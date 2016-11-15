@@ -89,6 +89,10 @@ private:
   std::map< Vision::FaceID_t, bool > _faceWasClose;
 
   float _lastReactionTime_s = -1.0f;
+
+  // whether or not the robot has played it's "big initial greeting" animation, which should only happen once
+  // per session
+  bool _hasPlayedInitialGreeting = false;
   
 }; // class BehaviorAcknowledgeFace
 

@@ -582,7 +582,32 @@ namespace Cozmo {
     
     return _lastObservedFaceTimeStamp;    
   }
-  
+
+  bool FaceWorld::HasTurnedTowardsFace(Vision::FaceID_t faceID) const
+  {
+    const auto& it = _knownFaces.find(faceID);
+    if( it == _knownFaces.end() ) {
+      // either this is a bad ID, or the face was deleted, so assume we haven't animated at it. Note that (as
+      // of this comment writing...) named faces are not deleted
+      return false;
+    }
+
+    return it->second.hasTurnedTowards;
+  }
+
+  void FaceWorld::SetTurnedTowardsFace(Vision::FaceID_t faceID, bool val)
+  {
+    auto it = _knownFaces.find(faceID);
+    if( it == _knownFaces.end() ) {
+      PRINT_NAMED_WARNING("FaceWorld.SetTurnedTowardsFaceAndAnimation.InvalidFace",
+                          "Claiming that we animated at face %d, but that face doesn't exist in FaceWorld",
+                          faceID);
+      return;
+    }
+    
+    it->second.hasTurnedTowards = val;
+  }
+
   void FaceWorld::DrawFace(KnownFace& knownFace)
   {
     const Vision::TrackedFace& trackedFace = knownFace.face;

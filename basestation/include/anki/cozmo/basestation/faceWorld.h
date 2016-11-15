@@ -64,6 +64,12 @@ namespace Cozmo {
     // different origins (e.g. the robot was picked up and hasn't seen a face since), this code will assume
     // that the origins are the same (even though they aren't).
     TimeStamp_t GetLastObservedFaceWithRespectToRobot(Pose3d& p) const;
+
+    // Returns true if any action has turned towards this face
+    bool HasTurnedTowardsFace(Vision::FaceID_t faceID) const;
+
+    // Tell FaceWorld that the robot has turned towards this face (or not, if val=false)
+    void SetTurnedTowardsFace(Vision::FaceID_t faceID, bool val = true);
     
     // Removes all known faces and resets the last observed face timer to 0, so
     // GetLastObservedFace() will return 0.
@@ -78,6 +84,7 @@ namespace Cozmo {
       VizManager::Handle_t     vizHandle;
       s32                      numTimesObserved = 0;
       s32                      numTimesObservedFacingCamera = 0;
+      bool                     hasTurnedTowards = false;
 
       KnownFace(Vision::TrackedFace& faceIn);
       bool IsNamed() const { return !face.GetName().empty(); }

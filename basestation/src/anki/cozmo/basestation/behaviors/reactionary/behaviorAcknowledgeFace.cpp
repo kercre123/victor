@@ -38,6 +38,7 @@ CONSOLE_VAR(u32, kNumImagesToWaitFor, "AcknowledgementBehaviors", 3);
 CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_mm, "AcknowledgementBehaviors", 300.0f, 0.0f, 1000.0f);
 CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_gap_mm, "AcknowledgementBehaviors", 100.0f, 0.0f, 1000.0f);
 CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 0.0f, 60.0f);
+CONSOLE_VAR(f32, kMaxTimeForInitialGreeting_s, "AcknowledgementBehaviors", 60.0f);
 }
 
 using namespace AcknowledgeFaceConsoleVars;
@@ -100,12 +101,31 @@ void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
     return;
   }
 
+  const bool sayName = true;
   TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(robot,
                                                                 _targetFace,
                                                                 PI_F,
-                                                                true); // say name
-  turnAction->SetSayNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed);
+                                                                sayName);
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool withinMinSessionTime = currTime_s <= kMaxTimeForInitialGreeting_s;
+  const bool alreadyTurnedTowards = robot.GetFaceWorld().HasTurnedTowardsFace(_targetFace);
+  const bool shouldPlayInitialGreeting = !_hasPlayedInitialGreeting && withinMinSessionTime && !alreadyTurnedTowards;
+
+  if( shouldPlayInitialGreeting ) {
+    turnAction->SetSayNameTriggerCallback([this](const Robot& robot, Vision::FaceID_t faceID){
+        // only play the initial greeting once, so if we are going to use it, mark that here
+        _hasPlayedInitialGreeting = true;
+        return AnimationTrigger::NamedFaceInitialGreeting;
+      });      
+  }
+  else {
+    turnAction->SetSayNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed);
+  }
+  
+  // if it's not named, always play this one
   turnAction->SetNoNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceUnnamed);
+  
   turnAction->SetMaxFramesToWait(kNumImagesToWaitFor);
 
   StartActing(turnAction, &BehaviorAcknowledgeFace::FinishIteration);

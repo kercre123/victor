@@ -529,6 +529,10 @@
       "AnimName": "ag_memorymatch_getout"
     },
     {
+      "CladEvent": "NamedFaceInitialGreeting",
+      "AnimName" : "ag_greeting_happy"
+    },
+    {
       "CladEvent": "NeutralFace",
       "AnimName" : "ag_neutral_face"
     },

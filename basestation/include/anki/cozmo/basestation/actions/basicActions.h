@@ -541,6 +541,16 @@ namespace Cozmo {
       // don't have a name, we want to use this animation instead)
       void SetNoNameAnimationTrigger(AnimationTrigger trigger);
 
+      // instead of manually specifying a trigger, this function allows a lambda to be called when the face is
+      // turned to. It is called right before the animation should be played, only if the face is named. Input
+      // is the face we are reacting to, and the return value should be the animation to play. If
+      // AnimationTrigger::Count is returned, no animation will play
+      using AnimTriggerForFaceCallback = std::function<AnimationTrigger(const Robot& robot, Vision::FaceID_t faceID)>;
+      void SetSayNameTriggerCallback(AnimTriggerForFaceCallback callback);
+
+      // same as above, but for the case when the face has no associated name
+      void SetNoNameTriggerCallback(AnimTriggerForFaceCallback callback);
+
       // Sets whether or not we require a face. Default is false (it will play animations and return success
       // even if no face is found). If set to true and no face is found, the action will fail with
       // FAILURE_ABORT and no animations will be played
@@ -572,9 +582,9 @@ namespace Cozmo {
       bool              _sayName                 = false;
       bool              _tracksLocked            = false;
       bool              _requireFaceConfirmation = false;
-      AnimationTrigger  _nameAnimTrigger         = AnimationTrigger::Count;
-      AnimationTrigger  _noNameAnimTrigger       = AnimationTrigger::Count;
 
+      AnimTriggerForFaceCallback _sayNameTriggerCallback;
+      AnimTriggerForFaceCallback _noNameTriggerCallback;
       
       std::vector<Signal::SmartHandle> _signalHandles;
 

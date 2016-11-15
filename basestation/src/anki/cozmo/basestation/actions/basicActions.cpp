@@ -1639,19 +1639,41 @@ namespace Anki {
     {
       if( ! _sayName ) {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
-                            "setting say name trigger, but we aren't going to say the name. This is useless");
+                          "setting say name trigger, but we aren't going to say the name. This is useless");
       }
-      _nameAnimTrigger = trigger;
+      _sayNameTriggerCallback = [trigger](const Robot& robot, Vision::FaceID_t faceID) {
+        return trigger;
+      };
     }
 
-    void TurnTowardsFaceAction::SetNoNameAnimationTrigger(AnimationTrigger trigger)
+  void TurnTowardsFaceAction::SetNoNameAnimationTrigger(AnimationTrigger trigger)
     {
       if( ! _sayName ) {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
-                            "setting anim trigger for unnamed faces, but we aren't going to say the name.");
+                          "setting anim trigger for unnamed faces, but we aren't going to say the name.");
       }
-      _noNameAnimTrigger = trigger;
+      _noNameTriggerCallback = [trigger](const Robot& robot, Vision::FaceID_t faceID) {
+        return trigger;
+      };
     }
+
+    void TurnTowardsFaceAction::SetSayNameTriggerCallback(AnimTriggerForFaceCallback callback)
+    {
+      if( ! _sayName ) {
+        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerCallbackWithoutSayingName",
+                          "setting say name trigger callback, but we aren't going to say the name. This is useless");
+      }
+      _sayNameTriggerCallback = callback;
+    }      
+
+    void TurnTowardsFaceAction::SetNoNameTriggerCallback(AnimTriggerForFaceCallback callback)
+    {
+      if( ! _sayName ) {
+        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerCallbackWithoutSayingName",
+                          "setting say name trigger callback, but we aren't going to say the name. This is useless");
+      }
+      _noNameTriggerCallback = callback;
+    }      
 
     ActionResult TurnTowardsFaceAction::Init()
     {
@@ -1855,24 +1877,30 @@ namespace Anki {
             result = ActionResult::SUCCESS;
           } else {
             // Wait for final action of fine-tune turning to complete.
-            // Create action to say name if enabled and we have a name by now.
+             // Create action to say name if enabled and we have a name by now.
             result = _action->Update();
             if(ActionResult::SUCCESS == result && _sayName)
             {
               const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_obsFaceID);
               if(nullptr != face) {
                 if( face->GetName().empty() ) {
-                  if( _noNameAnimTrigger != AnimationTrigger::Count ) {
-                    SetAction(new TriggerLiftSafeAnimationAction(_robot, _noNameAnimTrigger));
-                    _state = State::SayingName;
-                    result = ActionResult::RUNNING;
+                  if( _noNameTriggerCallback ) {
+                    AnimationTrigger noNameAnim = _noNameTriggerCallback(_robot, _obsFaceID);
+                    if( noNameAnim != AnimationTrigger::Count ) {
+                      SetAction(new TriggerLiftSafeAnimationAction(_robot, noNameAnim));
+                      _state = State::SayingName;
+                      result = ActionResult::RUNNING;
+                    }
                   }
                 }
                 else {
                   // we have a name
                   SayTextAction* sayText = new SayTextAction(_robot, face->GetName(), SayTextIntent::Name_Normal);
-                  if( _nameAnimTrigger != AnimationTrigger::Count ) {
-                    sayText->SetAnimationTrigger( _nameAnimTrigger );
+                  if( _sayNameTriggerCallback ) {
+                    AnimationTrigger sayNameAnim = _sayNameTriggerCallback(_robot, _obsFaceID);
+                    if( sayNameAnim != AnimationTrigger::Count ) {
+                      sayText->SetAnimationTrigger( sayNameAnim );
+                    }
                   }
                   SetAction(sayText);
                   _state = State::SayingName;
@@ -1898,6 +1926,11 @@ namespace Anki {
         }
           
       } // switch(_state)
+
+      if( ActionResult::SUCCESS == result && _obsFaceID != Vision::UnknownFaceID ) {
+        // tell face world that we have successfully turned towards this face
+        _robot.GetFaceWorld().SetTurnedTowardsFace(_obsFaceID);
+      }
       
       return result;
       

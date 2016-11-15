@@ -292,7 +292,7 @@ namespace Anki {
       webots::Field* autoConnectField = root_->getField("autoConnect");
       if( autoConnectField == nullptr ) {
         PRINT_NAMED_ERROR("WebotsKeyboardController.MissingField",
-                          "missing autoConnect field, assuming we shoudl auto connect");
+                          "missing autoConnect field, assuming we should auto connect");
         return;
       }
       else {
@@ -312,8 +312,10 @@ namespace Anki {
       while( !start && !_shouldQuit ) {
         int key = -1;
         while((key = GetSupervisor()->keyboardGetKey()) != 0 && !_shouldQuit) {
-          if(key == ShiftEnterKey) {
+          if(!start && key == ShiftEnterKey) {
             start = true;
+            PRINT_CH_INFO("Keyboard", "WebotsKeyboardController.StartEngine",
+                          "Starting our engines....");
           }
         }
         // manually step simulation
@@ -2196,6 +2198,15 @@ namespace Anki {
 //                      assignNameToFace.faceID = GetLastObservedFaceID();
 //                      assignNameToFace.name   = userName;
 //                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
+
+                      webots::Field* saveFaceField = root_->getField("saveFaceToRobot");
+                      if( saveFaceField == nullptr ) {
+                        PRINT_NAMED_ERROR("WebotsKeyboardController.MissingField",
+                                          "missing saveFaceToRobot field");
+                        break;
+                      }
+
+                      bool saveFaceToRobot = saveFaceField->getSFBool();
                       
                       printf("Enrolling face ID %d with name '%s'\n", GetLastObservedFaceID(), userName.c_str());
                       ExternalInterface::EnrollNamedFace enrollNamedFace;
@@ -2203,7 +2214,7 @@ namespace Anki {
                       enrollNamedFace.mergeIntoID = enrollToID;
                       enrollNamedFace.name        = userName;
                       enrollNamedFace.sequence    = FaceEnrollmentSequence::Simple;
-                      enrollNamedFace.saveToRobot = false; // for testing it's nice not to save
+                      enrollNamedFace.saveToRobot = saveFaceToRobot;
                       SendMessage(ExternalInterface::MessageGameToEngine(std::move(enrollNamedFace)));
                     } else {
                       // No user name, enable enrollment
