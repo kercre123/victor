@@ -466,7 +466,7 @@ public class StartupManager : MonoBehaviour {
         }
       } catch (Exception e) {
         _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",0);
-        Debug.LogError("Exception checking asset hash: " + e.ToString());
+        Debug.Log("Exception checking asset hash: " + e.ToString());
         yield break;
       }
 
@@ -481,7 +481,7 @@ public class StartupManager : MonoBehaviour {
           }
         } catch (Exception e) {
           _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",1);
-          Debug.LogError("Exception checking asset hash: " + e.ToString());
+          Debug.Log("Exception checking asset hash: " + e.ToString());
           yield break;
         }
       }
@@ -501,7 +501,7 @@ public class StartupManager : MonoBehaviour {
     }
     catch (Exception e) {
       _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",2);
-      Debug.LogError("There was an exception extracting the resource files: " + e.ToString());
+      Debug.Log("There was an exception extracting the resource files: " + e.ToString());
       yield break;
     }
 
@@ -511,7 +511,7 @@ public class StartupManager : MonoBehaviour {
 
     if (!string.IsNullOrEmpty(resourcesWWW.error)) {
       _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",3);
-      Debug.LogError("Error loading resources.txt: " + resourcesWWW.error);
+      Debug.Log("Error loading resources.txt: " + resourcesWWW.error);
       yield break;
     }
 
@@ -528,7 +528,7 @@ public class StartupManager : MonoBehaviour {
         }
         catch (Exception e) {
           _ExtractionErrorMessage = GetBootString("boot.errorDiskFull");
-          Debug.LogError("Error extracting file: " + e.ToString());
+          Debug.Log("Error extracting file: " + e.ToString());
           yield break;
         }
       }
@@ -590,7 +590,7 @@ public class StartupManager : MonoBehaviour {
   private bool ExtractOneFile(WWW www, string toPath) {
     if (!string.IsNullOrEmpty(www.error)) {
       _ExtractionErrorMessage = GetBootString("boot.errorDiskFull");
-      Debug.LogError("Error extracting file: " + www.error);
+      Debug.Log("Error extracting file: " + www.error);
       return false;
     }
 
@@ -599,7 +599,7 @@ public class StartupManager : MonoBehaviour {
     }
     catch (Exception e) {
       _ExtractionErrorMessage = GetBootString("boot.errorDiskFull");
-      Debug.LogError("Error extracting file: " + e.ToString());
+      Debug.Log("Error extracting file: " + e.ToString());
       return false;
     }
 
