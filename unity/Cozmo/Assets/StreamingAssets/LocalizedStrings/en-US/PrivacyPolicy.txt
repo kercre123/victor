@@ -227,3 +227,5 @@ Anki has received TRUSTe's Certified Privacy Seal signifying that this privacy s
 privacy.truste.com/privacy-seal/validation?rid=dd1f9af4-4afe-4b2d-ad5a-22c368251ce5
 
 If you have an unresolved privacy or data use concern that we have not addressed satisfactorily, please contact TRUSTe at https://feedback-form.truste.com/watchdog/request. The TRUSTe program covers only information that is collected through this website www.anki.com and the Anki DRIVE and Anki OVERDRIVE mobile applications.
+
+Copyright © 2016 Anki, Inc.  All rights reserved. 

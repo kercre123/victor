@@ -275,5 +275,8 @@
   },
   "label.totalSparks": {
     "translation": "Total Sparks: {0}"
+  },
+  "label.termsInstructions": {
+    "translation": "By tapping \"Start\", you agree to the terms below:"
   }
 }
