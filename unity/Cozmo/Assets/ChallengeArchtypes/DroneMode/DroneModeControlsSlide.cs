@@ -180,12 +180,12 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void CreateActionButton(DroneModeActionData actionData, System.Action callback,
-                                   bool interactableOnlyWhenCubeSeen, bool interactableOnlyWhenKnownFaceSeen,
+                                   bool interactableOnlyWhenCubeSeen, bool interactableOnlyWhenFaceSeen,
                                    string dasButtonName, ActionContextType actionType) {
       GameObject buttonContainer = GetContainerBasedOnActionType(actionType);
       GameObject newButton = UIManager.CreateUIElement(_DroneModeActionButtonPrefab, buttonContainer.transform);
       DroneModeActionButton newButtonScript = newButton.GetComponent<DroneModeActionButton>();
-      newButtonScript.Initialize(dasButtonName, _kDasViewControllerName, actionData, callback, interactableOnlyWhenCubeSeen, interactableOnlyWhenKnownFaceSeen);
+      newButtonScript.Initialize(dasButtonName, _kDasViewControllerName, actionData, callback, interactableOnlyWhenCubeSeen, interactableOnlyWhenFaceSeen);
       _ContextualButtons.Add(newButtonScript);
     }
 
@@ -397,15 +397,14 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void UpdateContextualButtons() {
       bool currentObjectIsCube = (_CurrentlyFocusedObject is LightCube);
-      bool currentObjectIsKnownFace = ((_CurrentlyFocusedObject is Face)
-                                       && (!string.IsNullOrEmpty(((Face)_CurrentlyFocusedObject).Name)));
+      bool currentObjectIsFace = (_CurrentlyFocusedObject is Face);
       foreach (DroneModeActionButton button in _ContextualButtons) {
         if (button.IsUnlocked) {
           if (button.NeedsCubeSeen) {
             button.Interactable = currentObjectIsCube;
           }
-          else if (button.NeedsKnownFaceSeen) {
-            button.Interactable = currentObjectIsKnownFace;
+          else if (button.NeedsFaceSeen) {
+            button.Interactable = currentObjectIsFace;
           }
           else {
             button.Interactable = true;

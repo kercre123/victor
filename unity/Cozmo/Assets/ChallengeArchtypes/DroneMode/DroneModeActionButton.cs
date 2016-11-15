@@ -23,19 +23,19 @@ namespace Cozmo.Minigame.DroneMode {
     private bool _NeedsCubeSeen;
     public bool NeedsCubeSeen { get { return _NeedsCubeSeen; } }
 
-    private bool _NeedsKnownFaceSeen;
-    public bool NeedsKnownFaceSeen { get { return _NeedsKnownFaceSeen; } }
+    private bool _NeedsFaceSeen;
+    public bool NeedsFaceSeen { get { return _NeedsFaceSeen; } }
 
     private System.Action _ActionCallback;
     private AlertView _AlertView;
 
     public void Initialize(string dasButtonName, string dasViewController, DroneModeActionData actionData,
-                           System.Action actionCallback, bool needsCubeSeen, bool needsKnownFaceSeen) {
+                           System.Action actionCallback, bool needsCubeSeen, bool needsFaceSeen) {
       _ActionButton.Initialize(HandleButtonClicked, dasButtonName, dasViewController);
       _ActionButton.Text = Localization.Get(actionData.ButtonTextLocKey);
       _ActionCallback = actionCallback;
       _NeedsCubeSeen = needsCubeSeen;
-      _NeedsKnownFaceSeen = needsKnownFaceSeen;
+      _NeedsFaceSeen = needsFaceSeen;
 
       _IsUnlocked = ((actionData.ActionUnlockId == Anki.Cozmo.UnlockId.Invalid) || UnlockablesManager.Instance.IsUnlocked(actionData.ActionUnlockId));
       _LockedIcon.SetActive(!_IsUnlocked);

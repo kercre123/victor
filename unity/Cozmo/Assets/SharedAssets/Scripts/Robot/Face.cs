@@ -5,7 +5,7 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   private const uint _kFindFaceTimeoutFrames = 1;
   private int _ConsecutiveVisionFramesNotSeen = 0;
 
-  public delegate void InFieldOfViewStateChangedHandler(Face faceChanged,bool newState);
+  public delegate void InFieldOfViewStateChangedHandler(Face faceChanged, bool newState);
 
   public event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;
 
@@ -56,7 +56,7 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
 
   public string ReticleLabelLocKey {
     get {
-      string key = "";
+      string key = LocalizationKeys.kDroneModeUnknownFaceReticleLabel;
       if (!string.IsNullOrEmpty(this.Name)) {
         key = LocalizationKeys.kLabelEmptyWithArg;
       }

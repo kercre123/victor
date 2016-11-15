@@ -68,35 +68,35 @@ namespace Cozmo {
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.LiftCubeButtonData,
             HandleLiftCubeButtonPressed,
             true, // interactableOnlyWhenCubeSeen
-            false, // interactableOnlyWhenKnownFaceSeen
+            false, // interactableOnlyWhenFaceSeen
             "lift_cube_button",
             DroneModeControlsSlide.ActionContextType.CubeNotInLift);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.RollCubeButtonData,
             HandleRollCubeButtonPressed,
             true, // interactableOnlyWhenCubeSeen
-            false, // interactableOnlyWhenKnownFaceSeen
+            false, // interactableOnlyWhenFaceSeen
             "roll_cube_button",
             DroneModeControlsSlide.ActionContextType.CubeNotInLift);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.DropCubeButtonData,
             HandleDropCubeButtonPressed,
             false, // interactableOnlyWhenCubeSeen
-            false, // interactableOnlyWhenKnownFaceSeen
+            false, // interactableOnlyWhenFaceSeen
             "drop_cube_button",
             DroneModeControlsSlide.ActionContextType.CubeInLift);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.StackCubeButtonData,
             HandleStackCubeButtonPressed,
             true, // interactableOnlyWhenCubeSeen
-            false, // interactableOnlyWhenKnownFaceSeen
+            false, // interactableOnlyWhenFaceSeen
             "stack_cube_button",
             DroneModeControlsSlide.ActionContextType.CubeInLift);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.SayNameButtonData,
             HandleSayNameButtonPressed,
             false, // interactableOnlyWhenCubeSeen
-            true, // interactableOnlyWhenKnownFaceSeen
+            true, // interactableOnlyWhenFaceSeen
             "say_name_button",
             DroneModeControlsSlide.ActionContextType.FaceSeen);
 
@@ -490,8 +490,8 @@ namespace Cozmo {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is Face) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.TurnTowardsFace((Face)targetObject,  
-              sayName: true, 
+            _CurrentRobot.TurnTowardsFace((Face)targetObject,
+              sayName: true,
               namedTrigger: Anki.Cozmo.AnimationTrigger.AcknowledgeFaceNamed,
               unnamedTrigger: Anki.Cozmo.AnimationTrigger.AcknowledgeFaceUnnamed,
               callback: HandleActionFinished);
