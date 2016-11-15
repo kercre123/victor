@@ -44,6 +44,11 @@ CONSOLE_VAR_RANGED(s32, kMinTimesToNotObserveDirtyObject, "PoseConfirmation", 2,
 // Only localize to / identify active objects within this distance
 CONSOLE_VAR_RANGED(f32, kMaxLocalizationDistance_mm, "PoseConfirmation", 250.f, 50.f, 1000.f);
 
+// TODO: (Al) Remove once bryon fixes the timestamps
+// Disable the object is still moving check for visual observation entries due to incorrect
+// timestamps in object moved messages
+CONSOLE_VAR(bool, kDisableStillMovingCheck, "PoseConfirmation", true);
+
 }
   
 ObjectPoseConfirmer::ObjectPoseConfirmer(Robot& robot)
@@ -90,7 +95,7 @@ Result ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject* object) const
 {
   if( !object->IsPoseStateUnknown() )
   {
-    object->SetPoseState(PoseState::Unknown);
+    SetPoseState(object, PoseState::Unknown);
 
     // Notify listeners if object is going fron !Unknown to Unknown
     using namespace ExternalInterface;
@@ -99,7 +104,15 @@ Result ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject* object) const
   
   return RESULT_OK;
 }
+
+void ObjectPoseConfirmer::SetPoseState(ObservableObject* object, PoseState newState) const
+{
+  _robot.GetLightsComponent().OnObjectPoseStateChanged(object->GetID(), object->GetPoseState(), newState);
   
+  object->SetPoseState(newState);
+}
+
+
 ObjectPoseConfirmer::PoseConfirmation::PoseConfirmation(const Pose3d& initPose, s32 initNumTimesObserved, TimeStamp_t initLastPoseUpdatedTime)
 : lastPose(initPose)
 , numTimesObserved(initNumTimesObserved)
@@ -154,7 +167,7 @@ Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const
         TimeStamp_t stoppedMovingTime;
         bool objectIsMoving = object->IsMoving(&stoppedMovingTime);
         if (!objectIsMoving) {
-          if (stoppedMovingTime >= object->GetLastObservedTime()) {
+          if (stoppedMovingTime >= object->GetLastObservedTime() && !kDisableStillMovingCheck) {
             PRINT_CH_DEBUG("PoseConfirmer", "AddVisualObservation.ObjectIsStillMoving", "");
             objectIsMoving = true;
           }

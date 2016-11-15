@@ -25,6 +25,7 @@ enum uint_8 BehaviorType {
   LookForFaceAndCube,
   InteractWithFaces,
   ReactToCliff,
+  ReactToDoubleTap,
   ReactToPet,
   ReactToPickup,
   ReactToPoke,

@@ -130,6 +130,10 @@ namespace Anki
       ObservableObject* GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown);
       const ObservableObject* GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown) const;
       
+      // Return a pointer to an object with the specified activeID (in the current world coordinate frame)
+      ObservableObject* GetObjectByActiveID(const ActiveID& activeID);
+      const ObservableObject* GetObjectByActiveID(const ActiveID& activeID) const;
+      
       // Like GetObjectByID but dynamically casts the given object ID into the
       // ActiveObject type.
       ActiveObject* GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown);
@@ -370,6 +374,7 @@ namespace Anki
       // Note these are marked const but return non-const pointers.
       ObservableObject* GetObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
       ActiveObject* GetActiveObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
+      ObservableObject* GetObjectByActiveIDHelper(const ActiveID& activeID) const;
       
       bool UpdateRobotPose(std::list<Vision::ObservedMarker>& obsMarkers, const TimeStamp_t atTimestamp);
       
@@ -602,8 +607,17 @@ namespace Anki
       return GetActiveObjectByIdHelper(objectID, inFamily); // returns const*
     }
     
+    inline ObservableObject* BlockWorld::GetObjectByActiveID(const ActiveID& activeID) {
+      return GetObjectByActiveIDHelper(activeID);
+    }
+    
+    inline const ObservableObject* BlockWorld::GetObjectByActiveID(const ActiveID& activeID) const {
+      return GetObjectByActiveIDHelper(activeID);
+    }
+
     inline ObjectID BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object,
                                              const ObservableObject* objectToCopyID)
+
     {
       return AddNewObject(_existingObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object, objectToCopyID);
     }

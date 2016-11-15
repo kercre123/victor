@@ -35,14 +35,9 @@ CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
 
 BehaviorPopAWheelie::BehaviorPopAWheelie(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _blockworldFilter( new BlockWorldFilter )
 , _robot(robot)
 {
   SetDefaultName("PopAWheelie");
-    
-  // set up the filter we will use for finding blocks we care about
-  _blockworldFilter->OnlyConsiderLatestUpdate(false);
-  _blockworldFilter->SetFilterFcn( std::bind( &BehaviorPopAWheelie::FilterBlocks, this, std::placeholders::_1) );
 }
 
 bool BehaviorPopAWheelie::IsRunnableInternal(const Robot& robot) const
@@ -68,32 +63,15 @@ void BehaviorPopAWheelie::StopInternal(Robot& robot)
   ResetBehavior(robot);
 }
 
+void BehaviorPopAWheelie::StopInternalFromDoubleTap(Robot& robot)
+{
+  ResetBehavior(robot);
+}
+
 void BehaviorPopAWheelie::UpdateTargetBlock(const Robot& robot) const
 {
-  const ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
-  if( nullptr != closestObj ) {
-    _targetBlock = closestObj->GetID();
-  }
-  else {
-    _targetBlock.UnSet();
-  }
+  _targetBlock = _robot.GetBehaviorManager().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PopAWheelieOnObject);
 }
-
-bool BehaviorPopAWheelie::FilterBlocks(const ObservableObject* obj) const
-{
-  const auto& whiteboard = _robot.GetBehaviorManager().GetWhiteboard();
-  const bool hasFailedToPopAWheelie = whiteboard.DidFailToUse(obj->GetID(),
-                                                              AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
-                                                              DefailtFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
-                                                              obj->GetPose(),
-                                                              DefailtFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                                              DefailtFailToUseParams::kAngleToleranceAfterFailure_radians);
-
-  return (!obj->IsPoseStateUnknown() &&
-          !hasFailedToPopAWheelie &&
-          _robot.CanPickUpObjectFromGround(*obj));
-}
-
 
 void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
 {
@@ -155,7 +133,13 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
-  };    
+    
+    // If this behavior uses a tapped object then prevent ReactToDoubleTap from interrupting
+    if(RequiresObjectTapped())
+    {
+      robot.GetBehaviorManager().GetWhiteboard().SetSuppressReactToDoubleTap(true);
+    }
+  };
   goPopAWheelie->SetPreDockCallback(disableCliff);
 
 

@@ -1,0 +1,9 @@
+{
+  "behaviorType": "ReactToDoubleTap",
+  "requireObjectTapped" : true,
+  "behaviorGroups": [
+                     "Reactionary",
+                     "ObjectTapInteraction"
+                     ],
+  "disableByDefault": false
+}

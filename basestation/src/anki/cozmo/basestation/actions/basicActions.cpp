@@ -1323,6 +1323,7 @@ namespace Anki {
             // get it initialized
             ActionResult verificationResult = _visuallyVerifyAction->Update();
             if(ActionResult::SUCCESS != verificationResult) {
+              _interactionResult = ObjectInteractionResult::VISUAL_VERIFICATION_FAILED;
               return verificationResult;
             }
           }
@@ -1334,6 +1335,7 @@ namespace Anki {
       if (nullptr != _visuallyVerifyAction) {
         ActionResult verificationResult = _visuallyVerifyAction->Update();
         if (verificationResult != ActionResult::SUCCESS) {
+          _interactionResult = ObjectInteractionResult::VISUAL_VERIFICATION_FAILED;
           return verificationResult;
         }
       }
@@ -1348,7 +1350,7 @@ namespace Anki {
           _robot.GetActionList().QueueActionNext(new TrackObjectAction(_robot, _objectID));
         }
       }
-
+      _interactionResult = ObjectInteractionResult::SUCCESS;
       return ActionResult::SUCCESS;
     } // TurnTowardsObjectAction::CheckIfDone()
     
@@ -1357,6 +1359,7 @@ namespace Anki {
       ObjectInteractionCompleted info;
       info.numObjects = 1;
       info.objectIDs[0] = _objectID;
+      info.result = _interactionResult;
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
     }
     

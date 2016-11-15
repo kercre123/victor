@@ -320,7 +320,7 @@ namespace Anki {
         _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
         result = ActionResult::FAILURE_ABORT;
       }
-      else if(PoseState::Unknown == object->GetPoseState())
+      else if(PoseState::Unknown == object->GetPoseState() && !_objectCanBeUnknown)
       {
         PRINT_NAMED_INFO("DriveToObjectAction.CheckPreconditions.ObjectPoseStateUnknown",
                          "Robot %d cannot plan a path to ActionableObject %d, whose pose state is Unknown.",

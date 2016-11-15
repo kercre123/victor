@@ -13,6 +13,8 @@
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -108,7 +110,7 @@ AIWhiteboard::~AIWhiteboard()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanPickupHelper(const ObservableObject* object)
+bool AIWhiteboard::CanPickupHelper(const ObservableObject* object) const
 {
   if( nullptr == object ) {
     PRINT_NAMED_ERROR("AIWhiteboard.CanPickupHelper.NullObject", "object was null");
@@ -118,19 +120,51 @@ bool AIWhiteboard::CanPickupHelper(const ObservableObject* object)
   // check for recent failures
   const bool recentlyFailed = DidFailToUse(object->GetID(),
                                            {{ ObjectUseAction::PickUpObject, ObjectUseAction::RollOrPopAWheelie }},
-                                           DefailtFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
+                                           DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
                                            object->GetPose().GetWithRespectToOrigin(),
-                                           DefailtFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                           DefailtFailToUseParams::kAngleToleranceAfterFailure_radians);
+                                           DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+                                           DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
   
   const bool canPickUp = _robot.CanPickUpObject(*object);
   return !recentlyFailed && canPickUp;
+}
+
+bool AIWhiteboard::CanPopAWheelieHelper(const ObservableObject* object) const
+{
+  const bool hasFailedToPopAWheelie = DidFailToUse(object->GetID(),
+                                                   AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
+                                                   DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
+                                                   object->GetPose(),
+                                                   DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+                                                   DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+  
+  return (!hasFailedToPopAWheelie && _robot.CanPickUpObjectFromGround(*object));
+}
+
+bool AIWhiteboard::CanRollHelper(const ObservableObject* object) const
+{
+  const bool hasFailedToRoll = DidFailToUse(object->GetID(),
+                                            AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
+                                            DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
+                                            object->GetPose(),
+                                            DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+                                            DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+  
+  return (!hasFailedToRoll && _robot.CanPickUpObjectFromGround(*object));
+}
+
+bool AIWhiteboard::CanRollRotationImportantHelper(const ObservableObject* object) const
+{
+  const Pose3d p = object->GetPose().GetWithRespectToOrigin();
+  return (CanRollHelper(object) &&
+          (p.GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::CreateBlockWorldFilters()
 {
 
+  // Pickup no axis check
   {
     BlockWorldFilter *pickupFilter = new BlockWorldFilter;
     pickupFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
@@ -138,6 +172,7 @@ void AIWhiteboard::CreateBlockWorldFilters()
     _filtersPerAction[ObjectUseIntention::PickUpAnyObject].reset( pickupFilter );
   }
 
+  // Pickup with axis check
   {
     BlockWorldFilter *pickupFilter = new BlockWorldFilter;
     pickupFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
@@ -158,6 +193,30 @@ void AIWhiteboard::CreateBlockWorldFilters()
       });
     _filtersPerAction.insert( std::make_pair( ObjectUseIntention::PickUpObjectWithAxisCheck,
                                               std::unique_ptr<BlockWorldFilter>(pickupFilter) ) );
+  }
+  
+  // Roll with axis check
+  {
+    BlockWorldFilter *rollFilter = new BlockWorldFilter;
+    rollFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollRotationImportantHelper, this, std::placeholders::_1));
+    _filtersPerAction[ObjectUseIntention::RollObjectWithAxisCheck].reset(rollFilter);
+  }
+  
+  // Roll no axis check
+  {
+    BlockWorldFilter *rollFilter = new BlockWorldFilter;
+    rollFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollHelper, this, std::placeholders::_1));
+    _filtersPerAction[ObjectUseIntention::RollObjectNoAxisCheck].reset(rollFilter);
+  }
+  
+  // Pop A Wheelie check
+  {
+    BlockWorldFilter *popFilter = new BlockWorldFilter;
+    popFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    popFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanPopAWheelieHelper, this, std::placeholders::_1));
+    _filtersPerAction[ObjectUseIntention::PopAWheelieOnObject].reset(popFilter);
   }
 }
 
@@ -1071,6 +1130,8 @@ void AIWhiteboard::UpdateValidObjects()
       }
     }
 
+    // Only update _bestObjectForAction as long as we do not have a tap intended object
+    if(!_haveTapIntentionObject)
     {
       // select best object
       const ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(_robot.GetPose(),
@@ -1150,6 +1211,61 @@ void AIWhiteboard::UpdateBeaconRender()
   }
 }
 
+
+void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
+{
+  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
+  
+  // We still want to do something with this double tapped object even if it doesn't exist in the
+  // current frame
+  if(object != nullptr)
+  {
+    bool filterCanUseObject = false;
+    
+    // For all intentions and their filters check if the filter can use the objectID
+    // and if so set objectID as the best object for the intention
+    for(const auto& filterPair : _filtersPerAction)
+    {
+      const auto& actionIntent = filterPair.first;
+      const auto& filterPtr = filterPair.second;
+      
+      _bestObjectForAction[actionIntent].UnSet();
+      
+      if(filterPtr &&
+         filterPtr->ConsiderObject(object))
+      {
+        _bestObjectForAction[actionIntent] = objectID;
+        filterCanUseObject = true;
+      }
+    }
+    
+    // None of the action intention filters can currently use objectID but still
+    // we still have a tap intention object because ReactToDoubleTap can run and
+    // determine if we can actually use the the tapped object
+    if(!filterCanUseObject)
+    {
+      PRINT_CH_INFO("AIWhiteBoard", "SetObjectTapInteration.NoFilter",
+                          "No actionIntent filter can currently use object %u",
+                          objectID.GetValue());
+    }
+  }
+
+  _haveTapIntentionObject = true;
+}
+
+void AIWhiteboard::ClearObjectTapInteraction()
+{
+  _haveTapIntentionObject = false;
+  
+  // Let ReactToDoubleTap be able to react if the next double tapped object is the same as the last
+  // double tapped object
+  _canReactToDoubleTapReactAgain = true;
+  
+  _suppressReactToDoubleTap = false;
+  
+  // Update the valid objects for each ObjectUseIntention now that we don't have a tapIntentionObject
+  UpdateValidObjects();
+}
 
 } // namespace Cozmo
 } // namespace Anki

@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -657,6 +658,15 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
                    firstObject->GetID().GetValue(), firstObject->GetActiveID(),
                    EnumToString(firstObject->GetType()), GetAxisString(payload));
   
+  const bool shouldIgnoreMovement = robot->GetBlockTapFilter().ShouldIgnoreMovementDueToDoubleTap(firstObject->GetID());
+  if(shouldIgnoreMovement)
+  {
+    PRINT_NAMED_INFO(MAKE_EVENT_NAME("IgnoringMessage"),
+                     "Waiting for double tap id:%d ignoring movement message",
+                     firstObject->GetID().GetValue());
+    return;
+  }
+  
   // Don't notify game about moving objects that are being carried or docked with
   // (We expect those to move)
   const bool isDockingObject  = firstObject->GetID() == robot->GetDockObject();
@@ -699,7 +709,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
         // we don't know where it is anymore. Next time we see it, relocalize it
         // relative to robot's pose estimate. Then we can use it for localization
         // again.
-        object->SetPoseState(PoseState::Dirty);
+        robot->GetObjectPoseConfirmer().SetPoseState(object, PoseState::Dirty);
         
         // If this is the object we were localized to, unset our localizedToID.
         // Note we are still "localized" by odometry, however.
@@ -731,7 +741,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       // if they were previously known
       if(object->IsPoseStateKnown())
       {
-        object->SetPoseState(PoseState::Dirty);
+        robot->GetObjectPoseConfirmer().SetPoseState(object, PoseState::Dirty);
       }
     }
     

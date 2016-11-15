@@ -18,6 +18,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/transport/connectionStats.h"
@@ -26,10 +28,13 @@
 
 CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 32);
 CONSOLE_VAR(Anki::TimeStamp_t, kTapWaitOffset_ms, "TapFilter.WaitOffsetTime", 75);
+CONSOLE_VAR(Anki::TimeStamp_t, kDoubleTapTime_ms, "TapFilter.DoubleTapTime", 500);
+CONSOLE_VAR(Anki::TimeStamp_t, kIgnoreMoveTimeAfterDoubleTap_ms, "TapFilter.IgnoreMoveTimeAfterDoubleTap", 500);
+CONSOLE_VAR(bool, kCanDoubleTapDirtyPoses, "DoubleTap", true);
+CONSOLE_VAR(bool, kIgnoreMovementWhileWaitingForDoubleTap, "DoubleTap", true);
 
 namespace Anki {
 namespace Cozmo {
-
 
 BlockTapFilterComponent::BlockTapFilterComponent(Robot& robot)
   : _robot(robot)
@@ -38,9 +43,18 @@ BlockTapFilterComponent::BlockTapFilterComponent(Robot& robot)
 {
   if( _robot.GetContext()->GetRobotManager()->GetMsgHandler() )
   {
-    _robotToEngineSignalHandle = (_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
+    _robotToEngineSignalHandle.push_back(_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
                                                                                                      RobotInterface::RobotToEngineTag::activeObjectTapped,
                                                                                                      std::bind(&BlockTapFilterComponent::HandleActiveObjectTapped, this, std::placeholders::_1)));
+    
+    _robotToEngineSignalHandle.push_back(_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
+                                                                                                            RobotInterface::RobotToEngineTag::activeObjectMoved,
+                                                                                                            std::bind(&BlockTapFilterComponent::HandleActiveObjectMoved, this, std::placeholders::_1)));
+    
+    _robotToEngineSignalHandle.push_back(_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
+                                                                                                           RobotInterface::RobotToEngineTag::activeObjectStopped,
+                                                                                                           std::bind(&BlockTapFilterComponent::HandleActiveObjectStopped, this, std::placeholders::_1)));
+    
   }
   // Null for unit tests
   if( _robot.GetContext()->GetExternalInterface() )
@@ -175,6 +189,109 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
 
   _tapInfo.emplace_back(std::move(payload));
   
+  CheckForDoubleTap(payload.objectID);
+}
+
+void BlockTapFilterComponent::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const auto& payload = message.GetData().Get_activeObjectMoved();
+  // In the message coming from the robot, the objectID is the slot the object is connected on which is its
+  // engine activeID
+  ObservableObject* object = _robot.GetBlockWorld().GetObjectByActiveID(payload.objectID);
+  
+  const auto& doubleTapInfo = _doubleTapObjects.find(object->GetID().GetValue());
+  
+  if(doubleTapInfo != _doubleTapObjects.end())
+  {
+    // If we have not started waiting for a double tap then mark this cube as moving
+    // Prevents checking for double taps while a cube is moving and also prevents
+    // considering a cube is moving while we are waiting for a potential double tap since
+    // taps/double taps often cause moved messages
+    if(doubleTapInfo->second.doubleTapTime == 0)
+    {
+      doubleTapInfo->second.isMoving = true;
+    }
+  }
+  else
+  {
+    _doubleTapObjects.emplace(object->GetID(), DoubleTapInfo{0, true, 0});
+  }
+}
+
+void BlockTapFilterComponent::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const auto& payload = message.GetData().Get_activeObjectStopped();
+  // In the message coming from the robot, the objectID is the slot the object is connected on which is its
+  // engine activeID
+  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByActiveID(payload.objectID);
+  
+  const auto& doubleTapInfo = _doubleTapObjects.find(object->GetID().GetValue());
+  
+  if(doubleTapInfo != _doubleTapObjects.end())
+  {
+    doubleTapInfo->second.isMoving = false;
+  }
+  else
+  {
+    _doubleTapObjects.emplace(object->GetID(), DoubleTapInfo{0, false, 0});
+  }
+}
+
+bool BlockTapFilterComponent::ShouldIgnoreMovementDueToDoubleTap(const ObjectID& objectID)
+{
+  if(!kIgnoreMovementWhileWaitingForDoubleTap)
+  {
+    return false;
+  }
+
+  const auto& doubleTapInfo = _doubleTapObjects.find(objectID);
+  
+  if(doubleTapInfo != _doubleTapObjects.end())
+  {
+    return doubleTapInfo->second.ignoreNextMoveTime > BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  }
+  return false;
+}
+
+void BlockTapFilterComponent::CheckForDoubleTap(const ObjectID& objectID)
+{
+  TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  auto doubleTapInfo = _doubleTapObjects.find(objectID);
+  if(doubleTapInfo == _doubleTapObjects.end())
+  {
+    doubleTapInfo = _doubleTapObjects.emplace(objectID, DoubleTapInfo{0, false, 0}).first;
+  }
+  
+  // Don't check for double taps while the cube is moving
+  if(doubleTapInfo->second.isMoving)
+  {
+    doubleTapInfo->second.doubleTapTime = 0;
+    return;
+  }
+  
+  // We have been waiting for a double tap and just got a tap within the double tap wait time
+  if(currTime < doubleTapInfo->second.doubleTapTime)
+  {
+    PRINT_CH_INFO("BlockPool", "BlockTapFilterComponent.Update.DoubleTap",
+                  "Detected double tap id:%u", objectID.GetValue());
+    
+    // Is ObjectTapInteractions feature enabled
+    if(_robot.GetContext() != nullptr &&
+       _robot.GetContext()->GetFeatureGate() != nullptr &&
+       _robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::ObjectTapInteractions))
+    {
+      _robot.GetBehaviorManager().HandleObjectTapInteraction(objectID);
+    }
+    
+    doubleTapInfo->second.doubleTapTime = 0;
+  }
+  // Start waiting for a double tap
+  else
+  {
+    doubleTapInfo->second.doubleTapTime = currTime + kDoubleTapTime_ms;
+    doubleTapInfo->second.ignoreNextMoveTime = currTime + kIgnoreMoveTimeAfterDoubleTap_ms;
+  }
 }
   
 

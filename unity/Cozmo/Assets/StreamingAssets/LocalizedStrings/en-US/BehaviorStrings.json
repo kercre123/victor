@@ -107,5 +107,8 @@
   },
   "behavior.DriveOffCharger": {
     "translation": "Cozmo is waking up"
+  },
+  "behavior.PickupCube": {
+    "translation": "Cozmo is picking up a cube"
   }
 }

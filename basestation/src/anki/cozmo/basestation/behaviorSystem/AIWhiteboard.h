@@ -34,7 +34,7 @@ class ObservableObject;
 class Robot;
 class BlockWorldFilter;
 
-namespace DefailtFailToUseParams {
+namespace DefaultFailToUseParams {
 constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
 constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
 static const Radians kAngleToleranceAfterFailure_radians = M_PI;
@@ -84,9 +84,13 @@ public:
   enum class ObjectUseIntention {
     // any object which can be picked up
     PickUpAnyObject,
-
     // only pick up upright objects, unless rolling is locked (in which case, pick up any object)
-    PickUpObjectWithAxisCheck
+    PickUpObjectWithAxisCheck,
+    
+    RollObjectWithAxisCheck,
+    RollObjectNoAxisCheck,
+    
+    PopAWheelieOnObject,
    };
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -207,6 +211,27 @@ public:
   Vision::FaceID_t GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
                                       const bool preferNamedFaces) const;
 
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Object Tap Interactions
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // Updates _bestObjectForAction so that all ObjectUseIntentions that can use objectID will use it
+  // Will prevent _bestObjectForActions from updating and overriding the objectID
+  void SetObjectTapInteraction(const ObjectID& objectID);
+  
+  // Clears and resets _bestObjectForActions
+  void ClearObjectTapInteraction();
+  
+  bool HasTapIntent() const { return _haveTapIntentionObject; }
+  
+  bool CanReactToDoubleTapReactAgain() const { return _canReactToDoubleTapReactAgain; }
+  void SetReactToDoubleTapCanReactAgain(const bool b) { _canReactToDoubleTapReactAgain = b; }
+  bool IsSuppressingReactToDoubleTap() const { return _suppressReactToDoubleTap; }
+  void SetSuppressReactToDoubleTap(const bool b) { _suppressReactToDoubleTap = b; }
+  
+  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -278,8 +303,11 @@ private:
   // update the best objects for each action type
   void UpdateValidObjects();
 
-  // Common logic for checking validity of blocks for any pick up action
-  bool CanPickupHelper(const ObservableObject* object);
+  // Common logic for checking validity of blocks for any Pickup, PopAWheelie, or Roll action
+  bool CanPickupHelper(const ObservableObject* object) const;
+  bool CanPopAWheelieHelper(const ObservableObject* object) const;
+  bool CanRollHelper(const ObservableObject* object) const;
+  bool CanRollRotationImportantHelper(const ObservableObject* object) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Failures
@@ -339,6 +367,15 @@ private:
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
+  
+  // Whether or not we are intending to interact with an object that has been double tapped
+  bool _haveTapIntentionObject = false;
+  
+  // Whether or not ReactToDoubleTap can react to the same lastDoubleTapped object
+  bool _canReactToDoubleTapReactAgain = false;
+  
+  // Whether or not ReactToDoubleTap can run
+  bool _suppressReactToDoubleTap = false;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

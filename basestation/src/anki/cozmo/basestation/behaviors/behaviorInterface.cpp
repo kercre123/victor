@@ -59,6 +59,7 @@ static const char* kRequiredDriveOffChargerKey   = "requiredRecentDriveOffCharge
 static const char* kRequiredParentSwitchKey      = "requiredRecentSwitchToParent_sec";
 static const char* kDisableReactionaryDefault    = "disableByDefault";
 static const char* kExecutableBehaviorTypeKey    = "executableBehaviorType";
+static const char* kRequireObjectTappedKey       = "requireObjectTapped";
 static const char* kCooldownOnObjectiveKey       = "considerThisHasRunForBehaviorObjective";
   
 static const int kMaxResumesFromCliff            = 2;
@@ -274,6 +275,8 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     _executableType = ExecutableBehaviorTypeFromString(executableBehaviorTypeJson.asCString());
   }
   
+  JsonTools::GetValueOptional(config, kRequireObjectTappedKey, _requireObjectTapped);
+  
   return true;
 }
 
@@ -384,6 +387,8 @@ Result IBehavior::Init()
     SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
   }
   
+  UpdateTappedObjectLights(true);
+  
   return initResult;
 }
 
@@ -424,6 +429,8 @@ Result IBehavior::Resume(BehaviorType resumingFromType)
     SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
   }
   
+  UpdateTappedObjectLights(true);
+  
   return initResult;
 }
 
@@ -445,7 +452,9 @@ void IBehavior::Stop()
   PRINT_CH_INFO("Behaviors", (GetName() + ".Stop").c_str(), "Stopping...");
 
   _isRunning = false;
-  StopInternal(_robot);
+  // If the behavior uses double tapped objects then call StopInternalFromDoubleTap in case
+  // StopInternal() does things like fire mood events or sets failures to use
+  (RequiresObjectTapped() ? StopInternalFromDoubleTap(_robot) : StopInternal(_robot));
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   StopActing(false);
   
@@ -560,6 +569,21 @@ bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
   if(robot.IsCarryingObject() && !CarryingObjectHandledInternally()){
     return false;
   }
+  
+  // check if the behavior needs a tapped object and if there is a tapped object
+  if(_requireObjectTapped)
+  {
+    if(!robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+    {
+      return false;
+    }
+    // Otherwise there is a tapped object so we need to make sure this behaviors target blocks are up to
+    // date before checking IsRunnableInternal()
+    else
+    {
+      UpdateTargetBlocks(robot);
+    }
+  }
 
   // no unlock or unlock passed, ask subclass
   const bool isRunnable = IsRunnableInternal(robot);
@@ -580,6 +604,15 @@ void IBehavior::SetDefaultName(const char* inName)
 IBehavior::Status IBehavior::UpdateInternal(Robot& robot)
 {
   if( IsActing() ) {
+  
+    // If the behavior needs a tapped object but we no longer have a tapped object then
+    // end the behavior
+    if(_requireObjectTapped &&
+       !robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+    {
+      return Status::Complete;
+    }
+  
     return Status::Running;
   }
 
@@ -601,6 +634,14 @@ Result IBehavior::ResumeInternal(Robot& robot)
 {
   // by default, if we are runnable again, initialize and start over
   Result resumeResult = RESULT_FAIL;
+  
+  // If this behavior needs a tapped object and there is a tapped object make sure
+  // to update our target blocks before trying to resume
+  if(_requireObjectTapped && robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+  {
+    UpdateTargetBlocks(robot);
+  }
+  
   if ( IsRunnable(robot) ) {
     _isRunning = true;
     resumeResult = InitInternal(robot);
@@ -807,6 +848,8 @@ void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved)
   // send das event
   Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetName().c_str());
 
+  UpdateTappedObjectLights(false);
+
 }
   
 
@@ -898,6 +941,56 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
   
   return ActionResult::SUCCESS;
 }
+
+void IBehavior::UpdateTappedObjectLights(const bool on) const
+{
+  // Prevents enabling/disabling the ReactToCubeMoved behavior multiple times
+  static bool behaviorDisabled = false;
+
+  if(_requireObjectTapped &&
+     _robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+  {
+    const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
+    
+    if(on)
+    {
+      _robot.GetLightsComponent().ClearAllTapInteractionObjects();
+      _robot.GetLightsComponent().SetTapInteractionObject(_tappedObject);
+    
+      if(!behaviorDisabled)
+      {
+        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("ObjectTapInteraction", BehaviorType::ReactToCubeMoved, false);
+        behaviorDisabled = true;
+      }
+    }
+    else
+    {
+      _robot.GetLightsComponent().ClearAllTapInteractionObjects();
+      
+      if(behaviorDisabled)
+      {
+        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("ObjectTapInteraction", BehaviorType::ReactToCubeMoved, true);
+        behaviorDisabled = false;
+      }
+      
+      _robot.GetBehaviorManager().LeaveObjectTapInteraction();
+    }
+  }
+}
+
+bool IBehavior::HandleNewDoubleTap(Robot& robot)
+{
+  Stop();
+  UpdateTargetBlocks(robot);
+  
+  if(!IsRunnable(robot))
+  {
+    return false;
+  }
+  
+  Init();
+  return true;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::UpdateAudioState(int newAudioState)
@@ -957,7 +1050,7 @@ void IReactionaryBehavior::StopInternal(Robot& robot)
   robot.GetMoveComponent().IgnoreDirectDriveMessages(false);
   robot.SetIgnoreExternalActions(false);
   
-  StopInternalReactionary(robot);
+  (RequiresObjectTapped() ? StopInternalFromDoubleTap(robot) : StopInternalReactionary(robot));
 }
   
 void IReactionaryBehavior::LoadConfig(Robot& robot, const Json::Value& config)

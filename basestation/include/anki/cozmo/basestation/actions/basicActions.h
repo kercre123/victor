@@ -515,6 +515,7 @@ namespace Cozmo {
       bool                       _headTrackWhenDone;
       bool                       _doRefinedTurn = true;
       f32                        _refinedTurnAngleTol_rad = DEG_TO_RAD_F32(5);
+      ObjectInteractionResult    _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
       
     }; // TurnTowardsObjectAction
     

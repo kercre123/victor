@@ -2,6 +2,10 @@
   {
     "feature": "dummy",
     "enabled": false
+  },
+  {
+    "feature": "ObjectTapInteractions",
+    "enabled": true
   }
 ]
 

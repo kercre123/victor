@@ -32,13 +32,18 @@ protected:
 
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
+  virtual void   StopInternalFromDoubleTap(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
-    
+  
+  virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { BehaviorStackBlocks::UpdateTargetBlocks(robot); }
+  
+  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {(_stackInAnyOrientation ? AIWhiteboard::ObjectUseIntention::PickUpAnyObject : AIWhiteboard::ObjectUseIntention::PickUpObjectWithAxisCheck)}; }
+  
 private:
   const f32   _distToBackupOnStackFailure_mm = 40;
 
@@ -59,6 +64,9 @@ private:
   float _waitForBlocksToBeValidUntilTime_s = -1.0f;
   
   bool _stackInAnyOrientation = false;
+  
+  // Whether or not the top block was set via a double tap
+  mutable bool _topBlockSetFromTapIntent = false;
 
   void TransitionToPickingUpBlock(Robot& robot);
   void TransitionToStackingBlock(Robot& robot);

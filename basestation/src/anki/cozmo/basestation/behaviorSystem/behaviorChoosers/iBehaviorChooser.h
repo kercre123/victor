@@ -76,6 +76,8 @@ public:
   // name (for debug/identification)
   virtual const char* GetName() const = 0;
   
+  bool SupportsObjectTapInteractions() const { return _supportsObjectTapInteractions; }
+  
   // ==================== Event/Message Handling ====================
   // Handle various message types
   template<typename T>
@@ -88,6 +90,8 @@ protected:
 
 private:
   std::vector<Signal::SmartHandle> _signalHandles;
+  
+  bool _supportsObjectTapInteractions = false;
 
   
 

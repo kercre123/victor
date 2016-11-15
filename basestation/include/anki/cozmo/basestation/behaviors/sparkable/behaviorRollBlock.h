@@ -33,9 +33,14 @@ protected:
 
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
+  virtual void   StopInternalFromDoubleTap(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
+  
+  virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { UpdateTargetBlock(robot); }
+  
+  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {(_isBlockRotationImportant ? AIWhiteboard::ObjectUseIntention::RollObjectWithAxisCheck : AIWhiteboard::ObjectUseIntention::RollObjectNoAxisCheck)}; }
   
 private:
 
@@ -47,7 +52,6 @@ private:
   
   s32 _numRollActionRetries = 0;
 
-  std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
   bool _isBlockRotationImportant;
 
   const Robot& _robot;
@@ -63,10 +67,6 @@ private:
   void SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
   
   void ResetBehavior(Robot& robot);
-
-  // This should return true if the block is valid for this action, false otherwise. Checks that the block is
-  // a light cube with known position, not moving, resting flat, and not being carried
-  virtual bool FilterBlocks(const ObservableObject* obj) const;
 
   virtual void UpdateTargetBlock(const Robot& robot) const;
 };

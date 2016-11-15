@@ -60,7 +60,6 @@ LightsComponent::LightsComponent(Robot& robot)
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandles);
     using namespace ExternalInterface;
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectMoved>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotDelocalized>();
     
@@ -87,6 +86,8 @@ LightsComponent::LightsComponent(Robot& robot)
         AddLightStateValues(CubeLightsState::Visible,       json["visible"]);
         AddLightStateValues(CubeLightsState::Interacting,   json["interacting"]);
         AddLightStateValues(CubeLightsState::Sleep,         json["sleep"]);
+        AddLightStateValues(CubeLightsState::DoubleTappedKnown,  json["doubleTappedKnown"]);
+        AddLightStateValues(CubeLightsState::DoubleTappedUnsure,  json["doubleTappedUnsure"]);
         
         _wakeupTime_ms    = json["wakeUpDuration_ms"].asUInt();
         _wakeupFadeOut_ms = json["wakeUpFadeOutDuration_ms"].asUInt();
@@ -206,10 +207,10 @@ void LightsComponent::Update()
           // be properly restored
           if(!cubeInfoPair.second.enabled)
           {
-            cubeInfoPair.second.prevState = CubeLightsState::Visible;
+            cubeInfoPair.second.prevState = object->IsPoseStateKnown() ? CubeLightsState::Visible : CubeLightsState::Connected;
           }
           
-          cubeInfoPair.second.desiredState = CubeLightsState::Visible;
+          cubeInfoPair.second.desiredState = object->IsPoseStateKnown() ? CubeLightsState::Visible : CubeLightsState::Connected;
         }
       }
     }
@@ -262,7 +263,45 @@ void LightsComponent::Update()
             currState == CubeLightsState::Interacting &&
             _robot.GetCarryingObject() != cubeInfoPair.first)
     {
-      newState = CubeLightsState::Visible;
+      const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(cubeInfoPair.first);
+      if(object == nullptr)
+      {
+        newState = CubeLightsState::Connected;
+      }
+      else
+      {
+        newState = object->IsPoseStateKnown() ? CubeLightsState::Visible : CubeLightsState::Connected;
+      }
+    }
+    
+    ///////
+    // Check for object tap interactions to set the light state
+    
+    if(_tapInteractionObjects.count(cubeInfoPair.first) > 0 &&
+       (fadeFromTo.second != CubeLightsState::DoubleTappedKnown ||
+        fadeFromTo.second != CubeLightsState::DoubleTappedUnsure))
+    {
+      const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(cubeInfoPair.first);
+      if(object != nullptr)
+      {
+        // If we are carrying the cube make sure to keep it in the DoubleTappedKnown state
+        newState = (object->IsPoseStateKnown() || _robot.GetCarryingObject() == cubeInfoPair.first) ? CubeLightsState::DoubleTappedKnown : CubeLightsState::DoubleTappedUnsure;
+      }
+    }
+    // Otherwise if we just finished interacting with the cube
+    else if(_tapInteractionObjects.count(cubeInfoPair.first) == 0 &&
+            (currState == CubeLightsState::DoubleTappedKnown ||
+             currState == CubeLightsState::DoubleTappedUnsure))
+    {
+      const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(cubeInfoPair.first);
+      if(object == nullptr)
+      {
+        newState = CubeLightsState::Connected;
+      }
+      else
+      {
+        newState = object->IsPoseStateKnown() ? CubeLightsState::Visible : CubeLightsState::Connected;
+      }
     }
     
     
@@ -403,7 +442,7 @@ void LightsComponent::UpdateBackpackLights()
 
 bool LightsComponent::ShouldOverrideState(CubeLightsState currState, CubeLightsState nextState)
 {
-  // We should never transition to Invalid, override the Fade or custom pattern states since they manages themselves,
+  // We should never transition to Invalid, override the Fade or custom pattern states since they manage themselves,
   // or override WakeUp with anything other than WakeUpFadeOut
   if(nextState == CubeLightsState::Invalid ||
      currState == CubeLightsState::Fade ||
@@ -573,14 +612,14 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
   SetObjectLightsInternal(object, values);
 }
   
-bool LightsComponent::SetCustomLightPattern(ObjectID objectID, ObjectLights pattern)
+bool LightsComponent::SetCustomLightPattern(const ObjectID& objectID, ObjectLights pattern)
 {
   auto insertionResult = _customLightPatterns.insert(std::make_pair(objectID, pattern));
   return insertionResult.second;
 }
 
 
-bool LightsComponent::ClearCustomLightPattern(ObjectID objectID)
+bool LightsComponent::ClearCustomLightPattern(const ObjectID& objectID)
 {
   auto count = _customLightPatterns.erase(objectID);
   return count != 0;
@@ -591,6 +630,14 @@ template<>
 void LightsComponent::HandleMessage(const ExternalInterface::RobotObservedObject& msg)
 {
   if( msg.objectFamily != ObjectFamily::LightCube ) {
+    return;
+  }
+  
+  const auto* object = _robot.GetBlockWorld().GetObjectByID(msg.objectID);
+  // Don't do anything with this observation until the cube is in a known posestate
+  if(object != nullptr &&
+     !object->IsPoseStateKnown())
+  {
     return;
   }
   
@@ -613,31 +660,6 @@ void LightsComponent::HandleMessage(const ExternalInterface::RobotObservedObject
     }
     
     _cubeInfo[msg.objectID].desiredState = CubeLightsState::Visible;
-  }
-}
-
-template<>
-void LightsComponent::HandleMessage(const ObjectMoved& msg)
-{
-  auto cube = _cubeInfo.find(msg.objectID);
-  if(cube == _cubeInfo.end())
-  {
-    PRINT_NAMED_WARNING("LightsComponent.HandleObjectMoved",
-                        "Got object moved message from object %d but no matching object in _cubeInfo map",
-                        msg.objectID);
-    return;
-  }
-  
-  if( ShouldOverrideState( cube->second.desiredState, CubeLightsState::Connected ) )
-  {
-    // Update our prevState if we are disabled so if we are moved while disabled our state will
-    // be properly restored
-    if(!cube->second.enabled)
-    {
-      cube->second.prevState = CubeLightsState::Connected;
-    }
-    
-    cube->second.desiredState = CubeLightsState::Connected;
   }
 }
 

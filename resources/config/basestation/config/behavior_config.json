@@ -20,6 +20,7 @@
   "freeplayBehaviorChooserConfig" :
   {
     "type" : "goal",
+    "supportsObjectTapInteractions": true,
     
     // parameters to decide between goals
     "desiredGoalNames" :
@@ -27,7 +28,8 @@
       "faceAndCubeGoalName": "FP_PlayAlone",
       "faceOnlyGoalName": "FP_Socialize",
       "cubeOnlyGoalName": "FP_PlayAlone",
-      "noFaceNoCubeGoalName": "FP_Hiking"
+      "noFaceNoCubeGoalName": "FP_Hiking",
+      "objectTapInteractionGoalName" : "ObjectTapInteraction"
     },
     // goals to create
     "goals" :
@@ -380,8 +382,22 @@
           "type" : "Simple",
           "requiredRecentOnTreadsEventSecs" : 5.0 // purposely high so that reactions don't prevent goal selection due to timeout
         }
-      }
+      },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      {
+        "name" : "ObjectTapInteraction",
+        "requireObjectTapped": true,
+        "priority": 0, // lower is better
+        "behaviorChooser" :
+        {
+          "type" : "simple",
+          "behaviorGroups" : [ "ObjectTapInteraction" ]
+        },
+        "goalStrategy":
+        {
+          "type" : "Object_Tap_Interaction"
+        }
+      }
     ]
   },
 

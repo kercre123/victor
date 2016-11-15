@@ -95,6 +95,7 @@ namespace Cozmo {
     // update objects' poses
     void SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState);
     using Vision::ObservableObject::SetPoseParent;
+    using Vision::ObservableObject::SetPoseState;
     friend ObjectPoseConfirmer;
     
     ActiveID _activeID = -1;

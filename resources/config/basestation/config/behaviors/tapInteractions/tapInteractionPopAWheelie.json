@@ -1,0 +1,19 @@
+{
+  "behaviorType": "PopAWheelie",
+  "name": "tapInteractionPopAWheelie",
+  "requireObjectTapped" : true,
+  "requiredUnlockId": "PopAWheelieAction",
+  "behaviorGroups": [
+                     "ObjectTapInteraction"
+                     ],
+  
+  "flatScore":  5.0,
+  "runningPenalty": {
+    "nodes": [
+      {
+        "x": 0.0,
+        "y": 2.0
+      }
+    ]
+  }
+}

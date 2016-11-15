@@ -16,6 +16,7 @@
 
 
 #include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorGroup.h"
 #include "util/helpers/noncopyable.h"
 #include <map>
 

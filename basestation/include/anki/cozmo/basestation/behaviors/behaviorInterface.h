@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
@@ -204,6 +205,17 @@ public:
   // returns the required unlockID for the behavior
   const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
   
+  // Force a behavior to update its target blocks but only if it is in a state where it can
+  void UpdateTargetBlocks(const Robot& robot) const { UpdateTargetBlocksInternal(robot); };
+  
+  // Get the ObjectUseIntentions this behavior uses
+  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const { return {}; }
+  
+  // Handles stopping, updating target blocks, and re-initing the behavior so things get updated properly with
+  // the newly tapped object
+  // Returns whether or not the behavior can still run after updating target blocks
+  bool HandleNewDoubleTap(Robot& robot);
+  
 protected:
   
   void ClearBehaviorGroups() { _behaviorGroups.ClearFlags(); }
@@ -363,6 +375,13 @@ protected:
   void SmartReEnableReactionaryBehavior(BehaviorType type);
   void SmartReEnableReactionaryBehavior(const std::set<BehaviorType> typeList);
   
+  virtual void UpdateTargetBlocksInternal(const Robot& robot) const {};
+  
+  // Updates the double tapped object lights
+  // If on == true will turn on the double tapped lights for the current tapped object
+  // If on == false will clear double tapped lights
+  void UpdateTappedObjectLights(const bool on) const;
+  
   //Allows behaviors to skip certain steps when streamlined
   //Can be set in json (for sparks) or programatically
   bool _shouldStreamline;
@@ -376,6 +395,12 @@ protected:
   // this process might be enabled/disabled automatically by a behavior chooser based
   // behavior specify it in code because it's a code requirement (not data driven)
   AIInformationAnalysis::EProcess _requiredProcess;
+  
+  bool RequiresObjectTapped() const { return _requireObjectTapped; }
+  
+  // Override if a behavior that uses double tapped objects needs to do something different when it stops
+  // due to a double tap
+  virtual void StopInternalFromDoubleTap(Robot& robot) { if(!RequiresObjectTapped()) { StopInternal(robot); } }
   
 private:
             
@@ -465,6 +490,8 @@ private:
   
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
+  
+  bool _requireObjectTapped = false;
   
 }; // class IBehavior
   

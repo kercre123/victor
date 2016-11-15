@@ -170,6 +170,9 @@ public:
 
   PetWorld&              GetPetWorld()         {assert(_petWorld.get()); return *_petWorld;}
   const PetWorld&        GetPetWorld()   const {assert(_petWorld.get()); return *_petWorld;}
+  
+  BlockTapFilterComponent& GetBlockTapFilter() {assert(_tapFilterComponent); return *_tapFilterComponent;}
+  const BlockTapFilterComponent& GetBlockTapFilter() const {assert(_tapFilterComponent); return *_tapFilterComponent;}
 
   const bool             GetTimeSynced() const {return _timeSynced;}
   
@@ -375,7 +378,7 @@ public:
     
   bool IsTraversingPath()      const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
     
-  u16  GetCurrentPathSegment()  const { return _currPathSegment; }
+  s8   GetCurrentPathSegment()  const { return _currPathSegment; }
   u16  GetLastRecvdPathID()     const { return _lastRecvdPathID; }
   u16  GetLastSentPathID()      const { return _lastSentPathID;  }
 

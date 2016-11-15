@@ -76,6 +76,11 @@ bool BehaviorStackBlocks::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorStackBlocks::InitInternal(Robot& robot)
 {
+  if(robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+  {
+    UpdateTargetBlocks(robot);
+  }
+
   _waitForBlocksToBeValidUntilTime_s = -1.0f;
   TransitionToPickingUpBlock(robot);
   return Result::RESULT_OK;
@@ -86,9 +91,13 @@ void BehaviorStackBlocks::StopInternal(Robot& robot)
   ResetBehavior(robot);
 }
 
+void BehaviorStackBlocks::StopInternalFromDoubleTap(Robot& robot)
+{
+  ResetBehavior(robot);
+}
+
 void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
 {
-
   // if we've got a cube in our lift, use that for top
   const ObjectID lastTopID = _targetBlockTop;
   _targetBlockTop.UnSet();
@@ -114,6 +123,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
       AIWhiteboard::ObjectUseIntention::PickUpAnyObject :
       AIWhiteboard::ObjectUseIntention::PickUpObjectWithAxisCheck;
     _targetBlockTop = whiteboard.GetBestObjectForAction(intention);
+    _topBlockSetFromTapIntent = _robot.GetBehaviorManager().GetWhiteboard().HasTapIntent();
   }
 
   if( lastTopID.IsSet() && ! _targetBlockTop.IsSet() ) {
@@ -168,14 +178,29 @@ bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) con
                AIWhiteboard::ObjectUseAction::StackOnObject,
                kTimeObjectInvalidAfterStackFailure_sec,
                obj->GetPose(),
-               DefailtFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-               DefailtFailToUseParams::kAngleToleranceAfterFailure_radians);
+               DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+               DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
   
   // top gets picked first, so can't pick top here
-  return obj->GetID() != _targetBlockTop &&
-         FilterBlocksHelper(obj) &&
-         !hasFailedRecently &&
-         _robot.CanStackOnTopOfObject( *obj );
+  bool ret = (obj->GetID() != _targetBlockTop &&
+              FilterBlocksHelper(obj) &&
+              !hasFailedRecently &&
+              _robot.CanStackOnTopOfObject( *obj ));
+  
+  // If the top block wasn't set via a double tap and we have a tap intention then
+  // the double tapped block should be the bottom block
+  if(ret &&
+     !_topBlockSetFromTapIntent &&
+     _robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+  {
+    using Intent = AIWhiteboard::ObjectUseIntention;
+    Intent intent = _stackInAnyOrientation ? Intent::PickUpAnyObject : Intent::PickUpObjectWithAxisCheck;
+    
+    const ObjectID id = _robot.GetBehaviorManager().GetWhiteboard().GetBestObjectForAction(intent);
+    ret = (id == obj->GetID());
+  }
+  
+  return ret;
 }
 
 bool BehaviorStackBlocks::AreBlocksStillValid(const Robot& robot)
@@ -301,6 +326,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
     PRINT_NAMED_DEBUG("BehaviorStackBlocks.SkipPickup",
                       "Already holding top block, so no need to pick it up");
     TransitionToStackingBlock(robot);
+    return;
   }
 
   //skips turning towards face if this action is streamlined
@@ -503,6 +529,7 @@ void BehaviorStackBlocks::ResetBehavior(const Robot& robot)
 {
   _targetBlockTop.UnSet();
   _targetBlockBottom.UnSet();
+  _topBlockSetFromTapIntent = false;
 }
 
 void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObject* obj) const

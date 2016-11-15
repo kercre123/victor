@@ -17,6 +17,7 @@
 #define COZMO_BEHAVIOR_MANAGER_H
 
 #include "anki/common/types.h"
+#include "anki/common/basestation/objectIDs.h"
 
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
@@ -49,6 +50,7 @@ class IBehaviorChooser;
 class IReactionaryBehavior;
 class Robot;
 class WorkoutComponent;
+
 template<typename TYPE> class AnkiEvent;
 
 namespace Audio {
@@ -167,6 +169,20 @@ public:
   // and gives sparks the opportunity to end themselves if they are canceled by the user
   void SetRequestedSpark(UnlockId spark, bool softSpark);
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // ObjectTapInteractions
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // Handles switching behavior chooser, goal, and updating whiteboard for object tap interactions
+  void HandleObjectTapInteraction(const ObjectID& objectID);
+  
+  // Leave object interaction state resets the goal and clears the tap intented object in the whiteboard
+  void LeaveObjectTapInteraction();
+  
+  const ObjectID& GetLastTappedObject() const { return _lastDoubleTappedObject; }
+  const ObjectID& GetCurrTappedObject() const { return _currDoubleTappedObject; }
+  
+  
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -208,6 +224,12 @@ private:
   // it if so
   template<typename EventType>
   void ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event);
+  
+  // update the tapped object should its pose change
+  void UpdateTappedObject();
+  
+  // update current behavior with the new tapped object
+  void UpdateBehaviorWithObjectTapInteraction();
 
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -294,6 +316,16 @@ private:
     
   // For storing event handlers
   std::vector<Signal::SmartHandle> _eventHandlers;
+  
+  // The last object that was double tapped used for clearing object tap interaction lights
+  ObjectID _lastDoubleTappedObject;
+  ObjectID _currDoubleTappedObject;
+  
+  // The object that was just double tapped, will become current double tapped object on next Update()
+  ObjectID _pendingDoubleTappedObject;
+  
+  // Whether or not we need to handle an object being tapped in Update()
+  bool _needToHandleObjectTapped = false;
     
 }; // class BehaviorManager
 

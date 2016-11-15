@@ -83,6 +83,11 @@ public:
   // template for all events we subscribe to
   template<typename T> void HandleMessage(const T& msg);
   
+  void SwitchToObjectTapInteractionGoal() { _requestedGoal = _configParams.objectTapInteractionGoalName; }
+  void ClearObjectTapInteractionRequestedGoal();
+  
+  bool IsCurrentGoalObjectTapInteraction() const;
+  
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -95,6 +100,8 @@ private:
     std::string faceOnlyGoalName;
     std::string cubeOnlyGoalName;
     std::string noFaceNoCubeGoalName;
+    
+    std::string objectTapInteractionGoalName;
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

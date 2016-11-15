@@ -40,6 +40,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorCantHandleTallStack.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/BehaviorReactToDoubleTap.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToFrustration.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToMotorCalibration.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
@@ -329,6 +330,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToPet:
     {
       newBehavior = new BehaviorReactToPet(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToDoubleTap:
+    {
+      newBehavior = new BehaviorReactToDoubleTap(robot, config);
       break;
     }
     case BehaviorType::LookForFaceAndCube:

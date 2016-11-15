@@ -12,6 +12,8 @@
 #include "AIGoal.h"
 
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategyFactory.h"
@@ -35,6 +37,7 @@ namespace {
 static const char* kBehaviorChooserConfigKey = "behaviorChooser";
 static const char* kStrategyConfigKey = "goalStrategy";
 static const char* kRequiresSparkKey = "requireSpark";
+static const char* kRequiresObjectTapped = "requireObjectTapped";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -111,6 +114,8 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
   // other params
   _priority = JsonTools::ParseUint8(config, "priority", "AIGoal.Init");
   _name = JsonTools::ParseString(config, "name", "AIGoal.Init");
+  
+  JsonTools::GetValueOptional(config, kRequiresObjectTapped, _requireObjectTapped);
 
   const bool success = (nullptr != _behaviorChooserPtr);
   return success;
@@ -162,6 +167,16 @@ void AIGoal::Exit(Robot& robot)
 
   // log event to das
   Util::sEventF("robot.freeplay_goal_ended", {{DDATA, TO_DDATA_STR(static_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs))}}, "%s", _name.c_str());
+  
+  // If the goal requires a tapped object make sure to unset the tapped object when the goal exits
+  if(_requireObjectTapped)
+  {
+    robot.GetLightsComponent().ClearAllTapInteractionObjects();
+    
+    robot.GetBehaviorManager().RequestEnableReactionaryBehavior("ObjectTapInteraction", BehaviorType::ReactToCubeMoved, true);
+    
+    robot.GetBehaviorManager().LeaveObjectTapInteraction();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

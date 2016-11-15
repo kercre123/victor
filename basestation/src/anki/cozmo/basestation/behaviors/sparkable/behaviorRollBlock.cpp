@@ -40,7 +40,6 @@ CONSOLE_VAR(s32, kBRB_MaxRollRetries,         "Behavior.RollBlock", 1);
   
 BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _blockworldFilter( new BlockWorldFilter )
   , _isBlockRotationImportant(true)
   , _robot(robot)
 {
@@ -48,10 +47,6 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
 
   JsonTools::GetValueOptional(config,kPutDownAnimGroupKey,_putDownAnimTrigger);
   _isBlockRotationImportant = config.get(kIsBlockRotationImportant, true).asBool();
-
-  // set up the filter we will use for finding blocks we care about
-  _blockworldFilter->OnlyConsiderLatestUpdate(false);
-  _blockworldFilter->SetFilterFcn( std::bind( &BehaviorRollBlock::FilterBlocks, this, std::placeholders::_1) );
 }
 
 bool BehaviorRollBlock::IsRunnableInternal(const Robot& robot) const
@@ -79,17 +74,18 @@ void BehaviorRollBlock::StopInternal(Robot& robot)
   ResetBehavior(robot);
 }
 
+void BehaviorRollBlock::StopInternalFromDoubleTap(Robot& robot)
+{
+  ResetBehavior(robot);
+}
+
 void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 {
   if (!robot.IsCarryingObject())
   {
-    const ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
-    if( nullptr != closestObj ) {
-      _targetBlock = closestObj->GetID();
-    }
-    else {
-      _targetBlock.UnSet();
-    }
+    using Intent = AIWhiteboard::ObjectUseIntention;
+    const Intent intent = (_isBlockRotationImportant ? Intent::RollObjectWithAxisCheck : Intent::RollObjectNoAxisCheck);
+    _targetBlock = _robot.GetBehaviorManager().GetWhiteboard().GetBestObjectForAction(intent);
   }
   else
   {
@@ -103,23 +99,6 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
       _targetBlock.UnSet();
     }
   }
-}
-
-bool BehaviorRollBlock::FilterBlocks(const ObservableObject* obj) const
-{
-
-  const auto& whiteboard = _robot.GetBehaviorManager().GetWhiteboard();
-  const bool hasFailedToRoll = whiteboard.DidFailToUse(obj->GetID(),
-                                                       AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
-                                                       DefailtFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
-                                                       obj->GetPose(),
-                                                       DefailtFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                                       DefailtFailToUseParams::kAngleToleranceAfterFailure_radians);
-
-  return (!obj->IsPoseStateUnknown() &&
-          _robot.CanPickUpObjectFromGround(*obj) &&
-          !hasFailedToRoll &&
-          (!_isBlockRotationImportant || obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
 }
 
 void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
@@ -175,6 +154,16 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   rollAction->RollToUpright();
   rollAction->SetSayNameAnimationTrigger(AnimationTrigger::RollBlockPreActionNamedFace);
   rollAction->SetNoNameAnimationTrigger(AnimationTrigger::RollBlockPreActionUnnamedFace);
+  
+  auto preDockCallback = [this](Robot& robot) {
+    // If this behavior uses a tapped object then prevent ReactToDoubleTap from interrupting
+    if(RequiresObjectTapped())
+    {
+      robot.GetBehaviorManager().GetWhiteboard().SetSuppressReactToDoubleTap(true);
+    }
+  };
+  
+  rollAction->SetPreDockCallback(preDockCallback);
   
   RetryWrapperAction::RetryCallback retryCallback = [this, &robot, rollAction](const ExternalInterface::RobotCompletedAction& completion,
                                                                                const u8 retryCount,

@@ -43,11 +43,16 @@ protected:
 
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
+  virtual void   StopInternalFromDoubleTap(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
 
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
+  
+  virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { CheckForNearbyObject(robot); }
+  
+  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {AIWhiteboard::ObjectUseIntention::PickUpAnyObject}; }
   
 private:
   

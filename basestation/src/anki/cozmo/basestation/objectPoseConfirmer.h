@@ -73,6 +73,8 @@ public:
   //   but for now, just let ClearObject call this directly.
   Result MarkObjectUnknown(ObservableObject* object) const;
   
+  void SetPoseState(ObservableObject* object, PoseState newState) const;
+  
   // Remove all last pose and num observation information for all object IDs,
   // e.g. when the robot delocalizes
   void Clear();

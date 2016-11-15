@@ -19,6 +19,7 @@
 namespace Anki {
 namespace Cozmo {
 
+static const char* kSupportsObjectTapInteractionKey = "supportsObjectTapInteractions";
 
 IBehaviorChooser::IBehaviorChooser(Robot& robot, const Json::Value& config)
   :_robot(robot)
@@ -28,6 +29,8 @@ IBehaviorChooser::IBehaviorChooser(Robot& robot, const Json::Value& config)
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestEnabledBehaviorList>();
   }
+  
+  JsonTools::GetValueOptional(config, kSupportsObjectTapInteractionKey, _supportsObjectTapInteractions);
 }
   
 template<>

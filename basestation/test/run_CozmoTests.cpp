@@ -9,6 +9,7 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -221,7 +222,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   // Now fake an object moved message
   object->SetIsMoving(true, 0);
-  object->SetPoseState(PoseState::Dirty);
+  robot.GetObjectPoseConfirmer().SetPoseState(object, PoseState::Dirty);
   
   // Now after not seeing the object three times, it should be Unknown
   // because it was dirty
@@ -853,7 +854,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ASSERT_NE(nullptr, object2);
   
   // Make object2 able to be localized to
-  object2->SetPoseState(PoseState::Known);
+  robot.GetObjectPoseConfirmer().SetPoseState(object2, PoseState::Known);
   object2->SetIsMoving(false, 0);
   object2->SetLastObservedTime(10);
   Pose3d p(0,{0,1,0},{0,0,0});
@@ -884,7 +885,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ASSERT_EQ(blockWorld.GetNumOrigins(), 2);
 
   // Mark object2 in previous frame as unknown so that frame will become a zombie
-  object2->SetPoseState(PoseState::Unknown);
+  robot.GetObjectPoseConfirmer().SetPoseState(object2, PoseState::Unknown);
   
   // Delocalizing will create a new frame and delete our 2 zombie frames
   // One of the frames has object1 and 2 the other has object3

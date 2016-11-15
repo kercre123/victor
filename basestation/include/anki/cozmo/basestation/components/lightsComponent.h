@@ -72,11 +72,15 @@ public:
   const bool AreAllCubesEnabled() const;
   const bool IsCubeEnabled(const ObjectID objectID) const;
 
-  void SetInteractionObject(ObjectID objectID);
-  void UnSetInteractionObject(ObjectID objectID);
+  void SetInteractionObject(const ObjectID& objectID);
+  void UnSetInteractionObject(const ObjectID& objectID);
   
-  bool SetCustomLightPattern(ObjectID objectID, ObjectLights pattern);
-  bool ClearCustomLightPattern(ObjectID objectID);
+  void SetTapInteractionObject(const ObjectID& objectID);
+  void UnSetTapInteractionObject(const ObjectID& objectID);
+  void ClearAllTapInteractionObjects() { _tapInteractionObjects.clear(); }
+  
+  bool SetCustomLightPattern(const ObjectID& objectID, ObjectLights pattern);
+  bool ClearCustomLightPattern(const ObjectID& objectID);
   
   Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights);
   Result SetObjectLights(const ObjectID& objectID,
@@ -119,6 +123,8 @@ public:
     Visible,        // Have seen the cube and it hasn't moved
     Interacting,    // Actively doing something with the cube
     CustomPattern,  // Can be set to playback custom patterns set at runtime
+    DoubleTappedKnown,
+    DoubleTappedUnsure,
     Sleep,
     Fade,
   };
@@ -162,6 +168,7 @@ private:
   std::map< ObjectID, ObjectInfo > _cubeInfo;
   
   std::multiset<ObjectID> _interactionObjects;
+  std::set<ObjectID> _tapInteractionObjects;
   
   std::map<ObjectID, ObjectLights> _customLightPatterns;
   
@@ -242,14 +249,25 @@ private:
 }; // class LightsComponent
 
   
-inline void LightsComponent::SetInteractionObject(ObjectID objectID) {
+inline void LightsComponent::SetInteractionObject(const ObjectID& objectID) {
   _interactionObjects.insert(objectID);
 }
   
-inline void LightsComponent::UnSetInteractionObject(ObjectID objectID) {
+inline void LightsComponent::UnSetInteractionObject(const ObjectID& objectID) {
   auto iter = _interactionObjects.find(objectID);
   if(iter != _interactionObjects.end()) {
     _interactionObjects.erase(iter);
+  }
+}
+
+inline void LightsComponent::SetTapInteractionObject(const ObjectID& objectID) {
+  _tapInteractionObjects.insert(objectID);
+}
+
+inline void LightsComponent::UnSetTapInteractionObject(const ObjectID& objectID) {
+  auto iter = _tapInteractionObjects.find(objectID);
+  if(iter != _tapInteractionObjects.end()) {
+    _tapInteractionObjects.erase(iter);
   }
 }
   

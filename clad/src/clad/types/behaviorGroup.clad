@@ -37,6 +37,8 @@ enum uint_8 BehaviorGroup {
 
     MeetCozmo_Socialize,
 
+    ObjectTapInteraction,
+
     Count
 }
 

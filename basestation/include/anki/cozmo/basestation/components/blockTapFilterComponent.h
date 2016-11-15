@@ -21,6 +21,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/common/basestation/objectIDs.h"
 #include <list>
 
 namespace Anki {
@@ -35,19 +36,39 @@ public:
   explicit BlockTapFilterComponent(Robot& robot);
   
   void Update();
+  
+  bool ShouldIgnoreMovementDueToDoubleTap(const ObjectID& objectID);
 
 private:
   
   void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
 
   void HandleEnableTapFilter(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message);
   
+  void CheckForDoubleTap(const ObjectID& objectID);
+  
   Robot& _robot;
 
-  Signal::SmartHandle _robotToEngineSignalHandle;
+  std::vector<Signal::SmartHandle> _robotToEngineSignalHandle;
   Signal::SmartHandle _gameToEngineSignalHandle;
   bool _enabled;
   Anki::TimeStamp_t _waitToTime;
+  
+  struct DoubleTapInfo {
+    // The time we should stop waiting for a double tap
+    TimeStamp_t doubleTapTime = 0;
+    
+    // Whether or not the object is moving
+    bool isMoving = false;
+    
+    // The time we should stop ignoring move messages for the objectID this DoubleTapInfo
+    // maps to
+    TimeStamp_t ignoreNextMoveTime = 0;
+  };
+  
+  std::map<ObjectID, DoubleTapInfo> _doubleTapObjects;
   std::list<ObjectTapped> _tapInfo;
   
 #if ANKI_DEV_CHEATS

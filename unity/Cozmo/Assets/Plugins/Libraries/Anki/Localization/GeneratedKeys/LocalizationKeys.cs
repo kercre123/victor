@@ -32,6 +32,7 @@ public static class LocalizationKeys {
   public const string kBehaviorReactToOnTreads = "behavior.ReactToOnTreads";
   public const string kBehaviorReactToUnexpectedMovement = "behavior.ReactToUnexpectedMovement";
   public const string kBehaviorDriveOffCharger = "behavior.DriveOffCharger";
+  public const string kBehaviorPickupCube = "behavior.PickupCube";
 
   #endregion
 

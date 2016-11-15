@@ -129,6 +129,8 @@ private:
   // spark required for this goal
   UnlockId _requiredSpark;
   
+  bool _requireObjectTapped = false;
+  
   // last time the goal started running
   float _lastTimeGoalStartedSecs;
   // last time the goal stopped running

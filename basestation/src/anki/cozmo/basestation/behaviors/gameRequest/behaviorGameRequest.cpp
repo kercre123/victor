@@ -146,7 +146,7 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
   const bool recentlyFailed = whiteboard.DidFailToUse(obj->GetID(),
                                                       {{AIWhiteboard::ObjectUseAction::PickUpObject,
                                                         AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}},
-                                                      DefailtFailToUseParams::kTimeObjectInvalidAfterFailure_sec);
+                                                      DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec);
   
   // TODO:(bn) lee suggested we use != UNKNOWN instead of == known, so that we will still attempt to interact
   // with dirty blocks. I think the best would be to prefer Known, but fall back to Dirty as well

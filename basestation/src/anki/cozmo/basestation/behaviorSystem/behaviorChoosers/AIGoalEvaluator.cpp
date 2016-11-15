@@ -222,7 +222,8 @@ void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
   // sort goals by priority now so that later we can iterate from front to back
   // define lambda to sort. Note the container holds unique_ptrs
   auto sortByPriority = [](const std::unique_ptr<AIGoal>& goal1, const std::unique_ptr<AIGoal>& goal2) {
-    ASSERT_NAMED(goal1->GetPriority() != goal2->GetPriority(), "AIGoalEvaluator.SamePriorityNotSupported"); // there's no tie-break
+    // there's no tie-break
+    ASSERT_NAMED((goal1 == goal2) || (goal1->GetPriority() != goal2->GetPriority()), "AIGoalEvaluator.SamePriorityNotSupported");
     const bool isBetterPriority = (goal1->GetPriority() < goal2->GetPriority());
     return isBetterPriority;
   };
@@ -249,6 +250,8 @@ void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
     _configParams.faceOnlyGoalName = ParseString(desiredGoals, "faceOnlyGoalName", debugName);
     _configParams.cubeOnlyGoalName = ParseString(desiredGoals, "cubeOnlyGoalName", debugName);
     _configParams.noFaceNoCubeGoalName = ParseString(desiredGoals, "noFaceNoCubeGoalName", debugName);
+    
+    _configParams.objectTapInteractionGoalName = ParseString(desiredGoals, "objectTapInteractionGoalName", debugName);
   }
 }
 
@@ -606,6 +609,20 @@ void AIGoalEvaluator::DebugPrintGoals() const
   }
 }
 
+
+bool AIGoalEvaluator::IsCurrentGoalObjectTapInteraction() const
+{
+  return ((_currentGoalPtr != nullptr ) &&
+          (_currentGoalPtr->GetName() == _configParams.objectTapInteractionGoalName));
+}
+
+void AIGoalEvaluator::ClearObjectTapInteractionRequestedGoal()
+{
+  if(_requestedGoal == _configParams.objectTapInteractionGoalName)
+  {
+    _requestedGoal.clear();
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki

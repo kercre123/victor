@@ -406,6 +406,18 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     return match;
   } // GetObjectByIdHelper()
   
+  ObservableObject* BlockWorld::GetObjectByActiveIDHelper(const ActiveID& activeID) const
+  {
+    BlockWorldFilter filter;
+    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+    filter.SetFilterFcn([activeID](const ObservableObject* object) {
+      return object->IsActive() && object->GetActiveID() == activeID;
+    });
+    
+    ObservableObject* match = FindObjectHelper(filter, nullptr, true);
+    
+    return match;
+  }
   
   ActiveObject* BlockWorld::GetActiveObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const
   {
@@ -4186,7 +4198,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                     // for it and don't see it, we will fully clear it and mark it as "unknown"
                     ObservableObject* objectOnTop = object;
                     BOUNDED_WHILE(20, objectOnTop != nullptr) {
-                      objectOnTop->SetPoseState(PoseState::Dirty);
+                      _robot->GetObjectPoseConfirmer().SetPoseState(objectOnTop, PoseState::Dirty);
                       objectOnTop = FindObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
                     }
                   } // if quads intersect

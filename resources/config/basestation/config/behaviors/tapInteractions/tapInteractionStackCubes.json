@@ -1,0 +1,18 @@
+{
+  "behaviorType": "StackBlocks",
+  "name": "tapInteractionStackBlocks",
+  "requireObjectTapped" : true,
+  "requiredUnlockId": "StackTwoCubes",
+  "behaviorGroups": [
+                     "ObjectTapInteraction"
+                     ],
+  "flatScore": 5.0,
+  "runningPenalty": {
+    "nodes": [
+      {
+        "x": 0.0,
+        "y": 2.0
+      }
+    ]
+  }
+}

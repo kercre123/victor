@@ -84,6 +84,11 @@ void BehaviorPickUpCube::StopInternal(Robot& robot)
   
 }
 
+void BehaviorPickUpCube::StopInternalFromDoubleTap(Robot& robot)
+{
+  
+}
+
 bool BehaviorPickUpCube::IsRunnableInternal(const Robot& robot) const
 {
   // check even if we haven't seen a block so that we can pickup blocks we know of
@@ -117,7 +122,14 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
   
   const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
   const AIWhiteboard::ObjectUseIntention intent = AIWhiteboard::ObjectUseIntention::PickUpAnyObject;
-  const BlockWorldFilter* defaultFilter = whiteboard.GetDefaultFilterForAction( intent );  
+  const BlockWorldFilter* defaultFilter = whiteboard.GetDefaultFilterForAction( intent );
+  
+  // If we have a tap intent (an object was double tapped) then set that object as the targetBlock
+  if(whiteboard.HasTapIntent())
+  {
+    _targetBlockID = whiteboard.GetBestObjectForAction(intent);
+    return;
+  }
 
   if( defaultFilter == nullptr ) {
     return;
@@ -155,7 +167,10 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
   // Note: visually verify is true, so if we don't see the object anymore
   // this compound action will fail and we will not contionue this behavior.
   CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlockID, Radians(PI_F), true));
+  
+  // Don't visually verify when using a tap intent object since it could be far away or obscured
+  const bool shouldVisuallyVerify = !robot.GetBehaviorManager().GetWhiteboard().HasTapIntent();
+  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlockID, Radians(PI_F), shouldVisuallyVerify));
   if(!_shouldStreamline){
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
   }
@@ -251,6 +266,12 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
 void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
 {
   DEBUG_SET_STATE(PutDownCube);
+  
+  // If this behavior uses a tapped object then prevent ReactToDoubleTap from interrupting
+  if(RequiresObjectTapped())
+  {
+    robot.GetBehaviorManager().GetWhiteboard().SetSuppressReactToDoubleTap(true);
+  }
 
   CompoundActionSequential* action = new CompoundActionSequential(robot);
 
@@ -299,8 +320,6 @@ void BehaviorPickUpCube::FailedToPickupObject(Robot& robot)
   _targetBlockID.UnSet();
   
 }
-
-
 
 } // namespace Cozmo
 } // namespace Anki
