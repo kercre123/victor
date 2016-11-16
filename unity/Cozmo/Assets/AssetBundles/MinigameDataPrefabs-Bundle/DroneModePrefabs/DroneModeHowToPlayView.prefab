@@ -1575,13 +1575,13 @@ MonoBehaviour:
     JsonValue: false
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
-    JsonValue: 0.7697881
+    JsonValue: 1.0
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:g
-    JsonValue: 0.827064
+    JsonValue: 0.988235354
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:r
-    JsonValue: 0.8308824
+    JsonValue: 0.752941251
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#droneMode.cubeReticleLabel"'
@@ -3798,7 +3798,7 @@ RectTransform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 113828}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000016292068}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
   m_Children: []

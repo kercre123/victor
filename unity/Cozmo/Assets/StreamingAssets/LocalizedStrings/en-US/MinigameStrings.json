@@ -121,7 +121,7 @@
     "translation": "- Explore indoors in well lit spaces\n- Drive on flat surfaces\n- Be careful of falling off edges\n- Stay close to Cozmo for the best experience"
   },
   "droneMode.button.action.sayName": {
-    "translation": "Greet"
+    "translation": "Action"
   },
   "droneMode.button.action.liftCube": {
     "translation": "Lift Cube"

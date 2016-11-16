@@ -325,7 +325,6 @@ public static class LocalizationKeys {
   public const string kDroneModeButtonActionRollCube = "droneMode.button.action.rollCube";
   public const string kDroneModeTextHowToPlaySteering = "droneMode.text.howToPlaySteering";
   public const string kDroneModeTextHowToPlaySpeed = "droneMode.text.howToPlaySpeed";
-  public const string kDroneModeTextHowToPlayHead = "droneMode.text.howToPlayHead";
   public const string kDroneModeTextToggleNightVision = "droneMode.text.toggleNightVision";
   public const string kDroneModeTextRaiseLowerHead = "droneMode.text.raiseLowerHead";
   public const string kDroneModeTextSwitchHeadOrLift = "droneMode.text.switchHeadOrLift";
@@ -686,6 +685,7 @@ public static class LocalizationKeys {
   public const string kLabelDaysWithCozmo = "label.daysWithCozmo";
   public const string kLabelTermsOfUse = "label.termsOfUse";
   public const string kLabelTotalSparks = "label.totalSparks";
+  public const string kLabelTermsInstructions = "label.termsInstructions";
 
   #endregion
 
