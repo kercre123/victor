@@ -164,7 +164,7 @@ public class ObservedObject : IVisibleInCamera {
 
   public virtual string ReticleLabelLocKey {
     get {
-      string key = LocalizationKeys.kDroneModeUnknownObjectReticleLabel;
+      string key = "";
       if (this.ObjectType == ObjectType.Charger_Basic) {
         key = LocalizationKeys.kDroneModeChargerReticleLabel;
       }

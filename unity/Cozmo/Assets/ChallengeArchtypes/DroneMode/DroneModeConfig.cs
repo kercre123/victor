@@ -100,6 +100,10 @@ namespace Cozmo {
       [SerializeField]
       private DroneModeActionData _SayNameButtonData;
       public DroneModeActionData SayNameButtonData { get { return _SayNameButtonData; } }
+
+      [SerializeField]
+      private DroneModeActionData _ReactToPetButtonData;
+      public DroneModeActionData ReactToPetButtonData { get { return _ReactToPetButtonData; } }
     }
   }
 }

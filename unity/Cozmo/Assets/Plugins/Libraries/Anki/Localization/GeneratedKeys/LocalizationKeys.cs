@@ -315,9 +315,10 @@ public static class LocalizationKeys {
   public const string kDroneModeUnknownFaceReticleLabel = "droneMode.unknownFaceReticleLabel";
   public const string kDroneModeChargerReticleLabel = "droneMode.chargerReticleLabel";
   public const string kDroneModeCubeReticleLabel = "droneMode.cubeReticleLabel";
-  public const string kDroneModeUnknownObjectReticleLabel = "droneMode.unknownObjectReticleLabel";
+  public const string kDroneModePetLabel = "droneMode.petLabel";
   public const string kDroneModeSafePlayTitle = "droneMode.safePlay.title";
   public const string kDroneModeSafePlayDescription = "droneMode.safePlay.description";
+  public const string kDroneModeButtonActionReactToPet = "droneMode.button.action.reactToPet";
   public const string kDroneModeButtonActionSayName = "droneMode.button.action.sayName";
   public const string kDroneModeButtonActionLiftCube = "droneMode.button.action.liftCube";
   public const string kDroneModeButtonActionDropCube = "droneMode.button.action.dropCube";
@@ -325,7 +326,6 @@ public static class LocalizationKeys {
   public const string kDroneModeButtonActionRollCube = "droneMode.button.action.rollCube";
   public const string kDroneModeTextHowToPlaySteering = "droneMode.text.howToPlaySteering";
   public const string kDroneModeTextHowToPlaySpeed = "droneMode.text.howToPlaySpeed";
-  public const string kDroneModeTextHowToPlayHead = "droneMode.text.howToPlayHead";
   public const string kDroneModeTextToggleNightVision = "droneMode.text.toggleNightVision";
   public const string kDroneModeTextRaiseLowerHead = "droneMode.text.raiseLowerHead";
   public const string kDroneModeTextSwitchHeadOrLift = "droneMode.text.switchHeadOrLift";
@@ -686,6 +686,7 @@ public static class LocalizationKeys {
   public const string kLabelDaysWithCozmo = "label.daysWithCozmo";
   public const string kLabelTermsOfUse = "label.termsOfUse";
   public const string kLabelTotalSparks = "label.totalSparks";
+  public const string kLabelTermsInstructions = "label.termsInstructions";
 
   #endregion
 

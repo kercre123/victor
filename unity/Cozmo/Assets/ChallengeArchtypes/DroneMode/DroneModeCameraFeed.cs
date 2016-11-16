@@ -417,12 +417,6 @@ namespace Cozmo.Minigame.DroneMode {
           }
           _FocusedObjectFrameImage.gameObject.SetActive(true);
           _FocusedObjectTextLabel.text = text;
-
-          // For PetFace debugging
-          if (reticleFocus is PetFace) {
-            reticle.ShowReticleLabelText(true);
-            reticle.ReticleLabel = text;
-          }
         }
         else {
           _FocusedObjectFrameImage.gameObject.SetActive(false);

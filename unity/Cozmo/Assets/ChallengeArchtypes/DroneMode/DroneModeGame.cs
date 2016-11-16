@@ -35,6 +35,7 @@ namespace Cozmo {
         protected override void AddDisabledReactionaryBehaviors() {
           _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCubeMoved);
           _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
+          _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPet);
         }
 
         private void InitializeStateMachine() {

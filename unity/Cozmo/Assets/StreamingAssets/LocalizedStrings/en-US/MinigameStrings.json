@@ -111,14 +111,17 @@
   "droneMode.cubeReticleLabel": {
     "translation": "Power Cube"
   },
-  "droneMode.unknownObjectReticleLabel": {
-    "translation": "UNKNOWN"
+  "droneMode.petLabel": {
+    "translation": "Pet"
   },
   "droneMode.safePlay.title": {
     "translation": "Safe Play:"
   },
   "droneMode.safePlay.description": {
     "translation": "- Explore indoors in well lit spaces\n- Drive on flat surfaces\n- Be careful of falling off edges\n- Stay close to Cozmo for the best experience"
+  },
+  "droneMode.button.action.reactToPet": {
+    "translation": "Greet"
   },
   "droneMode.button.action.sayName": {
     "translation": "Greet"

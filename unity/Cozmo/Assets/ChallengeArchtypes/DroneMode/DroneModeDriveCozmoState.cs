@@ -100,6 +100,13 @@ namespace Cozmo {
             "say_name_button",
             DroneModeControlsSlide.ActionContextType.FaceSeen);
 
+          _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.ReactToPetButtonData,
+            HandleReactToPetButtonPressed,
+            false, // interactableOnlyWhenCubeSeen
+            false, // interactableOnlyWhenFaceSeen
+            "react_to_pet_button",
+            DroneModeControlsSlide.ActionContextType.PetSeen);
+
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
           _DroneModeControlsSlide.OnHeadSliderValueChanged += HandleHeadSliderValueChanged;
@@ -500,6 +507,19 @@ namespace Cozmo {
           }
         }
 
+        private void HandleReactToPetButtonPressed() {
+          IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
+          if (targetObject != null && targetObject is PetFace) {
+            _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
+            Anki.Cozmo.AnimationTrigger reactionAnimation = (((PetFace)targetObject).PetType == Anki.Vision.PetType.Cat) ?
+              Anki.Cozmo.AnimationTrigger.PetDetectionCat : Anki.Cozmo.AnimationTrigger.PetDetectionDog;
+            _CurrentRobot.SendAnimationTrigger(reactionAnimation,
+              callback: HandleActionFinished);
+            DisableInput();
+            IsPerformingAction = true;
+          }
+        }
+
         private void HandleActionFinished(bool success) {
           _CurrentRobot.CancelCallback(HandleActionFinished);
           EnableInput();
@@ -522,7 +542,6 @@ namespace Cozmo {
           _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
           _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
           _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToPet, enable);
         }
       }
     }

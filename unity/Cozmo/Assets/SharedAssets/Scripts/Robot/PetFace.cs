@@ -17,8 +17,7 @@ public class PetFace : IVisibleInCamera {
   public uint LastSeenEngineTimestamp { get; private set; }
 
   private Anki.Vision.PetType _PetType; // PetType
-
-  private uint _TimesObserved = 0;
+  public Anki.Vision.PetType PetType { get { return _PetType; } }
 
   // Faces are created when they are seen and destroyed when not seen for a while
   private bool _IsInFieldOfView = true;
@@ -46,12 +45,12 @@ public class PetFace : IVisibleInCamera {
 
   public string ReticleLabelLocKey {
     get {
-      return LocalizationKeys.kLabelEmptyWithArg;
+      return (LocalizationKeys.kDroneModePetLabel);
     }
   }
   public string ReticleLabelStringArg {
     get {
-      return (_PetType.ToString() + PetID + "[" + _TimesObserved + "]");
+      return "";
     }
   }
 
@@ -72,7 +71,6 @@ public class PetFace : IVisibleInCamera {
     VizRect = new Rect(message.img_rect.x_topLeft, message.img_rect.y_topLeft, message.img_rect.width, message.img_rect.height);
     _PetType = message.petType;
     IsInFieldOfView = true;
-    _TimesObserved = message.numTimesObserved;
     _ConsecutiveVisionFramesNotSeen = 0;
   }
 

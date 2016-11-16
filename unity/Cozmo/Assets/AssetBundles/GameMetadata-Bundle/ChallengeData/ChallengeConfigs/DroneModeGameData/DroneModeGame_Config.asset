@@ -48,3 +48,6 @@ MonoBehaviour:
   _SayNameButtonData:
     _ButtonTextLocKey: droneMode.button.action.sayName
     _ActionUnlockId: 0
+  _ReactToPetButtonData:
+    _ButtonTextLocKey: droneMode.button.action.reactToPet
+    _ActionUnlockId: 0

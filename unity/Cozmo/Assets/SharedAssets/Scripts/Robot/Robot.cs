@@ -821,18 +821,16 @@ public class Robot : IRobot {
       }
 
       if (isPetFrame) {
+        List<PetFace> petFacesToRemove = new List<PetFace>();
         foreach (var petFace in PetFaces) {
           if (petFace.LastSeenEngineTimestamp < engineTimestamp) {
             petFace.MarkNotVisibleThisFrame();
+            if (!petFace.IsInFieldOfView) {
+              petFacesToRemove.Add(petFace);
+            }
           }
         }
 
-        List<PetFace> petFacesToRemove = new List<PetFace>();
-        foreach (var petFace in PetFaces) {
-          if (!petFace.IsInFieldOfView) {
-            petFacesToRemove.Add(petFace);
-          }
-        }
         foreach (var petFaceToRemove in petFacesToRemove) {
           PetFaces.Remove(petFaceToRemove);
           if (OnPetFaceRemoved != null) {

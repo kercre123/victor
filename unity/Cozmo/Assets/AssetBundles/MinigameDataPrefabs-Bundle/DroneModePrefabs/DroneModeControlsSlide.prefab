@@ -343,6 +343,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &134970
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22424324}
+  - 114: {fileID: 11446204}
+  m_Layer: 5
+  m_Name: FaceButtonContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &135454
 GameObject:
   m_ObjectHideFlags: 1
@@ -530,7 +546,7 @@ GameObject:
   - 224: {fileID: 22401020}
   - 114: {fileID: 11472376}
   m_Layer: 5
-  m_Name: FaceButtonContainer
+  m_Name: PetButtonContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1215,7 +1231,8 @@ MonoBehaviour:
     _EventType: Sfx
   _HeadLiftToggleButton: {fileID: 11484472}
   _CameraFeed: {fileID: 11410814}
-  _FaceButtonContainer: {fileID: 151938}
+  _FaceButtonContainer: {fileID: 134970}
+  _PetButtonContainer: {fileID: 151938}
   _CubeInLiftButtonContainer: {fileID: 148848}
   _CubeNotInLiftButtonContainer: {fileID: 121322}
   _DroneModeActionButtonPrefab: {fileID: 11488882, guid: 6adfe16d5369e4b968c148c56e936f8f,
@@ -1667,6 +1684,26 @@ MonoBehaviour:
   _StartOn: 1
   _OnImageContainer: {fileID: 198382}
   _OffImageContainer: {fileID: 104978}
+--- !u!114 &11446204
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 134970}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -405508275, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 50
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11447486
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2457,10 +2494,10 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22496344}
-  m_RootOrder: 0
+  m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000015159556, y: 0.00008916855}
+  m_AnchoredPosition: {x: 0, y: 0.00022172928}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22404170
@@ -2611,6 +2648,24 @@ RectTransform:
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: -245.00024, y: -333.37506}
   m_SizeDelta: {x: 1319, y: 261}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22424324
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 134970}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22496344}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -0.000015159556, y: 0.00008916855}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22424678
 RectTransform:
@@ -3499,9 +3554,10 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
-  - {fileID: 22401020}
+  - {fileID: 22424324}
   - {fileID: 22427282}
   - {fileID: 22444140}
+  - {fileID: 22401020}
   m_Father: {fileID: 22452856}
   m_RootOrder: 8
   m_AnchorMin: {x: 0.5, y: 0.5}

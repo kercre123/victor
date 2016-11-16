@@ -34,7 +34,8 @@ namespace Cozmo.Minigame.DroneMode {
     public enum ActionContextType {
       CubeInLift,
       CubeNotInLift,
-      FaceSeen
+      FaceSeen,
+      PetSeen
     }
 
     public bool ShowDebugTextFields = true;
@@ -94,6 +95,9 @@ namespace Cozmo.Minigame.DroneMode {
 
     [SerializeField]
     private GameObject _FaceButtonContainer;
+
+    [SerializeField]
+    private GameObject _PetButtonContainer;
 
     [SerializeField]
     private GameObject _CubeInLiftButtonContainer;
@@ -200,6 +204,9 @@ namespace Cozmo.Minigame.DroneMode {
         break;
       case ActionContextType.FaceSeen:
         container = _FaceButtonContainer;
+        break;
+      case ActionContextType.PetSeen:
+        container = _PetButtonContainer;
         break;
       default:
         DAS.Error("DroneModeControlsSlide.GetContainerBasedOnActionType.ActionContextTypeNotSupported",
@@ -361,6 +368,7 @@ namespace Cozmo.Minigame.DroneMode {
     private void UpdateContextMenu() {
       // Hide all containers
       _FaceButtonContainer.SetActive(false);
+      _PetButtonContainer.SetActive(false);
       _CubeInLiftButtonContainer.SetActive(false);
       _CubeNotInLiftButtonContainer.SetActive(false);
 
@@ -370,6 +378,11 @@ namespace Cozmo.Minigame.DroneMode {
           if (_CurrentlyFocusedObject is Face) {
             // Show face container
             _FaceButtonContainer.SetActive(true);
+            anyContainerShown = true;
+          }
+          else if (_CurrentlyFocusedObject is PetFace) {
+            // Show face container
+            _PetButtonContainer.SetActive(true);
             anyContainerShown = true;
           }
           else if (_IsCubeInLift) {
