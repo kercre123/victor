@@ -6,6 +6,7 @@ public class CozmoJava {
 
     public static void init(Activity mainActivity) {
         BackgroundConnectivity.install(mainActivity);
+        CozmoWifi.register(mainActivity);
     }
 
 }
