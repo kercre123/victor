@@ -286,17 +286,23 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
   }
   
   // Check to see if better bottom block identified for stacking on
+  // New bottom must be closer to cozmo and currently visible while the old target base is not
   if(robot.IsCarryingObject()){
-    const ObservableObject* bottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
+    const ObservableObject* newBottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
                                                                                      *_blockworldFilterForBottom);
-    if( nullptr != bottomObject ) {
-      if(bottomObject->GetID() != _targetBlockBottom){
+    const ObservableObject* currentTarget = robot.GetBlockWorld().GetObjectByID(_targetBlockBottom);
+    
+    if( nullptr != newBottomObject && newBottomObject->GetID() != _targetBlockBottom) {
+      const bool currentTargetSeenThisFrame = currentTarget != nullptr &&
+                         currentTarget->GetLastObservedTime() ==robot.GetLastImageTimeStamp();
+      const bool newBottomSeenThisFrame = newBottomObject->GetLastObservedTime() == robot.GetLastImageTimeStamp();
+
+      if(!currentTargetSeenThisFrame && newBottomSeenThisFrame){
         StopWithoutImmediateRepetitionPenalty();
         return Status::Complete;
       }
     }
   }
-  
 
   IBehavior::Status ret = IBehavior::UpdateInternal(robot);
   
