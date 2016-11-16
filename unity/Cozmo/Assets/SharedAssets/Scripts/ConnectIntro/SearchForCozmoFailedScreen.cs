@@ -28,6 +28,9 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   private WifiInstructionsView _WifiInstructionsViewPrefab;
   private WifiInstructionsView _WifiInstructionsViewInstance;
 
+  [SerializeField]
+  private GameObject _WifiAnimationsPrefab;
+
   private PingStatus _PingStatus;
 
   public void Initialize(PingStatus pingStatus) {
@@ -39,6 +42,9 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     _GetACozmoButton.Initialize(HandleGetACozmoButton, "get_a_cozmo_button", "search_for_cozmo_failed_screen");
     RobotEngineManager.Instance.AddCallback<DeviceDataMessage>(HandleDeviceDataMessage);
     RobotEngineManager.Instance.SendRequestDeviceData();
+
+    GameObject wifiAnimations = GameObject.Instantiate(_WifiAnimationsPrefab);
+    wifiAnimations.transform.SetParent(transform, false);
 
     Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Fail);
 

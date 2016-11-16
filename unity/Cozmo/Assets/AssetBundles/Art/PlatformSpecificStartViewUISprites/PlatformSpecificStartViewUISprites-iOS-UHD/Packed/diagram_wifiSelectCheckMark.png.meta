@@ -52,7 +52,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: StartViewUISpritesUHDAtlas
+  spritePackingTag: PlatformSpecificStartViewUISpritesiOSUHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 

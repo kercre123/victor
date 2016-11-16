@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 42c316b45dd33444983b290c46b55938
-timeCreated: 1479158209
+guid: 6308682e26951421f918a7e7ad63c682
+timeCreated: 1479331554
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -44,7 +44,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 50
   alphaIsTransparency: 1
   textureType: 8
   buildTargetSettings: []
@@ -52,7 +52,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: StartViewUISpritesUHDAtlas
+  spritePackingTag: PlatformSpecificStartViewUISpritesiOSHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 

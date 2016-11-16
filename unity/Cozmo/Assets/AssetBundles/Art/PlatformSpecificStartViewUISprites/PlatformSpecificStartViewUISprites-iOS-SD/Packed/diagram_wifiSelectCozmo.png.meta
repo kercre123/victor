@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 15c21b7a260ae46259eaabd8b4f91b7a
-timeCreated: 1479159174
+guid: ee1e292db5950488ba09762f25aee655
+timeCreated: 1479331554
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -52,7 +52,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: StartViewUISpritesSDAtlas
+  spritePackingTag: PlatformSpecificStartViewUISpritesiOSSDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 
