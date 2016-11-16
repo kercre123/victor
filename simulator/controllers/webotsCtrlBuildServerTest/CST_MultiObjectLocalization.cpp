@@ -131,6 +131,7 @@ namespace Cozmo {
       {
         MakeSynchronous();
         SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
+        TakeScreenshotsAtInterval("MultiObjectLocalization", 1.f);
         _turnInPlaceDone = true;
         _moveHeadDone = false;
         _testState = TestState::InitialLocalization;
