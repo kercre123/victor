@@ -1,5 +1,7 @@
 # English
 # Last updated: 20.09.2016
+ask(-| )*hole#askhole
+\b(?!\bars\b)(fat|jack|jerk|lame|lard)?(-)*[4a][r5s]{2,}(es|e)?(-)*(bag\w*|bang\w*|bite\w*|clown\w*|crack\w*|face\w*|goblin\w*|hat\w*|head\w*|ho\w*|jack\w*|lick\w*|lol\w*|monk\w*|mu\w*|pirate\w*|hit\w*|wad\w*|wipe\w*)?\b#ass(es)
 beaner#
 -\b\w*b[i!1]+[a]*[+t7]+ch\w*\b#bitch
 blow(-| )*job#
@@ -10,12 +12,14 @@ chin(c|k)#chinc#http://www.urbandictionary.com/define.php?term=chink
 \b(?!\bscunthorpe\b)\w*[kc][u]+n[t7]\w*\b#cunt
 \b\w*(c|k)[0o]+[c]*k\w*\b#cock
 \bdago\b#
+dam[mn]#
 deggo#
 \bd[i!1][c]*k\w*\b#dick
 d[0o]{2,}chbag#
 \bfag(g)?\w*\b#fag(g)
 \b\w*(ph|f)[0uoae]+[c|k]*[u]*k\w*\b#fuck
 \bfuct\b#
+fuc#
 futanari#
 \bfux\b#
 \bgino\b#
@@ -30,7 +34,6 @@ g[0o]{2,}k#gook
 \bgypo\b#
 hardn#
 \bheeb\b#
-\bho\b#
 \bhoar\b#
 \bhoe\b#
 honkey#
