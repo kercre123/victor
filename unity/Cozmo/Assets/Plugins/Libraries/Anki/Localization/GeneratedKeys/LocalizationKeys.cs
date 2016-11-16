@@ -319,6 +319,7 @@ public static class LocalizationKeys {
   public const string kDroneModeSafePlayTitle = "droneMode.safePlay.title";
   public const string kDroneModeSafePlayDescription = "droneMode.safePlay.description";
   public const string kDroneModeButtonActionSayName = "droneMode.button.action.sayName";
+  public const string kDroneModeButtonActionGeneric = "droneMode.button.action.generic";
   public const string kDroneModeButtonActionLiftCube = "droneMode.button.action.liftCube";
   public const string kDroneModeButtonActionDropCube = "droneMode.button.action.dropCube";
   public const string kDroneModeButtonActionStackCube = "droneMode.button.action.stackCube";
