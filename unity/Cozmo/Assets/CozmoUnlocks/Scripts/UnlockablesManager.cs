@@ -51,10 +51,32 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   // should be called when connected to the robot and loaded unlock info from the physical robot.
-  public void OnConnectLoad(Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables) {
+  public void OnConnectLoad(Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables, bool fromBackup = false) {
     DAS.Info("UnlockablesManager.OnConnectLoad", "Unlocks loaded from robot / engine");
     _UnlockablesState = loadedUnlockables;
     _UnlocksLoaded = true;
+
+
+    //Trying to track down if unlocks is getting out of sync and UI is broken, so logging on connection
+    // Only want to log once so ignore the engine backups and only take the real robot version
+    if (!fromBackup) {
+      string game_unlock_status = "";
+      string spark_unlock_status = "";
+      foreach (KeyValuePair<UnlockId, bool> kvp in _UnlockablesState) {
+        if (kvp.Value) {
+          UnlockableInfo info = GetUnlockableInfo(kvp.Key);
+          if (info.UnlockableType == UnlockableType.Action) {
+            spark_unlock_status += kvp.Key + ",";
+          }
+          else if (info.UnlockableType == UnlockableType.Game) {
+            game_unlock_status += kvp.Key + ",";
+          }
+          // not logging face unlocks
+        }
+      }
+      DAS.Event("robot.game_unlock_status", game_unlock_status);
+      DAS.Event("robot.spark_unlock_status", spark_unlock_status);
+    }
   }
 
   private bool NothingUnlocked() {
@@ -259,7 +281,7 @@ public class UnlockablesManager : MonoBehaviour {
       DAS.Info("UnlockablesManager.HandleUnlockStatus ", message.unlocks[i].ToString());
       loadedUnlockables[message.unlocks[i]] = true;
     }
-    OnConnectLoad(loadedUnlockables);
+    OnConnectLoad(loadedUnlockables, message.fromBackup);
   }
 
   private void HandleUnlockDefaultsSet(Anki.Cozmo.ExternalInterface.UnlockedDefaults message) {

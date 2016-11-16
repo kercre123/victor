@@ -81,10 +81,6 @@ namespace Cozmo.HomeHub {
       LoadTiles();
     }
 
-    private void HandleNewChallengeUnlock(UnlockableInfo unlockInfo) {
-      UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
-    }
-
     private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       base.GetHomeViewInstance().HandleUnlockedChallengeClicked(challengeClicked, buttonTransform);
     }

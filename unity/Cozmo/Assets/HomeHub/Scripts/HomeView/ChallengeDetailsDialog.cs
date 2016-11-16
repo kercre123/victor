@@ -249,6 +249,7 @@ public class ChallengeDetailsDialog : BaseView {
   }
 
   private void HandleUnlockFromRobotResponded(Anki.Cozmo.UnlockId unlockId) {
+    DAS.Event("meta.app_unlock.unlockResultConfirmed", unlockId.ToString());
     if (unlockId == _ChallengeData.UnlockId.Value) {
       UnlockablesManager.Instance.OnUnlockComplete -= HandleUnlockFromRobotResponded;
       _UnlockFromRobotResponded = true;
