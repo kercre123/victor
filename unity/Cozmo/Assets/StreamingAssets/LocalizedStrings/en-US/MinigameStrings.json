@@ -125,6 +125,9 @@
   },
   "droneMode.button.action.sayName": {
     "translation": "Greet"
+      },
+  "droneMode.button.action.generic": {
+    "translation": "Action"
   },
   "droneMode.button.action.liftCube": {
     "translation": "Lift Cube"
