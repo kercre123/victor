@@ -152,17 +152,35 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
           delocMsg.robotID = 1;
           SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
 
-          // Turn the robot to see the second cube
-          ExternalInterface::QueueSingleAction m;
-          m.robotID = 1;
-          m.position = QueueActionPosition::NOW;
-          m.idTag = 15;
-          m.numRetries = 1;
-          uint8_t isAbsolute = 0; // relative turn
-          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(30), PI_F, 500.0f, isAbsolute, 1 ));
-          ExternalInterface::MessageGameToEngine message;
-          message.Set_QueueSingleAction(m);
-          SendMessage(message);
+          // add a small delay between the deloc and the turn action to work around a potential timing issue
+          // (we think the robot may start turning before it delocs, due to IPC and timing issues)
+          {
+            ExternalInterface::QueueSingleAction m;
+            m.robotID = 1;
+            m.position = QueueActionPosition::NOW;
+            m.idTag = 15;
+            m.numRetries = 1;
+            const float kTimeToWait_s = 0.5f;
+            m.action.Set_wait( ExternalInterface::Wait( kTimeToWait_s ) );
+            ExternalInterface::MessageGameToEngine message;
+            message.Set_QueueSingleAction(m);
+            SendMessage(message);
+          }
+
+          {
+            // Turn the robot to see the second cube
+            ExternalInterface::QueueSingleAction m;
+            m.robotID = 1;
+            m.position = QueueActionPosition::NEXT;
+            m.idTag = 16;
+            m.numRetries = 1;
+            uint8_t isAbsolute = 0; // relative turn
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(30), PI_F, 500.0f, isAbsolute, 1 ));
+            ExternalInterface::MessageGameToEngine message;
+            message.Set_QueueSingleAction(m);
+            SendMessage(message);
+          }
+          
           _startedMoving = false;
           SET_STATE(VerifyObject2)
         }
