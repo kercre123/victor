@@ -21,22 +21,7 @@
 #include <iomanip>
 #include <dispatch/dispatch.h>
 #import <Foundation/Foundation.h>
-
-// TODO: (DS) kill this once we complete migration to to xcode 10
-#if defined(__APPLE__) && defined(__MACH__)
-  #include <TargetConditionals.h>
-  #include <Availability.h>
-  #if __IPHONE_OS_VERSION_MAX_ALLOWED < 99999
-    #define ANKI_IOS_9_OR_LESS 1
-  #endif
-#endif
-
-#if defined(ANKI_IOS_9_OR_LESS)
 #include <asl.h>
-#else
-#include <os/log.h>
-static os_log_t logger = os_log_create("com.anki.cozmo", "");
-#endif
 
 static std::atomic<uint64_t> sequence_number{0};
 static dispatch_queue_t _loggingQueue = NULL;
@@ -93,11 +78,7 @@ void DasLocalAppender::append(DASLogLevel level, const char* _eventName, const c
 
     // [COZMO-2152] In addition to stdout also log to syslog so we can get the information after the fact
     // Do note LOG_DEBUG for this definition
-#if defined(ANKI_IOS_9_OR_LESS)
     int priority = ASL_LEVEL_DEBUG;
-#else
-    os_log_type_t priority = OS_LOG_TYPE_DEFAULT;
-#endif
 
     // According to /etc/asl.conf anything below a notice will not be logged to system.log
     // We don't have access to this file so we pretend that everything is a notice and use
@@ -106,25 +87,13 @@ void DasLocalAppender::append(DASLogLevel level, const char* _eventName, const c
       case DASLogLevel_Debug:
       case DASLogLevel_Info:
       case DASLogLevel_Event:
-#if defined(ANKI_IOS_9_OR_LESS)
         priority = ASL_LEVEL_NOTICE;
-#else
-        priority = OS_LOG_TYPE_INFO;
-#endif
         break;
       case DASLogLevel_Warn:
-#if defined(ANKI_IOS_9_OR_LESS)
         priority = ASL_LEVEL_WARNING;
-#else
-        priority = OS_LOG_TYPE_ERROR;
-#endif
         break;
       case DASLogLevel_Error:
-#if defined(ANKI_IOS_9_OR_LESS)
         priority = ASL_LEVEL_ERR;
-#else
-        priority = OS_LOG_TYPE_ERROR;
-#endif
         break;
       default:
         // should never be here
@@ -132,11 +101,10 @@ void DasLocalAppender::append(DASLogLevel level, const char* _eventName, const c
     }
     // create log_t and use it here..
 
-#if defined(ANKI_IOS_9_OR_LESS)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
     asl_log(NULL, NULL, priority, "%s", logMsg.c_str());
-#else
-    os_log_with_type(logger, priority, "%{public}s", logMsg.c_str());
-#endif
+#pragma GCC diagnostic pop
   });
 }
 
