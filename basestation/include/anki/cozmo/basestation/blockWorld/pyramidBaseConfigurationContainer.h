@@ -41,6 +41,7 @@ public:
   void PruneFullPyramids(const std::vector<PyramidPtr>& fullPyramids);
   
   virtual bool AnyConfigContainsObject(const ObjectID& objectID) const override;
+  virtual int ConfigurationCount() const override { return static_cast<int>(_pyramidBaseCache.size());}
 
 protected:
   virtual void SetCurrentCacheAsBackup()override { _backupCache = _pyramidBaseCache;}

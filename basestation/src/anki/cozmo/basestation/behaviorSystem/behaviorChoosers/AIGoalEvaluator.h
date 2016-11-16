@@ -47,7 +47,7 @@ public:
   ~AIGoalEvaluator();
   
   // Delegates to current goal
-  virtual Result Update() override;
+  virtual Result Update(Robot& robot) override;
   
   // exit the current goal so that we clean up any conditions we've set up before entering the new chooser
   virtual void OnDeselected() override;

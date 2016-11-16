@@ -42,6 +42,7 @@ protected:
   BehaviorPickUpCube(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   virtual void   StopInternalFromDoubleTap(Robot& robot) override;
 

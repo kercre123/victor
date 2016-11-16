@@ -49,6 +49,7 @@
   } while(0) \
 
 namespace Anki {
+class ObjectID;
 namespace Cozmo {
   
 // Forward declarations
@@ -58,6 +59,7 @@ class Robot;
 class Reward;
 class ActionableObject;
 class DriveToObjectAction;
+struct ObjectLights;
 
 namespace ExternalInterface {
 class MessageEngineToGame;
@@ -364,17 +366,21 @@ protected:
   void SmartDisableReactionaryBehavior(BehaviorType type);
   void SmartDisableReactionaryBehavior(const std::set<BehaviorType> typeList);
   
-  // Allows the behavior to lock and unlock tracks without worrying about the possibility of the behavior
-  // being interrupted and leaving the track locked
-  void SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName);
-  void SmartUnLockTracks(const std::string& who);
-
   // If a behavior needs to re-enable a reactionary behavior for later stages after being
   // disabled with SmartDisablesableReactionaryBehavior  this function will re-enable the behavior
   // and stop tracking it
   void SmartReEnableReactionaryBehavior(BehaviorType type);
   void SmartReEnableReactionaryBehavior(const std::set<BehaviorType> typeList);
   
+  // Allows the behavior to lock and unlock tracks without worrying about the possibility of the behavior
+  // being interrupted and leaving the track locked
+  bool SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName);
+  bool SmartUnLockTracks(const std::string& who);
+
+  // Allows the behavior to set a custom light pattern which will be automatically canceled if the behavior ends
+  bool SmartSetCustomLightPattern(const ObjectID& objectID, const ObjectLights& objectLights);
+  bool SmartRemoveCustomLightPattern(const ObjectID& objectID);
+
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const {};
   
   // Updates the double tapped object lights
@@ -492,6 +498,9 @@ private:
   std::map<std::string, u8> _lockingNameToTracksMap;
   
   bool _requireObjectTapped = false;
+
+  //A list of object IDs that have had a custom light pattern set
+  std::vector<ObjectID> _customLightObjects;
   
 }; // class IBehavior
   

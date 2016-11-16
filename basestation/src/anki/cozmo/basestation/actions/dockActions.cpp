@@ -1515,9 +1515,8 @@ namespace Anki {
                                      AnimationTrigger::SoundOnlyLiftEffortPlaceLow :
                                      AnimationTrigger::SoundOnlyLiftEffortPlaceHigh);
       
-      // If we aren't placing on the ground then we should check if there is an object on top of the object
-      // we are placing relative to
-      SetShouldCheckForObjectOnTopOf(!placeOnGround);
+      // Cozmo is carrying an object and wont be able to see on top of the object
+      SetShouldCheckForObjectOnTopOf(false);
       
       // SetPlacementOffset set in InitInternal
     }

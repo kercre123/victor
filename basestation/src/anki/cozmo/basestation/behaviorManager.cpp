@@ -529,7 +529,7 @@ void BehaviorManager::RequestEnableReactionaryBehavior(const std::string& reques
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorManager::Update()
+Result BehaviorManager::Update(Robot& robot)
 {
   ANKI_CPU_PROFILE("BehaviorManager::Update");
   
@@ -542,7 +542,7 @@ Result BehaviorManager::Update()
 
   _whiteboard->Update();
     
-  _currentChooserPtr->Update();
+  _currentChooserPtr->Update(robot);
 
   if( !_runningReactionaryBehavior )
   {

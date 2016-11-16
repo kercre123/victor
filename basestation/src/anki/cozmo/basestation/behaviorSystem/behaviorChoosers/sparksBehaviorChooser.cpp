@@ -11,6 +11,7 @@
  **/
 #include "SparksBehaviorChooser.h"
 
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
@@ -29,11 +30,16 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace{
 static const char* kMinTimeConfigKey                 = "minTimeSecs";
 static const char* kMaxTimeConfigKey                 = "maxTimeSecs";
 static const char* kNumberOfRepetitionsConfigKey     = "numberOfRepetitions";
 static const char* kBehaviorObjectiveConfigKey       = "behaviorObjective";
 static const char* ksoftSparkUpgradeTriggerConfigKey = "softSparkTrigger";
+static const char* kSparksSuccessTriggerKey          = "sparksSuccessTrigger";
+static const char* kSparksFailTriggerKey             = "sparksFailTrigger";
+
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& config)
@@ -75,7 +81,27 @@ SparksBehaviorChooser::~SparksBehaviorChooser()
 Result SparksBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& config)
 {
   BaseClass::ReloadFromConfig(robot, config);
+  
+  // Set animation triggers
   _softSparkUpgradeTrigger = AnimationTrigger::Count;
+  JsonTools::GetValueOptional(config, ksoftSparkUpgradeTriggerConfigKey, _softSparkUpgradeTrigger);
+
+  auto successTriggerString = config.get(kSparksSuccessTriggerKey,
+                                         EnumToString(AnimationTrigger::SparkSuccess)).asString();
+  auto failTriggerString = config.get(kSparksFailTriggerKey,
+                                         EnumToString(AnimationTrigger::SparkFailure)).asString();
+  
+  if(successTriggerString.compare("") == 0){
+    _sparksSuccessTrigger = AnimationTrigger::Count;
+  }else{
+    _sparksSuccessTrigger =  AnimationTriggerFromString(successTriggerString.c_str());
+  }
+  
+  if(failTriggerString.compare("") == 0){
+    _sparksFailTrigger = AnimationTrigger::Count;
+  }else{
+    _sparksFailTrigger = AnimationTriggerFromString(failTriggerString.c_str());
+  }
   
   //Create an arbitrary animation behavior
   _behaviorPlayAnimation = dynamic_cast<BehaviorPlayArbitraryAnim*>(robot.GetBehaviorFactory().CreateBehavior(BehaviorType::PlayArbitraryAnim, robot, Json::Value()));
@@ -84,7 +110,6 @@ Result SparksBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& 
   _minTimeSecs = JsonTools::ParseFloat(config, kMinTimeConfigKey, "Failed to parse min time");
   _maxTimeSecs = JsonTools::ParseFloat(config, kMaxTimeConfigKey, "Failed to parse max time");
   _numberOfRepetitions =  JsonTools::ParseUint8(config, kNumberOfRepetitionsConfigKey, "Failed to parse number of repetitions");
-  JsonTools::GetValueOptional(config, ksoftSparkUpgradeTriggerConfigKey, _softSparkUpgradeTrigger);
   
   _objectiveToListenFor = BehaviorObjectiveFromString(config.get(kBehaviorObjectiveConfigKey, EnumToString(BehaviorObjective::Unknown)).asCString());
     
@@ -156,6 +181,10 @@ void SparksBehaviorChooser::OnDeselected()
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToFrustration, true);
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToPet, true);
+  
+  // clear any custom light events set during the spark
+  _robot.GetLightsComponent().ClearAllCustomPatterns();
+
 
 }
   
@@ -193,7 +222,7 @@ void SparksBehaviorChooser::HandleMessage(const ExternalInterface::RobotObserved
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result SparksBehaviorChooser::Update()
+Result SparksBehaviorChooser::Update(Robot& robot)
 {
   // If the intro is interrupted, just continue as normal when reaction is over
   if((_state == ChooserState::ChooserSelected ||
@@ -281,13 +310,13 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
           std::vector<AnimationTrigger> getOutAnims;
           // Play different animations based on whether cozmo timed out or completed his desired reps
           if(_currentObjectiveCompletedCount >= _numberOfRepetitions){
-            getOutAnims.push_back(AnimationTrigger::SparkSuccess);
+            getOutAnims.push_back(_sparksSuccessTrigger);
             
             // make sure we don't immediately play frustration upon ending a spark successfully
             _robot.GetMoodManager().TriggerEmotionEvent("SuccessfulSpark", MoodManager::GetCurrentTimeInSeconds());
             
           }else{
-            getOutAnims.push_back(AnimationTrigger::SparkFailure);
+            getOutAnims.push_back(_sparksFailTrigger);
           }
           // then play standard get out
           getOutAnims.push_back(AnimationTrigger::SparkGetOut);

@@ -40,9 +40,11 @@ struct ObjectLights {
   ObjectLEDArray transitionOnPeriod_ms;
   ObjectLEDArray transitionOffPeriod_ms;
   std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> offset;
-  u32 rotationPeriod_ms;
-  MakeRelativeMode makeRelative;
+  u32 rotationPeriod_ms = 0;
+  MakeRelativeMode makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   Point2f relativePoint;
+  
+  bool EquivalentIgnoringRelativePoint(const ObjectLights& other) const;
 };
 
 typedef std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS> BackpackLEDArray;
@@ -75,12 +77,14 @@ public:
   void SetInteractionObject(const ObjectID& objectID);
   void UnSetInteractionObject(const ObjectID& objectID);
   
+  bool SetCustomLightPattern(const ObjectID& objectID, const ObjectLights& pattern, const std::string& lockName);
+  bool ClearCustomLightPattern(const ObjectID& objectID, const std::string& lockName);
+  void ClearAllCustomPatterns();
+
   void SetTapInteractionObject(const ObjectID& objectID);
   void UnSetTapInteractionObject(const ObjectID& objectID);
   void ClearAllTapInteractionObjects() { _tapInteractionObjects.clear(); }
-  
-  bool SetCustomLightPattern(const ObjectID& objectID, ObjectLights pattern);
-  bool ClearCustomLightPattern(const ObjectID& objectID);
+
   
   Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights);
   Result SetObjectLights(const ObjectID& objectID,
@@ -170,7 +174,17 @@ private:
   std::multiset<ObjectID> _interactionObjects;
   std::set<ObjectID> _tapInteractionObjects;
   
-  std::map<ObjectID, ObjectLights> _customLightPatterns;
+  // Custom light Patterns
+  struct CustomStateInfo{
+    CustomStateInfo(){}
+    CustomStateInfo(const ObjectLights& patternInput, const std::string& lockName);
+    
+    ObjectLights pattern;
+    std::vector<std::string> locks;
+  };
+  
+  std::map<ObjectID, CustomStateInfo> _customLightPatterns;
+  std::set<ObjectID> _customLightPatternsChanged;
   
   void UpdateToDesiredLights(const bool force = false);
   void UpdateToDesiredLights(const ObjectID objectID, const bool force = false);

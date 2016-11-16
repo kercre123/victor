@@ -40,6 +40,7 @@ public:
   
   // Return true if any stored configs contain the object
   virtual bool AnyConfigContainsObject(const ObjectID& objectID) const = 0;
+  virtual int ConfigurationCount() const = 0;
   
 protected:
   // Update contains the logic that backs up and then clears the current cache

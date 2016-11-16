@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -28,13 +30,16 @@ namespace Anki {
 namespace Cozmo {
 
 const int retryCount = 3;
-  
+const float kWaitForFlourish_sec = 2;
+
 namespace{
   RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
   {
     animTrigger = AnimationTrigger::Count;
     return true;
   };
+  
+static const float kTimeObjectInvalidAfterAnyFailure_sec = 30.0f;
 }
   
 BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& config)
@@ -48,28 +53,70 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
 {
   UpdatePyramidTargets(robot);
   
-  const bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
-  return allSet && AreAllBlockIDsUnique();
+  bool allSetAndUsable = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
+  if(allSetAndUsable && !_shouldStreamline){
+    // Pyramid is a complicated behavior with a lot of driving around. If we've
+    // failed to use any of the blocks and we're not sparked don't bother attempting
+    // this behavior - it will probably end poorly
+    auto staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+    auto baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+    auto topBlock = robot.GetBlockWorld().GetObjectByID(_topBlockID);
+    
+    std::set<AIWhiteboard::ObjectUseAction> failToUseReasons =
+                 {{AIWhiteboard::ObjectUseAction::StackOnObject,
+                   AIWhiteboard::ObjectUseAction::PickUpObject,
+                   AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}};
+    
+    const bool hasStaticFailed = robot.GetBehaviorManager().GetWhiteboard().
+                 DidFailToUse(_staticBlockID,
+                              failToUseReasons,
+                              kTimeObjectInvalidAfterAnyFailure_sec,
+                              staticBlock->GetPose(),
+                              DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+                              DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+    
+    const bool hasBaseFailed = robot.GetBehaviorManager().GetWhiteboard().
+    DidFailToUse(_baseBlockID,
+                 failToUseReasons,
+                 kTimeObjectInvalidAfterAnyFailure_sec,
+                 baseBlock->GetPose(),
+                 DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+                 DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+    
+    const bool hasTopFailed = robot.GetBehaviorManager().GetWhiteboard().
+    DidFailToUse(_topBlockID,
+                 failToUseReasons,
+                 kTimeObjectInvalidAfterAnyFailure_sec,
+                 topBlock->GetPose(),
+                 DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+                 DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+    
+    allSetAndUsable = allSetAndUsable && !hasStaticFailed && !hasBaseFailed && !hasTopFailed;
+  }
+  return allSetAndUsable && AreAllBlockIDsUnique();
 }
 
 Result BehaviorBuildPyramid::InitInternal(Robot& robot)
 {
   using namespace BlockConfigurations;
   auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
+
+  _lastBasesCount = 0;
   if(pyramidBases.size() > 0){
+    SetPyramidBaseLights();
     if(!robot.IsCarryingObject()){
       TransitionToDrivingToTopBlock(robot);
     }else{
       TransitionToPlacingTopBlock(robot);
     }
   }else{
+    SetPickupInitialBlockLights();
     if(!robot.IsCarryingObject()){
       TransitionToDrivingToBaseBlock(robot);
     }else{
       TransitionToPlacingBaseBlock(robot);
     }
   }
-  
   return Result::RESULT_OK;
 }
   
@@ -81,6 +128,7 @@ void BehaviorBuildPyramid::StopInternal(Robot& robot)
 void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 {
   DEBUG_SET_STATE(DrivingToTopBlock);
+  UpdateAudioState(std::underlying_type<MusicState>::type(MusicState::BaseFormed));
 
   DriveToPickupObjectAction* driveAction = new DriveToPickupObjectAction(robot, _topBlockID);
   
@@ -98,6 +146,7 @@ void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 {
   DEBUG_SET_STATE(PlacingTopBlock);
+  UpdateAudioState(std::underlying_type<MusicState>::type(MusicState::TopBlockCarry));
 
   const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
   if(nullptr == object)
@@ -114,7 +163,7 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 
   for(const auto& basePtr: pyramidBases){
     if(basePtr->ContainsBlock(_baseBlockID) && basePtr->ContainsBlock(_staticBlockID)){
-      Point2f baseOffset = basePtr->GetBaseBlockOffsetValues(robot);
+      Point2f baseOffset = basePtr->GetBaseBlockIdealOffsetValues(robot);
 
       const bool relativeCurrentMarker = false;
       DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot, _staticBlockID, false, baseOffset.x()/2, baseOffset.y()/2, false, 0, false, 0.f, false, relativeCurrentMarker);
@@ -135,9 +184,16 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 void BehaviorBuildPyramid::TransitionToReactingToPyramid(Robot& robot)
 {
   DEBUG_SET_STATE(ReactingToPyramid);
+  UpdateAudioState(static_cast<int>(MusicState::PyramidCompleteFlourish));
+  
+  SetFullPyramidLights();
 
-  StartActing( new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess));
-  BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);
+  StartActing( new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess),
+              [this, &robot](const ActionResult& result){
+                SetPyramidFlourishLights();
+                StartActing(new WaitAction(robot, kWaitForFlourish_sec));
+                BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);
+              });
   
 }
 

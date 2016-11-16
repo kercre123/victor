@@ -53,8 +53,8 @@ static const ObjectLights kCubeLightsOff = {
 };
 
 LightsComponent::LightsComponent(Robot& robot)
-  : _robot(robot),
-  _currentBackpackLights(kBackpackLightsOff)
+  : _robot(robot)
+  , _currentBackpackLights(kBackpackLightsOff)
 {
   if( _robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandles);
@@ -307,20 +307,26 @@ void LightsComponent::Update()
     
     ///////
     // Check for customPatterns that override other interactions
-    
-    // If a custom pattern has been set, fade to it
-    if(cubeInfoPair.second.currState != CubeLightsState::CustomPattern
-       && cubeInfoPair.second.currState != CubeLightsState::Fade
-       && _customLightPatterns.find(cubeInfoPair.first) != _customLightPatterns.end()){
-      newState = CubeLightsState::CustomPattern;
+    bool customPatternUpdate = false;
+    if(   cubeInfoPair.second.currState == CubeLightsState::CustomPattern
+       || cubeInfoPair.second.currState == CubeLightsState::Visible
+       || cubeInfoPair.second.currState == CubeLightsState::Connected)
+    {
+      if(_customLightPatterns.find(cubeInfoPair.first) != _customLightPatterns.end()){
+        newState = CubeLightsState::CustomPattern;
+        const bool customPatternChanged = std::find(_customLightPatternsChanged.begin(),
+                    _customLightPatternsChanged.end(), cubeInfoPair.first) != _customLightPatternsChanged.end();
+        if(customPatternChanged) {
+          doForceLightUpdate = true;
+          customPatternUpdate = true;
+        }
+      }
+      else if(cubeInfoPair.second.currState == CubeLightsState::CustomPattern){
+        customPatternUpdate = true;
+        newState = cubeInfoPair.second.prevState;
+      }
     }
-    // If a custom pattern has been removed, fade back to the previous state
-    else if(cubeInfoPair.second.currState != CubeLightsState::Fade
-       && cubeInfoPair.second.currState == CubeLightsState::CustomPattern
-       && _customLightPatterns.find(cubeInfoPair.first) == _customLightPatterns.end()){
-      newState = cubeInfoPair.second.prevState;
-    }
-    
+
     ///////
     // Handle WakeUp and sleep transitions
     
@@ -368,7 +374,7 @@ void LightsComponent::Update()
     // end newState selection
     ///////
     
-    if(ShouldOverrideState(currState, newState))
+    if(ShouldOverrideState(currState, newState) || customPatternUpdate)
     {
       cubeInfoPair.second.desiredState = newState;
     }
@@ -379,6 +385,8 @@ void LightsComponent::Update()
       UpdateToDesiredLights(cubeInfoPair.first, doForceLightUpdate);
     }
   }
+  
+  _customLightPatternsChanged.clear();
   
   UpdateBackpackLights();
 }
@@ -593,9 +601,10 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
   
   cube->second.startCurrStateTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();;
   
-  // Don't update prevState if our current state is sleep
+  // Don't update prevState if our current state is sleep or custom pattern
   if(cube->second.currState != CubeLightsState::Sleep &&
-     cube->second.currState != CubeLightsState::Off)
+     cube->second.currState != CubeLightsState::Off &&
+     cube->second.currState != CubeLightsState::CustomPattern)
   {
     cube->second.prevState = cube->second.currState;
   }
@@ -608,21 +617,65 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
                 object.GetValue(),
                 state);
   
-  const ObjectLights& values = _stateToValues[state];
-  SetObjectLightsInternal(object, values);
+  // assign default reference value to be re-assigned
+  const ObjectLights* values = &_stateToValues[CubeLightsState::Off];
+  if(state == CubeLightsState::CustomPattern){
+    values = &_customLightPatterns[object].pattern;
+  }else{
+    values = &_stateToValues[state];
+  }
+  SetObjectLightsInternal(object, *values);
 }
   
-bool LightsComponent::SetCustomLightPattern(const ObjectID& objectID, ObjectLights pattern)
+bool LightsComponent::SetCustomLightPattern(const ObjectID& objectID, const ObjectLights& pattern, const std::string& lockName)
 {
-  auto insertionResult = _customLightPatterns.insert(std::make_pair(objectID, pattern));
-  return insertionResult.second;
+  bool successfulInsertion = false;
+  const auto& mapIter = _customLightPatterns.find(objectID);
+  if(mapIter == _customLightPatterns.end()){
+    auto insertionResult = _customLightPatterns.insert(std::make_pair(objectID, CustomStateInfo(pattern, lockName)));
+    _customLightPatternsChanged.insert(objectID);
+    successfulInsertion = insertionResult.second;
+  }else{
+    // only add the lock to the map if the pattern being sent matches the one already playing
+    const auto& currentPattern = mapIter->second.pattern;
+    if(pattern.EquivalentIgnoringRelativePoint(currentPattern)){
+      mapIter->second.locks.push_back(lockName);
+      successfulInsertion = true;
+    }
+  }
+  
+
+  return successfulInsertion;
 }
 
 
-bool LightsComponent::ClearCustomLightPattern(const ObjectID& objectID)
+bool LightsComponent::ClearCustomLightPattern(const ObjectID& objectID, const std::string& lockName)
 {
-  auto count = _customLightPatterns.erase(objectID);
-  return count != 0;
+  bool successfulDeletion = false;
+  auto mapIter = _customLightPatterns.find(objectID);
+  if(mapIter != _customLightPatterns.end()){
+    auto& lockNames =  mapIter->second.locks;
+    auto lockIter = std::find(lockNames.begin(), lockNames.end(), lockName);
+    if(lockIter != lockNames.end()){
+      lockIter = lockNames.erase(lockIter);
+      if(lockNames.size() == 0){
+        mapIter = _customLightPatterns.erase(mapIter);
+        _customLightPatternsChanged.insert(objectID);
+        successfulDeletion = true;
+      }
+    }else{
+      PRINT_NAMED_WARNING("LightsCompononet.ClearCustomLightPattern.LockNotSet",
+                          "Attempted to unlock custom light pattern with name %s", lockName.c_str());
+    }
+
+  }
+
+  return successfulDeletion;
+}
+
+void LightsComponent::ClearAllCustomPatterns()
+{
+  _customLightPatterns.clear();
 }
 
 
@@ -928,7 +981,12 @@ ActiveObject* GetActiveObjectInAnyFrame(BlockWorld& blockWorld, const ObjectID& 
 
 Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID, const ObjectLights& values)
 {
-  ActiveObject* activeObject = GetActiveObjectInAnyFrame(_robot.GetBlockWorld(), objectID);
+  ActiveObject* activeObject = nullptr;
+  if(values.makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF) {
+    activeObject = GetActiveObjectInAnyFrame(_robot.GetBlockWorld(), objectID);
+  }else{
+    activeObject = _robot.GetBlockWorld().GetActiveObjectByID(objectID);
+  }
   
   if(activeObject == nullptr) {
     PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");
@@ -942,8 +1000,7 @@ Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID, const 
                           values.transitionOnPeriod_ms,
                           values.transitionOffPeriod_ms,
                           values.offset);
-    
-    
+
     ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
     if(activeCube != nullptr) {
       // NOTE: if make relative mode is "off", this call doesn't do anything:
@@ -1019,6 +1076,8 @@ Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID,
     
     WhichCubeLEDs rotatedWhichLEDs = whichLEDs;
     
+    
+
     ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
     if(activeCube != nullptr) {
       // NOTE: if make relative mode is "off", this call doesn't do anything:
@@ -1285,6 +1344,11 @@ void LightsComponent::OnObjectPoseStateChanged(const ObjectID& objectID,
     return;
   }
   
+  // Custom patterns have to implement their own response logic
+  if(cube->second.currState == CubeLightsState::CustomPattern){
+    return;
+  }
+  
   if(oldPoseState < newPoseState)
   {
     cube->second.desiredState = CubeLightsState::Connected;
@@ -1312,7 +1376,28 @@ LightsComponent::ObjectInfo::ObjectInfo()
   , lastObservedTime_ms(0)
 {
 }
+  
 
+LightsComponent::CustomStateInfo::CustomStateInfo(const ObjectLights& patternInput, const std::string& lockName)
+{
+  pattern = patternInput;
+  locks.push_back(lockName);
+}
+
+bool ObjectLights::EquivalentIgnoringRelativePoint(const ObjectLights& other) const
+{
+  // does not check relative point due to the possibility block world has changed
+  // but the intended pattern is the same
+  return this->onColors == other.onColors &&
+  this->offColors == other.offColors &&
+  this->onPeriod_ms == other.onPeriod_ms &&
+  this->offPeriod_ms == other.offPeriod_ms &&
+  this->transitionOnPeriod_ms == other.transitionOnPeriod_ms &&
+  this->transitionOffPeriod_ms == other.transitionOffPeriod_ms &&
+  this->offset == other.offset &&
+  this->rotationPeriod_ms == other.rotationPeriod_ms &&
+  this->makeRelative == other.makeRelative;
+}
 
 } // namespace Cozmo
 } // namespace Anki

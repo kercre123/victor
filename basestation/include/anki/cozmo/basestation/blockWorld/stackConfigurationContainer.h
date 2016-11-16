@@ -40,6 +40,7 @@ public:
   const StackWeakPtr GetTallestStack(const std::vector<ObjectID>& baseBlocksToIgnore) const;
   
   virtual bool AnyConfigContainsObject(const ObjectID& objectID) const override;
+  virtual int ConfigurationCount() const override { return static_cast<int>(_stackCache.size());}
 
 protected:
   virtual void SetCurrentCacheAsBackup() override { _backupCache = _stackCache;}

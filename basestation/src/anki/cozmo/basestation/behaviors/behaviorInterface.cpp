@@ -65,6 +65,7 @@ static const char* kCooldownOnObjectiveKey       = "considerThisHasRunForBehavio
 static const int kMaxResumesFromCliff            = 2;
 static const float kCooldownFromCliffResumes_sec     = 15.0;
 static const constexpr float kDisableRepetitionPenaltyOnStop_s = 1.f;
+  
 }
 
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
@@ -107,6 +108,10 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
                                 HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
                               } ));
   }
+  
+  SubscribeToTags({
+    GameToEngineTag::RequestEnableReactionaryBehavior
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -463,10 +468,16 @@ void IBehavior::Stop()
   SmartReEnableReactionaryBehavior(_disabledReactions);
   
   // Unlock any tracks which the behavior hasn't had a chance to unlock
-  for(auto entry: _lockingNameToTracksMap){
+  for(const auto& entry: _lockingNameToTracksMap){
     _robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
   }
   _lockingNameToTracksMap.clear();
+  
+  // Clear any light patterns which were set on cubes
+  for(const auto& objID : _customLightObjects){
+    _robot.GetLightsComponent().ClearCustomLightPattern(objID, GetName());
+  }
+  _customLightObjects.clear();
   
   ASSERT_NAMED(_disabledReactions.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
 }
@@ -895,27 +906,61 @@ IBehavior::BehaviorIter IBehavior::SmartReEnableReactionaryBehavior(BehaviorIter
   return  _disabledReactions.erase(iter);
 }
   
-void IBehavior::SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName)
+bool IBehavior::SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName)
 {
   // Only lock the tracks if we haven't already locked them with that key
   const bool insertionSuccessfull = _lockingNameToTracksMap.insert(std::make_pair(who, animationTracks)).second;
   if(insertionSuccessfull){
     _robot.GetMoveComponent().LockTracks(animationTracks, who, debugName);
+    return true;
   }else{
     PRINT_NAMED_WARNING("IBehavior.SmartLockTracks.AttemptingToLockTwice", "Attempted to lock tracks with key named %s but key already exists", who.c_str());
+    return false;
   }
 }
   
-void IBehavior::SmartUnLockTracks(const std::string& who)
+bool IBehavior::SmartUnLockTracks(const std::string& who)
 {
   auto mapIter = _lockingNameToTracksMap.find(who);
   if(mapIter == _lockingNameToTracksMap.end()){
     PRINT_NAMED_WARNING("IBehavior.SmartUnlockTracks.InvalidUnlock", "Attempted to unlock tracks with key named %s but key not found", who.c_str());
+    return false;
   }else{
     _robot.GetMoveComponent().UnlockTracks(mapIter->second, who);
-    _lockingNameToTracksMap.erase(mapIter);
+    mapIter = _lockingNameToTracksMap.erase(mapIter);
+    return true;
   }
 }
+  
+  
+bool IBehavior::SmartSetCustomLightPattern(const ObjectID& objectID, const ObjectLights& objectLights)
+{
+  if(std::find(_customLightObjects.begin(), _customLightObjects.end(), objectID) == _customLightObjects.end()){
+    _robot.GetLightsComponent().SetCustomLightPattern(objectID, objectLights, GetName());
+    _customLightObjects.push_back(objectID);
+    return true;
+  }else{
+    PRINT_NAMED_INFO("IBehavior.SmartSetCustomLightPattern.LightsAlreadySet",
+                        "A custom light pattern has already been set on object %d", objectID.GetValue());
+    return false;
+  }
+}
+
+  
+bool IBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID)
+{
+  auto objectIter = std::find(_customLightObjects.begin(), _customLightObjects.end(), objectID);
+  if(objectIter != _customLightObjects.end()){
+    _robot.GetLightsComponent().ClearCustomLightPattern(objectID, GetName());
+    _customLightObjects.erase(objectIter);
+    return true;
+  }else{
+    PRINT_NAMED_INFO("IBehavior.SmartRemoveCustomLightPattern.LightsNotSet",
+                        "No custom light pattern is set for object %d", objectID.GetValue());
+    return false;
+  }
+}
+  
 
 ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* action,
                                                       ActionableObject* object,
@@ -1137,7 +1182,7 @@ bool IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enabl
     int countRemoved = (int)_disableIDs.erase(requesterID);
     if(!countRemoved){
       PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
-                          "Attempted to enable reactionary behavior with invalid ID");
+                          "Attempted to enable reactionary behavior %s with invalid ID %s", GetName().c_str(), requesterID.c_str());
       return false;
     }
     
@@ -1145,7 +1190,7 @@ bool IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enabl
     int countInList = (int)_disableIDs.count(requesterID);
     if(countInList){
       PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
-                          "Attempted to disable reactionary behavior with ID previously registered");
+                          "Attempted to disable reactionary behavior %s with ID %s previously registered", GetName().c_str(), requesterID.c_str());
       return false;
     }else{
       _disableIDs.insert(requesterID);

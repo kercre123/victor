@@ -67,7 +67,7 @@ public:
   virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) = 0;
 
   // update internal state of the chooser
-  virtual Result Update() { return Result::RESULT_OK; }
+  virtual Result Update(Robot& robot) { return Result::RESULT_OK; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors

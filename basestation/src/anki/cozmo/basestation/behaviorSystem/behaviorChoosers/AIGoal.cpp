@@ -17,11 +17,14 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategyFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalPersistantUpdates/buildPyramidPersistantUpdate.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategies/iAIGoalStrategy.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
+
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -37,12 +40,15 @@ namespace {
 static const char* kBehaviorChooserConfigKey = "behaviorChooser";
 static const char* kStrategyConfigKey = "goalStrategy";
 static const char* kRequiresSparkKey = "requireSpark";
+static const char* kPersistantUpdateFuncKey = "persistantUpdateID";
+static const char* kPyramidSparkUpdateFuncID = "pyramidSparkUpdate";
 static const char* kRequiresObjectTapped = "requireObjectTapped";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoal::AIGoal()
-: _priority(0)
+: _persistantUpdateFunction(nullptr)
+, _priority(0)
 , _driveStartAnimTrigger(AnimationTrigger::Count)
 , _driveLoopAnimTrigger(AnimationTrigger::Count)
 , _driveEndAnimTrigger(AnimationTrigger::Count)
@@ -56,7 +62,7 @@ AIGoal::AIGoal()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoal::~AIGoal()
 {
-
+  Util::SafeDelete(_persistantUpdateFunction);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -112,6 +118,10 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
   _strategy.reset( newStrategy );
   
   // other params
+  std::string updateFuncID;
+  if ( JsonTools::GetValueOptional(config, kPersistantUpdateFuncKey, updateFuncID) ) {
+    _persistantUpdateFunction = PersistantUpdateFunctionChooser(updateFuncID);
+  }
   _priority = JsonTools::ParseUint8(config, "priority", "AIGoal.Init");
   _name = JsonTools::ParseString(config, "name", "AIGoal.Init");
   
@@ -180,12 +190,17 @@ void AIGoal::Exit(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result AIGoal::Update()
+Result AIGoal::Update(Robot& robot)
 {
   auto result = Result::RESULT_OK;
   if(_behaviorChooserPtr != nullptr){
-    result = _behaviorChooserPtr->Update();
+    result = _behaviorChooserPtr->Update(robot);
   }
+  
+  if(_persistantUpdateFunction != nullptr){
+    _persistantUpdateFunction->Update(robot);
+  }
+  
   return result;
 }
   
@@ -197,6 +212,16 @@ IBehavior* AIGoal::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunn
   IBehavior* ret = _behaviorChooserPtr->ChooseNextBehavior(robot, currentRunningBehavior);
   return ret;
 }
+  
+IGoalPersistantUpdate* AIGoal::PersistantUpdateFunctionChooser(const std::string& updateFuncID)
+{
+  if(updateFuncID == kPyramidSparkUpdateFuncID){
+    return new BuildPyramidPersistantUpdate;
+  }
+  
+  return nullptr;
+}
+
 
 
 } // namespace Cozmo

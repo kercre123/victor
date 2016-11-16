@@ -88,7 +88,7 @@ namespace Anki {
 
         const f32 PICKUP_WHILE_MOVING_ACC_THRESH[3]  = {5000, 5000, 12000};  // mm/s^2
         const f32 PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[3] = {0.5f, 0.5f, 0.5f};   // rad/s
-        const f32 UNEXPECTED_ROTATION_SPEED_THRESH   = DEG_TO_RAD_F32(10.f); //rad/s
+        const f32 UNEXPECTED_ROTATION_SPEED_THRESH   = DEG_TO_RAD_F32(20.f); //rad/s
         const u8 PICKUP_COUNT_WHILE_MOVING           = 40;
         const u8 PICKUP_COUNT_WHILE_MOTIONLESS       = 20;
         u8 potentialPickupCnt_                       = 0;
@@ -546,10 +546,14 @@ namespace Anki {
             cliffValWhileNotMoving_ = 0;
             
             // Is the robot turning at a radically different speed than what it should be experiencing given current wheel speeds?
+            // UNEXPECTED_ROTATION_SPEED_THRESH is being used as a multipurpose margin here. Because GetCurrNoSlipBodyRotSpeed() is based
+            // on filtered wheel speeds there's a little delay which permits measuredBodyRotSpeed to be a little faster than maxPossibleBodyRotSpeed.
             const f32 maxPossibleBodyRotSpeed = WheelController::GetCurrNoSlipBodyRotSpeed();
             const f32 measuredBodyRotSpeed = IMUFilter::GetRotationSpeed();
-            gyroZBasedMotionDetect = (((maxPossibleBodyRotSpeed > UNEXPECTED_ROTATION_SPEED_THRESH) && ((measuredBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) || (measuredBodyRotSpeed > maxPossibleBodyRotSpeed))) ||
-                                      ((maxPossibleBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) && ((measuredBodyRotSpeed > UNEXPECTED_ROTATION_SPEED_THRESH) || (measuredBodyRotSpeed < maxPossibleBodyRotSpeed))));
+            gyroZBasedMotionDetect = (((maxPossibleBodyRotSpeed > UNEXPECTED_ROTATION_SPEED_THRESH) &&
+                                       ((measuredBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) || (measuredBodyRotSpeed > maxPossibleBodyRotSpeed + UNEXPECTED_ROTATION_SPEED_THRESH))) ||
+                                      ((maxPossibleBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) &&
+                                       ((measuredBodyRotSpeed > UNEXPECTED_ROTATION_SPEED_THRESH) || (measuredBodyRotSpeed < maxPossibleBodyRotSpeed - UNEXPECTED_ROTATION_SPEED_THRESH))));
 
           }
 
@@ -604,8 +608,8 @@ namespace Anki {
             if (CheckPickupWhileMoving() || cliffBasedPickupDetect || gyroZBasedMotionDetect) {
               if (++potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOVING) {
                 SetPickupDetect(true);
-                AnkiInfo( 369, "IMUFilter.PickupDetected", 605, "accX = %f, accY = %f, accZ = %f, cliff = %d", 4,
-                         accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2], cliffBasedPickupDetect);
+                AnkiInfo( 416, "IMUFilter.PickupDetected", 629, "accX %f, accY %f, accZ %f, cliff %d, gyroZ %d", 5,
+                         accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2], cliffBasedPickupDetect, gyroZBasedMotionDetect);
               }
             } else {
               potentialPickupCnt_ = 0;

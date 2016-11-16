@@ -133,11 +133,11 @@ AIGoalEvaluator::~AIGoalEvaluator()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result AIGoalEvaluator::Update()
+Result AIGoalEvaluator::Update(Robot& robot)
 {
   auto result = Result::RESULT_OK;
   if(_currentGoalPtr != nullptr){
-    result = _currentGoalPtr->Update();
+    result = _currentGoalPtr->Update(robot);
   }
   return result;
 }

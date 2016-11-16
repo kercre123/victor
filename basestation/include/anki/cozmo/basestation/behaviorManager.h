@@ -99,7 +99,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // Calls the current behavior's Update() method until it returns COMPLETE or FAILURE.
-  Result Update();
+  Result Update(Robot& robot);
         
   // Set the current IBehaviorChooser. Note this results in the destruction of the current IBehaviorChooser
   // (if there is one) and the IBehaviors it contains

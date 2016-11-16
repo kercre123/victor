@@ -29,8 +29,12 @@
       "AnimName": "blockReact"
     },
     {
+      "CladEvent": "BuildPyramidReactToBase",
+      "AnimName": "ag_pyramid_rt2blocks"
+    },
+    {
       "CladEvent": "BuildPyramidSuccess",
-      "AnimName": "ag_pounceOnMotionSuccess"
+      "AnimName": "ag_pyramid_success"
     },
     {
       "CladEvent": "CantHandleTallStack",

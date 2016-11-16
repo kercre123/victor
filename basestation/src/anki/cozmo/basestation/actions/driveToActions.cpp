@@ -1375,45 +1375,65 @@ namespace Anki {
       // when relative current marker all pre-dock poses are valid
       // otherwise, one pre-doc pose may be impossible to place at certain offsets
       if(!relativeCurrentMarker){
-        GetDriveToObjectAction()->SetGetPossiblePosesFunc(
+        DriveToObjectAction* driveToAction = GetDriveToObjectAction();
+        if(driveToAction != nullptr){
+        
+          driveToAction->SetGetPossiblePosesFunc(
             [this, &robot, placementOffsetX_mm, placementOffsetY_mm](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
             {
               const ActionResult possiblePosesResult = GetDriveToObjectAction()->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
               
               if(possiblePosesResult == ActionResult::SUCCESS){
                 using PoseIter = std::vector<Pose3d>::iterator;
-                
-                Pose3d closestPreDocPose;
-                const bool closestPoseExists = GetDriveToObjectAction()->GetClosestPreDockPose(object, closestPreDocPose);
-                if(!closestPoseExists){
-                  PRINT_NAMED_WARNING("DriveToPlaceRelObject.GetPossiblePosesFunc.NoValidPoses",
-                                      "No valid poses returned from GetClosestPreDockPose so failing action name:%s, tag:%i", GetName().c_str(), GetTag());
-                  return ActionResult::FAILURE_ABORT;
-                }
-                
 
                 for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); ){
                   Pose3d preDocWRTBlock;
                   fullIter->GetWithRespectTo(object->GetPose(), preDocWRTBlock);
                   const float poseX = preDocWRTBlock.GetTranslation().x();
                   const float poseY = preDocWRTBlock.GetTranslation().y();
-                  
-                  const bool isPoseInvalid = ((FLT_GT(poseX, 0) != FLT_GT(placementOffsetX_mm, 0)) && !NEAR_ZERO(poseX)) ||
-                                             ((FLT_GT(poseY, 0) != FLT_GT(placementOffsetY_mm, 0)) && !NEAR_ZERO(poseY));
+                  const float minIllegalOffset = 1.f;
+                  const bool xOffsetRelevant = !IN_RANGE(placementOffsetX_mm, -minIllegalOffset, minIllegalOffset) &&
+                                            !IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
+                  const bool yOffsetRelevant = !IN_RANGE(placementOffsetY_mm, -minIllegalOffset, minIllegalOffset) &&
+                                            !IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
+                  const bool isPoseInvalid = (xOffsetRelevant && (FLT_GT(poseX, 0) != FLT_GT(placementOffsetX_mm, 0)))||
+                                             (yOffsetRelevant && (FLT_GT(poseY, 0) != FLT_GT(placementOffsetY_mm, 0)));
                   if(isPoseInvalid){
                     fullIter = possiblePoses.erase(fullIter);
+                    PRINT_CH_INFO("Actions", "PlaceRelObjectAction.PossiblePosesFunc.RemovingInvalidPose",
+                                  "Removing pose x:%f y:%f because Cozmo can't place at offset x:%f, y:%f, xRelevant:%d, yRelevant:%d",
+                                  poseX, poseY, placementOffsetX_mm, placementOffsetY_mm, xOffsetRelevant, yOffsetRelevant);
                   }else{
+                    // if available make sure we use the pre-doc pose that results in cozmo
+                    // being able to place with an x offset (tracking not blind)
+                    const bool onlyOnePlacementDirection = xOffsetRelevant != yOffsetRelevant;
+                    const bool currentXPoseIdeal = xOffsetRelevant && IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
+                    const bool currentYPoseIdeal = yOffsetRelevant && IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
+                    if(onlyOnePlacementDirection && (currentXPoseIdeal || currentYPoseIdeal)){
+                      Pose3d bestCopy = *fullIter;
+                      possiblePoses.clear();
+                      possiblePoses.push_back(bestCopy);
+                      break;
+                    }
+                    
                     ++fullIter;
                   }
                 }// end for(PoseIter)
-              } // end if(possiblePosesResult == ActionResult::Success)
+              }// end if(possiblePosesResult == ActionResult::Success)
+              else{
+                PRINT_CH_INFO("Actions","PlaceRelObjectAction.PossiblePosesFunc.PossiblePosesResultNotSuccess",
+                                 "Received possible psoses result:%hhu", possiblePosesResult);
+              }
               
               if(possiblePoses.size() > 0){
                 return possiblePosesResult;
               }else{
+                PRINT_CH_INFO("Actions", "PlaceRelObjectAction.PossiblePosesFunc.NoValidPoses",
+                                 "After filtering invalid pre-doc poses none remained for placement offset x:%f, y%f", placementOffsetX_mm, placementOffsetY_mm);
                 return ActionResult::FAILURE_ABORT;
               }
             });
+        }// end if(driveToAction != nullptr)
       } // end if(!relativeCurrentMarkre)
     }
     

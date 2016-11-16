@@ -188,13 +188,15 @@
           "numberOfRepetitions": 1,
           "behaviorObjective": "BuiltPyramid",
           "softSparkTrigger": "SoftSparkUpgradeLift",
+          "sparksSuccessTrigger": "", // don't play any animation
           // this are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksBuildPyramid" ]
         },
         "goalStrategy":
         {
           "type" : "Spark"
-        }
+        },
+        "persistantUpdateID" : "pyramidSparkUpdate"
       },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Freeplay goals:

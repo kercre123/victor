@@ -78,6 +78,21 @@ Result BehaviorPickUpCube::InitInternal(Robot& robot)
   }
   return Result::RESULT_OK;
 }
+  
+  
+IBehavior::Status BehaviorPickUpCube::UpdateInternal(Robot& robot)
+{
+  for(auto configType: _configurationsToIgnore) {
+    if(robot.GetBlockWorld().GetBlockConfigurationManager()
+                            .IsObjectPartOfConfigurationType(configType, _targetBlockID)){
+      StopWithoutImmediateRepetitionPenalty();
+      return Status::Complete;
+    }
+  }
+  
+  return Status::Running;
+}
+
 
 void BehaviorPickUpCube::StopInternal(Robot& robot)
 {

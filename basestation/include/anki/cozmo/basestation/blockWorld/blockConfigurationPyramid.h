@@ -51,6 +51,8 @@ class PyramidBase: public BlockConfiguration{
     friend class Pyramid;
     friend class BlockConfigurationManager;
   
+    PyramidBase(const ObjectID& staticBlockID, const ObjectID& baseBlockID);
+  
     bool operator==(const PyramidBase& other) const;
     bool operator!=(const PyramidBase& other) const{ return !(*this == other);}
   
@@ -60,20 +62,24 @@ class PyramidBase: public BlockConfiguration{
 
     // the xAxis and isPositive bools are set to indicate x/y axis of the base and positive/negative orientation of the baseBlock relative to the static block
     // returns true if the indicator bools were set, false otherwise
-    const bool GetBaseBlockOffset(const Robot& robot, bool& alongXAxis, bool& isPositive) const;
+    const bool GetBaseRelStaticInfo(const Robot& robot, bool& alongXAxis, bool& isPositive) const;
   
     // returns the x/y offset of the base block - returns 0/0 if offset is not valid
-    const Point2f GetBaseBlockOffsetValues(const Robot& robot) const;
+    const Point2f GetBaseBlockIdealOffsetValues(const Robot& robot) const;
 
   
   protected:
-    // Pyramid bases should only be created by the block configuration manager
-    PyramidBase(const ObjectID& staticBlockID, const ObjectID& baseBlockID);
+  
+    // Contains the official definition of what constitutes a pyramid base - all other functions
+    // should rely on these values for their definition
+    static bool GetCurrentBlockOffsetProperties(const Robot& robot, const ObservableObject* const staticBlock, const ObservableObject* const baseBlock,
+                                                float& xAxisOffset, float& yAxisOffset, float&  maxXAxisOffset, float& maxYAxisOffset);
     // Checks the relative world positions of the blocks to see if they form a pyramid base
     static bool BlocksFormPyramidBase(const Robot& robot, const ObservableObject* const staticBlock, const ObservableObject* const baseBlock);
     // Static accessor for BaseBlockOffset - returns true if the blocks form a pyramidBase
     // the xAxis and isPositive bools are set to indicate x/y axis of the base and positive/negative orientation of the baseBlock relative to the static block
-    static const bool GetBaseBlockOffset(const Robot& robot, const ObservableObject* const staticBlock, const ObservableObject* const baseBlock, bool& alongXAxis, bool& isPositive);
+    static const bool GetBaseRelStaticInfo(const Robot& robot, const ObservableObject* const staticBlock,
+                                           const ObservableObject* const baseBlock, bool& alongXAxis, bool& isPositive);
   
     // Checks the object's position to see if it is on top of the base
     const bool ObjectIsOnTopOfBase(const Robot& robot, const ObservableObject* const object) const;
@@ -93,6 +99,9 @@ class Pyramid: public BlockConfiguration{
   public:
     friend PyramidConfigurationContainer;
     friend PyramidBaseConfigurationContainer;
+  
+    Pyramid(const PyramidBase& base, const ObjectID& topBlockID);
+    Pyramid(const ObjectID& staticBlockID, const ObjectID& baseBlockID, const ObjectID& topBlockID);
  
     bool operator==(const Pyramid& other) const;
     bool operator!=(const Pyramid& other) const{ return !(*this == other);}
@@ -102,9 +111,6 @@ class Pyramid: public BlockConfiguration{
     const ObjectID& GetTopBlockID() const { return _topBlockID;}
   
   protected:
-    Pyramid(const PyramidBase& base, const ObjectID& topBlockID);
-    Pyramid(const ObjectID& staticBlockID, const ObjectID& baseBlockID, const ObjectID& topBlockID);
-  
     // Checks the object's position in the world against all other blocks on the ground
     // to determine if they form a pyramid base
     static std::vector<const PyramidBase*> BuildAllPyramidBasesForBlock(const Robot& robot, const ObservableObject* object);

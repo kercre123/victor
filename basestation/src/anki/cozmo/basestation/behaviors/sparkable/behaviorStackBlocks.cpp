@@ -292,6 +292,7 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
     if( nullptr != bottomObject ) {
       if(bottomObject->GetID() != _targetBlockBottom){
         StopWithoutImmediateRepetitionPenalty();
+        return Status::Complete;
       }
     }
   }

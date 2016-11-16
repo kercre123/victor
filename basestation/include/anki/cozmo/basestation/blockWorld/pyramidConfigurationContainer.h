@@ -35,6 +35,7 @@ public:
   std::vector<PyramidWeakPtr> GetWeakPyramids() const;
   
   virtual bool AnyConfigContainsObject(const ObjectID& objectID) const override;
+  virtual int ConfigurationCount() const override { return static_cast<int>(_pyramidCache.size());}
   
 protected:
   virtual void SetCurrentCacheAsBackup() override { _backupCache = _pyramidCache;}

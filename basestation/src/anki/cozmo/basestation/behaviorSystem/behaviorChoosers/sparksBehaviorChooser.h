@@ -45,7 +45,7 @@ public:
   // IBehaviorChooser API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result Update() override;
+  virtual Result Update(Robot& robot) override;
   
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
   virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
@@ -102,6 +102,9 @@ private:
   int _numberOfRepetitions;
   BehaviorObjective _objectiveToListenFor;
   AnimationTrigger _softSparkUpgradeTrigger;
+  AnimationTrigger _sparksSuccessTrigger;
+  AnimationTrigger _sparksFailTrigger;
+
   
   // Special re-start indicator
   TimeStamp_t _timePlayingOutroStarted;

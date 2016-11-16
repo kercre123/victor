@@ -1294,6 +1294,7 @@ Result Robot::Update()
                 );
     }
   }
+  
       
   ///////// Update the behavior manager ///////////
       
@@ -1317,7 +1318,7 @@ Result Robot::Update()
   static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
   if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
   {
-    _behaviorMgr->Update();
+    _behaviorMgr->Update(*this);
         
     const IBehavior* behavior = _behaviorMgr->GetCurrentBehavior();
     if(behavior != nullptr) {
