@@ -712,7 +712,10 @@ public abstract class GameBase : MonoBehaviour {
       RewardedActionManager.Instance.ResetPendingRewards();
     }
     _StateMachine.Stop();
-    _SharedMinigameViewInstance.CloseViewImmediately();
+    if (_SharedMinigameViewInstance != null) {
+      _SharedMinigameViewInstance.CloseViewImmediately();
+      _SharedMinigameViewInstance = null;
+    }
     CleanUp();
   }
 
@@ -720,7 +723,9 @@ public abstract class GameBase : MonoBehaviour {
 
     DAS.Debug("GameBase.CleanUp", "cleanup called");
 
-    _SharedMinigameViewInstance.ViewCloseAnimationFinished -= CleanUp;
+    if (_SharedMinigameViewInstance != null) {
+      _SharedMinigameViewInstance.ViewCloseAnimationFinished -= CleanUp;
+    }
 
     ContextManager.Instance.OnAppHoldStart -= HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd -= HandleAppHoldEnd;
