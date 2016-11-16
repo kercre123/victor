@@ -40,6 +40,8 @@ public static class LocalizationKeys {
 
   public const string kChallengeDetailsNeedsMoreCubesModalTitle = "challengeDetails.needsMoreCubesModal.title";
   public const string kChallengeDetailsNeedsMoreCubesModalDescription = "challengeDetails.needsMoreCubesModal.description";
+  public const string kChallengeDetailsCozmoNotOnTreadsTitle = "challengeDetails.cozmoNotOnTreads.title";
+  public const string kChallengeDetailsCozmoNotOnTreadsDescription = "challengeDetails.cozmoNotOnTreads.description";
   public const string kChallengeDetailsCozmoIsStillWakingUpModalTitle = "challengeDetails.cozmoIsStillWakingUpModal.title";
   public const string kChallengeDetailsCozmoIsStillWakingUpModalDescription = "challengeDetails.cozmoIsStillWakingUpModal.description";
   public const string kChallengeDetailsNeedsMoreCubesModalButton = "challengeDetails.needsMoreCubesModal.button";

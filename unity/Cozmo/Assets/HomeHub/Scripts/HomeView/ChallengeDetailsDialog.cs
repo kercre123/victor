@@ -160,6 +160,9 @@ public class ChallengeDetailsDialog : BaseView {
           if (robot.CurrentBehaviorType == Anki.Cozmo.BehaviorType.DriveOffCharger) {
             OpenCozmoNotReadyAlert();
           }
+          else if (robot.TreadState != Anki.Cozmo.OffTreadsState.OnTreads) {
+            OpenCozmoNotOnTreadsAlert();
+          }
           else {
             ChallengeStarted(_ChallengeId);
           }
@@ -179,6 +182,14 @@ public class ChallengeDetailsDialog : BaseView {
     AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
     alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalDescription;
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
+    this.CloseView();
+  }
+
+  private void OpenCozmoNotOnTreadsAlert() {
+    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsTitle;
+    alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsDescription;
     alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
     this.CloseView();
   }

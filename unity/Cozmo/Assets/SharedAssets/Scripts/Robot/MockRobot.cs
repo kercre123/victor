@@ -721,6 +721,11 @@ public class MockRobot : IRobot {
     private set;
   }
 
+  public OffTreadsState TreadState {
+    get;
+    private set;
+  }
+
   public Anki.Cozmo.GameStatusFlag GameStatus {
     get;
     private set;

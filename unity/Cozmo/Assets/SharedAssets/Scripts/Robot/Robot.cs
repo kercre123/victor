@@ -160,6 +160,7 @@ public class Robot : IRobot {
   public Vector3 Right { get { return Rotation * -Vector3.up; } }
 
   public RobotStatusFlag RobotStatus { get; private set; }
+  public OffTreadsState TreadState { get; private set; }
 
   public GameStatusFlag GameStatus { get; private set; }
 
@@ -380,6 +381,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedFace>(HandleDeletedFace);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugAnimationString>(HandleDebugAnimationString);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotState>(UpdateInfo);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugString>(HandleDebugString);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(UpdateObservedFaceInfo);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
@@ -583,6 +585,7 @@ public class Robot : IRobot {
     }
 
     LightCubes.Clear();
+    TreadState = OffTreadsState.OnTreads; // default from engine.
     RobotStatus = RobotStatusFlag.NoneRobotStatusFlag;
     GameStatus = GameStatusFlag.Nothing;
     WorldPosition = Vector3.zero;
@@ -626,6 +629,10 @@ public class Robot : IRobot {
       WorldPosition = new Vector3(message.pose.x, message.pose.y, message.pose.z);
       Rotation = new Quaternion(message.pose.q1, message.pose.q2, message.pose.q3, message.pose.q0);
     }
+  }
+
+  private void HandleRobotOffTreadsStateChanged(G2U.RobotOffTreadsStateChanged message) {
+    TreadState = message.treadsState;
   }
 
   public LightCube GetLightCubeWithFactoryID(uint factoryID) {
