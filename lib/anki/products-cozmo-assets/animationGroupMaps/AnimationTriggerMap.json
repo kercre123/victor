@@ -725,6 +725,18 @@
       "AnimName": "ag_petdetection_dog"
     },
     {
+      "CladEvent": "PetDetectionShort",
+      "AnimName": "ag_petdetection_shortreaction"
+    },
+    {
+      "CladEvent": "PetDetectionShort_Cat",
+      "AnimName": "ag_petdetection_shortcat"
+    },
+    {
+      "CladEvent": "PetDetectionShort_Dog",
+      "AnimName": "ag_petdetection_shortdog"
+    },
+    {
       "CladEvent": "PetDetectionSneeze",
       "AnimName": "ag_petdetection_misc"
     },
