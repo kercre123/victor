@@ -439,7 +439,7 @@ MonoBehaviour:
   _AppVerLabel: {fileID: 11496856}
   _WifiInstructionsViewPrefab: {fileID: 11483990, guid: a1b31871efbb945608143b5ebf5b66e8,
     type: 2}
-  _WifiAnimationsPrefab: {fileID: 149078, guid: b4dc81f408801477d9e45cae7d19ece5,
+  _WifiAnimationsPrefab: {fileID: 173596, guid: 612167f23913141adb46a0934b398698,
     type: 2}
 --- !u!114 &11477784
 MonoBehaviour:
