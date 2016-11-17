@@ -34,8 +34,8 @@ public:
   
 protected:
   virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void StopInternalReactionary(Robot& robot) override;
-  virtual void StopInternalFromDoubleTap(Robot& robot) override { StopInternalReactionary(robot); }
+  virtual void   StopInternalReactionary(Robot& robot) override;
+  virtual void   StopInternalReactionaryFromDoubleTap(Robot& robot) override { StopInternalReactionary(robot); }
   
   // Returns true if the double tapped object is valid to be reacted to
   bool IsTappedObjectValid(const Robot& robot) const;
