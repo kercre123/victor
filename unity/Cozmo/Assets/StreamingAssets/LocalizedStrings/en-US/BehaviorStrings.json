@@ -43,7 +43,7 @@
     "translation": ""
   },
   "behavior.KnockOverCubes": {
-    "translation": "Cozmo is knocking over Cubes"
+    "translation": "Cozmo is knocking over a stack of Cubes"
   },
   "behavior.PopAWheelie": {
     "translation": "Cozmo is popping a wheelie"
@@ -110,5 +110,8 @@
   },
   "behavior.PickupCube": {
     "translation": "Cozmo is picking up a cube"
+  },
+  "behavior.Workout": {
+    "translation": "Cozmo is doing a workout"
   }
 }

@@ -268,10 +268,10 @@
     "translation": "Cozmo lost track of his Cube and can't continue the game."
   },
   "minigame.timeout.title": {
-    "translation": "Are you still there?"
+    "translation": "The Game has Ended"
   },
   "minigame.timeout.description": {
-    "translation": "Returning to home due to lack of input."
+    "translation": "Cozmo is tired of waiting, and wants to do other things."
   },
   "speedTap.dontMoveBlock.title": {
     "translation": "Cozmo's Cube has moved!"
