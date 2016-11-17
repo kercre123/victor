@@ -23,8 +23,10 @@ MonoBehaviour:
   TitleKey: unlockable.cozmoSays.Title
   SparkButtonDescription: 
   SparkedStateDescription: 
+  SparkedMusicState:
+    _Sparked: 0
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 0
+  UpgradeCostAmountNeeded: 4
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
