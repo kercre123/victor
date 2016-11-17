@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &100068
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -53,7 +53,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &109766
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -68,7 +68,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &112124
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -83,7 +83,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &112620
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -98,27 +98,9 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &118536
-GameObject:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22454694}
-  - 222: {fileID: 22252144}
-  - 95: {fileID: 9513098}
-  - 225: {fileID: 22508702}
-  m_Layer: 5
-  m_Name: WifiAnimations
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!1 &123494
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -245,6 +227,8 @@ GameObject:
   m_Component:
   - 224: {fileID: 22461814}
   - 222: {fileID: 22277488}
+  - 95: {fileID: 9552322}
+  - 225: {fileID: 22576594}
   m_Layer: 5
   m_Name: WifiAnimations
   m_TagString: Untagged
@@ -305,7 +289,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &187932
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -372,13 +356,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!95 &9513098
+--- !u!95 &9552322
 Animator:
   serializedVersion: 3
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 118536}
+  m_GameObject: {fileID: 173596}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 1b04aad9079414e61ba50043ab68a99e, type: 2}
@@ -953,12 +937,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 112620}
---- !u!222 &22252144
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 118536}
 --- !u!222 &22261966
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -1095,7 +1073,7 @@ RectTransform:
   - {fileID: 22430792}
   - {fileID: 22445976}
   - {fileID: 22426308}
-  m_Father: {fileID: 22454694}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1114,7 +1092,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22400822}
-  m_Father: {fileID: 22454694}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 4
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
@@ -1132,7 +1110,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -43.149998}
   m_Children: []
-  m_Father: {fileID: 22454694}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1186,7 +1164,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22454694}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 3
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1296,36 +1274,12 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22410206}
-  m_Father: {fileID: 22454694}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 5
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 745, y: 526.35333}
   m_SizeDelta: {x: 828, y: 160}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!224 &22454694
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 118536}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children:
-  - {fileID: 22417654}
-  - {fileID: 22489250}
-  - {fileID: 22421532}
-  - {fileID: 22429022}
-  - {fileID: 22419808}
-  - {fileID: 22451818}
-  m_Father: {fileID: 22461814}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22460988
 RectTransform:
@@ -1356,11 +1310,16 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
-  - {fileID: 22454694}
+  - {fileID: 22417654}
+  - {fileID: 22489250}
+  - {fileID: 22421532}
+  - {fileID: 22429022}
+  - {fileID: 22419808}
+  - {fileID: 22451818}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1435,7 +1394,7 @@ RectTransform:
   - {fileID: 22470242}
   - {fileID: 22427294}
   - {fileID: 22466754}
-  m_Father: {fileID: 22454694}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -1453,12 +1412,12 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!225 &22508702
+--- !u!225 &22576594
 CanvasGroup:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 118536}
+  m_GameObject: {fileID: 173596}
   m_Enabled: 1
   m_Alpha: 0
   m_Interactable: 1
