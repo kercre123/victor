@@ -164,11 +164,11 @@
         {
           "type" : "sparks",
           "minTimeSecs": 0,
-          "maxTimeSecs": 120,
+          "maxTimeSecs": 60,
           "numberOfRepetitions": 1,
           "behaviorObjective": "PerformedWorkout",
           "softSparkTrigger": "SoftSparkUpgradeLift",
-          // this are the behaviors that are allowed in this behavior chooser
+          // these are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksWorkout" ]
         },
         "goalStrategy":
@@ -189,7 +189,7 @@
           "behaviorObjective": "BuiltPyramid",
           "softSparkTrigger": "SoftSparkUpgradeLift",
           "sparksSuccessTrigger": "", // don't play any animation
-          // this are the behaviors that are allowed in this behavior chooser
+          // these are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksBuildPyramid" ]
         },
         "goalStrategy":
