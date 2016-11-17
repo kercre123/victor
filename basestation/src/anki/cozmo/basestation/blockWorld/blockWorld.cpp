@@ -4468,9 +4468,23 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
           return false;
         }
         
-        const Point2f projectedCentroid(candidateWrtOrigin.GetTranslation()); // Drops Z coordinate
-        const bool withinProjectedQuad = refProjectedQuad.Contains(projectedCentroid);
-        if(!withinProjectedQuad)
+        //re-assign z coordinate for intersection check
+        const float candidateCurrentZ = candidateWrtOrigin.GetTranslation().z();
+        Vec3f candidateProjectedTranslation = {candidateWrtOrigin.GetTranslation().x(),
+                                                     candidateWrtOrigin.GetTranslation().y(),
+                                                     refWrtOrigin.GetTranslation().z()};
+        candidateWrtOrigin.SetTranslation(candidateProjectedTranslation);
+        
+        // perform intersection check
+        const Quad2f candidateProjected = candidateObject->GetBoundingQuadXY(candidateWrtOrigin);
+        const bool projectedQuadsIntersect = refProjectedQuad.Intersects(candidateProjected);
+        
+        // restore candidate z
+        candidateProjectedTranslation.z() = candidateCurrentZ;
+        candidateWrtOrigin.SetTranslation(candidateProjectedTranslation);
+
+
+        if(!projectedQuadsIntersect)
         {
           return false;
         }

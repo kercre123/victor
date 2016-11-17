@@ -809,9 +809,9 @@ TEST(BlockWorld, CubeStacks)
   ASSERT_EQ(nullptr, foundObject);
   
   
-  // Put Object 2 at the right height to be on top of Object 1, but with its
-  // center of mass _not_ above Object 1. So this should not be considered On Top Of.
-  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -30.f, 66.f}, &robot.GetPose());
+  // Put Object 2 at the right height to be on top of Object 1,
+  // but move it off to the side so that the quads don't intersect
+  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -45.f, 66.f}, &robot.GetPose());
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, notAbovePose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
