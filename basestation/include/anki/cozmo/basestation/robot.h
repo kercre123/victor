@@ -467,8 +467,10 @@ public:
     
   // Places the object that the robot was carrying in its current position
   // w.r.t. the world, and removes it from the lift pose chain so it is no
-  // longer "attached" to the robot.
-  Result SetCarriedObjectAsUnattached();
+  // longer "attached" to the robot. Set clearObjects=true to call
+  // BlockWorld::ClearObject() on all carried objects at the end (e.g. to set
+  // objects' pose states as Unknown instead of the default Dirty)
+  Result SetCarriedObjectAsUnattached(bool clearObjects = false);
 
   //
   // Object Stacking

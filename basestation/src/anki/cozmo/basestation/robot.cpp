@@ -556,12 +556,8 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     {
       // If we're falling or not upright and were carrying something, assume we
       // are no longer carrying that something and don't know where it is anymore
-      auto carriedObjectIDs = GetCarryingObjects();
-      SetCarriedObjectAsUnattached(); // Marks carried objects as Dirty
-      for(auto & objectID : carriedObjectIDs)
-      {
-        _blockWorld->ClearObject(objectID); // Mark the carried objects as Unknown
-      }
+      const bool clearObjects = true; // To mark as Unknown, not just Dirty
+      SetCarriedObjectAsUnattached(clearObjects);
     }
 
     // if the robot was on the charging platform and its state changes it's not on the platform anymore
@@ -3085,7 +3081,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
 } // AttachObjectToLift()
     
     
-Result Robot::SetCarriedObjectAsUnattached()
+Result Robot::SetCarriedObjectAsUnattached(bool clearObjects)
 {
   if(IsCarryingObject() == false) {
     PRINT_NAMED_WARNING("Robot.SetCarriedObjectAsUnattached.CarryingObjectNotSpecified",
@@ -3111,6 +3107,11 @@ Result Robot::SetCarriedObjectAsUnattached()
     return RESULT_FAIL;
   }
   
+  // Initially just mark the pose as Dirty. Iff clearObject=true, then the ClearObject
+  // call at the end will mark as Unknown. This is necessary because there are some
+  // unfortunate ordering dependencies with how we set the pose, set the pose state, and
+  // unset the carrying objects below. It's safer to do all of that, and _then_
+  // clear the objects at the end.
   Result poseResult = GetObjectPoseConfirmer().AddRobotRelativeObservation(object, placedPoseWrtRobot, PoseState::Dirty);
   if(RESULT_OK != poseResult)
   {
@@ -3125,7 +3126,10 @@ Result Robot::SetCarriedObjectAsUnattached()
                    object->GetPose().GetTranslation().y(),
                    object->GetPose().GetTranslation().z());
 
-  UnSetCarryingObjects(); // also sets carried objects as not being carried anymore
+  // Store the object IDs we were carrying before we unset them so we can clear them later if needed
+  auto carriedObjectIDs = GetCarryingObjects();
+  
+  UnSetCarryingObjects(); 
   _carryingMarker = nullptr;
       
   if(_carryingObjectOnTopID.IsSet()) {
@@ -3157,7 +3161,15 @@ Result Robot::SetCarriedObjectAsUnattached()
     PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached", "Updated object %d on top of carried object.",
                      objectOnTop->GetID().GetValue());
   }
-      
+  
+  if(clearObjects)
+  {
+    for(auto const& objectID : carriedObjectIDs)
+    {
+      GetBlockWorld().ClearObject(objectID); // Marks as unknown
+    }
+  }
+    
   return RESULT_OK;
       
 } // UnattachCarriedObject()

@@ -62,6 +62,14 @@ Result BehaviorReactToPickup::InitInternalReactionary(Robot& robot)
   
 void BehaviorReactToPickup::StartAnim(Robot& robot)
 {
+  // If we're carrying anything, the reaction will cause us to throw it, so unattach
+  // and set as unknown pose
+  if(robot.IsCarryingObject())
+  {
+    const bool clearCarriedObjects = true; // to mark as unknown, not just dirty
+    robot.SetCarriedObjectAsUnattached(clearCarriedObjects);
+  }
+  
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToPickup));
   
   const double minTime = _repeatAnimatingMultiplier * kMinTimeBetweenPickupAnims_sec;

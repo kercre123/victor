@@ -83,6 +83,8 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   if(newPoseState == PoseState::Unknown)
   {
     MarkObjectUnknown(object);
+    
+    // TODO: ClearObject also calls MarkObjectUnknown(). Necessary to call twice? (COZMO-7128)
     _robot.GetBlockWorld().ClearObject(object);
   }
   
