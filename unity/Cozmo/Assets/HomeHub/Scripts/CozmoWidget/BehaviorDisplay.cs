@@ -209,6 +209,9 @@ public class BehaviorDisplay : MonoBehaviour {
     case BehaviorType.PickUpCube:
       ret = Localization.Get(LocalizationKeys.kBehaviorPickupCube);
       break;
+    case BehaviorType.CubeLiftWorkout:
+      ret = Localization.Get(LocalizationKeys.kBehaviorWorkout);
+      break;
     default:
       break;
     }

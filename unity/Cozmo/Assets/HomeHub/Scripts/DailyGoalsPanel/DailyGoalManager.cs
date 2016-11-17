@@ -255,6 +255,30 @@ public class DailyGoalManager : MonoBehaviour {
     }
   }
 
+  public bool IsAnyGoalActiveForGame(string ChallengeID) {
+    if (DataPersistenceManager.Instance != null) {
+      if (DataPersistenceManager.Instance.CurrentSession != null) {
+        List<DailyGoal> goals = DataPersistenceManager.Instance.CurrentSession.DailyGoals;
+        if (goals != null) {
+          for (int i = 0; i < goals.Count; i++) {
+            if (!goals[i].GoalComplete) {
+              List<GoalCondition> conditions = goals[i].ProgConditions;
+              for (int j = 0; j < conditions.Count; j++) {
+                if (conditions[j] is ChallengeIDCondition) {
+                  ChallengeIDCondition idCondition = (ChallengeIDCondition)conditions[j];
+                  if (idCondition.ChallengeID == ChallengeID) {
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   // Handle DailyGoalProgression event, checking current goals and progressing those that have
   // their desired goalEvent and goalConditions met
   private void ProgressDailyGoals(GameEventWrapper goalEvent) {

@@ -88,7 +88,7 @@
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
-          <SelectedForBatchBuild>1</SelectedForBatchBuild>
+          <SelectedForBatchBuild>0</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
         </TargetCommonOption>
         <CommonProperty>
@@ -334,7 +334,7 @@
               <MiscControls>--no_exceptions</MiscControls>
               <Define>TARGET_K02,COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>.;supervisor/src;include;k02_hal/lib;k02_hal/;k02_hal/startup;k02_hal/lib/device;k02_hal/lib/drivers;k02_hal/lib/hal;generated/clad/robot;.\supervisor\src;k02_hal/hal</IncludePath>
+              <IncludePath>.;supervisor/src;include;lib;;startup;lib/device;lib/drivers;lib/hal;generated/clad/robot;.\supervisor\src;hal</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -364,7 +364,7 @@
             <TextAddressRange>0x00000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile>.\k02_hal\scatter.scf</ScatterFile>
+            <ScatterFile>.\scatter.scf</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc>--remove</Misc>
@@ -380,97 +380,97 @@
             <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>k02_hal/hal/main.cpp</FilePath>
+              <FilePath>hal/main.cpp</FilePath>
             </File>
             <File>
               <FileName>camera.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\camera.cpp</FilePath>
+              <FilePath>.\hal\camera.cpp</FilePath>
             </File>
             <File>
               <FileName>i2c.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\i2c.cpp</FilePath>
+              <FilePath>.\hal\i2c.cpp</FilePath>
             </File>
             <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\timer.cpp</FilePath>
+              <FilePath>.\hal\timer.cpp</FilePath>
             </File>
             <File>
               <FileName>enjpeg.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\enjpeg.cpp</FilePath>
+              <FilePath>.\hal\enjpeg.cpp</FilePath>
             </File>
             <File>
               <FileName>dac.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
+              <FilePath>.\hal\dac.cpp</FilePath>
             </File>
             <File>
               <FileName>oled.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
+              <FilePath>.\hal\oled.cpp</FilePath>
             </File>
             <File>
               <FileName>spi.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
+              <FilePath>.\hal\spi.cpp</FilePath>
             </File>
             <File>
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
+              <FilePath>.\hal\uart.cpp</FilePath>
             </File>
             <File>
               <FileName>debug.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
+              <FilePath>.\hal\debug.cpp</FilePath>
             </File>
             <File>
               <FileName>wifi.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\wifi.cpp</FilePath>
+              <FilePath>.\hal\wifi.cpp</FilePath>
             </File>
             <File>
               <FileName>imu.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
+              <FilePath>.\hal\imu.cpp</FilePath>
             </File>
             <File>
               <FileName>motors.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\motors.cpp</FilePath>
+              <FilePath>.\hal\motors.cpp</FilePath>
             </File>
             <File>
               <FileName>lights.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\lights.cpp</FilePath>
+              <FilePath>.\hal\lights.cpp</FilePath>
             </File>
             <File>
               <FileName>spine.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\spine.cpp</FilePath>
+              <FilePath>.\hal\spine.cpp</FilePath>
             </File>
             <File>
               <FileName>watchdog.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\watchdog.cpp</FilePath>
+              <FilePath>.\hal\watchdog.cpp</FilePath>
             </File>
             <File>
               <FileName>power.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
+              <FilePath>.\hal\power.cpp</FilePath>
             </File>
             <File>
               <FileName>crashlogger.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\crashlogger.cpp</FilePath>
+              <FilePath>.\hal\crashlogger.cpp</FilePath>
             </File>
             <File>
               <FileName>bootloader.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\bootloader.cpp</FilePath>
+              <FilePath>.\hal\bootloader.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -480,7 +480,7 @@
             <File>
               <FileName>startup_MK02F12810.s</FileName>
               <FileType>2</FileType>
-              <FilePath>k02_hal/startup/startup_MK02F12810.s</FilePath>
+              <FilePath>startup/startup_MK02F12810.s</FilePath>
             </File>
           </Files>
         </Group>

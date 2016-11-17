@@ -2,7 +2,7 @@
 #define SPINE_DATA_H
 
 #include <stdint.h>
-#include "hal/portable.h"
+#include "../hal/portable.h"
 #include "anki/cozmo/robot/ctassert.h"
 
 #pragma anon_unions

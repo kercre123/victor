@@ -609,12 +609,14 @@ protected:
 
   virtual Result InitInternal(Robot& robot) override final;
   virtual void   StopInternal(Robot& robot) override final;
+  virtual void   StopInternalFromDoubleTap(Robot& robot) override final { StopInternal(robot); }
   
   //Never Called - reactionary behaviors don't resume
   virtual Result ResumeInternal(Robot& robot) override final;
   
   virtual Result InitInternalReactionary(Robot& robot) = 0;
   virtual void   StopInternalReactionary(Robot& robot){};
+  virtual void   StopInternalReactionaryFromDoubleTap(Robot& robot) { if(!RequiresObjectTapped()) { StopInternalReactionary(robot); } }
 
   void LoadConfig(Robot& robot, const Json::Value& config);
   

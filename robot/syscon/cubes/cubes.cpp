@@ -15,6 +15,7 @@
 #include "head.h"
 #include "lights.h"
 #include "messages.h"
+#include "portable.h"
 
 #include "clad/robotInterface/messageFromActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine.h"

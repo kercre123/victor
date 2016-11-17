@@ -33,6 +33,7 @@ public static class LocalizationKeys {
   public const string kBehaviorReactToUnexpectedMovement = "behavior.ReactToUnexpectedMovement";
   public const string kBehaviorDriveOffCharger = "behavior.DriveOffCharger";
   public const string kBehaviorPickupCube = "behavior.PickupCube";
+  public const string kBehaviorWorkout = "behavior.Workout";
 
   #endregion
 
@@ -248,22 +249,26 @@ public static class LocalizationKeys {
   public const string kHelpTipsStringsSlide1Title = "helpTipsStrings.Slide1.title";
   public const string kHelpTipsStringsSlide1Body = "helpTipsStrings.Slide1.body";
   public const string kHelpTipsStringsSlide2Title = "helpTipsStrings.Slide2.title";
-  public const string kHelpTipsStringsSlide2Body = "helpTipsStrings.Slide2.body";
-  public const string kHelpTipsStringsSlide2BodyUpgrade = "helpTipsStrings.Slide2.bodyUpgrade";
-  public const string kHelpTipsStringsSlide2BodyApp = "helpTipsStrings.Slide2.bodyApp";
+  public const string kHelpTipsStringsSlide2Subtitle1 = "helpTipsStrings.Slide2.subtitle1";
+  public const string kHelpTipsStringsSlide2Subtitle2 = "helpTipsStrings.Slide2.subtitle2";
+  public const string kHelpTipsStringsSlide2Subtitle3 = "helpTipsStrings.Slide2.subtitle3";
   public const string kHelpTipsStringsSlide3Title = "helpTipsStrings.Slide3.title";
   public const string kHelpTipsStringsSlide3Body = "helpTipsStrings.Slide3.body";
-  public const string kHelpTipsStringsSlide3BodyEnergy = "helpTipsStrings.Slide3.bodyEnergy";
-  public const string kHelpTipsStringsSlide3BodyBits = "helpTipsStrings.Slide3.bodyBits";
-  public const string kHelpTipsStringsSlide3BodySparks = "helpTipsStrings.Slide3.bodySparks";
+  public const string kHelpTipsStringsSlide3BodyUpgrade = "helpTipsStrings.Slide3.bodyUpgrade";
+  public const string kHelpTipsStringsSlide3BodyApp = "helpTipsStrings.Slide3.bodyApp";
   public const string kHelpTipsStringsSlide4Title = "helpTipsStrings.Slide4.title";
   public const string kHelpTipsStringsSlide4Body = "helpTipsStrings.Slide4.body";
+  public const string kHelpTipsStringsSlide4BodyEnergy = "helpTipsStrings.Slide4.bodyEnergy";
+  public const string kHelpTipsStringsSlide4BodyBits = "helpTipsStrings.Slide4.bodyBits";
+  public const string kHelpTipsStringsSlide4BodySparks = "helpTipsStrings.Slide4.bodySparks";
   public const string kHelpTipsStringsSlide5Title = "helpTipsStrings.Slide5.title";
   public const string kHelpTipsStringsSlide5Body = "helpTipsStrings.Slide5.body";
   public const string kHelpTipsStringsSlide6Title = "helpTipsStrings.Slide6.title";
   public const string kHelpTipsStringsSlide6Body = "helpTipsStrings.Slide6.body";
   public const string kHelpTipsStringsSlide7Title = "helpTipsStrings.Slide7.title";
-  public const string kHelpTipsStringsSlide7Body = "helpTipsStrings.Slide7.body";
+  public const string kHelpTipsStringsSlide7Subtitle1 = "helpTipsStrings.Slide7.subtitle1";
+  public const string kHelpTipsStringsSlide7Subtitle2 = "helpTipsStrings.Slide7.subtitle2";
+  public const string kHelpTipsStringsSlide7Subtitle3 = "helpTipsStrings.Slide7.subtitle3";
   public const string kHelpTipsStringsSlide8Title = "helpTipsStrings.Slide8.title";
   public const string kHelpTipsStringsSlide8Body = "helpTipsStrings.Slide8.body";
   public const string kHelpTipsStringsSlide9Title = "helpTipsStrings.Slide9.title";

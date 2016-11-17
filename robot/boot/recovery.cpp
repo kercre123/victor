@@ -1,4 +1,4 @@
-#include "../../include/anki/cozmo/robot/rec_protocol.h"
+#include "../include/anki/cozmo/robot/rec_protocol.h"
 
 #include "MK02F12810.h"
 #include "recovery.h"
@@ -10,7 +10,7 @@
 #include "sideload.h"
 
 #include "portable.h"
-#include "../../k02_hal/hal/hardware.h"
+#include "../hal/hardware.h"
 
 using namespace Anki::Cozmo::HAL;
 

@@ -276,14 +276,14 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void HandleHowToPlayClicked() {
       if (UIManager.Instance.NumberOfOpenDialogues() == 0) {
-        OpenHowToPlayView(showCloseButton: true);
+        OpenHowToPlayView(showCloseButton: true, playAnimations: false);
       }
     }
 
-    public void OpenHowToPlayView(bool showCloseButton) {
+    public void OpenHowToPlayView(bool showCloseButton, bool playAnimations) {
       if (_HowToPlayViewInstance == null) {
         _HowToPlayViewInstance = UIManager.OpenView<DroneModeHowToPlayView>(_HowToPlayViewPrefab);
-        _HowToPlayViewInstance.ShowCloseButton(showCloseButton);
+        _HowToPlayViewInstance.Initialize(showCloseButton, playAnimations);
         if (showCloseButton) {
           _HowToPlayViewInstance.ViewClosed += HandleHowToPlayViewClosed;
           _HowToPlayButton.gameObject.SetActive(false);

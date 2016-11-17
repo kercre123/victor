@@ -7,8 +7,8 @@
 #include "power.h"
 #include "timer.h"
 #include "portable.h"
-#include "../../k02_hal/hal/hardware.h"
-#include "../../include/anki/cozmo/robot/rec_protocol.h"
+#include "../hal/hardware.h"
+#include "../include/anki/cozmo/robot/rec_protocol.h"
 
 uint16_t Anki::Cozmo::HAL::SPI::readWord(void) {
   while(~SPI0_SR & SPI_SR_RFDF_MASK) ;  // Wait for a byte

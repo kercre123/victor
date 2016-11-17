@@ -6,7 +6,7 @@
 #include "spi.h"
 
 #include "portable.h"
-#include "../../k02_hal/hal/hardware.h"
+#include "../hal/hardware.h"
 
 // This powers up the camera, OLED, and ESP8266 while respecting power sequencing rules
 void Anki::Cozmo::HAL::Power::init()

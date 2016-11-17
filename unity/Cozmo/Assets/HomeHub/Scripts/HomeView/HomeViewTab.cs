@@ -26,10 +26,7 @@ namespace Cozmo.HomeHub {
         _TabPanelsList.Add(newTabPanel);
         _TotalPanelsWidth += _TabViewPanelPrefabs[i].GetComponent<UnityEngine.UI.LayoutElement>().minWidth;
       }
-
-      if (_DisableGameRequestsWhenOpen) {
-        RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
-      }
+      EnableGameRequestsIfAllowed(!_DisableGameRequestsWhenOpen);
     }
 
     public float GoToIndex(int index) {
@@ -56,6 +53,15 @@ namespace Cozmo.HomeHub {
     void OnDestroy() {
       if (_DisableGameRequestsWhenOpen) {
         RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+      }
+    }
+
+    public void EnableGameRequestsIfAllowed(bool enable) {
+      if (enable && !_DisableGameRequestsWhenOpen) {
+        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+      }
+      else {
+        RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
       }
     }
   }

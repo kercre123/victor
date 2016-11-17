@@ -1094,7 +1094,7 @@ void IReactionaryBehavior::StopInternal(Robot& robot)
   robot.GetMoveComponent().IgnoreDirectDriveMessages(false);
   robot.SetIgnoreExternalActions(false);
   
-  (RequiresObjectTapped() ? StopInternalFromDoubleTap(robot) : StopInternalReactionary(robot));
+  (RequiresObjectTapped() ? StopInternalReactionaryFromDoubleTap(robot) : StopInternalReactionary(robot));
 }
   
 void IReactionaryBehavior::LoadConfig(Robot& robot, const Json::Value& config)
