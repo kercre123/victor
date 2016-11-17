@@ -439,7 +439,11 @@ void LightsComponent::UpdateBackpackLights()
     // If we are going to the off state go back to what the lights were before
     if(state == BackpackLightsState::OffCharger)
     {
-      SetBackpackLightsInternal(_currentBackpackLights);
+      if(_loopingBackpackLights){
+        SetBackpackLightsInternal(_currentLoopingBackpackLights);
+      }else{
+        SetBackpackLightsInternal(_currentBackpackLights);
+      }
     }
     else
     {
@@ -1219,7 +1223,9 @@ void LightsComponent::StartLoopingBackpackLights(const BackpackLights& lights)
 
   _loopingBackpackLights = true;
   _currentLoopingBackpackLights = lights;
-  SetBackpackLightsInternal(lights);
+  if(_curBackpackState == BackpackLightsState::OffCharger){
+    SetBackpackLightsInternal(lights);
+  }
 }
 
 void LightsComponent::StopLoopingBackpackLights()
@@ -1229,7 +1235,9 @@ void LightsComponent::StopLoopingBackpackLights()
     _loopingBackpackLights = false;
     PRINT_CH_INFO("LightsComponent", "LightsComponent.StopLoopingBackpackLights",
                   "Stopping looping backpack lights returning to previous pattern");
-    SetBackpackLightsInternal(_currentBackpackLights);
+    if(_curBackpackState == BackpackLightsState::OffCharger){
+      SetBackpackLightsInternal(_currentBackpackLights);
+    }
   }
 }
 

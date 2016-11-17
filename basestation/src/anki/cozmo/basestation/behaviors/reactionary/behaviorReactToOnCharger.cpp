@@ -84,6 +84,7 @@ Result BehaviorReactToOnCharger::InitInternalReactionary(Robot& robot)
   
   robot.GetBehaviorManager().SetReactionaryBehaviorsEnabled(false);
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>();
+  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
   
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));
   robot.GetExternalInterface()->BroadcastToEngine<StartIdleTimeout>(_timeTilSleepAnimation_s, _timeTilDisconnect_s);
@@ -92,6 +93,7 @@ Result BehaviorReactToOnCharger::InitInternalReactionary(Robot& robot)
   
 void BehaviorReactToOnCharger::StopInternalReactionary(Robot& robot)
 {
+  robot.GetAnimationStreamer().PopIdleAnimation();
   robot.GetBehaviorManager().SetReactionaryBehaviorsEnabled(true);
 }
   
