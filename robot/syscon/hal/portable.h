@@ -1,5 +1,5 @@
-#ifndef PORTABLE_H
-#define PORTABLE_H
+#ifndef __PORTABLE_H
+#define __PORTABLE_H
 
 typedef unsigned char       u8;
 typedef unsigned short      u16;

@@ -16,6 +16,7 @@ extern "C" {
 #include "timer.h"
 #include "head.h"
 
+#include "portable.h"
 #include "messages.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"

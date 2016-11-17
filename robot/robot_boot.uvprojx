@@ -336,7 +336,7 @@
 --gnu</MiscControls>
               <Define>COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>k02_hal/lib;include;k02_hal;../crypto;./sideload</IncludePath>
+              <IncludePath>lib;include;../crypto;./sideload</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

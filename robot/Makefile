@@ -6,7 +6,7 @@
 
 ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
-ANKI_LOG_SRC_DIRS=supervisor/src k02_hal espressif/app sim_hal/ syscon/hal
+ANKI_LOG_SRC_DIRS=supervisor/src hal espressif/app sim_hal/ syscon/hal
 
 UV4=C:/Keil_v5/UV4/UV4.exe
 PY=python3
