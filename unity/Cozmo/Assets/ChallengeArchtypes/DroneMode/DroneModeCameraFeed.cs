@@ -45,6 +45,7 @@ namespace Cozmo.Minigame.DroneMode {
     private float _CameraImageScale;
 
     private bool _ShowReticles = true;
+    public bool AllowChangeFocus { get; set; }
 
     // TODO: Replace text field
     public AnkiTextLabel DebugTextField;
@@ -72,10 +73,11 @@ namespace Cozmo.Minigame.DroneMode {
 
       _ReticlePool = new SimpleObjectPool<DroneModeCameraReticle>(CreateReticle, ResetReticle, 0);
       _FocusedObjectFrameImage.gameObject.SetActive(false);
+      AllowChangeFocus = true;
     }
 
     private void Update() {
-      if (_ShowReticles) {
+      if (_ShowReticles && AllowChangeFocus) {
         ShowDataForClosestVisibleObject();
         DebugTextField.text = FormatCurrentSeenObjects();
       }

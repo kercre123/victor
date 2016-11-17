@@ -37,6 +37,7 @@ namespace Cozmo {
             if (_IsPerformingAction != value) {
               _IsPerformingAction = value;
               UpdateIdleReactionaryBehaviors();
+              _DroneModeControlsSlide.AllowChangeFocus = !_IsPerformingAction;
             }
           }
         }

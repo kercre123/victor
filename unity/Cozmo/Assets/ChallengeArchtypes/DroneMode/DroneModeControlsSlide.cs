@@ -40,6 +40,14 @@ namespace Cozmo.Minigame.DroneMode {
 
     public bool ShowDebugTextFields = true;
 
+    public bool AllowChangeFocus {
+      set {
+        if (_CameraFeed != null) {
+          _CameraFeed.AllowChangeFocus = value;
+        }
+      }
+    }
+
     [SerializeField]
     private CozmoStickySlider _SpeedThrottle;
 
