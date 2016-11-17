@@ -62,6 +62,7 @@ namespace Cozmo {
 
           GameObject slide = _DroneModeGame.SharedMinigameView.ShowFullScreenGameStateSlide(
                                _DroneModeGame.DroneModeViewPrefab.gameObject, "drone_mode_view_slide");
+          _DroneModeGame.SharedMinigameView.HideTitleWidget();
           _DroneModeControlsSlide = slide.GetComponent<DroneModeControlsSlide>();
           _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           _DroneModeControlsSlide.InitializeLiftSlider(_TargetLiftFactor);

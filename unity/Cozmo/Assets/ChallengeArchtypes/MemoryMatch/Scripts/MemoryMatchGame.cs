@@ -256,10 +256,6 @@ namespace MemoryMatch {
         }
       }
       base.ShowWinnerState(currentEndState, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count));
-      // Add the Game Label again which the in game FullScreen cleared.
-      Cozmo.MinigameWidgets.ChallengeTitleWidget titleWidget = SharedMinigameView.TitleWidget;
-      titleWidget.Text = Localization.Get(_ChallengeData.ChallengeTitleLocKey);
-      titleWidget.SubtitleText = "";
 
       // Set Final Music State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Fanfare);
@@ -329,7 +325,6 @@ namespace MemoryMatch {
       if (_MemoryMatchTurnSlide == null) {
         _MemoryMatchTurnSlide = SharedMinigameView.ShowFullScreenGameStateSlide(
           _MemoryMatchTurnSlidePrefab.gameObject, "MemoryMatch_turn_slide");
-        SharedMinigameView.HideShelf();
 
         MemoryMatchTurnSlide turnUI = _MemoryMatchTurnSlide.GetComponent<MemoryMatchTurnSlide>();
         turnUI.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman);

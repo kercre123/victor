@@ -809,7 +809,6 @@ namespace Cozmo {
         HideGameStateSlide();
         HidePlayerScoreboard();
         HideCozmoScoreboard();
-        HideTitleWidget();
         HideShelf();
         HideContinueButton();
         return ShowGameStateSlide(slideDasName, prefab, _FullScreenGameSlideContainer, endInTweenCallback, 0f);
