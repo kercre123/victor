@@ -533,7 +533,7 @@ namespace Cozmo.HomeHub {
       else {
         // Otherwise set minigame need and update chest progress bar to whatever it should be at as
         // we enter the view.
-        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+        EnableGameRequestsIfAllowed(true);
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       }
     }
@@ -584,7 +584,7 @@ namespace Cozmo.HomeHub {
       }
       else {
         // Update Minigame need now that daily goal progress has changed
-        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+        EnableGameRequestsIfAllowed(true);
       }
     }
 
@@ -605,6 +605,7 @@ namespace Cozmo.HomeHub {
       }
       _LootSequenceActive = true;
       _EmotionChipTag.gameObject.SetActive(false);
+      EnableGameRequestsIfAllowed(false);
 
       AssetBundleManager.Instance.LoadAssetBundleAsync(_LootViewPrefabData.AssetBundle, (bool success) => {
         if (success) {
@@ -639,10 +640,18 @@ namespace Cozmo.HomeHub {
       }
     }
 
+    // If enabling is allowed by the tab, enable, otherwise ignore
+    public void EnableGameRequestsIfAllowed(bool isEnabled) {
+      if (_CurrentTabInstance != null) {
+        _CurrentTabInstance.EnableGameRequestsIfAllowed(isEnabled);
+      }
+    }
+
     private void HandleLootViewCloseAnimationFinished() {
       _EmotionChipTag.gameObject.SetActive(true);
       RewardSequenceActive = false;
       _LootSequenceActive = false;
+      EnableGameRequestsIfAllowed(true);
       CheckIfUnlockablesAffordableAndUpdateBadge();
       // Snap to zero, then tween to current progress
       UpdateChestProgressBar(0, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
@@ -653,7 +662,7 @@ namespace Cozmo.HomeHub {
     // and other obnoxious logic when we are doing pretty things with particles
     public Sequence EnergyRewardsBurst(int pointsEarned, Transform energySource, Sequence rewardSeqeuence) {
       RewardSequenceActive = true;
-      RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
+      EnableGameRequestsIfAllowed(false);
       GenericRewardsConfig rc = GenericRewardsConfig.Instance;
       int rewardCount = Mathf.CeilToInt((float)pointsEarned / (float)rc.ExpPerParticleEffect);
       for (int i = 0; i < rewardCount; i++) {
@@ -694,7 +703,7 @@ namespace Cozmo.HomeHub {
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       if (ChestRewardManager.Instance.ChestPending == false) {
         RewardSequenceActive = false;
-        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+        EnableGameRequestsIfAllowed(true);
         UIManager.EnableTouchEvents();
       }
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
@@ -757,6 +766,8 @@ namespace Cozmo.HomeHub {
       alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Request_Game);
       _RequestDialog = alertView;
+
+      RobotEngineManager.Instance.RequestGameManager.StartGameRequested();
     }
 
     private void HandleMiniGameRejection() {
@@ -816,7 +827,7 @@ namespace Cozmo.HomeHub {
       if (_RequestDialog != null) {
         _RequestDialog.CloseView();
         RobotEngineManager.Instance.RequestGameManager.StartRejectedRequestCooldown();
-        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+        EnableGameRequestsIfAllowed(true);
       }
     }
 
@@ -825,7 +836,7 @@ namespace Cozmo.HomeHub {
       if (_RequestDialog != null) {
         _RequestDialog.ViewClosed -= HandleRequestDialogClose;
         RobotEngineManager.Instance.RequestGameManager.StartRejectedRequestCooldown();
-        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+        EnableGameRequestsIfAllowed(true);
       }
     }
 

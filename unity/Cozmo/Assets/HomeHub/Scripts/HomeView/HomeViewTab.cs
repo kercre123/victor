@@ -23,15 +23,15 @@ namespace Cozmo.HomeHub {
         newTabPanel.Initialize(homeViewInstance);
         _TabPanelsList.Add(newTabPanel);
       }
-
-      if (_DisableGameRequestsWhenOpen) {
-        RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
-      }
+      EnableGameRequestsIfAllowed(!_DisableGameRequestsWhenOpen);
     }
 
-    void OnDestroy() {
-      if (_DisableGameRequestsWhenOpen) {
+    public void EnableGameRequestsIfAllowed(bool enable) {
+      if (enable && !_DisableGameRequestsWhenOpen) {
         RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+      }
+      else {
+        RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
       }
     }
   }

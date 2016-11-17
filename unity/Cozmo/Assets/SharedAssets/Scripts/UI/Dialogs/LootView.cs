@@ -244,7 +244,6 @@ namespace Cozmo.UI {
 
       StartCoroutine(InitializeBox());
       _BoxOpened = false;
-      RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
       _LootText.gameObject.SetActive(false);
 
       GameObject banner = UIManager.CreateUIElement(_BannerPrefab.gameObject, _BannerContainer);
@@ -565,7 +564,6 @@ namespace Cozmo.UI {
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();
       _TronPool.ReturnAllObjectsToPool();
-      RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
       StopCoroutine(InitializeBox());
       StopTweens();
     }
