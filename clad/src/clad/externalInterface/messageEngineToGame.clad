@@ -79,7 +79,7 @@ message UiDeviceConnected {
 
 message EngineRobotCLADVersionMismatch {
   bool engineToRobotMismatch,
-  bool robotToEngineMistmatch,
+  bool robotToEngineMismatch,
   string  engineEnginetoRobotHash,	// Engine's calculated hash for the engine to robot messages
   string  engineRobotToEngineHash,	// Engine's calculated hash for the robot to engine messages
   string  robotEnginetoRobotHash,	// Robot's calculated hash for the engine to robot messages

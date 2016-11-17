@@ -382,7 +382,7 @@ public class RobotEngineManager : MonoBehaviour {
       string str = "Engine to Robot CLAD version mismatch. Engine's EngineToRobot hash = " + message.engineEnginetoRobotHash + ". Robot's EngineToRobot hash = " + message.robotEnginetoRobotHash;
       DAS.Debug("clad_version_mismatch_engine_to_robot", str);
     }
-    if (message.robotToEngineMistmatch) {
+    if (message.robotToEngineMismatch) {
       string str = "Robot to Engine CLAD version mismatch. Engine's EngineToRobot hash = " + message.engineRobotToEngineHash + ". Robot's RobotToEngine hash = " + message.robotRobotToEngineHash;
       DAS.Debug("clad_version_mismatch_robot_to_engine", str);
     }
