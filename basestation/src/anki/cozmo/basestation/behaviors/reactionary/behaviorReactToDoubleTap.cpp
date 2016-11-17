@@ -162,8 +162,10 @@ void BehaviorReactToDoubleTap::StopInternalReactionary(Robot& robot)
 {
   if(_leaveTapInteractionOnStop)
   {
-    robot.GetBehaviorManager().LeaveObjectTapInteraction();
+    // Update the lights before leaving object tap interaction
     UpdateTappedObjectLights(false);
+    
+    robot.GetBehaviorManager().LeaveObjectTapInteraction();
   }
   else
   {

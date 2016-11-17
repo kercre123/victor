@@ -997,9 +997,10 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
   {
     const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
     
+    _robot.GetLightsComponent().ClearAllTapInteractionObjects();
+    
     if(on)
     {
-      _robot.GetLightsComponent().ClearAllTapInteractionObjects();
       _robot.GetLightsComponent().SetTapInteractionObject(_tappedObject);
     
       if(!behaviorDisabled)
@@ -1010,8 +1011,6 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
     }
     else
     {
-      _robot.GetLightsComponent().ClearAllTapInteractionObjects();
-      
       if(behaviorDisabled)
       {
         _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("ObjectTapInteraction", BehaviorType::ReactToCubeMoved, true);
