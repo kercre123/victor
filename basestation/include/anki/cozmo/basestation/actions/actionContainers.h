@@ -85,7 +85,9 @@ namespace Anki {
       // Deletes the action only if it isn't in the process of being deleted
       // Safeguards against the action being deleted multiple times due to handling action
       // completion signals
-      void DeleteAction(IActionRunner* &action);
+      // Returns true if this call actually deleted the action, false if the action is already in the process
+      // of being deleted
+      bool DeleteAction(IActionRunner* &action);
     
       IActionRunner*            _currentAction = nullptr;
       std::list<IActionRunner*> _queue;
@@ -93,6 +95,9 @@ namespace Anki {
       // A set of tags that are in the process of being deleted. This is used to protect
       // actions from being deleted multiple times/recursively
       std::set<u32>             _tagsBeingDeleted;
+      
+      // Whether or not the queue is currently being cleared
+      bool _currentlyClearing = false;
       
     }; // class ActionQueue
     

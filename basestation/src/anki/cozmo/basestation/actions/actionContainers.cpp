@@ -168,6 +168,11 @@ namespace Anki {
     
     void ActionList::Clear()
     {
+      if(_currentlyClearing)
+      {
+        return;
+      }
+      
       _currentlyClearing = true;
       _queues.clear();
       _currentlyClearing = false;
@@ -315,6 +320,13 @@ namespace Anki {
     
     void ActionQueue::Clear()
     {
+      if(_currentlyClearing)
+      {
+        return;
+      }
+      
+      _currentlyClearing = true;
+      
       if(_currentAction != nullptr)
       {
         _currentAction->Cancel();
@@ -326,6 +338,8 @@ namespace Anki {
         DeleteAction(*listIter);
         listIter = _queue.erase(listIter);
       }
+      
+      _currentlyClearing = false;
     }
 
     bool ActionQueue::Cancel(RobotActionType withType)
@@ -347,8 +361,16 @@ namespace Anki {
         ASSERT_NAMED(*iter != nullptr, "ActionQueue.CancelType.NullAction");
         
         if(withType == RobotActionType::UNKNOWN || (*iter)->GetType() == withType) {
-          DeleteAction(*iter);
-          iter = _queue.erase(iter);
+          // If this doesn't actually delete the action then it must have already been deleted so
+          // our iter will be invalid since the call that actually deleted the action will erase the iter
+          if(DeleteAction(*iter))
+          {
+            iter = _queue.erase(iter);
+          }
+          else
+          {
+            break;
+          }
           found = true;
         } else {
           ++iter;
@@ -381,8 +403,16 @@ namespace Anki {
                                 "Multiple actions with tag=%d found in queue",
                                 idTag);
           }
-          DeleteAction(*iter);
-          iter = _queue.erase(iter);
+          // If this doesn't actually delete the action then it must have already been deleted so
+          // our iter will be invalid since the call that actually deleted the action will erase the iter
+          if(DeleteAction(*iter))
+          {
+            iter = _queue.erase(iter);
+          }
+          else
+          {
+            break;
+          }
           found = true;
         } else {
           ++iter;
@@ -571,7 +601,7 @@ namespace Anki {
       }
     }
     
-    void ActionQueue::DeleteAction(IActionRunner* &action)
+    bool ActionQueue::DeleteAction(IActionRunner* &action)
     {
       if(action != nullptr)
       {
@@ -584,7 +614,9 @@ namespace Anki {
           Util::SafeDelete(action);
           _tagsBeingDeleted.erase(pair.first);
         }
+        return pair.second;
       }
+      return false;
     }
     
     bool ActionQueue::IsDuplicate(IActionRunner* action)
