@@ -109,7 +109,9 @@ const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
 */
 
 CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
-
+  
+// if false, vision system keeps running while picked up, on side, etc.
+CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 
 ////////
 // Consts for robot offtreadsState
@@ -505,8 +507,9 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   if(_timeOffTreadStateChanged_ms + kRobotTimeToConsiderOfftreads_ms <= currentTimestamp
      && _offTreadsState != _awaitingConfirmationTreadState)
   {
-    // Special case for just left treads
-    if(_offTreadsState == OffTreadsState::OnTreads){
+    if(kUseVisionOnlyWhileOnTreads && _offTreadsState == OffTreadsState::OnTreads)
+    {
+      // Pause vision if we just left treads
       _visionComponentPtr->Pause(true);
     }
     
@@ -535,8 +538,12 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     
     // Special case logic for returning to treads
     if(_offTreadsState == OffTreadsState::OnTreads){
-      // Robot just got put back down
-      _visionComponentPtr->Pause(false);
+      
+      if(kUseVisionOnlyWhileOnTreads)
+      {
+        // Re-enable vision if we've returned to treads
+        _visionComponentPtr->Pause(false);
+      }
       
       ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
       

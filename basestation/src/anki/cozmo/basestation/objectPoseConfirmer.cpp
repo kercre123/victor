@@ -175,8 +175,9 @@ Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const
           }
         }
         
+        const bool isRobotOnTreads = OffTreadsState::OnTreads == _robot.GetOffTreadsState();
         const bool isFarAway = Util::IsFltGT(obsDistance_mm,  kMaxLocalizationDistance_mm);
-        const bool useDirty = isFarAway || robotWasMoving || objectIsMoving;
+        const bool useDirty = !isRobotOnTreads || isFarAway || robotWasMoving || objectIsMoving;
         
         // Note that we never change a Known object to Dirty with a visual observation
         if(!useDirty || !object->IsPoseStateKnown())

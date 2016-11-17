@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using Cozmo.UI;
 using System.Collections.Generic;
@@ -382,6 +382,7 @@ namespace Cozmo.Minigame.DroneMode {
 
       if (!_IsNightVisionEnabled) {
         bool anyContainerShown = false;
+        bool isRobotPickedUp = _CurrentRobot.Status(Anki.Cozmo.RobotStatusFlag.IS_PICKED_UP);
         if (_CurrentlyFocusedObject != null) {
           if (_CurrentlyFocusedObject is Face) {
             // Show face container
@@ -393,18 +394,18 @@ namespace Cozmo.Minigame.DroneMode {
             _PetButtonContainer.SetActive(true);
             anyContainerShown = true;
           }
-          else if (_IsCubeInLift) {
+          else if (_IsCubeInLift && !isRobotPickedUp) {
             //   Show cube in lift container
             _CubeInLiftButtonContainer.SetActive(true);
             anyContainerShown = true;
           }
-          else if (_CurrentlyFocusedObject is LightCube) {
+          else if (_CurrentlyFocusedObject is LightCube && !isRobotPickedUp) {
             // Show cube seen container
             _CubeNotInLiftButtonContainer.SetActive(true);
             anyContainerShown = true;
           }
         }
-        else if (_IsCubeInLift) {
+        else if (_IsCubeInLift && !isRobotPickedUp) {
           //   Show cube in lift container
           _CubeInLiftButtonContainer.SetActive(true);
           anyContainerShown = true;

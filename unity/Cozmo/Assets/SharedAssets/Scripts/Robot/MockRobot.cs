@@ -379,7 +379,7 @@ public class MockRobot : IRobot {
     QueueCallback(1f, callback);
   }
 
-  public void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+  public void TurnTowardsFace(Face face, float maxTurnAngle_rad = Mathf.PI, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                               bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                               AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                               RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {

@@ -405,6 +405,8 @@ namespace Cozmo {
       
       Pose3d    _poseWrtRobot;
       
+      const Radians& GetMaxTurnAngle() const { return _maxTurnAngle; }
+      
     private:
       Radians   _maxTurnAngle;
       bool      _isPoseSet   = false;

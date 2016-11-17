@@ -1445,9 +1445,10 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         
         // Let "observedObject" used below refer to the new object
         observedObject = objSeen.get();
-        
+
+        const bool wasRobotMoving = false; // assume false, otherwise we wouldn't have gotten this far w/ marker?
         _robot->GetObjectPoseConfirmer().AddVisualObservation(observedObject, observedObject->GetPose(),
-                                                              distToObjSeen, observedObject->GetLastObservedTime());
+                                                              wasRobotMoving, distToObjSeen);
       }
       else
       {

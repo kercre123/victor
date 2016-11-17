@@ -497,15 +497,23 @@ namespace Cozmo {
         private void HandleSayNameButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is Face) {
+            float maxTurnAngle_rad = Mathf.PI;
+            if (_CurrentRobot.Status(Anki.Cozmo.RobotStatusFlag.IS_PICKED_UP)) {
+              maxTurnAngle_rad = 0f; // Don't try to turn at all if picked up
+            } 
+
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             _CurrentRobot.TurnTowardsFace((Face)targetObject,
+              maxTurnAngle_rad: maxTurnAngle_rad,
               sayName: true,
               namedTrigger: Anki.Cozmo.AnimationTrigger.AcknowledgeFaceNamed,
               unnamedTrigger: Anki.Cozmo.AnimationTrigger.AcknowledgeFaceUnnamed,
               callback: HandleActionFinished);
+            
             DisableInput();
-            IsPerformingAction = true;
+            IsPerformingAction = true;  
           }
+
         }
 
         private void HandleReactToPetButtonPressed() {

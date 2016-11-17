@@ -1428,7 +1428,7 @@ public class Robot : IRobot {
 
   }
 
-  public void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
+  public void TurnTowardsFace(Face face, float maxTurnAngle_rad = Mathf.PI, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
                               bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                               AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                               RobotCallback callback = null,
@@ -1437,7 +1437,7 @@ public class Robot : IRobot {
     SendQueueSingleAction(
       Singleton<Anki.Cozmo.ExternalInterface.TurnTowardsFace>.Instance.Initialize(
         faceID: face.ID,
-        maxTurnAngle_rad: float.MaxValue,
+        maxTurnAngle_rad: maxTurnAngle_rad,
         maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
         panAccel_radPerSec2: panAccel_radPerSec2,
         panTolerance_rad: kPanTolerance_rad, // 1.7 degrees is the minimum in the engine

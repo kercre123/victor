@@ -137,7 +137,6 @@ namespace Cozmo {
   CONSOLE_VAR(f32,  kFaceTrackingMaxHeadAngleChange_deg, "Vision.FaceDetection", 8.f);
   CONSOLE_VAR(f32,  kFaceTrackingMaxBodyAngleChange_deg, "Vision.FaceDetection", 8.f);
   CONSOLE_VAR(f32,  kFaceTrackingMaxPoseChange_mm,       "Vision.FaceDetection", 10.f);
-  CONSOLE_VAR(bool, kIgnoreFacesBelowRobot,              "Vision.FaceDetection", true);
   
   namespace {
     // These are initialized from Json config:
@@ -1801,7 +1800,7 @@ namespace Cozmo {
       _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
     }
     
-    for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); )
+    for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
     {
       auto & currentFace = *faceIter;
       
@@ -1823,16 +1822,7 @@ namespace Cozmo {
       headPose.SetParent(&_poseData.cameraPose);
       headPose = headPose.GetWithRespectToOrigin();
 
-      if(kIgnoreFacesBelowRobot && headPose.GetTranslation().z() < 0.f) {
-        // Don't report faces that are below the origin (which we are assuming is on the ground plane)
-        //PRINT_NAMED_DEBUG("VisionSystem.DetectFaces.IgnoreFaceBelowRobot",
-        //                  "z=%.2f", headPose.GetTranslation().z());
-        faceIter = _currentResult.faces.erase(faceIter);
-      }
-      else {
-        currentFace.SetHeadPose(headPose);
-        ++faceIter;
-      }
+      currentFace.SetHeadPose(headPose);
     }
     
     return RESULT_OK;

@@ -39,6 +39,9 @@ namespace Cozmo {
   // Log recognition to DAS if we haven't seen a face for this long and then re-see it
   CONSOLE_VAR(u32, kTimeUnobservedBeforeReLoggingToDAS_ms, "Vision.FaceWorld", 10000);
   
+  // Ignore faces detected below the robot (except when picked up), to help reduce false positives
+  CONSOLE_VAR(bool, kIgnoreFacesBelowRobot, "Vision.FaceWorld", true);
+  
   static const char * const kLoggingChannelName = "FaceRecognizer";
   static const char * const kIsNamedStringDAS = "1";
   static const char * const kIsSessionOnlyStringDAS = "0";
@@ -188,6 +191,18 @@ namespace Cozmo {
                        _robot.GetWorldOrigin()->GetName().c_str());
       
       return RESULT_FAIL_ORIGIN_MISMATCH;
+    }
+    
+    const bool robotOnTreads = _robot.GetOffTreadsState() == OffTreadsState::OnTreads;
+    const bool headBelowRobot = headPose.GetTranslation().z() < 0.f;
+    if(kIgnoreFacesBelowRobot && robotOnTreads && headBelowRobot)
+    {
+      // Don't report faces that are below the origin (which we are assuming is on the ground plane)
+      //PRINT_NAMED_DEBUG("VisionSystem.DetectFaces.IgnoreFaceBelowRobot",
+      //                  "z=%.2f", headPose.GetTranslation().z());
+      PRINT_CH_DEBUG(kLoggingChannelName, "FaceWorld.AddOrUpdateFace.IgnoringFaceBelowRobot",
+                     "z=%f", headPose.GetTranslation().z());
+      return RESULT_OK;
     }
     
     face.SetHeadPose(headPose);

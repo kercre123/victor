@@ -241,7 +241,7 @@ public interface IRobot : IDisposable {
                          QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                          float setTiltTolerance_rad = 0f);
 
-  void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+  void TurnTowardsFace(Face face, float maxTurnAngle_rad = Mathf.PI, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                        bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                        AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                        RobotCallback callback = null,
