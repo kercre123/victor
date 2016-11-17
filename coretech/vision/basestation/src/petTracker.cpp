@@ -20,6 +20,7 @@
 #include "clad/types/petTypes.h"
 
 #include "util/logging/logging.h"
+#include "util/console/consoleInterface.h"
 
 // Omron Computer Vision
 #include "OmcvPdAPI.h"
@@ -43,6 +44,10 @@ extern "C"
   }
 }
 #endif
+
+// If < 0, use value from JSON config. Otherwise use this one (for dev adjustment live)
+CONSOLE_VAR_RANGED(s32, kRuntimePetDetectionThreshold, "Vision.PetDetection", -1, -1, 1000);
+
 
 namespace Anki {
 namespace Vision {
@@ -217,6 +222,22 @@ Result PetTracker::Update(const Vision::Image&       frameOrig,
   if(!_isInitialized) {
     PRINT_NAMED_ERROR("PetTracker.Update.NotInitialized", "");
     return RESULT_FAIL;
+  }
+  
+  if(kRuntimePetDetectionThreshold >= 0 && _runtimeDetectionThreshold != kRuntimePetDetectionThreshold)
+  {
+    PRINT_NAMED_DEBUG("PetTracker.Update.ThresholdUpdated",
+                      "Updating detection threshold from %d to %d",
+                      _runtimeDetectionThreshold,
+                      kRuntimePetDetectionThreshold);
+    
+    _runtimeDetectionThreshold = kRuntimePetDetectionThreshold;
+    
+    INT32 omcvResult = OMCV_PD_SetThreshold(_handles->omcvPetDetector, _runtimeDetectionThreshold);
+    if(OMCV_NORMAL != omcvResult) {
+      PRINT_NAMED_ERROR("PetTracker.Update.OkaoSetThresholdFailed", "OMCV Result=%d", omcvResult);
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
   }
   
   ASSERT_NAMED(frameOrig.IsContinuous(), "PetTracker.Update.NonContinuousImage");

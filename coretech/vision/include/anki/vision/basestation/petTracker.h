@@ -43,6 +43,9 @@ private:
   
   std::unique_ptr<Handles> _handles;
   
+  // For dev/live threshold adjustment
+  s32 _runtimeDetectionThreshold = -1;
+  
 }; // class PetTracker
   
 } // namespace Vision
