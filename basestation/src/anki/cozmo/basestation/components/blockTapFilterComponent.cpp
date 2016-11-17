@@ -198,6 +198,12 @@ void BlockTapFilterComponent::HandleActiveObjectMoved(const AnkiEvent<RobotInter
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
   ObservableObject* object = _robot.GetBlockWorld().GetObjectByActiveID(payload.objectID);
+  if( object == nullptr )
+  {
+    PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectMoved.ObjectIDNull",
+                        "Could not find match for active object ID %d", payload.objectID);
+    return;
+  }
   
   const auto& doubleTapInfo = _doubleTapObjects.find(object->GetID().GetValue());
   
@@ -224,6 +230,12 @@ void BlockTapFilterComponent::HandleActiveObjectStopped(const AnkiEvent<RobotInt
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
   const ObservableObject* object = _robot.GetBlockWorld().GetObjectByActiveID(payload.objectID);
+  if( object == nullptr )
+  {
+    PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectStopped.ObjectIDNull",
+                        "Could not find match for active object ID %d", payload.objectID);
+    return;
+  }
   
   const auto& doubleTapInfo = _doubleTapObjects.find(object->GetID().GetValue());
   
