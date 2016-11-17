@@ -69,6 +69,7 @@ public:
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleDefaultCameraParams(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleObjectPowerLevel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   
   double GetLastImageReceivedTime() const { return _lastImageRecvTime; }
   
@@ -91,8 +92,12 @@ private:
   u32          _repeatedImageCount = 0;
   double       _lastImageRecvTime  = -1.0;
   
-  bool ShouldIgnoreMultipleImages() const;
+  // For tracking time since last power level report (per accessory)
+  std::map<uint32_t, float> _lastPowerLevelSentTime;
   
+  // Internal helpers
+  bool ShouldIgnoreMultipleImages() const;
+
 };
 
 } // namespace Cozmo

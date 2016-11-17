@@ -56,6 +56,8 @@
 // Always play robot audio on device
 #define ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE 0
 
+// How often do we send power level updates to DAS?
+#define POWER_LEVEL_INTERVAL_SEC 600.0
 
 namespace Anki {
 namespace Cozmo {
@@ -116,6 +118,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
   
   
   // lambda wrapper to call internal handler
@@ -1137,6 +1140,68 @@ void RobotToEngineImplMessaging::HandleDefaultCameraParams(const AnkiEvent<Robot
   
   const DefaultCameraParams& payload = message.GetData().Get_defaultCameraParams();
   robot->GetVisionComponent().HandleDefaultCameraParams(payload);
+}
+
+//
+// Convert battery voltage to percentage according to profile described by Nathan Monson.
+// Always returns a value 0-100.
+//
+static float GetBatteryPercent(float batteryVoltage)
+{
+  const float batteryEmpty = 1.0f; // 1.0V
+  const float batteryFull = 1.5f; // 1.5V
+  
+  if (batteryVoltage >= batteryFull) {
+    return 100.0f;
+  }
+  if (batteryVoltage > batteryEmpty) {
+    float percent = 100.0 * (batteryVoltage - batteryEmpty) / (batteryFull - batteryEmpty);
+    return percent;
+  }
+  return 0.0f;
+}
+
+void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  ANKI_CPU_PROFILE("Robot::HandleObjectPowerLevel");
+  
+  const auto & payload = message.GetData().Get_objectPowerLevel();
+  const auto robotID = robot->GetID();
+  const auto activeID = payload.objectID;
+  const auto batteryLevel = payload.batteryLevel;
+  const float batteryVoltage = batteryLevel / 100.0;
+  const float batteryPercent = GetBatteryPercent(batteryVoltage);
+  
+  // Report to log
+  PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Log", "RobotID %u activeID %u at %.2fV %.2f%%",
+    robotID, activeID, batteryVoltage, batteryPercent);
+  
+  // Report to DAS?
+  const float now = Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float then = _lastPowerLevelSentTime[activeID];
+  
+  if (now - then >= POWER_LEVEL_INTERVAL_SEC) {
+    PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Report",
+                     "Sending DAS report for robotID %u activeID %u now %f then %f",
+                     robotID, activeID, now, then);
+    char ddata[BUFSIZ];
+    snprintf(ddata, sizeof(ddata), "%.2f,%.2f", batteryVoltage, batteryPercent);
+    Anki::Util::sEventF("robot.accessory_powerlevel", {{DDATA, ddata}}, "%u", activeID);
+    
+    _lastPowerLevelSentTime[activeID] = now;
+  }
+  
+  // Forward to game
+  const BlockWorld & blockWorld = robot->GetBlockWorld();
+  const ObservableObject * object = blockWorld.GetObjectByActiveID(activeID);
+  if (object != nullptr) {
+    const uint32_t objectID = object->GetID();
+    PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Broadcast",
+                      "RobotID %u activeID %u objectID %u at %u cv",
+                      robotID, activeID, objectID, batteryLevel);
+    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectPowerLevel(objectID, batteryLevel)));
+  }
+
 }
 } // end namespace Cozmo
 } // end namespace Anki
