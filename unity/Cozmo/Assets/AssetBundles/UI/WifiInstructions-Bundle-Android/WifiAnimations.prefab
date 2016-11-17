@@ -36,7 +36,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &104326
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -121,7 +121,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &121514
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -136,7 +136,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &123290
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -154,7 +154,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &135218
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -171,7 +171,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &135660
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -247,6 +247,8 @@ GameObject:
   m_Component:
   - 224: {fileID: 22461814}
   - 222: {fileID: 22277488}
+  - 95: {fileID: 9574770}
+  - 225: {fileID: 22518840}
   m_Layer: 5
   m_Name: WifiAnimations
   m_TagString: Untagged
@@ -256,7 +258,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &174574
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -298,24 +300,6 @@ GameObject:
   - 114: {fileID: 11449794}
   m_Layer: 5
   m_Name: CellPhoneFace
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!1 &184420
-GameObject:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22438956}
-  - 222: {fileID: 22298122}
-  - 95: {fileID: 9588388}
-  - 225: {fileID: 22566404}
-  m_Layer: 5
-  m_Name: WifiAnimations
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -372,13 +356,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!95 &9588388
+--- !u!95 &9574770
 Animator:
   serializedVersion: 3
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 184420}
+  m_GameObject: {fileID: 173596}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 7c715979c126c48d9a3cd17d5ac270e8, type: 2}
@@ -1013,12 +997,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 193674}
---- !u!222 &22298122
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 184420}
 --- !u!222 &22298528
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -1037,7 +1015,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22463030}
-  m_Father: {fileID: 22438956}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 4
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
@@ -1055,7 +1033,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -43.149998}
   m_Children: []
-  m_Father: {fileID: 22438956}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1128,7 +1106,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22493040}
-  m_Father: {fileID: 22438956}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 5
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
@@ -1190,30 +1168,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -190}
   m_SizeDelta: {x: 560, y: 540}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!224 &22438956
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 184420}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children:
-  - {fileID: 22457020}
-  - {fileID: 22491280}
-  - {fileID: 22403654}
-  - {fileID: 22472744}
-  - {fileID: 22403248}
-  - {fileID: 22427814}
-  m_Father: {fileID: 22461814}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22442346
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1246,7 +1200,7 @@ RectTransform:
   - {fileID: 22433632}
   - {fileID: 22427836}
   - {fileID: 22491940}
-  m_Father: {fileID: 22438956}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1264,11 +1218,16 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
-  - {fileID: 22438956}
+  - {fileID: 22457020}
+  - {fileID: 22491280}
+  - {fileID: 22403654}
+  - {fileID: 22472744}
+  - {fileID: 22403248}
+  - {fileID: 22427814}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1302,7 +1261,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22438956}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 3
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1380,7 +1339,7 @@ RectTransform:
   - {fileID: 22477772}
   - {fileID: 22490732}
   - {fileID: 22442346}
-  m_Father: {fileID: 22438956}
+  m_Father: {fileID: 22461814}
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -1442,12 +1401,12 @@ RectTransform:
   m_AnchoredPosition: {x: 84, y: -266}
   m_SizeDelta: {x: 923, y: 1011}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!225 &22566404
+--- !u!225 &22518840
 CanvasGroup:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 184420}
+  m_GameObject: {fileID: 173596}
   m_Enabled: 1
   m_Alpha: 0
   m_Interactable: 1
