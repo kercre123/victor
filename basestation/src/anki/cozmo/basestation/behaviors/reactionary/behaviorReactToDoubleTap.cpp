@@ -96,6 +96,12 @@ Result BehaviorReactToDoubleTap::InitInternalReactionary(Robot& robot)
       obj->Vision::ObservableObject::SetPose(p);
       auto* turnAction = new TurnTowardsObjectAction(robot, ObjectID(), DEG_TO_RAD_F32(180));
       turnAction->UseCustomObject(obj);
+      
+      // Don't do a refined turn because in many cases when the object is in the ground it is because
+      // we just delocalized and both the object and the robot are now at the origin. Turning around
+      // the object's origin causes our initial turn angle and the refined turn angle to vary greatly, due to
+      // the robot not turning exactly around its own origin.
+      turnAction->ShouldDoRefinedTurn(false);
       action = turnAction;
       _turningTowardsGhostObject = true;
     }
