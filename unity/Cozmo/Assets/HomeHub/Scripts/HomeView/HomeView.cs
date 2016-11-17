@@ -73,6 +73,8 @@ namespace Cozmo.HomeHub {
     private CozmoButton _SettingsButton;
 
     [SerializeField]
+    private UnityEngine.UI.Image _SettingsAlertImage;
+    [SerializeField]
     private RectTransform _ScrollRectContent;
 
     [SerializeField]
@@ -224,6 +226,11 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.OnBlockConnectivityChanged += HandleBlockConnectivityChanged;
+        _SettingsAlertImage.gameObject.SetActive(RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != 3);
+      }
+
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleCheckForLootView;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       RewardedActionManager.Instance.OnFreeplayRewardEvent += HandleFreeplayRewardedAction;
@@ -249,6 +256,10 @@ namespace Cozmo.HomeHub {
 
       // Start listening for Battery Level popups now that HomeView is fully initialized
       PauseManager.Instance.ListeningForBatteryLevel = true;
+    }
+
+    private void HandleBlockConnectivityChanged(int blocksConnected) {
+      _SettingsAlertImage.gameObject.SetActive(blocksConnected != 3);
     }
 
     private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
@@ -350,6 +361,13 @@ namespace Cozmo.HomeHub {
       }
       else {
         SwitchToTab(_PreviousTab);
+      }
+
+      // auto scroll to the cubes setting panel if we don't have three cubes connected.
+      if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != 3) {
+        _CurrentTabInstance.GetComponent<ParentLayoutContentSizeFitter>().OnResizedParent += () => {
+          _ScrollRect.horizontalNormalizedPosition = _CurrentTabInstance.GoToIndex(1);
+        };
       }
     }
 
@@ -846,6 +864,10 @@ namespace Cozmo.HomeHub {
 
       if (_RewardSequence != null) {
         _RewardSequence.Kill();
+      }
+
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.OnBlockConnectivityChanged -= HandleBlockConnectivityChanged;
       }
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
