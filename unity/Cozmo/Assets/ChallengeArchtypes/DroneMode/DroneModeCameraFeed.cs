@@ -168,7 +168,10 @@ namespace Cozmo.Minigame.DroneMode {
       }
 
       _ShowReticles = showReticles;
-      if (!showReticles) {
+      if (showReticles) {
+        CreateReticlesIfVisible();
+      }
+      else {
         _FocusedObjectFrameImage.gameObject.SetActive(false);
 
         IVisibleInCamera[] toRemove = new IVisibleInCamera[_ObjToReticle.Count];
@@ -190,24 +193,32 @@ namespace Cozmo.Minigame.DroneMode {
 
       _CurrentRobot.OnFaceAdded += HandleOnFaceAdded;
       _CurrentRobot.OnFaceRemoved += HandleOnFaceRemoved;
+
+      _CurrentRobot.OnPetFaceAdded += HandlePetFaceAdded;
+      _CurrentRobot.OnPetFaceRemoved += HandlePetFaceRemoved;
+
+      _CurrentRobot.OnLightCubeAdded += HandleOnCubeAdded;
+      _CurrentRobot.OnLightCubeRemoved += HandleOnCubeRemoved;
+
+      _CurrentRobot.OnChargerAdded += HandleOnChargerAdded;
+      _CurrentRobot.OnChargerRemoved += HandleOnChargerRemoved;
+
+      CreateReticlesIfVisible();
+    }
+
+    private void CreateReticlesIfVisible() {
       foreach (var face in _CurrentRobot.Faces) {
         CreateFaceReticle(face);
       }
 
-      _CurrentRobot.OnPetFaceAdded += HandlePetFaceAdded;
-      _CurrentRobot.OnPetFaceRemoved += HandlePetFaceRemoved;
       foreach (var petFace in _CurrentRobot.PetFaces) {
         CreatePetFaceReticle(petFace);
       }
 
-      _CurrentRobot.OnLightCubeAdded += HandleOnCubeAdded;
-      _CurrentRobot.OnLightCubeRemoved += HandleOnCubeRemoved;
       foreach (var cube in _CurrentRobot.LightCubes) {
         CreateObservedObjectReticle(cube.Value);
       }
 
-      _CurrentRobot.OnChargerAdded += HandleOnChargerAdded;
-      _CurrentRobot.OnChargerRemoved += HandleOnChargerRemoved;
       if (_CurrentRobot.Charger != null) {
         CreateObservedObjectReticle(_CurrentRobot.Charger);
       }
