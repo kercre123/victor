@@ -60,7 +60,7 @@
 		"durationTraits" : [
 			{
 				"rangeMin" : 1.3,
-				"rangeMax" : 1.7,
+				"rangeMax" : 1.85,
 				"stepSize" : 0.05
 			}
 		],
@@ -68,7 +68,7 @@
 		"pitchTraits" : [
 			{
 				"rangeMin" : 0.0,
-				"rangeMax" : 0.3,
+				"rangeMax" : 0.4,
 				"stepSize" : 0.01
 			}
 		],
