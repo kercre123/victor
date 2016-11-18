@@ -14,8 +14,7 @@ public class UnlockAnimation : MonoBehaviour {
   [SerializeField]
   private int _UnlockSpriteCount = 4;
 
-  private Sequence _GrowSeqeuence;
-  private Sequence _ShrinkSeqeuence;
+  private Sequence _UnlockAnimationSequence;
 
   public void Initialize(Sprite unlockSprite, Transform container) {
     for (int i = 0; i < _UnlockSpriteCount; ++i) {
@@ -25,7 +24,7 @@ public class UnlockAnimation : MonoBehaviour {
       _UnlockIconInstances.Add(unlockIcon);
     }
 
-    _GrowSeqeuence = DOTween.Sequence();
+    _UnlockAnimationSequence = DOTween.Sequence();
 
     // set transparency and tweens
     for (int i = 0; i < _UnlockIconInstances.Count; ++i) {
@@ -33,38 +32,27 @@ public class UnlockAnimation : MonoBehaviour {
       c.a = 0.3f;
       _UnlockIconInstances[i].color = c;
 
-      int unlockIndex = i;
-
-      Tween unlockTween = DOTween.To(() => _UnlockIconInstances[unlockIndex].transform.localScale, x => _UnlockIconInstances[unlockIndex].transform.localScale = x, Vector3.one * 1.5f, _TweenDuration);
-      _GrowSeqeuence.Append(unlockTween);
+      // Assigning is necessary otherwise the tween will cause a null exception
+      int unlockGrowIndex = i;
+      _UnlockAnimationSequence.Append(_UnlockIconInstances[unlockGrowIndex].transform.DOScale(Vector3.one * 1.5f, _TweenDuration)
+                                      .SetEase(Ease.OutQuad));
     }
 
-    _GrowSeqeuence.Play();
-    _GrowSeqeuence.OnComplete(() => {
+    for (int i = 0; i < _UnlockIconInstances.Count; ++i) {
+      // Assigning is necessary otherwise the tween will cause a null exception
+      int unlockShrinkIndex = i;
+      _UnlockAnimationSequence.Append(_UnlockIconInstances[unlockShrinkIndex].transform.DOScale(Vector3.one, _TweenDuration)
+                                      .SetEase(Ease.InQuad));
+    }
 
-      _ShrinkSeqeuence = DOTween.Sequence();
-      for (int i = 0; i < _UnlockIconInstances.Count; ++i) {
-        int unlockIndex = i;
-        Tween shrinkTween = DOTween.To(() => _UnlockIconInstances[unlockIndex].transform.localScale, x => _UnlockIconInstances[unlockIndex].transform.localScale = x, Vector3.one, _TweenDuration);
-        _ShrinkSeqeuence.Append(shrinkTween);
-      }
-
-      _ShrinkSeqeuence.Play();
-      _ShrinkSeqeuence.OnComplete(() => {
-        GameObject.Destroy(gameObject);
-      });
-
+    _UnlockAnimationSequence.OnComplete(() => {
+      GameObject.Destroy(gameObject);
     });
   }
 
   private void OnDestroy() {
-
-    if (_GrowSeqeuence != null) {
-      _GrowSeqeuence.Kill();
-    }
-
-    if (_ShrinkSeqeuence != null) {
-      _ShrinkSeqeuence.Kill();
+    if (_UnlockAnimationSequence != null) {
+      _UnlockAnimationSequence.Kill();
     }
 
     for (int i = 0; i < _UnlockIconInstances.Count; ++i) {
