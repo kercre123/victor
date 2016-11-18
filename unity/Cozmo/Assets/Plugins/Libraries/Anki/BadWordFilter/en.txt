@@ -4,7 +4,9 @@ ask(-| )*hole#askhole
 \b(?!\bars\b)(fat|jack|jerk|lame|lard)?(-)*[4a][r5s]{2,}(es|e)?(-)*(bag\w*|bang\w*|bite\w*|clown\w*|crack\w*|face\w*|goblin\w*|hat\w*|head\w*|ho\w*|jack\w*|lick\w*|lol\w*|monk\w*|mu\w*|pirate\w*|hit\w*|wad\w*|wipe\w*)?\b#ass(es)
 beaner#
 -\b\w*b[i!1]+[a]*[+t7]+ch\w*\b#bitch
+bitch#
 blow(-| )*job#
+blowjob#
 blumpkin#
 bollo[ckx]k?#bollok
 buggery?#
@@ -37,9 +39,9 @@ hardn#
 \bhoar\b#
 \bhoe\b#
 honkey#
+honky#
 h[0o]{2,}ker#
 \bhore\b#
-j[0o]{2,}#Jew
 \bjap\b#
 jewbag#
 jig(g)?ab[0o]{1,}#jiggaboo
@@ -103,6 +105,7 @@ tranny#
 \bwank\w*\b#wank
 white(-| )*power#
 \b\w*wh[o0](a)?r\w*\b#whor
+wigger#
 \bwog\b#
 \bwop\b#
 \b\w*x{1,}[ -]rat\w*\b#
