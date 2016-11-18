@@ -9,13 +9,13 @@ public class SnappableLayoutGroup : MonoBehaviour {
   private List<UnityEngine.UI.LayoutElement> _LayoutElementList = new List<UnityEngine.UI.LayoutElement>();
 
   private float _TotalPanelSize = 0.0f;
-  private bool _IsHorizonal;
+  private bool _IsHorizontal;
 
   public void AddLayoutElement(UnityEngine.UI.LayoutElement element) {
     _LayoutElementList.Add(element);
-    _IsHorizonal = _LayoutGroup is UnityEngine.UI.HorizontalLayoutGroup;
+    _IsHorizontal = _LayoutGroup is UnityEngine.UI.HorizontalLayoutGroup;
 
-    if (_IsHorizonal) {
+    if (_IsHorizontal) {
       _TotalPanelSize += element.minWidth;
     }
     else {
@@ -33,7 +33,12 @@ public class SnappableLayoutGroup : MonoBehaviour {
     float indexedValue = 0.0f;
     for (int i = 0; i < _LayoutElementList.Count; ++i) {
       if (i < index) {
-        indexedValue += _LayoutElementList[i].minWidth;
+        if (_IsHorizontal) {
+          indexedValue += _LayoutElementList[i].minWidth;
+        }
+        else {
+          indexedValue += _LayoutElementList[i].minHeight;
+        }
       }
       else {
         break;
@@ -41,7 +46,7 @@ public class SnappableLayoutGroup : MonoBehaviour {
     }
     float elementSize;
 
-    if (_IsHorizonal) {
+    if (_IsHorizontal) {
       elementSize = _LayoutElementList[index].minWidth;
     }
     else {

@@ -25,7 +25,7 @@ namespace Cozmo.HomeHub {
         TabPanel newTabPanel = UIManager.CreateUIElement(_TabViewPanelPrefabs[i].gameObject, _Container).GetComponent<TabPanel>();
         newTabPanel.Initialize(homeViewInstance);
         _TabPanelsList.Add(newTabPanel);
-        _SnappableLayoutGroup.AddLayoutElement(newTabPanel.GetLayoutElement());
+        _SnappableLayoutGroup.AddLayoutElement(newTabPanel.LayoutElement);
       }
       EnableGameRequestsIfAllowed(!_DisableGameRequestsWhenOpen);
     }

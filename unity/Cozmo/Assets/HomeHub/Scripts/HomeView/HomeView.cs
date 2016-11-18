@@ -365,7 +365,7 @@ namespace Cozmo.HomeHub {
       }
 
       // auto scroll to the cubes setting panel if we don't have three cubes connected.
-      if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != 3) {
+      if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != kCubesCount) {
         _CurrentTabInstance.GetComponent<ParentLayoutContentSizeFitter>().OnResizedParent += () => {
           const int kCubesHelpIndex = 1;
           _ScrollRect.horizontalNormalizedPosition = _CurrentTabInstance.GetNormalizedSnapIndexPosition(kCubesHelpIndex);
