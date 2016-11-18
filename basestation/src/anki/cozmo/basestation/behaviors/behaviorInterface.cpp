@@ -108,10 +108,6 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
                                 HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
                               } ));
   }
-  
-  SubscribeToTags({
-    GameToEngineTag::RequestEnableReactionaryBehavior
-  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -466,6 +462,11 @@ void IBehavior::Stop()
   // Re-enable any reactionary behaviors which the behavior disabled and didn't have a chance to
   // re-enable before stopping
   SmartReEnableReactionaryBehavior(_disabledReactions);
+
+  // re-enable tap interaction if needed
+  if( _tapInteractionDisabled ) {
+    SmartReEnableTapInteraction();
+  }
   
   // Unlock any tracks which the behavior hasn't had a chance to unlock
   for(const auto& entry: _lockingNameToTracksMap){
@@ -480,6 +481,7 @@ void IBehavior::Stop()
   _customLightObjects.clear();
   
   ASSERT_NAMED(_disabledReactions.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
+  ASSERT_NAMED(!_tapInteractionDisabled, "IBehavior.Stop.TapInteractionStillDisabled");
 }
 
 void IBehavior::StopOnNextActionComplete()
@@ -614,16 +616,7 @@ void IBehavior::SetDefaultName(const char* inName)
 
 IBehavior::Status IBehavior::UpdateInternal(Robot& robot)
 {
-  if( IsActing() ) {
-  
-    // If the behavior needs a tapped object but we no longer have a tapped object then
-    // end the behavior
-    if(_requireObjectTapped &&
-       !robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
-    {
-      return Status::Complete;
-    }
-  
+  if( IsActing() ) {  
     return Status::Running;
   }
 
@@ -899,6 +892,25 @@ void IBehavior::SmartReEnableReactionaryBehavior(const std::set<BehaviorType> ty
 }
 
 
+void IBehavior::SmartDisableTapInteraction()
+{
+  if( !_tapInteractionDisabled ) {
+    _robot.GetBehaviorManager().RequestEnableTapInteraction(GetName(), false);
+    _tapInteractionDisabled = true;
+  }
+}
+
+void IBehavior::SmartReEnableTapInteraction()
+{
+  if( _tapInteractionDisabled ) {
+    _robot.GetBehaviorManager().RequestEnableTapInteraction(GetName(), true);
+    _tapInteractionDisabled = false;
+  }
+  else {
+    PRINT_NAMED_WARNING("IBehavior.SmartReEnableTapInteraction.NotDisabled",
+                        "Attempted to re-enable tap interaction (manually), but it wasn't disabled");
+  }    
+}
 
 IBehavior::BehaviorIter IBehavior::SmartReEnableReactionaryBehavior(BehaviorIter iter)
 {
@@ -1177,10 +1189,16 @@ void IReactionaryBehavior::AlwaysHandle(const RobotToEngineEvent& event, const R
   
 bool IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enable)
 {
+  PRINT_CH_DEBUG("Behaviors", "BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
+                 "%s: requesting behavior %s be %s",
+                 requesterID.c_str(),
+                 GetName().c_str(),
+                 enable ? "enabled" : "disabled");
+
   if(enable){
     int countRemoved = (int)_disableIDs.erase(requesterID);
     if(!countRemoved){
-      PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
+      PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs.InvalidDisable",
                           "Attempted to enable reactionary behavior %s with invalid ID %s", GetName().c_str(), requesterID.c_str());
       return false;
     }
@@ -1188,7 +1206,7 @@ bool IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enabl
   }else{
     int countInList = (int)_disableIDs.count(requesterID);
     if(countInList){
-      PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
+      PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs.DuplicateEnable",
                           "Attempted to disable reactionary behavior %s with ID %s previously registered", GetName().c_str(), requesterID.c_str());
       return false;
     }else{

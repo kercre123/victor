@@ -186,7 +186,9 @@ public:
   
   const ObjectID& GetLastTappedObject() const { return _lastDoubleTappedObject; }
   const ObjectID& GetCurrTappedObject() const { return _currDoubleTappedObject; }
-  
+
+  // Enable and disable tap interaction
+  void RequestEnableTapInteraction(const std::string& requesterID, bool enable);
   
 private:
 
@@ -334,7 +336,10 @@ private:
   
   // Whether or not we need to handle an object being tapped in Update()
   bool _needToHandleObjectTapped = false;
-    
+
+  // set of things which have disabled tap interaction
+  std::multiset<std::string> _tapInteractionDisabledIDs;
+  
 }; // class BehaviorManager
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -548,11 +548,6 @@ Result BehaviorManager::Update(Robot& robot)
     
   _currentChooserPtr->Update(robot);
 
-  if( !_runningReactionaryBehavior )
-  {
-    ChooseNextBehaviorAndSwitch();
-  }
-  
   UpdateTappedObject();
   
   // Update the current behavior if a new object was double tapped
@@ -560,6 +555,11 @@ Result BehaviorManager::Update(Robot& robot)
   {
     UpdateBehaviorWithObjectTapInteraction();
     _needToHandleObjectTapped = false;
+  }
+
+  if( !_runningReactionaryBehavior )
+  {
+    ChooseNextBehaviorAndSwitch();
   }
   
   // Allow reactionary behaviors to request a switch without a message
@@ -846,12 +846,13 @@ void BehaviorManager::RequestCurrentBehaviorEndOnNextActionComplete()
 
 void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
 {
-  // Have to be in freeplay and not picking or placing
+  // Have to be in freeplay and not picking or placing and flat on the ground
   if(_currentChooserPtr != _freeplayChooser ||
-     _robot.IsPickingOrPlacing())
+     _robot.IsPickingOrPlacing() ||
+     _robot.GetOffTreadsState() != OffTreadsState::OnTreads)
   {
     PRINT_CH_INFO("Behaviors", "HandleObjectTapInteraction.CantRun",
-                  "Robot is not in freeplay chooser or is picking and placing");
+                  "Robot is not in freeplay chooser or is picking and placing or not on treads");
     return;
   }
 
@@ -868,6 +869,12 @@ void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
   {
     PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.InReaction",
                   "Currently in reaction not switching to double tap");
+    return;
+  }
+
+  if( !_tapInteractionDisabledIDs.empty() ) {
+    PRINT_CH_INFO("Behavior", "BehaviorManager.HandleObjectTapInteraction.Disabled",
+                  "Object tap interaction disabled, ignoring tap");
     return;
   }
   
@@ -915,14 +922,36 @@ void BehaviorManager::LeaveObjectTapInteraction()
   }
 }
 
+void BehaviorManager::RequestEnableTapInteraction(const std::string& requesterID, bool enable)
+{
+  if( enable ) {
+    size_t countRemoved = _tapInteractionDisabledIDs.erase(requesterID);
+    if( countRemoved == 0 ) {
+      PRINT_NAMED_WARNING("BehaviorManager.RequestEnableTapInteraction.IDNotFound",
+                          "Attempted to enable tap interaction with invalid id '%s'",
+                          requesterID.c_str());
+    }
+  }
+  else {
+    size_t countInList = _tapInteractionDisabledIDs.count(requesterID);
+    if( countInList > 0 ) {
+      PRINT_NAMED_WARNING("BehaviorManager.RequestEnableTapInteraction.DuplicateID",
+                          "Trying to disable tap interaction with ID previously registered: '%s'",
+                          requesterID.c_str());
+    }
+    _tapInteractionDisabledIDs.insert(requesterID);
+  }
+}
+
 void BehaviorManager::UpdateTappedObject()
 {
   // If the tapped objects pose becomes unknown and we aren't currently in ReactToDoubleTap
   // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running) then give up and
   // leave object tap interaction
   if(GetWhiteboard().HasTapIntent() &&
-     (_currentBehavior != nullptr &&
-      _currentBehavior->GetType() != BehaviorType::ReactToDoubleTap))
+     _currentBehavior != nullptr &&
+     _currentBehavior->GetType() != BehaviorType::ReactToDoubleTap &&
+     _tapInteractionDisabledIDs.empty())
   {
     const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_currDoubleTappedObject);
     if(object != nullptr && object->IsPoseStateUnknown())

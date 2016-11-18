@@ -130,6 +130,10 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
     SmartDisableReactionaryBehavior(BehaviorType::ReactToUnexpectedMovement);
     SmartDisableReactionaryBehavior(BehaviorType::ReactToReturnedToTreads);
 
+    // Wheelies (or the animation afterwards) sometimes cause false double tap events, so disable tap
+    // interaction until the behavior is complete
+    SmartDisableTapInteraction();
+    
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
