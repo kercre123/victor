@@ -46,19 +46,16 @@ namespace Anki {
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far preActionPose is from actionObject
     Point2f ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
-                                              const ActionableObject* actionObject,
+                                              const Pose3d& actionObjectPose,
                                               const Radians& preActionPoseAngleTolerance)
     {
-      assert(actionObject != nullptr);
-      
       if(preActionPoseAngleTolerance > 0.f) {
         // Compute distance threshold for preaction pose based on distance to the
         // object: the further away, the more slop we're allowed.
         Pose3d objectWrtPreActionPose;
-        if(false == actionObject->GetPose().GetWithRespectTo(preActionPose, objectWrtPreActionPose)) {
+        if(false == actionObjectPose.GetWithRespectTo(preActionPose, objectWrtPreActionPose)) {
           PRINT_NAMED_WARNING("ComputePreActionPoseDistThreshold.ObjectPoseOriginProblem",
-                              "Could not get object %d's pose w.r.t. preActionPose.",
-                              actionObject->GetID().GetValue());
+                              "Could not get object pose w.r.t. preActionPose.");
           return -1.f;
         }
         
@@ -368,7 +365,7 @@ namespace Anki {
                     closestPoint.Length());
       
       output.distThresholdUsed = ComputePreActionPoseDistThreshold(preActionPoses[closestIndex].GetPose(),
-                                                                   dockObject,
+                                                                   dockObject->GetPose(),
                                                                    preActionPoseAngleTolerance);
       
       output.robotAtClosestPreActionPose = false;

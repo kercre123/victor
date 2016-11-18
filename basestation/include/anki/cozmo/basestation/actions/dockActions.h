@@ -40,7 +40,7 @@ namespace Anki {
     class DriveToPlaceCarriedObjectAction;
     
     Point2f ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
-                                              const ActionableObject* actionObject,
+                                              const Pose3d& actionObject,
                                               const Radians& preActionPoseAngleTolerance);
 
     // Interface for actions that involve "docking" with an object

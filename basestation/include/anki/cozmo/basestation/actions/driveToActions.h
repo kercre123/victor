@@ -72,6 +72,12 @@ namespace Anki {
                       const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                       const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
       
+      // Set possible goal options that were generated from an object's pose (predock poses)
+      Result SetGoals(const std::vector<Pose3d>& poses,
+                      const Pose3d& objectPoseGoalsGeneratedFrom,
+                      const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                      const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+      
       void SetMotionProfile(const PathMotionProfile& motionProfile);
 
     protected:
@@ -101,6 +107,10 @@ namespace Anki {
       float _timeToAbortPlanning;
             
       Signal::SmartHandle _originChangedHandle;
+      
+      // The pose of the object that the _goalPoses were generated from
+      Pose3d _objectPoseGoalsGeneratedFrom;
+      bool _useObjectPose = false;
       
     }; // class DriveToPoseAction
 

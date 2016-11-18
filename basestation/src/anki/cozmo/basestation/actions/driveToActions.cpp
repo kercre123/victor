@@ -265,15 +265,9 @@ namespace Anki {
 
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
-
-          const Point2f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0],
-                                                                                    object,
-                                                                                    DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
           DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_robot, true, _useManualSpeed);
-          driveToPoseAction->SetGoals(possiblePoses, {preActionPoseDistThresh.x(),
-                                                      preActionPoseDistThresh.y(),
-                                                      preActionPoseDistThresh.y()});
+          driveToPoseAction->SetGoals(possiblePoses, object->GetPose());
           if(_hasMotionProfile)
           {
             driveToPoseAction->SetMotionProfile(_pathMotionProfile);
@@ -668,6 +662,16 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result DriveToPoseAction::SetGoals(const std::vector<Pose3d>& poses,
+                                       const Pose3d& objectPoseGoalsGeneratedFrom,
+                                       const Point3f& distThreshold,
+                                       const Radians& angleThreshold)
+    {
+      _objectPoseGoalsGeneratedFrom = objectPoseGoalsGeneratedFrom;
+      _useObjectPose = true;
+      return SetGoals(poses, distThreshold, angleThreshold);
+    }
+    
     void DriveToPoseAction::SetMotionProfile(const PathMotionProfile& motionProfile)
     {
       _hasMotionProfile = true;
@@ -850,9 +854,21 @@ namespace Anki {
           Vec3f Tdiff;
           
           // HACK: Loosen z threshold bigtime:
-          const Point3f distanceThreshold(_goalDistanceThreshold.x(),
-                                          _goalDistanceThreshold.y(),
-                                          _robot.GetHeight());
+          Point3f distanceThreshold(_goalDistanceThreshold.x(),
+                                    _goalDistanceThreshold.y(),
+                                    _robot.GetHeight());
+          
+          // If the goals were generated from an object then compute the distance threshold using the
+          // pose of the goal that was actually selected
+          if(_useObjectPose)
+          {
+            const Point2f thresh = ComputePreActionPoseDistThreshold(_goalPoses[_selectedGoalIndex],
+                                                                     _objectPoseGoalsGeneratedFrom,
+                                                                     DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
+            
+            distanceThreshold.x() = thresh.x();
+            distanceThreshold.y() = thresh.y();
+          }
           
           if(_robot.GetPose().IsSameAs(_goalPoses[_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
