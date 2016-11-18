@@ -15,7 +15,9 @@ MonoBehaviour:
     _EnumValueAsString: MemoryMatchGame
     _EnumValue: 17
   UnlockableType: 0
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: DroneModeGame
+    _EnumValue: 14
   AnyPrereqUnlock: 0
   _ComingSoon: 0
   _HideInUI: 0
@@ -26,7 +28,7 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 0
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 2
+  UpgradeCostAmountNeeded: 5
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
