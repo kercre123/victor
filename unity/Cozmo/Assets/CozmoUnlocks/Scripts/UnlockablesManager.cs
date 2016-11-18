@@ -64,12 +64,14 @@ public class UnlockablesManager : MonoBehaviour {
       string spark_unlock_status = "";
       foreach (KeyValuePair<UnlockId, bool> kvp in _UnlockablesState) {
         if (kvp.Value) {
-          UnlockableInfo info = GetUnlockableInfo(kvp.Key);
-          if (info.UnlockableType == UnlockableType.Action) {
-            spark_unlock_status += kvp.Key + ",";
-          }
-          else if (info.UnlockableType == UnlockableType.Game) {
-            game_unlock_status += kvp.Key + ",";
+          UnlockableInfo info = GetUnlockableInfo(kvp.Key, false);
+          if (info != null) {
+            if (info.UnlockableType == UnlockableType.Action) {
+              spark_unlock_status += kvp.Key + ",";
+            }
+            else if (info.UnlockableType == UnlockableType.Game) {
+              game_unlock_status += kvp.Key + ",";
+            }
           }
           // not logging face unlocks
         }
@@ -199,11 +201,10 @@ public class UnlockablesManager : MonoBehaviour {
     return comingSoonList;
   }
 
-  public UnlockableInfo GetUnlockableInfo(Anki.Cozmo.UnlockId id) {
+  public UnlockableInfo GetUnlockableInfo(Anki.Cozmo.UnlockId id, bool errorOnNotFound = true) {
     UnlockableInfo info = Array.Find(_UnlockableInfoList.UnlockableInfoData, x => x.Id.Value == id);
-    if (info == null) {
-      DAS.Error(this, "Invalid unlockable id " + id);
-      return null;
+    if (info == null && errorOnNotFound) {
+      DAS.Error("UnlockablesManager.GetUnlockableInfo", "Invalid unlockable id " + id);
     }
     return info;
   }
