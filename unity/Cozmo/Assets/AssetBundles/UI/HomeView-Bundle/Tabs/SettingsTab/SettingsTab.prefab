@@ -12,6 +12,7 @@ GameObject:
   - 114: {fileID: 11402114}
   - 114: {fileID: 11428538}
   - 114: {fileID: 11460488}
+  - 114: {fileID: 11499854}
   m_Layer: 5
   m_Name: SettingsTab
   m_TagString: Untagged
@@ -57,6 +58,7 @@ MonoBehaviour:
   - {fileID: 11443554, guid: ba0455f156a204d43aa235640d5f8969, type: 2}
   - {fileID: 11443554, guid: 8a1797711b8ef4024b2130678a9bac99, type: 2}
   _DisableGameRequestsWhenOpen: 1
+  _SnappableLayoutGroup: {fileID: 11499854}
 --- !u!114 &11428538
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -81,6 +83,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 1
   m_VerticalFit: 1
+--- !u!114 &11499854
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 140558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a50f1d0ea3b04469b98bafad813ddab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _LayoutGroup: {fileID: 11402114}
 --- !u!224 &22428334
 RectTransform:
   m_ObjectHideFlags: 1

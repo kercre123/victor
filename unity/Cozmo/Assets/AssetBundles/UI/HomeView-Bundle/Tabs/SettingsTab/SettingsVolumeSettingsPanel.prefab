@@ -835,6 +835,7 @@ MonoBehaviour:
   m_Text: Master
   _AllUppercase: 1
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11436898
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -897,6 +898,7 @@ MonoBehaviour:
   m_Text: '#settings.volumePanel.robotToggle.medium'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11444316
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -950,6 +952,7 @@ MonoBehaviour:
   m_Text: '#settings.volumePanel.robotToggle.high'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11454492
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -985,6 +988,7 @@ MonoBehaviour:
   m_Text: '#settings.volumePanel.title'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11457626
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1047,6 +1051,7 @@ MonoBehaviour:
   m_Text: '#settings.sleepCozmoPanel.button.sleepCozmo'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11468796
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1082,6 +1087,7 @@ MonoBehaviour:
   m_Text: robot
   _AllUppercase: 1
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11469712
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1144,6 +1150,7 @@ MonoBehaviour:
   m_Text: '#settings.volumePanel.robotToggle.low'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11471728
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1191,6 +1198,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d19915635dcd34752a39d00ae11e54c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _LayoutElement: {fileID: 11444316}
 --- !u!114 &11475652
 MonoBehaviour:
   m_ObjectHideFlags: 1

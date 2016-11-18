@@ -14,6 +14,7 @@ GameObject:
   - 114: {fileID: 11438804}
   - 114: {fileID: 11477434}
   - 114: {fileID: 11418588}
+  - 114: {fileID: 11482952}
   m_Layer: 5
   m_Name: PlayTab
   m_TagString: Untagged
@@ -36,6 +37,7 @@ MonoBehaviour:
   - {fileID: 11429418, guid: 5cfca50bd149c4f0fa165abf972d8c13, type: 2}
   - {fileID: 11483340, guid: 2453f18bd514742a5b96299b79a121ca, type: 2}
   _DisableGameRequestsWhenOpen: 0
+  _SnappableLayoutGroup: {fileID: 11482952}
 --- !u!114 &11418588
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -107,6 +109,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 1
   m_VerticalFit: 1
+--- !u!114 &11482952
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 116496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a50f1d0ea3b04469b98bafad813ddab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _LayoutGroup: {fileID: 11418588}
 --- !u!222 &22204234
 CanvasRenderer:
   m_ObjectHideFlags: 1
