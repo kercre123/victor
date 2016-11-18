@@ -10,11 +10,12 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private bool _DisableGameRequestsWhenOpen;
 
+    [SerializeField]
+    private SnappableLayoutGroup _SnappableLayoutGroup;
+
     private List<TabPanel> _TabPanelsList = new List<TabPanel>();
 
     private Transform _Container;
-
-    private float _TotalPanelsWidth;
 
     public void Initialize(HomeView homeViewInstance) {
       if (_Container == null) {
@@ -24,30 +25,13 @@ namespace Cozmo.HomeHub {
         TabPanel newTabPanel = UIManager.CreateUIElement(_TabViewPanelPrefabs[i].gameObject, _Container).GetComponent<TabPanel>();
         newTabPanel.Initialize(homeViewInstance);
         _TabPanelsList.Add(newTabPanel);
-        _TotalPanelsWidth += _TabViewPanelPrefabs[i].GetComponent<UnityEngine.UI.LayoutElement>().minWidth;
+        _SnappableLayoutGroup.AddLayoutElement(newTabPanel.GetLayoutElement());
       }
       EnableGameRequestsIfAllowed(!_DisableGameRequestsWhenOpen);
     }
 
-    public float GoToIndex(int index) {
-      if (index > _TabPanelsList.Count) {
-        DAS.Error("HomeViewTab.GoToIndex out of bounds", gameObject.name);
-        return 0.0f;
-      }
-
-      float indexedValue = 0.0f;
-      for (int i = 0; i < _TabPanelsList.Count; ++i) {
-        if (i < index) {
-          indexedValue += _TabPanelsList[i].GetComponent<UnityEngine.UI.LayoutElement>().minWidth;
-        }
-        else {
-          break;
-        }
-      }
-
-      float scrollNormalizedPosition = (indexedValue + _TabPanelsList[index].GetComponent<UnityEngine.UI.LayoutElement>().minWidth / 2.0f) / _TotalPanelsWidth;
-
-      return scrollNormalizedPosition;
+    public float GetNormalizedSnapIndexPosition(int index) {
+      return _SnappableLayoutGroup.GetNormalizedSnapValue(index);
     }
 
     void OnDestroy() {

@@ -301,6 +301,7 @@ MonoBehaviour:
   m_Text: '#cozmoTab.subTitle'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11486066
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -343,6 +344,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d19915635dcd34752a39d00ae11e54c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _LayoutElement: {fileID: 11421844}
 --- !u!114 &11495202
 MonoBehaviour:
   m_ObjectHideFlags: 1

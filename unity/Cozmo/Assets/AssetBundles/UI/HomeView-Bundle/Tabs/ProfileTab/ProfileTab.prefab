@@ -236,6 +236,7 @@ GameObject:
   - 114: {fileID: 11484722}
   - 114: {fileID: 11429890}
   - 114: {fileID: 11453224}
+  - 114: {fileID: 11436698}
   m_Layer: 5
   m_Name: ProfileTab
   m_TagString: Untagged
@@ -447,6 +448,7 @@ MonoBehaviour:
   m_Text: '#label.daysWithCozmo'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11406928
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -482,6 +484,7 @@ MonoBehaviour:
   m_Text: WWWWWWWWWWW
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11417764
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -517,6 +520,7 @@ MonoBehaviour:
   m_Text: 20
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11419144
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -552,6 +556,7 @@ MonoBehaviour:
   m_Text: '#label.activePlayer'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11420918
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -644,6 +649,7 @@ MonoBehaviour:
   m_Text: '#label.streaksCount'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11429890
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -771,6 +777,7 @@ MonoBehaviour:
   m_Text: 20
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11436368
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -798,6 +805,18 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11436698
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 165444}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a50f1d0ea3b04469b98bafad813ddab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _LayoutGroup: {fileID: 11429890}
 --- !u!114 &11439446
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -811,7 +830,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _TabViewPanelPrefabs: []
   _DisableGameRequestsWhenOpen: 0
-  _Container: {fileID: 0}
+  _SnappableLayoutGroup: {fileID: 11436698}
 --- !u!114 &11451540
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -943,6 +962,7 @@ MonoBehaviour:
   m_Text: 20
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11469160
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -996,6 +1016,7 @@ MonoBehaviour:
   m_Text: '#label.goalsCompleted'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11484018
 MonoBehaviour:
   m_ObjectHideFlags: 1

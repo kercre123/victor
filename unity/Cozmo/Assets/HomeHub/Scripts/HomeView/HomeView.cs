@@ -23,6 +23,7 @@ namespace Cozmo.HomeHub {
     private const float kFreeplayIntervalCheck = 30.0f;
     private float _FreeplayIntervalLastTimestamp = -1;
     private float _FreeplayStartedTimestamp = -1;
+    private const int kCubesCount = 3;
 
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
 
@@ -228,7 +229,7 @@ namespace Cozmo.HomeHub {
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.OnBlockConnectivityChanged += HandleBlockConnectivityChanged;
-        _SettingsAlertImage.gameObject.SetActive(RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != 3);
+        _SettingsAlertImage.gameObject.SetActive(RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != kCubesCount);
       }
 
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleCheckForLootView;
@@ -259,7 +260,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleBlockConnectivityChanged(int blocksConnected) {
-      _SettingsAlertImage.gameObject.SetActive(blocksConnected != 3);
+      _SettingsAlertImage.gameObject.SetActive(blocksConnected != kCubesCount);
     }
 
     private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
@@ -366,7 +367,8 @@ namespace Cozmo.HomeHub {
       // auto scroll to the cubes setting panel if we don't have three cubes connected.
       if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != 3) {
         _CurrentTabInstance.GetComponent<ParentLayoutContentSizeFitter>().OnResizedParent += () => {
-          _ScrollRect.horizontalNormalizedPosition = _CurrentTabInstance.GoToIndex(1);
+          const int kCubesHelpIndex = 1;
+          _ScrollRect.horizontalNormalizedPosition = _CurrentTabInstance.GetNormalizedSnapIndexPosition(kCubesHelpIndex);
         };
       }
     }

@@ -12,6 +12,7 @@ GameObject:
   - 114: {fileID: 11480134}
   - 114: {fileID: 11436592}
   - 114: {fileID: 11497368}
+  - 114: {fileID: 11496396}
   m_Layer: 5
   m_Name: CozmoTab
   m_TagString: Untagged
@@ -43,6 +44,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _TabViewPanelPrefabs:
   - {fileID: 11494066, guid: 9964565640ffb415ea4cc00cc10aea80, type: 2}
+  _DisableGameRequestsWhenOpen: 0
+  _SnappableLayoutGroup: {fileID: 11496396}
 --- !u!114 &11480134
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -63,6 +66,18 @@ MonoBehaviour:
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
+--- !u!114 &11496396
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 165444}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a50f1d0ea3b04469b98bafad813ddab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _LayoutGroup: {fileID: 11480134}
 --- !u!114 &11497368
 MonoBehaviour:
   m_ObjectHideFlags: 1
