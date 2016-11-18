@@ -79,13 +79,19 @@ public final class CozmoWifi {
             String ssid = wifiInfo.getSSID();
             boolean isCozmoAP = isCozmoSSID(ssid);
             if (isCozmoAP) {
+              String frequencyStr = "";
+              if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                frequencyStr = wifiInfo.getFrequency() + wifiInfo.FREQUENCY_UNITS;
+              } else {
+                frequencyStr = "no.freq.api";
+              }
               DAS.Event("android.wifi.connected_to_cozmo_access_point",
                 dequoteSSID(wifiInfo.getSSID()) + ","
                 + wifiInfo.getBSSID() + ","
                 + getHostAddress(wifiInfo.getIpAddress()) + ","
                 + (wifiInfo.getHiddenSSID() ? "hidden" : "visible") + ","
                 + wifiInfo.getRssi() + ","
-                + wifiInfo.getFrequency() + wifiInfo.FREQUENCY_UNITS + ","
+                + frequencyStr + ","
                 + wifiInfo.getLinkSpeed() + wifiInfo.LINK_SPEED_UNITS);
 
             } else {
