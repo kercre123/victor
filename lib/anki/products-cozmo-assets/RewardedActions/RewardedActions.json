@@ -777,7 +777,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 10,
+        "Amount": 15,
         "DescriptionKey": "reward.description.MemoryMatch.WinGame.Vs"
       }
     },
@@ -811,7 +811,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 10,
+        "Amount": 15,
         "DescriptionKey": "reward.description.MemoryMatch.PatternLength.Five"
       }
     },
@@ -845,7 +845,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 10,
+        "Amount": 25,
         "DescriptionKey": "reward.description.MemoryMatch.PatternLength.Ten"
       }
     },
@@ -879,7 +879,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 10,
+        "Amount": 50,
         "DescriptionKey": "reward.description.MemoryMatch.PatternLength.Twenty"
       }
     },
@@ -965,7 +965,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 10,
+        "Amount": 15,
         "DescriptionKey": "reward.description.MemoryMatch.Lives.TwoLeft"
       }
     },
@@ -1008,7 +1008,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 10,
+        "Amount": 20,
         "DescriptionKey": "reward.description.MemoryMatch.Lives.ThreeLeft"
       }
     },
