@@ -53,11 +53,15 @@ namespace Onboarding {
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding__Show_Cube);
 
-      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("OnboardingShowCube");
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("OnboardingShowCube");
+        // In this behavior we allow some interuptions, but ReactToPet can interrupt from those reactions. Repress it here, instead of the C++ behavior
+        // so it will be off throughout the whole thing.
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("onboardingUnity", BehaviorType.ReactToPet, false);
+      }
       // So there is no UI pop just start us at the right stage.
       // Next tick engine will set up at this state too.
       UpdateStateUI(OnboardingStateEnum.WaitForShowCube);
-
     }
 
     public override void OnDestroy() {
@@ -68,6 +72,7 @@ namespace Onboarding {
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("NoneBehavior");
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("onboardingUnity", BehaviorType.ReactToPet, true);
       }
     }
 
