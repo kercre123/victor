@@ -46,23 +46,20 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   [Cozmo.ItemId]
   public string RequestTrickCostItemId;
   public AnimationCurve RequestTrickCostAmountCurve;
-  public int RequestTrickCostAmountNeededMin;
-  public int RequestTrickCostAmountNeededMaxTimes;
-  public int RequestTrickCostAmountNeededMax;
+  public int RequestTrickCostAmountNeededMin = 1;
+  [Range(1,20)]
+  public int RequestTrickCostAmountNeededMaxTimes = 1;
+  public int RequestTrickCostAmountNeededMax = 1;
   public int RequestTrickCostAmountNeeded {
     get {
       int cost = 0;
       int count = 0;
-      // Failsafe to protect from divide by zero errors if values haven't been set yet
-      if (RequestTrickCostAmountNeededMin == 0) {
-        return 0;
-      }
       if (DataPersistence.DataPersistenceManager.Instance.CurrentSession.SparkCount.TryGetValue(Id.Value, out count)) {
-        float prog = (float)count / (float)RequestTrickCostAmountNeededMaxTimes;
-        if (count > RequestTrickCostAmountNeededMax) {
+        if (count > RequestTrickCostAmountNeededMaxTimes) {
           return RequestTrickCostAmountNeededMax;
         }
         else {
+          float prog = (float)count / (float)RequestTrickCostAmountNeededMaxTimes;
           return (int)Mathf.Lerp(RequestTrickCostAmountNeededMin, RequestTrickCostAmountNeededMax,
                                  RequestTrickCostAmountCurve.Evaluate(prog));
         }

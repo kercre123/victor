@@ -28,7 +28,7 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 1875882538
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 5
+  UpgradeCostAmountNeeded: 8
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
@@ -46,9 +46,9 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
-  RequestTrickCostAmountNeededMin: 3
-  RequestTrickCostAmountNeededMaxTimes: 8
-  RequestTrickCostAmountNeededMax: 8
+  RequestTrickCostAmountNeededMin: 2
+  RequestTrickCostAmountNeededMaxTimes: 10
+  RequestTrickCostAmountNeededMax: 4
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: a0c43fab4ccad47618022bc1f4e9715e, type: 3}
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: a0c43fab4ccad47618022bc1f4e9715e,
