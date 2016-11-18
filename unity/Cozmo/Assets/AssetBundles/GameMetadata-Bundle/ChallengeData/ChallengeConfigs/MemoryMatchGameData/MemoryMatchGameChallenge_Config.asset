@@ -32,6 +32,16 @@ MonoBehaviour:
         val: 1
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: skillCurveIndex
+        val: 2
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: skillCurveIndex
+        val: 3
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
   MinSequenceLength: 2
   MaxSequenceLength: 30
   TimeWaitFirstBeat: 1
@@ -66,13 +76,13 @@ MonoBehaviour:
     m_Curve:
     - time: -0.047992516
       value: 0.9907192
-      inSlope: -0.10658469
-      outSlope: -0.10658469
+      inSlope: 0.008914063
+      outSlope: 0.008914063
       tangentMode: 0
-    - time: 5.0152326
-      value: 0.5816887
-      inSlope: -0.29773122
-      outSlope: -0.29773122
+    - time: 4.0047917
+      value: 0.5944958
+      inSlope: -0.3127057
+      outSlope: -0.3127057
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -81,13 +91,43 @@ MonoBehaviour:
     m_Curve:
     - time: -0.047992516
       value: 0.9907192
-      inSlope: -0.10658469
-      outSlope: -0.10658469
+      inSlope: -0.010381369
+      outSlope: -0.010381369
       tangentMode: 0
-    - time: 5.0152326
-      value: 0.5816887
-      inSlope: -0.29773122
-      outSlope: -0.29773122
+    - time: 6.520695
+      value: 0.6480208
+      inSlope: -0.19553326
+      outSlope: -0.19553326
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  - serializedVersion: 2
+    m_Curve:
+    - time: -0.029117798
+      value: 0.9907192
+      inSlope: -0.011219106
+      outSlope: -0.011219106
+      tangentMode: 0
+    - time: 8.006876
+      value: 0.6002792
+      inSlope: -0.17427416
+      outSlope: -0.17427416
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  - serializedVersion: 2
+    m_Curve:
+    - time: -0.029117798
+      value: 0.9907192
+      inSlope: 0.003270767
+      outSlope: 0.003270767
+      tangentMode: 0
+    - time: 12.017582
+      value: 0.6480449
+      inSlope: -0.06347157
+      outSlope: -0.06347157
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
