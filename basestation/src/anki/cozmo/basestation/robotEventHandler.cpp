@@ -802,11 +802,13 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
     ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::LIFT_TRACK);
   }
   
+  const bool kInterruptRunning = true; // TODO: expose this option in CLAD?
+  
   if( msg.useLiftSafe ) {
-    newAction = new TriggerLiftSafeAnimationAction(robot, msg.trigger, msg.numLoops, ignoreTracks);
+    newAction = new TriggerLiftSafeAnimationAction(robot, msg.trigger, msg.numLoops, kInterruptRunning, ignoreTracks);
   }
   else {
-    newAction = new TriggerAnimationAction(robot, msg.trigger, msg.numLoops, ignoreTracks);
+    newAction = new TriggerAnimationAction(robot, msg.trigger, msg.numLoops, kInterruptRunning, ignoreTracks);
   }
   return newAction;
 }
