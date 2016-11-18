@@ -313,7 +313,7 @@ public class Robot : IRobot {
   }
 
   public event Action<ObservedObject> OnCarryingObjectSet;
-  public event Action<int> OnBlockConnectivityChanged;
+
 
   private ObservedObject _HeadTrackingObject = null;
 
@@ -868,10 +868,6 @@ public class Robot : IRobot {
       else {
         DeleteObservedObject((int)blockData.ObjectID);
       }
-    }
-
-    if (OnBlockConnectivityChanged != null) {
-      OnBlockConnectivityChanged(LightCubes.Count);
     }
   }
 

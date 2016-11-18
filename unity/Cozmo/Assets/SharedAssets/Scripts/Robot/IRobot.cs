@@ -84,8 +84,6 @@ public interface IRobot : IDisposable {
   event ChargerStateEventHandler OnChargerAdded;
   event ChargerStateEventHandler OnChargerRemoved;
 
-  event Action<int> OnBlockConnectivityChanged;
-
   List<Face> Faces { get; }
 
   event FaceStateEventHandler OnFaceAdded;

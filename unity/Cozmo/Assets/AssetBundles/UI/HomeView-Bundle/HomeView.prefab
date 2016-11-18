@@ -325,23 +325,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &119310
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22437324}
-  - 222: {fileID: 22295452}
-  - 114: {fileID: 11494118}
-  m_Layer: 5
-  m_Name: SettingsAlertImage
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!1 &119812
 GameObject:
   m_ObjectHideFlags: 1
@@ -1988,9 +1971,6 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
-    JsonValue: false
-  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
@@ -2026,7 +2006,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.8862745, g: 1, b: 0, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2048,7 +2028,6 @@ MonoBehaviour:
   m_Text: 1/3
   _AllUppercase: 0
   GlowText: 0
-  IsRaycastBlocker: 0
 --- !u!114 &11413228
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2062,7 +2041,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.8862745, g: 1, b: 0, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2084,7 +2063,6 @@ MonoBehaviour:
   m_Text: 1/3
   _AllUppercase: 0
   GlowText: 0
-  IsRaycastBlocker: 0
 --- !u!114 &11414336
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2668,7 +2646,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.8862745, g: 1, b: 0, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2690,7 +2668,6 @@ MonoBehaviour:
   m_Text: 1/3
   _AllUppercase: 0
   GlowText: 0
-  IsRaycastBlocker: 0
 --- !u!114 &11433342
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2927,9 +2904,6 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
-    JsonValue: false
-  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
@@ -3130,7 +3104,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0.609, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -3152,7 +3126,6 @@ MonoBehaviour:
   m_Text: '>Thing Cozmo is doing'
   _AllUppercase: 0
   GlowText: 0
-  IsRaycastBlocker: 0
 --- !u!114 &11453882
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3388,7 +3361,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _BehaviorLabel: {fileID: 11453108}
   _MinTimeInStateBeforeChange_Sec: 0.5
-  _MinTimeShowingRewardBeforeChange_Sec: 2.5
   _FadeTime_Sec: 0.3
 --- !u!114 &11465266
 MonoBehaviour:
@@ -3559,7 +3531,6 @@ MonoBehaviour:
   _PlaySelectedTabs: {fileID: 128218}
   _ProfileSelectedTabs: {fileID: 163956}
   _SettingsButton: {fileID: 11429614}
-  _SettingsAlertImage: {fileID: 11494118}
   _ScrollRectContent: {fileID: 22415210}
   _RequirementPointsProgressBar: {fileID: 11401482}
   _EmotionChipTag: {fileID: 11406946}
@@ -3931,33 +3902,6 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11494118
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 119310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: dd350cf88c8124d77a33bd1a75545537, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
 --- !u!114 &11494348
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4073,7 +4017,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.8862745, g: 1, b: 0, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -4095,7 +4039,6 @@ MonoBehaviour:
   m_Text: 1/3
   _AllUppercase: 0
   GlowText: 0
-  IsRaycastBlocker: 0
 --- !u!114 &11498466
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -6056,12 +5999,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 121252}
---- !u!222 &22295452
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 119310}
 --- !u!222 &22295840
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -6156,7 +6093,6 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22476122}
-  - {fileID: 22437324}
   m_Father: {fileID: 22441376}
   m_RootOrder: 3
   m_AnchorMin: {x: 1, y: 1}
@@ -7049,24 +6985,6 @@ RectTransform:
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -18, y: 0}
   m_SizeDelta: {x: 180, y: 244}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!224 &22437324
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 119310}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
-  m_Father: {fileID: 22401150}
-  m_RootOrder: 1
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 41, y: -53}
-  m_SizeDelta: {x: 125, y: 125}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22438686
 RectTransform:
