@@ -145,12 +145,17 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
   static const u8 kNumRetries = 2;
   RetryWrapperAction* action = new RetryWrapperAction(robot, driveToBlockAction, retryCallback, kNumRetries);
 
-  StartActing(action, [this,&robot](ActionResult res) {
+  StartActing(action, [this,&robot](const ExternalInterface::RobotCompletedAction& completion) {
+      ActionResult res = completion.result;
+      
       if( res == ActionResult::SUCCESS ) {
         TransitionToPreLiftAnim(robot);
       }
       else {
-        const bool countFailure = false;
+        // only count driving failures if there are no predock poses (that way a different cube or behavior
+        // will get selected)
+        const auto& interactionResult = completion.completionInfo.Get_objectInteractionCompleted().result;
+        const bool countFailure = interactionResult == ObjectInteractionResult::NO_PREACTION_POSES;
         TransitionToFailureRecovery(robot, countFailure);
       }
     });
