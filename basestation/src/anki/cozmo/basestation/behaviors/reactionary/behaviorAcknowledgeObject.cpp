@@ -339,11 +339,12 @@ void BehaviorAcknowledgeObject::StopInternalAcknowledgement(Robot& robot)
 
 bool BehaviorAcknowledgeObject::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  return kEnableObjectAcknowledgement &&
+  const bool ret = kEnableObjectAcknowledgement &&
     !robot.IsCarryingObject() &&
     !robot.IsPickingOrPlacing() &&
     !robot.IsOnCharger() &&
     !robot.IsOnChargerPlatform();
+  return ret;
 }
 
 void BehaviorAcknowledgeObject::AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot)
@@ -422,7 +423,8 @@ bool BehaviorAcknowledgeObject::ShouldRunForEvent(const ExternalInterface::Messa
 
   // this will be set in begin iteration
   _currTarget.UnSet();
-  return HasDesiredReactionTargets(robot);
+  const bool ret = HasDesiredReactionTargets(robot);
+  return ret;
 } // ShouldRunForEvent()
 
 

@@ -357,6 +357,7 @@ namespace Anki
       template<typename T>
       void HandleMessage(const T& msg);
       
+      BlockConfigurations::BlockConfigurationManager& GetBlockConfigurationManager() { assert(_blockConfigurationManager); return *_blockConfigurationManager;}
       const BlockConfigurations::BlockConfigurationManager& GetBlockConfigurationManager() const { assert(_blockConfigurationManager); return *_blockConfigurationManager;}
       void NotifyBlockConfigurationManagerObjectPoseChanged(const ObjectID& objectID) const;
       

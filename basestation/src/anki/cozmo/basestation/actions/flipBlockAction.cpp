@@ -274,9 +274,9 @@ ActionResult FlipBlockAction::Init()
     return ActionResult::FAILURE_ABORT;
   }
   
-  if(!object->IsPoseStateKnown())
+  if(object->IsPoseStateUnknown())
   {
-    PRINT_NAMED_WARNING("FlipBlockAction.Init.UnknownPose", "Object %d pose state is not known", _objectID.GetValue());
+    PRINT_NAMED_WARNING("FlipBlockAction.Init.UnknownPose", "Object %d pose state is unknown", _objectID.GetValue());
     return ActionResult::FAILURE_ABORT;
   }
   

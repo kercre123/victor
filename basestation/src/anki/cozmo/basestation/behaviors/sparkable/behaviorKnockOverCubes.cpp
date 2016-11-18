@@ -220,7 +220,10 @@ void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(Robot& robot)
 void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
 {
   DEBUG_SET_STATE(PlayingReaction);
-
+  
+  // notify configuration manager that the tower was knocked over
+  robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
+  
   // determine if the robot successfully knocked over the min number of cubes
   auto animationTrigger = _knockOverFailureTrigger;
   if(_objectsFlipped.size() >= kMinBlocksForSuccess){
