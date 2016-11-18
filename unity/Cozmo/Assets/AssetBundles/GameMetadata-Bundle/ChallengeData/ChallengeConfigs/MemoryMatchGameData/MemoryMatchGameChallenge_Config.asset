@@ -14,10 +14,10 @@ MonoBehaviour:
   _SkillConfig:
     _EvaluateLevelChangeEvent:
     - _EnumValueAsString: OnMemoryMatchVsComplete
-      _EnumValue: 20
+      _EnumValue: 17
     _ChallengePointEvent:
     - _EnumValueAsString: OnMemoryMatchVsComplete
-      _EnumValue: 20
+      _EnumValue: 17
     _ResetPointsEvent: []
     _UsePointThreshold: 1
     _ComparedPointThreshold: 3
@@ -44,6 +44,7 @@ MonoBehaviour:
   MaxLivesCozmo: 3
   MaxLivesHuman: 3
   MinRoundBeforeLongReact: 3
+  TapBufferRobotTimeMS: 300
   TimeBetweenBeat_Sec:
     serializedVersion: 2
     m_Curve:

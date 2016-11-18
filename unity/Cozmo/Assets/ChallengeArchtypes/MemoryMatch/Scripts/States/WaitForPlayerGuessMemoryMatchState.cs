@@ -12,7 +12,6 @@ namespace MemoryMatch {
     private int _CurrentSequenceIndex = 0;
     private int _TargetCube = -1;
     private float _StartLightBlinkTime = -1;
-    private const float _kTapBufferRobotTimeMS = 150f;
     private float _LastTapRobotTime = 0;
 
     private enum SubState {
@@ -112,8 +111,9 @@ namespace MemoryMatch {
       // Has enough of an offset where it doesn't completely solve it. This is in robot time not unity time to help ignore the tap filter offset
       // In the world of worse errors, it's better for people to think they're moving to fast and a tap didn't register
       // rather than it being wrong for no reason.
-      if (timeStamp < _LastTapRobotTime + _kTapBufferRobotTimeMS) {
-        DAS.Info("MemoryMatch.OnBlockTapped.Ignore", "Tapped: " + id + " @ " + timeStamp + " last was " + _LastTapRobotTime);
+      if (timeStamp < _LastTapRobotTime + _GameInstance.Config.TapBufferRobotTimeMS) {
+        DAS.Debug("MemoryMatch.OnBlockTapped.Ignore", "Tapped: " + id + " @ " + timeStamp + " last was " + _LastTapRobotTime);
+        DAS.Event("MemoryMatch.OnBlockTapped.TooSoonIgnore", (timeStamp - _LastTapRobotTime).ToString());
         return;
       }
 

@@ -28,6 +28,8 @@ public class MemoryMatchGameConfig : MinigameConfigBase {
 
   public int MinRoundBeforeLongReact = 5;
 
+  public float TapBufferRobotTimeMS = 300f;
+
   public AnimationCurve TimeBetweenBeat_Sec;
 
   public AnimationCurve[] CozmoGuessCubeCorrectPercentagePerSkill;
