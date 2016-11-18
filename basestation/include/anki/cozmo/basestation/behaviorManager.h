@@ -148,6 +148,11 @@ public:
   
   // calculates (and sets in the freeplay chooser) the desired goal due to objects recently seen
   void CalculateFreeplayGoalFromObjects();
+
+  // return the basestation time that freeplay first started (often useful as a notion of "session"). This
+  // will be -1 until freeplay has started, and then will always be set to the time (in seconds) that freeplay
+  // started
+  float GetFirstTimeFreeplayStarted() const { return _firstTimeFreeplayStarted; }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Sparks
@@ -286,6 +291,9 @@ private:
   
   // time at which last chooser was selected
   float _lastChooserSwitchTime;
+
+  // first time freeplay ever started
+  float _firstTimeFreeplayStarted = -1.0f;
 
   // - - - - - - - - - - - - - - -
   // others/shared

@@ -198,6 +198,10 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                  {
                                    case BehaviorChooserType::Freeplay:
                                    {
+                                     if( _firstTimeFreeplayStarted < 0 ) {
+                                       const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+                                       _firstTimeFreeplayStarted = currTime_s;
+                                     }
                                      SetBehaviorChooser( _freeplayChooser );
                                      break;
                                    }

@@ -107,11 +107,19 @@ void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
                                                                 PI_F,
                                                                 sayName);
 
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool withinMinSessionTime = currTime_s <= kMaxTimeForInitialGreeting_s;
+  const float freeplayStartedTime_s = robot.GetBehaviorManager().GetFirstTimeFreeplayStarted();    
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();  
+  const bool withinMinSessionTime = freeplayStartedTime_s >= 0.0f &&
+    (currTime_s - freeplayStartedTime_s) <= kMaxTimeForInitialGreeting_s;
   const bool alreadyTurnedTowards = robot.GetFaceWorld().HasTurnedTowardsFace(_targetFace);
   const bool shouldPlayInitialGreeting = !_hasPlayedInitialGreeting && withinMinSessionTime && !alreadyTurnedTowards;
 
+  PRINT_CH_INFO("Behaviors", "AcknowledgeFace.DoAcknowledgement",
+                "currTime = %f, alreadyTurned:%d, shouldPlayGreeting:%d",
+                currTime_s,
+                alreadyTurnedTowards ? 1 : 0,
+                shouldPlayInitialGreeting ? 1 : 0);
+  
   if( shouldPlayInitialGreeting ) {
     turnAction->SetSayNameTriggerCallback([this](const Robot& robot, Vision::FaceID_t faceID){
         // only play the initial greeting once, so if we are going to use it, mark that here
