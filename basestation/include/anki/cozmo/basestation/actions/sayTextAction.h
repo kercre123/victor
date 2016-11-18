@@ -61,7 +61,7 @@ public:
   // Use AnimationTrigger::Count to use built-in animation (default).
   // The animation group should contain animations that have the special audio keyframe for
   // Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing or Play__Robot_Vo__External_Unprocessed
-  void SetAnimationTrigger(AnimationTrigger trigger) { _animationTrigger = trigger; }
+  void SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTracks = 0);
   
   // Generate new animation by stiching the animation group animations together until they are equal or greater to the
   // duration of generated text to speech conent
@@ -86,6 +86,7 @@ private:
   bool                      _isAudioReady         = false;
   Animation                 _animation;
   AnimationTrigger          _animationTrigger     = AnimationTrigger::Count; // Count == use built-in animation
+  u8                        _ignoreAnimTracks     = (u8)AnimTrackFlag::NO_TRACKS;
   IActionRunner*            _playAnimationAction  = nullptr;
   bool                      _fitToDuration        = false;
   f32                       _timeout_sec          = 30.f;

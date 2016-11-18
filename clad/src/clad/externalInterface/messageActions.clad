@@ -210,7 +210,10 @@ message PlayAnimationTrigger {
   uint_8  robotID,
   uint_32 numLoops,
   AnimationTrigger trigger,
-  bool useLiftSafe
+  bool    useLiftSafe,
+  bool    ignoreBodyTrack,
+  bool    ignoreHeadTrack,
+  bool    ignoreLiftTrack
 }
 
 // PlayAnimation -- TEMP CODE!! Iterating animation code

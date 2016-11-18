@@ -524,7 +524,8 @@ namespace Cozmo {
             Anki.Cozmo.AnimationTrigger reactionAnimation = (((PetFace)targetObject).PetType == Anki.Vision.PetType.Cat) ?
               Anki.Cozmo.AnimationTrigger.PetDetectionCat : Anki.Cozmo.AnimationTrigger.PetDetectionDog;
             _CurrentRobot.SendAnimationTrigger(reactionAnimation,
-              callback: HandleActionFinished);
+              callback: HandleActionFinished, 
+              ignoreBodyTrack: _CurrentRobot.Status(Anki.Cozmo.RobotStatusFlag.IS_PICKED_UP));
             DisableInput();
             IsPerformingAction = true;
           }

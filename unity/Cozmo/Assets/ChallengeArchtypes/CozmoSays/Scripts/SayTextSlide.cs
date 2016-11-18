@@ -148,13 +148,13 @@ public class SayTextSlide : MonoBehaviour {
       SetGetInOutTriggers(_TextInput.text.Length, _TextInput.characterLimit, out getInTrigger, out getOutTrigger);
 
       RobotActionUnion[] actions = {
-        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(RobotEngineManager.Instance.CurrentRobot.ID, 1, getInTrigger, true)),
+        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(RobotEngineManager.Instance.CurrentRobot.ID, 1, getInTrigger, true, false, false, false)),
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _TextInput.text,
           Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakLoop,
           Anki.Cozmo.SayTextIntent.Cozmo_Says,
           true)),
-        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(RobotEngineManager.Instance.CurrentRobot.ID, 1, getOutTrigger, true))
+        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(RobotEngineManager.Instance.CurrentRobot.ID, 1, getOutTrigger, true, false, false, false))
       };
 
       RobotEngineManager.Instance.CurrentRobot.SendQueueCompoundAction(actions, (success) => {

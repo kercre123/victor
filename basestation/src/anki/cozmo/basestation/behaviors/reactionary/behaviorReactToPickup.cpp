@@ -15,7 +15,10 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/faceWorld.h"
+#include "anki/cozmo/basestation/petWorld.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
@@ -62,7 +65,7 @@ Result BehaviorReactToPickup::InitInternalReactionary(Robot& robot)
   
 void BehaviorReactToPickup::StartAnim(Robot& robot)
 {
-  // If we're carrying anything, the reaction will cause us to throw it, so unattach
+  // If we're carrying anything, the animation will likely cause us to throw it, so unattach
   // and set as unknown pose
   if(robot.IsCarryingObject())
   {
@@ -70,7 +73,62 @@ void BehaviorReactToPickup::StartAnim(Robot& robot)
     robot.SetCarriedObjectAsUnattached(clearCarriedObjects);
   }
   
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToPickup));
+  // If we're seeing a human or pet face, react to that, otherwise, react to being picked up
+  const TimeStamp_t lastImageTimeStamp = robot.GetLastImageTimeStamp();
+  const TimeStamp_t kObsFaceTimeWindow_ms = 500;
+  const TimeStamp_t obsTimeCutoff = (lastImageTimeStamp > kObsFaceTimeWindow_ms ? lastImageTimeStamp - kObsFaceTimeWindow_ms : 0);
+  
+  auto faceIDsObserved = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(obsTimeCutoff);
+  
+  
+  auto const kTracksToLock = Util::EnumToUnderlying(AnimTrackFlag::BODY_TRACK);
+  if(!faceIDsObserved.empty())
+  {
+    // Get name of first named face, if there is one
+    std::string name;
+    for(auto faceID : faceIDsObserved)
+    {
+      const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
+      if(face != nullptr && face->HasName())
+      {
+        name = face->GetName();
+        break;
+      }
+    }
+    
+    // Say the name if we have it, otherwise just acknowledge the (unknown) face
+    // TODO: Set triggers in Json config?
+    if(name.empty())
+    {
+      // Just react to unnamed face, but without using treads
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::AcknowledgeFaceUnnamed, 1, true, kTracksToLock));
+    }
+    else
+    {
+      SayTextAction* sayText = new SayTextAction(robot, name, SayTextIntent::Name_Normal);
+      sayText->SetAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed, kTracksToLock);
+      StartActing(sayText);
+    }
+  }
+  else
+  {
+    auto currentPets = robot.GetPetWorld().GetAllKnownPets();
+    if(!currentPets.empty())
+    {
+      AnimationTrigger animTrigger = AnimationTrigger::PetDetectionShort_Dog;
+      if(Vision::PetType::Cat == currentPets.begin()->second.GetType())
+      {
+        animTrigger = AnimationTrigger::PetDetectionShort_Cat;
+      }
+      
+      // React, but without using body track, since we're picked up
+      StartActing(new TriggerAnimationAction(robot, animTrigger, 1, true, kTracksToLock));
+    }
+    else
+    {
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToPickup));
+    }
+  }
   
   const double minTime = _repeatAnimatingMultiplier * kMinTimeBetweenPickupAnims_sec;
   const double maxTime = _repeatAnimatingMultiplier * kMaxTimeBetweenPickupAnims_sec;

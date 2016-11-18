@@ -1230,10 +1230,10 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, mergeIntoID, name, seq, saveToRobot), callback, queueActionPosition);
   }
 
-  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true) {
+  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false) {
 
     DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + 1 + " loop " + useSafeLiftMotion);
-    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent, useSafeLiftMotion), callback, queueActionPosition);
+    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent, useSafeLiftMotion, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack), callback, queueActionPosition);
   }
 
   public void SetIdleAnimation(AnimationTrigger default_anim) {

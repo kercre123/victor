@@ -787,11 +787,26 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimationTrigger& msg)
 {
   IActionRunner* newAction = nullptr;
+  std::underlying_type<AnimTrackFlag>::type ignoreTracks = Util::EnumToUnderlying(AnimTrackFlag::NO_TRACKS);
+  
+  if(msg.ignoreBodyTrack)
+  {
+    ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::BODY_TRACK);
+  }
+  if(msg.ignoreHeadTrack)
+  {
+    ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::HEAD_TRACK);
+  }
+  if(msg.ignoreLiftTrack)
+  {
+    ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::LIFT_TRACK);
+  }
+  
   if( msg.useLiftSafe ) {
-    newAction = new TriggerLiftSafeAnimationAction(robot, msg.trigger, msg.numLoops);
+    newAction = new TriggerLiftSafeAnimationAction(robot, msg.trigger, msg.numLoops, ignoreTracks);
   }
   else {
-    newAction = new TriggerAnimationAction(robot, msg.trigger, msg.numLoops);
+    newAction = new TriggerAnimationAction(robot, msg.trigger, msg.numLoops, ignoreTracks);
   }
   return newAction;
 }

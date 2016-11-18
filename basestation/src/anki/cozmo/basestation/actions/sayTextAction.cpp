@@ -175,6 +175,13 @@ SayTextAction::~SayTextAction()
 } // ~SayTextAction()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SayTextAction::SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTracks)
+{
+  _animationTrigger = trigger;
+  _ignoreAnimTracks = ignoreTracks;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::Init()
 {
   using namespace Audio;
@@ -238,11 +245,11 @@ ActionResult SayTextAction::Init()
           
           // Generate animation
           UpdateAnimationToFitDuration(duration_ms);
-          _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
+          _playAnimationAction = new PlayAnimationAction(_robot, &_animation, 1, true, _ignoreAnimTracks);
         }
         else {
           // Use current animation trigger
-          _playAnimationAction = new TriggerLiftSafeAnimationAction(_robot, _animationTrigger);
+          _playAnimationAction = new TriggerLiftSafeAnimationAction(_robot, _animationTrigger, 1, true, _ignoreAnimTracks);
         }
       }
       
