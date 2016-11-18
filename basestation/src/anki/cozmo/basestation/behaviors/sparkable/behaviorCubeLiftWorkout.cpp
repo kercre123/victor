@@ -35,6 +35,9 @@ static const AIWhiteboard::ObjectUseIntention kObjectIntention = AIWhiteboard::O
 // if we haven't seen the cube this recently, search for it
 // TODO:(bn) centralize this logic somewhere, every behavior should have access to this
 static const uint32_t kMinAgeToPerformSearch_ms = 300;
+static const f32 kPostLiftDriveBackwardDist_mm = 20.f;
+static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;
+  
 }
 
 BehaviorCubeLiftWorkout::BehaviorCubeLiftWorkout(Robot& robot, const Json::Value& config)
@@ -170,11 +173,19 @@ void BehaviorCubeLiftWorkout::TransitionToPreLiftAnim(Robot& robot)
 void BehaviorCubeLiftWorkout::TransitionToPickingUpCube(Robot& robot)
 {
   PickupObjectAction* pickupAction = new PickupObjectAction(robot, _targetBlockID);
+  
   // we already checked this in the drive to, don't re-do driving if the animation moves us a bit
   pickupAction->SetDoNearPredockPoseCheck(false);
+  
+  CompoundActionSequential* pickupAndDriveBackAction = new CompoundActionSequential(robot, {
+    pickupAction,
+    new DriveStraightAction(robot, -kPostLiftDriveBackwardDist_mm, kPostLiftDriveBackwardSpeed_mmps),
+  });
+  pickupAndDriveBackAction->SetProxyTag(pickupAction->GetTag());
+  
   static const u8 kNumRetries = 2;
   RetryWrapperAction* action = new RetryWrapperAction(robot,
-                                                      pickupAction,
+                                                      pickupAndDriveBackAction,
                                                       AnimationTrigger::WorkoutPickupRetry,
                                                       kNumRetries);
 
