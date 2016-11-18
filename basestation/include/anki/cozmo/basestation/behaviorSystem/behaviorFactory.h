@@ -57,9 +57,9 @@ public:
   void DestroyBehavior(IBehavior* behavior);
   void SafeDestroyBehavior(IBehavior*& behaviorPtrRef); // destroy and null out the pointer
   
-  IBehavior* FindBehaviorByName(const std::string& inName);
-  IBehavior* FindBehaviorByType(const BehaviorType& type);
-  IBehavior* FindBehaviorByExecutableType(ExecutableBehaviorType type);
+  IBehavior* FindBehaviorByName(const std::string& inName) const;
+  IBehavior* FindBehaviorByType(const BehaviorType& type) const;
+  IBehavior* FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
   
   const NameToBehaviorMap& GetBehaviorMap() const { return _nameToBehaviorMap; }
   

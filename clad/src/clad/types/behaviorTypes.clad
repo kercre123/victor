@@ -71,6 +71,7 @@ enum uint_8 BehaviorType {
   OnboardingShowCube,
   OnConfigSeen,
   CubeLiftWorkout,
+  CheckForStackAtInterval,
 
   Count
 }

@@ -1071,7 +1071,13 @@ Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID,
                                                 const Point2f& relativeToPoint,
                                                 const u32 rotationPeriod_ms)
 {
-  ActiveObject* activeObject = GetActiveObjectInAnyFrame(_robot.GetBlockWorld(), objectID);
+  ActiveObject* activeObject = nullptr;
+  if(makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF) {
+    activeObject = GetActiveObjectInAnyFrame(_robot.GetBlockWorld(), objectID);
+  }else{
+    activeObject = _robot.GetBlockWorld().GetActiveObjectByID(objectID);
+  }
+  
   
   if(activeObject == nullptr) {
     PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");

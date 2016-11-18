@@ -116,6 +116,9 @@ public class BehaviorDisplay : MonoBehaviour {
     string ret = "";
     // Might share some of these in the future, so not a dictionary
     switch (behaviorType) {
+    case BehaviorType.LookForFaceAndCube:
+      ret = Localization.Get(LocalizationKeys.kBehaviorLookForFaceAndCube);
+      break;
     case BehaviorType.BringCubeToBeacon:
       ret = Localization.Get(LocalizationKeys.kBehaviorBringCubeToBeacon);
       break;
@@ -211,6 +214,9 @@ public class BehaviorDisplay : MonoBehaviour {
       break;
     case BehaviorType.CubeLiftWorkout:
       ret = Localization.Get(LocalizationKeys.kBehaviorWorkout);
+      break;
+    case BehaviorType.CheckForStackAtInterval:
+      ret = Localization.Get(LocalizationKeys.kBehaviorCheckForStackAtInterval);
       break;
     default:
       break;

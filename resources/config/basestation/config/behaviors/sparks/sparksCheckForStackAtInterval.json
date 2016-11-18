@@ -1,0 +1,9 @@
+{
+  "behaviorType": "CheckForStackAtInterval",
+  "name": "sparksCheckForStackAtInterval",
+  "behaviorGroups": [
+    "SparksKnockOverCubes"
+  ],
+  "flatScore": 4.0,
+  "delayBetweenChecks": 15.0
+}

@@ -113,5 +113,11 @@
   },
   "behavior.Workout": {
     "translation": "Cozmo is doing a workout"
+  },
+  "behavior.CheckForStackAtInterval": {
+    "translation": "Cozmo is looking for a stack"
+  },
+  "behavior.LookForFaceAndCube": {
+    "translation": " "
   }
 }

@@ -34,6 +34,8 @@ public static class LocalizationKeys {
   public const string kBehaviorDriveOffCharger = "behavior.DriveOffCharger";
   public const string kBehaviorPickupCube = "behavior.PickupCube";
   public const string kBehaviorWorkout = "behavior.Workout";
+  public const string kBehaviorCheckForStackAtInterval = "behavior.CheckForStackAtInterval";
+  public const string kBehaviorLookForFaceAndCube = "behavior.LookForFaceAndCube";
 
   #endregion
 

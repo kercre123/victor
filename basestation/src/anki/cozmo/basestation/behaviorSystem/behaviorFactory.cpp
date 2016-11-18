@@ -58,6 +58,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorCheckForStackAtInterval.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorCubeLiftworkout.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorKnockOverCubes.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
@@ -353,6 +354,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
       newBehavior = new BehaviorCubeLiftWorkout(robot, config);
       break;
     }
+    case BehaviorType::CheckForStackAtInterval:
+    {
+      newBehavior = new BehaviorCheckForStackAtInterval(robot, config);
+      break;
+    }
     case BehaviorType::Count:
     {
       PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.BadType", "Unexpected type '%s'", EnumToString(behaviorType));
@@ -508,7 +514,7 @@ bool BehaviorFactory::RemoveBehaviorFromMap(IBehavior* behavior)
 }
 
 
-IBehavior* BehaviorFactory::FindBehaviorByName(const std::string& inName)
+IBehavior* BehaviorFactory::FindBehaviorByName(const std::string& inName) const
 {
   IBehavior* foundBehavior = nullptr;
   
@@ -522,7 +528,7 @@ IBehavior* BehaviorFactory::FindBehaviorByName(const std::string& inName)
 }
 
   
-IBehavior* BehaviorFactory::FindBehaviorByType(const BehaviorType& type)
+IBehavior* BehaviorFactory::FindBehaviorByType(const BehaviorType& type) const
 {
   for(const auto behavior : _nameToBehaviorMap)
   {
@@ -535,7 +541,7 @@ IBehavior* BehaviorFactory::FindBehaviorByType(const BehaviorType& type)
 }
   
   
-IBehavior* BehaviorFactory::FindBehaviorByExecutableType(ExecutableBehaviorType type)
+IBehavior* BehaviorFactory::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {
   for(const auto behavior : _nameToBehaviorMap)
   {
