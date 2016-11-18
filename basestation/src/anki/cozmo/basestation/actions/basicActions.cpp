@@ -398,6 +398,15 @@ namespace Anki {
         _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
       }
 
+      if(_desiredObjectID.IsSet())
+      {
+        const ObservableObject* desiredObject = _robot.GetBlockWorld().GetObjectByID(_desiredObjectID);
+        if(nullptr != desiredObject)
+        {
+          _desiredObjectLastObsTime = desiredObject->GetLastObservedTime();
+        }
+      }
+      
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
       // first update doesn't _fail_
@@ -416,11 +425,14 @@ namespace Anki {
       ActionResult internalResult = _compoundAction.Update();
       const ObservableObject* desiredObject = _desiredObjectID.IsSet() ? _robot.GetBlockWorld().GetObjectByID(_desiredObjectID) : nullptr;
       
-      // check if the object has been located
-      if(desiredObject != nullptr && desiredObject->IsPoseStateKnown())
+      // check if the object has been located and actually observed
+      if(desiredObject != nullptr &&
+         desiredObject->IsPoseStateKnown() &&
+         desiredObject->GetLastObservedTime() > _desiredObjectLastObsTime)
       {
         return ActionResult::SUCCESS;
       }
+      
       // unsuccessful in finding the object
       else if(internalResult == ActionResult::SUCCESS && _desiredObjectID.IsSet()){
         return ActionResult::FAILURE_ABORT;

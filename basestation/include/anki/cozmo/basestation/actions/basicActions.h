@@ -108,7 +108,8 @@ namespace Cozmo {
     private:
       CompoundActionSequential _compoundAction;
       ObjectID _desiredObjectID;
-
+      TimeStamp_t _desiredObjectLastObsTime = 0;
+      
       f32 _minWaitTime_s = 0.8f;
       f32 _maxWaitTime_s = 1.2f;
       f32 _minSearchAngle_rads = DEG_TO_RAD(15.0f);
