@@ -90,7 +90,7 @@ IBehavior::Status BehaviorPickUpCube::UpdateInternal(Robot& robot)
     }
   }
   
-  return Status::Running;
+  return super::UpdateInternal(robot);
 }
 
 

@@ -36,7 +36,8 @@ class ObservableObject;
   
 class BehaviorPickUpCube : public IBehavior
 {
-protected:
+  using super = IBehavior;
+protected:  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPickUpCube(Robot& robot, const Json::Value& config);
