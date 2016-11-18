@@ -30,6 +30,8 @@ namespace MemoryMatch {
     private float _ScanTimeoutSec = -1.0f;
     private float _ScanTimeoutSecMax = 30.0f;
 
+    private int _FirstBlockSeenID = -1;
+
     public ScanForInitialCubeState(State nextState, int cubesRequired, float MinDistBetweenCubesMM, float RotateSecScan, float ScanTimeoutSecMax) : base(nextState, cubesRequired) {
       _SetupCubeState = new Dictionary<int, ScannedSetupCubeState>();
       _CubesStateUpdated = false;
@@ -177,6 +179,11 @@ namespace MemoryMatch {
         // our list of scanned cubes
         if (cube.IsInFieldOfView && !cubeAdded) {
           if (_Game.CubeIdsForGame.Count < _CubesRequired) {
+            // The first cube we saw is likely the center, 
+            // possible not if we saw two at once but this is only used for UI display
+            if (_Game.CubeIdsForGame.Count == 0) {
+              _FirstBlockSeenID = cube.ID;
+            }
             _Game.CubeIdsForGame.Add(cube.ID);
             _SetupCubeState.Add(cube.ID, ScannedSetupCubeState.Unknown);
             cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
@@ -207,8 +214,11 @@ namespace MemoryMatch {
           _ShowCozmoCubesSlide.LightUpCubes(new List<int> { 1 });
           break;
         case 2:
-          // Start with lighting up the center specifically.
-          _ShowCozmoCubesSlide.LightUpCubes(new List<int> { 1, 2 });
+          // extra block is on the left of the two.
+          // 2 means light up the bottom on the UI, left from Cozmo's POV
+          int lightIndex = (_FirstBlockSeenID == _Game.CubeIdsForGame[1]) ? 0 : 2;
+          _ShowCozmoCubesSlide.LightUpCubes(new List<int> { 1, lightIndex });
+
           break;
         default:
           _ShowCozmoCubesSlide.LightUpCubes(numValidCubes);
@@ -247,6 +257,7 @@ namespace MemoryMatch {
           InitShowCubesSlide();
           // Reset for another scan since hopefully they moved them
           _Game.CubeIdsForGame.Clear();
+          _FirstBlockSeenID = -1;
           _SetupCubeState.Clear();
           foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
             lightCube.Value.SetLEDsOff();
@@ -256,6 +267,7 @@ namespace MemoryMatch {
         // setup next state...
         if (nextState == ScanPhase.NoCubesSeen) {
           _Game.CubeIdsForGame.Clear();
+          _FirstBlockSeenID = -1;
           _SetupCubeState.Clear();
           UpdateUI(0);
           _Game.SharedMinigameView.EnableContinueButton(false);
@@ -305,9 +317,9 @@ namespace MemoryMatch {
           }
           // Error sound
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Tap_Red);
-          MemoryMatchGame MemoryMatchGame = _Game as MemoryMatchGame;
+          MemoryMatchGame MemoryMatchGameInstance = _Game as MemoryMatchGame;
           _Game.SharedMinigameView.ShowWideGameStateSlide(
-                                                     MemoryMatchGame.MemoryMatchSetupErrorPrefab.gameObject, "MemoryMatch_error_slide");
+                                                     MemoryMatchGameInstance.MemoryMatchSetupErrorPrefab.gameObject, "MemoryMatch_error_slide");
         }
 
         _ScanPhase = nextState;
