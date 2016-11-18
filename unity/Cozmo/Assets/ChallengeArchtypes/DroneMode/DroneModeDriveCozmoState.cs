@@ -184,6 +184,11 @@ namespace Cozmo {
           //    Anki.Cozmo.BehaviorType.AcknowledgeObject
           //    Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement
 
+          if (reactionaryBehavior == Anki.Cozmo.BehaviorType.ReactToOnCharger) {
+            _CurrentRobot.DriveWheels(0f, 0f);
+            _RobotAnimator.AllowIdleAnimation(false);
+          }
+
           // Disable input so we can set slider values safely based on behavior activity
           DisableInput();
         }
@@ -196,6 +201,10 @@ namespace Cozmo {
         public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
           // Set sliders to new state since reactionary behaviors can change head and lift height
           SetSlidersToCurrentPosition();
+
+          if (reactionaryBehavior == Anki.Cozmo.BehaviorType.ReactToOnCharger) {
+            _RobotAnimator.AllowIdleAnimation(true);
+          }
 
           // Re-enable input so that players can drive Cozmo again
           EnableInput();
@@ -501,7 +510,7 @@ namespace Cozmo {
             float maxTurnAngle_rad = Mathf.PI;
             if (_CurrentRobot.Status(Anki.Cozmo.RobotStatusFlag.IS_PICKED_UP)) {
               maxTurnAngle_rad = 0f; // Don't try to turn at all if picked up
-            } 
+            }
 
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             _CurrentRobot.TurnTowardsFace((Face)targetObject,
@@ -510,9 +519,9 @@ namespace Cozmo {
               namedTrigger: Anki.Cozmo.AnimationTrigger.AcknowledgeFaceNamed,
               unnamedTrigger: Anki.Cozmo.AnimationTrigger.AcknowledgeFaceUnnamed,
               callback: HandleActionFinished);
-            
+
             DisableInput();
-            IsPerformingAction = true;  
+            IsPerformingAction = true;
           }
 
         }
