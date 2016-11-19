@@ -24,15 +24,15 @@ namespace {
 static const char* kLogChannel = "Behaviors";
 
 // Console parameters
-static const char* kConsoleGroup = "Behavior.ReactToPet";
+#define CONSOLE_GROUP "Behavior.ReactToPet"
 
-CONSOLE_VAR(bool, kReactToPetEnable, kConsoleGroup, true);
-CONSOLE_VAR(f32, kReactToPetCooldown_s, kConsoleGroup, 60.0f);
-CONSOLE_VAR(f32, kReactToPetMinTime_s, kConsoleGroup, 10.0f);
-CONSOLE_VAR(f32, kReactToPetMaxTime_s, kConsoleGroup, 15.0f);
-CONSOLE_VAR(s32, kReactToPetSneezePercent, kConsoleGroup, 20);
-CONSOLE_VAR(s32, kReactToPetNumTimesObserved, kConsoleGroup, 3);
-CONSOLE_VAR(f32, kReactToPetTrackUpdateTimeout, kConsoleGroup, 3.0f);
+CONSOLE_VAR(bool, kReactToPetEnable, CONSOLE_GROUP, true);
+CONSOLE_VAR(f32, kReactToPetCooldown_s, CONSOLE_GROUP, 60.0f);
+CONSOLE_VAR(f32, kReactToPetMinTime_s, CONSOLE_GROUP, 10.0f);
+CONSOLE_VAR(f32, kReactToPetMaxTime_s, CONSOLE_GROUP, 15.0f);
+CONSOLE_VAR(s32, kReactToPetSneezePercent, CONSOLE_GROUP, 20);
+CONSOLE_VAR(s32, kReactToPetNumTimesObserved, CONSOLE_GROUP, 3);
+CONSOLE_VAR(f32, kReactToPetTrackUpdateTimeout, CONSOLE_GROUP, 3.0f);
 } // end namespace
   
 using namespace Anki::Vision;
