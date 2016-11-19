@@ -43,9 +43,11 @@ private:
   
   float _nextCheckTime_s;
   Pose3d _initialRobotPose;
-  mutable std::vector<const ObservableObject*> _knownBlocks;
+  mutable std::vector<ObjectID> _knownBlockIDs;
   int _knownBlockIndex;
   
+  std::unique_ptr<ObservableObject> _ghostStackedObject;
+
 
   virtual void UpdateTargetBlocks(const Robot& robot) const;
   
@@ -54,7 +56,11 @@ private:
   void TransitionToCheckingAboveBlock(Robot& robot);
   void TransitionToReturnToSearch(Robot& robot);
 
-  std::unique_ptr<ObservableObject> _ghostStackedObject;
+  // find objectID in the given index. Returns unset ID if the index is not valid
+  ObjectID GetKnownObjectID(int index) const;
+  
+  // find current known object by it's cached id
+  const ObservableObject* GetKnownObject(const Robot& robot, int index) const;
   
 };
 

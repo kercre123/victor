@@ -34,7 +34,7 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(Robot& robot, c
 : IBehavior(robot, config)
 , _delayBetweenChecks_s(0)
 , _nextCheckTime_s(0)
-, _knownBlockIndex(0)
+, _knownBlockIndex(-1)
 , _ghostStackedObject(new ActiveCube(ObservableObject::InvalidActiveID,
                                      ObservableObject::InvalidFactoryID,
                                      ActiveObjectType::OBJECT_CUBE1))
@@ -49,10 +49,12 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(Robot& robot, c
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorCheckForStackAtInterval::IsRunnableInternal(const Robot& robot) const
 {
-  const float currTime =  BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if(currTime > _nextCheckTime_s){
+  const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if(currTime > _nextCheckTime_s)
+  {
     UpdateTargetBlocks(robot);
-    return !_knownBlocks.empty();
+    const bool hasBlocks = !_knownBlockIDs.empty();
+    return hasBlocks;
   }
   
   return false;
@@ -67,7 +69,7 @@ Result BehaviorCheckForStackAtInterval::InitInternal(Robot& robot)
     _ghostStackedObject->SetID();
   }
   
-  if(!_knownBlocks.empty()){
+  if(!_knownBlockIDs.empty()) {
     TransitionToSetup(robot);
     return Result::RESULT_OK;
   }
@@ -79,7 +81,8 @@ Result BehaviorCheckForStackAtInterval::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCheckForStackAtInterval::StopInternal(Robot& robot)
 {
-  _knownBlocks.clear();
+  _knownBlockIndex = -1;
+  _knownBlockIDs.clear();
 }
   
 
@@ -95,10 +98,10 @@ void BehaviorCheckForStackAtInterval::TransitionToSetup(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCheckForStackAtInterval::TransitionToFacingBlock(Robot& robot)
 {
-  IActionRunner* action = new TurnTowardsObjectAction(robot,
-                                  _knownBlocks[_knownBlockIndex]->GetID(),
-                                  M_PI);
+  const ObjectID& objectIDToLookAt = GetKnownObjectID(_knownBlockIndex);
+  IActionRunner* action = new TurnTowardsObjectAction(robot, objectIDToLookAt, M_PI);
   
+  // check above even if turn action fails
   StartActing(action, &BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock);
 }
 
@@ -106,29 +109,40 @@ void BehaviorCheckForStackAtInterval::TransitionToFacingBlock(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(Robot& robot)
 {
-  const ObservableObject* obj = _knownBlocks[_knownBlockIndex];
-  Pose3d ghostPose = obj->GetPose().GetWithRespectToOrigin();
-  ghostPose.SetTranslation({
-    ghostPose.GetTranslation().x(),
-    ghostPose.GetTranslation().y(),
-    ghostPose.GetTranslation().z() + obj->GetSize().z()});
-  
-  robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
-  
-  // use 0 for max turn angle so we only look with the head
-  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
-  turnAction->UseCustomObject(_ghostStackedObject.get());
-  
-  StartActing(turnAction, [this, &robot](const ActionResult& result){
-    _knownBlockIndex += 1;
-    if(_knownBlocks.size() <= _knownBlockIndex){
-      TransitionToReturnToSearch(robot);
-    }else{
-      TransitionToFacingBlock(robot);
-    }
+  const ObservableObject* obj = GetKnownObject(robot, _knownBlockIndex);
+  if ( nullptr != obj )
+  {
+    Pose3d ghostPose = obj->GetPose().GetWithRespectToOrigin();
+    ghostPose.SetTranslation({
+      ghostPose.GetTranslation().x(),
+      ghostPose.GetTranslation().y(),
+      ghostPose.GetTranslation().z() + obj->GetSize().z()});
     
-  });
-  
+    robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
+    
+    // use 0 for max turn angle so we only look with the head
+    TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
+    turnAction->UseCustomObject(_ghostStackedObject.get());
+    
+    // after checking the object, go back to the rotation we had at start, or continue with next block if any left
+    StartActing(turnAction, [this, &robot](const ActionResult& result) {
+      ++_knownBlockIndex;
+      const bool hasMoreBlocks = _knownBlockIndex < _knownBlockIDs.size();
+      if (hasMoreBlocks) {
+        TransitionToFacingBlock(robot);
+      } else {
+        TransitionToReturnToSearch(robot);
+      }
+    });
+  }
+  else
+  {
+    PRINT_CH_INFO("Behaviors",
+                  "BehaviorCheckForStackAtInterval.TransitionToCheckingAboveBlock.NullObject",
+                  "Could not get object from index:%d, ID:%d. The list may be dirty or the cube disconnected. Ending prematurely",
+                  _knownBlockIndex,
+                  GetKnownObjectID(_knownBlockIndex).GetValue());
+  }
 }
 
   
@@ -143,7 +157,34 @@ void BehaviorCheckForStackAtInterval::TransitionToReturnToSearch(Robot& robot)
   });
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObjectID BehaviorCheckForStackAtInterval::GetKnownObjectID(int index) const
+{
+  // validate index
+  if ( index < 0 || index >= _knownBlockIDs.size() ) {
+    PRINT_NAMED_ERROR("BehaviorCheckForStackAtInterval.GetKnownObject.InvalidIndex",
+    "%d is not within range of known objects [0,%zu]", index, _knownBlockIDs.size());
+    return ObjectID();
+  }
   
+  const ObjectID& retID = _knownBlockIDs[index];
+  return retID;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const ObservableObject* BehaviorCheckForStackAtInterval::GetKnownObject(const Robot& robot, int index) const
+{
+  // get id from the given index
+  const ObjectID& objID = GetKnownObjectID(index);
+  if ( objID.IsSet() ) {
+    // find object currently in world
+    const ObservableObject* ret = robot.GetBlockWorld().GetObjectByID( objID );
+    return ret;
+  } else {
+    return nullptr;
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCheckForStackAtInterval::UpdateTargetBlocks(const Robot& robot) const
 {
@@ -152,14 +193,21 @@ void BehaviorCheckForStackAtInterval::UpdateTargetBlocks(const Robot& robot) con
   knownBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
   knownBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
                                  {
-                                   if(!blockPtr->IsPoseStateKnown()){
+                                  // originally we had !known, but if cubes are not at localizable distance, Cozmo
+                                  // never checks back on them, or if you build a tower and doing so they become
+                                  // dirty. Trying Unknown instead
+                                   if(blockPtr->IsPoseStateUnknown()){
                                      return false;
                                    }
                                    
                                    return true;
                                  });
-  
-  robot.GetBlockWorld().FindMatchingObjects(knownBlockFilter, _knownBlocks);
+ 
+  std::vector<const ObservableObject*> objectList;
+  robot.GetBlockWorld().FindMatchingObjects(knownBlockFilter, objectList);
+  for( const auto& objPtr : objectList ) {
+    _knownBlockIDs.emplace_back( objPtr->GetID() );
+  }
 }
 
 
