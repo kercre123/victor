@@ -1,6 +1,75 @@
 {
   "GenList": [
     {
+      "TitleKey": "dailyGoal.title.TotalPlayTime.30",
+      "RewardType": "experience",
+      "Tag": "",
+      "PointsRewarded": 50,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnConnectedInterval",
+      "GenConditions": [],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.TimedIntervalCondition, Assembly-CSharp",
+          "TargetTime": 1800.0,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Timed Interval Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 61
+    },
+    {
+      "TitleKey": "dailyGoal.title.MeetCozmo.UpdateFace",
+      "RewardType": "experience",
+      "Tag": "",
+      "PointsRewarded": 30,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnReEnrollFace",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentEnrolledFacesCondition, Assembly-CSharp",
+          "TargetFaces": 1,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Current Enrolled Faces Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [],
+      "Id": 60
+    },
+    {
+      "TitleKey": "dailyGoal.title.MeetCozmo.NewFace",
+      "RewardType": "experience",
+      "Tag": "",
+      "PointsRewarded": 45,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnMeetNewPerson",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentEnrolledFacesCondition, Assembly-CSharp",
+          "TargetFaces": 1,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Current Enrolled Faces Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [],
+      "Id": 59
+    },
+    {
       "TitleKey": "dailyGoal.title.FreeplayTime.10",
       "RewardType": "experience",
       "Tag": "Freeplay",
@@ -408,7 +477,7 @@
       "TitleKey": "dailyGoal.title.WinKeepaway",
       "RewardType": "experience",
       "Tag": "KeepawayGameResult",
-      "PointsRewarded": 25,
+      "PointsRewarded": 35,
       "Target": 1,
       "Priority": 0,
       "CladEvent": "OnChallengeComplete",
@@ -685,6 +754,395 @@
       "Id": 40
     },
     {
+      "TitleKey": "dailyGoal.title.WinMemoryMatch.Level0",
+      "RewardType": "experience",
+      "Tag": "MemoryMatchGameResult",
+      "PointsRewarded": 30,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "MemoryMatchGame",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 0,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 44
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlayMemoryMatch.Level0",
+      "RewardType": "experience",
+      "Tag": "MemoryMatchGameResult",
+      "PointsRewarded": 35,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "MemoryMatchGame",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 0,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 53
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlayMemoryMatch.Level1",
+      "RewardType": "experience",
+      "Tag": "MemoryMatchGameResult",
+      "PointsRewarded": 35,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "MemoryMatchGame",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 54
+    },
+    {
+      "TitleKey": "dailyGoal.title.WinMemoryMatch.Level0.NoLivesLost",
+      "RewardType": "experience",
+      "Tag": "MemoryMatchGameResult",
+      "PointsRewarded": 45,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "MemoryMatchGame",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 0,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": false,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeSpecificGameCondition, Assembly-CSharp",
+          "TargetValue": 3.0,
+          "ConditionKey": "human_lives",
+          "compareType": "EQUAL",
+          "Label": {
+            "text": "Challenge Specific Game Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 55
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlayMemoryMatch.Pattern5",
+      "RewardType": "experience",
+      "Tag": "MemoryMatchPatternLength",
+      "PointsRewarded": 25,
+      "Target": 5,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "MemoryMatchGame",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetScore": 5,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 56
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlayMemoryMatch.Pattern8",
+      "RewardType": "experience",
+      "Tag": "MemoryMatchPatternLength",
+      "PointsRewarded": 30,
+      "Target": 5,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "MemoryMatchGame",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetScore": 8,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 57
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlayMemoryMatch.Pattern10",
+      "RewardType": "experience",
+      "Tag": "MemoryMatchPatternLength",
+      "PointsRewarded": 40,
+      "Target": 5,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "MemoryMatchGame",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetScore": 10,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 58
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlayCozmoSays",
+      "RewardType": "experience",
+      "Tag": "NONE",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "CozmoSaysGame",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "CozmoSaysGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 50
+    },
+    {
       "TitleKey": "dailyGoal.title.SparkPickupCube",
       "RewardType": "experience",
       "Tag": "",
@@ -881,6 +1339,72 @@
         }
       ],
       "Id": 37
+    },
+    {
+      "TitleKey": "dailyGoal.title.SparkBuildAPyramid",
+      "RewardType": "experience",
+      "Tag": "",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnUnlockableSparked",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "BuildPyramid",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
+          "Unlocked": "BuildPyramid",
+          "Label": {
+            "text": "Unlock ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 46
+    },
+    {
+      "TitleKey": "dailyGoal.title.SparkWorkoutWithCubes",
+      "RewardType": "experience",
+      "Tag": "",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnUnlockableSparked",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "Workout",
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
+          "Unlocked": "Workout",
+          "Label": {
+            "text": "Unlock ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 48
     },
     {
       "TitleKey": "dailyGoal.title.WinKeepaway.TieBreaker",
@@ -1190,6 +1714,43 @@
         }
       ],
       "Id": 17
+    },
+    {
+      "TitleKey": "dailyGoal.title.UnlockAppMemoryMatchGameSolo",
+      "RewardType": "experience",
+      "Tag": "UnlockNewThing",
+      "PointsRewarded": 30,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeDifficultyUnlock",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "UseMinDiff": true,
+          "MinDiff": 0,
+          "UseMaxDiff": true,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 52
     },
     {
       "TitleKey": "dailyGoal.title.UnlockAppQuickTapGame",
@@ -1520,6 +2081,105 @@
         }
       ],
       "Id": 4
+    },
+    {
+      "TitleKey": "dailyGoal.title.UnlockUpgradeWorkoutWithCubes",
+      "RewardType": "experience",
+      "Tag": "UnlockNewThing",
+      "PointsRewarded": 50,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnUnlockableEarned",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "Workout",
+          "State": "Available",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
+          "Unlocked": "Workout",
+          "Label": {
+            "text": "Unlock ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 47
+    },
+    {
+      "TitleKey": "dailyGoal.title.UnlockAppCozmoSays",
+      "RewardType": "experience",
+      "Tag": "UnlockNewThing",
+      "PointsRewarded": 50,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnUnlockableEarned",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "CozmoSaysGame",
+          "State": "Available",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
+          "Unlocked": "CozmoSaysGame",
+          "Label": {
+            "text": "Unlock ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 49
+    },
+    {
+      "TitleKey": "dailyGoal.title.UnlockAppMemoryMatchGame",
+      "RewardType": "experience",
+      "Tag": "UnlockNewThing",
+      "PointsRewarded": 50,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnUnlockableEarned",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "MemoryMatchGame",
+          "State": "Available",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
+          "Unlocked": "MemoryMatchGame",
+          "Label": {
+            "text": "Unlock ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 51
     }
   ]
 }

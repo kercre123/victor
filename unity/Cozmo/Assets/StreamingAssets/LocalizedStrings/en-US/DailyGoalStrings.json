@@ -66,6 +66,30 @@
   "dailyGoal.title.WinSpeedTap.NoRed": {
     "translation": "Win a game of <b>Quick Tap</b> without ever tapping on a red cube"
   },
+  "dailyGoal.title.PlayMemoryMatch.Level0": {
+    "translation": "Play a game of <b>Memory Match</b> in Vs Mode"
+  },
+  "dailyGoal.title.WinMemoryMatch.Level0": {
+    "translation": "Win a game of <b>Memory Match</b> in Vs Mode"
+  },
+  "dailyGoal.title.WinMemoryMatch.Level0": {
+    "translation": "Win a game of <b>Memory Match</b> in Vs Mode"
+  },
+  "dailyGoal.title.WinMemoryMatch.Level0.NoLivesLost": {
+    "translation": "Win <b>Memory Match</b> in Vs Mode with no lives lost"
+  },
+  "dailyGoal.title.PlayMemoryMatch.Level1": {
+    "translation": "Play a game of <b>Memory Match</b> in Solo Mode"
+  },
+  "dailyGoal.title.PlayMemoryMatch.Pattern5": {
+    "translation": "Complete a 5 light pattern in <b>Memory Match</b> Solo Mode"
+  },
+  "dailyGoal.title.PlayMemoryMatch.Pattern8": {
+    "translation": "Complete an 8 light pattern in <b>Memory Match</b> Solo Mode"
+  },
+  "dailyGoal.title.PlayMemoryMatch.Pattern10": {
+    "translation": "Complete a 10 light pattern in <b>Memory Match</b> Solo Mode"
+  },
   "dailyGoal.title.PlayKeepaway": {
     "translation": "Play two games of <b>Keepaway</b>"
   },
@@ -91,7 +115,10 @@
     "translation": "Introduce someone new with the <b>Meet Cozmo</b> App"
   },
   "dailyGoal.title.MeetCozmo.UpdateFace": {
-    "translation": "Update {0}'s data in the <b>Meet Cozmo</b> App"
+    "translation": "Update a face in the <b>Meet Cozmo</b> App"
+  },
+  "dailyGoal.title.PlayCozmoSays": {
+    "translation": "Use the <b>Cozmo Says</b> App"
   },
   "dailyGoal.title.ExplorerMode.Playtime.10": {
     "translation": "Play the <b>Explorer Mode</b> App for 10 minutes"
@@ -103,52 +130,61 @@
     "translation": "Let Cozmo play uninterrupted for 10 minutes"
   },
   "dailyGoal.title.UnlockUpgradeBuildPyramid": {
-    "translation": "Unlock Cozmo's <b>Build a Pyramid</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Build a Pyramid</b> Upgrade"
+  },
+  "dailyGoal.title.UnlockUpgradeWorkoutWithCubes": {
+    "translation": "Unlock Cozmo's <b>Workout With Cubes</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradeFlipOntoBack": {
-    "translation": "Unlock Cozmo's <b>Pop a Wheelie</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Pop a Wheelie</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradeKnockOverThreeCubeStack": {
-    "translation": "Unlock Cozmo's <b>Knock Over Stacks</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Knock Over Stacks</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradePickupCube": {
-    "translation": "Unlock Cozmo's <b>Pick up Cube</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Pick up Cube</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradePounceOnMotion": {
-    "translation": "Unlock Cozmo's <b>Pounce On Fingers</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Pounce On Fingers</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradeReactToSmiles": {
-    "translation": "Unlock Cozmo's <b>React To Smiles</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>React To Smiles</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradeRecognizePets": {
-    "translation": "Unlock Cozmo's <b>Recognize Pets</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Recognize Pets</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradeRollCube": {
-    "translation": "Unlock Cozmo's <b>Roll a Cube</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Roll a Cube</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradeStackTwoCubes": {
-    "translation": "Unlock Cozmo's <b>Stack Cubes</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Stack Cubes</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradeTakeCubeFromHand": {
-    "translation": "Unlock Cozmo's <b>Take Cube From Hand</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Take Cube From Hand</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradePounceOnMotionAction": {
-    "translation": "Unlock Cozmo's <b>Pounce On Fingers</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Pounce On Fingers</b> Upgrade"
   },
   "dailyGoal.title.UnlockUpgradePopAWheelieAction": {
-    "translation": "Unlock Cozmo's <b>Pop A Wheelie</b> Upgrade."
+    "translation": "Unlock Cozmo's <b>Pop A Wheelie</b> Upgrade"
   },
   "dailyGoal.title.UnlockAppDroneModeGame": {
-    "translation": "Unlock Cozmo's <b>Explorer Mode</b> App."
+    "translation": "Unlock Cozmo's <b>Explorer Mode</b> App"
   },
   "dailyGoal.title.UnlockAppKeepawayGame": {
-    "translation": "Unlock Cozmo's <b>Keepaway</b> App."
+    "translation": "Unlock Cozmo's <b>Keepaway</b> App"
   },
   "dailyGoal.title.UnlockAppMemoryMatchGame": {
-    "translation": "Unlock Cozmo's <b>Memory Match</b> App."
+    "translation": "Unlock Cozmo's <b>Memory Match</b> App"
+  },
+  "dailyGoal.title.UnlockAppMemoryMatchGameSolo": {
+    "translation": "Unlock Solo Mode in Cozmo's <b>Memory Match</b> App"
   },
   "dailyGoal.title.UnlockAppQuickTapGame": {
-    "translation": "Unlock Cozmo's <b>Quick Tap</b> App."
+    "translation": "Unlock Cozmo's <b>Quick Tap</b> App"
+  },
+  "dailyGoal.title.UnlockAppCozmoSays": {
+    "translation": "Unlock the <b>Cozmo Says</b> App"
   },
   "dailyGoal.title.UnlockQuickTapDifficulty.TwoColor": {
     "translation": "Unlock the Two Color game mode in <b>Quick Tap</b>"
@@ -176,5 +212,11 @@
   },
   "dailyGoal.title.SparkPopAWheelie": {
     "translation": "Spark the <b>Pop a Wheelie</b> Upgrade"
+  },
+  "dailyGoal.title.SparkBuildAPyramid": {
+    "translation": "Spark the <b>Build A Pyramid</b> Upgrade"
+  },
+  "dailyGoal.title.SparkWorkoutWithCubes": {
+    "translation": "Spark the <b>Workout With Cubes</b> Upgrade"
   }
 }
