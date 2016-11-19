@@ -55,6 +55,8 @@ static BirthCertificate birthCert;
 static s8  menuIndex;
 static u8  extVolt10x;
 
+#define CHARGER_DETECT_THRESHOLD_DV (40)
+
 typedef enum {
   PP_entry = 0,
   PP_pause,
@@ -180,7 +182,7 @@ void Update()
       }
       case RobotInterface::FTM_Sleepy:
       {
-        if ((((now - lastExecTime) > (5*60*1000000)) && (extVolt10x < 40)) || // 5 minutes off charger
+        if ((((now - lastExecTime) > (5*60*1000000)) && (extVolt10x < CHARGER_DETECT_THRESHOLD_DV)) || // 5 minutes off charger
             ((now - lastExecTime) > (30*60*1000000))) // 30 minutes on charger
         {
           SetMode(RobotInterface::FTM_Off);
@@ -254,7 +256,6 @@ void Process_TestState(const RobotInterface::TestState& state)
     if (state.positionsFixed[m] < minPositions[m]) minPositions[m] = state.positionsFixed[m];
     if (state.positionsFixed[m] > maxPositions[m]) maxPositions[m] = state.positionsFixed[m];
   }
-  extVolt10x = state.extVolt10x; 
   
   switch (mode)
   {
@@ -267,6 +268,10 @@ void Process_TestState(const RobotInterface::TestState& state)
         modeTimeout = 0xFFFFffff;
         resetPositions(state.positionsFixed);
         SetMode(RobotInterface::FTM_SSID);
+      }
+      else if ((state.extVolt10x > CHARGER_DETECT_THRESHOLD_DV) != (extVolt10x > CHARGER_DETECT_THRESHOLD_DV))
+      { // If we've gotten on to or off of the charger, reset the timer
+        lastExecTime = now;
       }
       break;
     }
@@ -285,6 +290,10 @@ void Process_TestState(const RobotInterface::TestState& state)
         modeTimeout = now + 30000000;
         resetPositions(state.positionsFixed);
         SetMode(RobotInterface::FTM_WiFiInfo);
+      }
+      else if ((state.extVolt10x > CHARGER_DETECT_THRESHOLD_DV) != (extVolt10x > CHARGER_DETECT_THRESHOLD_DV))
+      { // If we've gotten on to or off of the charger, reset the timer
+        lastExecTime = now;
       }
       break;
     }
@@ -384,6 +393,8 @@ void Process_TestState(const RobotInterface::TestState& state)
       break;
     }
   }
+  
+  extVolt10x = state.extVolt10x; // Set at end for comparison in body
 }
 
 RobotInterface::FactoryTestMode GetMode()
