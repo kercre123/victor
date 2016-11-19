@@ -1451,8 +1451,6 @@ public class Robot : IRobot {
       ),
       callback,
       queueActionPosition);
-
-    RobotEngineManager.Instance.SendMessage();
   }
 
   // Turns towards the last seen face, but not any more than the specified maxTurnAngle
