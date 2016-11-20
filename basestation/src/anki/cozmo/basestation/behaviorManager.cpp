@@ -811,10 +811,22 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
 {
   _lastRequestedSpark = spark;
   _isRequestedSparkSoft = softSpark;
+
+  PRINT_CH_INFO("Beahviors", "BehaviorManager.SetRequestedSpark",
+                "requested %s spark is '%s'",
+                _isRequestedSparkSoft ? "soft" : "hard",
+                UnlockIdToString(_lastRequestedSpark));
 }
   
 const UnlockId BehaviorManager::SwitchToRequestedSpark()
 {
+  PRINT_CH_INFO("Beahviors", "BehaviorManager.SwitchToRequestedSpark",
+                "switching active spark from '%s' -> '%s'. From %s -> %s",
+                UnlockIdToString(_activeSpark),
+                UnlockIdToString(_lastRequestedSpark),
+                _isSoftSpark ? "soft" : "hard",
+                _isRequestedSparkSoft ? "soft" : "hard");
+
   _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
   
   _activeSpark = _lastRequestedSpark;

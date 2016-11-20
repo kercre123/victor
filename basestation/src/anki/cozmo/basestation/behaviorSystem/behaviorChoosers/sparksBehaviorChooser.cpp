@@ -169,17 +169,12 @@ void SparksBehaviorChooser::OnSelected()
 
 }
   
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::OnDeselected()
 {
   BehaviorManager& mngr = _robot.GetBehaviorManager();
 
   if(_idleAnimationsSet){
-    // Revert to driving anims
-    _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-    _robot.GetAnimationStreamer().PopIdleAnimation();
-    _idleAnimationsSet = false;
+    ResetLightsAndAnimations();
   }
   
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
@@ -191,6 +186,16 @@ void SparksBehaviorChooser::OnDeselected()
   _robot.GetLightsComponent().ClearAllCustomPatterns();
 
 
+}
+  
+void SparksBehaviorChooser::ResetLightsAndAnimations()
+{
+  // Revert to driving anims
+  _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  _robot.GetAnimationStreamer().PopIdleAnimation();
+  _idleAnimationsSet = false;
+  
+  _robot.GetLightsComponent().StopLoopingBackpackLights();
 }
 
   
@@ -219,57 +224,27 @@ void SparksBehaviorChooser::HandleMessage(const ExternalInterface::RobotObserved
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result SparksBehaviorChooser::Update(Robot& robot)
 {
-  const auto currentBehavior = _robot.GetBehaviorManager().GetCurrentBehavior();
-
   // If the intro is interrupted, just continue as normal when reaction is over
   if((_state == ChooserState::ChooserSelected ||
      _state == ChooserState::PlayingSparksIntro)){
+    auto currentBehavior = _robot.GetBehaviorManager().GetCurrentBehavior();
     if(currentBehavior != nullptr && currentBehavior->IsReactionary()){
       _state = ChooserState::UsingSimpleBehaviorChooser;
     }
   }
   
-  // If a spark reaches an end condition during the normal behavior chooser sequence
-  // update the chooser state appropriately
-  if(_state == ChooserState::UsingSimpleBehaviorChooser){
-    if(ShouldSparkEnd()){
-      
-      if(currentBehavior != nullptr && !currentBehavior->IsReactionary()){
-        BehaviorManager& mngr = _robot.GetBehaviorManager();
-        
-        // check for spark->spark transitions
-        if(mngr.GetRequestedSpark() != UnlockId::Count){
-          const bool transitionBetweenSparks = mngr.GetActiveSpark() != mngr.GetRequestedSpark();
-          const bool softSparkToHardSpark = mngr.IsActiveSparkSoft() && !mngr.IsRequestedSparkSoft();
-          
-          // handle spark->spark transitions
-          if(transitionBetweenSparks || softSparkToHardSpark){
-            mngr.RequestCurrentBehaviorEndImmediately("Sparks transition from one spark to another");
-            _switchingToHardSpark = true;
-            _state = ChooserState::PlayingSparksOutro;
-          }
-        }else{
-          // end spark gracefully
-          mngr.RequestCurrentBehaviorEndOnNextActionComplete();
-          _state = ChooserState::WaitingForCurrentBehaviorToStop;
-        }
-        
-      }else{
-        // A reaction is running - transition out of sparked state so that
-        // the chooser will get kicked out on the next ChooseNextBehaviorAndSwitch call
-        TransitionOutOfSparkedState();
-      }
-      
-    } // end if(ShouldSparkEnd)
+  if(_state == ChooserState::UsingSimpleBehaviorChooser
+     || _state == ChooserState::WaitingForCurrentBehaviorToStop ){
+    CheckIfSparkShouldEnd();
   }
   
-  // If a reactionary behavior is triggered during end animation, skip the outro etc
+  // If we've timed out during a reactionary behavior, skip the outro and kill the lights
   if(_state == ChooserState::WaitingForCurrentBehaviorToStop){
     auto currentBehavior = _robot.GetBehaviorManager().GetCurrentBehavior();
     if(currentBehavior != nullptr && currentBehavior->IsReactionary()){
-      // Transition out of sparked state so that
-      // the chooser will get kicked out on the next ChooseNextBehaviorAndSwitch call
-      TransitionOutOfSparkedState();
+      CompleteSparkLogic();
+      ResetLightsAndAnimations();
+      _state = ChooserState::EndSparkWhenReactionEnds;
     }
   }
   
@@ -364,7 +339,7 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
             
       if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
         bestBehavior = _behaviorNone;
-        TransitionOutOfSparkedState();
+        CompleteSparkLogic();
       }
 
       break;
@@ -379,7 +354,7 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
   return bestBehavior;
 }
  
-void SparksBehaviorChooser::TransitionOutOfSparkedState()
+void SparksBehaviorChooser::CompleteSparkLogic()
 {
   BehaviorManager& mngr = _robot.GetBehaviorManager();
 
@@ -431,6 +406,7 @@ void SparksBehaviorChooser::TransitionOutOfSparkedState()
                        UnlockIdToString(mngr.GetActiveSpark()));
   }
   
+  // UI updates
   if(!mngr.DidGameRequestSparkEnd() && !_switchingToHardSpark){
     //Allow new goal to be chosen if we haven't received any updates from the user or switching to same spark
     if(mngr.GetActiveSpark() == mngr.GetRequestedSpark()){
@@ -444,33 +420,42 @@ void SparksBehaviorChooser::TransitionOutOfSparkedState()
       _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>(sparkEnded);
     }
   }
-  
-  _robot.GetLightsComponent().StopLoopingBackpackLights();
-  _state = ChooserState::EndSparkWhenReactionEnds;
 }
 
   
-bool SparksBehaviorChooser::ShouldSparkEnd()
+void SparksBehaviorChooser::CheckIfSparkShouldEnd()
 {
   BehaviorManager& mngr = _robot.GetBehaviorManager();
   const IBehavior* currentRunningBehavior = mngr.GetCurrentBehavior();
   
-  TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Behaviors with _numberOfRepetitions == 0 will always wait until max time and then play success outro
-  const bool minTimeAndRepetitions = FLT_GE(currentTime, _timeChooserStarted + _minTimeSecs)
+  const bool minTimeAndRepetitions = FLT_GE(currentTime_s, _timeChooserStarted + _minTimeSecs)
                                                 && (_numberOfRepetitions != 0 && _currentObjectiveCompletedCount >= _numberOfRepetitions);
-  const bool maxTimeout = FLT_GE(currentTime, _timeChooserStarted + _maxTimeSecs)
+  const bool maxTimeout = FLT_GE(currentTime_s, _timeChooserStarted + _maxTimeSecs)
                             && currentRunningBehavior != nullptr && currentRunningBehavior->GetRequiredUnlockID() != mngr.GetActiveSpark() ;
   const bool gameRequestedSparkEnd = mngr.DidGameRequestSparkEnd();
   
   // Transitioning out of spark to freeplay  - end current spark elegantly
-  if(minTimeAndRepetitions || maxTimeout || gameRequestedSparkEnd)
+  if(_state == ChooserState::UsingSimpleBehaviorChooser
+     && (minTimeAndRepetitions || maxTimeout || gameRequestedSparkEnd))
   {
-    return true;
+    mngr.RequestCurrentBehaviorEndOnNextActionComplete();
+    _state = ChooserState::WaitingForCurrentBehaviorToStop;
+  }else{
+    // Transitioning directly between sparks - end current spark immediately
+    if(mngr.GetRequestedSpark() != UnlockId::Count){
+      const bool softSparkToSoftSpark = mngr.GetActiveSpark() != mngr.GetRequestedSpark();
+      const bool softSparkToHardSpark = mngr.IsActiveSparkSoft() && !mngr.IsRequestedSparkSoft();
+      
+      if(softSparkToSoftSpark || softSparkToHardSpark){
+        mngr.RequestCurrentBehaviorEndImmediately("Sparks transition soft spark to soft spark");
+        _switchingToHardSpark = true;
+        _state = ChooserState::PlayingSparksOutro;
+      }
+    } // end (mngr.GetRequestedSpark() != UnlockID::Count)
   }
-  
-  return false;
 }
 
   

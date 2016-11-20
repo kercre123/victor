@@ -67,14 +67,9 @@ protected:
 
 private:
   
-  bool ShouldSparkEnd();
-  // This function allows the components of the spark visible to the user
-  // (backpack lights, UI) to be transitioned out of while the chooser may still be
-  // active (e.g. a reactionary behavior is running).  In this way the sparked state
-  // appears to end even though the chooser is still running.
-  // There are certain paths on which values are re-set both in this function and
-  // OnDeselected, but currently these are all safe for multiple deliitons
-  void TransitionOutOfSparkedState();
+  void CheckIfSparkShouldEnd();
+  void CompleteSparkLogic();
+  void ResetLightsAndAnimations();
   
   enum class ChooserState{
     ChooserSelected,
