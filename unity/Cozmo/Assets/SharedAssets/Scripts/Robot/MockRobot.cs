@@ -36,6 +36,8 @@ public class MockRobot : IRobot {
     _EnrolledFacesLastEnrolledTime.Add(1, -9000);
     _EnrolledFacesLastEnrolledTime.Add(2, -9001);
     _EnrolledFacesLastEnrolledTime.Add(3, -3000000);
+
+    PetFaces = new List<PetFace>();
   }
 
   public bool Status(Anki.Cozmo.RobotStatusFlag s) {
