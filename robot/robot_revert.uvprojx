@@ -48,7 +48,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>.\build\app\</OutputDirectory>
-          <OutputName>robot</OutputName>
+          <OutputName>revert</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
@@ -69,7 +69,7 @@
             <nStopU2X>0</nStopU2X>
           </BeforeCompile>
           <BeforeMake>
-            <RunUserProg1>1</RunUserProg1>
+            <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
             <UserProg1Name>bash -c "make k02"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
@@ -81,7 +81,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash -c "make k02_fix"</UserProg1Name>
+            <UserProg1Name>bash -c "make k02_revert"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -375,155 +375,6 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>hal</GroupName>
-          <Files>
-            <File>
-              <FileName>main.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>k02_hal/hal/main.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>camera.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\camera.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>i2c.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\i2c.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>timer.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\timer.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>enjpeg.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\enjpeg.cpp</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>2</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>4</Optim>
-                    <oTime>1</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>2</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <uC99>2</uC99>
-                    <useXO>2</useXO>
-                    <v6Lang>0</v6Lang>
-                    <v6LangP>0</v6LangP>
-                    <vShortEn>2</vShortEn>
-                    <vShortWch>2</vShortWch>
-                    <v6Lto>0</v6Lto>
-                    <v6WtE>0</v6WtE>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
-            </File>
-            <File>
-              <FileName>watchdog.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\watchdog.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>dac.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>oled.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>spi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>uart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>debug.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>imu.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>wifi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\wifi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>motors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\motors.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lights.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\lights.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>cube.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\cube.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>spine.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\spine.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>power.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>fcc.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\fcc.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>startup</GroupName>
           <Files>
             <File>
@@ -531,150 +382,20 @@
               <FileType>2</FileType>
               <FilePath>k02_hal/startup/startup_MK02F12810.s</FilePath>
             </File>
-            <File>
-              <FileName>startup.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>k02_hal/startup/startup.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>clad</GroupName>
+          <GroupName>revert</GroupName>
           <Files>
             <File>
-              <FileName>messages.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\messages.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>clad.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\clad.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>supervisor</GroupName>
-          <Files>
-            <File>
-              <FileName>cozmoBot.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\cozmoBot.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>liftController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\liftController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>velocityProfileGenerator.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>radians.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\radians.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>headController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\headController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>imuFilter.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\imuFilter.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>trig_fast.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>dockingController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\dockingController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>localization.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\localization.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>localization_geometry.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\localization_geometry.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>path.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\path.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pathFollower.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pickAndPlaceController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>speedController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\speedController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>steeringController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\steeringController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>timeProfiler.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>wheelController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>proxSensors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>testModeController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>version.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\version.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>backpackLightController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>bootloader</GroupName>
-          <Files>
-            <File>
-              <FileName>bootbin.s</FileName>
+              <FileName>firmware.s</FileName>
               <FileType>2</FileType>
-              <FilePath>.\k02_hal\hal\bootbin.s</FilePath>
+              <FilePath>.\revert\firmware.s</FilePath>
             </File>
             <File>
-              <FileName>bootloader.cpp</FileName>
+              <FileName>main.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\bootloader.cpp</FilePath>
+              <FilePath>.\revert\main.cpp</FilePath>
             </File>
           </Files>
         </Group>
