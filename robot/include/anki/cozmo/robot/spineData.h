@@ -17,6 +17,10 @@ typedef s32 Fixed;
 #define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
+// From Fixed to s32, but floored
+#define FROM_FIXED_FLOOR(x) (x >> 16)
+
+
 static const int spine_baud_rate    = 500000;
 static const int charger_baud_rate  = 100000;
 

@@ -26,7 +26,7 @@
 #include "util/math/math.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
-CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 32);
+CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 60);
 CONSOLE_VAR(Anki::TimeStamp_t, kTapWaitOffset_ms, "TapFilter.WaitOffsetTime", 75);
 CONSOLE_VAR(Anki::TimeStamp_t, kDoubleTapTime_ms, "TapFilter.DoubleTapTime", 500);
 CONSOLE_VAR(Anki::TimeStamp_t, kIgnoreMoveTimeAfterDoubleTap_ms, "TapFilter.IgnoreMoveTimeAfterDoubleTap", 500);
@@ -129,6 +129,15 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
   
+  // Taps below threshold should be filtered and ignored.
+  int16_t intensity = payload.tapPos - payload.tapNeg;
+  if (intensity <= kTapIntensityMin)
+  {
+    PRINT_CH_INFO("BlockPool", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
+                  "Tap ignored %d <= %d",intensity,kTapIntensityMin);
+    return;
+  }
+  
   // The message from the robot has the active object ID in it, so we need
   // to find the objects in blockworld (which have their own bookkeeping ID) that
   // have the matching active ID. We also need to consider all pose states and origin frames.
@@ -151,7 +160,6 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
   ObservableObject* object = matchingObjects.front();
   
-  int16_t intensity = payload.tapPos - payload.tapNeg;
   Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
                 "Received message that %s %d (Active ID %d) was tapped %d times "
@@ -168,14 +176,6 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   {
     // Do not filter any taps if block tap filtering was disabled.
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
-    return;
-  }
-
-  if (intensity <= kTapIntensityMin)
-  {
-    // Taps below threshold should be filtered and ignored.
-    PRINT_CH_INFO("BlockPool", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
-                  "Tap ignored %d <= %d",intensity,kTapIntensityMin);
     return;
   }
 

@@ -77,10 +77,15 @@ static uint8_t rotationPeriod[MAX_ACCESSORIES];
 static uint8_t rotationOffset[MAX_ACCESSORIES];
 static uint8_t rotationNext[MAX_ACCESSORIES];
 
+// Accelerometer IIR filter vars
+static Fixed acc_filt[MAX_ACCESSORIES][3];
+static const Fixed one = TO_FIXED(1.0);
+static const Fixed filter_coeff = TO_FIXED(0.1);
+
 // Motion computation thresholds and vars
-static const u8 START_MOVING_COUNT_THRESH = 2; // Determines number of motion tics that much be observed before Moving msg is sent
+static const u8 START_MOVING_COUNT_THRESH = 5; // Determines number of motion tics that much be observed before Moving msg is sent
 static const u8 STOP_MOVING_COUNT_THRESH = 5;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
-static const u8 ACC_MOVE_THRESH = 5;           // If current value differs from filtered value by this much, block is considered to be moving.
+static const u8 ACC_MOVE_THRESH = 3;           // If current value differs from filtered value by this much, block is considered to be moving.
 static u8 movingTimeoutCtr[MAX_ACCESSORIES];
 static bool isMoving[MAX_ACCESSORIES];
 
@@ -89,9 +94,11 @@ static UpAxis prevUpAxis[MAX_ACCESSORIES];     // Last sent upAxis
 static UpAxis nextUpAxis[MAX_ACCESSORIES];     // Candidate next upAxis to send
 static u8 nextUpAxisCount[MAX_ACCESSORIES] = {0};          // Number of times candidate next upAxis is observed
 static const u8 UPAXIS_STABLE_COUNT_THRESH = 15;     // How long the candidate upAxis must be observed for before it is reported
-static const UpAxis idxToUpAxis[3][2] = { {XPositive, XNegative},
-                                          {YPositive, YNegative},
-                                          {ZPositive, ZNegative} };
+
+// Axes are swapped coming out of the cube so swap them here before reporting to engine
+static const UpAxis idxToUpAxis[3][2] = { {YNegative, YPositive},
+                                          {ZPositive, ZNegative},
+                                          {XNegative, XPositive} };
 extern GlobalDataToHead g_dataToHead;
 
 static bool sendDiscovery;
@@ -277,29 +284,36 @@ void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
     RobotInterface::SendMessage(m);
   }
   accessories[id].ignoreTaps = false;
-
-  // Accumulate IIR filter for each axis
-  static s32 acc_filt[MAX_ACCESSORIES][3];
-  static const s32 filter_coeff = 20;
-  acc_filt[id][0] = ((filter_coeff * ax) + ((100 - filter_coeff) * acc_filt[id][0])) / 100;
-  acc_filt[id][1] = ((filter_coeff * ay) + ((100 - filter_coeff) * acc_filt[id][1])) / 100;
-  acc_filt[id][2] = ((filter_coeff * az) + ((100 - filter_coeff) * acc_filt[id][2])) / 100;
-
+  
+  
   // Check for motion
-  bool xMoving = ABS(acc_filt[id][0] - ax) > ACC_MOVE_THRESH;
-  bool yMoving = ABS(acc_filt[id][1] - ay) > ACC_MOVE_THRESH;
-  bool zMoving = ABS(acc_filt[id][2] - az) > ACC_MOVE_THRESH;
+  bool xMoving = ABS(FROM_FIXED_FLOOR(acc_filt[id][0]) - ax) >= ACC_MOVE_THRESH;
+  bool yMoving = ABS(FROM_FIXED_FLOOR(acc_filt[id][1]) - ay) >= ACC_MOVE_THRESH;
+  bool zMoving = ABS(FROM_FIXED_FLOOR(acc_filt[id][2]) - az) >= ACC_MOVE_THRESH;
   bool isMovingNow = xMoving || yMoving || zMoving;
 
+  bool skipFilterStep = false;
   if (isMovingNow) {
+    
+    // Skip filter accumulation if this is the first few frames of evidence of motion from a non-moving state.
+    // This prevents fast high intensity events like taps from influencing the filter.
+    skipFilterStep = !isMoving[id] && (movingTimeoutCtr[id] <= 1);
+    
     // Incremenent counter if block is not yet considered moving, or
     // if it is already considered moving and the moving count is less than STOP_MOVING_COUNT_THRESH
-    // so that it doesn't need to decrement so much before it's considered stop moving again.
+    // so that it doesn't need to decrement so much before it's considered to have stopped moving again.
     if (!isMoving[id] || (movingTimeoutCtr[id] < STOP_MOVING_COUNT_THRESH)) {
       ++movingTimeoutCtr[id];
     }
   } else if (movingTimeoutCtr[id] > 0) {
     --movingTimeoutCtr[id];
+  }
+  
+  // Accumulate IIR filter for each axis
+  if (!skipFilterStep) {
+    acc_filt[id][0] = (filter_coeff * ax) + FIXED_MUL(one - filter_coeff, acc_filt[id][0]);
+    acc_filt[id][1] = (filter_coeff * ay) + FIXED_MUL(one - filter_coeff, acc_filt[id][1]);
+    acc_filt[id][2] = (filter_coeff * az) + FIXED_MUL(one - filter_coeff, acc_filt[id][2]);
   }
 
   // Compute motion direction change. i.e. change in dominant acceleration vector
@@ -307,9 +321,9 @@ void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
   UpAxis motionDir = Unknown;
 
   for (int i=0; i < 3; ++i) {
-    s8 absAccel = ABS(acc_filt[id][i]);
+    s8 absAccel = ABS(FROM_FIXED_FLOOR(acc_filt[id][i]));
     if (absAccel > maxAccelVal) {
-      motionDir = idxToUpAxis[i][acc_filt[id][i] > 0 ? 0 : 1];
+      motionDir = idxToUpAxis[i][FROM_FIXED_FLOOR(acc_filt[id][i]) > 0 ? 0 : 1];
       maxAccelVal = absAccel;
     }
   }
@@ -320,7 +334,7 @@ void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
   // Check for stable up axis
   // Send ObjectUpAxisChanged msg if it changes
   if (motionDir == nextUpAxis[id]) {
-    //s32 accSum = ax + ay + az;  // magnitude of 64 is approx 1g
+    //s32 accSum = ax + ay + az;  // magnitude of 32 is approx 1g
 
     if (nextUpAxis[id] != prevUpAxis[id]) {
       if (++nextUpAxisCount[id] >= UPAXIS_STABLE_COUNT_THRESH) {
@@ -343,9 +357,9 @@ void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
     m.timestamp = g_dataToHead.timestamp;
     m.objectID = id;
     m.robotID = 0;
-    m.accel.x = ax;
-    m.accel.y = ay;
-    m.accel.z = az;
+    m.accel.x = -az;   // Flipped for the same reason idxToUpAxis is flipped
+    m.accel.y = -ax;
+    m.accel.z = ay;
     m.axisOfAccel = motionDir;
     RobotInterface::SendMessage(m);
     isMoving[id] = true;
