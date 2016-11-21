@@ -72,7 +72,7 @@ public class DailyGoalManager : MonoBehaviour {
     return dailyGoalList;
   }
 
-  public List<DailyGoalGenerationData.GoalEntry> GetGeneratableGoalEntries() {
+  public List<DailyGoalGenerationData.GoalEntry> GetGeneratableGoalEntries(bool compareTags = true) {
     List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
     // Look at a list of exclusively goals that have their conditions met
     for (int i = 0; i < _CurrentGenData.GenList.Count; i++) {
@@ -83,7 +83,7 @@ public class DailyGoalManager : MonoBehaviour {
     }
     // Clear out previous session's tag collisions so goals have variety
     List<string> previousTags = DataPersistenceManager.Instance.Data.DefaultProfile.PreviousTags;
-    if (previousTags != null) {
+    if (previousTags != null && compareTags) {
       for (int i = 0; i < previousTags.Count; i++) {
         if (TagConfig.IsValidTag(previousTags[i])) {
           for (int j = 0; j < goalList.Count;) {
@@ -97,17 +97,18 @@ public class DailyGoalManager : MonoBehaviour {
         }
       }
     }
-    else {
+    else if (previousTags == null) {
       // If save data has no previous tags, don't crash and fix up the save data
       DataPersistenceManager.Instance.Data.DefaultProfile.PreviousTags = new List<string>();
     }
     return goalList;
   }
 
+  // This is a debug only function that doesn't check tag comparisons
   public List<string> GetGeneratableGoalNames() {
     List<string> goalNameList = new List<string>();
     List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
-    goalList = GetGeneratableGoalEntries();
+    goalList = GetGeneratableGoalEntries(false);
     for (int i = 0; i < goalList.Count; i++) {
       goalNameList.Add(Localization.Get(goalList[i].TitleKey));
     }
