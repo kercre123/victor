@@ -19,6 +19,7 @@ VERSION_HEADER=include/anki/cozmo/robot/version.h
 UNSIGNED_BINARY=$(RELEASE_DIR)/cozmo.unsafe
 SIGNED_BINARY=$(RELEASE_DIR)/cozmo.safe
 STAGING_BINARY=$(STAGING_DIR)/cozmo.safe
+REVERT_BINARY=$(STAGING_DIR)/revert.safe
 
 DIFFIE_KEY=certs/diffie.pem
 DEVELOPMENT_KEY=certs/development.pem
@@ -86,6 +87,10 @@ tests: export_key $(sign_test_files)
 k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
 	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi ./binaries/esp.user.bin --rtip ./build/app/robot.axf  --body ./binaries/syscon.axf $(STAGING_BINARY)
+
+k02_revert:
+	python3 ./tools/boot_header.py ./build/app/revert.axf
+	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi ./binaries/esp.user.bin --rtip ./build/app/revert.axf --body ./binaries/syscon.axf $(REVERT_BINARY)
 
 k02_fcc_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/fcc/robot.axf
