@@ -963,10 +963,10 @@ namespace Cozmo {
       }
       
       if(&p->GetPose().FindOrigin() != _robot.GetWorldOrigin()) {
-        PRINT_NAMED_WARNING("VisionComponent.UpdateVisionMarkers.OldOrigin",
-                            "Ignoring observed marker from origin %s (robot origin is %s)",
-                            p->GetPose().FindOrigin().GetName().c_str(),
-                            _robot.GetWorldOrigin()->GetName().c_str());
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.OldOrigin",
+                      "Ignoring observed marker from origin %s (robot origin is %s)",
+                      p->GetPose().FindOrigin().GetName().c_str(),
+                      _robot.GetWorldOrigin()->GetName().c_str());
         return RESULT_OK;
       }
       
