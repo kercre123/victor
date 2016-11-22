@@ -71,7 +71,7 @@
     "translation": "Completed a Memory Match pattern > 20 lights long."
   },
   "reward.description.MemoryMatch.HighScore.Solo": {
-    "translation": "Set a new personal record for Memory Match longest pattern completed in solo"
+    "translation": "Set a new pattern record for Memory Match solo"
   },
   "reward.description.QuickTap.Played": {
     "translation": "Played a game of Quick Tap"
@@ -122,7 +122,7 @@
     "translation": "Won a game of Keepaway 5 to 0"
   },
   "reward.description.Keepaway.NoFakes": {
-    "translation": "Finished a game of Keepaway without ever getting faked out."
+    "translation": "Finished a game of Keepaway without getting faked out"
   },
   "reward.description.Keepaway.TieBreaker": {
     "translation": "Won Keepaway after being tied 4-4"
