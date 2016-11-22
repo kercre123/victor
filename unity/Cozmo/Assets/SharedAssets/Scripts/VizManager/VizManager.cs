@@ -16,11 +16,11 @@ namespace Anki.Cozmo.Viz {
 
     }
 
-    #if VIZ_ON_DEVICE
+#if VIZ_ON_DEVICE
     private VizDirectChannel _Channel = null;
-    #else
+#else
     private VizUdpChannel _Channel = null;
-    #endif
+#endif
 
     private DisconnectionReason _LastDisconnectionReason;
 
@@ -114,7 +114,21 @@ namespace Anki.Cozmo.Viz {
 
     public static VizManager Instance { get; private set; }
 
-    public static bool Enabled = false;
+    private static int _EnabledReferenceCount = 0;
+    public static bool Enabled {
+      get { return _EnabledReferenceCount > 0; }
+      set {
+        if (value) {
+          _EnabledReferenceCount++;
+        }
+        else {
+          _EnabledReferenceCount--;
+          if (_EnabledReferenceCount < 0) {
+            _EnabledReferenceCount = 0;
+          }
+        }
+      }
+    }
 
     private void OnEnable() {
 
@@ -127,11 +141,11 @@ namespace Anki.Cozmo.Viz {
         Instance = this;
       }
 
-      #if VIZ_ON_DEVICE
+#if VIZ_ON_DEVICE
       _Channel = new VizDirectChannel();
-      #else
+#else
       _Channel = new VizUdpChannel();
-      #endif
+#endif
       _Channel.ConnectedToClient += Connected;
       _Channel.DisconnectedFromClient += Disconnected;
       _Channel.MessageReceived += ReceivedMessage;

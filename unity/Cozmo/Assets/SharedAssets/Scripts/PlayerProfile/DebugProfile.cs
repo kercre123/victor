@@ -13,6 +13,7 @@ namespace DataPersistence {
     public bool RunPressDemo;
     public Dictionary<string, List<FakeTouch>> FakeTouchRecordings;
     public bool NoFreeplayOnStart;
+    public bool ShowDroneModeDebugInfo;
 
     public DebugProfile() {
       SOSLoggerEnabled = false;
@@ -21,6 +22,7 @@ namespace DataPersistence {
       RunPressDemo = false;
       FakeTouchRecordings = new Dictionary<string, List<FakeTouch>>();
       NoFreeplayOnStart = false;
+      ShowDroneModeDebugInfo = false;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.DebugConsoleVarUpdated += HandleDebugConsoleVarUpdated;
