@@ -74,7 +74,7 @@
       "RewardType": "experience",
       "Tag": "Freeplay",
       "PointsRewarded": 40,
-      "Target": 20,
+      "Target": 10,
       "Priority": 0,
       "CladEvent": "OnFreeplayInterval",
       "GenConditions": [],
@@ -864,6 +864,19 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "ProgressConditions": [
@@ -929,7 +942,7 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": false,
+          "PlayerWin": true,
           "Label": {
             "text": "Challenge Winner Condition",
             "image": null,
@@ -960,11 +973,14 @@
       "CladEvent": "OnChallengeComplete",
       "GenConditions": [
         {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "MemoryMatchGame",
-          "State": "Unlocked",
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
           "Label": {
-            "text": "Current Unlock Condition",
+            "text": "Current Difficulty Unlocked Condition",
             "image": null,
             "tooltip": ""
           }
@@ -1013,11 +1029,14 @@
       "CladEvent": "OnChallengeComplete",
       "GenConditions": [
         {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "MemoryMatchGame",
-          "State": "Unlocked",
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
           "Label": {
-            "text": "Current Unlock Condition",
+            "text": "Current Difficulty Unlocked Condition",
             "image": null,
             "tooltip": ""
           }
@@ -1066,11 +1085,14 @@
       "CladEvent": "OnChallengeComplete",
       "GenConditions": [
         {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "MemoryMatchGame",
-          "State": "Unlocked",
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
           "Label": {
-            "text": "Current Unlock Condition",
+            "text": "Current Difficulty Unlocked Condition",
             "image": null,
             "tooltip": ""
           }
