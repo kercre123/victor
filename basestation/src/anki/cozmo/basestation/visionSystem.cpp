@@ -1098,6 +1098,22 @@ namespace Cozmo {
       }
     }
     
+    // If we are in limited exposure mode limit the exposure to multiples of 10 ms
+    // This is to prevent image artifacts from mismatched exposure and head light pulsing
+    if(_mode.IsBitFlagSet(VisionMode::LimitedExposure))
+    {
+      static const int kExposureMultiple = 10;
+
+      const int remainder = _currentExposureTime_ms % kExposureMultiple;
+      // Round _maxCameraExposureTime_ms down to the nearest multiple of kExposureMultiple
+      const int maxCameraExposureRounded_ms = _maxCameraExposureTime_ms - (_maxCameraExposureTime_ms % kExposureMultiple);
+      if(remainder != 0)
+      {
+        _currentExposureTime_ms += (kExposureMultiple - remainder);
+        _currentExposureTime_ms = std::min(maxCameraExposureRounded_ms, _currentExposureTime_ms);
+      }
+    }
+    
     _currentResult.exposureTime_ms = _currentExposureTime_ms;
     _currentResult.cameraGain      = _currentCameraGain;
     
