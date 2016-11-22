@@ -222,12 +222,11 @@ void BlockConfigurationManager::UpdateLastConfigCheckBlockPoses()
         if(block->IsPoseStateUnknown()){
           _objectIDToLastPoseConfigurationUpdateMap.erase(objectID);
         }else{
-          lastPoseMapIter->second = block->GetPose();
+          lastPoseMapIter->second = block->GetPose().GetWithRespectToOrigin();
         }
       }else if(!block->IsPoseStateUnknown()){
-        _objectIDToLastPoseConfigurationUpdateMap.insert(std::make_pair(objectID, block->GetPose()));
+        _objectIDToLastPoseConfigurationUpdateMap.insert(std::make_pair(objectID, block->GetPose().GetWithRespectToOrigin()));
       }
-      
     }
   }
 }
