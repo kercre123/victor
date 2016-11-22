@@ -250,10 +250,8 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void CreatePetFaceReticle(PetFace petFace) {
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DroneModePetReticlesEnabled) {
-        petFace.InFieldOfViewStateChanged += HandlePetFaceInFieldOfViewChanged;
-        CreateReticleIfVisible(petFace);
-      }
+      petFace.InFieldOfViewStateChanged += HandlePetFaceInFieldOfViewChanged;
+      CreateReticleIfVisible(petFace);
     }
 
     private void HandlePetFaceAdded(PetFace petFace) {

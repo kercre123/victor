@@ -14,8 +14,6 @@ namespace DataPersistence {
     public Dictionary<string, List<FakeTouch>> FakeTouchRecordings;
     public bool NoFreeplayOnStart;
 
-    public bool DroneModePetReticlesEnabled = false;
-
     public DebugProfile() {
       SOSLoggerEnabled = false;
       LatencyDisplayEnabled = false;
