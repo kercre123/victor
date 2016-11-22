@@ -110,6 +110,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22491280}
+  - 225: {fileID: 22543754}
   m_Layer: 5
   m_Name: CellPhoneDiagram
   m_TagString: Untagged
@@ -247,6 +248,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22457020}
+  - 225: {fileID: 22580494}
   m_Layer: 5
   m_Name: ChargeDockContainer
   m_TagString: Untagged
@@ -1086,7 +1088,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -620, y: -38}
+  m_AnchoredPosition: {x: -699, y: -38}
   m_SizeDelta: {x: 907, y: 1016}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22461814
@@ -1269,6 +1271,28 @@ CanvasGroup:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 173596}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!225 &22543754
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 121514}
+  m_Enabled: 1
+  m_Alpha: 0.2
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!225 &22580494
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 174574}
   m_Enabled: 1
   m_Alpha: 0
   m_Interactable: 1
