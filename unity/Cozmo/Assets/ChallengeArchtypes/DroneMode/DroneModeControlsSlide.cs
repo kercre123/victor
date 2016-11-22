@@ -242,6 +242,7 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void EnableInput() {
       EnableHeadSlider();
+      _NightVisionButton.Interactable = true;
       _LiftSlider.interactable = true;
       _SpeedThrottle.interactable = true;
       UpdateContextualButtons();
@@ -252,6 +253,7 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void DisableInput() {
       DisableHeadSlider();
+      _NightVisionButton.Interactable = false;
       _LiftSlider.interactable = false;
       _SpeedThrottle.interactable = false;
       foreach (DroneModeActionButton button in _ContextualButtons) {
