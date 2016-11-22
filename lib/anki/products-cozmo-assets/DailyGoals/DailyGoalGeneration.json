@@ -3,7 +3,7 @@
     {
       "TitleKey": "dailyGoal.title.TotalPlayTime.30",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Freeplay",
       "PointsRewarded": 50,
       "Target": 1,
       "Priority": 0,
@@ -26,7 +26,7 @@
     {
       "TitleKey": "dailyGoal.title.MeetCozmo.UpdateFace",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "MeetCozmo",
       "PointsRewarded": 30,
       "Target": 1,
       "Priority": 0,
@@ -49,7 +49,7 @@
     {
       "TitleKey": "dailyGoal.title.MeetCozmo.NewFace",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "MeetCozmo",
       "PointsRewarded": 45,
       "Target": 1,
       "Priority": 0,
@@ -1134,7 +1134,7 @@
     {
       "TitleKey": "dailyGoal.title.PlayCozmoSays",
       "RewardType": "experience",
-      "Tag": "NONE",
+      "Tag": "MeetCozmo",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1157,7 +1157,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkPickupCube",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1190,7 +1190,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkStackCubes",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1223,7 +1223,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkRollCubes",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1256,7 +1256,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkPounceOnMotion",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1289,7 +1289,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkKnockOverStacks",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1322,7 +1322,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkPopAWheelie",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1355,7 +1355,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkBuildAPyramid",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1388,7 +1388,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkWorkoutWithCubes",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
