@@ -70,7 +70,7 @@ namespace Cozmo {
       public float HeadTurnAccel_radPerSec2 { get { return _HeadTurnAccel_radPerSec2; } }
 
       [SerializeField, Range(0f, 1000f), Tooltip("(rad/s) Turning speed of lift.")]
-      private float _LiftTurnSpeed_radPerSec = 10f;
+      private float _LiftTurnSpeed_radPerSec = 3f;
       public float LiftTurnSpeed_radPerSec { get { return _LiftTurnSpeed_radPerSec; } }
 
       [SerializeField, Range(0f, 10000f), Tooltip("(rad/s^2) Accel speed of lift.")]
