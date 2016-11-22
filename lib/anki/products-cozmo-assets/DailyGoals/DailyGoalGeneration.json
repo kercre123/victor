@@ -968,7 +968,7 @@
       "RewardType": "experience",
       "Tag": "MemoryMatchPatternLength",
       "PointsRewarded": 25,
-      "Target": 5,
+      "Target": 1,
       "Priority": 0,
       "CladEvent": "OnChallengeComplete",
       "GenConditions": [
@@ -1024,7 +1024,7 @@
       "RewardType": "experience",
       "Tag": "MemoryMatchPatternLength",
       "PointsRewarded": 30,
-      "Target": 5,
+      "Target": 1,
       "Priority": 0,
       "CladEvent": "OnChallengeComplete",
       "GenConditions": [
@@ -1080,7 +1080,7 @@
       "RewardType": "experience",
       "Tag": "MemoryMatchPatternLength",
       "PointsRewarded": 40,
-      "Target": 5,
+      "Target": 1,
       "Priority": 0,
       "CladEvent": "OnChallengeComplete",
       "GenConditions": [
