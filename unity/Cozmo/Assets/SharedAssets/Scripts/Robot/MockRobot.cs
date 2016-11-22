@@ -13,9 +13,9 @@ public class MockRobot : IRobot {
 
   private readonly List<CallbackWrapper> _Callbacks = new List<CallbackWrapper>();
 
-  public event System.Action<ObservedObject> OnCarryingObjectSet;
+  public event System.Action<ActiveObject> OnCarryingObjectSet;
 
-  public event System.Action<ObservedObject> OnHeadTrackingObjectSet;
+  public event System.Action<ActiveObject> OnHeadTrackingObjectSet;
 
   public MockRobot(byte id) {
     ID = id;
@@ -107,7 +107,7 @@ public class MockRobot : IRobot {
     return null;
   }
 
-  public ObservedObject GetObservedObjectWithFactoryID(uint factoryID) {
+  public ActiveObject GetActiveObjectWithFactoryID(uint factoryID) {
     return null;
   }
 
@@ -153,7 +153,7 @@ public class MockRobot : IRobot {
 
   }
 
-  public ObservedObject GetObservedObjectById(int id) {
+  public ActiveObject GetActiveObjectById(int id) {
     return null;
   }
 
@@ -198,7 +198,7 @@ public class MockRobot : IRobot {
     QueueCallback(0.5f, callback);
   }
 
-  public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void PlaceObjectRel(ActiveObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     if (CarryingObject == null) {
       // Can't place object if carrying object is null
       if (callback != null) {
@@ -219,7 +219,7 @@ public class MockRobot : IRobot {
     QueueCallback(1f, callback);
   }
 
-  public void PlaceOnObject(ObservedObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void PlaceOnObject(ActiveObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     if (CarryingObject == null) {
       // Can't place object if carrying object is null
       if (callback != null) {
@@ -341,16 +341,16 @@ public class MockRobot : IRobot {
     return _RobotVolume;
   }
 
-  public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
+  public void TrackToObject(ActiveObject observedObject, bool headOnly = true) {
     // TODO: Something?
     HeadTrackingObject = observedObject;
   }
 
-  public ObservedObject GetCharger() {
+  public ActiveObject GetCharger() {
     return null;
   }
 
-  public void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void MountCharger(ActiveObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
   }
 
@@ -370,7 +370,7 @@ public class MockRobot : IRobot {
     Rotation = rotation;
   }
 
-  public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW,
+  public void TurnTowardsObject(ActiveObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW,
                                 float setTiltTolerance_rad = 0f) {
 
     LookAtPosition(observedObject.WorldPosition);
@@ -402,7 +402,7 @@ public class MockRobot : IRobot {
     QueueCallback(1f, callback);
   }
 
-  public uint PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0f, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint PickupObject(ActiveObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0f, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     CarryingObject = selectedObject;
     LiftHeight = 1f;
@@ -417,7 +417,7 @@ public class MockRobot : IRobot {
     return 0;
   }
 
-  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void RollObject(ActiveObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     // Rather than figure out what side the cube was on, assume it just goes upright
     Rotation = selectedObject.Rotation.zRotation();
@@ -470,7 +470,7 @@ public class MockRobot : IRobot {
     QueueCallback(2f, callback);
   }
 
-  public void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void GotoObject(ActiveObject obj, float distance_mm, bool goToPreDockPose, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     var delta = (WorldPosition - obj.WorldPosition).normalized * distance_mm;
 
@@ -479,7 +479,7 @@ public class MockRobot : IRobot {
     QueueCallback(2f, callback);
   }
 
-  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0f, Anki.Cozmo.AlignmentType alignmentType = Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void AlignWithObject(ActiveObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0f, Anki.Cozmo.AlignmentType alignmentType = Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     Rotation = obj.Rotation.zRotation();
     WorldPosition = (obj.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
@@ -830,7 +830,7 @@ public class MockRobot : IRobot {
 
   public Anki.Cozmo.UnlockId SparkUnlockId { get; private set; }
 
-  public ObservedObject TargetLockedObject {
+  public ActiveObject TargetLockedObject {
     get;
     set;
   }
@@ -875,9 +875,9 @@ public class MockRobot : IRobot {
     set;
   }
 
-  private ObservedObject _CarryingObject;
+  private ActiveObject _CarryingObject;
 
-  public ObservedObject CarryingObject {
+  public ActiveObject CarryingObject {
     get { return _CarryingObject; }
     private set {
       _CarryingObject = value;
@@ -887,9 +887,9 @@ public class MockRobot : IRobot {
     }
   }
 
-  private ObservedObject _HeadTrackingObject;
+  private ActiveObject _HeadTrackingObject;
 
-  public ObservedObject HeadTrackingObject {
+  public ActiveObject HeadTrackingObject {
     get { return _HeadTrackingObject; }
     private set {
       _HeadTrackingObject = value;
@@ -991,7 +991,7 @@ public class MockRobot : IRobot {
   public event LightCubeStateEventHandler OnLightCubeAdded;
   public event LightCubeStateEventHandler OnLightCubeRemoved;
 
-  public ObservedObject Charger { get; set; }
+  public ActiveObject Charger { get; set; }
 
   public event ChargerStateEventHandler OnChargerAdded;
   public event ChargerStateEventHandler OnChargerRemoved;

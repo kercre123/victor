@@ -243,7 +243,7 @@ namespace PatternGuess {
       }
     }
 
-    private void DriveToCube(ObservedObject cube) {
+    private void DriveToCube(ActiveObject cube) {
       _CurrentRobot.GotoObject(cube, kCubeDistance, callback: HandleMoveToCubeCallback);
       _IsDrivingToPose = true;
     }

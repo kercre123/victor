@@ -31,7 +31,7 @@ public interface ILight {
 }
 
 public delegate void LightCubeStateEventHandler(LightCube cube);
-public delegate void ChargerStateEventHandler(ObservedObject charger);
+public delegate void ChargerStateEventHandler(ActiveObject charger);
 public delegate void FaceStateEventHandler(Face face);
 public delegate void PetFaceStateEventHandler(PetFace face);
 public delegate void EnrolledFaceRemoved(int faceId, string faceName);
@@ -79,7 +79,7 @@ public interface IRobot : IDisposable {
 
   List<LightCube> VisibleLightCubes { get; }
 
-  ObservedObject Charger { get; }
+  ActiveObject Charger { get; }
 
   event ChargerStateEventHandler OnChargerAdded;
   event ChargerStateEventHandler OnChargerRemoved;
@@ -128,13 +128,13 @@ public interface IRobot : IDisposable {
 
   uint SerialNumber { get; set; }
 
-  ObservedObject CarryingObject { get; }
+  ActiveObject CarryingObject { get; }
 
-  event Action<ObservedObject> OnCarryingObjectSet;
+  event Action<ActiveObject> OnCarryingObjectSet;
 
-  ObservedObject HeadTrackingObject { get; }
+  ActiveObject HeadTrackingObject { get; }
 
-  event Action<ObservedObject> OnHeadTrackingObjectSet;
+  event Action<ActiveObject> OnHeadTrackingObjectSet;
 
   bool Status(RobotStatusFlag s);
 
@@ -154,11 +154,11 @@ public interface IRobot : IDisposable {
 
   void ClearData(bool initializing = false);
 
-  ObservedObject GetObservedObjectById(int id);
+  ActiveObject GetActiveObjectById(int id);
 
   LightCube GetLightCubeWithFactoryID(uint factoryID);
 
-  ObservedObject GetObservedObjectWithFactoryID(uint factoryID);
+  ActiveObject GetActiveObjectWithFactoryID(uint factoryID);
 
   void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight);
 
@@ -193,9 +193,9 @@ public interface IRobot : IDisposable {
 
   void PlaceObjectOnGroundHere(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void PlaceObjectRel(ActiveObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void PlaceOnObject(ObservedObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void PlaceOnObject(ActiveObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN);
 
@@ -232,11 +232,11 @@ public interface IRobot : IDisposable {
 
   float GetRobotVolume();
 
-  void TrackToObject(ObservedObject observedObject, bool headOnly = true);
+  void TrackToObject(ActiveObject activeObject, bool headOnly = true);
 
   void StopTrackToObject();
 
-  void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+  void TurnTowardsObject(ActiveObject activeObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                          RobotCallback callback = null,
                          QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                          float setTiltTolerance_rad = 0f);
@@ -249,9 +249,9 @@ public interface IRobot : IDisposable {
 
   void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, AnimationTrigger unnamedTrigger = AnimationTrigger.Count, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  uint PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  uint PickupObject(ActiveObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void RollObject(ActiveObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void PlaceObjectOnGround(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
@@ -261,9 +261,9 @@ public interface IRobot : IDisposable {
 
   void DriveStraightAction(float speed_mmps, float dist_mm, bool shouldPlayAnimation = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void GotoObject(ActiveObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void AlignWithObject(ActiveObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   LightCube GetClosestLightCube();
 
@@ -320,9 +320,9 @@ public interface IRobot : IDisposable {
 
   void UpdateLightMessages(bool now = false);
 
-  ObservedObject GetCharger();
+  ActiveObject GetCharger();
 
-  void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void MountCharger(ActiveObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 

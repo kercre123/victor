@@ -17,7 +17,7 @@ namespace ScriptedSequences.Conditions {
       }
     }
 
-    void HandleHeadTrackingObjectSet (ObservedObject obj)
+    void HandleHeadTrackingObjectSet (ActiveObject obj)
     {
       if (obj != null) {
         IsMet = true;

@@ -3,11 +3,7 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
-/// <summary>
-/// all objects that cozmo sees are transmitted across to unity and represented here as ObservedObjects
-///   so far, we only both handling three types of cubes and a charger
-/// </summary>
-public class ObservedObject : IVisibleInCamera {
+public class ActiveObject : IVisibleInCamera {
 
   public class Light : Robot.Light {
     public static new float MessageDelay = 0f;
@@ -43,7 +39,7 @@ public class ObservedObject : IVisibleInCamera {
     NotVisible
   }
 
-  public delegate void InFieldOfViewStateChangedHandler(ObservedObject objectChanged,
+  public delegate void InFieldOfViewStateChangedHandler(ActiveObject objectChanged,
                                                         InFieldOfViewState oldState, InFieldOfViewState newState);
 
   public static event InFieldOfViewStateChangedHandler AnyInFieldOfViewStateChanged;
@@ -192,10 +188,10 @@ public class ObservedObject : IVisibleInCamera {
 
 
 
-  public ObservedObject() {
+  public ActiveObject() {
   }
 
-  public ObservedObject(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
+  public ActiveObject(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
     Family = objectFamily;
     ObjectType = objectType;
     ID = objectID;
@@ -223,27 +219,27 @@ public class ObservedObject : IVisibleInCamera {
       Lights[i] = new Light();
     }
 
-    DAS.Debug("ObservedObject.Constructed", "ObservedObject from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
+    DAS.Debug("ActiveObject.Constructed", "ActiveObject from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
   }
 
-  public static implicit operator uint(ObservedObject observedObject) {
-    if (observedObject == null) {
-      DAS.Warn(string.Format("{0}.NullValue", typeof(ObservedObject)), "converting null ObservedObject into uint: returning uint.MaxValue");
+  public static implicit operator uint(ActiveObject activeObject) {
+    if (activeObject == null) {
+      DAS.Warn(string.Format("{0}.NullValue", typeof(ActiveObject)), "converting null ActiveObject into uint: returning uint.MaxValue");
       return uint.MaxValue;
     }
 
-    return (uint)observedObject.ID;
+    return (uint)activeObject.ID;
   }
 
-  public static implicit operator int(ObservedObject observedObject) {
-    if (observedObject == null)
+  public static implicit operator int(ActiveObject activeObject) {
+    if (activeObject == null)
       return kInvalidObjectID;
 
-    return observedObject.ID;
+    return activeObject.ID;
   }
 
-  public static implicit operator string(ObservedObject observedObject) {
-    return ((int)observedObject).ToString();
+  public static implicit operator string(ActiveObject activeObject) {
+    return ((int)activeObject).ToString();
   }
 
   public void UpdateInfo(G2U.RobotObservedObject message) {

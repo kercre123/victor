@@ -277,7 +277,7 @@ namespace Cozmo.Minigame.DroneMode {
       }
     }
 
-    private void CreateObservedObjectReticle(ObservedObject observedObject) {
+    private void CreateObservedObjectReticle(ActiveObject observedObject) {
       observedObject.InFieldOfViewStateChanged += HandleInFieldOfViewChanged;
       CreateReticleIfVisible(observedObject);
     }
@@ -291,21 +291,21 @@ namespace Cozmo.Minigame.DroneMode {
       RemoveReticle(cube);
     }
 
-    private void HandleOnChargerAdded(ObservedObject charger) {
+    private void HandleOnChargerAdded(ActiveObject charger) {
       CreateObservedObjectReticle(charger);
     }
 
-    private void HandleOnChargerRemoved(ObservedObject charger) {
+    private void HandleOnChargerRemoved(ActiveObject charger) {
       charger.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
       RemoveReticle(charger);
     }
 
-    private void HandleInFieldOfViewChanged(ObservedObject observedObject,
-                                            ObservedObject.InFieldOfViewState oldState,
-                                            ObservedObject.InFieldOfViewState newState) {
+    private void HandleInFieldOfViewChanged(ActiveObject observedObject,
+                                            ActiveObject.InFieldOfViewState oldState,
+                                            ActiveObject.InFieldOfViewState newState) {
 
       // If visible spawn reticle and add to dictionary
-      if (newState == ObservedObject.InFieldOfViewState.Visible) {
+      if (newState == ActiveObject.InFieldOfViewState.Visible) {
         CreateReticleIfVisible(observedObject);
       }
       else {
@@ -443,8 +443,8 @@ namespace Cozmo.Minigame.DroneMode {
     private string FormatCurrentSeenObjects() {
       string toString = "";
       foreach (var obj in _ObjToReticle.Keys) {
-        if (obj is ObservedObject) {
-          toString += ((ObservedObject)obj).ObjectType + " " + obj.VizRect + "       ";
+        if (obj is ActiveObject) {
+          toString += ((ActiveObject)obj).ObjectType + " " + obj.VizRect + "       ";
         }
         else if (obj is Face) {
           toString += "Face ID " + ((Face)obj).ID + " " + obj.VizRect + "       ";

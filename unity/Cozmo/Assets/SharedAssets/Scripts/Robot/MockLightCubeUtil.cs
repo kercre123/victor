@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class MockLightCubeUtil {
 
-  public static RobotObservedObject CurrentState(this ObservedObject cube) {
+  public static RobotObservedObject CurrentState(this ActiveObject cube) {
     return Singleton<RobotObservedObject>.Instance.Initialize(cube.RobotID,
       0,
       cube.Family,
@@ -68,31 +68,31 @@ public static class MockLightCubeUtil {
     return obj;
   }
 
-  public static void Apply(this RobotObservedObject msg, ObservedObject obj) {
+  public static void Apply(this RobotObservedObject msg, ActiveObject obj) {
     obj.UpdateInfo(msg);
   }
 
-  public static void Rotate(this ObservedObject obj, Quaternion rotation) {
+  public static void Rotate(this ActiveObject obj, Quaternion rotation) {
     obj.CurrentState().Rotate(rotation).Apply(obj);
   }
 
-  public static void Move(this ObservedObject obj, Vector3 position) {
+  public static void Move(this ActiveObject obj, Vector3 position) {
     obj.CurrentState().Move(position).Apply(obj);
   }
 
-  public static void MoveAndRotate(this ObservedObject obj, Vector3 position, Quaternion rotation) {
+  public static void MoveAndRotate(this ActiveObject obj, Vector3 position, Quaternion rotation) {
     obj.CurrentState().Move(position).Rotate(rotation).Apply(obj);
   }
 
-  public static void SetRotation(this ObservedObject obj, Quaternion rotation) {
+  public static void SetRotation(this ActiveObject obj, Quaternion rotation) {
     obj.CurrentState().SetRotation(rotation).Apply(obj);
   }
 
-  public static void SetPosition(this ObservedObject obj, Vector3 position) {
+  public static void SetPosition(this ActiveObject obj, Vector3 position) {
     obj.CurrentState().SetPosition(position).Apply(obj);
   }
 
-  public static void MakeActiveAndVisible(this ObservedObject obj, bool active, bool visible) {
+  public static void MakeActiveAndVisible(this ActiveObject obj, bool active, bool visible) {
     obj.CurrentState().MakeActive(active).Apply(obj);
   }
 

@@ -15,7 +15,7 @@ namespace PatternGuess {
 
       _CurrentRobot.TurnOffAllLights();
       List<LightCube> targetCubes = new List<LightCube>();
-      foreach (ObservedObject obj in _CurrentRobot.VisibleLightCubes) {
+      foreach (ActiveObject obj in _CurrentRobot.VisibleLightCubes) {
         targetCubes.Add(obj as LightCube);
 
         if (targetCubes.Count >= game.NumCubesInCode) {

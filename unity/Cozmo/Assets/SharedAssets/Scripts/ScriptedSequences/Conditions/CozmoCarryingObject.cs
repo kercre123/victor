@@ -17,7 +17,7 @@ namespace ScriptedSequences.Conditions {
       }
     }
 
-    void HandleCarryingObjectSet (ObservedObject obj)
+    void HandleCarryingObjectSet (ActiveObject obj)
     {
       if (obj != null) {
         IsMet = true;
