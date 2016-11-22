@@ -97,6 +97,7 @@ namespace Cozmo {
           _DroneModeControlsSlide = slide.GetComponent<DroneModeControlsSlide>();
           _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           _DroneModeControlsSlide.InitializeLiftSlider(_TargetLiftFactor);
+          _DroneModeControlsSlide.InitializeHeadSlider(_CurrentRobot.HeadAngle * Mathf.Rad2Deg);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.LiftCubeButtonData,
             HandleLiftCubeButtonPressed,

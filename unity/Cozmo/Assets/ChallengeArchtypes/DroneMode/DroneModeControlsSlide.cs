@@ -169,10 +169,6 @@ namespace Cozmo.Minigame.DroneMode {
       _CurrentDriveSpeedSliderSegmentValue = 0f;
       _SpeedThrottle.onValueChanged.AddListener(HandleSpeedThrottleValueChanged);
 
-      _CurrentHeadSliderValue = 0f;
-      _HeadTiltSlider.value = _CurrentHeadSliderValue;
-      _HeadTiltSlider.onValueChanged.AddListener(HandleHeadSliderValueChanged);
-
       _ShowDebugInformation = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.ShowDroneModeDebugInfo;
       EnableDebugInformation();
 
@@ -200,6 +196,12 @@ namespace Cozmo.Minigame.DroneMode {
       _CurrentLiftSliderValue = sliderValue;
       _LiftSlider.value = _CurrentLiftSliderValue;
       _LiftSlider.onValueChanged.AddListener(HandleLiftSliderValueChanged);
+    }
+
+    public void InitializeHeadSlider(float sliderValue) {
+      _CurrentHeadSliderValue = sliderValue;
+      _HeadTiltSlider.value = _CurrentHeadSliderValue;
+      _HeadTiltSlider.onValueChanged.AddListener(HandleHeadSliderValueChanged);
     }
 
     public void CreateActionButton(DroneModeActionData actionData, System.Action callback,

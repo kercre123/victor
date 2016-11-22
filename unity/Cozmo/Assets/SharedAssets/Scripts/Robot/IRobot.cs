@@ -42,6 +42,9 @@ public interface IRobot : IDisposable {
 
   byte ID { get; }
 
+  /// <summary>
+  /// Head angle in radians
+  /// </summary>
   float HeadAngle { get; }
 
   float PoseAngle { get; }
