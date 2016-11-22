@@ -531,7 +531,7 @@ namespace Cozmo {
           if (targetObject != null && targetObject is PetFace) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             Anki.Cozmo.AnimationTrigger reactionAnimation = (((PetFace)targetObject).PetType == Anki.Vision.PetType.Cat) ?
-              Anki.Cozmo.AnimationTrigger.PetDetectionShort_Cat : Anki.Cozmo.AnimationTrigger.PetDetectionShort_Dog;
+              Anki.Cozmo.AnimationTrigger.PetDetectionCat : Anki.Cozmo.AnimationTrigger.PetDetectionDog;
             _CurrentRobot.SendAnimationTrigger(reactionAnimation,
               callback: HandleActionFinished,
               ignoreBodyTrack: _CurrentRobot.Status(Anki.Cozmo.RobotStatusFlag.IS_PICKED_UP));
