@@ -24,15 +24,15 @@ AnimationClip:
         inSlope: 0
         outSlope: 0
         tangentMode: 10
-      - time: 0.35
+      - time: 0.16666667
         value: 0
-        inSlope: 1
-        outSlope: 1
+        inSlope: 1.5000001
+        outSlope: 1.5000001
         tangentMode: 10
-      - time: 0.85
+      - time: 0.5
         value: 1
-        inSlope: 2
-        outSlope: 2
+        inSlope: 3.0000002
+        outSlope: 3.0000002
         tangentMode: 10
       m_PreInfinity: 2
       m_PostInfinity: 2
@@ -109,7 +109,7 @@ AnimationClip:
   - curve:
       serializedVersion: 2
       m_Curve:
-      - time: 0.51666665
+      - time: 0.5
         value: 0
         inSlope: 0
         outSlope: 0
@@ -135,14 +135,14 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - time: 2.5
-        value: -741
-        inSlope: 253.33337
-        outSlope: 253.33337
+        value: -857
+        inSlope: 396.66672
+        outSlope: 396.66672
         tangentMode: 10
       - time: 2.8
-        value: -665
-        inSlope: 253.33337
-        outSlope: 253.33337
+        value: -738
+        inSlope: 396.66672
+        outSlope: 396.66672
         tangentMode: 10
       m_PreInfinity: 2
       m_PostInfinity: 2
@@ -304,6 +304,46 @@ AnimationClip:
       m_RotationOrder: 4
     attribute: m_Alpha
     path: 
+    classID: 225
+    script: {fileID: 0}
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.1666665
+        value: 0
+        inSlope: 2.9999986
+        outSlope: 2.9999986
+        tangentMode: 10
+      - time: 4.5
+        value: 1
+        inSlope: 2.9999986
+        outSlope: 2.9999986
+        tangentMode: 10
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_Alpha
+    path: CellPhoneDiagram
+    classID: 225
+    script: {fileID: 0}
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0.5
+        value: 0
+        inSlope: 3.0000002
+        outSlope: 3.0000002
+        tangentMode: 10
+      - time: 0.8333333
+        value: 1
+        inSlope: 3.0000002
+        outSlope: 3.0000002
+        tangentMode: 10
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_Alpha
+    path: ChargeDockContainer
     classID: 225
     script: {fileID: 0}
   m_PPtrCurves: []
@@ -386,6 +426,18 @@ AnimationClip:
       classID: 225
       customType: 0
       isPPtrCurve: 0
+    - path: 3614665843
+      attribute: 1574349066
+      script: {fileID: 0}
+      classID: 225
+      customType: 0
+      isPPtrCurve: 0
+    - path: 3717274068
+      attribute: 1574349066
+      script: {fileID: 0}
+      classID: 225
+      customType: 0
+      isPPtrCurve: 0
     pptrCurveMapping: []
   m_AnimationClipSettings:
     serializedVersion: 2
@@ -416,15 +468,15 @@ AnimationClip:
         inSlope: 0
         outSlope: 0
         tangentMode: 10
-      - time: 0.35
+      - time: 0.16666667
         value: 0
-        inSlope: 1
-        outSlope: 1
+        inSlope: 1.5000001
+        outSlope: 1.5000001
         tangentMode: 10
-      - time: 0.85
+      - time: 0.5
         value: 1
-        inSlope: 2
-        outSlope: 2
+        inSlope: 3.0000002
+        outSlope: 3.0000002
         tangentMode: 10
       m_PreInfinity: 2
       m_PostInfinity: 2
@@ -501,7 +553,7 @@ AnimationClip:
   - curve:
       serializedVersion: 2
       m_Curve:
-      - time: 0.51666665
+      - time: 0.5
         value: 0
         inSlope: 0
         outSlope: 0
@@ -527,14 +579,14 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - time: 2.5
-        value: -741
-        inSlope: 253.33337
-        outSlope: 253.33337
+        value: -857
+        inSlope: 396.66672
+        outSlope: 396.66672
         tangentMode: 10
       - time: 2.8
-        value: -665
-        inSlope: 253.33337
-        outSlope: 253.33337
+        value: -738
+        inSlope: 396.66672
+        outSlope: 396.66672
         tangentMode: 10
       m_PreInfinity: 2
       m_PostInfinity: 2
@@ -696,6 +748,46 @@ AnimationClip:
       m_RotationOrder: 4
     attribute: m_Alpha
     path: 
+    classID: 225
+    script: {fileID: 0}
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.1666665
+        value: 0
+        inSlope: 2.9999986
+        outSlope: 2.9999986
+        tangentMode: 10
+      - time: 4.5
+        value: 1
+        inSlope: 2.9999986
+        outSlope: 2.9999986
+        tangentMode: 10
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_Alpha
+    path: CellPhoneDiagram
+    classID: 225
+    script: {fileID: 0}
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0.5
+        value: 0
+        inSlope: 3.0000002
+        outSlope: 3.0000002
+        tangentMode: 10
+      - time: 0.8333333
+        value: 1
+        inSlope: 3.0000002
+        outSlope: 3.0000002
+        tangentMode: 10
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_Alpha
+    path: ChargeDockContainer
     classID: 225
     script: {fileID: 0}
   m_EulerEditorCurves: []
