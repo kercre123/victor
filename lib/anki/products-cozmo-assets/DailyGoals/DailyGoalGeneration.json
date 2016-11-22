@@ -1138,7 +1138,7 @@
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
+      "CladEvent": "OnCozmoSayText",
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
@@ -1151,17 +1151,7 @@
           }
         }
       ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CozmoSaysGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
+      "ProgressConditions": [],
       "Id": 50
     },
     {

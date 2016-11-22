@@ -140,6 +140,8 @@ public class SayTextSlide : MonoBehaviour {
     }
     else {
 
+      GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnCozmoSayText);
+
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Cozmo_Says_Speaking);
 
       Anki.Cozmo.AnimationTrigger getInTrigger;

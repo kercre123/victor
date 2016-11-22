@@ -23,6 +23,7 @@ namespace Anki {
       OnConnectedInterval,
       OnMemoryMatchVsComplete,
       OnNewHighScore,
+      OnCozmoSayText,
       Count
     }
     // namespace Cozmo
