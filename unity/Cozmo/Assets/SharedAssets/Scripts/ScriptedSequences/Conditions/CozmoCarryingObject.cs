@@ -12,13 +12,12 @@ namespace ScriptedSequences.Conditions {
           Robot.OnCarryingObjectSet += HandleCarryingObjectSet;
         }
       }
-      else if(Robot != null) {
+      else if (Robot != null) {
         Robot.OnCarryingObjectSet -= HandleCarryingObjectSet;
       }
     }
 
-    void HandleCarryingObjectSet (ActiveObject obj)
-    {
+    void HandleCarryingObjectSet(ObservableObject obj) {
       if (obj != null) {
         IsMet = true;
       }
