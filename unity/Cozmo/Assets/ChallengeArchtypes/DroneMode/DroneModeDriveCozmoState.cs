@@ -31,6 +31,7 @@ namespace Cozmo {
         private bool _IsDrivingLift = false;
 
         private bool _IsPerformingAction = false;
+        private bool _AreIdleReactionaryBehaviorsEnabled = true;
 
         private bool IsDrivingWheels {
           get { return _IsDrivingWheels; }
@@ -561,10 +562,16 @@ namespace Cozmo {
         private void UpdateIdleReactionaryBehaviors() {
           // If targets are all zero, enable reactionary behavior
           if (!IsDrivingHead && !IsDrivingWheels && !IsDrivingLift && !IsPerformingAction) {
-            EnableIdleReactionaryBehaviors(true);
+            if (!_AreIdleReactionaryBehaviorsEnabled) {
+              EnableIdleReactionaryBehaviors (true);
+              _AreIdleReactionaryBehaviorsEnabled = true;
+            }
           }
           else {
-            EnableIdleReactionaryBehaviors(false);
+            if (_AreIdleReactionaryBehaviorsEnabled) {
+              EnableIdleReactionaryBehaviors (false);
+              _AreIdleReactionaryBehaviorsEnabled = false;
+            }
           }
         }
 
