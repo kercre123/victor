@@ -167,6 +167,9 @@ public class BehaviorDisplay : MonoBehaviour {
     case BehaviorType.InteractWithFaces:
       ret = Localization.Get(LocalizationKeys.kBehaviorInteractWithFaces);
       break;
+    case BehaviorType.ReactToPet:
+      ret = Localization.Get(LocalizationKeys.kBehaviorReactToPet);
+      break;
     case BehaviorType.PlayAnim:
       // Play Anim behavior is also used for some intros/outros
       if (behaviorName == "NothingToDo_Idle" || behaviorName == "NothingToDo_BoredAnim") {
