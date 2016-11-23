@@ -30,9 +30,9 @@ MonoBehaviour:
   _SlowDownForTurnThreshold: 0.5
   _HeadTurnSpeed_radPerSec: 15
   _HeadTurnAccel_radPerSec2: 20
-  _LiftTurnSpeed_radPerSec: 10
+  _LiftTurnSpeed_radPerSec: 3
   _LiftTurnAccel_radPerSec2: 20
-  _StartingLiftHeight: 0.25
+  _StartingLiftHeight: 0
   _LiftCubeButtonData:
     _ButtonTextLocKey: droneMode.button.action.liftCube
     _ActionUnlockId: 6

@@ -19,9 +19,10 @@ namespace Cozmo {
         private float _TargetTurnDirection;
 
         private float _TargetHeadAngle_rad;
-        private bool _TargetHeadAngleChanged = false;
+        private float _LastCommandedTargetHeadAngle_rad;
 
         private float _TargetLiftFactor;
+        private float _LastCommandedTargetLiftFactor;
 
         private float _LastMessageSentTimestamp;
 
@@ -30,6 +31,36 @@ namespace Cozmo {
         private bool _IsDrivingLift = false;
 
         private bool _IsPerformingAction = false;
+
+        private bool IsDrivingWheels {
+          get { return _IsDrivingWheels; }
+          set {
+            if (_IsDrivingWheels != value) {
+              _IsDrivingWheels = value;
+              UpdateIdleReactionaryBehaviors();
+            }
+          }
+        }
+
+        private bool IsDrivingHead {
+          get { return _IsDrivingHead; }
+          set {
+            if (_IsDrivingHead != value) {
+              _IsDrivingHead = value;
+              UpdateIdleReactionaryBehaviors();
+            }
+          }
+        }
+
+        private bool IsDrivingLift {
+          get { return _IsDrivingLift; }
+          set {
+            if (_IsDrivingLift != value) {
+              _IsDrivingLift = value;
+              UpdateIdleReactionaryBehaviors();
+            }
+          }
+        }
 
         private bool IsPerformingAction {
           get { return _IsPerformingAction; }
@@ -66,6 +97,7 @@ namespace Cozmo {
           _DroneModeControlsSlide = slide.GetComponent<DroneModeControlsSlide>();
           _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           _DroneModeControlsSlide.InitializeLiftSlider(_TargetLiftFactor);
+          _DroneModeControlsSlide.InitializeHeadSlider(_CurrentRobot.HeadAngle * Mathf.Rad2Deg);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.LiftCubeButtonData,
             HandleLiftCubeButtonPressed,
@@ -236,21 +268,13 @@ namespace Cozmo {
           if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec
               || ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
             _LastMessageSentTimestamp = Time.time;
-            bool droveWheels = DriveWheelsIfNeeded();
-            bool droveHead = true;
+            IsDrivingWheels = DriveWheelsIfNeeded();
+            
             if (!_IsPlayingTurboTransitionAnimation) {
-              droveHead = DriveHeadIfNeeded();
+              DriveHeadIfNeeded();
             }
 
-            bool droveLift = DriveLiftIfNeeded();
-
-            if (_IsDrivingHead != droveHead || _IsDrivingWheels != droveWheels || _IsDrivingLift != droveLift) {
-              _IsDrivingHead = droveHead;
-              _IsDrivingWheels = droveWheels;
-              _IsDrivingLift = droveLift;
-
-              UpdateIdleReactionaryBehaviors();
-            }
+            DriveLiftIfNeeded();
           }
         }
 
@@ -286,67 +310,54 @@ namespace Cozmo {
           return droveWheels;
         }
 
-        private bool DriveHeadIfNeeded() {
-          bool startDriveHead = false;
+        private void DriveHeadIfNeeded() {
           float currentHeadAngle_rad = _CurrentRobot.HeadAngle;
-          if (!_IsDrivingHead && _TargetHeadAngleChanged && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
+          if (!_LastCommandedTargetHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             DriveHeadInternal();
             HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadAngle_rad + " current=" + currentHeadAngle_rad;
-            startDriveHead = true;
           }
-          return startDriveHead;
         }
 
         private void HandleHeadMoveFinished(bool success) {
-          float currentHeadAngle_rad = _CurrentRobot.HeadAngle;
-          if (_TargetHeadAngleChanged && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
-            DriveHeadInternal();
-            HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadAngle_rad + " current=" + currentHeadAngle_rad;
-          }
-          else {
-            _IsDrivingHead = false;
-            HeadDrivingDebugText = "\nPlayer not driving head: target=" + _TargetHeadAngle_rad + " current=" + _CurrentRobot.GetHeadAngleFactor();
-            _RobotAnimator.AllowIdleAnimation(true);
-          }
+          IsDrivingHead = false;
+          HeadDrivingDebugText = "\nPlayer not driving head: target=" + _TargetHeadAngle_rad + " current=" + _CurrentRobot.GetHeadAngleFactor();
+          _RobotAnimator.AllowIdleAnimation(true);
         }
 
         private void DriveHeadInternal() {
           _CurrentRobot.CancelCallback(HandleHeadMoveFinished);
-          _CurrentRobot.SetHeadAngle(_TargetHeadAngle_rad, callback: HandleHeadMoveFinished, useExactAngle: true,
+          _LastCommandedTargetHeadAngle_rad = _TargetHeadAngle_rad;
+          _CurrentRobot.SetHeadAngle(_TargetHeadAngle_rad, callback: HandleHeadMoveFinished, 
+            queueActionPosition: Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING, 
+            useExactAngle: true,
             speed_radPerSec: _DroneModeGame.DroneModeConfigData.HeadTurnSpeed_radPerSec,
             accel_radPerSec2: _DroneModeGame.DroneModeConfigData.HeadTurnAccel_radPerSec2);
 
-          _IsDrivingHead = true;
-          _TargetHeadAngleChanged = false;
+          IsDrivingHead = true;
           _RobotAnimator.AllowIdleAnimation(false);
         }
 
-        private bool DriveLiftIfNeeded() {
-          bool startDriveLift = false;
+        private void DriveLiftIfNeeded() {
           // Ideally we could do this check after every animation end, but this works for now.
-          if (!_IsDrivingLift && !_CurrentRobot.LiftHeightFactor.IsNear(_TargetLiftFactor, _kLiftFactorThreshold)) {
+          if (!_LastCommandedTargetLiftFactor.IsNear(_TargetLiftFactor, _kLiftFactorThreshold)) {
             DriveLiftInternal();
-            startDriveLift = true;
           }
-          return startDriveLift;
         }
 
         private void HandleLiftMoveFinished(bool success) {
-          if (!_CurrentRobot.LiftHeightFactor.IsNear(_TargetLiftFactor, _kLiftFactorThreshold)) {
-            DriveLiftInternal();
-          }
-          else {
-            _IsDrivingLift = false;
-          }
+          IsDrivingLift = false;
         }
 
         private void DriveLiftInternal() {
           _CurrentRobot.CancelCallback(HandleLiftMoveFinished);
+          _LastCommandedTargetLiftFactor = _TargetLiftFactor;
           _CurrentRobot.SetLiftHeight(_TargetLiftFactor,
+            callback: HandleLiftMoveFinished,
+            queueActionPosition: Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING, 
             speed_radPerSec: _DroneModeGame.DroneModeConfigData.LiftTurnSpeed_radPerSec,
             accel_radPerSec2: _DroneModeGame.DroneModeConfigData.LiftTurnAccel_radPerSec2);
 
-          _IsDrivingLift = true;
+          IsDrivingLift = true;
         }
 
         private bool IsUserPointTurning(float targetDriveSpeed, float targetTurnDirection) {
@@ -430,7 +441,6 @@ namespace Cozmo {
           float newSliderValue_rad = newSliderValue_deg * Mathf.Deg2Rad;
           if (!newSliderValue_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             _TargetHeadAngle_rad = newSliderValue_rad;
-            _TargetHeadAngleChanged = true;
           }
         }
 
@@ -531,9 +541,9 @@ namespace Cozmo {
           if (targetObject != null && targetObject is PetFace) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             Anki.Cozmo.AnimationTrigger reactionAnimation = (((PetFace)targetObject).PetType == Anki.Vision.PetType.Cat) ?
-              Anki.Cozmo.AnimationTrigger.PetDetectionShort_Cat : Anki.Cozmo.AnimationTrigger.PetDetectionShort_Dog;
+              Anki.Cozmo.AnimationTrigger.PetDetectionCat : Anki.Cozmo.AnimationTrigger.PetDetectionDog;
             _CurrentRobot.SendAnimationTrigger(reactionAnimation,
-              callback: HandleActionFinished, 
+              callback: HandleActionFinished,
               ignoreBodyTrack: _CurrentRobot.Status(Anki.Cozmo.RobotStatusFlag.IS_PICKED_UP));
             DisableInput();
             IsPerformingAction = true;
@@ -550,7 +560,7 @@ namespace Cozmo {
 
         private void UpdateIdleReactionaryBehaviors() {
           // If targets are all zero, enable reactionary behavior
-          if (!_IsDrivingHead && !_IsDrivingWheels && !_IsDrivingLift && !IsPerformingAction) {
+          if (!IsDrivingHead && !IsDrivingWheels && !IsDrivingLift && !IsPerformingAction) {
             EnableIdleReactionaryBehaviors(true);
           }
           else {

@@ -823,6 +823,9 @@ namespace AnimationController {
     // Don't play disabled tracks
     _tracksToPlay &= ~whichTracks;
     
+    // Stop only the tracks that are in use
+    whichTracks &= _tracksInUse;
+    
     // Disabled tracks are no longer "in use"
     _tracksInUse &= ~whichTracks;
     

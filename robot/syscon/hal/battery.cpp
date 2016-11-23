@@ -166,14 +166,6 @@ void Battery::init()
   startADCsample(ANALOG_CLIFF_SENSE);
 }
 
-void Battery::setHeadlight(bool status) {
-  if (status) {
-    nrf_gpio_pin_set(PIN_IR_FORWARD);
-  } else {
-    nrf_gpio_pin_clear(PIN_IR_FORWARD);
-  }
-}
-
 void Battery::setOperatingMode(Anki::Cozmo::BodyRadioMode mode) {
   current_operating_mode = mode;
 }

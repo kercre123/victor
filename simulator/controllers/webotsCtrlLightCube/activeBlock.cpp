@@ -558,6 +558,9 @@ Result Update() {
       msg.tag = BlockMessages::LightCubeMessage::Tag_tapped;
       msg.tapped.objectID = blockID_;
       msg.tapped.numTaps = 1;
+      msg.tapped.tapNeg = -50;  // Hard-coded tap intensity.
+      msg.tapped.tapPos = 50;   // Just make sure that tapPos - tapNeg > BlockTapFilterComponent::kTapIntensityMin
+      msg.tapped.tapTime = static_cast<u32>(active_object_controller.getTime() / 0.035f) % u8_MAX;  // Each tapTime count should be 35ms
       emitter_->send(msg.GetBuffer(), msg.Size());
     }
 

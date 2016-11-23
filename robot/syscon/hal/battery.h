@@ -21,7 +21,6 @@ namespace Battery {
   void updateOperatingMode();
 
   // Update the state of the battery
-  void setHeadlight(bool status);
   void manage(void);
   uint8_t getLevel(void);
 

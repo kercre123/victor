@@ -9,8 +9,15 @@ namespace Anki.Cozmo.Viz {
     [SerializeField]
     private RawImage _OverlayImage;
 
-
     private bool _Initialized = false;
+
+    void Start() {
+      VizManager.Enabled = true;
+    }
+
+    void OnDestroy() {
+      VizManager.Enabled = false;
+    }
 
     // Update is called once per frame
     void Update() {

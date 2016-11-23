@@ -27,7 +27,10 @@ namespace Anki {
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         int diff = 0;
-        if (DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty.TryGetValue(ChallengeID, out diff)) {
+        ChallengeData data = ChallengeDataList.Instance.GetChallengeDataById(ChallengeID);
+        if (data && UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
+          // if not found, then we're at difficulty 0
+          DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty.TryGetValue(ChallengeID, out diff);
           isMet = !UseMinDiff || diff >= MinDiff;
           if (isMet) {
             isMet = !UseMaxDiff || diff <= MaxDiff;

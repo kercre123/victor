@@ -1,14 +1,17 @@
 #include "timer.h"
 #include "nrf.h"
+#include "nrf_gpio.h"
 
 #include "hardware.h"
 #include "backpack.h"
+#include "lights.h"
 #include "cubes.h"
 
 // This is the IRQ handler for various power modes
 extern void main_execution();
 
 static const int PERIOD = CYCLES_MS(5.0f) >> 8;
+static bool _headlight = false;
 
 void Timer::init()
 {
@@ -58,11 +61,23 @@ void MicroWait(u32 microseconds)
   }
 }
 
+void Lights::setHeadlight(bool status) {
+  _headlight = status;
+
+  if (!status) {
+    nrf_gpio_pin_clear(PIN_IR_FORWARD);
+  }
+}
+
 extern "C" void RTC1_IRQHandler() {
   if (NRF_RTC1->EVENTS_COMPARE[0]) {
     NRF_RTC1->EVENTS_COMPARE[0] = 0;
 
     NRF_RTC1->CC[0] += PERIOD;
     main_execution();
+
+    if (_headlight) {
+      nrf_gpio_pin_toggle(PIN_IR_FORWARD);
+    }
   }
 }

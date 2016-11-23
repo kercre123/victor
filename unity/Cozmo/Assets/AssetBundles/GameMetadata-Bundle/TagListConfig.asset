@@ -11,7 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cb29b2dcff9f47d5818db384cfcce4a, type: 3}
   m_Name: TagListConfig
   m_EditorClassIdentifier: 
-  NoTag: NONE
   Tags:
   - NONE
   - QuickTapGameResult
@@ -30,3 +29,5 @@ MonoBehaviour:
   - MemoryMatchGameLives
   - MemoryMatchPatternLength
   - HighScore
+  - MeetCozmo
+  - Spark

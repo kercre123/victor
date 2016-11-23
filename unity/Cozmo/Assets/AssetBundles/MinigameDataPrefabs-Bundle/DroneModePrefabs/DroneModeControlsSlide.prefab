@@ -181,7 +181,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &112866
 GameObject:
   m_ObjectHideFlags: 1
@@ -1192,7 +1192,7 @@ MonoBehaviour:
   - {fileID: 11447486}
   - {fileID: 11459592}
   - {fileID: 11455886}
-  DebugTextField: {fileID: 11422020}
+  _DebugTextField: {fileID: 11422020}
 --- !u!114 &11410830
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1204,7 +1204,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 621515eed51054735aec3188f904c529, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowDebugTextFields: 0
   _SpeedThrottle: {fileID: 11410692}
   _SpeedThrottleBackgrounds:
   - {fileID: 11405622}
@@ -1267,8 +1266,10 @@ MonoBehaviour:
         type: 3}
       m_DisabledSprite: {fileID: 21300000, guid: 84251d45145cc4772be211003545e7b9,
         type: 3}
-  TiltText: {fileID: 11434292}
-  DebugText: {fileID: 11466266}
+  _TiltText: {fileID: 11434292}
+  _DebugText: {fileID: 11466266}
+  _DroneModeRobotCameraPrefab: {fileID: 165760, guid: 35b2ef5ae73994734a6aca2c46178407,
+    type: 2}
 --- !u!114 &11414384
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2554,8 +2555,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 899.00024, y: -81.62488}
-  m_SizeDelta: {x: 757, y: 766}
+  m_AnchoredPosition: {x: 471, y: 56}
+  m_SizeDelta: {x: 942, y: 628.37}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!224 &22407382
 RectTransform:
@@ -2646,8 +2647,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -245.00024, y: -333.37506}
-  m_SizeDelta: {x: 1319, y: 261}
+  m_AnchoredPosition: {x: -396, y: -231.94}
+  m_SizeDelta: {x: 1104, y: 464}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22424324
 RectTransform:
@@ -3447,8 +3448,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -609.499, y: 301.37357}
-  m_SizeDelta: {x: 1319, y: 766}
+  m_AnchoredPosition: {x: -396, y: 301.37357}
+  m_SizeDelta: {x: 1104, y: 766}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22485002
 RectTransform:

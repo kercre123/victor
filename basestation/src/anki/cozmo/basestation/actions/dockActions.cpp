@@ -1177,7 +1177,7 @@ namespace Anki {
         return RESULT_FAIL;
       } else if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { // TODO: Stop using constant ROBOT_BOUNDING_Z for this
         _dockAction = DockAction::DA_PICKUP_HIGH;
-        SetType(RobotActionType::PLACE_OBJECT_HIGH);
+        SetType(RobotActionType::PICKUP_OBJECT_HIGH);
       }
       
       return RESULT_OK;

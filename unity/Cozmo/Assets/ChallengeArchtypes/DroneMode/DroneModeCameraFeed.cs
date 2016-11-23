@@ -47,8 +47,9 @@ namespace Cozmo.Minigame.DroneMode {
     private bool _ShowReticles = true;
     public bool AllowChangeFocus { get; set; }
 
-    // TODO: Replace text field
-    public AnkiTextLabel DebugTextField;
+    [SerializeField]
+    private AnkiTextLabel _DebugTextField;
+    public AnkiTextLabel DebugTextField { get { return _DebugTextField; } }
 
     private DroneModeColorSet _CurrentColorSet;
 
@@ -79,7 +80,7 @@ namespace Cozmo.Minigame.DroneMode {
     private void Update() {
       if (_ShowReticles && AllowChangeFocus) {
         ShowDataForClosestVisibleObject();
-        DebugTextField.text = FormatCurrentSeenObjects();
+        _DebugTextField.text = FormatCurrentSeenObjects();
       }
     }
 
@@ -250,10 +251,8 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void CreatePetFaceReticle(PetFace petFace) {
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DroneModePetReticlesEnabled) {
-        petFace.InFieldOfViewStateChanged += HandlePetFaceInFieldOfViewChanged;
-        CreateReticleIfVisible(petFace);
-      }
+      petFace.InFieldOfViewStateChanged += HandlePetFaceInFieldOfViewChanged;
+      CreateReticleIfVisible(petFace);
     }
 
     private void HandlePetFaceAdded(PetFace petFace) {

@@ -63,7 +63,7 @@
     "MaxPets"             : 4,    // Detectable/trackable at the same time
     "MinFaceSize"         : 60,
     "MaxFaceSize"         : 240,
-    "DetectionThreshold"  : 900,  // 0 to 1000
+    "DetectionThreshold"  : 850,  // 0 to 1000
     "InitialSearchCycle"  : 4,    // 1 to 45
     "NewSearchCycle"      : 8,    // 5 to 45
     "TrackRetryCount"     : 2,    // Number of frames to continue searching for a lost pet

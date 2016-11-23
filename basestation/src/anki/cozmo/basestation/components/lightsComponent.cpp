@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/ledEncoding.h"
@@ -1333,6 +1334,7 @@ void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const std:
 
 void LightsComponent::SetHeadlight(bool on)
 {
+  _robot.GetVisionComponent().EnableMode(VisionMode::LimitedExposure, on);
   _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadlight(on)));
 }
 

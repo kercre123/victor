@@ -3,7 +3,7 @@
     {
       "TitleKey": "dailyGoal.title.TotalPlayTime.30",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Freeplay",
       "PointsRewarded": 50,
       "Target": 1,
       "Priority": 0,
@@ -26,7 +26,7 @@
     {
       "TitleKey": "dailyGoal.title.MeetCozmo.UpdateFace",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "MeetCozmo",
       "PointsRewarded": 30,
       "Target": 1,
       "Priority": 0,
@@ -49,7 +49,7 @@
     {
       "TitleKey": "dailyGoal.title.MeetCozmo.NewFace",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "MeetCozmo",
       "PointsRewarded": 45,
       "Target": 1,
       "Priority": 0,
@@ -74,7 +74,7 @@
       "RewardType": "experience",
       "Tag": "Freeplay",
       "PointsRewarded": 40,
-      "Target": 20,
+      "Target": 10,
       "Priority": 0,
       "CladEvent": "OnFreeplayInterval",
       "GenConditions": [],
@@ -864,6 +864,19 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "ProgressConditions": [
@@ -929,7 +942,7 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": false,
+          "PlayerWin": true,
           "Label": {
             "text": "Challenge Winner Condition",
             "image": null,
@@ -955,16 +968,19 @@
       "RewardType": "experience",
       "Tag": "MemoryMatchPatternLength",
       "PointsRewarded": 25,
-      "Target": 5,
+      "Target": 1,
       "Priority": 0,
       "CladEvent": "OnChallengeComplete",
       "GenConditions": [
         {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "MemoryMatchGame",
-          "State": "Unlocked",
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
           "Label": {
-            "text": "Current Unlock Condition",
+            "text": "Current Difficulty Unlocked Condition",
             "image": null,
             "tooltip": ""
           }
@@ -1008,16 +1024,19 @@
       "RewardType": "experience",
       "Tag": "MemoryMatchPatternLength",
       "PointsRewarded": 30,
-      "Target": 5,
+      "Target": 1,
       "Priority": 0,
       "CladEvent": "OnChallengeComplete",
       "GenConditions": [
         {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "MemoryMatchGame",
-          "State": "Unlocked",
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
           "Label": {
-            "text": "Current Unlock Condition",
+            "text": "Current Difficulty Unlocked Condition",
             "image": null,
             "tooltip": ""
           }
@@ -1061,16 +1080,19 @@
       "RewardType": "experience",
       "Tag": "MemoryMatchPatternLength",
       "PointsRewarded": 40,
-      "Target": 5,
+      "Target": 1,
       "Priority": 0,
       "CladEvent": "OnChallengeComplete",
       "GenConditions": [
         {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "MemoryMatchGame",
-          "State": "Unlocked",
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
           "Label": {
-            "text": "Current Unlock Condition",
+            "text": "Current Difficulty Unlocked Condition",
             "image": null,
             "tooltip": ""
           }
@@ -1112,11 +1134,11 @@
     {
       "TitleKey": "dailyGoal.title.PlayCozmoSays",
       "RewardType": "experience",
-      "Tag": "NONE",
+      "Tag": "MeetCozmo",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
+      "CladEvent": "OnCozmoSayText",
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
@@ -1129,23 +1151,13 @@
           }
         }
       ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CozmoSaysGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
+      "ProgressConditions": [],
       "Id": 50
     },
     {
       "TitleKey": "dailyGoal.title.SparkPickupCube",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1178,7 +1190,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkStackCubes",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1211,7 +1223,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkRollCubes",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1244,7 +1256,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkPounceOnMotion",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1277,7 +1289,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkKnockOverStacks",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1310,7 +1322,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkPopAWheelie",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1343,7 +1355,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkBuildAPyramid",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1376,7 +1388,7 @@
     {
       "TitleKey": "dailyGoal.title.SparkWorkoutWithCubes",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "Spark",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,

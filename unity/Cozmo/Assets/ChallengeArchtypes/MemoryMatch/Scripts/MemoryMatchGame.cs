@@ -129,6 +129,8 @@ namespace MemoryMatch {
       if (playerPickingSequence == _FirstPlayer && _WantsSequenceGrowth) {
         SequenceGrown = true;
         _CurrentSequenceLength = _CurrentSequenceLength >= MaxSequenceLength ? MaxSequenceLength : _CurrentSequenceLength + 1;
+        // Set the length as our score to make High Scores easier
+        PlayerScore = _CurrentSequenceLength;
       }
       return _CurrentSequenceLength;
     }
@@ -266,8 +268,6 @@ namespace MemoryMatch {
       UpdateUIForGameEnd();
 
       Anki.Cozmo.AnimationTrigger trigger = Anki.Cozmo.AnimationTrigger.Count;
-      // Set the length as our score to make High Scores easier
-      PlayerScore = _CurrentSequenceLength;
       if (CurrentDifficulty == (int)MemoryMatchMode.SOLO) {
         PlayerRoundsWon = 1;
         CozmoRoundsWon = 0;

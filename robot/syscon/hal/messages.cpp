@@ -113,7 +113,7 @@ static void Process_setBodyRadioMode(const SetBodyRadioMode& msg) {
 
   if (msg.radioMode == BODY_BLUETOOTH_OPERATING_MODE) 
   {
-    Battery::setHeadlight(false);
+    Lights::setHeadlight(false);
     ResetMissedLogCount();
   }
 
@@ -127,7 +127,7 @@ static void Process_enterPairing(const EnterPairing& msg)
 
 static void Process_setHeadlight(const RobotInterface::SetHeadlight& msg)
 {
-  Battery::setHeadlight(msg.enable);
+  Lights::setHeadlight(msg.enable);
 }
 
 static void Process_readBodyStorage(const ReadBodyStorage& msg) {

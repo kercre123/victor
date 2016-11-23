@@ -84,6 +84,7 @@ namespace Lights {
   void init();
   void manage();
   void update(LightValues& light, const LightState* ledParams);
+  void setHeadlight(bool status);
 };
 
 #endif

@@ -1,3 +1,4 @@
+using Anki.Debug;
 using UnityEngine;
 using UnityEngine.UI;
 using Cozmo.UI;
@@ -38,7 +39,8 @@ namespace Cozmo.Minigame.DroneMode {
       PetSeen
     }
 
-    public bool ShowDebugTextFields = true;
+    private const string kShowDebugConsoleVar = "_ShowDebugInformation";
+    private bool _ShowDebugInformation = false;
 
     public bool AllowChangeFocus {
       set {
@@ -139,11 +141,17 @@ namespace Cozmo.Minigame.DroneMode {
 
     private bool _IsNightVisionEnabled = false;
 
-    // TODO Remove debug text field
-    public Anki.UI.AnkiTextLabel TiltText;
+    [SerializeField]
+    private Anki.UI.AnkiTextLabel _TiltText;
+    public Anki.UI.AnkiTextLabel TiltText { get { return _TiltText; } }
 
-    // TODO Remove debug text field
-    public Anki.UI.AnkiTextLabel DebugText;
+    [SerializeField]
+    private Anki.UI.AnkiTextLabel _DebugText;
+    public Anki.UI.AnkiTextLabel DebugText { get { return _DebugText; } }
+
+    [SerializeField]
+    private GameObject _DroneModeRobotCameraPrefab;
+    private GameObject _DroneModeRobotCameraInstance;
 
     private void Awake() {
       _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", _kDasViewControllerName);
@@ -161,17 +169,16 @@ namespace Cozmo.Minigame.DroneMode {
       _CurrentDriveSpeedSliderSegmentValue = 0f;
       _SpeedThrottle.onValueChanged.AddListener(HandleSpeedThrottleValueChanged);
 
-      _CurrentHeadSliderValue = 0f;
-      _HeadTiltSlider.value = _CurrentHeadSliderValue;
-      _HeadTiltSlider.onValueChanged.AddListener(HandleHeadSliderValueChanged);
+      _ShowDebugInformation = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.ShowDroneModeDebugInfo;
+      EnableDebugInformation();
 
-      TiltText.gameObject.SetActive(ShowDebugTextFields);
-      DebugText.gameObject.SetActive(ShowDebugTextFields);
+      DebugConsoleData.Instance.AddConsoleVar(kShowDebugConsoleVar, "Drone Mode", this);
+      DebugConsoleData.Instance.DebugConsoleVarUpdated += HandleDebugConsoleVarUpdated;
     }
 
     public void InitializeCameraFeed(IRobot currentRobot) {
       _CameraFeed.Initialize(currentRobot);
-      _CameraFeed.DebugTextField.gameObject.SetActive(ShowDebugTextFields);
+      _CameraFeed.DebugTextField.gameObject.SetActive(_ShowDebugInformation);
 
       _CameraFeed.OnCurrentFocusChanged += HandleCurrentFocusedObjectChanged;
       _CurrentlyFocusedObject = _CameraFeed.CurrentlyFocusedObject;
@@ -189,6 +196,12 @@ namespace Cozmo.Minigame.DroneMode {
       _CurrentLiftSliderValue = sliderValue;
       _LiftSlider.value = _CurrentLiftSliderValue;
       _LiftSlider.onValueChanged.AddListener(HandleLiftSliderValueChanged);
+    }
+
+    public void InitializeHeadSlider(float sliderValue) {
+      _CurrentHeadSliderValue = sliderValue;
+      _HeadTiltSlider.value = _CurrentHeadSliderValue;
+      _HeadTiltSlider.onValueChanged.AddListener(HandleHeadSliderValueChanged);
     }
 
     public void CreateActionButton(DroneModeActionData actionData, System.Action callback,
@@ -238,10 +251,14 @@ namespace Cozmo.Minigame.DroneMode {
         _CurrentRobot.OnCarryingObjectSet -= HandleRobotCarryingObjectSet;
         _CurrentRobot.SetNightVision(false);
       }
+
+      DebugConsoleData.Instance.RemoveConsoleData(kShowDebugConsoleVar, "Drone Mode");
+      DebugConsoleData.Instance.DebugConsoleVarUpdated -= HandleDebugConsoleVarUpdated;
     }
 
     public void EnableInput() {
       EnableHeadSlider();
+      _NightVisionButton.Interactable = true;
       _LiftSlider.interactable = true;
       _SpeedThrottle.interactable = true;
       UpdateContextualButtons();
@@ -252,6 +269,7 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void DisableInput() {
       DisableHeadSlider();
+      _NightVisionButton.Interactable = false;
       _LiftSlider.interactable = false;
       _SpeedThrottle.interactable = false;
       foreach (DroneModeActionButton button in _ContextualButtons) {
@@ -482,6 +500,33 @@ namespace Cozmo.Minigame.DroneMode {
 
       foreach (var speedSliderBackground in _SpeedThrottleBackgrounds) {
         speedSliderBackground.color = colorSet.ButtonColor;
+      }
+    }
+
+    private void EnableDebugInformation() {
+      DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.ShowDroneModeDebugInfo = _ShowDebugInformation;
+      DataPersistence.DataPersistenceManager.Instance.Save();
+
+      _TiltText.gameObject.SetActive(_ShowDebugInformation);
+      _DebugText.gameObject.SetActive(_ShowDebugInformation);
+      if (_CameraFeed != null) {
+        _CameraFeed.DebugTextField.gameObject.SetActive(_ShowDebugInformation);
+      }
+      if (_ShowDebugInformation) {
+        if (_DroneModeRobotCameraInstance == null) {
+          _DroneModeRobotCameraInstance = UIManager.CreateUIElement(_DroneModeRobotCameraPrefab, this.transform);
+        }
+      }
+      else {
+        if (_DroneModeRobotCameraInstance != null) {
+          GameObject.Destroy(_DroneModeRobotCameraInstance);
+        }
+      }
+    }
+
+    private void HandleDebugConsoleVarUpdated(string varName) {
+      if (varName == kShowDebugConsoleVar) {
+        EnableDebugInformation();
       }
     }
   }
