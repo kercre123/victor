@@ -57,7 +57,7 @@
 #define ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE 0
 
 // How often do we send power level updates to DAS?
-#define POWER_LEVEL_INTERVAL_SEC 600.0
+#define POWER_LEVEL_INTERVAL_SEC 600
 
 namespace Anki {
 namespace Cozmo {
@@ -1188,13 +1188,13 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Log", "RobotID %u activeID %u at %.2fV %.2f%%",
     robotID, activeID, batteryVoltage, batteryPercent);
   
-  // Report to DAS?
-  const float now = Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const float then = _lastPowerLevelSentTime[activeID];
+  // Report to DAS if this is first event for this accessory or if appropriate interval has passed since last report
+  const uint32_t now = (uint32_t) Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const uint32_t then = _lastPowerLevelSentTime[activeID];
   
-  if (now - then >= POWER_LEVEL_INTERVAL_SEC) {
+  if (then == 0 || now - then >= POWER_LEVEL_INTERVAL_SEC) {
     PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Report",
-                     "Sending DAS report for robotID %u activeID %u now %f then %f",
+                     "Sending DAS report for robotID %u activeID %u now %u then %u",
                      robotID, activeID, now, then);
     char ddata[BUFSIZ];
     snprintf(ddata, sizeof(ddata), "%.2f,%.2f", batteryVoltage, batteryPercent);

@@ -93,7 +93,7 @@ private:
   double       _lastImageRecvTime  = -1.0;
   
   // For tracking time since last power level report (per accessory)
-  std::map<uint32_t, float> _lastPowerLevelSentTime;
+  std::map<uint32_t, uint32_t> _lastPowerLevelSentTime;
   
   // Internal helpers
   bool ShouldIgnoreMultipleImages() const;
