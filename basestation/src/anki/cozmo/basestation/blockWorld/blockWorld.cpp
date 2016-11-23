@@ -4449,9 +4449,16 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
     // Find the point at the top middle of the object on bottom
     // (or if !onTop, the bottom middle of the object on top)
-    const Point3f rotatedBtmSize(refWrtOrigin.GetRotation() * referenceObject.GetSize());
+    const Vec3f& objSize = referenceObject.GetSize();
+    const Vec3f& zCoordRotation = refWrtOrigin.GetRotation().GetRotationMatrix().GetRow(2);
+    const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * objSize.x());
+    const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * objSize.y());
+    const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * objSize.z());
+    
+    const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
+                                                  std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
     const f32 topOfObjectOnBottom = (refWrtOrigin.GetTranslation().z() +
-                                     (onTop ? 0.5f : -0.5f) * std::abs(rotatedBtmSize.z()));
+                                    (onTop ? 0.5f : -0.5f) * maxRotatedAxis_zValue);
     
     BlockWorldFilter filter(filterIn);
     filter.AddIgnoreID(referenceObject.GetID());
@@ -4492,9 +4499,16 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         
         // Find the point at bottom middle of the object we're checking to be on top
         // (or if !onTop, the top middle of object we're checking to be underneath)
-        const Point3f rotatedCandidateSize(candidateWrtOrigin.GetRotation() * candidateObject->GetSize());
+        const Vec3f& objSize = candidateObject->GetSize();
+        const Vec3f& zCoordRotation = candidateWrtOrigin.GetRotation().GetRotationMatrix().GetRow(2);
+        const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * objSize.x());
+        const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * objSize.y());
+        const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * objSize.z());
+        
+        const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
+                                                      std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
         const f32 bottomOfCandidateObject = (candidateWrtOrigin.GetTranslation().z() +
-                                             (onTop ? -0.5f : 0.5f) * std::abs(rotatedCandidateSize.z()));
+                                            (onTop ? -0.5f : 0.5f) * maxRotatedAxis_zValue);
         
         // If the top of the bottom object and the bottom the candidate top object are
         // close enough together, return this as the object on top
@@ -4527,12 +4541,19 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         std::copy(foundQuad.begin(), foundQuad.end(), std::back_inserter(corners));
         Rectangle<f32> bbox(corners);
         
-        Pose3d vizPose(0, Z_AXIS_3D(), Point3f(bbox.GetXmid(), bbox.GetYmid(),
-                                               refWrtOrigin.GetTranslation().z() +
-                                               (onTop ? 0.5f : -0.5f)*rotatedBtmSize.z()));
+        Pose3d vizPose(0, Z_AXIS_3D(), Point3f(bbox.GetXmid(), bbox.GetYmid(), topOfObjectOnBottom));
         
-        const Point3f rotatedFoundSize(foundObject->GetPose().GetWithRespectToOrigin().GetRotation() * foundObject->GetSize());
-        const f32 height = rotatedBtmSize.z() + rotatedFoundSize.z();
+        // compute maxRotatedAxis_zValue: the value of the axis that contributes the most in Z after the object
+        // has been rotated (like we do in the actual code, this is just render)
+        const Vec3f& foundObjSize = foundObject->GetSize();
+        const Vec3f& zCoordRotation = foundObject->GetPose().GetWithRespectToOrigin().GetRotation().GetRotationMatrix().GetRow(2);
+        const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * foundObjSize.x());
+        const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * foundObjSize.y());
+        const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * foundObjSize.z());
+        
+        const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
+                                                      std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
+        const f32 height = topOfObjectOnBottom + maxRotatedAxis_zValue;
         
         _robot->GetContext()->GetVizManager()->DrawCuboid(stackID,
                                                           Point3f(bbox.GetHeight(),

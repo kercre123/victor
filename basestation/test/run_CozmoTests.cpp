@@ -727,6 +727,32 @@ TEST(BlockWorld, CubeStacks)
     {100.f,  44.f, 23.f},  // On one side in Y direction
     {100.f, -44.f, 24.f},  // On other side in Y direction
   };
+
+  // rsam found a test case in which 2 cubes would find the other one to be on top, potentially causing
+  // a loop trying to build stacks. The poses below are a a set that caused the issue.
+  {
+    Vec3f trans1{100,0,0};
+    Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
+    Rotation3d rotX1 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
+    const Pose3d object1Pose(rotZ1 * rotX1, trans1, &robot.GetPose() );
+    lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, object1Pose, PoseState::Known);
+    ASSERT_EQ(RESULT_OK, lastResult);
+
+    Vec3f trans2{100,0,0};
+    Rotation3d rotZ2 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
+    Rotation3d rotX2 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
+    const Pose3d object2Pose(rotZ2 * rotX2, trans2, &robot.GetPose() );
+    lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
+    ASSERT_EQ(RESULT_OK, lastResult);
+
+    ObservableObject* foundObject1 = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+    ASSERT_EQ(nullptr, foundObject1);
+    ASSERT_NE(object2, foundObject1);
+
+    ObservableObject* foundObject2 = blockWorld.FindObjectOnTopOf(*object2, STACKED_HEIGHT_TOL_MM);
+    ASSERT_EQ(nullptr, foundObject2);
+    ASSERT_NE(object1, foundObject2);
+  }
   
   for(auto & btmRot1 : TestInPlaneRotations)
   {
