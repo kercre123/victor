@@ -234,7 +234,7 @@ namespace Cozmo.UI {
       PauseManager.Instance.OnPauseDialogOpen += CloseView;
       _OpenBox.gameObject.SetActive(false);
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
-      _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
+      _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, _ReadyChestBurst);
       _ActiveBitsTransforms = new List<Transform>();
       _ActiveSparkTransforms = new List<Transform>();
       ContextManager.Instance.AppFlash(playChime: true);
@@ -530,8 +530,10 @@ namespace Cozmo.UI {
     }
 
     private void TronLineBurst(int count) {
-      for (int i = 0; i < count; i++) {
-        _TronPool.GetObjectFromPool();
+      if (this != null) {
+        for (int i = 0; i < count; i++) {
+          _TronPool.GetObjectFromPool();
+        }
       }
     }
 
@@ -564,6 +566,7 @@ namespace Cozmo.UI {
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();
       _TronPool.ReturnAllObjectsToPool();
+      _TronPool.DestroyPool();
       StopCoroutine(InitializeBox());
       StopTweens();
     }
