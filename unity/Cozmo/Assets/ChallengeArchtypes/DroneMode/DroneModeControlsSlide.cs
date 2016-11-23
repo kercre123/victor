@@ -50,6 +50,16 @@ namespace Cozmo.Minigame.DroneMode {
       }
     }
 
+    private bool _ShowActionButtons = true;
+    public bool ShowActionButtons {
+      set {
+        if (_ShowActionButtons != value) {
+          _ShowActionButtons = value;
+          UpdateContextMenu();
+        }
+      }
+    }
+
     [SerializeField]
     private CozmoStickySlider _SpeedThrottle;
 
@@ -398,7 +408,7 @@ namespace Cozmo.Minigame.DroneMode {
       _CubeInLiftButtonContainer.SetActive(false);
       _CubeNotInLiftButtonContainer.SetActive(false);
 
-      if (!_IsNightVisionEnabled) {
+      if (!_IsNightVisionEnabled && _ShowActionButtons) {
         bool anyContainerShown = false;
         bool isRobotPickedUp = _CurrentRobot.Status(Anki.Cozmo.RobotStatusFlag.IS_PICKED_UP);
         if (_CurrentlyFocusedObject != null) {
