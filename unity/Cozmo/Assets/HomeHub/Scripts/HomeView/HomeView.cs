@@ -20,7 +20,7 @@ namespace Cozmo.HomeHub {
       Settings
     }
 
-    private const float kFreeplayIntervalCheck = 30.0f;
+    private const float _kFreeplayIntervalCheck = 60.0f;
     private float _FreeplayIntervalLastTimestamp = -1;
     private float _FreeplayStartedTimestamp = -1;
 
@@ -495,7 +495,7 @@ namespace Cozmo.HomeHub {
       if (_FreeplayIntervalLastTimestamp < 0.0f) {
         _FreeplayIntervalLastTimestamp = Time.time;
       }
-      if (Time.time - _FreeplayIntervalLastTimestamp > kFreeplayIntervalCheck) {
+      if (Time.time - _FreeplayIntervalLastTimestamp > _kFreeplayIntervalCheck) {
         _FreeplayIntervalLastTimestamp = Time.time;
         GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayInterval, Time.time - _FreeplayStartedTimestamp));
       }

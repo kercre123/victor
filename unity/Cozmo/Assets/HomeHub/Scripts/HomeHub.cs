@@ -57,7 +57,7 @@ namespace Cozmo.HomeHub {
     private AlertView _ChallengeAlertView = null;
 
     // Total ConnectedTime For GameEvents
-    private const float _kConnectedTimeIntervalCheck = 30.0f;
+    private const float _kConnectedTimeIntervalCheck = 60.0f;
     private float _ConnectedTimeIntervalLastTimestamp = -1;
     private float _ConnectedTimeStartedTimestamp = -1;
 
