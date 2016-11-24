@@ -1144,7 +1144,7 @@ namespace Anki {
           if(GetState() != ActionResult::FAILURE_NOT_STARTED)
           {
             PRINT_NAMED_WARNING("PickupObjectAction.EmitCompletionSignal",
-                                "Dock action not set before filling compeltion signal");
+                                "Dock action not set before filling completion signal");
           }
         }
       }

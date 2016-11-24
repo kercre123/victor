@@ -1216,7 +1216,7 @@ void LightsComponent::RestorePrevState(const ObjectID objectID)
     cube->second.desiredState = CubeLightsState::Visible;
   }
   
-  PRINT_CH_INFO("LightsComponent", "LightsComponent.RestorePrevState", "Restoring obejct %d to state %d from %d)",
+  PRINT_CH_INFO("LightsComponent", "LightsComponent.RestorePrevState", "Restoring object %d to state %d from %d)",
                 objectID.GetValue(), cube->second.desiredState, cube->second.currState);
 }
 
