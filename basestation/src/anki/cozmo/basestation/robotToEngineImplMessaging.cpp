@@ -1189,7 +1189,7 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
     robotID, activeID, batteryVoltage, batteryPercent);
   
   // Report to DAS if this is first event for this accessory or if appropriate interval has passed since last report
-  const uint32_t now = (uint32_t) Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const uint32_t now = Util::numeric_cast<uint32_t>(Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
   const uint32_t then = _lastPowerLevelSentTime[activeID];
   
   if (then == 0 || now - then >= POWER_LEVEL_INTERVAL_SEC) {
