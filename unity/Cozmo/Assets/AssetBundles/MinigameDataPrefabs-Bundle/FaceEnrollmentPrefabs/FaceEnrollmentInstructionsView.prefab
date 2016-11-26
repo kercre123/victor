@@ -239,6 +239,7 @@ MonoBehaviour:
   m_Text: '#faceEnrollment.instructions.bottom'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11410906
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -313,7 +314,7 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 0
     m_MaxSize: 300
-    m_Alignment: 0
+    m_Alignment: 1
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -322,6 +323,7 @@ MonoBehaviour:
   m_Text: '#faceEnrollment.instructions.top'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11424514
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -504,6 +506,7 @@ MonoBehaviour:
   m_Text: 'Your Face: '
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11480072
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -546,8 +549,11 @@ MonoBehaviour:
   _DASEventViewType: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 0
   DimBackground: 0
-  DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Invalid
+    _EventType: GenericEvent
   _FaceNameLabel: {fileID: 11472424}
 --- !u!222 &22200494
 CanvasRenderer:
