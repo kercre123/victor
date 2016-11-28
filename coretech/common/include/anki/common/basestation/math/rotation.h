@@ -131,6 +131,13 @@ namespace Anki {
     inline T& y() { return this->operator[](2); }
     inline T& z() { return this->operator[](3); }
     
+    // Cast operator
+    // NOTE: This instead of overloading assignment operator to avoid doing
+    // a bunch of implicit casts unknowingly. Maybe do the same for Point class
+    // and classes derived therefrom?
+    template<typename T_other>
+    UnitQuaternion<T>& SetCast(const UnitQuaternion<T_other> &other);
+    
     bool operator==(const UnitQuaternion<T>& other) const;
     
     // Quaternion multiplication

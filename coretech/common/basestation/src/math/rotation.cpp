@@ -535,10 +535,21 @@ namespace Anki {
     this->Normalize();
   }
   
+  
+  template<>
+  UnitQuaternion<float>& UnitQuaternion<float>::Normalize()
+  {
+    // Cast to double (which calls Normalize()) to ensure
+    // computation is done with maximal precision.
+    UnitQuaternion<double> doublePt(*this);
+    this->SetCast(doublePt);
+    return *this;
+  }
+  
   template<typename T>
   UnitQuaternion<T>& UnitQuaternion<T>::Normalize()
   {
-    const double qmagsq = Point<4,T>::LengthSq();
+    const T qmagsq = Point<4,T>::LengthSq();
     
     if(qmagsq == 0.f) {
       PRINT_NAMED_WARNING("UnitQuaternion.Normalize.AllZero",
@@ -552,6 +563,8 @@ namespace Anki {
     if (std::abs(1.0 - qmagsq) < 2.107342e-08) {
       // This is an approximation of dividing by the square root, when the
       // squared magnitude of the quaternion is small enough.
+      // It also serves to avoid the divide-by-square-root step when it might result in
+      // floating-point errors.
       // See: http://stackoverflow.com/questions/11667783/quaternion-and-normalization
       Point<4,T>::operator*=(2.0 / (1.0 + qmagsq));
     }
@@ -588,6 +601,17 @@ namespace Anki {
     q_new.Conj();
     return q_new;
   }
+  
+  template<typename T>
+  template<typename T_other>
+  UnitQuaternion<T>& UnitQuaternion<T>::SetCast(const UnitQuaternion<T_other> &other)
+  {
+    for(int i=0; i<4; ++i) {
+      this->data[i] = static_cast<T>(other[i]);
+    }
+    return *this;
+  }
+  
   
   template<typename T>
   UnitQuaternion<T>& UnitQuaternion<T>::operator*=(const UnitQuaternion<T>& other)
