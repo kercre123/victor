@@ -25,6 +25,9 @@ namespace Cozmo {
 namespace
 {
 
+// number of root shifts that should be made to include new content
+static const int numberOfAllowedShiftsToIncludeContent = 1;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // convert between NavMemoryMapTypes::EContentType and NavMeshQuadTreeTypes::ENodeContentType
 NavMeshQuadTreeTypes::ENodeContentType ConvertContentType(NavMemoryMapTypes::EContentType contentType )
@@ -230,7 +233,7 @@ void NavMemoryMapQuadTree::AddQuadInternal(const Quad2f& quad, EContentType type
 {
   const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
   NodeContent nodeContent(nodeContentType);
-  _navMesh.AddQuad(quad, nodeContent);
+  _navMesh.AddQuad(quad, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -240,7 +243,7 @@ void NavMemoryMapQuadTree::AddQuadInternal(const Quad2f& quad, const INavMemoryM
   NodeContent nodeContent(nodeContentType);
   nodeContent.data.reset( content.Clone() );
 
-  _navMesh.AddQuad(quad, nodeContent);
+  _navMesh.AddQuad(quad, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -248,7 +251,7 @@ void NavMemoryMapQuadTree::AddLineInternal(const Point2f& from, const Point2f& t
 {
   const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
   NodeContent nodeContent(nodeContentType);
-  _navMesh.AddLine(from, to, nodeContent);
+  _navMesh.AddLine(from, to, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -258,7 +261,7 @@ void NavMemoryMapQuadTree::AddLineInternal(const Point2f& from, const Point2f& t
   NodeContent nodeContent(nodeContentType);
   nodeContent.data.reset( content.Clone() );
 
-  _navMesh.AddLine(from, to, nodeContent);
+  _navMesh.AddLine(from, to, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -266,7 +269,7 @@ void NavMemoryMapQuadTree::AddTriangleInternal(const Triangle2f& tri, EContentTy
 {
   const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
   NodeContent nodeContent(nodeContentType);
-  _navMesh.AddTriangle(tri, nodeContent);
+  _navMesh.AddTriangle(tri, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -276,7 +279,7 @@ void NavMemoryMapQuadTree::AddTriangleInternal(const Triangle2f& tri, const INav
   NodeContent nodeContent(nodeContentType);
   nodeContent.data.reset( content.Clone() );
 
-  _navMesh.AddTriangle(tri, nodeContent);
+  _navMesh.AddTriangle(tri, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -284,7 +287,7 @@ void NavMemoryMapQuadTree::AddPointInternal(const Point2f& point, EContentType t
 {
   const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
   NodeContent nodeContent(nodeContentType);
-  _navMesh.AddPoint(point, nodeContent);
+  _navMesh.AddPoint(point, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -294,7 +297,7 @@ void NavMemoryMapQuadTree::AddPointInternal(const Point2f& point, const INavMemo
   NodeContent nodeContent(nodeContentType);
   nodeContent.data.reset( content.Clone() );
 
-  _navMesh.AddPoint(point, nodeContent);
+  _navMesh.AddPoint(point, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 } // namespace Cozmo

@@ -490,6 +490,10 @@ namespace Anki
       // updates the objects reported in curOrigin that are moving to the relocalizedOrigin by virtue of rejiggering
       void UpdateOriginsOfObjectsReportedInMemMap(const Pose3d* curOrigin, const Pose3d* relocalizedOrigin);
       
+      // clear the space in the memory map between the robot and observed markers for any object that has been updated,
+      // because if we saw the marker, it means there's nothing between us and the marker
+      void ClearRobotToMarkersInMemMap();
+      
       // add/remove the given object to/from the memory map
       void AddObjectReportToMemMap(const ObservableObject& object, const Pose3d& newPose);
       void RemoveObjectReportFromMemMap(const ObservableObject& object, const Pose3d* origin);
