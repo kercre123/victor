@@ -330,9 +330,6 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
-    JsonValue: 1
-  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
     JsonValue: 300
   - ObjectPath: 
@@ -340,7 +337,7 @@ MonoBehaviour:
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
-    JsonValue: 150
+    JsonValue: 118
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"YOU WIN"'
@@ -2042,8 +2039,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -219.20001}
-  m_SizeDelta: {x: -456, y: -349}
+  m_AnchoredPosition: {x: 0, y: -203.98001}
+  m_SizeDelta: {x: -456, y: -379.44}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22493428
 RectTransform:
