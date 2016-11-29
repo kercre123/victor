@@ -185,17 +185,12 @@ public static class LocalizationEditorUtility {
     string sansFormat = GetTranslation(key, out fileName);
     string[] splitName = sansFormat.Split();
     for (int i = 0; i < splitName.Length; i++) {
-      if (splitName[i].Contains(kFormatMarkers[0].ToString())) {
-        int markerStart = splitName[i].IndexOf(kFormatMarkers[0]);
-        int markerEnd = splitName[i].IndexOf(kFormatMarkers[1]);
-        int totalLength = splitName[i].Length;
-        if (markerStart == 0) {
-          markerEnd += 1;
-          splitName[i] = splitName[i].Substring(markerEnd, totalLength - markerEnd);
-        }
-        else {
-          splitName[i] = splitName[i].Substring(0, markerStart);
-        }
+      int markerStart = splitName[i].IndexOf(kFormatMarkers[0]);
+      int markerEnd = splitName[i].IndexOf(kFormatMarkers[1]);
+      while (markerStart >= 0 && markerEnd > markerStart) {
+        splitName[i] = splitName[i].Remove(markerStart, markerEnd - markerStart + 1);
+        markerStart = splitName[i].IndexOf(kFormatMarkers[0]);
+        markerEnd = splitName[i].IndexOf(kFormatMarkers[1]);
       }
     }
     sansFormat = String.Join(" ", splitName);
