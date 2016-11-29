@@ -70,6 +70,8 @@ namespace Cozmo.Minigame.CubePounce {
 
     protected void InitializeMinigameObjects(int numCubes) {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingPets, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingOverheadEdges, false);
 
       _StateMachine.SetNextState(new InitialCubesState(new CubePounceStateInitGame(), numCubes));
     }

@@ -395,6 +395,8 @@ namespace Cozmo.HomeHub {
         robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingPets, true);
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingOverheadEdges, true);
         // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
         robot.SetEnableCliffSensor(true);
       }

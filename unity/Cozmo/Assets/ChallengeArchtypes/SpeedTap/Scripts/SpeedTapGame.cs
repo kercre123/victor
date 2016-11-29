@@ -205,6 +205,8 @@ namespace SpeedTap {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingPets, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingOverheadEdges, false);
     }
 
     // Set up Difficulty Settings that are not round specific

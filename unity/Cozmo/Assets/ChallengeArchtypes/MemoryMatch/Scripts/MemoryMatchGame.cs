@@ -118,6 +118,8 @@ namespace MemoryMatch {
         CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
         CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
         CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+        CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingPets, false);
+        CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingOverheadEdges, false);
       }
       int curveIndex = Mathf.Clamp((int)SkillSystem.Instance.GetSkillVal(kSkillCurve), 0, _Config.CozmoGuessCubeCorrectPercentagePerSkill.Length - 1);
       _SkillCurve = _Config.CozmoGuessCubeCorrectPercentagePerSkill[curveIndex];
