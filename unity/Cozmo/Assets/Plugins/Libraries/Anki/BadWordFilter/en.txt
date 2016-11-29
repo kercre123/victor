@@ -90,7 +90,6 @@ slanteye#
 \bspic\b#
 spick#
 spl[0o]{2,}ge#
-\bs[0o]{2,}\b#
 sp[0o]{2,}ge#
 \btard\b#
 \btea(-| )*bag\w*\b#
