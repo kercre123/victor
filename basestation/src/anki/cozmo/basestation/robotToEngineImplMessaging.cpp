@@ -1133,7 +1133,7 @@ void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterfac
 {
   ANKI_CPU_PROFILE("Robot::HandleSyncTimeAck");
   PRINT_NAMED_INFO("Robot.HandleSyncTimeAck","");
-  robot->SetTimeSynced(true);
+  robot->SetTimeSynced();
 }
 
 void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

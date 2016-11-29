@@ -186,7 +186,7 @@ public:
   const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
   
   // Mutators
-  void SetTimeSynced(const bool timeSynced) {_timeSynced = timeSynced; }
+  void SetTimeSynced() {_timeSynced = true; _syncTimeSentTime_sec = 0; }
   
   // Set the object we are localized to.
   // Use nullptr to UnSet the localizedTo object but still mark the robot
@@ -1160,6 +1160,8 @@ protected:
   // Sync time with physical robot and trigger it robot to send back camera
   // calibration
   Result SendSyncTime() const;
+  double _syncTimeSentTime_sec = 0;
+  constexpr static double kMaxSyncTimeAckDelay_sec = 5;
   
   // Send's robot's current pose
   Result SendAbsLocalizationUpdate() const;

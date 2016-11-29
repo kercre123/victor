@@ -1234,6 +1234,12 @@ Result Robot::Update()
   
   _robotIdleTimeoutComponent->Update(currentTime);
   
+  // Check for syncTimeAck taking too long to arrive
+  if (_syncTimeSentTime_sec > 0 && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
+    PRINT_NAMED_WARNING("Robot.Update.SyncTimeAckNotReceived", "");
+    _syncTimeSentTime_sec = 0;
+  }
+  
   if (!_gotStateMsgAfterTimeSync)
   {
     PRINT_NAMED_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
@@ -2171,7 +2177,11 @@ Result Robot::SyncTime()
   _timeSynced = false;
   _poseHistory->Clear();
       
-  return SendSyncTime();
+  Result res = SendSyncTime();
+  if (res == RESULT_OK) {
+    _syncTimeSentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+  return res;
 }
     
 Result Robot::LocalizeToObject(const ObservableObject* seenObject,
