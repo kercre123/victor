@@ -1931,14 +1931,14 @@ MonoBehaviour:
     ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 33ba2c66bb38944e39100870fbeac048, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
-    disabledSprite: {fileID: 21300000, guid: 15a89aff1805c400791555554971e3ab, type: 3}
-    disabledColor: {r: 0.5441177, g: 0.5441177, b: 0.5441177, a: 1}
+    disabledSprite: {fileID: 21300000, guid: a4d853efdeae245c0b5e5804a700affa, type: 3}
+    disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 11426224}
     ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: d74a3e14af88149c6be64d997bb918a3, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
-    disabledSprite: {fileID: 21300000, guid: e73eb585059544b0dbe628a75522a138, type: 3}
-    disabledColor: {r: 0.54509807, g: 0.54509807, b: 0.54509807, a: 1}
+    disabledSprite: {fileID: 21300000, guid: 3e60ac27f41dd4c78a684d3b4260da0c, type: 3}
+    disabledColor: {r: 1, g: 1, b: 1, a: 1}
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Invalid
