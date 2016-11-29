@@ -313,7 +313,11 @@ namespace MemoryMatch {
           _Game.SharedMinigameView.EnableContinueButton(true);
           LightCube centerCube = (_Game as MemoryMatchGame).GetCubeBySortedIndex(1);
           if (centerCube != null) {
-            _CurrentRobot.TurnTowardsObject(centerCube, false);
+            _CurrentRobot.TurnTowardsObject(centerCube, false, callback: (success) => {
+              if (_CurrentRobot != null) {
+                _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+              }
+            });
           }
           // Error sound
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Tap_Red);
