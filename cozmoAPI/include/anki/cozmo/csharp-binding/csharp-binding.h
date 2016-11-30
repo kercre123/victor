@@ -1,5 +1,5 @@
 //
-//  csharp-binding.h
+//  anki/cozmo/csharp-binding/csharp-binding.h
 //  CozmoGame
 //
 //  Created by Greg Nagel on 4/11/15.
@@ -43,6 +43,9 @@ extern "C" {
   void cozmo_uninstall_google_breakpad();
 
   void cozmo_send_to_clipboard(const char* log);
+  
+  // Called from C# to locate device ID file. Android only.
+  const char * cozmo_get_device_id_file_path(const char * persistentDataPath);
   
   void Unity_DAS_Event(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
   

@@ -50,6 +50,9 @@
 #endif
 #endif
 
+// Where do we store device ID?
+#define DEVICE_ID_FILE "uniqueDeviceID.dat"
+
 using namespace Anki;
 using namespace Anki::Cozmo;
 
@@ -234,7 +237,7 @@ int cozmo_startup(const char *configuration_data)
   // init DAS among other things
   result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform, appRunId);
 #elif defined(ANKI_PLATFORM_ANDROID) && USE_DAS
-  std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId, dataPlatform->pathToResource(Anki::Util::Data::Scope::Persistent, "uniqueDeviceID.dat"))};
+  std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId, dataPlatform->pathToResource(Anki::Util::Data::Scope::Persistent, DEVICE_ID_FILE))};
   dasPlatform->InitForUnityPlayer();
   DASNativeInit(std::move(dasPlatform), "cozmo");
 #endif
@@ -390,3 +393,14 @@ void cozmo_execute_background_transfers()
   }
   engineAPI->ExecuteBackgroundTransfers();
 }
+
+#if defined(ANKI_PLATFORM_ANDROID)
+const char * cozmo_get_device_id_file_path(const char * persistentDataPath)
+{
+  static std::string path;
+  path = std::string(persistentDataPath) + "/output/" + DEVICE_ID_FILE;
+  return path.c_str();
+}
+#endif
+
+

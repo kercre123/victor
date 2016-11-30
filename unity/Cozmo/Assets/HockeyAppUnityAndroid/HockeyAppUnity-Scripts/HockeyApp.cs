@@ -118,12 +118,12 @@ public class HockeyApp : MonoBehaviour {
   protected void StartCrashManager(string urlString, string secret, int authType, bool updateManagerEnabled, bool userMetricsEnabled, bool autoSendEnabled) {
     // For iOS because there is no concept of NativeCrashManager we start in HockeyApp.mm, and then call into the unity class using UploadUnityCrashInfoIOS
 #if (UNITY_ANDROID && !UNITY_EDITOR)
+   
+    // This is a mild hack to make sure that both Unity and Engine get the DeviceID from the same place on Android
+    string deviceIDFilePath = CozmoBinding.GetDeviceIDFilePath(Application.persistentDataPath);
+
     // get DAS (for device ID)
     AndroidJavaClass dasClass = new AndroidJavaClass("com.anki.daslib.DAS");
-
-    // This is a horrible HACK to make sure that both Unity and Engine get the DeviceID from the same place on Android
-    // COZMO-5283 captures the tech debt to do this right
-    string deviceIDFilePath = Application.persistentDataPath + "/output/uniqueDeviceID.dat";
 
     _DeviceId = dasClass.CallStatic<string>("getDeviceID", deviceIDFilePath);
 
@@ -163,7 +163,7 @@ public class HockeyApp : MonoBehaviour {
 
   // UnitySendMessage only supports one param. 
   public void UploadUnityCrashInfoIOS(string hockey_params) {
-    // params are appId, versionCode, versionName, budleIdentifier,  anki device id ,sdkversion, sdkname,
+    // params are appId, versionCode, versionName, bundleIdentifier, anki device id, sdkversion, sdkname
 #if (UNITY_IOS && !UNITY_EDITOR)
     char[] delimiterChars = { ',' };
     string[] split_params = hockey_params.Split(delimiterChars);
@@ -178,7 +178,7 @@ public class HockeyApp : MonoBehaviour {
     if (IsConnected()) {
       DAS.Info("HockeyAppManager.UploadUnityCrashInfo.Connected", hockey_params);
       List<string> logFileDirs = GetLogFiles();
-      DAS.Info("HockeyAppManager.UploadUnityCrashInfo.LogCount = " + logFileDirs.Count, "HockeAppManager.UploadUnityCrashInfo.Connected " + logFileDirs.Count);
+      DAS.Info("HockeyAppManager.UploadUnityCrashInfo.LogCount = " + logFileDirs.Count, "HockeyAppManager.UploadUnityCrashInfo.Connected " + logFileDirs.Count);
       if (logFileDirs.Count > 0) {
         StartCoroutine(SendLogs(logFileDirs));
       }
@@ -482,7 +482,7 @@ public class HockeyApp : MonoBehaviour {
   }
 
   /// <summary>
-  /// Upload existing reports to HockeyApp and delete delete them locally.
+  /// Upload existing reports to HockeyApp and delete them locally.
   /// </summary>
   protected virtual IEnumerator SendLogs(List<string> logs) {
     string crashPath = HOCKEYAPP_CRASHESPATH;

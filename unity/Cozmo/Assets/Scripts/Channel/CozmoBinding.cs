@@ -72,6 +72,9 @@ public static class CozmoBinding {
   private static extern void cozmo_send_to_clipboard(string logData);
 
   [DllImport("cozmoEngine")]
+  private static extern string cozmo_get_device_id_file_path(string persistentDataPath);
+
+  [DllImport("cozmoEngine")]
   public static extern uint cozmo_transmit_engine_to_game([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] bytes, System.UIntPtr len);
 
   [DllImport("cozmoEngine")]
@@ -160,6 +163,14 @@ public static class CozmoBinding {
     }
 
   }
+
+  #if (UNITY_ANDROID && !UNITY_EDITOR)
+  // Return absolute path to uniqueDeviceID.dat located in persistent data storage.
+  // Android only.
+  public static string GetDeviceIDFilePath(string persistentDataPath) {
+    return CozmoBinding.cozmo_get_device_id_file_path(persistentDataPath);
+  }
+  #endif
 
   #if (UNITY_ANDROID && !UNITY_EDITOR)
   public static AndroidJavaObject GetCurrentActivity() {
