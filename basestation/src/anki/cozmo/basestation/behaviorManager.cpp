@@ -812,7 +812,7 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
   _lastRequestedSpark = spark;
   _isRequestedSparkSoft = softSpark;
 
-  PRINT_CH_INFO("Beahviors", "BehaviorManager.SetRequestedSpark",
+  PRINT_CH_INFO("Behaviors", "BehaviorManager.SetRequestedSpark",
                 "requested %s spark is '%s'",
                 _isRequestedSparkSoft ? "soft" : "hard",
                 UnlockIdToString(_lastRequestedSpark));
@@ -820,7 +820,7 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
   
 const UnlockId BehaviorManager::SwitchToRequestedSpark()
 {
-  PRINT_CH_INFO("Beahviors", "BehaviorManager.SwitchToRequestedSpark",
+  PRINT_CH_INFO("Behaviors", "BehaviorManager.SwitchToRequestedSpark",
                 "switching active spark from '%s' -> '%s'. From %s -> %s",
                 UnlockIdToString(_activeSpark),
                 UnlockIdToString(_lastRequestedSpark),
