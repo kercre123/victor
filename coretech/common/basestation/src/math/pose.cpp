@@ -221,7 +221,7 @@ namespace Anki {
   } // Constructor: Pose3d(Pose2d)
 
   Pose3d::Pose3d(const PoseStruct3d& poseStruct, const PoseOriginList& originList)
-  : Pose3d(Rotation3d(UnitQuaternion<f32>(poseStruct.q0, poseStruct.q1, poseStruct.q2, poseStruct.q3)),
+  : Pose3d(Rotation3d(UnitQuaternion(poseStruct.q0, poseStruct.q1, poseStruct.q2, poseStruct.q3)),
            Vec3f(poseStruct.x, poseStruct.y, poseStruct.z),
            originList.GetOriginByID(poseStruct.originID))
   {
@@ -235,7 +235,7 @@ namespace Anki {
     const Pose3d flattenedPose = GetWithRespectToOrigin();
     
     const Vec3f& T = flattenedPose.GetTranslation();
-    const UnitQuaternion<f32>& Q = flattenedPose.GetRotation().GetQuaternion();
+    const UnitQuaternion& Q = flattenedPose.GetRotation().GetQuaternion();
     
     PoseStruct3d poseStruct(T.x(), T.y(), T.z(), Q.w(), Q.x(), Q.y(), Q.z(),
                             originList.GetOriginID(&FindOrigin()));

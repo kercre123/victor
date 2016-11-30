@@ -322,7 +322,7 @@ namespace Anki {
       cv::eigen(Q.get_CvMatx_() * Q.get_CvMatx_().t(), eigenvalues, cvEigenvectors);
       
       SmallMatrix<4,4,f32> eigenvectors(cvEigenvectors);
-      pose.SetRotation(UnitQuaternion<f32>(eigenvectors.GetRow(0)));
+      pose.SetRotation(UnitQuaternion(eigenvectors.GetRow(0)));
       pose.SetTranslation(T);
       
       return RESULT_OK;

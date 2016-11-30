@@ -110,13 +110,13 @@ namespace Anki {
   // A class for working with UnitQuaternions.
   // Type T must be float or double.
   template<typename T>
-  class UnitQuaternion : public Point<4,T>
+  class UnitQuaternion_ : public Point<4,T>
   {
   public:
-    UnitQuaternion();
-    UnitQuaternion(const UnitQuaternion& other);
-    UnitQuaternion(const T w, const T x, const T y, const T z); // will normalize the inputs
-    UnitQuaternion(const Point<4,T>& vals);
+    UnitQuaternion_();
+    UnitQuaternion_(const UnitQuaternion_& other);
+    UnitQuaternion_(const T w, const T x, const T y, const T z); // will normalize the inputs
+    UnitQuaternion_(const Point<4,T>& vals);
     
     // Named accessors for the four elements of the quatnerion (w,x,y,z)
     inline T w() const { return this->operator[](0); }
@@ -136,26 +136,28 @@ namespace Anki {
     // a bunch of implicit casts unknowingly. Maybe do the same for Point class
     // and classes derived therefrom?
     template<typename T_other>
-    UnitQuaternion<T>& SetCast(const UnitQuaternion<T_other> &other);
+    UnitQuaternion_<T>& SetCast(const UnitQuaternion_<T_other> &other);
     
-    bool operator==(const UnitQuaternion<T>& other) const;
+    bool operator==(const UnitQuaternion_<T>& other) const;
     
     // Quaternion multiplication
-    UnitQuaternion<T>  operator* (const UnitQuaternion<T>& other) const;
-    UnitQuaternion<T>& operator*=(const UnitQuaternion<T>& other);
+    UnitQuaternion_<T>  operator* (const UnitQuaternion_<T>& other) const;
+    UnitQuaternion_<T>& operator*=(const UnitQuaternion_<T>& other);
     
     // Rotation of a point/vector
     Point3<T> operator*(const Point3<T>& p) const;
     
     // Normalize to unit length
-    UnitQuaternion<T>& Normalize();
+    UnitQuaternion_<T>& Normalize();
     
     // Conjugate
-    UnitQuaternion<T>& Conj(); // in place
-    UnitQuaternion<T>  GetConj() const;
+    UnitQuaternion_<T>& Conj(); // in place
+    UnitQuaternion_<T>  GetConj() const;
     
   }; // class UnitQuaternion
   
+  // The default UnitQuaternion is double to minimize effects of floating-point error
+  using UnitQuaternion = UnitQuaternion_<double>;
   
   // A general storage class for storing and converting between different Rotation
   // formats. Internally, uses a UnitQuaternion, but can be constructed from and
@@ -167,7 +169,7 @@ namespace Anki {
     Rotation3d(const Radians& angle, const Vec3f& axis);
     Rotation3d(const RotationVector3d& Rvec);
     Rotation3d(const RotationMatrix3d& Rmat);
-    Rotation3d(const UnitQuaternion<float>& q);
+    Rotation3d(const UnitQuaternion& q);
     
     bool operator==(const Rotation3d& other) const;
     
@@ -179,7 +181,7 @@ namespace Anki {
     // Rotate a point/vector
     Point3<float> operator*(const Point3<float>& p) const;    
     
-    const UnitQuaternion<float>& GetQuaternion()     const { return _q; }
+    const UnitQuaternion& GetQuaternion()     const { return _q; }
     const RotationMatrix3d       GetRotationMatrix() const;
     const RotationVector3d       GetRotationVector() const;
     
@@ -196,7 +198,7 @@ namespace Anki {
     Rotation3d  GetInverse() const;
     
   private:
-    UnitQuaternion<float> _q;
+    UnitQuaternion _q;
     
     // Get a specific entry in the corresponding rotation matrix
     // i and j must be one of [0,1,2]; otherwise compilation will fail.

@@ -1051,7 +1051,7 @@ namespace Anki {
       m.y_mm = p.GetTranslation().y();
       m.level = 0;
       m.useManualSpeed = useManualSpeed;
-      UnitQuaternion<f32> q(p.GetRotation().GetQuaternion());
+      UnitQuaternion q(p.GetRotation().GetQuaternion());
       m.qw = q.w();
       m.qx = q.x();
       m.qy = q.y();
