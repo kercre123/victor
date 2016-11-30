@@ -66,6 +66,9 @@ namespace Anki {
       // CustomObject object functions
       virtual const Point3f& GetSize() const override { return _size; }
 
+      // TODO: Consider making this settable
+      virtual bool CanIntersectWithRobot() const override { return true; }
+      
     protected:
 
       constexpr static const f32 kSameDistToleranceFraction      = 0.8f;

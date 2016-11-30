@@ -4087,7 +4087,37 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
     //PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
     
-    CheckForCollisionWithRobot();
+    
+    // Check for unobserved, uncarried objects that overlap with the robot's position,
+    // and mark them as dirty.
+    // For now we aren't worrying about collision with the robot while picking or placing since
+    // we are trying to get close to objects in these modes.
+    // TODO: Enable collision checking while picking and placing too
+    // (I feel like we should be able to always do this, since we _do_ check that the
+    //  object is not the docking object as part of the filter, and we do height checks as well.
+    //  But I'm wary of changing it now either...)
+    if(!_robot->IsPickingOrPlacing())
+    {
+      BlockWorldFilter unobservedCollidingObjectFilter;
+      unobservedCollidingObjectFilter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
+      unobservedCollidingObjectFilter.SetFilterFcn([this](const ObservableObject* object) {
+        return CheckForCollisionWithRobot(object);
+      });
+      
+      ModifierFcn markAsDirty = [this](ObservableObject* object)
+      {
+        // Mark object and everything on top of it as "dirty". Next time we look
+        // for it and don't see it, we will fully clear it and mark it as "unknown"
+        ObservableObject* objectOnTop = object;
+        BOUNDED_WHILE(20, objectOnTop != nullptr) {
+          _robot->GetObjectPoseConfirmer().SetPoseState(objectOnTop, PoseState::Dirty);
+          objectOnTop = FindObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
+        }
+      };
+      
+      ModifyObjects(markAsDirty, unobservedCollidingObjectFilter);
+    }
+    
     
     // TODO: Deal with unknown markers?
     
@@ -4126,111 +4156,82 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
   } // Update()
   
-  void BlockWorld::CheckForCollisionWithRobot()
+  bool BlockWorld::CheckForCollisionWithRobot(const ObservableObject* object) const
   {
-    auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
+    // If this object is _allowed_ to intersect with the robot, no reason to
+    // check anything
+    if(object->CanIntersectWithRobot()) {
+      return false;
+    }
     
-    // Don't worry about collision with the robot while picking or placing since we
-    // are trying to get close to objects in these modes.
-    // TODO: Enable collision checking while picking and placing too
-    // (I feel like we should be able to always do this, since we _do_ check that the
-    //  object is not the docking object below, and we do height checks as well. But
-    //  I'm wary of changing it now either...)
-    if(!_robot->IsPickingOrPlacing() && originIter != _existingObjects.end())
+    // If object was observed, it must be there, so don't check for collision
+    const bool wasObserved = object->GetLastObservedTime() >= _robot->GetLastImageTimeStamp();
+    if(wasObserved) {
+      return false;
+    }
+    
+    // Only check objects that are in accurate/known pose state
+    if(!object->IsPoseStateKnown()) {
+      return false;
+    }
+    
+    const ObjectID& objectID = object->GetID();
+    
+    // Don't worry about collision with an object being carried or that we are
+    // docking with, since we are expecting to be in close proximity to either
+    const bool isCarryingObject = _robot->IsCarryingObject(objectID);
+    const bool isDockingWithObject = _robot->GetDockObject() == objectID;
+    if(isCarryingObject || isDockingWithObject) {
+      return false;
+    }
+    
+    // Check block's bounding box in same coordinates as this robot to
+    // see if it intersects with the robot's bounding box. Also check to see
+    // block and the robot are at overlapping heights.  Skip this check
+    // entirely if the block isn't in the same coordinate tree as the
+    // robot.
+    Pose3d objectPoseWrtRobotOrigin;
+    if(false == object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
     {
-      // Check for unobserved, uncarried objects that overlap with any robot's position
-      // TODO: better way of specifying which objects are obstacles and which are not
-      // TODO: Move this giant loop to its own method
-      for(auto & objectsByFamily : originIter->second)
-      {
-        // For now, look for collision with anything other than Mat objects
-        // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
-        // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
-        if(objectsByFamily.first != ObjectFamily::Mat &&
-           objectsByFamily.first != ObjectFamily::MarkerlessObject &&
-           objectsByFamily.first != ObjectFamily::CustomObject)
-        {
-          for(auto & objectsByType : objectsByFamily.second)
-          {
-            for(auto & objectIdPair : objectsByType.second)
-            {
-              ObservableObject* object = objectIdPair.second.get();
-              
-              // Collision check objects that
-              // - were not observed in the last image,
-              // - are not being carried
-              // - still have known pose state (not dirtied already, nor unknown)
-              // - are not the obect we are docking with (since we are _trying_ to get close)
-              // - can intersect the robot (e.g. not charger)
-              if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
-                 object->IsPoseStateKnown() &&
-                 object->GetID() != _robot->GetDockObject() &&
-                 !object->CanIntersectWithRobot() &&
-                 !_robot->IsCarryingObject(object->GetID()))
-              {
-                // Check block's bounding box in same coordinates as this robot to
-                // see if it intersects with the robot's bounding box. Also check to see
-                // block and the robot are at overlapping heights.  Skip this check
-                // entirely if the block isn't in the same coordinate tree as the
-                // robot.
-                Pose3d objectPoseWrtRobotOrigin;
-                if(true == object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
-                {
-                  const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
-                  const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
-                  /*
-                   const f32    blockSize   = 0.5f*object->GetSize().Length();
-                   const f32    blockTop    = objectHeight + blockSize;
-                   const f32    blockBottom = objectHeight - blockSize;
-                   */
-                  const f32 robotBottom = _robot->GetPose().GetTranslation().z();
-                  const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
-                  
-                  // TODO: Better check for being in the same plane that takes the
-                  //       vertical extent of the object (in its current pose) into account
-                  const bool inSamePlane = (objectHeight >= robotBottom && objectHeight <= robotTop);
-                  /*
-                   const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
-                   ((robotTop >= blockBottom) && (robotTop <= blockTop)));
-                   
-                   const bool bottomIntersects = (((blockBottom >= robotBottom) && (blockBottom <= robotTop)) ||
-                   ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
-                   */
-                  
-                  const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin(),
-                                                                     ROBOT_BBOX_PADDING_FOR_OBJECT_COLLISION);
-                  
-                  const bool bboxIntersects = robotBBox.Intersects(objectBBox);
-                  
-                  if( inSamePlane && bboxIntersects )
-                  {
-                    PRINT_CH_INFO("BlockWorld", "BlockWorld.Update",
-                                  "Marking object %d as 'dirty', because it intersects robot %d's bounding quad.",
-                                  object->GetID().GetValue(), _robot->GetID());
-                    
-                    // Mark object and everything on top of it as "dirty". Next time we look
-                    // for it and don't see it, we will fully clear it and mark it as "unknown"
-                    ObservableObject* objectOnTop = object;
-                    BOUNDED_WHILE(20, objectOnTop != nullptr) {
-                      _robot->GetObjectPoseConfirmer().SetPoseState(objectOnTop, PoseState::Dirty);
-                      objectOnTop = FindObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
-                    }
-                  } // if quads intersect
-                }
-                else
-                {
-                  // We should not get here because we are only looping over objects that are
-                  // in the robot's current frame
-                  PRINT_NAMED_WARNING("BlockWorld.Update.BadOrigin", "");
-                } // if we got block pose wrt robot origin
-                
-              } // if block was not observed
-              
-            } // for each object of this type
-          } // for each object type
-        } // if not in the Mat family
-      } // for each object family
-    } // if robot is not picking or placing
+      PRINT_NAMED_WARNING("BlockWorld.CheckForCollisionWithRobot.BadOrigin",
+                          "Could not get %s %d pose (origin: %s[%p]) w.r.t. robot origin (%s[%p])",
+                          EnumToString(object->GetType()), objectID.GetValue(),
+                          object->GetPose().FindOrigin().GetName().c_str(),
+                          &object->GetPose().FindOrigin(),
+                          _robot->GetWorldOrigin()->GetName().c_str(),
+                          _robot->GetWorldOrigin());
+      return false;
+    }
+    
+    // Check the that the object is in the same plane as the robot
+    // TODO: Better check for being in the same plane that takes the
+    //       vertical extent of the object (in its current pose) into account
+    
+    const f32 objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
+    const f32 robotBottom = _robot->GetPose().GetTranslation().z();
+    const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
+    
+    const bool inSamePlane = (objectHeight >= robotBottom && objectHeight <= robotTop);
+    if(!inSamePlane) {
+      return false;
+    }
+    
+    // Check if the object's bounding box intersects the robot's
+    const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
+    const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin(),
+                                                       ROBOT_BBOX_PADDING_FOR_OBJECT_COLLISION);
+    
+    const bool bboxIntersects = robotBBox.Intersects(objectBBox);
+    if(bboxIntersects)
+    {
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForCollisionWithRobot.ObjectRobotIntersection",
+                    "Marking object %s %d as 'dirty', because it intersects robot %d's bounding quad.",
+                    EnumToString(object->GetType()), object->GetID().GetValue(), _robot->GetID());
+      
+      return true;
+    }
+    
+    return false;
   }
   
   Result BlockWorld::UpdateMarkerlessObjects(TimeStamp_t atTimestamp)

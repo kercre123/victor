@@ -417,7 +417,9 @@ namespace Anki
       //    still visible. Return the number of these.
       u32 CheckForUnobservedObjects(TimeStamp_t atTimestamp);
       
-      void CheckForCollisionWithRobot();
+      // Checks whether an object is unobserved and in collision with the robot,
+      // for use in filtering objects to mark them as dirty
+      bool CheckForCollisionWithRobot(const ObservableObject* object) const;
       
       // Adds a new object based on its origin/family/type. Its ID will be assigned
       // if it isn't already, or it will be copied from objectToCopyID if that object

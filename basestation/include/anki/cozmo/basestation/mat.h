@@ -71,6 +71,9 @@ namespace Anki {
       virtual void GetUnsafeRegions(std::vector<std::pair<Quad2f,ObjectID> >& unsafeRegions, const Pose3d& atPose, const f32 padding_mm) const;
       void GetUnsafeRegions(std::vector<std::pair<Quad2f,ObjectID> >& unsafeRegions, const f32 padding_mm) const; // at current pose
       
+      // Since robot can drive on top of a mat, their bounding boxes are allowed
+      // to intersect
+      virtual bool CanIntersectWithRobot() const override { return true; }
       
     protected:
       
