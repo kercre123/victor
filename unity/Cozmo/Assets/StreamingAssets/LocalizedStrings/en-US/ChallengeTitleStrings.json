@@ -21,38 +21,29 @@
   "challengeDetails.needsMoreCubesModal.title": {
     "translation": "Not Enough Cubes"
   },
-  "challengeDetails.needsMoreCubesModal.description":{
+  "challengeDetails.needsMoreCubesModal.description": {
     "translation": "Cozmo needs {0} more {1} to start {2}."
   },
   "challengeDetails.cozmoNotOnTreads.title": {
     "translation": "Cozmo is not ready"
   },
-  "challengeDetails.cozmoNotOnTreads.description":{
+  "challengeDetails.cozmoNotOnTreads.description": {
     "translation": "Please help Cozmo get upright and ready to play."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title": {
     "translation": "Cozmo is Waking Up"
   },
-  "challengeDetails.cozmoIsStillWakingUpModal.description":{
+  "challengeDetails.cozmoIsStillWakingUpModal.description": {
     "translation": "Please wait for Cozmo to wake up and drive off of his charger."
   },
   "challengeDetails.needsMoreCubesModal.button": {
     "translation": "Show Me How"
-  },
-  "challengeEnded.label.reward": {
-    "translation": "Rewards:"
   },
   "artistCozmo.title": {
     "translation": "Artist Cozmo"
   },
   "artistCozmo.description": {
     "translation": "Artist Cozmo Description"
-  },
-  "askCozmo01.title": {
-    "translation": "Ask Cozmo Challenge 1"
-  },
-  "askCozmo01.description": {
-    "translation": "Ask Cozmo Challenge 1 Description"
   },
   "patternGuess01.title": {
     "translation": "Pattern Guess"
@@ -78,36 +69,6 @@
   "faceEnrollment.description": {
     "translation": "Introduce Cozmo to new people so he can learn to say their name."
   },
-  "investorDemo.investorDemoScene1": {
-    "translation": "Investor Scene 1"
-  },
-  "investorDemo.investorDemoScene2": {
-    "translation": "Investor Scene 2"
-  },
-  "investorDemo.investorDemoScene3": {
-    "translation": "Investor Scene 3"
-  },
-  "investorDemo.investorDemoScene4": {
-    "translation": "Investor Scene 4"
-  },
-  "investorDemo.investorDemoFull": {
-    "translation": "Full"
-  },
-  "investorDemo.investorDemoCubes": {
-    "translation": "Cubes"
-  },
-  "investorDemo.investorDemoFaces": {
-    "translation": "Faces"
-  },
-  "investorDemo.investorDemoMotion": {
-    "translation": "Motion"
-  },
-  "playhouseGame01.title": {
-    "translation": "Playhouse"
-  },
-  "playhouseGame01.description": {
-    "translation": "Make a play with Cozmo by stringing together a series of actions."
-  },
   "selfieGame01.title": {
     "translation": "Selfie Time"
   },
@@ -131,12 +92,6 @@
   },
   "treasureHuntGame01.description": {
     "translation": "Find the treasure!"
-  },
-  "whackAMole.title": {
-    "translation": "Whack A Mole"
-  },
-  "whackAMole.description": {
-    "translation": "Tap an active Button to turn it off and trick Cozmo."
   },
   "cozmoSays.title": {
     "translation": "Cozmo Says"

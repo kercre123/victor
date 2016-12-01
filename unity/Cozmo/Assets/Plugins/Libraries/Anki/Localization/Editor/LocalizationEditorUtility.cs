@@ -292,4 +292,68 @@ public static class LocalizationEditorUtility {
     }
     return variableName;
   }
+
+  private static bool StringContainedInDir(string str, string dir, string searchPattern, string exclude = null) {
+    foreach (var path in Directory.GetFiles(dir, searchPattern, SearchOption.AllDirectories)) {
+      if (exclude != null && path.Contains(exclude)) {
+        continue;
+      }
+      if (File.ReadAllText(path).Contains(str)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  // Can't search with multiple file extensions
+  private static bool StringContainedInDir(string str, string dir, string[] searchPatterns) {
+    foreach (var path in Directory.GetFiles(dir, "*", SearchOption.AllDirectories)) {
+      for (int i = 0; i < searchPatterns.Length; ++i) {
+        if (path.Contains(searchPatterns[i])) {
+          if (File.ReadAllText(path).Contains(str)) {
+            return true;
+          }
+          break;
+        }
+      }
+    }
+    return false;
+  }
+
+  [MenuItem("Cozmo/Localization/Remove Unused Loc Keys")]
+  public static void RemoveUnusedLocKeys() {
+    foreach (var localizationDictFile in _LocalizationDictionaries) {
+      string fileName = localizationDictFile.Key;
+      // Special case file that adds plural etc
+      if (fileName == "ItemStrings") {
+        continue;
+      }
+      // Deep copy to remove from source
+      Dictionary<string, LocalizationDictionaryEntry> keysDict = new Dictionary<string, LocalizationDictionaryEntry>(localizationDictFile.Value.Translations);
+      bool anyUpdateNeeded = false;
+      foreach (var locKey in keysDict) {
+        bool keyFound = false;
+        // Check C# code, prefabs, assets.
+        // Check configs for game
+        // Check Config code from engine...
+        if (StringContainedInDir(VariableNameFromLocalizationKey(locKey.Key), "Assets/", "*.cs", "LocalizationKeys.cs") ||
+            StringContainedInDir(locKey.Key, "Assets/", new string[] { ".prefab", ".asset" }) ||
+            StringContainedInDir(locKey.Key, Application.dataPath + "/../../../lib/anki/products-cozmo-assets/", "*.json") ||
+            StringContainedInDir(locKey.Key, Application.dataPath + "/../../../resources/config/basestation/config", "*.json")) {
+          // orring for fast out
+          keyFound = true;
+        }
+
+        // Consider a key not used if it is not in C# code, prefabs, or engine configs
+        if (!keyFound) {
+          localizationDictFile.Value.Translations.Remove(locKey.Key);
+          anyUpdateNeeded = true;
+          Debug.LogWarning("Not Found " + locKey.Key);
+        }
+      }
+
+      if (anyUpdateNeeded) {
+        File.WriteAllText(kLocalizationFolder + fileName + ".json", JsonConvert.SerializeObject(localizationDictFile.Value, Formatting.Indented));
+      }
+    }
+  }
 }

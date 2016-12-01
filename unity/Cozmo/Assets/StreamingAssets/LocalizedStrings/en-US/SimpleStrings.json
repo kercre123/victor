@@ -24,17 +24,11 @@
   "name.player": {
     "translation": "Player"
   },
-  "button.quitGame": {
-    "translation": "Quit Game"
-  },
   "button.quit": {
     "translation": "Quit"
   },
   "button.cancel": {
     "translation": "Cancel"
-  },
-  "button.startChallenge": {
-    "translation": "Start"
   },
   "button.yes": {
     "translation": "Yes"
@@ -81,20 +75,11 @@
   "button.soundsGood": {
     "translation": "Sounds Good"
   },
-  "label.percentComplete": {
-    "translation": "{0:P2} Complete"
-  },
   "label.plusCount": {
     "translation": "+{0}"
   },
   "label.xCount": {
     "translation": "x{0}"
-  },
-  "label.simpleCount": {
-    "translation": "{0} {1}"
-  },
-  "label.colonCount": {
-    "translation": "{0}: {1}"
   },
   "label.totalCount": {
     "translation": "Your {0}: {1}"
@@ -104,15 +89,6 @@
   },
   "label.dayCount": {
     "translation": "Day {0}"
-  },
-  "label.daysCount.plural": {
-    "translation": "{0} Days"
-  },
-  "label.daysCount.singular": {
-    "translation": "{0} Day"
-  },
-  "dailySummary.title": {
-    "translation": "Daily Summary for {0}/{1}"
   },
   "requestGame.title": {
     "translation": "{0}!"
@@ -126,20 +102,11 @@
   "dailyGoal.FriendBonus": {
     "translation": "Friend Bonus"
   },
-  "dailyGoal.Complete": {
-    "translation": "Complete"
-  },
-  "timeline.weekLabel": {
-    "translation": "{0}W\nAGO"
-  },
   "label.connect": {
     "translation": "Connect"
   },
   "label.start": {
     "translation": "Start"
-  },
-  "label.loading": {
-    "translation": "Loading"
   },
   "button.save": {
     "translation": "Save"
@@ -150,20 +117,8 @@
   "cozmoTab.subTitle": {
     "translation": ": Expand Cozmo's abilities"
   },
-  "cozmoTab.hexCount": {
-    "translation": "Code Fragments: {0}"
-  },
-  "coreUpgradeDetailsDialog.titleLabel": {
-    "translation": "Upgrade:"
-  },
   "coreUpgradeDetailsDialog.cubesNeeded": {
     "translation": "{0} {1} Required"
-  },
-  "coreUpgradeDetailsDialog.prompt": {
-    "translation": "Press and hold to do it!"
-  },
-  "coreUpgradeDetailsDialog.totalInventory": {
-    "translation": "Total {0}: {1}"
   },
   "loot.Start": {
     "translation": "Tap Repeatedly!"
@@ -182,15 +137,6 @@
   },
   "title.soundCheck": {
     "translation": "Sound Check"
-  },
-  "button.soundCheckPlay": {
-    "translation": "Play"
-  },
-  "button.soundCheckPlayAgain": {
-    "translation": "Play Again"
-  },
-  "button.soundCheckContinue": {
-    "translation": "Sounds Good"
   },
   "button.GetACozmo": {
     "translation": "Get A Cozmo"
@@ -218,9 +164,6 @@
   },
   "button.skip": {
     "translation": "Skip"
-  },
-  "button.createNew": {
-    "translation": "Create New"
   },
   "button.addPerson": {
     "translation": "Add Person"
@@ -257,9 +200,6 @@
   },
   "label.activePlayer": {
     "translation": "Active Player:"
-  },
-  "label.gamesPlayed": {
-    "translation": "Games Played: "
   },
   "label.streaksCount": {
     "translation": "Longest Daily Streak:"

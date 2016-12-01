@@ -26,15 +26,12 @@
   },
   "unlockable.App": {
     "translation": "App"
-  },  
+  },
   "unlockable.Upgrade": {
     "translation": "Upgrade"
   },
   "unlockable.Available": {
     "translation": "Available:"
-  },
-  "unlockable.ViewPreReq": {
-    "translation": "View Upgrade"
   },
   "unlockable.PreReqNeeded.Description": {
     "translation": "You need to unlock the {0} {1} first!"
@@ -192,23 +189,8 @@
   "unlockable.ComingSoon.Description": {
     "translation": "Check back for more great Upgrades, Apps, and fun Cozmo features"
   },
-  "unlockable.Default.Title": {
-    "translation": "Unlockable Default Title"
-  },
-  "unlockable.Default.Description": {
-    "translation": "Unlockable Default Description"
-  },
-  "skills.LevelUp.Description": {
-    "translation": "Skills Leveled up to {0} in {1}"
-  },
-  "skills.LevelUp.Title": {
-    "translation": "Level Up"
-  },
   "sparks.Sparked": {
     "translation": "Cozmo is sparked:"
-  },
-  "sparks.Press": {
-    "translation": "Tap to ask Cozmo to do this"
   },
   "sparks.SparkCozmo": {
     "translation": "Spark Cozmo"

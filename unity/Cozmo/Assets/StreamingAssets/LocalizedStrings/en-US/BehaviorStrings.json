@@ -60,9 +60,6 @@
   "behavior.LookingForFaces": {
     "translation": "Cozmo is looking around"
   },
-  "behavior.FindFaces": {
-    "translation": "Cozmo is looking around"
-  },
   "behavior.InteractWithFaces": {
     "translation": "Cozmo is looking around"
   },

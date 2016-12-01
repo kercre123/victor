@@ -21,10 +21,6 @@
   "reward.description.Missing": {
     "translation": "Missing description"
   },
-
-  "reward.description.Freeplay.Uninterrupted.5": {
-    "translation": "Let Cozmo explore uninterrupted for 5 minutes"
-  },
   "reward.description.Freeplay.Spark": {
     "translation": "Spark an Upgrade"
   },
@@ -33,9 +29,6 @@
   },
   "reward.description.Freeplay.CompleteBehavior.Pounce": {
     "translation": "completing the 'Pounce On Fingers' behavior successfully"
-  },
-  "reward.description.Freeplay.CompleteBehavior.TipOver": {
-    "translation": "completing the 'Knock Over Stacks' behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.Pyramid": {
     "translation": "completing the 'Build a Pyramid' behavior successfully"
@@ -100,18 +93,9 @@
   "reward.description.QuickTap.Shutout.SingleRound": {
     "translation": "Won a round of Quick Tap 5 to 0"
   },
-  "reward.description.QuickTap.Shutout.TwoRounds": {
-    "translation": "Won two rounds of Quick Tap 5 to 0"
-  },
-  "reward.description.QuickTap.RedCubes.NeverTap": {
-    "translation": "Never tapped on a red cube!"
-  },
   "reward.description.QuickTap.TieBreaker.OneRound": {
     "translation": "Won a round of Quick Tap after being tied 4-4"
   },
-  "reward.description.QuickTap.TieBreaker.TwoRounds": {
-    "translation": "Won two rounds of after being tied 4-4"
-  },  
   "reward.description.Keepaway.Played": {
     "translation": "Played a game of Keepaway"
   },
@@ -120,9 +104,6 @@
   },
   "reward.description.Keepaway.Shutout": {
     "translation": "Won a game of Keepaway 5 to 0"
-  },
-  "reward.description.Keepaway.NoFakes": {
-    "translation": "Finished a game of Keepaway without getting faked out"
   },
   "reward.description.Keepaway.TieBreaker": {
     "translation": "Won Keepaway after being tied 4-4"
@@ -153,9 +134,6 @@
   },
   "reward.description.SkillUp": {
     "translation": "Cozmo's {0} skill has increased!"
-  },
-  "reward.description.SkillDown": {
-    "translation": "Cozmo's {0} skill has decreased!"
   },
   "reward.freeplay.BehaviorDisplay": {
     "translation": "Cozmo got +{0} energy from {1}!"
