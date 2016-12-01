@@ -149,6 +149,7 @@ public:
   bool IsRunnable(const Robot& robot, bool allowWhileRunning=false) const;
   
   const std::string& GetName() const { return _name; }
+  const std::string& GetDisplayNameKey() const { return _displayNameKey; }
   const std::string& GetDebugStateName() const { return _debugStateName;}
   const BehaviorType GetType() const { return _behaviorType; }
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
@@ -433,6 +434,7 @@ private:
   // ==================== Member Vars ====================
     
   std::string _name;
+  std::string _displayNameKey = "";
   std::string _debugStateName = "";
   BehaviorType _behaviorType;
   ExecutableBehaviorType _executableType;

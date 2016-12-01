@@ -1,6 +1,7 @@
 {
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestSpeedTap",
+  "displayNameKey":"behavior.RequestToPlay",
   "requiredGameFlags" : "SpeedTap",
   "behaviorGroups": [
     "FP_PlayWithHumans",

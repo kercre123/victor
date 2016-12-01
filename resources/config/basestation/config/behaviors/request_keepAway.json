@@ -1,6 +1,7 @@
 {
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestKeepAway",
+  "displayNameKey":"behavior.RequestToPlay",
   "requiredGameFlags" : "KeepAway",
   "behaviorGroups": [
     "FP_PlayWithHumans",

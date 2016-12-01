@@ -1,6 +1,7 @@
 {
   "behaviorType": "DriveOffCharger",
   "name": "DriveOffCharger",
+  "displayNameKey":"behavior.DriveOffCharger",
   "flatScore" : 0.0, // score is modified by behavior
   "extraDistanceToDrive_mm": 60.0,
   "behaviorGroups": [

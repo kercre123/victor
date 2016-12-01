@@ -1,6 +1,7 @@
 {
   "behaviorType": "PickUpCube",
   "name": "sparksPickUpCube",
+  "displayNameKey":"behavior.PickupCube",
   "requiredUnlockId": "PickupCube",
   "behaviorGroups": [
     "SparksPickUpCube"

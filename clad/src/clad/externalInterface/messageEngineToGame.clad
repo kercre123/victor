@@ -658,7 +658,8 @@ message BehaviorTransition{
   BehaviorType oldBehaviorType,
   BehaviorType newBehaviorType,
   bool isOldReactionary,
-  bool isNewReactionary
+  bool isNewReactionary,
+  string newBehaviorDisplayKey
 }
 
 //respond with the list of freeplay behavior

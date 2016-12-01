@@ -9,6 +9,7 @@
   "name": "Hiking_DriveOffCharger",
 
   "behaviorType": "DriveOffCharger",
+  "displayNameKey":"behavior.DriveOffCharger",
   "flatScore": 10.0,
   "behaviorGroups": [
     "FP_Hiking"

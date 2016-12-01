@@ -49,6 +49,7 @@ const char* IBehavior::kBaseDefaultName = "no_name";
 namespace {
   
 static const char* kNameKey                      = "name";
+static const char* kDisplayNameKey               = "displayNameKey";
 static const char* kEmotionScorersKey            = "emotionScorers";
 static const char* kFlatScoreKey                 = "flatScore";
 static const char* kRepetitionPenaltyKey         = "repetitionPenalty";
@@ -115,6 +116,7 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
 {
   const Json::Value& nameJson = config[kNameKey];
   _name = nameJson.isString() ? nameJson.asCString() : kBaseDefaultName;
+  JsonTools::GetValueOptional(config, kDisplayNameKey, _displayNameKey);
 
   // - - - - - - - - - -
   // Required unlock

@@ -9,6 +9,7 @@
   "name": "Hiking_LookingInPlaceForUnknown",
 
   "behaviorType": "LookInPlaceMemoryMap",
+  "displayNameKey":"behavior.LookInPlaceMemoryMap",
   "flatScore": 1.1,
   "behaviorGroups": [
     "FP_Hiking"

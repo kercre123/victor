@@ -1,6 +1,7 @@
 {
   "behaviorType": "RollBlock",
   "name": "tapInteractionRollCube",
+  "displayNameKey":"behavior.RollBlock",
   "requireObjectTapped" : true,
   "requiredUnlockId": "RollCube",
   "behaviorGroups": [

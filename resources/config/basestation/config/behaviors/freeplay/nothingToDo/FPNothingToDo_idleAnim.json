@@ -8,6 +8,7 @@
   "name": "NothingToDo_Idle",
 
   "behaviorType": "PlayAnim",
+  "displayNameKey":"behavior.Bored",
   "flatScore": 1.0,
   "behaviorGroups": [
     "FP_NothingToDo"

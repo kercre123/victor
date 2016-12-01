@@ -1,6 +1,7 @@
 {
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestMemoryMatch",
+  "displayNameKey":"behavior.RequestToPlay",
   "requiredGameFlags" : "MemoryMatch",
   "behaviorGroups": [
     "FP_PlayWithHumans",

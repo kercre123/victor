@@ -1,6 +1,8 @@
 {
   "behaviorType": "AcknowledgeFace",
   "name": "AcknowledgeFace",
+  "displayNameKey":"behavior.AcknowledgeObject",
+  
   "behaviorGroups": [
     "Reactionary"
   ],

@@ -387,7 +387,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     ItemData itemData = ItemDataConfig.GetData(itemID);
     string costName = "";
     if (itemData != null) {
-      costName = Localization.Get(itemData.GetAmountName(cost));
+      costName = itemData.GetAmountName(cost);
     }
     else {
       DAS.Error("CoreUpgradeDetailsDialog.UpdateAvailableCostLables", string.Format("ItemData for {0} is NULL", itemID));

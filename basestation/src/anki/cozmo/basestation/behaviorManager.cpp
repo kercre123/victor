@@ -372,6 +372,7 @@ void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior
   msg.newBehaviorType = newBehaviorType;
   msg.isOldReactionary = oldBehaviorIsReactionary;
   msg.isNewReactionary = newBehaviorIsReactionary;
+  msg.newBehaviorDisplayKey = newBehavior ? newBehavior->GetDisplayNameKey() : "";
   
   _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
 }

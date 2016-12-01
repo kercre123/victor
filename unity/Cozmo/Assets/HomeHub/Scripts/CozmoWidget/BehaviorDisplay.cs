@@ -59,9 +59,12 @@ public class BehaviorDisplay : MonoBehaviour {
     IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
     if (CurrentRobot != null && _BehaviorLabel != null) {
       if (_OverrideString == null) {
-        string currBehaviorString = GetBehaviorString(CurrentRobot.CurrentBehaviorType, CurrentRobot.CurrentBehaviorName);
+        string currBehaviorString = string.Empty;
+        if (CurrentRobot.CurrentBehaviorDisplayNameKey != string.Empty) {
+          currBehaviorString = Localization.Get(CurrentRobot.CurrentBehaviorDisplayNameKey);
+        }
         // If string is empty the design is that cozmo should stay in the previous state
-        if (currBehaviorString != "" && currBehaviorString != _CurrString) {
+        if (currBehaviorString != string.Empty && currBehaviorString != _CurrString) {
           // start counting start of a change
           if (_StateChangeTimeStamp < 0.0f) {
             _StateChangeTimeStamp = Time.time;
@@ -110,121 +113,6 @@ public class BehaviorDisplay : MonoBehaviour {
       str = "";
     }
     StartFadeTo(str);
-  }
-
-  private string GetBehaviorString(BehaviorType behaviorType, string behaviorName) {
-    string ret = "";
-    // Might share some of these in the future, so not a dictionary
-    switch (behaviorType) {
-    case BehaviorType.LookForFaceAndCube:
-      ret = Localization.Get(LocalizationKeys.kBehaviorLookForFaceAndCube);
-      break;
-    case BehaviorType.BringCubeToBeacon:
-      ret = Localization.Get(LocalizationKeys.kBehaviorBringCubeToBeacon);
-      break;
-    case BehaviorType.LookAround:
-      ret = Localization.Get(LocalizationKeys.kBehaviorLookAround);
-      break;
-    case BehaviorType.ExploreVisitPossibleMarker:
-      ret = Localization.Get(LocalizationKeys.kBehaviorExploreVisitPossibleMarker);
-      break;
-    case BehaviorType.LookInPlaceMemoryMap:
-      ret = Localization.Get(LocalizationKeys.kBehaviorLookInPlaceMemoryMap);
-      break;
-    case BehaviorType.ExploreLookAroundInPlace:
-      ret = Localization.Get(LocalizationKeys.kBehaviorExploreLookAroundInPlace);
-      break;
-    case BehaviorType.ThinkAboutBeacons:
-      ret = Localization.Get(LocalizationKeys.kBehaviorThinkAboutBeacons);
-      break;
-    case BehaviorType.VisitInterestingEdge:
-      ret = Localization.Get(LocalizationKeys.kBehaviorVisitInterestingEdge);
-      break;
-    case BehaviorType.BuildPyramid:
-      ret = Localization.Get(LocalizationKeys.kBehaviorBuildPyramid);
-      break;
-    case BehaviorType.KnockOverCubes:
-      ret = Localization.Get(LocalizationKeys.kBehaviorKnockOverCubes);
-      break;
-    case BehaviorType.PopAWheelie:
-      ret = Localization.Get(LocalizationKeys.kBehaviorPopAWheelie);
-      break;
-    case BehaviorType.PounceOnMotion:
-      ret = Localization.Get(LocalizationKeys.kBehaviorPounceOnMotion);
-      break;
-    case BehaviorType.RollBlock:
-      ret = Localization.Get(LocalizationKeys.kBehaviorRollBlock);
-      break;
-    case BehaviorType.StackBlocks:
-      ret = Localization.Get(LocalizationKeys.kBehaviorStackCube);
-      break;
-    case BehaviorType.FindFaces:
-      ret = Localization.Get(LocalizationKeys.kBehaviorLookingForFaces);
-      break;
-    case BehaviorType.AcknowledgeFace:
-      ret = Localization.Get(LocalizationKeys.kBehaviorAcknowledgeObject);
-      break;
-    case BehaviorType.InteractWithFaces:
-      ret = Localization.Get(LocalizationKeys.kBehaviorInteractWithFaces);
-      break;
-    case BehaviorType.ReactToPet:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToPet);
-      break;
-    case BehaviorType.PlayAnim:
-      // Play Anim behavior is also used for some intros/outros
-      if (behaviorName == "NothingToDo_Idle" || behaviorName == "NothingToDo_BoredAnim") {
-        ret = Localization.Get(LocalizationKeys.kBehaviorBored);
-      }
-      break;
-    case BehaviorType.ReactToCliff:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToCliff);
-      break;
-    case BehaviorType.AcknowledgeObject:
-      ret = Localization.Get(LocalizationKeys.kBehaviorAcknowledgeObject);
-      break;
-    case BehaviorType.ReactToRobotOnBack:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToOnBack);
-      break;
-    case BehaviorType.ReactToRobotOnFace:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToOnFace);
-      break;
-    case BehaviorType.ReactToReturnedToTreads:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToOnTreads);
-      break;
-    case BehaviorType.ReactToUnexpectedMovement:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToUnexpectedMovement);
-      break;
-    case BehaviorType.ReactToFrustration:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToFrustration);
-      break;
-    case BehaviorType.ReactToOnCharger:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToOnCharger);
-      break;
-    case BehaviorType.ReactToPickup:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToPickup);
-      break;
-    case BehaviorType.ReactToRobotOnSide:
-      ret = Localization.Get(LocalizationKeys.kBehaviorReactToOnSide);
-      break;
-    case BehaviorType.DriveOffCharger:
-      ret = Localization.Get(LocalizationKeys.kBehaviorDriveOffCharger);
-      break;
-    case BehaviorType.RequestGameSimple:
-      ret = Localization.Get(LocalizationKeys.kBehaviorRequestToPlay);
-      break;
-    case BehaviorType.PickUpCube:
-      ret = Localization.Get(LocalizationKeys.kBehaviorPickupCube);
-      break;
-    case BehaviorType.CubeLiftWorkout:
-      ret = Localization.Get(LocalizationKeys.kBehaviorWorkout);
-      break;
-    case BehaviorType.CheckForStackAtInterval:
-      ret = Localization.Get(LocalizationKeys.kBehaviorCheckForStackAtInterval);
-      break;
-    default:
-      break;
-    }
-    return ret;
   }
 
   private void HandleFreeplayRewardedAction(RewardedActionData reward) {

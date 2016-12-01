@@ -851,6 +851,7 @@ public class MockRobot : IRobot {
     get;
     set;
   }
+  public string CurrentBehaviorDisplayNameKey { get; set; }
 
   public bool PlayingReactionaryBehavior {
     get; set;

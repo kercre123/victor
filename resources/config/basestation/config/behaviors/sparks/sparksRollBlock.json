@@ -2,6 +2,7 @@
   "behaviorType": "RollBlock",
   "executableBehaviorType": "RollBlock",
   "name": "sparksRollBlock",
+  "displayNameKey":"behavior.RollBlock",
   "requiredUnlockId": "RollCube",
   "behaviorGroups": [
       "SparksRollBlock"

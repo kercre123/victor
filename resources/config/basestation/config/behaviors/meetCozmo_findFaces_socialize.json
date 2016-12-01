@@ -1,6 +1,7 @@
 {
   "behaviorType": "FindFaces",
   "name": "meetCozmo_findFaces_socialize",
+  "displayNameKey":"behavior.LookingForFaces",
 
   "behaviorGroups": [
     "MeetCozmo_Socialize"

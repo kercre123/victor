@@ -289,6 +289,8 @@ public class Robot : IRobot {
 
   public string CurrentBehaviorName { get; set; }
 
+  public string CurrentBehaviorDisplayNameKey { get; set; }
+
   public string CurrentDebugAnimationString { get; set; }
 
   public bool PlayingReactionaryBehavior { get; set; }
@@ -447,6 +449,7 @@ public class Robot : IRobot {
   private void HandleBehaviorTransition(Anki.Cozmo.ExternalInterface.BehaviorTransition message) {
     CurrentBehaviorType = message.newBehaviorType;
     CurrentBehaviorName = message.newBehavior;
+    CurrentBehaviorDisplayNameKey = message.newBehaviorDisplayKey;
   }
 
   private void HandleReactionaryBehaviorTransition(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
@@ -605,6 +608,7 @@ public class Robot : IRobot {
     CurrentBehaviorType = BehaviorType.NoneBehavior;
     // usually this is unique
     CurrentBehaviorName = "NoneBehavior";
+    CurrentBehaviorDisplayNameKey = "";
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
       BackpackLights[i].ClearData();

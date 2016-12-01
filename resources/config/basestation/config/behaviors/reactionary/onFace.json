@@ -1,5 +1,6 @@
 {
   "behaviorType": "ReactToRobotOnFace",
+  "displayNameKey":"behavior.ReactToOnFace",
   "behaviorGroups": [
     "Reactionary"
   ],

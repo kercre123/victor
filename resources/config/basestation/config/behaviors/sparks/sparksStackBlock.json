@@ -1,6 +1,7 @@
 {
   "behaviorType": "StackBlocks",
   "name": "sparksStackBlock",
+  "displayNameKey":"behavior.StackCube",
   "requiredUnlockId": "StackTwoCubes",
   "behaviorGroups": [
     "SparksStackBlock"

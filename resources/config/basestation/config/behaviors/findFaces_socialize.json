@@ -2,6 +2,7 @@
   "behaviorType": "FindFaces",
   "executableBehaviorType": "FindFaces",
   "name": "findFaces_socialize",
+  "displayNameKey":"behavior.LookingForFaces",
 
   "behaviorGroups": [
     "FP_Socialize"

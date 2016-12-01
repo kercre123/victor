@@ -1,6 +1,7 @@
 {
   "behaviorType": "CheckForStackAtInterval",
   "name": "sparksCheckForStackAtInterval",
+  "displayNameKey":"behavior.CheckForStackAtInterval",
   "behaviorGroups": [
     "SparksKnockOverCubes"
   ],

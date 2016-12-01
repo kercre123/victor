@@ -1,5 +1,6 @@
 {
   "behaviorType": "ReactToPickup",
+  "displayNameKey":"behavior.ReactToPickup",
   "behaviorGroups": [
     "Reactionary"
   ],
