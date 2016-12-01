@@ -245,6 +245,11 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public bool PreloadOnboarding() {
+    if (!IsOnboardingRequired(OnboardingPhases.Home) &&
+        !IsOnboardingRequired(OnboardingPhases.Loot) &&
+        !IsOnboardingRequired(OnboardingPhases.Upgrades)) {
+      return false;
+    }
     if (_OnboardingUIInstance == null) {
       AssetBundleManager.Instance.LoadAssetBundleAsync(_OnboardingUIPrefabData.AssetBundle, LoadOnboardingAssetsCallback);
       return false;

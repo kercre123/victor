@@ -70,8 +70,8 @@ public class IntroManager : MonoBehaviour {
 
     _StartFlowInProgress = true;
 
+    OnboardingManager.Instance.PreloadOnboarding();
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
-      OnboardingManager.Instance.PreloadOnboarding();
       ShowFirstTimeFlow();
     }
     else {
