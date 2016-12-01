@@ -55,14 +55,13 @@ MonoBehaviour:
   - targetImage: {fileID: 11431056}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
-    pressedColor: {r: 1, g: 1, b: 1, a: 0.791}
+    pressedColor: {r: 1, g: 1, b: 1, a: 0.5294118}
     disabledSprite: {fileID: 0}
     disabledColor: {r: 0.47058824, g: 0.47058824, b: 0.47058824, a: 0.334}
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11431056
 MonoBehaviour:
@@ -76,7 +75,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.522}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
