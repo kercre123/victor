@@ -291,9 +291,6 @@ namespace Cozmo {
     // Disable reactionary behaviors
     robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
     
-    // Disable keep face alive animation
-    robot.GetAnimationStreamer().SetParam(Anki::Cozmo::LiveIdleAnimationParameter::EnableKeepFaceAlive, 0);
-
     // Only enable vision modes we actually need
     // NOTE: we do not (yet) restore vision modes afterwards!
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off

@@ -52,10 +52,6 @@ namespace Anki {
           _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
           _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
-        // Restore previous keep face alive setting
-        if(_wasKeepFaceAliveEnabled) {
-          _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
-        }
       }
 
       if( IsRunning() ) {
@@ -156,11 +152,9 @@ namespace Anki {
         
         if(_moveEyes)
         {
-          // Disable keep face alive if it is enabled and save so we can restore later
-          _wasKeepFaceAliveEnabled = _robot.GetAnimationStreamer().GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive);
-          if(_wasKeepFaceAliveEnabled) {
-            _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, false);
-          }
+          // Remove any existing eye dart due to keeping face alive, since we're
+          // doing our own
+          _robot.GetAnimationStreamer().RemoveKeepAliveEyeDart(IKeyFrame::SAMPLE_LENGTH_MS);
           
           // Store half the total difference so we know when to remove eye shift
           _halfAngle = 0.5f*(_currentTargetAngle - _initialAngle).getAbsoluteVal();
@@ -688,12 +682,6 @@ namespace Anki {
         }
         _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       }
-      if(_moveEyes) {
-        // Restore previous keep face alive setting
-        if(_wasKeepFaceAliveEnabled) {
-          _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
-        }
-      }
     }
     
     bool MoveHeadToAngleAction::IsHeadInPosition() const
@@ -719,11 +707,8 @@ namespace Anki {
         
         if(_moveEyes)
         {
-          // Store initial state of keep face alive so we can restore it
-          _wasKeepFaceAliveEnabled = _robot.GetAnimationStreamer().GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive);
-          if(_wasKeepFaceAliveEnabled) {
-            _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, false);
-          }
+          // Remove any existing eye dart due to keeping face alive, since we're doing our own
+          _robot.GetAnimationStreamer().RemoveKeepAliveEyeDart(IKeyFrame::SAMPLE_LENGTH_MS);
           
           // Lead with the eyes, if not in position
           // Note: assuming screen is about the same x distance from the neck joint as the head cam

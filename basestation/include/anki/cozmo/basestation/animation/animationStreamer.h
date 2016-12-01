@@ -99,6 +99,9 @@ namespace Cozmo {
     // Add a keyframe to the end of an existing persistent face layer
     void AddToPersistentFaceLayer(Tag tag, ProceduralFaceKeyFrame&& keyframe);
     
+    // Remove any existing procedural eye dart created by KeepFaceAlive
+    void RemoveKeepAliveEyeDart(s32 duration_ms);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
      
