@@ -2136,9 +2136,6 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:a
-    JsonValue: 0.8627451
-  - ObjectPath: ButtonIcon
     FieldName: UnityEngine.UI.Image:m_Color:b
     JsonValue: 0.9098039
   - ObjectPath: ButtonIcon
@@ -2147,9 +2144,6 @@ MonoBehaviour:
   - ObjectPath: ButtonIcon
     FieldName: UnityEngine.UI.Image:m_Color:r
     JsonValue: 0.141176477
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:a
-    JsonValue: 0.8627451
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:b
     JsonValue: 0.909804

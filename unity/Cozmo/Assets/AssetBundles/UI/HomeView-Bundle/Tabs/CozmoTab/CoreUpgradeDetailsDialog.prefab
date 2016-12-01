@@ -913,15 +913,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
-  - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:a
-    JsonValue: 0.547
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:a
-    JsonValue: 1.0
+    JsonValue: 0.3137255
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:b
     JsonValue: 1.0
@@ -933,7 +930,7 @@ MonoBehaviour:
     JsonValue: 1.0
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:a
-    JsonValue: 0.784
+    JsonValue: 0.5882353
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: CoreUpgradeDetailsDialog:_OptionalCloseDialogButton

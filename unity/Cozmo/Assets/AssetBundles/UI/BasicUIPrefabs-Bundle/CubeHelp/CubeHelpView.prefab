@@ -118,15 +118,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
-  - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:a
-    JsonValue: 0.549019635
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:a
-    JsonValue: 0.549019635
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.UI.BaseView:_OptionalCloseDialogButton

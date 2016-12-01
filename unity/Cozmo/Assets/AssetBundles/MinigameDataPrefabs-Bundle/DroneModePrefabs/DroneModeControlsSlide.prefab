@@ -1746,9 +1746,6 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:a
-    JsonValue: 0.498039216
-  - ObjectPath: ButtonIcon
     FieldName: UnityEngine.UI.Image:m_Color:b
     JsonValue: 0.9098039
   - ObjectPath: ButtonIcon
