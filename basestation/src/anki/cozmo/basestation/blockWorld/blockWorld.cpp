@@ -3170,12 +3170,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     // iterate the objects we have seen, to grab the markers we have seen and clear the map towards them
     for(const ObservableObject* seenObj : seenObjects)
     {
-      // objectSeen should be directly w.r.t robot's origin now
-      ASSERT_NAMED(seenObj->GetPose().GetParent() != nullptr && seenObj->GetPose().GetParent()->IsOrigin(),
-                   "BlockWorld.ClearRobotToMarkersInMemMap.ObservedObjectParentNotAnOrigin");
-      ASSERT_NAMED(seenObj->GetPose().GetParent() == _robot->GetWorldOrigin(),
-                   "BlockWorld.ClearRobotToMarkersInMemMap.ObservedObjectParentNotRobotOrigin");
-
       // get the markers we have seen from this object
       std::vector<const Vision::KnownMarker*> observedMarkers;
       seenObj->GetObservedMarkers(observedMarkers);
