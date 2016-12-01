@@ -181,7 +181,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   , _trackPoseChanges(false)
   , _blockConfigurationManager(new BlockConfigurations::BlockConfigurationManager(*robot))
   {
-    CORETECH_ASSERT(_robot != nullptr);
+    ASSERT_NAMED(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
     
     // TODO: Create each known block / matpiece from a configuration/definitions file
     
@@ -2172,12 +2172,14 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         
         // ObservedObjects are w.r.t. the arbitrary historical origin of the camera
         // that observed them.  Hook them up to the current robot origin now:
-        CORETECH_ASSERT(object->GetPose().GetParent() != nullptr &&
-                        object->GetPose().GetParent()->IsOrigin());
+        ASSERT_NAMED(object->GetPose().GetParent() != nullptr &&
+                        object->GetPose().GetParent()->IsOrigin(),
+                     "BlockWorld.UpdateRobotPose.InvalidParentPose");
+        
         object->SetPoseParent(_robot->GetWorldOrigin());
         
         MatPiece* mat = dynamic_cast<MatPiece*>(object);
-        CORETECH_ASSERT(mat != nullptr);
+        ASSERT_NAMED(mat != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatPiece");
         
         // Does this mat pose make sense? I.e., is the top surface flat enough
         // that we could drive on it?
@@ -2262,7 +2264,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
             // though it is not _on_ that mat.  Remain localized to that mat
             // and update any others it is also seeing
             matToLocalizeTo = dynamic_cast<MatPiece*>(overlappingMatsSeen[0]);
-            CORETECH_ASSERT(matToLocalizeTo != nullptr);
+            ASSERT_NAMED(matToLocalizeTo != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatLocalization");
           }
           
           
@@ -2272,31 +2274,33 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
           // most accurate) and localize to that one.
           f32 minDistSq = -1.f;
           MatPiece* closestMat = nullptr;
-          for(const auto& matPair : matsSeen) {
+          for (const auto& matPair : matsSeen) {
             Vision::ObservableObject* mat = matPair.second;
             
             std::vector<const Vision::KnownMarker*> observedMarkers;
             mat->GetObservedMarkers(observedMarkers, atTimestamp);
-            if(observedMarkers.empty()) {
+            if (observedMarkers.empty()) {
+              // TODO: handle this situation
               PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers",
                                 "We saw a mat piece but it is returning no observed markers for "
                                 "the current timestamp.");
-              CORETECH_ASSERT(false); // TODO: handle this situation
+              ASSERT_NAMED(false, "BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers");
             }
             
             Pose3d markerWrtRobot;
-            for(auto obsMarker : observedMarkers) {
-              if(obsMarker->GetPose().GetWithRespectTo(_robot->GetPose(), markerWrtRobot) == false) {
-                PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMisMatch",
+            for (auto obsMarker : observedMarkers) {
+              if (obsMarker->GetPose().GetWithRespectTo(_robot->GetPose(), markerWrtRobot) == false) {
+                // TODO: handle this situation
+                PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMismatch",
                                   "Could not get the pose of an observed marker w.r.t. the robot that "
                                   "supposedly observed it.");
-                CORETECH_ASSERT(false); // TODO: handle this situation
+                ASSERT_NAMED(false, "BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMismatch");
               }
               
               const f32 markerDistSq = markerWrtRobot.GetTranslation().LengthSq();
-              if(closestMat == nullptr || markerDistSq < minDistSq) {
+              if (closestMat == nullptr || markerDistSq < minDistSq) {
                 closestMat = dynamic_cast<MatPiece*>(mat);
-                CORETECH_ASSERT(closestMat != nullptr);
+                ASSERT_NAMED(closestMat != nullptr, "BlockWorld.UpdateRobotPose.InvalidClosestMat");
                 minDistSq = markerDistSq;
               }
             } // for each observed marker
@@ -2374,7 +2378,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
             // update its pose (we can't both update the mat's pose and use it
             // to update the robot's pose at the same time!)
             existingMatPiece.reset( dynamic_cast<MatPiece*>(existingObjects.front()) );
-            CORETECH_ASSERT(existingMatPiece != nullptr);
+            ASSERT_NAMED(existingMatPiece != nullptr, "BlockWorld.UpdateRobotPose.InvalidExistingMatPiece");
             
             PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
                                     "Robot %d localizing to existing %s mat with ID=%d.",
@@ -2472,8 +2476,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
               _robot->GetObjectPoseConfirmer().AddObjectRelativeObservation(overlappingObjects[0], poseWrtOrigin, matSeen);
               
             } else {
-              /* PUNT - not sure this is workign, nor we want to bother with this for now...
-              CORETECH_ASSERT(robot->IsLocalized());
+              /* PUNT - not sure this is working, nor we want to bother with this for now...
+              ASSERT_NAMED(robot->IsLocalized(), "BlockWorld.UpdateRobotPose.RobotIsNotLocalized");
               
               // Find the mat the robot is currently localized to
               MatPiece* localizedToMat = nullptr;
@@ -2484,7 +2488,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                 }
               }
 
-              CORETECH_ASSERT(localizedToMat != nullptr);
+              ASSERT_NAMED(localizedToMat != nullptr, "BlockWorld.UpdateRobotPose.RobotIsNotLocalizedToMat");
               
               // Update the mat we are localized to (but may not have seen) w.r.t. the existing
               // observed world origin mat we did see from it.  This should in turn

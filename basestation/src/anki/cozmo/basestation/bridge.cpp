@@ -92,8 +92,8 @@ namespace Anki {
       const Vision::KnownMarker* rightMarker = &AddMarker(rightMarkerType, rightMarkerPose, markerSize);
       AddMarker(middleMarkerType, Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f}), markerSize);
       
-      CORETECH_ASSERT(leftMarker != nullptr);
-      CORETECH_ASSERT(rightMarker != nullptr);
+      ASSERT_NAMED(leftMarker != nullptr, "Bridge.Constructor.InvalidLeftMarker");
+      ASSERT_NAMED(rightMarker != nullptr, "Bridge.Constructor.InvalidRightMarker");
       
       if(preCrossingPoseLeft.GetWithRespectTo(leftMarker->GetPose(), preCrossingPoseLeft) == false) {
         PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseLeftError", "Could not get preCrossingLeftPose w.r.t. left bridge marker.");

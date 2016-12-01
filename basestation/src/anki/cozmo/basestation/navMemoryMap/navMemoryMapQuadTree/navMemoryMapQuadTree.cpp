@@ -51,7 +51,9 @@ NavMeshQuadTreeTypes::ENodeContentType ConvertContentType(NavMemoryMapTypes::ECo
     case EContentType::_Count:                { ASSERT_NAMED(false, "NavMeshQuadTreeTypes.ConvertContentType.InvalidType._Count"); break; }
   }
   
-  CORETECH_ASSERT(nodeContentType != ENodeContentType::Invalid);
+  ASSERT_NAMED(nodeContentType != ENodeContentType::Invalid,
+               "NavMeshQuadTreeTypes.ConvertContentType.InvalidNodeContentType");
+  
   return nodeContentType;
 }
 
@@ -60,7 +62,8 @@ NavMeshQuadTreeTypes::ENodeContentTypePackedType ConvertContentArrayToFlags(cons
 {
   using namespace NavMemoryMapTypes;
   using namespace NavMeshQuadTreeTypes;
-  ASSERT_NAMED( IsSequentialArray(array), "ConvertContentTypeToFlags.InvalidArray");
+  
+  ASSERT_NAMED(IsSequentialArray(array), "NavMeshQuadTreeTypes.ConvertContentArrayToFlags.InvalidArray");
 
   ENodeContentTypePackedType contentTypeFlags = 0;
   for( const auto& entry : array )

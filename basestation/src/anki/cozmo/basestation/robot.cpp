@@ -1050,7 +1050,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     if(IsOnRamp()) {
           
       // Sanity check:
-      CORETECH_ASSERT(_rampID.IsSet());
+      ASSERT_NAMED(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
           
       // Don't update pose history while on a ramp.
       // Instead, just compute how far the robot thinks it has gone (in the plane)
@@ -1982,7 +1982,7 @@ void Robot::SetLiftAngle(const f32& angle)
       
   Robot::ComputeLiftPose(_currentLiftAngle, _liftPose);
 
-  CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
+  ASSERT_NAMED(_liftPose.GetParent() == &_liftBasePose, "Robot.SetLiftAngle.InvalidPose");
 }
     
 Radians Robot::GetPitchAngle() const
@@ -2983,7 +2983,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
     return RESULT_FAIL;
   }
       
-  CORETECH_ASSERT(marker != nullptr);
+  ASSERT_NAMED(marker != nullptr, "Robot.DockWithObject.InvalidMarker");
       
   // Need to store these so that when we receive notice from the physical
   // robot that it has picked up an object we can transition the docking
@@ -3649,7 +3649,7 @@ Result Robot::UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin)
 {
   // Reverse the connection between origin and robot, and connect the new
   // reversed connection
-  //CORETECH_ASSERT(p.GetPose().GetParent() == _poseOrigin);
+  //ASSERT_NAMED(p.GetPose().GetParent() == _poseOrigin, "Robot.UpdateWorldOrigin.InvalidPose");
   //Pose3d originWrtRobot = _pose.GetInverse();
   //originWrtRobot.SetParent(&newPoseOrigin);
       
@@ -4047,7 +4047,8 @@ void Robot::BroadcastAvailableObjects(bool enable)
       
 Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
 {
-  //CoreTechPrint("_reactionCallbacks size = %lu\n", (unsigned long)_reactionCallbacks.size());
+  //PRINT_NAMED_DEBUG("Robot.AddReactionCallback", _reactionCallbacks size = %lu\n",
+  //  (unsigned long)_reactionCallbacks.size());
       
   _reactionCallbacks[code].emplace_front(callback);
       

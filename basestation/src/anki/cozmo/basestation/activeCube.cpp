@@ -59,7 +59,7 @@ namespace Anki {
       for(auto & marker : markerList) {
         uniqueCodes.insert(marker.GetCode());
       }
-      CORETECH_ASSERT(uniqueCodes.size() == markerList.size());
+      ASSERT_NAMED(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
     }
     
     ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
