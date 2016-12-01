@@ -22,6 +22,7 @@
 #include "wheelController.h"
 #include "pathFollower.h"
 #include "pickAndPlaceController.h"
+#include "proxSensors.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
@@ -514,7 +515,7 @@ namespace Anki {
           
           // Picked up flag is reset only when the robot has
           // stopped moving, detects no cliffs, and has been set upright.
-          if (!HAL::IsCliffDetected() &&
+          if (!ProxSensors::IsCliffDetected() &&
               CheckPutdown() &&
               (accel_robot_frame_filt[2] > NSIDE_DOWN_THRESH_MMPS2)) {
             if (++putdownCnt_ > PUTDOWN_COUNT) {
@@ -608,7 +609,7 @@ namespace Anki {
             if (CheckPickupWhileMoving() || cliffBasedPickupDetect || gyroZBasedMotionDetect) {
               if (++potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOVING) {
                 SetPickupDetect(true);
-                AnkiInfo( 416, "IMUFilter.PickupDetected", 629, "accX %f, accY %f, accZ %f, cliff %d, gyroZ %d", 5,
+                AnkiInfo( 418, "IMUFilter.PickupDetected", 629, "accX %f, accY %f, accZ %f, cliff %d, gyroZ %d", 5,
                          accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2], cliffBasedPickupDetect, gyroZBasedMotionDetect);
               }
             } else {
@@ -835,7 +836,7 @@ namespace Anki {
               gyroBiasCoeff_ = GYRO_BIAS_FILT_COEFF;
               gyroMotionThresh_ = GYRO_MOTION_THRESHOLD;
             }
-            else if ( HAL::IsCliffDetected() ||
+            else if ( ProxSensors::IsCliffDetected() ||
                       (ABS(gyro_bias_filt[0] - imu_data_.rate_x) > BIAS_FILT_RESTART_THRESH) ||
                       (ABS(gyro_bias_filt[1] - imu_data_.rate_y) > BIAS_FILT_RESTART_THRESH) ||
                       (ABS(gyro_bias_filt[2] - imu_data_.rate_z) > BIAS_FILT_RESTART_THRESH) ) {

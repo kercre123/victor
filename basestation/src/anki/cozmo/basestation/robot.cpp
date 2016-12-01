@@ -113,6 +113,10 @@ CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
 // if false, vision system keeps running while picked up, on side, etc.
 CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 
+// Whether or not to lower the cliff detection threshold on the robot
+// whenever a suspicious cliff is encountered.
+CONSOLE_VAR(bool, kDoProgressiveThresholdAdjustOnSuspiciousCliff, "Robot", true);
+  
 ////////
 // Consts for robot offtreadsState
 ///////
@@ -156,6 +160,26 @@ const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
   0,             -0.9976,   -0.0698,
 });
 
+  
+  
+// Minimum value that cliff detection threshold can be dynamically lowered to
+static const u32 kCliffSensorMinDetectionThresh = 150;
+
+// Amount by which cliff detection level can be lowered when suspiciously cliff-y floor detected
+static const u32 kCliffSensorDetectionThreshStep = 250;
+
+// Number of suspicious cliffs that must be encountered before detection threshold is lowered
+static const u32 kCliffSensorSuspiciousCliffCount = 1;
+
+// Size of running window of cliff data for computing running mean/variance in number of RobotState messages (which arrive every 30ms)
+static const u32 kCliffSensorRunningStatsWindowSize = 100;
+  
+// Cliff variance threshold for detecting suspiciously cliffy floor/carpet
+static const f32 kCliffSensorSuspiciouslyCliffyFloorThresh = 10000;
+  
+// The minimum amount by which the cliff data must be above the minimum value observed since stopping
+// began in order to be considered a suspicious cliff. (i.e. We might be on crazy carpet)
+static const u16 kMinRiseDuringStopForSuspiciousCliff = 15;
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   : _context(context)
@@ -400,7 +424,99 @@ ObjectID Robot::AddUnconnectedCharger()
   return _chargerID;
 }
 
+void Robot::IncrementSuspiciousCliffCount()
+{
+  if (_cliffDetectThreshold > kCliffSensorMinDetectionThresh) {
+    ++_suspiciousCliffCnt;
+    PRINT_NAMED_EVENT("IncrementSuspiciousCliffCount.Count", "%d", _suspiciousCliffCnt);
+    if (_suspiciousCliffCnt >= kCliffSensorSuspiciousCliffCount) {
+      _cliffDetectThreshold = MAX(_cliffDetectThreshold - kCliffSensorDetectionThreshStep, kCliffSensorMinDetectionThresh);
+      PRINT_NAMED_EVENT("IncrementSuspiciousCliffCount.NewThreshold", "%d", _cliffDetectThreshold);
+      SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(_cliffDetectThreshold);
+      _suspiciousCliffCnt = 0;
+    }
+  }
+}
+
+void Robot::EvaluateCliffSuspiciousnessWhenStopped() {
+  if (kDoProgressiveThresholdAdjustOnSuspiciousCliff) {
+    _cliffStartTimestamp = GetLastMsgTimestamp();
+  }
+}
+  
+// Updates mean and variance of cliff readings observed in last kCliffSensorRunningStatsWindowSize RobotState msgs.
+// Based on Welford Algorithm. See http://stackoverflow.com/questions/5147378/rolling-variance-algorithm
+void Robot::UpdateCliffRunningStats(const RobotState& msg) {
+  
+  u16 obs = msg.cliffDataRaw;
+  if (GetMoveComponent().AreWheelsMoving() && (GetOffTreadsState() == OffTreadsState::OnTreads) && obs > (_cliffDetectThreshold)) {
+
+    _cliffDataQueue.push_back(obs);
+    if (_cliffDataQueue.size() > kCliffSensorRunningStatsWindowSize) {
+      // Popping oldest value. Update stats.
+      f32 oldestObs = _cliffDataQueue.front();
+      _cliffDataQueue.pop_front();
+      f32 prevMean = _cliffRunningMean;
+      _cliffRunningMean += (obs - oldestObs) / kCliffSensorRunningStatsWindowSize;
+      _cliffRunningVar_acc += (obs - prevMean) * (obs - _cliffRunningMean) - (oldestObs - prevMean) * (oldestObs - _cliffRunningMean);
+    } else {
+      // Queue not full yet. Just update stats
+      f32 delta = obs - _cliffRunningMean;
+      _cliffRunningMean += delta / _cliffDataQueue.size();
+      _cliffRunningVar_acc += delta * (obs - _cliffRunningMean);
+    }
     
+    // Compute running variance based on number of samples in queue/window
+    if (_cliffDataQueue.size() > 1) {
+      _cliffRunningVar = _cliffRunningVar_acc / (_cliffDataQueue.size() - 1);
+    }
+  }
+}
+  
+
+void Robot::ClearCliffRunningStats() {
+  _cliffDataQueue.clear();
+  _cliffRunningMean = 0;
+  _cliffRunningVar = 0;
+  _cliffRunningVar_acc = 0;
+}
+
+void Robot::UpdateCliffDetectThreshold() {
+  // Check pose history for cliff readings to see if cliff readings went up
+  // after stopping indicating a suspicious cliff.
+  if (_cliffStartTimestamp > 0) {
+    if( !GetMoveComponent().AreWheelsMoving() ) {
+      
+      auto poseMap = GetPoseHistory()->GetRawPoses();
+      u16 minVal = u16_MAX;
+      for (auto startIt = poseMap.lower_bound(_cliffStartTimestamp); startIt != poseMap.end(); ++startIt) {
+        u16 currVal = startIt->second.GetCliffData();
+        PRINT_NAMED_DEBUG("Robot.UpdateCliffRunningStats.CliffValueWhileStopping", "%d - %d", startIt->first, currVal);
+        
+        if (minVal > currVal) {
+          minVal = currVal;
+        }
+        
+        // If a cliff reading is ever more than a certain amount above the minimum observed value since
+        // it began stopping, the cliff it is reacting to is suspect (probably carpet) so don't bother doing the reaction.
+        // Note: This is mostly from testing on the office carpet.
+        if (IsFloorSuspiciouslyCliffy() && (currVal > minVal + kMinRiseDuringStopForSuspiciousCliff)) {
+          IncrementSuspiciousCliffCount();
+        }
+      }
+      
+      _cliffStartTimestamp = 0;
+    }
+  }
+}
+
+  
+// The variance of the recent cliff readings is what we use to determine the cliffyness of the floor
+bool Robot::IsFloorSuspiciouslyCliffy() const {
+  return (_cliffRunningVar > kCliffSensorSuspiciouslyCliffyFloorThresh);
+}
+
+  
 bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 {
   if (!IsHeadCalibrated()) {
@@ -586,6 +702,16 @@ void Robot::Delocalize(bool isCarryingObject)
   _localizedToID.UnSet();
   _localizedToFixedObject = false;
   _localizedMarkerDistToCameraSq = -1.f;
+  
+  // Reset cliff threshold
+  _suspiciousCliffCnt = 0;
+  if (_cliffDetectThreshold != CLIFF_SENSOR_DROP_LEVEL) {
+    _cliffDetectThreshold = CLIFF_SENSOR_DROP_LEVEL;
+    PRINT_NAMED_EVENT("Robot.Delocalize.RestoringCliffDetectThreshold", "%d", _cliffDetectThreshold);
+    SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(_cliffDetectThreshold);
+  }
+  
+  ClearCliffRunningStats();
 
   // NOTE: no longer doing this here because Delocalize() can be called by
   //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
@@ -624,7 +750,7 @@ void Robot::Delocalize(bool isCarryingObject)
   // frame that have different origins (Not 100% sure this is totally necessary but seems
   // like the cleaner / safer thing to do.)
   AddVisionOnlyPoseToHistory(GetLastMsgTimestamp(), _pose, GetHeadAngle(), GetLiftAngle());
-  AddRawOdomPoseToHistory(GetLastMsgTimestamp(),GetPoseFrameID(), _pose, GetHeadAngle(), GetLiftAngle(), isCarryingObject);
+  AddRawOdomPoseToHistory(GetLastMsgTimestamp(),GetPoseFrameID(), _pose, GetHeadAngle(), GetLiftAngle(), GetCliffDataRaw(), isCarryingObject);
   
   if(_timeSynced)
   {
@@ -1030,6 +1156,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
                                          newPose,
                                          msg.headAngle,
                                          msg.liftAngle,
+                                         msg.cliffDataRaw,
                                          isCarryingObject);
     
     if(lastResult != RESULT_OK) {
@@ -1069,6 +1196,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   }
   
   DetectGyroDrift(msg);
+  
+  UpdateCliffRunningStats(msg);
+  UpdateCliffDetectThreshold();
   
   /*
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
@@ -1764,7 +1894,7 @@ void Robot::SetNewPose(const Pose3d& newPose)
   //  can get.
   const TimeStamp_t timeStamp = GetLastMsgTimestamp();
   
-  Result addResult = AddRawOdomPoseToHistory(timeStamp, _frameId, _pose, GetHeadAngle(), GetLiftAngle(), IsCarryingObject());
+  Result addResult = AddRawOdomPoseToHistory(timeStamp, _frameId, _pose, GetHeadAngle(), GetLiftAngle(), GetCliffDataRaw(), IsCarryingObject());
   if(RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("Robot.SetNewPose.AddRawOdomPoseFailed",
@@ -2367,7 +2497,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   {
     // Update the computed historical pose as well so that subsequent block
     // pose updates use obsMarkers whose camera's parent pose is correct.
-    posePtr->SetAll(GetPoseFrameID(), robotPoseWrtOrigin, liftAngle, liftAngle, posePtr->IsCarryingObject());
+    posePtr->SetAll(GetPoseFrameID(), robotPoseWrtOrigin, liftAngle, liftAngle, posePtr->GetCliffData(), posePtr->IsCarryingObject());
   }
 
       
@@ -2594,7 +2724,7 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   // pose updates use obsMarkers whose camera's parent pose is correct.
   // Note again that we store the pose w.r.t. the origin in history.
   // TODO: Should SetPose() do the flattening w.r.t. origin?
-  posePtr->SetAll(GetPoseFrameID(), robotPoseWrtOrigin, posePtr->GetHeadAngle(), posePtr->GetLiftAngle(), posePtr->IsCarryingObject());
+  posePtr->SetAll(GetPoseFrameID(), robotPoseWrtOrigin, posePtr->GetHeadAngle(), posePtr->GetLiftAngle(), posePtr->GetCliffData(), posePtr->IsCarryingObject());
       
   // Compute the new "current" pose from history which uses the
   // past vision-based "ground truth" pose we just computed.
@@ -3507,9 +3637,10 @@ Result Robot::AddRawOdomPoseToHistory(const TimeStamp_t t,
                                       const Pose3d& pose,
                                       const f32 head_angle,
                                       const f32 lift_angle,
+                                      const u16 cliff_data,
                                       const bool isCarryingObject)
 {
-  RobotPoseStamp poseStamp(frameID, pose, head_angle, lift_angle, isCarryingObject);
+  RobotPoseStamp poseStamp(frameID, pose, head_angle, lift_angle, cliff_data, isCarryingObject);
   return _poseHistory->AddRawOdomPose(t, poseStamp);
 }
     
@@ -3578,7 +3709,7 @@ Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
   // COZMO-3309 Need to change poseHistory to robot status history
   const bool isCarryingObject = false;
   
-  RobotPoseStamp poseStamp(_frameId, pose, head_angle, lift_angle, isCarryingObject);
+  RobotPoseStamp poseStamp(_frameId, pose, head_angle, lift_angle, u16_MAX, isCarryingObject);
   return _poseHistory->AddVisionOnlyPose(t, poseStamp);
 }
 

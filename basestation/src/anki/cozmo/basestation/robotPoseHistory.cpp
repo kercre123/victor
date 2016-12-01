@@ -22,7 +22,7 @@ namespace Anki {
     
     RobotPoseStamp::RobotPoseStamp()
     {
-      SetAll(0, Pose3d(), 0.0f, 0.0f, false);
+      SetAll(0, Pose3d(), 0.0f, 0.0f, u16_MAX, false);
     }
     
 
@@ -30,27 +30,30 @@ namespace Anki {
                                    const Pose3d& pose,
                                    const f32 head_angle,
                                    const f32 lift_angle,
+                                   const u16 cliff_data,
                                    const bool isCarryingObject)
     {
-      SetAll(frameID, pose, head_angle, lift_angle, isCarryingObject);
+      SetAll(frameID, pose, head_angle, lift_angle, cliff_data, isCarryingObject);
     }
     
     void RobotPoseStamp::SetAll(const PoseFrameID_t frameID,
                                  const Pose3d& pose,
                                  const f32 head_angle,
                                  const f32 lift_angle,
+                                 const u16 cliff_data,
                                  const bool isCarryingObject)
     {
       frame_ = frameID;
       pose_ = pose;
       headAngle_ = head_angle;
       liftAngle_ = lift_angle;
+      _cliffData = cliff_data;
       _isCarryingObject = isCarryingObject;
     }
     
     void RobotPoseStamp::Print() const
     {
-      printf("Frame %d, headAng %f, carrying %s", frame_, headAngle_, _isCarryingObject?"yes":"no");
+      printf("Frame %d, headAng %f, cliff %d, carrying %s", frame_, headAngle_, _cliffData, _isCarryingObject?"yes":"no");
       pose_.Print();
     }
     
@@ -134,7 +137,7 @@ namespace Anki {
       // If visPose entry exist at t, then overwrite it
       PoseMapIter_t it = visPoses_.find(t);
       if (it != visPoses_.end()) {
-        it->second.SetAll(p.GetFrameId(), p.GetPose(), p.GetHeadAngle(), p.GetLiftAngle(), p.IsCarryingObject());
+        it->second.SetAll(p.GetFrameId(), p.GetPose(), p.GetHeadAngle(), p.GetLiftAngle(), p.GetCliffData(), p.IsCarryingObject());
       } else {
       
         std::pair<PoseMapIter_t, bool> res;
@@ -247,6 +250,9 @@ namespace Anki {
         
           // Interp lift angle
           f32 interpLiftAngle = prev_it->second.GetLiftAngle() + timeScale * (it->second.GetLiftAngle() - prev_it->second.GetLiftAngle());
+
+          // Interp cliff data
+          f32 interpCliffData = prev_it->second.GetCliffData() + timeScale * (it->second.GetCliffData() - prev_it->second.GetCliffData());
           
           t = t_request;
 //          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle, interpLiftAngle, prev_it->second.GetPose().GetParent());
@@ -255,7 +261,7 @@ namespace Anki {
           const bool interpIsCarryingObject = isCloserToItThanFirst ? it->second.IsCarryingObject() : prev_it->second.IsCarryingObject();
 
           Pose3d interpPose(interpRotation, Z_AXIS_3D(), interpTrans, prev_it->second.GetPose().GetParent());
-          p.SetAll(prev_it->second.GetFrameId(), interpPose, interpHeadAngle, interpLiftAngle, interpIsCarryingObject);
+          p.SetAll(prev_it->second.GetFrameId(), interpPose, interpHeadAngle, interpLiftAngle, interpCliffData, interpIsCarryingObject);
         } else {
           
           // Return the pose closest to the requested time
@@ -429,7 +435,7 @@ namespace Anki {
       // pose in "git", so it should still be relative to whatever "git" was relative to.
       pTransform *= git->second.GetPose(); // Apply pTransform to git and store in pTransform
       pTransform.SetParent(git->second.GetPose().GetParent()); // Keep git's parent
-      p.SetAll(git->second.GetFrameId(), pTransform, p1.GetHeadAngle(), p1.GetLiftAngle(), p1.IsCarryingObject());
+      p.SetAll(git->second.GetFrameId(), pTransform, p1.GetHeadAngle(), p1.GetLiftAngle(), p1.GetCliffData(), p1.IsCarryingObject());
       
       return RESULT_OK;
     }
@@ -450,7 +456,7 @@ namespace Anki {
       // If computedPose entry exist at t, then overwrite it
       PoseMapIter_t it = computedPoses_.find(t);
       if (it != computedPoses_.end()) {
-        it->second.SetAll(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle(), ps.GetLiftAngle(), ps.IsCarryingObject());
+        it->second.SetAll(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle(), ps.GetLiftAngle(), ps.GetCliffData(), ps.IsCarryingObject());
         *p = &(it->second);
         
         if (key) {
@@ -461,7 +467,7 @@ namespace Anki {
         std::pair<PoseMapIter_t, bool> res;
         res = computedPoses_.emplace(std::piecewise_construct,
                                      std::forward_as_tuple(t),
-                                     std::forward_as_tuple(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle(), ps.GetLiftAngle(), ps.IsCarryingObject()));
+                                     std::forward_as_tuple(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle(), ps.GetLiftAngle(), ps.GetCliffData(), ps.IsCarryingObject()));
         
         if (!res.second) {
           return RESULT_FAIL;

@@ -145,7 +145,10 @@ const u8 NUM_RADIAL_DISTORTION_COEFFS = 8;
  *
  **************************************************************************/
 
+// Default cliff detection threshold
 const u32 CLIFF_SENSOR_DROP_LEVEL = 400;
+
+// Cliff un-detection threshold (hysteresis)
 const u32 CLIFF_SENSOR_UNDROP_LEVEL = 600;
 
 

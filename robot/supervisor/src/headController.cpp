@@ -5,6 +5,7 @@
 #include "anki/cozmo/robot/logging.h"
 #include "messages.h"
 #include "imuFilter.h"
+#include "proxSensors.h"
 #include <math.h>
 
 #define DEBUG_HEAD_CONTROLLER 0
@@ -449,7 +450,7 @@ namespace HeadController {
       if (potentialBurnoutStartTime_ms_ == 0) {
         potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
       } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
-        if (IsInPosition() || IMUFilter::IsPickedUp() || HAL::IsCliffDetected()) {
+        if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsCliffDetected()) {
           // Stop messing with the head! Going limp until you do!
           Messages::SendMotorAutoEnabledMsg(MOTOR_HEAD, false);
           Disable(true);

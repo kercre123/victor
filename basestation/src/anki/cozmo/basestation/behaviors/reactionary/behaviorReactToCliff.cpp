@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
@@ -37,7 +38,7 @@ static const std::set<BehaviorType> kBehaviorsToDisable = {BehaviorType::ReactTo
                                                            BehaviorType::AcknowledgeObject,
                                                            BehaviorType::AcknowledgeFace,
                                                            BehaviorType::ReactToCubeMoved};
-
+  
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
 {
@@ -60,12 +61,32 @@ Result BehaviorReactToCliff::InitInternalReactionary(Robot& robot)
   robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
   
   SmartDisableReactionaryBehavior(kBehaviorsToDisable);
-
+  
   switch( _state ) {
-    case State::PlayingStopReaction: 
-      TransitionToPlayingStopReaction(robot);
+    case State::PlayingStopReaction:
+    {
+      // Record cliff detection threshold before at start of stop
+      _cliffDetectThresholdAtStart = robot.GetCliffDetectThreshold();
+      
+      // Wait function for determining if the cliff is suspicious
+      auto waitForStopLambda = [this](Robot& robot) {
+        if ( robot.GetMoveComponent().AreWheelsMoving() ) {
+          return false;
+        }
+        
+        if (_cliffDetectThresholdAtStart != robot.GetCliffDetectThreshold()) {
+          // There was a change in the cliff detection threshold so assuming
+          // it was a false cliff and aborting reaction
+          PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.QuittingDueToSuspiciousCliff", "");
+          _quitReaction = true;
+        }
+        return true;
+      };
+      
+      WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(robot, waitForStopLambda);
+      StartActing(waitForStopAction, &BehaviorReactToCliff::TransitionToPlayingStopReaction);
       break;
-
+    }
     case State::PlayingCliffReaction:
       _gotCliff = true;
       TransitionToPlayingCliffReaction(robot);
@@ -85,16 +106,20 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
 {
   DEBUG_SET_STATE(PlayingStopReaction);
 
+  if(_quitReaction) {
+    //SendFinishedReactToCliffMessage(robot);
+    return;
+  }
+  
   // in case latency spiked between the Stop and Cliff message, add a small extra delay
   const float latencyDelay_s = 0.05f;
   const float minWaitTime_s = (1.0 / 1000.0 ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
 
-
-  // play the stop animation, but also wait at least the minimum time so we keep running 
+  // play the stop animation, but also wait at least the minimum time so we keep running
   _gotCliff = false;
   StartActing(new CompoundActionParallel(robot, {
     new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop),
-        new WaitAction(robot, minWaitTime_s) }),
+    new WaitAction(robot, minWaitTime_s) }),
     &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
@@ -143,7 +168,7 @@ bool BehaviorReactToCliff::ShouldRunForEvent(const ExternalInterface::MessageEng
 {  
   switch( event.GetTag() ) {
     case EngineToGameTag::CliffEvent: {
-      if( !IsRunning() && event.Get_CliffEvent().detected ) {
+      if( !IsRunning() && event.Get_CliffEvent().detected && !_quitReaction) {
         PRINT_NAMED_WARNING("BehaviorReactToCliff.CliffWithoutStop",
                             "Got a cliff event but stop isn't running, skipping straight to cliff react (bad latency?)");
         // this should only happen if latency gets bad because otherwise we should stay in the stop reaction
@@ -154,6 +179,7 @@ bool BehaviorReactToCliff::ShouldRunForEvent(const ExternalInterface::MessageEng
     }
 
     case EngineToGameTag::RobotStopped: {
+      _quitReaction = false;
       if( !IsRunning() ) {
         _state = State::PlayingStopReaction;
         return true;
