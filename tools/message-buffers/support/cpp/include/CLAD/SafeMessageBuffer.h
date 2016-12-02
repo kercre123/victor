@@ -1,12 +1,23 @@
+/*
+ * Copyright 2015-2016 Anki Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * File: SafeMessageBuffer.h
  *
- * Author: wesley
- * Created: 2/10/2015
- *
  * Description: Utility for safe message serialization and deserialization.
- *
- * Copyright: Anki, Inc. 2015
  *
  **/
 
@@ -17,10 +28,10 @@
 #error "SafeMessageBuffer is a C++ only header!"
 #endif
 
+#include <cassert>
 #include <cstdint>
 #include <vector>
 #include <string>
-#include "util/math/numericCast.h"
 
 namespace CLAD
 {
@@ -28,17 +39,17 @@ namespace CLAD
 class __attribute__((visibility("default"))) SafeMessageBuffer
 {
 public:
-  
+
   // ========== Constructors / Destructors ==========
-  
+
   SafeMessageBuffer();
   explicit SafeMessageBuffer(size_t inSize);
   SafeMessageBuffer(uint8_t* inBuffer, size_t inBufferSize, bool inOwnsBufferMemory = false);
-  
+
   ~SafeMessageBuffer();
 
   // ========== Buffer Management ==========
-  
+
   void AllocateBuffer(size_t inBufferSize);
   void SetBuffer(uint8_t* inBuffer, size_t inBufferSize, bool inOwnsBufferMemory = false);
   void ReleaseBuffer();
@@ -46,7 +57,7 @@ public:
   size_t  GetBytesWritten() const;
   size_t  GetBytesRead() const;
   size_t  CopyBytesOut(uint8_t* outBuffer, size_t bufferSize) const;
-  
+
   void Clear();
 
   // ========== Write methods ==========
@@ -58,7 +69,7 @@ public:
   {
     return WriteBytes(&inVal, sizeof(inVal));
   }
-  
+
   template <typename T>
   bool Write( const std::vector<T>& inVec)
   {
@@ -69,7 +80,7 @@ public:
     }
     return true;
   }
-  
+
   template <typename val_t, size_t length>
   bool WriteFArray(const std::array<val_t, length>& inArray)
   {
@@ -80,7 +91,7 @@ public:
     }
     return true;
   }
-  
+
   template <typename val_t, typename length_t>
   bool WriteVArray(val_t* arrayPtr, const length_t numElements)
   {
@@ -95,7 +106,10 @@ public:
   template <typename val_t, typename length_t>
   bool WriteVArray( const std::vector<val_t>& inVec )
   {
-    const length_t lengthWritten = Anki::Util::numeric_cast<length_t>(inVec.size());
+    const auto inVecLength = inVec.size();
+    const length_t lengthWritten = static_cast<length_t>(inVecLength);
+    assert(static_cast<decltype(inVecLength)>(lengthWritten) == inVecLength);
+
     if(!Write(lengthWritten)) {
       return false;
     }
@@ -104,11 +118,14 @@ public:
     }
     return true;
   }
-  
+
   template <typename length_t>
   bool WritePString( const std::string& str )
   {
-    const length_t lengthWritten = Anki::Util::numeric_cast<length_t>(str.length());
+    const std::size_t strlen = str.length();
+    const length_t lengthWritten = static_cast<length_t>(strlen);
+    assert(static_cast<std::size_t>(lengthWritten) == strlen);
+
     if(!Write(lengthWritten)) {
       return false;
     }
@@ -123,7 +140,10 @@ public:
   template <typename array_length_t, typename string_length_t>
   bool WritePStringVArray( const std::vector<std::string>& inVec )
   {
-    const array_length_t lengthWritten = Anki::Util::numeric_cast<array_length_t>(inVec.size());
+    const auto inVecLength = inVec.size();
+    const array_length_t lengthWritten = static_cast<array_length_t>(inVecLength);
+    assert(static_cast<decltype(inVecLength)>(lengthWritten) == inVecLength);
+
     if(!Write(lengthWritten)) {
       return false;
     }
@@ -152,13 +172,13 @@ public:
   // ========== Read methods ==========
 
   bool ReadBytes(void* destData, size_t sizeOfRead) const;
-  
+
   template <typename T>
   bool Read(T& outVal) const
   {
     return ReadBytes(&outVal, sizeof(outVal));
   }
-  
+
   template <typename val_t>
   bool Read( std::vector<val_t>& outVec, const size_t num) const
   {
@@ -186,7 +206,7 @@ public:
     }
     return true;
   }
-  
+
   template <typename val_t, typename length_t>
   bool ReadVArray( std::vector<val_t>& outVec ) const
   {
@@ -199,7 +219,7 @@ public:
     }
     return true;
   }
-  
+
   template <typename length_t>
   bool ReadPString( std::string& outStr ) const
   {
@@ -304,12 +324,12 @@ public:
     }
     return true;
   }
-  
+
   // Buffer contents equality
   bool ContentsEqual(const SafeMessageBuffer& other) const;
 
 private:
-  
+
   SafeMessageBuffer(const SafeMessageBuffer&);
   SafeMessageBuffer& operator=(const SafeMessageBuffer&);
 
@@ -317,7 +337,7 @@ private:
 
   uint8_t*          _buffer;
   size_t            _bufferSize;
-  
+
   uint8_t*          _writeHead;
   mutable uint8_t*  _readHead;
 
