@@ -37,13 +37,30 @@ namespace Anki {
     // Calculate timestamps for ImageIMU messages since they only have frameIDs and lineNumbers
     void ImuDataHistory::CalculateTimestampForImageIMU(u32 imageId, TimeStamp_t t, f32 period, int height)
     {
-      for(auto iter = _history.begin(); iter != _history.end(); iter++)
+      const f32 timePerLine = period/height;
+      for(auto iter = _history.begin(); iter != _history.end(); ++iter)
       {
         if(iter->imageId == imageId)
         {
           // The timestamp when this data was captured is
           // timestamp of the image - the time it took from the line it was captured to the end of the image
           iter->timestamp = t - (period/height * (height - iter->line2Number));
+        }
+        // Otherwise if the imageIMU is from the previous image and it still has a timestamp of 0
+        // better calculate it now. This means we got the imageIMU data after the corresponding image was processed
+        else if(iter->imageId == imageId - 1 &&
+                iter->timestamp == 0)
+        {
+          if(iter != _history.begin())
+          {
+            const auto prevIter = iter - 1;
+            // Both the last imageIMU data for the previous image and the one before both cant have timestamps of zero
+            // the only time that they both might have zero timestamps is on start up before we have processed the first image
+            if(prevIter->timestamp != 0)
+            {
+              iter->timestamp = prevIter->timestamp + ((iter->line2Number - prevIter->line2Number) * timePerLine);
+            }
+          }
         }
       }
     }
@@ -130,29 +147,45 @@ namespace Anki {
     }
     
     void RollingShutterCorrector::ComputePixelShifts(const VisionPoseData& poseData,
-                                                     const VisionPoseData& prevPoseData)
+                                                     const VisionPoseData& prevPoseData,
+                                                     const u32 numRows)
     {
       _pixelShifts.clear();
+      _pixelShifts.reserve(_rsNumDivisions);
 
       Pose3d pose = poseData.cameraPose.GetWithRespectToOrigin();
       
       // Time difference between subdivided rows in the image
-      int timeDif = floor(timeBetweenFrames_ms/_rsNumDivisions);
+      const f32 timeDif = timeBetweenFrames_ms/_rsNumDivisions;
       
       // Whether or not a call to computePixelShiftsWithImageIMU returned false meaning it
       // was unable to compute the pixelShifts from imageIMU data
       bool didComputePixelShiftsFail = false;
       
+      // Compounded pixelShifts across the image
+      Vec2f shiftOffset = 0;
+      
+      // The fraction each subdivided row in the image will contribute to the total shifts for this image
+      const f32 frac = 1.f / _rsNumDivisions;
+      const f32 numRowsPerDivision = numRows/_rsNumDivisions;
+      
       for(int i=1;i<=_rsNumDivisions;i++)
       {
         Vec2f pixelShifts;
-        didComputePixelShiftsFail |= !ComputePixelShiftsWithImageIMU((TimeStamp_t)(poseData.timeStamp - (i*timeDif)),
+        const int curLine = (_rsNumDivisions - i) * numRowsPerDivision;
+        didComputePixelShiftsFail |= !ComputePixelShiftsWithImageIMU((TimeStamp_t)(poseData.timeStamp - std::round(i*timeDif)),
                                                                      pixelShifts,
                                                                      poseData,
                                                                      prevPoseData,
-                                                                     1 - i/(_rsNumDivisions*1.0));
-
-        _pixelShifts.insert(_pixelShifts.begin(), pixelShifts);
+                                                                     frac,
+                                                                     curLine,
+                                                                     numRows);
+        
+        _pixelShifts.insert(_pixelShifts.end(),
+                            Vec2f(pixelShifts.x() + shiftOffset.x(), pixelShifts.y() + shiftOffset.y()));
+        
+        shiftOffset.x() += pixelShifts.x();
+        shiftOffset.y() += pixelShifts.y();
       }
       
       if(didComputePixelShiftsFail)
@@ -178,13 +211,19 @@ namespace Anki {
     {
       Vision::Image img(imgOrig.GetNumRows(), imgOrig.GetNumCols());
       img.SetTimestamp(imgOrig.GetTimestamp());
-      int numRows = img.GetNumRows() - 1;
+      
+      const int numRows = img.GetNumRows() - 1;
+      
+      const f32 rowsPerDivision = ((f32)numRows)/_rsNumDivisions;
       
       for(int i=1;i<=_rsNumDivisions;i++)
       {
-        Vec2f pixelShifts = _pixelShifts[i-1];
+        const Vec2f& pixelShifts = _pixelShifts[i-1];
         
-        for(int y = numRows - (i*1.0/_rsNumDivisions * numRows); y < (int)(numRows - ((i-1)*1.0/_rsNumDivisions * numRows)); y++)
+        const int firstRow = numRows - (i * rowsPerDivision);
+        const int lastRow  = numRows - ((i-1) * rowsPerDivision);
+        
+        for(int y = firstRow; y < lastRow; y++)
         {
           const unsigned char* row = imgOrig.GetRow(y);
           unsigned char* shiftRow = img.GetRow(y);
@@ -209,7 +248,9 @@ namespace Anki {
                                                                  Vec2f& shift,
                                                                  const VisionPoseData& poseData,
                                                                  const VisionPoseData& prevPoseData,
-                                                                 f32 frac)
+                                                                 const f32 frac,
+                                                                 const int line,
+                                                                 const u32 numRows)
     {
       std::deque<ImuDataHistory::ImuData>::const_iterator ImuBeforeT;
       std::deque<ImuDataHistory::ImuData>::const_iterator ImuAfterT;
@@ -242,8 +283,28 @@ namespace Anki {
             beforeAfterSet = true;
           }
           
-          rateY = (((t - ImuBeforeT->timestamp)*(ImuAfterT->rateY - ImuBeforeT->rateY)) / (ImuAfterT->timestamp - ImuBeforeT->timestamp)) + ImuBeforeT->rateY;
-          rateZ = (((t - ImuBeforeT->timestamp)*(ImuAfterT->rateZ - ImuBeforeT->rateZ)) / (ImuAfterT->timestamp - ImuBeforeT->timestamp)) + ImuBeforeT->rateZ;
+          int beforeLine = ImuBeforeT->line2Number;
+          int afterLine = ImuAfterT->line2Number;
+          
+          // If the timestamp of the after imu data is zero then it is from the next image that has yet to be processed
+          // which means we need to increase the line number to work with the current image
+          // The current line we are calculating is towards the end of the image so the after imu data falls in the next image
+          if(ImuAfterT->timestamp == 0)
+          {
+            afterLine += numRows;
+          }
+          // Otherwise if the after imu data has a valid timestamp but a different frame id than the current line must cause
+          // the before imu data to fall in the previous image so we need to decrease the before line number
+          else if(ImuBeforeT->imageId < ImuAfterT->imageId)
+          {
+            beforeLine -= numRows;
+          }
+          
+          // Linearly interpolate the imu data using the line numbers the before and after imu data was captured
+          rateY = (((line - beforeLine)*(ImuAfterT->rateY - ImuBeforeT->rateY)) / (afterLine - beforeLine)) + ImuBeforeT->rateY;
+          rateZ = (((line - beforeLine)*(ImuAfterT->rateZ - ImuBeforeT->rateZ)) / (afterLine - beforeLine)) + ImuBeforeT->rateZ;
+          
+          break;
         }
       }
       

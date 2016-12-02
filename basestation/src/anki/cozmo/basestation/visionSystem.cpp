@@ -3261,7 +3261,7 @@ namespace Cozmo {
     if(_doRollingShutterCorrection)
     {
       Tic("RollingShutterComputePixelShifts");
-      _rollingShutterCorrector.ComputePixelShifts(poseData, _prevPoseData);
+      _rollingShutterCorrector.ComputePixelShifts(poseData, _prevPoseData, inputImageGray.GetNumRows());
       Toc("RollingShutterComputePixelShifts");
       
       if(IsModeEnabled(VisionMode::Tracking))

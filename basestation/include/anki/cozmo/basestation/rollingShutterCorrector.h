@@ -78,7 +78,8 @@ namespace Anki {
     
       // Calculates the amount of pixel shift to account for rolling shutter
       void ComputePixelShifts(const VisionPoseData& poseData,
-                              const VisionPoseData& prevPoseData);
+                              const VisionPoseData& prevPoseData,
+                              const u32 numRows);
       
       // Shifts the image by the calculated pixel shifts
       Vision::Image WarpImage(const Vision::Image& img);
@@ -95,7 +96,9 @@ namespace Anki {
                                           Vec2f& shift,
                                           const VisionPoseData& poseData,
                                           const VisionPoseData& prevPoseData,
-                                          f32 frac);
+                                          const f32 frac,
+                                          const int line,
+                                          const u32 numRows);
     
       // Vector of vectors of varying pixel shift amounts based on gyro rates and vertical position in the image
       std::vector<Vec2f> _pixelShifts;
