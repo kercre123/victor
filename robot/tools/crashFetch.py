@@ -20,7 +20,7 @@ class CrashDownloader:
         
     def OnData(self, msg):
         sys.stdout.write("ROBOT CRASH REPORT: err = {0.errorCode}\tsource = {0.which}\t{1} words{2}".format(msg, len(msg.dump), os.linesep))
-        with open('robot_crash_{0.errorCode}_{0.which}_{1:10d}.msg'.format(msg, int(time.time())), "wb") as dump:
+        with open('robot_crash_{0.errorCode}_{0.which}_{1:10d}.{2}.msg'.format(msg, int(time.time()), self.logIndex), "wb") as dump:
             dump.write(msg.pack())
         self.logIndex += 1
         if self.logIndex < MAX_CRASH_LOGS:
