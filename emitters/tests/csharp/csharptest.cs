@@ -1,6 +1,20 @@
+// Copyright 2015-2016 Anki Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
 // CSharp message packing test
-// Author: Mark Pauley
-// Date: January 26, 2015
+//
 
 public class HelloWorld {
   public static bool Test_Foo() {
@@ -283,13 +297,13 @@ public class HelloWorld {
     System.Console.WriteLine("UnionOfUnion = " + myUnionOfUnion.Size + " bytes");
     System.IO.MemoryStream stream = new System.IO.MemoryStream();
     myUnionOfUnion.Pack(stream);
-    
+
     stream.Seek(0, System.IO.SeekOrigin.Begin);
     UnionOfUnion myOtherUnionOfUnion = new UnionOfUnion(stream);
     if (!myOtherUnionOfUnion.Equals(myUnionOfUnion)) {
         return false;
     }
-    
+
     return true;
   }
 
@@ -310,20 +324,20 @@ public class HelloWorld {
     myMessageOfUnion.anInt = 11;
     myMessageOfUnion.myFooBar = myFooBarUnion;
     myMessageOfUnion.aBool = true;
-    
-    
+
+
     System.Console.WriteLine("\nStruct = " + myFoo.Size + " bytes");
     System.Console.WriteLine("Union = " + myFooBarUnion.Size + " bytes");
     System.Console.WriteLine("MessageOfUnion = " + myMessageOfUnion.Size + " bytes");
     System.IO.MemoryStream stream = new System.IO.MemoryStream();
     myMessageOfUnion.Pack(stream);
-    
+
     stream.Seek(0, System.IO.SeekOrigin.Begin);
     MessageOfUnion myOtherMessageOfUnion = new MessageOfUnion(stream);
     if (!myOtherMessageOfUnion.Equals(myMessageOfUnion)) {
         return false;
     }
-    
+
     return true;
   }
 
@@ -393,7 +407,7 @@ public class HelloWorld {
     if (lastData.b != 0xff) return false;
     if (lastData.c != -10) return false;
     if (lastData.d != false) return false;
-    
+
     return true;
   }
 
@@ -420,7 +434,7 @@ public class HelloWorld {
     if (lastData.b != 12.0f) return false;
     if (lastData.c != -10) return false;
     if (lastData.d != 0.0f) return false;
-    
+
     return true;
   }
 

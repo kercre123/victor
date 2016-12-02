@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015-2016 Anki Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 #include "SimpleTest.h"
 #include "ExplicitUnion.h"
 #include "UnionOfUnion.h"
@@ -27,7 +43,7 @@ TEST AnkiEnum_Basics()
   ASSERT_EQ((int)ae::d1, 5);
   ASSERT_EQ((int)ae::d2, 6);
   ASSERT_EQ((int)ae::d3, 7);
-  
+
   ASSERT_EQ("e1", AnkiTypes::AnkiEnumToString(ae::e1));
   ASSERT_EQ("myReallySilly_EnumVal", AnkiTypes::AnkiEnumToString(ae::myReallySilly_EnumVal));
   ASSERT_EQ(nullptr, AnkiTypes::AnkiEnumToString((ae) (-1)));
@@ -73,7 +89,7 @@ TEST Foo_should_round_trip()
   myFoo.Pack(&buff[0], length);
   Foo otherFoo;
   otherFoo.Unpack(&buff[0], length);
-  delete buff;
+  delete[] buff;
   
   ASSERT_EQ(myFoo, otherFoo);
   PASS();
@@ -95,14 +111,14 @@ TEST Bar_should_round_trip()
   // If this breaks:
   // we've either changed the clad file or we've broken binary compatiblity!
   ASSERT_EQ(114, myBar.Size());
-  
+
   size_t length = myBar.Size();
   uint8_t* buff = new uint8_t[length];
   Bar otherBar;
   myBar.Pack(buff, length);
   otherBar.Unpack(buff, length);
   delete[] buff;
-  
+
   ASSERT_EQ(myBar, otherBar);
   PASS();
 }
@@ -114,14 +130,14 @@ TEST Dog_should_round_trip()
   // If this breaks:
   // we've either changed the clad file or we've broken binary compatiblity!
   ASSERT_EQ(2, myDog.Size());
-  
+
   size_t length = myDog.Size();
   uint8_t* buff = new uint8_t[length];
   Baz::Dog otherDog;
   myDog.Pack(buff, length);
   otherDog.Unpack(buff, length);
   delete[] buff;
-  
+
   ASSERT_EQ(myDog, otherDog);
   PASS();
 }
@@ -138,7 +154,7 @@ TEST SoManyStrings_should_round_trip()
   // If this breaks:
   // we've either changed the clad file or we've broken binary compatiblity!
   ASSERT_EQ(41, mySoManyStrings.Size());
-  
+
   size_t length = mySoManyStrings.Size();
   uint8_t* buff = new uint8_t[length];
   SoManyStrings otherSoManyStrings;
@@ -157,7 +173,7 @@ TEST od432_should_round_trip()
   od432 myOD432 { aFoo, 5, LEDColor::Color1 };
 
   ASSERT_EQ(25, myOD432.Size());
-  
+
   size_t length = myOD432.Size();
   uint8_t* buff = new uint8_t[length];
   od432 otherOD432;
@@ -171,7 +187,7 @@ TEST od432_should_round_trip()
 
 TEST od433_should_round_trip()
 {
-  
+
   Foo aFoo {false, 1, 2, 3, 1.0, 5555, AnkiTypes::AnkiEnum::e3, "hello"};
   Foo bFoo {true, 3, 2, 1, 5.0, 999, AnkiTypes::AnkiEnum::e1, "world"};
   Foo cFoo {false, 4, 5, 6, 2.0, 4555, AnkiTypes::AnkiEnum::d1, "bye"};
@@ -179,7 +195,7 @@ TEST od433_should_round_trip()
   od433 myOD433 { {aFoo, bFoo}, {cFoo, dFoo}, 5};
 
   ASSERT_EQ(79, myOD433.Size());
-  
+
   size_t length = myOD433.Size();
   uint8_t* buff = new uint8_t[length];
   od433 otherOD433;
@@ -210,7 +226,7 @@ TEST union_should_round_trip_after_reuse()
   ASSERT_EQ(Cat::MyMessage::Tag::myFoo, message.GetTag());
   // Assert this.
   // std::cout << "hash of msg.Tag = " << type_hash_fn(message.GetTag()) << std::endl;
-  
+
   CLAD::SafeMessageBuffer  buff(message.Size());
   message.Pack(buff);
   Cat::MyMessage otherMessage(buff);
@@ -229,9 +245,9 @@ TEST union_should_round_trip_after_reuse()
   myBar.fixedBoolBuff = { true, true, true, true, true, false, false, false, false, false };
   myBar.fixedEnumBuff = { AnkiTypes::AnkiEnum::e2, AnkiTypes::AnkiEnum::e3 };
   message.Set_myBar(myBar);
-  
+
   ASSERT_EQ(128, message.Size());
-  
+
   // Assert This
   // std::cout << "hash of msg.Tag = " << type_hash_fn(message.GetTag()) << std::endl;
   buff.~SafeMessageBuffer();
@@ -242,7 +258,7 @@ TEST union_should_round_trip_after_reuse()
 
   ASSERT_EQ(Cat::MyMessageTag::myBar, otherMessage.GetTag());
   ASSERT_EQ(message.Get_myBar(), otherMessage.Get_myBar());
-  
+
   Baz::Dog myDog;
   myDog.a = AnkiTypes::AnkiEnum::e2;
   myDog.b = 55;
@@ -261,13 +277,13 @@ TEST union_should_round_trip_after_reuse()
 
   ASSERT_EQ(Cat::MyMessageTag::myDog, otherMessage.GetTag());
   ASSERT_EQ(message.Get_myDog(), otherMessage.Get_myDog());
-  
+
   od432 myOD432;
   Foo aFoo {false, 1, 2, 3, 1.0, 5555, AnkiTypes::AnkiEnum::e3, "hello"};
   myOD432.aFoo = aFoo;
   myOD432.otherByte = 5;
   myOD432.color = LEDColor::CurrentColor;
-  
+
   message.Set_myOD432(myOD432);
   ASSERT_EQ(26, message.Size());
 
@@ -278,7 +294,7 @@ TEST union_should_round_trip_after_reuse()
   message.Pack(buff);
   otherMessage.Unpack(buff);
   buff.~SafeMessageBuffer();
-  
+
   ASSERT_EQ(Cat::MyMessageTag::myOD432, otherMessage.GetTag());
   ASSERT_EQ(message.Get_myOD432(), otherMessage.Get_myOD432());
 
@@ -289,18 +305,18 @@ TEST Autounion_should_exist() {
   FunkyMessage msg;
   Funky funky {AnkiTypes::AnkiEnum::e1, 3};
   Monkey aMonkey {123182931, funky};
-  
-  
+
+
   // I'm sure autounion will suck all sorts of stuff up
   // and the test will likely break any time you touch the clad file.
   // (pauley)
   msg.Set_Monkey(aMonkey);
   ASSERT_EQ(11, msg.Size());
   ASSERT_EQ(FunkyMessage::Tag::Monkey, msg.GetTag());
-  
+
   Music music {{123}, funky};
   msg.Set_Music(music);
-  
+
   PASS();
 }
 
@@ -312,7 +328,7 @@ TEST CopyConstructors_should_round_trip() {
   ASSERT_EQ(AnkiTypes::AnkiEnum::e3, bFoo.myFoo);
 
   ASSERT_EQ(aFoo, bFoo);
-  
+
 #if defined(HELPER_CONSTRUCTORS) && HELPER_CONSTRUCTORS != 0
   // Looks like we default here to the first member of type Foo
   Cat::MyMessage aWrapper(std::move(aFoo));
@@ -323,19 +339,19 @@ TEST CopyConstructors_should_round_trip() {
   // use copy contructor
   Cat::MyMessage bWrapper(aWrapper);
   const Foo& bWrappersFoo = bWrapper.Get_myFoo();
-  
+
   // This is actually not defined.
   // aFoo has been moved into aWrapper
   ASSERT_EQ("hello", bWrappersFoo.myString);
   ASSERT_EQ(AnkiTypes::AnkiEnum::e3, bWrapper.Get_myFoo().myFoo);
-  
+
   // use move constructor
   Cat::MyMessage cWrapper(std::move(aWrapper));
-  
+
   ASSERT_EQ("hello", cWrapper.Get_myFoo().myString);
   ASSERT_EQ(AnkiTypes::AnkiEnum::e3, cWrapper.Get_myFoo().myFoo);
   // Assert that aWrapper has been cleared?
-  
+
   PASS();
 }
 
@@ -345,10 +361,10 @@ TEST AssignmentOperators() {
   Foo bFoo;
   bFoo.myFoo = AnkiTypes::AnkiEnum::myReallySilly_EnumVal;
   bFoo = aFoo;
-  
+
   ASSERT_EQ(AnkiTypes::AnkiEnum::e3, aFoo.myFoo);
   ASSERT_EQ(AnkiTypes::AnkiEnum::e3, bFoo.myFoo);
-  
+
   Cat::MyMessage aWrapper = Cat::MyMessage::CreatemyFoo(std::move(aFoo));
   // use assignment opperator
   Cat::MyMessage bWrapper;
@@ -359,14 +375,14 @@ TEST AssignmentOperators() {
   ASSERT_EQ("hello", aFoo.myString);
   ASSERT_EQ("hello", bWrappersFoo.myString);
   ASSERT_EQ(AnkiTypes::AnkiEnum::e3, bWrappersFoo.myFoo);
-  
+
   // use move assignment opperator
   Cat::MyMessage cWrapper;
   cWrapper.Set_myDog(Baz::Dog(AnkiTypes::AnkiEnum::e3, 5));
   cWrapper = std::move(aWrapper);
   ASSERT_EQ(AnkiTypes::AnkiEnum::e3, cWrapper.Get_myFoo().myFoo);
   ASSERT_EQ("hello", cWrapper.Get_myFoo().myString);
-  
+
   PASS();
 }
 
@@ -376,7 +392,7 @@ TEST Union_UnionOfUnion() {
   FooBarUnion myFooBarUnion;
   BarFooUnion myBarFooUnion;
   Foo aFoo {false, 1, 2, 3, 1.0, 5555, AnkiTypes::AnkiEnum::e3, "hello"};
- 
+
   myFooBarUnion.Set_myFoo(aFoo);
   myUnionOfUnion.Set_myFooBar(myFooBarUnion);
   CLAD::SafeMessageBuffer  buff(myUnionOfUnion.Size());
@@ -394,14 +410,14 @@ TEST Union_MessageOfUnion() {
   FooBarUnion myFooBarUnion;
   BarFooUnion myBarFooUnion;
   Foo aFoo {false, 1, 2, 3, 1.0, 5555, AnkiTypes::AnkiEnum::e3, "hello"};
-  
+
   myFooBarUnion.Set_myFoo(aFoo);
   myMessageOfUnion.anInt = 11;
   myMessageOfUnion.myFooBar = myFooBarUnion;
   myMessageOfUnion.aBool = true;
-  
+
   CLAD::SafeMessageBuffer buff(myMessageOfUnion.Size());
-  
+
   myMessageOfUnion.Pack(buff);
   otherMessageOfUnion = MessageOfUnion(buff);
   ASSERT_EQ(myMessageOfUnion, otherMessageOfUnion);
@@ -416,11 +432,11 @@ TEST Union_TagToType() {
   constexpr bool myFooIsCorrectType
     = std::is_same<Cat::MyMessage_TagToType<Cat::MyMessageTag::myFoo>::type, Foo>::value;
   ASSERT(myFooIsCorrectType);
-  
+
   constexpr bool myBarIsCorrectType
     = std::is_same<Cat::MyMessage_TagToType<Cat::MyMessageTag::myBar>::type, Bar>::value;
   ASSERT(myBarIsCorrectType);
-  
+
   PASS();
 }
 
@@ -429,10 +445,10 @@ TEST Union_TemplatedAccessors() {
   Foo aFoo {false, 1, 2, 3, 1.0, 5555, AnkiTypes::AnkiEnum::e3, "hello"};
   Cat::MyMessage msg;
   msg.Set_myFoo(aFoo);
-  
+
   ASSERT_EQ(msg.Get_myFoo(), msg.Get_<Cat::MyMessageTag::myFoo>());
   ASSERT_EQ(msg.Get_myFoo().myShort, msg.Get_<Cat::MyMessageTag::myFoo>().myShort);
-  
+
   Baz::Dog myDog;
   myDog.a = AnkiTypes::AnkiEnum::e2;
   myDog.b = 55;
@@ -555,7 +571,7 @@ SUITE(CPP_Emitter) {
 
   // Message Tests
   RUN_TEST(Message_VersionHash);
-  
+
   // RoundTripTests
   RUN_TEST(Foo_should_round_trip);
   RUN_TEST(Bar_should_round_trip);
@@ -574,10 +590,10 @@ SUITE(CPP_Emitter) {
   RUN_TEST(Union_UnionOfUnion);
   RUN_TEST(Union_MessageOfUnion);
   RUN_TEST(Union_VersionHash);
-  
+
   // Autounion
   RUN_TEST(Autounion_should_exist);
-  
+
   // Template helpies
   RUN_TEST(Union_TagToType);
   RUN_TEST(Union_TemplatedAccessors);
@@ -608,4 +624,3 @@ int main(int argc, char **argv) {
     RUN_SUITE(CPP_Emitter);
     GREATEST_MAIN_END();        /* display results */
 }
-

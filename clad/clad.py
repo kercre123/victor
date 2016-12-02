@@ -1,7 +1,21 @@
 #!/usr/bin/env python
+#
+# Copyright 2015-2016 Anki Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 """
-The parser for AnkiBuffers
+The parser for CLAD
 Author: Mark Pauley
 Date: 12/12/2014
 """
@@ -24,7 +38,7 @@ THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 class CLADParser(PLYParser):
     """ A parser for the Anki Buffer definition language.
     """
-    
+
     def __init__(self,
                  input_directories=(".",),
                  lex_optimize=False,
@@ -33,13 +47,13 @@ class CLADParser(PLYParser):
                  yacctab='clad.yacctab',
                  yacc_debug=False,
                  lex_debug=False):
-        """ 
+        """
         Create a new CLAD parser
         Options:
         - input_directories: a tuple including the directories to search for
           input files and #include files.
 
-        - lex_optimize / lextab: tell PLY to generate a tokenizer table to 
+        - lex_optimize / lextab: tell PLY to generate a tokenizer table to
           increase performance of the tokenizer.
 
         - yacc_optimize / yacctab: tell PLY to generate a parser table to
@@ -53,7 +67,7 @@ class CLADParser(PLYParser):
             lex_debug=lex_debug,
             error_func=self._lex_error_func,
             type_lookup_func=self._lex_type_lookup_func)
-        
+
         self.lexer.build(optimize=lex_optimize, lextab=lextab, outputdir=THIS_DIR)
         self.tokens = self.lexer.tokens
         self.parser = yacc.yacc(
@@ -67,18 +81,18 @@ class CLADParser(PLYParser):
         self._input_directories = input_directories
 
     _include_directive_re = re.compile('^#include\s+\"(.*)\"(?:\s*/.*)*$')
-    
+
     def token_to_coord(self, token):
         return self.lineno_to_coord(token.lineno, self.lexer.find_tok_column(token.lexpos))
-    
+
     def production_to_coord(self, production, index):
         return self.lineno_to_coord(production.lineno(index), self.lexer.find_tok_column(production.lexpos(index)))
-    
+
     def lineno_to_coord(self, lineno, column):
         coord = copy.copy(self._lines_to_coords[lineno - 1])
         coord.column = column
         return coord
-    
+
     def preprocess(self, text, filename, directory):
         lines = text.splitlines(True)
         if lines and lines[-1] and lines[-1][-1] != '\n':
@@ -118,13 +132,13 @@ class CLADParser(PLYParser):
                 processed_text.append(line)
             lineno += 1
         return processed_text
-        
+
     def parse(self, text, filename='', directory='', debuglevel=0):
         """ Parses buffer definitions and returns an AST.
-        
+
           text:
             A String containing the source code
-            
+
           filename:
             Name of the file being parsed (for meaningful
             error messages)
@@ -135,12 +149,12 @@ class CLADParser(PLYParser):
         self._last_yielded_token = None
         self.declared_types = dict()
         self._namespace_stack = [ None ]
-        
+
         self._enum_decls = []
         self._message_types = []
         self._union_decls = []
         self._all_members = []
-        
+
         self._included_files = []
         self._lines_to_coords = []
         processed_text = ''.join(self.preprocess(text, filename, directory))
@@ -150,7 +164,7 @@ class CLADParser(PLYParser):
             lexer=self.lexer,
             tracking=True,
             debug=debuglevel)
-        
+
         self._postprocess_enums()
         self._postprocess_unions()
         self._postprocess_versioning_hashes(self._syntax_tree)
@@ -172,21 +186,23 @@ class CLADParser(PLYParser):
                         enum.fully_qualified_name(),
                         member.name,
                         enum.storage_type.name))
-                
+
                 member.value = value
                 if value in all_values:
                     member.is_duplicate = True
                 all_values.add(value)
                 value += 1
-    
+
     def _postprocess_unions(self):
         # Figure out autounions
         for auto_union in self._union_decls:
-            # Autounions are specified as empty unions
-            if auto_union.member_list is None:
+            # Autounions are specified explicitly with the autounion keyword
+            if auto_union.is_explicit_auto_union():
                 coord = auto_union.coord
-                auto_union.member_list = ast.MessageMemberDeclList([], coord)
-            
+
+                if auto_union.member_list is None:
+                    auto_union.member_list = ast.MessageMemberDeclList([], coord)
+
                 names = dict()
                 for message_type in self._message_types:
                     if message_type.name in names:
@@ -198,11 +214,17 @@ class CLADParser(PLYParser):
                             names[message_type.name].fully_qualified_name(),
                             message_type.fully_qualified_name()))
                     names[message_type.name] = message_type
+
+                # generate the list of already initialized names, don't add auto entries for these
+                initialized_names = dict()
+                for member in auto_union.members():
+                    initialized_names[member.name] = member
             
                 for init_value, message_type in enumerate(self._message_types):
-                    decl = ast.MessageMemberDecl(message_type.name, message_type, None, coord)
-                    auto_union.member_list.append(decl)
-                    self._all_members.append(decl)
+                    if message_type.name not in initialized_names:
+                        decl = ast.MessageMemberDecl(message_type.name, message_type, None, coord)
+                        auto_union.member_list.append(decl)
+                        self._all_members.append(decl)
         
         # calculate all union initializers
         for union in self._union_decls:
@@ -210,7 +232,7 @@ class CLADParser(PLYParser):
             value_set = dict()
             value = 0
             for member in union.members():
-                
+
                 if member.name in name_set:
                     raise ParseError(
                         member.coord,
@@ -220,10 +242,10 @@ class CLADParser(PLYParser):
                         name_set[member.name].type.fully_qualified_name(),
                         member.type.fully_qualified_name()))
                 name_set[member.name] = member
-                
+
                 if member.init:
                     value = member.init.value
-                
+
                 if not (union.tag_storage_type.min <= value <= union.tag_storage_type.max):
                     raise ParseError(
                         member.coord,
@@ -231,7 +253,7 @@ class CLADParser(PLYParser):
                         union.fully_qualified_name(),
                         member.name,
                         member.init.value))
-                
+
                 if value in value_set:
                     raise ParseError(
                         member.coord,
@@ -241,7 +263,7 @@ class CLADParser(PLYParser):
                         value_set[value].name,
                         value))
                 value_set[value] = member
-                
+
                 if value == union.invalid_tag:
                     raise ParseError(
                         member.coord,
@@ -250,7 +272,7 @@ class CLADParser(PLYParser):
                         union.invalid_tag,
                         member.name,
                         value))
-                
+
                 member.tag = value
                 value += 1
 
@@ -272,7 +294,7 @@ class CLADParser(PLYParser):
         def visit_IncludeDecl(self, node, *args, **kwargs):
             # don't go hashing #included entities
             pass
-        
+
         def visit_Decl_subclass(self, node, *args, **kwargs):
             self.generic_visit(node, *args, **kwargs)
             node.hash_str = self.get_hash_from_node(node)
@@ -280,12 +302,12 @@ class CLADParser(PLYParser):
     def _postprocess_versioning_hashes(self, node):
         self.HashVisitor().visit(node)
         pass
-        
+
     ###### implementation ######
 
     def _get_current_namespace(self):
         return self._namespace_stack[-1]
-    
+
     def _get_type_or_namespace_from_fully_qualified_name(self, typename):
         if typename is None:
             return self.declared_types
@@ -297,7 +319,7 @@ class CLADParser(PLYParser):
                 return None
             t = t[namespace]
         return t
-    
+
     def _get_type_or_namespace(self, m_typename):
         namespace = self._get_current_namespace();
         while True:
@@ -311,7 +333,7 @@ class CLADParser(PLYParser):
                 break;
             namespace = namespace.namespace
         return None;
-    
+
     def _add_namespace(self, new_namespace):
         namespace_name = new_namespace.fully_qualified_name()
         namespace_list = namespace_name.split('::')
@@ -339,19 +361,19 @@ class CLADParser(PLYParser):
             raise ParseError(self.production_to_coord(production, index),
                              "Name '{0}' already exists".format(m_type.fully_qualified_name()))
         namespace_types[m_type.name] = m_type
-    
+
     def _is_type_in_scope(self, name):
         """ Is <name> a type in the current-scope?
         """
-    
+
     def _lex_error_func(self, msg, token):
         self._parse_error(msg, self.token_to_coord(token))
-    
+
     def _lex_type_lookup_func(self, name):
         """ Looks up types that were previously defined.
         """
         is_type = self._is_type_in_scope(name)
-    
+
     def _get_yacc_lookahead_token(self):
         """ The last token yacc requested from the lexer.
         Saved in the lexer.
@@ -368,7 +390,7 @@ class CLADParser(PLYParser):
                     decl.fully_qualified_name(),
                     member.name))
             all_members[member.name] = member
-    
+
     def _check_variable_length_array(self, member, data_type, length_type):
         if length_type.name == 'bool':
             self._parse_error("{0} is a variable-length array with a bool length, which isn't supported.".format(member.name),
@@ -402,7 +424,7 @@ class CLADParser(PLYParser):
         if (member_type_ref.type.max is not None) and (member_type_ref.type.max < initializer.value):
             self._parse_error("{0} is larger than the maximum value ({1}) for type {2}".format(initializer.value, member_type_ref.type.max, member_type_ref.type.name),
                               member_coord)
-                
+
     #################################
     ###### Parser Productions #######
     #################################
@@ -410,7 +432,7 @@ class CLADParser(PLYParser):
     # Any new additions to CLAD syntax will require changes to this
     # list of productions.
     # Note: the comments are used by PLY to match rules against incoming tokens
-    
+
     def p_start(self, p):
         """ start : decl_list
         """
@@ -483,9 +505,9 @@ class CLADParser(PLYParser):
                                self.production_to_coord(p, 2),
                                self._get_current_namespace(),
                                is_structure)
-        
+
         self._check_duplicates(p[0], p[1])
-        
+
         type = ast.CompoundType(p[0].name, p[0], p[0].coord)
         if not is_structure:
             self._message_types.append(type)
@@ -496,7 +518,7 @@ class CLADParser(PLYParser):
                                | STRUCTURE
         """
         p[0] = p[1]
-        
+
     def p_message_member_decl_list(self, p):
         """ message_member_decl_list : message_member_decl
                                      | message_member_decl_list COMMA message_member_decl
@@ -534,7 +556,7 @@ class CLADParser(PLYParser):
                 None, #initializer
                 coord #file / line number
             )
-        
+
     def p_message_variable_array_member(self, p):
         """ message_variable_array_member : type ID LSQ builtin_int_type RSQ
                                           | type ID LSQ builtin_int_type COLON int_constant RSQ
@@ -543,11 +565,11 @@ class CLADParser(PLYParser):
             max_length = p[6].value
         else:
             max_length = None
-        
+
         type = ast.VariableArrayType(p[1].type, p[4].type, max_length, self.production_to_coord(p, 1))
         p[0] = ast.MessageMemberDecl(p[2], type, None, self.production_to_coord(p, 1))
         self._check_variable_length_array(p[0], p[1].type, p[4].type)
-        
+
     def p_message_fixed_array_member(self, p):
         """ message_fixed_array_member : type ID LSQ int_constant RSQ
         """
@@ -556,7 +578,7 @@ class CLADParser(PLYParser):
                               self.production_to_coord(p, 1))
         type = ast.FixedArrayType(p[1].type, p[4].value, self.production_to_coord(p, 1))
         p[0] = ast.MessageMemberDecl(p[2], type, None, self.production_to_coord(p, 1))
-        
+
     def p_enum_decl(self, p):
         """ enum_decl : ENUM builtin_type ID LBRACE enum_member_list RBRACE
                       | ENUM builtin_type ID LBRACE enum_member_list COMMA RBRACE
@@ -574,9 +596,9 @@ class CLADParser(PLYParser):
         decl_type = ast.DefinedType(decl.name, decl, self.production_to_coord(p, 1))
         self._add_type(p, 1, decl_type)
         p[0] = decl
-        
+
         self._enum_decls.append(decl)
-        
+
     def p_enum_member_list(self, p):
         """ enum_member_list : enum_member
                              | enum_member_list COMMA enum_member
@@ -585,7 +607,7 @@ class CLADParser(PLYParser):
             p[0] = ast.EnumMemberList([p[1]], p[1].coord)
         else:
             p[0] = p[1].append(p[3])
-        
+
     def p_enum_member(self, p):
         """ enum_member : ID
                         | ID EQ int_constant
@@ -593,20 +615,31 @@ class CLADParser(PLYParser):
         value = p[3] if len(p) == 4 else None
         p[0] = ast.EnumMember(p[1], value, self.production_to_coord(p, 1))
 
-    def p_union_decl(self, p):
-        """ union_decl : UNION ID LBRACE union_member_decl_list RBRACE
-                       | UNION ID LBRACE union_member_decl_list COMMA RBRACE
-                       | UNION ID LBRACE RBRACE
+    def p_union_decl_begin(self, p):
+        """ union_decl_begin : UNION
+                             | AUTOUNION
         """
+        p[0] = p[1]
+
+    def p_union_decl(self, p):
+        """ union_decl : union_decl_begin ID LBRACE union_member_decl_list RBRACE
+                       | union_decl_begin ID LBRACE union_member_decl_list COMMA RBRACE
+                       | union_decl_begin ID LBRACE RBRACE
+        """
+
+        is_explicit_auto_union = p[1] == "autounion"
+
         member_list = p[4] if len(p) > 5 else None
         decl = ast.UnionDecl(p[2], member_list,
                              self.production_to_coord(p, 2),
-                             self._get_current_namespace())
+                             self._get_current_namespace(),
+                             is_explicit_auto_union)
+
         p[0] = decl
-        
+
         if len(p) > 5:
             self._check_duplicates(p[0], 'union')
-        
+
         self._union_decls.append(decl)
         type = ast.CompoundType(p[0].name, p[0], p[0].coord)
         self._add_type(p, 1, type)
@@ -626,13 +659,13 @@ class CLADParser(PLYParser):
                               | union_fixed_array_member
         """
         p[0] = p[1]
-    
+
     def get_union_initializer(self, p, normal_length):
         if len(p) > normal_length:
             return p[normal_length + 1]
         else:
             return None
-    
+
     def p_union_member(self, p):
         """ union_member : type ID
                          | type ID EQ int_constant
@@ -655,12 +688,12 @@ class CLADParser(PLYParser):
         else:
             max_length = None
             initializer = self.get_union_initializer(p, 6)
-        
+
         type = ast.VariableArrayType(p[1].type, p[4].type, max_length, self.production_to_coord(p, 1))
         p[0] = ast.MessageMemberDecl(p[2], type, initializer, self.production_to_coord(p, 1))
         self._check_variable_length_array(p[0], p[1].type, p[4].type)
         self._all_members.append(p[0])
-        
+
     def p_union_fixed_array_member(self, p):
         """ union_fixed_array_member : type ID LSQ int_constant RSQ
                                      | type ID LSQ int_constant RSQ EQ int_constant
@@ -671,13 +704,13 @@ class CLADParser(PLYParser):
         type = ast.FixedArrayType(p[1].type, p[4].value, self.production_to_coord(p, 1))
         p[0] = ast.MessageMemberDecl(p[2], type, self.get_union_initializer(p, 6), self.production_to_coord(p, 1))
         self._all_members.append(p[0])
-    
+
     def p_type(self, p):
         """ type : string_type
                  | non_array_type
         """
         p[0] = p[1]
-    
+
     def p_string_type(self, p):
         """ string_type : STRING
                         | STRING LSQ type RSQ
@@ -687,7 +720,7 @@ class CLADParser(PLYParser):
             max_length = p[5].value
         else:
             max_length = None
-        
+
         if len(p) == 2:
             length_type = 'uint_8'
         else:
@@ -706,7 +739,7 @@ class CLADParser(PLYParser):
                            | declared_type
         """
         p[0] = p[1]
-        
+
     def p_builtin_type(self, p):
         """ builtin_type : builtin_float_type
                          | builtin_int_type
@@ -714,18 +747,18 @@ class CLADParser(PLYParser):
         p[0] = p[1]
 
     def p_builtin_float_type(self,p):
-        """ builtin_float_type : FLOAT_32 
-                               | FLOAT_64 
+        """ builtin_float_type : FLOAT_32
+                               | FLOAT_64
         """
         p[0] = ast.TypeReference(ast.builtin_types[p[1]], self.production_to_coord(p, 1))
-        
+
     def p_builtin_int_type(self, p):
         """ builtin_int_type : INT_8
-                             | INT_16 
+                             | INT_16
                              | INT_32
                              | INT_64
                              | UINT_8
-                             | UINT_16 
+                             | UINT_16
                              | UINT_32
                              | UINT_64
                              | BOOL
@@ -748,24 +781,21 @@ class CLADParser(PLYParser):
                      | float_constant
         """
         p[0] = p[1]
-        
+
     def p_int_constant(self, p):
         """ int_constant : INT_CONST_DEC
                          | INT_CONST_HEX
         """
         p[0] = ast.IntConst(p[1].value, p[1].type, self.production_to_coord(p, 1))
-    
+
     def p_float_constant(self, p):
         """ float_constant : FLOAT_CONST_DEC
         """
         p[0] = ast.FloatConst(p[1].value, p[1].type, self.production_to_coord(p, 1))
-        
+
     def p_error(self, p):
         if p:
             self._parse_error("before '{0}'".format(p.value),
                               self.lineno_to_coord(p.lineno, self.lexer.find_tok_column(p.lexpos)))
         else:
             self._parse_error('At end of input.', _lines_to_coords[-1])
-    
-            
-

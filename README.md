@@ -64,6 +64,12 @@ Any new emitter can easily be unit-tested against the other emitters, meaning th
 		  type MemberThree[uint_type],
 		  type MemberFour[uint_const] = int_const
 		}
+
+		// An autounion contains one of every message included in that file. (use structure for a message that isn't auto-added to implicit auto-unions). A subset of members may have fixed tags defined
+		autounion name {
+		  type MemberOne = int_const,
+		  type MemberTwo = int_const
+		}
 	
 	* members can be of primitive, variable-array, fixed-array, composite(message) and sum(union) types
 	* object will be serialized as a *1-byte tag*, follwed immediately by the serialization of the underlying type

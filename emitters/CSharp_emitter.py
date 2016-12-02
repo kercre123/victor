@@ -1,4 +1,18 @@
 #!/usr/bin/env python
+#
+# Copyright 2015-2016 Anki Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -20,11 +34,11 @@ from clad import ast
 from clad import clad
 
 class CSharpQualifiedNamer(object):
-    
+
     @classmethod
     def join(cls, *args):
         return '.'.join(args)
-    
+
     @classmethod
     def disambiguate(cls, qualified_name):
         return "global::" + qualified_name
@@ -72,35 +86,35 @@ def cast_type(type):
         return type.fully_qualified_name(CSharpQualifiedNamer)
 
 class NamespaceEmitter(ast.NodeVisitor):
-    
+
     def __init__(self, output, include_extension=None):
         self.output = output
 
     def visit_IncludeDecl(self, node, *args, **kwargs):
         pass
-        
+
     def visit_NamespaceDecl(self, node, *args, **kwargs):
         self.output.write('namespace {namespace_name} {{\n\n'.format(namespace_name=node.name))
         self.generic_visit(node, *args, **kwargs)
         self.output.write('}} // namespace {namespace_name}\n\n'.format(namespace_name=node.name))
-    
+
     def visit_EnumDecl(self, node, *args, **kwargs):
         EnumEmitter(self.output).visit(node, *args, **kwargs)
-    
+
     def visit_MessageDecl(self, node, *args, **kwargs):
         StructEmitter(self.output).visit(node, *args, **kwargs)
-    
+
     def visit_UnionDecl(self, node, *args, **kwargs):
         UnionEmitter(self.output).visit(node, *args, **kwargs)
 
 class EnumEmitter(ast.NodeVisitor):
     def __init__(self, output=sys.stdout):
         self.output = output
-        
+
     def visit_EnumDecl(self, node):
         if self.usesBitflags(node):
             self.output.write('[System.Flags]\n')
-        
+
         header = textwrap.dedent("""\
         public enum {0} : {1}
         {{
@@ -114,7 +128,7 @@ class EnumEmitter(ast.NodeVisitor):
         #print the footer
         footer = '};\n\n'
         self.output.write(footer)
-    
+
     def usesBitflags(self, node):
         """
         Returns True if the field is considered a list of bitflags.
@@ -125,16 +139,16 @@ class EnumEmitter(ast.NodeVisitor):
         """
         if not node.members():
             return False
-        
+
         current = -1
         values = set()
         for member in node.members():
             current = member.initializer.value if member.initializer else current + 1
             values.add(current)
-        
+
         minimum, maximum, length = min(values), max(values), len(values)
         return minimum >= 0 and maximum - minimum + 1 != length
-    
+
     def emitEnum(self, member, enum_val, trailing_comma=True, prefix=''):
         separator = ',' if trailing_comma else ''
         if not member.initializer:
@@ -157,7 +171,7 @@ class StructEmitter(ast.NodeVisitor):
         globals = dict(
             message_name=node.name)
         
-        header = 'public class {message_name}\n{{\n'.format(**globals)
+        header = 'public partial class {message_name}\n{{\n'.format(**globals)
         footer = '}\n\n'
         self.output.write(header)
         self.emitFields(node, globals)
@@ -169,7 +183,7 @@ class StructEmitter(ast.NodeVisitor):
         self.emitEquals(node, globals)
         self.emitGetHashCode(node, globals)
         self.output.write(footer)
-    
+
     def emitFields(self, node, globals):
         if node.members():
             visitor = TypeVisitor(self.output)
@@ -195,25 +209,25 @@ class StructEmitter(ast.NodeVisitor):
                 self.output.write('; // {member_type}\n'.format(member_type=member.type.name))
 
             self.output.write('\n')
-            
+
             visitor = PropertyVisitor(self.output)
             for member in node.members():
                 visitor.visit(member.type, member_name=member.name)
             self.output.write('\n')
-    
+
     def emitEquals(self, node, globals):
         if node.members():
             self.output.write(textwrap.dedent('''\
             \tpublic static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {{
             \t\tif (System.Object.ReferenceEquals(a1, a2))
             \t\t\treturn true;
-            
+
             \t\tif (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
             \t\t\treturn false;
-            
+
             \t\tif (a1.Count != a2.Count)
             \t\t\treturn false;
-            
+
             \t\tfor (int i = 0; i < a1.Count; i++)
             \t\t{{
             \t\t\tif (!a1[i].Equals(a2[i])) {{
@@ -237,7 +251,7 @@ class StructEmitter(ast.NodeVisitor):
             \t{{
             \t\treturn !(a == b);
             \t}}
-            
+
             \tpublic override bool Equals(System.Object obj)
             \t{{
             \t\treturn this.Equals(obj as {message_name});
@@ -289,12 +303,12 @@ class StructEmitter(ast.NodeVisitor):
 
     def emitConstructors(self, node, globals):
         self.output.write('\t/**** Constructors ****/\n\n')
-        
+
         self.emitDefaultConstructor(node, globals)
         if node.members():
             self.emitValueConstructor(node, globals)
         self.emitUnpackConstructors(node, globals)
-        
+
     def emitDefaultConstructor(self, node, globals):
         self.output.write('\tpublic {message_name}()\n\t{{\n'.format(**globals))
         for member in node.members():
@@ -311,89 +325,89 @@ class StructEmitter(ast.NodeVisitor):
 
     def emitValueConstructor(self, node, globals):
         self.output.write('\tpublic {message_name}('.format(**globals))
-        
+
         visitor = TypeVisitor(self.output)
         for i, member in enumerate(node.members()):
             visitor.visit(member.type)
             self.output.write(' {member_name}'.format(member_name=member.name))
             if (i < len(node.members()) - 1):
                 self.output.write(',\n\t\t')
-        
+
         self.output.write(')\n')
-        
+
         self.output.write('\t{\n')
         for member in node.members():
             self.output.write('\t\tthis.{member_name} = {member_name};\n'.format(member_name=member.name))
         self.output.write('\t}\n\n')
-    
+
     def emitUnpackConstructors(self, node, globals):
         self.output.write(textwrap.dedent('''\
             \tpublic {message_name}(System.IO.Stream stream)
             \t{{
             \t\tUnpack(stream);
             \t}}
-            
+
             \tpublic {message_name}(System.IO.BinaryReader reader)
             \t{{
             \t\tUnpack(reader);
             \t}}
-            
+
             #''')[:-1].format(**globals))
-    
+
     def emitUnpack(self, node, globals):
         self.output.write(textwrap.dedent('''\
             \tpublic void Unpack(System.IO.Stream stream)
             \t{{
             #''')[:-1].format(**globals))
-        
+
         if node.members():
             self.output.write(textwrap.dedent('''\
                 \t\tSystem.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
                 \t\tUnpack(reader);
                 #''')[:-1].format(**globals))
-        
+
         self.output.write(textwrap.dedent('''\
             \t}}
-            
+
             \tpublic void Unpack(System.IO.BinaryReader reader)
             \t{{
             #''')[:-1].format(**globals))
-        
+
         visitor = UnpackVisitor(self.output)
         for member in node.members():
             visitor.visit(member.type, destination='_{member_name}'.format(member_name=member.name), depth=2)
-        
+
         self.output.write(textwrap.dedent('''\
             \t}}
-            
+
             #''')[:-1].format(**globals))
-    
+
     def emitPack(self, node, globals):
         self.output.write(textwrap.dedent('''\
             \tpublic void Pack(System.IO.Stream stream)
             \t{{
             #''')[:-1].format(**globals))
-        
+
         if node.members():
             self.output.write(textwrap.dedent('''\
                 \t\tSystem.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
                 \t\tPack(writer);
                 #''')[:-1].format(**globals))
-        
+
         self.output.write(textwrap.dedent('''\
             \t}}
-            
+
             \tpublic void Pack(System.IO.BinaryWriter writer)
             \t{{
             #''')[:-1].format(**globals))
-        
+
         visitor = PackVisitor(self.output)
         for member in node.members():
             visitor.visit(member.type, value='_{member_name}'.format(member_name=member.name), depth=2)
-        
+
         self.output.write(textwrap.dedent('''\
             \t}}
-            
+
             #''')[:-1].format(**globals))
 
     def isUnion(self, t):
@@ -464,15 +478,14 @@ class StructEmitter(ast.NodeVisitor):
         self.output.write('\t\treturn this;\n')
         self.output.write('\t}\n\n')
 
-
     def emitSize(self, node, globals):
-        
+
         self.output.write(textwrap.dedent('''\
-            \tpublic int Size 
+            \tpublic int Size
             \t{{
             \t\tget {{
             #''')[:-1].format(**globals))
-        
+
         if node.is_message_size_fixed():
             self.output.write('\t\t\treturn {size};\n'.format(size=node.max_message_size()))
         else:
@@ -481,13 +494,13 @@ class StructEmitter(ast.NodeVisitor):
             for member in node.members():
                 visitor.visit(member.type, value=member.name, depth=3)
             self.output.write('\t\t\treturn result;\n')
-        
+
         self.output.write(textwrap.dedent('''\
             \t\t}}
             \t}}
-            
+
             #''')[:-1].format(**globals))
-        
+
     def visit_UnionDecl(self, node):
         pass
 
@@ -495,23 +508,23 @@ class TypeVisitor(ast.NodeVisitor):
 
     def __init__(self, output=sys.stdout):
         self.output = output
-        
+
     def visit_BuiltinType(self, node):
         self.output.write(type_translations[node.name])
 
     def visit_DefinedType(self, node):
         self.output.write(node.fully_qualified_name(CSharpQualifiedNamer))
-    
+
     def visit_CompoundType(self, node):
         self.output.write(node.fully_qualified_name(CSharpQualifiedNamer))
 
     def visit_PascalStringType(self, node):
         self.output.write('string')
-        
+
     def visit_VariableArrayType(self, node):
         self.visit(node.member_type)
         self.output.write('[]')
-        
+
     def visit_FixedArrayType(self, node):
         self.visit(node.member_type)
         self.output.write('[]')
@@ -521,13 +534,13 @@ class PropertyVisitor(ast.NodeVisitor):
     def __init__(self, output=sys.stdout):
         self.output = output
         self.type_visitor = TypeVisitor(self.output)
-    
+
     def visit_Terse(self, node, member_name):
         self.output.write('\tpublic ')
         self.type_visitor.visit(node)
         self.output.write(' {member_name} {{ get {{ return _{member_name}; }} set {{ _{member_name} = value; }} }}\n\n'.format(
             member_name=member_name))
-    
+
     def visit_Verbose(self, node, member_name, check_body):
         self.output.write('\tpublic ')
         self.type_visitor.visit(node)
@@ -540,22 +553,22 @@ class PropertyVisitor(ast.NodeVisitor):
             \t\t}}
             \t\tset {{
             #''')[:-1].format(member_name=member_name))
-        
+
         self.output.write(check_body);
-        
+
         self.output.write(textwrap.dedent('''\
             \t\t\t_{member_name} = value;
             \t\t}}
             \t}}
-            
+
             #''')[:-1].format(member_name=member_name))
-        
+
     def visit_BuiltinType(self, node, member_name):
         self.visit_Terse(node, member_name)
 
     def visit_DefinedType(self, node, member_name):
         self.visit_Terse(node, member_name)
-    
+
     def visit_CompoundType(self, node, member_name):
         self.visit_Verbose(node, member_name,
             check_body=textwrap.dedent('''\
@@ -571,7 +584,7 @@ class PropertyVisitor(ast.NodeVisitor):
             \t\t\t\tthrow new System.ArgumentException("{member_name} string is too long. Must decode to less than or equal to {max_length} bytes.", "value");
             \t\t\t}}
             #''')[:-1].format(member_name=member_name, max_length=node.length_type.max))
-        
+
     def visit_VariableArrayType(self, node, member_name):
         if node.length_type.max == (2 << 63) - 1:
             self.visit_Terse(node, member_name)
@@ -583,7 +596,7 @@ class PropertyVisitor(ast.NodeVisitor):
                 \t\t\t\tthrow new System.ArgumentException("{member_name} variable-length array is too long. Must be less than or equal to {max_length}.", "value");
                 \t\t\t}}
                 #''')[:-1].format(member_name=member_name, max_length=max_length))
-        
+
     def visit_FixedArrayType(self, node, member_name):
         self.visit_Verbose(node, member_name,
             check_body=textwrap.dedent('''\
@@ -599,10 +612,10 @@ class UnpackVisitor(ast.NodeVisitor):
 
     def __init__(self, output=sys.stdout):
         self.output = output
-        
+
     def get_index_variable(self, depth):
         return chr(ord('i') + (depth - 2))
-    
+
     def visit_BuiltinType(self, node, destination, depth):
         self.output.write('{indent}{destination} = reader.{read_method}();\n'.format(
             indent='\t' * depth,
@@ -615,7 +628,7 @@ class UnpackVisitor(ast.NodeVisitor):
             destination=destination,
             defined_type=node.fully_qualified_name(CSharpQualifiedNamer),
             read_method=read_translations[node.builtin_type().name]))
-    
+
     def visit_CompoundType(self, node, destination, depth):
         self.output.write('{indent}{destination} = new {member_type}(reader);\n'.format(
             indent='\t' * depth,
@@ -636,7 +649,7 @@ class UnpackVisitor(ast.NodeVisitor):
             length_variable=length_variable,
             bytes_variable=bytes_variable,
             read_length_method=read_translations[node.length_type.name]))
-        
+
     def visit_VariableArrayType(self, node, destination, depth):
         prefix = destination.replace('[', '_').replace(']', '')
         length_variable = '{prefix}_length'.format(prefix=prefix)
@@ -654,7 +667,7 @@ class UnpackVisitor(ast.NodeVisitor):
             read_length_method=read_translations[node.length_type.name]))
         self.visit(node.member_type, '{old}[{index}]'.format(old=destination, index=index_variable), depth + 1)
         self.output.write('{indent}}}\n'.format(indent='\t' * depth))
-    
+
     def visit_FixedArrayType(self, node, destination, depth):
         index_variable = self.get_index_variable(depth)
         self.output.write(textwrap.dedent('''\
@@ -673,10 +686,10 @@ class PackVisitor(ast.NodeVisitor):
 
     def __init__(self, output=sys.stdout):
         self.output = output
-        
+
     def get_index_variable(self, depth):
         return chr(ord('i') + (depth - 2) // 2)
-    
+
     def visit_BuiltinType(self, node, value, depth):
         self.output.write('{indent}writer.Write(({builtin_type}){value});\n'.format(
             indent='\t' * depth,
@@ -685,7 +698,7 @@ class PackVisitor(ast.NodeVisitor):
 
     def visit_DefinedType(self, node, value, depth):
         self.visit_BuiltinType(node, value, depth)
-    
+
     def visit_CompoundType(self, node, value, depth):
         if depth > 2:
             self.output.write(textwrap.dedent('''\
@@ -716,7 +729,7 @@ class PackVisitor(ast.NodeVisitor):
             value=value,
             bytes_variable=bytes_variable,
             length_type=cast_type(node.length_type.builtin_type())))
-        
+
     def visit_VariableArrayType(self, node, value, depth):
         index_variable = self.get_index_variable(depth)
         self.output.write(textwrap.dedent('''\
@@ -738,7 +751,7 @@ class PackVisitor(ast.NodeVisitor):
             ''').format(
             indent='\t' * depth,
             length_type=cast_type(node.length_type.builtin_type())))
-    
+
     def visit_FixedArrayType(self, node, value, depth):
         index_variable = self.get_index_variable(depth)
         self.output.write(textwrap.dedent('''\
@@ -754,10 +767,10 @@ class SizeVisitor(ast.NodeVisitor):
 
     def __init__(self, output=sys.stdout):
         self.output = output
-    
+
     def get_index_variable(self, depth):
         return chr(ord('i') + (depth - 2) // 2)
-    
+
     def visit_BuiltinType(self, node, value, depth):
         self.output.write('{indent}result += {size}; // {type}\n'.format(
             indent='\t' * depth,
@@ -766,7 +779,7 @@ class SizeVisitor(ast.NodeVisitor):
 
     def visit_DefinedType(self, node, value, depth):
         self.visit_BuiltinType(node, value, depth)
-    
+
     def visit_CompoundType(self, node, value, depth):
         if depth > 3:
             self.output.write(textwrap.dedent('''\
@@ -791,7 +804,7 @@ class SizeVisitor(ast.NodeVisitor):
             length_type=node.length_type.name,
             length_size=node.length_type.max_message_size(),
             value=value))
-    
+
     def visit_VariableArrayType(self, node, value, depth):
         self.output.write(textwrap.dedent('''\
             {indent}result += {length_size}; // {length_type}
@@ -816,7 +829,7 @@ class SizeVisitor(ast.NodeVisitor):
             self.visit(node.member_type, '{old}[{index}]'.format(old=value, index=index_variable), depth + 2)
             self.output.write('{indent}\t}}\n'.format(indent='\t' * depth))
         self.output.write('{indent}}}\n'.format(indent='\t' * depth))
-    
+
     def visit_FixedArrayType(self, node, value, depth):
         if node.is_message_size_fixed():
             self.output.write('{indent}result += {length} * {element_size};\n'.format(
@@ -832,7 +845,7 @@ class SizeVisitor(ast.NodeVisitor):
             self.visit(node.member_type, '{old}[{index}]'.format(old=value, index=index_variable), depth + 1)
             self.output.write('{indent}}}\n'.format(indent='\t' * depth))
 
-        
+
 class UnionEmitter(ast.NodeVisitor):
     def __init__(self, output=sys.stdout, prefix=''):
         self.output = output
@@ -840,7 +853,7 @@ class UnionEmitter(ast.NodeVisitor):
 
     def visit_UnionDecl(self, node):
         globals = dict(union_name=node.name)
-        
+
         header = "public class {union_name} {{\n".format(**globals)
         footer = '}\n\n'
         members = node.members()
@@ -861,10 +874,10 @@ class UnionEmitter(ast.NodeVisitor):
         self.emitGetHashCode(node, globals)
         #end union stuff
         self.output.write(footer)
-        
+
     def emitTags(self, node, globals):
         self.output.write('public enum Tag {\n')
-        
+
         with self.output.indent(1):
             lines = []
             for i, member in enumerate(node.members()):
@@ -877,22 +890,23 @@ class UnionEmitter(ast.NodeVisitor):
                     middle = ''
                 end = ' // {value}'.format(value=member.tag)
                 lines.append((start, middle, end))
-            
+
             start = 'INVALID'.format(**globals)
             middle = ' = {invalid_tag}'.format(invalid_tag=node.invalid_tag)
             lines.append((start, middle))
             self.output.write_with_aligned_whitespace(lines)
-        
+
         self.output.write('};\n\n')
-        
+
     def emitTagMember(self, node, globals):
         self.output.write('\tprivate Tag _tag = Tag.INVALID;\n\n')
-        
+
     def emitUnion(self, node, globals):
         self.output.write('\tprivate object _state = null;\n\n')
+        self.output.write('\tpublic object GetState() { return _state; }\n\n')
     def emitGetTag(self, node, globals):
         self.output.write('\tpublic Tag GetTag() { return _tag; }\n\n')
-        
+
     def emitAccessors(self, node, globals):
         for member in node.members():
             Union_AccessorEmitter(output=self.output,
@@ -923,10 +937,10 @@ class UnionEmitter(ast.NodeVisitor):
 
     def emitConstructors(self, node, globals):
         self.output.write('\t/**** Constructors ****/\n\n')
-        
+
         self.emitDefaultConstructor(node, globals)
         self.emitUnpackConstructors(node, globals)
-        
+
     def emitDefaultConstructor(self, node, globals):
         self.output.write('\tpublic {union_name}()\n\t{{\n'.format(**globals))
         self.output.write('\t}\n\n')
@@ -937,29 +951,29 @@ class UnionEmitter(ast.NodeVisitor):
             \t{{
             \t\tUnpack(stream);
             \t}}
-            
+
             \tpublic {union_name}(System.IO.BinaryReader reader)
             \t{{
             \t\tUnpack(reader);
             \t}}
-            
+
             #''')[:-1].format(**globals))
-    
+
     def emitUnpack(self, node, globals):
         self.output.write(textwrap.dedent('''\
             \tpublic void Unpack(System.IO.Stream stream)
             \t{{
             #''')[:-1].format(**globals))
-        
+
         if node.members():
             self.output.write(textwrap.dedent('''\
                 \t\tSystem.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
                 \t\tUnpack(reader);
                 #''')[:-1].format(**globals))
-        
+
         self.output.write(textwrap.dedent('''\
             \t}}
-            
+
             \tpublic void Unpack(System.IO.BinaryReader reader)
             \t{{
             \t\tTag newTag = (Tag)reader.{tag_type}();
@@ -967,37 +981,37 @@ class UnionEmitter(ast.NodeVisitor):
             #''')[:-1].format(
                 tag_type=read_translations[node.tag_storage_type.name],
                 **globals))
-        
+
         visitor = UnpackVisitor(self.output)
         for member in node.members():
             self.output.write('\t\tcase Tag.%s:\n' % member.name)
             visitor.visit(member.type, destination=member.name, depth=3)
             self.output.write('\t\t\tbreak;\n')
-        
+
         self.output.write(textwrap.dedent('''\
             \t\tdefault:
             \t\t\tbreak;\n
             \t\t}}
             \t\t_tag = newTag;
             \t}}
-            
+
             #''')[:-1].format(**globals))
-    
+
     def emitPack(self, node, globals):
         self.output.write(textwrap.dedent('''\
             \tpublic void Pack(System.IO.Stream stream)
             \t{{
             #''')[:-1].format(**globals))
-        
+
         if node.members():
             self.output.write(textwrap.dedent('''\
                 \t\tSystem.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
                 \t\tPack(writer);
                 #''')[:-1].format(**globals))
-        
+
         self.output.write(textwrap.dedent('''\
             \t}}
-            
+
             \tpublic void Pack(System.IO.BinaryWriter writer)
             \t{{
             \t\twriter.Write(({tag_type})GetTag());
@@ -1005,21 +1019,21 @@ class UnionEmitter(ast.NodeVisitor):
             #''')[:-1].format(
                 tag_type=type_translations[node.tag_storage_type.name],
                 **globals))
-        
+
         visitor = PackVisitor(self.output)
         for member in node.members():
             self.output.write('\t\tcase Tag.%s:\n' % member.name)
             visitor.visit(member.type, value=member.name, depth=3)
             self.output.write('\t\t\tbreak;\n')
-        
+
         self.output.write(textwrap.dedent('''\
             \t\tdefault:
             \t\t\tbreak;
             \t\t}}
             \t}}
-            
+
             #''')[:-1].format(**globals))
-    
+
     def emitEquals(self, node, globals):
         self.output.write(textwrap.dedent('''\
         \tpublic static bool operator ==({union_name} a, {union_name} b)
@@ -1036,7 +1050,7 @@ class UnionEmitter(ast.NodeVisitor):
         \t{{
         \t\treturn !(a == b);
         \t}}
-        
+
         \tpublic override bool Equals(System.Object obj)
         \t{{
         \t\treturn this.Equals(obj as {union_name});
@@ -1048,7 +1062,7 @@ class UnionEmitter(ast.NodeVisitor):
         \t\t{{
         \t\t\treturn false;
         \t\t}}
-        
+
         \t\treturn (_tag == p._tag && _state.Equals(p._state));
         \t}}
 
@@ -1069,13 +1083,13 @@ class UnionEmitter(ast.NodeVisitor):
         #''')[:-1])
 
     def emitSize(self, node, globals):
-        
+
         self.output.write(textwrap.dedent('''\
-            \tpublic int Size 
+            \tpublic int Size
             \t{{
             \t\tget {{
             #''')[:-1].format(**globals))
-        
+
         if node.is_message_size_fixed():
             self.output.write('\t\t\treturn {size};\n'.format(size=node.max_message_size()))
         else:
@@ -1102,16 +1116,16 @@ class UnionEmitter(ast.NodeVisitor):
                 \t\t}}
                 \t}}\n
                 #''')[:-1].format(**globals))
-    
+
 class Union_AccessorEmitter(ast.NodeVisitor):
     def __init__(self, output=sys.stdout, prefix=''):
         self.output = output
         self.prefix = prefix
-        
+
     def visit_MessageMemberDecl(self, node):
         self.emitProperty(node)
         self.output.write('\n')
-        
+
     def emitProperty(self, node):
         self.output.write('\tpublic ')
         self.visit(node.type)
