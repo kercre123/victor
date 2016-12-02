@@ -4,7 +4,6 @@ namespace ScriptedSequences.Conditions {
   public class TouchedAnywhere : ScriptedSequenceCondition {
 
     protected override void EnableChanged(bool enabled) {
-
       var touchCatcher = UIManager.Instance.TouchCatcher;
 
       if (touchCatcher != null) {

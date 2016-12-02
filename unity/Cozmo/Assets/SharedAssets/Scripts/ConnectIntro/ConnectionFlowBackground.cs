@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ConnectionFlowBackground : Cozmo.UI.BaseView {
+public class ConnectionFlowBackground : Cozmo.UI.BaseModal {
 
   [SerializeField]
   private Sprite _CompletedStateSprite;

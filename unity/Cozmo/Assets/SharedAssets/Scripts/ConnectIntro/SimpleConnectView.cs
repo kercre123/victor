@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class SimpleConnectView : Cozmo.UI.BaseView {
+public class SimpleConnectView : Cozmo.UI.BaseModal {
 
   public System.Action OnConnectButton;
 

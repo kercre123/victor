@@ -2,7 +2,7 @@
 using System.Collections;
 using DG.Tweening;
 
-public class SoundCheckView : Cozmo.UI.BaseView {
+public class SoundCheckView : Cozmo.UI.BaseModal {
 
   public System.Action OnSoundCheckComplete;
 

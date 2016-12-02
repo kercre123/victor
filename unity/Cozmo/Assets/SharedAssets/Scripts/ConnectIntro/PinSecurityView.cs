@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PinSecurityView : Cozmo.UI.BaseView {
+public class PinSecurityView : Cozmo.UI.BaseModal {
 
   public System.Action<string> OnPinEntered;
   public System.Action OnQuitButton;

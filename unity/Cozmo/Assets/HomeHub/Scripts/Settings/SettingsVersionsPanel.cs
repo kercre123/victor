@@ -124,7 +124,7 @@ namespace Cozmo.Settings {
 
     private void HandleOpenEraseCozmoViewButtonTapped() {
       if (_EraseCozmoDialogInstance == null) {
-        _EraseCozmoDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.LongConfirmationViewPrefab);
+        _EraseCozmoDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.LongConfirmationViewPrefab);
         _EraseCozmoDialogInstance.Initialize("erase_cozmo_dialog",
                                              LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoTitle,
                                              LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoWarningLabel,
@@ -177,7 +177,7 @@ namespace Cozmo.Settings {
 
     private void HandleOpenSupportViewButtonTapped() {
       if (_SupportInfoViewInstance == null) {
-        _SupportInfoViewInstance = UIManager.OpenView(_SupportInfoViewPrefab);
+        _SupportInfoViewInstance = UIManager.OpenModal(_SupportInfoViewPrefab);
         _SupportInfoViewInstance.OnOpenRestoreCozmoViewButtonTapped += HandleOpenRestoreCozmoViewButtonTapped;
         _SupportInfoViewInstance.HideRestoreButton(_RestoreButtonIsActive);
       }
@@ -188,7 +188,7 @@ namespace Cozmo.Settings {
         if (_SupportInfoViewInstance != null) {
           _SupportInfoViewInstance.CloseView();
         }
-        _RestoreCozmoDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.LongConfirmationViewPrefab);
+        _RestoreCozmoDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.LongConfirmationViewPrefab);
         _RestoreCozmoDialogInstance.Initialize("restore_cozmo_dialog",
                                                LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoTitle,
                                                LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoWarningLabel,

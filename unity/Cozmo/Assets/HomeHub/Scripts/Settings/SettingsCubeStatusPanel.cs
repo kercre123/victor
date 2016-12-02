@@ -13,7 +13,7 @@ namespace Cozmo.Settings {
     [SerializeField]
     private CozmoButton _ShowCubeHelpButton;
 
-    private BaseView _SettingsCubeHelpDialogInstance;
+    private BaseModal _SettingsCubeHelpDialogInstance;
 
     [SerializeField]
     private HorizontalLayoutGroup _LightCubeButtonLayoutGroup;
@@ -21,7 +21,7 @@ namespace Cozmo.Settings {
     [SerializeField]
     private SettingsLightCubeButton _SettingsLightCubeButtonPrefab;
 
-    private AlertView _ConfirmBlockPoolRefreshView;
+    private AlertModal _ConfirmBlockPoolRefreshView;
 
     private const string kDasEventViewController = "settings_cube_status_panel";
 
@@ -58,7 +58,7 @@ namespace Cozmo.Settings {
     }
 
     private void HandleRefreshBlockPoolTapped() {
-      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
       // Hook up callbacks
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonRefresh, HandleRefreshBlockPool);
@@ -75,7 +75,7 @@ namespace Cozmo.Settings {
 
     private void HandleOpenCubeHelpViewTapped() {
       if (_SettingsCubeHelpDialogInstance == null) {
-        _SettingsCubeHelpDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.CubeHelpViewPrefab);
+        _SettingsCubeHelpDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpViewPrefab);
       }
     }
   }

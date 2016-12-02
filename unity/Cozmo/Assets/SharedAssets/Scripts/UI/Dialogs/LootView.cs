@@ -10,7 +10,7 @@ using Cozmo.MinigameWidgets;
 using Cozmo.Util;
 
 namespace Cozmo.UI {
-  public class LootView : BaseView {
+  public class LootView : BaseModal {
 
     #region Constants
 

@@ -123,7 +123,7 @@ MonoBehaviour:
     JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: Cozmo.UI.BaseView:_OptionalCloseDialogButton
+    FieldName: Cozmo.UI.BaseModal:_OptionalCloseDialogButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11452052

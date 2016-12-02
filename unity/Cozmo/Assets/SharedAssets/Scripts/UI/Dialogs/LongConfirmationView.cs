@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Collections;
 
 namespace Cozmo.UI {
-  public class LongConfirmationView : BaseView {
+  public class LongConfirmationView : BaseModal {
 
     [SerializeField]
     private AnkiTextLabel _TitleTextLabel;

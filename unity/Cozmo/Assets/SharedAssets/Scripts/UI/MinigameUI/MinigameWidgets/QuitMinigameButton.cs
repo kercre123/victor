@@ -21,7 +21,7 @@ namespace Cozmo {
       [SerializeField]
       private CozmoButton _QuitButtonInstance;
 
-      private AlertView _QuitPopupInstance;
+      private AlertModal _QuitPopupInstance;
 
       public string DASEventViewController {
         get { return _QuitButtonInstance.DASEventViewController; }
@@ -63,7 +63,7 @@ namespace Cozmo {
       private void HandleQuitButtonTap() {
         if (UIManager.Instance.NumberOfOpenDialogues() == 0) {
           // Open confirmation dialog instead
-          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_NoText);
+          AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.NoTextAlertModalPrefab);
           // Hook up callbacks
           alertView.SetCloseButtonEnabled(false);
           alertView.SetPrimaryButton(LocalizationKeys.kButtonQuit, HandleQuitConfirmed, Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));

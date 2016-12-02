@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ProfileCreationView : Cozmo.UI.BaseView {
+public class ProfileCreationView : Cozmo.UI.BaseModal {
 
   [SerializeField]
   private UnityEngine.UI.InputField _NameField;
@@ -96,7 +96,7 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
   }
 
   private void ProfileCreationDone() {
-    UIManager.CloseView(this);
+    UIManager.CloseModal(this);
   }
 
   protected override void CleanUp() {

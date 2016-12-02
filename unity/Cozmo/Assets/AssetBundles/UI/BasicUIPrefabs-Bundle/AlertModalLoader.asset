@@ -9,18 +9,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5b3fc0c5e9f534d109d440955e9c3d30, type: 3}
-  m_Name: AlertViewLoader
+  m_Name: AlertModalLoader
   m_EditorClassIdentifier: 
-  _AlertViewPrefab: {fileID: 11464034, guid: 1c49983afe76142ff897b4cc22f9ef57, type: 2}
-  _AlertViewPrefab_NoText: {fileID: 11464034, guid: d5c0f5442c0704b80a75c78c511e6aa5,
+  _AlertModalPrefab: {fileID: 11464034, guid: 1c49983afe76142ff897b4cc22f9ef57, type: 2}
+  _NoTextAlertModalPrefab: {fileID: 11464034, guid: d5c0f5442c0704b80a75c78c511e6aa5,
     type: 2}
-  _AlertViewPrefab_Icon: {fileID: 11445856, guid: 6df6cacad361b454391645f3c10a68dd,
+  _IconAlertModalPrefab: {fileID: 11445856, guid: 6df6cacad361b454391645f3c10a68dd,
     type: 2}
-  _AlertViewPrefab_BadLight: {fileID: 11497196, guid: c0f4aad8d980c4533bc2aa6874374a65,
+  _BadLightAlertModalPrefab: {fileID: 11497196, guid: c0f4aad8d980c4533bc2aa6874374a65,
     type: 2}
-  _AlertViewPrefab_LowBattery: {fileID: 11497196, guid: 585c3cec3fa734ad99af4d59195a2742,
+  _LowBatteryAlertModalPrefab: {fileID: 11497196, guid: 585c3cec3fa734ad99af4d59195a2742,
     type: 2}
-  _AlertViewPrefab_ComingSoon: {fileID: 11425878, guid: a10d0b3424331432da08b6c328ec83da,
+  _ComingSoonAlertModalPrefab: {fileID: 11425878, guid: a10d0b3424331432da08b6c328ec83da,
     type: 2}
   _ScrollingTextViewPrefab: {fileID: 11422892, guid: a9bae51dad15b4085b12a1640c774477,
     type: 2}

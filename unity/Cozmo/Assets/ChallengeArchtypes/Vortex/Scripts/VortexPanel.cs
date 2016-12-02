@@ -5,7 +5,7 @@ using Cozmo.UI;
 
 namespace Vortex {
 
-  public class VortexPanel : BaseView {
+  public class VortexPanel : BaseModal {
 
     [SerializeField]
     private UnityEngine.UI.Button _SpinButton;

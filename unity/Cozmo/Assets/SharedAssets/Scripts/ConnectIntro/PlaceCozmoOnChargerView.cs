@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PlaceCozmoOnChargerView : Cozmo.UI.BaseView {
+public class PlaceCozmoOnChargerView : Cozmo.UI.BaseModal {
 
   public System.Action OnConnectButton;
 
@@ -14,7 +14,7 @@ public class PlaceCozmoOnChargerView : Cozmo.UI.BaseView {
 
   private void Awake() {
     _ContinueButton.Initialize(() => {
-      _KeepCozmoOnChargerConnectViewInstance = UIManager.OpenView(_KeepCozmoOnChargerConnectViewPrefab);
+      _KeepCozmoOnChargerConnectViewInstance = UIManager.OpenModal(_KeepCozmoOnChargerConnectViewPrefab);
       _KeepCozmoOnChargerConnectViewInstance.OnConnectButton += HandleConnectButton;
     }, "continue_button", this.DASEventViewName);
     DasTracker.Instance.TrackChargerPromptEntered();
@@ -30,7 +30,7 @@ public class PlaceCozmoOnChargerView : Cozmo.UI.BaseView {
   protected override void CleanUp() {
     base.CleanUp();
     if (_KeepCozmoOnChargerConnectViewInstance != null) {
-      UIManager.CloseViewImmediately(_KeepCozmoOnChargerConnectViewInstance);
+      UIManager.CloseModalImmediately(_KeepCozmoOnChargerConnectViewInstance);
     }
   }
 }

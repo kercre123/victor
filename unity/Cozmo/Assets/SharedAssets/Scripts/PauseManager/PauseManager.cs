@@ -24,7 +24,7 @@ namespace Cozmo {
     private static PauseManager _Instance;
     public Action OnPauseDialogOpen;
     private bool _IsPaused = false;
-    private AlertView _GoToSleepDialog = null;
+    private AlertModal _GoToSleepDialog = null;
     private bool _IsOnChargerToSleep = false;
     private bool _StartedIdleTimeout = false;
     private bool _IdleTimeOutEnabled = true;
@@ -33,11 +33,11 @@ namespace Cozmo {
     private const float _kMaxValidBatteryVoltage = 4.2f;
     private float _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
     private bool _LowBatteryAlertTriggered = false;
-    private AlertView _LowBatteryDialog = null;
+    private AlertModal _LowBatteryDialog = null;
     public bool ListeningForBatteryLevel = false;
     public static bool sLowBatteryEventLogged = false;
 
-    private AlertView _SleepCozmoConfirmDialog;
+    private AlertModal _SleepCozmoConfirmDialog;
 
     public bool IsAnyDialogOpen {
       get {
@@ -292,8 +292,8 @@ namespace Cozmo {
       if (!IsConfirmSleepDialogOpen) {
         Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
 
-        _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab,
-                                                      preInitFunc: (AlertView alertView) => {
+        _SleepCozmoConfirmDialog = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab,
+                                                      creationSuccessCallback: (AlertModal alertView) => {
                                                         alertView.OpenAudioEvent = openEvt;
                                                       },
                                                       overrideBackgroundDim: null,
@@ -330,8 +330,8 @@ namespace Cozmo {
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
       if (!IsGoToSleepDialogOpen) {
-        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab,
-                                                          preInitFunc: (AlertView view) => {
+        Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab,
+                                                          creationSuccessCallback: (AlertModal view) => {
                                                             view.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
                                                           },
                                                           overrideCloseOnTouchOutside: false);
@@ -352,7 +352,7 @@ namespace Cozmo {
         return;
       }
       if (!IsLowBatteryDialogOpen) {
-        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_LowBattery);
+        Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.LowBatteryAlertModalPrefab);
         alertView.SetCloseButtonEnabled(true);
         alertView.DimBackground = true;
         alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryTitle;

@@ -33,7 +33,7 @@ namespace InvestorDemo {
     }
 
     protected void InitializeMinigameObjects() {
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab);
+      _GamePanel = UIManager.OpenModal(_GamePanelPrefab);
 
       CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
 
@@ -86,7 +86,7 @@ namespace InvestorDemo {
       }
 
       if (_GamePanel != null) {
-        UIManager.CloseViewImmediately(_GamePanel);
+        UIManager.CloseModalImmediately(_GamePanel);
       }
     }
   }

@@ -54,7 +54,7 @@ namespace Cozmo.HomeHub {
 
     private AnimationTrigger _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
 
-    private AlertView _ChallengeAlertView = null;
+    private AlertModal _ChallengeAlertView = null;
 
     // Total ConnectedTime For GameEvents
     private const float _kConnectedTimeIntervalCheck = 60.0f;
@@ -153,7 +153,7 @@ namespace Cozmo.HomeHub {
         yield return 0;
       }
 
-      _HomeViewInstance = UIManager.OpenView(homeViewPrefab.GetComponent<HomeView>());
+      _HomeViewInstance = UIManager.OpenModal(homeViewPrefab.GetComponent<HomeView>());
       _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
       _HomeViewInstance.MinigameConfirmed += HandleStartChallengeRequest;
 
@@ -203,7 +203,7 @@ namespace Cozmo.HomeHub {
         bool available = UnlockablesManager.Instance.IsUnlockableAvailable(_ChallengeStatesById[challenge].Data.UnlockId.Value);
         UnlockableInfo unlockInfo = UnlockablesManager.Instance.GetUnlockableInfo(_ChallengeStatesById[challenge].Data.UnlockId.Value);
         if (unlockInfo.ComingSoon) {
-          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: true);
+          AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab, overrideCloseOnTouchOutside: true);
           alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
 
           alertView.TitleLocKey = LocalizationKeys.kUnlockableComingSoonTitle;
@@ -224,7 +224,7 @@ namespace Cozmo.HomeHub {
           }
 
           // Create alert view with Icon
-          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: true);
+          AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.IconAlertModalPrefab, overrideCloseOnTouchOutside: true);
           alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
           alertView.TitleLocKey = unlockInfo.TitleKey;
           alertView.SetIcon(_ChallengeStatesById[challenge].Data.ChallengeIcon);
@@ -255,7 +255,7 @@ namespace Cozmo.HomeHub {
           _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
 
           _ChallengeDetailsPrefabData.LoadAssetData((GameObject challengeDetailsPrefab) => {
-            _ChallengeDetailsDialogInstance = UIManager.OpenView(challengeDetailsPrefab.GetComponent<ChallengeDetailsDialog>(),
+            _ChallengeDetailsDialogInstance = UIManager.OpenModal(challengeDetailsPrefab.GetComponent<ChallengeDetailsDialog>(),
               newView => {
                 newView.Initialize(_ChallengeStatesById[challenge].Data);
               });

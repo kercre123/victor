@@ -51,7 +51,7 @@ namespace Cozmo.Settings {
 
     private void HandleAcknowledgementsLinkButtonTapped() {
       if (_AcknowledgementsDialogInstance == null) {
-        _AcknowledgementsDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.ScrollingTextViewPrefab,
+        _AcknowledgementsDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextViewPrefab,
                                                              (ScrollingTextView view) => { view.DASEventViewName = "acknowledgements_view"; });
         _AcknowledgementsDialogInstance.Initialize(Localization.Get(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle),
                                                    Localization.ReadLocalizedTextFromFile(_AcknowledgementsTextFileName));
@@ -60,7 +60,7 @@ namespace Cozmo.Settings {
 
     private void HandlePrivacyPolicyLinkButtonTapped() {
       if (_PrivacyPolicyDialogInstance == null) {
-        _PrivacyPolicyDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.ScrollingTextViewPrefab,
+        _PrivacyPolicyDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextViewPrefab,
                                                            (ScrollingTextView view) => { view.DASEventViewName = "privacyPolicy_view"; });
         _PrivacyPolicyDialogInstance.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle),
                                                 Localization.ReadLocalizedTextFromFile(_PrivacyPolicyTextFileName));
@@ -69,7 +69,7 @@ namespace Cozmo.Settings {
 
     private void HandleTermsOfUseLinkButtonTapped() {
       if (_TermsOfUseDialogInstance == null) {
-        _TermsOfUseDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.ScrollingTextViewPrefab,
+        _TermsOfUseDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextViewPrefab,
                                                        (ScrollingTextView view) => { view.DASEventViewName = "termsOfUse_view"; });
         _TermsOfUseDialogInstance.Initialize(Localization.Get(LocalizationKeys.kLabelTermsOfUse),
                                              Localization.ReadLocalizedTextFromFile(_TermsOfUseTextFileName));

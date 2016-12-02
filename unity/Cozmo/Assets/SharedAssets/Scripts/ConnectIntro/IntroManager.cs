@@ -85,7 +85,7 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void OnRobotDisconnect(object message) {
-    DasTracker.Instance.TrackIntroManagerRobotDisconnect(UIManager.GetTopViewName());
+    DasTracker.Instance.TrackIntroManagerRobotDisconnect(UIManager.GetTopModalName());
     if (null != _HubWorldInstance) {
       _HubWorldInstance.DestroyHubWorld();
     }
@@ -100,7 +100,7 @@ public class IntroManager : MonoBehaviour {
       return;
     }
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
-    UIManager.CloseAllViewsImmediately();
+    UIManager.CloseAllModalsImmediately();
     UIManager.EnableTouchEvents();
 
     if (!_StartFlowInProgress) {

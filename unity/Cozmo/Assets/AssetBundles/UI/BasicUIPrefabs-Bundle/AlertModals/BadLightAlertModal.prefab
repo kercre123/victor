@@ -63,7 +63,7 @@ GameObject:
   - 114: {fileID: 11497196}
   - 225: {fileID: 22520596}
   m_Layer: 5
-  m_Name: BadLightAlert
+  m_Name: BadLightAlertModal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -205,7 +205,7 @@ MonoBehaviour:
     JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Cozmo.UI.AlertView:_OptionalCloseDialogButton
+    FieldName: Cozmo.UI.AlertModal:_OptionalCloseDialogButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11466024

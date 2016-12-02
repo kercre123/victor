@@ -80,7 +80,7 @@ GameObject:
   - 114: {fileID: 11497196}
   - 225: {fileID: 22520596}
   m_Layer: 5
-  m_Name: LowBatteryAlert
+  m_Name: LowBatteryAlertModal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -136,7 +136,7 @@ MonoBehaviour:
     JsonValue: '"#connectivity.cozmoLowBatteryDesc"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Cozmo.UI.AlertView:_AlertMessageText
+    FieldName: Cozmo.UI.AlertModal:_AlertMessageText
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
@@ -178,7 +178,7 @@ MonoBehaviour:
     JsonValue: '"#connectivity.cozmoLowBatteryTitle"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Cozmo.UI.AlertView:_AlertTitleText
+    FieldName: Cozmo.UI.AlertModal:_AlertTitleText
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
@@ -259,7 +259,7 @@ MonoBehaviour:
     JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Cozmo.UI.AlertView:_OptionalCloseDialogButton
+    FieldName: Cozmo.UI.AlertModal:_OptionalCloseDialogButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11489078

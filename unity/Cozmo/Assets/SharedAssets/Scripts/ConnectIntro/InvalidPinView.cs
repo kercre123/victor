@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class InvalidPinView : Cozmo.UI.BaseView {
+public class InvalidPinView : Cozmo.UI.BaseModal {
 
   public System.Action OnRetryPin;
 

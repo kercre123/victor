@@ -3,7 +3,7 @@ using Cozmo.UI;
 using DG.Tweening;
 
 namespace Cozmo.Minigame.DroneMode {
-  public class DroneModeHowToPlayView : BaseView {
+  public class DroneModeHowToPlayView : BaseModal {
 
     [SerializeField]
     private CanvasGroup _AlphaController;

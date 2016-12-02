@@ -126,7 +126,7 @@ GameObject:
   - 114: {fileID: 11425878}
   - 225: {fileID: 22579418}
   m_Layer: 5
-  m_Name: ComingSoonUpgradeAlertView
+  m_Name: ComingSoonUpgradeAlertModal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -201,7 +201,7 @@ MonoBehaviour:
     JsonValue: '"#button.close"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: Cozmo.UI.AlertView:_PrimaryButton
+    FieldName: Cozmo.UI.AlertModal:_PrimaryButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11433172
@@ -266,6 +266,7 @@ MonoBehaviour:
   m_Text: Cozmo wants to meet you
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11451588
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -301,6 +302,7 @@ MonoBehaviour:
   m_Text: '#unlockable.ComingSoon.Title'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11489942
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -316,7 +318,7 @@ MonoBehaviour:
   ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Cozmo.UI.AlertView:_Icon
+    FieldName: Cozmo.UI.AlertModal:_Icon
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!222 &22202148

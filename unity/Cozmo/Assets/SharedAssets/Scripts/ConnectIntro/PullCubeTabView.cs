@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class PullCubeTabView : Cozmo.UI.BaseView {
+public class PullCubeTabView : Cozmo.UI.BaseModal {
 
   [SerializeField]
   private const float _kTimeBeforeForceContinue = 15.0f;

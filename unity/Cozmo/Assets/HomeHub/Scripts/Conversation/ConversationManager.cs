@@ -52,14 +52,14 @@ namespace Conversations {
       _CurrentConversation = new Conversation();
       _CurrentConversationKey = conversationKey;
       if (_CurrBackground != null) {
-        UIManager.CloseView(_CurrBackground);
+        UIManager.CloseModal(_CurrBackground);
         _CurrBackground = null;
       }
       if (_CurrentLeftSpeechBubble != null) {
-        UIManager.CloseView(_CurrentLeftSpeechBubble);
+        UIManager.CloseModal(_CurrentLeftSpeechBubble);
       }
       if (_CurrentRightSpeechBubble != null) {
-        UIManager.CloseView(_CurrentRightSpeechBubble);
+        UIManager.CloseModal(_CurrentRightSpeechBubble);
       }
     }
 
@@ -70,7 +70,7 @@ namespace Conversations {
     public void AddConversationLine(ConversationLine line) {
       _CurrentConversation.AddToConversation(line);
       if (_CurrBackground == null) {
-        _CurrBackground = UIManager.OpenView(_ConvoOverlayPrefab);
+        _CurrBackground = UIManager.OpenModal(_ConvoOverlayPrefab);
         _CurrBackground.InitButtonText(LocalizationKeys.kButtonContinue);
       }
       CreateSpeechBubble(line);
@@ -86,15 +86,15 @@ namespace Conversations {
       SpeechBubble newBubble;
       if (line.IsRight) {
         if (_CurrentRightSpeechBubble != null) {
-          UIManager.CloseView(_CurrentRightSpeechBubble);
+          UIManager.CloseModal(_CurrentRightSpeechBubble);
         }
-        newBubble = _CurrentRightSpeechBubble = UIManager.OpenView(_RightBubble);
+        newBubble = _CurrentRightSpeechBubble = UIManager.OpenModal(_RightBubble);
       }
       else {
         if (_CurrentLeftSpeechBubble != null) {
-          UIManager.CloseView(_CurrentLeftSpeechBubble);
+          UIManager.CloseModal(_CurrentLeftSpeechBubble);
         }
-        newBubble = _CurrentLeftSpeechBubble = UIManager.OpenView(_LeftBubble);
+        newBubble = _CurrentLeftSpeechBubble = UIManager.OpenModal(_LeftBubble);
       }
       newBubble.Initialize(line);
       return newBubble;

@@ -7,7 +7,7 @@ using DG.Tweening;
 
 namespace Cozmo {
   namespace UI {
-    public class AlertView : BaseView {
+    public class AlertModal : BaseModal {
 
       [SerializeField]
       private AnkiTextLabel _AlertTitleText;
@@ -69,7 +69,7 @@ namespace Cozmo {
       }
 
       private void Awake() {
-        string viewName = GenerateDasName();
+        string alertDasName = GenerateDasName();
 
         if (_OptionalCloseDialogButton != null) {
           _OptionalCloseDialogButton.gameObject.SetActive(false);
@@ -81,12 +81,12 @@ namespace Cozmo {
 
         // Hide all buttons
         if (_PrimaryButton != null) {
-          _PrimaryButton.DASEventViewController = viewName;
+          _PrimaryButton.DASEventViewController = alertDasName;
           _PrimaryButton.gameObject.SetActive(false);
         }
 
         if (_SecondaryButton != null) {
-          _SecondaryButton.DASEventViewController = viewName;
+          _SecondaryButton.DASEventViewController = alertDasName;
           _SecondaryButton.gameObject.SetActive(false);
         }
 
@@ -101,34 +101,34 @@ namespace Cozmo {
       }
 
       private void UpdateButtonViewControllerNames() {
-        string viewName = GenerateDasName();
+        string alertDasName = GenerateDasName();
         if (_OptionalCloseDialogButton != null) {
-          _OptionalCloseDialogButton.DASEventViewController = viewName;
+          _OptionalCloseDialogButton.DASEventViewController = alertDasName;
         }
 
         // Hide all buttons
         if (_PrimaryButton != null) {
-          _PrimaryButton.DASEventViewController = viewName;
+          _PrimaryButton.DASEventViewController = alertDasName;
         }
 
         if (_SecondaryButton != null) {
-          _SecondaryButton.DASEventViewController = viewName;
+          _SecondaryButton.DASEventViewController = alertDasName;
         }
       }
 
       private string GenerateDasName() {
         string viewFormatting = "{0}_{1}";
-        string viewName = null;
+        string alertDasName = null;
         if (_TitleKey != null) {
-          viewName = string.Format(viewFormatting, DASEventViewName, _TitleKey);
+          alertDasName = string.Format(viewFormatting, DASEventViewName, _TitleKey);
         }
         else if (_DescriptionKey != null) {
-          viewName = string.Format(viewFormatting, DASEventViewName, _DescriptionKey);
+          alertDasName = string.Format(viewFormatting, DASEventViewName, _DescriptionKey);
         }
         else {
-          viewName = DASEventViewName;
+          alertDasName = DASEventViewName;
         }
-        return viewName;
+        return alertDasName;
       }
 
       public void SetCloseButtonEnabled(bool enabled) {
@@ -136,7 +136,7 @@ namespace Cozmo {
           _OptionalCloseDialogButton.gameObject.SetActive(enabled);
         }
         else {
-          DAS.Warn(this, "Tried to set up a button that doesn't exist in this AlertView! " + gameObject.name);
+          DAS.Warn("AlertModal.SetCloseButtonEnabled.OptionalCloseDialogButtonNull", "Tried to set up a button that doesn't exist in this AlertModal! " + gameObject.name);
         }
       }
 
@@ -198,7 +198,7 @@ namespace Cozmo {
           }
         }
         else {
-          DAS.Warn(this, "Tried to set up a button that doesn't exist in this AlertView! " + gameObject.name);
+          DAS.Warn("AlertModal.SetupButton.TargetButtonNull", "Tried to set up a button that doesn't exist in this AlertModal! " + gameObject.name);
         }
       }
 

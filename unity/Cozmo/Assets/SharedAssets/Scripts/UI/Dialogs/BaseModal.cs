@@ -6,7 +6,7 @@ using Anki.UI;
 
 namespace Cozmo {
   namespace UI {
-    public class BaseView : MonoBehaviour {
+    public class BaseModal : MonoBehaviour {
       private enum ViewState {
         Initialized,
         IsOpening,
@@ -16,7 +16,7 @@ namespace Cozmo {
       }
 
       // Static events
-      public delegate void BaseViewHandler(BaseView view);
+      public delegate void BaseViewHandler(BaseModal view);
 
       public static event BaseViewHandler BaseViewOpened;
       public static event BaseViewHandler BaseViewOpenAnimationFinished;
@@ -261,7 +261,7 @@ namespace Cozmo {
         RaiseViewCloseAnimationFinished(this);
       }
 
-      private static void RaiseViewOpened(BaseView view) {
+      private static void RaiseViewOpened(BaseModal view) {
         if (BaseViewOpened != null) {
           BaseViewOpened(view);
         }
@@ -270,7 +270,7 @@ namespace Cozmo {
         }
       }
 
-      private static void RaiseViewOpenAnimationFinished(BaseView view) {
+      private static void RaiseViewOpenAnimationFinished(BaseModal view) {
         if (BaseViewOpenAnimationFinished != null) {
           BaseViewOpenAnimationFinished(view);
         }
@@ -279,7 +279,7 @@ namespace Cozmo {
         }
       }
 
-      private static void RaiseViewClosed(BaseView view) {
+      private static void RaiseViewClosed(BaseModal view) {
         if (BaseViewClosed != null) {
           BaseViewClosed(view);
         }
@@ -291,7 +291,7 @@ namespace Cozmo {
         }
       }
 
-      private static void RaiseViewCloseAnimationFinished(BaseView view) {
+      private static void RaiseViewCloseAnimationFinished(BaseModal view) {
         if (BaseViewCloseAnimationFinished != null) {
           BaseViewCloseAnimationFinished(view);
         }

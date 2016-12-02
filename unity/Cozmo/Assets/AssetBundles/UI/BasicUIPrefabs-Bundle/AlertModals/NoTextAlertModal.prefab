@@ -93,7 +93,7 @@ GameObject:
   - 222: {fileID: 22264502}
   - 114: {fileID: 11449834}
   m_Layer: 5
-  m_Name: NoTextAlertView
+  m_Name: NoTextAlertModal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -201,7 +201,7 @@ MonoBehaviour:
     JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: Cozmo.UI.AlertView:_OptionalCloseDialogButton
+    FieldName: Cozmo.UI.AlertModal:_OptionalCloseDialogButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11435156
@@ -246,7 +246,7 @@ MonoBehaviour:
   ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
-    FieldName: Cozmo.UI.AlertView:_PrimaryButton
+    FieldName: Cozmo.UI.AlertModal:_PrimaryButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11443360
@@ -267,7 +267,7 @@ MonoBehaviour:
     JsonValue: '"No"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
-    FieldName: Cozmo.UI.AlertView:_SecondaryButton
+    FieldName: Cozmo.UI.AlertModal:_SecondaryButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11449834
@@ -397,6 +397,7 @@ MonoBehaviour:
   m_Text: Speed Tap
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!222 &22216668
 CanvasRenderer:
   m_ObjectHideFlags: 1

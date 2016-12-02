@@ -50,7 +50,7 @@ namespace Vortex {
 
     protected void InitializeMinigameObjects(int numCubes) {
       DAS.Info(this, "VortexGame::Start");
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab);
+      _GamePanel = UIManager.OpenModal(_GamePanelPrefab);
 
       _GamePanel.HandleSpinEnded = HandleSpinEnded;
       _GamePanel.HandleSpinStarted = HandleSpinStarted;
@@ -69,7 +69,7 @@ namespace Vortex {
 
     protected override void CleanUpOnDestroy() {
       if (_GamePanel != null) {
-        UIManager.CloseViewImmediately(_GamePanel);
+        UIManager.CloseModalImmediately(_GamePanel);
       }
 
       LightCube.TappedAction -= HandleBlockTapped;

@@ -3,7 +3,7 @@ using System.Collections;
 using Cozmo.UI;
 
 namespace InvestorDemo {
-  public class InvestorDemoPanel : BaseView {
+  public class InvestorDemoPanel : BaseModal {
     
     [SerializeField]
     private UnityEngine.UI.Button _NextButton;
