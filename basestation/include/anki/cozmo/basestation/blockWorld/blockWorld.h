@@ -87,9 +87,12 @@ namespace Anki
                                ActiveObjectType activeObjectType,
                                const ObservableObject* objToCopyId = nullptr);
       
-      // notify the blockWorld that someone has changed the pose of an object
-      void OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family,
+      // notify the blockWorld that someone is about to change the pose of an object
+      void OnObjectPoseWillChange(const ObjectID& objectID, ObjectFamily family,
         const Pose3d& newPose, PoseState newPoseState);
+      
+      // notify the blockWorld that someone (poseConfirmer) has visually verified the given object at their current pose
+      void OnObjectVisuallyVerified(const ObservableObject* object);
       
       // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
       // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
@@ -492,9 +495,10 @@ namespace Anki
       // updates the objects reported in curOrigin that are moving to the relocalizedOrigin by virtue of rejiggering
       void UpdateOriginsOfObjectsReportedInMemMap(const Pose3d* curOrigin, const Pose3d* relocalizedOrigin);
       
-      // clear the space in the memory map between the robot and observed markers for any object that has been updated,
-      // because if we saw the marker, it means there's nothing between us and the marker
-      void ClearRobotToMarkersInMemMap();
+      // clear the space in the memory map between the robot and observed markers for the given object,
+      // because if we saw the marker, it means there's nothing between us and the marker.
+      // The observed markers are obtained querying the current marker observation time
+      void ClearRobotToMarkersInMemMap(const ObservableObject* object);
       
       // add/remove the given object to/from the memory map
       void AddObjectReportToMemMap(const ObservableObject& object, const Pose3d& newPose);
