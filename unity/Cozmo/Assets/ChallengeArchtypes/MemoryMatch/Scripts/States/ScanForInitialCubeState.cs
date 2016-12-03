@@ -318,6 +318,19 @@ namespace MemoryMatch {
                 _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
               }
             });
+
+            int closeCubes = 0;
+            foreach (KeyValuePair<int, ScannedSetupCubeState> cubeState in _SetupCubeState) {
+              if (cubeState.Value == ScannedSetupCubeState.TooClose) {
+                closeCubes++;
+              }
+            }
+            // If all cubes are too close there is a desire that only the outside cubes turn red.
+            // Design wise this is to indicate you should only move the outter ones
+            // whereas if just two cubes are close together you could move both.
+            if (closeCubes == _SetupCubeState.Count) {
+              centerCube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
+            }
           }
           // Error sound
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Tap_Red);
