@@ -376,6 +376,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.AvailableObjects>(HandleAvailableObjectsUpdate);
     RobotEngineManager.Instance.AddCallback<ObjectMoved>(HandleObservedObjectMoved);
     RobotEngineManager.Instance.AddCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
     RobotEngineManager.Instance.AddCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
@@ -408,6 +409,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.AvailableObjects>(HandleAvailableObjectsUpdate);
     RobotEngineManager.Instance.RemoveCallback<ObjectMoved>(HandleObservedObjectMoved);
     RobotEngineManager.Instance.RemoveCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
     RobotEngineManager.Instance.RemoveCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
@@ -904,6 +906,19 @@ public class Robot : IRobot {
         }
         Faces.RemoveAt(i);
         break;
+      }
+    }
+  }
+
+  private void HandleAvailableObjectsUpdate(Anki.Cozmo.ExternalInterface.AvailableObjects message) {
+    AvailableObject[] availableObjects = message.objects;
+    if (availableObjects != null) {
+      for (int i = 0; i < availableObjects.Length; ++i) {
+        AvailableObject obj = availableObjects[i];
+        ObservedObject objectSeen = GetObservedObjectById((int)obj.objectID);
+        if (objectSeen != null) {
+          objectSeen.UpdateAvailable(obj);
+        }
       }
     }
   }
