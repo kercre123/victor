@@ -143,6 +143,7 @@ namespace Anki {
       
       Radians currentAngle;
       _inPosition = IsBodyInPosition(currentAngle);
+      _turnStarted = false;
       
       if(!_inPosition) {
 
