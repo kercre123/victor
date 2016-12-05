@@ -63,13 +63,6 @@ public:
 
   virtual EPlannerStatus CheckPlanningStatus() const override;
 
-  // by default, this planner will run in a thread. If it is set to be synchronous, it will not
-  void SetIsSynchronous(bool val);
-
-  // Useful for testing, tell the planner to sleep for the given number of milliseconds after planning before
-  // any results are processed (this is skipped if the planner fails for any reason)
-  void SetArtificialPlannerDelay_ms(int ms);
-
 protected:
   EComputePathStatus ComputePathHelper(const Pose3d& startPose,
                                        const std::vector<Pose3d>& targetPoses);
