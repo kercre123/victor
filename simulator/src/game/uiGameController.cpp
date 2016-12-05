@@ -268,23 +268,23 @@ namespace Anki {
       HandleActiveObjectTapped(msg);
     }
     
-    void UiGameController::HandleAvailableObjectsBase(ExternalInterface::AvailableObjects const& msg)
+    void UiGameController::HandleObjectStatesBase(ExternalInterface::ObjectStates const& msg)
     {
-      for(auto & availableObject : msg.objects)
+      for(auto & objectState : msg.objects)
       {
-        PRINT_NAMED_INFO("HandleAvailableObjects",
+        PRINT_NAMED_INFO("HandleObjectStates",
                          "Received message about known object %d (type: %s, poseState: %hhu)",
-                         availableObject.objectID,
-                         EnumToString(availableObject.objectType),
-                         availableObject.poseState);
+                         objectState.objectID,
+                         EnumToString(objectState.objectType),
+                         objectState.poseState);
         
-        AddOrUpdateObject(availableObject.objectID,
-                          availableObject.objectType,
-                          availableObject.objectFamily,
-                          availableObject.pose);
+        AddOrUpdateObject(objectState.objectID,
+                          objectState.objectType,
+                          objectState.objectFamily,
+                          objectState.pose);
       }
       
-      HandleAvailableObjects(msg);
+      HandleObjectStates(msg);
     }
 
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
@@ -499,8 +499,8 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::ObjectTapped:
             HandleActiveObjectTappedBase(message.Get_ObjectTapped());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::AvailableObjects:
-            HandleAvailableObjectsBase(message.Get_AvailableObjects());
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectStates:
+            HandleObjectStatesBase(message.Get_ObjectStates());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());

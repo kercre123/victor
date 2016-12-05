@@ -247,7 +247,7 @@ public class ObservedObject : IVisibleInCamera {
   }
 
   // Useful for when the world was rejiggered.
-  public void UpdateAvailable(G2U.AvailableObject message) {
+  public void UpdateAvailable(G2U.ObjectState message) {
     CurrentPoseState = (ObservedObject.PoseState)message.poseState;
     if (CurrentPoseState != PoseState.Unknown) {
       Vector3 newPos = new Vector3(message.pose.x, message.pose.y, message.pose.z);

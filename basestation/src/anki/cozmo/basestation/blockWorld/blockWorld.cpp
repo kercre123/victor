@@ -307,7 +307,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CreateFixedCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapRenderEnabled>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestObjectStates>();
   }
 
   BlockWorld::~BlockWorld()
@@ -385,9 +385,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   };
 
   template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::RequestAvailableObjects& msg)
+  void BlockWorld::HandleMessage(const ExternalInterface::RequestObjectStates& msg)
   {
-    BroadcastAvailableObjects(msg.connectedObjectsOnly, nullptr);
+    BroadcastObjectStates(msg.connectedObjectsOnly, nullptr);
   };
 
   
@@ -611,7 +611,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   } // BroadcastObjectObservation()
   
   
-  void BlockWorld::BroadcastAvailableObjects(bool connectedObjectsOnly, const Pose3d* inOrigin)
+  void BlockWorld::BroadcastObjectStates(bool connectedObjectsOnly, const Pose3d* inOrigin)
   {
     using namespace ExternalInterface;
     
@@ -627,22 +627,22 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       filter.AddAllowedOrigin(inOrigin);
     }
     
-    AvailableObjects availableObjects;
+    ObjectStates objectStates;
     
-    filter.SetFilterFcn([this,&availableObjects,connectedObjectsOnly](const ObservableObject* obj)
+    filter.SetFilterFcn([this,&objectStates,connectedObjectsOnly](const ObservableObject* obj)
                         {
                           const bool isConnected = obj->GetActiveID() >= 0;
                           if(isConnected || !connectedObjectsOnly)
                           {
-                            AvailableObject availableObject(obj->GetID(),
-                                                            obj->GetLastObservedTime(),
-                                                            obj->GetFamily(),
-                                                            obj->GetType(),
-                                                            obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
-                                                            obj->GetPoseState(),
-                                                            isConnected);
+                            ObjectState objectState(obj->GetID(),
+                                                    obj->GetLastObservedTime(),
+                                                    obj->GetFamily(),
+                                                    obj->GetType(),
+                                                    obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
+                                                    obj->GetPoseState(),
+                                                    isConnected);
                             
-                            availableObjects.objects.push_back(std::move(availableObject));
+                            objectStates.objects.push_back(std::move(objectState));
                             return true;
                           }
                           return false;
@@ -651,7 +651,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Iterate over all objects and add them to the available objects list if they pass the filter
     FindObjectHelper(filter, nullptr, false);
     
-    _robot->Broadcast(MessageEngineToGame(std::move(availableObjects)));
+    _robot->Broadcast(MessageEngineToGame(std::move(objectStates)));
   }
   
   Result BlockWorld::UpdateObjectOrigin(const ObjectID& objectID, const Pose3d* oldOrigin)
@@ -862,7 +862,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // we added any based on rejiggering (not observation). Include unconnected
     // ones as well.
     const bool broadCastConnectedOnly = false;
-    BroadcastAvailableObjects(broadCastConnectedOnly, newOrigin);
+    BroadcastObjectStates(broadCastConnectedOnly, newOrigin);
     
     // if memory maps are enabled, we can merge old into new
     {

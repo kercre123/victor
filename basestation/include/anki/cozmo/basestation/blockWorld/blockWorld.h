@@ -462,7 +462,7 @@ namespace Anki
       Result BroadcastObjectObservation(const ObservableObject* observedObject) const;
       
       // Use inOrigin=nullptr to use objects from all coordinate frames
-      void BroadcastAvailableObjects(bool connectedObjectsOnly, const Pose3d* inOrigin);
+      void BroadcastObjectStates(bool connectedObjectsOnly, const Pose3d* inOrigin);
       
       // Note: these helpers return non-const pointers despite being marked const,
       // but that's because they are protected helpers wrapped by const/non-const
