@@ -527,6 +527,7 @@ void LatticePlanner::SetIsSynchronous(bool val)
 void LatticePlanner::SetArtificialPlannerDelay_ms(int ms)
 {
   _impl->_msToBlock = ms;
+  PRINT_CH_INFO("Planner", "LatticePlanner.SetDelay", "Adding %dms of artificial delay", ms);
 }
 
 //////////////////////////////////////////////////////////////////////////////// 
@@ -548,11 +549,11 @@ void LatticePlannerImpl::DoPlanning()
 
     // for testing / debugging to make the planner slow. We still want it to stop when requested, so
     // periodically check _runPlanner
-    const int kMaxNumToBlock = 10;
+    const int kMaxNumToBlock_ms = 10;
     int msBlocked = 0;
 
     while(msBlocked < _msToBlock && _runPlanner ) {
-      const int thisBlock_ms = std::min( kMaxNumToBlock, _msToBlock - msBlocked );
+      const int thisBlock_ms = std::min( kMaxNumToBlock_ms, _msToBlock - msBlocked );
       std::this_thread::sleep_for( std::chrono::milliseconds(thisBlock_ms) );
       msBlocked += thisBlock_ms;
     }
