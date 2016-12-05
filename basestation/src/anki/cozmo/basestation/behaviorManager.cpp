@@ -922,17 +922,12 @@ void BehaviorManager::LeaveObjectTapInteraction()
       PRINT_NAMED_ERROR("BehaviorManager.LeaveObjectTapInteraction.NullChooser",
                         "Current chooser is not an AIGoalEvaluator but supports object tap interactions");
     }
-    
-    GetWhiteboard().ClearObjectTapInteraction();
-    
-    _lastDoubleTappedObject.UnSet();
-    _currDoubleTappedObject.UnSet();
   }
-  else
-  {
-    PRINT_NAMED_WARNING("BehaviorManager.LeaveObjectTapInteraction.NullChooser",
-                        "Current chooser is null or does not support object tap interaction");
-  }
+  
+  GetWhiteboard().ClearObjectTapInteraction();
+  
+  _lastDoubleTappedObject.UnSet();
+  _currDoubleTappedObject.UnSet();
 }
 
 void BehaviorManager::RequestEnableTapInteraction(const std::string& requesterID, bool enable)
