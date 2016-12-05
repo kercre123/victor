@@ -21,7 +21,11 @@
     <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="com.amazon.device.messaging.permission.RECEIVE" />
-
+    
+    <!-- DHC: Temporary fix until we find the code that requires this permission. This 
+    effectively disables the permission since we won't install in a device with SdkVersion 1 -->
+	<uses-permission android:name="android.permission.CAMERA" android:maxSdkVersion="1" />
+ 
     <uses-feature android:name="android.hardware.bluetooth" />
     <uses-feature android:name="android.hardware.bluetooth_le" />
     <uses-feature android:name="android.hardware.screen.landscape" />
