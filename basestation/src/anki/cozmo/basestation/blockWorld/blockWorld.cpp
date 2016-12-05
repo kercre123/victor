@@ -78,52 +78,6 @@ namespace Cozmo {
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Helper namespace
-namespace {
-
-// return the content type we would set in the memory type for each object family
-NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
-{
-  using ContentType = NavMemoryMapTypes::EContentType;
-  ContentType retType = ContentType::Unknown;
-  switch(family)
-  {
-    case ObjectFamily::Block:
-    case ObjectFamily::LightCube:
-      // pick depending on addition or removal
-      retType = isAdding ? ContentType::ObstacleCube : ContentType::ObstacleCubeRemoved;
-      break;
-    case ObjectFamily::Charger:
-      retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
-      break;
-    case ObjectFamily::MarkerlessObject:
-    {
-      if(!isAdding)
-      {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.BadIsAdding",
-                            "isAdding must be true for ContentType ObstacleUnrecognized");
-      }
-      else
-      {
-        retType = ContentType::ObstacleUnrecognized;
-      }
-      break;
-    }
-      
-    case ObjectFamily::Invalid:
-    case ObjectFamily::Unknown:
-    case ObjectFamily::Ramp:
-    case ObjectFamily::Mat:
-    case ObjectFamily::CustomObject:
-    break;
-  };
-
-  return retType;
-}
-
-};
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CONSOLE VARS
 
 // how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
@@ -166,6 +120,58 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   
 // Whether or not to put unrecognized markerless objects like collision/prox obstacles and cliffs into the memory map
 CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helper namespace
+namespace {
+
+// return the content type we would set in the memory type for each object family
+NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
+{
+  using ContentType = NavMemoryMapTypes::EContentType;
+  ContentType retType = ContentType::Unknown;
+  switch(family)
+  {
+    case ObjectFamily::Block:
+    case ObjectFamily::LightCube:
+      // pick depending on addition or removal
+      retType = isAdding ? ContentType::ObstacleCube : ContentType::ObstacleCubeRemoved;
+      break;
+    case ObjectFamily::Charger:
+      retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
+      break;
+    case ObjectFamily::MarkerlessObject:
+    {
+      // old .badIsAdding message
+      if(!isAdding)
+      {
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessOject.RemovalNotSupported",
+                            "ContentType MarkerlessObject removal is not supported. kAddUnrecognizedMarkerlessObjectsToMemMap was (%s)",
+                            kAddUnrecognizedMarkerlessObjectsToMemMap ? "true" : "false");
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessOject.AdditionNotSupported",
+                            "ContentType MarkerlessObject addition is not supported. kAddUnrecognizedMarkerlessObjectsToMemMap was (%s)",
+                            kAddUnrecognizedMarkerlessObjectsToMemMap ? "true" : "false");
+        // retType = ContentType::ObstacleUnrecognized;
+      }
+      break;
+    }
+      
+    case ObjectFamily::Invalid:
+    case ObjectFamily::Unknown:
+    case ObjectFamily::Ramp:
+    case ObjectFamily::Mat:
+    case ObjectFamily::CustomObject:
+    break;
+  };
+
+  return retType;
+}
+
+};
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld(Robot* robot)
@@ -2978,7 +2984,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     if ( addType == NavMemoryMapTypes::EContentType::Unknown )
     {
       // this is ok, this obstacle family is not tracked in the memory map
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.BlockWorld.RemoveObjectReportFromMemMap.InvalidRemovalType",
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.AddObjectReportToMemMap.InvalidAddType",
                     "Family '%s' is not known in memory map",
                     ObjectFamilyToString(objectFam) );
       return;
@@ -3117,7 +3123,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       const ObservableObject* object = GetObjectByID(pairIdToPoseInfoByOrigin.first);
       if ( nullptr == object )
       {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.BlockWorld::UpdateObjectsReportedInMepMap.NotAnObject",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectsReportedInMepMap.NotAnObject",
                       "Could not find object ID '%d' in BlockWorld updating their quads", pairIdToPoseInfoByOrigin.first );
         continue;
       }
