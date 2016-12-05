@@ -65,7 +65,7 @@ reinterpret_cast = {
 FORMATTER_KEY = re.compile(r'(?<!%)%[0-9.-]*([{}])'.format("".join(reinterpret_cast.keys()))) # Find singal % marks
 
 def formatTrace(fmt, args):
-    "Returns the formatted string from a trace, doing the nesisary type reinterpretation"
+    "Returns the formatted string from a trace, doing the necessary type reinterpretation"
     convertedArgs = tuple([reinterpret_cast[t](a) for t, a in zip(FORMATTER_KEY.findall(fmt), args)])
     try:
         ret = fmt % convertedArgs
@@ -148,7 +148,7 @@ class _Dispatcher(IDataReceiver):
         elif self.state is ConnectionState.waitingToConnect:
             self.state = ConnectionState.failedToConnect
         else:
-            raise Exception("Recieved disconnect in unexpected state self: {}{linesep}".format(self.state, linesep=os.linesep))
+            raise Exception("Received disconnect in unexpected state self: {}{linesep}".format(self.state, linesep=os.linesep))
         for sub in self.OnDisconnectedSubscribers:
             sub(sourceAddress)
 
@@ -240,7 +240,7 @@ class _Dispatcher(IDataReceiver):
         return self.transport.SendData(True, False, self.dest, msg.pack())
 
 def Init(warnMsgErrors=True, transport=UDPTransport(), forkTransportThread=True):
-    "Initalize the robot interface. Must be called before any other methods"
+    "Initialize the robot interface. Must be called before any other methods"
     global dispatcher
     if dispatcher is None:
         dispatcher = _Dispatcher(transport, warnMsgErrors, forkTransportThread)

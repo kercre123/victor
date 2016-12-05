@@ -18,7 +18,7 @@ public class GameEventManager {
     }
   }
 
-  // Event that fires and notifes all listeners of a CozmoEvent being recieved,
+  // Event that fires and notifies all listeners of a CozmoEvent being received,
   // other managers listen to this and use that to map enum based events to things
   public event Action<GameEventWrapper> OnGameEvent;
 
@@ -40,7 +40,7 @@ public class GameEventManager {
   // Fire the Action without sending a message base to engine
   // Use this for when we receive a game event from engine
   public void FireGameEvent(GameEventWrapper cozEvent) {
-    // Don't fire game events while in SDK mode since we don't want metagame features enablec
+    // Don't fire game events while in SDK mode since we don't want metagame features enabled
     if (DataPersistence.DataPersistenceManager.Instance.IsSDKEnabled) {
       return;
     }

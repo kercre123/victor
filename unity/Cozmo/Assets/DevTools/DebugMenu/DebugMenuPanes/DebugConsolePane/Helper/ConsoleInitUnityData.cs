@@ -39,6 +39,7 @@ namespace Anki.Debug {
       DebugConsoleData.Instance.AddConsoleFunction("Set Calibration", "Camera Calibration",
                                                               (string str) => { RobotEngineManager.Instance.CurrentRobot.SetCalibrationData(_CalibrationFocalX, _CalibrationFocalY, _CalibrationCenterX, _CalibrationCenterY); });
       DebugConsoleData.Instance.AddConsoleFunction("Upload Dev/DAS Logs", "Dev", (string str) => { CozmoBinding.cozmo_execute_background_transfers(); });
+      DebugConsoleData.Instance.AddConsoleFunction("Unity Time Scale", "Dev", HandleSetTimeScale);
     }
 
     private float _CalibrationFocalX = 0;
@@ -59,6 +60,15 @@ namespace Anki.Debug {
       // use reflection to change readonly field
       typeof(DataPersistence.DataPersistenceManager).GetField("Data").SetValue(DataPersistence.DataPersistenceManager.Instance, new DataPersistence.SaveData());
       DataPersistence.DataPersistenceManager.Instance.Save();
+    }
+
+    private void HandleSetTimeScale(string str) {
+      float result;
+      if (float.TryParse(str, out result)) {
+        if (result > -float.Epsilon) {
+          UnityEngine.Time.timeScale = result;
+        }
+      }
     }
 
   }

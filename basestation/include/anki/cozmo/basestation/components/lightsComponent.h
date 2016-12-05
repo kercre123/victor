@@ -113,7 +113,7 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-  void OnObjectPoseStateChanged(const ObjectID& objectID,
+  void OnObjectPoseStateWillChange(const ObjectID& objectID,
                                 const PoseState oldPoseState,
                                 const PoseState newPoseState);
   

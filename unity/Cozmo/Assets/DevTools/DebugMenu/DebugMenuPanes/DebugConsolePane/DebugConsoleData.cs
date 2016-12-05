@@ -102,7 +102,7 @@ namespace Anki.Debug {
     public event Action<string> DebugConsoleVarUpdated;
 
     private void HandleInitDebugConsoleVar(Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage message) {
-      DAS.Info("RobotEngineManager.ReceivedDebugConsoleInit", " Recieved Debug Console Init");
+      DAS.Info("RobotEngineManager.ReceivedDebugConsoleInit", "Received Debug Console Init");
       for (int i = 0; i < message.varData.Length; ++i) {
         Anki.Debug.DebugConsoleData.Instance.AddConsoleVar(message.varData[i]);
       }
@@ -134,7 +134,7 @@ namespace Anki.Debug {
         info = ((System.Type)obj).GetField(varName, bindFlags);
       }
       if (info == null) {
-        DAS.Error("Unity.DebugConsole", "Attempted to add nonexistant var: " + varName);
+        DAS.Error("Unity.DebugConsole", "Attempted to add nonexistent var: " + varName);
         return;
       }
 

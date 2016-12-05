@@ -563,7 +563,7 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
           continue
 
         if output.test_return_code != 0:
-          UtilLog.error('Recieved non-zero return code from webots. Recieved {return_code}'.format(
+          UtilLog.error('Received non-zero return code from webots. Received {return_code}'.format(
                           return_code=output.test_return_code))
           continue
 

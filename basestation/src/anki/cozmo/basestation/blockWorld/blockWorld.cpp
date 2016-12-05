@@ -2886,16 +2886,16 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family,
+  void BlockWorld::OnObjectPoseWillChange(const ObjectID& objectID, ObjectFamily family,
     const Pose3d& newPose, PoseState newPoseState)
   {
-    ASSERT_NAMED(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
+    ASSERT_NAMED(objectID.IsSet(), "BlockWorld.OnObjectPoseWillChange.InvalidObjectID");
 
     // find the object
     const ObservableObject* object = GetObjectByID(objectID, family);
     if ( nullptr == object )
     {
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseChanged.NotAnObject",
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseWillChange.NotAnObject",
                     "Could not find object ID '%d' in BlockWorld", objectID.GetValue() );
       return;
     }
@@ -2909,7 +2909,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       const bool alreadyChanged = (matchIter != _objectPoseChangeList.end());
       if ( alreadyChanged ) {
         // if it's already there, warn about it because we don't think it should be possible
-        PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.MultipleChanges",
+        PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseWillChange.MultipleChanges",
                             "Object '%d' is changing its pose again this tick!", objectID.GetValue());
         // do not update old pose, conserve the original pose it had when it changed the first time
       }
@@ -2929,7 +2929,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     {
       // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
       // be smaller than the threshold to not report
-      ASSERT_NAMED(kObjectPositionChangeToReport_mm < object->GetSize().z()*0.5f, "OnObjectPoseChanged.ChangeThresholdTooBig");
+      ASSERT_NAMED(kObjectPositionChangeToReport_mm < object->GetSize().z()*0.5f, "OnObjectPoseWillChange.ChangeThresholdTooBig");
       const float distThreshold = kObjectPositionChangeToReport_mm;
       const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
 
@@ -2960,6 +2960,13 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         AddObjectReportToMemMap(*object, newPose);
       }
     }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::OnObjectVisuallyVerified(const ObservableObject* object)
+  {
+      // -- clear memory map from robot to markers
+      ClearRobotToMarkersInMemMap(object);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3153,8 +3160,14 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::ClearRobotToMarkersInMemMap()
+  void BlockWorld::ClearRobotToMarkersInMemMap(const ObservableObject* object)
   {
+    // the newPose should be directly in the robot's origin
+    ASSERT_NAMED(object->GetPose().GetParent() == _robot->GetWorldOrigin(),
+                "BlockWorld.ClearRobotToMarkersInMemMap.ObservedObjectParentNotRobotOrigin");
+
+    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    
     // we are creating a quad projected on the ground from the robot to every marker we see. In order to do so
     // the bottom corners of the ground quad match the forward ones of the robot (robotQuad::xLeft). The names
     // cornerBR, cornerBL are the corners in the ground quads (BottomRight and BottomLeft).
@@ -3163,47 +3176,33 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     Point3f cornerBR{ robotQuad[Quad::TopLeft   ].x(), robotQuad[Quad::TopLeft ].y(), 0};
     Point3f cornerBL{ robotQuad[Quad::BottomLeft].x(), robotQuad[Quad::BottomLeft].y(), 0};
   
-    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-    
-    // find all objects that have been seen this frame
-    std::vector<const ObservableObject*> seenObjects;
-    BlockWorldFilter filter;
-    filter.OnlyConsiderLatestUpdate(true); // this guarantees we only get the ones we have seen this tick
-    FindMatchingObjects(filter, seenObjects);
-
-    // iterate the objects we have seen, to grab the markers we have seen and clear the map towards them
-    for(const ObservableObject* seenObj : seenObjects)
+    // get the markers we have seen from this object
+    std::vector<const Vision::KnownMarker*> observedMarkers;
+    object->GetObservedMarkers(observedMarkers);
+  
+    for ( const auto& observedMarkerIt : observedMarkers )
     {
-      // get the markers we have seen from this object
-      std::vector<const Vision::KnownMarker*> observedMarkers;
-      seenObj->GetObservedMarkers(observedMarkers);
-    
-      for ( const auto& observedMarkerIt : observedMarkers )
-      {
-        // An observerd marker. Assign the marker's bottom corners as the top corners for the ground quad
-        // The names of the corners (cornerTL and cornerTR) are those of the ground quad: TopLeft and TopRight
-        ASSERT_NAMED(&observedMarkerIt->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
-                     "BlockWorld.ClearVisionFromRobotToMarkers.MarkerOriginShouldBeRobotOrigin");
-        
-        const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
-        Point3f cornerTL = markerCorners[Quad::BottomLeft];
-        Point3f cornerTR = markerCorners[Quad::BottomRight];
-        
-        // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
-        // the navmesh that it should be clear, since we saw the marker
-        Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
-        
-        // update navmesh with a quadrilateral between the robot and the seen object
-        if ( nullptr != currentNavMemoryMap ) {
-          currentNavMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
-        }
-        
-        // also notify behavior whiteboard.
-        // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
-        // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
-        // robot component, like a VisualInformationProcessingComponent
-        _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
-      }
+      // An observerd marker. Assign the marker's bottom corners as the top corners for the ground quad
+      // The names of the corners (cornerTL and cornerTR) are those of the ground quad: TopLeft and TopRight
+      ASSERT_NAMED(&observedMarkerIt->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
+                   "BlockWorld.ClearVisionFromRobotToMarkers.MarkerOriginShouldBeRobotOrigin");
+      
+      const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
+      Point3f cornerTL = markerCorners[Quad::BottomLeft];
+      Point3f cornerTR = markerCorners[Quad::BottomRight];
+      
+      // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
+      // the navmesh that it should be clear, since we saw the marker
+      Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
+      
+      // update navmesh with a quadrilateral between the robot and the seen object
+      currentNavMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
+      
+      // also notify behavior whiteboard.
+      // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
+      // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
+      // robot component, like a VisualInformationProcessingComponent
+      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
     }
   }
   
@@ -4042,10 +4041,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       
       // update stacks
       UpdatePoseOfStackedObjects();
-      
-      // clear memory map from the robot to all markers we have seen. This should be done after the robot has relocalized, 
-      // and once all objects have been matched to the markers (if any)
-      ClearRobotToMarkersInMemMap();
     }
     else
     {
