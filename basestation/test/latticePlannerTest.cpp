@@ -262,6 +262,7 @@ TEST_F(LatticePlannerTest, StopPlanning)
   bool done = false;
   bool calledStop = false;
   int maxTimeMs = 100;
+  const int kMsToSendStop = 4;
   int ms;
   for(ms = 0; ms < maxTimeMs; ms++) {
     little_sleep(std::chrono::milliseconds(1));
@@ -273,7 +274,7 @@ TEST_F(LatticePlannerTest, StopPlanning)
 
       case EPlannerStatus::Running:
         printf("%d: running\n", ms);
-        if(ms ==  4) {
+        if(ms == kMsToSendStop) {
           _planner->StopPlanning();
           printf("%d: CALLING STOP\n", ms);
           calledStop = true;

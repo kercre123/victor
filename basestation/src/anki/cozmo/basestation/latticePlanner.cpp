@@ -540,26 +540,33 @@ void LatticePlannerImpl::DoPlanning()
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
     PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: running replan...");
   }
+
+  if( _msToBlock > 0 ) {
+    if( LATTICE_PLANNER_THREAD_DEBUG ) {
+      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: block for %d ms", _msToBlock);
+    }
+
+    // for testing / debugging to make the planner slow. We still want it to stop when requested, so
+    // periodically check _runPlanner
+    const int kMaxNumToBlock = 10;
+    int msBlocked = 0;
+
+    while(msBlocked < _msToBlock && _runPlanner ) {
+      const int thisBlock_ms = std::min( kMaxNumToBlock, _msToBlock - msBlocked );
+      std::this_thread::sleep_for( std::chrono::milliseconds(thisBlock_ms) );
+      msBlocked += thisBlock_ms;
+    }
+
+    if( LATTICE_PLANNER_THREAD_DEBUG ) {
+      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: Finished blocking wait");
+    }
+  }
   
   bool result = _planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS, &_runPlanner);
 
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
     PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: replan finished");
   }
-
-  if( _msToBlock > 0 && result ) {
-    if( LATTICE_PLANNER_THREAD_DEBUG ) {
-      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: block for %d ms", _msToBlock);
-    }
-
-    // for testing / debugging to make the planner slow
-    std::this_thread::sleep_for( std::chrono::milliseconds(_msToBlock) );
-
-    if( LATTICE_PLANNER_THREAD_DEBUG ) {
-      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: Finished blocking wait");
-    }
-  }
-
 
   if(!result) {
     _internalComputeStatus = EPlannerStatus::Error;
