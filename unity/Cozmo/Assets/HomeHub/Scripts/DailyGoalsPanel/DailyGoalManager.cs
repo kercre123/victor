@@ -138,12 +138,40 @@ public class DailyGoalManager : MonoBehaviour {
     Instance = this;
     LoadDailyGoalGenerationData();
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
+#if ENABLE_DEBUG_PANEL
+    Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Print Daily Goal rejection info", "Debug", HandlePrintDebugInfoOnDailyGoals);
+#endif
   }
 
   void OnDestroy() {
     ResolveDailyGoalsEarned();
     GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
   }
+
+#if ENABLE_DEBUG_PANEL
+  private void HandlePrintDebugInfoOnDailyGoals(string locName) {
+    DailyGoalGenerationData.GoalEntry entry = _CurrentGenData.GenList.Find(x => x.TitleKey == locName);
+    if (entry != null) {
+      for (int i = 0; i < entry.GenConditions.Count; i++) {
+        if (!entry.GenConditions[i].ConditionMet()) {
+          DAS.Warn("Debug.DailyGoals ", locName + " rejected due to condition not met " + entry.GenConditions[i].GetType());
+        }
+      }
+      // Check tag collision for generation
+      List<string> previousTags = DataPersistenceManager.Instance.Data.DefaultProfile.PreviousTags;
+      if (previousTags != null) {
+        for (int i = 0; i < previousTags.Count; i++) {
+          if (entry.Tag == previousTags[i]) {
+            DAS.Warn("Debug.DailyGoals", locName + " rejected due to previous tag " + previousTags[i]);
+          }
+        }
+      }
+    }
+    else {
+      DAS.Warn("Debug.DailyGoals", locName + " not found");
+    }
+  }
+#endif
 
   public void LoadDailyGoalGenerationData() {
     _CurrentGenData = new DailyGoalGenerationData();
