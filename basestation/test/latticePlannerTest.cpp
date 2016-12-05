@@ -57,7 +57,7 @@ protected:
     } while (std::chrono::high_resolution_clock::now() < end);
   }
 
-  void ExpectPlanCompleteInThread(int maxTimeMs, int minPlanTimeMs = 2) {
+  void ExpectPlanCompleteInThread(int maxTimeMs) {
     bool done = false;
     int ms = 0;
 
@@ -87,10 +87,7 @@ protected:
 
     std::cout<<"planner took "<<ms<<"ms\n";
   
-    EXPECT_GE(ms, minPlanTimeMs) << "the planner might be fast, but not that fast!";
     EXPECT_LT(ms, maxTimeMs) << "shouldn't use all the available time";
-
-    printf("planner finished after %dms\n", ms);
   }
     
   Robot* _robot = nullptr;
@@ -319,7 +316,7 @@ TEST_F(LatticePlannerTest, StopPlanning)
   ret = _planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
     
-  ExpectPlanCompleteInThread(1000, 6);
+  ExpectPlanCompleteInThread(1000);
 
   Planning::GoalID selectedTargetIdx = 100;
 
