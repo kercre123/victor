@@ -66,7 +66,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       MakeSynchronous();
       DisableRandomPathSpeeds();
       StartMovieConditional("RollBlockBehavior");
-      TakeScreenshotsAtInterval("RollBlockBehavior", 1.f);
+      // TakeScreenshotsAtInterval("RollBlockBehavior", 1.f);
       
       // make sure rolling is unlocked
       UnlockId unlock = UnlockIdsFromString("RollCube");

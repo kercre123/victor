@@ -72,7 +72,7 @@ namespace Anki {
         {
           MakeSynchronous();
           StartMovieConditional("RollBlock");
-          TakeScreenshotsAtInterval("RollBlock", 1.f);
+          // TakeScreenshotsAtInterval("RollBlock", 1.f);
           
           SendMoveHeadToAngle(0, 100, 100);
           _testState = TestState::RollObject;

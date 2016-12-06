@@ -75,7 +75,7 @@ namespace Cozmo {
       case TestState::MoveHead:
       {
         MakeSynchronous();
-        TakeScreenshotsAtInterval("Robot Kidnapping", 1.f);
+        // TakeScreenshotsAtInterval("Robot Kidnapping", 1.f);
 
         SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
         _testState = TestState::WaitForCubeConnections;
