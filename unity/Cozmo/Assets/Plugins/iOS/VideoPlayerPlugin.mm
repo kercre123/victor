@@ -23,7 +23,8 @@ extern "C" __attribute__((visibility ("default"))) NSString *const kUnityViewDid
     bool m_bLoopPlay;
     NSURL* m_videoURL;
 }
-- (void)playVideo:(NSURL *)videoURL;
+
+- (void)playVideo;
 
 - (void)orientationDidChange:(NSNotification *)notification;
 
@@ -40,7 +41,8 @@ extern "C" __attribute__((visibility ("default"))) NSString *const kUnityViewDid
     m_bFinish = false;
     [player loadVideo:videoURL];
 }
-- (void)playVideo{
+
+- (void)playVideo {
 
     if (!view && [player readyToPlay])
         [self play];
@@ -390,7 +392,7 @@ extern "C" bool VideoPlayerPluginFinish(int iID) {
     if (_GetPlayer(iID)->player) {
         return _GetPlayer(iID)->m_bFinish;
     }
-
+    return false;
 }
 
 extern "C" bool VideoPlayerPluginError(int iID) {
@@ -402,7 +404,6 @@ extern "C" bool VideoPlayerPluginError(int iID) {
         //return _GetPlayer(iID)->player get;
         
     }
-    
-    
-    
+    return false;
 }
+
