@@ -75,6 +75,11 @@ public interface IRobot : IDisposable {
 
   float BatteryVoltage { get; }
 
+  List<ObservableObject> VisibleObjects { get; }
+  List<ObservableObject> KnownObjects { get; }
+
+  List<ActiveObject> ConnectedObjects { get; }
+
   Dictionary<int, LightCube> LightCubes { get; }
 
   event LightCubeStateEventHandler OnLightCubeAdded;

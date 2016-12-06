@@ -738,6 +738,26 @@ public class MockRobot : IRobot {
     get { return 4.73f; }
   }
 
+  List<ObservableObject> _VisibleObjects = new List<ObservableObject>();
+  // objects that are currently visible (cubes, charger)
+  public List<ObservableObject> VisibleObjects {
+    get {
+      return _VisibleObjects;
+    }
+  }
+
+  List<ObservableObject> _KnownObjects = new List<ObservableObject>();
+  // objects with poses known by blockworld
+  public List<ObservableObject> KnownObjects {
+    get {
+      return _KnownObjects;
+    }
+  }
+
+  List<ActiveObject> _ConnectedObjects = new List<ActiveObject>();
+  // objects that we can talk to / hear
+  public List<ActiveObject> ConnectedObjects { get { return _ConnectedObjects; } }
+
   private readonly Dictionary<int, LightCube> _LightCubes = new Dictionary<int, LightCube>();
 
   public Dictionary<int, LightCube> LightCubes {

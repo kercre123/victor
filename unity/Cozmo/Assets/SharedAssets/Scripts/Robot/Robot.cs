@@ -166,18 +166,22 @@ public class Robot : IRobot {
 
   public float BatteryVoltage { get; private set; }
 
+  // objects that are currently visible (cubes, charger)
+  public List<ObservableObject> VisibleObjects { get; private set; }
+
+  // objects with poses known by blockworld
+  public List<ObservableObject> KnownObjects { get; private set; }
+
+  // objects that we can talk to / hear
+  public List<ActiveObject> ConnectedObjects { get; private set; }
+
+  // cubes that are active and we can talk to / hear
   public Dictionary<int, LightCube> LightCubes { get; private set; }
 
   public event LightCubeStateEventHandler OnLightCubeAdded;
   public event LightCubeStateEventHandler OnLightCubeRemoved;
 
-  private List<LightCube> _VisibleLightCubes = new List<LightCube>();
-
-  public List<LightCube> VisibleLightCubes {
-    get {
-      return _VisibleLightCubes;
-    }
-  }
+  public List<LightCube> VisibleLightCubes { get; private set; }
 
   public event ChargerStateEventHandler OnChargerAdded;
   public event ChargerStateEventHandler OnChargerRemoved;
@@ -344,7 +348,15 @@ public class Robot : IRobot {
 
   public Robot(byte robotID) : base() {
     ID = robotID;
+
+    VisibleObjects = new List<ObservableObject>();
+    KnownObjects = new List<ObservableObject>();
+
+    ConnectedObjects = new List<ActiveObject>();
     LightCubes = new Dictionary<int, LightCube>();
+
+    VisibleLightCubes = new List<LightCube>();
+
     Faces = new List<global::Face>();
     EnrolledFaces = new Dictionary<int, string>();
     EnrolledFacesLastEnrolledTime = new Dictionary<int, float>();
@@ -915,6 +927,8 @@ public class Robot : IRobot {
     if (objectStates != null) {
       for (int i = 0; i < objectStates.Length; ++i) {
         ObjectState obj = objectStates[i];
+
+        // TODO: fix which list this is getting objects from
         ObservableObject objectSeen = GetActiveObjectById((int)obj.objectID);
         if (objectSeen != null) {
           objectSeen.UpdateAvailable(obj);
@@ -2029,10 +2043,10 @@ public class Robot : IRobot {
   private void HandleInFieldOfViewStateChanged(ObservableObject objectChanged,
                                                ActiveObject.InFieldOfViewState oldState,
                                                ActiveObject.InFieldOfViewState newState) {
-    _VisibleLightCubes.Clear();
+    VisibleLightCubes.Clear();
     foreach (LightCube cube in LightCubes.Values) {
       if (cube.IsInFieldOfView) {
-        _VisibleLightCubes.Add(cube);
+        VisibleLightCubes.Add(cube);
       }
     }
   }
