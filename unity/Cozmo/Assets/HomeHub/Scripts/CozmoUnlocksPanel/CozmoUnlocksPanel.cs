@@ -32,7 +32,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   [SerializeField]
   private CoreUpgradeDetailsDialog _CoreUpgradeDetailsViewPrefab;
-  private BaseView _CoreUpgradeDetailsViewInstance;
+  private BaseModal _CoreUpgradeDetailsViewInstance;
 
   [SerializeField]
   private UnlockAnimation _CoreUpgradeAnimatedIconPrefab;
@@ -147,7 +147,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
 
     if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
-      CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
+      CoreUpgradeDetailsDialog detailView = UIManager.OpenModal<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
       detailView.Initialize(unlockInfo, CozmoUnlockState.Unlocked, null);
       _CoreUpgradeDetailsViewInstance = detailView;
     }
@@ -156,7 +156,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedUnlockable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
     if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
-      CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
+      CoreUpgradeDetailsDialog detailView = UIManager.OpenModal<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
       detailView.Initialize(unlockInfo, CozmoUnlockState.Unlockable, HandleUnlockableUpgradeUnlocked);
       _CoreUpgradeDetailsViewInstance = detailView;
     }
@@ -166,7 +166,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedLocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
     if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
-      CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
+      CoreUpgradeDetailsDialog detailView = UIManager.OpenModal<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
       detailView.Initialize(unlockInfo, CozmoUnlockState.Locked, HandleUnlockableUpgradeUnlocked);
       _CoreUpgradeDetailsViewInstance = detailView;
     }
@@ -184,7 +184,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
         }
       }
       // Create alert view with Icon
-      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_ComingSoon, overrideCloseOnTouchOutside: true);
+      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.ComingSoonAlertModalPrefab, overrideCloseOnTouchOutside: true);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
       alertView.TitleLocKey = unlockInfo.TitleKey;
       alertView.SetIcon(unlockInfo.CoreUpgradeIcon);

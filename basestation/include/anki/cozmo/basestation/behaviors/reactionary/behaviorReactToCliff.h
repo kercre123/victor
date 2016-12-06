@@ -59,6 +59,9 @@ private:
   void TransitionToBackingUp(Robot& robot);
   void SendFinishedReactToCliffMessage(Robot& robot);
 
+  u16 _cliffDetectThresholdAtStart = 0;
+  bool _quitReaction = false;
+  
 }; // class BehaviorReactToCliff
   
 

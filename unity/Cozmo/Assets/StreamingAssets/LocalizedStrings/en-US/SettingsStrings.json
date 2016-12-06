@@ -75,14 +75,8 @@
   "settings.sdkPanel.sdkNotConnected.text": {
     "translation": "SDK Not Connected"
   },
-  "settings.sdkPanel.showSDKButton.text": {
-    "translation": "Show SDK"
-  },
   "settings.sdkPanel.wrongVersion.text": {
     "translation": "Incompatible SDK Version"
-  },
-  "settings.sleepCozmoPanel.button.returnToTitle": {
-    "translation": "(Return To Title)"
   },
   "settings.sleepCozmoPanel.button.sleepCozmo": {
     "translation": "Sleep Cozmo"

@@ -1,6 +1,7 @@
 {
   "behaviorType": "PopAWheelie",
   "name": "popAWheelie",
+  "displayNameKey":"behavior.PopAWheelie",
   "requiredUnlockId": "PopAWheelieAction",
   "behaviorGroups": [
     "FP_PlayAlone"    

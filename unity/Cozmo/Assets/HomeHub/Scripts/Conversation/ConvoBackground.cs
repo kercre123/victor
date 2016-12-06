@@ -8,7 +8,7 @@ using Cozmo.UI;
 namespace Conversations {
   // Class for handling the conversation background to hide everything behind speech bubbles mid conversation
   // Will add additional logic as it proves necessary.
-  public class ConvoBackground : BaseView {
+  public class ConvoBackground : BaseModal {
 
     [SerializeField]
     private Image _Background;

@@ -402,10 +402,7 @@ namespace Cozmo {
       // duration so it doesn't pop.
       // (Special case: allow KeepAlive to play on top of the "Live" idle.)
       if(anim != &_liveAnimation) {
-        if(NotAnimatingTag != _eyeDartTag) {
-          RemovePersistentFaceLayer(_eyeDartTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
-          _eyeDartTag = NotAnimatingTag;
-        }
+        RemoveKeepAliveEyeDart(3*IKeyFrame::SAMPLE_LENGTH_MS);
       }
     }
     return lastResult;
@@ -723,25 +720,17 @@ namespace Cozmo {
     return paramsSet;
   } // GetFaceHelper()
   
+  void AnimationStreamer::RemoveKeepAliveEyeDart(s32 duration_ms)
+  {
+    if(NotAnimatingTag != _eyeDartTag) {
+      RemovePersistentFaceLayer(_eyeDartTag, duration_ms);
+      _eyeDartTag = NotAnimatingTag;
+    }
+  }
+  
   void AnimationStreamer::SetParam(LiveIdleAnimationParameter whichParam, float newValue)
   {
-    if(LiveIdleAnimationParameter::EnableKeepFaceAlive == whichParam && (bool)newValue==false)
-    {
-      if(!ANKI_DEV_CHEATS)
-      {
-        PRINT_NAMED_WARNING("AnimationStreamer.SetParam.CannotDisableKeepFaceAlive",
-                            "KeepFaceAlive is required to protect against screen burn-in");
-        return;
-      }
-      
-      // Get rid of any existint eye dart in case we are disabling keep face alive
-      RemovePersistentFaceLayer(_eyeDartTag, IKeyFrame::SAMPLE_LENGTH_MS);
-      _eyeDartTag = NotAnimatingTag;
-      
-      // NOTE: we can't remove an in-progress blink. It's not persistent and has
-      // to complete so we don't leave the eyes in a weird state.
-    }
-    else if(LiveIdleAnimationParameter::BlinkSpacingMaxTime_ms == whichParam)
+    if(LiveIdleAnimationParameter::BlinkSpacingMaxTime_ms == whichParam)
     {
       if( newValue > kMaxBlinkSpacingTimeForScreenProtection_ms)
       {
@@ -776,33 +765,41 @@ namespace Cozmo {
     const f32 MaxDist = GetParam<f32>(Param::EyeDartMaxDistance_pix);
     if(_nextEyeDart_ms <= 0 && MaxDist > 0.f)
     {
-      const f32 xDart = _rng.RandIntInRange(-MaxDist, MaxDist);
-      const f32 yDart = _rng.RandIntInRange(-MaxDist, MaxDist);
+      const bool noOtherFaceLayers = (_faceLayers.empty() ||
+                                      (_faceLayers.size()==1 && _faceLayers.find(_eyeDartTag) != _faceLayers.end()));
       
-      // Randomly choose how long the shift should take
-      const s32 duration = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartMinDuration_ms),
-                                               GetParam<s32>(Param::EyeDartMaxDuration_ms));
-      
-      //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
-      //                  "shift=(%.1f,%.1f)", xDart, yDart);
-      
-      const f32 normDist = 5.f;
-      ProceduralFace procFace;
-      procFace.LookAt(xDart, yDart, normDist, normDist,
-                                  GetParam<f32>(Param::EyeDartUpMaxScale),
-                                  GetParam<f32>(Param::EyeDartDownMinScale),
-                                  GetParam<f32>(Param::EyeDartOuterEyeScaleIncrease));
-      
-      if(_eyeDartTag == NotAnimatingTag) {
-        FaceTrack faceTrack;
-        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration));
-        _eyeDartTag = AddPersistentFaceLayer("KeepAliveEyeDart", std::move(faceTrack));
-      } else {
-        AddToPersistentFaceLayer(_eyeDartTag, ProceduralFaceKeyFrame(procFace, duration));
+      // If there's no other face layer active right now, do the dart. Otherwise,
+      // skip it
+      if(noOtherFaceLayers)
+      {
+        const f32 xDart = _rng.RandIntInRange(-MaxDist, MaxDist);
+        const f32 yDart = _rng.RandIntInRange(-MaxDist, MaxDist);
+        
+        // Randomly choose how long the shift should take
+        const s32 duration = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartMinDuration_ms),
+                                                 GetParam<s32>(Param::EyeDartMaxDuration_ms));
+        
+        //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
+        //                  "shift=(%.1f,%.1f)", xDart, yDart);
+        
+        const f32 normDist = 5.f;
+        ProceduralFace procFace;
+        procFace.LookAt(xDart, yDart, normDist, normDist,
+                        GetParam<f32>(Param::EyeDartUpMaxScale),
+                        GetParam<f32>(Param::EyeDartDownMinScale),
+                        GetParam<f32>(Param::EyeDartOuterEyeScaleIncrease));
+        
+        if(_eyeDartTag == NotAnimatingTag) {
+          FaceTrack faceTrack;
+          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration));
+          _eyeDartTag = AddPersistentFaceLayer("KeepAliveEyeDart", std::move(faceTrack));
+        } else {
+          AddToPersistentFaceLayer(_eyeDartTag, ProceduralFaceKeyFrame(procFace, duration));
+        }
+        
+        _nextEyeDart_ms = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartSpacingMinTime_ms),
+                                              GetParam<s32>(Param::EyeDartSpacingMaxTime_ms));
       }
-      
-      _nextEyeDart_ms = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartSpacingMinTime_ms),
-                                            GetParam<s32>(Param::EyeDartSpacingMaxTime_ms));
     }
     
     // Blinks
@@ -1379,8 +1376,7 @@ namespace Cozmo {
     const bool usingLiveIdle          = _idleAnimation == &_liveAnimation;
     const bool haveIdleAnimation      = _idleAnimation != nullptr;
     const bool longEnoughSinceStream  = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f;
-    if(GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive) &&
-       !haveStreamingAnimation &&
+    if(!haveStreamingAnimation &&
        haveStreamedAnything &&
        (usingLiveIdle || (!haveIdleAnimation && longEnoughSinceStream)))
     {
@@ -1599,8 +1595,6 @@ namespace Cozmo {
   {
 #   define SET_DEFAULT(__NAME__, __VALUE__) \
     SetParam(LiveIdleAnimationParameter::__NAME__,  static_cast<f32>(__VALUE__))
-    
-    SET_DEFAULT(EnableKeepFaceAlive, true);
     
     SET_DEFAULT(BlinkSpacingMinTime_ms, 3000);
     SET_DEFAULT(BlinkSpacingMaxTime_ms, 4000);

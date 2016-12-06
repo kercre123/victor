@@ -11,7 +11,7 @@ namespace Cozmo.Settings {
     [SerializeField]
     private SDKView _SDKViewPrefab;
 
-    private AlertView _ActivateSDKModal = null;
+    private AlertModal _ActivateSDKModal = null;
 
     private void Awake() {
       _EnableSDKButton.Initialize(HandleEnableSDKButtonTapped, "enable_sdk_button", "settings_sdk_panel");
@@ -36,7 +36,7 @@ namespace Cozmo.Settings {
           // If this is the first time enabling the SDK, display a confirmation modal
           // with EULA and only EnableSDK on confirmation.
           // Create alert view with Icon
-          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_NoText, overrideCloseOnTouchOutside: true);
+          AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.NoTextAlertModalPrefab, overrideCloseOnTouchOutside: true);
           // Hook up callbacks
           alertView.SetCloseButtonEnabled(false);
           alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, EnableSDK);
@@ -53,7 +53,7 @@ namespace Cozmo.Settings {
       DataPersistenceManager.Instance.IsSDKEnabled = true;
       DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated = true;
       DataPersistenceManager.Instance.Save();
-      UIManager.OpenView(_SDKViewPrefab);
+      UIManager.OpenModal(_SDKViewPrefab);
 
     }
 

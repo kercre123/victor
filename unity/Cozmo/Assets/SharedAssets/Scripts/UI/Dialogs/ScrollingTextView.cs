@@ -3,7 +3,7 @@ using DG.Tweening;
 using UnityEngine;
 
 namespace Cozmo.UI {
-  public class ScrollingTextView : BaseView {
+  public class ScrollingTextView : BaseModal {
 
     [SerializeField]
     private CanvasGroup _AlphaController;

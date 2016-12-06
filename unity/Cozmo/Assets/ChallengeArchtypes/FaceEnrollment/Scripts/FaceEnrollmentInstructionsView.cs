@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class FaceEnrollmentInstructionsView : Cozmo.UI.BaseView {
+public class FaceEnrollmentInstructionsView : Cozmo.UI.BaseModal {
 
   [SerializeField]
   private Anki.UI.AnkiTextLabel _FaceNameLabel;

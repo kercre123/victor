@@ -50,6 +50,16 @@ namespace Cozmo.Minigame.DroneMode {
       }
     }
 
+    private bool _ShowActionButtons = true;
+    public bool ShowActionButtons {
+      set {
+        if (_ShowActionButtons != value) {
+          _ShowActionButtons = value;
+          UpdateContextMenu();
+        }
+      }
+    }
+
     [SerializeField]
     private CozmoStickySlider _SpeedThrottle;
 
@@ -300,7 +310,7 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void OpenHowToPlayView(bool showCloseButton, bool playAnimations) {
       if (_HowToPlayViewInstance == null) {
-        _HowToPlayViewInstance = UIManager.OpenView<DroneModeHowToPlayView>(_HowToPlayViewPrefab);
+        _HowToPlayViewInstance = UIManager.OpenModal<DroneModeHowToPlayView>(_HowToPlayViewPrefab);
         _HowToPlayViewInstance.Initialize(showCloseButton, playAnimations);
         if (showCloseButton) {
           _HowToPlayViewInstance.ViewClosed += HandleHowToPlayViewClosed;
@@ -398,7 +408,7 @@ namespace Cozmo.Minigame.DroneMode {
       _CubeInLiftButtonContainer.SetActive(false);
       _CubeNotInLiftButtonContainer.SetActive(false);
 
-      if (!_IsNightVisionEnabled) {
+      if (!_IsNightVisionEnabled && _ShowActionButtons) {
         bool anyContainerShown = false;
         bool isRobotPickedUp = _CurrentRobot.Status(Anki.Cozmo.RobotStatusFlag.IS_PICKED_UP);
         if (_CurrentlyFocusedObject != null) {
@@ -498,8 +508,22 @@ namespace Cozmo.Minigame.DroneMode {
       _SpeedThrottle.image.sprite = colorSet.SpeedSliderHandleSprites.highlightedSprite;
       _SpeedThrottle.spriteState = colorSet.SpeedSliderHandleSprites;
 
+      _HeadTiltSlider.image.sprite = colorSet.HeadSliderHandleSprites.highlightedSprite;
+      _HeadTiltSlider.spriteState = colorSet.HeadSliderHandleSprites;
+
+      _LiftSlider.image.sprite = colorSet.LiftSliderHandleSprites.highlightedSprite;
+      _LiftSlider.spriteState = colorSet.LiftSliderHandleSprites;
+
       foreach (var speedSliderBackground in _SpeedThrottleBackgrounds) {
         speedSliderBackground.color = colorSet.ButtonColor;
+      }
+
+      foreach (var gameObjectToShow in colorSet.GameObjectsToShow) {
+        gameObjectToShow.SetActive(true);
+      }
+
+      foreach (var gameObjectToHide in colorSet.GameObjectsToHide) {
+        gameObjectToHide.SetActive(false);
       }
     }
 
@@ -561,8 +585,24 @@ namespace Cozmo.Minigame.DroneMode {
     private Color _BottomGradientColor;
     public Color BottomGradientColor { get { return _BottomGradientColor; } }
 
-    [SerializeField]
+    [SerializeField, Tooltip("Speed Handle Sprites")]
     private SpriteState _SpeedSliderHandleSprites;
     public SpriteState SpeedSliderHandleSprites { get { return _SpeedSliderHandleSprites; } }
+
+    [SerializeField, Tooltip("Head Handle Sprites")]
+    private SpriteState _HeadSliderHandleSprites;
+    public SpriteState HeadSliderHandleSprites { get { return _HeadSliderHandleSprites; } }
+
+    [SerializeField, Tooltip("Lift Handle Sprites")]
+    private SpriteState _LiftSliderHandleSprites;
+    public SpriteState LiftSliderHandleSprites { get { return _LiftSliderHandleSprites; } }
+
+    [SerializeField]
+    private GameObject[] _GameObjectsToShow;
+    public GameObject[] GameObjectsToShow { get { return _GameObjectsToShow; } }
+
+    [SerializeField]
+    private GameObject[] _GameObjectsToHide;
+    public GameObject[] GameObjectsToHide { get { return _GameObjectsToHide; } }
   }
 }

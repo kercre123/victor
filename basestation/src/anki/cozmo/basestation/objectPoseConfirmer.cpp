@@ -72,8 +72,8 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   }
   
   // Notify about the change we are about to make from old to new:
-  _robot.GetBlockWorld().OnObjectPoseChanged(object->GetID(), object->GetFamily(), newPose, newPoseState);
-  _robot.GetLightsComponent().OnObjectPoseStateChanged(object->GetID(), object->GetPoseState(), newPoseState);
+  _robot.GetBlockWorld().OnObjectPoseWillChange(object->GetID(), object->GetFamily(), newPose, newPoseState);
+  _robot.GetLightsComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newPoseState);
   
   // if state changed from unknown to known or dirty
   if (object->IsPoseStateUnknown() && newPoseState != PoseState::Unknown){
@@ -109,7 +109,7 @@ Result ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject* object) const
 
 void ObjectPoseConfirmer::SetPoseState(ObservableObject* object, PoseState newState) const
 {
-  _robot.GetLightsComponent().OnObjectPoseStateChanged(object->GetID(), object->GetPoseState(), newState);
+  _robot.GetLightsComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newState);
   
   object->SetPoseState(newState);
 }
@@ -186,6 +186,10 @@ Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const
           SetPoseHelper(object, newPose, obsDistance_mm, newPoseState, "AddVisualObservation.Update");
           poseConf.lastPoseUpdatedTime = object->GetLastObservedTime();
         }
+        
+        // notify blockworld that we can confirm we have seen this object at its current pose. This allows blockworld
+        // to reason about the markers seen this frame
+        _robot.GetBlockWorld().OnObjectVisuallyVerified(object);
       }
     }
     else

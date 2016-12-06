@@ -7,7 +7,7 @@ using Cozmo.UI;
 using Cozmo;
 using DataPersistence;
 
-public class ChallengeDetailsDialog : BaseView {
+public class ChallengeDetailsDialog : BaseModal {
 
   public delegate void ChallengeDetailsClickedHandler(string challengeId);
 
@@ -179,7 +179,7 @@ public class ChallengeDetailsDialog : BaseView {
 
   // Cozmo isn't done driving off the charger.
   private void OpenCozmoNotReadyAlert() {
-    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
     alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalDescription;
     alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
@@ -187,7 +187,7 @@ public class ChallengeDetailsDialog : BaseView {
   }
 
   private void OpenCozmoNotOnTreadsAlert() {
-    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
     alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsDescription;
     alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
@@ -195,12 +195,12 @@ public class ChallengeDetailsDialog : BaseView {
   }
 
   private void OpenNeedCubesAlert(int currentCubes, int neededCubes) {
-    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(true);
     alertView.SetPrimaryButton(LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
       () => {
-        UIManager.OpenView(AlertViewLoader.Instance.CubeHelpViewPrefab);
+        UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpViewPrefab);
       }
     );
 

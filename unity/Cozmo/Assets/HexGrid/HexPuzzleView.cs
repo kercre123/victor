@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Cozmo.UI;
 
-public class HexPuzzleView : BaseView {
+public class HexPuzzleView : BaseModal {
 
   [SerializeField]
   private HexSetDrawer _OccupiedMapDrawerPrefab;

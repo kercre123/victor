@@ -87,7 +87,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
 
   private void OnDestroy() {
     if (_WifiInstructionsViewInstance != null) {
-      UIManager.CloseViewImmediately(_WifiInstructionsViewInstance);
+      UIManager.CloseModalImmediately(_WifiInstructionsViewInstance);
     }
     RobotEngineManager.Instance.RemoveCallback<DeviceDataMessage>(HandleDeviceDataMessage);
   }
@@ -111,7 +111,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   }
 
   private void HandleShowMeButton() {
-    _WifiInstructionsViewInstance = UIManager.OpenView(_WifiInstructionsViewPrefab);
+    _WifiInstructionsViewInstance = UIManager.OpenModal(_WifiInstructionsViewPrefab);
     _WifiInstructionsViewInstance.ViewClosedByUser += QuitFlow;
   }
 

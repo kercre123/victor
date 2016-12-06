@@ -329,7 +329,7 @@ message RobotMarkedObjectPoseUnknown {
     uint_32 objectID
 }
 
-structure AvailableObject {
+structure ObjectState {
     uint_32      objectID,
     uint_32      lastObservedTimestamp,
     ObjectFamily objectFamily,
@@ -339,8 +339,8 @@ structure AvailableObject {
     bool         isConnected,
 }
 
-message AvailableObjects {
-    AvailableObject objects[uint_8]
+message ObjectStates {
+    ObjectState objects[uint_8]
 }
 
 
@@ -658,7 +658,8 @@ message BehaviorTransition{
   BehaviorType oldBehaviorType,
   BehaviorType newBehaviorType,
   bool isOldReactionary,
-  bool isNewReactionary
+  bool isNewReactionary,
+  string newBehaviorDisplayKey
 }
 
 //respond with the list of freeplay behavior

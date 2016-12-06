@@ -129,7 +129,7 @@ void NavMeshQuadTreeProcessor::OnNodeContentTypeChanged(const NavMeshQuadTreeNod
   if ( IsCached(oldContent) )
   {
     // remove the node from that cache
-    CORETECH_ASSERT(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end());
+    ASSERT_NAMED(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end(), "NavMeshQuadTreeProcessor.OnNodeContentTypeChanged.InvalidRemove");
     _nodeSets[oldContent].erase( node );
     
     // flag as dirty
@@ -139,7 +139,7 @@ void NavMeshQuadTreeProcessor::OnNodeContentTypeChanged(const NavMeshQuadTreeNod
   if ( IsCached(newContent) )
   {
     // add node to that cache
-    CORETECH_ASSERT(_nodeSets[newContent].find(node) == _nodeSets[newContent].end());
+    ASSERT_NAMED(_nodeSets[newContent].find(node) == _nodeSets[newContent].end(), "NavMeshQuadTreeProcessor.OnNodeContentTypeChanged.InvalidInsert");
     _nodeSets[newContent].insert(node);
     
     // flag as dirty
@@ -159,8 +159,8 @@ void NavMeshQuadTreeProcessor::OnNodeDestroyed(const NavMeshQuadTreeNode* node)
   if ( IsCached(oldContent) )
   {
     // remove the node from that cache
-    CORETECH_ASSERT(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end());
-    _nodeSets[oldContent].erase( node );
+    ASSERT_NAMED(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end(), "NavMeshQuadTreeProcessor.OnNodeDestroyed.InvalidNode");
+    _nodeSets[oldContent].erase(node);
     
     // flag as dirty
     _contentGfxDirty = true;
@@ -211,7 +211,7 @@ bool NavMeshQuadTreeProcessor::HasBorders(ENodeContentType innerType, ENodeConte
     }
   }
   
-  // no chached version, pick in the cached nodes if any would be seed
+  // no cached version, pick in the cached nodes if any would be seed
   const bool hasSeed = HasBorderSeed(innerType, outerTypes);
   return hasSeed;
 }
@@ -831,14 +831,14 @@ void NavMeshQuadTreeProcessor::InvalidateBorders()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::AddBorderWaypoint(const NavMeshQuadTreeNode* from, const NavMeshQuadTreeNode* to, EDirection dir)
 {
-  CORETECH_ASSERT(nullptr != _currentBorderCombination);
+  ASSERT_NAMED(nullptr != _currentBorderCombination, "NavMeshQuadTreeProcessor.AddBorderWaypoint.InvalidBorderCombination");
   _currentBorderCombination->waypoints.emplace_back( from, to, dir, false );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::FinishBorder()
 {
-  CORETECH_ASSERT(nullptr != _currentBorderCombination);
+  ASSERT_NAMED(nullptr != _currentBorderCombination, "NavMeshQuadTreeProcessor.FinishBorder.InvalidBorderCombination");
   if ( !_currentBorderCombination->waypoints.empty() ) {
     _currentBorderCombination->waypoints.back().isEnd = true;
   }
@@ -878,7 +878,7 @@ CheckedDirectionInfo::CheckedDirectionInfo()
 {
   // do not initialize to 0 because we use that to know whether it's complete.
   // directions with 0 neighbors are allowed
-  CORETECH_ASSERT(neighborsLeft > 0 );
+  ASSERT_NAMED(neighborsLeft > 0, "CheckedDirectionInfo.Constructor.InvalidNeighborsLeft" );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -888,14 +888,14 @@ void CheckedDirectionInfo::Init(size_t neighborCount)
     neighborVisited.resize(neighborCount, false);
     neighborsLeft = neighborCount;
   } else {
-    CORETECH_ASSERT(neighborCount == neighborVisited.size());
+    ASSERT_NAMED(neighborCount == neighborVisited.size(), "CheckedDirectionInfo.Init.InvalidNeighborCount");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CheckedDirectionInfo::MarkChecked(size_t neighborIdx)
 {
-  CORETECH_ASSERT(neighborIdx < neighborVisited.size());
+  ASSERT_NAMED(neighborIdx < neighborVisited.size(), "CheckedDirectionInfo.MarkChecked.InvalidNeighbor");
   if ( !neighborVisited[neighborIdx] )
   {
     neighborVisited[neighborIdx] = true;
@@ -907,7 +907,7 @@ void CheckedDirectionInfo::MarkChecked(size_t neighborIdx)
 bool CheckedDirectionInfo::IsChecked(size_t neighborIdx) const
 {
   if ( !neighborVisited.empty() ) {
-    CORETECH_ASSERT(neighborIdx < neighborVisited.size());
+    ASSERT_NAMED(neighborIdx < neighborVisited.size(), "CheckedDirectionInfo.IsChecked.InvalidNeighbor");
     return neighborVisited[neighborIdx];
   } else {
     return false;
@@ -929,8 +929,17 @@ struct CheckedInfo
 {
   CheckedInfo() {}
   
-  CheckedDirectionInfo& GetDirInfo(const EDirection dir ) { CORETECH_ASSERT((size_t)dir < 4); return directions[(size_t)dir]; }
-  const CheckedDirectionInfo& GetDirInfo(const EDirection dir ) const { CORETECH_ASSERT((size_t)dir < 4); return directions[(size_t)dir]; }
+  CheckedDirectionInfo& GetDirInfo(const EDirection dir )
+  {
+    ASSERT_NAMED((size_t)dir < 4, "CheckedInfo.GetDirInfo.InvalidDirection");
+    return directions[(size_t)dir];
+  }
+  
+  const CheckedDirectionInfo& GetDirInfo(const EDirection dir ) const
+  {
+    ASSERT_NAMED((size_t)dir < 4, "CheckedInfo.constGetDirInfo.InvalidDirection");
+    return directions[(size_t)dir];
+  }
   
   // allocate flags if not initialized yet (otherwise ignored)
   void InitDirection(const EDirection dir, size_t neighborCount) { GetDirInfo(dir).Init(neighborCount); }
@@ -971,10 +980,12 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
   
   DEBUG_FIND_BORDER("------------------------------------------------------");
   DEBUG_FIND_BORDER("Starting FindBorders...");
+  
   const BorderKeyType borderComboKey = GetBorderTypeKey(innerType, outerTypes);
   _currentBorderCombination = &_bordersPerContentCombination[borderComboKey];
 
-  CORETECH_ASSERT(IsCached(innerType));
+  ASSERT_NAMED(IsCached(innerType), "NavMeshQuadTreeProcessor.FindBorders.InvalidType");
+  
   const NodeSet& innerSet = _nodeSets[innerType];
 
   _currentBorderCombination->waypoints.clear();
@@ -983,10 +994,12 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
   // map with what is visited for every inner node
   std::unordered_map<const NavMeshQuadTreeNode*, CheckedInfo> checkedNodes;
 
+  // hope this doesn't grow too quickly
+  ASSERT_NAMED(_root->GetLevel() < 32, "NavMeshQuadTreeProcessor.FindBorders.InvalidLevel");
+  
   // reserve space for this node's neighbors
   NavMeshQuadTreeNode::NodeCPtrVector neighbors;
-  CORETECH_ASSERT( _root->GetLevel() < 32 );
-  neighbors.reserve( 1 << _root->GetLevel() ); // hope this doesn't grow too quickly
+  neighbors.reserve( 1 << _root->GetLevel() );
   
   const EClockDirection clockDir = EClockDirection::CW;
     
@@ -1048,7 +1061,7 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
             ++candidateOuterIdx;
           }
           
-          CORETECH_ASSERT(foundOuter || candidateCheckedInfo.IsDirectionComplete(candidateDir));
+          ASSERT_NAMED(foundOuter || candidateCheckedInfo.IsDirectionComplete(candidateDir), "NavMeshQuadTreeProcessor.FindBorders.DirectionNotComplete");
         }
 
         // if we didn't find an outer, try next direction
@@ -1116,7 +1129,9 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
                     break;
                   }
                 }
-                CORETECH_ASSERT(fromNeighborIdx < neighbors.size()); // should always find it
+                
+                // should always find it
+                ASSERT_NAMED(fromNeighborIdx < neighbors.size(), "NavMeshQuadTreeProcessor.FindBorders.InvalidNeighbor");
                 
                 // print visit debug
                 DEBUG_FIND_BORDER(">> [%p] Visiting %zu towards %s ", curInnerNode, nextNeighborIdx, EDirectionToString(curDir));
@@ -1220,7 +1235,8 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
       {
         DEBUG_FIND_BORDER("[%p] No more seeds found", candidateSeed);
       
-        CORETECH_ASSERT(checkedNodes[candidateSeed].AreAllDirectionsComplete());
+        ASSERT_NAMED(checkedNodes[candidateSeed].AreAllDirectionsComplete(),
+                     "NavMeshQuadTreeProcessor.FindBorders.DirectionsNotComplete");
       }
       
     } // while !complete
@@ -1228,7 +1244,7 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
   } // for every candidate seed
   
   // we should have visited all inner nodes, and only those
-  CORETECH_ASSERT(checkedNodes.size() == innerSet.size());
+  ASSERT_NAMED(checkedNodes.size() == innerSet.size(), "NavMeshQuadTreeProcessor.FindBorders.InvalidSize");
   
   DEBUG_FIND_BORDER("FINISHED FindBorders!");
   _currentBorderCombination->dirty = false;
@@ -1248,9 +1264,10 @@ bool NavMeshQuadTreeProcessor::HasBorderSeed(ENodeContentType innerType, ENodeCo
     return false;
   }
   
+  ASSERT_NAMED(_root->GetLevel() < 32, "NavMeshQuadTreeProcessor.HasBorderSeed.InvalidRootLevel");
+  
   // reserve space for any node's neighbors
   NavMeshQuadTreeNode::NodeCPtrVector neighbors;
-  CORETECH_ASSERT( _root->GetLevel() < 32 );
   neighbors.reserve( 1 << _root->GetLevel() ); // hope this doesn't grow too quickly
   
   // for every node, try to see if they are an innerContent with at least one outerContent neighbor

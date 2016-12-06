@@ -65,14 +65,13 @@ public:
   // Operations
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // notify the navmesh that the given quad has the specified content
-  void AddQuad(const Quad2f& quad, const NodeContent& nodeContent);
-  // notify the navmesh that the given line has the specified content
-  void AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent);
-  // notify the navmesh that the given triangle has the specified content
-  void AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent);
-  // notify the navmesh that the given point has the specified content
-  void AddPoint(const Point2f& point, const NodeContent& nodeContent);
+  // notify the navmesh that the given quad/point/line/triangle has the specified content
+  // shiftAllowedCount: number of shifts we can do for a fully expanded root that still needs to move to
+  // fit the data.
+  void AddQuad(const Quad2f& quad, const NodeContent& nodeContent, int shiftAllowedCount);
+  void AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent, int shiftAllowedCount);
+  void AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent, int shiftAllowedCount);
+  void AddPoint(const Point2f& point, const NodeContent& nodeContent, int shiftAllowedCount);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   void Merge(const NavMeshQuadTree& other, const Pose3d& transform);
@@ -82,13 +81,12 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Node operations
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // Expand the root node so that the given quad is included in the navMesh
-  void Expand(const Quad2f& quadToCover);
-  // Expand the root node so that the given point is included in the navMesh
-  void Expand(const Point2f& pointToInclude);
-  // Expand the root node so that the given triangle is included in the navMesh
-  void Expand(const Triangle2f& triangleToCover);
+
+  // Expand the root node so that the given quad/point/triangle is included in the navMesh, up to the max root size limit.
+  // shiftAllowedCount: number of shifts we can do if the root reaches the max size upon expanding (or already is at max.)
+  void Expand(const Quad2f& quadToCover, int shiftAllowedCount);
+  void Expand(const Point2f& pointToInclude, int shiftAllowedCount);
+  void Expand(const Triangle2f& triangleToCover, int shiftAllowedCount);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

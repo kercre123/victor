@@ -1,6 +1,7 @@
 {
   "behaviorType": "StackBlocks",
   "name": "tapInteractionStackBlocks",
+  "displayNameKey":"behavior.StackCube",
   "requireObjectTapped" : true,
   "requiredUnlockId": "StackTwoCubes",
   "behaviorGroups": [

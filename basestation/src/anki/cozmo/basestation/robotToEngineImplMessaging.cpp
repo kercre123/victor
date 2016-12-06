@@ -57,7 +57,7 @@
 #define ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE 0
 
 // How often do we send power level updates to DAS?
-#define POWER_LEVEL_INTERVAL_SEC 600.0
+#define POWER_LEVEL_INTERVAL_SEC 600
 
 namespace Anki {
 namespace Cozmo {
@@ -853,7 +853,11 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   ANKI_CPU_PROFILE("Robot::HandleRobotStopped");
   
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
-  PRINT_NAMED_INFO("RobotImplMessaging.HandleRobotStopped", "%d", payload.reason);
+  Util::sEventF("RobotImplMessaging.HandleRobotStopped",
+                {{DDATA, TO_DDATA_STR(robot->GetCliffRunningVar())}},
+                "%d", payload.reason);
+  
+  robot->EvaluateCliffSuspiciousnessWhenStopped();
   
   // This is a somewhat overloaded use of enableCliffSensor, but currently only cliffs
   // trigger this RobotStopped message so it's not too crazy.
@@ -1133,7 +1137,7 @@ void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterfac
 {
   ANKI_CPU_PROFILE("Robot::HandleSyncTimeAck");
   PRINT_NAMED_INFO("Robot.HandleSyncTimeAck","");
-  robot->SetTimeSynced(true);
+  robot->SetTimeSynced();
 }
 
 void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -1188,13 +1192,13 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Log", "RobotID %u activeID %u at %.2fV %.2f%%",
     robotID, activeID, batteryVoltage, batteryPercent);
   
-  // Report to DAS?
-  const float now = Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const float then = _lastPowerLevelSentTime[activeID];
+  // Report to DAS if this is first event for this accessory or if appropriate interval has passed since last report
+  const uint32_t now = Util::numeric_cast<uint32_t>(Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+  const uint32_t then = _lastPowerLevelSentTime[activeID];
   
-  if (now - then >= POWER_LEVEL_INTERVAL_SEC) {
+  if (then == 0 || now - then >= POWER_LEVEL_INTERVAL_SEC) {
     PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Report",
-                     "Sending DAS report for robotID %u activeID %u now %f then %f",
+                     "Sending DAS report for robotID %u activeID %u now %u then %u",
                      robotID, activeID, now, then);
     char ddata[BUFSIZ];
     snprintf(ddata, sizeof(ddata), "%.2f,%.2f", batteryVoltage, batteryPercent);

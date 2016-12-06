@@ -78,52 +78,6 @@ namespace Cozmo {
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Helper namespace
-namespace {
-
-// return the content type we would set in the memory type for each object family
-NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
-{
-  using ContentType = NavMemoryMapTypes::EContentType;
-  ContentType retType = ContentType::Unknown;
-  switch(family)
-  {
-    case ObjectFamily::Block:
-    case ObjectFamily::LightCube:
-      // pick depending on addition or removal
-      retType = isAdding ? ContentType::ObstacleCube : ContentType::ObstacleCubeRemoved;
-      break;
-    case ObjectFamily::Charger:
-      retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
-      break;
-    case ObjectFamily::MarkerlessObject:
-    {
-      if(!isAdding)
-      {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.BadIsAdding",
-                            "isAdding must be true for ContentType ObstacleUnrecognized");
-      }
-      else
-      {
-        retType = ContentType::ObstacleUnrecognized;
-      }
-      break;
-    }
-      
-    case ObjectFamily::Invalid:
-    case ObjectFamily::Unknown:
-    case ObjectFamily::Ramp:
-    case ObjectFamily::Mat:
-    case ObjectFamily::CustomObject:
-    break;
-  };
-
-  return retType;
-}
-
-};
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CONSOLE VARS
 
 // how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
@@ -166,6 +120,58 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   
 // Whether or not to put unrecognized markerless objects like collision/prox obstacles and cliffs into the memory map
 CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helper namespace
+namespace {
+
+// return the content type we would set in the memory type for each object family
+NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
+{
+  using ContentType = NavMemoryMapTypes::EContentType;
+  ContentType retType = ContentType::Unknown;
+  switch(family)
+  {
+    case ObjectFamily::Block:
+    case ObjectFamily::LightCube:
+      // pick depending on addition or removal
+      retType = isAdding ? ContentType::ObstacleCube : ContentType::ObstacleCubeRemoved;
+      break;
+    case ObjectFamily::Charger:
+      retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
+      break;
+    case ObjectFamily::MarkerlessObject:
+    {
+      // old .badIsAdding message
+      if(!isAdding)
+      {
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessOject.RemovalNotSupported",
+                            "ContentType MarkerlessObject removal is not supported. kAddUnrecognizedMarkerlessObjectsToMemMap was (%s)",
+                            kAddUnrecognizedMarkerlessObjectsToMemMap ? "true" : "false");
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessOject.AdditionNotSupported",
+                            "ContentType MarkerlessObject addition is not supported. kAddUnrecognizedMarkerlessObjectsToMemMap was (%s)",
+                            kAddUnrecognizedMarkerlessObjectsToMemMap ? "true" : "false");
+        // retType = ContentType::ObstacleUnrecognized;
+      }
+      break;
+    }
+      
+    case ObjectFamily::Invalid:
+    case ObjectFamily::Unknown:
+    case ObjectFamily::Ramp:
+    case ObjectFamily::Mat:
+    case ObjectFamily::CustomObject:
+    break;
+  };
+
+  return retType;
+}
+
+};
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld(Robot* robot)
@@ -181,7 +187,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   , _trackPoseChanges(false)
   , _blockConfigurationManager(new BlockConfigurations::BlockConfigurationManager(*robot))
   {
-    CORETECH_ASSERT(_robot != nullptr);
+    ASSERT_NAMED(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
     
     // TODO: Create each known block / matpiece from a configuration/definitions file
     
@@ -301,7 +307,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CreateFixedCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapRenderEnabled>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestObjectStates>();
   }
 
   BlockWorld::~BlockWorld()
@@ -379,9 +385,9 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   };
 
   template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::RequestAvailableObjects& msg)
+  void BlockWorld::HandleMessage(const ExternalInterface::RequestObjectStates& msg)
   {
-    BroadcastAvailableObjects(msg.connectedObjectsOnly, nullptr);
+    BroadcastObjectStates(msg.connectedObjectsOnly, nullptr);
   };
 
   
@@ -605,7 +611,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   } // BroadcastObjectObservation()
   
   
-  void BlockWorld::BroadcastAvailableObjects(bool connectedObjectsOnly, const Pose3d* inOrigin)
+  void BlockWorld::BroadcastObjectStates(bool connectedObjectsOnly, const Pose3d* inOrigin)
   {
     using namespace ExternalInterface;
     
@@ -621,22 +627,22 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       filter.AddAllowedOrigin(inOrigin);
     }
     
-    AvailableObjects availableObjects;
+    ObjectStates objectStates;
     
-    filter.SetFilterFcn([this,&availableObjects,connectedObjectsOnly](const ObservableObject* obj)
+    filter.SetFilterFcn([this,&objectStates,connectedObjectsOnly](const ObservableObject* obj)
                         {
                           const bool isConnected = obj->GetActiveID() >= 0;
                           if(isConnected || !connectedObjectsOnly)
                           {
-                            AvailableObject availableObject(obj->GetID(),
-                                                            obj->GetLastObservedTime(),
-                                                            obj->GetFamily(),
-                                                            obj->GetType(),
-                                                            obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
-                                                            obj->GetPoseState(),
-                                                            isConnected);
+                            ObjectState objectState(obj->GetID(),
+                                                    obj->GetLastObservedTime(),
+                                                    obj->GetFamily(),
+                                                    obj->GetType(),
+                                                    obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
+                                                    obj->GetPoseState(),
+                                                    isConnected);
                             
-                            availableObjects.objects.push_back(std::move(availableObject));
+                            objectStates.objects.push_back(std::move(objectState));
                             return true;
                           }
                           return false;
@@ -645,7 +651,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     // Iterate over all objects and add them to the available objects list if they pass the filter
     FindObjectHelper(filter, nullptr, false);
     
-    _robot->Broadcast(MessageEngineToGame(std::move(availableObjects)));
+    _robot->Broadcast(MessageEngineToGame(std::move(objectStates)));
   }
   
   Result BlockWorld::UpdateObjectOrigin(const ObjectID& objectID, const Pose3d* oldOrigin)
@@ -856,7 +862,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     // we added any based on rejiggering (not observation). Include unconnected
     // ones as well.
     const bool broadCastConnectedOnly = false;
-    BroadcastAvailableObjects(broadCastConnectedOnly, newOrigin);
+    BroadcastObjectStates(broadCastConnectedOnly, newOrigin);
     
     // if memory maps are enabled, we can merge old into new
     {
@@ -2172,12 +2178,14 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         
         // ObservedObjects are w.r.t. the arbitrary historical origin of the camera
         // that observed them.  Hook them up to the current robot origin now:
-        CORETECH_ASSERT(object->GetPose().GetParent() != nullptr &&
-                        object->GetPose().GetParent()->IsOrigin());
+        ASSERT_NAMED(object->GetPose().GetParent() != nullptr &&
+                        object->GetPose().GetParent()->IsOrigin(),
+                     "BlockWorld.UpdateRobotPose.InvalidParentPose");
+        
         object->SetPoseParent(_robot->GetWorldOrigin());
         
         MatPiece* mat = dynamic_cast<MatPiece*>(object);
-        CORETECH_ASSERT(mat != nullptr);
+        ASSERT_NAMED(mat != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatPiece");
         
         // Does this mat pose make sense? I.e., is the top surface flat enough
         // that we could drive on it?
@@ -2262,7 +2270,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
             // though it is not _on_ that mat.  Remain localized to that mat
             // and update any others it is also seeing
             matToLocalizeTo = dynamic_cast<MatPiece*>(overlappingMatsSeen[0]);
-            CORETECH_ASSERT(matToLocalizeTo != nullptr);
+            ASSERT_NAMED(matToLocalizeTo != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatLocalization");
           }
           
           
@@ -2272,31 +2280,33 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
           // most accurate) and localize to that one.
           f32 minDistSq = -1.f;
           MatPiece* closestMat = nullptr;
-          for(const auto& matPair : matsSeen) {
+          for (const auto& matPair : matsSeen) {
             Vision::ObservableObject* mat = matPair.second;
             
             std::vector<const Vision::KnownMarker*> observedMarkers;
             mat->GetObservedMarkers(observedMarkers, atTimestamp);
-            if(observedMarkers.empty()) {
+            if (observedMarkers.empty()) {
+              // TODO: handle this situation
               PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers",
                                 "We saw a mat piece but it is returning no observed markers for "
                                 "the current timestamp.");
-              CORETECH_ASSERT(false); // TODO: handle this situation
+              ASSERT_NAMED(false, "BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers");
             }
             
             Pose3d markerWrtRobot;
-            for(auto obsMarker : observedMarkers) {
-              if(obsMarker->GetPose().GetWithRespectTo(_robot->GetPose(), markerWrtRobot) == false) {
-                PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMisMatch",
+            for (auto obsMarker : observedMarkers) {
+              if (obsMarker->GetPose().GetWithRespectTo(_robot->GetPose(), markerWrtRobot) == false) {
+                // TODO: handle this situation
+                PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMismatch",
                                   "Could not get the pose of an observed marker w.r.t. the robot that "
                                   "supposedly observed it.");
-                CORETECH_ASSERT(false); // TODO: handle this situation
+                ASSERT_NAMED(false, "BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMismatch");
               }
               
               const f32 markerDistSq = markerWrtRobot.GetTranslation().LengthSq();
-              if(closestMat == nullptr || markerDistSq < minDistSq) {
+              if (closestMat == nullptr || markerDistSq < minDistSq) {
                 closestMat = dynamic_cast<MatPiece*>(mat);
-                CORETECH_ASSERT(closestMat != nullptr);
+                ASSERT_NAMED(closestMat != nullptr, "BlockWorld.UpdateRobotPose.InvalidClosestMat");
                 minDistSq = markerDistSq;
               }
             } // for each observed marker
@@ -2374,7 +2384,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
             // update its pose (we can't both update the mat's pose and use it
             // to update the robot's pose at the same time!)
             existingMatPiece.reset( dynamic_cast<MatPiece*>(existingObjects.front()) );
-            CORETECH_ASSERT(existingMatPiece != nullptr);
+            ASSERT_NAMED(existingMatPiece != nullptr, "BlockWorld.UpdateRobotPose.InvalidExistingMatPiece");
             
             PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
                                     "Robot %d localizing to existing %s mat with ID=%d.",
@@ -2472,8 +2482,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
               _robot->GetObjectPoseConfirmer().AddObjectRelativeObservation(overlappingObjects[0], poseWrtOrigin, matSeen);
               
             } else {
-              /* PUNT - not sure this is workign, nor we want to bother with this for now...
-              CORETECH_ASSERT(robot->IsLocalized());
+              /* PUNT - not sure this is working, nor we want to bother with this for now...
+              ASSERT_NAMED(robot->IsLocalized(), "BlockWorld.UpdateRobotPose.RobotIsNotLocalized");
               
               // Find the mat the robot is currently localized to
               MatPiece* localizedToMat = nullptr;
@@ -2484,7 +2494,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                 }
               }
 
-              CORETECH_ASSERT(localizedToMat != nullptr);
+              ASSERT_NAMED(localizedToMat != nullptr, "BlockWorld.UpdateRobotPose.RobotIsNotLocalizedToMat");
               
               // Update the mat we are localized to (but may not have seen) w.r.t. the existing
               // observed world origin mat we did see from it.  This should in turn
@@ -2573,61 +2583,9 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       // Extract only observed markers from obsMarkersAtTimestamp
       objectLibrary.CreateObjectsFromMarkers(obsMarkers, objectsSeen);
       
-      // Remove used markers from map
+      // Remove used markers from list
       RemoveUsedMarkers(obsMarkers);
     
-      for(const auto& objectPair : objectsSeen) {
-        Vision::ObservableObject* object = objectPair.second;
-        
-        // ObservedObjects should be directly w.r.t. an origin by now, and that
-        // origin should be the robot's. (We should not have queued markers that
-        // did not meet that criteria.)
-        ASSERT_NAMED(object->GetPose().GetParent() != nullptr &&
-                     object->GetPose().GetParent()->IsOrigin(),
-                     "BlockWorld.UpdateObjectPoses.ObservedObjectParentNotAnOrigin");
-        ASSERT_NAMED(object->GetPose().GetParent() == _robot->GetWorldOrigin(),
-                     "BlockWorld.UpdateObjectPoses.ObservedObjectParentNotRobotOrigin");
-
-        // we are creating a quad projected on the ground from the robot to every marker we see. In order to do so
-        // the bottom corners of the ground quad match the forward ones of the robot (robotQuad::xLeft). The names
-        // cornerBR, cornerBL are the corners in the ground quads (BottomRight and BottomLeft).
-        // Later on we will generate the top corners for the ground quad (cornerTL, corner TR)
-        const Quad2f& robotQuad = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin());
-        Point3f cornerBR{ robotQuad[Quad::TopLeft   ].x(), robotQuad[Quad::TopLeft ].y(), 0};
-        Point3f cornerBL{ robotQuad[Quad::BottomLeft].x(), robotQuad[Quad::BottomLeft].y(), 0};
-      
-        INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-        
-        std::vector<const Vision::KnownMarker *> observedMarkers;
-        object->GetObservedMarkers(observedMarkers);
-        for ( const auto& observedMarkerIt : observedMarkers )
-        {
-          // An observerd marker. Assign the marker's bottom corners as the top corners for the ground quad
-          // The names of the corners (cornerTL and cornerTR) are those of the ground quad: TopLeft and TopRight
-          ASSERT_NAMED(_robot->GetWorldOrigin() == &observedMarkerIt->GetPose().FindOrigin(),
-                       "BlockWorld.UpdateObjectPoses.MarkerOriginShouldBeRobotOrigin");
-          const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
-          Point3f cornerTL = markerCorners[Quad::BottomLeft];
-          Point3f cornerTR = markerCorners[Quad::BottomRight];
-          
-          // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
-          // the navmesh that it should be clear, since we saw the marker
-          Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
-          
-          // update navmesh with a quadrilateral between the robot and the seen object
-          if ( nullptr != currentNavMemoryMap ) {
-            currentNavMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
-          }
-          
-          // also notify behavior whiteboard.
-          // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
-          // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
-          // robot component, like a VisualInformationProcessingComponent
-          _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
-        }
-        
-      }
-      
       // Use them to add or update existing blocks in our world
       Result lastResult = AddAndUpdateObjects(objectsSeen, inFamily, atTimestamp);
       if(lastResult != RESULT_OK) {
@@ -2934,16 +2892,16 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family,
+  void BlockWorld::OnObjectPoseWillChange(const ObjectID& objectID, ObjectFamily family,
     const Pose3d& newPose, PoseState newPoseState)
   {
-    ASSERT_NAMED(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
+    ASSERT_NAMED(objectID.IsSet(), "BlockWorld.OnObjectPoseWillChange.InvalidObjectID");
 
     // find the object
     const ObservableObject* object = GetObjectByID(objectID, family);
     if ( nullptr == object )
     {
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseChanged.NotAnObject",
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseWillChange.NotAnObject",
                     "Could not find object ID '%d' in BlockWorld", objectID.GetValue() );
       return;
     }
@@ -2957,7 +2915,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       const bool alreadyChanged = (matchIter != _objectPoseChangeList.end());
       if ( alreadyChanged ) {
         // if it's already there, warn about it because we don't think it should be possible
-        PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.MultipleChanges",
+        PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseWillChange.MultipleChanges",
                             "Object '%d' is changing its pose again this tick!", objectID.GetValue());
         // do not update old pose, conserve the original pose it had when it changed the first time
       }
@@ -2977,7 +2935,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     {
       // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
       // be smaller than the threshold to not report
-      ASSERT_NAMED(kObjectPositionChangeToReport_mm < object->GetSize().z()*0.5f, "OnObjectPoseChanged.ChangeThresholdTooBig");
+      ASSERT_NAMED(kObjectPositionChangeToReport_mm < object->GetSize().z()*0.5f, "OnObjectPoseWillChange.ChangeThresholdTooBig");
       const float distThreshold = kObjectPositionChangeToReport_mm;
       const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
 
@@ -3011,6 +2969,13 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::OnObjectVisuallyVerified(const ObservableObject* object)
+  {
+      // -- clear memory map from robot to markers
+      ClearRobotToMarkersInMemMap(object);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::AddObjectReportToMemMap(const ObservableObject& object, const Pose3d& newPose)
   {
     const int objectId = object.GetID().GetValue();
@@ -3019,7 +2984,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     if ( addType == NavMemoryMapTypes::EContentType::Unknown )
     {
       // this is ok, this obstacle family is not tracked in the memory map
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.BlockWorld.RemoveObjectReportFromMemMap.InvalidRemovalType",
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.AddObjectReportToMemMap.InvalidAddType",
                     "Family '%s' is not known in memory map",
                     ObjectFamilyToString(objectFam) );
       return;
@@ -3158,7 +3123,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       const ObservableObject* object = GetObjectByID(pairIdToPoseInfoByOrigin.first);
       if ( nullptr == object )
       {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.BlockWorld::UpdateObjectsReportedInMepMap.NotAnObject",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectsReportedInMepMap.NotAnObject",
                       "Could not find object ID '%d' in BlockWorld updating their quads", pairIdToPoseInfoByOrigin.first );
         continue;
       }
@@ -3197,6 +3162,53 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         // origin (then one we are relocalizing to), or another origin not related to these two, do nothing in those
         // cases
       }
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::ClearRobotToMarkersInMemMap(const ObservableObject* object)
+  {
+    // the newPose should be directly in the robot's origin
+    ASSERT_NAMED(object->GetPose().GetParent() == _robot->GetWorldOrigin(),
+                "BlockWorld.ClearRobotToMarkersInMemMap.ObservedObjectParentNotRobotOrigin");
+
+    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    
+    // we are creating a quad projected on the ground from the robot to every marker we see. In order to do so
+    // the bottom corners of the ground quad match the forward ones of the robot (robotQuad::xLeft). The names
+    // cornerBR, cornerBL are the corners in the ground quads (BottomRight and BottomLeft).
+    // Later on we will generate the top corners for the ground quad (cornerTL, corner TR)
+    const Quad2f& robotQuad = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin());
+    Point3f cornerBR{ robotQuad[Quad::TopLeft   ].x(), robotQuad[Quad::TopLeft ].y(), 0};
+    Point3f cornerBL{ robotQuad[Quad::BottomLeft].x(), robotQuad[Quad::BottomLeft].y(), 0};
+  
+    // get the markers we have seen from this object
+    std::vector<const Vision::KnownMarker*> observedMarkers;
+    object->GetObservedMarkers(observedMarkers);
+  
+    for ( const auto& observedMarkerIt : observedMarkers )
+    {
+      // An observerd marker. Assign the marker's bottom corners as the top corners for the ground quad
+      // The names of the corners (cornerTL and cornerTR) are those of the ground quad: TopLeft and TopRight
+      ASSERT_NAMED(&observedMarkerIt->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
+                   "BlockWorld.ClearVisionFromRobotToMarkers.MarkerOriginShouldBeRobotOrigin");
+      
+      const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
+      Point3f cornerTL = markerCorners[Quad::BottomLeft];
+      Point3f cornerTR = markerCorners[Quad::BottomRight];
+      
+      // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
+      // the navmesh that it should be clear, since we saw the marker
+      Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
+      
+      // update navmesh with a quadrilateral between the robot and the seen object
+      currentNavMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
+      
+      // also notify behavior whiteboard.
+      // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
+      // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
+      // robot component, like a VisualInformationProcessingComponent
+      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
     }
   }
   
@@ -3945,6 +3957,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     if(!currentObsMarkers.empty())
     {
       const TimeStamp_t atTimestamp = currentObsMarkers.front().GetTimeStamp();
+      _currentObservedMarkerTimestamp = atTimestamp;
       
       // Sanity check
       if(ANKI_DEVELOPER_CODE)
@@ -4034,11 +4047,12 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       
       // update stacks
       UpdatePoseOfStackedObjects();
-      
-      _currentObservedMarkerTimestamp = atTimestamp;
     }
     else
     {
+      _currentObservedMarkerTimestamp = 0;
+      
+      
       const TimeStamp_t lastImgTimestamp = _robot->GetLastImageTimeStamp();
       if(lastImgTimestamp > 0) // Avoid warning on first Update()
       {
@@ -4049,8 +4063,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         _robot->GetVisionComponent().AddLiftOccluder(lastImgTimestamp);
         CheckForUnobservedObjects(lastImgTimestamp);
       }
-      
-      _currentObservedMarkerTimestamp = 0;
     }
     
     // do not track changes anymore, since we only use them to update stacks
@@ -4074,7 +4086,37 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
     //PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
     
-    CheckForCollisionWithRobot();
+    
+    // Check for unobserved, uncarried objects that overlap with the robot's position,
+    // and mark them as dirty.
+    // For now we aren't worrying about collision with the robot while picking or placing since
+    // we are trying to get close to objects in these modes.
+    // TODO: Enable collision checking while picking and placing too
+    // (I feel like we should be able to always do this, since we _do_ check that the
+    //  object is not the docking object as part of the filter, and we do height checks as well.
+    //  But I'm wary of changing it now either...)
+    if(!_robot->IsPickingOrPlacing())
+    {
+      BlockWorldFilter unobservedCollidingObjectFilter;
+      unobservedCollidingObjectFilter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
+      unobservedCollidingObjectFilter.SetFilterFcn([this](const ObservableObject* object) {
+        return CheckForCollisionWithRobot(object);
+      });
+      
+      ModifierFcn markAsDirty = [this](ObservableObject* object)
+      {
+        // Mark object and everything on top of it as "dirty". Next time we look
+        // for it and don't see it, we will fully clear it and mark it as "unknown"
+        ObservableObject* objectOnTop = object;
+        BOUNDED_WHILE(20, objectOnTop != nullptr) {
+          _robot->GetObjectPoseConfirmer().SetPoseState(objectOnTop, PoseState::Dirty);
+          objectOnTop = FindObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
+        }
+      };
+      
+      ModifyObjects(markAsDirty, unobservedCollidingObjectFilter);
+    }
+    
     
     // TODO: Deal with unknown markers?
     
@@ -4113,111 +4155,82 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
   } // Update()
   
-  void BlockWorld::CheckForCollisionWithRobot()
+  bool BlockWorld::CheckForCollisionWithRobot(const ObservableObject* object) const
   {
-    auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
+    // If this object is _allowed_ to intersect with the robot, no reason to
+    // check anything
+    if(object->CanIntersectWithRobot()) {
+      return false;
+    }
     
-    // Don't worry about collision with the robot while picking or placing since we
-    // are trying to get close to objects in these modes.
-    // TODO: Enable collision checking while picking and placing too
-    // (I feel like we should be able to always do this, since we _do_ check that the
-    //  object is not the docking object below, and we do height checks as well. But
-    //  I'm wary of changing it now either...)
-    if(!_robot->IsPickingOrPlacing() && originIter != _existingObjects.end())
+    // If object was observed, it must be there, so don't check for collision
+    const bool wasObserved = object->GetLastObservedTime() >= _robot->GetLastImageTimeStamp();
+    if(wasObserved) {
+      return false;
+    }
+    
+    // Only check objects that are in accurate/known pose state
+    if(!object->IsPoseStateKnown()) {
+      return false;
+    }
+    
+    const ObjectID& objectID = object->GetID();
+    
+    // Don't worry about collision with an object being carried or that we are
+    // docking with, since we are expecting to be in close proximity to either
+    const bool isCarryingObject = _robot->IsCarryingObject(objectID);
+    const bool isDockingWithObject = _robot->GetDockObject() == objectID;
+    if(isCarryingObject || isDockingWithObject) {
+      return false;
+    }
+    
+    // Check block's bounding box in same coordinates as this robot to
+    // see if it intersects with the robot's bounding box. Also check to see
+    // block and the robot are at overlapping heights.  Skip this check
+    // entirely if the block isn't in the same coordinate tree as the
+    // robot.
+    Pose3d objectPoseWrtRobotOrigin;
+    if(false == object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
     {
-      // Check for unobserved, uncarried objects that overlap with any robot's position
-      // TODO: better way of specifying which objects are obstacles and which are not
-      // TODO: Move this giant loop to its own method
-      for(auto & objectsByFamily : originIter->second)
-      {
-        // For now, look for collision with anything other than Mat objects
-        // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
-        // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
-        if(objectsByFamily.first != ObjectFamily::Mat &&
-           objectsByFamily.first != ObjectFamily::MarkerlessObject &&
-           objectsByFamily.first != ObjectFamily::CustomObject)
-        {
-          for(auto & objectsByType : objectsByFamily.second)
-          {
-            for(auto & objectIdPair : objectsByType.second)
-            {
-              ObservableObject* object = objectIdPair.second.get();
-              
-              // Collision check objects that
-              // - were not observed in the last image,
-              // - are not being carried
-              // - still have known pose state (not dirtied already, nor unknown)
-              // - are not the obect we are docking with (since we are _trying_ to get close)
-              // - can intersect the robot (e.g. not charger)
-              if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
-                 object->IsPoseStateKnown() &&
-                 object->GetID() != _robot->GetDockObject() &&
-                 !object->CanIntersectWithRobot() &&
-                 !_robot->IsCarryingObject(object->GetID()))
-              {
-                // Check block's bounding box in same coordinates as this robot to
-                // see if it intersects with the robot's bounding box. Also check to see
-                // block and the robot are at overlapping heights.  Skip this check
-                // entirely if the block isn't in the same coordinate tree as the
-                // robot.
-                Pose3d objectPoseWrtRobotOrigin;
-                if(true == object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
-                {
-                  const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
-                  const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
-                  /*
-                   const f32    blockSize   = 0.5f*object->GetSize().Length();
-                   const f32    blockTop    = objectHeight + blockSize;
-                   const f32    blockBottom = objectHeight - blockSize;
-                   */
-                  const f32 robotBottom = _robot->GetPose().GetTranslation().z();
-                  const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
-                  
-                  // TODO: Better check for being in the same plane that takes the
-                  //       vertical extent of the object (in its current pose) into account
-                  const bool inSamePlane = (objectHeight >= robotBottom && objectHeight <= robotTop);
-                  /*
-                   const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
-                   ((robotTop >= blockBottom) && (robotTop <= blockTop)));
-                   
-                   const bool bottomIntersects = (((blockBottom >= robotBottom) && (blockBottom <= robotTop)) ||
-                   ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
-                   */
-                  
-                  const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin(),
-                                                                     ROBOT_BBOX_PADDING_FOR_OBJECT_COLLISION);
-                  
-                  const bool bboxIntersects = robotBBox.Intersects(objectBBox);
-                  
-                  if( inSamePlane && bboxIntersects )
-                  {
-                    PRINT_CH_INFO("BlockWorld", "BlockWorld.Update",
-                                  "Marking object %d as 'dirty', because it intersects robot %d's bounding quad.",
-                                  object->GetID().GetValue(), _robot->GetID());
-                    
-                    // Mark object and everything on top of it as "dirty". Next time we look
-                    // for it and don't see it, we will fully clear it and mark it as "unknown"
-                    ObservableObject* objectOnTop = object;
-                    BOUNDED_WHILE(20, objectOnTop != nullptr) {
-                      _robot->GetObjectPoseConfirmer().SetPoseState(objectOnTop, PoseState::Dirty);
-                      objectOnTop = FindObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
-                    }
-                  } // if quads intersect
-                }
-                else
-                {
-                  // We should not get here because we are only looping over objects that are
-                  // in the robot's current frame
-                  PRINT_NAMED_WARNING("BlockWorld.Update.BadOrigin", "");
-                } // if we got block pose wrt robot origin
-                
-              } // if block was not observed
-              
-            } // for each object of this type
-          } // for each object type
-        } // if not in the Mat family
-      } // for each object family
-    } // if robot is not picking or placing
+      PRINT_NAMED_WARNING("BlockWorld.CheckForCollisionWithRobot.BadOrigin",
+                          "Could not get %s %d pose (origin: %s[%p]) w.r.t. robot origin (%s[%p])",
+                          EnumToString(object->GetType()), objectID.GetValue(),
+                          object->GetPose().FindOrigin().GetName().c_str(),
+                          &object->GetPose().FindOrigin(),
+                          _robot->GetWorldOrigin()->GetName().c_str(),
+                          _robot->GetWorldOrigin());
+      return false;
+    }
+    
+    // Check the that the object is in the same plane as the robot
+    // TODO: Better check for being in the same plane that takes the
+    //       vertical extent of the object (in its current pose) into account
+    
+    const f32 objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
+    const f32 robotBottom = _robot->GetPose().GetTranslation().z();
+    const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
+    
+    const bool inSamePlane = (objectHeight >= robotBottom && objectHeight <= robotTop);
+    if(!inSamePlane) {
+      return false;
+    }
+    
+    // Check if the object's bounding box intersects the robot's
+    const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
+    const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin(),
+                                                       ROBOT_BBOX_PADDING_FOR_OBJECT_COLLISION);
+    
+    const bool bboxIntersects = robotBBox.Intersects(objectBBox);
+    if(bboxIntersects)
+    {
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForCollisionWithRobot.ObjectRobotIntersection",
+                    "Marking object %s %d as 'dirty', because it intersects robot %d's bounding quad.",
+                    EnumToString(object->GetType()), object->GetID().GetValue(), _robot->GetID());
+      
+      return true;
+    }
+    
+    return false;
   }
   
   Result BlockWorld::UpdateMarkerlessObjects(TimeStamp_t atTimestamp)
@@ -4449,9 +4462,16 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
     // Find the point at the top middle of the object on bottom
     // (or if !onTop, the bottom middle of the object on top)
-    const Point3f rotatedBtmSize(refWrtOrigin.GetRotation() * referenceObject.GetSize());
+    const Vec3f& objSize = referenceObject.GetSize();
+    const Vec3f& zCoordRotation = refWrtOrigin.GetRotation().GetRotationMatrix().GetRow(2);
+    const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * objSize.x());
+    const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * objSize.y());
+    const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * objSize.z());
+    
+    const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
+                                                  std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
     const f32 topOfObjectOnBottom = (refWrtOrigin.GetTranslation().z() +
-                                     (onTop ? 0.5f : -0.5f) * std::abs(rotatedBtmSize.z()));
+                                    (onTop ? 0.5f : -0.5f) * maxRotatedAxis_zValue);
     
     BlockWorldFilter filter(filterIn);
     filter.AddIgnoreID(referenceObject.GetID());
@@ -4492,9 +4512,16 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         
         // Find the point at bottom middle of the object we're checking to be on top
         // (or if !onTop, the top middle of object we're checking to be underneath)
-        const Point3f rotatedCandidateSize(candidateWrtOrigin.GetRotation() * candidateObject->GetSize());
+        const Vec3f& objSize = candidateObject->GetSize();
+        const Vec3f& zCoordRotation = candidateWrtOrigin.GetRotation().GetRotationMatrix().GetRow(2);
+        const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * objSize.x());
+        const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * objSize.y());
+        const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * objSize.z());
+        
+        const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
+                                                      std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
         const f32 bottomOfCandidateObject = (candidateWrtOrigin.GetTranslation().z() +
-                                             (onTop ? -0.5f : 0.5f) * std::abs(rotatedCandidateSize.z()));
+                                            (onTop ? -0.5f : 0.5f) * maxRotatedAxis_zValue);
         
         // If the top of the bottom object and the bottom the candidate top object are
         // close enough together, return this as the object on top
@@ -4527,12 +4554,19 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         std::copy(foundQuad.begin(), foundQuad.end(), std::back_inserter(corners));
         Rectangle<f32> bbox(corners);
         
-        Pose3d vizPose(0, Z_AXIS_3D(), Point3f(bbox.GetXmid(), bbox.GetYmid(),
-                                               refWrtOrigin.GetTranslation().z() +
-                                               (onTop ? 0.5f : -0.5f)*rotatedBtmSize.z()));
+        Pose3d vizPose(0, Z_AXIS_3D(), Point3f(bbox.GetXmid(), bbox.GetYmid(), topOfObjectOnBottom));
         
-        const Point3f rotatedFoundSize(foundObject->GetPose().GetWithRespectToOrigin().GetRotation() * foundObject->GetSize());
-        const f32 height = rotatedBtmSize.z() + rotatedFoundSize.z();
+        // compute maxRotatedAxis_zValue: the value of the axis that contributes the most in Z after the object
+        // has been rotated (like we do in the actual code, this is just render)
+        const Vec3f& foundObjSize = foundObject->GetSize();
+        const Vec3f& zCoordRotation = foundObject->GetPose().GetWithRespectToOrigin().GetRotation().GetRotationMatrix().GetRow(2);
+        const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * foundObjSize.x());
+        const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * foundObjSize.y());
+        const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * foundObjSize.z());
+        
+        const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
+                                                      std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
+        const f32 height = topOfObjectOnBottom + maxRotatedAxis_zValue;
         
         _robot->GetContext()->GetVizManager()->DrawCuboid(stackID,
                                                           Point3f(bbox.GetHeight(),

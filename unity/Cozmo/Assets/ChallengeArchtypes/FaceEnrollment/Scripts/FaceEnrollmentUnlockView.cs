@@ -2,7 +2,7 @@
 using System.Collections;
 using DataPersistence;
 
-public class FaceEnrollmentUnlockView : Cozmo.UI.BaseView {
+public class FaceEnrollmentUnlockView : Cozmo.UI.BaseModal {
 
   [SerializeField]
   private Color _AvailableColor;

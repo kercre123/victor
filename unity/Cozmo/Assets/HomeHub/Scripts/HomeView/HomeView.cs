@@ -11,7 +11,7 @@ using System;
 using DG.Tweening;
 
 namespace Cozmo.HomeHub {
-  public class HomeView : BaseView {
+  public class HomeView : BaseModal {
 
     public enum HomeTab {
       Cozmo,
@@ -20,7 +20,7 @@ namespace Cozmo.HomeHub {
       Settings
     }
 
-    private const float kFreeplayIntervalCheck = 30.0f;
+    private const float _kFreeplayIntervalCheck = 60.0f;
     private float _FreeplayIntervalLastTimestamp = -1;
     private float _FreeplayStartedTimestamp = -1;
 
@@ -157,12 +157,12 @@ namespace Cozmo.HomeHub {
     private Cozmo.UI.CozmoButton _HelpButton;
 
     [SerializeField]
-    private BaseView _HelpViewPrefab;
-    private BaseView _HelpViewInstance;
+    private BaseModal _HelpViewPrefab;
+    private BaseModal _HelpViewInstance;
 
-    private AlertView _RequestDialog = null;
+    private AlertModal _RequestDialog = null;
 
-    private AlertView _BadLightDialog = null;
+    private AlertModal _BadLightDialog = null;
 
     private HomeHub _HomeHubInstance;
 
@@ -273,7 +273,7 @@ namespace Cozmo.HomeHub {
     private void CreateBadLightPopup() {
       ContextManager.Instance.AppFlash(playChime: true);
       // Create alert view with Icon
-      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_BadLight, overrideCloseOnTouchOutside: true);
+      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.BadLightAlertModalPrefab, overrideCloseOnTouchOutside: true);
       // Hook up callbacks
       alertView.SetCloseButtonEnabled(true);
       _BadLightDialog = alertView;
@@ -337,7 +337,7 @@ namespace Cozmo.HomeHub {
       if (HomeViewCurrentlyOccupied) {
         return;
       }
-      _HelpViewInstance = UIManager.OpenView(_HelpViewPrefab);
+      _HelpViewInstance = UIManager.OpenModal(_HelpViewPrefab);
     }
 
     private void HandleSettingsButton() {
@@ -495,7 +495,7 @@ namespace Cozmo.HomeHub {
       if (_FreeplayIntervalLastTimestamp < 0.0f) {
         _FreeplayIntervalLastTimestamp = Time.time;
       }
-      if (Time.time - _FreeplayIntervalLastTimestamp > kFreeplayIntervalCheck) {
+      if (Time.time - _FreeplayIntervalLastTimestamp > _kFreeplayIntervalCheck) {
         _FreeplayIntervalLastTimestamp = Time.time;
         GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayInterval, Time.time - _FreeplayStartedTimestamp));
       }
@@ -611,7 +611,7 @@ namespace Cozmo.HomeHub {
         if (success) {
           _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
             if (prefabObject != null) {
-              LootView lootView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
+              LootView lootView = UIManager.OpenModal(prefabObject.GetComponent<LootView>());
               lootView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
               lootView.ViewCloseAnimationFinished += (() => {
                 HandleLootViewCloseAnimationFinished();
@@ -754,7 +754,7 @@ namespace Cozmo.HomeHub {
       _Stopwatch.Start();
       _CurrentChallengeId = data.ChallengeID;
       // Create alert view with Icon
-      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
+      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.IconAlertModalPrefab, overrideCloseOnTouchOutside: false);
       // Hook up callbacks
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
@@ -852,7 +852,7 @@ namespace Cozmo.HomeHub {
       DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdatePlayTabText;
 
       if (_HelpViewInstance != null) {
-        UIManager.CloseView(_HelpViewInstance);
+        UIManager.CloseModal(_HelpViewInstance);
       }
 
       if (_RewardSequence != null) {

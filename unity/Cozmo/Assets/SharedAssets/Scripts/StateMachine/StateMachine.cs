@@ -71,10 +71,7 @@ public class StateMachine {
 
   public void UpdateStateMachine() {
     if (_IsPaused) {
-      if (_NextState != null) {
-        ProgressToNextState();
-      }
-      else if (_CurrState != null) {
+      if (_CurrState != null) {
         _CurrState.PausedUpdate();
       }
     }

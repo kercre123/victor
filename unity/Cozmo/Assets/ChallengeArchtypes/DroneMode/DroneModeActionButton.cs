@@ -27,7 +27,7 @@ namespace Cozmo.Minigame.DroneMode {
     public bool NeedsFaceSeen { get { return _NeedsFaceSeen; } }
 
     private System.Action _ActionCallback;
-    private AlertView _AlertView;
+    private AlertModal _AlertView;
 
     public void Initialize(string dasButtonName, string dasViewController, DroneModeActionData actionData,
                            System.Action actionCallback, bool needsCubeSeen, bool needsFaceSeen) {
@@ -58,7 +58,7 @@ namespace Cozmo.Minigame.DroneMode {
       }
       else {
         if (_AlertView == null) {
-          _AlertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+          _AlertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
           // Hook up callbacks
           _AlertView.SetCloseButtonEnabled(true);
           _AlertView.SetPrimaryButton(LocalizationKeys.kButtonOkay);

@@ -31,6 +31,7 @@ namespace Cozmo {
         private bool _IsDrivingLift = false;
 
         private bool _IsPerformingAction = false;
+        private bool _AreIdleReactionaryBehaviorsEnabled = true;
 
         private bool IsDrivingWheels {
           get { return _IsDrivingWheels; }
@@ -38,6 +39,7 @@ namespace Cozmo {
             if (_IsDrivingWheels != value) {
               _IsDrivingWheels = value;
               UpdateIdleReactionaryBehaviors();
+              _DroneModeControlsSlide.ShowActionButtons = !_IsDrivingWheels;
             }
           }
         }
@@ -269,7 +271,7 @@ namespace Cozmo {
               || ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
             _LastMessageSentTimestamp = Time.time;
             IsDrivingWheels = DriveWheelsIfNeeded();
-            
+
             if (!_IsPlayingTurboTransitionAnimation) {
               DriveHeadIfNeeded();
             }
@@ -327,8 +329,8 @@ namespace Cozmo {
         private void DriveHeadInternal() {
           _CurrentRobot.CancelCallback(HandleHeadMoveFinished);
           _LastCommandedTargetHeadAngle_rad = _TargetHeadAngle_rad;
-          _CurrentRobot.SetHeadAngle(_TargetHeadAngle_rad, callback: HandleHeadMoveFinished, 
-            queueActionPosition: Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING, 
+          _CurrentRobot.SetHeadAngle(_TargetHeadAngle_rad, callback: HandleHeadMoveFinished,
+            queueActionPosition: Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING,
             useExactAngle: true,
             speed_radPerSec: _DroneModeGame.DroneModeConfigData.HeadTurnSpeed_radPerSec,
             accel_radPerSec2: _DroneModeGame.DroneModeConfigData.HeadTurnAccel_radPerSec2);
@@ -353,7 +355,7 @@ namespace Cozmo {
           _LastCommandedTargetLiftFactor = _TargetLiftFactor;
           _CurrentRobot.SetLiftHeight(_TargetLiftFactor,
             callback: HandleLiftMoveFinished,
-            queueActionPosition: Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING, 
+            queueActionPosition: Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING,
             speed_radPerSec: _DroneModeGame.DroneModeConfigData.LiftTurnSpeed_radPerSec,
             accel_radPerSec2: _DroneModeGame.DroneModeConfigData.LiftTurnAccel_radPerSec2);
 
@@ -561,10 +563,16 @@ namespace Cozmo {
         private void UpdateIdleReactionaryBehaviors() {
           // If targets are all zero, enable reactionary behavior
           if (!IsDrivingHead && !IsDrivingWheels && !IsDrivingLift && !IsPerformingAction) {
-            EnableIdleReactionaryBehaviors(true);
+            if (!_AreIdleReactionaryBehaviorsEnabled) {
+              EnableIdleReactionaryBehaviors (true);
+              _AreIdleReactionaryBehaviorsEnabled = true;
+            }
           }
           else {
-            EnableIdleReactionaryBehaviors(false);
+            if (_AreIdleReactionaryBehaviorsEnabled) {
+              EnableIdleReactionaryBehaviors (false);
+              _AreIdleReactionaryBehaviorsEnabled = false;
+            }
           }
         }
 

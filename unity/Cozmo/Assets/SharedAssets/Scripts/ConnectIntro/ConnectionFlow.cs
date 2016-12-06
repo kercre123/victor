@@ -96,11 +96,11 @@ public class ConnectionFlow : MonoBehaviour {
   private void Cleanup() {
     if (_PullCubeTabViewInstance != null) {
       _PullCubeTabViewInstance.ViewClosed -= HandlePullCubeTabsCompeted;
-      UIManager.CloseViewImmediately(_PullCubeTabViewInstance);
+      UIManager.CloseModalImmediately(_PullCubeTabViewInstance);
     }
 
     if (_ConnectionFlowBackgroundInstance != null) {
-      UIManager.CloseViewImmediately(_ConnectionFlowBackgroundInstance);
+      UIManager.CloseModalImmediately(_ConnectionFlowBackgroundInstance);
     }
 
     if (_UpdateFirmwareScreenInstance != null) {
@@ -108,11 +108,11 @@ public class ConnectionFlow : MonoBehaviour {
     }
 
     if (_InvalidPinViewInstance != null) {
-      UIManager.CloseViewImmediately(_InvalidPinViewInstance);
+      UIManager.CloseModalImmediately(_InvalidPinViewInstance);
     }
 
     if (_ReplaceCozmoOnChargerViewInstance != null) {
-      UIManager.CloseViewImmediately(_ReplaceCozmoOnChargerViewInstance);
+      UIManager.CloseModalImmediately(_ReplaceCozmoOnChargerViewInstance);
     }
 
     if (_WakingUpCozmoScreenInstance != null) {
@@ -136,7 +136,7 @@ public class ConnectionFlow : MonoBehaviour {
   private void ReturnToTitle() {
     if (_ConnectionFlowBackgroundInstance != null) {
       _ConnectionFlowBackgroundInstance.ViewClosed += QuitConnectionFlow;
-      UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+      UIManager.CloseModal(_ConnectionFlowBackgroundInstance);
       _ConnectionFlowBackgroundInstance = null;
     }
     else {
@@ -158,7 +158,7 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void CreateConnectionFlowBackground() {
-    _ConnectionFlowBackgroundInstance = UIManager.OpenView<ConnectionFlowBackground>(_ConnectionFlowBackgroundPrefab);
+    _ConnectionFlowBackgroundInstance = UIManager.OpenModal<ConnectionFlowBackground>(_ConnectionFlowBackgroundPrefab);
   }
 
   private void ShowSearchForCozmo() {
@@ -246,13 +246,13 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void ReplaceCozmoOnCharger() {
-    _ReplaceCozmoOnChargerViewInstance = UIManager.OpenView(_ReplaceCozmoOnChargerViewPrefab);
+    _ReplaceCozmoOnChargerViewInstance = UIManager.OpenModal(_ReplaceCozmoOnChargerViewPrefab);
     _ReplaceCozmoOnChargerViewInstance.OnConnectButton += ReplaceCozmoOnChargerConnect;
     _ReplaceCozmoOnChargerViewInstance.ViewClosedByUser += ReturnToTitle;
   }
 
   private void ReplaceCozmoOnChargerConnect() {
-    UIManager.CloseView(_ReplaceCozmoOnChargerViewInstance);
+    UIManager.CloseModal(_ReplaceCozmoOnChargerViewInstance);
     ReturnToSearch();
   }
 
@@ -263,19 +263,19 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void ShowInvalidPinScreen() {
-    _InvalidPinViewInstance = UIManager.OpenView(_InvalidPinViewPrefab);
+    _InvalidPinViewInstance = UIManager.OpenModal(_InvalidPinViewPrefab);
     _InvalidPinViewInstance.OnRetryPin += ShowPinScreen;
     _InvalidPinViewInstance.ViewClosedByUser += ReturnToTitle;
   }
 
   private void ShowPinScreen() {
-    _PinSecurityViewInstance = UIManager.OpenView(_PinSecurityViewPrefab);
+    _PinSecurityViewInstance = UIManager.OpenModal(_PinSecurityViewPrefab);
     _PinSecurityViewInstance.ViewClosedByUser += HandlePinSecurityViewClosedByUser;
     _PinSecurityViewInstance.OnPinEntered += HandlePinSecurityEntered;
   }
 
   private void UpdateAppScreen() {
-    _UpdateAppViewInstance = UIManager.OpenView(_UpdateAppViewPrefab);
+    _UpdateAppViewInstance = UIManager.OpenModal(_UpdateAppViewPrefab);
     _UpdateAppViewInstance.ViewClosedByUser += ReturnToTitle;
   }
 
@@ -284,7 +284,7 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void HandlePinSecurityEntered(string pin) {
-    UIManager.CloseView(_PinSecurityViewInstance);
+    UIManager.CloseModal(_PinSecurityViewInstance);
     ShowConnectingToCozmoScreen();
   }
 
@@ -356,10 +356,10 @@ public class ConnectionFlow : MonoBehaviour {
   private void TransitionConnectionFlowToPullCubeTabs() {
     if (_SecuringConnectionScreenInstance != null) {
       GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
-      UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+      UIManager.CloseModal(_ConnectionFlowBackgroundInstance);
       _SecuringConnectionScreenInstance = null;
       _ConnectionFlowBackgroundInstance = null;
-      _PullCubeTabViewInstance = UIManager.OpenView(_PullCubeTabViewPrefab);
+      _PullCubeTabViewInstance = UIManager.OpenModal(_PullCubeTabViewPrefab);
       _PullCubeTabViewInstance.ViewClosed += HandlePullCubeTabsCompeted;
     }
     else {
@@ -373,7 +373,7 @@ public class ConnectionFlow : MonoBehaviour {
 
   private void FinishConnectionFlow() {
     if (_ConnectionFlowBackgroundInstance != null) {
-      UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+      UIManager.CloseModal(_ConnectionFlowBackgroundInstance);
       _ConnectionFlowBackgroundInstance = null;
     }
 

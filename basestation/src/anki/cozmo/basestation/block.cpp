@@ -86,7 +86,7 @@ namespace Cozmo {
     const float flipPreActionPoseDist = FLIP_PREDOCK_POSE_DISTAMCE_MM / 1.414f;
     
     // SetSize() should have been called already
-    CORETECH_ASSERT(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f);
+    ASSERT_NAMED(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f, "Block.AddFace.InvalidHalfSize");
     
     // The poses here are based on the Marker's canonical pose being in the
     // X-Z plane
@@ -216,7 +216,7 @@ namespace Cozmo {
     }
     
     // Every block should at least have a front face defined in the BlockDefinitions file
-    CORETECH_ASSERT(markersByFace_[FRONT_FACE] != NULL);
+    ASSERT_NAMED(markersByFace_[FRONT_FACE] != NULL, "Block.Constructor.InvalidFrontFace");
     
   } // Constructor: Block(type)
   

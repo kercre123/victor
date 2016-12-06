@@ -1,6 +1,7 @@
 {
   "behaviorType": "PickUpCube",
   "name": "tapInteractionPickUpCube",
+  "displayNameKey":"behavior.PickupCube",
   "requireObjectTapped" : true,
   "requiredUnlockId": "PickupCube",
   "behaviorGroups": [

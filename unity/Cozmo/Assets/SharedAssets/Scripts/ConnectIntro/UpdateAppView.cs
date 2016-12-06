@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class UpdateAppView : Cozmo.UI.BaseView {
+public class UpdateAppView : Cozmo.UI.BaseModal {
 
   [SerializeField]
   private Cozmo.UI.CozmoButton _UpdateAppButton;

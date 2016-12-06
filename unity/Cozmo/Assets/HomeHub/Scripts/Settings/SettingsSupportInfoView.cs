@@ -4,7 +4,7 @@ using DG.Tweening;
 using UnityEngine;
 
 namespace Cozmo.Settings {
-  public class SettingsSupportInfoView : BaseView {
+  public class SettingsSupportInfoView : BaseModal {
     public event System.Action OnOpenRestoreCozmoViewButtonTapped;
 
     [SerializeField]

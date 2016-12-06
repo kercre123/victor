@@ -1,6 +1,7 @@
 {
   "behaviorType": "ReactToFrustration",
   "name": "ReactToFrustration",
+  "displayNameKey":"behavior.ReactToFrustration",
   "behaviorGroups": [
     "Reactionary"
   ],

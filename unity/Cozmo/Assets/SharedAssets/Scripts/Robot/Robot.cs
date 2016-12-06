@@ -289,6 +289,8 @@ public class Robot : IRobot {
 
   public string CurrentBehaviorName { get; set; }
 
+  public string CurrentBehaviorDisplayNameKey { get; set; }
+
   public string CurrentDebugAnimationString { get; set; }
 
   public bool PlayingReactionaryBehavior { get; set; }
@@ -375,6 +377,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.AddCallback<ObjectMoved>(HandleActiveObjectMoved);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ObjectStates>(HandleObjectStatesUpdate);
     RobotEngineManager.Instance.AddCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
     RobotEngineManager.Instance.AddCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
@@ -407,6 +410,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.RemoveCallback<ObjectMoved>(HandleActiveObjectMoved);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ObjectStates>(HandleObjectStatesUpdate);
     RobotEngineManager.Instance.RemoveCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
     RobotEngineManager.Instance.RemoveCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
@@ -447,6 +451,7 @@ public class Robot : IRobot {
   private void HandleBehaviorTransition(Anki.Cozmo.ExternalInterface.BehaviorTransition message) {
     CurrentBehaviorType = message.newBehaviorType;
     CurrentBehaviorName = message.newBehavior;
+    CurrentBehaviorDisplayNameKey = message.newBehaviorDisplayKey;
   }
 
   private void HandleReactionaryBehaviorTransition(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
@@ -605,6 +610,7 @@ public class Robot : IRobot {
     CurrentBehaviorType = BehaviorType.NoneBehavior;
     // usually this is unique
     CurrentBehaviorName = "NoneBehavior";
+    CurrentBehaviorDisplayNameKey = "";
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
       BackpackLights[i].ClearData();
@@ -900,6 +906,19 @@ public class Robot : IRobot {
         }
         Faces.RemoveAt(i);
         break;
+      }
+    }
+  }
+
+  private void HandleObjectStatesUpdate(Anki.Cozmo.ExternalInterface.ObjectStates message) {
+    ObjectState[] objectStates = message.objects;
+    if (objectStates != null) {
+      for (int i = 0; i < objectStates.Length; ++i) {
+        ObjectState obj = objectStates[i];
+        ObservableObject objectSeen = GetActiveObjectById((int)obj.objectID);
+        if (objectSeen != null) {
+          objectSeen.UpdateAvailable(obj);
+        }
       }
     }
   }

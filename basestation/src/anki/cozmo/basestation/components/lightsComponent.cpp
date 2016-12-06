@@ -1216,7 +1216,7 @@ void LightsComponent::RestorePrevState(const ObjectID objectID)
     cube->second.desiredState = CubeLightsState::Visible;
   }
   
-  PRINT_CH_INFO("LightsComponent", "LightsComponent.RestorePrevState", "Restoring obejct %d to state %d from %d)",
+  PRINT_CH_INFO("LightsComponent", "LightsComponent.RestorePrevState", "Restoring object %d to state %d from %d)",
                 objectID.GetValue(), cube->second.desiredState, cube->second.currState);
 }
 
@@ -1338,7 +1338,7 @@ void LightsComponent::SetHeadlight(bool on)
   _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadlight(on)));
 }
 
-void LightsComponent::OnObjectPoseStateChanged(const ObjectID& objectID,
+void LightsComponent::OnObjectPoseStateWillChange(const ObjectID& objectID,
                                                const PoseState oldPoseState,
                                                const PoseState newPoseState)
 {
@@ -1356,7 +1356,7 @@ void LightsComponent::OnObjectPoseStateChanged(const ObjectID& objectID,
   auto cube = _cubeInfo.find(objectID);
   if(cube == _cubeInfo.end())
   {
-    PRINT_NAMED_WARNING("LightsComponent.OnObjectPoseStateChanged.NoCube", "%d", objectID.GetValue());
+    PRINT_NAMED_WARNING("LightsComponent.OnObjectPoseStateWillChange.NoCube", "%d", objectID.GetValue());
     return;
   }
   
@@ -1375,7 +1375,7 @@ void LightsComponent::OnObjectPoseStateChanged(const ObjectID& objectID,
     cube->second.desiredState = CubeLightsState::Visible;
   }
   
-  PRINT_CH_INFO("LightsComponent", "LightsComponent.OnObjectPoseStateChanged",
+  PRINT_CH_INFO("LightsComponent", "LightsComponent.OnObjectPoseStateWillChange",
                 "Changing object %d from state %d to %d based on pose change from %s to %s",
                 objectID.GetValue(),
                 cube->second.currState,

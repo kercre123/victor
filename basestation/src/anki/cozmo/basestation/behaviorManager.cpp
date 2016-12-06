@@ -372,6 +372,7 @@ void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior
   msg.newBehaviorType = newBehaviorType;
   msg.isOldReactionary = oldBehaviorIsReactionary;
   msg.isNewReactionary = newBehaviorIsReactionary;
+  msg.newBehaviorDisplayKey = newBehavior ? newBehavior->GetDisplayNameKey() : "";
   
   _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
 }
@@ -812,7 +813,7 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
   _lastRequestedSpark = spark;
   _isRequestedSparkSoft = softSpark;
 
-  PRINT_CH_INFO("Beahviors", "BehaviorManager.SetRequestedSpark",
+  PRINT_CH_INFO("Behaviors", "BehaviorManager.SetRequestedSpark",
                 "requested %s spark is '%s'",
                 _isRequestedSparkSoft ? "soft" : "hard",
                 UnlockIdToString(_lastRequestedSpark));
@@ -820,7 +821,7 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
   
 const UnlockId BehaviorManager::SwitchToRequestedSpark()
 {
-  PRINT_CH_INFO("Beahviors", "BehaviorManager.SwitchToRequestedSpark",
+  PRINT_CH_INFO("Behaviors", "BehaviorManager.SwitchToRequestedSpark",
                 "switching active spark from '%s' -> '%s'. From %s -> %s",
                 UnlockIdToString(_activeSpark),
                 UnlockIdToString(_lastRequestedSpark),
@@ -921,17 +922,12 @@ void BehaviorManager::LeaveObjectTapInteraction()
       PRINT_NAMED_ERROR("BehaviorManager.LeaveObjectTapInteraction.NullChooser",
                         "Current chooser is not an AIGoalEvaluator but supports object tap interactions");
     }
-    
-    GetWhiteboard().ClearObjectTapInteraction();
-    
-    _lastDoubleTappedObject.UnSet();
-    _currDoubleTappedObject.UnSet();
   }
-  else
-  {
-    PRINT_NAMED_WARNING("BehaviorManager.LeaveObjectTapInteraction.NullChooser",
-                        "Current chooser is null or does not support object tap interaction");
-  }
+  
+  GetWhiteboard().ClearObjectTapInteraction();
+  
+  _lastDoubleTappedObject.UnSet();
+  _currDoubleTappedObject.UnSet();
 }
 
 void BehaviorManager::RequestEnableTapInteraction(const std::string& requesterID, bool enable)

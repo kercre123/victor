@@ -206,7 +206,7 @@ namespace Anki {
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
-        robotState_.status |= HAL::IsCliffDetected() ? CLIFF_DETECTED : 0;
+        robotState_.status |= ProxSensors::IsCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.status |= bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ? IS_BODY_ACC_MODE : 0;
         robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;
@@ -694,6 +694,11 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
+      void Process_setCliffDetectThreshold(const RobotInterface::SetCliffDetectThreshold& msg)
+      {
+        ProxSensors::SetCliffDetectThreshold(msg.detectLevel);
+      }
+      
       void Process_enableBraceWhenFalling(const RobotInterface::EnableBraceWhenFalling& msg)
       {
         IMUFilter::EnableBraceWhenFalling(msg.enable);

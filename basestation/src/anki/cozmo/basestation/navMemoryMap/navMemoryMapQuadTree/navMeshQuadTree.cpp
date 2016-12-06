@@ -132,7 +132,7 @@ float NavMeshQuadTree::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent)
+void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::AddQuad");
   
@@ -185,7 +185,7 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
     }
     else
     {
-      Expand( quad );
+      Expand( quad, shiftAllowedCount );
     }
   }
 
@@ -194,7 +194,7 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent)
+void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::AddLine");
   
@@ -226,7 +226,7 @@ void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const Node
     }
     else
     {
-      Expand( from );
+      Expand( from, shiftAllowedCount );
     }
   }
 
@@ -242,7 +242,7 @@ void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const Node
     }
     else
     {
-      Expand( to );
+      Expand( to, shiftAllowedCount );
     }
   }
 
@@ -251,7 +251,7 @@ void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const Node
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent)
+void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::AddTriangle");
   
@@ -285,7 +285,7 @@ void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& node
     }
     else
     {
-      Expand( tri );
+      Expand( tri, shiftAllowedCount );
     }
   }
 
@@ -294,7 +294,7 @@ void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& node
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddPoint(const Point2f& point, const NodeContent& nodeContent)
+void NavMeshQuadTree::AddPoint(const Point2f& point, const NodeContent& nodeContent, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::AddPoint");
   
@@ -310,7 +310,7 @@ void NavMeshQuadTree::AddPoint(const Point2f& point, const NodeContent& nodeCont
     }
     else
     {
-      Expand( point );
+      Expand( point, shiftAllowedCount );
     }
   }
   
@@ -339,6 +339,17 @@ void NavMeshQuadTree::Merge(const NavMeshQuadTree& other, const Pose3d& transfor
   // root length. That would allow 'this' to keep at least half a root worth of information with respect the new one
   // we are bringing in.
   
+  // the expected number of shifts should be less than :
+  // halfMaxSize = rootMaxSize*0.5
+  // distance = distance between root centers
+  // maxNumberOfShifts = ceil( distance / halfMaxSize)
+  const Vec3f centerFromOtherInThisFrame = transform * other._root.GetCenter();
+  const float centerDistance = (centerFromOtherInThisFrame - _root.GetCenter()).Length();
+  const float minNodeSize = kQuadTreeInitialRootSideLength / (2 << (kQuadTreeInitialMaxDepth-1));
+  const float maxNodeSize = minNodeSize * (2 << (kQuadTreeMaxRootDepth-1));
+  const float halfRootSize = maxNodeSize * 0.5f;
+  const int maxNumberOfShifts = std::ceil( centerDistance / halfRootSize );
+  
   // iterate all those leaf nodes, adding them to this tree
   for( const auto& nodeInOther : leafNodes ) {
   
@@ -362,13 +373,13 @@ void NavMeshQuadTree::Merge(const NavMeshQuadTree& other, const Pose3d& transfor
       
       // add to this
       NodeContent copyOfContent = nodeInOther->GetContent();
-      AddQuad(transformedQuad2d, copyOfContent); // TODO how good it's to pass a const shared_ptr? the ctrl block is modified
+      AddQuad(transformedQuad2d, copyOfContent, maxNumberOfShifts);
     }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
+void NavMeshQuadTree::Expand(const Quad2f& quadToCover, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::ExpandByQuad");
   
@@ -377,28 +388,44 @@ void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
   bool expanded = false;
   bool quadFitsInMap = false;
   
-  do {
-
-    // Find in which direction we are expanding and upgrade root level in that direction
+  do
+  {
+    // find in which direction we are expanding, upgrade root level in that direction (center moves)
     const Vec2f& direction = quadToCover.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
     expanded = _root.UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
-    
-    // if we didn't expand, see if we can shift the root to cover the quad, by removing other nodes in the map
-    if ( !expanded ) {
-      std::vector<Point2f> requiredPoints;
-      requiredPoints.reserve(4);
-      for( const Point2f& p : quadToCover ) {
-        requiredPoints.emplace_back(p);
-      }
-      _root.ShiftRoot(requiredPoints, _processor);
-    }
-    
+
     // check if the quad now fits in the expanded root
     quadFitsInMap = _root.Contains(quadToCover);
     
   } while( !quadFitsInMap && expanded );
+
+  // if the quad still doesn't fit, see if we can shift
+  int shiftsDone = 0;
+  bool canShift = (shiftsDone<shiftAllowedCount);
+  if ( !quadFitsInMap && canShift )
+  {
+    // calculate points for shift
+    std::vector<Point2f> requiredPoints;
+    requiredPoints.reserve(4);
+    for( const Point2f& p : quadToCover ) {
+      requiredPoints.emplace_back(p);
+    }
+    
+    // shift as many times as we can until the quad fits
+    do
+    {
+      // shift the root to try to cover the quad, by removing opposite nodes in the map
+      _root.ShiftRoot(requiredPoints, _processor);
+      ++shiftsDone;
+      canShift = (shiftsDone<shiftAllowedCount);
+
+      // check if the quad now fits in the expanded root
+      quadFitsInMap = _root.Contains(quadToCover);
+      
+    } while( !quadFitsInMap && canShift );
+  }
   
-  // the quad should be contained, if it's not, we have reached the limit of expansions and the quad does not
+  // the quad should be contained, if it's not, we have reached the limit of expansions and shifts, and the quad does not
   // fit, which will cause information loss
   if ( !quadFitsInMap ) {
     PRINT_NAMED_ERROR("NavMeshQuadTree.ExpandByQuad.InsufficientExpansion",
@@ -408,12 +435,12 @@ void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
       _root.GetSideLen() );
   }
   
-  // always flag as dirty since we have modified the root
+  // always flag as dirty since we have modified the root (potentially)
   _gfxDirty = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Expand(const Point2f& pointToInclude)
+void NavMeshQuadTree::Expand(const Point2f& pointToInclude, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::ExpandByPoint");
   
@@ -424,24 +451,40 @@ void NavMeshQuadTree::Expand(const Point2f& pointToInclude)
   
   do {
 
-    // Find in which direction we are expanding and upgrade root level in that direction
+    // find in which direction we are expanding and upgrade root level in that direction (center moves)
     const Vec2f& direction = pointToInclude - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
     expanded = _root.UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
-    
-    // if we didn't expand, see if we can shift the root to cover the point, by removing other nodes in the map
-    if ( !expanded ) {
-      std::vector<Point2f> requiredPoints;
-      requiredPoints.reserve(1);
-      requiredPoints.emplace_back(pointToInclude);
-      _root.ShiftRoot(requiredPoints, _processor);
-    }
     
     // check if the point now fits in the expanded root
     pointInMap = _root.Contains(pointToInclude);
     
   } while( !pointInMap && expanded );
   
-  // the point should be contained, if it's not, we have reached the limit of expansions and the point does not
+  // if the point still doesn't fit, see if we can shift
+  int shiftsDone = 0;
+  bool canShift = (shiftsDone<shiftAllowedCount);
+  if ( !pointInMap && canShift )
+  {
+    // calculate points for shift
+    std::vector<Point2f> requiredPoints;
+    requiredPoints.reserve(1);
+    requiredPoints.emplace_back(pointToInclude);
+    
+    // shift as many times as we can until the quad fits
+    do
+    {
+      // shift the root to try to cover the point, by removing opposite nodes in the map
+      _root.ShiftRoot(requiredPoints, _processor);
+      ++shiftsDone;
+      canShift = (shiftsDone<shiftAllowedCount);
+
+      // check if the point now fits in the expanded root
+      pointInMap = _root.Contains(pointToInclude);
+      
+    } while( !pointInMap && canShift );
+  }
+  
+  // the point should be contained, if it's not, we have reached the limit of expansions and shifts, and the point does not
   // fit, which will cause information loss
   if ( !pointInMap ) {
     PRINT_NAMED_ERROR("NavMeshQuadTree.ExpandByPoint.InsufficientExpansion",
@@ -449,12 +492,12 @@ void NavMeshQuadTree::Expand(const Point2f& pointToInclude)
       pointToInclude.x(), pointToInclude.y(), _root.GetCenter().x(), _root.GetCenter().y(), _root.GetSideLen() );
   }
   
-  // always flag as dirty since we have modified the root
+  // always flag as dirty since we have modified the root (potentially)
   _gfxDirty = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover)
+void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::ExpandByTriangle");
   
@@ -465,26 +508,42 @@ void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover)
   
   do {
 
-    // Find in which direction we are expanding and upgrade root level in that direction
+    // find in which direction we are expanding and upgrade root level in that direction (center moves)
     const Vec2f& direction = triangleToCover.GetCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
     expanded = _root.UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
-    
-    // if we didn't expand, see if we can shift the root to cover the triangle, by removing other nodes in the map
-    if ( !expanded ) {
-      std::vector<Point2f> requiredPoints;
-      requiredPoints.reserve(3);
-      for( const Point2f& p : triangleToCover ) {
-        requiredPoints.emplace_back(p);
-      }
-      _root.ShiftRoot(requiredPoints, _processor);
-    }
     
     // check if the point now fits in the expanded root
     triangleInMap = _root.Contains(triangleToCover);
     
   } while( !triangleInMap && expanded );
   
-  // the point should be contained, if it's not, we have reached the limit of expansions and the point does not
+  // if the triangle still doesn't fit, see if we can shift
+  int shiftsDone = 0;
+  bool canShift = (shiftsDone<shiftAllowedCount);
+  if ( !triangleInMap && canShift )
+  {
+    // calculate points for shift
+    std::vector<Point2f> requiredPoints;
+    requiredPoints.reserve(3);
+    for( const Point2f& p : triangleToCover ) {
+      requiredPoints.emplace_back(p);
+    }
+    
+    // shift as many times as we can until the triangle fits
+    do
+    {
+      // shift the root to try to cover the triangle, by removing opposite nodes in the map
+      _root.ShiftRoot(requiredPoints, _processor);
+      ++shiftsDone;
+      canShift = (shiftsDone<shiftAllowedCount);
+
+      // check if the triangle now fits in the expanded root
+      triangleInMap = _root.Contains(triangleToCover);
+      
+    } while( !triangleInMap && canShift );
+  }
+  
+  // the point should be contained, if it's not, we have reached the limit of expansions and shifts, and the point does not
   // fit, which will cause information loss
   if ( !triangleInMap ) {
     PRINT_NAMED_ERROR("NavMeshQuadTree.ExpandByTriangle.InsufficientExpansion",
@@ -494,7 +553,7 @@ void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover)
       _root.GetSideLen() );
   }
   
-  // always flag as dirty since we have modified the root
+  // always flag as dirty since we have modified the root (potentially)
   _gfxDirty = true;
 }
 

@@ -1,6 +1,7 @@
 {
   "behaviorType": "PopAWheelie",
   "name": "sparksPopAWheelie",
+  "displayNameKey":"behavior.PopAWheelie",
   "requiredUnlockId": "PopAWheelieAction",
   "behaviorGroups": [
     "SparksPopAWheelie"

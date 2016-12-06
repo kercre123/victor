@@ -52,6 +52,7 @@
 #include "anki/cozmo/basestation/tracePrinter.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/stats/recentStatsAccumulator.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -186,7 +187,7 @@ public:
   const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
   
   // Mutators
-  void SetTimeSynced(const bool timeSynced) {_timeSynced = timeSynced; }
+  void SetTimeSynced() {_timeSynced = true; _syncTimeSentTime_sec = 0; }
   
   // Set the object we are localized to.
   // Use nullptr to UnSet the localizedTo object but still mark the robot
@@ -518,7 +519,21 @@ public:
 
   // Return the timestamp of the last _processed_ image
   TimeStamp_t GetLastImageTimeStamp() const;
+
+  // Evaluate how suspicious the cliff that caused robot to stop is based on how much the reading
+  // actually rises while it's stopping in reaction to the supposed cliff.
+  void EvaluateCliffSuspiciousnessWhenStopped();
   
+  // Returns true if floor is suspciously cliff-y looking based on variance of cliff readings
+  bool IsFloorSuspiciouslyCliffy() const;
+  
+  // Returns current threshold for cliff detection
+  u16 GetCliffDetectThreshold() const { return _cliffDetectThreshold; }
+  
+  // Get the mean/variance of cliff readings over the past few seconds. (See kCliffSensorRunningStatsWindowSize)
+  f32 GetCliffRunningMean() const { return _cliffRunningMean; }
+  f32 GetCliffRunningVar() const  { return _cliffRunningVar;  }
+  void ClearCliffRunningStats();
   
   // =========== IMU Data =============
   
@@ -626,6 +641,7 @@ public:
                                  const Pose3d& pose,
                                  const f32 head_angle,
                                  const f32 lift_angle,
+                                 const u16 cliff_data,
                                  const bool isCarryingObject);
   
 //  Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
@@ -978,6 +994,24 @@ protected:
   bool             _isBodyInAccessoryMode = true;
   u8               _setBodyModeTicDelay   = 0;
   bool             _gotStateMsgAfterTimeSync = false;
+  
+  u32              _suspiciousCliffCnt = 0;
+  u16              _cliffDetectThreshold  = CLIFF_SENSOR_DROP_LEVEL;
+  u32              _cliffStartTimestamp = 0;
+  
+  // Increments count of suspicious cliff. (i.e. Cliff was detected but data looks like maybe it's not real.)
+  void IncrementSuspiciousCliffCount();
+  
+  // Assesses suspiciousness of current cliff and adjusts cliff threshold if necessary
+  void UpdateCliffDetectThreshold();
+  
+  // Cliff-yness tracking
+  std::deque<u16> _cliffDataQueue;
+  f32             _cliffRunningMean;
+  f32             _cliffRunningVar;
+  f32             _cliffRunningVar_acc;
+  void UpdateCliffRunningStats(const RobotState& msg);
+  
 
   OffTreadsState    _offTreadsState  = OffTreadsState::OnTreads;
   OffTreadsState    _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
@@ -1160,6 +1194,8 @@ protected:
   // Sync time with physical robot and trigger it robot to send back camera
   // calibration
   Result SendSyncTime() const;
+  double _syncTimeSentTime_sec = 0;
+  constexpr static double kMaxSyncTimeAckDelay_sec = 5;
   
   // Send's robot's current pose
   Result SendAbsLocalizationUpdate() const;

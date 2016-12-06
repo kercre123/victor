@@ -1,5 +1,6 @@
 {
   "behaviorType": "ReactToRobotOnBack",
+  "displayNameKey":"behavior.ReactToOnBack",
   "behaviorGroups": [
     "Reactionary"
   ],

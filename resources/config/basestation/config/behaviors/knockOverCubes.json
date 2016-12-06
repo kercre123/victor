@@ -1,6 +1,7 @@
 {
   "behaviorType": "KnockOverCubes",
   "name": "knockOverCubes",
+  "displayNameKey":"behavior.KnockOverCubes",
   "flatScore": 20,
   "requiredUnlockId": "KnockOverThreeCubeStack",
   "behaviorGroups": [

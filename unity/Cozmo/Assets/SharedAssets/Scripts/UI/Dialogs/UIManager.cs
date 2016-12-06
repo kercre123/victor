@@ -60,23 +60,23 @@ public class UIManager : MonoBehaviour {
   private CanvasGroup _DimBackgroundPrefab;
 
   private CanvasGroup _DimBackgroundInstance;
-  private int _NumDialogsDimmingBackground;
+  private int _NumModalsDimmingBackground;
   private Sequence _DimBackgroundTweener;
 
   [SerializeField]
   private BackgroundColorController _BackgroundColorController;
   public BackgroundColorController BackgroundColorController { get { return _BackgroundColorController; } }
 
-  private List<BaseView> _OpenViews;
+  private List<BaseModal> _OpenModals;
   // Account far the fact that there's always a base view open
-  public int NumberOfOpenDialogues() { return _OpenViews.Count - 1; }
+  public int NumberOfOpenDialogues() { return _OpenModals.Count - 1; }
 
   void Awake() {
     Instance = this;
-    _OpenViews = new List<BaseView>();
-    _NumDialogsDimmingBackground = 0;
+    _OpenModals = new List<BaseModal>();
+    _NumModalsDimmingBackground = 0;
     DOTween.Init();
-    BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
+    BaseModal.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
 
   void Start() {
@@ -91,7 +91,7 @@ public class UIManager : MonoBehaviour {
 
   /// <summary>
   /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
-  /// For BaseViews, use OpenView instead.
+  /// For BaseModals, use OpenModal<T> instead.
   /// </summary>
   public static GameObject CreateUIElement(MonoBehaviour uiPrefab) {
     return CreateUIElement(uiPrefab.gameObject, Instance._HorizontalCanvas.transform);
@@ -99,7 +99,7 @@ public class UIManager : MonoBehaviour {
 
   /// <summary>
   /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
-  /// For BaseViews, use OpenView instead.
+  /// For BaseModals, use OpenModal<T> instead.
   /// </summary>
   public static GameObject CreateUIElement(MonoBehaviour uiPrefab, Transform parentTransform) {
     return CreateUIElement(uiPrefab.gameObject, parentTransform);
@@ -107,20 +107,20 @@ public class UIManager : MonoBehaviour {
 
   /// <summary>
   /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
-  /// For BaseViews, use OpenView instead.
+  /// For BaseModals, use OpenModal<T> instead.
   /// </summary>
   public static GameObject CreateUIElement(GameObject uiPrefab) {
     GameObject go = null;
     // INGO: Trying fix for https://ankiinc.atlassian.net/browse/COZMO-1172
-    if (Instance != null && Instance._HorizontalCanvas != null) {
-      go = CreateUIElement(uiPrefab, Instance._HorizontalCanvas.transform);
+    if (_Instance != null && _Instance._HorizontalCanvas != null) {
+      go = CreateUIElement(uiPrefab, _Instance._HorizontalCanvas.transform);
     }
     return go;
   }
 
   /// <summary>
   /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
-  /// For BaseViews, use OpenView instead.
+  /// For BaseModals, use OpenModal<T> instead.
   /// </summary>
   public static GameObject CreateUIElement(GameObject uiPrefab, Transform parentTransform) {
     GameObject newUi = Instantiate(uiPrefab);
@@ -129,84 +129,84 @@ public class UIManager : MonoBehaviour {
   }
 
   /// <summary>
-  /// Creates a dialog using a script/prefab that extends from BaseView.
+  /// Creates a dialog using a script/prefab that extends from BaseModal.
   /// Plays open animations on that dialog by default. 
   /// </summary>
-  public static T OpenView<T>(
-    T viewPrefab,
-    System.Action<T> preInitFunc = null,
+  public static T OpenModal<T>(
+    T modalPrefab,
+    System.Action<T> creationSuccessCallback = null,
     bool? overrideBackgroundDim = null,
-    bool? overrideCloseOnTouchOutside = null) where T : BaseView {
+    bool? overrideCloseOnTouchOutside = null) where T : BaseModal {
 
-    GameObject newView = Instantiate(viewPrefab.gameObject);
-    T viewScript = newView.GetComponent<T>();
+    GameObject newModal = Instantiate(modalPrefab.gameObject);
+    T modalScript = newModal.GetComponent<T>();
 
-    Transform targetCanvas = Instance._HorizontalCanvas.transform;
-    newView.transform.SetParent(targetCanvas, false);
+    Transform targetCanvas = _Instance._HorizontalCanvas.transform;
+    newModal.transform.SetParent(targetCanvas, false);
 
-    if (preInitFunc != null) {
-      preInitFunc(viewScript);
+    if (creationSuccessCallback != null) {
+      creationSuccessCallback(modalScript);
     }
 
-    viewScript.Initialize(overrideCloseOnTouchOutside);
+    modalScript.Initialize(overrideCloseOnTouchOutside);
 
-    SendDasEventForDialogOpen(viewScript);
+    SendDasEventForDialogOpen(modalScript);
 
-    Instance._OpenViews.Add(viewScript);
+    _Instance._OpenModals.Add(modalScript);
 
     // find the spot in the transform hierarchy that viewScript belongs in based on layer priority
-    for (int i = 0; i < _Instance._OpenViews.Count; ++i) {
-      if (_Instance._OpenViews[i].LayerPriority > viewScript.LayerPriority) {
-        viewScript.transform.SetSiblingIndex(_Instance._OpenViews[i].transform.GetSiblingIndex());
+    for (int i = 0; i < _Instance._OpenModals.Count; ++i) {
+      if (_Instance._OpenModals[i].LayerPriority > modalScript.LayerPriority) {
+        modalScript.transform.SetSiblingIndex(_Instance._OpenModals[i].transform.GetSiblingIndex());
         break;
       }
     }
 
-    bool shouldDimBackground = overrideBackgroundDim.HasValue ? overrideBackgroundDim.Value : viewScript.DimBackground;
+    bool shouldDimBackground = overrideBackgroundDim.HasValue ? overrideBackgroundDim.Value : modalScript.DimBackground;
     if (shouldDimBackground) {
-      Instance.DimBackground(viewScript, targetCanvas);
+      _Instance.DimBackground(modalScript, targetCanvas);
     }
 
     _Instance.PlaceDimmer();
 
-    return viewScript;
+    return modalScript;
   }
 
-  public static void CloseView(BaseView viewObject) {
-    viewObject.CloseView();
+  public static void CloseModal(BaseModal modalObject) {
+    modalObject.CloseView();
   }
 
-  public static void CloseViewImmediately(BaseView viewObject) {
-    viewObject.CloseViewImmediately();
+  public static void CloseModalImmediately(BaseModal modalObject) {
+    modalObject.CloseViewImmediately();
   }
 
-  public static void CloseAllViews() {
-    Instance.CloseAllViewsInternal();
+  public static void CloseAllModals() {
+    _Instance.CloseAllModalsInternal();
   }
 
-  private void CloseAllViewsInternal() {
+  private void CloseAllModalsInternal() {
     // Close views down the stack
-    for (int i = _OpenViews.Count - 1; i >= 0; i--) {
-      if (_OpenViews[i] != null) {
-        _OpenViews[i].CloseView();
+    for (int i = _OpenModals.Count - 1; i >= 0; i--) {
+      if (_OpenModals[i] != null) {
+        _OpenModals[i].CloseView();
       }
     }
   }
 
-  public static void CloseAllViewsImmediately() {
-    if (Instance == null) {
-      DAS.Error("UIManager.CloseAllViewsImmediatelyInternal", "Closing views called when UI manager is already destroyed");
+  public static void CloseAllModalsImmediately() {
+    if (_Instance == null) {
+      DAS.Error("UIManager.CloseAllModalsImmediately", "Closing modals called when UI manager is already destroyed");
       return;
     }
-    Instance.CloseAllViewsImmediatelyInternal();
+    _Instance.CloseAllModalsImmediatelyInternal();
   }
 
-  private void CloseAllViewsImmediatelyInternal() {
+  private void CloseAllModalsImmediatelyInternal() {
     // Close views down the stack
-    while (_OpenViews.Count > 0) {
-      if (_OpenViews[Instance._OpenViews.Count - 1] != null) {
-        DAS.Debug("UIManager.CloseAllViewsImmediatelyInternal", "Closing View " + _OpenViews[Instance._OpenViews.Count - 1].name);
-        _OpenViews[Instance._OpenViews.Count - 1].CloseViewImmediately();
+    while (_OpenModals.Count > 0) {
+      if (_OpenModals[_OpenModals.Count - 1] != null) {
+        DAS.Debug("UIManager.CloseAllModalsImmediatelyInternal", "Closing Modals " + _OpenModals[Instance._OpenModals.Count - 1].name);
+        _OpenModals[_OpenModals.Count - 1].CloseViewImmediately();
       }
     }
   }
@@ -227,29 +227,29 @@ public class UIManager : MonoBehaviour {
     }
   }
 
-  public static string GetTopViewName() {
-    var views = _Instance._OpenViews;
-    var topView = views.Count > 0 ? views[views.Count - 1] : null;
-    return topView != null ? topView.name : string.Empty;
+  public static string GetTopModalName() {
+    var openModals = _Instance._OpenModals;
+    var openModal = openModals.Count > 0 ? openModals[openModals.Count - 1] : null;
+    return openModal != null ? openModal.name : string.Empty;
   }
 
-  private void HandleBaseViewCloseAnimationFinished(BaseView view) {
-    _OpenViews.Remove(view);
+  private void HandleBaseViewCloseAnimationFinished(BaseModal view) {
+    _OpenModals.Remove(view);
     TryUnDimBackground(view);
     SendDasEventForDialogClose(view);
   }
 
-  private void DimBackground(BaseView view, Transform targetCanvas) {
-    view.DimBackground = true;
-    _NumDialogsDimmingBackground++;
-    if (_NumDialogsDimmingBackground == 1) {
+  private void DimBackground(BaseModal modalObject, Transform targetCanvas) {
+    modalObject.DimBackground = true;
+    _NumModalsDimmingBackground++;
+    if (_NumModalsDimmingBackground == 1) {
       if (_DimBackgroundInstance == null) {
         // First dialog to dim the background, we need to create a dimmer
         // on top of existing ui, if the view has a specific prefab it wants
         // to use for dimming the background, use that instead
         // (For instance, onboarding background dimming that wants to avoid
         // covering the entire screen)
-        GameObject toInstantiate = Instance._DimBackgroundPrefab.gameObject;
+        GameObject toInstantiate = _DimBackgroundPrefab.gameObject;
         _DimBackgroundInstance = Instantiate(toInstantiate).GetComponent<CanvasGroup>();
         _DimBackgroundInstance.transform.SetParent(targetCanvas, false);
         _DimBackgroundInstance.alpha = 0;
@@ -264,12 +264,12 @@ public class UIManager : MonoBehaviour {
     }
   }
 
-  private void TryUnDimBackground(BaseView view) {
-    if (view.DimBackground) {
-      _NumDialogsDimmingBackground--;
-      if (_NumDialogsDimmingBackground <= 0) {
+  private void TryUnDimBackground(BaseModal modalObject) {
+    if (modalObject.DimBackground) {
+      _NumModalsDimmingBackground--;
+      if (_NumModalsDimmingBackground <= 0) {
         // Destroy the dimmer when no dialogs want it anymore
-        _NumDialogsDimmingBackground = 0;
+        _NumModalsDimmingBackground = 0;
         if (_DimBackgroundInstance != null) {
           if (_DimBackgroundTweener != null) {
             _DimBackgroundTweener.Kill();
@@ -286,16 +286,16 @@ public class UIManager : MonoBehaviour {
 
   private void PlaceDimmer() {
     // find where transform hierarchy the dim background should go
-    if (_Instance._DimBackgroundInstance != null) {
-      for (int i = _Instance._OpenViews.Count - 1; i >= 0; --i) {
-        if (_Instance._OpenViews[i].DimBackground) {
-          int targetIndex = _Instance._OpenViews[i].transform.GetSiblingIndex();
-          int currentDimmerIndex = _Instance._DimBackgroundInstance.transform.GetSiblingIndex();
+    if (_DimBackgroundInstance != null) {
+      for (int i = _OpenModals.Count - 1; i >= 0; --i) {
+        if (_OpenModals[i].DimBackground) {
+          int targetIndex = _OpenModals[i].transform.GetSiblingIndex();
+          int currentDimmerIndex = _DimBackgroundInstance.transform.GetSiblingIndex();
           if (currentDimmerIndex < targetIndex) {
-            _Instance._DimBackgroundInstance.transform.SetSiblingIndex(targetIndex - 1);
+            _DimBackgroundInstance.transform.SetSiblingIndex(targetIndex - 1);
           }
           else {
-            _Instance._DimBackgroundInstance.transform.SetSiblingIndex(targetIndex);
+            _DimBackgroundInstance.transform.SetSiblingIndex(targetIndex);
           }
         }
       }
@@ -319,17 +319,17 @@ public class UIManager : MonoBehaviour {
     }
   }
 
-  private static void SendDasEventForDialogOpen(BaseView newView) {
+  private static void SendDasEventForDialogOpen(BaseModal newView) {
     string eventOpenId = DASUtil.FormatViewTypeForOpen(newView.DASEventViewType);
     SendDialogDasEvent(eventOpenId, newView);
   }
 
-  private static void SendDasEventForDialogClose(BaseView closedView) {
+  private static void SendDasEventForDialogClose(BaseModal closedView) {
     string eventClosedId = DASUtil.FormatViewTypeForClose(closedView.DASEventViewType);
     SendDialogDasEvent(eventClosedId, closedView);
   }
 
-  private static void SendDialogDasEvent(string eventId, BaseView viewOne) {
+  private static void SendDialogDasEvent(string eventId, BaseModal viewOne) {
     DAS.Event(eventId, viewOne.DASEventViewName);
   }
 }

@@ -1,6 +1,7 @@
 {
   "behaviorType": "ReactToReturnedToTreads",
   "name": "ReactToReturnedToTreads",
+  "displayNameKey":"behavior.ReactToOnTreads",
   "behaviorGroups": [
     "Reactionary"
   ],

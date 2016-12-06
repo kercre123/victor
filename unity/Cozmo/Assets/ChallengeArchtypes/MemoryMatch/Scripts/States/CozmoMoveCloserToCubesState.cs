@@ -54,16 +54,23 @@ namespace MemoryMatch {
       }
       LightCube cubeA, cubeB;
       LightCube.TryFindCubesFurthestApart(cubesForGame, out cubeA, out cubeB);
-      _CubeMidpoint = VectorUtil.Midpoint(cubeA.WorldPosition.xy(), cubeB.WorldPosition.xy());
-      Vector2 cubeAlignmentVector = cubeA.WorldPosition - cubeB.WorldPosition;
-      Vector2 perpendicularToCubes = cubeAlignmentVector.PerpendicularAlignedWith(_CurrentRobot.Forward.xy());
+      if (cubeA != null && cubeB != null &&
+          cubeA.CurrentPoseState != ObservableObject.PoseState.Unknown &&
+          cubeB.CurrentPoseState != ObservableObject.PoseState.Unknown) {
+        _CubeMidpoint = VectorUtil.Midpoint(cubeA.WorldPosition.xy(), cubeB.WorldPosition.xy());
+        Vector2 cubeAlignmentVector = cubeA.WorldPosition - cubeB.WorldPosition;
+        Vector2 perpendicularToCubes = cubeAlignmentVector.PerpendicularAlignedWith(_CurrentRobot.Forward.xy());
 
-      // Add the vector to the center of the blocks to figure out the target world position
-      _TargetPosition = _CubeMidpoint + (-perpendicularToCubes.normalized * kTargetDistance);
-      float targetAngle = Mathf.Atan2(perpendicularToCubes.y, perpendicularToCubes.x) * Mathf.Rad2Deg;
-      _TargetRotation = Quaternion.Euler(0, 0, targetAngle);
+        // Add the vector to the center of the blocks to figure out the target world position
+        _TargetPosition = _CubeMidpoint + (-perpendicularToCubes.normalized * kTargetDistance);
+        float targetAngle = Mathf.Atan2(perpendicularToCubes.y, perpendicularToCubes.x) * Mathf.Rad2Deg;
+        _TargetRotation = Quaternion.Euler(0, 0, targetAngle);
 
-      MoveToTargetLocation(_TargetPosition, _TargetRotation);
+        MoveToTargetLocation(_TargetPosition, _TargetRotation);
+      }
+      else {
+        HandleGotoRotationComplete(false);
+      }
     }
 
     public override void Exit() {
@@ -107,12 +114,7 @@ namespace MemoryMatch {
     }
 
     private void HandleGotoPoseComplete(bool success) {
-      if (success) {
-        MoveToTargetRotation(_TargetRotation);
-      }
-      else {
-        MoveToTargetLocation(_TargetPosition, _TargetRotation);
-      }
+      MoveToTargetRotation(_TargetRotation);
     }
 
     private void MoveToTargetRotation(Quaternion targetRotation) {

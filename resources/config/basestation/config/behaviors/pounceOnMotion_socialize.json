@@ -1,6 +1,7 @@
 {
   "behaviorType": "PounceOnMotion",
   "name": "pounceOnMotion_socialize",
+  "displayNameKey":"behavior.PounceOnMotion",
   "requiredUnlockId": "PounceOnMotionAction",
   "behaviorGroups": [
     "FP_Socialize"

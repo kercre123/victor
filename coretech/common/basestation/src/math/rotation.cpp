@@ -75,8 +75,9 @@ namespace Anki {
       }
       
       // If the row norm isn't crazy, but has gotten outside our tolerances
-      // then renormalize the matrix
-      if(!NEAR(rowNorm, 1.f, RotationMatrixBase<DIM>::OrthogonalityToleranceLow)) {
+      // then renormalize the matrix.
+      // Norm absolutely cannot be greater than 1.
+      if (rowNorm > 1.f || rowNorm < 1-RotationMatrixBase<DIM>::OrthogonalityToleranceLow) {
         needsRenormalization = true;
         break;
       }
@@ -287,7 +288,7 @@ namespace Anki {
     
   }
   
-  Rotation3d::Rotation3d(const UnitQuaternion<float>& q)
+  Rotation3d::Rotation3d(const UnitQuaternion& q)
   : _q(q)
   {
     
@@ -300,15 +301,21 @@ namespace Anki {
   
   Radians Rotation3d::GetAngleDiffFrom(const Rotation3d& otherRotation) const
   {
-    const UnitQuaternion<float>& q_this = this->GetQuaternion();
-    const UnitQuaternion<float>& q_other = otherRotation.GetQuaternion();
+    const UnitQuaternion& q_this = this->GetQuaternion();
+    const UnitQuaternion& q_other = otherRotation.GetQuaternion();
     
-    const f32 innerProd = std::min(1.f, std::max(-1.f, (q_this.w()*q_other.w() +
-                                                        q_this.x()*q_other.x() +
-                                                        q_this.y()*q_other.y() +
-                                                        q_this.z()*q_other.z())));
+    // Check for equality since in some cases if there are values very close to 1
+    // the innerProd below may have magnitude less than 1 resulting in non-zero angleDiff.
+    if (q_this == q_other) {
+      return 0;
+    }
     
-    Radians angleDiff(std::acos(2.f * innerProd*innerProd - 1.f));
+    const double innerProd = std::min(1.0, std::max(-1.0, (q_this.w()*q_other.w() +
+                                                           q_this.x()*q_other.x() +
+                                                           q_this.y()*q_other.y() +
+                                                           q_this.z()*q_other.z())));
+    
+    Radians angleDiff(std::acos(2.0 * innerProd*innerProd - 1.0));
     
     return angleDiff;
   }
@@ -482,7 +489,7 @@ namespace Anki {
   
   bool IsNearlyEqual(const Rotation3d& R1, const Rotation3d& R2, const f32 tolerance)
   {
-    return IsNearlyEqual(R1.GetQuaternion(), R2.GetQuaternion(), tolerance);
+    return IsNearlyEqual(R1.GetQuaternion(), R2.GetQuaternion(), (double)tolerance);
   }
   
   Rotation3d& Rotation3d::Invert()
@@ -508,46 +515,39 @@ namespace Anki {
 #endif
   
   template<typename T>
-  UnitQuaternion<T>::UnitQuaternion()
+  UnitQuaternion_<T>::UnitQuaternion_()
   : Point<4,T>(1,0,0,0)
   {
     
   }
 
   template<typename T>
-  UnitQuaternion<T>::UnitQuaternion(const UnitQuaternion& other)
+  UnitQuaternion_<T>::UnitQuaternion_(const UnitQuaternion_& other)
   : Point<4, T>(other)
   {
     
   }
   
   template<typename T>
-  UnitQuaternion<T>::UnitQuaternion(const Point<4, T>& vals)
+  UnitQuaternion_<T>::UnitQuaternion_(const Point<4, T>& vals)
   : Point<4, T>(vals)
   {
     this->Normalize();
   }
   
   template<typename T>
-  UnitQuaternion<T>::UnitQuaternion(const T w, const T x, const T y, const T z)
+  UnitQuaternion_<T>::UnitQuaternion_(const T w, const T x, const T y, const T z)
   : Point<4,T>(w,x,y,z)
   {
     this->Normalize();
   }
   
   template<typename T>
-  UnitQuaternion<T>& UnitQuaternion<T>::Normalize()
+  UnitQuaternion_<T>& UnitQuaternion_<T>::Normalize()
   {
-    const double qmagsq = Point<4,T>::LengthSq();
+    const T qmagsq = Point<4,T>::LengthSq();
     
-    if(qmagsq == 0.f) {
-      PRINT_NAMED_WARNING("UnitQuaternion.Normalize.AllZero",
-                          "Tried to normalize an all-zero UnitQuaternion");
-      *this = UnitQuaternion();
-      return *this;
-    }
-    
-    ASSERT_NAMED(qmagsq != 0, "UnitQuaternion.Normalize.AllZero");
+    ASSERT_NAMED(!NEAR_ZERO(qmagsq), "UnitQuaternion.Normalize.NearZero");
     
     if (std::abs(1.0 - qmagsq) < 2.107342e-08) {
       // This is an approximation of dividing by the square root, when the
@@ -564,15 +564,15 @@ namespace Anki {
   }
   
   template<typename T>
-  UnitQuaternion<T> UnitQuaternion<T>::operator*(const UnitQuaternion<T>& other) const
+  UnitQuaternion_<T> UnitQuaternion_<T>::operator*(const UnitQuaternion_<T>& other) const
   {
-    UnitQuaternion output(*this);
+    UnitQuaternion_ output(*this);
     output *= other;
     return output;
   }
   
   template<typename T>
-  UnitQuaternion<T>& UnitQuaternion<T>::Conj()
+  UnitQuaternion_<T>& UnitQuaternion_<T>::Conj()
   {
     // (w stays same)
     x() = -x();
@@ -582,15 +582,26 @@ namespace Anki {
   }
   
   template<typename T>
-  UnitQuaternion<T> UnitQuaternion<T>::GetConj() const
+  UnitQuaternion_<T> UnitQuaternion_<T>::GetConj() const
   {
-    UnitQuaternion<T> q_new(*this);
+    UnitQuaternion_<T> q_new(*this);
     q_new.Conj();
     return q_new;
   }
   
   template<typename T>
-  UnitQuaternion<T>& UnitQuaternion<T>::operator*=(const UnitQuaternion<T>& other)
+  template<typename T_other>
+  UnitQuaternion_<T>& UnitQuaternion_<T>::SetCast(const UnitQuaternion_<T_other> &other)
+  {
+    for(int i=0; i<4; ++i) {
+      this->data[i] = static_cast<T>(other[i]);
+    }
+    return *this;
+  }
+  
+  
+  template<typename T>
+  UnitQuaternion_<T>& UnitQuaternion_<T>::operator*=(const UnitQuaternion_<T>& other)
   {
     const T wNew = (this->w()*other.w()) - (this->x()*other.x()) - (this->y()*other.y()) - (this->z()*other.z());
     const T xNew = (this->w()*other.x()) + (this->x()*other.w()) + (this->y()*other.z()) - (this->z()*other.y());
@@ -608,7 +619,7 @@ namespace Anki {
   }
   
   template<typename T>
-  Point3<T> UnitQuaternion<T>::operator*(const Point3<T>& p) const
+  Point3<T> UnitQuaternion_<T>::operator*(const Point3<T>& p) const
   {
     const T w2 = w()*w();
     const T x2 = x()*x();
@@ -629,14 +640,14 @@ namespace Anki {
   }
   
   template<typename T>
-  bool UnitQuaternion<T>::operator==(const UnitQuaternion<T>& other) const
+  bool UnitQuaternion_<T>::operator==(const UnitQuaternion_<T>& other) const
   {
     return Point<4,T>::operator==(other);
   }
   
   // Explicit instantiation for single and double precision
-  template class UnitQuaternion<float_t>;
-  template class UnitQuaternion<double_t>;
+  template class UnitQuaternion_<float_t>;
+  template class UnitQuaternion_<double_t>;
   
 #if 0
 #pragma mark --- RotationMatrix 3d ----

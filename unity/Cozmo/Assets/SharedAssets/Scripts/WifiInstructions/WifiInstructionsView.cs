@@ -1,17 +1,17 @@
 ﻿using UnityEngine;
 
-public class WifiInstructionsView : Cozmo.UI.BaseView {
+public class WifiInstructionsView : Cozmo.UI.BaseModal {
 
   [SerializeField]
   private Cozmo.UI.CozmoButton _HelpButton;
 
   [SerializeField]
-  private Cozmo.UI.BaseView _GetHelpViewPrefab;
-  private Cozmo.UI.BaseView _GetHelpViewInstance;
+  private Cozmo.UI.BaseModal _GetHelpViewPrefab;
+  private Cozmo.UI.BaseModal _GetHelpViewInstance;
 
   private void Awake() {
     _HelpButton.Initialize(() => {
-      _GetHelpViewInstance = UIManager.OpenView(_GetHelpViewPrefab);
+      _GetHelpViewInstance = UIManager.OpenModal(_GetHelpViewPrefab);
       DasTracker.Instance.TrackWifiInstructionsGetHelp();
     }, "help_button", this.DASEventViewName);
     DasTracker.Instance.TrackWifiInstructionsStarted();
@@ -19,7 +19,7 @@ public class WifiInstructionsView : Cozmo.UI.BaseView {
 
   protected override void CleanUp() {
     if (_GetHelpViewInstance != null) {
-      UIManager.CloseViewImmediately(_GetHelpViewInstance);
+      UIManager.CloseModalImmediately(_GetHelpViewInstance);
     }
   }
 

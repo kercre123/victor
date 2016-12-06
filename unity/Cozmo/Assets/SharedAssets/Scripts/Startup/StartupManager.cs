@@ -343,9 +343,9 @@ public class StartupManager : MonoBehaviour {
         Cozmo.ShaderHolder.SetInstance(sh);
       });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.UI.AlertViewLoader>(_BasicUIPrefabAssetBundleName,
-      "AlertViewLoader", (Cozmo.UI.AlertViewLoader avl) => {
-        Cozmo.UI.AlertViewLoader.SetInstance(avl);
+    assetBundleManager.LoadAssetAsync<Cozmo.UI.AlertModalLoader>(_BasicUIPrefabAssetBundleName,
+      "AlertModalLoader", (Cozmo.UI.AlertModalLoader avl) => {
+        Cozmo.UI.AlertModalLoader.SetInstance(avl);
       });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.UIColorPalette>(_BasicUIPrefabAssetBundleName,
@@ -493,6 +493,10 @@ public class StartupManager : MonoBehaviour {
       }
     }
 
+    // Clear the unity cache so Unity doesn't confuse old and new versions of the asset bundles
+    Caching.CleanCache();
+
+    // Delete and create target extraction folder
     try {
       if (Directory.Exists(toPath)) {
         Directory.Delete(toPath, true);

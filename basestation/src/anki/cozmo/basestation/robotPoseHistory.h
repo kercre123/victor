@@ -30,18 +30,21 @@ namespace Anki {
                      const Pose3d& pose,
                      const f32 head_angle,
                      const f32 lift_angle,
+                     const u16 cliff_data,
                      const bool isCarryingObject);
       
       void SetAll(const PoseFrameID_t frameID,
                    const Pose3d& pose,
                    const f32 head_angle,
                    const f32 lift_angle,
+                   const u16 cliff_data,
                    const bool isCarryingObject);
 
       
       const Pose3d& GetPose() const {return pose_;}
       const f32 GetHeadAngle() const {return headAngle_;}
       const f32 GetLiftAngle() const {return liftAngle_;}
+      const u16 GetCliffData() const {return _cliffData; }
       const PoseFrameID_t GetFrameId() const {return frame_;}
       const bool IsCarryingObject() const { return _isCarryingObject; }
 
@@ -52,7 +55,9 @@ namespace Anki {
       PoseFrameID_t frame_;
       f32 headAngle_;
       f32 liftAngle_;
+      u16 _cliffData;
       bool _isCarryingObject; // COZMO-3309: Need to change poseHistory to robot status history
+
     };
     
     
@@ -162,12 +167,15 @@ namespace Anki {
       // Prints the entire history
       void Print() const;
       
+      
+      typedef std::map<TimeStamp_t, RobotPoseStamp> PoseMap_t;
+      const PoseMap_t& GetRawPoses() { return poses_; }
+      
     private:
       
       void CullToWindowSize();
       
       // Pose history as reported by robot
-      typedef std::map<TimeStamp_t, RobotPoseStamp> PoseMap_t;
       typedef PoseMap_t::iterator PoseMapIter_t;
       typedef PoseMap_t::const_iterator const_PoseMapIter_t;
       PoseMap_t poses_;

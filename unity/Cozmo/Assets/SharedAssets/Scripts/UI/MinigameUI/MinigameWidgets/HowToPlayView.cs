@@ -9,7 +9,7 @@ namespace Cozmo {
     /// How to play view. Shows either a text field or a 
     /// custom prefab within a scroll rect.
     /// </summary>
-    public class HowToPlayView : BaseView {
+    public class HowToPlayView : BaseModal {
 
       [SerializeField]
       private CanvasGroup _AlphaController;

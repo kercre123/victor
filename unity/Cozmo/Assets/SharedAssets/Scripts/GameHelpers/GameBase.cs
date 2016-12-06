@@ -43,7 +43,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
-  private AlertView _InterruptedAlertView = null;
+  private AlertModal _InterruptedAlertView = null;
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
@@ -224,7 +224,7 @@ public abstract class GameBase : MonoBehaviour {
     MinigameUIPrefabHolder.LoadSharedMinigameViewPrefab(minigameAssetBundleName, (GameObject viewPrefab) => {
       if (viewPrefab != null) {
         SharedMinigameView prefabScript = viewPrefab.GetComponent<SharedMinigameView>();
-        _SharedMinigameViewInstance = UIManager.OpenView(prefabScript, newView => {
+        _SharedMinigameViewInstance = UIManager.OpenModal(prefabScript, newView => {
           newView.Initialize(_ChallengeData);
           InitializeMinigameView(newView, _ChallengeData);
 
@@ -1267,7 +1267,7 @@ public abstract class GameBase : MonoBehaviour {
     }
     // Don't set everything on fire if its already on fire, that's a waste of perfectly good fire
     if (_InterruptedAlertView == null && PauseManager.Instance.IsAnyDialogOpen == false) {
-      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab, overrideCloseOnTouchOutside: false);
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonOkay, null);
       alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;

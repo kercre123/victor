@@ -38,6 +38,7 @@ public class MockRobot : IRobot {
     _EnrolledFacesLastEnrolledTime.Add(3, -3000000);
 
     PetFaces = new List<PetFace>();
+    CurrentBehaviorDisplayNameKey = string.Empty;
   }
 
   public bool Status(Anki.Cozmo.RobotStatusFlag s) {
@@ -851,6 +852,7 @@ public class MockRobot : IRobot {
     get;
     set;
   }
+  public string CurrentBehaviorDisplayNameKey { get; set; }
 
   public bool PlayingReactionaryBehavior {
     get; set;

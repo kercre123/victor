@@ -241,6 +241,17 @@ public class ObservableObject : IVisibleInCamera {
     return ((int)observableObject).ToString();
   }
 
+  // Useful for when the world was rejiggered.
+  public void UpdateAvailable(G2U.ObjectState message) {
+    CurrentPoseState = (ObservableObject.PoseState)message.poseState;
+    if (CurrentPoseState != PoseState.Unknown) {
+      Vector3 newPos = new Vector3(message.pose.x, message.pose.y, message.pose.z);
+      //dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
+      WorldPosition = newPos;
+      Rotation = new Quaternion(message.pose.q1, message.pose.q2, message.pose.q3, message.pose.q0);
+    }
+  }
+
   public void UpdateInfo(G2U.RobotObservedObject message) {
     LastSeenEngineTimestamp = message.timestamp;
     _ConsecutiveVisionFramesNotSeen = 0;

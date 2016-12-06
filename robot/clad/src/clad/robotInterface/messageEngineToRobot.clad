@@ -329,6 +329,11 @@ message EnableStopOnCliff
   bool enable
 }
 
+message SetCliffDetectThreshold
+{
+  uint_16 detectLevel
+}
+
 message EnableBraceWhenFalling
 {
   bool enable
@@ -450,7 +455,7 @@ union EngineToRobot
   SetMotionModelParams          setMotionModelParams        = 0x51,
   EnterSleepMode                enterSleepMode              = 0x52,
   PowerState                    powerState                  = 0x53,
-  //          FREE SLOT!!!                                  = 0x54,
+  SetCliffDetectThreshold       setCliffDetectThreshold     = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
   SetCameraParams               setCameraParams             = 0x57,

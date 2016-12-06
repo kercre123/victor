@@ -8,15 +8,15 @@ namespace Onboarding {
     [SerializeField]
     private GameObject _OverviewInstructions;
 
-    private BaseView _UpgradeDetailsView = null;
+    private BaseModal _UpgradeDetailsView = null;
 
     private float _StartTime;
     public override void Start() {
       base.Start();
 
-      BaseView.BaseViewOpened += HandleViewOpened;
+      BaseModal.BaseViewOpened += HandleViewOpened;
       GameEventManager.Instance.OnGameEvent += HandleGameEvent;
-      BaseView.BaseViewClosed += HandleViewClosed;
+      BaseModal.BaseViewClosed += HandleViewClosed;
       // Highlight region is set by CozmoUnlocksPanel before this phase starts
       OnboardingManager.Instance.ShowOutlineRegion(true, true);
       _StartTime = Time.time;
@@ -25,13 +25,13 @@ namespace Onboarding {
 
     public override void OnDestroy() {
       base.OnDestroy();
-      BaseView.BaseViewOpened -= HandleViewOpened;
+      BaseModal.BaseViewOpened -= HandleViewOpened;
       GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
-      BaseView.BaseViewClosed -= HandleViewClosed;
+      BaseModal.BaseViewClosed -= HandleViewClosed;
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
     }
 
-    private void HandleViewOpened(BaseView view) {
+    private void HandleViewOpened(BaseModal view) {
       if (view is CoreUpgradeDetailsDialog) {
         _UpgradeDetailsView = view;
         _OverviewInstructions.SetActive(false);
@@ -39,7 +39,7 @@ namespace Onboarding {
     }
     // QA could get here if they didn't clear their robot save, but cleared their app save.
     // so onboarding needs to get cleaned up properly.
-    private void HandleViewClosed(BaseView view) {
+    private void HandleViewClosed(BaseModal view) {
       if (view is CoreUpgradeDetailsDialog) {
         GoToNextState();
       }

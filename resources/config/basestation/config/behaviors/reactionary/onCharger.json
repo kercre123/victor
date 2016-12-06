@@ -1,5 +1,6 @@
 {
   "behaviorType": "ReactToOnCharger",
+  "displayNameKey":"behavior.ReactToOnCharger",
   "behaviorGroups": [
     "Reactionary"
   ],

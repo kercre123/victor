@@ -5,22 +5,11 @@
       "RewardType": "experience",
       "Tag": "Freeplay",
       "PointsRewarded": 50,
-      "Target": 1,
+      "Target": 30,
       "Priority": 0,
       "CladEvent": "OnConnectedInterval",
       "GenConditions": [],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.TimedIntervalCondition, Assembly-CSharp",
-          "TargetTime": 1800.0,
-          "compareType": "GREATER_INCLUSIVE",
-          "Label": {
-            "text": "Timed Interval Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
+      "ProgressConditions": [],
       "Id": 61
     },
     {

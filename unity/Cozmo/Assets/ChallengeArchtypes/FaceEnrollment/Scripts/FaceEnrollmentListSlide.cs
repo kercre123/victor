@@ -69,7 +69,7 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
         }
 
         _LockedNewFaceSlotInstance.OnCreateNewButton += () => {
-          _UnlockFaceCellViewInstance = UIManager.OpenView(_UnlockFaceCellViewPrefab);
+          _UnlockFaceCellViewInstance = UIManager.OpenModal(_UnlockFaceCellViewPrefab);
           KeyValuePair<string, int> unlockCostInfo = UnlockablesManager.Instance.FaceUnlockCost(faceSlot);
           _UnlockFaceCellViewInstance.Initialize(unlockCostInfo.Key, unlockCostInfo.Value);
         };

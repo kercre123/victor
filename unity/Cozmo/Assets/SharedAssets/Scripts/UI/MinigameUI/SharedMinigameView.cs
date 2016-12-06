@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class SharedMinigameView : BaseView {
+    public class SharedMinigameView : BaseModal {
 
       public enum ContentLayer {
         Bottom,

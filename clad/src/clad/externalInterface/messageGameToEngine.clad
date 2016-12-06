@@ -528,7 +528,7 @@ message SetDefaultHeadAndLiftState {
 // Blockworld
 ///////////////////////////////////////////////////////////////////////////////
 
-message RequestAvailableObjects {
+message RequestObjectStates {
   bool connectedObjectsOnly
 }
 

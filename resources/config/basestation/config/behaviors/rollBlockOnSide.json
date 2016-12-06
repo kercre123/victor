@@ -1,6 +1,7 @@
 {
   "behaviorType": "RollBlock",
   "name": "RollBlockOnSide",
+  "displayNameKey":"behavior.RollBlock",
   "requiredUnlockId": "RollCube",
   "behaviorGroups": [
     "FP_PlayWithHumans",

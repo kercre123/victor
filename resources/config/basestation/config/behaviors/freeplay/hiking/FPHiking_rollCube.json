@@ -1,6 +1,7 @@
 {
   "behaviorType": "RollBlock",
   "name": "Hiking_RollCube",
+  "displayNameKey":"behavior.RollBlock",
   "requiredUnlockId": "RollCube",
   "behaviorGroups": [
     "FP_Hiking"

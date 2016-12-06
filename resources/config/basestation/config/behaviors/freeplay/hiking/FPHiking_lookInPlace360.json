@@ -9,6 +9,7 @@
   "name": "Hiking_LookInPlace360",
 
   "behaviorType": "ExploreLookAroundInPlace",
+  "displayNameKey":"behavior.ExploreLookAroundInPlace",
   "flatScore": 1.0,
 //  "behaviorGroups": [
 //    // "FP_Hiking" Disabled in favor of memoryMap one

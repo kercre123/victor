@@ -34,6 +34,7 @@ TEST(RobotPoseHistory, AddGetPose)
   const f32 l1 = 0;
   const f32 l2 = 0.5f;
   const f32 l3 = 0.7f;
+  const u16 c1 = 800;
   const TimeStamp_t t1 = 0;
   const TimeStamp_t t2 = 10;
   const TimeStamp_t t3 = 1005;
@@ -56,6 +57,7 @@ TEST(RobotPoseHistory, AddGetPose)
                                      p1,
                                      h1,
                                      l1,
+                                     c1,
                                      carrying1));
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 1);
@@ -72,6 +74,7 @@ TEST(RobotPoseHistory, AddGetPose)
                                      p2,
                                      h2,
                                      l2,
+                                     c1,
                                      carrying2));
   
   // Request out of range pose
@@ -101,6 +104,7 @@ TEST(RobotPoseHistory, AddGetPose)
                                      p3,
                                      h3,
                                      l3,
+                                     c1,
                                      carrying3));
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
@@ -119,6 +123,7 @@ TEST(RobotPoseHistory, AddGetPose)
                                      p1,
                                      h1,
                                      l1,
+                                     c1,
                                      carrying1));
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
@@ -160,6 +165,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
   const f32 l1 = 0;
   const f32 l2 = 0.5f;
   const f32 l3 = 0.7f;
+  const u16 c1 = 800;
   const TimeStamp_t t1 = 0;
   const TimeStamp_t t2 = 10;
   const TimeStamp_t t3 = 20;
@@ -170,19 +176,19 @@ TEST(RobotPoseHistory, GroundTruthPose)
   hist.SetTimeWindow(1000);
   
   // Add all three poses
-  p.SetAll(frameID, p1, h1, l1, carrying1);
+  p.SetAll(frameID, p1, h1, l1, c1, carrying1);
   hist.AddRawOdomPose(t1, p);
 
-  p.SetAll(frameID, p2, h2, l2, carrying2);
+  p.SetAll(frameID, p2, h2, l2, c1, carrying2);
   hist.AddRawOdomPose(t2, p);
   
-  p.SetAll(frameID, p3, h3, l3, carrying3);
+  p.SetAll(frameID, p3, h3, l3, c1, carrying3);
   hist.AddRawOdomPose(t3, p);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 3);
 
   // 1) Add ground truth pose equivalent to p1 at same time t1
-  p.SetAll(frameID, p1, h1, l1, carrying1);
+  p.SetAll(frameID, p1, h1, l1, c1, carrying1);
   ASSERT_TRUE(hist.AddVisionOnlyPose(t1, p) == RESULT_OK);
   ASSERT_TRUE(hist.GetNumVisionPoses() == 1);
  
@@ -199,7 +205,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
 
   
   // 2) Adding ground truth pose equivalent to p1 at time t2
-  p.SetAll(frameID, p1, h1, l1, carrying1);
+  p.SetAll(frameID, p1, h1, l1, c1, carrying1);
   hist.AddVisionOnlyPose(t2, p);
   
   // Since the frame ID of the ground truth pose is the same the frame of the
@@ -215,7 +221,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
   ASSERT_TRUE(p.GetPose().IsSameAs(p3, DIST_EQ_THRESH, ANGLE_EQ_THRESH));
   
   // 3) Now inserting the same ground truth pose again but with a higher frame id
-  p.SetAll(frameID+1, p1, h1, l1, carrying1);
+  p.SetAll(frameID+1, p1, h1, l1, c1, carrying1);
   hist.AddVisionOnlyPose(t2, p);
 
   // Requested pose at t3 should be pose p1 modified by the pose diff between p2 and p3

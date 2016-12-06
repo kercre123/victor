@@ -202,11 +202,11 @@ public class SkillSystem {
             if (winPercent < skillLevelConfig.LowerBoundThreshold) {
               int cozmoSkillLevel = GetCozmoSkillLevel(currSkillData);
 
-              // We're losing too much, level up
-              RewardedActionManager.Instance.NewSkillChange += 1;
-
               //  if new high, let the player know
               if (cozmoSkillLevel + 1 < skillConfig.GetMaxLevel()) {
+                // We're losing too much, level up
+                RewardedActionManager.Instance.NewSkillChange += 1;
+
                 bool newHighestLevel = cozmoSkillLevel == currSkillData.HighestLevel;
                 // this is explicity player profile based, ignore robot level.
                 if (cozmoSkillLevel == currSkillData.LastLevel) {
@@ -236,11 +236,15 @@ public class SkillSystem {
             }
             // we're winning too much, level down
             else if (winPercent > skillLevelConfig.UpperBoundThreshold) {
-              currSkillData.ChangeLevel(currSkillData.LastLevel - 1);
-              RewardedActionManager.Instance.NewSkillChange -= 1;
-              // cozmosHighestRobotLevel never levels down
-              DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID,
-                DASUtil.FormatExtraData(currSkillData.LastLevel.ToString() + "," + currSkillData.HighestLevel.ToString()));
+              int nextLevel = currSkillData.LastLevel - 1;
+              if (nextLevel >= 0) {
+                RewardedActionManager.Instance.NewSkillChange -= 1;
+                // cozmosHighestRobotLevel never levels down
+                DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID,
+                  DASUtil.FormatExtraData(currSkillData.LastLevel.ToString() + "," + currSkillData.HighestLevel.ToString()));
+              }
+              // Change level will cap and reset points
+              currSkillData.ChangeLevel(nextLevel);
             }
             else {
               currSkillData.ResetPoints();

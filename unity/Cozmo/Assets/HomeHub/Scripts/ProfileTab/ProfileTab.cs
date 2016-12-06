@@ -20,8 +20,8 @@ public class ProfileTab : MonoBehaviour {
   private Cozmo.UI.CozmoButton _EditNameButton;
 
   [SerializeField]
-  private Cozmo.UI.BaseView _ProfileEditNameViewPrefab;
-  private Cozmo.UI.BaseView _ProfileEditNameViewInstance;
+  private Cozmo.UI.BaseModal _ProfileEditNameViewPrefab;
+  private Cozmo.UI.BaseModal _ProfileEditNameViewInstance;
 
   // Use this for initialization
   private void Awake() {
@@ -62,7 +62,7 @@ public class ProfileTab : MonoBehaviour {
   }
 
   private void HandleEditNameButton() {
-    _ProfileEditNameViewInstance = UIManager.OpenView(_ProfileEditNameViewPrefab);
+    _ProfileEditNameViewInstance = UIManager.OpenModal(_ProfileEditNameViewPrefab);
     _ProfileEditNameViewInstance.GetComponent<EnterNameSlide>().SetNameInputField(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
     _ProfileEditNameViewInstance.GetComponent<EnterNameSlide>().RegisterInputFocus();
     _ProfileEditNameViewInstance.GetComponent<EnterNameSlide>().OnNameEntered += HandleProfileEditNameDone;
@@ -72,12 +72,12 @@ public class ProfileTab : MonoBehaviour {
     _PlayerName.text = newName;
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName = newName;
     DataPersistence.DataPersistenceManager.Instance.Save();
-    UIManager.CloseView(_ProfileEditNameViewInstance);
+    UIManager.CloseModal(_ProfileEditNameViewInstance);
   }
 
   private void OnDestroy() {
     if (_ProfileEditNameViewInstance != null) {
-      UIManager.CloseView(_ProfileEditNameViewInstance);
+      UIManager.CloseModal(_ProfileEditNameViewInstance);
     }
   }
 

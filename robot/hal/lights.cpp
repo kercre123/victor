@@ -11,7 +11,6 @@ namespace Anki
   {
     namespace HAL
     {
-      static bool cliffDetected = false;
       static uint16_t colorState[4];
 
       // Light up one of the backpack LEDs to the specified 24-bit RGB color
@@ -21,16 +20,6 @@ namespace Anki
       
       void GetBackpack(uint16_t* colors) {
         memcpy(colors, colorState, sizeof(colorState));
-      }
-
-      bool IsCliffDetected()
-      {
-        if (!cliffDetected && g_dataToHead.cliffLevel < CLIFF_SENSOR_DROP_LEVEL) {
-          cliffDetected = true;
-        } else if (cliffDetected && g_dataToHead.cliffLevel > CLIFF_SENSOR_UNDROP_LEVEL) {
-          cliffDetected = false;
-        }
-        return cliffDetected;
       }
       
       u16 GetRawCliffData() 

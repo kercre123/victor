@@ -6,7 +6,7 @@ namespace FaceEnrollment {
 
     private FaceEnrollmentInstructionsView _FaceEnrollmentInstructionsViewInstance;
 
-    private Cozmo.UI.AlertView _ErrorAlertView = null;
+    private Cozmo.UI.AlertModal _ErrorAlertView = null;
 
     private FaceEnrollmentGame _FaceEnrollmentGame;
     private System.Action _OnUserCancel;
@@ -15,7 +15,7 @@ namespace FaceEnrollment {
     private bool _UserCancelledEnrollment = false;
     private bool _EnrollingFace = false;
 
-    private Cozmo.UI.AlertView _DoneAlertView = null;
+    private Cozmo.UI.AlertModal _DoneAlertView = null;
 
     public bool IsReEnrollment {
       get { return _ReEnrollFaceID != 0; }
@@ -38,7 +38,7 @@ namespace FaceEnrollment {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
 
       _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
-      _FaceEnrollmentInstructionsViewInstance = UIManager.OpenView(_FaceEnrollmentGame.FaceEnrollmentInstructionsViewPrefab);
+      _FaceEnrollmentInstructionsViewInstance = UIManager.OpenModal(_FaceEnrollmentGame.FaceEnrollmentInstructionsViewPrefab);
       _FaceEnrollmentInstructionsViewInstance.ViewClosedByUser += HandleUserClosedView;
 
       _FaceEnrollmentInstructionsViewInstance.SetFaceName(_NameForFace);
@@ -146,7 +146,7 @@ namespace FaceEnrollment {
 
     private void HandleKnownEnrollmentFailure(Anki.Cozmo.FaceEnrollmentCompleted faceEnrollmentCompleted) {
       // we didn't succeed so let's show an error to the user saying why
-      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab);
+      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab);
 
       if (faceEnrollmentCompleted.neverSawValidFace) {
         alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentErrorsNeverSawValidFaceTitle;
@@ -253,7 +253,7 @@ namespace FaceEnrollment {
     }
 
     private void DoneAlertView() {
-      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab, overrideCloseOnTouchOutside: false);
 
       // show alert
       alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertTitle;

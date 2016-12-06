@@ -176,18 +176,19 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   {
     // Do not filter any taps if block tap filtering was disabled.
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
-    return;
   }
-
-  // A new "group" of taps is coming in, evaluate after a certain amount of time after the first one
-  if( _tapInfo.empty() )
+  else
   {
-    // Potentially we could add more time based on LatencyAvg if we wanted to track that in the
-    // shipping app. Latency should be higher on lower end devices
-    _waitToTime = engineTime + kTapWaitOffset_ms;
-  }
+    // A new "group" of taps is coming in, evaluate after a certain amount of time after the first one
+    if( _tapInfo.empty() )
+    {
+      // Potentially we could add more time based on LatencyAvg if we wanted to track that in the
+      // shipping app. Latency should be higher on lower end devices
+      _waitToTime = engineTime + kTapWaitOffset_ms;
+    }
 
-  _tapInfo.emplace_back(std::move(payload));
+    _tapInfo.emplace_back(std::move(payload));
+  }
   
   CheckForDoubleTap(payload.objectID);
 }

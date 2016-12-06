@@ -59,6 +59,9 @@ namespace Anki {
       
       static const Point3f& GetSizeByType(ObjectType type);
       
+      // TODO: Consider making this settable 
+      virtual bool CanIntersectWithRobot() const override { return true; }
+      
     protected:
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;

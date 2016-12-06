@@ -8,7 +8,7 @@ namespace FaceEnrollment {
 
     private FaceEnrollmentGame _FaceEnrollmentGame;
 
-    private Cozmo.UI.AlertView _DeleteConfirmationAlertView = null;
+    private Cozmo.UI.AlertModal _DeleteConfirmationAlertView = null;
 
     public override void Pause(State.PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
       // don't quit from reactionary behaviors.
@@ -64,7 +64,7 @@ namespace FaceEnrollment {
 
     // pop up a confirmation for deleting an enrolled face
     private void RequestDeleteEnrolledFace(int faceID) {
-      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_NoText);
+      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.NoTextAlertModalPrefab);
 
       alertView.SetDasEventName("delete_enrolled_face_confirm");
       alertView.SetCloseButtonEnabled(false);

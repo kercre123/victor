@@ -27,7 +27,7 @@
   "onboarding.CozmoNeedsCharge.KeepOnCharger": {
     "translation": "Keep him on the charger"
   },
-    "onboarding.CozmoNeedsCharge.PutBackOnCharger": {
+  "onboarding.CozmoNeedsCharge.PutBackOnCharger": {
     "translation": "Please put Cozmo back on the charger"
   },
   "onboarding.CozmoNeedsCharge.CozmoIsReady": {
@@ -54,23 +54,11 @@
   "onboarding.Slide0": {
     "translation": "Create a <b>great</b> play space "
   },
-  "onboarding.Slide1": {
-    "translation": "This Cozmo has already been through the Tutorial.\n Would you like to skip it or start again?"
-  },
   "onboarding.Slide2Header": {
     "translation": "<b>Welcome!</b>"
   },
   "onboarding.Slide2": {
     "translation": "Cozmo is a very special robot who needs a caring owner\n\n Follow the instructions carefully!"
-  },
-  "onboarding.Slide3": {
-    "translation": "Show Cozmo a Power Cube"
-  },
-  "onboarding.Slide4": {
-    "translation": "Just like you, if the Cube is too close it's hard to see."
-  },
-  "onboarding.Slide1a": {
-    "translation": "COZMO LOGO"
   },
   "onboarding.Phase3.Header1": {
     "translation": "Place a Power Cube in front of Cozmo"
@@ -93,14 +81,8 @@
   "onboarding.Phase3.ErrorCube": {
     "translation": "The Cube has moved!"
   },
-  "onboarding.Phase3.ErrorCube2": {
-    "translation": "Put the Cube in front of Cozmo to proceed"
-  },
   "onboarding.Phase3.ErrorCubeRightSideUp": {
     "translation": "Lights Side Up!"
-  },
-  "onboarding.Phase3.ErrorCubeRightSideUp2": {
-    "translation": "Turn the Cube so that the lights are on top"
   },
   "onboarding.Phase3.ErrorCozmo": {
     "translation": "<b>Tutorial Paused</b>\nCozmo needs to be on a stable, flat, surface and to explore on his own."
@@ -128,9 +110,6 @@
   },
   "onboarding.Phase4.Body4": {
     "translation": "Unlock Upgrades to give Cozmo new skills and abilities\n\nLet's unlock Stack Cubes now!"
-  },
-  "onboarding.Phase5.Body1": {
-    "translation": "It's time to play some games!\n\nTap the Play Tab, here"
   },
   "onboarding.Phase5.Body2": {
     "translation": "Each day you'll get a new set of Goals\n\nCompleting these is the quickest way to improve your Cozmo!"

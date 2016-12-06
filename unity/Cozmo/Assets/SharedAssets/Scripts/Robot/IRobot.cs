@@ -122,6 +122,7 @@ public interface IRobot : IDisposable {
   BehaviorType CurrentBehaviorType { get; set; }
 
   string CurrentBehaviorName { get; set; }
+  string CurrentBehaviorDisplayNameKey { get; set; }
 
   bool PlayingReactionaryBehavior { get; set; }
 

@@ -1,6 +1,7 @@
 #include "liftController.h"
 #include "pickAndPlaceController.h"
 #include "imuFilter.h"
+#include "proxSensors.h"
 #include <math.h>
 #include "anki/common/constantsAndMacros.h"
 #include "anki/cozmo/robot/hal.h"
@@ -504,7 +505,7 @@ namespace Anki {
         if (potentialBurnoutStartTime_ms_ == 0) {
           potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
         } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
-          if (IsInPosition() || IMUFilter::IsPickedUp() || HAL::IsCliffDetected()) {
+          if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsCliffDetected()) {
             // Stop messing with the lift! Going limp until you do!
             Messages::SendMotorAutoEnabledMsg(MOTOR_LIFT, false);
             Disable(true);

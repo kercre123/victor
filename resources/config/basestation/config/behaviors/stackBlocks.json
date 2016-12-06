@@ -2,6 +2,7 @@
   "behaviorType": "StackBlocks",
   "executableBehaviorType": "StackBlocks",
   "name": "StackBlocks",
+  "displayNameKey":"behavior.StackCube",
   "requiredUnlockId": "StackTwoCubes",
   "behaviorGroups": [
     "FP_PlayAlone"

@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Cozmo.Settings {
-  public class SDKView : BaseView {
+  public class SDKView : BaseModal {
 
     [SerializeField]
     private CozmoButton _DisableSDKButton;

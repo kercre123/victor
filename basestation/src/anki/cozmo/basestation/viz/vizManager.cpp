@@ -361,14 +361,16 @@ namespace Anki {
     
     void VizManager::EraseRobot(const u32 robotID)
     {
-      CORETECH_ASSERT(robotID < _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_ROBOT]);
-      EraseVizObject(VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_ROBOT] + robotID);
+      const int viztype = (int)VizObjectType::VIZ_OBJECT_ROBOT;
+      ASSERT_NAMED(robotID < _VizObjectMaxID[viztype], "VizManager.EraseRobot.InvalidID");
+      EraseVizObject(VizObjectBaseID[viztype] + robotID);
     }
     
     void VizManager::EraseCuboid(const u32 blockID)
     {
-      CORETECH_ASSERT(blockID < _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
-      EraseVizObject(VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID] + blockID);
+      const int viztype = (int)VizObjectType::VIZ_OBJECT_CUBOID;
+      ASSERT_NAMED(blockID < _VizObjectMaxID[viztype], "VizManager.EraseCuboid.InvalidID");
+      EraseVizObject(VizObjectBaseID[viztype] + blockID);
     }
 
     void VizManager::EraseAllCuboids()
@@ -378,8 +380,9 @@ namespace Anki {
     
     void VizManager::ErasePreDockPose(const u32 preDockPoseID)
     {
-      CORETECH_ASSERT(preDockPoseID < _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE]);
-      EraseVizObject(VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID);
+      const int viztype = (int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE;
+      ASSERT_NAMED(preDockPoseID < _VizObjectMaxID[viztype], "VizManager.ErasePreDockPose.InvalidID");
+      EraseVizObject(VizObjectBaseID[viztype] + preDockPoseID);
     }
 
 
@@ -647,7 +650,8 @@ namespace Anki {
         const size_t maxBufferForQuads = maxBufferSize - (identifier.length()+1) - kReservedBytes;
         size_t quadsPerMessage = maxBufferForQuads / sizeof(SimpleQuadVector::value_type);
         size_t remainingQuads = quads.size();
-        CORETECH_ASSERT(quadsPerMessage>0);
+        
+        ASSERT_NAMED(quadsPerMessage>0, "VizManager.DrawQuadVector.InvalidQuadsPerMessage");
         
         // sadly we can't create one message and send it several times, because MessageViz doesn't support it (it needs
         // to embed the tag) for receiving end processing, and we can't initialize messages with a range of vectors, so

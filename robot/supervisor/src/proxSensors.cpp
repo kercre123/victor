@@ -22,9 +22,12 @@ namespace Anki {
 
         // Cliff sensor
         bool _enableCliffDetect = true;
+        bool _cliffDetected    = false;
         bool _wasCliffDetected = false;
         bool _wasPickedup      = false;
 
+        u16 _cliffDetectThresh = CLIFF_SENSOR_DROP_LEVEL;
+        
         CliffEvent _cliffMsg;
         TimeStamp_t _pendingCliffEvent = 0;
         TimeStamp_t _pendingUncliffEvent = 0;
@@ -67,7 +70,17 @@ namespace Anki {
       // reason for the cliff was actually a pickup.
       void UpdateCliff()
       {
-        bool isDrivingForward = WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
+        // Update cliff status with hysteresis
+        u16 rawCliff = HAL::GetRawCliffData();
+        if (!_cliffDetected && rawCliff < _cliffDetectThresh) {
+          _cliffDetected = true;
+        } else if (_cliffDetected && rawCliff > CLIFF_SENSOR_UNDROP_LEVEL) {
+          _cliffDetected = false;
+        }
+        
+        
+        const f32 avgWheelSpeed = WheelController::GetAverageFilteredWheelSpeed();
+        const bool isDrivingForward = avgWheelSpeed > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
 
         // Check for whether or not wheels are already stopping.
         // When reversing and stopping fast enough it's possible for the wheels to report forward speeds.
@@ -80,7 +93,7 @@ namespace Anki {
         bool alreadyStopping = (desiredLeftSpeed == 0.f) && (desiredRightSpeed == 0.f);
 
         if (_enableCliffDetect &&
-            HAL::IsCliffDetected() &&
+            IsCliffDetected() &&
             !IMUFilter::IsPickedUp() &&
             isDrivingForward && !alreadyStopping &&
             !_wasCliffDetected) {
@@ -89,7 +102,7 @@ namespace Anki {
           // 1) Turning in place
           // 2) Driving over something (i.e. pitch is higher than some degrees).
           AnkiEvent( 339, "ProxSensors.UpdateCliff.StoppingDueToCliff", 347, "%d", 1, _stopOnCliff);
-          AnkiDebug( 407, "ProxSensors.UpdateCliff.WheelSpeed", 623, "%f", 1, WheelController::GetAverageFilteredWheelSpeed());
+          AnkiDebug( 407, "ProxSensors.UpdateCliff.WheelSpeed", 623, "%f", 1, avgWheelSpeed);
           
           if(_stopOnCliff)
           {
@@ -117,7 +130,7 @@ namespace Anki {
           QueueCliffEvent(Localization::GetCurrPose_x(), Localization::GetCurrPose_y(), Localization::GetCurrPose_angle().ToFloat());
           
           _wasCliffDetected = true;
-        } else if (!HAL::IsCliffDetected() && _wasCliffDetected) {
+        } else if (!IsCliffDetected() && _wasCliffDetected) {
           QueueUncliffEvent();
           _wasCliffDetected = false;
         }
@@ -185,6 +198,11 @@ namespace Anki {
       } // Update()
 
 
+      bool IsCliffDetected()
+      {
+        return _cliffDetected;
+      }
+      
       void EnableCliffDetector(bool enable) {
         AnkiEvent( 340, "ProxSensors.EnableCliffDetector", 347, "%d", 1, enable);
         _enableCliffDetect = enable;
@@ -195,6 +213,16 @@ namespace Anki {
         _stopOnCliff = enable;
       }
 
+      void SetCliffDetectThreshold(u16 level)
+      {
+        if (level > CLIFF_SENSOR_UNDROP_LEVEL) {
+          AnkiWarn( 416, "ProxSensors.SetCliffDetectThreshold.TooHigh", 347, "%d", 1, level);
+        } else {
+          AnkiEvent( 417, "ProxSensors.SetCliffDetectThreshold.NewLevel", 347, "%d", 1, level);
+          _cliffDetectThresh = level;
+        }
+      }
+      
       
       // Since this re-enables 'cliff detect' and 'stop on cliff'
       // it should only be called when the robot disconnects,
@@ -204,6 +232,9 @@ namespace Anki {
         _stopOnCliff       = true;
         _wasCliffDetected  = false;
         _wasPickedup       = false;
+        
+        _cliffDetected     = false;
+        _cliffDetectThresh = CLIFF_SENSOR_DROP_LEVEL;
         
         _pendingCliffEvent   = 0;
         _pendingUncliffEvent = 0;

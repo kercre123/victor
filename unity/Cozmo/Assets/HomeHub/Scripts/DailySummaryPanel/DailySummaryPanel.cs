@@ -6,7 +6,7 @@ using DataPersistence;
 using Cozmo.UI;
 using Anki.Cozmo;
 
-public class DailySummaryPanel : BaseView {
+public class DailySummaryPanel : BaseModal {
   
   public DailyGoalPanel.OnFriendshipBarAnimateComplete FriendshipBarAnimateComplete;
 

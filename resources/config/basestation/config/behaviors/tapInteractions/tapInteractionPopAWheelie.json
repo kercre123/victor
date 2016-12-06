@@ -1,6 +1,7 @@
 {
   "behaviorType": "PopAWheelie",
   "name": "tapInteractionPopAWheelie",
+  "displayNameKey":"behavior.PopAWheelie",
   "requireObjectTapped" : true,
   "requiredUnlockId": "PopAWheelieAction",
   "behaviorGroups": [

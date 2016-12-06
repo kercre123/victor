@@ -727,6 +727,32 @@ TEST(BlockWorld, CubeStacks)
     {100.f,  44.f, 23.f},  // On one side in Y direction
     {100.f, -44.f, 24.f},  // On other side in Y direction
   };
+
+  // rsam found a test case in which 2 cubes would find the other one to be on top, potentially causing
+  // a loop trying to build stacks. The poses below are a a set that caused the issue.
+  {
+    Vec3f trans1{100,0,0};
+    Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
+    Rotation3d rotX1 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
+    const Pose3d object1Pose(rotZ1 * rotX1, trans1, &robot.GetPose() );
+    lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, object1Pose, PoseState::Known);
+    ASSERT_EQ(RESULT_OK, lastResult);
+
+    Vec3f trans2{100,0,0};
+    Rotation3d rotZ2 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
+    Rotation3d rotX2 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
+    const Pose3d object2Pose(rotZ2 * rotX2, trans2, &robot.GetPose() );
+    lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
+    ASSERT_EQ(RESULT_OK, lastResult);
+
+    ObservableObject* foundObject1 = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+    ASSERT_EQ(nullptr, foundObject1);
+    ASSERT_NE(object2, foundObject1);
+
+    ObservableObject* foundObject2 = blockWorld.FindObjectOnTopOf(*object2, STACKED_HEIGHT_TOL_MM);
+    ASSERT_EQ(nullptr, foundObject2);
+    ASSERT_NE(object1, foundObject2);
+  }
   
   for(auto & btmRot1 : TestInPlaneRotations)
   {
@@ -989,7 +1015,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     // Start the robot/world fresh for each pose
     robot.GetBlockWorld().ClearAllExistingObjects();
     ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
-    ASSERT_EQ(robot.AddRawOdomPoseToHistory(currentTimeStamp, robot.GetPoseFrameID(), Pose3d(0, Z_AXIS_3D(), {0, 0, 0}), 0, 0, false), RESULT_OK);
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(currentTimeStamp, robot.GetPoseFrameID(), Pose3d(0, Z_AXIS_3D(), {0, 0, 0}), 0, 0, CLIFF_SENSOR_UNDROP_LEVEL, false), RESULT_OK);
     
     currentTimeStamp += 5;
     
@@ -1028,7 +1054,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
     const bool isCarryingObject = (msg.status&(uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK) != 0;
     Pose3d pose( msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, msg.pose.y} );
-    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp, msg.pose_frame_id, pose, msg.headAngle, msg.liftAngle, isCarryingObject)
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp, msg.pose_frame_id, pose, msg.headAngle, msg.liftAngle, CLIFF_SENSOR_UNDROP_LEVEL, isCarryingObject)
       , RESULT_OK
       );
     

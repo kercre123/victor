@@ -224,8 +224,8 @@ namespace Anki {
       {
         // The sizes specified by the block definitions should
         // agree with this being a cube (all dimensions the same)
-        CORETECH_ASSERT(_size.x() == _size.y())
-        CORETECH_ASSERT(_size.y() == _size.z())
+        ASSERT_NAMED(_size.x() == _size.y(), "Block_Cube1x1.Constructor.InvalidXY");
+        ASSERT_NAMED(_size.y() == _size.z(), "Block_Cube1x1.Constructor.InvalidYZ");
       }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
@@ -349,7 +349,7 @@ namespace Anki {
     /*
     inline Block::FaceName Block::FaceType_to_FaceName(FaceType type)
     {
-      CORETECH_ASSERT(type > 0 && type < NUM_FACES+1);
+      ASSERT_NAMED(type > 0 && type < NUM_FACES+1, "Block.FaceTypeToFaceName.InvalidType");
       return static_cast<FaceName>(type-1);
     }
      */

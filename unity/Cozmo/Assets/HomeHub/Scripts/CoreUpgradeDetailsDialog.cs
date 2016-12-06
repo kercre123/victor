@@ -9,7 +9,7 @@ using DG.Tweening;
 using System.Collections.Generic;
 using Cozmo.HomeHub;
 
-public class CoreUpgradeDetailsDialog : BaseView {
+public class CoreUpgradeDetailsDialog : BaseModal {
 
   public delegate void CoreUpgradeRequestedHandler(UnlockableInfo info);
 
@@ -117,7 +117,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   [SerializeField]
   private Color _UpgradeLockedColor;
 
-  private AlertView _QuitViewRef;
+  private AlertModal _QuitViewRef;
 
   public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel.CozmoUnlockState unlockState, CoreUpgradeRequestedHandler buttonCostPaidCallback) {
     _UnlockInfo = unlockInfo;
@@ -266,7 +266,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   private void CreateConfirmQuitAlert() {
     // Open confirmation dialog instead
-    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonStaySparked, HandleStaySparked, Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
@@ -387,7 +387,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     ItemData itemData = ItemDataConfig.GetData(itemID);
     string costName = "";
     if (itemData != null) {
-      costName = Localization.Get(itemData.GetAmountName(cost));
+      costName = itemData.GetAmountName(cost);
     }
     else {
       DAS.Error("CoreUpgradeDetailsDialog.UpdateAvailableCostLables", string.Format("ItemData for {0} is NULL", itemID));
@@ -451,7 +451,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     StopSparkUnlock();
     if (_QuitViewRef != null) {
-      UIManager.CloseView(_QuitViewRef);
+      UIManager.CloseModal(_QuitViewRef);
     }
      
     DataPersistenceManager.Instance.Save();

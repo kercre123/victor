@@ -76,7 +76,6 @@ namespace Cozmo {
       f32     _maxSpeed_radPerSec = _kDefaultSpeed;
       f32     _accel_radPerSec2 = _kDefaultAccel;
       
-      bool    _wasKeepFaceAliveEnabled;
       bool    _moveEyes = true;
       AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       
@@ -289,7 +288,6 @@ namespace Cozmo {
       bool        _moveEyes = true;
       bool        _holdEyes = false;
       Radians     _halfAngle;
-      bool        _wasKeepFaceAliveEnabled;
       
       AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       

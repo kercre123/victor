@@ -268,7 +268,7 @@ MonoBehaviour:
   ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: Cozmo.UI.BaseView:_OptionalCloseDialogButton
+    FieldName: Cozmo.UI.BaseModal:_OptionalCloseDialogButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11490254

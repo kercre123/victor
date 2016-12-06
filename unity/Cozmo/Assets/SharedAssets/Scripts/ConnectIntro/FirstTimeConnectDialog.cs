@@ -50,12 +50,12 @@ public class FirstTimeConnectDialog : MonoBehaviour {
     }
 
     _PrivacyPolicyButton.Initialize(() => {
-      ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
+      ScrollingTextView view = UIManager.OpenModal<ScrollingTextView>(AlertModalLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
       view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.ReadLocalizedTextFromFile(_PrivacyPolicyFileName));
     }, "privacy_policy_button", "first_time_connect_dialog");
 
     _TermsOfUseButton.Initialize(() => {
-      ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "terms_of_use_view"; });
+      ScrollingTextView view = UIManager.OpenModal<ScrollingTextView>(AlertModalLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "terms_of_use_view"; });
       view.Initialize(Localization.Get(LocalizationKeys.kLabelTermsOfUse), Localization.ReadLocalizedTextFromFile(_TermsOfUseFileName));
     }, "terms_of_use_button", "first_time_connect_dialog");
 
@@ -65,7 +65,7 @@ public class FirstTimeConnectDialog : MonoBehaviour {
 
   private void OnDestroy() {
     if (_PlaceCozmoOnChargerViewInstance != null) {
-      UIManager.CloseViewImmediately(_PlaceCozmoOnChargerViewInstance);
+      UIManager.CloseModalImmediately(_PlaceCozmoOnChargerViewInstance);
     }
 
     if (_ConnectionFlowInstance != null) {
@@ -80,18 +80,18 @@ public class FirstTimeConnectDialog : MonoBehaviour {
       ShowPlaceCozmoOnCharger();
     }
     else {
-      _SoundCheckViewInstance = UIManager.OpenView(_SoundCheckViewPrefab);
+      _SoundCheckViewInstance = UIManager.OpenModal(_SoundCheckViewPrefab);
       _SoundCheckViewInstance.OnSoundCheckComplete += HandleSoundCheckComplete;
     }
   }
 
   private void HandleSoundCheckComplete() {
     _SoundCheckViewInstance.ViewClosed += ShowProfileCreationScreen;
-    UIManager.CloseView(_SoundCheckViewInstance);
+    UIManager.CloseModal(_SoundCheckViewInstance);
   }
 
   private void ShowProfileCreationScreen() {
-    _ProfileCreationViewInstance = UIManager.OpenView(_ProfileCreationViewPrefab);
+    _ProfileCreationViewInstance = UIManager.OpenModal(_ProfileCreationViewPrefab);
     _ProfileCreationViewInstance.ViewClosed += HandleProfileCreationDone;
   }
 
@@ -100,7 +100,7 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   }
 
   private void ShowPlaceCozmoOnCharger() {
-    _PlaceCozmoOnChargerViewInstance = UIManager.OpenView(_PlaceCozmoOnChargerViewPrefab);
+    _PlaceCozmoOnChargerViewInstance = UIManager.OpenModal(_PlaceCozmoOnChargerViewPrefab);
     _PlaceCozmoOnChargerViewInstance.OnConnectButton += HandleConnectButton;
   }
 
@@ -116,7 +116,7 @@ public class FirstTimeConnectDialog : MonoBehaviour {
 
   private void HandleConnectButton() {
     _PlaceCozmoOnChargerViewInstance.ViewClosed += StartConnectionFlow;
-    UIManager.CloseView(_PlaceCozmoOnChargerViewInstance);
+    UIManager.CloseModal(_PlaceCozmoOnChargerViewInstance);
   }
 
   private void StartConnectionFlow() {

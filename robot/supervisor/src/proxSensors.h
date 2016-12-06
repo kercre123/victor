@@ -33,6 +33,10 @@ namespace Anki {
       void EnableCliffDetector(bool enable);
       
       void EnableStopOnCliff(bool enable);
+
+      bool IsCliffDetected();
+      
+      void SetCliffDetectThreshold(u16 level);
       
     } // namespace ProxSensors
   } // namespace Cozmo

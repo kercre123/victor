@@ -12,7 +12,9 @@ public class DebugDisplayPane : MonoBehaviour {
 
   [SerializeField]
   private GameObject _RobotStateTextFieldPrefab;
-  private GameObject _RobotStateTextFieldInstance;
+
+  // This attribute is static so the text string can be removed even when exiting and coming back to the debug menu
+  private static GameObject _RobotStateTextFieldInstance;
 
   [SerializeField]
   private Toggle _ToggleShowLocDebug;
@@ -123,12 +125,12 @@ public class DebugDisplayPane : MonoBehaviour {
   private void FillKnownDeviceDataInformation() {
     // Cozmo Android doesn't have a main activity in java now so just get this the unity way.
     // iOS gets the build info from DeviceDataMessage
-#if UNITY_ANDROID
+#if UNITY_ANDROID  && !UNITY_EDITOR
     _BuildVersion.text = GetVersionName();
 #endif
   }
 
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
   public static string GetVersionName() {
     string dasVersionName = "unknown";
     using (AndroidJavaClass contextCls = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))

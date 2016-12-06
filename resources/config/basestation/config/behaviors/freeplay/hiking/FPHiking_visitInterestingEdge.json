@@ -9,6 +9,7 @@
   "name": "Hiking_VisitInterestingEdge",
 
   "behaviorType": "VisitInterestingEdge",
+  "displayNameKey":"behavior.VisitInterestingEdge",
   "flatScore": 1.25,
   "behaviorGroups": [
     "FP_Hiking"

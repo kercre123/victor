@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using Anki.UI;
@@ -148,6 +148,9 @@ namespace Cozmo.Minigame.DroneMode {
           _CurrentRobot.Charger.OnVizRectChanged -= HandleVizRectChanged;
         }
       }
+
+      _ReticlePool.ReturnAllObjectsToPool();
+      _ReticlePool.DestroyPool();
     }
 
     public void SetCameraFeedColor(DroneModeColorSet colorSet, bool showReticles) {
@@ -192,16 +195,24 @@ namespace Cozmo.Minigame.DroneMode {
       _CameraFeedImage.rectTransform.localScale = new Vector3(_CameraImageScale, _CameraImageScale, _CameraImageScale);
       _CameraFeedImage.texture = _ImageProcessor.Image;
 
+      _CurrentRobot.OnFaceAdded -= HandleOnFaceAdded;
       _CurrentRobot.OnFaceAdded += HandleOnFaceAdded;
+      _CurrentRobot.OnFaceRemoved -= HandleOnFaceRemoved;
       _CurrentRobot.OnFaceRemoved += HandleOnFaceRemoved;
 
+      _CurrentRobot.OnPetFaceAdded -= HandlePetFaceAdded;
       _CurrentRobot.OnPetFaceAdded += HandlePetFaceAdded;
+      _CurrentRobot.OnPetFaceRemoved -= HandlePetFaceRemoved;
       _CurrentRobot.OnPetFaceRemoved += HandlePetFaceRemoved;
 
+      _CurrentRobot.OnLightCubeAdded -= HandleOnCubeAdded;
       _CurrentRobot.OnLightCubeAdded += HandleOnCubeAdded;
+      _CurrentRobot.OnLightCubeRemoved -= HandleOnCubeRemoved;
       _CurrentRobot.OnLightCubeRemoved += HandleOnCubeRemoved;
 
+      _CurrentRobot.OnChargerAdded -= HandleOnChargerAdded;
       _CurrentRobot.OnChargerAdded += HandleOnChargerAdded;
+      _CurrentRobot.OnChargerRemoved -= HandleOnChargerRemoved;
       _CurrentRobot.OnChargerRemoved += HandleOnChargerRemoved;
 
       CreateReticlesIfVisible();
@@ -226,6 +237,7 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void CreateFaceReticle(Face face) {
+      face.InFieldOfViewStateChanged -= HandleFaceInFieldOfViewChanged;
       face.InFieldOfViewStateChanged += HandleFaceInFieldOfViewChanged;
       CreateReticleIfVisible(face);
     }
@@ -241,16 +253,19 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void HandleFaceInFieldOfViewChanged(Face face, bool isInFieldOfView) {
-      // If visible spawn reticle and add to dictionary
-      if (isInFieldOfView) {
-        CreateReticleIfVisible(face);
-      }
-      else {
-        RemoveReticle(face);
+      if (this != null) {
+        // If visible spawn reticle and add to dictionary
+        if (isInFieldOfView) {
+          CreateReticleIfVisible(face);
+        }
+        else {
+          RemoveReticle(face);
+        }
       }
     }
 
     private void CreatePetFaceReticle(PetFace petFace) {
+      petFace.InFieldOfViewStateChanged -= HandlePetFaceInFieldOfViewChanged;
       petFace.InFieldOfViewStateChanged += HandlePetFaceInFieldOfViewChanged;
       CreateReticleIfVisible(petFace);
     }
@@ -277,6 +292,7 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void CreateObservedObjectReticle(ObservableObject observedObject) {
+      observedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
       observedObject.InFieldOfViewStateChanged += HandleInFieldOfViewChanged;
       CreateReticleIfVisible(observedObject);
     }

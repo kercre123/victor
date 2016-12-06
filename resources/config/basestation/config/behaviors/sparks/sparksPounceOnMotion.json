@@ -2,6 +2,7 @@
   "behaviorType": "PounceOnMotion",
   "executableBehaviorType": "PounceOnMotion",
   "name": "sparksPounceOnMotion",
+  "displayNameKey":"behavior.PounceOnMotion",
   "behaviorGroups": [
     "SparksPounceOnMotion"
   ],

@@ -26,7 +26,7 @@ public class FaceEnrollmentCell : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Image _UpdateImage;
 
-  private Cozmo.UI.AlertView _ReEnrollAlertView = null;
+  private Cozmo.UI.AlertModal _ReEnrollAlertView = null;
 
   public void Initialize(int faceID, string faceName, bool needsUpdate) {
     _FaceName = faceName;
@@ -50,7 +50,7 @@ public class FaceEnrollmentCell : MonoBehaviour {
   private void HandleReEnrollFaceClicked() {
     if (OnReEnrollFaceRequested != null) {
 
-      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab);
+      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab);
       alertView.SetDasEventName("reenroll_face_confirm");
       alertView.SetCloseButtonEnabled(false);
       alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentReenrollmentAlertTitle;

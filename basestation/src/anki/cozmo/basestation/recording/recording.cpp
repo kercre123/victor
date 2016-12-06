@@ -122,7 +122,7 @@ void Recording::InitializePlanner(IPathPlanner *pathPlanner)
 RecordingPlaybackStatus Recording::PreTickMessageProcess()
 {
   /*
-  CORETECH_ASSERT(outStream_.is_open());
+  ASSERT_NAMED(outStream_.is_open(), "Recording.PreTickMessageProcess.InvalidOutputStream");
 
   BaseStationTime_t currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   unsigned int timeSize = sizeof(currentTickCount);
@@ -149,7 +149,7 @@ RecordingPlaybackStatus Recording::PreTickMessageProcess()
 RecordingPlaybackStatus Recording::PostTickMessageProcess()
 {
   /*
-  CORETECH_ASSERT(outStream_.is_open());
+  ASSERT_NAMED(outStream_.is_open(), "Recording.PostTickMessageProcess.InvalidOutputStream");
 
   BaseStationTime_t currentTickCount = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   unsigned int timeSize = sizeof(currentTickCount);

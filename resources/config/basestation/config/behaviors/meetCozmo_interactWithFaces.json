@@ -1,6 +1,7 @@
 {
   "behaviorType": "InteractWithFaces",
   "name": "meetCozmo_interactWithFaces",
+  "displayNameKey":"behavior.InteractWithFaces",
   "behaviorGroups": [
     "MeetCozmo_Socialize"
   ],

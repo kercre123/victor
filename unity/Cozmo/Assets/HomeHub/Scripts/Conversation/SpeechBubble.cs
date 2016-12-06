@@ -6,7 +6,7 @@ using Anki.UI;
 using Cozmo.UI;
 
 namespace Conversations {
-  public class SpeechBubble : BaseView {
+  public class SpeechBubble : BaseModal {
 
     private string _LineKey;
 

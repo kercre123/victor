@@ -1,6 +1,7 @@
 {
   "behaviorType": "CubeLiftWorkout",
   "name": "cubeLiftWorkout",
+  "displayNameKey":"behavior.Workout",
   "requiredUnlockId": "Workout",
   "behaviorGroups": [
     "FP_PlayAlone"
