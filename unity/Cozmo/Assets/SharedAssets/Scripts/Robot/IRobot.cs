@@ -75,11 +75,16 @@ public interface IRobot : IDisposable {
 
   float BatteryVoltage { get; }
 
+  // objects that are currently visible (cubes, charger)
   List<ObservableObject> VisibleObjects { get; }
+
+  // objects with poses known by blockworld
   List<ObservableObject> KnownObjects { get; }
 
+  // objects that we can talk to / hear
   List<ActiveObject> ConnectedObjects { get; }
 
+  // cubes that are active and we can talk to / hear
   Dictionary<int, LightCube> LightCubes { get; }
 
   event LightCubeStateEventHandler OnLightCubeAdded;
