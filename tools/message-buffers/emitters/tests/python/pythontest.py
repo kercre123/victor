@@ -1,3 +1,19 @@
+#!/usr/bin/env python
+#
+# Copyright 2015-2016 Anki Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 #
 #  CLAD Unit test:
 #  Python emitter unit test
@@ -28,7 +44,7 @@ class TestSimpleMessage(unittest.TestCase):
         foo2a = Foo()
         foo2b = Foo.unpack(foo2a.pack())
         self.assertEqual(foo2a, foo2b, "Empty Message round-trip via constructor is broken")
-        
+
     def test_PopulatedMessageRoundTrip(self):
         foo3a = Foo(isFoo=True, myByte=-5, byteTwo=203, myFloat=13231321,
                     myShort=32000, myNormal=0xFFFFFFFF,
@@ -46,7 +62,7 @@ class TestSimpleMessage(unittest.TestCase):
         foo4a.myNormal=65536
         foo4a.myFoo=AnkiTypes.AnkiEnum.e1
         foo4a.myString=''
-        
+
         foo4b = Foo.unpack(foo4a.pack())
         self.assertEqual(foo4a, foo4b, "Populated Message assignment is broken")
 
@@ -56,7 +72,7 @@ class TestMessageOfArrays(unittest.TestCase):
         bar1a = Bar()
         bar1b = Bar()
         self.assertEqual(bar1a, bar1b, "Empty Message construction is deterministic")
-        
+
     def test_EmptyMessageRoundTrip(self):
         bar2a = Bar()
         bar2b = Bar.unpack(bar2a.pack())
@@ -103,7 +119,7 @@ class TestMessageOfStrings(unittest.TestCase):
         somany2b = SoManyStrings.unpack(somany2a.pack())
         self.assertEqual(somany2a, somany2b, "Empty Message round-trip via constructor is broken")
 
-    def test_PopulatedMessageRoundTrip(self):        
+    def test_PopulatedMessageRoundTrip(self):
         somany3a = SoManyStrings(
             (hex(x*x*x^3423) for x in range(2000)),
             ('na' * i for i in range(3)),
@@ -119,7 +135,7 @@ class TestMessageOfStrings(unittest.TestCase):
         somany4a.fixedStringBuff = 'abc'
         somany4a.anotherVarStringBuff = [u'\u1233\u1231 foo', 'asdas', '\xC2\xA2']
         somany4a.anotherFixedStringBuff = ['', '\0']
-        
+
         somany4b = SoManyStrings.unpack(somany4a.pack())
         self.assertEqual(somany4a, somany4b,
                          "Populated Message assignment is broken")
@@ -129,12 +145,12 @@ class TestUnion(unittest.TestCase):
         msg1a = Cat.MyMessage()
         msg1b = Cat.MyMessage()
         self.assertEqual(msg1a, msg1b, "Empty union construction is broken")
-        
+
     def test_EmptyUnionRoundTrip(self):
         msg2a = Cat.MyMessage(myFoo=Foo()) # can't pack untagged
         msg2b = Cat.MyMessage.unpack(msg2a.pack())
         self.assertEqual(msg2a, msg2b, "Empty union roundtrip is broken")
-        
+
     def test_PopulatedUnionRoundTrip(self):
         msg3a = Cat.MyMessage(myFoo=Foo(
             False,
@@ -205,7 +221,7 @@ class TestUnion(unittest.TestCase):
         constructedMessage = Cat.MyMessage(**{kind: subMessage})
         self.assertEqual(constructedMessage.tag, tag)
         self.assertEqual(getattr(constructedMessage, constructedMessage.tag_name), subMessage)
-        
+
 
 class TestAutoUnion(unittest.TestCase):
     def test_Creation(self):
@@ -216,7 +232,7 @@ class TestAutoUnion(unittest.TestCase):
         msg.Monkey = aMonkey
         music = Music((131,), funky)
         msg.Music = music
-        
+
 class TestDefaultValues(unittest.TestCase):
     def test_defaultValueInts(self):
       # This will break if the default values specified in DefaultValues.clad change
@@ -270,4 +286,3 @@ class TestDefaultValues(unittest.TestCase):
 # Required unittest.main
 if __name__ == '__main__':
     unittest.main()
-    

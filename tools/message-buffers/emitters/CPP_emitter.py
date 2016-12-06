@@ -1,4 +1,18 @@
 #!/usr/bin/env python
+#
+# Copyright 2015-2016 Anki Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -229,7 +243,7 @@ class CPPEnumEmitter(HEnumEmitter):
     def emitSuffix(self, node, globals):
         self.output.write('const char* {enum_name}VersionHashStr = "{enum_hash}";\n\n'.format(**globals))
         self.output.write('const uint8_t {enum_name}VersionHash[16] = {{ \n'.format(**globals))
-        hex_data = map(ord, globals['enum_hash'].decode("hex"))
+        hex_data = emitterutil.decode_hex_string(globals['enum_hash'])
         with self.output.indent(2):
             for i, byte in enumerate(hex_data):
                 separator = ','
@@ -259,6 +273,7 @@ class HStructEmitter(BaseEmitter):
             self.emitUnpack(node, globals)
             self.emitSize(node, globals)
             self.emitEquality(node, globals)
+            self.emitInvoke(node, globals)
         self.emitFooter(node, globals)
         
     def emitHeader(self, node, globals):
@@ -286,6 +301,15 @@ class HStructEmitter(BaseEmitter):
             self.output.write(';\n')
 
         self.output.write('\n')
+
+    def emitInvoke(self, node, globals):
+        paramsStr = ', '.join([m.name for m in node.members()])
+        self.output.write(textwrap.dedent('''
+            template <typename Callable>
+            void Invoke(Callable&& func) const {{
+               func({0});
+            }}
+            '''.format(paramsStr)))
 
     def emitConstructors(self, node, globals):
         self.output.write(textwrap.dedent('''\
@@ -365,7 +389,7 @@ class CPPStructEmitter(HStructEmitter):
         self.output.write('\n')
         self.output.write('const char* {message_name}VersionHashStr = "{message_hash}";\n\n'.format(**globals))
         self.output.write('const uint8_t {message_name}VersionHash[16] = {{ \n'.format(**globals))
-        hex_data = map(ord, globals['message_hash'].decode("hex"))
+        hex_data = emitterutil.decode_hex_string(globals['message_hash'])
         with self.output.indent(2):
             for i, byte in enumerate(hex_data):
                 separator = ','
@@ -393,6 +417,9 @@ class CPPStructEmitter(HStructEmitter):
             }}
             
             '''.format(**globals)))
+
+    def emitInvoke(self, node, globals):
+        pass
 
     def emitPack(self, node, globals):
         self.output.write(textwrap.dedent('''\
@@ -533,6 +560,7 @@ class HUnionEmitter(BaseEmitter):
             self.emitDestructor(node, globals)
             self.emitGetTag(node, globals)
             self.emitTemplatedGet(node, globals)
+            self.emitTemplatedCreate(node, globals)
             self.emitAccessors(node, globals)
             self.emitUnpack(node, globals)
             self.emitPack(node, globals)
@@ -591,6 +619,11 @@ class HUnionEmitter(BaseEmitter):
         self.output.write('// NOTE: Always returns a reference, even for trivial types, unlike untemplated version\n')
         self.output.write('template<Tag tag>\n')
         self.output.write('const typename {union_name}_TagToType<tag>::type & Get_() const;\n\n'.format(**globals))
+
+    def emitTemplatedCreate(self, node, globals):
+        self.output.write('// Templated creator for making a union object out of one if its members\n')
+        self.output.write('template <Tag tag>\n')
+        self.output.write('static {union_name} Create_(typename {union_name}_TagToType<tag>::type member);\n\n'.format(**globals))
 
     def emitAccessors(self, node, globals):
         for member in node.members():
@@ -761,7 +794,7 @@ class CPPUnionEmitter(BaseEmitter):
         self.output.write('\n')
         self.output.write('const char* {union_name}VersionHashStr = "{union_hash}";\n\n'.format(**globals))
         self.output.write('const uint8_t {union_name}VersionHash[16] = {{ \n'.format(**globals))
-        hex_data = map(ord, globals['union_hash'].decode("hex"))
+        hex_data = emitterutil.decode_hex_string(globals['union_hash'])
         with self.output.indent(2):
             for i, byte in enumerate(hex_data):
                 separator = ','
@@ -962,6 +995,16 @@ class CPPUnionEmitter(BaseEmitter):
                 \treturn this->{private_name};
                 }}
         
+                ''').format(**locals))
+
+            # Emit templated Create_<Tag>()
+            self.output.write(textwrap.dedent('''\
+                template<>
+                {union_name} {union_name}::Create_<{union_name}::Tag::{member_name}>({value_type} member)
+                {{
+                \treturn Create{member_name}(std::move(member));
+                }}
+
                 ''').format(**locals))
             
             
