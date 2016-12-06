@@ -18,6 +18,7 @@
 #include "anki/common/types.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "util/global/globalDefinitions.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
