@@ -35,9 +35,8 @@ namespace MemoryMatch {
       base.Exit();
       if (_CurrentRobot != null) {
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
+        _CurrentRobot.OnLightCubeRemoved -= HandleOnCubeRemoved;
       }
-
-      _CurrentRobot.OnLightCubeRemoved -= HandleOnCubeRemoved;
     }
 
     // We want to kill the game... but Cozmo should just stop when done with current action.
