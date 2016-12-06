@@ -32,6 +32,7 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include <chrono>
 #include <condition_variable>
 #include <thread>
 
@@ -86,17 +87,7 @@ public:
   LatticePlannerImpl(Robot* robot, Util::Data::DataPlatform* dataPlatform, const LatticePlanner* parent)
     : _robot(robot)
     , _planner(_context)
-    , _searchNum(0)
-    , _plannerThread(nullptr)
-    , _timeToPlan(false)
-    , _stopThread(false)
-    , _runPlanner(true)
-    , _plannerRunning(false)
-    , _internalComputeStatus(EPlannerStatus::Error)
     , _parent(parent)
-    , _multiGoalPlanning(LATTICE_PLANNER_MULTIPLE_GOALS)
-    , _selectedGoalID(0)
-    , _timeOfLastObjectsImport(0)
   {
     if( dataPlatform == nullptr ) {
       PRINT_NAMED_ERROR("LatticePlanner.InvalidDataPlatform",
@@ -165,6 +156,8 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
 
+  // by default, this planner will run in a thread. If it is set to be synchronous, it will not
+  void SetIsSynchronous(bool val);
 
   // imports and pads obstacles
   void ImportBlockworldObstaclesIfNeeded(const bool isReplanning, const ColorRGBA* vizColor = nullptr);
@@ -195,39 +188,42 @@ public:
 
   std::string _pathToEnvCache;
 
-  int _searchNum;
+  int _searchNum = 0;
 
   // while planner thread is planning, it holds contextLock
-  std::thread *_plannerThread;
+  std::thread *_plannerThread = nullptr;
   std::recursive_mutex _contextMutex;
   std::condition_variable_any _threadRequest;
-  bool _timeToPlan;
+  bool _timeToPlan = false;
   
   // this is a bool used to clean up and stop the thread (entirely)
-  bool _stopThread;
+  bool _stopThread = false;
 
   // this is the bool passed in to the planner to allow it to stop early
-  bool _runPlanner;
+  bool _runPlanner = true;
 
   // This is toggled by the planner thread when it is crunching
-  bool _plannerRunning;
+  bool _plannerRunning = false;
+
+  // whether to run multi-goal planner (true) or just plan with respect to the nearest fatal-penalty-free goal
+  bool _multiGoalPlanning = LATTICE_PLANNER_MULTIPLE_GOALS;
+  
+  // if true, always block when starting planning to return in the same tick
+  bool _isSynchronous = false;
 
   // this is also locked by _contextMutex, due to laziness
-  EPlannerStatus _internalComputeStatus;
+  EPlannerStatus _internalComputeStatus = EPlannerStatus::Error;
 
   const LatticePlanner* _parent;
   
-  // whether to run multi-goal planner (true) or just plan with respect to the nearest fatal-penalty-free goal
-  bool _multiGoalPlanning;
-  
   // the chosen best goal out of _targetPoses_orig
-  GoalID _selectedGoalID;
+  GoalID _selectedGoalID = 0;
   
   // the last timestamp at which blockworld objects were imported
-  TimeStamp_t _timeOfLastObjectsImport;
+  TimeStamp_t _timeOfLastObjectsImport = 0;
 
-  // if true, always block when starting planning to return in the same tick
-  bool _isSynchronous = false;
+  // useful for testing / debugging, wait this many extra milliseconds to simulate a slower planner
+  int _msToBlock = 0;
 
   std::vector<Signal::SmartHandle> _signalHandles;
 };
@@ -273,18 +269,34 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
     if( _impl->_timeToPlan || _impl->_plannerRunning ) {
 
       // thread is already running.
-      PRINT_NAMED_WARNING("LatticePlanner.ComputePath.AlreadyRunning",
+      PRINT_NAMED_WARNING("LatticePlanner.ComputePathHelper.AlreadyRunning",
                           "Tried to compute a new path, but the planner is already running! (timeToPlan %d, running %d)",
                           _impl->_timeToPlan,
                           _impl->_plannerRunning);
       return EComputePathStatus::Error;
     }
     else {
+      if( LATTICE_PLANNER_THREAD_DEBUG ) {
+        PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "ComputePathHelper: try lock failed, blocking");
+      }
+
       _impl->_contextMutex.lock();
     }
   }
 
   std::lock_guard<std::recursive_mutex> lg(_impl->_contextMutex, std::adopt_lock);
+
+  if( _impl->_timeToPlan ) {
+    PRINT_NAMED_WARNING("LatticePlanner.ComputePathHelper.PreviousPlanRequested",
+                        "timeToPlan already set, so another compute path call is already waiting to signal the planner");
+    return EComputePathStatus::Error;
+  }    
+
+  
+  if( LATTICE_PLANNER_THREAD_DEBUG ) {
+    PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "ComputePathHelper: got lock");
+  }
+
 
   /*
   const f32 Z_HEIGHT_DIFF_TOLERANCE = ROBOT_BOUNDING_Z * .2f;
@@ -320,10 +332,22 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
   
 
   if( _impl->_context.goals_c.empty() ) {
+
+    if( LATTICE_PLANNER_THREAD_DEBUG ) {
+      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug",
+                    "ComputePathHelper: no valid goals, returning (release lock)");
+    }
+
     return EComputePathStatus::Error;
   }
 
   EComputePathStatus res = ComputeNewPathIfNeeded(startPose, true);
+
+  if( LATTICE_PLANNER_THREAD_DEBUG ) {
+    PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug",
+                  "ComputePathHelper: release lock");
+  }
+
   return res;
 }
 
@@ -362,6 +386,12 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
   }
 
   std::lock_guard<std::recursive_mutex> lg( _impl->_contextMutex, std::adopt_lock);
+
+  if( _impl->_timeToPlan ) {
+    PRINT_NAMED_WARNING("LatticePlanner.ComputePath.PreviousPlanRequested",
+                        "timeToPlan already set, so another compute path call is already waiting to signal the planner");
+    return EComputePathStatus::Error;
+  }    
 
   _impl->ImportBlockworldObstaclesIfNeeded(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
@@ -489,6 +519,17 @@ bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
   return ret;
 }
 
+void LatticePlanner::SetIsSynchronous(bool val)
+{
+  _impl->SetIsSynchronous(val);
+}
+
+void LatticePlanner::SetArtificialPlannerDelay_ms(int ms)
+{
+  _impl->_msToBlock = ms;
+  PRINT_CH_INFO("Planner", "LatticePlanner.SetDelay", "Adding %dms of artificial delay", ms);
+}
+
 //////////////////////////////////////////////////////////////////////////////// 
 // LatticePlannerImpl functions
 //////////////////////////////////////////////////////////////////////////////// 
@@ -497,7 +538,36 @@ void LatticePlannerImpl::DoPlanning()
 {
   _internalComputeStatus = EPlannerStatus::Running;
 
+  if( LATTICE_PLANNER_THREAD_DEBUG ) {
+    PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: running replan...");
+  }
+
+  if( _msToBlock > 0 ) {
+    if( LATTICE_PLANNER_THREAD_DEBUG ) {
+      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: block for %d ms", _msToBlock);
+    }
+
+    // for testing / debugging to make the planner slow. We still want it to stop when requested, so
+    // periodically check _runPlanner
+    const int kMaxNumToBlock_ms = 10;
+    int msBlocked = 0;
+
+    while(msBlocked < _msToBlock && _runPlanner ) {
+      const int thisBlock_ms = std::min( kMaxNumToBlock_ms, _msToBlock - msBlocked );
+      std::this_thread::sleep_for( std::chrono::milliseconds(thisBlock_ms) );
+      msBlocked += thisBlock_ms;
+    }
+
+    if( LATTICE_PLANNER_THREAD_DEBUG ) {
+      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: Finished blocking wait");
+    }
+  }
+  
   bool result = _planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS, &_runPlanner);
+
+  if( LATTICE_PLANNER_THREAD_DEBUG ) {
+    PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: replan finished");
+  }
 
   if(!result) {
     _internalComputeStatus = EPlannerStatus::Error;
@@ -594,10 +664,15 @@ void LatticePlannerImpl::worker()
 template<>
 void LatticePlannerImpl::HandleMessage(const ExternalInterface::PlannerRunMode& msg)
 {
-  _isSynchronous = msg.isSync;
+  SetIsSynchronous(msg.isSync);
+}
+
+void LatticePlannerImpl::SetIsSynchronous(bool val)
+{
+  _isSynchronous = val;
   PRINT_CH_INFO("Planner", "LatticePlanner.IsSync",
                 "%s",
-                msg.isSync ? "true" : "false");
+                val ? "true" : "false");
 }
 
 void LatticePlannerImpl::StopPlanning()
@@ -737,6 +812,11 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
 
   std::lock_guard<std::recursive_mutex> lg(_contextMutex, std::adopt_lock);
 
+  if( LATTICE_PLANNER_THREAD_DEBUG ) {
+    PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "StartPlanning: got lock");
+  }
+
+
   State_c lastSafeState;
   xythetaPlan validOldPlan;
   size_t planIdx = 0;
@@ -857,11 +937,16 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
                       "Do planning now in StartPlanning...");        
         DoPlanning();
       }
-      else {            
+      else {
         _timeToPlan = true;
         _internalComputeStatus = EPlannerStatus::Running;
         _threadRequest.notify_all();
       }
+    }
+
+    if( LATTICE_PLANNER_THREAD_DEBUG ) {
+      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug",
+                    "StartPlanning: return running (release lock)");
     }
     
     return EComputePathStatus::Running;
