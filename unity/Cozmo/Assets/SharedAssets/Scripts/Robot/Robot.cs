@@ -167,13 +167,10 @@ public class Robot : IRobot {
   public float BatteryVoltage { get; private set; }
 
   // objects that are currently visible (cubes, charger)
-  public List<ObservableObject> VisibleObjects { get; private set; }
+  public Dictionary<int, ObservableObject> VisibleObjects { get; private set; }
 
   // objects with poses known by blockworld
-  public List<ObservableObject> KnownObjects { get; private set; }
-
-  // objects that we can talk to / hear
-  public List<ActiveObject> ConnectedObjects { get; private set; }
+  public Dictionary<int, ObservableObject> KnownObjects { get; private set; }
 
   // cubes that are active and we can talk to / hear
   public Dictionary<int, LightCube> LightCubes { get; private set; }
@@ -181,7 +178,7 @@ public class Robot : IRobot {
   public event LightCubeStateEventHandler OnLightCubeAdded;
   public event LightCubeStateEventHandler OnLightCubeRemoved;
 
-  public List<LightCube> VisibleLightCubes { get; private set; }
+  public Dictionary<int, LightCube> VisibleLightCubes { get; private set; }
 
   public event ChargerStateEventHandler OnChargerAdded;
   public event ChargerStateEventHandler OnChargerRemoved;
@@ -349,13 +346,11 @@ public class Robot : IRobot {
   public Robot(byte robotID) : base() {
     ID = robotID;
 
-    VisibleObjects = new List<ObservableObject>();
-    KnownObjects = new List<ObservableObject>();
+    VisibleObjects = new Dictionary<int, ObservableObject>();
+    KnownObjects = new Dictionary<int, ObservableObject>();
 
-    ConnectedObjects = new List<ActiveObject>();
     LightCubes = new Dictionary<int, LightCube>();
-
-    VisibleLightCubes = new List<LightCube>();
+    VisibleLightCubes = new Dictionary<int, LightCube>();
 
     Faces = new List<global::Face>();
     EnrolledFaces = new Dictionary<int, string>();
@@ -384,7 +379,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.MoodState>(UpdateEmotionFromEngineRobotManager);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(SparkEnded);
 
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectTapped>(HandleActiveObjectTapped);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
@@ -417,7 +412,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(ProcessRobotCompletedAction);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(SparkEnded);
 
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectTapped>(HandleActiveObjectTapped);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
@@ -765,7 +760,7 @@ public class Robot : IRobot {
 
   #endregion
 
-  public void DeleteObservedObject(int id) {
+  private void DeleteActiveObject(int id) {
     if (id < 0) {
       // Negative object ids are invalid
       return;
@@ -795,7 +790,7 @@ public class Robot : IRobot {
 
   public void HandleDeleteObservedObject(Anki.Cozmo.ExternalInterface.RobotDeletedObject message) {
     if (ID == message.robotID) {
-      DeleteObservedObject((int)message.objectID);
+      KnownObjects.Remove((int)message.objectID);
     }
   }
 
@@ -884,7 +879,7 @@ public class Robot : IRobot {
         AddActiveObject((int)blockData.ObjectID, blockData.FactoryID, blockData.ObjectType);
       }
       else {
-        DeleteObservedObject((int)blockData.ObjectID);
+        DeleteActiveObject((int)blockData.ObjectID);
       }
     }
   }
@@ -928,8 +923,12 @@ public class Robot : IRobot {
       for (int i = 0; i < objectStates.Length; ++i) {
         ObjectState obj = objectStates[i];
 
-        // TODO: fix which list this is getting objects from
-        ObservableObject objectSeen = GetActiveObjectById((int)obj.objectID);
+        ObservableObject knownObj = null;
+        if (KnownObjects.TryGetValue((int)obj.objectID, out knownObj)) {
+          knownObj.UpdateAvailable(obj);
+        }
+
+        ActiveObject objectSeen = GetActiveObjectById((int)obj.objectID);
         if (objectSeen != null) {
           objectSeen.UpdateAvailable(obj);
         }
@@ -946,8 +945,13 @@ public class Robot : IRobot {
       return;
     }
 
-    // Get the ObservedObject
+    ObservableObject knownObj = null;
+    if ((KnownObjects.TryGetValue((int)message.objectID, out knownObj))) {
+      knownObj.UpdateInfo(message);
+    }
+
     ActiveObject objectSeen = GetActiveObjectById((int)message.objectID);
+    // if we have an active object with the same id then update its pose
     if (objectSeen != null) {
       // Update its info if the new timestamp is newer or the same as the robot's current timestamp
       if (message.timestamp >= objectSeen.LastSeenEngineTimestamp) {
@@ -958,10 +962,7 @@ public class Robot : IRobot {
         + " _after_ receiving a newer message with timestamp " + objectSeen.LastSeenEngineTimestamp + "!");
       }
     }
-    else {
-      // We didn't know about this object before. Store it with the information we know about it
-      AddActiveObject(message.objectID, 0, message.objectType);
-    }
+
   }
 
   private void HandleActiveObjectMoved(ObjectMoved message) {
@@ -1019,7 +1020,9 @@ public class Robot : IRobot {
     int objectID = (int)message.objectID;
     if (ID == message.robotID) {
       // TODO Do we need a timestamp here? (message doesn't have it)
-      // Update ObservedObject pose to unknown
+
+      KnownObjects.Remove((int)message.objectID);
+
       ActiveObject objectPoseUnknown = GetActiveObjectById(objectID);
       if (objectPoseUnknown != null) {
         objectPoseUnknown.MarkPoseUnknown();
@@ -1027,7 +1030,7 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleObservedObjectTapped(ObjectTapped message) {
+  private void HandleActiveObjectTapped(ObjectTapped message) {
     if (ID == message.robotID) {
       ActiveObject objectPoseUnknown = GetActiveObjectById((int)message.objectID);
       if (objectPoseUnknown != null) {
@@ -2044,9 +2047,16 @@ public class Robot : IRobot {
                                                ActiveObject.InFieldOfViewState oldState,
                                                ActiveObject.InFieldOfViewState newState) {
     VisibleLightCubes.Clear();
-    foreach (LightCube cube in LightCubes.Values) {
-      if (cube.IsInFieldOfView) {
-        VisibleLightCubes.Add(cube);
+    foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
+      if (kvp.Value.IsInFieldOfView) {
+        VisibleLightCubes.Add(kvp.Key, kvp.Value);
+      }
+    }
+
+    VisibleObjects.Clear();
+    foreach (KeyValuePair<int, ObservableObject> kvp in KnownObjects) {
+      if (kvp.Value.IsInFieldOfView) {
+        VisibleObjects.Add(kvp.Key, kvp.Value);
       }
     }
   }

@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace TreasureHunt {
 
@@ -50,11 +50,11 @@ namespace TreasureHunt {
     private ActiveObject FollowClosest() {
       ActiveObject closest = null;
       float dist = float.MaxValue;
-      foreach (ActiveObject obj in _CurrentRobot.VisibleLightCubes) {
-        float d = Vector3.Distance(_CurrentRobot.WorldPosition, obj.WorldPosition);
+      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.VisibleLightCubes) {
+        float d = Vector3.Distance(_CurrentRobot.WorldPosition, kvp.Value.WorldPosition);
         if (d < dist) {
           dist = d;
-          closest = obj;
+          closest = kvp.Value;
         }
       }
 
