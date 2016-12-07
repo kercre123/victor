@@ -57,9 +57,12 @@ namespace FaceEnrollment {
     }
 
     protected override void AddDisabledReactionaryBehaviors() {
-      // meet cozmo has special logic for this stuff so override the base class and do nothing here.
-      // reactionary behavior and custom freeplay behavior inside of MeetCozmo is set in
+      // Meet Cozmo has special logic for this stuff so override the base class.
+      // Reactionary behavior and custom freeplay behavior inside of MeetCozmo is set in
       // FaceSlideState class.
+
+      // Disable ReactToPet to avoid false positive disruptions
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPet);
     }
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -147,7 +150,7 @@ namespace FaceEnrollment {
         RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToPickup, enable);
         RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
         RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToFrustration, enable);
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToPet, enable);
+        // Note ReactToPet stays disabled during minigames to avoid false positive disruption
       }
     }
 
