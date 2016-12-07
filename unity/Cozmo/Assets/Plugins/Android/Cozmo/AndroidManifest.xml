@@ -20,12 +20,17 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-    <uses-permission android:name="com.amazon.device.messaging.permission.RECEIVE" />
-    
     <!-- DHC: Temporary fix until we find the code that requires this permission. This 
     effectively disables the permission since we won't install in a device with SdkVersion 1 -->
 	<uses-permission android:name="android.permission.CAMERA" android:maxSdkVersion="1" />
- 
+
+    <!-- Amazon integration -->
+	<permission android:name="com.anki.cozmo.permission.RECEIVE_ADM_MESSAGE" android:protectionLevel="signature" />
+	<uses-permission android:name="com.anki.cozmo.permission.RECEIVE_ADM_MESSAGE" />
+	<uses-permission android:name="com.amazon.device.messaging.permission.RECEIVE" />
+
+    <!-- End Amazon integration -->
+
     <uses-feature android:name="android.hardware.bluetooth" />
     <uses-feature android:name="android.hardware.bluetooth_le" />
     <uses-feature android:name="android.hardware.screen.landscape" />
@@ -48,6 +53,18 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <amazon:enable-feature android:name="com.amazon.device.messaging" android:required="true"/>
+	<service android:name="com.anki.cozmo.ADMService" android:exported="false" />
+	<receiver android:name="com.anki.cozmo.ADMReceiver" android:permission="com.amazon.device.messaging.permission.SEND" >
+		<intent-filter>
+			<action android:name="com.amazon.device.messaging.intent.REGISTRATION" />
+			<action android:name="com.amazon.device.messaging.intent.RECEIVE" />
+ 
+			<category android:name="com.anki.cozmo" />
+	    </intent-filter>
+	</receiver>
+
+	<!-- End Amazon integration -->
+
         <receiver android:name="com.anki.cozmo.notifications.NotificationAlarm" />
 
         <activity android:name="com.pushio.manager.PushIOActivityLauncher" android:exported="true" />

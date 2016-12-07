@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/debug/cladLoggerProvider.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/deviceData/deviceDataManager.h"
@@ -41,7 +42,6 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
-#include "util/logging/sosLoggerProvider.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 #include "util/time/universalTime.h"
@@ -111,7 +111,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ResetFirmware>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestFeatureToggles>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetEnableSOSLogging>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFeatureToggle>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotImageSendMode>();
@@ -121,7 +120,8 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
 
   _debugConsoleManager.Init(_context->GetExternalInterface());
   _dasToSdkHandler.Init(_context->GetExternalInterface());
-
+  InitUnityLogger();
+  
   #if VIZ_ON_DEVICE
   _context->GetVizManager()->SetMessagePort(vizMessagePort);
   #endif
@@ -643,8 +643,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::StartTestMode& msg)
   }
 }
 
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::SetEnableSOSLogging& msg)
+void CozmoEngine::InitUnityLogger()
 {
 #if ANKI_DEV_CHEATS
   if(Anki::Util::gLoggerProvider != nullptr) {
@@ -652,11 +651,9 @@ void CozmoEngine::HandleMessage(const ExternalInterface::SetEnableSOSLogging& ms
     if (multiLoggerProvider != nullptr) {
       const std::vector<Anki::Util::ILoggerProvider*>& loggers = multiLoggerProvider->GetProviders();
       for(int i = 0; i < loggers.size(); ++i) {
-        Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(loggers[i]);
-        if (sosLoggerProvider != nullptr) {
-          sosLoggerProvider->OpenSocket();
-          // disables tags for the SOS program
-          sosLoggerProvider->SetSoSTagEncoding(false);
+        CLADLoggerProvider* unityLoggerProvider = dynamic_cast<CLADLoggerProvider*>(loggers[i]);
+        if (unityLoggerProvider != nullptr) {
+          unityLoggerProvider->SetExternalInterface(_context->GetExternalInterface());
           break;
         }
       }

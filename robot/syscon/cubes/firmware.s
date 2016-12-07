@@ -1,9 +1,9 @@
                 AREA    |.text|, DATA, READONLY
                 ALIGN
 
-                EXPORT  __CUBE_XS6
+                EXPORT  CurrentCubeFirmware
 
-__CUBE_XS6
+CurrentCubeFirmware
                 INCBIN  ../../accessories/releases/xs6-p5.safe
 
                 END

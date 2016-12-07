@@ -7,7 +7,6 @@ namespace DataPersistence {
   // things that go here should be the exceptions.
   [System.Serializable]
   public class DebugProfile {
-    public bool SOSLoggerEnabled;
     public bool LatencyDisplayEnabled;
     public bool DebugPauseEnabled;
     public bool RunPressDemo;
@@ -16,7 +15,6 @@ namespace DataPersistence {
     public bool ShowDroneModeDebugInfo;
 
     public DebugProfile() {
-      SOSLoggerEnabled = false;
       LatencyDisplayEnabled = false;
       DebugPauseEnabled = false;
       RunPressDemo = false;

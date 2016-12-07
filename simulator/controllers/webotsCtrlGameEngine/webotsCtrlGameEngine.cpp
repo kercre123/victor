@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/console/consoleSystem.h"
 #include "util/logging/printfLoggerProvider.h"
-#include "util/logging/sosLoggerProvider.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
 #include "util/global/globalDefinitions.h"
 
@@ -27,6 +26,7 @@
 #include <fstream>
 
 #if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/cladLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "util/fileUtils/fileUtils.h"
@@ -103,15 +103,15 @@ int main(int argc, char **argv)
   
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger"), "mac");
+  Util::IFormattedLoggerProvider* unityLoggerProvider = new CLADLoggerProvider();
 #endif
 
   // - create and set logger
-  Util::IFormattedLoggerProvider* sosLoggerProvider = new Util::SosLoggerProvider();
   Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
   Anki::Util::MultiFormattedLoggerProvider loggerProvider({
-    sosLoggerProvider
-    , printfLoggerProvider
+    printfLoggerProvider
 #if ANKI_DEV_CHEATS
+    ,unityLoggerProvider
     , new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
             Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
@@ -142,11 +142,13 @@ int main(int argc, char **argv)
     // set filter in the loggers
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
     printfLoggerProvider->SetFilter(filterPtr);
-    sosLoggerProvider->SetFilter(filterPtr);
     
     // also parse additional info for providers
     printfLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
-    sosLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+#if ANKI_DEV_CHEATS
+    unityLoggerProvider->SetFilter(filterPtr);
+    unityLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+#endif
   }
   else
   {

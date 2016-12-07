@@ -1184,6 +1184,7 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   const auto & payload = message.GetData().Get_objectPowerLevel();
   const auto robotID = robot->GetID();
   const auto activeID = payload.objectID;
+  const auto missedPackets = payload.missedPackets;
   const auto batteryLevel = payload.batteryLevel;
   const float batteryVoltage = batteryLevel / 100.0;
   const float batteryPercent = GetBatteryPercent(batteryVoltage);
@@ -1215,7 +1216,7 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
     PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Broadcast",
                       "RobotID %u activeID %u objectID %u at %u cv",
                       robotID, activeID, objectID, batteryLevel);
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectPowerLevel(objectID, batteryLevel)));
+    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectPowerLevel(objectID, missedPackets, batteryLevel)));
   }
 
 }

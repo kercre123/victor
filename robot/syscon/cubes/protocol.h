@@ -49,14 +49,4 @@ __packed struct OTAFirmwareBlock {
   CubeFirmwareBlock   block;
 };
 
-__packed struct CubeFirmware {
-  uint32_t            magic;
-  uint16_t            dataLen;
-  uint16_t            patchLevel;
-  uint8_t             patchStart;
-  uint8_t             hwVersion;
-  uint8_t             _reserved[6];
-  CubeFirmwareBlock   data[1];
-};
-
 #endif

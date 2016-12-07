@@ -43,7 +43,7 @@ struct QueueSlot {
   volatile QueueSlotState state;
 };
 
-static const int QUEUE_DEPTH = 8;
+static const int QUEUE_DEPTH = 32;
 static QueueSlot queue[QUEUE_DEPTH];
 
 static void Process_diffieHellmanResults(const DiffieHellmanResults& msg) {

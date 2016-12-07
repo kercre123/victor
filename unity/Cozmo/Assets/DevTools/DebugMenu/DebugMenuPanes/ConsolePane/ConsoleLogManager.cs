@@ -5,7 +5,7 @@ using System.Text;
 using System.Linq;
 using Anki.UI;
 
-public class ConsoleLogManager : MonoBehaviour, IDASTarget {
+public class ConsoleLogManager : MonoBehaviour {
 
 
   private static ConsoleLogManager _Instance;
@@ -39,17 +39,12 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   [SerializeField]
   private int numberCachedLogMaximum = 100;
 
-  private const int kClipboardLogMaximum = 9000;
-
-  private Queue<LogPacket> _LogToClipboard = new Queue<LogPacket>();
   private Queue<LogPacket> _MostRecentLogs = new Queue<LogPacket>();
   private Queue<LogPacket> _ReceivedPackets = new Queue<LogPacket>();
 
   private ConsoleLogPane _ConsoleLogPaneView;
 
   private Dictionary<LogPacket.ELogKind, bool> _LastToggleValues;
-
-  private bool _SOSLoggingEnabled = false;
 
   // Use this for initialization
   private void Awake() {
@@ -66,10 +61,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     _LastToggleValues.Add(LogPacket.ELogKind.Debug, true);
     _LastToggleValues.Add(LogPacket.ELogKind.Global, true);
 
-    //DAS.AddTarget(this);
-
     ConsoleLogPane.ConsoleLogPaneOpened += OnConsoleLogPaneOpened;
 
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugAppendConsoleLogLine>(HandleAppendLine);
   }
 
   private void Update() {
@@ -85,10 +79,6 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
           _MostRecentLogs.Dequeue();
         }
 
-        while (_LogToClipboard.Count > kClipboardLogMaximum) {
-          _LogToClipboard.Dequeue();
-        }
-
         // Update the UI, if it is open
         if ((_ConsoleLogPaneView != null) && (_LastToggleValues[newPacket.LogKind])) {
           _ConsoleLogPaneView.AppendLog(newPacket.ToString());
@@ -96,25 +86,8 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
       }
     }
   }
-
-  public void EnableSOSLogs(bool enable) {
-
-    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = enable;
-    DataPersistence.DataPersistenceManager.Instance.Save();
-
-    if (!_SOSLoggingEnabled && enable) {
-      _SOSLoggingEnabled = enable;
-      SOSLogManager.Instance.CreateListener();
-      RobotEngineManager.Instance.SetEnableSOSLogging(true);
-      SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
-    }
-    else if (_SOSLoggingEnabled && !enable) {
-      _SOSLoggingEnabled = false;
-      SOSLogManager.Instance.CleanUp();
-    }
-  }
-
-  private void HandleNewSOSLog(string log) {
+  private void HandleAppendLine(Anki.Cozmo.ExternalInterface.DebugAppendConsoleLogLine msg) {
+    string log = msg.line;
     if (log.Contains("[Warn]")) {
       SaveLogPacket(LogPacket.ELogKind.Warning, "", log, null, null);
     }
@@ -140,44 +113,11 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void OnDestroy() {
-    DAS.RemoveTarget(this);
     ConsoleLogPane.ConsoleLogPaneOpened -= OnConsoleLogPaneOpened;
 
     if (_ConsoleLogPaneView != null) {
       _ConsoleLogPaneView.ConsoleLogToggleChanged -= OnConsoleToggleChanged;
     }
-  }
-
-  void IDASTarget.Info(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
-    SaveLogPacket(LogPacket.ELogKind.Info, eventName, eventValue, keyValues, context);
-  }
-
-  void IDASTarget.Error(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
-    SaveLogPacket(LogPacket.ELogKind.Error, eventName, eventValue, keyValues, context);
-  }
-
-  void IDASTarget.Warn(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
-    SaveLogPacket(LogPacket.ELogKind.Warning, eventName, eventValue, keyValues, context);
-  }
-
-  void IDASTarget.Event(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
-    SaveLogPacket(LogPacket.ELogKind.Event, eventName, eventValue, keyValues, context);
-  }
-
-  void IDASTarget.Debug(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
-    SaveLogPacket(LogPacket.ELogKind.Debug, eventName, eventValue, keyValues, context);
-  }
-
-  void IDASTarget.Ch_Info(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
-    SaveLogPacket(LogPacket.ELogKind.Info, channelName + "-" + eventName, eventValue, keyValues, context);
-  }
-
-  void IDASTarget.Ch_Debug(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
-    SaveLogPacket(LogPacket.ELogKind.Debug, channelName + "-" + eventName, eventValue, keyValues, context);
-  }
-
-  void IDASTarget.SetGlobal(string eventName, string eventValue) {
-    SaveLogPacket(LogPacket.ELogKind.Global, eventName, eventValue, null, null);
   }
 
   private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
@@ -186,14 +126,11 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     // This can be called from multiple threads while the main one is processing the received packets so we have to lock
     lock (_ReceivedPackets) {
       _ReceivedPackets.Enqueue(newPacket);
-      _LogToClipboard.Enqueue(newPacket);
     }
   }
 
   private void OnConsoleLogPaneOpened(ConsoleLogPane logPane) {
     _ConsoleLogPaneView = logPane;
-    _ConsoleLogPaneView.ConsoleSOSToggle += EnableSOSLogs;
-    _ConsoleLogPaneView.ConsoleLogCopyToClipboard += CopyLogsToClipboard;
 
     List<string> consoleText = CompileRecentLogs();
     _ConsoleLogPaneView.Initialize(consoleText, _TextLabelPool);
@@ -213,18 +150,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     _ConsoleLogPaneView.SetText(consoleText);
   }
 
-  private void CopyLogsToClipboard() {
-    string logFull = "git hash: " + BuildFlags.kGitHash + "\n";
-    foreach (LogPacket logPacket in _LogToClipboard) {
-      logFull += logPacket.GetStringNoFromatting() + "\n";
-    }
-    CozmoBinding.SendToClipboard(logFull);
-    GUIUtility.systemCopyBuffer = logFull;
-  }
-
   private void OnConsoleLogPaneClosed() {
-    _ConsoleLogPaneView.ConsoleSOSToggle -= EnableSOSLogs;
-    _ConsoleLogPaneView.ConsoleLogCopyToClipboard -= CopyLogsToClipboard;
     _ConsoleLogPaneView.ConsoleLogToggleChanged -= OnConsoleToggleChanged;
     _ConsoleLogPaneView = null;
   }

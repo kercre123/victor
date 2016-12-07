@@ -568,11 +568,6 @@
               <FilePath>.\cubes\firmware.s</FilePath>
             </File>
             <File>
-              <FileName>micro_esb.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\cubes\micro_esb.cpp</FilePath>
-            </File>
-            <File>
               <FileName>cubes.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\cubes\cubes.cpp</FilePath>

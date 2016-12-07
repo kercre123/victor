@@ -88,7 +88,7 @@ void Lights::init() {
   memset(&lightController, 0, sizeof(lightController));
 }
 
-void Lights::manage() {
+int Lights::manage() {
   static unsigned int last_counter = 0;
   static unsigned int accumulator = 0;
 
@@ -105,13 +105,15 @@ void Lights::manage() {
   }
 
   if (frame_delta <= 0) {
-    return ;
+    return 0;
   }
 
   for(int i = 0; i < TOTAL_LIGHTS; ++i)
   {
     CalculateLEDColor(lightController.lights[i], frame_delta);
   }
+  
+  return frame_delta;
 }
 
 void Lights::update(LightValues& light, const LightState* params) {

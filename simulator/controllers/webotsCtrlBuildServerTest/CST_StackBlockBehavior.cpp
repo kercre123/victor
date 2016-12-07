@@ -82,7 +82,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       MakeSynchronous();
       DisableRandomPathSpeeds();
       StartMovieConditional("StackBlockBehavior");
-      TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
+      // TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
       
       // make sure rolling is unlocked
       UnlockId unlock = UnlockIdsFromString("StackTwoCubes");

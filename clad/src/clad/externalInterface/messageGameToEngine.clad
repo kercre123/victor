@@ -820,10 +820,6 @@ message GetAllDebugConsoleVarMessage {
 message GetJsonDasLogsMessage {
 }
 
-message SetEnableSOSLogging {
-  bool enabled
-}
-
 // Msg used by maya (and SDK) to disable reaction behaviors.
 message EnableReactionaryBehaviors {
   bool enabled

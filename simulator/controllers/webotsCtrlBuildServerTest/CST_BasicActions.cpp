@@ -66,7 +66,7 @@ namespace Anki {
         {
           MakeSynchronous();
           StartMovieConditional("BasicActions");
-          TakeScreenshotsAtInterval("BasicActions", 1.f);
+          // TakeScreenshotsAtInterval("BasicActions", 1.f);
 
           SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, 100, 100);
           _testState = TestState::MoveLiftDown;

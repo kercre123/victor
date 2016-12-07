@@ -1,14 +1,25 @@
-/**
- * File: safeMessageBuffer.cpp
+/*
+ * Copyright 2015-2016 Anki Inc.
  *
- * Author: wesley
- * Created: 2/10/2015
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Description: Utility for safe message serialization and deserialization.
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Copyright: Anki, Inc. 2015
- *
- **/
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ /**
+  * File: SafeMessageBuffer.cpp
+  *
+  * Description: Utility for safe message serialization and deserialization.
+  *
+  **/
 
 #include <CLAD/SafeMessageBuffer.h>
 #include <cassert>
@@ -107,7 +118,7 @@ size_t SafeMessageBuffer::CopyBytesOut(uint8_t* outBuffer, size_t bufferSize) co
   memcpy(outBuffer, _buffer, byteCount);
   return (byteCount);
 }
-  
+
 void SafeMessageBuffer::Clear()
 {
   memset(_buffer, 0, _bufferSize);
@@ -163,12 +174,12 @@ bool SafeMessageBuffer::ContentsEqual(const SafeMessageBuffer& other) const
     else if (other._buffer == nullptr || other._bufferSize == 0) {
         return false;
     }
-    
+
     size_t thisSize = (_writeHead > _readHead) ? _writeHead - _readHead : _bufferSize;
     uint8_t* thisBuffer = (_writeHead > _readHead) ? _readHead : _buffer;
     size_t otherSize = (other._writeHead > other._readHead) ? other._writeHead - other._readHead : other._bufferSize;
     uint8_t* otherBuffer = (other._writeHead > other._readHead) ? other._readHead : other._buffer;
-    
+
     if (thisSize != otherSize) {
         return false;
     }

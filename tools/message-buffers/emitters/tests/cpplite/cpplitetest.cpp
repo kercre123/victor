@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015-2016 Anki Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include "aligned-lite/CTest.h"
 #include <stdio.h>
@@ -18,26 +33,26 @@ int test_Foo()
   foo1.myNormal = 0x0eadbeef;
   foo1.myFoo = d2;
   //foo1.myString = "Blah Blah Blah";
-  
+
   if (!foo1.IsValid()) {
     printf("INVALID MESSAGE\n");
     return 1;
   }
-  
+
   Foo foo2;
-  
+
   memcpy(foo2.GetBuffer(), foo1.GetBuffer(), foo1.Size());
-  
+
   if (!foo2.IsValid() || foo1.Size() != foo2.Size()) {
     printf("INVALID COPY\n");
     return 1;
   }
-  
-  if (foo1.isFoo == foo2.isFoo && 
-      foo1.myByte == foo2.myByte && 
-      foo1.myShort == foo2.myShort && 
+
+  if (foo1.isFoo == foo2.isFoo &&
+      foo1.myByte == foo2.myByte &&
+      foo1.myShort == foo2.myShort &&
       foo1.myFloat == foo2.myFloat &&
-      foo1.myNormal == foo2.myNormal && 
+      foo1.myNormal == foo2.myNormal &&
       foo1.myFoo == foo2.myFoo) {
     printf("PASS foo1 == foo2\n");
     return 1;
@@ -59,24 +74,24 @@ int test_MyMessage()
   message.foo.myFloat = -0.0f;
   message.foo.myNormal = 0x0eadbeef;
   message.foo.myFoo = d2;
-  
+
   if (!message.IsValid()) {
     printf("INVALID MESSAGE 1\n");
     return 1;
   }
-  
+
   MyMessage message2;
   memcpy(message2.GetBuffer(), message.GetBuffer(), message.Size());
-  
+
   if (!message2.IsValid() || message2.Size() != message.Size()) {
     printf("INVALID COPY 1\n");
     return 1;
   }
-  
-  if (message.foo.isFoo == message.foo.isFoo && 
-      message.foo.myByte == message2.foo.myByte && 
-      message.foo.myShort == message2.foo.myShort && 
-      message.foo.myNormal == message2.foo.myNormal && 
+
+  if (message.foo.isFoo == message.foo.isFoo &&
+      message.foo.myByte == message2.foo.myByte &&
+      message.foo.myShort == message2.foo.myShort &&
+      message.foo.myNormal == message2.foo.myNormal &&
       message.foo.myFoo == message2.foo.myFoo) {
     printf("PASS message.foo == message2.foo\n");
   }
@@ -84,7 +99,7 @@ int test_MyMessage()
     printf("FAIL message.foo != message2.foo\n");
     return 0;
   }
-  
+
   Bar temp = {
     { 1, 1, 0, 0, 1, 0, 1, 0 },
     { 0, 1},
@@ -96,22 +111,22 @@ int test_MyMessage()
     1,
     { 2 },
   };
-  
+
   message.tag = MyMessage::Tag_bar;
   message.bar = temp;
-  
+
   if (!message.IsValid()) {
     printf("INVALID MESSAGE 2\n");
     return 1;
   }
-  
+
   memcpy(message2.GetBuffer(), message.GetBuffer(), message.Size());
-  
+
   if (!message2.IsValid() || message2.Size() != message.Size()) {
     printf("INVALID COPY 2\n");
     return 1;
   }
-  
+
   if (memcmp(&message.bar.byteBuff, &message2.bar.byteBuff, sizeof(message.bar.byteBuff)) == 0 &&
       memcmp(&message.bar.shortBuff, &message2.bar.shortBuff, sizeof(message.bar.shortBuff)) == 0 &&
       memcmp(&message.bar.enumBuff, &message2.bar.enumBuff, sizeof(message.bar.enumBuff)) == 0 &&
@@ -130,7 +145,7 @@ int main(int argc, char** argv)
   // fix warnings
   (void)argc;
   (void)argv;
-  
+
   if(!test_Foo()) {
     return 1;
   }
