@@ -12,10 +12,6 @@ public class ConsoleLogPane : MonoBehaviour {
 
   public static event ConsoleLogPaneOpenHandler ConsoleLogPaneOpened;
 
-  public delegate void ConsoleSOSLogButtonEnableHandler(bool enabled);
-
-  public event ConsoleSOSLogButtonEnableHandler ConsoleSOSToggle;
-
   private static void RaiseConsoleLogPaneOpened(ConsoleLogPane consoleLogPane) {
     if (ConsoleLogPaneOpened != null) {
       ConsoleLogPaneOpened(consoleLogPane);
@@ -25,10 +21,6 @@ public class ConsoleLogPane : MonoBehaviour {
   public delegate void ConsoleLogPaneClosedHandler();
 
   public event ConsoleLogPaneClosedHandler ConsoleLogPaneClosed;
-
-  public delegate void ConsoleLogCopyToClipboardHander();
-
-  public event ConsoleLogCopyToClipboardHander ConsoleLogCopyToClipboard;
 
   private void RaiseConsoleLogPaneClosed() {
     if (ConsoleLogPaneClosed != null) {
@@ -56,16 +48,10 @@ public class ConsoleLogPane : MonoBehaviour {
   private ConsoleLogToggle[] _LogToggles;
 
   [SerializeField]
-  private UnityEngine.UI.Toggle _SOSToggle;
-
-  [SerializeField]
   private UnityEngine.UI.Toggle _PauseToggle;
 
   [SerializeField]
   private UnityEngine.UI.Toggle _LatencyToggle;
-
-  [SerializeField]
-  private Button _CopyLogButton;
 
   private SimpleObjectPool<AnkiTextLabel> _TextLabelPool;
   private List<AnkiTextLabel> _TextLabelsUsed;
@@ -77,22 +63,11 @@ public class ConsoleLogPane : MonoBehaviour {
 
     RaiseConsoleLogPaneOpened(this);
 
-    _SOSToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled;
-    _SOSToggle.onValueChanged.AddListener(HandleToggleSOS);
-
     _PauseToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled;
     _PauseToggle.onValueChanged.AddListener(HandleTogglePause);
 
     _LatencyToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled;
     _LatencyToggle.onValueChanged.AddListener(HandleToggleLatency);
-
-    _CopyLogButton.onClick.AddListener(HandleOnCopyLogButton);
-  }
-
-  private void HandleOnCopyLogButton() {
-    if (ConsoleLogCopyToClipboard != null) {
-      ConsoleLogCopyToClipboard();
-    }
   }
 
   private void OnDestroy() {
@@ -100,12 +75,6 @@ public class ConsoleLogPane : MonoBehaviour {
     ReturnLabelsToPool();
 
     RaiseConsoleLogPaneClosed();
-  }
-
-  private void HandleToggleSOS(bool enable) {
-    if (ConsoleSOSToggle != null) {
-      ConsoleSOSToggle(enable);
-    }
   }
 
   // TODO add react behavior dropdown

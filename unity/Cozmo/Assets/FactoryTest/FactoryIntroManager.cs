@@ -53,8 +53,6 @@ public class FactoryIntroManager : MonoBehaviour {
   void Start() {
     _PingStatusComponent = GetComponent<PingStatus>();
 
-    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = true;
-
     SetStatusText("Not Connected");
 
     RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToClient;

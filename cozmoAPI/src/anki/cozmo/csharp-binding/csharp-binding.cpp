@@ -22,7 +22,6 @@
 #include "util/logging/channelFilter.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
-#include "util/logging/sosLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 
 #include <algorithm>
@@ -30,6 +29,7 @@
 #include <vector>
 
 #if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/cladLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "util/fileUtils/fileUtils.h"
@@ -210,6 +210,7 @@ int cozmo_startup(const char *configuration_data)
   // Initialize logging
   #if ANKI_DEV_CHEATS
     DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger"), appRunId);
+    Util::IFormattedLoggerProvider* unityLoggerProvider = new CLADLoggerProvider();
   #endif
   
   Anki::Util::IEventProvider* eventProvider = nullptr;
@@ -218,14 +219,13 @@ int cozmo_startup(const char *configuration_data)
     eventProvider = dasLoggerProvider;
   #endif
   
-  Util::IFormattedLoggerProvider* sosLoggerProvider = new Util::SosLoggerProvider();
   Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
-    sosLoggerProvider
 #if USE_DAS
-    , dasLoggerProvider
+    dasLoggerProvider,
 #endif
 #if ANKI_DEV_CHEATS
-    , new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
+    unityLoggerProvider,
+    new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
                             Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
   });
@@ -276,10 +276,11 @@ int cozmo_startup(const char *configuration_data)
     
     // set filter in the loggers
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
-    sosLoggerProvider->SetFilter(filterPtr);
     
-    // also parse additional info for providers
-    sosLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+#if ANKI_DEV_CHEATS
+    unityLoggerProvider->SetFilter(filterPtr);
+    unityLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+#endif
     
     #define FILTER_DAS 0 // for local testing only
     #if USE_DAS && FILTER_DAS

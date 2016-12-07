@@ -500,6 +500,10 @@ message VerifyDebugConsoleVarMessage {
   bool success
 }
 
+message DebugAppendConsoleLogLine {
+  string line
+}
+
 structure TimingInfo
 {
   float_32  avgTime_ms,

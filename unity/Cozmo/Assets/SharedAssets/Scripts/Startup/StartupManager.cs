@@ -210,10 +210,6 @@ public class StartupManager : MonoBehaviour {
   private void HandleConnectedToEngine(string connectionIdentifier) {
     DAS.Info("StartupManager.HandleConnectedToEngine", "Engine connected!");
     _EngineConnected = true;
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
-      // TODO: SOS logger is super old and rotten, commenting it out until someone actually has time to fix this
-      //ConsoleLogManager.Instance.EnableSOSLogs(true);
-    }
   }
 
   private void HandleDataLoaded(Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus message) {
@@ -329,11 +325,6 @@ public class StartupManager : MonoBehaviour {
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();
     ChestRewardManager.CreateInstance();
-
-
-    if (_IsDebugBuild) {
-      gameObject.AddComponent<SOSLogManager>();
-    }
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {

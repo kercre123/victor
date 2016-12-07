@@ -131,6 +131,7 @@ protected:
   
   void UpdateLatencyInfo();
   void SendSupportInfo() const;
+  void InitUnityLogger();
   
   EngineState _engineState = EngineState::Stopped;
 
