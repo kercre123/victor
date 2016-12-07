@@ -82,7 +82,7 @@ extern ControllerLights lightController;
 
 namespace Lights {
   void init();
-  void manage();
+  int manage();
   void update(LightValues& light, const LightState* ledParams);
   void setHeadlight(bool status);
 };

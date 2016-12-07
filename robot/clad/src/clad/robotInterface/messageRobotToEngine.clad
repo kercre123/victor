@@ -80,7 +80,7 @@ union RobotToEngine {
   ObjectTapped               activeObjectTapped     = 0xB6,
   DataDump                   dataDump               = 0xB7,
   PickAndPlaceResult         pickAndPlaceResult     = 0xB8,
-  // FREE SLOT                                      = 0xB9,
+  ObjectTappedFiltered       objectTappedFiltered   = 0xB9,
   RampTraverseStart          rampTraverseStarted    = 0xBA,
   RampTraverseComplete       rampTraverseCompleted  = 0xBB,
   BridgeTraverseStart        bridgeTraverseStarted  = 0xBC,

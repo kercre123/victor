@@ -61,6 +61,14 @@ message ObjectUpAxisChanged
   UpAxis  upAxis,
 }
 
+message ObjectTappedFiltered
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+  uint_8  tapTime,
+  uint_8  tapIntensity
+}
+
 message ObjectTapped
 {
   uint_32     timestamp,
@@ -75,6 +83,7 @@ message ObjectTapped
 message ObjectPowerLevel
 {
   uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32 missedPackets,
   uint_8  batteryLevel
 }
 

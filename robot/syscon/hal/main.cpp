@@ -76,9 +76,9 @@ int main(void)
   for (;;) {
     Battery::updateOperatingMode();
 
-    // This means that if the crypto engine is running, the lights will stop pulsing. 
+    // This means that if the crypto engine is running, the lights will stop pulsing.
     Tasks::manage();
-    Lights::manage();
+    Radio::rotate(Lights::manage());
     Backpack::manage();
     Temp::manage();
   }
