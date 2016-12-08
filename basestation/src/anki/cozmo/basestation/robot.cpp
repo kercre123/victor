@@ -3048,7 +3048,12 @@ const std::set<ObjectID> Robot::GetCarryingObjects() const
   }
   return objects;
 }
-    
+
+bool Robot::IsCarryingObject(const ObjectID& objectID) const
+{
+  return _carryingObjectID == objectID || _carryingObjectOnTopID == objectID;
+}
+
 void Robot::SetCarryingObject(ObjectID carryObjectID)
 {
   ObservableObject* object = _blockWorld->GetObjectByID(carryObjectID);

@@ -152,54 +152,126 @@ public:
   Robot(const RobotID_t robotID, const CozmoContext* context);
   ~Robot();
   // Explicitely delete copy and assignment operators (class doesn't support shallow copy)
+  // TEMP: use noncopyable instead
   Robot(const Robot&) = delete;
   Robot& operator=(const Robot&) = delete;
+
+  // =========== Robot properties ===========
+  
+  const RobotID_t GetID() const;
+
+  // Specify whether this robot is a physical robot or not.
+  // Currently, adjusts headCamPose by slop factor if it's physical.
+  void SetPhysicalRobot(bool isPhysical);
+  bool IsPhysical() const {return _isPhysical;}
+
+  // Whether or not to ignore all incoming external messages that create/queue actions
+  // Use with care: Make sure a call to ignore is eventually followed by a call to unignore
+  void SetIgnoreExternalActions(bool ignore) { _ignoreExternalActions = ignore; }
+  bool GetIgnoreExternalActions() { return _ignoreExternalActions;}
+
+  // =========== Robot Update ===========
   
   Result Update();
     
   Result UpdateFullRobotState(const RobotState& msg);
     
   bool HasReceivedRobotState() const;
-  
-  // Accessors
-  const RobotID_t        GetID()         const;
-  BlockWorld&            GetBlockWorld()       {assert(_blockWorld.get()); return *_blockWorld;}
-  const BlockWorld&      GetBlockWorld() const {assert(_blockWorld.get()); return *_blockWorld;}
-  
-  FaceWorld&             GetFaceWorld()        {assert(_faceWorld.get()); return *_faceWorld;}
-  const FaceWorld&       GetFaceWorld()  const {assert(_faceWorld.get()); return *_faceWorld;}
 
-  PetWorld&              GetPetWorld()         {assert(_petWorld.get()); return *_petWorld;}
-  const PetWorld&        GetPetWorld()   const {assert(_petWorld.get()); return *_petWorld;}
+  const bool GetTimeSynced() const {return _timeSynced;}
+  void       SetTimeSynced()       {_timeSynced = true; _syncTimeSentTime_sec = 0; }
+
+  Result SyncTime();  // TODO:(bn) only for robot event handler, move out of this header...
+
+  TimeStamp_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; }
+
+  // This is just for unit tests to fake a syncTimeAck message from the robot
+  // and force the head into calibrated state.
+  void FakeSyncTimeAck() { _timeSynced = true; _isHeadCalibrated = true; _isLiftCalibrated = true; }
+
+  // =========== Components ===========
+  
+  BlockWorld&       GetBlockWorld()       {assert(_blockWorld.get()); return *_blockWorld;}
+  const BlockWorld& GetBlockWorld() const {assert(_blockWorld.get()); return *_blockWorld;}
+  
+  FaceWorld&       GetFaceWorld()       {assert(_faceWorld.get()); return *_faceWorld;}
+  const FaceWorld& GetFaceWorld() const {assert(_faceWorld.get()); return *_faceWorld;}
+
+  PetWorld&       GetPetWorld()       {assert(_petWorld.get()); return *_petWorld;}
+  const PetWorld& GetPetWorld() const {assert(_petWorld.get()); return *_petWorld;}
+
+  VisionComponent&       GetVisionComponent()       { assert(_visionComponentPtr); return *_visionComponentPtr; }
+  const VisionComponent& GetVisionComponent() const { assert(_visionComponentPtr); return *_visionComponentPtr; }
   
   BlockTapFilterComponent& GetBlockTapFilter() {assert(_tapFilterComponent); return *_tapFilterComponent;}
   const BlockTapFilterComponent& GetBlockTapFilter() const {assert(_tapFilterComponent); return *_tapFilterComponent;}
 
-  const bool             GetTimeSynced() const {return _timeSynced;}
+  TextToSpeechComponent& GetTextToSpeechComponent() { return _textToSpeechComponent; }
+  // TODO:(bn)  // TEMP: add const version
+
+  MovementComponent&       GetMoveComponent()       { return _movementComponent; }
+  const MovementComponent& GetMoveComponent() const { return _movementComponent; }
+
+  LightsComponent&       GetLightsComponent()       { assert(_lightsComponent); return *_lightsComponent; }
+  const LightsComponent& GetLightsComponent() const { assert(_lightsComponent); return *_lightsComponent; }
+
+  const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
+  MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
+
+  const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
+  BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
+
+  const BehaviorFactory& GetBehaviorFactory() const;
+  BehaviorFactory&       GetBehaviorFactory();
   
-  //
-  // Localization
-  //
-  bool                   IsLocalized()     const;
-  void                   Delocalize(bool isCarryingObject);
+  const AIInformationAnalyzer& GetAIInformationAnalyzer() const { return *_aiInformationAnalyzer; }
+  AIInformationAnalyzer&       GetAIInformationAnalyzer()       { return *_aiInformationAnalyzer; }
+
+  // TEMP: consistency
+  inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
+    assert(_progressionUnlockComponent);
+    return *_progressionUnlockComponent;
+  }  
+  inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {
+    assert(_progressionUnlockComponent);
+    return *_progressionUnlockComponent;
+  }
+
+  const NVStorageComponent& GetNVStorageComponent() const { return _nvStorageComponent; }
+  NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
+  
+  const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
+  SpeedChooser& GetSpeedChooser() { return *_speedChooser; }
+  
+  const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
+  DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
+  
+  const Util::RandomGenerator& GetRNG() const { return *_context->GetRandom(); }
+  Util::RandomGenerator& GetRNG() { return *_context->GetRandom(); }
+  
+  // =========== Localization ===========
+  
+  bool IsLocalized() const;
+  void Delocalize(bool isCarryingObject);
+
+  // Updates the pose of the robot.
+  // Sends new pose down to robot.
+  void SetNewPose(const Pose3d& newPose);
       
   // Get the ID of the object we are localized to
-  const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
-  
-  // Mutators
-  void SetTimeSynced() {_timeSynced = true; _syncTimeSentTime_sec = 0; }
-  
+  const ObjectID& GetLocalizedTo() const {return _localizedToID;}
+    
   // Set the object we are localized to.
   // Use nullptr to UnSet the localizedTo object but still mark the robot
   // as localized (i.e. to "odometry").
-  Result                 SetLocalizedTo(const ObservableObject* object);
+  Result SetLocalizedTo(const ObservableObject* object);
   
   // Has the robot moved since it was last localized
-  bool                   HasMovedSinceBeingLocalized() const;
+  bool HasMovedSinceBeingLocalized() const;
   
   // Get the squared distance to the closest, most recently observed marker
   // on the object we are localized to
-  f32                    GetLocalizedToDistanceSq() const;
+  f32 GetLocalizedToDistanceSq() const;
   
   // TODO: Can this be removed in favor of the more general LocalizeToObject() below?
   Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);
@@ -207,71 +279,61 @@ public:
   Result LocalizeToObject(const ObservableObject* seenObject, ObservableObject* existingObject);
     
   // Returns true if robot is not traversing a path and has no actions in its queue.
-  bool   IsIdle() const;
+  bool IsIdle() const; // TODO:(bn) delete?? // TEMP: 
   
   // True if we are on the sloped part of a ramp
-  bool   IsOnRamp() const { return _onRamp; }
+  bool IsOnRamp() const { return _onRamp; }
     
   // Set whether or not the robot is on a ramp
   Result SetOnRamp(bool t);
     
   // Just sets the ramp to use and in which direction, not whether robot is on it yet
-  void   SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction);
+  void SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction);
 
   // True if robot is on charger
-  bool   IsOnCharger() const { return _isOnCharger; }
+  bool   IsOnCharger()         const { return _isOnCharger; }
   // True if we know we're on a connected charger, but not the contacts
   bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
   // True if robot is charging
-  bool   IsCharging() const { return _isCharging; }
+  bool   IsCharging()          const { return _isCharging; }
   // True if charger is out of spec
-  bool   IsChargerOOS() const { return _chargerOOS; }
+  bool   IsChargerOOS()        const { return _chargerOOS; }
   // Updates pose to be on charger
   Result SetPoseOnCharger();
   
-  // Sets the charger that it's docking to
-  void   SetCharger(const ObjectID& chargerID) { _chargerID = chargerID; }
-  const ObjectID GetCharger() const { return _chargerID; }
-  // Updates the pose of the robot.
-  // Sends new pose down to robot.
-  void SetNewPose(const Pose3d& newPose);
-  
+  // Sets the charger that it's docking to // TEMP: rename?
+  void           SetCharger(const ObjectID& chargerID) { _chargerID = chargerID; }
+  const ObjectID GetCharger() const                    { return _chargerID; }
+
+  // =========== Cliff reactions ===========
+
+  // whether or not the robot should react (the sensor may still be enabled)
+  // TEMP:  // TODO:(bn) do we need this anymore? kill it
   const bool GetIsCliffReactionDisabled() { return _isCliffReactionDisabled; }
   
-  //
-  // Camera / Vision
-  //
-  VisionComponent&         GetVisionComponent() { assert(_visionComponentPtr); return *_visionComponentPtr; }
-  const VisionComponent&   GetVisionComponent() const { assert(_visionComponentPtr); return *_visionComponentPtr; }
-  Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
-  Result                   GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const;
-  Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
+  // =========== Camera / Vision ===========
+  Vision::Camera GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
+  Result         GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const;
+  Pose3d         GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
   
   // Set the calibrated rotation of the camera
   void SetCameraRotation(f32 roll, f32 pitch, f32 yaw);
-  
-  // Specify whether this robot is a physical robot or not.
-  // Currently, adjusts headCamPose by slop factor if it's physical.
-  void SetPhysicalRobot(bool isPhysical);
-  bool IsPhysical() const {return _isPhysical;}
-  
-  // Whether or not to ignore all incoming external messages that create/queue actions
-  // Use with care: Make sure a call to ignore is eventually followed by a call to unignore
-  void SetIgnoreExternalActions(bool ignore) { _ignoreExternalActions = ignore; }
-  bool GetIgnoreExternalActions() { return _ignoreExternalActions;}
-    
-  //
-  // Pose (of the robot or its parts)
-  //
-  const Pose3d&          GetPose()         const;
-  const f32              GetHeadAngle()    const;
-  const f32              GetLiftAngle()    const;
-  const Pose3d&          GetLiftPose()     const { return _liftPose; }  // At current lift position!
-  const Pose3d&          GetLiftBasePose() const { return _liftBasePose; }
-  const PoseFrameID_t    GetPoseFrameID()  const { return _frameId; }
-  const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
-  Pose3d                 GetCameraPose(f32 atAngle) const;
-  Pose3d                 GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
+
+  // Return the timestamp of the last _processed_ image
+  TimeStamp_t GetLastImageTimeStamp() const;  
+
+  // =========== Pose (of the robot or its parts) ===========
+  const Pose3d&       GetPose() const;
+  const f32           GetHeadAngle() const;
+  const f32           GetLiftAngle() const;
+  const Pose3d&       GetLiftPose()     const { return _liftPose; } // At current lift position!
+  const Pose3d&       GetLiftBasePose() const { return _liftBasePose; }
+  const PoseFrameID_t GetPoseFrameID()  const { return _frameId; }
+  const Pose3d*       GetWorldOrigin()  const { return _worldOrigin; }
+  Pose3d              GetCameraPose(f32 atAngle) const;
+  Pose3d              GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
+
+  OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
   
   // Figure out the head angle to look at the given pose. Orientation of pose is
   // ignored. All that matters is its distance from the robot (in any direction)
@@ -343,9 +405,7 @@ public:
   // Computes robot origin pose for the given drive center pose
   void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose) const;
     
-  //
-  // Path Following
-  //
+  // =========== Path Following ===========
 
   // Begin computation of a path to drive to the given pose (or poses). Once the path is computed, the robot
   // will immediately start following it, and will replan (e.g. to avoid new obstacles) automatically If
@@ -377,32 +437,29 @@ public:
   // Replans with ComputeNewPathIfNeeded
   void RestartPlannerIfNeeded(bool forceReplan);
     
-  bool IsTraversingPath()      const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
-    
-  s8   GetCurrentPathSegment()  const { return _currPathSegment; }
-  u16  GetLastRecvdPathID()     const { return _lastRecvdPathID; }
-  u16  GetLastSentPathID()      const { return _lastSentPathID;  }
+  bool IsTraversingPath()      const { return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID); }
+ 
+  s8   GetCurrentPathSegment() const { return _currPathSegment; }
+  u16  GetLastRecvdPathID()    const { return _lastRecvdPathID; }
+  u16  GetLastSentPathID()     const { return _lastSentPathID; }
 
   bool IsUsingManualPathSpeed() const {return _usingManualPathSpeed;}
   
   // Execute a manually-assembled path
   Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
   
-  //
-  // Object Docking / Carrying
-  //
+  // =========== Object Docking / Carrying ===========
 
-  const ObjectID&  GetDockObject()          const {return _dockObjectID;}
-  const ObjectID&  GetCarryingObject()      const {return _carryingObjectID;}
-  const ObjectID&  GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
-  const std::set<ObjectID> GetCarryingObjects() const;
-  const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
+  const ObjectID&            GetDockObject()          const {return _dockObjectID;}
+  const ObjectID&            GetCarryingObject()      const {return _carryingObjectID;}
+  const ObjectID&            GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
+  const std::set<ObjectID>   GetCarryingObjects()     const;
+  const Vision::KnownMarker* GetCarryingMarker()      const {return _carryingMarker; }
 
   bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
-  bool IsCarryingObject(const ObjectID& objectID) const { return _carryingObjectID == objectID || _carryingObjectOnTopID == objectID; }
+  bool IsCarryingObject(const ObjectID& objectID) const;
   
   bool IsPickingOrPlacing() const {return _isPickingOrPlacing;}
-  OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
   
   EncodedImage& GetEncodedImage() { return _encodedImage; }
   
@@ -473,9 +530,12 @@ public:
   // objects' pose states as Unknown instead of the default Dirty)
   Result SetCarriedObjectAsUnattached(bool clearObjects = false);
 
-  //
-  // Object Stacking
-  //
+  // Send a message to the robot to place whatever it is carrying on the
+  // ground right where it is. Returns RESULT_FAIL if robot is not carrying
+  // anything.
+  Result PlaceObjectOnGround(const bool useManualSpeed = false);
+
+  // =========== Object Stacking ===========
   
   // lets the robot decide if we should try to stack on top of the given object, so that we have a central place
   // to make the appropriate checks.
@@ -492,9 +552,7 @@ public:
   bool CanPickUpObjectFromGround(const ObservableObject& object) const;
     
   /*
-  //
-  // Proximity Sensors
-  //
+  // =========== Proximity Sensors ===========
   u8   GetProxSensorVal(ProxSensor_t sensor)    const {return _proxVals[sensor];}
   bool IsProxSensorBlocked(ProxSensor_t sensor) const {return _proxBlocked[sensor];}
 
@@ -514,11 +572,8 @@ public:
   u16  GetCliffDataRaw() const { return _cliffDataRaw; }
   
   // sets distance detected by forward proximity sensor
-  void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
-  u16 GetForwardSensorValue() const { return _forwardSensorValue_mm; }
-
-  // Return the timestamp of the last _processed_ image
-  TimeStamp_t GetLastImageTimeStamp() const;
+  void SetForwardSensorValue(u16 value_mm)       { _forwardSensorValue_mm = value_mm; }
+  u16  GetForwardSensorValue()             const { return _forwardSensorValue_mm; }
 
   // Evaluate how suspicious the cliff that caused robot to stop is based on how much the reading
   // actually rises while it's stopping in reaction to the supposed cliff.
@@ -531,8 +586,8 @@ public:
   u16 GetCliffDetectThreshold() const { return _cliffDetectThreshold; }
   
   // Get the mean/variance of cliff readings over the past few seconds. (See kCliffSensorRunningStatsWindowSize)
-  f32 GetCliffRunningMean() const { return _cliffRunningMean; }
-  f32 GetCliffRunningVar() const  { return _cliffRunningVar;  }
+  f32  GetCliffRunningMean() const { return _cliffRunningMean; }
+  f32  GetCliffRunningVar()  const { return _cliffRunningVar; }
   void ClearCliffRunningStats();
   
   // =========== IMU Data =============
@@ -549,18 +604,15 @@ public:
   // z-axis: points out top of head
   const GyroData& GetHeadGyroData() const {return _robotGyro; }
   
+  // send the request down to the robot
+  Result RequestIMU(const u32 length_ms) const;
+
   // =========== Actions Commands =============
     
   // Return a reference to the robot's action list for directly adding things
   // to do, either "now" or in queues.
   // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
-  ActionList& GetActionList() { return *_actionList; }
-  
-  // Send a message to the robot to place whatever it is carrying on the
-  // ground right where it is. Returns RESULT_FAIL if robot is not carrying
-  // anything.
-  Result PlaceObjectOnGround(const bool useManualSpeed = false);
-    
+  ActionList& GetActionList() { return *_actionList; }    
     
   // =========== Animation Commands =============
     
@@ -569,8 +621,8 @@ public:
   s32 GetNumAnimationBytesPlayed() const;
   s32 GetNumAnimationAudioFramesPlayed() const;
   IPathPlanner* GetLongPathPlannerPtr() const {return _longPathPlanner; }
-  // Returns a reference to a count of the total number of bytes or audio frames
-  // streamed to the robot.
+
+  // Returns a count of the total number of bytes or audio frames streamed to the robot.
   s32 GetNumAnimationBytesStreamed() const;
   s32 GetNumAnimationAudioFramesStreamed() const;
   
@@ -590,16 +642,6 @@ public:
   void SetNumAnimationAudioFramesPlayed(s32 numAnimationAudioFramesPlayed) { _numAnimationAudioFramesPlayed = numAnimationAudioFramesPlayed; }
   void SetEnabledAnimTracks(s32 enabledAnimTracks) { _enabledAnimTracks = enabledAnimTracks; }
   void SetAnimationTag(s32 animationTag) { _animationTag = animationTag; }
-  
-  // =========== Audio =============
-  Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
-  
-  
-  // Load in all data-driven behaviors
-  void LoadBehaviors();
-
-  // Load in all data-driven emotion events
-  void LoadEmotionEvents();
 
   // Returns true if the robot is currently playing an animation, according
   // to most recent state message. NOTE: Will also be true if the animation
@@ -612,23 +654,26 @@ public:
   // Returns the "tag" of the animation currently playing on the robot
   u8 GetCurrentAnimationTag() const;
 
-  Result SyncTime();
+  u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
   
-  // This is just for unit tests to fake a syncTimeAck message from the robot
-  // and force the head into calibrated state.
-  void FakeSyncTimeAck() { _timeSynced = true; _isHeadCalibrated = true; _isLiftCalibrated = true; }
+  // =========== Audio =============
+  Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
   
-  Result RequestIMU(const u32 length_ms) const;
+  
+  // Load in all data-driven behaviors
+  void LoadBehaviors(); // TEMP: move to ai component
 
-  // Get text to speech component
-  TextToSpeechComponent& GetTextToSpeechComponent() { return _textToSpeechComponent; }
-  
+  // =========== Mood =============
+
+  // Load in all data-driven emotion events // TEMP: move to mood manager?
+  void LoadEmotionEvents();      
 
   // =========== Pose history =============
   
   RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
   const RobotPoseHistory* GetPoseHistory() const { return _poseHistory; }
   
+  // TEMP: delete these??
 //  Result AddRawOdomPoseToHistory(const TimeStamp_t t,
 //                                 const PoseFrameID_t frameID,
 //                                 const f32 pose_x, const f32 pose_y, const f32 pose_z,
@@ -655,7 +700,6 @@ public:
                                     const f32 head_angle,
                                     const f32 lift_angle);
 
-  TimeStamp_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; }
     
   bool IsValidPoseKey(const HistPoseKey key) const;
     
@@ -666,7 +710,7 @@ public:
 
   Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const;
   
-  // ============= Reactions =============
+  // ============= Reactions ============= // TEMP:  // TODO:(bn) delete this whole section
   using ReactionCallback = std::function<Result(Robot*,Vision::ObservedMarker*)>;
   using ReactionCallbackIter = std::list<ReactionCallback>::const_iterator;
     
@@ -681,6 +725,7 @@ public:
   
   // ========= Lights ==========
 
+ // TEMP: kill this? (use component instead)
   Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights) { return GetLightsComponent().SetObjectLights(objectID, lights); }
   Result SetBackpackLights(const BackpackLights& lights) { return GetLightsComponent().SetBackpackLights(lights); }
   void SetHeadlight(bool on) { GetLightsComponent().SetHeadlight(on); }
@@ -703,9 +748,7 @@ public:
     
   // =========  Other State  ============
   f32 GetBatteryVoltage() const { return _battVoltage; }
-  
-  u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
-    
+      
   // Abort everything the robot is doing, including path following, actions,
   // animations, and docking. This is like the big red E-stop button.
   // TODO: Probably need a more elegant way of doing this.
@@ -754,45 +797,6 @@ public:
   void SetTimeSinceLastImage(double timeSinceLastImage) { _timeSinceLastImage_s = 0.0; }
   double GetCurrentImageDelay() const { return std::max(_lastImageLatencyTime_s, _timeSinceLastImage_s); }
   
-  MovementComponent& GetMoveComponent() { return _movementComponent; }
-  const MovementComponent& GetMoveComponent() const { return _movementComponent; }
-
-  LightsComponent& GetLightsComponent() { assert(_lightsComponent); return *_lightsComponent; }
-  const LightsComponent& GetLightsComponent() const { assert(_lightsComponent); return *_lightsComponent; }
-
-  const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
-  MoodManager& GetMoodManager() { assert(_moodManager); return *_moodManager; }
-
-  const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
-  BehaviorManager& GetBehaviorManager() { return *_behaviorMgr; }
-  
-  const AIInformationAnalyzer& GetAIInformationAnalyzer() const { return *_aiInformationAnalyzer; }
-  AIInformationAnalyzer& GetAIInformationAnalyzer() { return *_aiInformationAnalyzer; }
-
-  const BehaviorFactory& GetBehaviorFactory() const;
-  BehaviorFactory& GetBehaviorFactory();
-
-  inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
-    assert(_progressionUnlockComponent);
-    return *_progressionUnlockComponent;
-  }  
-  inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {
-    assert(_progressionUnlockComponent);
-    return *_progressionUnlockComponent;
-  }
-
-  const NVStorageComponent& GetNVStorageComponent() const { return _nvStorageComponent; }
-  NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
-  
-  const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
-  SpeedChooser& GetSpeedChooser() { return *_speedChooser; }
-  
-  const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
-  DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
-  
-  const Util::RandomGenerator& GetRNG() const { return *_context->GetRandom(); }
-  Util::RandomGenerator& GetRNG() { return *_context->GetRandom(); }
-
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
@@ -833,29 +837,29 @@ protected:
   
   RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
   // The robot's identifier
-  RobotID_t         _ID;
-  bool              _isPhysical       = false;
-  u32               _serialNumberHead = 0;
-  u32               _serialNumberBody = 0;
-  u32               _modelNumber      = 0;
-  s32               _hwVersion        = 0;
+  RobotID_t _ID;
+  bool      _isPhysical       = false;
+  u32       _serialNumberHead = 0;
+  u32       _serialNumberBody = 0;
+  u32       _modelNumber      = 0;
+  s32       _hwVersion        = 0;
   
   // Whether or not sync time was acknowledged by physical robot
-  bool              _timeSynced = false;
-  
+  bool _timeSynced = false;
+
   // Flag indicating whether a robotStateMessage was ever received
-  TimeStamp_t       _lastMsgTimestamp;
-  bool              _newStateMsgAvailable = false;
+  TimeStamp_t _lastMsgTimestamp;
+  bool        _newStateMsgAvailable = false;
     
   // A reference to the BlockWorld the robot lives in
-  std::unique_ptr<BlockWorld>        _blockWorld;
-    
+  std::unique_ptr<BlockWorld>            _blockWorld;
+ 
   // A container for faces/people the robot knows about
-  std::unique_ptr<FaceWorld>         _faceWorld;
-  
+  std::unique_ptr<FaceWorld>             _faceWorld;
+ 
   // A container for all pet faces the robot knows about
-  std::unique_ptr<PetWorld>          _petWorld;
-  
+  std::unique_ptr<PetWorld>              _petWorld;
+ 
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
   std::unique_ptr<AIInformationAnalyzer> _aiInformationAnalyzer;
   
@@ -863,12 +867,12 @@ protected:
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;
   
   ///////// Animation /////////
-  AnimationStreamer           _animationStreamer;
-  s32 _numAnimationBytesPlayed         = 0;
-  s32 _numAnimationBytesStreamed       = 0;
-  s32 _numAnimationAudioFramesPlayed   = 0;
-  s32 _numAnimationAudioFramesStreamed = 0;
-  u8  _animationTag                    = 0;
+  AnimationStreamer _animationStreamer;
+  s32               _numAnimationBytesPlayed         = 0;
+  s32               _numAnimationBytesStreamed       = 0;
+  s32               _numAnimationAudioFramesPlayed   = 0;
+  s32               _numAnimationAudioFramesStreamed = 0;
+  u8                _animationTag                    = 0;
   
   DrivingAnimationHandler* _drivingAnimationHandler;
   
