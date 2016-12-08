@@ -8,9 +8,13 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/robot/matlabInterface.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
@@ -745,11 +749,12 @@ TEST(BlockWorld, CubeStacks)
     lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, lastResult);
 
-    ObservableObject* foundObject1 = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+    ObservableObject* foundObject1 = blockWorld.FindObjectOnTopOf(*object1, 2*STACKED_HEIGHT_TOL_MM);
     ASSERT_EQ(nullptr, foundObject1);
     ASSERT_NE(object2, foundObject1);
 
-    ObservableObject* foundObject2 = blockWorld.FindObjectOnTopOf(*object2, STACKED_HEIGHT_TOL_MM);
+    ObservableObject* foundObject2 = blockWorld.FindObjectOnTopOf(*object2, 2*STACKED_HEIGHT_TOL_MM);
+
     ASSERT_EQ(nullptr, foundObject2);
     ASSERT_NE(object1, foundObject2);
   }
@@ -1316,6 +1321,495 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 #endif
   
 } // TEST_P(BlockWorldTest, BlockAndRobotLocalization)
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(BlockWorldTest, BlockConfigurationManager)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  const time_t currTime = time(0);
+  fprintf(stdout, "Curr time seed:%ld\n", currTime);
+  auto randGen = Util::RandomGenerator(static_cast<uint>(currTime));
+
+  //////////
+  //// Helper Functions
+  //////////
+  auto setPoseHelper = [&robot](ObservableObject* object, Pose3d& pose){
+    robot.GetObjectPoseConfirmer().SetPoseState(object, PoseState::Known);
+    object->SetIsMoving(false, 0);
+    object->SetLastObservedTime(10);
+    pose.SetParent(robot.GetPose().GetParent());
+    robot.GetObjectPoseConfirmer().AddVisualObservation(object, pose, false, 10);
+    robot.GetObjectPoseConfirmer().AddVisualObservation(object, pose, false, 10);
+    ASSERT_EQ(object->GetPoseState(), PoseState::Known);
+    ASSERT_EQ(object->IsActive(), true);
+    //ASSERT_EQ(object->CanBeUsedForLocalization(), true);
+    ASSERT_EQ(robot.GetBlockWorld().GetNumOrigins(), 1);
+    
+  };
+  
+  auto getRandomFlatXRotation = [&randGen](){
+    const std::vector<RotationVector3d> flatXRotations{
+      {0,   X_AXIS_3D()},
+      {M_PI_2,   X_AXIS_3D()},
+      {M_PI,   X_AXIS_3D()},
+      {-M_PI_2,  X_AXIS_3D()}
+    };
+    const int xDegreeIndex = randGen.RandInt(static_cast<int>(flatXRotations.size()));
+    return flatXRotations[xDegreeIndex];
+  };
+  
+  auto getRandomFlatYRotation = [&randGen](){
+    const std::vector<RotationVector3d> flatYRotations{
+      {0,   Y_AXIS_3D()},
+      {M_PI_2,   Y_AXIS_3D()},
+      {M_PI,   Y_AXIS_3D()},
+      {-M_PI_2,  Y_AXIS_3D()}
+    };
+    const int yDegreeIndex = randGen.RandInt(static_cast<int>(flatYRotations.size()));
+    
+    return flatYRotations[yDegreeIndex];
+  };
+  
+  // assumes resting flat
+  auto getRandomZRotation = [&randGen](const Pose3d& pose){
+    AxisName name = pose.GetRotationMatrix().GetRotatedParentAxis<'Z'>();
+    
+    Vec3f dominantAxis;
+    switch (name) {
+      case AxisName::X_NEG:
+      case AxisName::X_POS:
+      {
+        dominantAxis = X_AXIS_3D();
+        break;
+      }
+      case AxisName::Y_NEG:
+      case AxisName::Y_POS:
+      {
+        dominantAxis = Y_AXIS_3D();
+        break;
+      }
+      case AxisName::Z_NEG:
+      case AxisName::Z_POS:
+      {
+        dominantAxis = Z_AXIS_3D();
+        break;
+      }
+    }
+    
+    const RotationVector3d randRot = {randGen.RandDblInRange(-M_PI, M_PI), dominantAxis};
+
+    return randRot;
+  };
+  
+  auto rotateForWorldZ = [&randGen](const Pose3d& pose, const Radians& rotation){
+    AxisName name = pose.GetRotationMatrix().GetRotatedParentAxis<'Z'>();
+    
+    Vec3f dominantAxis;
+    switch (name) {
+      case AxisName::X_NEG:
+      case AxisName::X_POS:
+      {
+        dominantAxis = X_AXIS_3D();
+        break;
+      }
+      case AxisName::Y_NEG:
+      case AxisName::Y_POS:
+      {
+        dominantAxis = Y_AXIS_3D();
+        break;
+      }
+      case AxisName::Z_NEG:
+      case AxisName::Z_POS:
+      {
+        dominantAxis = Z_AXIS_3D();
+        break;
+      }
+    }
+    
+    const RotationVector3d randRot = {rotation, dominantAxis};
+    return Pose3d(randRot, {0,0,0}, &pose);
+  };
+  
+  
+  
+  auto getRandRotationRestingFlat = [&getRandomFlatXRotation, &getRandomFlatYRotation](){
+    return Rotation3d(getRandomFlatXRotation()) *
+           Rotation3d(getRandomFlatYRotation()) *
+           Rotation3d(0, Z_AXIS_3D());
+  };
+  
+  auto getRandRotatedRestingFlatPose = [&getRandRotationRestingFlat, &getRandomZRotation](const Pose3d& pose){
+    const Pose3d partialRot(getRandRotationRestingFlat(), {0,0,0}, &pose);
+    Pose3d wrtOrigin = Pose3d(getRandomZRotation(partialRot), {0,0,0}, &partialRot).GetWithRespectToOrigin();
+    return wrtOrigin;
+  };
+  
+  
+  //////////
+  //// Setup Robot/viz/update ability
+  //////////
+  Json::Reader reader;
+  Json::Value jsonRoot;
+  std::vector<std::string> jsonFileList;
+  
+  const std::string subPath("test/blockWorldTests/");
+  const std::string jsonFilename = subPath + "visionTest_VaryingDistance.json";
+  
+  fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
+  
+  const bool jsonParseResult = cozmoContext->GetDataPlatform()->readAsJson(Anki::Util::Data::Scope::Resources, jsonFilename, jsonRoot);
+  ASSERT_TRUE(jsonParseResult);
+  
+  //  Robot robot(0, 0, &blockWorld, 0);    // TODO: Support multiple robots
+  
+  ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
+  Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
+  robot.GetVisionComponent().SetCameraCalibration(calib);
+  
+  bool checkRobotPose;
+  ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));
+  
+
+  // Fake a state message update for robot
+  // The robot should not report at t=0, since we are after timeSync and 0 is used by the
+  // robot constructor to set everything to 0
+  RobotState stateMsg(1, // timestamp,
+                      0, // pose_frame_id,
+                      1, // pose_origin_id,
+                      RobotPose(0.f,0.f,0.f,0.f,0.f),
+                      0.f, // lwheel_speed_mmps,
+                      0.f, // rwheel_speed_mmps,
+                      0.f, // headAngle,
+                      0.f, // liftAngle,
+                      0.f, // liftHeight,
+                      AccelData(),
+                      GyroData(),
+                      0.f, // batteryVoltage,
+                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
+                      0, // lastPathID,
+                      0, // cliffDataRaw,
+                      0, // currPathSegment,
+                      0); // numFreeSegmentSlots)
+  
+  robot.UpdateFullRobotState(stateMsg);
+  // for calling robot update
+  std::list<Vision::ObservedMarker> emptyMarkersList;
+  const Pose3d robotPose = robot.GetPose().GetWithRespectToOrigin();
+    //////////
+  //// Create Blocks
+  //////////
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  ASSERT_EQ(blockWorld.GetNumOrigins(), 0);
+  
+  // Add object
+  ObjectID objID1 = blockWorld.AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  ObjectID objID2 = blockWorld.AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  ObjectID objID3 = blockWorld.AddActiveObject(2, 2, ActiveObjectType::OBJECT_CUBE3);
+
+  ObservableObject* object1 = blockWorld.GetObjectByID(objID1);
+  ASSERT_NE(nullptr, object1);
+  ASSERT_EQ(object1->GetPoseState(), PoseState::Unknown);
+  ASSERT_EQ(object1->IsActive(), true);
+  
+  ObservableObject* object2 = blockWorld.GetObjectByID(objID2);
+  ASSERT_NE(nullptr, object2);
+  
+  ObservableObject* object3 = blockWorld.GetObjectByID(objID3);
+  ASSERT_NE(nullptr, object3);
+  
+  /////////
+  // Test stacks of cubes
+  /////////
+  const int numberOfStackTests = 500;
+  const int numberOfTestsWithTwoBlocks = numberOfStackTests/2;
+  const float oddsFirstBlockOnGround = 0.7;
+  const float oddsSecondBlockInStack = 0.7;
+  const float oddsThirdBlockInStack = 0.7;
+  
+  const float xMinGrid = 0;
+  const float xMaxGrid = 100;
+  const float yMinGrid = 0;
+  const float yMaxGrid = 100;
+  
+  
+  for(int i = 0; i < numberOfStackTests; i++){
+    const bool useThirdBlock = i > numberOfTestsWithTwoBlocks;
+    
+    const bool firstBlockOnGround = randGen.RandDblInRange(0,1) < oddsFirstBlockOnGround;
+    const bool secondBlockInStack = randGen.RandDblInRange(0,1) < oddsSecondBlockInStack;
+    const bool thirdBlockInStack = useThirdBlock && randGen.RandDblInRange(0,1) < oddsThirdBlockInStack;
+ 
+    Pose3d ob1Pose;
+    Pose3d ob2Pose;
+    Pose3d ob3Pose;
+    
+    
+    // set up base block pose
+    const float ob1X = randGen.RandDblInRange(xMinGrid, xMaxGrid);
+    const float ob1Y = randGen.RandDblInRange(yMinGrid, yMaxGrid);
+    const float ob1Z = firstBlockOnGround ? object1->GetSize().z()/2 : object1->GetSize().z()*5;
+    ob1Pose = Pose3d(0, Z_AXIS_3D(), {ob1X, ob1Y, ob1Z}, &robotPose);
+    
+    
+    // set up second block pose
+    const float ob1XOffsetRange = object1->GetSize().x()/3;
+    const float ob1YOffsetRange = object1->GetSize().y()/3;
+    {
+      // move the block so that it is somewhat overlapping with the base cube
+      float xOffsetOb2 = randGen.RandDblInRange(-ob1XOffsetRange, ob1XOffsetRange);
+      float yOffsetOb2 = randGen.RandDblInRange(-ob1YOffsetRange, ob1YOffsetRange);
+      float zOffsetOb2 = object1->GetSize().z();
+
+      if(!secondBlockInStack){
+        // Move the block's offset in one direction so that it is out of range
+        const float randSelection = randGen.RandDblInRange(0, 1);
+        if(randSelection < 0.3){
+          xOffsetOb2 += ob1XOffsetRange * 10;
+        }else if(randSelection < 0.6){
+          yOffsetOb2 += ob1YOffsetRange * 10;
+        }else{
+          zOffsetOb2 += zOffsetOb2;
+        }
+      }
+      
+      ob2Pose = Pose3d(0, Z_AXIS_3D(), {xOffsetOb2 + ob1Pose.GetTranslation().x(),
+                                        yOffsetOb2 + ob1Pose.GetTranslation().y(),
+                                        zOffsetOb2 + ob1Pose.GetTranslation().z()}, &robotPose);
+    }
+    
+    // set up third block pose
+    {
+      if(useThirdBlock){
+        float xOffsetOb3 = randGen.RandDblInRange(-ob1XOffsetRange, ob1XOffsetRange);
+        float yOffsetOb3 = randGen.RandDblInRange(-ob1YOffsetRange, ob1YOffsetRange);
+        float zOffsetOb3 = object1->GetSize().z()*2;
+        
+        if(!thirdBlockInStack){
+          // Move the block's offset in one direction so that it is out of range
+          const float randSelection = randGen.RandDblInRange(0, 1);
+          if(randSelection < 0.3){
+            xOffsetOb3 += ob1XOffsetRange * 10;
+          }else if(randSelection < 0.6){
+            yOffsetOb3 += ob1YOffsetRange * 10;
+          }else{
+            zOffsetOb3 += zOffsetOb3;
+          }
+        }
+
+        ob3Pose = Pose3d(0, Z_AXIS_3D(), {xOffsetOb3 + ob1Pose.GetTranslation().x(),
+                                          yOffsetOb3 + ob1Pose.GetTranslation().y(),
+                                          zOffsetOb3 + ob1Pose.GetTranslation().z()}, &robotPose);
+      }else{
+        ob3Pose = Pose3d(0, Z_AXIS_3D(), {xMaxGrid*2, yMaxGrid*2, 0}, &robotPose);
+      }
+    }
+    
+    Pose3d finalOb1Pose = getRandRotatedRestingFlatPose(ob1Pose);
+    Pose3d finalOb2Pose = getRandRotatedRestingFlatPose(ob2Pose);
+    Pose3d finalOb3Pose = getRandRotatedRestingFlatPose(ob3Pose);
+    
+    // set the final poses
+    setPoseHelper(object1, finalOb1Pose);
+    setPoseHelper(object2, finalOb2Pose);
+    setPoseHelper(object3, finalOb3Pose);
+    
+    
+    // update the stack cache
+    robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
+    robot.GetBlockWorld().Update(emptyMarkersList);
+    
+    // check that the expected number of stacks exist
+    const auto& stacks = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache();
+    const bool stackShouldExist = firstBlockOnGround && secondBlockInStack;
+    
+    // for testing broken cases
+    /**Rotation3d ob1Rot = Rotation3d(M_PI, X_AXIS_3D()) *
+                        Rotation3d(M_PI, Y_AXIS_3D()) *
+                        Rotation3d(0, Z_AXIS_3D());
+    Pose3d finalOb1Pose(ob1Rot,{56, 91, 22});
+                                   
+    Rotation3d ob2Rot = Rotation3d(M_PI, X_AXIS_3D()) *
+                                   Rotation3d(M_PI, Y_AXIS_3D()) *
+                                   Rotation3d(0, Z_AXIS_3D());
+    Pose3d finalOb2Pose(ob2Rot,{70, 80, 66});**/
+
+    
+    
+    fprintf(stdout,  "Stack of cubes test %d stackShouldExist:%d, stackCount:%d, \
+useThirdBlock:%d, thirdBlockInStack:%d\n",
+                     i, stackShouldExist, stacks.ConfigurationCount(),
+                     useThirdBlock, thirdBlockInStack);
+            
+    fprintf(stdout, "Ob1 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
+            finalOb1Pose.GetWithRespectToOrigin().GetTranslation().x(),
+            finalOb1Pose.GetWithRespectToOrigin().GetTranslation().y(),
+            finalOb1Pose.GetWithRespectToOrigin().GetTranslation().z(),
+            RAD_TO_DEG_F32(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG_F32(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG_F32(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+    
+    fprintf(stdout, "Ob2 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
+            finalOb2Pose.GetWithRespectToOrigin().GetTranslation().x(),
+            finalOb2Pose.GetWithRespectToOrigin().GetTranslation().y(),
+            finalOb2Pose.GetWithRespectToOrigin().GetTranslation().z(),
+            RAD_TO_DEG_F32(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG_F32(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG_F32(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+    
+    fprintf(stdout, "Ob3 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
+            finalOb3Pose.GetWithRespectToOrigin().GetTranslation().x(),
+            finalOb3Pose.GetWithRespectToOrigin().GetTranslation().y(),
+            finalOb3Pose.GetWithRespectToOrigin().GetTranslation().z(),
+            RAD_TO_DEG_F32(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG_F32(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG_F32(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+    
+    ASSERT_EQ(stackShouldExist, stacks.ConfigurationCount() > 0);
+    
+    if(stackShouldExist && useThirdBlock && thirdBlockInStack){
+      ASSERT_TRUE(stacks.ConfigurationCount() == 1);
+      ASSERT_TRUE(stacks.GetStacks()[0]->GetStackHeight() == 3);
+    }else if(stackShouldExist && useThirdBlock && !thirdBlockInStack){
+      ASSERT_TRUE(stacks.ConfigurationCount() == 1);
+      ASSERT_TRUE(stacks.GetStacks()[0]->GetStackHeight() == 2);
+    }
+  }
+  
+  
+  /////////
+  // Test pyramids
+  /////////
+  
+  /**
+  * What this currently tests: valid pyramid base states - place cube to the each of the 4 sides
+  * of a static cube and rotate both of them along their 90 degree turns.
+  *
+  * What it needs to be able to test:
+  *  - Placement of a valid top block on top of the base
+  *  - Placement of an invalid top block close to a base
+  *  - Invalid bases
+  *  - Base blocks which are at slight angles to each other in addition to offsets
+  *  - Base blocks which are slightly inside one another (this can happen in viz)
+  *  - Scenarios with more than 3 cubes which allow for multiple base/pyramid counts
+  *
+  **/
+  
+  ObservableObject* staticBlock = blockWorld.GetObjectByID(objID1);
+  ASSERT_NE(nullptr, staticBlock);
+
+  ObservableObject* baseBlock = blockWorld.GetObjectByID(objID2);
+  ASSERT_NE(nullptr, baseBlock);
+  
+  ObservableObject* topBlock = blockWorld.GetObjectByID(objID3);
+  ASSERT_NE(nullptr, topBlock);
+  
+  // consts
+  Json::Value fakeJSON;
+  const int pyramidTestRepetitionCount = 10;
+  
+  const std::vector<float> orientationList = {0, M_PI_2, M_PI, -M_PI_2};
+  
+  const float blockSize = staticBlock->GetSize().x();
+  const float blockHeightCenter = staticBlock->GetSize().z()/2;
+  std::vector<std::pair<float, float>> baseOffsets;
+  baseOffsets.push_back(std::make_pair(0, blockSize));
+  baseOffsets.push_back(std::make_pair(0, -blockSize));
+  baseOffsets.push_back(std::make_pair(blockSize, 0));
+  baseOffsets.push_back(std::make_pair(-blockSize, 0));
+  
+  for(int i = 0; i < pyramidTestRepetitionCount; i++){
+    for(const float staticOrientation: orientationList){
+      Pose3d staticPose = Pose3d(getRandRotationRestingFlat(), {0,0, blockHeightCenter}, &robotPose);
+      Pose3d staticPoseFinal = rotateForWorldZ(staticPose, staticOrientation).GetWithRespectToOrigin();
+      
+      setPoseHelper(staticBlock,  staticPoseFinal);
+      
+      for(const auto baseOffset: baseOffsets){
+        for(const float baseBlockOrientaiton: orientationList){
+          const float xBaseOffset = baseOffset.first;
+          const float yBaseOffset = baseOffset.second;
+
+          const Pose3d basePose = Pose3d(getRandRotationRestingFlat(),
+                            {xBaseOffset, yBaseOffset, blockHeightCenter}, &robotPose);
+          Pose3d basePoseFinal = rotateForWorldZ(basePose, baseBlockOrientaiton).GetWithRespectToOrigin();
+          setPoseHelper(baseBlock, basePoseFinal);
+          
+          // build the configuration cache
+          robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
+          robot.GetBlockWorld().Update(emptyMarkersList);
+          const auto& bases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache();
+          
+          fprintf(stdout, "staticBlockPose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
+                  staticPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
+                  staticPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
+                  staticPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
+                  RAD_TO_DEG_F32(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG_F32(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG_F32(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+          
+          fprintf(stdout, "baseBlockPose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
+                  basePoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
+                  basePoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
+                  basePoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
+                  RAD_TO_DEG_F32(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG_F32(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG_F32(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+          
+          ASSERT_TRUE(bases.ConfigurationCount() == 1);
+          
+          for(const float topBlockOrientiation: orientationList){
+            const float xTopOffset = xBaseOffset/2;
+            const float yTopOffset = yBaseOffset/2;
+            
+            const Pose3d topPose = Pose3d(getRandRotationRestingFlat(),
+                                          {xTopOffset, yTopOffset, blockHeightCenter + staticBlock->GetSize().z()},
+                                          &robotPose);
+            Pose3d topPoseFinal = rotateForWorldZ(topPose, topBlockOrientiation).GetWithRespectToOrigin();
+            setPoseHelper(topBlock, topPoseFinal);
+            
+            // build a full pyramid, and then re-build the cache
+            robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
+            robot.GetBlockWorld().Update(emptyMarkersList);
+
+            const auto& pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache();
+            
+            
+            fprintf(stdout, "Top block pose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
+                    topPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
+                    topPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
+                    topPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
+                    RAD_TO_DEG_F32(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                    RAD_TO_DEG_F32(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                    RAD_TO_DEG_F32(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+
+            
+            ASSERT_TRUE(pyramids.ConfigurationCount() == 1);
+          
+            // the base should have been pruned out now that it's part of a full pyramid
+            const auto& basesShouldBeEmpty = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache();
+            ASSERT_TRUE(basesShouldBeEmpty.ConfigurationCount() == 0);
+          }
+          // re-set the top block's pose
+          Pose3d farOffPose(0, Z_AXIS_3D(), {0, 500, 500}, &robotPose);
+          setPoseHelper(topBlock, farOffPose);
+
+        }
+      }
+    } // end static orientation
+  }// end repetition count
+}
 
 
 // This is the list of JSON files containing vision test worlds:

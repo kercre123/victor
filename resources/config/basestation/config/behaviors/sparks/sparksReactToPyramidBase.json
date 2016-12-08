@@ -1,0 +1,15 @@
+{
+  "behaviorType": "OnConfigSeen",
+  "name": "sparksPyramidOnConfigSeen",
+  "requiredUnlockId": "BuildPyramid",
+  "behaviorGroups": [
+     "SparksBuildPyramid"
+  ],
+  "flatScore": 5.0,
+  "configTriggers":[
+    "PyramidBase"
+  ],
+  "animTriggers": [
+      "BuildPyramidReactToBase"
+  ]
+}

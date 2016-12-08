@@ -196,7 +196,7 @@
         {
           "type" : "Spark"
         },
-        "persistantUpdateID" : "pyramidSparkUpdate"
+        "persistentComponentID" : "pyramidSparkUpdate"
       },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Freeplay goals:

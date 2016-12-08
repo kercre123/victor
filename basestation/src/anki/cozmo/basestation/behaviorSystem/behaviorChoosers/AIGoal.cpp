@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategyFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalPersistantUpdates/buildPyramidPersistantUpdate.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalPersistentUpdates/buildPyramidPersistentUpdate.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategies/iAIGoalStrategy.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
@@ -40,14 +40,14 @@ namespace {
 static const char* kBehaviorChooserConfigKey = "behaviorChooser";
 static const char* kStrategyConfigKey = "goalStrategy";
 static const char* kRequiresSparkKey = "requireSpark";
-static const char* kPersistantUpdateFuncKey = "persistantUpdateID";
+static const char* kPersistentUpdateComponentKey = "persistentComponentID";
 static const char* kPyramidSparkUpdateFuncID = "pyramidSparkUpdate";
 static const char* kRequiresObjectTapped = "requireObjectTapped";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoal::AIGoal()
-: _persistantUpdateFunction(nullptr)
+: _persistentUpdateComponent(nullptr)
 , _priority(0)
 , _driveStartAnimTrigger(AnimationTrigger::Count)
 , _driveLoopAnimTrigger(AnimationTrigger::Count)
@@ -62,7 +62,7 @@ AIGoal::AIGoal()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoal::~AIGoal()
 {
-  Util::SafeDelete(_persistantUpdateFunction);
+  Util::SafeDelete(_persistentUpdateComponent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -119,8 +119,9 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
   
   // other params
   std::string updateFuncID;
-  if ( JsonTools::GetValueOptional(config, kPersistantUpdateFuncKey, updateFuncID) ) {
-    _persistantUpdateFunction = PersistantUpdateFunctionChooser(updateFuncID);
+  if ( JsonTools::GetValueOptional(config, kPersistentUpdateComponentKey, updateFuncID) ) {
+    _persistentUpdateComponent = PersistentUpdateComponentFactory(updateFuncID);
+    _persistentUpdateComponent->Init(robot);
   }
   _priority = JsonTools::ParseUint8(config, "priority", "AIGoal.Init");
   _name = JsonTools::ParseString(config, "name", "AIGoal.Init");
@@ -154,6 +155,12 @@ void AIGoal::Enter(Robot& robot)
     robot.GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetName());
   }
   
+  // notify the persistant update function that the goal was entered
+  if(_persistentUpdateComponent != nullptr){
+    _persistentUpdateComponent->GoalEntered(robot);
+  }
+  
+  
   // log event to das
   Util::sEventF("robot.freeplay_goal_started", {}, "%s", _name.c_str());
 }
@@ -175,6 +182,11 @@ void AIGoal::Exit(Robot& robot)
     robot.GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetName());
   }
 
+  // notify the persistant update function that the goal is exiting
+  if(_persistentUpdateComponent != nullptr){
+    _persistentUpdateComponent->GoalExited(robot);
+  }
+  
   // log event to das
   Util::sEventF("robot.freeplay_goal_ended", {{DDATA, TO_DDATA_STR(static_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs))}}, "%s", _name.c_str());
   
@@ -197,8 +209,8 @@ Result AIGoal::Update(Robot& robot)
     result = _behaviorChooserPtr->Update(robot);
   }
   
-  if(_persistantUpdateFunction != nullptr){
-    _persistantUpdateFunction->Update(robot);
+  if(_persistentUpdateComponent != nullptr){
+    _persistentUpdateComponent->Update(robot);
   }
   
   return result;
@@ -213,10 +225,10 @@ IBehavior* AIGoal::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunn
   return ret;
 }
   
-IGoalPersistantUpdate* AIGoal::PersistantUpdateFunctionChooser(const std::string& updateFuncID)
+IGoalPersistentUpdate* AIGoal::PersistentUpdateComponentFactory(const std::string& updateFuncID)
 {
   if(updateFuncID == kPyramidSparkUpdateFuncID){
-    return new BuildPyramidPersistantUpdate;
+    return new BuildPyramidPersistentUpdate;
   }
   
   return nullptr;

@@ -36,10 +36,12 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
+const int kMaxSearchCount = 1;
 const int kCubeSizeBuffer_mm = 12;
-const int kRetryCount = 3;
+const float kDriveBackDistance_mm = 40.f;
+const float kDriveBackSpeed_mm_s = 10.f;
   
-static const char * kCustomLightLockName = "BuildPyramidSetByIDLock";
+static const char * kCustomLightLockName = "BuildPyramidBaseSetByIDLock";
 
 RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
 {
@@ -56,8 +58,8 @@ static const constexpr uint kSingleTransitionOn = kSingleTimeOn;
 static const constexpr uint kSingleTransitionOff = kSingleTransitionOn;
 
 // Base Formed rotation
-static const constexpr uint kBaseFormedTimeOn = kSingleTimeOn*2;
-static const constexpr uint kBaseFormedTimeOff = kBaseFormedTimeOn;
+static const constexpr uint kBaseFormedTimeOn = kSingleTimeOn;
+static const constexpr uint kBaseFormedTimeOff = 3*kBaseFormedTimeOn;
 static const constexpr uint kBaseFormedTransitionOn = kBaseFormedTimeOn;
 static const constexpr uint kBaseFormedTransitionOff = kBaseFormedTransitionOn;
   
@@ -80,7 +82,11 @@ static const constexpr uint kPyramidFlourishShutoff_sec = 4*kFullPyramidTimeOn; 
 BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _lastBasesCount(0)
+, _searchingForNearbyBaseBlockCount(0)
+, _searchingForNearbyStaticBlockCount(0)
 , _continuePastBaseCallback(nullptr)
+, _behaviorState(State::DrivingToBaseBlock)
+, _checkForFullPyramidVisualVerifyFailure(false)
 , _robot(robot)
 , _baseBlockOffsetX(0)
 , _baseBlockOffsetY(0)
@@ -97,7 +103,7 @@ bool BehaviorBuildPyramidBase::IsRunnableInternal(const Robot& robot) const
 {
   UpdatePyramidTargets(robot);
 
-  bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet();
+  bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && !_topBlockID.IsSet();
   if(allSet && AreAllBlockIDsUnique()){
     // Ensure a base does not already exist in the world
     using namespace BlockConfigurations;
@@ -112,6 +118,8 @@ bool BehaviorBuildPyramidBase::IsRunnableInternal(const Robot& robot) const
 Result BehaviorBuildPyramidBase::InitInternal(Robot& robot)
 {
   _lastBasesCount = 0;
+  _searchingForNearbyBaseBlockCount = 0;
+  _searchingForNearbyStaticBlockCount = 0;
   SetPickupInitialBlockLights();
   if(!robot.IsCarryingObject()){
     TransitionToDrivingToBaseBlock(robot);
@@ -128,77 +136,35 @@ void BehaviorBuildPyramidBase::StopInternal(Robot& robot)
   ResetPyramidTargets(robot);
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::SparksPersistantMusicLightControls(Robot& robot, int& lastPyramidBaseSeenCount, bool& wasRobotCarryingObject, bool& sparksPersistantCallbackSet)
-{
-  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-  const int pyramidBaseSize = static_cast<int>(pyramidBases.size());
   
-  // Did we see a new pyramid base or was a pyramid base destroyed?
-  if(pyramidBaseSize > 0 && lastPyramidBaseSeenCount == 0){
-    const auto& base = pyramidBases[0];
-    robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
-            UnlockId::BuildPyramid, static_cast<int>(MusicState::BaseFormed));
-    SetPyramidBaseLightsByID(robot, base->GetBaseBlockID(), base->GetStaticBlockID());
-    
-  }else if(pyramidBaseSize == 0 && lastPyramidBaseSeenCount != 0){
-    robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
-            UnlockId::BuildPyramid, static_cast<int>(MusicState::SearchingForCube));
-    robot.GetLightsComponent().ClearAllCustomPatterns();
-  }
-  
-  // The robot picked up a block - is it going to place it as a top block, or just looking around?
-  if(robot.IsCarryingObject() != wasRobotCarryingObject){
-    if(pyramidBaseSize == 0){
-      robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
-              UnlockId::BuildPyramid, static_cast<int>(MusicState::InitialCubeCarry));
-    }else{
-      // To pick up the cube with a base in place means the full pyramid behavior is running,
-      // remove all locks so that the running behavior has full control of the lights
-      const auto& base = pyramidBases[0];
-      robot.GetLightsComponent().ClearCustomLightPattern(base->GetBaseBlockID(), kCustomLightLockName);
-      robot.GetLightsComponent().ClearCustomLightPattern(base->GetStaticBlockID(), kCustomLightLockName);
-    }
-  }
-  
-  wasRobotCarryingObject = robot.IsCarryingObject();
-  lastPyramidBaseSeenCount = pyramidBaseSize;
-  
-  // transition states in the event of a robot delocalization
-  if(!sparksPersistantCallbackSet){
-    auto handlerCallback = [&robot](const EngineToGameEvent& event) {
-      robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
-                                  UnlockId::BuildPyramid, static_cast<int>(MusicState::SearchingForCube));
-      robot.GetLightsComponent().ClearAllCustomPatterns();
-    };
-  
-    static Signal::SmartHandle eventHalder = robot.GetExternalInterface()->Subscribe(EngineToGameTag::RobotDelocalized, handlerCallback);
-    sparksPersistantCallbackSet = true;
-  }
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
 {
   using namespace BlockConfigurations;
-  
   const auto& pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-  if(pyramidBases.size() > 0){
-    // if bases exists, and the base we're trying to build isn't one of them, cancel and re-assign blocks
-    PyramidBase possibleBase = PyramidBase(_staticBlockID, _baseBlockID);
-    const bool baseIsValid = std::find_if(pyramidBases.begin(), pyramidBases.end(),
-                        [&possibleBase](const PyramidBasePtr p){ return *p == possibleBase;}) == pyramidBases.end();
-    if(baseIsValid){
-      StopWithoutImmediateRepetitionPenalty();
-      return IBehavior::Status::Complete;
-    }
+  const auto& pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+
+  if(!pyramidBases.empty() && _behaviorState < State::ObservingBase){
+    StopWithoutImmediateRepetitionPenalty();
+    return IBehavior::Status::Complete;
   }
   
   // if a pyramid base was destroyed, stop the behavior to build the base again
-  if(pyramidBases.size() == 0 &&
-     _lastBasesCount > 0){
+  if(pyramidBases.empty() &&
+     pyramids.empty() &&
+     _lastBasesCount > 0 &&
+     _behaviorState != State::ReactingToPyramid &&
+     _behaviorState != State::PlacingTopBlock){
     StopWithoutImmediateRepetitionPenalty();
     return IBehavior::Status::Complete;
+  }
+  
+  // prevent against visual verify failures
+  if(_checkForFullPyramidVisualVerifyFailure){
+    if(!pyramids.empty()){
+      StopWithoutImmediateRepetitionPenalty();
+      return IBehavior::Status::Complete;
+    }
   }
   
   _lastBasesCount = static_cast<int>(pyramidBases.size());
@@ -211,15 +177,19 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(Robot& robot)
 {
-  DEBUG_SET_STATE(DrivingToBaseBlock);
+  SET_STATE(DrivingToBaseBlock);
   DriveToPickupObjectAction* driveAction = new DriveToPickupObjectAction(robot, _baseBlockID);
-  RetryWrapperAction* wrapper = new RetryWrapperAction(robot, driveAction, retryCallback, kRetryCount);
   
-  StartActing(wrapper,
+  StartActing(driveAction,
               [this, &robot](const ActionResult& result){
                 if(result == ActionResult::SUCCESS)
                 {
                   TransitionToPlacingBaseBlock(robot);
+                }else{
+                  if(_searchingForNearbyBaseBlockCount < kMaxSearchCount){
+                    _searchingForNearbyBaseBlockCount++;
+                    TransitionToSearchingWithCallback(robot, _baseBlockID, &BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock);
+                  }
                 }
               });
   
@@ -228,7 +198,7 @@ void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
 {
-  DEBUG_SET_STATE(PlacingBaseBlock);
+  SET_STATE(PlacingBaseBlock);
   UpdateAudioState(static_cast<int>(MusicState::InitialCubeCarry));
   
   // if a block has moved into the area we want to place the block, update where we are going to place the block
@@ -247,14 +217,18 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
   
   const bool relativeCurrentMarker = false;
   DriveToPlaceRelObjectAction* driveAction = new DriveToPlaceRelObjectAction(robot, _staticBlockID, true, _baseBlockOffsetX, _baseBlockOffsetY, false, 0, false, 0.f, false, relativeCurrentMarker);
-  RetryWrapperAction* wrapper = new RetryWrapperAction(robot, driveAction, retryCallback, kRetryCount);
   
-  StartActing(wrapper,
+  StartActing(driveAction,
               [this, &robot](const ActionResult& result){
                 if(result == ActionResult::SUCCESS)
                 {
                   SetPyramidBaseLights();
                   TransitionToObservingBase(robot);
+                }else{
+                  if(_searchingForNearbyStaticBlockCount < kMaxSearchCount){
+                    _searchingForNearbyStaticBlockCount++;
+                    TransitionToSearchingWithCallback(robot, _staticBlockID, &BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock);
+                  }
                 }
               });
 
@@ -263,9 +237,10 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::TransitionToObservingBase(Robot& robot)
 {
-  DEBUG_SET_STATE(ObservingBase);
+  SET_STATE(ObservingBase);
   
   CompoundActionSequential* action = new CompoundActionSequential(robot);
+  action->AddAction(new DriveStraightAction(robot, -kDriveBackDistance_mm, kDriveBackSpeed_mm_s));
   action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::BuildPyramidReactToBase));
 
   StartActing(action,
@@ -275,6 +250,18 @@ void BehaviorBuildPyramidBase::TransitionToObservingBase(Robot& robot)
                 }
               });
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+void BehaviorBuildPyramidBase::TransitionToSearchingWithCallback(Robot& robot,  const ObjectID& objectID,  void(T::*callback)(Robot&))
+{
+  SET_STATE(SearchingForObject);
+  CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+  compoundAction->AddAction(new TurnTowardsObjectAction(robot, objectID, M_PI), true);
+  compoundAction->AddAction(new SearchForNearbyObjectAction(robot, objectID));
+  StartActing(compoundAction, callback);
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
@@ -382,18 +369,25 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
   offsetList.emplace_back(0, blockSize);
   offsetList.emplace_back(0, -blockSize);
   offsetList.emplace_back(-blockSize, 0);
+  
+  // assign default values, just in case
+  _baseBlockOffsetX = offsetList[0].first;
+  _baseBlockOffsetY = offsetList[0].second;
 
   for(const auto& entry: offsetList){
     if(CheckBaseBlockPoseIsFree(entry.first, entry.second)){
-      Pose3d validPose = Pose3d(0.f, Z_AXIS_3D(), {entry.first, entry.second, 0.f}, &object->GetPose());
+      Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter();
+      Pose3d potentialPose = Pose3d(0, Z_AXIS_3D(), {entry.first,
+                                                     entry.second,
+                                                     -object->GetSize().z()},
+                                    &zRotatedPose);
       f32 newDistSquared;
-      ComputeDistanceSQBetween(_robot.GetPose(), validPose, newDistSquared);
+      ComputeDistanceSQBetween(_robot.GetPose(), potentialPose, newDistSquared);
       
       if(newDistSquared < nearestDistanceSQ){
         nearestDistanceSQ = newDistSquared;
         _baseBlockOffsetX = entry.first;
         _baseBlockOffsetY = entry.second;
-      
       }
     }
   }
@@ -420,9 +414,16 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
   const float xSize = placingObject->GetSize().x();
   const float ySize = placingObject->GetSize().y();
   const float zSize = placingObject->GetSize().z();
+
+  Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter();
+  Pose3d placePose = Pose3d(0, Z_AXIS_3D(), {xSize,
+                                             ySize,
+                                             0},
+                                &zRotatedPose);
   
-  Pose3d placePose = Pose3d(0.f, Z_AXIS_3D(), {xOffset, yOffset,0.f}, &object->GetPose());
-  ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(placePose, {xSize, ySize, zSize}, filter);
+  ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(
+                                            placePose.GetWithRespectToOrigin(),
+                                            {xSize, ySize, zSize}, filter);
   return closestObject == nullptr;
 }
 
@@ -495,6 +496,14 @@ void BehaviorBuildPyramidBase::HandleWhileRunning(const EngineToGameEvent& event
 
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBuildPyramidBase::SetState_internal(State state, const std::string& stateName){
+  _behaviorState = state;
+  SetDebugStateName(stateName);
+}
+
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::SetPickupInitialBlockLights()
 {
@@ -532,9 +541,9 @@ void BehaviorBuildPyramidBase::SetFullPyramidLights()
   SmartRemoveCustomLightPattern(_baseBlockID);
   SmartRemoveCustomLightPattern(_topBlockID);
   
-  SmartSetCustomLightPattern(_staticBlockID, GetFullPyramidLights(_robot));
-  SmartSetCustomLightPattern(_baseBlockID, GetFullPyramidLights(_robot));
-  SmartSetCustomLightPattern(_topBlockID, GetFullPyramidLights(_robot));
+  SmartSetCustomLightPattern(_staticBlockID, GetFlourishPyramidLights(_robot));
+  SmartSetCustomLightPattern(_baseBlockID, GetFlourishPyramidLights(_robot));
+  SmartSetCustomLightPattern(_topBlockID, GetFlourishPyramidLights(_robot));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -544,9 +553,9 @@ void BehaviorBuildPyramidBase::SetPyramidFlourishLights()
   SmartRemoveCustomLightPattern(_baseBlockID);
   SmartRemoveCustomLightPattern(_topBlockID);
   
-  SmartSetCustomLightPattern(_staticBlockID, GetFlourishStaticLights());
-  SmartSetCustomLightPattern(_baseBlockID, GetFlourishBaseLights());
-  SmartSetCustomLightPattern(_topBlockID, GetFlourishTopLights());
+  SmartSetCustomLightPattern(_staticBlockID, GetDenouementStaticLights());
+  SmartSetCustomLightPattern(_baseBlockID, GetDenouementBaseLights());
+  SmartSetCustomLightPattern(_topBlockID, GetDenouementTopLights());
   
 }
   
@@ -577,15 +586,13 @@ const ObjectLights& BehaviorBuildPyramidBase::GetBaseFormedLights()
 {
   static const ObjectLights kBaseFormedLights= {
     //clock of marker, marker, counter clock marker, across
-    //.onColors               = {{NamedColors::GREEN, NamedColors::BLACK, NamedColors::GREEN, NamedColors::GREEN}},
-    .onColors               = {{NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN}},
+    .onColors               = {{NamedColors::GREEN, NamedColors::BLACK, NamedColors::GREEN, NamedColors::GREEN}},
     .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{kBaseFormedTimeOn,kBaseFormedTimeOn,kBaseFormedTimeOn,kBaseFormedTimeOn}},
-    .offPeriod_ms           = {{kBaseFormedTimeOff,kBaseFormedTimeOff,kBaseFormedTimeOff,kBaseFormedTimeOff}},
+    .onPeriod_ms            = {{kBaseFormedTimeOn,0,kBaseFormedTimeOn,kBaseFormedTimeOn}},
+    .offPeriod_ms           = {{kBaseFormedTimeOff,0,kBaseFormedTimeOff,kBaseFormedTimeOff}},
     .transitionOnPeriod_ms  = {{kBaseFormedTransitionOn,kBaseFormedTransitionOn, kBaseFormedTransitionOn,kBaseFormedTransitionOn}},
     .transitionOffPeriod_ms = {{kBaseFormedTransitionOff,kBaseFormedTransitionOff,kBaseFormedTransitionOff, kBaseFormedTransitionOn}},
-    //.offset                 = {{kBaseFormedTimeOn,0,kBaseFormedTimeOn*5,0}},
-    .offset                 = {{0,0,0,0}},
+    .offset                 = {{kBaseFormedTimeOn,0,kBaseFormedTimeOn*5,0}},
     .rotationPeriod_ms      = 0,
     .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE,
     .relativePoint          = {0,0}
@@ -599,23 +606,19 @@ ObjectLights BehaviorBuildPyramidBase::GetBaseFormedBaseLights(Robot& robot, con
 {
   ObjectLights baseBlockLights = GetBaseFormedLights();
 
-  
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
   const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
-  if(baseBlock == nullptr){
+  if(staticBlock == nullptr || baseBlock == nullptr){
     return baseBlockLights;
   }
   
   using namespace BlockConfigurations;
+  Pose3d baseMidpoint;
+  PyramidBase::GetBaseInteriorMidpoint(robot, baseBlock, staticBlock, baseMidpoint);
   
-  // To account for block world ambiguity, use normalized offset instead of direct coordinates of other block
-  PyramidBase baseForOffset = PyramidBase(baseID, staticID); // purposefully reversed for base offset
-  Point2f baseOffsets = baseForOffset.GetBaseBlockIdealOffsetValues(robot);
-  const float kOffsetMultiplier = 1;
-  Pose3d offsetPose = Pose3d(0, Z_AXIS_3D(), {kOffsetMultiplier * baseOffsets.x(), kOffsetMultiplier * baseOffsets.y(), 0}, &baseBlock->GetPose());
-  
-  baseBlockLights.relativePoint = {offsetPose.GetWithRespectToOrigin().GetTranslation().x(), offsetPose.GetWithRespectToOrigin().GetTranslation().y()};
-  //baseBlockLights.offset = {{kBaseFormedTimeOn*4,0,kBaseFormedTimeOn*2,kBaseFormedTimeOn*3}};
-  baseBlockLights.offset = {{kBaseFormedTimeOn*2,kBaseFormedTimeOn*2,kBaseFormedTimeOn*2,kBaseFormedTimeOn*2}};
+  baseBlockLights.relativePoint = {baseMidpoint.GetTranslation().x(),
+                                   baseMidpoint.GetTranslation().y()};
+  baseBlockLights.offset = {{kBaseFormedTimeOn*4,0,kBaseFormedTimeOn*2,kBaseFormedTimeOn*3}};
 
   return baseBlockLights;
 
@@ -627,19 +630,17 @@ ObjectLights BehaviorBuildPyramidBase::GetBaseFormedStaticLights(Robot& robot, c
   ObjectLights staticBlockLights = GetBaseFormedLights();
 
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
-  if(staticBlock == nullptr){
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
+  if(staticBlock == nullptr || baseBlock == nullptr){
     return staticBlockLights;
   }
  
   using namespace BlockConfigurations;
-
-  PyramidBase baseForOffset = PyramidBase(staticID, baseID);
-  Point2f baseOffsets = baseForOffset.GetBaseBlockIdealOffsetValues(robot);
-  const float kOffsetMultiplier = 1;
-  Pose3d offsetPose = Pose3d(0, Z_AXIS_3D(), {kOffsetMultiplier * baseOffsets.x(), kOffsetMultiplier * baseOffsets.y(), 0}, &staticBlock->GetPose());
+  Pose3d staticMidpoint;
+  PyramidBase::GetBaseInteriorMidpoint(robot, staticBlock, baseBlock, staticMidpoint);
   
-  
-  staticBlockLights.relativePoint = {offsetPose.GetWithRespectToOrigin().GetTranslation().x(), offsetPose.GetWithRespectToOrigin().GetTranslation().y()};
+  staticBlockLights.relativePoint = {staticMidpoint.GetTranslation().x(),
+                                     staticMidpoint.GetTranslation().y()};
   
   return staticBlockLights;
 }
@@ -667,7 +668,7 @@ const ObjectLights& BehaviorBuildPyramidBase::GetBaseFormedTopLights()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetFullPyramidLights(Robot& robot)
+const ObjectLights& BehaviorBuildPyramidBase::GetFlourishPyramidLights(Robot& robot)
 {
   static ColorRGBA lightGreen =ColorRGBA(0.f, 0.5f, 0.f);
   static ObjectLights kFullBaseLights= {
@@ -688,7 +689,7 @@ const ObjectLights& BehaviorBuildPyramidBase::GetFullPyramidLights(Robot& robot)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetFlourishBaseLights() const
+const ObjectLights& BehaviorBuildPyramidBase::GetDenouementBaseLights() const
 {
   static ObjectLights kFlourishBaseLights= {
     //clock of marker, marker, counter clock marker, across
@@ -709,16 +710,16 @@ const ObjectLights& BehaviorBuildPyramidBase::GetFlourishBaseLights() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetFlourishStaticLights() const
+const ObjectLights& BehaviorBuildPyramidBase::GetDenouementStaticLights() const
 {
-  return GetFlourishBaseLights();
+  return GetDenouementBaseLights();
 }
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetFlourishTopLights() const
+const ObjectLights& BehaviorBuildPyramidBase::GetDenouementTopLights() const
 {
-  static ObjectLights kFlourishTopLights= GetFlourishBaseLights();
+  static ObjectLights kFlourishTopLights= GetDenouementBaseLights();
   kFlourishTopLights.onPeriod_ms = {{kPyramidFlourishShutoff_sec, kPyramidFlourishShutoff_sec*2, kPyramidFlourishShutoff_sec*3, kPyramidFlourishShutoff_sec*4}};
   
   return kFlourishTopLights;

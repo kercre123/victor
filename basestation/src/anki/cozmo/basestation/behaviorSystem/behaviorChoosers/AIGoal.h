@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalPersistantUpdates/iGoalPersistantUpdate.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalPersistentUpdates/iGoalPersistentUpdate.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/unlockTypes.h"
 #include "json/json-forwards.h"
@@ -103,8 +103,8 @@ private:
   // returns true if driving animation triggers have been defined for this goal
   bool HasDrivingAnimTriggers() const { return _driveStartAnimTrigger != AnimationTrigger::Count; } // checking one is checking all
 
-  // sets the PersistantUpdateFunctionClass based on the string passed in
-  IGoalPersistantUpdate* PersistantUpdateFunctionChooser(const std::string& updateFuncID);
+  // sets the PersistentUpdateFunctionClass based on the string passed in
+  IGoalPersistentUpdate* PersistentUpdateComponentFactory(const std::string& updateFuncID);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -115,7 +115,7 @@ private:
   
   // a function that can contain logic that spans behaviors
   // and requires update ticks
-  IGoalPersistantUpdate* _persistantUpdateFunction;
+  IGoalPersistentUpdate* _persistentUpdateComponent;
   
   // strategy to run this goal
   std::unique_ptr<IAIGoalStrategy> _strategy;

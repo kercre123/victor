@@ -30,7 +30,11 @@
 #include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
 
-#include <math.h>
+
+namespace{
+const float kMaxNegativeXPlacementOffset = 1.f;
+  
+}
 
 
 namespace Anki {
@@ -166,7 +170,7 @@ namespace Anki {
 
     void IDockAction::SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad)
     {
-      if(offsetX_mm < 0) {
+      if(FLT_LT(offsetX_mm, -kMaxNegativeXPlacementOffset)) {
         ASSERT_NAMED_EVENT(false, "IDockAction.SetPlacementOffset.InvalidOffset", "x offset %f cannot be negative (through block)", offsetX_mm);
         // for release set offset to 0 so that Cozmo doesn't look stupid plowing through a block
         offsetX_mm = 0;
@@ -1726,8 +1730,10 @@ namespace Anki {
       }
       
       Pose3d dockObjectWRTRobot;
-      dockObject->GetPose().GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
-      const float robotObjRelRotation_rad = dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
+      dockObject->GetZRotatedPointAboveObjectCenter()
+                .GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
+      const float robotObjRelRotation_rad =
+                    dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       // consts for comparing relative robot/block alignment
       const float kRotationTolerence_rad = DEG_TO_RAD_F32(15);
@@ -1760,7 +1766,7 @@ namespace Anki {
         return ActionResult::FAILURE_RETRY;
       }
       
-      if(xAbsolutePlacementOffset_mm < 0){
+      if(FLT_LT(xAbsolutePlacementOffset_mm, -kMaxNegativeXPlacementOffset)){
         PRINT_NAMED_ERROR("PlaceRelObjectAction.TransformPlacementOffsetsRelativeObject",
                           "Attempted to set negative xOffset. xOffset:%f, yOffset:%f", xAbsolutePlacementOffset_mm, yAbsolutePlacementOffset_mm);
         return ActionResult::FAILURE_ABORT;

@@ -44,6 +44,9 @@ namespace {
 using PyramidIterator = std::vector<PyramidWeakPtr>::iterator;
 const float kOnGroundTolerencePyramidOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
 const float kTopBlockOverhangMin_mm = 5;
+// Distance of 60mm used - 30 mm from corner to center plus max distance seperation of 30mm
+const float kDistMaxCornerToCenter_mm = 60;
+const float kDistMaxCornerToCenter_mm_sqr = kDistMaxCornerToCenter_mm * kDistMaxCornerToCenter_mm;
 }
 
 // ---------------------------------------------------------
@@ -75,171 +78,115 @@ bool PyramidBase::operator==(const PyramidBase& other) const
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PyramidBase::GetCurrentBlockOffsetProperties(const Robot& robot, const ObservableObject* const staticBlock, const ObservableObject* const baseBlock,
-                                              float& xAxisOffset, float& yAxisOffset, float&  maxXAxisOffset, float& maxYAxisOffset)
-{
-  if((staticBlock == nullptr || baseBlock == nullptr) ||
-      staticBlock->GetID() == baseBlock->GetID()){
-    return false;
-  }
-  
-  Pose3d basePoseWRTStatic;
-  if(baseBlock->GetPose().GetWithRespectTo(staticBlock->GetPose(), basePoseWRTStatic)){
-    
-    //Radians baseBlockOffsetAngle = std::atan2(basePoseWRTStatic.GetTranslation().y(), basePoseWRTStatic.GetTranslation().x());
-    
-    Radians baseBlockOffsetAngle = std::atan2(baseBlock->GetPose().GetTranslation().y() - staticBlock->GetPose().GetTranslation().y(),
-                                              baseBlock->GetPose().GetTranslation().x() - staticBlock->GetPose().GetTranslation().x());
-    
-    
-    baseBlockOffsetAngle = -(staticBlock->GetPose().GetRotation().GetAngleAroundZaxis() - baseBlockOffsetAngle);
-
-
-    // figure out the axis the block is along, and then remove the size of the blocks
-    // from the offset to account for the seperation of their centers
-    bool alongXAxis = false;
-    
-    if(baseBlockOffsetAngle < M_PI_4 && baseBlockOffsetAngle >= -M_PI_4) {
-      alongXAxis = true;
-    }
-    else if(baseBlockOffsetAngle < 3*M_PI_4 && baseBlockOffsetAngle >= M_PI_4) {
-      alongXAxis = false;
-    }
-    else if(baseBlockOffsetAngle < -M_PI_4 && baseBlockOffsetAngle >= -3*M_PI_4) {
-      alongXAxis = false;
-    }
-    else {
-      assert(baseBlockOffsetAngle < -3*M_PI_4 || baseBlockOffsetAngle > 3*M_PI_4);
-      alongXAxis = true;
-    }
-    
-    maxXAxisOffset = staticBlock->GetSize().x()/2;
-    maxYAxisOffset = staticBlock->GetSize().y()/2;
-
-    xAxisOffset = basePoseWRTStatic.GetTranslation().x();
-    yAxisOffset = basePoseWRTStatic.GetTranslation().y();
-    
-    // lessen the offset to account for the space from the center of the block to the edge
-    // and extend the max offset since we can be more lenienet along that axis
-    const float kAdditionalHorizontalToleranceMultiplier = 0.25;
-    if(alongXAxis){
-      xAxisOffset -= (staticBlock->GetSize().x()/2 + baseBlock->GetSize().x()/2);
-      maxXAxisOffset += baseBlock->GetSize().x()*kAdditionalHorizontalToleranceMultiplier;
-    }else{
-      yAxisOffset -= (staticBlock->GetSize().y()/2 + baseBlock->GetSize().y()/2);
-      maxYAxisOffset += baseBlock->GetSize().y()*kAdditionalHorizontalToleranceMultiplier;
-    }
-    
-    
-    PRINT_CH_INFO("Behaviors", "PyramidBase.GetCurrentBlockOffsetProperties.BlockOffsetAngle",
-                      "Base block ID:%d at x:%f y:%f, Static staticID:%d at x:%f y:%f offset deg:%f - Along XAxis:%d",
-                      baseBlock->GetID().GetValue(), baseBlock->GetPose().GetTranslation().x(), baseBlock->GetPose().GetTranslation().y(),
-                      staticBlock->GetID().GetValue(), staticBlock->GetPose().GetTranslation().x(), staticBlock->GetPose().GetTranslation().y(),
-                      RAD_TO_DEG_F32(baseBlockOffsetAngle.ToFloat()), alongXAxis);
-    
-    return true;
-  }
-  
-  return false;
-}
-  
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool PyramidBase::BlocksFormPyramidBase(const Robot& robot, const ObservableObject* const staticBlock, const ObservableObject* const baseBlock)
 {
-  float xAxisOffset;
-  float yAxisOffset;
-  float maxXAxisOffset;
-  float maxYAxisOffset;
-  if(GetCurrentBlockOffsetProperties(robot, staticBlock, baseBlock, xAxisOffset, yAxisOffset, maxXAxisOffset, maxYAxisOffset)){
-    return FLT_LT(std::abs(xAxisOffset), maxXAxisOffset) && FLT_LT(std::abs(yAxisOffset), maxYAxisOffset);
-  }
-  
-  return false;
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const bool PyramidBase::GetBaseRelStaticInfo(const Robot& robot, const ObservableObject* const staticBlock, const ObservableObject* const baseBlock, bool& alongXAxis, bool& isPositive)
-{
-  if(!staticBlock || !baseBlock){
-    PRINT_NAMED_WARNING("PyramidBase.GetBaseBlockOffset.NullObject",
-                      "Static block or base block is null: sb:%p, bb:%p", staticBlock, baseBlock);
+  if(staticBlock == nullptr || baseBlock == nullptr){
     return false;
   }
   
-  float xAxisOffset;
-  float yAxisOffset;
-  float maxXAxisOffset;
-  float maxYAxisOffset;
-  if(GetCurrentBlockOffsetProperties(robot, staticBlock, baseBlock, xAxisOffset, yAxisOffset, maxXAxisOffset, maxYAxisOffset)){
-    // the axis with the smaller max offset is assumed to be the denominant axis
-    alongXAxis = maxXAxisOffset > maxYAxisOffset;
-    if(alongXAxis){
-      isPositive = FLT_GT(xAxisOffset, 0);
-    }else{
-      isPositive = FLT_GT(yAxisOffset, 0);
+  Pose3d staticCorner1;
+  Pose3d staticCorner2;
+  Pose3d baseCorner1;
+  Pose3d baseCorner2;
+  if(GetBaseInteriorCorners(robot, staticBlock, baseBlock, staticCorner1, staticCorner2) &&
+     GetBaseInteriorCorners(robot, baseBlock, staticBlock, baseCorner1, baseCorner2)){
+    const Pose3d& basePoseCenterAtTop = baseBlock->GetZRotatedPointAboveObjectCenter();
+    const Pose3d& staticPoseCenterAtTop = staticBlock->GetZRotatedPointAboveObjectCenter();
+    
+    float staticDist1;
+    float staticDist2;
+    float baseDist1;
+    float baseDist2;
+    if(ComputeDistanceSQBetween(staticCorner1, basePoseCenterAtTop, staticDist1) &&
+       ComputeDistanceSQBetween(staticCorner2, basePoseCenterAtTop, staticDist2) &&
+       ComputeDistanceSQBetween(baseCorner1, staticPoseCenterAtTop, baseDist1) &&
+       ComputeDistanceSQBetween(baseCorner2, staticPoseCenterAtTop, baseDist2)){
+      return staticDist1 < kDistMaxCornerToCenter_mm_sqr &&
+             staticDist2 < kDistMaxCornerToCenter_mm_sqr &&
+             baseDist1 < kDistMaxCornerToCenter_mm_sqr &&
+             baseDist2 < kDistMaxCornerToCenter_mm_sqr;
     }
-    return true;
   }
-  
   
   return false;
 }
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const bool PyramidBase::GetBaseRelStaticInfo(const Robot& robot, bool& alongXAxis, bool& isPositive) const
+bool PyramidBase::GetBaseInteriorCorners(const Robot& robot,
+                                         const ObservableObject* const targetCube,
+                                         const ObservableObject* const otherCube,
+                                         Pose3d& corner1, Pose3d& corner2)
 {
-  const ObservableObject* const baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
-  const ObservableObject* const staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-  return GetBaseRelStaticInfo(robot, staticBlock, baseBlock, alongXAxis, isPositive);
-}
+  std::vector<Point2f> allPoints;
+  std::multimap<float,Pose3d> poseMap;
+  
+  // Get all corners of the
+  auto boundingQuad = targetCube->GetBoundingQuadXY(0);
+  allPoints.push_back(boundingQuad.GetBottomRight());
+  allPoints.push_back(boundingQuad.GetTopRight());
+  allPoints.push_back(boundingQuad.GetBottomLeft());
+  allPoints.push_back(boundingQuad.GetTopLeft());
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const Point2f PyramidBase::GetBaseBlockIdealOffsetValues(const Robot& robot) const
-{
-  Point2f offset = Point2f(0,0);
-  bool alongXAxis = false;
-  bool isPositive = false;
-  const ObservableObject* const staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-  if(staticBlock != nullptr && GetBaseRelStaticInfo(robot, alongXAxis, isPositive)){
-    const float staticBlockSizeX = staticBlock->GetSize().x();
-    const float staticBlockSizeY = staticBlock->GetSize().y();
-    const float signMultiplier = isPositive ? 1 : -1;
-    if(alongXAxis){
-      offset = Point2f(signMultiplier*staticBlockSizeX, 0);
-    }else{
-      offset = Point2f(0, signMultiplier*staticBlockSizeY);
+  // calculate distance from corners to center of other block
+  for(const auto& point: allPoints){
+    Pose3d pointAsPose = Pose3d(0, Z_AXIS_3D(),
+                                {point.x(), point.y(), targetCube->GetSize().z()},
+                                robot.GetWorldOrigin());
+    float dist;
+    if(!ComputeDistanceSQBetween(pointAsPose, otherCube->GetPose(), dist)){
+      return false;
     }
-  }else{
-    // unable to get offset
-    if(staticBlock == nullptr){
-      PRINT_CH_INFO("Behaviors","PyramidBase.GetBaseBlockOffsetValues.StaticNullptr",
-                        "The static blockID for this pyramid is not valid");
-    }else{
-      PRINT_CH_INFO("Behaviors","PyramidBase.GetBaseBlockOffsetValues.NoBaseOffset",
-                    "Unable to get a base block offset for a pyramid base");
-    }
-    
+    poseMap.insert(std::make_pair(dist,std::move(pointAsPose)));
   }
-    
-  return offset;
+  
+  // find the two closest points - the map is automatically sorted by distance
+  auto mapIter = poseMap.begin();
+  corner1 = (*mapIter).second.GetWithRespectToOrigin();
+  ++mapIter;
+  corner2 = (*mapIter).second.GetWithRespectToOrigin();
+  
+  return true;
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PyramidBase::GetBaseInteriorMidpoint(const Robot& robot,
+                                          const ObservableObject* const targetCube,
+                                          const ObservableObject* const otherCube,
+                                          Pose3d& midPoint){
+  Pose3d corner1;
+  Pose3d corner2;
+  const bool gotCorners = GetBaseInteriorCorners(robot, targetCube, otherCube, corner1, corner2);
+  if(!gotCorners){
+    return false;
+  }
+  
+  const float edgeMiddleX = (corner1.GetWithRespectToOrigin().GetTranslation().x() +
+                                   corner2.GetWithRespectToOrigin().GetTranslation().x())/2;
+  const float edgeMiddleY = (corner1.GetWithRespectToOrigin().GetTranslation().y() +
+                                   corner2.GetWithRespectToOrigin().GetTranslation().y())/2;
+  
+  midPoint = Pose3d(0, Z_AXIS_3D(), {edgeMiddleX,
+                                     edgeMiddleY,
+                                     targetCube->GetSize().z()},
+                    &robot.GetPose().FindOrigin());
+  return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const ObservableObject* const object) const
+const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const ObservableObject* const targetObject) const
 {
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
   const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
-  if(!staticBlock || !baseBlock || !object){
+  if(staticBlock == nullptr || baseBlock == nullptr || targetObject == nullptr){
     return false;
   }
   
   bool ableToComparePoses = true;
   
   Pose3d objectPoseWRTStatic;
-  ableToComparePoses = ableToComparePoses && object->GetPose().GetWithRespectTo(staticBlock->GetPose(), objectPoseWRTStatic);
+  ableToComparePoses = ableToComparePoses && targetObject->GetPose().GetWithRespectTo(staticBlock->GetPose(), objectPoseWRTStatic);
   Pose3d basePoseWRTStatic;
   ableToComparePoses = ableToComparePoses && baseBlock->GetPose().GetWithRespectTo(staticBlock->GetPose(), basePoseWRTStatic);
   
@@ -252,8 +199,8 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
   const Point3f rotatedBtmSize(staticWrtOrigin.GetRotation() * staticBlock->GetSize());
   const float staticBlockTopZ = staticWrtOrigin.GetTranslation().z() + (0.5f * std::abs(rotatedBtmSize.z()));
   
-  const Pose3d topWrtOrigin = object->GetPose().GetWithRespectToOrigin();
-  const Point3f rotatedTopSize(topWrtOrigin.GetRotation() * object->GetSize());
+  const Pose3d topWrtOrigin = targetObject->GetPose().GetWithRespectToOrigin();
+  const Point3f rotatedTopSize(topWrtOrigin.GetRotation() * targetObject->GetSize());
   const float topBlockBottomZ = topWrtOrigin.GetTranslation().z() - (0.5f * std::abs(rotatedTopSize.z()));
   
   const bool topAtAppropriateHeight = Util::IsNear(topBlockBottomZ, staticBlockTopZ, STACKED_HEIGHT_TOL_MM);
@@ -261,33 +208,31 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
     return false;
   }
   
-  bool alongXAxis = false;
-  bool isPositive = false;
-  if(!GetBaseRelStaticInfo(robot, alongXAxis, isPositive)){
+  Pose3d staticBlockIdealCenter;
+  Pose3d baseBlockIdealCenter;
+  if(!GetBaseInteriorMidpoint(robot, staticBlock, baseBlock, staticBlockIdealCenter) ||
+     !GetBaseInteriorMidpoint(robot, baseBlock, staticBlock, baseBlockIdealCenter)){
     return false;
   }
-  
-  // Check to make sure the top block is between the bottom and stack blocks
   
   const float xTopBlockOverhangTolerence_mm = staticBlock->GetSize().x()/2 - kTopBlockOverhangMin_mm;
   const float yTopBlockOverhangTolerence_mm = staticBlock->GetSize().y()/2 - kTopBlockOverhangMin_mm;
   const float arbitrarilyHighZ = 100.f; // this has already been checked
   const Point3f distanceTolerence = Point3f(xTopBlockOverhangTolerence_mm, yTopBlockOverhangTolerence_mm, arbitrarilyHighZ);
-
-  // Calculate the edge of the static block's offset
-  float staticEdgeX = 0;
-  float staticEdgeY = 0;
-  const float offsetMultiplyer = isPositive ? 1 : -1;
-  if(alongXAxis){
-    staticEdgeX += offsetMultiplyer * staticBlock->GetSize().x()/2;
-  }else{
-    staticEdgeY += offsetMultiplyer * staticBlock->GetSize().y()/2;
-  }
+  
+  const Vec3f& targetTrans = targetObject->GetPose().GetTranslation();
+  Pose3d targetObjectUnrotatedCenter(0, Z_AXIS_3D(),
+                                     {targetTrans.x(),
+                                      targetTrans.y(),
+                                      0},
+                                     &staticBlock->GetPose().FindOrigin());
+  
+  const bool topBlockCentered =
+               targetObjectUnrotatedCenter.IsSameAs(staticBlockIdealCenter, distanceTolerence, M_PI) &&
+               targetObjectUnrotatedCenter.IsSameAs(baseBlockIdealCenter, distanceTolerence, M_PI);
   
   
-  Pose3d topBlockIdealCenter = Pose3d(0.f, Z_AXIS_3D(), {staticEdgeX, staticEdgeY, 0.f}, &object->GetPose());
-  
-  return object->GetPose().IsSameAs(topBlockIdealCenter, distanceTolerence, M_PI);
+  return topBlockCentered;
 }
   
   

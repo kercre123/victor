@@ -28,9 +28,8 @@
 
 namespace Anki {
 namespace Cozmo {
-
-const int retryCount = 3;
-const float kWaitForFlourish_sec = 2;
+const int kMaxSearchCount = 1;
+const float kWaitForDenouement_sec = 0.75;
 
 namespace{
   RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
@@ -41,14 +40,20 @@ namespace{
   
 static const float kTimeObjectInvalidAfterAnyFailure_sec = 30.0f;
 }
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& config)
 : BehaviorBuildPyramidBase(robot, config)
+, _searchingForNearbyBaseCount(0)
+, _searchingForTopBlockCount(0)
 {
   SetDefaultName("BuildPyramid");
   _continuePastBaseCallback =  std::bind(&BehaviorBuildPyramid::TransitionToDrivingToTopBlock, (this), std::placeholders::_1);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
 {
   UpdatePyramidTargets(robot);
@@ -96,12 +101,27 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
   return allSetAndUsable && AreAllBlockIDsUnique();
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorBuildPyramid::InitInternal(Robot& robot)
 {
   using namespace BlockConfigurations;
-  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-
+  
+  // check to see if a pyramid was built but failed to visually verify
+  auto& pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+  if(_checkForFullPyramidVisualVerifyFailure && !pyramids.empty()){
+    _checkForFullPyramidVisualVerifyFailure = false;
+    TransitionToReactingToPyramid(robot);
+    return Result::RESULT_OK;
+  }else{
+    _checkForFullPyramidVisualVerifyFailure = false;
+  }
+  
+  
+  const auto& pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   _lastBasesCount = 0;
+  _searchingForNearbyBaseCount = 0;
+  _searchingForTopBlockCount = 0;
   if(pyramidBases.size() > 0){
     SetPyramidBaseLights();
     if(!robot.IsCarryingObject()){
@@ -125,31 +145,41 @@ void BehaviorBuildPyramid::StopInternal(Robot& robot)
   ResetPyramidTargets(robot);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 {
-  DEBUG_SET_STATE(DrivingToTopBlock);
+  SET_STATE(DrivingToTopBlock);
   UpdateAudioState(std::underlying_type<MusicState>::type(MusicState::BaseFormed));
 
   DriveToPickupObjectAction* driveAction = new DriveToPickupObjectAction(robot, _topBlockID);
   
-  RetryWrapperAction* wrapper = new RetryWrapperAction(robot, driveAction, retryCallback, retryCount);
-  
-  StartActing(wrapper,
+  StartActing(driveAction,
               [this, &robot](const ActionResult& result){
                 if(result == ActionResult::SUCCESS)
                 {
                   TransitionToPlacingTopBlock(robot);
+                }else{
+                  if(_searchingForTopBlockCount < kMaxSearchCount){
+                    _searchingForTopBlockCount++;
+                    TransitionToSearchingWithCallback(robot, _topBlockID,
+                          &BehaviorBuildPyramid::TransitionToDrivingToTopBlock);
+                  }
                 }
               });
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 {
-  DEBUG_SET_STATE(PlacingTopBlock);
+  SET_STATE(PlacingTopBlock);
   UpdateAudioState(std::underlying_type<MusicState>::type(MusicState::TopBlockCarry));
-
-  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-  if(nullptr == object)
+  SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
+  
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+  if(staticBlock  == nullptr || baseBlock == nullptr)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramid.TransitionToPlacingTopBlock.NullObject",
                         "Object %d is NULL", _staticBlockID.GetValue());
@@ -163,17 +193,38 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 
   for(const auto& basePtr: pyramidBases){
     if(basePtr->ContainsBlock(_baseBlockID) && basePtr->ContainsBlock(_staticBlockID)){
-      Point2f baseOffset = basePtr->GetBaseBlockIdealOffsetValues(robot);
+      
+      using namespace BlockConfigurations;
+      Pose3d idealTopPlacementWRTWorld;
+      if(!PyramidBase::GetBaseInteriorMidpoint(robot, staticBlock, baseBlock, idealTopPlacementWRTWorld)){
+        return;
+      }
+      
+      const Pose3d& idealTopMarkerPose = staticBlock->GetZRotatedPointAboveObjectCenter();
+      Pose3d idealPlacementWRTUnrotatedStatic;
+      if(!idealTopPlacementWRTWorld.GetWithRespectTo(idealTopMarkerPose, idealPlacementWRTUnrotatedStatic)){
+        return;
+      }
+      
 
+      // if we've already tried to place the block, see if we can visually verify it now
       const bool relativeCurrentMarker = false;
-      DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot, _staticBlockID, false, baseOffset.x()/2, baseOffset.y()/2, false, 0, false, 0.f, false, relativeCurrentMarker);
+      DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot, _staticBlockID, false,
+                                                  idealPlacementWRTUnrotatedStatic.GetTranslation().x(),
+                                                  idealPlacementWRTUnrotatedStatic.GetTranslation().y(),
+                                                  false, 0, false, 0.f, false, relativeCurrentMarker);
       
-      RetryWrapperAction* wrapper = new RetryWrapperAction(robot, action, retryCallback, retryCount);
-      
-      StartActing(wrapper,
+      StartActing(action,
                   [this, &robot](const ActionResult& result){
                     if (result == ActionResult::SUCCESS) {
                       TransitionToReactingToPyramid(robot);
+                    }else{
+                      if(_searchingForNearbyBaseCount < kMaxSearchCount){
+                        _searchingForNearbyBaseCount++;
+                        _checkForFullPyramidVisualVerifyFailure = true;
+                        TransitionToSearchingWithCallback(robot, _staticBlockID,
+                              &BehaviorBuildPyramid::TransitionToPlacingTopBlock);
+                      }
                     }
                   });
     }
@@ -181,9 +232,10 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramid::TransitionToReactingToPyramid(Robot& robot)
 {
-  DEBUG_SET_STATE(ReactingToPyramid);
+  SET_STATE(ReactingToPyramid);
   UpdateAudioState(static_cast<int>(MusicState::PyramidCompleteFlourish));
   
   SetFullPyramidLights();
@@ -191,13 +243,14 @@ void BehaviorBuildPyramid::TransitionToReactingToPyramid(Robot& robot)
   StartActing( new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess),
               [this, &robot](const ActionResult& result){
                 SetPyramidFlourishLights();
-                StartActing(new WaitAction(robot, kWaitForFlourish_sec));
+                StartActing(new WaitAction(robot, kWaitForDenouement_sec));
                 BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);
               });
   
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectID BehaviorBuildPyramid::GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const
 {
   f32 shortestDistance = -1.f;
@@ -216,6 +269,21 @@ ObjectID BehaviorBuildPyramid::GetNearestBlockToPose(const Pose3d& pose, const B
   
   return nearestObject;
 }
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+void BehaviorBuildPyramid::TransitionToSearchingWithCallback(Robot& robot,
+                                                             const ObjectID& objectID,
+                                                             void(T::*callback)(Robot&))
+{
+  SET_STATE(SearchingForObject);
+  CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+  compoundAction->AddAction(new TurnTowardsObjectAction(robot, objectID, M_PI), true);
+  compoundAction->AddAction(new SearchForNearbyObjectAction(robot, objectID));
+  StartActing(compoundAction, callback);
+}
+
 
 } //namespace Cozmo
 } //namespace Anki
