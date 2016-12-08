@@ -101,10 +101,14 @@ public final class CozmoWifi {
         }
       }
     } else if (WifiManager.SCAN_RESULTS_AVAILABLE_ACTION.equals(action)) {
-      List<ScanResult> scanResults = mWifiManager.getScanResults();
+      List<ScanResult> scanResults = null;
+      try {
+        scanResults = mWifiManager.getScanResults();
+      }
+      catch (SecurityException e) {}
+      int otherAPs = 0;
+      int cozmoAPs = 0;
       if (scanResults != null) {
-        int otherAPs = 0;
-        int cozmoAPs = 0;
         for (final ScanResult scanResult : scanResults) {
           boolean isCozmoAP = isCozmoSSID(scanResult.SSID);
           if (isCozmoAP) {
@@ -119,15 +123,15 @@ public final class CozmoWifi {
             otherAPs++;
           }
         }
-        boolean zeroAPs = otherAPs + cozmoAPs == 0;
-        boolean hasLocationPermission =
-          ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (zeroAPs && !hasLocationPermission) {
-          DAS.Event("android.wifi.scan_results.no_permission", "");
-        } else {
-          DAS.Event("android.wifi.scan_results.cozmo_vs_other_ap_counts",
-            "" + cozmoAPs + "," + otherAPs);
-        }
+      }
+      boolean zeroAPs = otherAPs + cozmoAPs == 0;
+      boolean hasLocationPermission =
+        ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+      if (zeroAPs && !hasLocationPermission) {
+        DAS.Event("android.wifi.scan_results.no_permission", "");
+      } else {
+        DAS.Event("android.wifi.scan_results.cozmo_vs_other_ap_counts",
+          "" + cozmoAPs + "," + otherAPs);
       }
     } else if (WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION.equals(action)) {
       boolean supplicantConnected = intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED,
