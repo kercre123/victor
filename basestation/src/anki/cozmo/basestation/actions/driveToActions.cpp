@@ -10,21 +10,24 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/speedChooser.h"
-#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "anki/cozmo/basestation/speedChooser.h"
 #include "util/console/consoleInterface.h"
 #include "util/math/math.h"
-#include "driveToActions.h"
 
 namespace Anki {
   

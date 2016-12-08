@@ -1,10 +1,3 @@
-//
-//  robot.h
-//  Products_Cozmo
-//
-//  Created by Andrew Stein on 8/23/13.
-//  Copyright (c) 2013 Anki, Inc. All rights reserved.
-//
 /**
  * File: robot.h
  *
@@ -27,55 +20,46 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_H
 #define ANKI_COZMO_BASESTATION_ROBOT_H
 
-#include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/poseOriginList.h"
+#include "anki/common/types.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/encodedImage.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/ramp.h"
+#include "anki/planning/shared/goalDefs.h"
+#include "anki/planning/shared/path.h"
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
-#include "anki/planning/shared/goalDefs.h"
-#include "anki/planning/shared/path.h"
-#include "clad/types/activeObjectTypes.h"
-#include "clad/types/ledTypes.h"
-#include "clad/types/animationKeyFrames.h"
-#include "anki/cozmo/basestation/activeObject.h"
-#include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/encodedImage.h"
-#include "anki/cozmo/basestation/animation/animationStreamer.h"
-#include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/proceduralFace.h"
-#include "anki/cozmo/basestation/ramp.h"
-#include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
-#include "anki/cozmo/basestation/components/movementComponent.h"
-#include "anki/cozmo/basestation/components/nvStorageComponent.h"
-#include "anki/cozmo/basestation/tracePrinter.h"
-#include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "util/signals/simpleSignal_fwd.h"
-#include "util/stats/recentStatsAccumulator.h"
-#include "clad/types/robotStatusAndActions.h"
-#include "clad/types/imageTypes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include <memory>
+#include "clad/types/activeObjectTypes.h"
+#include "clad/types/animationKeyFrames.h"
+#include "clad/types/dockingSignals.h"
+#include "clad/types/imageTypes.h"
+#include "clad/types/ledTypes.h"
+#include "clad/types/robotStatusAndActions.h"
+#include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal.hpp"
+#include "util/stats/recentStatsAccumulator.h"
 #include <queue>
-#include <unordered_map>
-#include <unordered_set>
 #include <time.h>
+#include <unordered_map>
 #include <utility>
-#include <fstream>
 
 
 namespace Anki {
   
 // Forward declaration:
+
+class PoseOriginList;
+
 namespace Util {
 namespace Data {
 class DataPlatform;
 }
 }
 
+// TODO:(bn) path planning component
 enum class ERobotDriveToPoseStatus {
   // There was an internal error while planning
   Error,
@@ -97,32 +81,35 @@ enum class ERobotDriveToPoseStatus {
 namespace Cozmo {
   
 // Forward declarations:
+class AIInformationAnalyzer;
+class ActionList;
 class BehaviorFactory;
-class IPathPlanner;
-class MatPiece;
-class MoodManager;
-class PathDolerOuter;
-class ProgressionUnlockComponent;
-class VisionComponent;
+class BehaviorManager;
 class BlockFilter;
 class BlockTapFilterComponent;
 class BlockWorld;
+class CozmoContext;
+class DrivingAnimationHandler;
 class FaceWorld;
+class IExternalInterface;
+class IPathPlanner;
+class LightsComponent;
+class MatPiece;
+class MoodManager;
+class MovementComponent;
+class NVStorageComponent;
+class ObjectPoseConfirmer;
+class PathDolerOuter;
 class PetWorld;
+class ProgressionUnlockComponent;
+class RobotIdleTimeoutComponent;
 class RobotPoseHistory;
 class RobotPoseStamp;
-class IExternalInterface;
-struct RobotState;
-class ActiveCube;
-class SpeedChooser;
-class DrivingAnimationHandler;
-class LightsComponent;
 class RobotToEngineImplMessaging;
-class ActionList;
-class BehaviorManager;
-class AIInformationAnalyzer;
-class RobotIdleTimeoutComponent;
-class ObjectPoseConfirmer;
+class SpeedChooser;
+class TextToSpeechComponent;
+class VisionComponent;
+struct RobotState;
 
 namespace RobotAnimation {
 class EngineAnimationController;
@@ -145,16 +132,12 @@ class MessageEngineToGame;
 }
 
 // indent 2 spaces << that way !!!! coding standards !!!!
-class Robot
+class Robot : private Util::noncopyable
 {
 public:
     
   Robot(const RobotID_t robotID, const CozmoContext* context);
   ~Robot();
-  // Explicitely delete copy and assignment operators (class doesn't support shallow copy)
-  // TEMP: use noncopyable instead
-  Robot(const Robot&) = delete;
-  Robot& operator=(const Robot&) = delete;
 
   // =========== Robot properties ===========
   
@@ -191,43 +174,66 @@ public:
 
   // =========== Components ===========
   
-  BlockWorld&       GetBlockWorld()       {assert(_blockWorld.get()); return *_blockWorld;}
-  const BlockWorld& GetBlockWorld() const {assert(_blockWorld.get()); return *_blockWorld;}
+  inline BlockWorld&       GetBlockWorld()       {assert(_blockWorld); return *_blockWorld;}
+  inline const BlockWorld& GetBlockWorld() const {assert(_blockWorld); return *_blockWorld;}
   
-  FaceWorld&       GetFaceWorld()       {assert(_faceWorld.get()); return *_faceWorld;}
-  const FaceWorld& GetFaceWorld() const {assert(_faceWorld.get()); return *_faceWorld;}
+  inline FaceWorld&       GetFaceWorld()       {assert(_faceWorld); return *_faceWorld;}
+  inline const FaceWorld& GetFaceWorld() const {assert(_faceWorld); return *_faceWorld;}
 
-  PetWorld&       GetPetWorld()       {assert(_petWorld.get()); return *_petWorld;}
-  const PetWorld& GetPetWorld() const {assert(_petWorld.get()); return *_petWorld;}
+  inline PetWorld&       GetPetWorld()       {assert(_petWorld); return *_petWorld;}
+  inline const PetWorld& GetPetWorld() const {assert(_petWorld); return *_petWorld;}
 
-  VisionComponent&       GetVisionComponent()       { assert(_visionComponentPtr); return *_visionComponentPtr; }
-  const VisionComponent& GetVisionComponent() const { assert(_visionComponentPtr); return *_visionComponentPtr; }
+  inline VisionComponent&       GetVisionComponent()       { assert(_visionComponent); return *_visionComponent; }
+  inline const VisionComponent& GetVisionComponent() const { assert(_visionComponent); return *_visionComponent; }
   
-  BlockTapFilterComponent& GetBlockTapFilter() {assert(_tapFilterComponent); return *_tapFilterComponent;}
-  const BlockTapFilterComponent& GetBlockTapFilter() const {assert(_tapFilterComponent); return *_tapFilterComponent;}
+  inline BlockTapFilterComponent& GetBlockTapFilter() {
+    assert(_tapFilterComponent);
+    return *_tapFilterComponent;
+  }
+  inline const BlockTapFilterComponent& GetBlockTapFilter() const {
+    assert(_tapFilterComponent);
+    return *_tapFilterComponent;
+  }
 
-  TextToSpeechComponent& GetTextToSpeechComponent() { return _textToSpeechComponent; }
-  // TODO:(bn)  // TEMP: add const version
+  inline TextToSpeechComponent& GetTextToSpeechComponent() {
+    assert(_textToSpeechComponent);
+    return *_textToSpeechComponent;
+  }
+  inline const TextToSpeechComponent& GetTextToSpeechComponent() const {
+    assert(_textToSpeechComponent);
+    return *_textToSpeechComponent;
+  }
 
-  MovementComponent&       GetMoveComponent()       { return _movementComponent; }
-  const MovementComponent& GetMoveComponent() const { return _movementComponent; }
+  inline MovementComponent& GetMoveComponent() {
+    assert(_movementComponent);
+    return *_movementComponent;
+  }
+  inline const MovementComponent& GetMoveComponent() const {
+    assert(_movementComponent);
+    return *_movementComponent;
+  }
+ 
+  inline LightsComponent&       GetLightsComponent()       { assert(_lightsComponent); return *_lightsComponent; }
+  inline const LightsComponent& GetLightsComponent() const { assert(_lightsComponent); return *_lightsComponent; }
 
-  LightsComponent&       GetLightsComponent()       { assert(_lightsComponent); return *_lightsComponent; }
-  const LightsComponent& GetLightsComponent() const { assert(_lightsComponent); return *_lightsComponent; }
+  inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
+  inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
-  const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
-  MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
-
-  const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
-  BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
+  inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
+  inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
 
   const BehaviorFactory& GetBehaviorFactory() const;
   BehaviorFactory&       GetBehaviorFactory();
   
-  const AIInformationAnalyzer& GetAIInformationAnalyzer() const { return *_aiInformationAnalyzer; }
-  AIInformationAnalyzer&       GetAIInformationAnalyzer()       { return *_aiInformationAnalyzer; }
-
-  // TEMP: consistency
+  inline const AIInformationAnalyzer& GetAIInformationAnalyzer() const {
+    assert(_aiInformationAnalyzer);
+    return *_aiInformationAnalyzer;
+  }
+  inline AIInformationAnalyzer& GetAIInformationAnalyzer() {
+    assert(_aiInformationAnalyzer);
+    return *_aiInformationAnalyzer;
+  }
+  
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
     return *_progressionUnlockComponent;
@@ -237,8 +243,14 @@ public:
     return *_progressionUnlockComponent;
   }
 
-  const NVStorageComponent& GetNVStorageComponent() const { return _nvStorageComponent; }
-  NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
+  inline const NVStorageComponent& GetNVStorageComponent() const {
+    assert(_nvStorageComponent);
+    return *_nvStorageComponent;
+  }
+  inline NVStorageComponent& GetNVStorageComponent() {
+    assert(_nvStorageComponent);
+    return *_nvStorageComponent;
+  }
   
   const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
   SpeedChooser& GetSpeedChooser() { return *_speedChooser; }
@@ -246,8 +258,8 @@ public:
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
   
-  const Util::RandomGenerator& GetRNG() const { return *_context->GetRandom(); }
-  Util::RandomGenerator& GetRNG() { return *_context->GetRandom(); }
+  const Util::RandomGenerator& GetRNG() const;
+  Util::RandomGenerator& GetRNG();
   
   // =========== Localization ===========
   
@@ -278,9 +290,6 @@ public:
       
   Result LocalizeToObject(const ObservableObject* seenObject, ObservableObject* existingObject);
     
-  // Returns true if robot is not traversing a path and has no actions in its queue.
-  bool IsIdle() const; // TODO:(bn) delete?? // TEMP: 
-  
   // True if we are on the sloped part of a ramp
   bool IsOnRamp() const { return _onRamp; }
     
@@ -301,14 +310,13 @@ public:
   // Updates pose to be on charger
   Result SetPoseOnCharger();
   
-  // Sets the charger that it's docking to // TEMP: rename?
+  // Sets the charger that it's docking to
   void           SetCharger(const ObjectID& chargerID) { _chargerID = chargerID; }
   const ObjectID GetCharger() const                    { return _chargerID; }
 
   // =========== Cliff reactions ===========
 
   // whether or not the robot should react (the sensor may still be enabled)
-  // TEMP:  // TODO:(bn) do we need this anymore? kill it
   const bool GetIsCliffReactionDisabled() { return _isCliffReactionDisabled; }
   
   // =========== Camera / Vision ===========
@@ -346,7 +354,7 @@ public:
   Result ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
                                             Radians& absPanAngle, Radians& absTiltAngle) const;
   
-  const PoseOriginList&  GetPoseOriginList() const { return _poseOriginList; }
+  const PoseOriginList&  GetPoseOriginList() const { assert(_poseOriginList); return *_poseOriginList; }
   
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
   
@@ -612,7 +620,7 @@ public:
   // Return a reference to the robot's action list for directly adding things
   // to do, either "now" or in queues.
   // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
-  ActionList& GetActionList() { return *_actionList; }    
+  ActionList& GetActionList() { assert(_actionList); return *_actionList; }    
     
   // =========== Animation Commands =============
     
@@ -661,26 +669,18 @@ public:
   
   
   // Load in all data-driven behaviors
-  void LoadBehaviors(); // TEMP: move to ai component
+  void LoadBehaviors();
 
   // =========== Mood =============
 
-  // Load in all data-driven emotion events // TEMP: move to mood manager?
+  // Load in all data-driven emotion events // TODO: move to mood manager?
   void LoadEmotionEvents();      
 
   // =========== Pose history =============
   
   RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
   const RobotPoseHistory* GetPoseHistory() const { return _poseHistory; }
-  
-  // TEMP: delete these??
-//  Result AddRawOdomPoseToHistory(const TimeStamp_t t,
-//                                 const PoseFrameID_t frameID,
-//                                 const f32 pose_x, const f32 pose_y, const f32 pose_z,
-//                                 const f32 pose_angle,
-//                                 const f32 head_angle,
-//                                 const f32 lift_angle);
-  
+    
   Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                  const PoseFrameID_t frameID,
                                  const Pose3d& pose,
@@ -688,12 +688,6 @@ public:
                                  const f32 lift_angle,
                                  const u16 cliff_data,
                                  const bool isCarryingObject);
-  
-//  Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
-//                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
-//                                    const f32 pose_angle,
-//                                    const f32 head_angle,
-//                                    const f32 lift_angle);
   
   Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                     const Pose3d& pose, 
@@ -709,27 +703,7 @@ public:
   bool UpdateCurrPoseFromHistory();
 
   Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const;
-  
-  // ============= Reactions ============= // TEMP:  // TODO:(bn) delete this whole section
-  using ReactionCallback = std::function<Result(Robot*,Vision::ObservedMarker*)>;
-  using ReactionCallbackIter = std::list<ReactionCallback>::const_iterator;
-    
-  // Add a callback function to be run as a "reaction" when the robot
-  // sees the specified VisionMarker. The returned iterator can be
-  // used to remove the callback via the method below.
-  ReactionCallbackIter AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback);
-    
-  // Remove a previously-added callback using the iterator returned by
-  // AddReactionCallback above.
-  void RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove);
-  
-  // ========= Lights ==========
-
- // TEMP: kill this? (use component instead)
-  Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights) { return GetLightsComponent().SetObjectLights(objectID, lights); }
-  Result SetBackpackLights(const BackpackLights& lights) { return GetLightsComponent().SetBackpackLights(lights); }
-  void SetHeadlight(bool on) { GetLightsComponent().SetHeadlight(on); }
-  
+      
   // =========  Block messages  ============
 
   // Assign which objects the robot should connect to.
@@ -777,12 +751,9 @@ public:
   // =========  Events  ============
   using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
   RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
-  bool HasExternalInterface() const { return _context->GetExternalInterface() != nullptr; }
+  bool HasExternalInterface() const;
   
-  IExternalInterface* GetExternalInterface() {
-    ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
-    return _context->GetExternalInterface();
-  }
+  IExternalInterface* GetExternalInterface();
   
   RobotInterface::MessageHandler* GetRobotMessageHandler();
   void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
@@ -808,7 +779,7 @@ public:
   
   void BroadcastEngineErrorCode(EngineErrorCode error);
   
-  Util::Data::DataPlatform* GetContextDataPlatform() { return _context->GetDataPlatform(); }
+  Util::Data::DataPlatform* GetContextDataPlatform();
   const CozmoContext* GetContext() const { return _context; }
   
   ExternalInterface::RobotState GetRobotState();
@@ -867,6 +838,7 @@ protected:
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;
   
   ///////// Animation /////////
+  // TODO:(bn) make animation streamer a pointer, pull Tag out into a constants / definitions file
   AnimationStreamer _animationStreamer;
   s32               _numAnimationBytesPlayed         = 0;
   s32               _numAnimationBytesStreamed       = 0;
@@ -882,18 +854,16 @@ protected:
   // Note that we want _actionList as a pointer instead of unique_ptr. This is because unique_ptrs are
   // set to nullptr before being deleted, while regular pointers are not. Actions sometimes interact with
   // the ActionList upon destruction, and we don't want to cause a crash because the pointer has already been nulled.
-  ActionList*           _actionList;
-  MovementComponent     _movementComponent;
-  VisionComponent*      _visionComponentPtr;
-  NVStorageComponent    _nvStorageComponent;
-  TextToSpeechComponent _textToSpeechComponent;
-  
-  std::unique_ptr<ObjectPoseConfirmer>  _objectPoseConfirmerPtr;
-
-  std::unique_ptr<LightsComponent>  _lightsComponent;
+  std::unique_ptr<ActionList>            _actionList;
+  std::unique_ptr<MovementComponent>     _movementComponent;
+  std::unique_ptr<VisionComponent>       _visionComponent;
+  std::unique_ptr<NVStorageComponent>    _nvStorageComponent;
+  std::unique_ptr<TextToSpeechComponent> _textToSpeechComponent;
+  std::unique_ptr<ObjectPoseConfirmer>   _objectPoseConfirmerPtr;
+  std::unique_ptr<LightsComponent>       _lightsComponent;
   
   // Hash to not spam debug messages
-  size_t            _lastDebugStringHash;
+  size_t _lastDebugStringHash;
 
   // Path Following. There are multiple planners, only one of which can
   // be selected at a time. Some of these might point to the same planner.
@@ -929,26 +899,26 @@ protected:
   */
   
   // Geometry / Pose
-  PoseOriginList    _poseOriginList;
-  
-  Pose3d*           _worldOrigin;
-  Pose3d            _pose;
-  Pose3d            _driveCenterPose;
-  PoseFrameID_t     _frameId = 0;
-  ObjectID          _localizedToID;       // ID of mat object robot is localized to
-  bool              _hasMovedSinceLocalization = false;
-  u32               _numMismatchedFrameIDs = 0;
+  std::unique_ptr<PoseOriginList> _poseOriginList;
+ 
+  Pose3d*        _worldOrigin;
+  Pose3d         _pose;
+  Pose3d         _driveCenterPose;
+  PoseFrameID_t  _frameId                   = 0;
+  ObjectID       _localizedToID; // ID of mat object robot is localized to
+  bool           _hasMovedSinceLocalization = false;
+  u32            _numMismatchedFrameIDs     = 0;
   
   // May be true even if not localized to an object, if robot has not been picked up
-  bool              _isLocalized = true;
-  bool              _localizedToFixedObject; // false until robot sees a _fixed_ mat
-  bool              _needToSendLocalizationUpdate = false;
+  bool _isLocalized                  = true;
+  bool _localizedToFixedObject; // false until robot sees a _fixed_ mat
+  bool _needToSendLocalizationUpdate = false;
   
   // Whether or not to ignore all external action messages
   bool _ignoreExternalActions = false;
   
   // Stores (squared) distance to the closest observed marker of the object we're localized to
-  f32               _localizedMarkerDistToCameraSq;
+  f32 _localizedMarkerDistToCameraSq = -1.0f;
   
   Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
     
@@ -1000,7 +970,7 @@ protected:
   bool             _gotStateMsgAfterTimeSync = false;
   
   u32              _suspiciousCliffCnt = 0;
-  u16              _cliffDetectThreshold  = CLIFF_SENSOR_DROP_LEVEL;
+  u16              _cliffDetectThreshold;
   u32              _cliffStartTimestamp = 0;
   
   // Increments count of suspicious cliff. (i.e. Cliff was detected but data looks like maybe it's not real.)
@@ -1076,12 +1046,8 @@ protected:
   ObjectID                    _carryingObjectOnTopID;
   const Vision::KnownMarker*  _carryingMarker           = nullptr;
   bool                        _lastPickOrPlaceSucceeded = false;
-  
-  // A place to store reaction callback functions, indexed by the type of
-  // vision marker that triggers them
-  std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
-  
-  EncodedImage _encodedImage;
+    
+  EncodedImage _encodedImage; // TODO:(bn) store pointer?
   double       _timeSinceLastImage_s = 0.0;
   double       _lastImageLatencyTime_s = 0.0;
   Util::Stats::RecentStatsAccumulator _imageStats{50};
@@ -1122,10 +1088,7 @@ protected:
       Reset();
     }
       
-    void Reset() {
-      factoryID = ActiveObject::InvalidFactoryID;
-      pending = false;
-    }
+    void Reset();
   };
   std::array<ObjectToConnectToInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> _objectsToConnectTo;
 
@@ -1150,14 +1113,7 @@ protected:
       Reset();
     }
       
-    void Reset() {
-      factoryID = ActiveObject::InvalidFactoryID;
-      objectType = ObjectType::Invalid;
-      connectionState = ConnectionState::Invalid;
-      rssi = 0;
-      lastDiscoveredTimeStamp = 0;
-      lastDisconnectionTime = 0;
-    }
+    void Reset();
   };
   std::unordered_map<FactoryID, ActiveObjectInfo> _discoveredObjects;
   bool _enableDiscoveredObjectsBroadcasting = false;

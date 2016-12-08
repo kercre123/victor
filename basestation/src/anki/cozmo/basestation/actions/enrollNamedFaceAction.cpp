@@ -13,11 +13,13 @@
 #include "enrollNamedFaceAction.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -76,7 +78,7 @@ namespace Cozmo {
         .transitionOffPeriod_ms = {{250,250,250,250,250}},
         .offset                 = {{0,0,0,0,0}}
       };
-      robot.SetBackpackLights(lights);
+      robot.GetLightsComponent().SetBackpackLights(lights);
     }
   }
   

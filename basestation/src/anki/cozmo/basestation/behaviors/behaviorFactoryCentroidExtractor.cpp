@@ -17,8 +17,12 @@
  * Copyright: Anki, Inc. 2016
  **/
 
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
@@ -143,7 +147,7 @@ namespace Cozmo {
                   {
                     PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.MoveHead", "Moving head to 0 degrees failed");
                     failLights.onColors = fail_onColorMagenta;
-                    robot.SetBackpackLights(failLights);
+                    robot.GetLightsComponent().SetBackpackLights(failLights);
                   }
                 });
   }
@@ -159,7 +163,7 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.DotTestFailed",
                             "Failed to find all 4 dots");
         failLights.onColors = fail_onColorRed;
-        robot.SetBackpackLights(failLights);
+        robot.GetLightsComponent().SetBackpackLights(failLights);
       }
       else
       {
@@ -168,7 +172,7 @@ namespace Cozmo {
           PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.DidNotComputeCameraPose",
                               "Failed to compute camPose camera is not calibrated");
           failLights.onColors = fail_onColorOrange;
-          robot.SetBackpackLights(failLights);
+          robot.GetLightsComponent().SetBackpackLights(failLights);
         }
         else
         {
@@ -215,11 +219,11 @@ namespace Cozmo {
           if(doThresholdCheck && exceedsThresh)
           {
             failLights.onColors = fail_onColorBlue;
-            robot.SetBackpackLights(failLights);
+            robot.GetLightsComponent().SetBackpackLights(failLights);
           }
           else
           {
-            robot.SetBackpackLights(passLights);
+            robot.GetLightsComponent().SetBackpackLights(passLights);
           }
         }
       }

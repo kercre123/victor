@@ -17,6 +17,7 @@
  **/
 
 #include "anki/cozmo/basestation/actions/driveOffChargerContactsAction.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "util/console/consoleInterface.h"

@@ -13,18 +13,20 @@
 
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
-#include "util/transport/connectionStats.h"
 #include "util/math/math.h"
-#include "clad/externalInterface/messageGameToEngine.h"
+#include "util/transport/connectionStats.h"
 
 CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 60);
 CONSOLE_VAR(Anki::TimeStamp_t, kTapWaitOffset_ms, "TapFilter.WaitOffsetTime", 75);

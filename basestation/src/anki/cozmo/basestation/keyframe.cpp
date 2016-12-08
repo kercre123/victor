@@ -14,16 +14,17 @@
  **/
 
 
-#include "anki/cozmo/basestation/keyframe.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/ledEncoding.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/faceAnimationManager.h"
-#include "anki/cozmo/basestation/animations/animEventHelpers.h"
-#include "util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/animations/animEventHelpers.h"
+#include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/cozmo/basestation/keyframe.h"
+#include "anki/cozmo/basestation/ledEncoding.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/logging/logging.h"
 
 #include <opencv2/core.hpp>
 #include <cassert>

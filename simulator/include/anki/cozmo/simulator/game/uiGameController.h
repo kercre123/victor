@@ -9,24 +9,26 @@
 #ifndef __UI_GAME_CONTROLLER_H__
 #define __UI_GAME_CONTROLLER_H__
 
-#include <webots/Supervisor.hpp>
-#include <unordered_set>
-#include "anki/types.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/game/comms/gameComms.h"
+#include "anki/cozmo/game/comms/gameMessageHandler.h"
+#include "anki/types.h"
+#include "anki/vision/basestation/faceIdTypes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/imageTypes.h"
-#include "clad/types/robotTestModes.h"
-#include "clad/types/objectTypes.h"
-#include "clad/types/objectFamilies.h"
-#include "clad/types/visionModes.h"
-#include "clad/types/nvStorageTypes.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/activeObjectTypes.h"
-#include "anki/cozmo/game/comms/gameMessageHandler.h"
-#include "anki/cozmo/game/comms/gameComms.h"
+#include "clad/types/imageTypes.h"
+#include "clad/types/nvStorageTypes.h"
+#include "clad/types/objectFamilies.h"
+#include "clad/types/objectTypes.h"
+#include "clad/types/robotTestModes.h"
+#include "clad/types/visionModes.h"
+#include <unordered_set>
+#include <webots/Supervisor.hpp>
 
 
 namespace Anki {

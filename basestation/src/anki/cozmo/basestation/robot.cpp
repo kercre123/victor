@@ -7,76 +7,71 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
+#include "anki/cozmo/basestation/robot.h"
+
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/poseOriginList.h"
+#include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/rect_impl.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
-#include "anki/cozmo/basestation/animations/engineAnimationController.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
+#include "anki/cozmo/basestation/animations/engineAnimationController.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/pathPlanner.h"
-#include "anki/cozmo/basestation/latticePlanner.h"
-#include "anki/cozmo/basestation/minimalAnglePlanner.h"
-#include "anki/cozmo/basestation/faceAndApproachPlanner.h"
-#include "anki/cozmo/basestation/pathDolerOuter.h"
-#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/activeCube.h"
-#include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/ledEncoding.h"
-#include "anki/cozmo/basestation/petWorld.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotDataLoader.h"
-#include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
-#include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
-#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/vision/CameraSettings.h"
-// TODO: This is shared between basestation and robot and should be moved up
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
-#include "anki/cozmo/basestation/ramp.h"
-#include "anki/cozmo/basestation/charger.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/cozmo/basestation/viz/vizManager.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/faceAnimationManager.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/blocks/blockFilter.h"
+#include "anki/cozmo/basestation/charger.h"
+#include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
-#include "anki/cozmo/basestation/objectPoseConfirmer.h"
-#include "anki/cozmo/basestation/blocks/blockFilter.h"
-#include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
-#include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/speedChooser.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/faceAndApproachPlanner.h"
+#include "anki/cozmo/basestation/faceWorld.h"
+#include "anki/cozmo/basestation/latticePlanner.h"
+#include "anki/cozmo/basestation/minimalAnglePlanner.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/objectPoseConfirmer.h"
+#include "anki/cozmo/basestation/pathDolerOuter.h"
+#include "anki/cozmo/basestation/pathPlanner.h"
+#include "anki/cozmo/basestation/petWorld.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
+#include "anki/cozmo/basestation/ramp.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
+#include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
+#include "anki/cozmo/basestation/speedChooser.h"
+#include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/basestation/observableObjectLibrary_impl.h"
-#include "anki/vision/basestation/image.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/robotStatusAndActions.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/gameStatusFlag.h"
+#include "clad/types/robotStatusAndActions.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
-#include "util/helpers/templateHelpers.h"
-#include "util/helpers/ankiDefines.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/ankiDefines.h"
+#include "util/helpers/templateHelpers.h"
 #include "util/transport/reliableConnection.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
@@ -198,12 +193,13 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _animationController(new RobotAnimation::EngineAnimationController(_context, _audioClient.get()))
 #endif
   , _actionList(new ActionList())
-  , _movementComponent(*this)
-  , _visionComponentPtr( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
-  , _nvStorageComponent(*this, _context)
-  , _textToSpeechComponent(_context)
+  , _movementComponent(new MovementComponent(*this))
+  , _visionComponent( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
+  , _nvStorageComponent(new NVStorageComponent(*this, _context))
+  , _textToSpeechComponent(new TextToSpeechComponent(_context))
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
   , _lightsComponent( new LightsComponent( *this ) )
+  , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
   , _headCamPose(_kDefaultHeadCamRotation,
@@ -212,6 +208,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
                   {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
   , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
   , _currentHeadAngle(MIN_HEAD_ANGLE)
+  , _cliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL)
   , _gyroDriftReported(false)
   , _driftCheckStartPoseFrameId(0)
   , _driftCheckStartAngle_rad(0)
@@ -290,7 +287,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
-  _visionComponentPtr->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
+  _visionComponent->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
   
   _pdo = new PathDolerOuter(_context->GetRobotManager()->GetMsgHandler(), robotID);
 
@@ -311,12 +308,12 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
       
   if (nullptr != _context->GetDataPlatform())
   {
-    _visionComponentPtr->Init(_context->GetDataLoader()->GetRobotVisionConfig());
+    _visionComponent->Init(_context->GetDataLoader()->GetRobotVisionConfig());
   }
       
   // Read all neccessary data off the robot and back it up
   // Potentially duplicates some reads like FaceAlbumData
-  _nvStorageComponent.GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
+  _nvStorageComponent->GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
       
 } // Constructor: Robot
     
@@ -330,11 +327,11 @@ Robot::~Robot()
   
   // Destroy our actionList before things like the path planner, since actions often rely on those
   // things existing
-  Util::SafeDelete(_actionList);
+  _actionList.reset();
       
   // destroy vision component first because its thread might be using things from Robot. This fixes a crash
   // caused by the vision thread using _poseHistory when it was destroyed here
-  Util::SafeDelete(_visionComponentPtr);
+  _visionComponent.reset();
   
   Util::SafeDelete(_poseHistory);
   Util::SafeDelete(_pdo);
@@ -626,7 +623,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     if(kUseVisionOnlyWhileOnTreads && _offTreadsState == OffTreadsState::OnTreads)
     {
       // Pause vision if we just left treads
-      _visionComponentPtr->Pause(true);
+      _visionComponent->Pause(true);
     }
     
     // Falling seems worthy of a DAS event
@@ -658,7 +655,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       if(kUseVisionOnlyWhileOnTreads)
       {
         // Re-enable vision if we've returned to treads
-        _visionComponentPtr->Pause(false);
+        _visionComponent->Pause(false);
       }
       
       ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
@@ -696,6 +693,16 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   return false;
 }
     
+const Util::RandomGenerator& Robot::GetRNG() const
+{
+  return *_context->GetRandom();
+}
+
+Util::RandomGenerator& Robot::GetRNG()
+{
+  return *_context->GetRandom();
+}
+
 void Robot::Delocalize(bool isCarryingObject)
 {
   _isLocalized = false;
@@ -731,12 +738,12 @@ void Robot::Delocalize(bool isCarryingObject)
   // Add a new pose origin to use until the robot gets localized again
   const Pose3d* oldOrigin = _worldOrigin;
   _worldOrigin = new Pose3d();
-  PoseOriginID_t originID = _poseOriginList.AddOrigin(_worldOrigin);
+  PoseOriginID_t originID = _poseOriginList->AddOrigin(_worldOrigin);
   _worldOrigin->SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(originID));
   
   // Log delocalization, new origin name, and num origins to DAS
   PRINT_NAMED_EVENT("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
-                    GetID(), _worldOrigin->GetName().c_str(), _poseOriginList.GetSize());
+                    GetID(), _worldOrigin->GetName().c_str(), _poseOriginList->GetSize());
   
   _pose.SetRotation(0, Z_AXIS_3D());
   _pose.SetTranslation({0.f, 0.f, 0.f});
@@ -759,7 +766,7 @@ void Robot::Delocalize(bool isCarryingObject)
                      "Sending new localization update at t=%u, with pose frame %u and origin ID=%u",
                      GetLastMsgTimestamp(),
                      GetPoseFrameID(),
-                     _poseOriginList.GetOriginID(_worldOrigin));
+                     _poseOriginList->GetOriginID(_worldOrigin));
     SendAbsLocalizationUpdate(_pose, GetLastMsgTimestamp(), GetPoseFrameID());
   }
   
@@ -768,7 +775,7 @@ void Robot::Delocalize(bool isCarryingObject)
                                          "LocalizedTo: <nothing>");
   GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         _poseOriginList.GetSize(),
+                                         _poseOriginList->GetSize(),
                                          _worldOrigin->GetName().c_str());
   GetContext()->GetVizManager()->EraseAllVizObjects();
   
@@ -844,7 +851,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   for(const auto& marker : object->GetMarkers()) {
     if(marker.GetLastObservedTime() >= mostRecentObsTime) {
       Pose3d markerPoseWrtCamera;
-      if(false == marker.GetPose().GetWithRespectTo(_visionComponentPtr->GetCamera().GetPose(), markerPoseWrtCamera)) {
+      if(false == marker.GetPose().GetWithRespectTo(_visionComponent->GetCamera().GetPose(), markerPoseWrtCamera)) {
         PRINT_NAMED_ERROR("Robot.SetLocalizedTo.MarkerOriginProblem",
                           "Could not get pose of marker w.r.t. robot camera");
         return RESULT_FAIL;
@@ -871,7 +878,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
   GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         _poseOriginList.GetSize(),
+                                         _poseOriginList->GetSize(),
                                          _worldOrigin->GetName().c_str());
       
   return RESULT_OK;
@@ -1214,8 +1221,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // TODO: Should this just be a different message? Or one that includes the state message from the robot?
   RobotState stateMsg(msg);
 
-  const float imageFrameRate = 1000.0f / _visionComponentPtr->GetFramePeriod_ms();
-  const float imageProcRate = 1000.0f / _visionComponentPtr->GetProcessingPeriod_ms();
+  const float imageFrameRate = 1000.0f / _visionComponent->GetFramePeriod_ms();
+  const float imageProcRate = 1000.0f / _visionComponent->GetProcessingPeriod_ms();
             
   // Send state to visualizer for displaying
   GetContext()->GetVizManager()->SendRobotState(
@@ -1316,7 +1323,7 @@ Pose3d Robot::GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeS
     
 Vision::Camera Robot::GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const
 {
-  Vision::Camera camera(_visionComponentPtr->GetCamera());
+  Vision::Camera camera(_visionComponent->GetCamera());
       
   // Update the head camera's pose
   camera.SetPose(GetHistoricalCameraPose(p, t));
@@ -1394,10 +1401,10 @@ Result Robot::Update()
   */
       
       
-  if(_visionComponentPtr->GetCamera().IsCalibrated())
+  if(_visionComponent->GetCamera().IsCalibrated())
   {
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
-    Result visionResult = _visionComponentPtr->UpdateAllResults();
+    Result visionResult = _visionComponent->UpdateAllResults();
     if(RESULT_OK != visionResult) {
       PRINT_NAMED_WARNING("Robot.Update.VisionComponentUpdateFail", "");
       return visionResult;
@@ -1515,7 +1522,7 @@ Result Robot::Update()
   }
 
   /////////// Update NVStorage //////////
-  _nvStorageComponent.Update();
+  _nvStorageComponent->Update();
 
   /////////// Update path planning / following ////////////
 
@@ -1786,7 +1793,7 @@ Result Robot::Update()
   // Sending debug string to game and viz
   char buffer [128];
 
-  const float imageProcRate = 1000.0f / _visionComponentPtr->GetProcessingPeriod_ms();
+  const float imageProcRate = 1000.0f / _visionComponent->GetProcessingPeriod_ms();
       
   // So we can have an arbitrary number of data here that is likely to change want just hash it all
   // together if anything changes without spamming
@@ -1938,7 +1945,7 @@ void Robot::SetHeadAngle(const f32& angle)
                           angle, RAD_TO_DEG_F32(angle));
     }
         
-    _visionComponentPtr->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
+    _visionComponent->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
   }
   
 } // SetHeadAngle()
@@ -2488,7 +2495,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     _blockWorld->UpdateObjectOrigins(oldOrigin, _worldOrigin);
 
     // after updating all block world objects, flatten out origins to remove grandparents
-    _poseOriginList.Flatten(_worldOrigin);
+    _poseOriginList->Flatten(_worldOrigin);
         
   } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
       
@@ -3027,7 +3034,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
                                dockAction == DockAction::DA_CROSS_BRIDGE);
         
     // Tell the VisionSystem to start tracking this marker:
-    _visionComponentPtr->SetMarkerToTrack(marker->GetCode(), marker->GetSize(),
+    _visionComponent->SetMarkerToTrack(marker->GetCode(), marker->GetSize(),
                                           image_pixel_x, image_pixel_y, checkAngleX,
                                           placementOffsetX_mm, placementOffsetY_mm,
                                           placementOffsetAngle_rad);
@@ -3533,6 +3540,23 @@ Result Robot::SendIMURequest(const u32 length_ms) const
   return SendRobotMessage<IMURequest>(length_ms);
 }
   
+
+bool Robot::HasExternalInterface() const
+{
+  return _context->GetExternalInterface() != nullptr;
+}
+
+IExternalInterface* Robot::GetExternalInterface()
+{
+  ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
+  return _context->GetExternalInterface();
+}
+
+Util::Data::DataPlatform* Robot::GetContextDataPlatform()
+{
+  return _context->GetDataPlatform();
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void Robot::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
@@ -4048,31 +4072,7 @@ void Robot::BroadcastAvailableObjects(bool enable)
 {
   _enableDiscoveredObjectsBroadcasting = enable;
 }
-    
-      
-Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
-{
-  //PRINT_NAMED_DEBUG("Robot.AddReactionCallback", _reactionCallbacks size = %lu\n",
-  //  (unsigned long)_reactionCallbacks.size());
-      
-  _reactionCallbacks[code].emplace_front(callback);
-      
-  return _reactionCallbacks[code].cbegin();
-      
-} // AddReactionCallback()
-    
-    
-// Remove a preivously-added callback using the iterator returned by
-// AddReactionCallback above.
-void Robot::RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove)
-{
-  _reactionCallbacks[code].erase(callbackToRemove);
-  if(_reactionCallbacks[code].empty()) {
-    _reactionCallbacks.erase(code);
-  }
-} // RemoveReactionCallback()
-    
-    
+
 Result Robot::AbortAll()
 {
   bool anyFailures = false;
@@ -4091,7 +4091,7 @@ Result Robot::AbortAll()
     anyFailures = true;
   }
   
-  _movementComponent.StopAllMotors();
+  _movementComponent->StopAllMotors();
       
   if(anyFailures) {
     return RESULT_FAIL;
@@ -4323,10 +4323,6 @@ FactoryID Robot::GetClosestDiscoveredObjectsOfType(ObjectType type, uint8_t maxR
   return closest;
 }
 
-bool Robot::IsIdle() const
-{
-  return !IsTraversingPath() && _actionList->IsEmpty();
-}
   
 const BehaviorFactory& Robot::GetBehaviorFactory() const
 {
@@ -4355,7 +4351,7 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
                              0.f,
                              poseWrtNeck.GetTranslation().z());
   
-  Vision::Camera camera(_visionComponentPtr->GetCamera());
+  Vision::Camera camera(_visionComponent->GetCamera());
   
   const Vision::CameraCalibration* calib = camera.GetCalibration();
   if(nullptr == calib)
@@ -4440,6 +4436,22 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
   absPanAngle  = std::atan2f(-pt.x(), calib->GetFocalLength_x()) + poseStamp.GetPose().GetRotation().GetAngleAroundZaxis();
   
   return RESULT_OK;
+}
+
+void Robot::ObjectToConnectToInfo::Reset()
+{
+  factoryID = ActiveObject::InvalidFactoryID;
+  pending = false;
+}
+
+void Robot::ActiveObjectInfo::Reset()
+{
+  factoryID = ActiveObject::InvalidFactoryID;
+  objectType = ObjectType::Invalid;
+  connectionState = ConnectionState::Invalid;
+  rssi = 0;
+  lastDiscoveredTimeStamp = 0;
+  lastDisconnectionTime = 0;
 }
 
 } // namespace Cozmo

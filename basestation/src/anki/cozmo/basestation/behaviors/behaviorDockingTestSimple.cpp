@@ -22,14 +22,17 @@
  **/
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "clad/types/dockingSignals.h"
@@ -219,7 +222,7 @@ namespace Anki {
           }
           
           // Turn off backpack lights in case we needed to be manually reset
-          robot.SetBackpackLights(failLights);
+          robot.GetLightsComponent().SetBackpackLights(failLights);
           
           _blockObjectIDPickup.UnSet();
           
@@ -753,11 +756,11 @@ namespace Anki {
     {
       if(_yellForHelp)
       {
-        robot.SetBackpackLights(failLights);
+        robot.GetLightsComponent().SetBackpackLights(failLights);
       }
       else if(_yellForCompletion)
       {
-        robot.SetBackpackLights(passLights);
+        robot.GetLightsComponent().SetBackpackLights(passLights);
       }
       SetCurrState(s);
     }

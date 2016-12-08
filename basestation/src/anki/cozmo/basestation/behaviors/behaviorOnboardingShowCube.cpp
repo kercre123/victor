@@ -11,16 +11,18 @@
  **/
 
 
-#include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/actions/dockActions.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
