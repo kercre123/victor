@@ -39,20 +39,21 @@
  * Copyright: Anki, Inc. 2016
  **/
 
+#include "anki/common/robot/errorHandling.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/common/robot/errorHandling.h"
-#include "clad/externalInterface/messageGameToEngine.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
-#include "util/console/consoleInterface.h"
 
 CONSOLE_VAR(bool, kNoWriteToRobot, "NVStorageComponent", false);
 

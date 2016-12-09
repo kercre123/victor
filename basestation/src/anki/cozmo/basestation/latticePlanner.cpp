@@ -18,6 +18,7 @@
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"

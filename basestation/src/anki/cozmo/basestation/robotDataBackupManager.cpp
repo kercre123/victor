@@ -12,11 +12,16 @@
  * Copyright: Anki, Inc. 2016
  **/
 
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataBackupManager.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/onboardingData.h"
 #include "json/json.h"
 #include "util/fileUtils/fileUtils.h"

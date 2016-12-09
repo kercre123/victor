@@ -11,18 +11,21 @@
  * --gtest_filter=QueueAction*
  **/
 
-#include "gtest/gtest.h"
+#include "anki/common/types.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/common/types.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "gtest/gtest.h"
 #include "util/helpers/templateHelpers.h"
 #include <limits.h>
-#include <vector>
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
+
 
 using namespace Anki::Cozmo;
 

@@ -14,6 +14,7 @@
 
 
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {

@@ -14,12 +14,13 @@
  **/
 #include "behaviorExploreLookAroundInPlace.h"
 
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
