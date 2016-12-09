@@ -11,7 +11,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 ///   adds functionality for controlling the four LEDs
 ///   adds awareness of accelerometer messages to detect LightCube movements
 /// </summary>
-public class LightCube : ObservedObject {
+public class LightCube : ActiveObject {
   #region LightCube helpers
 
   public static bool TryFindCubesFurthestApart(List<LightCube> cubesToCompare, out LightCube cubeA, out LightCube cubeB) {

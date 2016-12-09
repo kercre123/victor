@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class MockLightCubeUtil {
 
-  public static RobotObservedObject CurrentState(this ObservedObject cube) {
+  public static RobotObservedObject CurrentState(this ObservableObject cube) {
     return Singleton<RobotObservedObject>.Instance.Initialize(cube.RobotID,
       0,
       cube.Family,
@@ -20,7 +20,7 @@ public static class MockLightCubeUtil {
         cube.Rotation.w,
         cube.Rotation.x,
         cube.Rotation.y,
-        cube.Rotation.z, 
+        cube.Rotation.z,
         0),
       cube.TopFaceNorthAngle,
       (byte)(cube.HasLights ? 1 : 0));
@@ -68,31 +68,31 @@ public static class MockLightCubeUtil {
     return obj;
   }
 
-  public static void Apply(this RobotObservedObject msg, ObservedObject obj) {
+  public static void Apply(this RobotObservedObject msg, ObservableObject obj) {
     obj.UpdateInfo(msg);
   }
 
-  public static void Rotate(this ObservedObject obj, Quaternion rotation) {
+  public static void Rotate(this ObservableObject obj, Quaternion rotation) {
     obj.CurrentState().Rotate(rotation).Apply(obj);
   }
 
-  public static void Move(this ObservedObject obj, Vector3 position) {
+  public static void Move(this ObservableObject obj, Vector3 position) {
     obj.CurrentState().Move(position).Apply(obj);
   }
 
-  public static void MoveAndRotate(this ObservedObject obj, Vector3 position, Quaternion rotation) {
+  public static void MoveAndRotate(this ObservableObject obj, Vector3 position, Quaternion rotation) {
     obj.CurrentState().Move(position).Rotate(rotation).Apply(obj);
   }
 
-  public static void SetRotation(this ObservedObject obj, Quaternion rotation) {
+  public static void SetRotation(this ObservableObject obj, Quaternion rotation) {
     obj.CurrentState().SetRotation(rotation).Apply(obj);
   }
 
-  public static void SetPosition(this ObservedObject obj, Vector3 position) {
+  public static void SetPosition(this ObservableObject obj, Vector3 position) {
     obj.CurrentState().SetPosition(position).Apply(obj);
   }
 
-  public static void MakeActiveAndVisible(this ObservedObject obj, bool active, bool visible) {
+  public static void MakeActiveAndVisible(this ObservableObject obj, bool active, bool visible) {
     obj.CurrentState().MakeActive(active).Apply(obj);
   }
 

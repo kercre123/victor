@@ -50,7 +50,7 @@ namespace Cozmo.BlockPool {
       foreach (Transform child in _AvailableScrollView) {
         Destroy(child);
       }
-        
+
       // Spawn buttons for existing block pool objects
       for (int i = 0; i < _BlockPoolTracker.Blocks.Count; i++) {
         AddOrUpdateButtonInternal(_BlockPoolTracker.Blocks[i], true);
@@ -141,7 +141,7 @@ namespace Cozmo.BlockPool {
           });
 
           canToggleButton = !pooledObjectOfSameType;
-        }  
+        }
 
         if (canToggleButton) {
           _BlockPoolTracker.SetObjectInPool(data.FactoryID, !data.IsPersistent);
@@ -161,7 +161,7 @@ namespace Cozmo.BlockPool {
 
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        ObservedObject charger = robot.GetCharger();
+        ActiveObject charger = robot.GetCharger();
         if ((data.ObjectType == ObjectType.Charger_Basic) && (charger != null) && (charger.FactoryID == data.FactoryID)) {
           uint period_ms = isConnected ? (uint)500 : 0;
           charger.SetLEDs(color, color, period_ms);
@@ -212,14 +212,14 @@ namespace Cozmo.BlockPool {
             cube.SetLEDs(color, color);
           }
           else {
-            ObservedObject observedObject = robot.GetObservedObjectWithFactoryID(data.FactoryID);
-            if (observedObject != null) {
+            ActiveObject activeObject = robot.GetActiveObjectWithFactoryID(data.FactoryID);
+            if (activeObject != null) {
               EnableButton(data.FactoryID, GetButtonColor(data));
 
               // Turn on the lights to show that we are connected
-              if (observedObject.ObjectType == ObjectType.Charger_Basic) {
+              if (activeObject.ObjectType == ObjectType.Charger_Basic) {
                 uint color = GetObjectColor(data);
-                observedObject.SetLEDs(color, color);
+                activeObject.SetLEDs(color, color);
               }
             }
             else {
@@ -309,8 +309,7 @@ namespace Cozmo.BlockPool {
     }
 
     private Color GetButtonColor(BlockPoolData data) {
-      switch (data.ConnectionState)
-      {
+      switch (data.ConnectionState) {
       case BlockConnectionState.Connected:
         return data.IsPersistent ? Color.cyan : Color.green;
 
@@ -334,7 +333,7 @@ namespace Cozmo.BlockPool {
         return data.IsPersistent ? Color.cyan.ToUInt() : Color.green.ToUInt();
       }
       else {
-        return 0; 
+        return 0;
       }
     }
   }

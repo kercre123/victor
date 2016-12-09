@@ -228,11 +228,11 @@ namespace Cozmo.Minigame.DroneMode {
       }
 
       foreach (var cube in _CurrentRobot.LightCubes) {
-        CreateObservedObjectReticle(cube.Value);
+        CreateObservableObjectReticle(cube.Value);
       }
 
       if (_CurrentRobot.Charger != null) {
-        CreateObservedObjectReticle(_CurrentRobot.Charger);
+        CreateObservableObjectReticle(_CurrentRobot.Charger);
       }
     }
 
@@ -278,14 +278,24 @@ namespace Cozmo.Minigame.DroneMode {
       RemoveReticle(petFace);
     }
 
-    private void CreateObservedObjectReticle(ObservedObject observedObject) {
+    private void HandlePetFaceInFieldOfViewChanged(PetFace petFace, bool isInFieldOfView) {
+      // If visible spawn reticle and add to dictionary
+      if (isInFieldOfView) {
+        CreateReticleIfVisible(petFace);
+      }
+      else {
+        RemoveReticle(petFace);
+      }
+    }
+
+    private void CreateObservableObjectReticle(ObservableObject observedObject) {
       observedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
       observedObject.InFieldOfViewStateChanged += HandleInFieldOfViewChanged;
       CreateReticleIfVisible(observedObject);
     }
 
     private void HandleOnCubeAdded(LightCube cube) {
-      CreateObservedObjectReticle(cube);
+      CreateObservableObjectReticle(cube);
     }
 
     private void HandleOnCubeRemoved(LightCube cube) {
@@ -293,21 +303,21 @@ namespace Cozmo.Minigame.DroneMode {
       RemoveReticle(cube);
     }
 
-    private void HandleOnChargerAdded(ObservedObject charger) {
-      CreateObservedObjectReticle(charger);
+    private void HandleOnChargerAdded(ObservableObject charger) {
+      CreateObservableObjectReticle(charger);
     }
 
-    private void HandleOnChargerRemoved(ObservedObject charger) {
+    private void HandleOnChargerRemoved(ObservableObject charger) {
       charger.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
       RemoveReticle(charger);
     }
 
-    private void HandleInFieldOfViewChanged(ObservedObject observedObject,
-                                            ObservedObject.InFieldOfViewState oldState,
-                                            ObservedObject.InFieldOfViewState newState) {
+    private void HandleInFieldOfViewChanged(ObservableObject observedObject,
+                                            ObservableObject.InFieldOfViewState oldState,
+                                            ObservableObject.InFieldOfViewState newState) {
 
       // If visible spawn reticle and add to dictionary
-      if (newState == ObservedObject.InFieldOfViewState.Visible) {
+      if (newState == ObservableObject.InFieldOfViewState.Visible) {
         CreateReticleIfVisible(observedObject);
       }
       else {
@@ -451,8 +461,8 @@ namespace Cozmo.Minigame.DroneMode {
     private string FormatCurrentSeenObjects() {
       string toString = "";
       foreach (var obj in _ObjToReticle.Keys) {
-        if (obj is ObservedObject) {
-          toString += ((ObservedObject)obj).ObjectType + " " + obj.VizRect + "       ";
+        if (obj is ObservableObject) {
+          toString += ((ObservableObject)obj).ObjectType + " " + obj.VizRect + "       ";
         }
         else if (obj is Face) {
           toString += "Face ID " + ((Face)obj).ID + " " + obj.VizRect + "       ";

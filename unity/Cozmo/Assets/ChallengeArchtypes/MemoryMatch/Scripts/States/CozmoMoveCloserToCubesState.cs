@@ -55,8 +55,8 @@ namespace MemoryMatch {
       LightCube cubeA, cubeB;
       LightCube.TryFindCubesFurthestApart(cubesForGame, out cubeA, out cubeB);
       if (cubeA != null && cubeB != null &&
-          cubeA.CurrentPoseState != ObservedObject.PoseState.Unknown &&
-          cubeB.CurrentPoseState != ObservedObject.PoseState.Unknown) {
+          cubeA.CurrentPoseState != ObservableObject.PoseState.Unknown &&
+          cubeB.CurrentPoseState != ObservableObject.PoseState.Unknown) {
         _CubeMidpoint = VectorUtil.Midpoint(cubeA.WorldPosition.xy(), cubeB.WorldPosition.xy());
         Vector2 cubeAlignmentVector = cubeA.WorldPosition - cubeB.WorldPosition;
         Vector2 perpendicularToCubes = cubeAlignmentVector.PerpendicularAlignedWith(_CurrentRobot.Forward.xy());

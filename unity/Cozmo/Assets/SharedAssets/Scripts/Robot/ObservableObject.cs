@@ -3,11 +3,7 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
-/// <summary>
-/// all objects that cozmo sees are transmitted across to unity and represented here as ObservedObjects
-///   so far, we only both handling three types of cubes and a charger
-/// </summary>
-public class ObservedObject : IVisibleInCamera {
+public class ObservableObject : IVisibleInCamera {
 
   public class Light : Robot.Light {
     public static new float MessageDelay = 0f;
@@ -43,7 +39,7 @@ public class ObservedObject : IVisibleInCamera {
     NotVisible
   }
 
-  public delegate void InFieldOfViewStateChangedHandler(ObservedObject objectChanged,
+  public delegate void InFieldOfViewStateChangedHandler(ObservableObject objectChanged,
                                                         InFieldOfViewState oldState, InFieldOfViewState newState);
 
   public static event InFieldOfViewStateChangedHandler AnyInFieldOfViewStateChanged;
@@ -192,10 +188,10 @@ public class ObservedObject : IVisibleInCamera {
 
 
 
-  public ObservedObject() {
+  public ObservableObject() {
   }
 
-  public ObservedObject(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
+  public ObservableObject(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
     Family = objectFamily;
     ObjectType = objectType;
     ID = objectID;
@@ -214,7 +210,6 @@ public class ObservedObject : IVisibleInCamera {
 
     _ConsecutiveVisionFramesNotSeen = 0;
 
-
     SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
 
     Lights = new Light[SetAllActiveObjectLEDsMessage.onColor.Length];
@@ -223,32 +218,32 @@ public class ObservedObject : IVisibleInCamera {
       Lights[i] = new Light();
     }
 
-    DAS.Debug("ObservedObject.Constructed", "ObservedObject from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
+    DAS.Debug("ObservableObject.Constructed", "ObservableObject from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
   }
 
-  public static implicit operator uint(ObservedObject observedObject) {
-    if (observedObject == null) {
-      DAS.Warn(string.Format("{0}.NullValue", typeof(ObservedObject)), "converting null ObservedObject into uint: returning uint.MaxValue");
+  public static implicit operator uint(ObservableObject observableObject) {
+    if (observableObject == null) {
+      DAS.Warn(string.Format("{0}.NullValue", typeof(ObservableObject)), "converting null ObservableObject into uint: returning uint.MaxValue");
       return uint.MaxValue;
     }
 
-    return (uint)observedObject.ID;
+    return (uint)observableObject.ID;
   }
 
-  public static implicit operator int(ObservedObject observedObject) {
-    if (observedObject == null)
+  public static implicit operator int(ObservableObject observableObject) {
+    if (observableObject == null)
       return kInvalidObjectID;
 
-    return observedObject.ID;
+    return observableObject.ID;
   }
 
-  public static implicit operator string(ObservedObject observedObject) {
-    return ((int)observedObject).ToString();
+  public static implicit operator string(ObservableObject observableObject) {
+    return ((int)observableObject).ToString();
   }
 
   // Useful for when the world was rejiggered.
   public void UpdateAvailable(G2U.ObjectState message) {
-    CurrentPoseState = (ObservedObject.PoseState)message.poseState;
+    CurrentPoseState = (ObservableObject.PoseState)message.poseState;
     if (CurrentPoseState != PoseState.Unknown) {
       Vector3 newPos = new Vector3(message.pose.x, message.pose.y, message.pose.z);
       //dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.

@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace TreasureHunt {
 
@@ -24,7 +24,7 @@ namespace TreasureHunt {
 
       if (HasGoldBlockInView()) {
         _LastTimeSeenGoldBlock = Time.time;
-        ObservedObject followingCube = FollowClosest();
+        ActiveObject followingCube = FollowClosest();
         if (followingCube != null) {
           TreasureHuntGame treasureHuntGame = (_StateMachine.GetGame() as TreasureHuntGame);
           treasureHuntGame.ClearBlockLights();
@@ -47,14 +47,14 @@ namespace TreasureHunt {
       return (_CurrentRobot.VisibleLightCubes.Count > 0);
     }
 
-    private ObservedObject FollowClosest() {
-      ObservedObject closest = null;
+    private ActiveObject FollowClosest() {
+      ActiveObject closest = null;
       float dist = float.MaxValue;
-      foreach (ObservedObject obj in _CurrentRobot.VisibleLightCubes) {
-        float d = Vector3.Distance(_CurrentRobot.WorldPosition, obj.WorldPosition);
+      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.VisibleLightCubes) {
+        float d = Vector3.Distance(_CurrentRobot.WorldPosition, kvp.Value.WorldPosition);
         if (d < dist) {
           dist = d;
-          closest = obj;
+          closest = kvp.Value;
         }
       }
 
@@ -95,7 +95,7 @@ namespace TreasureHunt {
 
     }
 
-    private void ComputeTurnDirection(ObservedObject followBlock) {
+    private void ComputeTurnDirection(ActiveObject followBlock) {
       float turnAngle = Vector3.Cross(_CurrentRobot.Forward, followBlock.WorldPosition - _CurrentRobot.WorldPosition).z;
       if (turnAngle < 0.0f)
         _SearchTurnRight = true;

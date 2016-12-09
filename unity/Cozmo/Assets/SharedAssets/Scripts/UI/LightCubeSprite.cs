@@ -104,8 +104,8 @@ namespace Cozmo.UI {
       }
     }
 
-    private void SetColorsBasedOnLights(ObservedObject.Light[] lights) {
-      ObservedObject.Light targetLight;
+    private void SetColorsBasedOnLights(ActiveObject.Light[] lights) {
+      ActiveObject.Light targetLight;
       for (int i = 0; i < _LightSpritesClockwise.Length; i++) {
         targetLight = lights[i % lights.Length];
         Color onColor = targetLight.OnColor.ToColor();

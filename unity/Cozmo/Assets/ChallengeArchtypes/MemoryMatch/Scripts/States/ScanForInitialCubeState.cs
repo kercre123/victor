@@ -189,7 +189,7 @@ namespace MemoryMatch {
             cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
           }
         }
-        else if (cube.CurrentPoseState != ObservedObject.PoseState.Known && cubeAdded) {
+        else if (cube.CurrentPoseState != LightCube.PoseState.Known && cubeAdded) {
           _Game.CubeIdsForGame.Remove(cube.ID);
           _SetupCubeState.Remove(cube.ID);
           cube.SetLEDs(Cozmo.UI.CubePalette.Instance.OutOfViewColor.lightColor);

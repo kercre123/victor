@@ -12,13 +12,12 @@ namespace ScriptedSequences.Conditions {
           Robot.OnHeadTrackingObjectSet += HandleHeadTrackingObjectSet;
         }
       }
-      else if(Robot != null) {
+      else if (Robot != null) {
         Robot.OnHeadTrackingObjectSet -= HandleHeadTrackingObjectSet;
       }
     }
 
-    void HandleHeadTrackingObjectSet (ObservedObject obj)
-    {
+    void HandleHeadTrackingObjectSet(ObservableObject obj) {
       if (obj != null) {
         IsMet = true;
       }

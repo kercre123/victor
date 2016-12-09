@@ -48,7 +48,7 @@ public static class CozmoUtil {
   /// <summary>
   /// Checks whether the edge of the observed object is at the desired distance to the input position, within specified tolerance 
   /// </summary>
-  public static bool ObjectEdgeWithinXYTolerance(Vector3 basePosition, ObservedObject obsObject, float desiredDistance_mm, float distanceTolerance_mm) {
+  public static bool ObjectEdgeWithinXYTolerance(Vector3 basePosition, ActiveObject obsObject, float desiredDistance_mm, float distanceTolerance_mm) {
     // Update the desired distance to include the half size of the object. Using the X axis size because for now our objects are symmetrical
     float updatedDesiredDist_mm = desiredDistance_mm + (obsObject.Size.x * 0.5f);
     float desiredMax_mm = (updatedDesiredDist_mm + distanceTolerance_mm);
@@ -63,12 +63,12 @@ public static class CozmoUtil {
     return (actualSqr_mm > desiredMinSqr_mm && actualSqr_mm < desiredMaxSqr_mm);
   }
 
-  public static bool ObjectEdgeWithinXYDistance(Vector3 basePosition, ObservedObject obsObject, float desiredDistance_mm) {
+  public static bool ObjectEdgeWithinXYDistance(Vector3 basePosition, ActiveObject obsObject, float desiredDistance_mm) {
     float dummyOut;
     return ObjectEdgeWithinXYDistance(basePosition, obsObject, desiredDistance_mm, out dummyOut);
   }
 
-  public static bool ObjectEdgeWithinXYDistance(Vector3 basePosition, ObservedObject obsObject, float desiredDistance_mm, out float actualDistance_mm_out) {
+  public static bool ObjectEdgeWithinXYDistance(Vector3 basePosition, ActiveObject obsObject, float desiredDistance_mm, out float actualDistance_mm_out) {
     float distanceThreshold_mm = desiredDistance_mm + (obsObject.Size.x * 0.5f);
     float distanceThresholdSqr_mm = distanceThreshold_mm * distanceThreshold_mm;
 

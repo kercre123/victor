@@ -393,7 +393,7 @@ namespace Cozmo.Minigame.DroneMode {
       }
     }
 
-    private void HandleRobotCarryingObjectSet(ObservedObject newObjectInLift) {
+    private void HandleRobotCarryingObjectSet(ObservableObject newObjectInLift) {
       bool isCubeInLift = (newObjectInLift != null && (newObjectInLift is LightCube));
       if (_IsCubeInLift != isCubeInLift) {
         _IsCubeInLift = isCubeInLift;

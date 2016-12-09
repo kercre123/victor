@@ -144,7 +144,7 @@ namespace Cozmo.BlockPool {
 
       for (int i = 0; i < initMsg.blockData.Length; ++i) {
         Anki.Cozmo.ExternalInterface.BlockPoolBlockData blockData = initMsg.blockData[i];
-        AddOrUpdateBlockData(blockData.factoryID, blockData.objectType, ObservedObject.kInvalidObjectID, null, null, true);
+        AddOrUpdateBlockData(blockData.factoryID, blockData.objectType, ActiveObject.kInvalidObjectID, null, null, true);
       }
     }
 
@@ -225,7 +225,7 @@ namespace Cozmo.BlockPool {
 
       BlockPoolData data = null;
       if (!_BlocksByID.TryGetValue(factoryID, out data)) {
-        int oID = objectID.HasValue ? objectID.Value : ObservedObject.kInvalidObjectID;
+        int oID = objectID.HasValue ? objectID.Value : ActiveObject.kInvalidObjectID;
         BlockConnectionState cState = connectionState.HasValue ? connectionState.Value : BlockConnectionState.Unavailable;
         data = new BlockPoolData(type, factoryID, signalStrength.GetValueOrDefault(), oID, cState, isPersistent.GetValueOrDefault());
         _BlocksByID.Add(factoryID, data);
