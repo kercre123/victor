@@ -22,7 +22,7 @@
 #include "anki/cozmo/basestation/animation/animation.h"
 #include "clad/audio/audioCallbackMessage.h"
 #include "clad/audio/messageAudioClient.h"
-#include "DriveAudioEngine/audioCallback.h"
+#include "AudioEngine/audioCallback.h"
 #include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"

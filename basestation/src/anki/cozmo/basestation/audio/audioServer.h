@@ -15,8 +15,8 @@
 #ifndef __Basestation_Audio_AudioServer_H__
 #define __Basestation_Audio_AudioServer_H__
 
-#include "DriveAudioEngine/audioTypes.h"
-#include "DriveAudioEngine/audioCallback.h"
+#include "AudioEngine/audioTypes.h"
+#include "AudioEngine/audioCallback.h"
 #include "util/helpers/noncopyable.h"
 #include <stdio.h>
 #include <unordered_map>

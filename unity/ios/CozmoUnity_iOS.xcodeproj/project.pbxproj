@@ -136,7 +136,7 @@
 		83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574B0E63022200468741 /* OpenAL.framework */; };
 		83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574E0E63025400468741 /* libiconv.2.dylib */; };
 		840D146DB5E8DF800E7FA9E0 /* Bulk_Generics_9.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 64B958AC6BD87F99753A4E26 /* Bulk_Generics_9.cpp */; };
-		85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */; };
+		85065E851BF1904400DBAF35 /* libAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85065E841BF1904400DBAF35 /* libAudioEngine.a */; };
 		85DD01461CD2A17300F2EAD5 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */; };
 		85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DEB8FE1C652A3C00202214 /* libDAS.a */; };
 		85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */ = {isa = PBXBuildFile; fileRef = 85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */; };
@@ -379,7 +379,7 @@
 		83B2574E0E63025400468741 /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = usr/lib/libiconv.2.dylib; sourceTree = SDKROOT; };
 		83BF13F00AF4A251214D6A6C /* Il2CppMarshalingFunctionsTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMarshalingFunctionsTable.cpp; path = UnityBuild/Classes/Native/Il2CppMarshalingFunctionsTable.cpp; sourceTree = "<group>"; };
 		8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_4.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_4.cpp; sourceTree = "<group>"; };
-		85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDriveAudioEngine.a; path = "../../lib/audio/gyp/build/Debug-iphoneos/libDriveAudioEngine.a"; sourceTree = "<group>"; };
+		85065E841BF1904400DBAF35 /* libAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libAudioEngine.a; path = "../../lib/audio/gyp/build/Debug-iphoneos/libAudioEngine.a"; sourceTree = "<group>"; };
 		852C0B6C1C6965730003DCFD /* DASConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = DASConfig.json; sourceTree = "<group>"; };
 		85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libBLECozmo.a; path = "../../lib/BLECozmo/project/gyp/build/Debug-iphoneos/libBLECozmo.a"; sourceTree = "<group>"; };
 		85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
@@ -482,7 +482,7 @@
 				6F5432391C8928AF006D3724 /* MobileCoreServices.framework in Frameworks */,
 				6F5432371C89288F006D3724 /* AssetsLibrary.framework in Frameworks */,
 				85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */,
-				85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */,
+				85065E851BF1904400DBAF35 /* libAudioEngine.a in Frameworks */,
 				83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */,
 				491A6D981B5F1D64003E91FB /* Security.framework in Frameworks */,
 				F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */,
@@ -637,7 +637,7 @@
 				495653B71C7BCFD10054EB7F /* opencv2.framework */,
 				85DEB8FE1C652A3C00202214 /* libDAS.a */,
 				4E3C5ED01C055A8B008399F7 /* libCozmoFxPlugIn.a */,
-				85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */,
+				85065E841BF1904400DBAF35 /* libAudioEngine.a */,
 				ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */,
 				ADED22181B9A2E7900B5D289 /* libsphinxad.a */,
 				ADED22191B9A2E7900B5D289 /* libsphinxBase.a */,

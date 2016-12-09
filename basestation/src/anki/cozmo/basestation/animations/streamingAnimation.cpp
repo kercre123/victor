@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 
-#include "DriveAudioEngine/audioCallback.h"
+#include "AudioEngine/audioCallback.h"
 
 
 #include "util/dispatchQueue/dispatchQueue.h"

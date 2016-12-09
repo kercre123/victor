@@ -132,7 +132,7 @@ def main(scriptArgs):
     UtilLog.error('audio path not found [%s]' % options.audioPath)
     return False
   audioProjectPath = options.audioPath
-  audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioengine.gyp')
+  audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioEngine.gyp')
 
   if not options.bleCozmoPath:
     options.bleCozmoPath = os.path.join(options.projectRoot, 'lib/BLECozmo')

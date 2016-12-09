@@ -41,9 +41,9 @@
 #ifndef EXCLUDE_ANKI_AUDIO_LIBS
 
 #define USE_AUDIO_ENGINE 1
-#include "DriveAudioEngine/audioEngineController.h"
-#include "DriveAudioEngine/PlugIns/hijackAudioPlugIn.h"
-#include "DriveAudioEngine/PlugIns/wavePortalPlugIn.h"
+#include "AudioEngine/audioEngineController.h"
+#include "AudioEngine/PlugIns/hijackAudioPlugIn.h"
+#include "AudioEngine/PlugIns/wavePortalPlugIn.h"
 #else
 // If we're excluding the audio libs, don't link any of the audio engine
 #define USE_AUDIO_ENGINE 0

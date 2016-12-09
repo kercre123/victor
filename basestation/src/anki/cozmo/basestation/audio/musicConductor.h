@@ -9,8 +9,8 @@
 #ifndef MusicConductor_hpp
 #define MusicConductor_hpp
 
-#include "DriveAudioEngine/audioTypes.h"
-#include "DriveAudioEngine/audioCallback.h"
+#include "AudioEngine/audioTypes.h"
+#include "AudioEngine/audioCallback.h"
 #include "util/helpers/noncopyable.h"
 #include <mutex>
 

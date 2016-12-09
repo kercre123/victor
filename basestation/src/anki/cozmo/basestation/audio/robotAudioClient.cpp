@@ -21,7 +21,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/audio/messageAudioClient.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "DriveAudioEngine/audioCallback.h"
+#include "AudioEngine/audioCallback.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"

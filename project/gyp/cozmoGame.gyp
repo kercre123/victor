@@ -412,7 +412,7 @@
               '<(cg-cti_gyp_path):ctiVisionRobot',
               '<(cg-util_gyp_path):util',
               '<(cg-util_gyp_path):jsoncpp',
-              '<(cg-audio_path):DriveAudioEngine',
+              '<(cg-audio_path):AudioEngine',
               '<(cg-das_path):DAS',
               '<(cg-ble_cozmo_path):BLECozmo',
             ]
@@ -575,7 +575,7 @@
               '<(cg-util_gyp_path):jsoncpp',
               '<(cg-util_gyp_path):kazmath',
               '<(cg-util_gyp_path):UtilUnitTest',
-              '<(cg-audio_path):DriveAudioEngine',
+              '<(cg-audio_path):AudioEngine',
               '<(cg-das_path):DAS',
               '<(cg-ble_cozmo_path):BLECozmo',
               #'<(cg-audio_path):CozmoFxPlugIn',
@@ -606,7 +606,7 @@
               '<(cg-cti_gyp_path):ctiVisionRobot',
               '<(cg-util_gyp_path):util',
               '<(cg-util_gyp_path):jsoncpp',
-              '<(cg-audio_path):DriveAudioEngine',
+              '<(cg-audio_path):AudioEngine',
               '<(cg-ble_cozmo_path):BLECozmo',
             ]
           },

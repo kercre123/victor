@@ -1090,7 +1090,7 @@
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-util_gyp_path):jsoncpp',
               '<(ce-util_gyp_path):util',
-              '<(cg-audio_path):DriveAudioEngine',
+              '<(cg-audio_path):AudioEngine',
             ],
             'sources': [ '<!@(cat <(engine_test_source))' ],
             'sources/': [
@@ -1208,7 +1208,7 @@
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-util_gyp_path):jsoncpp',
               '<(ce-util_gyp_path):util',
-              #'<(ce-audio_path):DriveAudioEngine',
+              #'<(ce-audio_path):AudioEngine',
             ],
             'sources': [
               '../../tools/recognizeFaces/recognizeFaces.cpp',
@@ -1333,7 +1333,7 @@
         '<(ce-cti_gyp_path):ctiVision',
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
-        '<(cg-audio_path):DriveAudioEngine',
+        '<(cg-audio_path):AudioEngine',
         '<(ce-ble_cozmo_path):BLECozmo',
         '<(ce-das_path):DAS',
       ],
