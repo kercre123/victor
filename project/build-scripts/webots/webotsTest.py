@@ -811,6 +811,7 @@ def main(args):
 
   return_value = 0
 
+  global_test_results = {}
   for _ in range(0, options.num_runs):
     stop_webots()
 
@@ -829,6 +830,7 @@ def main(args):
       for test_controller, results_of_each_world in test_results.items():
         for world, result in results_of_each_world.items():
           if result is ResultCode.succeeded:
+            global_test_results.setdefault(test_controller, []).append("passed")
             UtilLog.info("{test_controller} in {world} passed.".format(test_controller=test_controller, world=world))
 
     if any_test_failed(test_results):
@@ -836,6 +838,7 @@ def main(args):
       for test_controller, results_of_each_world in test_results.items():
         for world, result in results_of_each_world.items():
           if result is ResultCode.failed:
+            global_test_results.setdefault(test_controller, []).append("failed")
             UtilLog.info("{test_controller} in {world} failed.".format(test_controller=test_controller, world=world))
 
     if not options.show_graphics:
@@ -882,6 +885,30 @@ def main(args):
                   failed=num_of_failed_runs, total=num_of_total_runs, 
                   percentage=float(num_of_failed_runs)/num_of_total_runs*100))
 
+    results_msg=''
+    for test_controller,results in global_test_results.items():
+      results_msg+="{} - {}/{} PASSED\n".format(test_controller, results.count('passed'), len(results))
+
+    if num_of_failed_runs > 0:
+      payload={"channel":"#coz-webots-tests",
+               "username":"buildbot",
+               "attachments":[{
+                 "text":"{}".format(results_msg),
+                 "fallback":"{}".format(results_msg),
+                 "color":"danger"}]
+               }
+    else:
+      payload = {"channel": "#coz-webots-tests",
+                 "username": "buildbot",
+                 "attachments": [{
+                   "text": "{}".format(results_msg),
+                   "fallback": "{}".format(results_msg),
+                   "color": "good"}]
+                 }
+    slack_url='https://hooks.slack.com/services/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'
+    cmd = ['curl', '-X', '--connect-timeout', '60', '-m', '60', 'POST', '-d', 'payload={}'.format(payload), slack_url]
+    process = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
   return return_value
 
 
