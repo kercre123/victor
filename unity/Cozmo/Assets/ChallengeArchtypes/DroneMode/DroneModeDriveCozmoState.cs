@@ -472,7 +472,7 @@ namespace Cozmo {
 
         private void HandleLiftCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
-          if (targetObject != null && targetObject is ObservableObject && targetObject is LightCube) {
+          if (targetObject != null && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             _CurrentRobot.PickupObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandleActionFinished);
             DisableInput();
@@ -482,7 +482,7 @@ namespace Cozmo {
 
         private void HandleRollCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
-          if (targetObject != null && targetObject is ObservableObject && targetObject is LightCube) {
+          if (targetObject != null && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             _CurrentRobot.RollObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandleActionFinished);
             DisableInput();
@@ -508,7 +508,7 @@ namespace Cozmo {
 
         private void HandleStackCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
-          if (targetObject != null && targetObject is ObservableObject && targetObject is LightCube) {
+          if (targetObject != null && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             _CurrentRobot.PlaceOnObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandleActionFinished);
             DisableInput();
