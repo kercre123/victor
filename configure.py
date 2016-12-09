@@ -286,6 +286,7 @@ class GamePlatformConfiguration(object):
         #because these is being deleted no matter what it must exist for all configurations.
         self.android_unity_plugin_dir = os.path.join(self.unity_plugin_dir, 'Android', 'libs', 'generated')
         self.android_lib_dir = os.path.join(self.platform_build_dir, 'libs')
+        ankibuild.util.File.mkdir_p(self.android_lib_dir)
         self.android_prestrip_lib_dir = os.path.join(self.platform_build_dir, 'libs-prestrip')
 
 
@@ -503,9 +504,11 @@ class GamePlatformConfiguration(object):
             # move files.
             # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
             ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
-                                                "libcozmoEngine.so"), self.android_prestrip_lib_dir)
+                                                "libcozmoEngine.so"),
+                                   os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
             ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
-                                                "libDAS.so"), self.android_prestrip_lib_dir)
+                                                "libDAS.so"),
+                                   os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
             # build android-specific java files
             self.build_java(buildaction)
             # move third ndk libs.

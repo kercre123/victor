@@ -45,6 +45,7 @@
 #include "anki/cozmo/csharp-binding/ios/ios-binding.h"
 #elif defined(ANKI_PLATFORM_ANDROID)
 #include "anki/cozmo/csharp-binding/android/android-binding.h"
+#include "util/jni/jniUtils.h"
 #if USE_DAS
 #include <DAS/dasPlatform_android.h>
 #endif
@@ -238,7 +239,15 @@ int cozmo_startup(const char *configuration_data)
   result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform, appRunId);
 #elif defined(ANKI_PLATFORM_ANDROID) && USE_DAS
   std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId, dataPlatform->pathToResource(Anki::Util::Data::Scope::Persistent, DEVICE_ID_FILE))};
-  dasPlatform->InitForUnityPlayer();
+  if (config.get("standalone", false).asBool()) {
+    auto envWrapper = Anki::Util::JNIUtils::getJNIEnvWrapper();
+    JNIEnv* env = envWrapper->GetEnv();
+    JNI_CHECK(env);
+    Anki::Util::JObjectHandle activity{Anki::Util::JNIUtils::getCurrentActivity(env), env};
+    dasPlatform->Init(activity.get());
+  } else {
+    dasPlatform->InitForUnityPlayer();
+  }
   DASNativeInit(std::move(dasPlatform), "cozmo");
 #endif
   

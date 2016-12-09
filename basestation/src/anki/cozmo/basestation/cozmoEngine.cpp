@@ -534,7 +534,10 @@ Result CozmoEngine::InitInternal()
   
   // Setup Unity Audio Client Connections
   AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_context->GetExternalInterface() );
-  _context->GetAudioServer()->RegisterClientConnection( unityConnection );
+  auto audioServer = _context->GetAudioServer();
+  if (audioServer) {
+    audioServer->RegisterClientConnection( unityConnection );
+  }
   
   // Archive factory test logs
   FactoryTestLogger factoryTestLogger;
@@ -567,7 +570,10 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     AudioEngineMessageHandler* engineMessageHandler = new AudioEngineMessageHandler();
     AudioEngineClientConnection* engineConnection = new AudioEngineClientConnection( engineMessageHandler );
     // Transfer ownership of connection to Audio Server
-    _context->GetAudioServer()->RegisterClientConnection( engineConnection );
+    auto audioServer = _context->GetAudioServer();
+    if (audioServer) {
+      audioServer->RegisterClientConnection( engineConnection );
+    }
     
     // Set Robot Audio Client Message Handler to link to Connection and Robot Audio Buffer ( Audio played on Robot )
     robot->GetRobotAudioClient()->SetMessageHandler( engineConnection->GetMessageHandler() );

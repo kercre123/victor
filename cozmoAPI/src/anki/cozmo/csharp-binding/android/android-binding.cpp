@@ -14,6 +14,7 @@
 #include "anki/cozmo/csharp-binding/csharp-binding.h"
 #include "anki/cozmo/csharp-binding/breakpad/google_breakpad.h"
 #include "anki/common/types.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "util/jni/includeJni.h"
 #include "util/jni/jniUtils.h"
 #include "util/logging/logging.h"
@@ -44,9 +45,9 @@ static void DisableHockeyApp()
   // Best we can do is disable exception handlers, reset signal handlers, then hope for the best.
   // See also: https://github.com/bitstadium/HockeySDK-Android
   // See also: ios-binding.cpp, hockeyApp.mm
-    
+
   std::set_terminate(NULL);
-  
+
   signal(SIGSEGV, SIG_DFL);
   signal(SIGBUS, SIG_DFL);
   signal(SIGTRAP, SIG_DFL);
@@ -54,14 +55,13 @@ static void DisableHockeyApp()
   signal(SIGSYS, SIG_DFL);
   signal(SIGPIPE, SIG_DFL);
 }
-  
+
 
 int cozmo_shutdown()
 {
   DisableHockeyApp();
   return (int)RESULT_OK;
 }
-
 
 }
 }
@@ -76,6 +76,31 @@ Java_com_anki_cozmo_BackgroundConnectivity_ExecuteBackgroundTransfers(JNIEnv* en
 {
   PRINT_NAMED_INFO("AndroidBinding.BackgroundConnectivity", "received transfer request");
   cozmo_execute_background_transfers();
+}
+
+JNIEXPORT void JNICALL
+Java_com_anki_cozmoengine_Standalone_startCozmoEngine(JNIEnv* env,
+                                                      jobject thiz,
+                                                      jobject activity,
+                                                      jstring configuration)
+{
+  Anki::Util::JNIUtils::SetCurrentActivity(env, activity);
+  std::string configurationString = Anki::Util::JNIUtils::getStringFromJString(env, configuration);
+  (void) cozmo_startup(configurationString.c_str());
+  uint8_t enter_sdk_mode_message[1] =
+    { static_cast<uint8_t>(Anki::Cozmo::ExternalInterface::MessageGameToEngineTag::EnterSdkMode) };
+  cozmo_transmit_game_to_engine(enter_sdk_mode_message, sizeof(enter_sdk_mode_message));
+
+}
+
+JNIEXPORT void JNICALL
+Java_com_anki_cozmoengine_Standalone_stopCozmoEngine(JNIEnv* env,
+                                                     jobject thiz)
+{
+  uint8_t exit_sdk_mode_message[1] =
+    { static_cast<uint8_t>(Anki::Cozmo::ExternalInterface::MessageGameToEngineTag::ExitSdkMode) };
+  cozmo_transmit_game_to_engine(exit_sdk_mode_message, sizeof(exit_sdk_mode_message));
+  cozmo_shutdown();
 }
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved)

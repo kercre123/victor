@@ -115,7 +115,7 @@ AudioController::AudioController( const CozmoContext* context )
 
       // Get a handle to the activity instance
       Util::JClassHandle contextClass{env->FindClass("android/content/ContextWrapper"), env};
-      Util::JObjectHandle activity{Util::JNIUtils::getUnityActivity(env), env};
+      Util::JObjectHandle activity{Util::JNIUtils::getCurrentActivity(env), env};
 
       // Get a handle to the object representing the OBB folder
       jmethodID obbDirMethodID = env->GetMethodID(contextClass.get(), "getObbDir", "()Ljava/io/File;");

@@ -1,0 +1,13 @@
+android_resource(
+  name = 'res',
+  res = 'res',
+  assets = 'assets',
+  package = 'com.anki.cozmoengine',
+  visibility = [
+    '//standalone-apk/java/com/anki/cozmoengine:lib',
+  ],
+)
+
+project_config(
+  src_target = ':res'
+)

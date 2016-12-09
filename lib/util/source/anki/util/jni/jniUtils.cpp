@@ -7,6 +7,7 @@ namespace Anki {
 namespace Util {
 
 JavaVM* JNIUtils::_sJvm = nullptr;
+jobject JNIUtils::_sCurrentActivity = nullptr;
 
 jobjectArray JNIUtils::convertStringMapToJObjectArray(JNIEnv* env, const std::map<std::string,std::string>& stringMap, std::vector<jstring>& stringRefs)
 {
@@ -133,6 +134,10 @@ jobject JNIUtils::getUnityActivity(JNIEnv* env)
   }
 
   JClassHandle unityPlayer{env->FindClass("com/unity3d/player/UnityPlayer"), env};
+  if (env->ExceptionCheck()) {
+    env->ExceptionClear();
+    return nullptr;
+  }
   if (nullptr == unityPlayer) {
     return nullptr;
   }
@@ -143,6 +148,32 @@ jobject JNIUtils::getUnityActivity(JNIEnv* env)
   jobject activity = env->GetStaticObjectField(unityPlayer.get(), activityField);
 
   return activity;
+}
+
+jobject JNIUtils::getCurrentActivity(JNIEnv* env)
+{
+  if (nullptr == env) {
+    return nullptr;
+  }
+
+  jobject activity = getUnityActivity(env);
+
+  if (nullptr == activity) {
+    activity = env->NewLocalRef(_sCurrentActivity);
+  }
+
+  return activity;
+}
+
+void JNIUtils::SetCurrentActivity(JNIEnv* env, const jobject activity)
+{
+  if (_sCurrentActivity) {
+    env->DeleteGlobalRef(_sCurrentActivity);
+    _sCurrentActivity = (jobject) 0;
+  }
+  if (activity) {
+    _sCurrentActivity = env->NewGlobalRef(activity);
+  }
 }
 
 // JNIEnvWrapper implementation

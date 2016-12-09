@@ -14,6 +14,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/random/randomGenerator.h"
 #include "util/environment/locale.h"
+#include "util/fileUtils/fileUtils.h"
 
 
 namespace Anki {
