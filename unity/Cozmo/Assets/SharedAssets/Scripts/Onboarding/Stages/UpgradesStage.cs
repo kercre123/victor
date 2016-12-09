@@ -8,11 +8,25 @@ namespace Onboarding {
     [SerializeField]
     private GameObject _OverviewInstructions;
 
+    [SerializeField]
+    private GameObject _SoftSparkInstructions;
+
+    [SerializeField]
+    private CozmoButton _ContinueButtonInstance;
+
+
     private BaseModal _UpgradeDetailsView = null;
 
     private float _StartTime;
+
+    protected virtual void Awake() {
+      _ContinueButtonInstance.Initialize(HandleSoftSparkContinueButtonTapped, "Onboarding." + name, "Onboarding");
+    }
+
     public override void Start() {
       base.Start();
+
+      _SoftSparkInstructions.SetActive(false);
 
       BaseModal.BaseViewOpened += HandleViewOpened;
       GameEventManager.Instance.OnGameEvent += HandleGameEvent;
@@ -41,7 +55,7 @@ namespace Onboarding {
     // so onboarding needs to get cleaned up properly.
     private void HandleViewClosed(BaseModal view) {
       if (view is CoreUpgradeDetailsDialog) {
-        GoToNextState();
+        ShowSoftSparkInfo();
       }
     }
 
@@ -59,8 +73,17 @@ namespace Onboarding {
       if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnUnlockableEarned) {
         float timeToUpgrade = Time.time - _StartTime;
         DAS.Event("onboarding.upgrade", timeToUpgrade.ToString());
-        GoToNextState();
+        // What you wanted was more text
+        ShowSoftSparkInfo();
       }
+    }
+
+    private void ShowSoftSparkInfo() {
+      _SoftSparkInstructions.SetActive(true);
+    }
+
+    private void HandleSoftSparkContinueButtonTapped() {
+      GoToNextState();
     }
 
     private void GoToNextState() {

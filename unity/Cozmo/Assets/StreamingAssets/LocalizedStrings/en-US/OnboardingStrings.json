@@ -140,5 +140,8 @@
   },
   "onboarding.BirthWait": {
     "translation": "Watch Cozmo come to life"
+  },
+  "onboarding.Phase4.Body5": {
+    "translation": "Now Cozmo can Stack Cubes!\n\nWatch him try out his new skill now..."
   }
 }
