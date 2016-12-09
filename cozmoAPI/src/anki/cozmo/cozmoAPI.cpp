@@ -166,7 +166,8 @@ void CozmoAPI::Clear()
 
 CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
                                                    const Json::Value& config, bool& initResult)
-: _gameMessagePort(new GameMessagePort(ExternalInterface::kDirectCommsBufferSize, true))
+: _gameMessagePort(new GameMessagePort(ExternalInterface::kDirectCommsBufferSize,
+                                       !config.get("standalone", false).asBool()))
 , _vizMessagePort(CreateVizMessagePort())
 , _cozmoInstance(new CozmoEngine(dataPlatform, _gameMessagePort.get(), _vizMessagePort.get()))
 , _isRunning(true)

@@ -25,3 +25,21 @@ android_aar(
   ],
   visibility = ['PUBLIC'],
 )
+
+prebuilt_native_library(
+  name = 'native_libs_for_standalone',
+  native_libs = 'build/android/libs',
+  visibility = [
+    '//standalone-apk/java/com/anki/cozmoengine:lib',
+  ],
+)
+
+android_binary(
+  name = 'cozmoengine_standalone_app',
+  manifest = 'standalone-apk/AndroidManifest.xml',
+  keystore = '//standalone-apk/keystores:debug',
+  deps = [
+    '//standalone-apk/java/com/anki/cozmoengine:lib',
+  ],
+  visibility = ['PUBLIC'],
+)

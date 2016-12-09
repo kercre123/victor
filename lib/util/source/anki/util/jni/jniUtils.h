@@ -34,14 +34,17 @@ public:
   static std::string getStringFromObjectMethod(JNIEnv* env, const jobject jobj,
                                                const jmethodID method);
   static jobject getUnityActivity(JNIEnv* env);
+  static jobject getCurrentActivity(JNIEnv* env);
 
   static std::unique_ptr<JNIEnvWrapper> getJNIEnvWrapper();
 
   static JavaVM* GetJvm() { return _sJvm; }
   static void SetJvm(JavaVM* jvm) { _sJvm = jvm; }
+  static void SetCurrentActivity(JNIEnv* env, const jobject activity);
 
 private:
   static JavaVM* _sJvm;
+  static jobject _sCurrentActivity;
 
   JNIUtils() = delete;
 };
