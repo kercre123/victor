@@ -830,6 +830,11 @@ public class Robot : IRobot {
             kvp.Value.MarkNotVisibleThisFrame();
           }
         }
+        foreach (var kvp in KnownObjects) {
+          if (kvp.Value.LastSeenEngineTimestamp < engineTimestamp) {
+            kvp.Value.MarkNotVisibleThisFrame();
+          }
+        }
       }
 
       if (isFaceFrame) {

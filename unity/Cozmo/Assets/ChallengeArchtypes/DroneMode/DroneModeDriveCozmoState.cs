@@ -472,9 +472,9 @@ namespace Cozmo {
 
         private void HandleLiftCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
-          if (targetObject != null && targetObject is ActiveObject && targetObject is LightCube) {
+          if (targetObject != null && targetObject is ObservableObject && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.PickupObject(targetObject as ActiveObject, checkForObjectOnTop: false, callback: HandleActionFinished);
+            _CurrentRobot.PickupObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
           }
@@ -482,9 +482,9 @@ namespace Cozmo {
 
         private void HandleRollCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
-          if (targetObject != null && targetObject is ActiveObject && targetObject is LightCube) {
+          if (targetObject != null && targetObject is ObservableObject && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.RollObject(targetObject as ActiveObject, checkForObjectOnTop: false, callback: HandleActionFinished);
+            _CurrentRobot.RollObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
           }
@@ -508,9 +508,9 @@ namespace Cozmo {
 
         private void HandleStackCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
-          if (targetObject != null && targetObject is ActiveObject && targetObject is LightCube) {
+          if (targetObject != null && targetObject is ObservableObject && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.PlaceOnObject(targetObject as ActiveObject, checkForObjectOnTop: false, callback: HandleActionFinished);
+            _CurrentRobot.PlaceOnObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
           }
@@ -564,13 +564,13 @@ namespace Cozmo {
           // If targets are all zero, enable reactionary behavior
           if (!IsDrivingHead && !IsDrivingWheels && !IsDrivingLift && !IsPerformingAction) {
             if (!_AreIdleReactionaryBehaviorsEnabled) {
-              EnableIdleReactionaryBehaviors (true);
+              EnableIdleReactionaryBehaviors(true);
               _AreIdleReactionaryBehaviorsEnabled = true;
             }
           }
           else {
             if (_AreIdleReactionaryBehaviorsEnabled) {
-              EnableIdleReactionaryBehaviors (false);
+              EnableIdleReactionaryBehaviors(false);
               _AreIdleReactionaryBehaviorsEnabled = false;
             }
           }

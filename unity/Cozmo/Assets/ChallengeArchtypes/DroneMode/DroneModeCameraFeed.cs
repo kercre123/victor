@@ -228,11 +228,11 @@ namespace Cozmo.Minigame.DroneMode {
       }
 
       foreach (var cube in _CurrentRobot.LightCubes) {
-        CreateObservedObjectReticle(cube.Value);
+        CreateObserveableObjectReticle(cube.Value);
       }
 
       if (_CurrentRobot.Charger != null) {
-        CreateObservedObjectReticle(_CurrentRobot.Charger);
+        CreateObserveableObjectReticle(_CurrentRobot.Charger);
       }
     }
 
@@ -291,14 +291,14 @@ namespace Cozmo.Minigame.DroneMode {
       }
     }
 
-    private void CreateObservedObjectReticle(ObservableObject observedObject) {
+    private void CreateObserveableObjectReticle(ObservableObject observedObject) {
       observedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
       observedObject.InFieldOfViewStateChanged += HandleInFieldOfViewChanged;
       CreateReticleIfVisible(observedObject);
     }
 
     private void HandleOnCubeAdded(LightCube cube) {
-      CreateObservedObjectReticle(cube);
+      CreateObserveableObjectReticle(cube);
     }
 
     private void HandleOnCubeRemoved(LightCube cube) {
@@ -307,7 +307,7 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void HandleOnChargerAdded(ObservableObject charger) {
-      CreateObservedObjectReticle(charger);
+      CreateObserveableObjectReticle(charger);
     }
 
     private void HandleOnChargerRemoved(ObservableObject charger) {
