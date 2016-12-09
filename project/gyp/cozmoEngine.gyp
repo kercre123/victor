@@ -1426,6 +1426,7 @@
               '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkTimeStretchFX.a',
               '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSineSource.a',
               '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkExpanderFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkGuitarDistortionFX.a',
               '-llog',
               '-lOpenSLES',
               '-landroid',

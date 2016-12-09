@@ -71,16 +71,17 @@ bool BehaviorOnConfigSeen::IsRunnableInternal(const Robot& robot) const
   const bool initialUpdateCheck = FLT_GE(currentTime - _lastRunnableCheck_s, kMaxIntervalBetweenRunnableCheck_s);
   _lastRunnableCheck_s = currentTime;
   
+  bool newConfigSeen = false;
+  
   for(auto& mapEntry: _configurationCountMap){
     const auto& configs = robot.GetBlockWorld().GetBlockConfigurationManager().GetCacheByType(mapEntry.first);
     if(configs.ConfigurationCount() > mapEntry.second){
-      mapEntry.second = configs.ConfigurationCount();
-      
-      return !initialUpdateCheck;
+      newConfigSeen = true;
     }
+    mapEntry.second = configs.ConfigurationCount();
   }
-                                                                                  
-  return false;
+  
+  return newConfigSeen && !initialUpdateCheck;
 }
 
 

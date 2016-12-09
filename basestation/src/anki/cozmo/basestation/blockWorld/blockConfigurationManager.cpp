@@ -26,7 +26,7 @@ namespace BlockConfigurations {
   
 namespace {
 // minumum distance that a block has to move for us to update configurations
-const float constexpr kMinBlockMoveUpdateThreshold_mm = 15.f;
+const float constexpr kMinBlockMoveUpdateThreshold_mm = 5.f;
 const float constexpr kMinBlockRotationUpdateThreshold_rad = DEG_TO_RAD(30);
 }
   

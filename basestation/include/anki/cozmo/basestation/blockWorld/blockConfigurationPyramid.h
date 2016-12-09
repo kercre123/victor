@@ -29,6 +29,8 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/pose.h"
+
 
 namespace Anki{
 namespace Cozmo{
@@ -46,12 +48,14 @@ class PyramidBaseConfigurationContainer;
 // A base block and static block should never have an offset of 0 from each other
   
 class PyramidBase: public BlockConfiguration{
+  protected:
+    // The BlockConfigurationManager builds all configurations
+    PyramidBase(const ObjectID& staticBlockID, const ObjectID& baseBlockID);
+  
   public:
     // Allows pyramid to use GetAllBlockIDsOrdered() function
     friend class Pyramid;
     friend class BlockConfigurationManager;
-  
-    PyramidBase(const ObjectID& staticBlockID, const ObjectID& baseBlockID);
   
     bool operator==(const PyramidBase& other) const;
     bool operator!=(const PyramidBase& other) const{ return !(*this == other);}
@@ -60,34 +64,37 @@ class PyramidBase: public BlockConfiguration{
     const ObjectID& GetStaticBlockID() const { return _staticBlockID;}
     const ObjectID& GetBaseBlockID() const { return _baseBlockID;}
 
-    // the xAxis and isPositive bools are set to indicate x/y axis of the base and positive/negative orientation of the baseBlock relative to the static block
+    // the xAxis and isPositive bools are set to indicate x/y axis of the base
+    // and positive/negative orientation of the baseBlock relative to the static block
     // returns true if the indicator bools were set, false otherwise
-    const bool GetBaseRelStaticInfo(const Robot& robot, bool& alongXAxis, bool& isPositive) const;
+    static bool BlocksFormPyramidBase(const Robot& robot,
+                                      const ObservableObject* const staticBlock,
+                                      const ObservableObject* const baseBlock);
   
-    // returns the x/y offset of the base block - returns 0/0 if offset is not valid
-    const Point2f GetBaseBlockIdealOffsetValues(const Robot& robot) const;
-
+    // determine and set the two cube top corners closest to the other cube in the base
+    // ruterns true if corners are set by function, false if not possible
+    static bool GetBaseInteriorCorners(const Robot& robot,
+                                       const ObservableObject* const targetCube,
+                                       const ObservableObject* const otherCube,
+                                       Pose3d& corner1,
+                                       Pose3d& corner2);
+  
+    // determine the midpoint along the top most interior edge of the target cube
+    static bool GetBaseInteriorMidpoint(const Robot& robot,
+                                       const ObservableObject* const targetCube,
+                                       const ObservableObject* const otherCube,
+                                       Pose3d& midPoint);
   
   protected:
-  
-    // Contains the official definition of what constitutes a pyramid base - all other functions
-    // should rely on these values for their definition
-    static bool GetCurrentBlockOffsetProperties(const Robot& robot, const ObservableObject* const staticBlock, const ObservableObject* const baseBlock,
-                                                float& xAxisOffset, float& yAxisOffset, float&  maxXAxisOffset, float& maxYAxisOffset);
-    // Checks the relative world positions of the blocks to see if they form a pyramid base
-    static bool BlocksFormPyramidBase(const Robot& robot, const ObservableObject* const staticBlock, const ObservableObject* const baseBlock);
-    // Static accessor for BaseBlockOffset - returns true if the blocks form a pyramidBase
-    // the xAxis and isPositive bools are set to indicate x/y axis of the base and positive/negative orientation of the baseBlock relative to the static block
-    static const bool GetBaseRelStaticInfo(const Robot& robot, const ObservableObject* const staticBlock,
-                                           const ObservableObject* const baseBlock, bool& alongXAxis, bool& isPositive);
-  
     // Checks the object's position to see if it is on top of the base
-    const bool ObjectIsOnTopOfBase(const Robot& robot, const ObservableObject* const object) const;
+    const bool ObjectIsOnTopOfBase(const Robot& robot,
+                                   const ObservableObject* const object) const;
   
     // clear the base IDs
     virtual void ClearBase();
   
-    // Returns static and base block in ascending order so that equivalent pyramids are always returned the same way
+    // Returns static and base block in ascending order so that equivalent pyramids
+    // are always returned the same way
     virtual std::vector<ObjectID> GetAllBlockIDsOrdered() const override;
   
   private:
@@ -96,13 +103,14 @@ class PyramidBase: public BlockConfiguration{
 };
   
 class Pyramid: public BlockConfiguration{
-  public:
+  protected:
     friend PyramidConfigurationContainer;
     friend PyramidBaseConfigurationContainer;
-  
     Pyramid(const PyramidBase& base, const ObjectID& topBlockID);
-    Pyramid(const ObjectID& staticBlockID, const ObjectID& baseBlockID, const ObjectID& topBlockID);
+    Pyramid(const ObjectID& staticBlockID, const ObjectID& baseBlockID,
+                                           const ObjectID& topBlockID);
  
+  public:
     bool operator==(const Pyramid& other) const;
     bool operator!=(const Pyramid& other) const{ return !(*this == other);}
   
@@ -111,11 +119,17 @@ class Pyramid: public BlockConfiguration{
     const ObjectID& GetTopBlockID() const { return _topBlockID;}
   
   protected:
-    // Checks the object's position in the world against all other blocks on the ground
-    // to determine if they form a pyramid base
-    static std::vector<const PyramidBase*> BuildAllPyramidBasesForBlock(const Robot& robot, const ObservableObject* object);
-    // Assumes that the cache of PyramidBases has been updated, and checks for top blocks on top of them
-    static std::vector<const Pyramid*> BuildAllPyramidsForBlock(const Robot& robot, const ObservableObject* object);
+    // Checks the object's position in the world against all other blocks
+    // on the ground to determine if they form a pyramid base
+    static std::vector<const PyramidBase*> BuildAllPyramidBasesForBlock(
+                                                  const Robot& robot,
+                                                  const ObservableObject* object);
+  
+    // Assumes that the cache of PyramidBases has been updated,
+    // checks for top blocks on top of them
+    static std::vector<const Pyramid*> BuildAllPyramidsForBlock(
+                                                  const Robot& robot,
+                                                  const ObservableObject* object);
 
     // clear the pyramid IDs
     virtual void ClearPyramid();

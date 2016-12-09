@@ -33,9 +33,11 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   public bool IsInFieldOfView {
     get { return _IsInFieldOfView; }
     private set {
-      _IsInFieldOfView = value;
-      if (InFieldOfViewStateChanged != null) {
-        InFieldOfViewStateChanged(this, _IsInFieldOfView);
+      if (_IsInFieldOfView != value) {
+        _IsInFieldOfView = value;
+        if (InFieldOfViewStateChanged != null) {
+          InFieldOfViewStateChanged(this, _IsInFieldOfView);
+        }
       }
     }
   }

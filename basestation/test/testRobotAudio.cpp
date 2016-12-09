@@ -14,19 +14,21 @@
 
 #include "gtest/gtest.h"
 
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/animation/animation.h"
-#include "helpers/audio/robotAudioAnimationOnRobotTest.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoConfig_common.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/animationKeyFrames.h"
-#include "helpers/audio/robotAudioTestClient.h"
 #include "helpers/audio/animationAnimationTestConfig.h"
+#include "helpers/audio/robotAudioAnimationOnRobotTest.h"
+#include "helpers/audio/robotAudioTestClient.h"
 #include "util/logging/logging.h"
 
 #include <functional>

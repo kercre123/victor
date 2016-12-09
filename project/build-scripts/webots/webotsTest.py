@@ -771,11 +771,12 @@ def main(args):
                       1, that means each test will be run for a maximum of two times, if the first
                       run of each test fails.""")
 
-  parser.add_argument('--failOnError',
+  parser.add_argument('--ignoreLogErrors',
                       dest='fail_on_error',
-                      action='store_true',
-                      help="""If set, if an error is found inside the webots logs, that particular
-                      test that contained the error will be considered as failed.""")
+                      default='true',
+                      action='store_false',
+                      help="""If set, a test will not automatically fail just because an error
+                      appears in its webots log.""")
 
   (options, _) = parser.parse_known_args(args)
 

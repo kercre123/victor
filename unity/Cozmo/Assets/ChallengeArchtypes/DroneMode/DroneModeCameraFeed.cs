@@ -130,7 +130,6 @@ namespace Cozmo.Minigame.DroneMode {
         _CurrentRobot.OnPetFaceAdded -= HandlePetFaceAdded;
         _CurrentRobot.OnPetFaceRemoved -= HandlePetFaceRemoved;
         foreach (var petFace in _CurrentRobot.PetFaces) {
-          petFace.InFieldOfViewStateChanged -= HandlePetFaceInFieldOfViewChanged;
           petFace.OnVizRectChanged -= HandleVizRectChanged;
         }
 
@@ -149,6 +148,7 @@ namespace Cozmo.Minigame.DroneMode {
         }
       }
 
+      _ObjToReticle.Clear();
       _ReticlePool.ReturnAllObjectsToPool();
       _ReticlePool.DestroyPool();
     }
@@ -265,8 +265,6 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void CreatePetFaceReticle(PetFace petFace) {
-      petFace.InFieldOfViewStateChanged -= HandlePetFaceInFieldOfViewChanged;
-      petFace.InFieldOfViewStateChanged += HandlePetFaceInFieldOfViewChanged;
       CreateReticleIfVisible(petFace);
     }
 
@@ -277,7 +275,6 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void HandlePetFaceRemoved(PetFace petFace) {
       // Face is removed when not seen for a while 
-      petFace.InFieldOfViewStateChanged -= HandlePetFaceInFieldOfViewChanged;
       RemoveReticle(petFace);
     }
 
@@ -333,6 +330,7 @@ namespace Cozmo.Minigame.DroneMode {
         DroneModeCameraReticle newReticle = _ReticlePool.GetObjectFromPool();
         if (newReticle != null) {
           _ObjToReticle.Add(reticleFocus, newReticle);
+          reticleFocus.OnVizRectChanged -= HandleVizRectChanged;
           reticleFocus.OnVizRectChanged += HandleVizRectChanged;
 
           PositionReticle(newReticle, reticleFocus.VizRect);
@@ -342,6 +340,11 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void RemoveReticle(IVisibleInCamera reticleFocus) {
+      if (this == null) {
+        DAS.Error("DroneModeCameraFeed.RemoveReticle", "This is null");
+        return;
+      }
+
       DroneModeCameraReticle toRemove;
       if (_ObjToReticle.TryGetValue(reticleFocus, out toRemove)) {
         _ObjToReticle.Remove(reticleFocus);

@@ -162,6 +162,13 @@ namespace Anki {
       const ObjectID&    GetID()     const;
       const Pose3d&      GetPose()   const;
       const ColorRGBA&   GetColor()  const;
+      // Useful for doing calculations relative to the object which are agnostic
+      // of the object's x/y rotation.  Relative to _pose it has:
+      // - The same x/y translation relative to the origin
+      // - A Z-translation moved from the object's center up by the axis aligned with origin z's size
+      // - x/y rotation of 0 and z rotation equal to _poses's rotation relative to origin
+      Pose3d GetZRotatedPointAboveObjectCenter() const;
+      
       //virtual float GetMinDim() const = 0;
       
       // Auto-set ID to unique value

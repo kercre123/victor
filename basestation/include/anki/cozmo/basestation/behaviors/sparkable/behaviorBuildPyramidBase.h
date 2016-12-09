@@ -18,11 +18,15 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
+#define SET_STATE(s) SetState_internal(State::s, #s)
+
+
 namespace Anki {
 //forward declaration
 class Pose3d;
 namespace Cozmo {
 class ObservableObject;
+class BuildPyramidPersistentUpdate;
 enum class AnimationTrigger;
 struct ObjectLights;
   
@@ -30,55 +34,14 @@ class BehaviorBuildPyramidBase : public IBehavior
 {
 protected:
   // Enforce creation through BehaviorFactory
+  friend class BuildPyramidPersistentUpdate;
   friend class BehaviorFactory;
   BehaviorBuildPyramidBase(Robot& robot, const Json::Value& config);
+
   
 public:
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
-  
-  // Persistent function which can be ticked while sparked to handle
-  // light and music states while a specific pyramid behavior isn't running
-  static void SparksPersistantMusicLightControls(Robot& robot, int& lastPyramidBaseSeenCount, bool& wasRobotCarryingObject, bool& sparksPersistantCallbackSet);
-  
-protected:
-  virtual Result InitInternal(Robot& robot) override;
-  virtual Status UpdateInternal(Robot& robot) override;
-  void StopInternal(Robot& robot) override;
-  
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-
-  
-  void UpdatePyramidTargets(const Robot& robot) const;
-  void ResetPyramidTargets(const Robot& robot) const;
-  
-  mutable ObjectID _staticBlockID;
-  mutable ObjectID _baseBlockID;
-  mutable ObjectID _topBlockID;
-  
-  // track how many pyramid bases are known for updating the behavior when they are
-  // created or destroyed
-  int _lastBasesCount;
-  
-  // callback set by derived classes to continue performing actions after the base is built
-  SimpleCallbackWithRobot _continuePastBaseCallback;
-  
-  void TransitionToDrivingToBaseBlock(Robot& robot);
-  void TransitionToPlacingBaseBlock(Robot& robot);
-  void TransitionToObservingBase(Robot& robot);
-  
-
-  enum class DebugState {
-    DrivingToBaseBlock,
-    PlacingBaseBlock,
-    ObservingBase,
-    DrivingToTopBlock,
-    AligningWithBase,
-    PlacingTopBlock,
-    ReactingToPyramid
-  };
-  
-  // Match music Rounds to enum values
+  // Match music Rounds to enum values - starts at 1 to match rounds set up
+  // in the current audio sound banks
   enum class MusicState{
     SearchingForCube = 1,
     InitialCubeCarry,
@@ -87,9 +50,46 @@ protected:
     PyramidCompleteFlourish
   };
   
-  // Lights for build process
-  static void SetPyramidBaseLightsByID(Robot& robot, const ObjectID& staticID, const ObjectID& baseID);
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
 
+  
+protected:
+  enum class State {
+    DrivingToBaseBlock = 0,
+    PlacingBaseBlock,
+    ObservingBase,
+    DrivingToTopBlock,
+    AligningWithBase,
+    PlacingTopBlock,
+    ReactingToPyramid,
+    SearchingForObject
+  };
+  
+  
+  virtual Result InitInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
+  void StopInternal(Robot& robot) override;
+
+  void TransitionToDrivingToBaseBlock(Robot& robot);
+  void TransitionToPlacingBaseBlock(Robot& robot);
+  void TransitionToObservingBase(Robot& robot);
+
+  // utility functions
+  void UpdatePyramidTargets(const Robot& robot) const;
+  void ResetPyramidTargets(const Robot& robot) const;
+  
+  void SetState_internal(State state, const std::string& stateName);
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  
+  template<typename T>
+  void TransitionToSearchingWithCallback(Robot& robot,  const ObjectID& objectID,  void(T::*callback)(Robot&));
+  
+  /// Light functions
+  static void SetPyramidBaseLightsByID(Robot& robot, const ObjectID& staticID, const ObjectID& baseID);
+  static ObjectLights GetBaseFormedBaseLights(Robot& robot, const ObjectID& staticID, const ObjectID& baseID);
+  static ObjectLights GetBaseFormedStaticLights(Robot& robot, const ObjectID& staticID, const ObjectID& baseID);
+  
   void SetPickupInitialBlockLights();
   void SetPyramidBaseLights();
   void SetFullPyramidLights();
@@ -97,23 +97,42 @@ protected:
   bool AreAllBlockIDsUnique() const;
   
   static const ObjectLights& GetSingleStaticBlockLights();
-  
   static const ObjectLights& GetBaseFormedLights();
-  static ObjectLights GetBaseFormedBaseLights(Robot& robot, const ObjectID& staticID, const ObjectID& baseID);
-  static ObjectLights GetBaseFormedStaticLights(Robot& robot, const ObjectID& staticID, const ObjectID& baseID);
   static const ObjectLights& GetBaseFormedTopLights();
+
   
-  static const ObjectLights& GetFullPyramidLights(Robot& robot);
+  static const ObjectLights& GetFlourishPyramidLights(Robot& robot);
   
-  const ObjectLights& GetFlourishBaseLights() const;
-  const ObjectLights& GetFlourishStaticLights() const;
-  const ObjectLights& GetFlourishTopLights() const;
-    
+  const ObjectLights& GetDenouementBaseLights() const;
+  const ObjectLights& GetDenouementStaticLights() const;
+  const ObjectLights& GetDenouementTopLights() const;
+  
+  /// Attributes
+  mutable ObjectID _staticBlockID;
+  mutable ObjectID _baseBlockID;
+  mutable ObjectID _topBlockID;
+  
+  // track how many pyramid bases are known for updating the behavior when they are
+  // created or destroyed
+  int _lastBasesCount;
+  
+  // track retrys with searches
+  int _searchingForNearbyBaseBlockCount;
+  int _searchingForNearbyStaticBlockCount;
+
+  
+  // callback set by derived classes to continue performing actions after the base is built
+  SimpleCallbackWithRobot _continuePastBaseCallback;
+  
+  // track the behavior state for update state checks
+  State _behaviorState;
+  
+  // set if failed to place the top block - allows seeing a pyramid to jump stairght
+  // to the flourish on the cubes instead of re-placing the top block
+  bool _checkForFullPyramidVisualVerifyFailure;
+  
 private:
-  Robot& _robot;
   typedef std::vector<const ObservableObject*> BlockList;
-  
-  MusicState _musicState;
 
   ObjectID GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const;
   void SafeEraseBlockFromBlockList(const ObjectID& objectID, BlockList& blockList) const;
@@ -122,12 +141,13 @@ private:
   // doesn't have a block in the way
   void UpdateBlockPlacementOffsets() const;
   bool CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset) const;
+  
+  Robot& _robot;
+  MusicState _musicState;
 
   // offsets for placingBlock where the ground is clear
   mutable f32 _baseBlockOffsetX;
   mutable f32 _baseBlockOffsetY;
-  
-
   
 }; //class BehaviorBuildPyramidBase
 

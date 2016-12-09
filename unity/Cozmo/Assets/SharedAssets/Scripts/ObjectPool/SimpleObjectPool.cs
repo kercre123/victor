@@ -44,6 +44,10 @@ public class SimpleObjectPool<T> where T : class {
   }
 
   public void ReturnToPool(T item) {
+    if (this == null) {
+      DAS.Error("SimpleObjectPool.ReturnToPool", "This is null");
+      return;
+    }
     if (_MarkedAsDestroyed) {
       return;
     }

@@ -11,17 +11,18 @@
  *
  **/
 
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseOriginList.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/components/visionComponent.h"
-#include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-
 
 namespace Anki {
 namespace Cozmo {

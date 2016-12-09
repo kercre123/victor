@@ -1,25 +1,27 @@
 /// Implementation for printTrace functionality
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/common/basestation/jsonTools.h"
-#include "util/fileUtils/fileUtils.h"
-#include "util/cpuProfiler/cpuProfiler.h"
-#include "util/logging/logging.h"
-#include "util/helpers/base64.h"
-#include "util/UUID/UUID.h"
 #include "debug/devLoggingSystem.h"
-#include <stdlib.h>
-#include <stdarg.h>
+#include "util/UUID/UUID.h"
+#include "util/cpuProfiler/cpuProfiler.h"
+#include "util/fileUtils/fileUtils.h"
+#include "util/helpers/base64.h"
+#include "util/logging/logging.h"
 #include <fstream>
+#include <stdarg.h>
+#include <stdlib.h>
 
 #if USE_DAS
 #include <DAS/DAS.h>
 #include <DAS/DASPlatform.h>
 #endif
+
 
 namespace Anki {
 namespace Cozmo {

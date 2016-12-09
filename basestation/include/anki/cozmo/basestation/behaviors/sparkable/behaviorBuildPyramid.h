@@ -44,6 +44,10 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   void StopInternal(Robot& robot) override;
   
+  template<typename T>
+  void TransitionToSearchingWithCallback(Robot& robot,  const ObjectID& objectID,  void(T::*callback)(Robot&));
+  
+  
 private:
   typedef std::vector<const ObservableObject*> BlockList;
   
@@ -52,6 +56,9 @@ private:
   void TransitionToReactingToPyramid(Robot& robot);
   
   ObjectID GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const;
+  
+  int _searchingForNearbyBaseCount;
+  int _searchingForTopBlockCount;
   
   
 }; //class BehaviorBuildPyramid

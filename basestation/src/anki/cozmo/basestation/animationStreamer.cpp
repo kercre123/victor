@@ -1,20 +1,35 @@
+/**
+ * File: animationStreamer.cpp
+ *
+ * Authors: Andrew Stein
+ * Created: 2015-06-25
+ *
+ * Description: 
+ * 
+ *   Handles streaming a given animation from a CannedAnimationContainer
+ *   to a robot.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/proceduralFaceDrawer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "anki/cozmo/basestation/proceduralFaceDrawer.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "clad/externalInterface/messageGameToEngineTag.h"
-#include "clad/types/animationKeyFrames.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
-#include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "clad/externalInterface/messageGameToEngineTag.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/animationKeyFrames.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"

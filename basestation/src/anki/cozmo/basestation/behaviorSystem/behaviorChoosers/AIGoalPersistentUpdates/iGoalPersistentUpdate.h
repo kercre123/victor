@@ -1,5 +1,5 @@
 /**
- * File: iGoalPersistantUpdates.h
+ * File: iGoalPersistentUpdates.h
  *
  * Author: Kevin M. Karol
  * Created: 11/14/16
@@ -10,8 +10,8 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#ifndef __Cozmo_Basestation_AIGoalPersistantUpdate_IGoalPersistantUpdate_H__
-#define __Cozmo_Basestation_AIGoalPersistantUpdate_IGoalPersistantUpdate_H__
+#ifndef __Cozmo_Basestation_AIGoalPersistentUpdate_IGoalPersistentUpdate_H__
+#define __Cozmo_Basestation_AIGoalPersistentUpdate_IGoalPersistentUpdate_H__
 
 namespace Anki {
 namespace Cozmo {
@@ -21,11 +21,15 @@ class Robot;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIGoalEvaluator
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class IGoalPersistantUpdate
+class IGoalPersistentUpdate
 {
 public:
-  virtual ~IGoalPersistantUpdate(){};
+  virtual ~IGoalPersistentUpdate(){};
+  virtual void Init(Robot& robot) = 0;
   virtual void Update(Robot& robot) = 0;
+  virtual void GoalEntered(Robot& robot){};
+  virtual void GoalExited(Robot& robot){};
+  
 };
   
 

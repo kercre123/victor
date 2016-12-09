@@ -12,17 +12,19 @@
 
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "util/fileUtils/fileUtils.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/fileUtils/fileUtils.h"
 
 #define DEBUG_BLOCK_LIGHTS 0
 #define DEBUG_BACKPACK_LIGHTS 0
@@ -643,7 +645,7 @@ bool LightsComponent::SetCustomLightPattern(const ObjectID& objectID, const Obje
   }else{
     // only add the lock to the map if the pattern being sent matches the one already playing
     const auto& currentPattern = mapIter->second.pattern;
-    if(pattern.EquivalentIgnoringRelativePoint(currentPattern)){
+    if(pattern.EquivalentIgnoringPointAndOffset(currentPattern)){
       mapIter->second.locks.push_back(lockName);
       successfulInsertion = true;
     }
@@ -1400,9 +1402,9 @@ LightsComponent::CustomStateInfo::CustomStateInfo(const ObjectLights& patternInp
   locks.push_back(lockName);
 }
 
-bool ObjectLights::EquivalentIgnoringRelativePoint(const ObjectLights& other) const
+bool ObjectLights::EquivalentIgnoringPointAndOffset(const ObjectLights& other) const
 {
-  // does not check relative point due to the possibility block world has changed
+  // does not check relative point or offset due to the possibility block world has changed
   // but the intended pattern is the same
   return this->onColors == other.onColors &&
   this->offColors == other.offColors &&
@@ -1410,7 +1412,6 @@ bool ObjectLights::EquivalentIgnoringRelativePoint(const ObjectLights& other) co
   this->offPeriod_ms == other.offPeriod_ms &&
   this->transitionOnPeriod_ms == other.transitionOnPeriod_ms &&
   this->transitionOffPeriod_ms == other.transitionOffPeriod_ms &&
-  this->offset == other.offset &&
   this->rotationPeriod_ms == other.rotationPeriod_ms &&
   this->makeRelative == other.makeRelative;
 }

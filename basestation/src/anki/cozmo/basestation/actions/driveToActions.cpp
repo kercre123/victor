@@ -10,21 +10,24 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/speedChooser.h"
-#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "anki/cozmo/basestation/speedChooser.h"
 #include "util/console/consoleInterface.h"
 #include "util/math/math.h"
-#include "driveToActions.h"
 
 namespace Anki {
   
@@ -1395,7 +1398,10 @@ namespace Anki {
         if(driveToAction != nullptr){
         
           driveToAction->SetGetPossiblePosesFunc(
-            [this, &robot, placementOffsetX_mm, placementOffsetY_mm](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+            [this, &robot, placementOffsetX_mm, placementOffsetY_mm](
+                                              ActionableObject* object,
+                                              std::vector<Pose3d>& possiblePoses,
+                                              bool& alreadyInPosition)
             {
               const ActionResult possiblePosesResult = GetDriveToObjectAction()->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
               
@@ -1403,53 +1409,65 @@ namespace Anki {
                 using PoseIter = std::vector<Pose3d>::iterator;
 
                 for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); ){
+                  const Pose3d& idealTopMarker = object->GetZRotatedPointAboveObjectCenter();
                   Pose3d preDocWRTBlock;
-                  fullIter->GetWithRespectTo(object->GetPose(), preDocWRTBlock);
+                  fullIter->GetWithRespectTo(idealTopMarker, preDocWRTBlock);
                   const float poseX = preDocWRTBlock.GetTranslation().x();
                   const float poseY = preDocWRTBlock.GetTranslation().y();
                   const float minIllegalOffset = 1.f;
-                  const bool xOffsetRelevant = !IN_RANGE(placementOffsetX_mm, -minIllegalOffset, minIllegalOffset) &&
-                                            !IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
-                  const bool yOffsetRelevant = !IN_RANGE(placementOffsetY_mm, -minIllegalOffset, minIllegalOffset) &&
-                                            !IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
-                  const bool isPoseInvalid = (xOffsetRelevant && (FLT_GT(poseX, 0) != FLT_GT(placementOffsetX_mm, 0)))||
-                                             (yOffsetRelevant && (FLT_GT(poseY, 0) != FLT_GT(placementOffsetY_mm, 0)));
+                  const bool xOffsetRelevant =
+                              !IN_RANGE(placementOffsetX_mm, -minIllegalOffset, minIllegalOffset) &&
+                              !IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
+                  const bool yOffsetRelevant =
+                              !IN_RANGE(placementOffsetY_mm, -minIllegalOffset, minIllegalOffset) &&
+                              !IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
+                  const bool isPoseInvalid =
+                              (xOffsetRelevant && (FLT_GT(poseX, 0) != FLT_GT(placementOffsetX_mm, 0)))||
+                              (yOffsetRelevant && (FLT_GT(poseY, 0) != FLT_GT(placementOffsetY_mm, 0)));
                   if(isPoseInvalid){
                     fullIter = possiblePoses.erase(fullIter);
-                    PRINT_CH_INFO("Actions", "PlaceRelObjectAction.PossiblePosesFunc.RemovingInvalidPose",
+                    PRINT_CH_INFO("Actions", "DriveToPlaceRelObjectAction.PossiblePosesFunc.RemovingInvalidPose",
                                   "Removing pose x:%f y:%f because Cozmo can't place at offset x:%f, y:%f, xRelevant:%d, yRelevant:%d",
                                   poseX, poseY, placementOffsetX_mm, placementOffsetY_mm, xOffsetRelevant, yOffsetRelevant);
                   }else{
-                    // if available make sure we use the pre-doc pose that results in cozmo
-                    // being able to place with an x offset (tracking not blind)
+                    // We need to visually verify placement since there are high odds
+                    // that we will bump objects while placing relative to them, so if possible
+                    // place using a y offset
                     const bool onlyOnePlacementDirection = xOffsetRelevant != yOffsetRelevant;
                     const bool currentXPoseIdeal = xOffsetRelevant && IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
                     const bool currentYPoseIdeal = yOffsetRelevant && IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
-                    if(onlyOnePlacementDirection && (currentXPoseIdeal || currentYPoseIdeal)){
-                      Pose3d bestCopy = *fullIter;
-                      possiblePoses.clear();
-                      possiblePoses.push_back(bestCopy);
-                      break;
+                    if(onlyOnePlacementDirection &&
+                       possiblePoses.size() > 2 &&
+                       (currentXPoseIdeal || currentYPoseIdeal)){
+                      fullIter = possiblePoses.erase(fullIter);
+                    }else{
+                      ++fullIter;
                     }
-                    
-                    ++fullIter;
                   }
                 }// end for(PoseIter)
               }// end if(possiblePosesResult == ActionResult::Success)
               else{
-                PRINT_CH_INFO("Actions","PlaceRelObjectAction.PossiblePosesFunc.PossiblePosesResultNotSuccess",
-                                 "Received possible psoses result:%hhu", possiblePosesResult);
+                PRINT_CH_INFO("Actions",
+                              "DriveToPlaceRelObjectAction.PossiblePosesFunc.PossiblePosesResultNotSuccess",
+                              "Received possible psoses result:%hhu", possiblePosesResult);
               }
               
               if(possiblePoses.size() > 0){
                 return possiblePosesResult;
               }else{
-                PRINT_CH_INFO("Actions", "PlaceRelObjectAction.PossiblePosesFunc.NoValidPoses",
-                                 "After filtering invalid pre-doc poses none remained for placement offset x:%f, y%f", placementOffsetX_mm, placementOffsetY_mm);
+                PRINT_CH_INFO("Actions",
+                              "DriveToPlaceRelObjectAction.PossiblePosesFunc.NoValidPoses",
+                              "After filtering invalid pre-doc poses none remained for placement offset x:%f, y%f",
+                              placementOffsetX_mm, placementOffsetY_mm);
                 return ActionResult::FAILURE_ABORT;
               }
             });
         }// end if(driveToAction != nullptr)
+        else{
+          PRINT_CH_INFO("Actions",
+                        "DriveToPlaceRelObjectAction.PossiblePosesFunction.NoDriveToAction",
+                        "DriveToAction not set, possible invalid poses");
+        }
       } // end if(!relativeCurrentMarkre)
     }
     

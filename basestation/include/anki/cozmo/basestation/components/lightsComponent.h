@@ -44,7 +44,7 @@ struct ObjectLights {
   MakeRelativeMode makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   Point2f relativePoint;
   
-  bool EquivalentIgnoringRelativePoint(const ObjectLights& other) const;
+  bool EquivalentIgnoringPointAndOffset(const ObjectLights& other) const;
 };
 
 typedef std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS> BackpackLEDArray;

@@ -29,6 +29,11 @@ namespace BlockConfigurations{
 class StackConfigurationContainer;
   
 class StackOfCubes: public BlockConfiguration{
+  protected:
+  // The BlockConfigurationManager builds all configurations
+  StackOfCubes(const ObjectID& bottomBlockID, const ObjectID& middleBlockID);
+  StackOfCubes(const ObjectID& bottomBlockID, const ObjectID& middleBlockID, const ObjectID& topBlockID);
+  
   public:
     friend StackConfigurationContainer;
   
@@ -49,10 +54,6 @@ class StackOfCubes: public BlockConfiguration{
     bool IsASubstack(const StackOfCubes& potentialSuperStack) const;
 
   protected:
-    // Only the BlockConfigurationManager should create stacks
-    StackOfCubes(const ObjectID& bottomBlockID, const ObjectID& middleBlockID);
-    StackOfCubes(const ObjectID& bottomBlockID, const ObjectID& middleBlockID, const ObjectID& topBlockID);
-  
     // Returns the largest stack the object is a part of
     // this can only be one stack since two blocks centroids should not be able to be beneath or on top
     // of a block at the same time

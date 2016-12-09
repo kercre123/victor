@@ -22,19 +22,23 @@
  **/
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -342,12 +346,12 @@ namespace Cozmo {
     
     if (res == FactoryTestResultCode::SUCCESS) {
       PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestPASSED", "");
-      robot.SetBackpackLights(passLights);
+      robot.GetLightsComponent().SetBackpackLights(passLights);
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestFAILED",
                           "%s (code %d, state %s)",
                           EnumToString(res), static_cast<u8>(res), GetDebugStateName().c_str());
-      robot.SetBackpackLights(failLights);
+      robot.GetLightsComponent().SetBackpackLights(failLights);
     }
     
   };

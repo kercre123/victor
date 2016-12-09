@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
@@ -117,6 +118,8 @@ namespace Cozmo {
                                        const Point3f& thresholds_mm = {10, 10, 10});
     virtual ~VisuallyVerifyNoObjectAtPoseAction();
     
+    void AddIgnoreID(const ObjectID& objID);
+    
   protected:
     virtual ActionResult Init() override;
     virtual ActionResult CheckIfDone() override;
@@ -128,6 +131,7 @@ namespace Cozmo {
     Point3f               _thresholds_mm;
     int                   _numImagesToWaitFor = 10;
     
+    BlockWorldFilter      _filter;
   };
   
 } // namespace Cozmo

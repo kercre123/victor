@@ -392,6 +392,38 @@ namespace Vision {
     const bool isFlat = (Rmat.GetAngularDeviationFromParentAxis<'Z'>() < angleTol);
     return isFlat;
   }
+  
+  Pose3d ObservableObject::GetZRotatedPointAboveObjectCenter() const
+  {
+    // calculate the z translation of the top marker using the current object
+    // center and half the size of the object along the current rotated parent axis
+    const Pose3d poseWRTOrigin = _pose.GetWithRespectToOrigin();
+    float zAxisTrans = poseWRTOrigin.GetTranslation().z();
+    const RotationMatrix3d Rmat = poseWRTOrigin.GetRotationMatrix();
+    AxisName axis = Rmat.GetRotatedParentAxis<'Z'>();
+    switch(axis){
+      case AxisName::X_POS:
+      case AxisName::X_NEG:
+        zAxisTrans += GetSize().x()/2;
+        break;
+      case AxisName::Y_POS:
+      case AxisName::Y_NEG:
+        zAxisTrans += GetSize().y()/2;
+        break;
+      case AxisName::Z_POS:
+      case AxisName::Z_NEG:
+        zAxisTrans += GetSize().z()/2;
+        break;
+    }
+    
+    return Pose3d(poseWRTOrigin.GetRotation().GetAngleAroundZaxis(),
+                                         Z_AXIS_3D(),
+                                         {_pose.GetTranslation().x(),
+                                          _pose.GetTranslation().y(),
+                                          zAxisTrans},
+                                         &poseWRTOrigin.FindOrigin());
+  }
+
 
   const char* ObservableObject::PoseStateToString(const PoseState& state)
   {
