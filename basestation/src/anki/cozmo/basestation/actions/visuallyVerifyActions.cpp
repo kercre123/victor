@@ -256,6 +256,19 @@ VisuallyVerifyNoObjectAtPoseAction::VisuallyVerifyNoObjectAtPoseAction(Robot& ro
   name += std::to_string((int)_pose.GetTranslation().y()) + ",";
   name += std::to_string((int)_pose.GetTranslation().z()) + ")";
   SetName(name);
+  
+  _filter.SetIgnoreFamilies({ObjectFamily::MarkerlessObject});
+  // Augment the default filter (object not in unknown pose state) with one that
+  // checks that this object was observed in the last frame
+  _filter.AddFilterFcn([this](const ObservableObject* object)
+                       {
+                         if(object->GetLastObservedTime() >= _robot.GetLastImageTimeStamp())
+                         {
+                           return true;
+                         }
+                         return false;
+                       });
+
 }
 
 VisuallyVerifyNoObjectAtPoseAction::~VisuallyVerifyNoObjectAtPoseAction()
@@ -287,6 +300,15 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::Init()
   return ActionResult::SUCCESS;
 }
 
+void VisuallyVerifyNoObjectAtPoseAction::AddIgnoreID(const ObjectID& objID)
+{
+  if (HasStarted()) {
+    // You're too late! Set objects to ignore before you start the action!
+    PRINT_NAMED_WARNING("VisuallyVerifyNoObjectAtPoseAciton.AddIgnoreID.ActionAlreadyStarted", "");
+  } else {
+    _filter.AddIgnoreID(objID);
+  }
+}
 
 ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
 {
@@ -311,23 +333,10 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
   {
     ActionResult res = _waitForImagesAction->Update();
     
-    BlockWorldFilter filter;
-    filter.SetIgnoreFamilies({ObjectFamily::MarkerlessObject});
-    // Augment the default filter (object not in unknown pose state) with one that
-    // checks that this object was observed in the last frame
-    filter.AddFilterFcn([this](const ObservableObject* object)
-    {
-      if(object->GetLastObservedTime() >= _robot.GetLastImageTimeStamp())
-      {
-        return true;
-      }
-      return false;
-    });
-    
     // If there is an object at the given pose within the threshold then fail
     // Only do this check once we have turned towards the pose and have started waiting for images in case
     // there isn't actually an object at the pose but blockworld thinks there is
-    if(_robot.GetBlockWorld().FindObjectClosestTo(_pose, _thresholds_mm, filter) != nullptr)
+    if(_robot.GetBlockWorld().FindObjectClosestTo(_pose, _thresholds_mm, _filter) != nullptr)
     {
       PRINT_CH_DEBUG("Actions", "VisuallyVerifyNoObjectAtPose.FoundObject",
                      "Seeing object near pose (%f %f %f)",

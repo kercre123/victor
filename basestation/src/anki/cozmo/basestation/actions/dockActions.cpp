@@ -722,9 +722,10 @@ namespace Anki {
                              pose.GetTranslation().y(),
                              pose.GetTranslation().z() + rotatedSize.z()});
         
-        IAction* verifyNoObjectOnTopOfAction = new VisuallyVerifyNoObjectAtPoseAction(_robot,
-                                                                                      pose,
-                                                                                      rotatedSize * 0.5f);
+        VisuallyVerifyNoObjectAtPoseAction* verifyNoObjectOnTopOfAction = new VisuallyVerifyNoObjectAtPoseAction(_robot,
+                                                                                                                 pose,
+                                                                                                                 rotatedSize * 0.5f);
+        verifyNoObjectOnTopOfAction->AddIgnoreID(dockObject->GetID());
         
         // Disable the visual verification from issuing a completion signal
         verifyNoObjectOnTopOfAction->ShouldEmitCompletionSignal(false);
