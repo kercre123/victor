@@ -207,7 +207,8 @@ class UnityBuild(object):
         # We need to skip the ProjectSettings.asset file, since it can be
         # modified during the build.
         excludes = set(['ProjectSettings.asset',
-                        'EditorUserBuildSettings.asset'])
+                        'EditorUserBuildSettings.asset',
+                        '.DS_Store'])
 
         src_files = []
         for startFolder in ['Assets', 'ProjectSettings']:

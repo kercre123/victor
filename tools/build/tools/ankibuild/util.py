@@ -111,7 +111,7 @@ class File(object):
         for dep in deps:
             up_to_date = cls._is_file_up_to_date(target, dep)
             if not up_to_date:
-                print('Not up to date; "{0}" is newer than "{1}".'.format(target, dep))
+                print('Not up to date; "{0}" is older than "{1}".'.format(target, dep))
                 break
 
         return up_to_date
