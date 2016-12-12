@@ -7,9 +7,10 @@ namespace GameState {
 
 enum uint_32 External_Name
 {
-  External_Name_Off = 151699428,
+  Design_Pre_Generated_Name = 309148475,
   External_Name_On = 4053302206,
   Invalid = 0,
+  Unit_Test_Mock = 3937202207,
 }
 
 enum uint_32 GenericState
