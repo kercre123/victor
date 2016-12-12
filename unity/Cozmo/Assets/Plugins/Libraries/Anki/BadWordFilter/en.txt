@@ -1,11 +1,11 @@
 # English
 # Last updated: 20.09.2016
-ask(-| )*hole#askhole
+ass(-|\s)*hole#asshole
 \b(?!\bars\b)(fat|jack|jerk|lame|lard)?(-)*[4a][r5s]{2,}(es|e)?(-)*(bag\w*|bang\w*|bite\w*|clown\w*|crack\w*|face\w*|goblin\w*|hat\w*|head\w*|ho\w*|jack\w*|lick\w*|lol\w*|monk\w*|mu\w*|pirate\w*|hit\w*|wad\w*|wipe\w*)?\b#ass(es)
 beaner#
 -\b\w*b[i!1]+[a]*[+t7]+ch\w*\b#bitch
 bitch#
-blow(-| )*job#
+blow(-|\s)*job#
 blowjob#
 blumpkin#
 bollo[ckx]k?#bollok
@@ -26,9 +26,9 @@ futanari#
 \bfux\b#
 \bgino\b#
 go[k]{2,}un#
-\b\w*god(-| )*dam\w*\b#
+\b\w*god(-|\s)*dam\w*\b#
 \b\w*godam\w*\b#
-g[0o]{2,}(-| )*girl(s)?#
+g[0o]{2,}(-|\s)*girl(s)?#
 g[0o]{2,}k#gook
 \bgringo\b#
 \bguido\b#
@@ -70,7 +70,7 @@ pan[0o]{2,}ch#
 \bpiss\w*\b#
 pollock#
 p[0o]{2,}f#poof
-porch(-| )*monkey#
+porch(-|\s)*monkey#
 pr[i|1]ck#
 \bpunan\w*\b#
 punta#
@@ -92,7 +92,7 @@ spick#
 spl[0o]{2,}ge#
 sp[0o]{2,}ge#
 \btard\b#
-\btea(-| )*bag\w*\b#
+\btea(-|\s)*bag\w*\b#
 \bt[ie]t(s)?\b#tit
 \bt[1ie][t]{2,}\w*\b#titt
 tosser#
@@ -102,7 +102,7 @@ tranny#
 \btwunt\w*\b#
 \bwang\b#
 \bwank\w*\b#wank
-white(-| )*power#
+white(-|\s)*power#
 \b\w*wh[o0](a)?r\w*\b#whor
 wigger#
 \bwog\b#
