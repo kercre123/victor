@@ -958,6 +958,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &157414
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22469262}
+  - 114: {fileID: 11492286}
+  m_Layer: 5
+  m_Name: InfoWidgetContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
 --- !u!1 &158050
 GameObject:
   m_ObjectHideFlags: 1
@@ -1971,6 +1987,9 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
@@ -2006,7 +2025,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.8862745, g: 1, b: 0, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2028,6 +2047,7 @@ MonoBehaviour:
   m_Text: 1/3
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11413228
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2041,7 +2061,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.8862745, g: 1, b: 0, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2063,6 +2083,7 @@ MonoBehaviour:
   m_Text: 1/3
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11414336
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2646,7 +2667,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.8862745, g: 1, b: 0, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2668,6 +2689,7 @@ MonoBehaviour:
   m_Text: 1/3
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11433342
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2904,6 +2926,9 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
@@ -3104,7 +3129,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0.609, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -3126,6 +3151,7 @@ MonoBehaviour:
   m_Text: '>Thing Cozmo is doing'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11453882
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3361,6 +3387,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _BehaviorLabel: {fileID: 11453108}
   _MinTimeInStateBeforeChange_Sec: 0.5
+  _MinTimeShowingRewardBeforeChange_Sec: 2.5
   _FadeTime_Sec: 0.3
 --- !u!114 &11465266
 MonoBehaviour:
@@ -3902,6 +3929,39 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11492286
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 157414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 161112, guid: 43d1ce34393574c8cbcf2842a813e6d5, type: 2}
+  ModifiedValues:
+  - ObjectPath: WidgetWindow/ContentGridContainer/RowSparksContainer/IconSparksAlignContainer
+    FieldName: UnityEngine.UI.VerticalLayoutGroup:m_Padding
+    JsonValue: '{"left":0,"right":0,"top":0,"bottom":0,"horizontal":0,"vertical":0}'
+  - ObjectPath: WidgetWindow/ContentGridContainer/RowSparksContainer
+    FieldName: UnityEngine.UI.HorizontalLayoutGroup:m_Padding
+    JsonValue: '{"left":0,"right":0,"top":40,"bottom":0,"horizontal":0,"vertical":40}'
+  - ObjectPath: WidgetWindow/ContentGridContainer/RowBitsContainer/IconBitsAlignContainer
+    FieldName: UnityEngine.UI.VerticalLayoutGroup:m_Padding
+    JsonValue: '{"left":0,"right":0,"top":0,"bottom":0,"horizontal":0,"vertical":0}'
+  - ObjectPath: WidgetWindow/ContentGridContainer/RowBitsContainer
+    FieldName: UnityEngine.UI.HorizontalLayoutGroup:m_Padding
+    JsonValue: '{"left":0,"right":0,"top":40,"bottom":0,"horizontal":0,"vertical":40}'
+  - ObjectPath: WidgetWindow/ContentGridContainer/infoWidgetHeadline
+    FieldName: UnityEngine.UI.Text:m_Text
+    JsonValue: '"Fill the meter and get..."'
+  - ObjectPath: WidgetWindow/ContentGridContainer
+    FieldName: UnityEngine.UI.VerticalLayoutGroup:m_Padding
+    JsonValue: '{"left":10,"right":10,"top":0,"bottom":0,"horizontal":20,"vertical":0}'
+  ModifiedLocalReferences: []
+  ModifiedGlobalReferences: []
 --- !u!114 &11494348
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4017,7 +4077,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.8862745, g: 1, b: 0, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -4039,6 +4099,7 @@ MonoBehaviour:
   m_Text: 1/3
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11498466
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -7224,6 +7285,7 @@ RectTransform:
   - {fileID: 22499970}
   - {fileID: 22497190}
   - {fileID: 22441376}
+  - {fileID: 22469262}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -7587,6 +7649,24 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -8.7}
   m_SizeDelta: {x: 200, y: 56.3}
   m_Pivot: {x: 0, y: 1}
+--- !u!224 &22469262
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 157414}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22450442}
+  m_RootOrder: 6
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: -40, y: -646}
+  m_SizeDelta: {x: 1745, y: 841}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22470632
 RectTransform:
   m_ObjectHideFlags: 1
