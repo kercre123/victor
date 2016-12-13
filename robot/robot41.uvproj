@@ -357,7 +357,7 @@
               <MiscControls>--no_exceptions</MiscControls>
               <Define>TARGET_K02,COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>.;supervisor/src;include;lib;;startup;lib/device;lib/drivers;lib/hal;generated/clad/robot;.\supervisor\src;hal</IncludePath>
+              <IncludePath>.;supervisor/src;include;lib;;startup;lib/device;lib/drivers;lib/hal;generated/clad/robot;generated;.\supervisor\src;hal</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

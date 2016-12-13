@@ -41,6 +41,7 @@ INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
 INCLUDES += -I ../../../espressif_bootloader
+INCLUDES += -I ../../../generated
 INCLUDES += -I ../../../generated/clad/robot
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile

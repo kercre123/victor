@@ -140,6 +140,7 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
 
   uint32_t robotVersion = headerData[FirmwareUpdater::kFirmwareVersionKey].asUInt();
   uint32_t robotTime = headerData[FirmwareUpdater::kFirmwareTimeKey].asUInt();
+  std::string robotBuildType = headerData[FirmwareUpdater::kFirmwareBuildTypeKey].asString();
 
   // for firmware that came from a build server, a version number will be baked in,
   // but for local dev builds, the version field will equal the time field
@@ -149,10 +150,17 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   // simulated robot will have special tag in json
   const bool robotIsSimulated = robotVersion == 0 && robotTime == 0 && !headerData["sim"].isNull();
 
-  PRINT_NAMED_EVENT("robot.firmware_version", "%u", robotVersion);
-  PRINT_NAMED_INFO("RobotInitialConnection.HandleFirmwareVersion", "robot firmware: %d%s%s (app: %d%s)", robotVersion,
-    robotHasDevFirmware ? " (dev)" : "", robotIsSimulated ? " (SIM)" : "", _fwVersion, appHasDevFirmware ? " (dev)" : "");
-
+  Util::sEventF("robot.firmware_version",
+                {{DDATA, (headerData[FirmwareUpdater::kFirmwareTimeKey].asString() + std::string(".") + 
+                          robotBuildType).c_str()}},
+                "%u", robotVersion);
+  Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, "RobotInitialConnection.HandleFirmwareVersion",
+                        {{DDATA, jsonString.c_str()}},
+                        "robot firmware: %d%s%s%s (app: %d%s)", robotVersion, 
+                        robotBuildType.c_str(),
+                        robotHasDevFirmware ? " (dev)" : "",
+                        robotIsSimulated ? " (SIM)" : "", _fwVersion, appHasDevFirmware ? " (dev)" : "");
+  
   if (!_robotIsAvailable && !robotIsSimulated) {
     PRINT_NAMED_ERROR("RobotInitialConnection.HandleFirmwareVersion",
                       "Haven't gotten robot available message before firmware version");

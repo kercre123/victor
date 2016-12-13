@@ -42,6 +42,7 @@ INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
 INCLUDES += -I ../../../espressif_bootloader
 INCLUDES += -I ../../../include
+INCLUDES += -I ../../../generated
 INCLUDES += -I ../../../generated/clad/robot
 INCLUDES += -I ../../../supervisor/src
 PDIR := ../$(PDIR)

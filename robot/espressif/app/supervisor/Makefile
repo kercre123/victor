@@ -45,6 +45,7 @@ CXXSRCS:=animationController.cpp nvStorage.cpp
 INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
+INCLUDES += -I ../../../generated
 INCLUDES += -I ../../../generated/clad/robot
 INCLUDES += -I ../../../include
 INCLUDES += -I $(ESP_SRC_DIR)

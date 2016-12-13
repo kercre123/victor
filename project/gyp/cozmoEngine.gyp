@@ -628,6 +628,7 @@
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
               '../../robot/include',
+              '../../robot/generated',
               '../../include',
               '../../simulator/include',
             ],
@@ -660,7 +661,7 @@
                     'inputs': [],
                     'outputs': [],
                     'action': [
-                        'make', '-C', '../../robot/', 'sim'
+                        'make', '-C', '../../robot/', 'sim', 'BUILD_TYPE=SIMULATOR'
                     ],
                 }
             ]

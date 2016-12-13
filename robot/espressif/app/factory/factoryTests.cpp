@@ -302,8 +302,8 @@ void Process_TestState(const RobotInterface::TestState& state)
       static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
                                                                         "PSK:  %s\n"
                                                                         "Chan: %d  Stas: %d\n"
-                                                                        "FW Build: %d\n"
-                                                                        "FW Date:  %d\n"
+                                                                        "Ver:  %d%c\n"
+                                                                        "Time: %d\n"
                                                                         "Battery V x10: %d";
       const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
       if (!clientConnected())
@@ -317,7 +317,8 @@ void Process_TestState(const RobotInterface::TestState& state)
         memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
         Face::FacePrintf(fmtBuf,
                          ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
-                         UpgradeController::GetFirmwareVersion(), UpgradeController::GetBuildTime(),
+                         UpgradeController::GetFirmwareVersion(), UpgradeController::GetBuildType(),
+                         UpgradeController::GetBuildTime(),
                          state.battVolt10x);
       }
       if ((state.positionsFixed[3] - minPositions[3]) > 80000)

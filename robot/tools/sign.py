@@ -4,14 +4,16 @@ from __future__ import print_function
 from zlib import crc32
 from struct import pack
 from elfInfo import rom_info, HEADER_LENGTH
-from argparse import ArgumentParser
+import argparse
 import random
 import math
 import json
 import time
-import sys, os
+import sys
+import os
 import subprocess
 import shutil
+import re
 
 from Crypto.Hash import SHA512
 from Crypto.PublicKey import RSA
@@ -23,7 +25,7 @@ sys.path.insert(0, os.path.join("generated", "cladPython", "robot"))
 from clad.robotInterface.messageEngineToRobot_hash import messageEngineToRobotHash
 from clad.robotInterface.messageRobotToEngine_hash import messageRobotToEngineHash
 
-parser = ArgumentParser()
+parser = argparse.ArgumentParser()
 parser.add_argument("output", type=str,
                     help="target location for file")
 
@@ -37,6 +39,8 @@ parser.add_argument("-s", "--sign", nargs=2, type=str,
                     help="Create signature block")
 parser.add_argument("-c", "--comment", type=int, nargs="?", const=int(time.time()),
                     help="Add version information comment block, argument is the desired version string")
+parser.add_argument("-t", "--build_type_header", type=argparse.FileType('rt'),
+                    help="Headerfile to read")
 parser.add_argument("--prepend_size_word", action="store_true",
                     help="Put a single u32 size word at the front of the file for recovery images.")
 parser.add_argument("--factory_upgrade", nargs=2, type=str,
@@ -198,6 +202,9 @@ def get_version_comment_block(args):
         'messageEngineToRobotHash': hex(messageEngineToRobotHash)[2:],
         'messageRobotToEngineHash': hex(messageRobotToEngineHash)[2:],
     }
+    if args.build_type_header:
+        comment['build'] = re.match('#define\s+(\S+)', args.build_type_header.read()).groups()[0]
+        sys.stdout.write("{0}{1}# OTA File build type is *{2}*{1}{0}{1}".format("#"*60, os.linesep, comment['build']))
     for fw in ('wifi', 'rtip', 'body'):
         fn = getattr(args, fw)
         if fn is not None:

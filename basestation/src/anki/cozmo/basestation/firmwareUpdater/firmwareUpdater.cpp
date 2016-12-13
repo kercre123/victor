@@ -31,6 +31,7 @@ namespace Cozmo {
 
 const char* const FirmwareUpdater::kFirmwareVersionKey = "version";
 const char* const FirmwareUpdater::kFirmwareTimeKey = "time";
+const char* const FirmwareUpdater::kFirmwareBuildTypeKey = "build";
 
 
 FirmwareUpdater::FirmwareUpdater(const CozmoContext* context)

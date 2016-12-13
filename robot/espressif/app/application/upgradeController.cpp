@@ -112,6 +112,8 @@ namespace UpgradeController {
     extern unsigned int COZMO_BUILD_DATE;
   }
 
+  static char COZMO_BUILD_TYPE;
+
   static sha512_state firmware_digest;
   static uint8_t aes_iv[AES_KEY_LENGTH];
   static UCState self;
@@ -166,6 +168,10 @@ namespace UpgradeController {
     const char* timeStr = os_strstr(json, TIME_TAG);
     if (timeStr) COZMO_BUILD_DATE = atoi(timeStr + os_strlen(TIME_TAG));
     else COZMO_BUILD_DATE = 1;
+    static const char* BUILD_TYPE_TAG = "\"build\": \"";
+    const char* buildTypeStr = os_strstr(json, BUILD_TYPE_TAG);
+    if (buildTypeStr) COZMO_BUILD_TYPE = *(buildTypeStr+os_strlen(BUILD_TYPE_TAG));
+    else COZMO_BUILD_TYPE = 'U';
     
     self.phase = OTAT_Ready;
     return true;
@@ -1195,6 +1201,11 @@ namespace UpgradeController {
   {
     const uint32_t VERSION_INFO_ADDR = (APPLICATION_A_SECTOR * SECTOR_SIZE) + ESP_FW_MAX_SIZE - 0x800; // Memory offset of version info for both apps
     return FLASH_CACHE_POINTER + (VERSION_INFO_ADDR/4);  // Use A address because both images see it mapped in that place.
+  }
+
+  char GetBuildType()
+  {
+    return COZMO_BUILD_TYPE;
   }
 
   /// Retrieve numerical firmware version

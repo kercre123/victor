@@ -334,7 +334,7 @@
               <MiscControls>--gnu</MiscControls>
               <Define>NRF51,COZMO_ROBOT,SOFTDEVICE_PRESENT,BLE_STACK_SUPPORT_REQD</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/toolchain;./components/drivers_nrf/hal;./components/device;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/ble_dtm;./components/ble/common;./components/drivers_nrf/hal;./components/libraries/util;./components/libraries/timer;../generated/clad/robot;../include;../../crypto;./hal;./cubes;.;..\generated</IncludePath>
+              <IncludePath>./components/toolchain;./components/drivers_nrf/hal;./components/device;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/ble_dtm;./components/ble/common;./components/drivers_nrf/hal;./components/libraries/util;./components/libraries/timer;../generated/clad/robot;../generated;../include;../../crypto;./hal;./cubes;.;..\generated</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

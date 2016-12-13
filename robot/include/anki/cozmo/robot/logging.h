@@ -103,7 +103,7 @@ namespace Anki {
       #define AnkiInfo(...)
 #endif
 
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_MINIMAL
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
       #define AnkiDebug(nameId, nameString, fmtId, fmtString, nargs, ...) \
       { Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); }
       

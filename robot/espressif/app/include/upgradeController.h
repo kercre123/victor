@@ -26,6 +26,9 @@ namespace Anki {
       /// Retreive pointer to firmware version meta data in flash
       u32* GetVersionInfo();
       
+      /// Retrieves the first character of the firmware build type
+      char GetBuildType();
+      
       extern "C" {
         /// Retrieve numerical firmware version
         s32 GetFirmwareVersion();

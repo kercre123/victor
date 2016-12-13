@@ -79,6 +79,7 @@ class FirmwareUpdater
 public:
   static const char* const kFirmwareVersionKey; // = "version";
   static const char* const kFirmwareTimeKey; // = "time";
+  static const char* const kFirmwareBuildTypeKey;
 
   explicit FirmwareUpdater(const CozmoContext* context);
   ~FirmwareUpdater();
@@ -184,4 +185,3 @@ private:
 
 
 #endif // __Cozmo_Basestation_FirmwareUpdater_FirmwareUpdater_H__
-

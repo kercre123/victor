@@ -24,6 +24,7 @@ SIGN_FLAGS=--sign $(AES_KEY) $(DEVELOPMENT_KEY)
 PUBLIC_KEY_EXPORTER=tools/export_public.py
 PUBLIC_KEYS_HEADER=$(GENERATED_DIR)/publickeys.h
 CALCMONT_DEPS=tools/calcMontgomery.cpp ../crypto/bignum.cpp
+BUILD_TYPE_HEADER=$(GENERATED_DIR)/build_type.h
 
 WIFI_BINARY=$(BUILD_DIR)/esp.user.bin
 RTIP_BINARY=$(BUILD_DIR)/robot.axf
@@ -31,12 +32,14 @@ BODY_BINARY=$(BUILD_DIR)/syscon.axf
 MAP_FILES=$(BUILD_DIR)/esp.map $(BUILD_DIR)/esp.S $(BUILD_DIR)/robot.map $(BUILD_DIR)/syscon.map
 OTA_FILE=$(RELEASE_DIR)/cozmo.safe
 
-.PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild server.1 server.2 server.3
+BUILD_TYPE?=DEVELOPMENT
+
+.PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild server.1 server.2 server.3 $(BUILD_TYPE_HEADER)
 
 ########################################################################################################################
 # Build rules for engine / app
 
-sim: $(ANKI_LOG_TABLE_JSON)
+sim: $(ANKI_LOG_TABLE_JSON) $(BUILD_TYPE_HEADER)
 	make fourzero -C clad -j4
 
 app: $(ANKI_LOG_TABLE_JSON)
@@ -47,7 +50,7 @@ all: sim app esp k02 nrf
 ########################################################################################################################
 # Convenience rules
 
-dev: AnkiLog nrf k02 esp
+dev: AnkiLog nrf k02 esp $(BUILD_TYPE_HEADER)
 
 ota: $(OTA_FILE)
 	if test -e build/app/robot.map; then mv build/app/robot.map $(BUILD_DIR)/robot.map; fi
@@ -117,6 +120,9 @@ $(PUBLIC_KEYS_HEADER): Makefile $(PUBLIC_KEY_EXPORTER) $(CALCMONT_DEPS) $(GENERA
 	g++ -o build/calcMont $(CALCMONT_DEPS) -I ../crypto -I $(GENERATED_DIR)
 	build/calcMont >> $@
 
+$(BUILD_TYPE_HEADER): $(GENERATED_DIR)
+	echo "#define " $(BUILD_TYPE) 1 > $@
+
 ########################################################################################################################
 # Firmware Binaries
 
@@ -130,9 +136,13 @@ espBuild: esp AnkiLog
 	$(PY) ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin $(WIFI_BINARY)
 	cp espressif/app/esp.map $(BUILD_DIR)/esp.map
 	cp ./espressif/bin/upgrade/user1.2048.new.3.S $(BUILD_DIR)/esp.S
+	@echo "############################################"
+	@echo "#Espressif firmware build with build type:"
+	@cat $(BUILD_TYPE_HEADER)
+	@echo "############################################"
 
 $(OTA_FILE): Makefile $(RELEASE_DIR) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
-	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
+	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) -t $(BUILD_TYPE_HEADER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
 
 update_k02_bootloader.safe: 
 	$(PY) ./tools/sign.py -c 9999 $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip ./build/recover/robot_recover.axf  --body $(BODY_BINARY) $@
@@ -143,13 +153,13 @@ $(BUILD_DIR)/syscon.map:
 ########################################################################################################################
 # Build server steps
 
-server.1: nrf k02
+server.1: nrf k02 $(BUILD_TYPE_HEADER)
 	tar -cjf generated.tar.bz2 $(GENERATED_DIR)
 
 server.2: $(RTIP_BINARY) $(BODY_BINARY) # Run Keil cozmo.uvmpw batch build to generate these files
 	tar -cjf keil.tar.bz2 $(RTIP_BINARY) $(BODY_BINARY) $(BUILD_DIR)/app/robot.map syscon/build/app/syscon.map
 
-server.3: espBuild $(OTA_FILE)
+server.3: $(BUILD_TYPE_HEADER) espBuild $(OTA_FILE)
 	echo $(BUILD_NUMBER) > VERSION
 	mv build/app/robot.map build/robot.map
 	mv syscon/build/app/syscon.map build/syscon.map

@@ -45,6 +45,7 @@ CXXSRCS:=sha512.cpp bignum.cpp rsa_pss.cpp crc32.cpp aes.cpp
 INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
+INCLUDES += -I ../../../generated
 INCLUDES += -I ../../../generated/clad/robot
 INCLUDES += -I ../../../include
 INCLUDES += -I $(ESP_SRC_DIR)
