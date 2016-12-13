@@ -7,11 +7,10 @@ using System.Collections.Generic;
 public class AnimationPane : MonoBehaviour {
 
   [SerializeField]
-  private Dropdown _AnimationDropdown;
+  private Button _AnimationButtonPrefab;
 
   [SerializeField]
-  private Button _PlayAnimationButton;
-
+  private RectTransform _ScrollViewContent;
 
   // Use this for initialization
   void Start() {
@@ -22,12 +21,12 @@ public class AnimationPane : MonoBehaviour {
     }
     robotGroupNames.Sort();
     for (int i = 0; i < robotGroupNames.Count; ++i) {
-      Dropdown.OptionData optionData = new Dropdown.OptionData();
-      optionData.text = robotGroupNames[i].ToString();
-      _AnimationDropdown.options.Add(optionData);
+      int index = i;
+      Button animationButton = GameObject.Instantiate(_AnimationButtonPrefab.gameObject).GetComponent<Button>();
+      animationButton.onClick.AddListener(() => RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(robotGroupNames[index]));
+      animationButton.transform.FindChild("Text").GetComponent<Text>().text = robotGroupNames[i].ToString();
+      animationButton.transform.SetParent(_ScrollViewContent, false);
     }
-    _AnimationDropdown.value = 0;
-    _AnimationDropdown.RefreshShownValue();
-    _PlayAnimationButton.onClick.AddListener(() => RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(robotGroupNames[_AnimationDropdown.value]));
+
   }
 }
