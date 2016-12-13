@@ -434,6 +434,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
 
     ActiveObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
+    RobotEngineManager.Instance.RemoveCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
   }
 
   public Vector3 WorldToCozmo(Vector3 worldSpacePosition) {
