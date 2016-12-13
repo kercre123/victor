@@ -3,6 +3,8 @@
 #include "hal/portable.h"
 
 #include "hal/timers.h"
+#include "hal/random.h"
+
 #include "../app/fixture.h"
 #include "../app/binaries.h"
 
@@ -88,7 +90,7 @@ static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 #else
   { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot, g_EspBoot },
   { "USER", 0x080000, g_EspUserEnd - g_EspUser, g_EspUser },
-  { "SAFE", 0x0c5000, g_EspSafeEnd - g_EspSafe, g_EspSafe },
+  { "SAFE", 0x0c8000, g_EspSafeEnd - g_EspSafe, g_EspSafe },
   { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit, g_EspInit },
   { "BLANK",0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
 #endif
@@ -418,8 +420,20 @@ void ProgramEspressif(int serial)
   #ifndef FCC
     // Set serial number, model number, random data in Espressif
     if (!setserial) {
-      SlowPrintf("Load SERIAL data\n");
-      ESPFlashLoad(0x1000, 4, (uint8_t*)&serial);
+      const int DATALEN = 2+16;
+      u32 data[DATALEN];
+      data[0] = serial; // Serial
+      data[1] = 0;      // Model
+      
+      // Add 64 bytes of random gibberish, at Daniel's request
+      for (int i = 2; i < DATALEN; i++)
+        data[i] = GetRandom();
+      
+      SlowPrintf("Load SERIAL data: ");
+      for (int i = 0; i < DATALEN; i++)
+        SlowPrintf("%08x,", data[i]);
+      SlowPrintf("\n");
+      ESPFlashLoad(0x1000, sizeof(data), (uint8_t*)&data);
       setserial = true;
     }
   #endif

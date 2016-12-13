@@ -42,7 +42,6 @@ void SlowPrintf(const char* format, ...);
 #define SWD_PARITY 8
 
 // This short delay was tested empirically - it must be fast (>125KHz) to work with the nRF51's strange glitch filter
-// 10 bit delays makes about
 #define bit_delay() {volatile int x = 10; while (x--);}
 
 static char HostBus = 0; // SWD bus is controlled by the host or target
@@ -355,7 +354,7 @@ static void swd_setcsw(int addr, int size)
   swd_write(1, 0, csw);
 }
 
-static int swd_read32(int addr)
+int swd_read32(int addr)
 {
   unsigned long value;
   int r = swd_write(1, 0x4, addr);   // Set address
@@ -589,8 +588,17 @@ void SWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end)
 }
 
 // Send a file to the stub, one block at a time
-void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end, u32 serialaddr, u32 serial)
+void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end, u32 serialaddr, u32 serial, bool quickcheck)
 { 
+  // Assign serial number if requested
+  if (serialaddr && !serial)
+  {
+    serial = swd_read32(serialaddr);    // Existing serial number
+    if (0 == serial || 0xffffFFFF == serial)
+      serial = GetSerial();           // Missing serial, get a new one
+    ConsolePrintf("serial,%08x\r\n", serial);
+  }
+  
   while (start < end)
   {
     // Be sure the stub isn't busy..
@@ -601,47 +609,75 @@ void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u
       throw ERROR_SWD_FLASH_TIMEOUT;
     }
   
-    // Send the block
-    SlowPrintf("SWD sending block %08x to stub..", flashaddr);
-    swd_write(1, 0x4, tempaddr);
-    for (int i = 0; i < blocklen/4; i++) {
-      int val = ((u32*)(start))[i];
-      if (serialaddr && flashaddr+i*4 == serialaddr)
-        val = serial;   // Substitute serial when we hit that address
-      if (SWD_ACK != swd_write(1, 0xc, val))
-        throw ERROR_SWD_WRITE_BLOCK;    
-    }
-    // nRF51 (and other M0s) only accept 1KB auto-increment, so use write32 to cross blocklen boundary
-    swd_write32(tempaddr+blocklen, flashaddr);  // Send address to flash to
-    
-    // Wait for it to flash
-    SlowPrintf("waiting..");
-    starttime = getMicroCounter();
-    while (swd_read32(tempaddr+blocklen) != WAITING_FOR_BLOCK)
-      if (getMicroCounter() - starttime > STUB_TIMEOUT) {
-        swd_crash_dump();
-        throw ERROR_SWD_FLASH_TIMEOUT;
+    // Pre-test - if the data is already there, skip flashing
+    SlowPrintf("SWD pre-check %08x..", flashaddr);
+    bool skip = true;
+    if (quickcheck)
+    {
+      if (swd_read32(flashaddr) !=  *(u32*)start)
+        skip = false;
+      if (swd_read32(flashaddr+blocklen-4) != *(u32*)(start+blocklen-4))
+        skip = false;
+    } else {
+      for (int i = 0; i < blocklen/4; i++) {
+        int addr = flashaddr+i*4;
+        int val = ((u32*)(start))[i];
+        int actual = swd_read32(addr);
+        if (serialaddr && addr == serialaddr)
+          val = serial;   // Substitute serial when we hit that address
+        if (actual != val)
+        {
+          skip = false;
+          break;          // Need to re-send the block
+        }
       }
+    }
+    
+    if (!skip)
+    {
+      // Send the block
+      SlowPrintf("send to stub..");
+      swd_write(1, 0x4, tempaddr);
+      for (int i = 0; i < blocklen/4; i++) {
+        int val = ((u32*)(start))[i];
+        if (serialaddr && flashaddr+i*4 == serialaddr)
+          val = serial;   // Substitute serial when we hit that address
+        if (SWD_ACK != swd_write(1, 0xc, val))
+          throw ERROR_SWD_WRITE_BLOCK;    
+      }
+      // nRF51 (and other M0s) only accept 1KB auto-increment, so use write32 to cross blocklen boundary
+      swd_write32(tempaddr+blocklen, flashaddr);  // Send address to flash to
       
-    // Verify that it did flash
-    SlowPrintf("verifying..\n");
-    for (int i = 0; i < blocklen/4; i++) {
-      int addr = flashaddr+i*4;
-      int val = ((u32*)(start))[i];
-      int actual = swd_read32(addr);
-      if (serialaddr && addr == serialaddr)
-        val = serial;   // Substitute serial when we hit that address
-      if (actual != val)
-      {
-        SlowPrintf("Data found at %08x was %08x, not %08x\n", addr, actual, val);
-        ConsolePrintf("mismatch,%08x,%08x,%08x\r\n", addr, actual, val);
-        throw ERROR_SWD_MISMATCH;
+      // Wait for it to flash
+      SlowPrintf("waiting..");
+      starttime = getMicroCounter();
+      while (swd_read32(tempaddr+blocklen) != WAITING_FOR_BLOCK)
+        if (getMicroCounter() - starttime > STUB_TIMEOUT) {
+          swd_crash_dump();
+          throw ERROR_SWD_FLASH_TIMEOUT;
+        }
+        
+      // Verify that it did flash
+      SlowPrintf("verifying..");
+      for (int i = 0; i < blocklen/4; i++) {
+        int addr = flashaddr+i*4;
+        int val = ((u32*)(start))[i];
+        int actual = swd_read32(addr);
+        if (serialaddr && addr == serialaddr)
+          val = serial;   // Substitute serial when we hit that address
+        if (actual != val)
+        {
+          SlowPrintf("Data found at %08x was %08x, not %08x\n", addr, actual, val);
+          ConsolePrintf("mismatch,%08x,%08x,%08x\r\n", addr, actual, val);
+          throw ERROR_SWD_MISMATCH;
+        }
       }
     }
     
+    SlowPrintf("ok!\r\n");
     flashaddr += blocklen;
     start += blocklen;
   }
   
-  SlowPrintf("Success!\n");
+  SlowPrintf("Success!\r\n");
 }

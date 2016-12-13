@@ -59,6 +59,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.listFiles = new System.Windows.Forms.ListBox();
             this.lblDebugStat = new System.Windows.Forms.Label();
+            this.txtCommand = new System.Windows.Forms.TextBox();
             this.tabs.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picCam)).BeginInit();
@@ -82,7 +83,7 @@
             this.list.GridLines = true;
             this.list.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.list.HideSelection = false;
-            this.list.Location = new System.Drawing.Point(12, 44);
+            this.list.Location = new System.Drawing.Point(9, 44);
             this.list.MultiSelect = false;
             this.list.Name = "list";
             this.list.Size = new System.Drawing.Size(600, 308);
@@ -95,12 +96,12 @@
             // Body
             // 
             this.Body.Text = "Body";
-            this.Body.Width = 87;
+            this.Body.Width = 0;
             // 
             // FSN
             // 
             this.FSN.Text = "Fixture";
-            this.FSN.Width = 84;
+            this.FSN.Width = 171;
             // 
             // COM
             // 
@@ -188,10 +189,10 @@
             // lblNow
             // 
             this.lblNow.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblNow.Location = new System.Drawing.Point(366, 14);
+            this.lblNow.Location = new System.Drawing.Point(391, 14);
             this.lblNow.Margin = new System.Windows.Forms.Padding(0);
             this.lblNow.Name = "lblNow";
-            this.lblNow.Size = new System.Drawing.Size(246, 20);
+            this.lblNow.Size = new System.Drawing.Size(221, 20);
             this.lblNow.TabIndex = 6;
             this.lblNow.Text = "TIME: ";
             this.lblNow.TextAlign = System.Drawing.ContentAlignment.TopRight;
@@ -213,9 +214,9 @@
             // 
             this.lblCopy.BackColor = System.Drawing.SystemColors.Control;
             this.lblCopy.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCopy.Location = new System.Drawing.Point(0, -2);
+            this.lblCopy.Location = new System.Drawing.Point(-9, -27);
             this.lblCopy.Name = "lblCopy";
-            this.lblCopy.Size = new System.Drawing.Size(622, 397);
+            this.lblCopy.Size = new System.Drawing.Size(622, 389);
             this.lblCopy.TabIndex = 8;
             this.lblCopy.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.lblCopy.Visible = false;
@@ -226,23 +227,24 @@
             this.tabs.Controls.Add(this.tabPage2);
             this.tabs.Controls.Add(this.tabPage3);
             this.tabs.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabs.Location = new System.Drawing.Point(5, 6);
+            this.tabs.Location = new System.Drawing.Point(5, 1);
             this.tabs.Name = "tabs";
             this.tabs.SelectedIndex = 0;
-            this.tabs.Size = new System.Drawing.Size(617, 389);
+            this.tabs.Size = new System.Drawing.Size(617, 394);
             this.tabs.TabIndex = 9;
             this.tabs.Visible = false;
             this.tabs.SelectedIndexChanged += new System.EventHandler(this.tabs_SelectedIndexChanged);
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.lblCopy);
             this.tabPage1.Controls.Add(this.label2);
             this.tabPage1.Controls.Add(this.picCam);
             this.tabPage1.Controls.Add(this.txtInfo);
             this.tabPage1.Location = new System.Drawing.Point(4, 27);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(609, 358);
+            this.tabPage1.Size = new System.Drawing.Size(609, 363);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Car Info";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -285,7 +287,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 27);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(609, 358);
+            this.tabPage2.Size = new System.Drawing.Size(609, 363);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Change Color";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -316,7 +318,7 @@
             this.tabPage3.Controls.Add(this.listFiles);
             this.tabPage3.Location = new System.Drawing.Point(4, 27);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Size = new System.Drawing.Size(609, 358);
+            this.tabPage3.Size = new System.Drawing.Size(609, 363);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Change Firmware";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -343,22 +345,31 @@
             // lblDebugStat
             // 
             this.lblDebugStat.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDebugStat.Location = new System.Drawing.Point(366, 6);
+            this.lblDebugStat.Location = new System.Drawing.Point(395, 6);
             this.lblDebugStat.Name = "lblDebugStat";
-            this.lblDebugStat.Size = new System.Drawing.Size(252, 20);
+            this.lblDebugStat.Size = new System.Drawing.Size(223, 20);
             this.lblDebugStat.TabIndex = 10;
             this.lblDebugStat.Text = "Connecting...";
             this.lblDebugStat.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.lblDebugStat.Visible = false;
+            // 
+            // txtCommand
+            // 
+            this.txtCommand.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            this.txtCommand.Font = new System.Drawing.Font("Arial Narrow", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCommand.Location = new System.Drawing.Point(251, 12);
+            this.txtCommand.Name = "txtCommand";
+            this.txtCommand.Size = new System.Drawing.Size(138, 26);
+            this.txtCommand.TabIndex = 11;
+            this.txtCommand.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCommand_KeyDown);
             // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 397);
-            this.Controls.Add(this.lblCopy);
-            this.Controls.Add(this.lblDebugStat);
             this.Controls.Add(this.tabs);
+            this.Controls.Add(this.lblDebugStat);
             this.Controls.Add(this.lblLogging);
             this.Controls.Add(this.lblNow);
             this.Controls.Add(this.textBox2);
@@ -367,10 +378,11 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btnCopy);
             this.Controls.Add(this.list);
+            this.Controls.Add(this.txtCommand);
             this.MaximumSize = new System.Drawing.Size(640, 436);
             this.MinimumSize = new System.Drawing.Size(640, 436);
             this.Name = "Main";
-            this.Text = " ";
+            this.Text = " COZMO LOG";
             this.tabs.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
@@ -415,6 +427,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ListBox listFiles;
         private System.Windows.Forms.TextBox txtInfo;
+        private System.Windows.Forms.TextBox txtCommand;
     }
 }
 

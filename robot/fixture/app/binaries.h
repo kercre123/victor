@@ -29,7 +29,7 @@ extern "C" {
   extern const uint8_t g_stubBody[], g_stubBodyEnd[];  
   
   // Firmware for local (nRF51) radio
-  extern const uint8_t g_radio[], g_radioEnd[];
+  extern const uint8_t g_Radio[], g_RadioEnd[];
 }
 
 #endif

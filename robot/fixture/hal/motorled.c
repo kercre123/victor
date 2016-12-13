@@ -13,8 +13,8 @@
 
 #define MOTOR_PWM_MAXVAL 3000
 
-// Set motor speed between 0 and MOTOR_PWM_MAXVAL
-void MotorPWM(int pwm)
+// Set motor speed between 0 and 5000 millivolts
+void MotorMV(int millivolts)
 {
   TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
   TIM_OCInitTypeDef  TIM_OCInitStructure;
@@ -37,6 +37,7 @@ void MotorPWM(int pwm)
   TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
   TIM_OC1Init(TIM3, &TIM_OCInitStructure);  
 
+  int pwm = millivolts * MOTOR_PWM_MAXVAL / 5000;
   TIM_SetCompare1(TIM3, pwm);
   TIM_Cmd(TIM3, ENABLE);
   TIM_CtrlPWMOutputs(TIM3, ENABLE);
@@ -45,10 +46,13 @@ void MotorPWM(int pwm)
   PIN_AF(GPIOC, PINC_CHGTX);
 }
 
-// Sample one ADC channel slowly (about 10uS) - workaround STM32F215 ADC erratum (see AN4703)
-int GrabADC(int channel)
+// Init the ADC (if not already initialized)
+void InitADC()
 {
-  ADC_CommonInitTypeDef ADC_CommonInitStructure;
+  static bool inited = false;
+  if (inited)
+    return;
+  
   ADC_InitTypeDef ADC_InitStructure;
   
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
@@ -70,13 +74,37 @@ int GrabADC(int channel)
   ADC_Init(ADC1, &ADC_InitStructure);
   ADC_Cmd(ADC1, ENABLE);
   
+  inited = true;
+}
+
+static int VCC = 2800, OVERSAMPLE = 4;  // 2^n samples
+
+// Grab an ADC channel quickly/noisily - for scanning encoders
+int QuickADC(int channel)
+{
+  InitADC();
   ADC_RegularChannelConfig(ADC1, channel, 1, ADC_SampleTime_15Cycles);
-  ConsolePrintf("channel=%d: ", channel);
   
   // Turn off prefetch, then oversample to get a stable reading
   FLASH->ACR &= ~FLASH_ACR_PRFTEN;
   FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN);
-  static int VCC = 2800, OVERSAMPLE = 4;  // 2^n samples
+  ADC_SoftwareStartConv(ADC1);
+  while(ADC_GetFlagStatus(ADC1,ADC_FLAG_EOC) == RESET)
+    ;
+  int result = ADC_GetConversionValue(ADC1);
+  FLASH->ACR |= FLASH_ACR_PRFTEN;
+  return (result * VCC) >> 12;
+}
+
+// Sample one ADC channel slowly (about 500uS) - workaround STM32F215 ADC erratum (see AN4703)
+int GrabADC(int channel)
+{
+  InitADC();
+  ADC_RegularChannelConfig(ADC1, channel, 1, ADC_SampleTime_15Cycles);
+  
+  // Turn off prefetch, then oversample to get a stable reading
+  FLASH->ACR &= ~FLASH_ACR_PRFTEN;
+  FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN);
   int result = 0;
   for (int i = 0; i < (1 << OVERSAMPLE); i++)
   {
@@ -94,13 +122,55 @@ int GrabADC(int channel)
   return (result*VCC) >> (12+OVERSAMPLE);
 }
 
+// Grab quadrature encoder data
+void ReadEncoder(bool light, int usDelay, int& a, int& b, bool skipa)
+{
+  // Turn on encoder LED and read both channels
+  PIN_PULL_NONE(GPIOA, PINA_ENCLED);
+  PIN_RESET(GPIOA, PINA_ENCLED);
+  if (light)
+    PIN_OUT(GPIOA, PINA_ENCLED);
+  else
+    PIN_IN(GPIOA, PINA_ENCLED);    
+  
+  PIN_ANA(GPIOC, PINC_ENCA);
+  PIN_ANA(GPIOC, PINC_ENCB);
+
+  if (usDelay)
+    MicroWait(usDelay);  // Let LED turn on or off and ADC charge up
+
+  if (!skipa)
+    a = QuickADC(ADC_ENCA);
+  b = QuickADC(ADC_ENCB);
+}
+
+static const int LED_COUNT = 4, MAP_COUNT = 12;
+static const int LEDA[LED_COUNT] = { PINA_BPLED0, PINA_BPLED1, PINA_BPLED2, PINA_BPLED3 };
+static const int LEDMAP[MAP_COUNT] = { 0+1, 0+2, 0+3,  4+0, 4+2, 4+3,  8+0, 8+1, 8+3, 12+0, 12+1, 12+2 };
+
+// Turn on one of 12 LEDs
+void LEDOn(u8 led)
+{
+  led = LEDMAP[led];
+  int pinlow = led & 3;
+  int pinhigh = (led >> 2) & 3;
+
+  // Float everything
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    PIN_PULL_NONE(GPIOA, LEDA[i]);
+    PIN_IN(GPIOA, LEDA[i]);
+  }
+  
+  PIN_RESET(GPIOA, LEDA[pinlow]);
+  PIN_OUT(GPIOA, LEDA[pinlow]);
+  PIN_SET(GPIOA, LEDA[pinhigh]);
+  PIN_OUT(GPIOA, LEDA[pinhigh]);
+}
+  
 // Drive one of 12 LEDs on the backpack, then measure voltage on ADC
 int LEDTest(u8 led)
 {
-  static const int LED_COUNT = 4, MAP_COUNT = 12;
-  static const int LEDA[LED_COUNT] = { PINA_BPLED0, PINA_BPLED1, PINA_BPLED2, PINA_BPLED3 };
-  static const int LEDMAP[MAP_COUNT] = { 0+1, 0+2, 0+3,  4+0, 4+2, 4+3,  8+0, 8+1, 8+3, 12+0, 12+1, 12+2 };
-  
   if (led >= MAP_COUNT)
     throw ERROR_OUT_OF_RANGE;
   

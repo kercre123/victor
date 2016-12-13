@@ -51,7 +51,7 @@ void PrintFactoryBlockInfo(void);
 // Modify the RAM copy in g_flashParams, then call StoreParams();
 typedef struct
 {
-  int dummy;
+  int fixtureTypeOverride;
 } FlashParams;
 
 extern FlashParams g_flashParams;

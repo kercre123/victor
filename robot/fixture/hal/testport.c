@@ -19,21 +19,12 @@
 #include "../app/fixture.h"
 #include "hal/board.h"
 
-#define TESTPORT_TX       USART6  // Only works on Rev1+ fixtures
-#define TESTPORT_RX       USART6
-#define BAUD_RATE         500000
-
-#define TIMEOUT 800000  // 800 ms, some commands take a while...
-
-//#define DEBUG_RECEIVE
-//#define DEBUG_TRANSMIT
+#define TESTPORT       USART6  // Only works on Rev1+ fixtures
+#define BAUD_RATE      100000
 
 static __align(4) u8 m_globalBuffer[1024 * 16];
 
-#define BUFFER_LENGTH (1024 + 8)
-static u8 m_buffer[BUFFER_LENGTH];
-static u32 m_bufferIndex = 0;
-static BOOL m_isInTxMode = TRUE;
+// #define DEBUG_TESTPORT
 
 // Enable the test port
 void InitTestPort(int baudRate)
@@ -46,75 +37,41 @@ void InitTestPort(int baudRate)
   
   // Clock configuration
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART6, ENABLE);
   
-//  USART_HalfDuplexCmd(TESTPORT_RX, ENABLE);  // Enable the pin for transmitting and receiving
-  
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  // Don't enable by default
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_Pin =  GPIOC_CHGTX;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOC, PINC_CHGTX, GPIO_AF_USART3);
+  GPIO_PinAFConfig(GPIOC, PINC_CHGTX, GPIO_AF_USART6);
   
   GPIO_InitStructure.GPIO_Pin =  GPIOC_CHGRX;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOC, PINC_CHGRX, GPIO_AF_USART3);
+  GPIO_PinAFConfig(GPIOC, PINC_CHGRX, GPIO_AF_USART6);
   
-  // TESTPORT_TX/RX config
-  USART_Cmd(TESTPORT_TX, DISABLE);
+  // TESTPORT/RX config
+  USART_Cmd(TESTPORT, DISABLE);
   USART_InitStructure.USART_BaudRate = baudRate;
   USART_InitStructure.USART_WordLength = USART_WordLength_8b;
   USART_InitStructure.USART_StopBits = USART_StopBits_1;
   USART_InitStructure.USART_Parity = USART_Parity_No;
   USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
   USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-  USART_Init(TESTPORT_TX, &USART_InitStructure);  
-  USART_Cmd(TESTPORT_TX, ENABLE);
-  
-  // XXX: Init GPIOs
-
-  TestEnableRx();
-}
-
-void TestEnable(void)
-{
-  USART_Cmd(TESTPORT_TX, ENABLE);
-  USART_Cmd(TESTPORT_RX, ENABLE);
-}
-
-void TestDisable(void)
-{
-  USART_Cmd(TESTPORT_TX, DISABLE);
-  USART_Cmd(TESTPORT_RX, DISABLE);
-}
-
-void TestClear(void)
-{
-  volatile u32 v;
-  while (!(TESTPORT_TX->SR & USART_FLAG_TXE))
-    v = TESTPORT_TX->DR;
+  USART_Init(TESTPORT, &USART_InitStructure);  
+  USART_Cmd(TESTPORT, ENABLE);
 }
 
 // Send a character over the test port
 void TestPutChar(u8 c)
 {    
-#ifdef DEBUG_TRANSMIT
-  SlowPutChar('<');
-  SlowPutHex(c);
-#endif
-  
-  TESTPORT_TX->DR = c;
-  while (!(TESTPORT_TX->SR & USART_FLAG_TXE))
+  TESTPORT->DR = c;
+  // Wait for FIFO to empty and FIFO to run out
+  while (!(TESTPORT->SR & USART_FLAG_TXE))
     ;
-}
-
-// Send a string over the test port
-void TestPutString(char *s)
-{
-  while (*s)
-    TestPutChar(*s++);
+  while (!(TESTPORT->SR & USART_FLAG_TC))
+    ;
 }
 
 // Receive a byte from the test port, blocking until it arrives or there is a timeout
@@ -126,11 +83,11 @@ int TestGetCharWait(int timeout)
   int value;
   
   // Check for overrun
-  status = TESTPORT_RX->SR;
+  status = TESTPORT->SR;
   if (status & USART_SR_ORE)
   {
-    v = TESTPORT_RX->SR;
-    v = TESTPORT_RX->DR;
+    v = TESTPORT->SR;
+    v = TESTPORT->DR;
   }
   
   status = 0;
@@ -138,13 +95,12 @@ int TestGetCharWait(int timeout)
   startTime = getMicroCounter();
   while (getMicroCounter() - startTime < timeout)
   {
-    if (TESTPORT_RX->SR & USART_SR_RXNE)
+    if (TESTPORT->SR & USART_SR_RXNE)
     {
-      value = TESTPORT_RX->DR & 0xFF;
+      value = TESTPORT->DR & 0xFF;
       
-#ifdef DEBUG_RECEIVE
-      SlowPutChar('>');
-      SlowPutHex(value);
+#ifdef DEBUG_TESTPORT
+    SlowPrintf(">%02x ", value);
 #endif
       
       break;
@@ -153,258 +109,131 @@ int TestGetCharWait(int timeout)
   return value;
 }
 
-void TestEnableTx(void)
-{
-  // Wait until tranfer is complete
-  while (!(TESTPORT_TX->SR & USART_FLAG_TC))
-    ;
-    
-  if (!m_isInTxMode)
-  {
-    PIN_RESET(GPIOC, PINC_CHGRX);
-    PIN_OUT(GPIOC, PINC_CHGRX);
-    PIN_AF(GPIOC, PINC_CHGTX);
-    volatile u32 v = TESTPORT_RX->SR;
-//  XXX    USART_Cmd(TESTPORT_RX, DISABLE);
-    MicroWait(40);
-    m_isInTxMode = 1;
-  }
-}
-
-void TestEnableRx(void)
-{
-  volatile u32 v;
-  if (m_isInTxMode)
-  {
-    // Wait until tranfer is complete
-    while (!(TESTPORT_TX->SR & USART_FLAG_TC))
-      ;
-
-    PIN_RESET(GPIOC, PINC_CHGTX);    
-    PIN_OUT(GPIOC, PINC_CHGTX);
-    PIN_AF(GPIOC, PINC_CHGRX);
-    MicroWait(20);
-// XXX    USART_Cmd(TESTPORT_RX, ENABLE);
-    v = TESTPORT_RX->SR;
-    v = TESTPORT_RX->DR;
-    m_isInTxMode = 0;
-  }
-}
-
-void TestWaitForTransmissionComplete(void)
-{
-  while (!(TESTPORT_TX->SR & USART_FLAG_TC))
-    ;
-}
-
-error_t SendCommand(u8* receiveBuffer, u32 receiveLength)
-{
-  u32 i;
-  int value;
-  error_t ret = ERROR_OK;
-  
-  if (m_bufferIndex == 0)
-  {
-    throw ERROR_EMPTY_COMMAND;
-  }
-  
-  // We disable IRQ's so the USB interrupts don't make us lose UART data...
-  // It's a long time to disable interrupts, but USB and flow-control should
-  // be just fine, despite disabling for many milliseconds at a time.
-  __disable_irq();
-  
-  // Send the command byte and check for acknowledgement
-  TestEnableTx();
-  TestPutChar(m_buffer[0]);
-  
-  TestEnableRx();
-  value = TestGetCharWait(TIMEOUT);
-  if (value != DMC_ACK)
-  {
-    SlowPrintf("FAULT: received %02X ACK1, %02X\r\n", value, m_buffer[0]);
-    ret = ERROR_ACK1;
-    goto cleanup;
-  }
-  
-  // Send the remaining data in the buffer
-  if (m_bufferIndex > 1)
-  {
-    TestEnableTx();
-    for (i = 1; i < m_bufferIndex; i++)
-    {
-      TestPutChar(m_buffer[i]);
-    }
-  }
-  
-  // Receive data from the robot
-  if (receiveBuffer && receiveLength)
-  {
-    TestEnableRx();
-    for (i = 0; i < receiveLength; i++)
-    {
-      value = TestGetCharWait(TIMEOUT);
-      if (value < 0)
-      {
-        SlowPrintf("TIMEOUT on byte: %i\r\n", i);
-        ret = ERROR_RECEIVE;
-        goto cleanup;
-      }
-      
-      *receiveBuffer++ = (u8)value;
-    }
-  }
-  
-  // Get the final acknowledgement.
-  TestEnableRx();
-  value = TestGetCharWait(TIMEOUT);
-  if (value != DMC_ACK)
-  {
-    SlowPrintf("FAULT: received %02X ACK2, %02X\r\n", value, m_buffer[0]);
-    ret = ERROR_ACK2;
-    goto cleanup;
-  }
-
-cleanup:
-  TestEnableRx();
-  m_bufferIndex = 0;
-  __enable_irq();
-  
-  if (ret != ERROR_OK)
-    throw ret;
-  
-  return ret;
-}
-
-error_t SendBuffer(u8 command, u8* buffer, u32 length)
-{
-  u32 i;
-  int value;
-  error_t ret = ERROR_OK;
-  
-  // We disable IRQ's so the USB interrupts don't make us lose UART data...
-  // It's a long time to disable interrupts, but USB and flow-control should
-  // be just fine, despite disabling for many milliseconds at a time.
-  __disable_irq();
-  
-  // Send the command byte and check for acknowledgement
-  TestEnableTx();
-  TestPutChar(command);
-  
-  TestEnableRx();
-  value = TestGetCharWait(TIMEOUT);
-  if (value != DMC_ACK)
-  {
-    SlowPrintf("FAULT: received %02X ACK1, %02X\r\n", value, command);
-    ret = ERROR_ACK1;
-    goto cleanup;
-  }
-  
-  // Send the remaining data in the buffer
-  if (length > 0)
-  {
-    TestEnableTx();
-    for (i = 0; i < length; i++)
-    {
-      TestPutChar(buffer[i]);
-    }
-  }
-  
-  // Get the final acknowledgement.
-  TestEnableRx();
-  value = TestGetCharWait(TIMEOUT);
-  if (value != DMC_ACK)
-  {
-    SlowPrintf("FAULT: received %02X ACK2, %02X\r\n", value, command);
-    ret = ERROR_ACK2;
-    goto cleanup;
-  }
-
-cleanup:
-  __enable_irq();
-  
-  if (ret != ERROR_OK)
-    throw ret;
-  
-  return ret;
-}
-
-void Put8(u8 value)
-{
-  if (m_bufferIndex < BUFFER_LENGTH)
-  {
-    m_buffer[m_bufferIndex] = value;
-    m_bufferIndex++;
-  }
-}
-
-void Put16(u16 value)
-{
-  Put8(value);
-  Put8(value >> 8);
-}
-
-void Put32(u32 value)
-{
-  Put16(value);
-  Put16(value >> 16);
-}
-  
-u8 Receive8(u8* value)
-{
-  int v = TestGetCharWait(TIMEOUT);
-  if (v == -1)
-    return 1;
-  
-  *value = v;
-  return 0;
-}
-
-u8 Receive16(u16* value)
-{
-  u8 b0, b1;
-  if (Receive8(&b0))
-  {
-    return 1;
-  }
-  
-  if (Receive8(&b1))
-  {
-    return 1;
-  }
-  
-  *value = (b1 << 8) | b0;
-  return 0;
-}
-
-u8 Receive32(u32* value)
-{
-  u16 b0, b1;
-  
-  if (Receive16(&b0))
-  {
-    return 1;
-  }
-  
-  if (Receive16(&b1))
-  {
-    return 1;
-  }
-  
-  *value = (b1 << 16) | b0;
-  return 0;
-}
-
-u16 Construct16(u8* data)
-{
-  return data[0] | (data[1] << 8);
-}
-
-u32 Construct32(u8* data)
-{
-  return Construct16(data) | (Construct16(&data[2]) << 16);
-}
-
 u8* GetGlobalBuffer(void)
 {
   return m_globalBuffer;
+}
+
+
+void SendTestChar(int val)
+{
+  int c = val;
+  u32 start = getMicroCounter();
+  
+  // Listen for pulse
+  PIN_PULL_NONE(GPIOC, PINC_TRX);
+  PIN_IN(GPIOC, PINC_TRX);
+  PIN_RESET(GPIOC, PINC_CHGTX);     // Floating power
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  PIN_PULL_UP(GPIOC, PINC_CHGRX);
+  PIN_IN(GPIOC, PINC_CHGRX);
+
+  // Wait for RX to go low/be low
+  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
+    if (getMicroCounter()-start > 500000)
+      throw ERROR_NO_PULSE;
+    
+  // Now wait for it to go high
+  MicroWait(1000);    // Avoid false detects due to slow discharge
+  while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
+    if (getMicroCounter()-start > 500000)
+      throw ERROR_NO_PULSE;
+  
+  // If nothing to send, just return
+  if (c < 0)
+    return;
+    
+  // Before we can send, we must drive the signal up via TX, and pull the signal down via RX
+  PIN_SET(GPIOC, PINC_CHGTX);
+  PIN_AF(GPIOC, PINC_CHGTX);
+  
+  PIN_PULL_NONE(GPIOC, PINC_CHGRX);
+  PIN_RESET(GPIOC, PINC_CHGRX);
+  PIN_OUT(GPIOC, PINC_CHGRX);
+  
+  // XXX: This is a fairly critical parameter - has to be timed to the RTOS delays in factory firmware
+  // Too short is real bad, since you get a mangled byte - corrupting the command
+  // Too long will miss end-of-byte - which requires a retransmit (not quite as bad)
+  // There are no electrical consequences of running it too long, since it keeps the robot (externally) powered
+  MicroWait(70);  // Enough time for robot to turn around - usually 30uS does it, worst I saw was 55uS
+  
+  TestPutChar(c);
+  MicroWait(10);  // Some extra stop bit time
+  
+  // Back to listening for confirmation pulse
+  start = getMicroCounter();
+  PIN_RESET(GPIOC, PINC_CHGTX);     // Floating power
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  PIN_PULL_NONE(GPIOC, PINC_CHGRX);
+  PIN_IN(GPIOC, PINC_CHGRX);
+
+  // Wait for acknowledge (RX to go low/pulse high/go low)
+  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
+    if (getMicroCounter()-start > 200)
+      throw ERROR_NO_PULSE_ACK;
+  while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
+    if (getMicroCounter()-start > 200)
+      throw ERROR_NO_PULSE_ACK;
+  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
+    if (getMicroCounter()-start > 200)
+      throw ERROR_NO_PULSE_ACK;
+    
+#ifdef DEBUG_TESTPORT
+SlowPrintf("<%02x ", val);
+#endif  
+}
+
+int SendCommand(u8 test, s8 param, u8 buflen, u8* buf)
+{
+  const int CHAR_TIMEOUT = 1000;
+ 
+  // This is super unstable, so put a band-aid on it
+  int retries = 3;
+  while (retries)
+    try {      
+      // Clear trash from the UART buffer
+      PIN_IN(GPIOC, PINC_CHGRX);
+      while (-1 != TestGetCharWait(1))
+        ;
+      
+      // Send command
+      SendTestChar('W');
+      SendTestChar('t');
+      SendTestChar(param & 0xff);
+      SendTestChar(test & 0xff);
+      
+      // Now read reply
+      PIN_AF(GPIOC, PINC_CHGRX);
+      int c;
+      // Scan for header
+      while ((0xBE^0xFF) != (c = TestGetCharWait(CHAR_TIMEOUT)))
+        if (c == -1)
+          throw ERROR_TESTPORT_TIMEOUT;
+      u8 len = TestGetCharWait(CHAR_TIMEOUT);
+      if (len > buflen)
+        throw ERROR_TESTPORT_TMI;
+      for (int i = 0; i < len; i++)
+      {
+        int c = TestGetCharWait(CHAR_TIMEOUT);
+        if (c < 0)
+          throw ERROR_TESTPORT_TIMEOUT;
+        *buf++ = c;
+        if (0 != TestGetCharWait(CHAR_TIMEOUT))
+          throw ERROR_TESTPORT_PADDING;
+      }
+      if ((0xEF^0xFF) != TestGetCharWait(CHAR_TIMEOUT))
+        throw ERROR_TESTPORT_TIMEOUT;
+      PIN_IN(GPIOC, PINC_CHGRX);
+          
+#ifdef DEBUG_TESTPORT
+    SlowPrintf(" - OK!\r\n");
+#endif
+      
+      return len;
+    } catch (int err) {
+      retries--;
+      if (!retries)
+        throw err;
+    }
+  throw ERROR_UNKNOWN_MODE;
 }

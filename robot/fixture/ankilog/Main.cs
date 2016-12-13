@@ -558,6 +558,8 @@ namespace AnkiLog
                 catch (Exception x) { }     // Ignore problems and try next step                
         }
 
+        private string m_debugCommand = null;
+
         private const int IMGX = 80;
         private const int IMGY = 60;
         private const int SCALEX = 2, SCALEY = 2;
@@ -777,10 +779,20 @@ namespace AnkiLog
                                 fix.curLotcode = fix.lotcode;
                                 fix.curModel = fix.model;
                             }
+                            // Need to send a command typed into the textbox?
+                            if (null != m_debugCommand)
+                            {
+                                fix.port.ReadExisting();
+                                fix.port.Write(new byte[] { 27 }, 0, 1);
+                                fix.port.ReadTo(">");
+                                fix.port.WriteLine(m_debugCommand);
+                                fix.port.ReadTo("status,0");
+                            }
                         }
                         catch (Exception x) { }     // Ignore problems and try next fixture
                 }
                 catch (Exception x2) { }     // Ignore problems and try next fixture
+                m_debugCommand = null;
             }
             catch (Exception x3) {
                 System.Console.WriteLine("Unhandled exception: " + x3.Message);
@@ -851,6 +863,15 @@ namespace AnkiLog
             picCam.Image = m_bitmap;
             // Don't do the below, it's way slower!
             //e.Graphics.DrawImage(m_bitmap, 0, 0, m_bitmap.Width, m_bitmap.Height);
+        }
+
+        private void txtCommand_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Return)
+            {
+                m_debugCommand = txtCommand.Text;
+                txtCommand.Text = "";
+            }
         }
     }
 }

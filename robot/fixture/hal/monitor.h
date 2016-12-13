@@ -13,8 +13,8 @@ s32 MonitorGetCurrent(void);
 
 // Get the voltage in mV
 s32 MonitorGetVoltage(void);
+s32 BatGetCurrent(void);
+s32 ChargerGetCurrent(void);
+void MonitorSetDoubleSpeed(void);
 
-// Set VBAT voltage in mV
-void VBATMillivolts(int mv);
-  
 #endif

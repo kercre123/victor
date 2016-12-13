@@ -8,6 +8,7 @@
 #include "hal/display.h"
 #include "hal/motorled.h"
 #include "hal/board.h"
+#include "hal/radio.h"
 #include "../../crypto/crypto.h"
 #include "../app/fixture.h"
 #include <stdarg.h>
@@ -22,8 +23,6 @@
 #define BAUD_RATE   1000000
 
 extern BOOL g_isDevicePresent;
-extern u8 g_modelIndex;
-extern u32 g_modelIDs[8];
 extern FixtureType g_fixtureType;
 extern char* FIXTYPES[];
 
@@ -143,14 +142,14 @@ char ConsoleGetChar()
   return value;
 }
 
-void ConsoleWriteHex(u8* buffer, u32 numberOfBytes)
+void ConsoleWriteHex(const u8* buffer, u32 numberOfBytes, u32 offset)
 {
   u32 i, j;
   u32 numberOfRows = (numberOfBytes + 15) >> 4;
   for (i = 0; i < numberOfRows; i++)
   {
     u32 index = i << 4;
-    ConsolePrintf("%04x: ", i << 4);
+    ConsolePrintf("%04x: ", (i << 4) + offset);
     for (j = 0; j < 16; j++)
     {
       ConsolePrintf("%02x ", buffer[index + j]);
@@ -253,7 +252,6 @@ static char* GetArgument(u32 index)
   return buffer;
 }
 
-
 static void SetMode(void)
 {
   char* arg = GetArgument(1);
@@ -261,6 +259,8 @@ static void SetMode(void)
   for (int i = 0; i <= FIXTURE_DEBUG; i++)
     if (!strcasecmp(arg, FIXTYPES[i]))
     {
+      g_flashParams.fixtureTypeOverride = i;
+      StoreParams();
       g_fixtureType = i;
       SetFixtureText();
       return;
@@ -289,6 +289,9 @@ static void SetSerial(void)
   arg = GetArgument(1);
   sscanf(arg, "%i", &serial);
   
+  if ((u32)serial >= 0xf0)
+    throw ERROR_SERIAL_INVALID;
+  
   __disable_irq();
   FLASH_Unlock();
   FLASH_ProgramByte(FLASH_BOOTLOADER_SERIAL, serial & 255);
@@ -300,24 +303,14 @@ static void SetSerial(void)
 }
 
 extern int g_canary;
-static void GetSerial(void)
+static void GetSerialCmd(void)
 {
   // Serial number, fixture type, build version
   ConsolePrintf("serial,%i,%s,%i\r\n", 
     FIXTURE_SERIAL, 
-    g_fixtureType & FIXTURE_DEBUG ? "DEBUG" : FIXTYPES[g_fixtureType],
+    FIXTYPES[g_fixtureType],
     g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de);    // This part is hard to explain
 }
-
-static void SetVBAT(void)
-{
-  int mv;
-  char* arg = GetArgument(1);  
-  sscanf(arg, "%i", &mv);
-  VBATMillivolts(mv);
-  EnableBAT();
-}
-
 static void SetLotCode(void)
 {
   char* arg = GetArgument(1);
@@ -392,14 +385,20 @@ static void Charge(void)
 #endif
 
 void CubeBurn(void);
-void SendTestMode(int i);
 
 void SendTestMessage(void)
 {
   int test = 0;
   char* arg = GetArgument(1);  
   sscanf(arg, "%i", &test);
-  SendTestMode(test);
+  SendCommand(test, 0, 0, 0);
+}
+
+void SetRadio(void)
+{  
+  char* arg = GetArgument(1);
+  ConsolePrintf("Remember to use uppercase for most modes\r\n");
+  SetRadioMode(arg[0]);
 }
 
 void SetMotor(void)
@@ -407,15 +406,36 @@ void SetMotor(void)
   int test = 0;
   char* arg = GetArgument(1);  
   sscanf(arg, "%i", &test);
-  MotorPWM(test);
-  ConsolePrintf(":: %d ::\n", LEDTest(test));
+  MotorMV(test);
 }  
 
+// Set the cube test threshold in milliamps (usually 5-15)
+void SetCubeCurrent(int deltaMA);
+void SetCubeTest(void)
+{
+  int test = 0;
+  char* arg = GetArgument(1);  
+  sscanf(arg, "%i", &test);
+  SetCubeCurrent(test);
+}  
+
+// Re-run a test
+void Again(void)
+{
+  g_isDevicePresent = false;  // Virtually remove device
+}
+
 void HeadESP();
+void CubePOST(void);
+void DropSensor();
+void AllowOutdated();
 
 static CommandFunction m_functions[] =
 {
-  {"GetSerial", GetSerial, FALSE},
+  {"Again", Again, FALSE},
+  {"AllowOutdated", AllowOutdated, FALSE},
+  {"Drop", DropSensor, FALSE},
+  {"GetSerial", GetSerialCmd, FALSE},
   {"RedoTest", RedoTest, FALSE},
   {"SetDateCode", SetDateCode, FALSE},
   {"SetLotCode", SetLotCode, FALSE},
@@ -425,11 +445,12 @@ static CommandFunction m_functions[] =
   {"Current", TestCurrent, FALSE},
   {"DumpFixtureSerials", DumpFixtureSerials, FALSE},
   {"Voltage", TestVoltage, FALSE},
-  {"Burn", CubeBurn, FALSE},
-  {"SetVBAT", SetVBAT, FALSE},
+  {"CubePOST", CubePOST, FALSE},
   {"Send", SendTestMessage, FALSE},
   {"HeadESP", HeadESP, FALSE},
   {"SetMotor", SetMotor, FALSE},
+  {"SetRadio", SetRadio, FALSE},
+  {"SetCubeTest", SetCubeTest, FALSE},
 };
 
 static void ParseCommand(void)

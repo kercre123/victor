@@ -69,6 +69,12 @@ static int get_gpio(int gpio_num) {
 
 static void set_gpio(int gpio_num, int val)
 {
+  uint32 iomux_reg = REG_IOMUX_BASE + IOMUX_REG_OFFS[gpio_num];
+  uint32 old_iomux = READ_PERI_REG(iomux_reg);
+  uint32 gpio_func = IOMUX_GPIO_FUNC[gpio_num];
+  uint32 new_iomux = (old_iomux & ~IOMUX_FUNC_MASK) | gpio_func; // | IOMUX_PULLUP_MASK;
+  WRITE_PERI_REG(iomux_reg, new_iomux);
+  
   WRITE_PERI_REG(GPIO_DIR_OUT_ADDRESS, 1<<gpio_num); // Set pin to output
   if (val) WRITE_PERI_REG(GPIO_SET_OUT_ADDRESS, 1<<gpio_num); // write pin
   else   WRITE_PERI_REG(GPIO_CLEAR_OUT_ADDRESS, 1<<gpio_num);

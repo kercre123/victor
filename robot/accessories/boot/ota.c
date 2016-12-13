@@ -23,6 +23,9 @@ void OTABurn()
   
   u8 xdata *dest;
   u8 len, src, temp;
+
+  // This is an interlock to prevent stray jumps from skipping the XXTEA step
+  FSR = FSR_WEN;      // Allow writes
   
   // Decrypt XXTEA block (we use "encrypt" below since it's symmetrical, and faster/smaller)
   do {
@@ -55,17 +58,20 @@ void OTABurn()
     
     // A zero-length chunk indicates a successful completion, so return to the caller
     if (!len)
+    {
+      FSR = 0;            // Disallow writes - the only way out!
       return;
+    }
     
     // Burn the chunk, byte by byte
     do {
       temp = pram8(src);  // Fetch source byte
       src++;
       
+      // LED interrupts happen here - but they don't use pram, so it won't break anything
+      // But burning wrecks LED/RTC timing by freezing 800uS per byte, breaking OTA
       PCON = PCON_PMW;    // Map code space over to xdata
-      FSR = FSR_WEN;      // Allow writes
       *dest = temp;       // BURN IT
-      FSR = 0;            // Write protect ASAP
       PCON = 0;           // Restore data space (to fetch next byte safely)
       
       dest++;

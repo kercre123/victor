@@ -4,18 +4,10 @@
 
 #include "stm32f2xx.h"
 
-// Charge pins moved in rev 1
-#ifdef REV1
 #define PINC_CHGTX           6
 #define PINC_CHGRX           7
 #define PINB_SCL               8
 #define PINB_SDA               9
-#else
-#define PINC_CHGTX           11
-#define PINC_CHGRX           10
-#define PINB_SCL               8   // XXX: Reverse these for digital pot
-#define PINB_SDA               9
-#endif
 
 #define GPIOC_CHGTX          (1 << PINC_CHGTX)
 #define GPIOC_CHGRX          (1 << PINC_CHGRX)
@@ -23,7 +15,10 @@
 #define GPIOB_SDA         (1 << PINB_SDA)
 
 #define PINB_VDD   0
+#define ADC_VDD    8
+
 #define PINC_RESET 5
+#define ADC_RESET 15
 
 #define PINC_TRX 12
 #define GPIOC_TRX (1 << PINC_TRX)
@@ -41,14 +36,33 @@
 #define PINA_NRF_SWC  12
 #define GPIOA_NRF_SWC (1 << PINA_NRF_SWC)
 
+#define PINC_NRF_RX  10
+#define GPIOC_NRF_RX (1 << PINC_NRF_RX)
+#define PINC_NRF_TX  11
+#define GPIOC_NRF_TX (1 << PINC_NRF_TX)
+
 #define PINB_DEBUGTX 6
 #define GPIOB_DEBUGTX (1 << PINB_DEBUGTX)
+
+#define PINA_DUTCS 4
+#define PINA_SCK 5
+#define PINA_MISO 6
+#define PINA_MOSI 7
+#define PINA_PROGHV 9
+#define PINC_RESET 5
 
 // Backpack LEDs/ADC channels
 #define PINA_BPLED0 2
 #define PINA_BPLED1 3
 #define PINA_BPLED2 6
 #define PINA_BPLED3 7
+
+// Quadrature encoder IOs/ADC channels
+#define PINA_ENCLED 4
+#define PINC_ENCA   3
+#define ADC_ENCA    13
+#define PINC_ENCB   4
+#define ADC_ENCB    14
 
 typedef enum 
 {
