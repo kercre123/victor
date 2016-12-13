@@ -41,146 +41,6 @@
 #define HANDSHAKE_PIN (12)
 #define FACTORY_FW_START (FACTORY_WIFI_FW_SECTOR * SECTOR_SIZE)
 
-/** Check that the hash of the image matches it's header
- * @param header The image header data, already populated.
- * @param imageStart The start of the image, address of header in flash
- * @param buffer A pointer to at least BUFFER_SIZE bytes of memory for a read buffer
- * @return true if the hash matches the header, false if it doesn't.
- */
-NOINLINE int verify_firmware_hash(const AppImageHeader* header, const uint32 imageStart, uint8* const buffer)
-{
-  SHA1_CTX ctx; // SHA1 calculation state
-  uint8 digest[SHA1_DIGEST_LENGTH]; // Where to put the ultimate sha1 digest we calculate
-  int i;
-  uint32 index = sizeof(AppImageHeader) + APP_IMAGE_HEADER_OFFSET; // Current read index
-  
-  //ets_printf("AIH @ %x: size=%x, image#=%x, evil=%x\r\n", imageStart, header->size, header->imageNumber, header->evil);
-  
-  if (header->imageNumber < 1) return FALSE;
-  if (header->evil != 0) return FALSE;
-  
-  SHA1Init(&ctx);
-  
-  int retries = 3;
-  
-  while (index < header->size)
-  {
-    const uint32 remaining  = APP_IMAGE_HEADER_OFFSET + header->size - index;
-    const uint32 readPos    = imageStart + index;
-    const uint32 readLength = SHA_CHECK_READ_LENGTH < remaining ? SHA_CHECK_READ_LENGTH : remaining;
-    
-    if (SPIRead(readPos, buffer, readLength) != SPI_FLASH_RESULT_OK)
-    {
-      if (retries-- <= 0)
-      {
-        ets_printf("Failed to read back firmware at %x for hash validation\r\n", readPos);
-        return FALSE;
-      }
-      else continue;
-    }
-    
-    retries = 3;
-  
-    //ets_printf("SHA1Update: %x, %x\r\n", readPos, readLength);
-    SHA1Update(&ctx, buffer, readLength);
-    index += SHA_CHECK_READ_LENGTH;
-  }
-    
-  SHA1Final(digest, &ctx);
-  
-  for (i=0; i<SHA1_DIGEST_LENGTH; ++i)
-  {
-    if (digest[i] != header->sha1[i])
-    {
-      int j;
-      ets_printf("SHA1 Signature for image at %x doesn't match\r\n\t", imageStart);
-      for (j=0; j<SHA1_DIGEST_LENGTH; ++j) ets_printf("%02x ", header->sha1[j]);
-      ets_printf("\r\n\t");
-      for (j=0; j<SHA1_DIGEST_LENGTH; ++j) ets_printf("%02x ", digest[j]);
-      ets_printf("\r\n\t");
-      for (j=0; j<i; ++j) ets_printf("---");
-      ets_printf("^^\r\n");
-      return FALSE;
-    }
-  }
-  
-  return TRUE;
-}
-
-/** Returns the start of the firmware image to load and boot
- * @param buffer A pointer to at least BUFFER_SIZE bytes of memory for a read buffer
- * @return The flash address of the start of the image to load and boot.
- */
-NOINLINE uint32 select_image(uint8* const buffer)
-{
-  uint32 retImage       = FACTORY_FW_START;
-  uint32 preferredImage = FACTORY_FW_START;
-  uint32 secondImage    = FACTORY_FW_START;
-  AppImageHeader* preferredHeader = NULL;
-  AppImageHeader* secondHeader    = NULL;
-  FWImageSelection preferredEnum  = FW_IMAGE_FACTORY;
-  FWImageSelection secondEnum     = FW_IMAGE_FACTORY;
-  uint32 retSelection = FW_IMAGE_FACTORY;
-  if (get_gpio(RECOVERY_MODE_PIN) == FALSE)
-  {
-    ets_printf("Selecting recovery image\r\n");
-  }
-  else
-  {
-    AppImageHeader aihA, aihB;
-    
-    if (SPIRead(APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET, &aihA, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
-    {
-      ets_printf("Failed to read application image A header\r\nFalling back to factory image\r\n");
-    }
-    else if (SPIRead(APPLICATION_B_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET, &aihB, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
-    {
-      ets_printf("Failed to read application image B header\r\n");
-    }
-    else
-    {
-      if (aihA.imageNumber > aihB.imageNumber)
-      {
-        preferredImage  = APPLICATION_A_SECTOR * SECTOR_SIZE;
-        secondImage     = APPLICATION_B_SECTOR * SECTOR_SIZE;
-        preferredHeader = &aihA;
-        secondHeader    = &aihB;
-        preferredEnum   = FW_IMAGE_A;
-        secondEnum      = FW_IMAGE_B;
-      }
-      else
-      {
-        preferredImage  = APPLICATION_B_SECTOR * SECTOR_SIZE;
-        secondImage     = APPLICATION_A_SECTOR * SECTOR_SIZE;
-        preferredHeader = &aihB;
-        secondHeader    = &aihA;
-        preferredEnum   = FW_IMAGE_B;
-        secondEnum      = FW_IMAGE_A;
-      }
-      
-      if (verify_firmware_hash(preferredHeader, preferredImage, buffer))
-      {
-        ets_printf("Selecting newest image\r\n");
-        retImage = preferredImage;
-        retSelection = preferredEnum;
-      }
-      else if (verify_firmware_hash(secondHeader, secondImage, buffer))
-      {
-        ets_printf("Selecting older image\r\n");
-        retImage = secondImage;
-        retSelection = secondEnum;
-      }
-      else
-      {
-        ets_printf("Falling back to factory image\r\n");
-      }
-    }
-  }
-  
-  system_rtc_mem(RTC_IMAGE_SELECTION, &retSelection, 1, TRUE);
-  return retImage;
-}
-
 NOINLINE uint32 check_image(uint32 readpos, uint8* buffer) {
 
   uint8 sectcount;
@@ -279,6 +139,154 @@ NOINLINE uint32 check_image(uint32 readpos, uint8* buffer) {
   return romaddr;
 }
 
+/** Check that the hash of the image matches it's header
+ * @param header The image header data, already populated.
+ * @param imageStart The start of the image, address of header in flash
+ * @param buffer A pointer to at least BUFFER_SIZE bytes of memory for a read buffer
+ * @return true if the hash matches the header, false if it doesn't.
+ */
+NOINLINE uint32 verify_firmware_hash(const AppImageHeader* header, const uint32 imageStart, uint8* const buffer)
+{
+  SHA1_CTX ctx; // SHA1 calculation state
+  uint8 digest[SHA1_DIGEST_LENGTH]; // Where to put the ultimate sha1 digest we calculate
+  int i;
+  uint32 index = sizeof(AppImageHeader) + APP_IMAGE_HEADER_OFFSET; // Current read index
+  
+  //ets_printf("AIH @ %x: size=%x, image#=%x, evil=%x\r\n", imageStart, header->size, header->imageNumber, header->evil);
+  
+  if (header->imageNumber < 1) return FALSE;
+  if (header->evil != 0) return FALSE;
+  
+  SHA1Init(&ctx);
+  
+  int retries = 3;
+  
+  while (index < header->size)
+  {
+    const uint32 remaining  = APP_IMAGE_HEADER_OFFSET + header->size - index;
+    const uint32 readPos    = imageStart + index;
+    const uint32 readLength = SHA_CHECK_READ_LENGTH < remaining ? SHA_CHECK_READ_LENGTH : remaining;
+    
+    if (SPIRead(readPos, buffer, readLength) != SPI_FLASH_RESULT_OK)
+    {
+      if (retries-- <= 0)
+      {
+        ets_printf("Failed to read back firmware at %x for hash validation\r\n", readPos);
+        return FALSE;
+      }
+      else continue;
+    }
+    
+    retries = 3;
+  
+    //ets_printf("SHA1Update: %x, %x\r\n", readPos, readLength);
+    SHA1Update(&ctx, buffer, readLength);
+    index += SHA_CHECK_READ_LENGTH;
+  }
+    
+  SHA1Final(digest, &ctx);
+  
+  for (i=0; i<SHA1_DIGEST_LENGTH; ++i)
+  {
+    if (digest[i] != header->sha1[i])
+    {
+      int j;
+      ets_printf("SHA1 Signature for image at %x doesn't match\r\n\t", imageStart);
+      for (j=0; j<SHA1_DIGEST_LENGTH; ++j) ets_printf("%02x ", header->sha1[j]);
+      ets_printf("\r\n\t");
+      for (j=0; j<SHA1_DIGEST_LENGTH; ++j) ets_printf("%02x ", digest[j]);
+      ets_printf("\r\n\t");
+      for (j=0; j<i; ++j) ets_printf("---");
+      ets_printf("^^\r\n");
+      return FALSE;
+    }
+  }
+  
+  return check_image(imageStart, buffer);
+}
+
+/** Returns the start of the firmware image to load and boot
+ * @param buffer A pointer to at least BUFFER_SIZE bytes of memory for a read buffer
+ * @return The flash address of the start of the image to load and boot.
+ */
+NOINLINE uint32 select_image(uint8* const buffer)
+{
+  uint32 retImage       = FACTORY_FW_START;
+  uint32 preferredImage = FACTORY_FW_START;
+  uint32 secondImage    = FACTORY_FW_START;
+  AppImageHeader* preferredHeader = NULL;
+  AppImageHeader* secondHeader    = NULL;
+  FWImageSelection preferredEnum  = FW_IMAGE_FACTORY;
+  FWImageSelection secondEnum     = FW_IMAGE_FACTORY;
+  uint32 retSelection = FW_IMAGE_FACTORY;
+  uint32 readPos = 0;
+  if (get_gpio(RECOVERY_MODE_PIN) == FALSE)
+  {
+    ets_printf("Selecting recovery image\r\n");
+    retImage = check_image(retImage, buffer);
+  }
+  else
+  {
+    AppImageHeader aihA, aihB;
+    
+    if (SPIRead(APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET, &aihA, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
+    {
+      ets_printf("Failed to read application image A header\r\nFalling back to factory image\r\n");
+    }
+    else if (SPIRead(APPLICATION_B_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET, &aihB, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
+    {
+      ets_printf("Failed to read application image B header\r\n");
+    }
+    else
+    {
+      if (aihA.imageNumber > aihB.imageNumber)
+      {
+        preferredImage  = APPLICATION_A_SECTOR * SECTOR_SIZE;
+        secondImage     = APPLICATION_B_SECTOR * SECTOR_SIZE;
+        preferredHeader = &aihA;
+        secondHeader    = &aihB;
+        preferredEnum   = FW_IMAGE_A;
+        secondEnum      = FW_IMAGE_B;
+      }
+      else
+      {
+        preferredImage  = APPLICATION_B_SECTOR * SECTOR_SIZE;
+        secondImage     = APPLICATION_A_SECTOR * SECTOR_SIZE;
+        preferredHeader = &aihB;
+        secondHeader    = &aihA;
+        preferredEnum   = FW_IMAGE_B;
+        secondEnum      = FW_IMAGE_A;
+      }
+      
+      readPos = verify_firmware_hash(preferredHeader, preferredImage, buffer);
+      if (readPos != 0)
+      {  
+        ets_printf("Selecting newest image\r\n");
+        retImage = readPos;
+        retSelection = preferredEnum;
+      }
+      else
+      {
+        readPos = verify_firmware_hash(secondHeader, secondImage, buffer);
+        if (readPos != 0)
+        {
+          ets_printf("Selecting older image\r\n");
+          retImage = readPos;
+          retSelection = secondEnum;
+        }
+        else
+        {
+          ets_printf("Falling back to factory image\r\n");
+          retImage = check_image(retImage, buffer);
+        }
+      }
+    }
+  }
+  
+  system_rtc_mem(RTC_IMAGE_SELECTION, &retSelection, 1, TRUE);
+  return retImage;
+}
+
 
 /** Simplified find_image function
  */
@@ -292,8 +300,6 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
   uint32 readpos;
 
   readpos = select_image(buffer);
-
-  readpos = check_image(readpos, buffer);
   
   rom_header *header = (rom_header*)buffer;
   section_header *section = (section_header*)buffer;
@@ -344,13 +350,13 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
  */
 void NOINLINE setupSerial(void)
 {
-  set_gpio(HANDSHAKE_PIN, 0);
   // Update the clock rate here since it's the first function we call
   uart_div_modify(0, (50*1000000)/230400);
   // Debugging delay
-  //ets_delay_us(2000000);
+  ets_delay_us(100);
+  set_gpio(HANDSHAKE_PIN, 0);
   
-  ets_printf("Welcome to cboot\r\nVersion 2.0\r\n");
+  ets_printf("Welcome to cboot\r\nVersion 2.1\r\n");
 }
 
 /** Command SPI flash to make certain sectors read only until next power cycle

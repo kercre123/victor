@@ -8,6 +8,7 @@
 #include "hal/portable.h"
 #include "hal/board.h"
 #include "hal/uart.h"
+#include "app/binaries.h"
 
 #include "../app/fixture.h"
 #include <stdio.h>
@@ -545,18 +546,10 @@ void NRFSWDDeinit(void)
 // Typical block sizes are 1KB or 2KB - see the other stubs (in fixture/flash_stubs) for examples
 void NRFSWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end)
 {
-  // Power cycle the board to clear the cobwebs
-  DisableBAT();      // DisableBAT contains its own delay to empty out power
-  EnableBAT();
-  MicroWait(50000);  // Power should be stable by now (bit unstable at 10ms)
-
-  // Try to contact via SWD
-  InitNRFSWD();
-  swd_enable();
-  swd_chipinit();
-
   // Write the stub to RAM
   SlowPrintf("SWD writing stub..");
+  swd_write(0, 0x4, 0x54000000);    // Power up system and debug - place chip in reset  
+  swd_write(0, 0x4, 0x50000000);    // Power up system and debug - disable reset    
   swd_write32((int)&CoreDebug->DHCSR, 0xA05F0003);            // Halt core again, just in case
   swd_write(1, 0x4, loadaddr);
   for (int i = 0; i < (end+3-start)/4; i++)
@@ -577,6 +570,13 @@ void NRFSWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end)
       swd_crash_dump();
       throw ERROR_SWD_NOSTUB;
     }
+}
+
+void NRFSWDRun(int runaddr)
+{
+  swd_write32((int)&CoreDebug->DHCSR, 0xA05F0003);  // Halt core again, just in case
+  swd_write_cpu_reg(15, runaddr);                   // Point at start address
+  swd_write32((int)&CoreDebug->DHCSR, 0xA05F0001);  // Unhalt core
 }
 
 // Send a file to the stub, one block at a time
@@ -635,4 +635,31 @@ void NRFSWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, cons
   }
   
   SlowPrintf("Success!\n");
+}
+
+// Update the radio chip with the latest program if needed, and start it running
+// Returns false is the chip is unresponsive - this should be handled by radio.c driver
+bool UpdateNRF(bool forceupdate)
+{
+  // Try to contact via SWD
+  InitNRFSWD();
+  swd_enable();
+  swd_chipinit();
+
+  // If the radio is not running the latest version, update it
+  int nrfversion = swd_read32(16), myversion = *(int*)(g_Radio+16);
+  if (nrfversion != myversion || forceupdate)
+  {
+    ConsolePrintf("Radio had version %08x, updating to %08x\r\n", nrfversion, myversion);
+    NRFSWDInitStub(0x20000000, 0x20001400, g_stubBody, g_stubBodyEnd);
+    NRFSWDSend(0x20001000, 0x400, 0,       g_Radio,    g_RadioEnd,    0,    0); 
+  }
+  
+  // Try to run the program
+  swd_write(0, 0x4, 0x54000000);    // Power up system and debug - place chip in reset  
+  MicroWait(1000);
+  swd_write(0, 0x4, 0x50000000);    // Power up system and debug - disable reset    
+  // XXX: Unstable // NRFSWDRun(swd_read32(4));         // Jump into boot vector and get started
+  
+  return true;
 }

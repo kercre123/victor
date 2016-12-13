@@ -355,7 +355,7 @@
             <uSurpInc>0</uSurpInc>
             <VariousControls>
               <MiscControls>--exceptions --exceptions_unwind</MiscControls>
-              <Define>REV1,USE_STDPERIPH_DRIVER,FIXTURE</Define>
+              <Define>USE_STDPERIPH_DRIVER,FIXTURE</Define>
               <Undefine></Undefine>
               <IncludePath>lib;hal;usb;.</IncludePath>
             </VariousControls>
@@ -617,6 +617,11 @@
               <FileName>swdnrf.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\swdnrf.c</FilePath>
+            </File>
+            <File>
+              <FileName>random.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\random.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1243,6 +1248,11 @@
               <FileName>swdnrf.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\swdnrf.c</FilePath>
+            </File>
+            <File>
+              <FileName>random.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\random.c</FilePath>
             </File>
           </Files>
         </Group>

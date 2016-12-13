@@ -77,7 +77,7 @@ void main()
   Advertise();
   
   // If valid, start the requested OTA patch - see makesafe/cube.c for more details
-  if (*(u8 code *)((u16)_patchStart<<8) == 0x75)
+  if (*(u8 code *)((_patchStart<<8)|1) == 0x81)
     ((void(code *)(void))((u16)_patchStart<<8))();
 
   // Enter high power consumption mode - watchdog is the best way to exit

@@ -1,3 +1,4 @@
+// Driver for INA220AIDGST
 // Based on Drive Testfix, updated for Cozmo EP1 Testfix
 #include "hal/monitor.h"
 #include "hal/timers.h"
@@ -12,14 +13,10 @@
 
 #define READ                    1
 
-#define CLOCK_WAIT              5
-#ifdef PLAYPEN_ONLY
+static int CLOCK_WAIT = 1;  // 1=250KHz (2uS per edge), 0=500KHz
+
 #define GPIOB_SCL               8
 #define GPIOB_SDA               9
-#else
-#define GPIOB_SCL               9   // XXX: Backward for digital pot
-#define GPIOB_SDA               8
-#endif
 
 static void I2C_Pulse(void)
 {  
@@ -164,8 +161,34 @@ void InitMonitor(void)
   PIN_SET(GPIOB, GPIOB_SDA);
   PIN_SET(GPIOB, GPIOB_SCL);
   
-  // Setup the calibration register
+  // Setup the charge contact calibration register
+  // XXX: This is likely wrong for Cozmo testfix, but everything else is using it right now
   I2C_Send16(CHARGE_CONTACT_ADDRESS, 5, 0x75A5);  // Setup by TI's app... LSB = 20u
+  
+  // Setup the battery calibration registers
+  I2C_Send16(BATTERY_ADDRESS, 0, 5 + (1<<3)); // Measure current only, 10-bit (150uS), +/- 40mV (2A @ 0.02 ohm) full-scale
+  I2C_Send16(BATTERY_ADDRESS, 5, 0);          // No calibration - we can do our own math
+}
+
+s32 ChargerGetCurrent(void)
+{
+  static bool init = false;
+  if (!init)
+  {
+    I2C_Send16(CHARGE_CONTACT_ADDRESS, 0, 5 + (1<<3)); // Measure current only, 10-bit (150uS), +/- 40mV (2A @ 0.02 ohm) full-scale
+    I2C_Send16(CHARGE_CONTACT_ADDRESS, 5, 0);          // No calibration - we can do our own math
+    init = true;
+  }
+  I2C_Send8(CHARGE_CONTACT_ADDRESS, 1);  // Read shunt register directly - 4000 = 40mV or 2A
+  s16 value = I2C_Receive16(CHARGE_CONTACT_ADDRESS);
+  return (s32)value/2;  // 4000 = 2000mA, so easy to convert to mA 
+}
+
+s32 BatGetCurrent(void)
+{
+  I2C_Send8(BATTERY_ADDRESS, 1);  // Read shunt register directly - 4000 = 40mV or 2A
+  s16 value = I2C_Receive16(BATTERY_ADDRESS);
+  return (s32)value/2;  // 4000 = 2000mA, so easy to convert to mA 
 }
 
 s32 MonitorGetCurrent(void)
@@ -182,34 +205,7 @@ s32 MonitorGetVoltage(void)
   return (s32)value;
 }
 
-void VBATMillivolts(int mv)
+void MonitorSetDoubleSpeed(void)
 {
-  // Make this fast to call
-  static int currentmv = 2500;
-  if (mv == currentmv)
-    return;
-  
-  // Funky calculation goes like this:
-  // Regulator wants:
-  //    R1 = R2 [(VOUT / 1.25) ? 1]
-  //    R2 >= 25K
-  //    Thus, VOUT = ((R1/R2)+1) * 1.25
-  // VBAT controller gives:
-  //    R1 = 100K - 787.4*value
-  //    R2 = 787.4*value
-  // "value" is between 32 (75&25K/5V) and 127 (0&100K/1.25V)
-  // Or integer terms, mv = ((127-value)*1250/value) + 1250
-  int minError = 10000, bestValue = 0;
-  for (int i = 32; i < 128; i++)
-  {
-    int error = mv - (((127-i)*1250/i)+1250);
-    if (error < 0) error = -error;    // Absolute value
-    if (error < minError)
-    {
-      minError = error;
-      bestValue = i;
-    }
-  }
-  I2C_Send8(SET_VBAT_ADDRESS, bestValue);
-  currentmv = mv;
+  CLOCK_WAIT = 0;
 }

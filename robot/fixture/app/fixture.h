@@ -6,12 +6,14 @@
 
 #define FIXTURE_BODY1_TEST    1     // ID 1
 #define FIXTURE_BODY2_TEST    9     // ID 4 + 1
+#define FIXTURE_BODY3_TEST    13    // ID 4 + 3 + 1
 
 #define FIXTURE_HEAD1_TEST    2     // ID 2  
-#define FIXTURE_HEAD2_TEST    10    // ID 4 + 2  
 
-#define FIXTURE_EXTRAS_TEST   3     // ID 2 + 1
-#define FIXTURE_MOTOR_TEST    11    // ID 4 + 2 + 1
+#define FIXTURE_MOTOR1A_TEST  10    // ID 4 + 2         MOTORxL = lift
+#define FIXTURE_MOTOR2A_TEST  11    // ID 4 + 2 + 1
+#define FIXTURE_MOTOR1B_TEST  3     // ID 2 + 1         MOTORxH = head
+#define FIXTURE_MOTOR2B_TEST  12    // ID 4 + 3
 
 // Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
 #define FIXTURE_CHARGER_TEST  4     // ID 3
@@ -19,16 +21,41 @@
 #define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
 #define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
 
-#define FIXTURE_ROBOT_TEST    8     // ID 4
-#define FIXTURE_FINAL_TEST    12    // ID 4 + 3
-
+#define FIXTURE_INFO_TEST     14    // ID 4 + 3 + 2
 #define FIXTURE_PLAYPEN_TEST  15    // ID 4 + 3 + 2 + 1
 
-#define FIXTURE_DEBUG         16
+// These options are not selectable by dip switch (there are too many of them):
+#define FIXTURE_FINISHC_TEST   16   // Must be in order (charger, cube1, cube2, etc..)
+#define FIXTURE_FINISH1_TEST   17    
+#define FIXTURE_FINISH2_TEST   18    
+#define FIXTURE_FINISH3_TEST   19    
+#define FIXTURE_FINISH_TEST    20   // Will connect to any type of accessory
+
+#define FIXTURE_CUBEX_TEST     21   // Will verify (but not program-from-scratch) any cube type
+
+// These can have any values, but must be in numeric order
+#define FIXTURE_ROBOT1_TEST    8    // ID 4
+#define FIXTURE_ROBOT2_TEST    22
+#define FIXTURE_ROBOT3_TEST    23
+
+#define FIXTURE_PACKOUT_TEST   24
+#define FIXTURE_LIFETEST_TEST  25
+#define FIXTURE_RECHARGE_TEST  26
+
+// 27 is reserved for the ill-fated JAM test
+
+#define FIXTURE_HEAD2_TEST     28
+
+#define FIXTURE_SOUND_TEST     29
+
+#define FIXTURE_DEBUG          32   // Should be last ID
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "NO ID", "BODY1", "HEAD1", "EXTRAS", "CHARGER", "CUBE1", "CUBE2", "CUBE3", \
-                        "ROBOT", "BODY2", "HEAD2", "MOTOR",  "FINAL",  "?", "?", "PLAYPEN", "DEBUG" }
+#define FIXTURE_TYPES { "NO ID",   "BODY1",  "HEAD1",  "MOTOR1H","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
+                        "ROBOT1",  "BODY2",  "MOTOR1L","MOTOR2L","MOTOR2H", "BODY3",  "INFO",  "PLAYPEN", \
+                        "FINISHC", "FINISH1","FINISH2","FINISH3","FINISHX", "CUBEX",  "ROBOT2","ROBOT3", \
+                        "PACKOUT","LIFETEST","RECHARGE","JAM",   "HEAD2",   "SOUND",  "","", \
+                        "DEBUG" }
 
 extern FixtureType g_fixtureType;
 
@@ -36,18 +63,9 @@ extern char g_lotCode[15];
 extern u32 g_time;
 extern u32 g_dateCode;
 
-// Diagnostic mode commands are used to speak to the robot over the test port (charge contacts)
-typedef enum
-{
-  DMC_ENTER                 = 0xA3,
-  DMC_FIRST                 = 0x01,
-  
-  DMC_NACK                  = 0x01,
-  DMC_ACK                   = 0x02,
-  
-  DMC_LAST
-} DiagnosticModeCommand;
-
+// Get a serial number for a device in the normal 12.20 fixture.sequence format
+u32 GetSerial();
+                        
 // Error numbers - these are thrown and eventually arrive on the display for the factory operator
 // To aid memorization, error numbers are grouped logically:
 //  3xy - motor errors - where X is the motor 1 (left), 2 (right), 3 (lift), or 4 (head) - and Y is the problem (reversed, encoder, etc)
@@ -57,7 +75,7 @@ typedef enum
 //  7xy - cube/charger errors - where X is the component (0 = CPU) and Y is the problem
 #define ERROR_OK                    0
 
-// Internal Errors
+// Internal Errors - generally programming or hardware errors
 #define ERROR_EMPTY_COMMAND         1
 #define ERROR_ACK1                  2
 #define ERROR_ACK2                  3
@@ -74,9 +92,41 @@ typedef enum
 #define ERROR_CUBE_ROM_MISPATCH     12    // When you can't patch the cube ROM
 #define ERROR_SERIAL_INVALID        13    // When the serial number of this fixture exceeds 255, it can't make cubes!
 
+#define ERROR_RADIO_TIMEOUT         14    // On-board radio firmware failed to boot
+
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
-// SWD errors
+// General motor errors
+#define ERROR_MOTOR_LEFT            310   // Problem driving left motor (sticky or broken wire)
+#define ERROR_MOTOR_LEFT_SPEED      311   // Problem driving left motor at full speed
+#define ERROR_MOTOR_LEFT_JAM        316   // Jamming test failed on left motor
+
+#define ERROR_MOTOR_RIGHT           320   // Problem driving right motor (sticky or broken wire)
+#define ERROR_MOTOR_RIGHT_SPEED     321   // Problem driving right motor at full speed
+#define ERROR_MOTOR_RIGHT_JAM       326   // Jamming test failed on right motor
+
+#define ERROR_MOTOR_LIFT            330   // Problem driving lift motor (sticky or broken wire)
+#define ERROR_MOTOR_LIFT_RANGE      331   // Lift can't reach full range (bad encoder/mechanical blockage)
+#define ERROR_MOTOR_LIFT_BACKWARD   332   // Lift is wired backward
+#define ERROR_MOTOR_LIFT_NOSTOP     333   // Lift does not hit stop (bad encoder/missing lift arm)
+#define ERROR_MOTOR_LIFT_JAM        336   // Jamming test failed on lift motor
+
+#define ERROR_MOTOR_HEAD            340   // Problem driving head motor (sticky or broken wire)
+#define ERROR_MOTOR_HEAD_RANGE      341   // Head can't reach full range (bad encoder/mechanical blockage)
+#define ERROR_MOTOR_HEAD_BACKWARD   342   // Head is wired backward
+#define ERROR_MOTOR_HEAD_NOSTOP     343   // Head does not hit stop (bad encoder/missing head arm)
+#define ERROR_MOTOR_HEAD_SLOW_RANGE 345   // Head can't reach full range when run at low voltage
+#define ERROR_MOTOR_HEAD_JAM        346   // Jamming test failed on head motor
+
+// Body/finished robot testport errors
+#define ERROR_NO_PULSE              400   // Robot is not in debug/test mode
+#define ERROR_NO_PULSE_ACK          401   // Robot can't hear test fixture
+#define ERROR_TESTPORT_TIMEOUT      402   // Robot didn't reply to test fixture
+#define ERROR_TESTPORT_TMI          403   // Robot misunderstood request (too much info in reply)
+#define ERROR_TESTPORT_PADDING      404   // Test fixture can't hear robot
+
+// SWD errors - in head or body test, these are CPU failures
+// In finished good test, these are fixture (radio) failures
 #define ERROR_SWD_IDCODE            450   // IDCODE is unrecognized
 #define ERROR_SWD_READ_FAULT        451   // SWD read failed
 #define ERROR_SWD_WRITE_FAULT       452   // SWD write failed
@@ -94,14 +144,52 @@ typedef enum
 #define ERROR_HEAD_RADIO_FLASH      512   // Problem programming radio
 #define ERROR_HEAD_RADIO_TIMEOUT    513   // Unable to send command due to ESP timeout (broken connection?)
 
+#define ERROR_HEAD_SPEAKER          520   // Speaker not connected/damaged
+#define ERROR_HEAD_Q1               530   // Q1 is out of spec
+
 // Body errors
 #define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body
+#define ERROR_BODY_OUTOFDATE        601   // Body board is running out of date firmware
+
+// Drop sensor errors
+#define ERROR_DROP_LEAKAGE          610   // Drop leakage detected
+#define ERROR_DROP_TOO_DIM          611   // Drop sensor bad LED (or reading too dim)
+#define ERROR_DROP_TOO_BRIGHT       612   // Drop sensor bad photodiode (or too much ambient light)
+
+// Power system errors
+#define ERROR_BAT_LEAKAGE           620   // Too much leakage through battery when turned off
+#define ERROR_BAT_UNDERVOLT         621   // Battery voltage too low - must charge
+#define ERROR_BAT_CHARGER           622   // Battery charger not working
+
+// Motor harness errors
+#define ERROR_BACKPACK_LED          650   // Backpack LED miswired or bad LED
+#define ERROR_ENCODER_FAULT         651   // Encoder wire/solder broken
+#define ERROR_MOTOR_BACKWARD        652   // Motor or encoder is wired backward
+#define ERROR_MOTOR_SLOW            653   // Motor cannot turn easily (too tight or debris inside)
+
+#define ERROR_MOTOR_FAST            664   // Encoder does not meet Anki spec (can't count every tick at speed)
+#define ERROR_ENCODER_UNDERVOLT     665   // Encoder does not meet Anki spec (can't meet minimum voltage)
+#define ERROR_ENCODER_SPEED_FAULT   666   // Encoder does not meet Anki spec (rise/fall threshold)
+#define ERROR_ENCODER_RISE_TIME     667   // Encoder does not meet Anki spec (A vs B rise time)
 
 // Cube/charger errors
-#define ERROR_CUBE_CANNOT_WRITE     700
-#define ERROR_CUBE_NO_COMMUNICATION 701
-#define ERROR_CUBE_VERIFY_FAILED    702
-#define ERROR_CUBE_BLOCK_FAILED     703
-#define ERROR_CUBE_TYPE_CHANGE      704
+#define ERROR_CUBE_CANNOT_WRITE     700   // MCU is locked
+#define ERROR_CUBE_NO_COMMUNICATION 701   // MCU is not working (bad crystal?)
+#define ERROR_CUBE_VERIFY_FAILED    702   // OTP is not empty or did not program correctly
+#define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
+#define ERROR_CUBEX_NOT_SET         706   // Cube not programmed - CUBEX requires cube to be already programmed
+
+// 710-713 for cube/charger types 0-3
+#define ERROR_CUBE_TYPE_CHANGE      710   // Cube type (1,2,3) does not match fixture type (1,2,3)
+#define ERROR_CUBE1_TYPE_CHANGE     711   // Cube type (1,2,3) does not match fixture type (1,2,3)
+#define ERROR_CUBE2_TYPE_CHANGE     712   // Cube type (1,2,3) does not match fixture type (1,2,3)
+#define ERROR_CUBE3_TYPE_CHANGE     713   // Cube type (1,2,3) does not match fixture type (1,2,3)
+
+#define ERROR_CUBE_NO_BOOT          750   // Bad regulator, IMU, or crystal
+#define ERROR_CUBE_MISSING_LED      751   // LED wiring problem
+#define ERROR_CUBE_UNDERPOWER       752   // Bad power regulator
+#define ERROR_CUBE_OVERPOWER        753   // Too much power in active mode
+#define ERROR_CUBE_STANDBY          754   // Too much power in standby mode
+#define ERROR_CUBE_RADIO            755   // Bad radio/antenna
 
 #endif

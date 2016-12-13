@@ -30,6 +30,28 @@ void RadioRead(u8 idata *buf, u8 len)
   RFCSN = 1;
 }
 
+// Send a packet to radio FIFO
+void RadioSend(u8 idata *buf, u8 len)
+{
+  // Send the address
+  RFCSN = 0;
+  SPIRDAT = W_TX_PAYLOAD_NOACK; // FIFO is 2 bytes deep, so first byte never waits
+
+  // Send the payload
+  do
+  {
+    while(!(SPIRSTAT & TXREADY))    // Wait for FIFO empty
+      ;
+    SPIRDAT = *buf;
+    buf++;
+  } while (--len);
+  
+  // Wait for TX complete, then clean up
+  while(!(SPIRSTAT & TXEMPTY))
+    ;   
+  RFCSN = 1;
+}
+
 // Hop to the selected channel
 void RadioHopTo(u8 channel)
 {
@@ -91,7 +113,7 @@ code u8 SETUP_TX_BEACON[] = {
   WREG | STATUS,        RX_DR | TX_DS | MAX_RT, // Clear IRQ status
   WREG | FLUSH_TX,      0,                      // Flush anything in the FIFO
   WREG | FLUSH_RX,      0,                      // Flush anything in the FIFO
-  WREG | RF_SETUP,      RF_PWR1 | RF_PWR0,      // 1mbps, 0dB
+  WREG | RF_SETUP,      RF_PWR1,                // 1mbps, -6dB (due to crap antenna)
   WREG | RF_CH,         ADV_CHANNEL,            // Hop to advertising frequency
   WREG | EN_AA,         0,                      // Disable Enhanced Shockburst
   WREG | SETUP_RETR,    0,                      // Disable Enhanced Shockburst
@@ -116,16 +138,16 @@ bit RadioBeacon()
   RadioSetup(ADVERTISEMENT);
   
   // Wait for TX complete
-  WUF = RFF = 0;
+  IRCON = 0;
   RFCE = 1;
-  PWRDWN = STANDBY;
+  PWRDWN = STANDBY;   // Note: Supposed to set PWRDWN=0 afterward (but so far not needed?)
   RFCE = 0;
 
   // Start RX
   RadioSetup(SETUP_RX);
   
   // Listen for packet or timeout (either will wake us)
-  RFF = 0;
+  IRCON = 1;          // Note: Weird hack to clear interrupt flags without changing code size
   RFCE = 1;
   PWRDWN = STANDBY;
   RFCE = 0;
@@ -135,7 +157,7 @@ bit RadioBeacon()
   if (gotPacket)
     RadioRead((u8 idata *)SyncPkt, SyncLen);
   
-  // Power down radio again - this makes RFF 'forget'
+  // Power down radio again - this makes RFF 'forget' its state
   RadioSetup(SETUP_OFF);
   RFCKEN = 0;
   
@@ -152,10 +174,10 @@ code u8 SETUP_RX_HAND[] = {
 };
 code u8 SETUP_TX_HAND[] = {
   WREG | STATUS,        RX_DR | TX_DS | MAX_RT, // Clear IRQ status
-  4, WREG|TX_ADDR,      0xca,0x11,0xab,0x1e,    // Private TX address - last byte first on air
   WREG | CONFIG,        PWR_UP | EN_CRC | CRCO, // Power up TX with 16-bit CRC
   WREG | FLUSH_TX,      0,                      // Flush anything in the FIFO
   HAND_LEN,W_TX_PAYLOAD_NOACK,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+  4, WREG|TX_ADDR,      0xca,0x11,0xab,0x1e,    // Private TX address - last byte first on air
   0
 };
 

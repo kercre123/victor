@@ -10,6 +10,7 @@
 #include "hal/cube.h"
 #include "app/fixture.h"
 #include "hal/espressif.h"
+#include "hal/random.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -17,11 +18,11 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 25;
-const char* BUILD_INFO = "FOR TEST ONLY";
+u8 g_fixtureReleaseVersion = 69;
+const char* BUILD_INFO = "MP";
 
 BOOL g_isDevicePresent = 0;
-const char* FIXTYPES[] = FIXTURE_TYPES;
+const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
 FixtureType g_fixtureType = FIXTURE_NONE;
 FlashParams g_flashParams;
 
@@ -96,6 +97,15 @@ int GetSequence(void)
   return sequence;
 }
 
+// Get a serial number for a device in the normal 12.20 fixture.sequence format
+u32 GetSerial()
+{
+  if (FIXTURE_SERIAL >= 0xf0)
+    throw ERROR_SERIAL_INVALID;
+  return (FIXTURE_SERIAL << 20) | (GetSequence() & 0xFFffff);
+}
+
+extern int g_canary;
 // Show the name of the fixture and version information
 void SetFixtureText(void)
 {
@@ -122,7 +132,6 @@ void SetFixtureText(void)
   DisplayMoveCursor(55, 0);
   DisplayPutString(BUILD_INFO);
 #endif
-  
   DisplayFlip();
 }
 
@@ -133,7 +142,7 @@ void SetTestCounterText(u32 current, u32 count)
   DisplayBigCenteredText("%02d/%02d", current, count);
   DisplayFlip();
   
-  SlowPrintf("Test %i/%i\r\n", current, count);
+//  SlowPrintf("Test %i/%i\r\n", current, count);
 }
 
 void SetErrorText(u16 error)
@@ -145,8 +154,7 @@ void SetErrorText(u16 error)
   DisplayBigCenteredText("%3i", error % 1000);
   DisplayFlip();
   
-  // We want to force the red light to be seen for at least a second
-  MicroWait(1000000);
+  MicroWait(200000);      // So nobody misses the error
 }
 
 void SetOKText(void)
@@ -167,21 +175,36 @@ bool DetectDevice(void)
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
     case FIXTURE_CUBE3_TEST:
+    case FIXTURE_CUBEX_TEST:
       return CubeDetect();
     case FIXTURE_HEAD1_TEST:
     case FIXTURE_HEAD2_TEST:
       return HeadDetect();
     case FIXTURE_BODY1_TEST:
     case FIXTURE_BODY2_TEST:
+    case FIXTURE_BODY3_TEST:
       return BodyDetect();
-    case FIXTURE_ROBOT_TEST:
-    case FIXTURE_FINAL_TEST:
+    case FIXTURE_INFO_TEST:
+    case FIXTURE_ROBOT1_TEST:
+    case FIXTURE_ROBOT2_TEST:
+    case FIXTURE_ROBOT3_TEST:
+    case FIXTURE_PACKOUT_TEST:
+    case FIXTURE_LIFETEST_TEST:
+    case FIXTURE_RECHARGE_TEST:
     case FIXTURE_PLAYPEN_TEST:
+    case FIXTURE_SOUND_TEST:
       return RobotDetect();
-    case FIXTURE_MOTOR_TEST:
+    case FIXTURE_MOTOR1A_TEST:
+    case FIXTURE_MOTOR1B_TEST:
+    case FIXTURE_MOTOR2A_TEST:      
+    case FIXTURE_MOTOR2B_TEST:      
       return MotorDetect();
-    case FIXTURE_EXTRAS_TEST:
-      return ExtrasDetect();
+    case FIXTURE_FINISHC_TEST:
+    case FIXTURE_FINISH1_TEST:
+    case FIXTURE_FINISH2_TEST:
+    case FIXTURE_FINISH3_TEST:
+    case FIXTURE_FINISH_TEST:
+      return FinishDetect();
   }
 
   // If we don't know what kind of device to look for, it's not there!
@@ -189,10 +212,10 @@ bool DetectDevice(void)
 }
 
 // Wait until the Device has been pulled off the fixture
-void WaitForDeviceOff(void)
+void WaitForDeviceOff(bool error)
 {
   // In debug mode, keep device powered up so we can continue talking to it
-  if (g_fixtureType & FIXTURE_DEBUG)
+  if (g_fixtureType == FIXTURE_DEBUG)
   {
     while (g_isDevicePresent)
     {
@@ -211,6 +234,13 @@ void WaitForDeviceOff(void)
     u32 debounce = 0;
     while (g_isDevicePresent)
     {
+      // Blink annoying red LED
+      static u8 annoy;
+      if (error && (annoy++ & 0x80))
+        STM_EVAL_LEDOn(LEDRED);
+      else
+        STM_EVAL_LEDOff(LEDRED);
+      
       if (!DetectDevice())
       {
         // 500 checks * 1ms = 500ms delay showing error post removal
@@ -218,6 +248,7 @@ void WaitForDeviceOff(void)
           g_isDevicePresent = 0;
       }
       
+      ConsoleUpdate();  // No need to freeze up the console while waiting
       DisplayUpdate();  // While we wait, let screen saver kick in
     }
   }
@@ -227,10 +258,9 @@ void WaitForDeviceOff(void)
 }
 
 // Walk through tests one by one - logging to the PC and to the Device flash
+int g_stepNumber;
 static void RunTests()
 {
-  int i;
-  
   ConsoleWrite("[TEST:START]\r\n");
   
   ConsolePrintf("fixtureSerial,%i\r\n", FIXTURE_SERIAL);
@@ -242,10 +272,10 @@ static void RunTests()
     // Write pre-test data to flash and update factory block
     WritePreTestData();
     
-    for (i = 0; i < m_functionCount; i++)
+    for (g_stepNumber = 0; g_stepNumber < m_functionCount; g_stepNumber++)
     {      
-      SetTestCounterText(i + 1, m_functionCount);
-      m_functions[i]();
+      SetTestCounterText(g_stepNumber + 1, m_functionCount);
+      m_functions[g_stepNumber]();
     }
     
     WriteFactoryBlockErrorCode(ERROR_OK);
@@ -267,7 +297,7 @@ static void RunTests()
   }
 
   ConsolePrintf("[RESULT:%03i]\r\n[TEST:END]\r\n", error);
-  SlowPrintf("Test finished with error %03d\n", error);
+//  SlowPrintf("Test finished with error %03d\n", error);
   
   if (error != ERROR_OK)
   {
@@ -276,7 +306,7 @@ static void RunTests()
     SetOKText();
   }
   
-  WaitForDeviceOff();
+  WaitForDeviceOff(error != ERROR_OK);
 }
 
 // This checks for a Device (even asleep) that is in contact with the fixture
@@ -301,55 +331,6 @@ static BOOL IsDevicePresent(void)
   return FALSE;
 }
 
-// This function is meant to wake up a Device that is placed on a charger once it is detected
-#if 0
-BOOL ToggleContacts(void)
-{
-  TestEnable();
-  TestEnableTx();
-  MicroWait(100000);  // 100ms
-  TestEnableRx();
-  MicroWait(200000);  // 200ms
-  return TRUE;
-  
-  /* 
-   * The below needs to be redone for Cozmo
-   *
-  u32 i;
-  BOOL sawPowerOn = FALSE;
-  
-  PIN_OD(GPIOC, 10);
-  
-  const u32 maxCycles = 5000;
-  for (i = 0; i < maxCycles; i++)
-  {
-    PIN_SET(GPIOC, 10);
-    PIN_OUT(GPIOC, 10);
-    PIN_SET(GPIOC, 12);
-    MicroWait(10);
-    PIN_RESET(GPIOC, 12);
-    PIN_RESET(GPIOC, 10);
-    MicroWait(5);
-    PIN_IN(GPIOC, 10);
-    MicroWait(5);
-    if (GPIO_READ(GPIOC) & (1 << 10))
-    {
-      sawPowerOn = TRUE;
-      break;
-    }
-  }
-  
-  PIN_PULL_NONE(GPIOC, 10);
-  PIN_OUT(GPIOC, 10);
-  PIN_PP(GPIOC, 10);
-  PIN_RESET(GPIOC, 10);
-  PIN_SET(GPIOC, 12);
-  PIN_OUT(GPIOC, 12);
-  
-  return sawPowerOn;*/
-}
-#endif
-
 // Wake up the board and try to talk to it
 static BOOL TryToRunTests(void)
 {
@@ -363,34 +344,69 @@ static BOOL TryToRunTests(void)
 // Repeatedly scan for a device, then run through the tests when it appears
 static void MainExecution()
 {
-  int i;
-    
   switch (g_fixtureType)
   {
     case FIXTURE_CHARGER_TEST:
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
     case FIXTURE_CUBE3_TEST:
+    case FIXTURE_CUBEX_TEST:
       m_functions = GetCubeTestFunctions();
       break;
     case FIXTURE_HEAD1_TEST:
-    case FIXTURE_HEAD2_TEST:
       m_functions = GetHeadTestFunctions();
       break;    
+    case FIXTURE_HEAD2_TEST:
+      m_functions = GetHead2TestFunctions();
+      break;    
     case FIXTURE_BODY1_TEST:
-    case FIXTURE_BODY2_TEST:
-      m_functions = GetBodyTestFunctions();
+      m_functions = GetBody1TestFunctions();
       break;
-    case FIXTURE_ROBOT_TEST:
-    case FIXTURE_FINAL_TEST:
-    case FIXTURE_PLAYPEN_TEST:
+    case FIXTURE_BODY2_TEST:
+      m_functions = GetBody2TestFunctions();
+      break;
+    case FIXTURE_BODY3_TEST:
+      m_functions = GetBody3TestFunctions();
+      break;
+    case FIXTURE_INFO_TEST:
+      m_functions = GetInfoTestFunctions();
+      break;
+    case FIXTURE_ROBOT1_TEST:
+    case FIXTURE_ROBOT2_TEST:
+    case FIXTURE_ROBOT3_TEST:
       m_functions = GetRobotTestFunctions();
       break;
-    case FIXTURE_MOTOR_TEST:
-      m_functions = GetMotorTestFunctions();
+    case FIXTURE_PACKOUT_TEST:
+      m_functions = GetPackoutTestFunctions();
+      break; 
+    case FIXTURE_LIFETEST_TEST:
+      m_functions = GetLifetestTestFunctions();
+      break; 
+    case FIXTURE_RECHARGE_TEST:
+      m_functions = GetRechargeTestFunctions();
+      break; 
+    case FIXTURE_PLAYPEN_TEST:
+      m_functions = GetPlaypenTestFunctions();
       break;
-    case FIXTURE_EXTRAS_TEST:
-      m_functions = GetExtrasTestFunctions();
+    case FIXTURE_SOUND_TEST:
+      m_functions = GetSoundTestFunctions();
+      break;      
+    case FIXTURE_MOTOR1A_TEST:
+    case FIXTURE_MOTOR1B_TEST:
+      m_functions = GetMotor1TestFunctions();
+      break;
+    case FIXTURE_MOTOR2A_TEST:      
+      m_functions = GetMotor2ATestFunctions();
+      break;
+    case FIXTURE_MOTOR2B_TEST:      
+      m_functions = GetMotor2BTestFunctions();
+      break;
+    case FIXTURE_FINISHC_TEST:
+    case FIXTURE_FINISH1_TEST:
+    case FIXTURE_FINISH2_TEST:
+    case FIXTURE_FINISH3_TEST:
+    case FIXTURE_FINISH_TEST:
+      m_functions = GetFinishTestFunctions();
       break;
     case FIXTURE_DEBUG:
       m_functions = GetDebugTestFunctions();
@@ -417,22 +433,7 @@ static void MainExecution()
     STM_EVAL_LEDOff(LEDRED);
     STM_EVAL_LEDOff(LEDGREEN);
     
-    const int maxTries = 5;
-    for (i = 0; i < maxTries; i++)
-    {
-      if (TryToRunTests())
-        break;
-    }
-    
-    if (i == maxTries)
-    {
-      error_t error = ERROR_OK;
-      if (error != ERROR_OK)
-      {
-        SetErrorText(error);
-        WaitForDeviceOff();
-      }
-    }
+    TryToRunTests();
   }
 }
 
@@ -459,11 +460,20 @@ int main(void)
   InitUART();
   FetchParams();
   InitConsole();
-  
+  InitRandom();
+ 
   SlowPutString("STARTUP!\r\n");
 
+  // If we don't have a full upload, this is version 0 type NO ID
   g_fixtureType = (FixtureType)InitBoard();
-  SlowPrintf("Fixture: %i\r\n", g_fixtureType);
+  if (g_canary != 0xcab00d1e)
+    g_fixtureType = g_fixtureReleaseVersion = 0; 
+
+  // Else, figure out which fixture type we are
+  else if (g_fixtureType == FIXTURE_NONE 
+            && g_flashParams.fixtureTypeOverride > FIXTURE_NONE 
+            && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
+    g_fixtureType = g_flashParams.fixtureTypeOverride;
   
   SlowPutString("Initializing Display...\r\n");
   
@@ -473,7 +483,7 @@ int main(void)
   SetFixtureText();
   
   SlowPutString("Initializing Test Port...\r\n");
-  //InitTestPort(0);
+  InitTestPort(0);
 
   SlowPutString("Initializing Monitor...\r\n");
   InitMonitor();

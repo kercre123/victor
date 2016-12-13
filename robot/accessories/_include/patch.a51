@@ -16,8 +16,6 @@ $NOMOD51
         ; Set aside space for LED temporaries
         DSEG AT 70h
         DS 4
-        ISEG AT 80h
-        DS 3*13
 
                 EXTRN CODE (?C_START)
                 PUBLIC  ?C_STARTUP

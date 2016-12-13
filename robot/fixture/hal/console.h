@@ -10,6 +10,6 @@ void ConsolePrintf(const char* format, ...);
 void ConsoleWrite(char* s);
 void ConsolePutChar(char c);
 void ConsoleUpdate(void);
-void ConsoleWriteHex(u8* buffer, u32 numberOfBytes);
+void ConsoleWriteHex(const u8* buffer, u32 numberOfBytes, u32 offset = 0);
 
 #endif
