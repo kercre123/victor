@@ -67,6 +67,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       _CoreUpgradeDetailsViewInstance.CloseViewImmediately();
     }
 
+    ClearTiles();
+
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleRequestSetUnlockResult);
   }
 
@@ -135,6 +137,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
     for (int i = 0; i < _LockedTiles.Count; ++i) {
       _LockedTiles[i].OnTapped -= HandleTappedUnavailable;
+      _LockedTiles[i].OnTapped -= HandleTappedLocked;
     }
     _LockedTiles.Clear();
 
