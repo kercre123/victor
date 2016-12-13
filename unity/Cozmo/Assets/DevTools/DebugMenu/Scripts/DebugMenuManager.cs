@@ -4,6 +4,8 @@ using System.Collections;
 
 public class DebugMenuManager : MonoBehaviour {
 
+  private const string kDemoModeKey = "DemoMode";
+
   [SerializeField]
   private DebugMenuDialog _DebugMenuDialogPrefab;
   private DebugMenuDialog _DebugMenuDialogInstance;
@@ -17,6 +19,7 @@ public class DebugMenuManager : MonoBehaviour {
   private int _LastOpenedDebugTab = 0;
 
   private bool _DebugPause = false;
+  private bool _DemoMode = false;
 
   private static DebugMenuManager _Instance;
 
@@ -40,12 +43,20 @@ public class DebugMenuManager : MonoBehaviour {
   void Start() {
     // TODO: Destroy self if not production
     _Instance = this;
+
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleDemoModeVariable);
+    RobotEngineManager.Instance.Message.GetDebugConsoleVarMessage = new Anki.Cozmo.ExternalInterface.GetDebugConsoleVarMessage(kDemoModeKey);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  void OnDestroy() {
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleDemoModeVariable);
   }
 
   // TODO: Pragma out this code for production
   public void OnDebugMenuButtonTap() {
 #if ENABLE_DEBUG_PANEL
-    if (FakeTouchManager.Instance != null && !FakeTouchManager.Instance.IsPlayingTouches && !FakeTouchManager.Instance.IsSoakingTouches) {
+    if (!_DemoMode && FakeTouchManager.Instance != null && !FakeTouchManager.Instance.IsPlayingTouches && !FakeTouchManager.Instance.IsSoakingTouches) {
       CreateDebugDialog();
     }
 #endif
@@ -94,6 +105,12 @@ public class DebugMenuManager : MonoBehaviour {
           game.ResumeStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.BehaviorType.NoneBehavior);
         }
       }
+    }
+  }
+
+  private void HandleDemoModeVariable(Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage message) {
+    if (message.varName == kDemoModeKey && message.success) {
+      _DemoMode = message.varValue.varBool != 0;
     }
   }
 

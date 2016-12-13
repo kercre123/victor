@@ -7,7 +7,7 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>cozmoApp</string>
+				<string>cozmo</string>
 			</array>
 			<key>CFBundleURLName</key>
 			<string>com.anki.cozmo</string>
