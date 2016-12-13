@@ -52,11 +52,7 @@ $(CBOOT_FW_BASE)/%.bin: $(CBOOT_BUILD_BASE)/%.elf
 	@$(OBJCOPY) --only-section .rodata     -O binary $< eagle.app.v6.rodata.bin
 	@$(OBJCOPY) --only-section .irom0.text -O binary $< eagle.app.v6.irom0text.bin
 	@$(OBJCOPY) --only-section .iram2.text -O binary $< eagle.app.v6.iram2text.bin
-<<<<<<< HEAD
 	@python $(SDK_BASE)/tools/gen_appbin.py $< $(BOOT) $(SPI_MODE) $(SPI_FREQ_DIV) $(SPI_SIZE_MAP)
-=======
-	@python2.7 $(SDK_BASE)/tools/gen_appbin.py $< $(BOOT) $(SPI_MODE) $(SPI_FREQ_DIV) $(SPI_SIZE_MAP)
->>>>>>> factory
 	@mv eagle.app.flash.bin "$@"
 	@mv eagle.app.v6.*.bin build/
 
