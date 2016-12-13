@@ -24,6 +24,13 @@ public class SkillSystem {
   private ChallengeData _CurrChallengeData;
   private int _ChallengeIndex;
 
+  public enum SkillOverrideLevel {
+    None,
+    Min,
+    Max,
+  };
+  private int _SkillOveride = -1;
+
   #region GameAPI
 
   public static SkillSystem Instance {
@@ -72,6 +79,9 @@ public class SkillSystem {
 
   // If player last level was 10 but on a new cozmo thats only level 3. That cozmo should play at level 3
   public int GetCozmoSkillLevel(GameSkillData playerSkill) {
+    if (_SkillOveride >= 0) {
+      return _SkillOveride;
+    }
     if (_CozmoHighestLevels.Length > _ChallengeIndex) {
       return Mathf.Min(_CozmoHighestLevels[_ChallengeIndex], playerSkill.LastLevel);
     }
@@ -81,6 +91,18 @@ public class SkillSystem {
     }
   }
 
+  public void SetSkillOverride(SkillOverrideLevel level) {
+    if (level == SkillOverrideLevel.None) {
+      _SkillOveride = -1;
+    }
+    else if (level == SkillOverrideLevel.Min) {
+      _SkillOveride = 0;
+    }
+    else if (level == SkillOverrideLevel.Max && _CurrChallengeData != null) {
+      GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
+      _SkillOveride = skillConfig.GetMaxLevel() - 1;
+    }
+  }
 
   public GameSkillLevelConfig GetSkillLevelConfig() {
     GameSkillData currSkillData = GetSkillDataForGame();

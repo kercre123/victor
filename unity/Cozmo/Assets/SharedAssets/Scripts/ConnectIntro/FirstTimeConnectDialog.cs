@@ -77,7 +77,12 @@ public class FirstTimeConnectDialog : MonoBehaviour {
 
   private void HandleStartButton() {
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileCreated) {
-      ShowPlaceCozmoOnCharger();
+      if (DebugMenuManager.Instance.DemoMode) {
+        StartConnectionFlow();
+      }
+      else {
+        ShowPlaceCozmoOnCharger();
+      }
     }
     else {
       _SoundCheckViewInstance = UIManager.OpenModal(_SoundCheckViewPrefab);

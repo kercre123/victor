@@ -514,8 +514,6 @@ MonoBehaviour:
     panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
   - name: Playtest
     panePrefab: {fileID: 119064, guid: 9450d0bb23c9a405dadefc00ad27edd0, type: 2}
-  - name: Features
-    panePrefab: {fileID: 119064, guid: 5b2d29212da0348a1ba82efde08dd49a, type: 2}
   - name: FakeTap
     panePrefab: {fileID: 183772, guid: d5295c6abc723485eb37f70ee0b3b697, type: 2}
   - name: RobotRestore

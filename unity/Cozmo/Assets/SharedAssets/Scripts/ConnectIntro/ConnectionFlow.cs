@@ -296,7 +296,13 @@ public class ConnectionFlow : MonoBehaviour {
 
     _ConnectionFlowBackgroundInstance.SetStateComplete(2);
 
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+    // Now that we're connected to robot, make sure everything is unlocked
+    if (DebugMenuManager.Instance.DemoMode) {
+      UnlockablesManager.Instance.TrySetUnlocked(UnlockId.All, true);
+    }
+
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow &&
+        !DebugMenuManager.Instance.DemoMode) {
       Invoke("TransitionConnectionFlowToPullCubeTabs", ConnectionFlowDelay);
     }
     else {

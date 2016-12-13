@@ -44,6 +44,15 @@ namespace Onboarding {
       return _OutlineLargePrefab;
     }
 
+    public int GetShowCubeStateID() {
+      for (int i = 0; i < _PhaseHomePrefabs.Count; ++i) {
+        if (_PhaseHomePrefabs[i] is ShowCubeStage) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
     public int GetMaxStageInPhase(OnboardingManager.OnboardingPhases phase) {
       switch (phase) {
       case OnboardingManager.OnboardingPhases.Home:

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Anki.Assets;
 using Cozmo.CheckInFlow.UI;
+using System.Collections.Generic;
 
 public class IntroManager : MonoBehaviour {
 
@@ -69,6 +70,27 @@ public class IntroManager : MonoBehaviour {
     }
 
     _StartFlowInProgress = true;
+
+    // Before starting, reset some state
+    if (DebugMenuManager.Instance.DemoMode) {
+      // Set needing onboarding home, but not other phases
+      DataPersistence.PlayerProfile profile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+      profile.OnboardingStages[OnboardingManager.OnboardingPhases.Home] = 0;
+      // reset the item inventory
+      List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
+      for (int i = 0; i < itemIDs.Count; ++i) {
+        profile.Inventory.SetItemAmount(itemIDs[i], 0);
+      }
+      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Loot);
+      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
+      // Needs to set all difficulties unlocked ( don't just return in UI so that we don't have "new difficulty unlocked popups");
+      ChallengeData[] challengeList = ChallengeDataList.Instance.ChallengeData;
+      for (int i = 0; i < challengeList.Length; ++i) {
+        profile.GameInstructionalVideoPlayed[challengeList[i].ChallengeID] = true;
+        profile.GameDifficulty[challengeList[i].ChallengeID] = challengeList[i].DifficultyOptions.Count;
+      }
+      // Later on Robot unlocks happen
+    }
 
     OnboardingManager.Instance.PreloadOnboarding();
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {

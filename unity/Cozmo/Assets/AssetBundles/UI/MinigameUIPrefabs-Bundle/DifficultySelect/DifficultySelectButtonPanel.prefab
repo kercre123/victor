@@ -64,6 +64,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _OptionPrefab: {fileID: 11412212, guid: d23d2787d5a764eebbe2a1a747ae1eeb, type: 2}
+  _DemoSkillBtnPrefab: {fileID: 152978, guid: 85e466276edb84b0c9132dbbba20bcf7, type: 2}
   _OptionTray: {fileID: 22443094}
 --- !u!224 &22443094
 RectTransform:

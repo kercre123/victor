@@ -9,7 +9,6 @@ namespace DataPersistence {
   public class DebugProfile {
     public bool LatencyDisplayEnabled;
     public bool DebugPauseEnabled;
-    public bool RunPressDemo;
     public Dictionary<string, List<FakeTouch>> FakeTouchRecordings;
     public bool NoFreeplayOnStart;
     public bool ShowDroneModeDebugInfo;
@@ -17,7 +16,6 @@ namespace DataPersistence {
     public DebugProfile() {
       LatencyDisplayEnabled = false;
       DebugPauseEnabled = false;
-      RunPressDemo = false;
       FakeTouchRecordings = new Dictionary<string, List<FakeTouch>>();
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;

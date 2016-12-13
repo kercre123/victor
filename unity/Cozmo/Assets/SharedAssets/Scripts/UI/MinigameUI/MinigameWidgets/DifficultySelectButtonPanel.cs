@@ -15,6 +15,9 @@ public class DifficultySelectButtonPanel : MonoBehaviour {
   private DifficultySelectOption _OptionPrefab;
 
   [SerializeField]
+  private GameObject _DemoSkillBtnPrefab;
+
+  [SerializeField]
   private RectTransform _OptionTray;
 
   private int _SelectedDifficultyIndex;
@@ -64,6 +67,25 @@ public class DifficultySelectButtonPanel : MonoBehaviour {
 
     SelectOption(selectedDifficulty);
 
+    // Show allow override for skill level
+    if (DebugMenuManager.Instance.DemoMode) {
+      CreateDemoSkillBtn("Skill: Default", SkillSystem.SkillOverrideLevel.None, 0);
+      CreateDemoSkillBtn("Skill: Easy", SkillSystem.SkillOverrideLevel.Min, 600);
+      CreateDemoSkillBtn("Skill: Hard", SkillSystem.SkillOverrideLevel.Max, 1200);
+    }
+  }
+
+  private void CreateDemoSkillBtn(string btnName, SkillSystem.SkillOverrideLevel level, int xOffset = 0) {
+    GameObject newButton = UIManager.CreateUIElement(_DemoSkillBtnPrefab, transform.parent.parent.transform);
+    newButton.transform.localPosition = new Vector3(xOffset, 350);
+    UnityEngine.UI.Button button = newButton.GetComponent<UnityEngine.UI.Button>();
+    UnityEngine.UI.Text txt = button.GetComponentInChildren<UnityEngine.UI.Text>();
+    if (txt) {
+      txt.text = btnName;
+    }
+    button.onClick.AddListener(() => {
+      SkillSystem.Instance.SetSkillOverride(level);
+    });
   }
 
   private void SelectOption(int index) {

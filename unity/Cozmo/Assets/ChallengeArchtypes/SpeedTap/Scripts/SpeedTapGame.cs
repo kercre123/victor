@@ -164,7 +164,7 @@ namespace SpeedTap {
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       SpeedTapGameConfig speedTapConfig = minigameConfigData as SpeedTapGameConfig;
       // Set all Config based values
-      TotalRounds = speedTapConfig.Rounds;
+      TotalRounds = DebugMenuManager.Instance.DemoMode ? 1 : speedTapConfig.Rounds;
       MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       _AllDifficultySettings = speedTapConfig.DifficultySettings;
       _BetweenRoundsMusic = speedTapConfig.BetweenRoundMusic;
@@ -227,6 +227,12 @@ namespace SpeedTap {
         if (_CurrentDifficultySettings.Colors != null && _CurrentDifficultySettings.Colors.Length > 0) {
           Rules.SetUsableColors(_CurrentDifficultySettings.Colors);
         }
+      }
+      // In demo mode, skills could have been overwritten
+      if (DebugMenuManager.Instance.DemoMode) {
+        CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
+        MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
+        MaxTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
       }
     }
 

@@ -194,6 +194,10 @@ public class OnboardingManager : MonoBehaviour {
       if (!FirstTime || isOldRobot) {
         startStage = 1;
       }
+      // In demo mode skip to wake up
+      if (DebugMenuManager.Instance.DemoMode) {
+        startStage = 2;
+      }
 
       // This is safe because you can't spend currency in the first phase of onboarding
       Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetHexData();
@@ -297,7 +301,19 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public void GoToNextStage() {
-    SetSpecificStage(GetCurrStageInPhase(_CurrPhase) + 1);
+    // In demo mode skip to wake up
+    if (DebugMenuManager.Instance.DemoMode && _CurrPhase == OnboardingPhases.Home) {
+      // Completed the Show CubePhase
+      if (GetCurrStageInPhase(_CurrPhase) == _OnboardingUIInstance.GetShowCubeStateID()) {
+        CompletePhase(_CurrPhase);
+      }
+      else {
+        SetSpecificStage(GetCurrStageInPhase(_CurrPhase) + 1);
+      }
+    }
+    else {
+      SetSpecificStage(GetCurrStageInPhase(_CurrPhase) + 1);
+    }
   }
 
   public void SetSpecificStage(int nextStage) {

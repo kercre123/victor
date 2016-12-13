@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cozmo.HomeHub;
 using System.Collections;
 
@@ -31,6 +31,12 @@ public class DebugMenuManager : MonoBehaviour {
       if (_Instance == null) {
         _Instance = value;
       }
+    }
+  }
+
+  public bool DemoMode {
+    get {
+      return _DemoMode;
     }
   }
 
