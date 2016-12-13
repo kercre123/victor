@@ -121,9 +121,10 @@
             'libopencv_videoio.a',
           ],
 
+          # Prefer release build of 3rdparty libraries for performance
           'opencv_lib_search_path_debug': [
             '<(coretech_external_path)/build/opencv-<(opencv_version)/lib/Debug',
-            '<(coretech_external_path)/build/opencv-<(opencv_version)/3rdparty/lib/Debug',
+            '<(coretech_external_path)/build/opencv-<(opencv_version)/3rdparty/lib/Release',
             '<(coretech_external_path)/libjpeg-turbo/mac_libs',
           ],
 
