@@ -120,19 +120,19 @@ namespace Anki {
         if(onPeriods_ms[iLED] == 0 && offPeriods_ms[iLED] > 0) {
           // Looks like we mean for this LED to be solid "off" color
           _ledState[iLED].onColor = offColors[iLED];
-          _ledState[iLED].onPeriod_ms = u32_MAX/2;
+          _ledState[iLED].onPeriod_ms = std::numeric_limits<u32>::max()/2;
         }
         else if(offPeriods_ms[iLED] == 0 && onPeriods_ms[iLED] > 0) {
           // Looks like we mean for this LED to be solid "on" color
           _ledState[iLED].offColor = onColors[iLED];
-          _ledState[iLED].offPeriod_ms = u32_MAX/2;
+          _ledState[iLED].offPeriod_ms = std::numeric_limits<u32>::max()/2;
         }
         else if(onPeriods_ms[iLED]==0 && offPeriods_ms[iLED]==0) {
           // Looks like we mean for this LED to actually turn off
           _ledState[iLED].onColor = 0;
           _ledState[iLED].offColor = 0;
-          _ledState[iLED].onPeriod_ms = u32_MAX/2;
-          _ledState[iLED].offPeriod_ms = u32_MAX/2;
+          _ledState[iLED].onPeriod_ms = std::numeric_limits<u32>::max()/2;
+          _ledState[iLED].offPeriod_ms = std::numeric_limits<u32>::max()/2;
         }
         
         _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriods_ms[iLED];

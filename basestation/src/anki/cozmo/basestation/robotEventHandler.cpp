@@ -538,7 +538,7 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsObject& msg)
 {
   ObjectID objectID;
-  if(msg.objectID == u32_MAX) {
+  if(msg.objectID == std::numeric_limits<u32>::max()) {
     objectID = robot.GetBlockWorld().GetSelectedObject();
   } else {
     objectID = msg.objectID;

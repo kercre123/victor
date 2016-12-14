@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
 
 #include <opencv2/core.hpp>
@@ -596,12 +597,12 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
                              animNameDebug.c_str(),
                              std::abs(_streamMsg.speed),
                              MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-            _streamMsg.speed = CLIP(_streamMsg.speed,
+            _streamMsg.speed = CLIP((f32)_streamMsg.speed,
                                     -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
                                     MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
           }
         } else if(radiusStr == "STRAIGHT") {
-          _streamMsg.curvatureRadius_mm = s16_MAX;
+          _streamMsg.curvatureRadius_mm = std::numeric_limits<s16>::max();
           
           // Check that speed is valid
           if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
@@ -609,7 +610,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
                              "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
                              animNameDebug.c_str(),
                              std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
-            _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
+            _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
           }
         } else {
           PRINT_NAMED_ERROR("BodyMotionKeyFrame.BadRadiusString",
@@ -631,7 +632,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
                            "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
                            animNameDebug.c_str(),
                            std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
-          _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
+          _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
         }
       }
       

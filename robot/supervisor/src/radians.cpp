@@ -13,7 +13,6 @@
 
 #include <math.h>
 #include "anki/cozmo/robot/logging.h"
-#include "anki/common/constantsAndMacros.h"
 #include "radians.h"
 
 namespace Anki {
@@ -156,7 +155,7 @@ namespace Anki {
   // two radian values is within tolerance.
   bool operator==(const Radians& a, const Radians& b)
   {
-    return NEAR(a.radians_, b.radians_, FLOATING_POINT_COMPARISON_TOLERANCE);
+    return a.IsNear(b);
   }
 
   // Inequality operator: Returns true if the magnitude of difference between
@@ -188,6 +187,11 @@ namespace Anki {
   bool operator<=(const Radians& a, const Radians& b)
   {
     return(b >= a);
+  }
+  
+  bool Radians::IsNear(const Radians& other, const Radians& epsilon) const
+  {
+    return ABS((radians_ - other).ToFloat()) < ABS(epsilon.ToFloat());
   }
 
   // Assignment operators
@@ -233,9 +237,9 @@ namespace Anki {
 
     // If clockwise then difference should be -ve, and vice versa.
     if(!clockwise && diff < 0.0f) {
-      diff += 2.0f*PI_F;
+      diff += 2.0f*M_PI_F;
     } else if(clockwise && diff > 0.0f) {
-      diff -= 2.0f*PI_F;
+      diff -= 2.0f*M_PI_F;
     }
 
     return diff;
@@ -251,25 +255,25 @@ namespace Anki {
     }
 
     // Check if already within range
-    if(radians_ > -PI_F  && radians_ <= PI_F) {
+    if(radians_ > -M_PI_F  && radians_ <= M_PI_F) {
       return;
     }
 
     if(ABS(radians_) < 10.0f) {
       // For small values of radians, rescale manually to avoid doing division
-      while(radians_ <= -PI_F) {
-        radians_ += 2.0f*PI_F;
+      while(radians_ <= -M_PI_F) {
+        radians_ += 2.0f*M_PI_F;
       }
-      while(radians_ > PI_F) {
-        radians_ -= 2.0f*PI_F;
+      while(radians_ > M_PI_F) {
+        radians_ -= 2.0f*M_PI_F;
       }
     } else {
       // Otherwise compute and adjust at once (more expensive due to divide)
 
-      // If not, compute amount to shift by.  Divide by 2*PI_F but subtract .5 since
+      // If not, compute amount to shift by.  Divide by 2*M_PI_F but subtract .5 since
       // we're going to be in the (-PI, PI] range.
-      shiftAmt = (int)ceilf((radians_ / (2.0f * PI_F)) - 0.5f);
-      radians_ -= (2.0f * PI_F * (float)shiftAmt);
+      shiftAmt = (int)ceilf((radians_ / (2.0f * M_PI_F)) - 0.5f);
+      radians_ -= (2.0f * M_PI_F * (float)shiftAmt);
     }
   }
 
@@ -279,7 +283,7 @@ namespace Anki {
   {
     // Increase radians_ until it's positive
     while(radians_ < 0.0f) {
-      radians_ += 2.0f * PI_F;
+      radians_ += 2.0f * M_PI_F;
     }
   }
 
@@ -287,7 +291,7 @@ namespace Anki {
   {
     // Increase radians_ until it's negative
     while(radians_ > 0.0f) {
-      radians_ -= 2.0f * PI_F;
+      radians_ -= 2.0f * M_PI_F;
     }
   }
 } // namespace Anki

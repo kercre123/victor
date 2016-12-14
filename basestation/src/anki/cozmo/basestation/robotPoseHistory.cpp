@@ -22,7 +22,7 @@ namespace Anki {
     
     RobotPoseStamp::RobotPoseStamp()
     {
-      SetAll(0, Pose3d(), 0.0f, 0.0f, u16_MAX, false);
+      SetAll(0, Pose3d(), 0.0f, 0.0f, std::numeric_limits<u16>::max(), false);
     }
     
 

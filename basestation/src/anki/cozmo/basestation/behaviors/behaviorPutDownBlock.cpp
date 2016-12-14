@@ -94,7 +94,7 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot, bo
     const bool sayName = false;
     action->AddAction(new TurnTowardsFaceWrapperAction(robot,
                                                        new TriggerAnimationAction(robot, AnimationTrigger::PutDownBlockKeepAlive),
-                                                       true, false, PI_F, sayName));
+                                                       true, false, M_PI_F, sayName));
   }
   
   return action;

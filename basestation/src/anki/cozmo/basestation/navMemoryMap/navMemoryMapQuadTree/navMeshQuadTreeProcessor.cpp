@@ -18,7 +18,6 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
-#include "util/math/constantsAndMacros.h"
 
 #include <limits>
 #include <memory>

@@ -492,9 +492,9 @@ namespace Cozmo {
       //       was motion to be conservative
       const bool inSameFrame = &lastPoseStamp.GetPose().FindOrigin() == &imagePoseStamp.GetPose().FindOrigin();
       const bool headSame = inSameFrame && NEAR(lastPoseStamp.GetHeadAngle(),
-                                                imagePoseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
+                                                imagePoseStamp.GetHeadAngle(), DEG_TO_RAD(0.1f));
       const bool liftSame = inSameFrame && NEAR(lastPoseStamp.GetLiftAngle(),
-                                                imagePoseStamp.GetLiftAngle(), DEG_TO_RAD_F32(0.1));
+                                                imagePoseStamp.GetLiftAngle(), DEG_TO_RAD(0.1f));
       
       const bool poseSame = (inSameFrame &&
                              NEAR(lastPoseStamp.GetPose().GetTranslation().x(),
@@ -503,7 +503,7 @@ namespace Cozmo {
                                   imagePoseStamp.GetPose().GetTranslation().y(), .5f) &&
                              NEAR(lastPoseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
                                   imagePoseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                                  DEG_TO_RAD_F32(0.1)));
+                                  DEG_TO_RAD(0.1f)));
       
       Lock();
       _nextPoseData.poseStamp = imagePoseStamp;
@@ -673,7 +673,7 @@ namespace Cozmo {
       } else {
         PRINT_CH_INFO("VisionComponent",
                       "VisionComponent.PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
-                      "Stopping at %.1fdeg", RAD_TO_DEG_F32(headAngle_rad));
+                      "Stopping at %.1fdeg", RAD_TO_DEG(headAngle_rad));
         break;
       }
     }
@@ -692,7 +692,7 @@ namespace Cozmo {
     if(iter == _groundPlaneHomographyLUT.end()) {
       PRINT_NAMED_WARNING("VisionComponent.LookupGroundPlaneHomography.KeyNotFound",
                           "Failed to find homogrphay using headangle of %.2frad (%.1fdeg) as lower bound",
-                          atHeadAngle, RAD_TO_DEG_F32(atHeadAngle));
+                          atHeadAngle, RAD_TO_DEG(atHeadAngle));
       --iter;
     } else {
       auto nextIter = iter; ++nextIter;
@@ -976,7 +976,7 @@ namespace Cozmo {
       
       // If we were moving too fast at timestamp t and we aren't doing rolling shutter correction
       // then don't queue this marker otherwise don't queue if only the head was moving too fast
-      if(WasMovingTooFast(t, DEG_TO_RAD_F32(kBodyTurnSpeedThreshBlock_degs), DEG_TO_RAD_F32(kHeadTurnSpeedThreshBlock_degs)))
+      if(WasMovingTooFast(t, DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs), DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)))
       {
         return RESULT_OK;
       }
@@ -1087,8 +1087,8 @@ namespace Cozmo {
       // else we will just look at the previous and next imu data
       if((kBodyTurnSpeedThreshFace_degs > 0.f || kHeadTurnSpeedThreshFace_degs > 0.f) &&
          WasMovingTooFast(faceDetection.GetTimeStamp(),
-                          DEG_TO_RAD_F32(kBodyTurnSpeedThreshFace_degs),
-                          DEG_TO_RAD_F32(kHeadTurnSpeedThreshFace_degs),
+                          DEG_TO_RAD(kBodyTurnSpeedThreshFace_degs),
+                          DEG_TO_RAD(kHeadTurnSpeedThreshFace_degs),
                           (faceDetection.IsBeingTracked() ? kNumImuDataToLookBack : 0)))
       {
         // Skip this face
@@ -1114,8 +1114,8 @@ namespace Cozmo {
     {
       if((FLT_GT(kBodyTurnSpeedThreshPet_degs, 0.f) || FLT_GT(kHeadTurnSpeedThreshPet_degs, 0.f)) &&
          WasMovingTooFast(pet.GetTimeStamp(),
-                          DEG_TO_RAD_F32(kBodyTurnSpeedThreshPet_degs),
-                          DEG_TO_RAD_F32(kHeadTurnSpeedThreshPet_degs),
+                          DEG_TO_RAD(kBodyTurnSpeedThreshPet_degs),
+                          DEG_TO_RAD(kHeadTurnSpeedThreshPet_degs),
                           (pet.IsBeingTracked() ? kNumImuDataToLookBack : 0)))
       {
         // Skip this pet
@@ -1772,7 +1772,7 @@ namespace Cozmo {
     }};
     
     static const s32 kDotDiameter_pix = 25;
-    static const f32 kDotArea_pix = (f32)(kDotDiameter_pix*kDotDiameter_pix) * 0.25f * PI_F;
+    static const f32 kDotArea_pix = (f32)(kDotDiameter_pix*kDotDiameter_pix) * 0.25f * M_PI_F;
     static const f32 kMinAreaFrac = 0.75f; // relative to circular dot area
     static const f32 kMaxAreaFrac = 1.25f; // relative to dot bounding box
     

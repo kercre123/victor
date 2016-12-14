@@ -541,7 +541,7 @@ void BehaviorLookInPlaceMemoryMap::UpdateSectorRender(Robot& robot)
         
         {
           const float sectorStart_deg = (prevIdx * anglePerSector_deg) + angleOffsetToNotOverlap_deg;
-          const Radians sectorStart_rad  = _startingBodyFacing_rad.ToFloat() + DEG_TO_RAD_F32( sectorStart_deg );
+          const Radians sectorStart_rad  = _startingBodyFacing_rad.ToFloat() + DEG_TO_RAD( sectorStart_deg );
           const Rotation3d startRotateAbsAroundUp(sectorStart_rad, kUpVector);
           const Vec3f& sectorStartLine = startRotateAbsAroundUp * kFwdVector;
           const Point3f& from3D = renderCenter + sectorStartLine * minDist;
@@ -551,7 +551,7 @@ void BehaviorLookInPlaceMemoryMap::UpdateSectorRender(Robot& robot)
 
         {
           const float sectorEnd_deg = (idx * anglePerSector_deg) - angleOffsetToNotOverlap_deg;
-          const Radians sectorEnd_rad = _startingBodyFacing_rad.ToFloat() + DEG_TO_RAD_F32( sectorEnd_deg );
+          const Radians sectorEnd_rad = _startingBodyFacing_rad.ToFloat() + DEG_TO_RAD( sectorEnd_deg );
           const Rotation3d endRotateAbsAroundUp  (sectorEnd_rad, kUpVector);
           const Vec3f& sectorEndLine = endRotateAbsAroundUp * kFwdVector;
           const Point3f& from3D = renderCenter + sectorEndLine * minDist;

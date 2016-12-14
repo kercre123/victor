@@ -302,7 +302,7 @@ namespace Anki
 
       for(s32 x=0; x<imageWidth; x++) {
         s32 scaleValue = -1;
-        s32 dogMax = s32_MIN;
+        s32 dogMax = std::numeric_limits<s32>::min();
         for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
           const s32 dog = ABS(static_cast<s32>(pFilteredRows[iHalfWidth+1][x]) - static_cast<s32>(pFilteredRows[iHalfWidth][x]));
 

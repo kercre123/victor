@@ -158,7 +158,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 4;
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(PI/2, DEG_TO_RAD(100), 0, false, 1));
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(M_PI_F/2, DEG_TO_RAD(100), 0, false, 1));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -177,7 +177,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 5;
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-PI/2, DEG_TO_RAD(100), 0, false, 1));
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, false, 1));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -196,7 +196,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 6;
-            m.action.Set_panAndTilt(ExternalInterface::PanAndTilt(PI, PI, true, true));
+            m.action.Set_panAndTilt(ExternalInterface::PanAndTilt(M_PI_F, M_PI_F, true, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -220,7 +220,7 @@ namespace Anki {
             // Face the position (0,-100,0) wrt robot
             m.action.Set_turnTowardsPose(ExternalInterface::TurnTowardsPose(GetRobotPose().GetTranslation().x(),
                                                               GetRobotPose().GetTranslation().y() + -1000,
-                                                              NECK_JOINT_POSITION[2], PI, 0, 0, 0, 0, 0, 0, 1));
+                                                              NECK_JOINT_POSITION[2], M_PI_F, 0, 0, 0, 0, 0, 0, 1));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -233,14 +233,14 @@ namespace Anki {
           // Verify robot is facing pose
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 20) &&
-                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD_F32(4), HEAD_ANGLE_TOL), DEFAULT_TIMEOUT)
+                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(4.f), HEAD_ANGLE_TOL), DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 8;
             // Face block 0
-            m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(0, PI, 0, 0, 0, 0, 0, 0, 1, true, false));
+            m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(0, M_PI_F, 0, 0, 0, 0, 0, 0, 1, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

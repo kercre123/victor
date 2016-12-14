@@ -105,7 +105,7 @@ namespace Anki {
           GetObjectPose(0, pose);
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
-                                           NEAR(pose.GetRotationAngle(), -1.5, 0.2), 25)
+                                           pose.GetRotationAngle().IsNear(-1.5f, 0.2f), 25)
           {
             StopMovie();
             CST_EXIT();

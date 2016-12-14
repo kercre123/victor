@@ -45,7 +45,7 @@ EComputePathStatus DubbinsPlanner::ComputePath(const Pose3d& startPose,
   startPose.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
   float dotProduct = DotProduct(rotAxis, Z_AXIS_3D());
   const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
-  if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
+  if(!rotAngle.IsNear(0.f, DEG_TO_RAD(10.f)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
     PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_start",
                       "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)",
                       rotAxis.x(), rotAxis.y(), rotAxis.z());
@@ -64,7 +64,7 @@ EComputePathStatus DubbinsPlanner::ComputePath(const Pose3d& startPose,
   // TODO: Something smarter?
   targetPose.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
   dotProduct = DotProduct(rotAxis, Z_AXIS_3D());
-  if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
+  if(!rotAngle.IsNear(0.f, DEG_TO_RAD(10.f)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
     PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_target",
                       "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)",
                       rotAxis.x(), rotAxis.y(), rotAxis.z());

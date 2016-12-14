@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/exceptions.h"
+#include "util/math/math.h"
 #include "clad/vizInterface/messageViz.h"
 #include <OpenGL/OpenGL.h>
 #pragma GCC diagnostic push
@@ -567,23 +568,23 @@ void PhysVizController::ProcessVizAppendPathSegmentArcMessage(const AnkiEvent<Vi
   float dir = (sweepRad > 0 ? 1 : -1);
 
   // Make endRad be between -PI and PI
-  while (endRad > PI) {
-    endRad -= 2*PI;
+  while (endRad > M_PI_F) {
+    endRad -= 2*M_PI_F;
   }
-  while (endRad < -PI) {
-    endRad += 2*PI;
+  while (endRad < -M_PI_F) {
+    endRad += 2*M_PI_F;
   }
 
 
   if (dir == 1) {
     // Make startRad < endRad
     while (startRad > endRad) {
-      startRad -= 2*PI;
+      startRad -= 2*M_PI_F;
     }
   } else {
     // Make startRad > endRad
     while (startRad < endRad) {
-      startRad += 2*PI;
+      startRad += 2*M_PI_F;
     }
   }
 
@@ -644,7 +645,7 @@ void PhysVizController::ProcessVizSetOriginMessage(const AnkiEvent<VizInterface:
 {
   const auto& payload = msg.GetData().Get_SetVizOrigin();
   
-  _globalRotation[0] = RAD_TO_DEG_F32(payload.rot_rad); // Note that global rotation angle is in degrees!
+  _globalRotation[0] = RAD_TO_DEG(payload.rot_rad); // Note that global rotation angle is in degrees!
   _globalRotation[1] = payload.rot_axis_x;
   _globalRotation[2] = payload.rot_axis_y;
   _globalRotation[3] = payload.rot_axis_z;

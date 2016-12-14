@@ -51,7 +51,7 @@ const float kRecentFailure_sec = 45.0f;
 // if a cube fails, how far does it have to move so that we ignore that previous failure
 const float kCubeFailureDist_mm = 20.0f;
 // if a cube fails, how far does it have to turn so that we ignore that previous failure
-const float kCubeFailureRot_rad = DEG_TO_RAD_F32(22.5f);
+const float kCubeFailureRot_rad = DEG_TO_RAD(22.5f);
 
 // if a location fails, how far does it invalidate other poses
 // if a location failed, chances are nearby locations will fail too. Now, the whiteboard doesn't store all failures, so

@@ -1,4 +1,3 @@
-#include "util/math/constantsAndMacros.h"
 #include "util/helpers/includeGTest.h"
 #include "util/logging/logging.h"
 
@@ -12,6 +11,7 @@
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
+#include "util/helpers/quoteMacro.h"
 #include "util/jsonWriter/jsonWriter.h"
 
 using namespace std;

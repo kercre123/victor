@@ -305,7 +305,7 @@ Cost xythetaEnvironment::ApplyPathSegment(const PathSegment& pathSegment,
   // since mprim.json uses an intermediate step size of 0.25 in positon, and PI/32 in orientation,
   // find a step size that matches the smaller of those
   const float kPrimPositionStepSizeRecip = 4.0f;
-  const float kPrimAngleStepSizeRecip = 32/PI;
+  const float kPrimAngleStepSizeRecip = 32/M_PI_F;
   const size_t numPointsPosition = std::ceil(1 + pathSegment.GetLength() * kPrimPositionStepSizeRecip);
   const size_t numPointsAngle
     = std::ceil(Anki::Util::Abs(Radians(segmentDef.turn.targetAngle - start_theta).ToFloat()) * kPrimAngleStepSizeRecip);

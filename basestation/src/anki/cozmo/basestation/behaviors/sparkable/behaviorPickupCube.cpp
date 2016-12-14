@@ -185,7 +185,7 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
   
   // Don't visually verify when using a tap intent object since it could be far away or obscured
   const bool shouldVisuallyVerify = !robot.GetBehaviorManager().GetWhiteboard().HasTapIntent();
-  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlockID, Radians(PI_F), shouldVisuallyVerify));
+  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlockID, Radians(M_PI_F), shouldVisuallyVerify));
   if(!_shouldStreamline){
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
   }
@@ -268,7 +268,7 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
     return;
   }
   
-  double turn_rad = robot.GetRNG().RandDblInRange(M_PI_4 ,PI_F);
+  double turn_rad = robot.GetRNG().RandDblInRange(M_PI_4 ,M_PI_F);
   if( robot.GetRNG().RandDbl() < 0.5 )
   {
     turn_rad *= -1;

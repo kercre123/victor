@@ -380,7 +380,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
     if (std::fabsf(turnSpeed) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
       PRINT_NAMED_WARNING("MovementComponent.EventHandler.TurnInPlaceAtSpeed.SpeedExceedsLimit",
                           "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
-                          RAD_TO_DEG_F32(turnSpeed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+                          RAD_TO_DEG(turnSpeed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
       turnSpeed = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, turnSpeed);
     }
     DirectDriveCheckSpeedAndLockTracks(turnSpeed,

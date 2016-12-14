@@ -19,7 +19,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 
-#include "util/math/constantsAndMacros.h"
+#include "util/math/math.h"
 
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
@@ -256,7 +256,7 @@ namespace Anki {
             // Clip the offset so it will stay on the preActionLine
             // Offset will always be positive which is what causes the slightly odd (but desirable) behavior of the
             // preDock pose moving away from the robot when we are infront of the end of the preActionLine closest to the object
-            const f32 offset = CLIP(sqrtf(x*x + y*y), 0, preActionPose.GetLineLength());
+            const f32 offset = CLIP(sqrtf(x*x + y*y), 0.f, preActionPose.GetLineLength());
           
             PreActionPose newPose(preActionPose, relToObjectPose, preActionPose.GetLineLength(), offset);
             currentPose = newPose;

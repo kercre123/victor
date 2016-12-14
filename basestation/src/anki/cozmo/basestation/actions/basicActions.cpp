@@ -68,7 +68,7 @@ namespace Anki {
       if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.SetMaxSpeed.SpeedExceedsLimit",
                             "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
-                            RAD_TO_DEG_F32(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+                            RAD_TO_DEG(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _maxSpeed_radPerSec = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxSpeed_radPerSec);
       } else if (maxSpeed_radPerSec == 0) {
         _maxSpeed_radPerSec = _kDefaultSpeed;
@@ -95,7 +95,7 @@ namespace Anki {
         PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             _angleTolerance.getDegrees(),
-                            RAD_TO_DEG_F32(POINT_TURN_ANGLE_TOL));
+                            RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
         _angleTolerance = POINT_TURN_ANGLE_TOL;
       }
     }
@@ -189,7 +189,7 @@ namespace Anki {
     bool TurnInPlaceAction::IsBodyInPosition(Radians& currentAngle) const
     {
       currentAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
-      const bool inPosition = NEAR((currentAngle-_currentTargetAngle).ToFloat(), 0.f, _angleTolerance.ToFloat() + FLOATING_POINT_COMPARISON_TOLERANCE);
+      const bool inPosition = currentAngle.IsNear(_currentTargetAngle, _angleTolerance.ToFloat() + Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
       return inPosition && !_robot.GetMoveComponent().AreWheelsMoving();
     }
     
@@ -243,7 +243,7 @@ namespace Anki {
       
       // When we've turned at least halfway, remove eye dart
       if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
-        if(_inPosition || NEAR((_currentAngle-_currentTargetAngle).ToFloat(), 0.f, _halfAngle.ToFloat()))
+        if(_inPosition || _currentAngle.IsNear(_currentTargetAngle, _halfAngle))
         {
           PRINT_CH_DEBUG("Actions", "TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
                          "Currently at %.1fdeg, on the way to %.1fdeg, within "
@@ -355,9 +355,9 @@ namespace Anki {
       PRINT_NAMED_DEBUG("SearchForNearbyObjectAction.Init",
                         "Action will wait %f, turn %fdeg, wait %f, turn %fdeg, wait %f",
                         initialWait_s,
-                        RAD_TO_DEG_F32(firstAngle_rads),
+                        RAD_TO_DEG(firstAngle_rads),
                         afterFirstTurnWait_s,
-                        RAD_TO_DEG_F32(secondAngle_rads),
+                        RAD_TO_DEG(secondAngle_rads),
                         afterSecondTurnWait_s);
 
       _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
@@ -627,12 +627,12 @@ namespace Anki {
       if(_headAngle < MIN_HEAD_ANGLE) {
         PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
                             "Requested head angle (%.1fdeg) less than min head angle (%.1fdeg). Clipping.",
-                            _headAngle.getDegrees(), RAD_TO_DEG_F32(MIN_HEAD_ANGLE));
+                            _headAngle.getDegrees(), RAD_TO_DEG(MIN_HEAD_ANGLE));
         _headAngle = MIN_HEAD_ANGLE;
       } else if(_headAngle > MAX_HEAD_ANGLE) {
         PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
                             "Requested head angle (%.1fdeg) more than max head angle (%.1fdeg). Clipping.",
-                            _headAngle.getDegrees(), RAD_TO_DEG_F32(MAX_HEAD_ANGLE));
+                            _headAngle.getDegrees(), RAD_TO_DEG(MAX_HEAD_ANGLE));
         _headAngle = MAX_HEAD_ANGLE;
       }
       
@@ -640,7 +640,7 @@ namespace Anki {
         PRINT_NAMED_WARNING("MoveHeadToAngleAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             _angleTolerance.getDegrees(),
-                            RAD_TO_DEG_F32(HEAD_ANGLE_TOL));
+                            RAD_TO_DEG(HEAD_ANGLE_TOL));
         _angleTolerance = HEAD_ANGLE_TOL;
       }
       
@@ -690,7 +690,7 @@ namespace Anki {
     
     bool MoveHeadToAngleAction::IsHeadInPosition() const
     {
-      const bool inPosition = NEAR((Radians(_robot.GetHeadAngle()) - _headAngle).ToFloat(), 0.f, _angleTolerance.ToFloat()+FLOATING_POINT_COMPARISON_TOLERANCE);
+      const bool inPosition = _headAngle.IsNear(_robot.GetHeadAngle(), _angleTolerance.ToFloat()+Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
       return inPosition;
     }
     
@@ -744,13 +744,13 @@ namespace Anki {
       {
         // If we're not there yet but at least halfway, and we're not supposed
         // to "hold" the eyes, then remove eye shift
-        if(_inPosition || NEAR(Radians(_robot.GetHeadAngle()) - _headAngle, 0.f, _halfAngle))
+        if(_inPosition || _headAngle.IsNear(_robot.GetHeadAngle(), _halfAngle))
         {
           PRINT_CH_DEBUG("Actions", "MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
                          "[%d] Currently at %.1fdeg, on the way to %.1fdeg, within "
                          "half angle of %.1fdeg",
                          GetTag(),
-                         RAD_TO_DEG_F32(_robot.GetHeadAngle()),
+                         RAD_TO_DEG(_robot.GetHeadAngle()),
                          _headAngle.getDegrees(),
                          _halfAngle.getDegrees());
           
@@ -775,7 +775,7 @@ namespace Anki {
                         "[%d] Head considered in position at %.1fdeg but still moving at %.1fdeg",
                         GetTag(),
                         _headAngle.getDegrees(),
-                        RAD_TO_DEG_F32(_robot.GetHeadAngle()));
+                        RAD_TO_DEG(_robot.GetHeadAngle()));
         }
       
         result = _robot.GetMoveComponent().IsHeadMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
@@ -784,7 +784,7 @@ namespace Anki {
         PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveHeadToAngleAction.CheckIfDone.NotInPosition",
                                 "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f) tol:%.1fdeg",
                                 GetTag(),
-                                RAD_TO_DEG_F32(_robot.GetHeadAngle()),
+                                RAD_TO_DEG(_robot.GetHeadAngle()),
                                 _headAngle.getDegrees(),
                                 _variability.getDegrees(),
                                 _angleTolerance.getDegrees());
@@ -1012,7 +1012,7 @@ namespace Anki {
       } else if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         PRINT_NAMED_WARNING("PanAndTiltAction.SetMaxSpeed.PanSpeedExceedsLimit",
                             "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
-                            RAD_TO_DEG_F32(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+                            RAD_TO_DEG(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _maxPanSpeed_radPerSec = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxSpeed_radPerSec);
       } else {
         _maxPanSpeed_radPerSec = maxSpeed_radPerSec;
@@ -1043,7 +1043,7 @@ namespace Anki {
         PRINT_NAMED_WARNING("PanAndTiltAction.SetPanTolerance.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             _panAngleTol.getDegrees(),
-                            RAD_TO_DEG_F32(POINT_TURN_ANGLE_TOL));
+                            RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
         _panAngleTol = POINT_TURN_ANGLE_TOL;
       }
     }
@@ -1081,7 +1081,7 @@ namespace Anki {
         PRINT_NAMED_WARNING("PanAndTiltAction.SetTiltTolerance.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             _tiltAngleTol.getDegrees(),
-                            RAD_TO_DEG_F32(HEAD_ANGLE_TOL));
+                            RAD_TO_DEG(HEAD_ANGLE_TOL));
         _tiltAngleTol = HEAD_ANGLE_TOL;
       }
     }
@@ -1808,7 +1808,7 @@ namespace Anki {
           
           // ... with valid pose w.r.t. robot. Turn towards that face -- iff it doesn't
           // require too large of an adjustment.
-          const Radians maxFineTuneAngle( std::min( GetMaxTurnAngle().ToFloat(), DEG_TO_RAD_F32(45)) );
+          const Radians maxFineTuneAngle( std::min( GetMaxTurnAngle().ToFloat(), DEG_TO_RAD(45.f)) );
           SetAction(new TurnTowardsPoseAction(_robot, pose, maxFineTuneAngle));
         }
       } else {

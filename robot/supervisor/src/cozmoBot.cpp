@@ -408,7 +408,7 @@ namespace Anki {
           // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
           // (The available frame is still one frame behind? I.e. we are just *about* to capture
           //  the next one?)
-          TimeStamp_t currentImageTime = floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
+          TimeStamp_t currentImageTime = floor((currentTime-HAL::GetCameraStartTime())/HAL::GetVisionTimeStep()) * HAL::GetVisionTimeStep() + HAL::GetCameraStartTime() - HAL::GetVisionTimeStep();
 
           // Keep up with the capture time of the last image we sent
           static TimeStamp_t lastImageSentTime = 0;

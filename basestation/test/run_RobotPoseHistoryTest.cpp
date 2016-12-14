@@ -152,9 +152,9 @@ TEST(RobotPoseHistory, GroundTruthPose)
   const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
   
   // Pose 1, 2, and 3
-  const Pose3d p1(0.25*PI_F, Z_AXIS_3D(), Vec3f(1,0,0), &origin );
-  const Pose3d p2(PIDIV2_F, Z_AXIS_3D(), Vec3f(1,2,0), &origin );
-  const Pose3d p3(PIDIV2_F - 0.25*PI_F, Z_AXIS_3D(), Vec3f(1 - sqrtf(2),2,0), &origin );
+  const Pose3d p1(0.25*M_PI_F, Z_AXIS_3D(), Vec3f(1,0,0), &origin );
+  const Pose3d p2(M_PI_2_F, Z_AXIS_3D(), Vec3f(1,2,0), &origin );
+  const Pose3d p3(M_PI_2_F - 0.25*M_PI_F, Z_AXIS_3D(), Vec3f(1 - sqrtf(2),2,0), &origin );
   Pose3d p1_by_p2Top3( p3 ); // Start by copying p3 so end result keeps origin
   p1_by_p2Top3 *= p2.GetInverse();
   p1_by_p2Top3 *= p1;

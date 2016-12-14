@@ -18,7 +18,6 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "clad/types/animationTrigger.h"
-#include "util/math/constantsAndMacros.h"
 
 
 #include <map>
@@ -45,10 +44,10 @@ protected:
   // Default configuration parameters which can be overriden by JSON config
   struct ConfigParams {
     AnimationTrigger reactionAnimTrigger   = AnimationTrigger::Count;
-    Radians     maxTurnAngle_rad           = DEG_TO_RAD_F32(45.f);
-    Radians     samePoseAngleThreshold_rad = DEG_TO_RAD_F32(45.f);
-    Radians     panTolerance_rad           = DEG_TO_RAD_F32(5.f);
-    Radians     tiltTolerance_rad          = DEG_TO_RAD_F32(5.f);
+    Radians     maxTurnAngle_rad           = DEG_TO_RAD(45.f);
+    Radians     samePoseAngleThreshold_rad = DEG_TO_RAD(45.f);
+    Radians     panTolerance_rad           = DEG_TO_RAD(5.f);
+    Radians     tiltTolerance_rad          = DEG_TO_RAD(5.f);
     TimeStamp_t coolDownDuration_ms        = 600000; // time since last seen (in same pose) before re-reaction
     float       samePoseDistThreshold_mm   = 80.f;
     float       samePoseDistThreshold_sparked_mm   = 30.f;

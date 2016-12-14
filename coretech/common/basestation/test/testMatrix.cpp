@@ -7,7 +7,7 @@
 #define DEBUG_TEST_MATRIX
 
 
-#define ASSERT_NEAR_EQ(a,b) ASSERT_NEAR(a,b,FLOATING_POINT_COMPARISON_TOLERANCE)
+#define ASSERT_NEAR_EQ(a,b) ASSERT_NEAR(a,b,Util::FLOATING_POINT_COMPARISON_TOLERANCE)
 
 using namespace std;
 using namespace Anki;

@@ -42,7 +42,7 @@ namespace {
 
 // all coordinates have to be this close from their counterpart to be considered the same observation (and thus override it)
 CONSOLE_VAR(float, kBW_PossibleObjectClose_mm, "AIWhiteboard", 50.0f);
-CONSOLE_VAR(float, kBW_PossibleObjectClose_rad, "AIWhiteboard", PI_F); // current objects flip due to distance, consider 360 since we don't care
+CONSOLE_VAR(float, kBW_PossibleObjectClose_rad, "AIWhiteboard", M_PI_F); // current objects flip due to distance, consider 360 since we don't care
 // limit to how many pending possible objects we have stored
 CONSOLE_VAR(uint32_t, kBW_MaxPossibleObjects, "AIWhiteboard", 10);
 CONSOLE_VAR(float, kFlatPosisbleObjectTol_deg, "AIWhiteboard", 10.0f);

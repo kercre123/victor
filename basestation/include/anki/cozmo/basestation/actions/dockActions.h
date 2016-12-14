@@ -268,7 +268,7 @@ namespace Anki {
       
     protected:
       
-      static constexpr f32 kMaxSuccessfulPitchAngle_rad = DEG_TO_RAD_F32(-70);
+      static constexpr f32 kMaxSuccessfulPitchAngle_rad = DEG_TO_RAD(-70.f);
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
       
@@ -476,7 +476,7 @@ namespace Anki {
       
     private:
       // How much we should look down to be able to see the marker of the object we just rolled
-      const f32 kAngleToLookDown = DEG_TO_RAD_F32(-15);
+      const f32 kAngleToLookDown = DEG_TO_RAD(-15.f);
       
     }; // class RollObjectAction
 

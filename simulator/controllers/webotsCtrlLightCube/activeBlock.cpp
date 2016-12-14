@@ -12,6 +12,7 @@
 #include "clad/robotInterface/lightCubeMessage.h"
 #include "anki/cozmo/robot/ledController.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -560,7 +561,7 @@ Result Update() {
       msg.tapped.numTaps = 1;
       msg.tapped.tapNeg = -50;  // Hard-coded tap intensity.
       msg.tapped.tapPos = 50;   // Just make sure that tapPos - tapNeg > BlockTapFilterComponent::kTapIntensityMin
-      msg.tapped.tapTime = static_cast<u32>(active_object_controller.getTime() / 0.035f) % u8_MAX;  // Each tapTime count should be 35ms
+      msg.tapped.tapTime = static_cast<u32>(active_object_controller.getTime() / 0.035f) % std::numeric_limits<u8>::max();  // Each tapTime count should be 35ms
       emitter_->send(msg.GetBuffer(), msg.Size());
     }
 

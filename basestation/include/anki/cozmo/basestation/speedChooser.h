@@ -14,7 +14,6 @@
 #define ANKI_COZMO_SPEED_CHOOSER_H
 
 #include "anki/common/basestation/math/pose.h"
-#include "anki/cozmo/shared/cozmoConfig_common.h"
 #include "clad/types/pathMotionProfile.h"
 #include "util/random/randomGenerator.h"
 #include "util/signals/simpleSignal_fwd.h"

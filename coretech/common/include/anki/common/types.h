@@ -23,7 +23,7 @@
 #define ANKICORETECH_COMMON_TYPES_H_
 
 #include <stdint.h>
-#include "util/math/constantsAndMacros.h"
+#include <limits.h>
 
 typedef uint8_t  u8;
 typedef int8_t   s8;
@@ -35,6 +35,8 @@ typedef uint64_t u64;
 typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
+
+
 // A key associated with each computed pose retrieved from history
 // to be used to check its validity at a later time.
 typedef uint32_t HistPoseKey;
@@ -45,7 +47,7 @@ typedef u32 RobotID_t;
 
 typedef u32 CameraID_t;
 
-const CameraID_t ANY_CAMERA = u32_MAX;
+const CameraID_t ANY_CAMERA = UINT_MAX;
 
 //const ObjectID ANY_OBJECT = u16_MAX;
 

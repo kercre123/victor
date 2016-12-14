@@ -44,7 +44,7 @@ bool WithinPreActionThreshold(const Robot& robot, std::vector<Pose3d>& possibleP
   
 }
 
-static constexpr f32 kPreDockPoseAngleTolerance = DEG_TO_RAD_F32(5);
+static constexpr f32 kPreDockPoseAngleTolerance = DEG_TO_RAD(5.f);
 
 DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot,
                                                  const ObjectID objectID,

@@ -213,7 +213,7 @@ std::string ParseString(const Json::Value& config, const char* key, const std::s
     const bool found = GetValueOptional(jsonRoot, key, storedVal);
     if(found) {
       if(storedInDegrees) {
-        angle = DEG_TO_RAD_F32(storedVal);
+        angle = DEG_TO_RAD(storedVal);
       } else {
         angle = storedVal;
       }

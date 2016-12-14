@@ -11,7 +11,7 @@ extern "C" {
 #include "anki/cozmo/robot/crashLogs.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/rec_protocol.h"
-#include "anki/cozmo/shared/cozmoConfig_common.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "timer.h"
 #include "storage.h"

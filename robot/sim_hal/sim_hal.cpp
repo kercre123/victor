@@ -63,6 +63,8 @@ namespace Anki {
 
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
 
+      const u32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
+
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
 
       bool isInitialized = false;
@@ -204,7 +206,7 @@ namespace Anki {
       // Approximate open-loop conversion of head power to angular head speed
       float HeadPowerToAngSpeed(float power)
       {
-        return power * 2*PI_F;
+        return power * 2*M_PI_F;
       }
 
 
@@ -904,6 +906,11 @@ namespace Anki {
       return cameraStartTime_ms_;
     }
 
+    u32 HAL::GetVisionTimeStep()
+    {
+      return VISION_TIME_STEP;
+    }
+    
     bool HAL::IsVideoEnabled()
     {
       return enableVideo_;

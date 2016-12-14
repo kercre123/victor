@@ -2750,7 +2750,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
 
   const s32 maxIterations = 50;
 
-  const f32 convergenceTolerance_angle = 0.05f * PI_F / 180.0f;
+  const f32 convergenceTolerance_angle = 0.05f * M_PI_F / 180.0f;
   const f32 convergenceTolerance_distance = 0.05f;
 
   const f32 scaleTemplateRegionPercent = 1.05f;
@@ -4211,15 +4211,15 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
 
   ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
-  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(50, 100, 50, u16_MAX); // 2
-  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, s16_MAX, 0); // 9
-  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, 0, 0); // 7
-  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 4
-  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, s16_MAX, 0, 0); // 5
-  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(0, s16_MAX, s16_MAX, 0); // 8
-  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(0, s16_MAX, s16_MAX, u16_MAX); // 3
-  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, 0, u16_MAX); // 1
-  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, s16_MAX, 0, 0); // 6
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(50, 100, 50, std::numeric_limits<u16>::max()); // 2
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(std::numeric_limits<s16>::max(), std::numeric_limits<s16>::max(), std::numeric_limits<s16>::max(), 0); // 9
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(std::numeric_limits<s16>::max(), std::numeric_limits<s16>::max(), 0, 0); // 7
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(std::numeric_limits<s16>::max(), std::numeric_limits<s16>::max(), std::numeric_limits<s16>::max(), std::numeric_limits<u16>::max()); // 4
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, std::numeric_limits<s16>::max(), 0, 0); // 5
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(0, std::numeric_limits<s16>::max(), std::numeric_limits<s16>::max(), 0); // 8
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(0, std::numeric_limits<s16>::max(), std::numeric_limits<s16>::max(), std::numeric_limits<u16>::max()); // 3
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(std::numeric_limits<s16>::max(), std::numeric_limits<s16>::max(), 0, std::numeric_limits<u16>::max()); // 1
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, std::numeric_limits<s16>::max(), 0, 0); // 6
   const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(42, 42, 42, 42); // 0
 
   components.get_componentsU16()->PushBack(component0);
@@ -4592,7 +4592,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
     Point<PRECISION>(0.2249,    0.0851));
 
   const f32 distThreshold      = 3.f;
-  const f32 angleThreshold     = DEG_TO_RAD_F32(2);
+  const f32 angleThreshold     = DEG_TO_RAD(2.f);
   const f32 pixelErrThreshold  = 1.f;
 
   // Create the 3D marker and put it in the specified pose relative to the camera

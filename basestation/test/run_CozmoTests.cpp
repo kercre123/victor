@@ -1657,25 +1657,25 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
             finalOb1Pose.GetWithRespectToOrigin().GetTranslation().x(),
             finalOb1Pose.GetWithRespectToOrigin().GetTranslation().y(),
             finalOb1Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG_F32(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     fprintf(stdout, "Ob2 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
             finalOb2Pose.GetWithRespectToOrigin().GetTranslation().x(),
             finalOb2Pose.GetWithRespectToOrigin().GetTranslation().y(),
             finalOb2Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG_F32(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     fprintf(stdout, "Ob3 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
             finalOb3Pose.GetWithRespectToOrigin().GetTranslation().x(),
             finalOb3Pose.GetWithRespectToOrigin().GetTranslation().y(),
             finalOb3Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG_F32(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     ASSERT_EQ(stackShouldExist, stacks.ConfigurationCount() > 0);
     
@@ -1756,17 +1756,17 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
                   staticPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
                   staticPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
                   staticPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                  RAD_TO_DEG_F32(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                  RAD_TO_DEG_F32(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                  RAD_TO_DEG_F32(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
           
           fprintf(stdout, "baseBlockPose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
                   basePoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
                   basePoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
                   basePoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                  RAD_TO_DEG_F32(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                  RAD_TO_DEG_F32(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                  RAD_TO_DEG_F32(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
           
           ASSERT_TRUE(bases.ConfigurationCount() == 1);
           
@@ -1791,9 +1791,9 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
                     topPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
                     topPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
                     topPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                    RAD_TO_DEG_F32(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                    RAD_TO_DEG_F32(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                    RAD_TO_DEG_F32(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
 
             
             ASSERT_TRUE(pyramids.ConfigurationCount() == 1);
@@ -1997,9 +1997,9 @@ TEST(FactoryTest, FindDotsInImages)
                      "'%s'[%s]: position=(%.1f,%.1f,%.1f)mm Roll=%.1fdeg Pitch=%.1fdeg, Yaw=%.1fdeg",
                      test.filename.c_str(), msg.success ? "SUCCESS" : "FAIL",
                      msg.camPoseX_mm, msg.camPoseY_mm, msg.camPoseZ_mm,
-                     RAD_TO_DEG_F32(msg.camPoseRoll_rad),
-                     RAD_TO_DEG_F32(msg.camPosePitch_rad),
-                     RAD_TO_DEG_F32(msg.camPoseYaw_rad));
+                     RAD_TO_DEG(msg.camPoseRoll_rad),
+                     RAD_TO_DEG(msg.camPosePitch_rad),
+                     RAD_TO_DEG(msg.camPoseYaw_rad));
     
     // TODO: Check the rest of the message contents for sane values
   }

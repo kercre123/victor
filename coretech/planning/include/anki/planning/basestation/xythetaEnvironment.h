@@ -8,7 +8,7 @@
 #include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
 #include "xythetaPlanner_definitions.h"
-#include "util/math/constantsAndMacros.h"
+#include "util/math/math.h"
 #include <assert.h>
 #include <cmath>
 #include <cfloat>
@@ -365,7 +365,7 @@ public:
   Cost ApplyPathSegment(const PathSegment& pathSegment,
                         State_c& state_c,
                         bool checkCollisions = true,
-                        float maxPenalty = FLOATING_POINT_COMPARISON_TOLERANCE) const;
+                        float maxPenalty = Util::FLOATING_POINT_COMPARISON_TOLERANCE) const;
 
   // Returns the state at the end of the given plan (e.g. following
   // along the plans start and executing every action). No collision

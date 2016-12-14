@@ -279,7 +279,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
   if( targetBlockID.IsSet() ) {
-    StartActing(new TurnTowardsObjectAction( robot, targetBlockID, PI_F ),
+    StartActing(new TurnTowardsObjectAction( robot, targetBlockID, M_PI_F ),
                 &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
     SET_STATE(FacingBlock);
   }
@@ -370,7 +370,7 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
 
     CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
 
-    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, lastKnownPose, PI_F);
+    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, lastKnownPose, M_PI_F);
     turnTowardsPoseAction->SetPanTolerance(DEG_TO_RAD(5));
     searchAction->AddAction(turnTowardsPoseAction);
 
@@ -494,7 +494,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
 void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 {
   const bool sayName = true;
-  StartActing(new TurnTowardsLastFacePoseAction(robot, PI_F, sayName),
+  StartActing(new TurnTowardsLastFacePoseAction(robot, M_PI_F, sayName),
               &BehaviorRequestGameSimple::TransitionToVerifyingFace);
   SET_STATE(LookingAtFace);
 }
@@ -531,7 +531,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
   // always turn back to the face after the animation in case the animation moves the head
   StartActing(new CompoundActionSequential(robot, {
         new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
-        new TurnTowardsLastFacePoseAction(robot, PI_F)}),
+        new TurnTowardsLastFacePoseAction(robot, M_PI_F)}),
     &BehaviorRequestGameSimple::TransitionToIdle);
   SET_STATE(PlayingRequestAnim);
 }

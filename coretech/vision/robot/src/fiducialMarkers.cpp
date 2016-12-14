@@ -745,7 +745,7 @@ namespace Anki
         probeYOffsetsF32[iOffset] = static_cast<f32>(VisionMarker::ProbePoints_Y[iOffset]) * fixedPointDivider;
       }
       
-      //u8 minValue = u8_MAX;
+      //u8 minValue = std::numeric_limits<u8>::max();
       //u8 maxValue = 0;
       
       for(s32 iProbe=0; iProbe<numProbes; ++iProbe)
@@ -1243,7 +1243,7 @@ namespace Anki
 #     elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       BeginBenchmark("vme_classify_tree");
       
-      AnkiAssert(NUM_TREES <= u8_MAX);
+      AnkiAssert(NUM_TREES <= std::numeric_limits<u8>::max());
       u8 predictedLabelsHist[NUM_MARKER_LABELS_ORIENTED];
       for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
         predictedLabelsHist[iLabel] = 0;
@@ -1734,7 +1734,7 @@ namespace Anki
 
       s32 bestDatabaseImage = -1;
       s32 bestDatabaseRotation = -1;
-      s32 bestDatabaseDifference = s32_MAX;
+      s32 bestDatabaseDifference = std::numeric_limits<s32>::max();
 
 #ifdef SHOW_EXHAUSTIVE_STEPS
       image.Show("image", false, false, true);

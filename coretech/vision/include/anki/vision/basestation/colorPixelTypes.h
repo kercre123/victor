@@ -13,7 +13,7 @@
 #ifndef __Anki_Coretech_Vision_Basestation_ColorPixelTypes_H__
 #define __Anki_Coretech_Vision_Basestation_ColorPixelTypes_H__
 
-#include "util/math/constantsAndMacros.h"
+#include "anki/common/types.h"
 #include <opencv2/core.hpp>
 
 namespace Anki {
@@ -81,7 +81,7 @@ namespace Vision {
     u8 gray() const {
       u16 gray = r() + (g() << 1) + b(); // give green double weight
       gray = gray >> 2; // divide by 4
-      assert(gray <= u8_MAX);
+      assert(gray <= std::numeric_limits<u8>::max());
       return static_cast<u8>(gray);
     }
     
@@ -147,7 +147,7 @@ namespace Vision {
   inline u8 PixelRGB_<u8>::gray() const {
     u16 gray = r() + (g() << 1) + b(); // give green double weight
     gray = gray >> 2; // divide by 4
-    assert(gray <= u8_MAX);
+    assert(gray <= std::numeric_limits<u8>::max());
     return static_cast<u8>(gray);
   }
  

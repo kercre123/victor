@@ -13,7 +13,6 @@
     <tExt>*.txt; *.h; *.inc</tExt>
     <pExt>*.plm</pExt>
     <CppX>*.cpp</CppX>
-    <nMigrate>0</nMigrate>
   </Extensions>
 
   <DaveTm>
@@ -32,7 +31,6 @@
         <BeepAtEnd>1</BeepAtEnd>
         <RunSim>0</RunSim>
         <RunTarget>1</RunTarget>
-        <RunAbUc>0</RunAbUc>
       </OPTTT>
       <OPTHX>
         <HexSelection>1</HexSelection>
@@ -78,6 +76,16 @@
         <IsCurrentTarget>1</IsCurrentTarget>
       </OPTFL>
       <CpuCode>5</CpuCode>
+      <DllOpt>
+        <SimDllName>SARMCM3.DLL</SimDllName>
+        <SimDllArguments>  </SimDllArguments>
+        <SimDlgDllName>DARMCM1.DLL</SimDlgDllName>
+        <SimDlgDllArguments>-pCM0</SimDlgDllArguments>
+        <TargetDllName>SARMCM3.DLL</TargetDllName>
+        <TargetDllArguments> </TargetDllArguments>
+        <TargetDlgDllName>TARMCM1.DLL</TargetDlgDllName>
+        <TargetDlgDllArguments>-pCM0</TargetDlgDllArguments>
+      </DllOpt>
       <DebugOpt>
         <uSim>0</uSim>
         <uTrg>1</uTrg>
@@ -96,11 +104,9 @@
         <tRfunc>0</tRfunc>
         <tRbox>1</tRbox>
         <tRtrace>1</tRtrace>
-        <sRSysVw>1</sRSysVw>
-        <tRSysVw>1</tRSysVw>
         <sRunDeb>0</sRunDeb>
         <sLrtime>0</sLrtime>
-        <nTsel>6</nTsel>
+        <nTsel>7</nTsel>
         <sDll></sDll>
         <sDllPa></sDllPa>
         <sDlgDll></sDlgDll>
@@ -191,7 +197,6 @@
           <WinNumber>1</WinNumber>
           <SubType>2</SubType>
           <ItemText>0x20002000</ItemText>
-          <AccSizeX>0</AccSizeX>
         </Mm>
       </MemoryWindow1>
       <Tracepoint>
@@ -225,10 +230,6 @@
       </DebugFlag>
       <LintExecutable></LintExecutable>
       <LintConfigFile></LintConfigFile>
-      <bLintAuto>0</bLintAuto>
-      <Lin2Executable></Lin2Executable>
-      <Lin2ConfigFile></Lin2ConfigFile>
-      <bLin2Auto>0</bLin2Auto>
     </TargetOption>
   </Target>
 
@@ -243,7 +244,11 @@
       <FileNumber>1</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
+      <ColumnNumber>49027076</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>0</TopLine>
+      <CurrentLine>5</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\ota\ota.cpp</PathWithFileName>
       <FilenameWithoutPath>ota.cpp</FilenameWithoutPath>
@@ -255,7 +260,11 @@
       <FileNumber>2</FileNumber>
       <FileType>5</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
+      <ColumnNumber>49027076</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>0</TopLine>
+      <CurrentLine>5</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\ota\ota.h</PathWithFileName>
       <FilenameWithoutPath>ota.h</FilenameWithoutPath>
@@ -267,7 +276,11 @@
       <FileNumber>3</FileNumber>
       <FileType>2</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
+      <ColumnNumber>49027076</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>0</TopLine>
+      <CurrentLine>5</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\ota\startup_nrf51.s</PathWithFileName>
       <FilenameWithoutPath>startup_nrf51.s</FilenameWithoutPath>
@@ -279,7 +292,11 @@
       <FileNumber>4</FileNumber>
       <FileType>8</FileType>
       <tvExp>1</tvExp>
+      <Focus>1</Focus>
+      <ColumnNumber>49027076</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>0</TopLine>
+      <CurrentLine>5</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\ota\lights.cpp</PathWithFileName>
       <FilenameWithoutPath>lights.cpp</FilenameWithoutPath>
@@ -299,7 +316,11 @@
       <FileNumber>5</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
+      <ColumnNumber>49027076</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>0</TopLine>
+      <CurrentLine>5</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\crypto\crc32.cpp</PathWithFileName>
       <FilenameWithoutPath>crc32.cpp</FilenameWithoutPath>

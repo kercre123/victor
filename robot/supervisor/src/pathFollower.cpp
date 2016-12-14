@@ -629,13 +629,13 @@ namespace Anki
         }
 
         // Compute x_center,y_center
-        f32 angToCenter = curr_angle.ToFloat() + (radius_mm > 0 ? -1 : 1) * PIDIV2_F;
+        f32 angToCenter = curr_angle.ToFloat() + (radius_mm > 0 ? -1 : 1) * M_PI_2_F;
         f32 absRadius = fabsf(radius_mm);
         f32 x_center = curr_x + absRadius * cosf(angToCenter);
         f32 y_center = curr_y + absRadius * sinf(angToCenter);
 
         // Compute startRad relative to (x_center, y_center)
-        f32 startRad = angToCenter + PI_F;
+        f32 startRad = angToCenter + M_PI_F;
 
         // Get intermediate poses: (1) after starting accel phase and (2) before ending accel phase
         f32 startAccelSweep = vpg.GetStartAccelDist();

@@ -40,7 +40,7 @@ namespace Anki {
     CONSOLE_VAR(bool, kSendAnythingToViz, "VizDebug", true);
     CONSOLE_VAR(bool, kSendBehaviorScoresToViz, "VizDebug", true);
     
-    const VizManager::Handle_t VizManager::INVALID_HANDLE = u32_MAX;
+    const VizManager::Handle_t VizManager::INVALID_HANDLE = std::numeric_limits<u32>::max();
     
     Result VizManager::Connect(const char *udp_host_address, const unsigned short port, const char* unity_host_address, const unsigned short unity_port)
     {
@@ -853,7 +853,7 @@ namespace Anki {
       v.imgId = ++(_imgID[robotID]);
       v.chunkId = 0;
       f32 chunkCount = ceilf((f32)dataLength / MAX_VIZ_IMAGE_CHUNK_SIZE);
-      if(chunkCount > static_cast<f32>(u8_MAX)) {
+      if(chunkCount > static_cast<f32>(std::numeric_limits<u8>::max())) {
         PRINT_NAMED_ERROR("VizManager.SendImage", "Too many chunks (>255) required to send image of %d bytes.\n", dataLength);
         return;
       }

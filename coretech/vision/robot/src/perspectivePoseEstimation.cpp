@@ -46,7 +46,7 @@
 #include "anki/common/robot/benchmarking.h"
 
 #include "anki/vision/robot/perspectivePoseEstimation.h"
-
+#include "util/math/math.h"
 #include <complex>
 
 namespace Anki {

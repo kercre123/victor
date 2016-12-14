@@ -191,7 +191,7 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(Robot& robot)
   CompoundActionSequential* action = new CompoundActionSequential(robot);
 
   {
-    TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(robot, _targetFace, PI_F, true);
+    TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(robot, _targetFace, M_PI_F, true);
     turnAndAnimateAction->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
     turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
     turnAndAnimateAction->SetRequireFaceConfirmation(true);

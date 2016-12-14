@@ -480,11 +480,11 @@ namespace Anki {
           */
           
           // Use slow motor speeds if SHIFT is pressed
-          f32 liftSpeed = DEG_TO_RAD_F32(root_->getField("liftSpeedDegPerSec")->getSFFloat());
-          f32 liftAccel = DEG_TO_RAD_F32(root_->getField("liftAccelDegPerSec2")->getSFFloat());
+          f32 liftSpeed = DEG_TO_RAD(root_->getField("liftSpeedDegPerSec")->getSFFloat());
+          f32 liftAccel = DEG_TO_RAD(root_->getField("liftAccelDegPerSec2")->getSFFloat());
           f32 liftDurationSec = root_->getField("liftDurationSec")->getSFFloat();
-          f32 headSpeed = DEG_TO_RAD_F32(root_->getField("headSpeedDegPerSec")->getSFFloat());
-          f32 headAccel = DEG_TO_RAD_F32(root_->getField("headAccelDegPerSec2")->getSFFloat());
+          f32 headSpeed = DEG_TO_RAD(root_->getField("headSpeedDegPerSec")->getSFFloat());
+          f32 headAccel = DEG_TO_RAD(root_->getField("headAccelDegPerSec2")->getSFFloat());
           f32 headDurationSec = root_->getField("headDurationSec")->getSFFloat();
           if (shiftKeyPressed) {
             wheelSpeed = root_->getField("driveSpeedSlow")->getSFFloat();
@@ -542,7 +542,7 @@ namespace Anki {
           // For pickup or placeRel, specify whether or not you want to use the
           // given approach angle for pickup, placeRel, or roll actions
           bool useApproachAngle = root_->getField("useApproachAngle")->getSFBool();
-          f32 approachAngle_rad = DEG_TO_RAD_F32(root_->getField("approachAngle_deg")->getSFFloat());
+          f32 approachAngle_rad = DEG_TO_RAD(root_->getField("approachAngle_deg")->getSFFloat());
           
           // For placeOn and placeOnGround, specify whether or not to use the exactRotation specified
           bool useExactRotation = root_->getField("useExactPlacementRotation")->getSFBool();
@@ -1101,7 +1101,7 @@ namespace Anki {
                     SendTrackToObject(GetLastObservedObject().id, headOnly);
                   } else {
                     // Disable tracking
-                    SendTrackToObject(u32_MAX);
+                    SendTrackToObject(std::numeric_limits<u32>::max());
                   }
                   
                 } else if(altKeyPressed) {
@@ -1119,7 +1119,7 @@ namespace Anki {
                     SendTrackToFace((u32)GetLastObservedFaceID(), headOnly);
                   } else {
                     // Disable tracking
-                    SendTrackToFace(u32_MAX);
+                    SendTrackToFace(std::numeric_limits<u32>::max());
                   }
 
                 } else {
@@ -1745,7 +1745,7 @@ namespace Anki {
                 } else if(shiftKeyPressed) {
                   ExternalInterface::TurnTowardsObject msg;
                   msg.robotID = 1;
-                  msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
+                  msg.objectID = std::numeric_limits<u32>::max(); // HACK to tell game to use blockworld's "selected" object
                   msg.panTolerance_rad = DEG_TO_RAD(5);
                   msg.maxTurnAngle_rad = DEG_TO_RAD(90);
                   msg.headTrackWhenDone = 0;

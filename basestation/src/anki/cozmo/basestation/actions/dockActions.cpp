@@ -310,7 +310,7 @@ namespace Anki {
           Radians headingDiff = preActionPose.GetRotationAngle<'Z'>() - input.approachAngle_rad;
           // If the heading difference between our desired approach angle and the preAction pose's heading is
           // greater than 45 degrees this preAction pose will not be the one of the poses closest to approach angle
-          if(FLT_GE(std::abs(headingDiff.ToFloat()), DEG_TO_RAD_F32(45)))
+          if(FLT_GE(std::abs(headingDiff.ToFloat()), DEG_TO_RAD(45.f)))
           {
             iter = preActionPoses.erase(iter);
           }
@@ -1740,11 +1740,11 @@ namespace Anki {
                     dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       // consts for comparing relative robot/block alignment
-      const float kRotationTolerence_rad = DEG_TO_RAD_F32(15);
-      const float kInAlignment_rad = DEG_TO_RAD_F32(0);
-      const float kClockwise_rad = DEG_TO_RAD_F32(-90);
+      const float kRotationTolerence_rad = DEG_TO_RAD(15.f);
+      const float kInAlignment_rad = DEG_TO_RAD(0.f);
+      const float kClockwise_rad = DEG_TO_RAD(-90.f);
       const float kCounterClockwise_rad = -kClockwise_rad;
-      const float kOppposite_rad = DEG_TO_RAD_F32(180);
+      const float kOppposite_rad = DEG_TO_RAD(180.f);
       const float kOppposite_rad_neg = -kOppposite_rad;
 
       //values to set placement offset with

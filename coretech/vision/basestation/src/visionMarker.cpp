@@ -21,7 +21,7 @@
 namespace Anki {
   namespace Vision{
   
-    const Marker::Code Marker::ANY_CODE = s16_MAX;
+    const Marker::Code Marker::ANY_CODE = std::numeric_limits<s16>::max();
     
     
     Marker::Marker(const Code& withCode)

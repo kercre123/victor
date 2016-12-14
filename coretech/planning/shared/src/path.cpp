@@ -1,7 +1,7 @@
 #include "anki/planning/shared/path.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/utilities_shared.h"
-#include "util/math/constantsAndMacros.h"
+#include "util/math/math.h"
 #include <assert.h>
 #include <math.h>
 #include <float.h>
@@ -40,7 +40,7 @@ namespace Anki
       
       // Compute end angle
       // If going backwards, flip it 180
-      def_.line.endAngle = Radians( ATAN2_ACC(y_end - y_start, x_end - x_start) + (targetSpeed < 0 ? PI_F : 0) ).ToFloat();
+      def_.line.endAngle = Radians( ATAN2_ACC(y_end - y_start, x_end - x_start) + (targetSpeed < 0 ? M_PI_F : 0) ).ToFloat();
       
       SetSpeedProfile(targetSpeed, accel, decel);
     }
@@ -61,13 +61,13 @@ namespace Anki
       f32 radiusAngle = startRad + sweepRad;
       if (sweepRad > 0) {
         // Turning CCW so add 90 degree
-        radiusAngle += PIDIV2_F;
+        radiusAngle += M_PI_2_F;
       } else {
-        radiusAngle -= PIDIV2_F;
+        radiusAngle -= M_PI_2_F;
       }
       
       // If going backwards, flip it 180
-      def_.arc.endAngle = Radians(radiusAngle + (targetSpeed < 0 ? PI_F : 0)).ToFloat();
+      def_.arc.endAngle = Radians(radiusAngle + (targetSpeed < 0 ? M_PI_F : 0)).ToFloat();
       
       SetSpeedProfile(targetSpeed, accel, decel);
     }
@@ -218,7 +218,7 @@ namespace Anki
                  seg.x,
                  seg.y,
                  seg.targetAngle,
-                 RAD_TO_DEG_F32( seg.angleTolerance ),
+                 RAD_TO_DEG( seg.angleTolerance ),
                  GetTargetSpeed(),
                  GetAccel(),
                  GetDecel());
@@ -434,14 +434,14 @@ namespace Anki
       // Find error between current robot heading and the expected heading at the closest point on the arc
       bool movingCCW = seg->sweepRad >= 0;
       Anki::Radians theta_line = ATAN2_FAST(dy,dx); // angle of line from circle center to robot
-      Anki::Radians theta_tangent = theta_line + Anki::Radians((movingCCW ? 1 : -1 ) * PIDIV2);
+      Anki::Radians theta_tangent = theta_line + Anki::Radians((movingCCW ? 1 : -1 ) * M_PI_2_F);
       
       radDiff = (theta_tangent - angle).ToFloat();
       
       // If the line is nearly vertical (within 0.5deg), approximate it
       // with true vertical so we don't take sqrts of -ve numbers.
       f32 x_intersect, y_intersect;
-      if (NEAR(ABS(theta_line.ToFloat()), PIDIV2, 0.01f)) {
+      if (NEAR(ABS(theta_line.ToFloat()), M_PI_2_F, 0.01f)) {
         shortestDistanceToPath = ABS(dy) - r;
         x_intersect = x_center;
         y_intersect = y_center + r * (dx > 0 ? 1 : -1);
@@ -512,26 +512,26 @@ namespace Anki
       // ever exceeds a conservative half the distance if PI was approached from the opposite direction.
       SegmentRangeStatus segStatus = IN_SEGMENT_RANGE;
       f32 angDiff = (theta_line - startRad).ToFloat();
-      if ( (movingCCW && (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad))) ||
-          (!movingCCW && (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad))) ){
+      if ( (movingCCW && (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*M_PI_F-seg->sweepRad))) ||
+          (!movingCCW && (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*M_PI_F+seg->sweepRad))) ){
         distToEnd = -distToEnd;
         segStatus = OOR_NEAR_END;
       }
 
       
       if (movingCCW) {
-        if (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad)) {
+        if (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*M_PI_F-seg->sweepRad)) {
           distToEnd = -distToEnd;
           segStatus = OOR_NEAR_END;
-        } else if (angDiff < 0 && angDiff > -0.5f*(2.f*PI-seg->sweepRad)) {
+        } else if (angDiff < 0 && angDiff > -0.5f*(2.f*M_PI_F-seg->sweepRad)) {
           segStatus = OOR_NEAR_START;
         }
           
       } else {
-        if (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad)) {
+        if (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*M_PI_F+seg->sweepRad)) {
           distToEnd = -distToEnd;
           segStatus = OOR_NEAR_END;
-        } else if (angDiff > 0 && angDiff < 0.5f*(2.f*PI-seg->sweepRad)) {
+        } else if (angDiff > 0 && angDiff < 0.5f*(2.f*M_PI_F-seg->sweepRad)) {
           segStatus = OOR_NEAR_START;
         }
       }
@@ -674,9 +674,9 @@ namespace Anki
       
       f32 theta = ATAN2_ACC(a_end_y, a_end_x) - ATAN2_ACC(a_start_y, a_start_x);
       if (theta < 0 && CCW)
-        return theta + 2*PI_F;
+        return theta + 2*M_PI_F;
       else if (theta > 0 && !CCW)
-        return theta - 2*PI_F;
+        return theta - 2*M_PI_F;
       
       return theta;
     }
@@ -1083,7 +1083,7 @@ namespace Anki
                       f32 targetSpeed, f32 accel, f32 decel) {
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
-      if (FLT_NEAR(sweepRad,0)) {
+      if (FLT_NEAR(sweepRad,0.f)) {
         CoreTechPrint("ERROR: sweepRad is zero\n");
       }
 
@@ -1109,7 +1109,7 @@ namespace Anki
         return false;
       }
       
-      if (FLT_NEAR(sweepRad,0)) {
+      if (FLT_NEAR(sweepRad,0.f)) {
         CoreTechPrint("ERROR: sweepRad is zero\n");
         return false;
       }
@@ -1129,7 +1129,7 @@ namespace Anki
       f32 sweep;
       Radians currAngle(startRad);
       Radians zeroAngle(0);
-      Radians piAngle(PI);
+      Radians piAngle(M_PI_F);
       
       // limitAngle toggles between zeroAngle and piAngle for as
       // long as traversing sweepRad causes it to cross 0 or PI.

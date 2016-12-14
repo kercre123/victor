@@ -480,7 +480,7 @@ public:
   
   // Tell the physical robot to dock with the specified marker
   // of the specified object that it should currently be seeing.
-  // If pixel_radius == u8_MAX, the marker can be seen anywhere in the image,
+  // If pixel_radius == std::numeric_limits<u8>::max(), the marker can be seen anywhere in the image,
   // otherwise the marker's center must be seen within pixel_radius of the
   // specified image coordinates.
   // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
@@ -961,7 +961,7 @@ protected:
   u8               _enabledAnimTracks     = (u8)AnimTrackFlag::ALL_TRACKS;
   bool             _isCliffDetected       = false;
   bool             _isCliffSensorOn       = false;
-  u16              _cliffDataRaw          = u16_MAX;
+  u16              _cliffDataRaw          = std::numeric_limits<u16>::max();
   u16              _forwardSensorValue_mm = 0;
   bool             _isOnChargerPlatform   = false;
   bool             _isCliffReactionDisabled = false;

@@ -578,7 +578,7 @@ TEST_F(LatticePlannerTest, MotionProfileZeroLengthSeg)
   Planning::Path path;
   path.AppendLine(0, 178.592758, -99.807365, 176.896408, -80.959740, 100, 200, 500);
   path.AppendLine(0, 176.896408, -80.959740, 176.000000, -71.000000, 100, 200, 500);
-  path.AppendPointTurn(0, 176.000000, -71.000000, 1.570796, -2, 100, 500, DEG_TO_RAD_F32(2), true);
+  path.AppendPointTurn(0, 176.000000, -71.000000, 1.570796, -2, 100, 500, DEG_TO_RAD(2.f), true);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
@@ -600,7 +600,7 @@ TEST_F(LatticePlannerTest, MotionProfileBackwardsForwards)
   
   Planning::Path path;
   path.AppendLine(0, 0, 0, -10, 0, -100, 200, 500);
-  path.AppendPointTurn(0, -10, 0, -0.463648, -2, 100, 500, DEG_TO_RAD_F32(2), true);
+  path.AppendPointTurn(0, -10, 0, -0.463648, -2, 100, 500, DEG_TO_RAD(2.f), true);
   path.AppendLine(0, -10, 0, -30, 9.999996, -100, 200, 500);
   path.AppendArc(0, 10, 10, 40, DEG_TO_RAD(180), DEG_TO_RAD(40), 100, 200, 500);
   path.AppendLine(0, -20.641773, -15.711510, -33.541773, -31.01151, 100, 200, 500);

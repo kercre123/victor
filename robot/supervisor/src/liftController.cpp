@@ -97,7 +97,7 @@ namespace Anki {
         u32 lastInPositionTime_ms_ = 0;
 
         // Speed and acceleration params
-        f32 maxSpeedRad_ = PI_F;
+        f32 maxSpeedRad_ = M_PI_F;
         f32 accelRad_ = 1000.f;
 
         // For generating position and speed profile

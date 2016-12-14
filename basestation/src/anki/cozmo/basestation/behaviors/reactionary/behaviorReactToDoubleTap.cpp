@@ -79,7 +79,7 @@ Result BehaviorReactToDoubleTap::InitInternalReactionary(Robot& robot)
       PRINT_CH_INFO("Behaviors", "ReactToDoubleTap.ObjectInOtherFrame",
                     "Turning towards pose in old frame");
       
-      action = new TurnTowardsPoseAction(robot, object->GetPose(), DEG_TO_RAD_F32(180));
+      action = new TurnTowardsPoseAction(robot, object->GetPose(), DEG_TO_RAD(180.f));
       _objectInCurrentFrame = false;
       
       // Treat this as the same as turning towards a ghost object
@@ -94,7 +94,7 @@ Result BehaviorReactToDoubleTap::InitInternalReactionary(Robot& robot)
       Pose3d p = object->GetPose().GetWithRespectToOrigin();
       p.SetTranslation({object->GetPose().GetTranslation().x(), object->GetPose().GetTranslation().y(), object->GetSize().z()*0.5f});
       obj->Vision::ObservableObject::SetPose(p);
-      auto* turnAction = new TurnTowardsObjectAction(robot, ObjectID(), DEG_TO_RAD_F32(180));
+      auto* turnAction = new TurnTowardsObjectAction(robot, ObjectID(), DEG_TO_RAD(180.f));
       turnAction->UseCustomObject(obj);
       
       // Don't do a refined turn because in many cases when the object is in the ground it is because
@@ -108,7 +108,7 @@ Result BehaviorReactToDoubleTap::InitInternalReactionary(Robot& robot)
     // Otherwise just turn towards the object
     else
     {
-      action = new TurnTowardsObjectAction(robot, objectID, Radians(DEG_TO_RAD_F32(180)), true, false);
+      action = new TurnTowardsObjectAction(robot, objectID, Radians(DEG_TO_RAD(180.f)), true, false);
     }
     
     StartActing(action,

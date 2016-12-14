@@ -168,7 +168,7 @@ void ITrackAction::SetPanTolerance(const Radians& panThreshold)
     PRINT_NAMED_WARNING("ITrackAction.InvalidTolerance",
                         "Tried to set tolerance of %fdeg, min is %f",
                         _panTolerance.getDegrees(),
-                        RAD_TO_DEG_F32(POINT_TURN_ANGLE_TOL));
+                        RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
     _panTolerance = POINT_TURN_ANGLE_TOL;
   }
 }
@@ -183,7 +183,7 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
     PRINT_NAMED_WARNING("ITrackAction.InvalidTolerance",
                         "Tried to set tolerance of %fdeg, min is %f",
                         _tiltTolerance.getDegrees(),
-                        RAD_TO_DEG_F32(HEAD_ANGLE_TOL));
+                        RAD_TO_DEG(HEAD_ANGLE_TOL));
     _tiltTolerance = HEAD_ANGLE_TOL;
   }
 }
@@ -306,7 +306,7 @@ ActionResult ITrackAction::CheckIfDone()
       _robot.ComputeOriginPose(dcPose, rotatedPose);
       
       // Set speed/accel based on angle difference
-      const f32 angleFrac = std::min(1.f, std::abs(relPanAngle)/PI_F);
+      const f32 angleFrac = std::min(1.f, std::abs(relPanAngle)/M_PI_F);
       const f32 speed = (_maxPanSpeed_radPerSec - _minPanSpeed_radPerSec)*angleFrac + _minPanSpeed_radPerSec;
       const f32 accel = 10.f; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
       

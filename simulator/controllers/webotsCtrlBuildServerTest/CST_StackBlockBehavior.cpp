@@ -42,8 +42,8 @@ enum class TestState {
 static const char* kBehaviorName = "StackBlocks";
 
 namespace {
-  static const Pose3d kidnapCubePose(PI_F, Z_AXIS_3D(), {40.0, -150.0, 22.0});
-  static const Pose3d hideCubePose(PI_F, Z_AXIS_3D(), {10000.0, 10000.0, 100.0});
+  static const Pose3d kidnapCubePose(M_PI_F, Z_AXIS_3D(), {40.0, -150.0, 22.0});
+  static const Pose3d hideCubePose(M_PI_F, Z_AXIS_3D(), {10000.0, 10000.0, 100.0});
 }
 
 
@@ -126,7 +126,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         m.idTag = 11;
         m.numRetries = 1;
         uint8_t isAbsolute = 0; // relative turn
-        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(45), PI_F, 500.0f, isAbsolute, 1 ));
+        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(45), M_PI_F, 500.0f, isAbsolute, 1 ));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);
@@ -175,7 +175,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
             m.idTag = 16;
             m.numRetries = 1;
             uint8_t isAbsolute = 0; // relative turn
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(30), PI_F, 500.0f, isAbsolute, 1 ));
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(30), M_PI_F, 500.0f, isAbsolute, 1 ));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -218,7 +218,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         m.idTag = 13;
         m.numRetries = 1;
         uint8_t isAbsolute = 0; // relative turn
-        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( -DEG_TO_RAD(90), PI_F, 500.0f, isAbsolute, 1 ));
+        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( -DEG_TO_RAD(90), M_PI_F, 500.0f, isAbsolute, 1 ));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);
@@ -300,7 +300,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
           m.idTag = 19;
           m.numRetries = 1;
           uint8_t isAbsolute = 1;
-          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( targetAngle, PI_F, 500.0f, isAbsolute, 1 ));
+          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( targetAngle, M_PI_F, 500.0f, isAbsolute, 1 ));
           ExternalInterface::MessageGameToEngine message;
           message.Set_QueueSingleAction(m);
           SendMessage(message);

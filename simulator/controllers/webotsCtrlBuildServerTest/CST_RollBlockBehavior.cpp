@@ -91,7 +91,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         m.idTag = 11;
         m.numRetries = 1;
         uint8_t isAbsolute = 0; // relative turn
-        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(90), PI_F, 500.0f, isAbsolute, 1 ));
+        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(90), M_PI_F, 500.0f, isAbsolute, 1 ));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);
@@ -142,7 +142,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         m.idTag = 17;
         m.numRetries = 1;
         uint8_t isAbsolute = 0; // relative turn
-        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( -DEG_TO_RAD(90), PI_F, 500.0f, isAbsolute, 1 ));
+        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( -DEG_TO_RAD(90), M_PI_F, 500.0f, isAbsolute, 1 ));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);

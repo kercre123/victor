@@ -311,16 +311,16 @@ namespace Cozmo {
     std::stringstream ss;
     if (_exportJson) {
       Json::Value& node = _json[poseName];
-      node["Rot_deg"][0] = RAD_TO_DEG_F32(data.angleX_rad);
-      node["Rot_deg"][1] = RAD_TO_DEG_F32(data.angleY_rad);
-      node["Rot_deg"][2] = RAD_TO_DEG_F32(data.angleZ_rad);
+      node["Rot_deg"][0] = RAD_TO_DEG(data.angleX_rad);
+      node["Rot_deg"][1] = RAD_TO_DEG(data.angleY_rad);
+      node["Rot_deg"][2] = RAD_TO_DEG(data.angleZ_rad);
       node["Trans_mm"][0] = data.transX_mm;
       node["Trans_mm"][1] = data.transY_mm;
       node["Trans_mm"][2] = data.transZ_mm;
       ss << "[" << poseName << "]\n" << node;
     } else {
       ss << "\n[" << poseName << "]" << std::fixed
-         << "\nRot_deg: "  << RAD_TO_DEG_F32(data.angleX_rad) << " " << RAD_TO_DEG_F32(data.angleY_rad) << " " << RAD_TO_DEG_F32(data.angleZ_rad)
+         << "\nRot_deg: "  << RAD_TO_DEG(data.angleX_rad) << " " << RAD_TO_DEG(data.angleY_rad) << " " << RAD_TO_DEG(data.angleZ_rad)
          << "\nTrans_mm: " << data.transX_mm << " " << data.transY_mm << " " << data.transZ_mm;
     }
     PRINT_NAMED_INFO("FactoryTestLogger.Append.PoseData", "%s", ss.str().c_str());
@@ -334,7 +334,7 @@ namespace Cozmo {
       if(msg.success)
       {
         Json::Value& node = _json["CentroidInfo"];
-        node["HeadAngle_deg"] = RAD_TO_DEG_F32(msg.headAngle);
+        node["HeadAngle_deg"] = RAD_TO_DEG(msg.headAngle);
         node["UpperLeft"][0] = msg.dotCenX_pix[0];
         node["UpperLeft"][1] = msg.dotCenY_pix[0];
         node["LowerLeft"][0] = msg.dotCenX_pix[1];
@@ -356,7 +356,7 @@ namespace Cozmo {
       if(msg.success)
       {
         ss << "\n[CentroidInfo]" << std::fixed
-        << "\nHeadAngle_deg: " << RAD_TO_DEG_F32(msg.headAngle)
+        << "\nHeadAngle_deg: " << RAD_TO_DEG(msg.headAngle)
         << "\nUpperLeft: "  << msg.dotCenX_pix[0] << " " << msg.dotCenY_pix[0]
         << "\nLowerLeft: "  << msg.dotCenX_pix[1] << " " << msg.dotCenY_pix[1]
         << "\nUpperRight: " << msg.dotCenX_pix[2] << " " << msg.dotCenY_pix[2]

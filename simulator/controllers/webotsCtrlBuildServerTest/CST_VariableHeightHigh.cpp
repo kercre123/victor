@@ -78,14 +78,14 @@ namespace Anki {
           //TakeScreenshotsAtInterval("VariableHeightHigh", 1.f);
           
           
-          SendMoveHeadToAngle(DEG_TO_RAD(10), 100, 100);
+          SendMoveHeadToAngle(DEG_TO_RAD(10.f), 100, 100);
           _testState = TestState::PickupHigh;
           break;
         }
         case TestState::PickupHigh:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(10), HEAD_ANGLE_TOL) &&
+                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(10.f), HEAD_ANGLE_TOL) &&
                                            GetNumObjects() == 1, DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;

@@ -74,7 +74,7 @@ const f32 TERMINAL_POINT_TURN_ACCEL = 100.f;
 const f32 TERMINAL_POINT_TURN_DECEL = 100.f;
 
 // The angular tolerance to use for the point turn that is appended at the end of every path
-const f32 TERMINAL_POINT_TURN_ANGLE_TOL = DEG_TO_RAD_F32(5.f);
+const f32 TERMINAL_POINT_TURN_ANGLE_TOL = DEG_TO_RAD(5.f);
 
 namespace Anki {
 namespace Cozmo {

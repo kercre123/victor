@@ -843,7 +843,7 @@ void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::
   const GoalPose& payload = message.GetData().Get_goalPose();
   Anki::Pose3d p(payload.pose.angle, Z_AXIS_3D(),
                  Vec3f(payload.pose.x, payload.pose.y, payload.pose.z));
-  //PRINT_INFO("Goal pose: x=%f y=%f %f deg (%d)", msg.pose_x, msg.pose_y, RAD_TO_DEG_F32(msg.pose_angle), msg.followingMarkerNormal);
+  //PRINT_INFO("Goal pose: x=%f y=%f %f deg (%d)", msg.pose_x, msg.pose_y, RAD_TO_DEG(msg.pose_angle), msg.followingMarkerNormal);
   if (payload.followingMarkerNormal) {
     robot->GetContext()->GetVizManager()->DrawPreDockPose(100, p, ::Anki::NamedColors::RED);
   } else {

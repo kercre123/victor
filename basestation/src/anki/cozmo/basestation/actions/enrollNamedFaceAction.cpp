@@ -146,8 +146,8 @@ namespace Cozmo {
     trackAction->SetSound(AnimationTrigger::Count);
     
     // Add constant small movement
-    trackAction->SetTiltTolerance(DEG_TO_RAD_F32(kMinTrackingTiltAngle_deg));
-    trackAction->SetPanTolerance(DEG_TO_RAD_F32(kMinTrackingPanAngle_deg));
+    trackAction->SetTiltTolerance(DEG_TO_RAD(kMinTrackingTiltAngle_deg));
+    trackAction->SetPanTolerance(DEG_TO_RAD(kMinTrackingPanAngle_deg));
     trackAction->SetClampSmallAnglesToTolerances(true);
     
     return trackAction;
@@ -166,7 +166,7 @@ namespace Cozmo {
                       "Turning towards faceID=%d (saveID=%d)",
                       faceID, saveID);
         
-        action = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD_F32(45.f));
+        action = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD(45.f));
       } else {
 
       }
@@ -204,7 +204,7 @@ namespace Cozmo {
                       "Turning towards faceID=%d last seen at t=%d (saveID=%d)",
                       faceToTurnTowards->GetID(), faceToTurnTowards->GetTimeStamp(), saveID);
         
-        action = new TurnTowardsFaceAction(robot, faceToTurnTowards->GetID(), DEG_TO_RAD_F32(90.f));
+        action = new TurnTowardsFaceAction(robot, faceToTurnTowards->GetID(), DEG_TO_RAD(90.f));
       }
     }
     
@@ -216,7 +216,7 @@ namespace Cozmo {
                     faceID, saveID);
       
       // No face found to look towards: fallback on looking at last face pose
-      action = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD_F32(45.f));
+      action = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD(45.f));
     }
     
     CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel(robot, {
@@ -1013,7 +1013,7 @@ namespace Cozmo {
           if(nullptr != myFace && nullptr != newFace &&
              newFace->GetHeadPose().IsSameAs(myFace->GetHeadPose(),
                                              kUpdateFacePositionThreshold_mm,
-                                             DEG_TO_RAD_F32(kUpdateFaceAngleThreshold_deg)))
+                                             DEG_TO_RAD(kUpdateFaceAngleThreshold_deg)))
           {
             PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotObservedFace.UpdatingFaceIDbyPose",
                           "Was enrolling ID=%d, changing to unnamed ID=%d based on pose (saveID=%d)",

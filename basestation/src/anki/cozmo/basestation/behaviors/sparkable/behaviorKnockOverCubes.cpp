@@ -43,7 +43,7 @@ const int kMaxNumRetries = 2;
 const float kMinThresholdRealign = 20.f;
 const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
-const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD_F32(90.f);
+const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD(90.f);
   
 const float kScoreIncreaseSoNoRoll = 10.f;
 }

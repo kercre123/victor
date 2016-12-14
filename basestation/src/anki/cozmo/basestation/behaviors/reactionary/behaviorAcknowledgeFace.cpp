@@ -104,7 +104,7 @@ void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
   const bool sayName = true;
   TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(robot,
                                                                 _targetFace,
-                                                                PI_F,
+                                                                M_PI_F,
                                                                 sayName);
 
   const float freeplayStartedTime_s = robot.GetBehaviorManager().GetFirstTimeFreeplayStarted();    
