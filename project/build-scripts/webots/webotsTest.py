@@ -885,10 +885,11 @@ def main(args):
                   failed=num_of_failed_runs, total=num_of_total_runs, 
                   percentage=float(num_of_failed_runs)/num_of_total_runs*100))
 
-    results_msg=''
+    results_msg='Nightly Webots Engine Test Results:\n'
     for test_controller,results in global_test_results.items():
       results_msg+="{} - {}/{} PASSED\n".format(test_controller, results.count('passed'), len(results))
 
+    UtilLog.info('results_msg:\n{}'.format(results_msg))
     if num_of_failed_runs > 0:
       payload={"channel":"#coz-webots-tests",
                "username":"buildbot",
@@ -906,7 +907,7 @@ def main(args):
                    "color": "good"}]
                  }
     slack_url='https://hooks.slack.com/services/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'
-    cmd = ['curl', '-X', '--connect-timeout', '60', '-m', '60', 'POST', '-d', 'payload={}'.format(payload), slack_url]
+    cmd = ['curl', '-X', 'POST', '-d', 'payload={}'.format(payload), slack_url]
     process = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
   return return_value
