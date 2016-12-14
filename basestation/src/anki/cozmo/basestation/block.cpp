@@ -431,7 +431,7 @@ namespace Cozmo {
     }
     
     //PRINT_INFO("ActiveCube %d's TopMarker is = %s\n", GetID().GetValue(),
-    //           Vision::MarkerTypeStrings[topMarker->GetCode()]);
+    //           topMarker->GetCodeName());
     
     return *topMarker;
   }

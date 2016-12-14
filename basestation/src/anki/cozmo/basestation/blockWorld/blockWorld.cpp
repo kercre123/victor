@@ -2530,7 +2530,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         /*
         PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose.AddingMatMarkerOccluder",
                          "Adding mat marker '%s' as an occluder for robot %d.",
-                         Vision::MarkerTypeStrings[obsMarker->GetCode()],
+                         obsMarker->GetCodeName(),
                          robot->GetID());
          */
         _robot->GetVisionComponent().GetCamera().AddOccluder(*obsMarker);

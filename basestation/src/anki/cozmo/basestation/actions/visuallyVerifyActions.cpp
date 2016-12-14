@@ -166,7 +166,7 @@ bool VisuallyVerifyObjectAction::HaveSeenObject()
         // Seeing wrong marker(s). Log this for help in debugging
         std::string observedMarkerNames;
         for(auto marker : observedMarkers) {
-          observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
+          observedMarkerNames += marker->GetCodeName();
           observedMarkerNames += " ";
         }
         

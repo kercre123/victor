@@ -618,7 +618,7 @@ namespace Anki {
             
             PRINT_CH_INFO("Actions", "IDockAction.DockWithObjectHelper.BeginDocking",
                           "Docking with marker %d (%s) using action %s.",
-                          _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], DockActionToString(_dockAction));
+                          _dockMarker->GetCode(), _dockMarker->GetCodeName(), DockActionToString(_dockAction));
             if(_robot.DockWithObject(_dockObjectID,
                                      _dockSpeed_mmps,
                                      _dockAccel_mmps2,
