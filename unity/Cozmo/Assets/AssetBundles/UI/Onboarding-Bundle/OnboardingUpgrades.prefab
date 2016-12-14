@@ -281,7 +281,7 @@ MonoBehaviour:
     JsonValue: false
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#button.continue"'
+    JsonValue: '"#button.okay"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
     FieldName: Onboarding.UpgradesStage:_ContinueButtonInstance
@@ -687,7 +687,7 @@ MonoBehaviour:
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
-    m_LineSpacing: 1
+    m_LineSpacing: 0.9
   m_Text: '#onboarding.Phase4.Body5'
   _AllUppercase: 0
   GlowText: 0
@@ -810,7 +810,7 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -378, y: -599.9999}
+  m_AnchoredPosition: {x: -346.1, y: -503}
   m_SizeDelta: {x: 248, y: 122}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22417712
@@ -830,8 +830,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 523, y: -36}
-  m_SizeDelta: {x: 1627, y: 1498}
+  m_AnchoredPosition: {x: 440, y: -167.5}
+  m_SizeDelta: {x: 1462, y: 1030}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22419512
 RectTransform:
@@ -920,8 +920,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -13, y: 0}
-  m_SizeDelta: {x: -222, y: -156}
+  m_AnchoredPosition: {x: 1, y: 145}
+  m_SizeDelta: {x: -205, y: -474}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22461088
 RectTransform:
