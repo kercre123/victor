@@ -826,7 +826,6 @@ def main(args):
 
     if any_test_succeeded(test_results):
       UtilLog.info('Passed tests: ')
-
       for test_controller, results_of_each_world in test_results.items():
         for world, result in results_of_each_world.items():
           if result is ResultCode.succeeded:
@@ -885,28 +884,34 @@ def main(args):
                   failed=num_of_failed_runs, total=num_of_total_runs, 
                   percentage=float(num_of_failed_runs)/num_of_total_runs*100))
 
-    results_msg='Nightly Webots Engine Test Results:\n'
+    results_passed_msg=''
+    results_failed_msg = ''
     for test_controller,results in global_test_results.items():
-      results_msg+="{} - {}/{} PASSED\n".format(test_controller, results.count('passed'), len(results))
+      if results.count('failed') > 0:
+        results_failed_msg += "{} - {}/{} FAILED\n".format(test_controller, results.count('failed'), len(results))
+      if results.count('passed') > 0:
+        results_passed_msg += "{} - {}/{} PASSED\n".format(test_controller, results.count('passed'), len(results))
 
-    UtilLog.info('results_msg:\n{}'.format(results_msg))
-    if num_of_failed_runs > 0:
-      payload={"channel":"#coz-webots-tests",
+    UtilLog.info('results_passed_msg:\n{}'.format(results_passed_msg))
+    UtilLog.info('results_failed_msg:\n{}'.format(results_failed_msg))
+    payload = {
+               "text":"*Webots Nightly Engine Test Results:*\n",
+               "mrkdwn": True,
+               "channel":"{}".format(os.environ['SLACK_CHANNEL']),
                "username":"buildbot",
-               "attachments":[{
-                 "text":"{}".format(results_msg),
-                 "fallback":"{}".format(results_msg),
-                 "color":"danger"}]
-               }
-    else:
-      payload = {"channel": "#coz-webots-tests",
-                 "username": "buildbot",
-                 "attachments": [{
-                   "text": "{}".format(results_msg),
-                   "fallback": "{}".format(results_msg),
-                   "color": "good"}]
+               "attachments":[
+                 {
+                 "text":"{}".format(results_failed_msg),
+                 "fallback":"{}".format(results_failed_msg),
+                 "color":"danger"
+                 },{
+                 "text": "{}".format(results_passed_msg),
+                 "fallback": "{}".format(results_passed_msg),
+                 "color": "good"
                  }
-    slack_url='https://hooks.slack.com/services/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'
+               ]
+             }
+    slack_url = '{}'.format(os.environ['SLACK_TOKEN_URL'])
     cmd = ['curl', '-X', 'POST', '-d', 'payload={}'.format(payload), slack_url]
     process = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
