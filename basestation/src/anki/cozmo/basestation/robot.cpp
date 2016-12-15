@@ -1048,9 +1048,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     
     Delocalize(isCarryingObject);
   }
-  else if(msg.pose_frame_id >= GetPoseFrameID()) // ignore state messages with old frame ID
+  else
   {
-    _numMismatchedFrameIDs = 0;
+    ASSERT_NAMED(msg.pose_frame_id <= GetPoseFrameID(), "Robot.UpdateFullRobotState.FrameFromFuture");
+    const bool frameIsCurrent = msg.pose_frame_id == GetPoseFrameID();
     
     Pose3d newPose;
         
@@ -1171,35 +1172,40 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
                           "AddRawOdomPoseToHistory failed for timestamp=%d", msg.timestamp);
       return lastResult;
     }
-    
+
     if(UpdateCurrPoseFromHistory() == false) {
       lastResult = RESULT_FAIL;
     }
-  }
-  else // Robot frameID is less than engine frameID
-  {
-    // COZMO-5850 (Al) This is to catch the issue where our frameID is incremented but fails to send
-    // to the robot due to some origin issue. Somehow the robot's pose becomes an origin and doesn't exist
-    // in the PoseOriginList. The frameID mismatch then causes all sorts of issues in things (ie VisionSystem
-    // won't process the next image). Delocalizing will fix the mismatch by creating a new origin and sending
-    // a localization update
-    static const u32 kNumTicksWithMismatchedFrameIDs = 100; // 3 seconds (called each RobotState msg)
     
-    ++_numMismatchedFrameIDs;
-    
-    if(_numMismatchedFrameIDs > kNumTicksWithMismatchedFrameIDs)
-    {
-      PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.MismatchedFrameIDs",
-                        "Robot[%u] and engine[%u] frameIDs are mismatched, delocalizing",
-                        msg.pose_frame_id,
-                        GetPoseFrameID());
-      
+    if (frameIsCurrent) {
       _numMismatchedFrameIDs = 0;
+
+    } else {
+      // COZMO-5850 (Al) This is to catch the issue where our frameID is incremented but fails to send
+      // to the robot due to some origin issue. Somehow the robot's pose becomes an origin and doesn't exist
+      // in the PoseOriginList. The frameID mismatch then causes all sorts of issues in things (ie VisionSystem
+      // won't process the next image). Delocalizing will fix the mismatch by creating a new origin and sending
+      // a localization update
+      static const u32 kNumTicksWithMismatchedFrameIDs = 100; // 3 seconds (called each RobotState msg)
       
-      Delocalize(IsCarryingObject());
+      ++_numMismatchedFrameIDs;
       
-      return RESULT_FAIL;
+      if(_numMismatchedFrameIDs > kNumTicksWithMismatchedFrameIDs)
+      {
+        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.MismatchedFrameIDs",
+                          "Robot[%u] and engine[%u] frameIDs are mismatched, delocalizing",
+                          msg.pose_frame_id,
+                          GetPoseFrameID());
+        
+        _numMismatchedFrameIDs = 0;
+        
+        Delocalize(IsCarryingObject());
+        
+        return RESULT_FAIL;
+      }
+
     }
+    
   }
   
   DetectGyroDrift(msg);
