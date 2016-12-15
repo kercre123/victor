@@ -32,6 +32,7 @@ from SimpleTest import ExplicitlyTaggedUnion, AnInt, AFloat, AListOfDoubles, AFi
 from SimpleTest import ExplicitlyTaggedAutoUnion, AnIntMessage, AFloatMessage, AListOfDoublesMessage, AFixedListOfBytesMessage, ABoolMessage
 from aligned.AutoUnionTest import FunkyMessage, Funky, Monkey, Music
 from DefaultValues import IntsWithDefaultValue, FloatsWithDefaultValue
+from SimpleTest import FooEnum, BarEnum
 
 class TestSimpleMessage(unittest.TestCase):
 
@@ -281,6 +282,23 @@ class TestDefaultValues(unittest.TestCase):
       self.assertAlmostEqual(lastData.b, 12.0)
       self.assertAlmostEqual(lastData.c, -10)
       self.assertAlmostEqual(lastData.d, False)
+
+class TestEnumComplex(unittest.TestCase):
+    def test_enumComplex(self):
+      self.assertEqual(FooEnum.foo1, 0)
+      self.assertEqual(FooEnum.foo2, 8)
+      self.assertEqual(FooEnum.foo3, 9)
+      self.assertEqual(FooEnum.foo4, 10)
+      self.assertEqual(FooEnum.foo5, 1280)
+      self.assertEqual(FooEnum.foo6, 1281)
+      self.assertEqual(FooEnum.foo7, 1000)
+
+      self.assertEqual(BarEnum.bar1, 0)
+      self.assertEqual(BarEnum.bar2, 8)
+      self.assertEqual(BarEnum.bar3, 9)
+      self.assertEqual(BarEnum.bar4, 1291)
+      self.assertEqual(BarEnum.bar5, 16)
+      self.assertEqual(BarEnum.bar6, 17)
 
 
 # Required unittest.main

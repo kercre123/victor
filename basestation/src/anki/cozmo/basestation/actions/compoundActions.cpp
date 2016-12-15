@@ -112,7 +112,7 @@ namespace Anki {
         // Also, only lock tracks if they aren't already locked as we will get only one unlock from the action destructor
         if(!_deleteActionOnCompletion)
         {
-          if((*iter)->GetState() != ActionResult::FAILURE_NOT_STARTED &&
+          if((*iter)->GetState() != ActionResult::NOT_STARTED &&
              !(*iter)->IsSuppressingTrackLocking() &&  !_robot.GetMoveComponent().AreAllTracksLockedBy((*iter)->GetTracksToLock(), std::to_string((*iter)->GetTag())))
           {
             _robot.GetMoveComponent().LockTracks((*iter)->GetTracksToLock(), (*iter)->GetTag(), (*iter)->GetName());
@@ -323,7 +323,7 @@ namespace Anki {
       Result derivedUpdateResult = UpdateDerived();
       if(RESULT_OK != derivedUpdateResult) {
         PRINT_NAMED_INFO("CompoundActionSequential.UpdateInternal.UpdateDerivedFailed", "");
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::UPDATE_DERIVED_FAILED;
       }
       
       if(_wasJustReset) {
@@ -345,19 +345,18 @@ namespace Anki {
           ActionResult subResult = (*_currentAction)->Update();
           SetStatus((*_currentAction)->GetStatus());
           
-          switch(subResult)
+          switch(IActionRunner::GetActionResultCategory(subResult))
           {
-            case ActionResult::RUNNING:
+            case ActionResultCategory::RUNNING:
             {
               return ActionResult::RUNNING;
             }
-              
-            case ActionResult::SUCCESS:
+            case ActionResultCategory::SUCCESS:
             {
               return MoveToNextAction(currentTime);
             }
-              
-            case ActionResult::FAILURE_RETRY:
+            case ActionResultCategory::RETRY:
+            {
               // A constituent action failed . Reset all the constituent actions
               // and try again as long as there are retries remaining
               if(RetriesRemain()) {
@@ -367,37 +366,39 @@ namespace Anki {
                 return ActionResult::RUNNING;
               }
               // No retries remaining. Fall through:
-
-            case ActionResult::FAILURE_ABORT:
-            case ActionResult::FAILURE_TIMEOUT:
-            case ActionResult::FAILURE_PROCEED:
-            case ActionResult::FAILURE_TRACKS_LOCKED:
-            case ActionResult::FAILURE_BAD_TAG:
-            case ActionResult::FAILURE_NOT_STARTED:
-            case ActionResult::CANCELLED:
-            case ActionResult::INTERRUPTED:
-              if(USE_ACTION_CALLBACKS) {
+            }
+            case ActionResultCategory::ABORT:
+            case ActionResultCategory::CANCELLED:
+            {
+              if(USE_ACTION_CALLBACKS)
+              {
                 RunCallbacks(subResult);
               }
-              if(ShouldIgnoreFailure(subResult, *_currentAction)) {
+              
+              if(ShouldIgnoreFailure(subResult, *_currentAction))
+              {
                 // We are ignoring this action's failures, so just move to next action
-                PRINT_NAMED_INFO("CompoundActionSequential.UpdateInternal",
-                                 "Ignoring failure for %s[%d] moving to next action",
-                                 (*_currentAction)->GetName().c_str(),
-                                 (*_currentAction)->GetTag());
+                PRINT_CH_INFO("Actions", "CompoundActionSequential.UpdateInternal",
+                              "Ignoring failure for %s[%d] moving to next action",
+                              (*_currentAction)->GetName().c_str(),
+                              (*_currentAction)->GetTag());
                 return MoveToNextAction(currentTime);
-              } else {
-                PRINT_NAMED_DEBUG("CompoundActionSequential.UpdateInternal",
-                                  "Current action %s[%d] failed with %s deleting",
-                                  (*_currentAction)->GetName().c_str(),
-                                  (*_currentAction)->GetTag(),
-                                  EnumToString(subResult));
+              }
+              else
+              {
+                PRINT_CH_DEBUG("Actions", "CompoundActionSequential.UpdateInternal",
+                               "Current action %s[%d] failed with %s deleting",
+                               (*_currentAction)->GetName().c_str(),
+                               (*_currentAction)->GetTag(),
+                               EnumToString(subResult));
                 StoreUnionAndDelete(_currentAction);
                 return subResult;
               }
-              
+            }
           } // switch(result)
-        } else {
+        }
+        else
+        {
           return ActionResult::RUNNING;
         } // if/else waitUntilTime
       } // if currentAction != actions.end()
@@ -442,52 +443,54 @@ namespace Anki {
 
         const ActionResult subResult = (*currentAction)->Update();
         SetStatus((*currentAction)->GetStatus());
-        switch(subResult)
+        switch(IActionRunner::GetActionResultCategory(subResult))
         {
-          case ActionResult::SUCCESS:
+          case ActionResultCategory::SUCCESS:
+          {
             // Just finished this action, delete it
             StoreUnionAndDelete(currentAction);
             break;
-            
-          case ActionResult::RUNNING:
+          }
+          case ActionResultCategory::RUNNING:
+          {
             // If any action is still running the group is still running
             result = ActionResult::RUNNING;
             ++currentAction;
             break;
-            
-          case ActionResult::FAILURE_RETRY:
+          }
+          case ActionResultCategory::RETRY:
+          {
             // If any retries are left, reset the group and try again.
             if(RetriesRemain()) {
-              PRINT_NAMED_INFO("CompoundActionParallel.Update.Retrying",
-                               "%s triggered retry", (*currentAction)->GetName().c_str());
+              PRINT_CH_INFO("Actions", "CompoundActionParallel.Update.Retrying",
+                            "%s triggered retry", (*currentAction)->GetName().c_str());
               Reset();
               return ActionResult::RUNNING;
             }
-            
-            // If not, just fall through to other failure handlers:
-          case ActionResult::FAILURE_ABORT:
-          case ActionResult::FAILURE_PROCEED:
-          case ActionResult::FAILURE_TIMEOUT:
-          case ActionResult::FAILURE_TRACKS_LOCKED:
-          case ActionResult::FAILURE_BAD_TAG:
-          case ActionResult::FAILURE_NOT_STARTED:
-          case ActionResult::CANCELLED:
-          case ActionResult::INTERRUPTED:
+            // Fall through to other failure handlers
+          }
+          case ActionResultCategory::CANCELLED:
+          case ActionResultCategory::ABORT:
           {
             // Return failure, aborting updating remaining actions the group
-            if(USE_ACTION_CALLBACKS) {
+            if(USE_ACTION_CALLBACKS)
+            {
               RunCallbacks(subResult);
             }
-            if(ShouldIgnoreFailure(subResult, *currentAction)) {
+            
+            if(ShouldIgnoreFailure(subResult, *currentAction))
+            {
               // Ignore the fact that this action failed and just delete it
               (*currentAction)->PrepForCompletion(); // Just in case we were cancelled
               StoreUnionAndDelete(currentAction);
-              break;
-            } else {
+            }
+            else
+            {
               return subResult;
             }
+            break;
           }
-        } // switch(subResult)
+        } // switch(subResultCategory)
       } // for each action in the group
       
       if(USE_ACTION_CALLBACKS) {

@@ -267,7 +267,7 @@ namespace Anki {
           _waitActionCompleted = true;
         }
       }
-      else if(msg.result == ActionResult::FAILURE_RETRY && msg.idTag == 12)
+      else if(IActionRunner::GetActionResultCategory(msg.result) == ActionResultCategory::RETRY && msg.idTag == 12)
       {
         PRINT_NAMED_INFO("CST_DockActions", "Pickup block failed requeueing action");
         

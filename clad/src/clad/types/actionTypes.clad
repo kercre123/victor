@@ -4,6 +4,7 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/audio/audioEventTypes.clad"
+//#include "clad/types/actionResults.clad"
 #include "clad/types/toolCodes.clad"
 #include "clad/types/unexpectedMovementTypes.clad"
 
@@ -84,35 +85,6 @@ enum int_32 RobotActionType {
     WAIT_FOR_LAMBDA
 }
 
-
-enum uint_8 ActionResult {
-    SUCCESS = 0,
-    RUNNING,
-    FAILURE_NOT_STARTED,
-    FAILURE_TIMEOUT,
-    FAILURE_PROCEED,
-    FAILURE_RETRY,
-    FAILURE_ABORT,
-    FAILURE_TRACKS_LOCKED,
-    FAILURE_BAD_TAG,
-    CANCELLED,
-    INTERRUPTED
-}
-
-enum uint_8 ObjectInteractionResult {
-    SUCCESS = 0,
-
-    // Failures types:
-    INCOMPLETE,
-    INVALID_OBJECT,                 // e.g., doesn't exist or wrong type
-    NO_PREACTION_POSES,
-    DID_NOT_REACH_PREACTION_POSE,
-    NOT_CARRYING,                   // When trying to place or after picking up
-    STILL_CARRYING,                 // When trying to do something not possible while carrying or after placing
-    VISUAL_VERIFICATION_FAILED,     // Didn't see object after reaching pre-action pose
-    UNKNOWN_PROBLEM,
-}
-
 enum uint_8 AlignmentType {
   LIFT_FINGER = 0, // Fingers aligned with object
   LIFT_PLATE,      // Lift plate aligned with object
@@ -124,7 +96,6 @@ enum uint_8 AlignmentType {
 structure ObjectInteractionCompleted {
     int_32     objectIDs[5],
     uint_8     numObjects = 0,
-    ObjectInteractionResult result,
 }
 
 // Used by PlayAnimationAction

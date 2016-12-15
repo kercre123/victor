@@ -213,7 +213,7 @@ ActionResult SayTextAction::Init()
       }
       else {
         PRINT_NAMED_ERROR("SayTextAction.Init.PrepareAudioEngine.Failed", "");
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::ABORT;
       }
       
       if (duration_ms * 0.001f > _timeout_sec) {
@@ -295,7 +295,7 @@ ActionResult SayTextAction::Init()
       if (DEBUG_SAYTEXT_ACTION) {
         PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.Init.TextToSpeechFailed", "");
       }
-      return ActionResult::FAILURE_ABORT;
+      return ActionResult::ABORT;
     }
       break;
   }

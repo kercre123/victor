@@ -7,6 +7,7 @@
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/types/actionTypes.clad"
+#include "clad/types/actionResults.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/behaviorObjectives.clad"
 #include "clad/types/behaviorTypes.clad"
@@ -394,10 +395,11 @@ message RobotCompletedFactoryDotTest {
 // TODO: Add action type, more informative result codes...
 message RobotCompletedAction {
     uint_32 robotID,
-    uint_32 idTag,                        // The identifier of the specific action that completed
-    RobotActionType  actionType,          // see enum in actionTypes.def
-    ActionResult  result,                 //  "
-    ActionCompletedUnion completionInfo   //  "
+    uint_32 idTag,                          // The identifier of the specific action that completed
+    RobotActionType  actionType,            // see actionTypes.clad
+    ActionResult  result,                   //  "
+    ActionResult  subActionResults[uint_8], // vector of all results from this action's subActions
+    ActionCompletedUnion completionInfo     //  see actionTypes.clad
 }
 
 // BlockPickedUp

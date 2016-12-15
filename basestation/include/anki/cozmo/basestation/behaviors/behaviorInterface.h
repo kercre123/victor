@@ -28,6 +28,7 @@
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
+#include "clad/types/actionResults.h"
 #include "clad/types/behaviorGroup.h"
 #include "clad/types/behaviorObjectives.h"
 #include "clad/types/behaviorTypes.h"

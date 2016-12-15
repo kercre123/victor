@@ -106,7 +106,7 @@ namespace Anki {
     
     void DriveToObjectAction::SetApproachAngle(const f32 angle_rad)
     {
-      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+      if( GetState() != ActionResult::NOT_STARTED ) {
         PRINT_NAMED_WARNING("DriveToObjectAction.SetApproachAngle.Invalid",
                             "Tried to set the approach angle, but action has already started");
         return;
@@ -179,7 +179,6 @@ namespace Anki {
       
       if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
       {
-        _interactionResult = preActionPoseOutput.interactionResult;
         return preActionPoseOutput.actionResult;
       }
       
@@ -188,8 +187,7 @@ namespace Anki {
         PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
                             "ActionableObject %d did not return any pre-action poses with action type %d.",
                             _objectID.GetValue(), _actionType);
-        _interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::NO_PREACTION_POSES;
       }
       
       alreadyInPosition = preActionPoseOutput.robotAtClosestPreActionPose;
@@ -216,7 +214,6 @@ namespace Anki {
         possiblePoses.push_back(preActionPose.GetPose());
       }
       
-      _interactionResult = ObjectInteractionResult::SUCCESS;
       return ActionResult::SUCCESS;
     } // GetPossiblePoses()
     
@@ -232,14 +229,14 @@ namespace Anki {
         if(_distance_mm < 0.f) {
           PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.NoDistanceSet",
                             "ActionType==NONE but no distance set either.");
-          result = ActionResult::FAILURE_ABORT;
+          result = ActionResult::NO_DISTANCE_SET;
         } else {
           
           Pose3d objectWrtRobotParent;
           if(false == object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), objectWrtRobotParent)) {
             PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
                               "Could not get object pose w.r.t. robot parent pose.");
-            result = ActionResult::FAILURE_ABORT;
+            result = ActionResult::BAD_POSE;
           } else {
             Point2f vec(_robot.GetPose().GetTranslation());
             vec -= Point2f(objectWrtRobotParent.GetTranslation());
@@ -314,16 +311,14 @@ namespace Anki {
         PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
                             "Robot %d's block world does not have an ActionableObject with ID=%d.",
                             _robot.GetID(), _objectID.GetValue());
-        _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
-        result = ActionResult::FAILURE_ABORT;
+        result = ActionResult::BAD_OBJECT;
       }
       else if(PoseState::Unknown == object->GetPoseState() && !_objectCanBeUnknown)
       {
         PRINT_NAMED_INFO("DriveToObjectAction.CheckPreconditions.ObjectPoseStateUnknown",
                          "Robot %d cannot plan a path to ActionableObject %d, whose pose state is Unknown.",
                          _robot.GetID(), _objectID.GetValue());
-        _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
-        result = ActionResult::FAILURE_ABORT;
+        result = ActionResult::BAD_OBJECT;
       }
       else
       {
@@ -369,8 +364,7 @@ namespace Anki {
           PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone.NoObjectWithID",
                               "Robot %d's block world does not have an ActionableObject with ID=%d.",
                               _robot.GetID(), _objectID.GetValue());
-          _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
-          result = ActionResult::FAILURE_ABORT;
+          result = ActionResult::BAD_OBJECT;
         }
         else if( _actionType == PreActionPose::ActionType::NONE)
         {
@@ -380,8 +374,7 @@ namespace Anki {
           {
             PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
                               "Could not get object pose w.r.t. robot parent pose.");
-            _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
-            result = ActionResult::FAILURE_ABORT;
+            result = ActionResult::BAD_OBJECT;
           }
           else
           {
@@ -390,7 +383,7 @@ namespace Anki {
               PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
                                "[%d] Robot not close enough, will return FAILURE_RETRY.",
                                GetTag());
-              result = ActionResult::FAILURE_RETRY;
+              result = ActionResult::DID_NOT_REACH_PREACTION_POSE;
             }
           }
         }
@@ -404,8 +397,7 @@ namespace Anki {
             PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
                              "[%d] Robot not in position, will return FAILURE_RETRY.",
                              GetTag());
-            _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
-            result = ActionResult::FAILURE_RETRY;
+            result = ActionResult::DID_NOT_REACH_PREACTION_POSE;
           }
         }
       }
@@ -415,8 +407,7 @@ namespace Anki {
     
     void DriveToObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
-      ObjectInteractionCompleted interactionCompleted({{_objectID.GetValue(), -1, -1, -1, -1}}, 1,
-                                                      _interactionResult);
+      ObjectInteractionCompleted interactionCompleted({{_objectID.GetValue(), -1, -1, -1, -1}}, 1);
       completionUnion.Set_objectInteractionCompleted(interactionCompleted);
     }
     
@@ -453,7 +444,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
                           "Robot %d cannot place an object because it is not carrying anything.",
                           _robot.GetID());
-        result = ActionResult::FAILURE_ABORT;
+        result = ActionResult::NOT_CARRYING_OBJECT_ABORT;
       } else {
         _objectID = _robot.GetCarryingObject();
         
@@ -463,15 +454,16 @@ namespace Anki {
                             "Robot %d's block world does not have an ActionableObject with ID=%d.",
                             _robot.GetID(), _objectID.GetValue());
           
-          result = ActionResult::FAILURE_ABORT;
+          result = ActionResult::BAD_OBJECT;
         } else {
           
           // Compute the approach angle given the desired placement pose of the carried block
           if (_useExactRotation) {
             f32 approachAngle_rad;
-            if (IDockAction::ComputePlacementApproachAngle(_robot, _placementPose, approachAngle_rad) != RESULT_OK) {
+            ActionResult res = IDockAction::ComputePlacementApproachAngle(_robot, _placementPose, approachAngle_rad);
+            if (res != ActionResult::SUCCESS) {
               PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.Init.FailedToComputeApproachAngle", "");
-              return ActionResult::FAILURE_ABORT;
+              return res;
             }
             SetApproachAngle(approachAngle_rad);
           }
@@ -507,7 +499,7 @@ namespace Anki {
         if ( !isFree ) {
           PRINT_NAMED_INFO("DriveToPlaceCarriedObjectAction.PlacementGoalNotFree",
                            "Placement goal is not free to drop the cube, failing with retry.");
-          result = ActionResult::FAILURE_RETRY;
+          result = ActionResult::PLACEMENT_GOAL_NOT_FREE;
         }
       }
       
@@ -613,7 +605,7 @@ namespace Anki {
                                       const Radians& angleThreshold)
     {
 
-      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+      if( GetState() != ActionResult::NOT_STARTED ) {
         PRINT_NAMED_WARNING("DriveToObjectAction.SetGoal.Invalid",
                             "[%d] Tried to set goal, but action has started",
                             GetTag());
@@ -643,7 +635,7 @@ namespace Anki {
                                        const Radians& angleThreshold)
     {
 
-      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+      if( GetState() != ActionResult::NOT_STARTED ) {
         PRINT_NAMED_WARNING("DriveToObjectAction.SetGoals.Invalid",
                             "[%d] Tried to set goals, but action has started",
                             GetTag());
@@ -692,7 +684,7 @@ namespace Anki {
       if(!_isGoalSet) {
         PRINT_NAMED_ERROR("DriveToPoseAction.Init.NoGoalSet",
                           "Goal must be set before running this action.");
-        result = ActionResult::FAILURE_ABORT;
+        result = ActionResult::NO_GOAL_SET;
       }
       else {
         
@@ -702,7 +694,7 @@ namespace Anki {
             // this means someone passed in a goal in a different origin than the robot.
             PRINT_NAMED_WARNING("DriveToPoseAction.Init.OriginMisMatch",
                                 "Could not get goal pose w.r.t. to robot origin.");
-            return ActionResult::FAILURE_ABORT;
+            return ActionResult::BAD_POSE;
           }
         }
         
@@ -734,7 +726,7 @@ namespace Anki {
         
         if(planningResult != RESULT_OK) {
           PRINT_CH_INFO("Actions", "DriveToPoseAction.Init.FailedToFindPath", "Failed to get path to goal pose.");
-          result = ActionResult::FAILURE_ABORT;
+          result = ActionResult::PATH_PLANNING_FAILED_ABORT;
         }
         
         if(result == ActionResult::SUCCESS) {
@@ -745,7 +737,7 @@ namespace Anki {
             // TODO: Make it possible to set the speed/accel somewhere?
             if(_robot.GetMoveComponent().MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
               PRINT_NAMED_ERROR("DriveToPoseAction.Init.MoveHeadFailed", "Failed to move head to path-following angle.");
-              result = ActionResult::FAILURE_ABORT;
+              result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
             }
           }
           
@@ -786,7 +778,7 @@ namespace Anki {
         case ERobotDriveToPoseStatus::Error:
           PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
           _timeToAbortPlanning = -1.0f;
-          result = ActionResult::FAILURE_ABORT;
+          result = ActionResult::PATH_PLANNING_FAILED_ABORT;
           break;
           
         case ERobotDriveToPoseStatus::ComputingPath: {
@@ -801,7 +793,7 @@ namespace Anki {
                              "Robot has been planning for more than %f seconds, aborting",
                              _maxPlanningTime);
             _robot.AbortDrivingToPose();
-            result = ActionResult::FAILURE_ABORT;
+            result = ActionResult::PATH_PLANNING_FAILED_ABORT;
             _timeToAbortPlanning = -1.0f;
           }
           break;
@@ -820,7 +812,7 @@ namespace Anki {
                              _maxReplanPlanningTime);
             _robot.AbortDrivingToPose();
             // re-try in this case, since we might be able to succeed once we stop and take more time to plan
-            result = ActionResult::FAILURE_RETRY;
+            result = ActionResult::PATH_PLANNING_FAILED_RETRY;
             _timeToAbortPlanning = -1.0f;
           }
           break;
@@ -909,14 +901,14 @@ namespace Anki {
                              distanceThreshold.x(),
                              distanceThreshold.y());
             
-            result = ActionResult::FAILURE_RETRY;
+            result = ActionResult::FAILED_TRAVERSING_PATH;
           }
           else {
             // Something went wrong: not in place and robot apparently hasn't
             // received all that it should have
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure",
                              "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.");
-            result = ActionResult::FAILURE_ABORT;
+            result = ActionResult::FOLLOWING_PATH_BUT_NOT_TRAVERSING;
           }
           break;
         }
@@ -1173,7 +1165,7 @@ namespace Anki {
 
     void IDriveToInteractWithObject::SetApproachAngle(const f32 angle_rad)
     {
-      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+      if( GetState() != ActionResult::NOT_STARTED ) {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetApproachAngle.Invalid",
                             "Tried to set the approach angle, but action has already started");
         return;
@@ -1449,17 +1441,17 @@ namespace Anki {
               else{
                 PRINT_CH_INFO("Actions",
                               "DriveToPlaceRelObjectAction.PossiblePosesFunc.PossiblePosesResultNotSuccess",
-                              "Received possible psoses result:%hhu", possiblePosesResult);
+                              "Received possible psoses result:%u", possiblePosesResult);
               }
               
               if(possiblePoses.size() > 0){
                 return possiblePosesResult;
               }else{
                 PRINT_CH_INFO("Actions",
-                              "DriveToPlaceRelObjectAction.PossiblePosesFunc.NoValidPoses",
+                              "PlaceRelObjectAction.PossiblePosesFunc.NoValidPoses",
                               "After filtering invalid pre-doc poses none remained for placement offset x:%f, y%f",
                               placementOffsetX_mm, placementOffsetY_mm);
-                return ActionResult::FAILURE_ABORT;
+                return ActionResult::NO_PREACTION_POSES;
               }
             });
         }// end if(driveToAction != nullptr)
@@ -1498,7 +1490,7 @@ namespace Anki {
 
     void DriveToRollObjectAction::RollToUpright()
     {
-      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+      if( GetState() != ActionResult::NOT_STARTED ) {
         PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.AlreadyRunning",
                             "[%d] Tried to set the approach angle, but action has already started",
                             GetTag());
@@ -1593,7 +1585,7 @@ namespace Anki {
     
     Result DriveToRollObjectAction::EnableDeepRoll(bool enable)
     {
-      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+      if( GetState() != ActionResult::NOT_STARTED ) {
         PRINT_NAMED_WARNING("DriveToRollObjectAction.EnableDeepRoll.Invalid",
                             "[%d] Tried to set deep roll mode, but action has started",
                             GetTag());

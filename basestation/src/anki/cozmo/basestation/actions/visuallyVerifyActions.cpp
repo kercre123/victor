@@ -78,7 +78,7 @@ namespace Cozmo {
                        "%s: Did not see object before processing %d images",
                        GetName().c_str(), GetNumImagesToWaitFor());
       
-      return ActionResult::FAILURE_ABORT;
+      return ActionResult::VISUAL_OBSERVATION_FAILED;
     }
     
     return ActionResult::RUNNING;
@@ -343,7 +343,7 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
                      _pose.GetTranslation().x(),
                      _pose.GetTranslation().y(),
                      _pose.GetTranslation().z());
-      return ActionResult::FAILURE_ABORT;
+      return ActionResult::VISUAL_OBSERVATION_FAILED;
     }
     
     return res;
@@ -352,7 +352,7 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
   PRINT_NAMED_WARNING("VisuallyVerifyNoObjectAtPoseAction.NullSubActions",
                       "Both subActions are null returning failure");
   
-  return ActionResult::FAILURE_ABORT;
+  return ActionResult::NULL_SUBACTION;
 }
 
 

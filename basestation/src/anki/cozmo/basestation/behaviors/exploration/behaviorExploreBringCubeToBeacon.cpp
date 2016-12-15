@@ -335,12 +335,13 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
       // arguably here we could check isCarrying regardless of action result. Even if the action failed, as long
       // as we are carrying the object we intended to pick up, we should be good
       bool pickUpFinalFail = false;
-      if ( actionRet.result == ActionResult::SUCCESS ) {
+      const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(actionRet.result);
+      if ( resCat == ActionResultCategory::SUCCESS ) {
         // object was picked up
         PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.Done").c_str(), "Picked up '%d'", _selectedObjectID.GetValue());
         TransitionToObjectPickedUp(robot);
       }
-      else if (actionRet.result == ActionResult::FAILURE_RETRY)
+      else if (resCat == ActionResultCategory::RETRY)
       {
         // do we currently have the object in the lift?
         const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
@@ -398,7 +399,8 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
   RobotCompletedActionCallback onStackActionResult = [this, &robot, bottomCubeID, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     bool stackOnCubeFinalFail = false;
-    if (actionRet.result == ActionResult::SUCCESS)
+    const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(actionRet.result);
+    if (resCat == ActionResultCategory::SUCCESS)
     {
       PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.Done").c_str(), "Successfully stacked cube");
       
@@ -415,7 +417,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
         robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
       }
     }
-    if (actionRet.result == ActionResult::FAILURE_RETRY)
+    if (resCat == ActionResultCategory::RETRY)
     {
       const bool canRetry = (attempt < kMaxAttempts);
       const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
@@ -472,7 +474,8 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
   RobotCompletedActionCallback onPlaceActionResult = [this, &robot, pose, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     bool placeAtCubeFinalFail = false;
-    if (actionRet.result == ActionResult::SUCCESS)
+    const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(actionRet.result);
+    if (resCat == ActionResultCategory::SUCCESS)
     {
       PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.Done").c_str(), "Successfully placed cube");
       
@@ -489,7 +492,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
         robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
       }
     }
-    else if (actionRet.result == ActionResult::FAILURE_RETRY)
+    else if (resCat == ActionResultCategory::RETRY)
     {
       const bool canRetry = false || (attempt < kMaxAttempts);
       const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);

@@ -92,7 +92,7 @@ namespace Anki {
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
         _wasAborted = true;
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::ANIM_ABORTED;
       }
       
       using namespace RobotInterface;
@@ -176,7 +176,7 @@ namespace Anki {
       if(_animTag != 0) {
         return ActionResult::SUCCESS;
       } else {
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::ANIM_ABORTED;
       }
     }
 
@@ -185,7 +185,7 @@ namespace Anki {
       if(_stoppedPlaying) {
         return ActionResult::SUCCESS;
       } else if(_wasAborted) {
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::ANIM_ABORTED;
       } else {
         return ActionResult::RUNNING;
       }
@@ -228,12 +228,12 @@ namespace Anki {
       // If animGroupName is empty we will already print a warning in the constructor so we can just fail immediately
       if(_animGroupName.empty())
       {
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::NO_ANIM_NAME;
       }
       
       _animName = _robot.GetAnimationStreamer().GetAnimationNameFromGroup(_animGroupName, _robot);
       if( _animName.empty() ) {
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::NO_ANIM_NAME;
       }
       else {
         return PlayAnimationAction::Init();

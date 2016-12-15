@@ -47,9 +47,7 @@ ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActi
           ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
 , _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
 {
-  _actionCompletedHandle = _robot.GetExternalInterface()->Subscribe(
-    ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
-    std::bind(&ITrackAction::HandleActionCompleted, this, std::placeholders::_1));
+
 }
 
 ITrackAction::~ITrackAction()
@@ -137,7 +135,7 @@ void ITrackAction::SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec)
 void ITrackAction::SetMode(Mode newMode)
 {
   _mode = newMode;
-  if(GetState() == ActionResult::FAILURE_NOT_STARTED)
+  if(GetState() == ActionResult::NOT_STARTED)
   {
     switch(_mode)
     {
@@ -190,8 +188,6 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
 
 ActionResult ITrackAction::Init()
 {
-  _stopActionNow = false;
-  
   // Store eye dart setting so we can restore after tracking
   _originalEyeDartDist = _robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
   
@@ -204,7 +200,7 @@ ActionResult ITrackAction::Init()
                         "[%d] Waiting on tag %d to stop this action, but that tag is no longer in use. Stopping now",
                         GetTag(),
                         _stopOnOtherActionTag);
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::ABORT;
   }
   
   return InitInternal();
@@ -219,7 +215,9 @@ bool ITrackAction::InterruptInternal()
 ActionResult ITrackAction::CheckIfDone()
 {
 
-  if( _stopActionNow ) {
+  if(_stopOnOtherActionTag != ActionConstants::INVALID_TAG &&
+     !IsTagInUse(_stopOnOtherActionTag) )
+  {
     PRINT_CH_INFO(kLogChannelName, "ITrackAction.FinishedByOtherAction",
                   "[%d] action %s stopping because we were told to stop when another action stops (and it did)",
                   GetTag(),
@@ -273,7 +271,7 @@ ActionResult ITrackAction::CheckIfDone()
       
       if(RESULT_OK != _robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
       {
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
       
       if(std::abs(relTiltAngle) > _minTiltAngleForSound) {
@@ -316,7 +314,7 @@ ActionResult ITrackAction::CheckIfDone()
       setBodyAngle.accel_rad_per_sec2    = accel;
       setBodyAngle.angle_tolerance       = _panTolerance.ToFloat();
       if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
       
       if(std::abs(relPanAngle) > _minPanAngleForSound) {
@@ -390,19 +388,6 @@ ActionResult ITrackAction::CheckIfDone()
   
   return ActionResult::RUNNING;
 }
-
-void ITrackAction::HandleActionCompleted(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
-{
-  const auto& msg = event.GetData().Get_RobotCompletedAction();
-  if( msg.idTag == _stopOnOtherActionTag ) {
-    PRINT_CH_INFO(kLogChannelName, "ITrackAction.CompletedOtherAction",
-                  "[%d] completed other action with tag %d, so telling this action to stop",
-                  GetTag(),
-                  _stopOnOtherActionTag);
-    _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
-    _stopActionNow = true;
-  }
-}
   
 //=======================================================================================================
 #pragma mark -
@@ -427,14 +412,14 @@ ActionResult TrackObjectAction::InitInternal()
 {
   if(!_objectID.IsSet()) {
     PRINT_NAMED_ERROR("TrackObjectAction.Init.ObjectIdNotSet", "");
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::BAD_OBJECT;
   }
   
   const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
   if(nullptr == object) {
     PRINT_NAMED_ERROR("TrackObjectAction.Init.InvalidObject",
                       "Object %d does not exist in BlockWorld", _objectID.GetValue());
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::BAD_OBJECT;
   }
   
   _objectType = object->GetType();
@@ -572,7 +557,7 @@ ActionResult TrackFaceAction::InitInternal()
     PRINT_NAMED_ERROR("TrackFaceAction.InitInternal.NoExternalInterface",
                       "Robot must have an external interface so action can "
                       "subscribe to face changed ID events.");
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::ABORT;
   }
   
   using namespace ExternalInterface;
@@ -760,7 +745,7 @@ ActionResult TrackMotionAction::InitInternal()
     PRINT_NAMED_ERROR("TrackMotionAction.Init.NoExternalInterface",
                       "Robot must have an external interface so action can "
                       "subscribe to motion observation events.");
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::ABORT;
   }
   
   _gotNewMotionObservation = false;

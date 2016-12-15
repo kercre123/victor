@@ -52,16 +52,16 @@ void BehaviorDrivePath::TransitionToFollowingPath(Robot& robot)
   IActionRunner* drivePath = new DrivePathAction(robot, _path);
   //Perform action and then callback
   StartActing(drivePath, [this](ActionResult res) {
-    switch(res)
+    switch(IActionRunner::GetActionResultCategory(res))
     {
-      case ActionResult::SUCCESS:
+      case ActionResultCategory::SUCCESS:
         BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);
         break;
         
-      case ActionResult::FAILURE_RETRY:
+      case ActionResultCategory::RETRY:
         break;
         
-      case ActionResult::FAILURE_ABORT:
+      case ActionResultCategory::ABORT:
         PRINT_NAMED_INFO("BehaviorDrivePath.FailedAbort",
                          "Failed to drive path, aborting");
         break;

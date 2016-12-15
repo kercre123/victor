@@ -225,8 +225,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
     retryAnimTrigger = AnimationTrigger::RollBlockRealign;
     
     // Use a different preAction pose if we are retrying because we weren't seeing the object
-    if(completion.completionInfo.Get_objectInteractionCompleted().result ==
-       ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
+    if(completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
     {
       pickupAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc(
         [this, pickupAction](ActionableObject* object,
@@ -239,7 +238,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
       return true;
     }
     else {
-      return completion.result == ActionResult::FAILURE_RETRY;
+      return IActionRunner::GetActionResultCategory(completion.result) == ActionResultCategory::RETRY;
     }
   };
   

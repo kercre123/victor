@@ -97,7 +97,7 @@ namespace Anki {
       
       // Called at the very beginning of UpdateInternal, so derived classes can
       // do additional work. If this does not return RESULT_OK, then UpdateInternal
-      // will return ActionResult::FAILURE_ABORT.
+      // will return ActionResult::UPDATE_DERIVED_FAILED.
       virtual Result UpdateDerived() { return RESULT_OK; }
       
     private:

@@ -19,6 +19,7 @@
 #include "UnionOfUnion.h"
 #include "DefaultValues.h"
 #include "aligned/AutoUnionTest.h"
+#include "TestEnum.h"
 
 // AMAZING UNIT TEST FRAMEWORK RIGHT HERE
 // JUST ONE HEADER (pauley)
@@ -350,7 +351,12 @@ TEST CopyConstructors_should_round_trip() {
 
   ASSERT_EQ("hello", cWrapper.Get_myFoo().myString);
   ASSERT_EQ(AnkiTypes::AnkiEnum::e3, cWrapper.Get_myFoo().myFoo);
-  // Assert that aWrapper has been cleared?
+  ASSERT_EQ(aWrapper.GetTag(), Cat::MyMessageTag::INVALID);
+  ASSERT_EQ(cWrapper.GetTag(), Cat::MyMessageTag::myFoo);
+  
+  // There was a bug that would cause cWrapper's tag to get cleared
+  cWrapper = cWrapper;
+  ASSERT_EQ(cWrapper.GetTag(), Cat::MyMessageTag::myFoo);
 
   PASS();
 }
@@ -562,12 +568,32 @@ TEST DefaultValues_Floats() {
 }
 
 
+TEST Enum_Complex() {
+  ASSERT_EQ(FooEnum::foo1, 0);
+  ASSERT_EQ(FooEnum::foo2, 8);
+  ASSERT_EQ(FooEnum::foo3, 9);
+  ASSERT_EQ(FooEnum::foo4, 10);
+  ASSERT_EQ(FooEnum::foo5, 1280);
+  ASSERT_EQ(FooEnum::foo6, 1281);
+  ASSERT_EQ(FooEnum::foo7, 1000);
+  
+  ASSERT_EQ((unsigned int)BarEnum::bar1, 0);
+  ASSERT_EQ((unsigned int)BarEnum::bar2, 8);
+  ASSERT_EQ((unsigned int)BarEnum::bar3, 9);
+  ASSERT_EQ((unsigned int)BarEnum::bar4, 1291);
+  ASSERT_EQ((unsigned int)BarEnum::bar5, 16);
+  ASSERT_EQ((unsigned int)BarEnum::bar6, 17);
+  
+  PASS();
+}
+
 SUITE(CPP_Emitter) {
 
   // Enum Tests
   RUN_TEST(AnkiEnum_Basics);
   RUN_TEST(AnkiEnum_NoClass);
   RUN_TEST(Enum_VersionHash);
+  RUN_TEST(Enum_Complex);
 
   // Message Tests
   RUN_TEST(Message_VersionHash);
@@ -601,7 +627,6 @@ SUITE(CPP_Emitter) {
   // Default Values
   RUN_TEST(DefaultValues_Ints);
   RUN_TEST(DefaultValues_Floats);
-
 }
 
 /* Add definitions that need to be in the test runner's main file. */

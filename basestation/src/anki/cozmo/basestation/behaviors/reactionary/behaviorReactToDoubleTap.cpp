@@ -122,8 +122,7 @@ Result BehaviorReactToDoubleTap::InitInternalReactionary(Robot& robot)
                   }
                 
                   // If we can't see the object after turning towards it then try to drive to it
-                  if(msg.completionInfo.Get_objectInteractionCompleted().result ==
-                     ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
+                  if(msg.result == ActionResult::VISUAL_OBSERVATION_FAILED)
                   {
                     TransitionToDriveToCube(robot);
                   }

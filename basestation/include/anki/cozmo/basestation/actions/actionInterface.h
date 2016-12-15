@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 
 #include "clad/types/actionTypes.h"
+#include "clad/types/actionResults.h"
 #include "clad/types/animationKeyFrames.h"
 
 #include "util/random/randomGenerator.h"
@@ -115,10 +116,10 @@ namespace Anki {
       void SetEnableMoodEventOnCompletion(bool enable);
 
       // Override this to fill in the ActionCompletedStruct emitted as part of the
-      // completion signal with an action finishes. Note that this public because
+      // completion signal with an action finishes. Note that this is public because
       // subclasses that are composed of other actions may want to make use of
       // the completion info of their constituent actions.
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const { }
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const { completionUnion = _completionUnion; }
 
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
@@ -141,6 +142,8 @@ namespace Anki {
       // Forces the actions state to SUCCESS so in the next update call the action will immediately complete
       // Use caution when calling this because it could result in an incomplete completionUnion
       void ForceComplete();
+      
+      static ActionResultCategory GetActionResultCategory(const ActionResult& res) { return static_cast<ActionResultCategory>(static_cast<u32>(res) >> ARCBitShift::NUM_BITS); }
 
     protected:
       
@@ -156,10 +159,10 @@ namespace Anki {
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
       
-      void ResetState() { _state = ActionResult::FAILURE_NOT_STARTED; }
+      void ResetState() { _state = ActionResult::NOT_STARTED; }
 
       bool IsRunning() const { return _state == ActionResult::RUNNING; }
-      bool HasStarted() const { return _state != ActionResult::FAILURE_NOT_STARTED; }
+      bool HasStarted() const { return _state != ActionResult::NOT_STARTED; }
       
       static u32 NextIdTag();
       
@@ -169,7 +172,7 @@ namespace Anki {
       
       std::string   _statusMsg;
       
-      ActionResult         _state           = ActionResult::FAILURE_NOT_STARTED;
+      ActionResult         _state           = ActionResult::NOT_STARTED;
       ActionCompletedUnion _completionUnion;
       RobotActionType      _type;
       std::string          _name;

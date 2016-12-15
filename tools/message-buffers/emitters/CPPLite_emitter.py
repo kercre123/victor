@@ -331,14 +331,9 @@ class HEnumEmitter(BaseEmitter):
             if node.members():
                 pieces = []
                 for member in node.members():
-                    if member.initializer:
-                        initializer = hex(member.value) if member.initializer.type == "hex" else str(member.value)
-                        start = '{member_name}'.format(member_name=member.name)
-                        middle = ' = {initializer},'.format(initializer=initializer)
-                    else:
-                        start = '{member_name},'.format(member_name=member.name)
-                        middle = ''
-                    end = ' // {value}'.format(value=member.value)
+                    start = '{member_name}'.format(member_name=member.name)
+                    middle = ' = {initializer},'.format(initializer=str(member.value))
+                    end = ''
             
                     pieces.append((start, middle, end))
                 

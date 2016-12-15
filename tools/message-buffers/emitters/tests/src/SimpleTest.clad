@@ -19,6 +19,7 @@
 #include "Bar.clad"
 #include "ExplicitUnion.clad"
 #include "ExplicitAutoUnion.clad"
+#include "TestEnum.clad"
 
 namespace Baz {
   message Dog {

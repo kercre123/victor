@@ -828,6 +828,19 @@ class FloatConst(Node):
 
     attr_names = tuple(["value", "type"])
 
+class StringConst(Node):
+    def __init__(self, value, coord):
+        self.value = value
+        self.type = "str"
+        self.coord = coord
+        self.isInt = False
+        self.isFloat = False
+    
+    def children(self):
+        return tuple()
+    
+    attr_names = tuple(["value", "type"])
+
 # DEBUG emitter
 class ASTDebug(NodeVisitor):
     def __init__(self):

@@ -269,7 +269,7 @@ namespace Anki {
             ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
             if(nullptr == object)
             {
-              EndAttempt(robot, ActionResult::FAILURE_ABORT, "PickupObjectIsNull", true);
+              EndAttempt(robot, ActionResult::ABORT, "PickupObjectIsNull", true);
               return Status::Failure;
             }
             
@@ -335,7 +335,7 @@ namespace Anki {
             const ObservableObject* blockToPickup = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
             if(nullptr == blockToPickup)
             {
-              EndAttempt(robot, ActionResult::FAILURE_ABORT, "BlockToPickupNull", true);
+              EndAttempt(robot, ActionResult::ABORT, "BlockToPickupNull", true);
               break;
             }
           
@@ -936,7 +936,7 @@ namespace Anki {
           {
             PRINT_NAMED_INFO("BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
             _yellForHelp = true;
-            END_TEST_IN_HANDLER(ActionResult::FAILURE_ABORT, "SawMoreThanOneMarkerOnInit");
+            END_TEST_IN_HANDLER(ActionResult::ABORT, "SawMoreThanOneMarkerOnInit");
           }
           return;
         }
@@ -953,7 +953,7 @@ namespace Anki {
           {
             PRINT_NAMED_INFO("BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
             _yellForHelp = true;
-            END_TEST_IN_HANDLER(ActionResult::FAILURE_ABORT, "SawMoreThanOneMarkerOnInit");
+            END_TEST_IN_HANDLER(ActionResult::ABORT, "SawMoreThanOneMarkerOnInit");
           }
           return;
         }
@@ -961,20 +961,20 @@ namespace Anki {
         {
           PRINT_NAMED_WARNING("BehaviorDockingTest.HandleObservedObject.UnexpectedBlock", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
           _yellForHelp = true;
-          END_TEST_IN_HANDLER(ActionResult::FAILURE_ABORT, "UnexpectedBlock");
+          END_TEST_IN_HANDLER(ActionResult::ABORT, "UnexpectedBlock");
         }
       }
       else
       {
         PRINT_NAMED_WARNING("BehaviorDockingTest.HandleObservedObject.UnexpectedObservedObject", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
         _yellForHelp = true;
-        END_TEST_IN_HANDLER(ActionResult::FAILURE_ABORT, "UnexpectedObject");
+        END_TEST_IN_HANDLER(ActionResult::ABORT, "UnexpectedObject");
       }
     }
     
     void BehaviorDockingTestSimple::HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg)
     {
-      EndAttempt(robot, ActionResult::FAILURE_ABORT, "RobotStopped");
+      EndAttempt(robot, ActionResult::ABORT, "RobotStopped");
       _yellForHelp = true;
       SetCurrStateAndFlashLights(State::ManualReset, robot);
     }
@@ -1005,7 +1005,7 @@ namespace Anki {
         _actionCallbackMap[action->GetTag()] = callback;
       } else {
         PRINT_NAMED_WARNING("BehaviorDockingTest.StartActing.QueueActionFailed", "Action type %s", EnumToString(action->GetType()));
-        EndAttempt(robot, ActionResult::FAILURE_ABORT, "QueueActionFailed");
+        EndAttempt(robot, ActionResult::ABORT, "QueueActionFailed");
       }
     }
     

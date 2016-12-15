@@ -111,8 +111,6 @@ protected:
   virtual bool InterruptInternal() override final;
   
 private:
-
-  void HandleActionCompleted(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
   
   Mode     _mode = Mode::HeadAndBody;
   double   _updateTimeout_sec = 0.;
@@ -121,7 +119,6 @@ private:
   Radians  _tiltTolerance = HEAD_ANGLE_TOL;
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
   u32      _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
-  bool     _stopActionNow = false;
   
   u32      _eyeShiftTag;
   bool     _moveEyes    = false;
@@ -140,8 +137,6 @@ private:
   
   u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;
   bool     _clampSmallAngles = false;
-
-  Signal::SmartHandle _actionCompletedHandle;
   
 }; // class ITrackAction
   

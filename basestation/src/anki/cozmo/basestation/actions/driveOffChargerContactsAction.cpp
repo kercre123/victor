@@ -80,7 +80,7 @@ ActionResult DriveOffChargerContactsAction::CheckIfDone()
   else
   {
     PRINT_NAMED_WARNING("DriveOffChargerContactsAction.CheckIfDone.StillOnCharger", "");
-    return ActionResult::FAILURE_RETRY;
+    return ActionResult::STILL_ON_CHARGER;
   }
 }
   

@@ -13,7 +13,9 @@
 
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionWatcher.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
@@ -25,6 +27,7 @@ namespace Anki {
 #pragma mark ---- ActionList ----
     
     ActionList::ActionList()
+    : _actionWatcher(new ActionWatcher())
     {
     
     }
@@ -336,8 +339,7 @@ namespace Anki {
       
       for (auto listIter = _queue.begin(); listIter != _queue.end(); ) {
         ASSERT_NAMED(*listIter != nullptr, "ActionQueue.Clear.NullAction");
-        DeleteAction(*listIter);
-        listIter = _queue.erase(listIter);
+        DeleteActionIter(listIter);
       }
       
       _currentlyClearing = false;
@@ -364,11 +366,7 @@ namespace Anki {
         if(withType == RobotActionType::UNKNOWN || (*iter)->GetType() == withType) {
           // If this doesn't actually delete the action then it must have already been deleted so
           // our iter will be invalid since the call that actually deleted the action will erase the iter
-          if(DeleteAction(*iter))
-          {
-            iter = _queue.erase(iter);
-          }
-          else
+          if(!DeleteActionIter(iter))
           {
             break;
           }
@@ -406,11 +404,7 @@ namespace Anki {
           }
           // If this doesn't actually delete the action then it must have already been deleted so
           // our iter will be invalid since the call that actually deleted the action will erase the iter
-          if(DeleteAction(*iter))
-          {
-            iter = _queue.erase(iter);
-          }
-          else
+          if(!DeleteActionIter(iter))
           {
             break;
           }
@@ -546,6 +540,7 @@ namespace Anki {
           _currentAction = GetNextActionToRun();
         }
         assert(_currentAction != nullptr);
+        _currentAction->GetRobot().GetActionList().GetActionWatcher().ParentActionUpdating(_currentAction);
         
         const CozmoContext* cozmoContext = _currentAction->GetRobot().GetContext();
         VizManager* vizManager = cozmoContext->GetVizManager();
@@ -602,22 +597,76 @@ namespace Anki {
       }
     }
     
-    bool ActionQueue::DeleteAction(IActionRunner* &action)
+    bool ActionQueue::DeleteActionAndIter(IActionRunner* &action, std::list<IActionRunner*>::iterator& iter)
     {
       if(action != nullptr)
       {
+        if(iter != _queue.end())
+        {
+          ASSERT_NAMED((*iter) == action, "ActionQueue.DeleteAction.IterAndActionNotTheSame");
+        }
+      
         // If the action isn't currently being deleted meaning it was successfully inserted into the set
         // so the second element of the pair will be true
         const auto pair = _tagsBeingDeleted.insert(action->GetTag());
         if(pair.second)
         {
           action->PrepForCompletion();
+          
+          IExternalInterface* externalInterface = nullptr;
+          ExternalInterface::RobotCompletedAction rca;
+          if(action->GetRobot().HasExternalInterface() &&
+             action->GetEmitCompletionSignal() &&
+             action->GetState() != ActionResult::INTERRUPTED)
+          {
+            std::vector<ActionResult> subActionResults;
+            action->GetRobot().GetActionList().GetActionWatcher().GetSubActionResults(action->GetTag(),
+                                                                                      subActionResults);
+            
+            ActionCompletedUnion acu;
+            action->GetCompletionUnion(acu);
+            
+            rca = ExternalInterface::RobotCompletedAction(action->GetRobot().GetID(),
+                                                          action->GetTag(),
+                                                          action->GetType(),
+                                                          action->GetState(),
+                                                          subActionResults,
+                                                          acu);
+            
+            externalInterface = action->GetRobot().GetExternalInterface();
+          }
+          
           Util::SafeDelete(action);
+          
+          // Remove the action from the queue before emitting a RobotActionCompleted signal
+          // This is to prevent there being a null action in the queue while systems are handling
+          // the action completion
+          if(iter != _queue.end())
+          {
+            iter = _queue.erase(iter);
+          }
+          
+          if(externalInterface != nullptr)
+          {
+            externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(rca)));
+          }
+          
           _tagsBeingDeleted.erase(pair.first);
         }
         return pair.second;
       }
       return false;
+    }
+    
+    bool ActionQueue::DeleteAction(IActionRunner* &action)
+    {
+      auto iter = _queue.end();
+      return DeleteActionAndIter(action, iter);
+    }
+    
+    bool ActionQueue::DeleteActionIter(std::list<IActionRunner*>::iterator& iter)
+    {
+      return DeleteActionAndIter(*iter, iter);
     }
     
     bool ActionQueue::IsDuplicate(IActionRunner* action)
@@ -645,6 +694,8 @@ namespace Anki {
         PRINT_STREAM_INFO("ActionQueue.Print", ss.str());
       }
     } // Print()
+    
+    
     
   } // namespace Cozmo
 } // namespace Anki

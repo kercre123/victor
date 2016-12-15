@@ -119,10 +119,10 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
   
   IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
   
-  if(preActionPoseOutput.actionResult == ActionResult::FAILURE_ABORT)
+  if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
   {
     PRINT_NAMED_WARNING("DriveToFlipBlockPoseAction.Constructor", "Failed to find closest preAction pose");
-    return ActionResult::FAILURE_ABORT;
+    return preActionPoseOutput.actionResult;
   }
   
   Pose3d facePose;
@@ -131,7 +131,7 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
   if(preActionPoseOutput.preActionPoses.empty())
   {
     PRINT_NAMED_WARNING("DriveToFlipBlockPoseAction.Constructor", "No preAction poses");
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::NO_PREACTION_POSES;
   }
   
   if(shouldDriveToClosestPose)
@@ -271,13 +271,13 @@ ActionResult FlipBlockAction::Init()
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("FlipBlockAction.Init.NullObject", "ObjectID=%d", _objectID.GetValue());
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::BAD_OBJECT;
   }
   
   if(object->IsPoseStateUnknown())
   {
     PRINT_NAMED_WARNING("FlipBlockAction.Init.UnknownPose", "Object %d pose state is unknown", _objectID.GetValue());
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::BAD_OBJECT;
   }
   
   const IDockAction::PreActionPoseInput preActionPoseInput(object,
@@ -333,7 +333,7 @@ ActionResult FlipBlockAction::CheckIfDone()
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("FlipBlockAction.CheckIfDone.NullObject", "ObjectID=%d", _objectID.GetValue());
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::BAD_OBJECT;
   }
   
   Pose3d p;

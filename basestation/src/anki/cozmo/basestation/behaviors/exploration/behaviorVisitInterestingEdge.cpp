@@ -639,12 +639,13 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robo
   
   RobotCompletedActionCallback onActionResult = [this, &robot, attemptsDone](const ExternalInterface::RobotCompletedAction& actionRet)
   {
-    if ( actionRet.result == ActionResult::SUCCESS )
+    ActionResultCategory resCat = IActionRunner::GetActionResultCategory(actionRet.result);
+    if ( resCat == ActionResultCategory::SUCCESS )
     {
       // we got there, gather accaurate border information
       TransitionToS2_GatherAccurateEdge(robot);
     }
-    else if (actionRet.result == ActionResult::FAILURE_RETRY)
+    else if (resCat == ActionResultCategory::RETRY)
     {
       // retry as long as we haven't run out of tries
       if ( attemptsDone < kVie_MoveActionRetries ) {

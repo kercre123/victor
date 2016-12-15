@@ -298,7 +298,7 @@ namespace Anki {
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                                 NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10),
                                                 NEAR(GetRobotPose().GetTranslation().x(), 0, 30),
-                                                _lastActionResult == ActionResult::FAILURE_ABORT)
+                                                _lastActionResult == ActionResult::VISUAL_OBSERVATION_FAILED)
           {
             StopMovie();
             CST_EXIT();

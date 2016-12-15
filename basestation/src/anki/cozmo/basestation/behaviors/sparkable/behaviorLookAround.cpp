@@ -218,7 +218,8 @@ void BehaviorLookAround::TransitionToRoaming(Robot& robot)
 
   StartActing(new CompoundActionSequential(robot, {setHeadAndLiftAction, goToPoseAction}),
               [this, &robot](ActionResult result) {
-                if( result == ActionResult::SUCCESS || result == ActionResult::FAILURE_RETRY ) {
+                const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
+                if( resCat == ActionResultCategory::SUCCESS || resCat == ActionResultCategory::RETRY ) {
                   _currentDestination = GetNextDestination(_currentDestination);
                 }
                 if (_numDestinationsLeft == 0) {

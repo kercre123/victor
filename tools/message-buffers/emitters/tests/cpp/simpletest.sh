@@ -28,7 +28,8 @@ for file in $CLADSRC/Foo.clad $CLADSRC/Bar.clad $CLADSRC/SimpleTest.clad \
                               $CLADSRC/UnionOfUnion.clad \
                               $CLADSRC/aligned/AutoUnionTest.clad \
                               $CLADSRC/aligned/AnkiEnum.clad \
-                              $CLADSRC/DefaultValues.clad; do
+                              $CLADSRC/DefaultValues.clad \
+                              $CLADSRC/TestEnum.clad; do
     OUTPUT_DIR_PARAM=$(dirname $OUTPUT_DIR/${file#$CLADSRC/};)
     mkdir -p ${OUTPUT_DIR_PARAM}
     $CLAD --output-union-helper-constructors -o ${OUTPUT_DIR_PARAM} -C $(dirname $file) $(basename $file);
@@ -48,5 +49,6 @@ clang++ -Wall -Wextra -std=c++11 -stdlib=libc++ \
     $OUTPUT_DIR/ExplicitUnion.cpp \
     $OUTPUT_DIR/UnionOfUnion.cpp \
     $SUPPORTDIR/source/SafeMessageBuffer.cpp \
-    $OUTPUT_DIR/DefaultValues.cpp
+    $OUTPUT_DIR/DefaultValues.cpp \
+    $OUTPUT_DIR/TestEnum.cpp
 $OUTPUT_DIR/cpptest.out

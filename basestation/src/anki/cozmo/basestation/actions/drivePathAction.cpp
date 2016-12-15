@@ -35,13 +35,13 @@ ActionResult DrivePathAction::Init()
   ERobotDriveToPoseStatus status = _robot.CheckDriveToPoseStatus();
   
   if(status != ERobotDriveToPoseStatus::Waiting){
-    result = ActionResult::FAILURE_ABORT;
+    result = ActionResult::PATH_PLANNING_FAILED_ABORT;
     return result;
   }
   
   // Tell robot to execute this simple path
   if(RESULT_OK != _robot.ExecutePath(_path, false)) {
-    result = ActionResult::FAILURE_ABORT;
+    result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
     return result;
   }
   

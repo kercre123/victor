@@ -102,14 +102,14 @@ ActionResult SetFaceAction::Init()
     default:
       PRINT_NAMED_ERROR("SetFaceAction.Init.BadActionType",
                         "Unexpected type: %s", EnumToString(GetType()));
-      return ActionResult::FAILURE_ABORT;
+      return ActionResult::ABORT;
   }
   
   if(RESULT_OK != addResult)
   {
     PRINT_NAMED_WARNING("SetFaceAction.Init.AddFaceKeyFrameFailed", "Type=%s",
                         EnumToString(GetType()));
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::ABORT;
   }
   
   _playAnimationAction = new PlayAnimationAction(_robot, &_animation);

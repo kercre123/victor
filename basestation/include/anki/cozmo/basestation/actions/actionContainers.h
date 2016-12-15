@@ -32,6 +32,7 @@ namespace Anki {
     // Forward declarations:
     class Robot;
     class IActionRunner;
+    class ActionWatcher;
     
     // This is an ordered list of actions to be run. It is similar to an
     // CompoundActionSequential, but actions can be added to it dynamically,
@@ -87,7 +88,11 @@ namespace Anki {
       // completion signals
       // Returns true if this call actually deleted the action, false if the action is already in the process
       // of being deleted
+      // If iter is not the end of the queue, the iter will be removed from the queue (iter should always point to the action)
       bool DeleteAction(IActionRunner* &action);
+      bool DeleteActionIter(std::list<IActionRunner*>::iterator& iter);
+      
+      bool DeleteActionAndIter(IActionRunner* &action, std::list<IActionRunner*>::iterator& iter);
     
       IActionRunner*            _currentAction = nullptr;
       std::list<IActionRunner*> _queue;
@@ -165,6 +170,8 @@ namespace Anki {
       // Blindly clears out the contents of the action list
       void       Clear();
       
+      ActionWatcher& GetActionWatcher() { return *_actionWatcher.get(); }
+      
       typedef std::map<SlotHandle, ActionQueue>::const_iterator const_iterator;
       const_iterator begin() const { return _queues.begin(); }
       const_iterator end()   const { return _queues.end();   }
@@ -175,6 +182,8 @@ namespace Anki {
     private:
       // Whether or not the queues are in the process of being cleared
       bool _currentlyClearing = false;
+      
+      std::unique_ptr<ActionWatcher> _actionWatcher;
       
     }; // class ActionList
     

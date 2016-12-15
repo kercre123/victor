@@ -151,7 +151,7 @@ namespace Anki {
       if(!_inPosition) {
 
         if(RESULT_OK != SendSetBodyAngle()) {
-          return ActionResult::FAILURE_RETRY;
+          return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
         }
         
         if(_moveEyes)
@@ -205,7 +205,7 @@ namespace Anki {
         {
           PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.WorldOriginUpdateFail",
                         "Could not get target pose w.r.t. current world origin");
-          return ActionResult::FAILURE_RETRY;
+          return ActionResult::BAD_POSE;
         }
         
         _currentTargetAngle = _targetPose.GetRotation().GetAngleAroundZaxis();
@@ -213,7 +213,7 @@ namespace Anki {
         // Also need to update the angle being used by the steering controller
         // on the robot:
         if(RESULT_OK != SendSetBodyAngle()) {
-          return ActionResult::FAILURE_RETRY;
+          return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
         }
         
         if(_moveEyes)
@@ -288,7 +288,7 @@ namespace Anki {
           PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving",
                               GetTag());
-          result = ActionResult::FAILURE_RETRY;
+          result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
         }
       }
       
@@ -433,7 +433,7 @@ namespace Anki {
       
       // unsuccessful in finding the object
       else if(internalResult == ActionResult::SUCCESS && _desiredObjectID.IsSet()){
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::VISUAL_OBSERVATION_FAILED;
       }
       
       return internalResult;
@@ -503,14 +503,14 @@ namespace Anki {
                                    _speed_mmps, _accel_mmps2, _decel_mmps2))
       {
         PRINT_NAMED_ERROR("DriveStraightAction.Init.AppendLineFailed", "");
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::PATH_PLANNING_FAILED_ABORT;
       }
       
       _hasStarted = false;
       
       // Tell robot to execute this simple path
       if(RESULT_OK != _robot.ExecutePath(path, false)) {
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
       
       return ActionResult::SUCCESS;
@@ -570,7 +570,7 @@ namespace Anki {
       _headCalibStarted = false;
       _liftCalibStarted = false;
       if (RESULT_OK != _robot.GetMoveComponent().CalibrateMotors(_calibHead, _calibLift)) {
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
       
       if(_robot.HasExternalInterface())
@@ -706,7 +706,7 @@ namespace Anki {
                                                                    _accel_radPerSec2,
                                                                    _duration_sec))
         {
-          result = ActionResult::FAILURE_ABORT;
+          result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
         }
         
         if(_moveEyes)
@@ -793,7 +793,7 @@ namespace Anki {
           PRINT_NAMED_WARNING("MoveHeadToAngleAction.CheckIfDone.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving",
                               GetTag());
-          result = ActionResult::FAILURE_RETRY;
+          result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
         }
       }
       
@@ -932,7 +932,7 @@ namespace Anki {
                                                        _maxLiftSpeedRadPerSec,
                                                        _liftAccelRacPerSec2,
                                                        _duration) != RESULT_OK) {
-          result = ActionResult::FAILURE_ABORT;
+          result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
         }
       }
       
@@ -974,7 +974,7 @@ namespace Anki {
           PRINT_NAMED_WARNING("MoveLiftToHeightAction.CheckIfDone.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving",
                               GetTag());
-          result = ActionResult::FAILURE_RETRY;
+          result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
         }
       }
       
@@ -1200,7 +1200,7 @@ namespace Anki {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectNotFound",
                             "Object with ID=%d no longer exists in the world.",
                             _objectID.GetValue());
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::BAD_OBJECT;
         }
       }
       // NOTE: in the case of a retry, init will be called multiple times, so it is possible that _objectID
@@ -1210,7 +1210,7 @@ namespace Anki {
       if( nullptr == _objectPtr ) {
         PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.Init.NullObject",
                       "No valid object ptr or ID");
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::BAD_OBJECT;
       }
       
       Pose3d objectPoseWrtRobot;
@@ -1228,7 +1228,7 @@ namespace Anki {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoValidPose",
                             "Could not get a valid closest marker pose of object %d",
                             _objectID.GetValue());
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::BAD_OBJECT;
         }
       } else {
         // Use the closest marker with the specified code:
@@ -1238,7 +1238,7 @@ namespace Anki {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoMarkersWithCode",
                             "Object %d does not have any markers with code %d.",
                             _objectID.GetValue(), _whichCode);
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::BAD_MARKER;
         }
         
         Vision::KnownMarker* closestMarker = nullptr;
@@ -1248,7 +1248,7 @@ namespace Anki {
             PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.MarkerOriginProblem",
                               "Could not get pose of marker with code %d of object %d "
                               "w.r.t. robot pose.", _whichCode, _objectID.GetValue() );
-            return ActionResult::FAILURE_ABORT;
+            return ActionResult::BAD_POSE;
           }
         } else {
           f32 closestDist = std::numeric_limits<f32>::max();
@@ -1258,7 +1258,7 @@ namespace Anki {
               PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.MarkerOriginProblem",
                                 "Could not get pose of marker with code %d of object %d "
                                 "w.r.t. robot pose.", _whichCode, _objectID.GetValue() );
-              return ActionResult::FAILURE_ABORT;
+              return ActionResult::BAD_POSE;
             }
             
             const f32 currentDist = markerPoseWrtRobot.GetTranslation().Length();
@@ -1273,7 +1273,7 @@ namespace Anki {
         if(closestMarker == nullptr) {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoClosestMarker",
                             "No closest marker found for object %d.", _objectID.GetValue());
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::BAD_MARKER;
         }
       }
       
@@ -1304,17 +1304,11 @@ namespace Anki {
           
           if(_doRefinedTurn)
           {
-            // If we need to refine the turn just reset this action, set appropriate variables, and re-init
+            // If we need to refine the turn just reset this action, set appropriate variables
             Reset(false);
             ShouldDoRefinedTurn(false);
             SetMaxPanSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
             SetPanTolerance(_refinedTurnAngleTol_rad);
-            
-            ActionResult res = Init();
-            if(res != ActionResult::SUCCESS)
-            {
-              return res;
-            }
             
             return ActionResult::RUNNING;
           }
@@ -1324,7 +1318,6 @@ namespace Anki {
             // get it initialized
             ActionResult verificationResult = _visuallyVerifyAction->Update();
             if(ActionResult::SUCCESS != verificationResult) {
-              _interactionResult = ObjectInteractionResult::VISUAL_VERIFICATION_FAILED;
               return verificationResult;
             }
           }
@@ -1336,7 +1329,6 @@ namespace Anki {
       if (nullptr != _visuallyVerifyAction) {
         ActionResult verificationResult = _visuallyVerifyAction->Update();
         if (verificationResult != ActionResult::SUCCESS) {
-          _interactionResult = ObjectInteractionResult::VISUAL_VERIFICATION_FAILED;
           return verificationResult;
         }
       }
@@ -1351,7 +1343,6 @@ namespace Anki {
           _robot.GetActionList().QueueActionNext(new TrackObjectAction(_robot, _objectID));
         }
       }
-      _interactionResult = ObjectInteractionResult::SUCCESS;
       return ActionResult::SUCCESS;
     } // TurnTowardsObjectAction::CheckIfDone()
     
@@ -1360,7 +1351,6 @@ namespace Anki {
       ObjectInteractionCompleted info;
       info.numObjects = 1;
       info.objectIDs[0] = _objectID;
-      info.result = _interactionResult;
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
     }
     
@@ -1391,7 +1381,7 @@ namespace Anki {
         if(object == nullptr) {
           PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.ObjectNotFound",
                             "Could not get actionable object with ID = %d from world.", _objectID.GetValue());
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::BAD_OBJECT;
         }
         
         if(object->GetType() == ObjectType::Bridge_LONG ||
@@ -1414,7 +1404,7 @@ namespace Anki {
                             "that traversal is not defined.", _robot.GetID(),
                             object->GetID().GetValue(), ObjectTypeToString(object->GetType()));
           
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::BAD_OBJECT;
         }
       }
       
@@ -1499,7 +1489,7 @@ namespace Anki {
       
       if(!_isPoseSet) {
         PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.PoseNotSet", "");
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::BAD_POSE;
       }
       
       if(_poseWrtRobot.GetParent() == nullptr) {
@@ -1517,7 +1507,7 @@ namespace Anki {
         _poseWrtRobot.Print();
         _poseWrtRobot.PrintNamedPathToOrigin(false);
         _robot.GetPose().PrintNamedPathToOrigin(false);
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::BAD_POSE;
       }
       
       if(_maxTurnAngle > 0)
@@ -1593,7 +1583,7 @@ namespace Anki {
       {
         PRINT_NAMED_WARNING("TurnTowardsImagePointAction.Init.ComputeTurnTowardsImagePointAnglesFailed",
                             "(%f,%f) at t=%u", _imgPoint.x(), _imgPoint.y(), _timestamp);
-        return ActionResult::FAILURE_ABORT;
+        return ActionResult::ABORT;
       }
       
       SetBodyPanAngle(panAngle);
@@ -1729,7 +1719,7 @@ namespace Anki {
         if( _requireFaceConfirmation ) {
           PRINT_CH_INFO("Actions", "TurnTowardsFaceAction.Init.NoFacePose",
                         "Required face pose, don't have one, failing");
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::NO_FACE;
         }
         else {
           _state = State::SayingName; // jump to end and play animation (if present)
@@ -1870,7 +1860,7 @@ namespace Anki {
           else if( result != ActionResult::RUNNING && _requireFaceConfirmation ) {
             // the wait action isn't running anymore, we didn't get a face, and we require a face. This is a
             // failure
-            result = ActionResult::FAILURE_ABORT;
+            result = ActionResult::NO_FACE;
           }
           break;
         }
@@ -2115,7 +2105,7 @@ namespace Anki {
             Result setCalibResult = _robot.GetVisionComponent().EnableToolCodeCalibration(_doCalibration);
             if(RESULT_OK != setCalibResult) {
               PRINT_CH_INFO("Actions", "ReadToolCodeAction.CheckIfDone.FailedToSetCalibration", "");
-              result = ActionResult::FAILURE_ABORT;
+              result = ActionResult::FAILED_SETTING_CALIBRATION;
             } else {
               // Tell the VisionSystem thread to check the tool code in the next image it gets.
               // It will disable this mode when it completes.
@@ -2132,7 +2122,7 @@ namespace Anki {
           
         case State::ReadCompleted:
           if(_toolCodeInfo.code == ToolCode::UnknownTool) {
-            result = ActionResult::FAILURE_ABORT;
+            result = ActionResult::UNKNOWN_TOOL_CODE;
           } else {
             result = ActionResult::SUCCESS;
           }
