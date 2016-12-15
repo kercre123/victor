@@ -794,19 +794,28 @@ namespace Cozmo.HomeHub {
       }
       DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("success"));
       DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
+      int cubesRequired = ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).MinigameConfig.NumCubesRequired();
       _CurrentChallengeId = null;
 
       if (_RequestDialog != null) {
         _RequestDialog.DisableAllButtons();
         _RequestDialog.ViewClosed -= HandleRequestDialogClose;
       }
-      HandleMiniGameYesAnimEnd(true);
-    }
 
-    private void HandleMiniGameYesAnimEnd(bool success) {
-      DAS.Info(this, "HandleMiniGameYesAnimEnd");
       if (MinigameConfirmed != null) {
-        MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
+        if (RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest != null) {
+          MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
+        }
+        else {
+          // challenge request has become null due to cube(s) disconnecting.
+          if (RobotEngineManager.Instance.CurrentRobot.LightCubes.Count < cubesRequired) {
+            string title = Localization.Get(ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).ChallengeTitleLocKey);
+            OpenNeedCubesAlert(RobotEngineManager.Instance.CurrentRobot.LightCubes.Count, cubesRequired, title);
+          }
+          else {
+            DAS.Error("HomeView.HandleMiniGameConfirm", "challenge request is null for an unknown reason");
+          }
+        }
       }
     }
 
@@ -841,6 +850,27 @@ namespace Cozmo.HomeHub {
     }
 
     #endregion
+
+    public void OpenNeedCubesAlert(int currentCubes, int neededCubes, string titleString) {
+      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
+      // Hook up callbacks
+      alertView.SetCloseButtonEnabled(true);
+      alertView.SetPrimaryButton(LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
+        () => {
+          UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpViewPrefab);
+        }
+      );
+
+      alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle;
+
+      int differenceCubes = neededCubes - currentCubes;
+      alertView.SetMessageArgs(new object[] {
+        differenceCubes,
+        ItemDataConfig.GetCubeData().GetAmountName(differenceCubes),
+        titleString
+      });
+      alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription;
+    }
 
     protected override void CleanUp() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);

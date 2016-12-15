@@ -257,7 +257,7 @@ namespace Cozmo.HomeHub {
           _ChallengeDetailsPrefabData.LoadAssetData((GameObject challengeDetailsPrefab) => {
             _ChallengeDetailsDialogInstance = UIManager.OpenModal(challengeDetailsPrefab.GetComponent<ChallengeDetailsDialog>(),
               newView => {
-                newView.Initialize(_ChallengeStatesById[challenge].Data);
+                newView.Initialize(_ChallengeStatesById[challenge].Data, _HomeViewInstance);
               });
 
             _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
