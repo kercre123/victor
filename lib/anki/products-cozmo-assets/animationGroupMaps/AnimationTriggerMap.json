@@ -533,6 +533,10 @@
       "AnimName": "ag_memorymatch_getout"
     },
     {
+      "CladEvent": "MemoryMatchCozmoFollowTapsSoundOnly",
+      "AnimName": "ag_memorymatch_point_player"
+    },
+    {
       "CladEvent": "NamedFaceInitialGreeting",
       "AnimName" : "ag_greeting_happy"
     },
