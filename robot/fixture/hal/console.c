@@ -545,24 +545,21 @@ void ConsoleUpdate(void)
       // Echo legal ASCII back to the console
       if (c >= 32 && c <= 126)
       {
-        ConsolePutChar(c);
-        // Prevent overflows...
-        if (m_index + 1 >= sizeof(m_parseBuffer))
-        {
-          m_index = 0;
+        //Ignore chars if buffer is full
+        if (m_index < sizeof(m_parseBuffer) - 1) { //leave 1 byte at end for NULL terminator
+            ConsolePutChar(c);
+            m_parseBuffer[m_index++] = c;
         }
-        m_parseBuffer[m_index++] = c;
       } else if (c == 27) {  // Check for escape
         ConsoleWrite("<ANKI>\r\n");
         m_index = 0;
-      } else if (c == 0x7F || c == 8) {  // Check for delete
-        ConsolePutChar(c);
-        m_index -= 1;
-        if (m_index < 0)
-        {
-          m_index = 0;
+      } else if (c == 0x7F || c == 8) {  // Check for delete or backspace keys
+        if( m_index > 0 ) {
+            ConsolePutChar(c);
+            ConsolePutChar(' ');
+            ConsolePutChar(c);
+            m_parseBuffer[--m_index] = 0;
         }
-        m_parseBuffer[m_index] = 0;
       } else if (c == '\r' || c == '\n') {
         ConsoleWrite("\r\n");
         m_parseBuffer[m_index] = 0;
