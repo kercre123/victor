@@ -266,7 +266,8 @@ Result ObjectPoseConfirmer::AddLiftRelativeObservation(ObservableObject* object,
   ASSERT_NAMED(newPoseWrtLift.GetParent() == &_robot.GetLiftPose(),
                "ObjectPoseConfirmer.AddLiftRelativeObservation.PoseNotWrtLift");
 
-  SetPoseHelper(object, newPoseWrtLift, -1, PoseState::Dirty, "AddLiftRelativeObservation");
+  // If the object is on the lift, consider its pose as accurately known
+  SetPoseHelper(object, newPoseWrtLift, -1, PoseState::Known, "AddLiftRelativeObservation");
   
   // numObservations is set to 1.
   // Basically, this requires that the object is observed a few times in a row without this method being called
