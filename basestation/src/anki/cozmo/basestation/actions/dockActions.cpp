@@ -756,8 +756,7 @@ namespace Anki {
         case DockAction::DA_POP_A_WHEELIE:
         {
           if(_robot.IsCarryingObject()) {
-            PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal",
-                                "Expecting robot to think it's not carrying object for roll action.");
+            PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal.ExpectedNotCarryingObject", "");
           } else {
             info.numObjects = 1;
             info.objectIDs.fill(-1);
@@ -769,7 +768,7 @@ namespace Anki {
         {
           if(GetState() != ActionResult::NOT_STARTED)
           {
-            PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal",
+            PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal.DockActionNotSet",
                                 "Dock action not set before filling completion signal.");
           }
         }
@@ -797,10 +796,10 @@ namespace Anki {
       // TODO: There might be ways to roll high blocks when not carrying object and low blocks when carrying an object.
       //       Do them later.
       if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
-        PRINT_CH_INFO("Actions", "PopAWheelieAction.SelectDockAction", "Object is too high to pop-a-wheelie. Aborting.");
+        PRINT_CH_INFO("Actions", "PopAWheelieAction.SelectDockAction.ObjectTooHigh", "Object is too high to pop-a-wheelie. Aborting.");
         return ActionResult::BAD_OBJECT;
       } else if (_robot.IsCarryingObject()) {
-        PRINT_CH_INFO("Actions", "PopAWheelieAction.SelectDockAction", "Can't pop-a-wheelie while carrying an object.");
+        PRINT_CH_INFO("Actions", "PopAWheelieAction.SelectDockAction.CarryingObject", "");
         return ActionResult::STILL_CARRYING_OBJECT;
       }
       
@@ -872,8 +871,7 @@ namespace Anki {
         case DockAction::DA_FACE_PLANT:
         {
           if(_robot.IsCarryingObject()) {
-            PRINT_NAMED_WARNING("FacePlantAction.EmitCompletionSignal",
-                                "Expecting robot to think it's not carrying object for FacePlant action.");
+            PRINT_NAMED_WARNING("FacePlantAction.EmitCompletionSignal.ExpectedNotCarryingObject", "");
           } else {
             info.numObjects = 1;
             info.objectIDs.fill(-1);
@@ -882,7 +880,7 @@ namespace Anki {
           break;
         }
         default:
-          PRINT_NAMED_WARNING("FacePlantAction.EmitCompletionSignal",
+          PRINT_NAMED_WARNING("FacePlantAction.EmitCompletionSignal.DockActionNotSet",
                               "Dock action not set before filling completion signal.");
       }
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
@@ -927,7 +925,7 @@ namespace Anki {
       }
     
       if (_robot.IsCarryingObject()) {
-        PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction", "Can't face plant while carrying an object.");
+        PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.CarryingObject", "");
         return ActionResult::STILL_CARRYING_OBJECT;
       }
       
@@ -1116,7 +1114,7 @@ namespace Anki {
         case DockAction::DA_PICKUP_LOW:
         {
           if(!_robot.IsCarryingObject()) {
-            PRINT_CH_INFO("Actions", "PickupObjectAction.GetCompletionUnion.NotCarrying", "");
+            PRINT_CH_INFO("Actions", "PickupObjectAction.GetCompletionUnion.ExpectedCarryingObject", "");
           } else {
             const std::set<ObjectID> carriedObjects = _robot.GetCarryingObjects();
             info.numObjects = carriedObjects.size();
@@ -1136,7 +1134,7 @@ namespace Anki {
           // Not setting dock action is only an issue if the action has started
           if(GetState() != ActionResult::NOT_STARTED)
           {
-            PRINT_NAMED_WARNING("PickupObjectAction.EmitCompletionSignal",
+            PRINT_NAMED_WARNING("PickupObjectAction.EmitCompletionSignal.DockActionNotSet",
                                 "Dock action not set before filling completion signal");
           }
         }
@@ -1164,7 +1162,7 @@ namespace Anki {
       SetType(RobotActionType::PICKUP_OBJECT_LOW);
       
       if (_robot.IsCarryingObject()) {
-        PRINT_CH_INFO("Actions", "PickupObjectAction.SelectDockAction", "Already carrying object. Can't pickup object. Aborting.");
+        PRINT_CH_INFO("Actions", "PickupObjectAction.SelectDockAction.CarryingObject", "Already carrying object. Can't pickup object. Aborting.");
         return ActionResult::STILL_CARRYING_OBJECT;
       } else if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { // TODO: Stop using constant ROBOT_BOUNDING_Z for this
         _dockAction = DockAction::DA_PICKUP_HIGH;
@@ -1205,7 +1203,7 @@ namespace Anki {
         case DockAction::DA_PICKUP_HIGH:
         {
           if(_robot.IsCarryingObject() == false) {
-            PRINT_NAMED_WARNING("PickupObjectAction.Verify.RobotNotCarryingObject",
+            PRINT_NAMED_WARNING("PickupObjectAction.Verify.ExpectedCarryingObject",
                                 "Expecting robot to think it's carrying an object at this point.");
             result = ActionResult::NOT_CARRYING_OBJECT_RETRY;
             break;
@@ -1413,7 +1411,7 @@ namespace Anki {
         actionResult = _faceAndVerifyAction->Update();
         
         if(actionResult != ActionResult::RUNNING && actionResult != ActionResult::SUCCESS) {
-          PRINT_NAMED_WARNING("PlaceObjectOnGroundAction.CheckIfDone",
+          PRINT_NAMED_WARNING("PlaceObjectOnGroundAction.CheckIfDone.FaceAndVerifyFailed",
                               "FaceAndVerify action reported failure, just deleting object %d.",
                               _carryingObjectID.GetValue());
           _robot.GetBlockWorld().ClearObject(_carryingObjectID);
@@ -1551,7 +1549,7 @@ namespace Anki {
           // Not setting dock action is only an issue if the action has started
           if(GetState() != ActionResult::NOT_STARTED)
           {
-            PRINT_NAMED_WARNING("PlaceRelObjectAction.EmitCompletionSignal",
+            PRINT_NAMED_WARNING("PlaceRelObjectAction.EmitCompletionSignal.DockActionNotSet",
                                 "Dock action not set before filling completion signal.");
           }
         }
@@ -1564,13 +1562,13 @@ namespace Anki {
     ActionResult PlaceRelObjectAction::SelectDockAction(ActionableObject* object)
     {
       if (!_robot.IsCarryingObject()) {
-        PRINT_CH_INFO("Actions", "PlaceRelObjectAction.SelectDockAction", "Can't place if not carrying an object. Aborting.");
+        PRINT_CH_INFO("Actions", "PlaceRelObjectAction.SelectDockAction.NotCarryingObject", "Can't place if not carrying an object. Aborting.");
         return ActionResult::NOT_CARRYING_OBJECT_ABORT;
       }
       
       if(!_placeObjectOnGroundIfCarrying && !_robot.CanStackOnTopOfObject(*object))
       {
-        PRINT_NAMED_WARNING("PlaceRelObjectAction.SelectDockAction", "Can't stack on object");
+        PRINT_NAMED_WARNING("PlaceRelObjectAction.SelectDockAction.CantStackOnObject", "");
         return ActionResult::BAD_OBJECT;
       }
       
@@ -1606,7 +1604,7 @@ namespace Anki {
           if(_robot.GetLastPickOrPlaceSucceeded()) {
             
             if(_robot.IsCarryingObject() == true) {
-              PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
+              PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify.ExpectedNotCarryingObject",
                                   "Expecting robot to think it's NOT carrying an object at this point.");
               return ActionResult::STILL_CARRYING_OBJECT;
             }
@@ -1638,7 +1636,7 @@ namespace Anki {
               
               if(result != ActionResult::SUCCESS)
               {
-                PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
+                PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify.VerifyFailed",
                                     "Robot thinks it placed the object %s, but verification of placement "
                                     "failed. Not sure where carry object %d is, so clearing it.",
                                     _dockAction == DockAction::DA_PLACE_LOW ? "low" : "high",
@@ -1673,7 +1671,7 @@ namespace Anki {
           } else {
             // If the robot thinks it failed last pick-and-place, it is because it
             // failed to dock/track, so we are probably still holding the block
-            PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
+            PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify.DockingFailed",
                                 "Robot reported placement failure. Assuming docking failed "
                                 "and robot is still holding same block.");
             result = ActionResult::LAST_PICK_AND_PLACE_FAILED;
@@ -1739,7 +1737,7 @@ namespace Anki {
       }
       
       if(FLT_LT(xAbsolutePlacementOffset_mm, -kMaxNegativeXPlacementOffset)){
-        PRINT_NAMED_ERROR("PlaceRelObjectAction.TransformPlacementOffsetsRelativeObject",
+        PRINT_NAMED_ERROR("PlaceRelObjectAction.TransformPlacementOffsetsRelativeObject.InvalidNegativeOffset",
                           "Attempted to set negative xOffset. xOffset:%f, yOffset:%f", xAbsolutePlacementOffset_mm, yAbsolutePlacementOffset_mm);
         return ActionResult::ABORT;
       }
@@ -1780,8 +1778,7 @@ namespace Anki {
         case DockAction::DA_DEEP_ROLL_LOW:
         {
           if(_robot.IsCarryingObject()) {
-            PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal",
-                                "Expecting robot to think it's not carrying object for roll action.");
+            PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal.ExpectedNotCarryingObject", "");
           }
           else {
             info.numObjects = 1;
@@ -1795,7 +1792,7 @@ namespace Anki {
           // Not setting dock action is only an issue if the action has started
           if(GetState() != ActionResult::NOT_STARTED)
           {
-            PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal",
+            PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal.DockActionNotSet",
                                 "Dock action not set before filling completion signal.");
           }
         }
@@ -1833,10 +1830,10 @@ namespace Anki {
       // TODO: There might be ways to roll high blocks when not carrying object and low blocks when carrying an object.
       //       Do them later.
       if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
-        PRINT_CH_INFO("Actions", "RollObjectAction.SelectDockAction", "Object is too high to roll. Aborting.");
+        PRINT_CH_INFO("Actions", "RollObjectAction.SelectDockAction.ObjectTooHigh", "Object is too high to roll. Aborting.");
         return ActionResult::BAD_OBJECT;
       } else if (_robot.IsCarryingObject()) {
-        PRINT_CH_INFO("Actions", "RollObjectAction.SelectDockAction", "Can't roll while carrying an object.");
+        PRINT_CH_INFO("Actions", "RollObjectAction.SelectDockAction.CarryingObject", "");
         return ActionResult::STILL_CARRYING_OBJECT;
       }
       
@@ -1855,8 +1852,7 @@ namespace Anki {
           if(_robot.GetLastPickOrPlaceSucceeded()) {
             
             if(_robot.IsCarryingObject() == true) {
-              PRINT_NAMED_WARNING("RollObjectAction::Verify",
-                                  "Expecting robot to think it's NOT carrying an object at this point.");
+              PRINT_NAMED_WARNING("RollObjectAction.Verify.ExpectedNotCarryingObject", "");
               result = ActionResult::STILL_CARRYING_OBJECT;
               break;
             }
@@ -1888,7 +1884,7 @@ namespace Anki {
               Util::SafeDelete(_rollVerifyAction);
               
               if(result != ActionResult::SUCCESS) {
-                PRINT_CH_INFO("Actions", "RollObjectAction.Verify",
+                PRINT_CH_INFO("Actions", "RollObjectAction.Verify.VisualVerifyFailed",
                               "Robot thinks it rolled the object, but verification failed. ");
                 
                 // Automatically set to deep roll in case the action is retried
@@ -1904,7 +1900,7 @@ namespace Anki {
           } else {
             // If the robot thinks it failed last pick-and-place, it is because it
             // failed to dock/track.
-            PRINT_NAMED_WARNING("RollObjectAction.Verify",
+            PRINT_NAMED_WARNING("RollObjectAction.Verify.DockingFailed",
                                 "Robot reported roll failure. Assuming docking failed");
             // retry, since the block is hopefully still there
             result = ActionResult::LAST_PICK_AND_PLACE_FAILED;

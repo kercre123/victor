@@ -625,12 +625,12 @@ namespace Anki {
     , _inPosition(false)
     {
       if(_headAngle < MIN_HEAD_ANGLE) {
-        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.AngleTooLow",
                             "Requested head angle (%.1fdeg) less than min head angle (%.1fdeg). Clipping.",
                             _headAngle.getDegrees(), RAD_TO_DEG(MIN_HEAD_ANGLE));
         _headAngle = MIN_HEAD_ANGLE;
       } else if(_headAngle > MAX_HEAD_ANGLE) {
-        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.AngleTooHigh",
                             "Requested head angle (%.1fdeg) more than max head angle (%.1fdeg). Clipping.",
                             _headAngle.getDegrees(), RAD_TO_DEG(MAX_HEAD_ANGLE));
         _headAngle = MAX_HEAD_ANGLE;
