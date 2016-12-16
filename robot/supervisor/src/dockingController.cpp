@@ -252,7 +252,7 @@ namespace Anki {
         const f32 DOCKING_K1 = 0.05f;
         const f32 DOCKING_K2 = 12.f;
         const f32 DOCKING_PATH_DIST_OFFSET_CAP_MM = 20;
-        const f32 DOCKING_PATH_ANG_OFFSET_CAP_RAD = 0.4;
+        const f32 DOCKING_PATH_ANG_OFFSET_CAP_RAD = 0.4f;
         bool appliedGains_ = false;
         
         // Save previous controller gains
@@ -871,7 +871,7 @@ namespace Anki {
                                                               HM_ROT_SPEED_RADPS,
                                                               HM_ROT_ACCEL_MMPS2,
                                                               HM_ROT_ACCEL_MMPS2,
-                                                              0.1, true);
+                                                              0.1f, true);
                     
                     PathFollower::AppendPathSegment_Line(0,
                                                          x,

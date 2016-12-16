@@ -159,9 +159,9 @@ struct SimulatorParameters {
   
   static const u32 TRACKING_ALGORITHM_SPEED_HZ = 15;
   
-  static const u32 TRACK_BLOCK_PERIOD_US        = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
-  static const u32 FIDUCIAL_DETECTION_PERIOD_US = 1e6 / FIDUCIAL_DETECTION_SPEED_HZ;
-  static const u32 FACE_DETECTION_PERIOD_US     = 1e6 / FACE_DETECTION_SPEED_HZ;
+  static const u32 TRACK_BLOCK_PERIOD_US        = (u32)(1e6 / TRACKING_ALGORITHM_SPEED_HZ);
+  static const u32 FIDUCIAL_DETECTION_PERIOD_US = (u32)(1e6 / FIDUCIAL_DETECTION_SPEED_HZ);
+  static const u32 FACE_DETECTION_PERIOD_US     = (u32)(1e6 / FACE_DETECTION_SPEED_HZ);
 # endif
 }; // struct SimulatorParameters
 

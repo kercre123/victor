@@ -16,23 +16,23 @@ static uint8_t MuLawCompressTable[] =
 // Length is in input samples
 
 void encodeMuLaw(int16_t *in, uint8_t *out, int length) {
-	for(;length > 0; length --) {
-		int16_t sample = *(in++);
-          bool sign = sample < 0;
+  for ( ; length > 0; length--) {
+    int16_t sample = *(in++);
+    const bool sign = (sample < 0);
 
-          if (sign)	{
-               sample = ~sample;
-          }
+    if (sign) {
+      sample = ~sample;
+    }
 
-          uint8_t exponent = MuLawCompressTable[sample >> 8];
-          uint8_t mantessa;
+    const uint8_t exponent = MuLawCompressTable[sample >> 8];
+    uint8_t mantissa;
 
-          if (exponent) {
-               mantessa = (sample >> (exponent + 3)) & 0xF;
-          } else {
-               mantessa = sample >> 4;
-          }
+    if (exponent) {
+      mantissa = (uint8_t)((sample >> (exponent + 3)) & 0xF);
+    } else {
+      mantissa = (uint8_t)(sample >> 4);
+    }
 
-		*(out++) = (sign ? 0x80 : 0) | (exponent << 4) | mantessa;
-	}
+    *(out++) = (uint8_t)((sign ? 0x80 : 0) | (exponent << 4) | mantissa);
+  }
 }

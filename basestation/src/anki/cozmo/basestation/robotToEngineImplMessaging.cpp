@@ -1187,7 +1187,7 @@ static float GetBatteryPercent(float batteryVoltage)
     return 100.0f;
   }
   if (batteryVoltage > batteryEmpty) {
-    float percent = 100.0 * (batteryVoltage - batteryEmpty) / (batteryFull - batteryEmpty);
+    float percent = 100.0f * (batteryVoltage - batteryEmpty) / (batteryFull - batteryEmpty);
     return percent;
   }
   return 0.0f;
@@ -1202,7 +1202,7 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   const auto activeID = payload.objectID;
   const auto missedPackets = payload.missedPackets;
   const auto batteryLevel = payload.batteryLevel;
-  const float batteryVoltage = batteryLevel / 100.0;
+  const float batteryVoltage = batteryLevel / 100.0f;
   const float batteryPercent = GetBatteryPercent(batteryVoltage);
   
   // Report to log

@@ -157,7 +157,7 @@ float atan_fast(float x)
 
   // Convert x to LUT index
   float x_lut_idx = ABS(x)*ATAN_LUT_INPUT_MULTIPLIER;
-  u8 x_lut_pre_idx = (int)(x_lut_idx);
+  u8 x_lut_pre_idx = (u8)(x_lut_idx);
   u8 x_lut_post_idx = x_lut_pre_idx + 1;
   float frac = x_lut_idx - (float)x_lut_pre_idx;
 
@@ -201,7 +201,7 @@ float asin_fast(float x)
 #ifdef USE_INTERPOLATION
   // Convert x to LUT index
   float x_lut_idx = ABS(x)*ASIN_LUT_INPUT_MULTIPLIER;
-  u8 x_lut_pre_idx = (int)(x_lut_idx);
+  u8 x_lut_pre_idx = (u8)(x_lut_idx);
   u8 x_lut_post_idx = x_lut_pre_idx + 1;
   float frac = x_lut_idx - (float)x_lut_pre_idx;
 

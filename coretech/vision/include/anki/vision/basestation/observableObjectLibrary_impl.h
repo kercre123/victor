@@ -158,7 +158,7 @@ namespace Vision {
       // TODO: make the distance/angle thresholds parameters or else object-type-specific
       std::vector<PoseCluster> poseClusters;
       ClusterObjectPoses(possiblePoses, libObject,
-                         5.f, 5.f*M_PI/180.f, poseClusters);
+                         5.f, 5.f*M_PI_F/180.f, poseClusters);
       
       // Recompute the pose for any cluster which had multiple matches in it,
       // using all of its matches simultaneously, and then add it as a new

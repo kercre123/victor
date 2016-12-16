@@ -27,7 +27,7 @@ namespace Anki {
         // to have settled enough for recalibration.
         const u32 LIFT_RELAX_TIME_MS = 250;
 
-        const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
+        const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001f;
 
         const f32 SPEED_FILTERING_COEFF = 0.9f;
 
@@ -75,7 +75,7 @@ namespace Anki {
         // If it exceeds this value, applied power should decay to this value when in position.
         // This value should be slightly less than the motor burnout protection threshold (POWER_THRESHOLD[])
         // in syscon's motors.cpp since the actual applied power can be slightly more than this.
-        const f32 MAX_POWER_IN_POSITION = 0.24;
+        const f32 MAX_POWER_IN_POSITION = 0.24f;
         
         // Motor burnout protection
         u32 potentialBurnoutStartTime_ms_ = 0;
@@ -246,7 +246,7 @@ namespace Anki {
               break;
 
             case LCS_LOWER_LIFT:
-              power_ = -0.3;
+              power_ = -0.3f;
               HAL::MotorSetPower(MOTOR_LIFT, power_);
               lastLiftMovedTime_ms = HAL::GetTimeStamp();
               calState_ = LCS_WAIT_FOR_STOP;

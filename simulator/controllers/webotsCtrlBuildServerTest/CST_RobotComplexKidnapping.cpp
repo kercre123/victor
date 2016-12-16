@@ -114,9 +114,9 @@ namespace Cozmo {
   
   // =========== Test class implementation ===========
   CST_RobotKidnappingComplex::CST_RobotKidnappingComplex()
-  : _kidnappedPose1(-M_PI_2, Z_AXIS_3D(), {0, -_gridSpacing_mm, 0})
-  , _kidnappedPose2( M_PI,   Z_AXIS_3D(), {-2*_gridSpacing_mm, _gridSpacing_mm, 0})
-  , _kidnappedPose3( M_PI_2, Z_AXIS_3D(), {-_gridSpacing_mm, 0, 0})
+  : _kidnappedPose1(-M_PI_2_F, Z_AXIS_3D(), {0, -_gridSpacing_mm, 0})
+  , _kidnappedPose2( M_PI_F,   Z_AXIS_3D(), {-2*_gridSpacing_mm, _gridSpacing_mm, 0})
+  , _kidnappedPose3( M_PI_2_F, Z_AXIS_3D(), {-_gridSpacing_mm, 0, 0})
   , _poseA_actual(0, Z_AXIS_3D(), {_gridSpacing_mm, 0.f, 22.f}, &_fakeOrigin)
   , _poseB_actual(0, Z_AXIS_3D(), {-_gridSpacing_mm, -_gridSpacing_mm, 22.f}, &_fakeOrigin)
   , _poseC_actual(0, Z_AXIS_3D(), {-2*_gridSpacing_mm, 0.f, 22.f}, &_fakeOrigin)
@@ -286,7 +286,7 @@ namespace Cozmo {
 
           // Turn towards C again
           _turnInPlaceDone = false;
-          SendTurnInPlace(DEG_TO_RAD(179.5));
+          SendTurnInPlace(DEG_TO_RAD(179.5f));
           
           _testState = TestState::ReLocalizeToObjectC;
         }

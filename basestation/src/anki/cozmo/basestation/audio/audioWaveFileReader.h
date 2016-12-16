@@ -90,7 +90,7 @@ private:
     }
     
     size_t CalculateNumberOfStandardSamples() const {
-      const uint8_t numberOfBytesPerSample = bitsPerSample / 8;
+      const uint8_t numberOfBytesPerSample = (uint8_t)(bitsPerSample / 8);
       return dataChunkSize / numberOfBytesPerSample;
     }
   };

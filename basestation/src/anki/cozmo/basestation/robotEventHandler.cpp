@@ -876,7 +876,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayFac
     {
       imageData_i[destI] = ((currentByte & 0x80) > 0) ? 255 : 0;
       ++destI;
-      currentByte = currentByte << 1;
+      currentByte = (uint8_t)(currentByte << 1);
     }
   }
   assert(destI == (ProceduralFace::WIDTH * ProceduralFace::HEIGHT));

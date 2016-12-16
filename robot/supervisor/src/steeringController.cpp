@@ -85,7 +85,7 @@ namespace Anki {
       
       f32 pointTurnKp_ = 150;
       f32 pointTurnKd_ = 4000;
-      f32 pointTurnKi_ = 0.3;
+      f32 pointTurnKi_ = 0.3f;
       f32 pointTurnMaxIntegralError_ = 100;
       f32 prevPointTurnAngleError_ = 0;
       f32 pointTurnAngleErrorSum_ = 0;

@@ -83,7 +83,7 @@ namespace Anki {
       switch(whichFace)
       {
         case FRONT_FACE:
-          facePose = Pose3d(-M_PI_2, Z_AXIS_3D(), {-_size.x() * 0.5f, 0.f, 0.f},  &GetPose());
+          facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-_size.x() * 0.5f, 0.f, 0.f},  &GetPose());
           break;
           
         case LEFT_FACE:
@@ -100,12 +100,12 @@ namespace Anki {
           
         case TOP_FACE:
           // Rotate -90deg around X, then -90 around Z
-          facePose = Pose3d(2.09439510f, {-0.57735027, 0.57735027, -0.57735027}, {0.f, 0.f, _size.z() * 0.5f},  &GetPose());
+          facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, _size.z() * 0.5f},  &GetPose());
           break;
           
         case BOTTOM_FACE:
           // Rotate +90deg around X, then -90 around Z
-          facePose = Pose3d(2.09439510f, {0.57735027, -0.57735027, -0.57735027}, {0.f, 0.f, -_size.z() * 0.5f}, &GetPose());
+          facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -_size.z() * 0.5f}, &GetPose());
           break;
           
         default:

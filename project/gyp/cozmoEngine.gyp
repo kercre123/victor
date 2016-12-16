@@ -122,7 +122,7 @@
     ],
 
     'compiler_flags': [
-      '-Wno-deprecated-declarations', # Supressed until system() usage is removed
+      '-Wno-deprecated-declarations', # Suppressed until system() usage is removed
       '-fdiagnostics-show-category=name',
       '-Wall',
       '-Woverloaded-virtual',
@@ -135,7 +135,7 @@
       '-Wshorten-64-to-32',
       '-Winit-self',
       '-Wconditional-uninitialized', 
-      # '-Wno-deprecated-register', # Disabled until this warning actually needs to be supressed
+      # '-Wno-deprecated-register', # Disabled until this warning actually needs to be suppressed
       '-Wformat',
       '-Werror=format-security',
       '-g',

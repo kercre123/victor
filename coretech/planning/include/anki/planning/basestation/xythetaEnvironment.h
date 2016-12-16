@@ -365,7 +365,7 @@ public:
   Cost ApplyPathSegment(const PathSegment& pathSegment,
                         State_c& state_c,
                         bool checkCollisions = true,
-                        float maxPenalty = Util::FLOATING_POINT_COMPARISON_TOLERANCE) const;
+                        float maxPenalty = Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT) const;
 
   // Returns the state at the end of the given plan (e.g. following
   // along the plans start and executing every action). No collision

@@ -296,7 +296,7 @@ namespace Cozmo {
   const f32 ROBOT_ADVERTISING_TIMEOUT_S = 0.25;
   
   // Time in between robot advertisements
-  const f32 ROBOT_ADVERTISING_PERIOD_S = 0.03;
+  const f32 ROBOT_ADVERTISING_PERIOD_S = 0.03f;
   
   // How frequently to send robot state messages (in number of main execution
   // loop increments).  So, 6 --> every 30ms, since our loop timestep is 5ms.

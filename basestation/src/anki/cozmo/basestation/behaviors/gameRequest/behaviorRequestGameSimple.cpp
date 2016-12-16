@@ -622,7 +622,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 
   // try a few different positions until we get one that isn't near another cube
   Radians targetAngle = std::atan2(facePose.GetTranslation().y(), facePose.GetTranslation().x());
-  float oneOverDist = 1.0 / xyDistToFace;
+  float oneOverDist = 1.0f / xyDistToFace;
 
   Pose3d targetPose;
   

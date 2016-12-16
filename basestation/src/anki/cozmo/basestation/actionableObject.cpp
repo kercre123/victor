@@ -109,7 +109,7 @@ namespace Anki {
         xyStart -= (stepVec * (ROBOT_BOUNDING_X - ROBOT_BOUNDING_X_FRONT));
         lineLength += (ROBOT_BOUNDING_X - ROBOT_BOUNDING_X_FRONT);
         
-        const s32 numSteps = std::floor(lineLength / stepSize);
+        const s32 numSteps = Util::numeric_cast<s32>(std::floor(lineLength / stepSize));
         
         stepVec *= stepSize;
         

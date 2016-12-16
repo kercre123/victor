@@ -15,7 +15,7 @@ namespace Anki {
         namespace { // "Private members"
           
           // For Webots Display:
-          const f32 OVERLAY_TEXT_SIZE = 0.08;
+          const f32 OVERLAY_TEXT_SIZE = 0.08f;
           const u32 OVERLAY_TEXT_COLOR = 0xff0000;
           const u16 MAX_TEXT_DISPLAY_LENGTH = 1024;
           

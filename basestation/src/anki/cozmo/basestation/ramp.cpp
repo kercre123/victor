@@ -68,7 +68,7 @@ namespace Anki {
       Pose3d frontPose(M_PI_2 - Ramp::Angle, Y_AXIS_3D(),
                        {Ramp::FrontMarkerDistance*std::cos(Ramp::Angle),
                        0, Ramp::FrontMarkerDistance*std::sin(Ramp::Angle)});
-      frontPose *= Pose3d(-M_PI_2, Z_AXIS_3D(), {0,0,0});
+      frontPose *= Pose3d(-M_PI_2_F, Z_AXIS_3D(), {0,0,0});
       _frontMarker = &AddMarker(frontMarkerType, frontPose, Ramp::TopMarkerSize);
       
       if(_preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), _preAscentPose) == false) {
@@ -92,7 +92,7 @@ namespace Anki {
       _leftMarker = &AddMarker(leftMarkerType, leftPose, Ramp::SideMarkerSize);
       AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset, 0);
       
-      Pose3d topPose(-M_PI_2, Y_AXIS_3D(),
+      Pose3d topPose(-M_PI_2_F, Y_AXIS_3D(),
                      {Ramp::PlatformLength + Ramp::SlopeLength - 0.025f, 0, Ramp::Height});
       topPose *= Pose3d(M_PI_2, Z_AXIS_3D(), {0,0,0});
       _topMarker = &AddMarker(topMarkerType, topPose, Ramp::TopMarkerSize);

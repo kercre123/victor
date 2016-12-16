@@ -223,8 +223,8 @@ void PhysVizController::Draw(int pass, const char *view)
 
           // Object ID label
           std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
-          DrawTextAtOffset(idString, 0.6*obj->x_size_m, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
-          DrawTextAtOffset(idString, -0.6*obj->x_size_m, -0.6*obj->y_size_m, -0.6*obj->z_size_m);
+          DrawTextAtOffset(idString, 0.6f*obj->x_size_m, 0.6f*obj->y_size_m, 0.6f*obj->z_size_m);
+          DrawTextAtOffset(idString, -0.6f*obj->x_size_m, -0.6f*obj->y_size_m, -0.6f*obj->z_size_m);
           
           break;
         }
@@ -242,7 +242,7 @@ void PhysVizController::Draw(int pass, const char *view)
           
           // Object ID label
           std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CHARGER]);
-          DrawTextAtOffset(idString, 0, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
+          DrawTextAtOffset(idString, 0, 0.6f*obj->y_size_m, 0.6f*obj->z_size_m);
           
           break;
         }
@@ -259,7 +259,7 @@ void PhysVizController::Draw(int pass, const char *view)
           break;
       }
 
-      DrawAxes(0.005);
+      DrawAxes(0.005f);
       
       glFlush();
 
@@ -835,22 +835,22 @@ void PhysVizController::DrawRobot(Anki::Cozmo::VizRobotMarkerType type)
   // Location of robot origin project up above the head
   float x = 0;
   float y = 0;
-  float z = 0.068;
+  float z = 0.068f;
 
   // Dimensions
   float l,w,h;
 
   switch (type) {
     case VizRobotMarkerType::VIZ_ROBOT_MARKER_SMALL_TRIANGLE:
-      l = 0.03;
-      w = 0.02;
-      h = 0.01;
+      l = 0.03f;
+      w = 0.02f;
+      h = 0.01f;
       break;
     case VizRobotMarkerType::VIZ_ROBOT_MARKER_BIG_TRIANGLE:
-      x += 0.03;  // Move tip of marker to come forward, roughly up to lift position.
-      l = 0.062;
-      w = 0.08;
-      h = 0.01;
+      x += 0.03f;  // Move tip of marker to come forward, roughly up to lift position.
+      l = 0.062f;
+      w = 0.08f;
+      h = 0.01f;
       break;
   }
 

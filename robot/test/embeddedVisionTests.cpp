@@ -724,7 +724,7 @@ GTEST_TEST(CoreTech_Vision, IntegerCounts_Quadrilateral)
   s32 color = 0;
   for(s32 y=0; y<arrayHeight; y++) {
     for(s32 x=0; x<arrayWidth; x++) {
-      image[y][x] = color;
+      image[y][x] = (u8)color;
       color++;
     }
   }
@@ -2183,24 +2183,24 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold)
 
   for(s32 y=0; y<24; y++) {
     for(s32 x=0; x<32; x++) {
-      image[y][x] = (y)*8;
+      image[y][x] = (u8)((y)*8);
     }
   }
 
   for(s32 y=24; y<48; y++) {
     for(s32 x=0; x<32; x++) {
-      image[y][x] = 250 - (((y)*4));
+      image[y][x] = (u8)(250 - (((y)*4)));
     }
   }
 
   for(s32 x=31; x<48; x++) {
     for(s32 y=0; y<48; y++) {
-      image[y][x] = (x-31)*10;
+      image[y][x] = (u8)((x-31)*10);
     }
   }
   for(s32 x=48; x<64; x++) {
     for(s32 y=0; y<48; y++) {
-      image[y][x] = 250 - (((x-31)*6) - (x+1)/2);
+      image[y][x] = (u8)(250 - (((x-31)*6) - (x+1)/2));
     }
   }
 
@@ -2279,24 +2279,24 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold)
 
   for(s32 y=0; y<24; y++) {
     for(s32 x=0; x<32; x++) {
-      image[y][x] = (y)*8;
+      image[y][x] = (u8)((y)*8);
     }
   }
 
   for(s32 y=24; y<48; y++) {
     for(s32 x=0; x<32; x++) {
-      image[y][x] = 250 - (((y)*4));
+      image[y][x] = (u8)(250 - (((y)*4)));
     }
   }
 
   for(s32 x=31; x<48; x++) {
     for(s32 y=0; y<48; y++) {
-      image[y][x] = (x-31)*10;
+      image[y][x] = (u8)((x-31)*10);
     }
   }
   for(s32 x=48; x<64; x++) {
     for(s32 y=0; y<48; y++) {
-      image[y][x] = 250 - (((x-31)*6) - (x+1)/2);
+      image[y][x] = (u8)(250 - (((x-31)*6) - (x+1)/2));
     }
   }
 

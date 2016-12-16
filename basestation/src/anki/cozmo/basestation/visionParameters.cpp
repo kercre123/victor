@@ -145,7 +145,7 @@ namespace Anki {
         verify_maxPixelDifference = 30;
         useWeights                = true;
        
-        convergenceTolerance_angle    = DEG_TO_RAD(0.05);
+        convergenceTolerance_angle    = DEG_TO_RAD(0.05f);
         convergenceTolerance_distance = 0.05f; // mm
         
         numSamplingRegions            = 5;

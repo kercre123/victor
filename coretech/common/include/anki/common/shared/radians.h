@@ -69,7 +69,7 @@ public:
   friend bool operator<=(const Radians& a, const Radians& b);
 
   // Returns true if other is within epsilon radians
-  bool IsNear(const Radians& other, const Radians& epsilon = Util::FLOATING_POINT_COMPARISON_TOLERANCE) const;
+  bool IsNear(const Radians& other, const Radians& epsilon = Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT) const;
 
   // Assignment operators
   void operator=(const Radians& b);

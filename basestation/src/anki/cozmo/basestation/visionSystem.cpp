@@ -810,7 +810,7 @@ namespace Cozmo {
       const CornerMethod cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
       
       ASSERT_NAMED(_detectionParameters.fiducialThicknessFraction.x() > 0 &&
-                   _detectionParameters.fiducialThicknessFraction.y(),
+                   _detectionParameters.fiducialThicknessFraction.y() > 0,
                    "VisionSystem.DetectMarkers.FiducialThicknessFractionParameterNotInitialized");
       
       // Convert "basestation" detection parameters to "embedded" parameters

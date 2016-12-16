@@ -272,7 +272,7 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
                                                                                 (size_t)waveData->num_samples);
 
   // Convert waveData format into StandardWaveDataContainer's format
-  const float kOneOverSHRT_MAX = 1.0 / float(SHRT_MAX);
+  const float kOneOverSHRT_MAX = 1.0f / float(SHRT_MAX);
   for (size_t sampleIdx = 0; sampleIdx < data->bufferSize; ++sampleIdx) {
     data->audioBuffer[sampleIdx] = waveData->samples[sampleIdx] * kOneOverSHRT_MAX;
   }

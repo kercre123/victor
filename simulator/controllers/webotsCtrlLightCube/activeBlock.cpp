@@ -61,8 +61,8 @@ namespace {
   const f32 TAP_DETECT_THRESH = 9;
   const u32 TAP_DETECT_WINDOW_MS = 100;
   const f32 CUTOFF_FREQ = 50;
-  const f32 RC = 1.0/(CUTOFF_FREQ*2*3.14);
-  const f32 dt = 0.001*TIMESTEP;
+  const f32 RC = 1.0f/(CUTOFF_FREQ*2*3.14f);
+  const f32 dt = 0.001f*TIMESTEP;
   const f32 alpha = RC/(RC + dt);
   
   

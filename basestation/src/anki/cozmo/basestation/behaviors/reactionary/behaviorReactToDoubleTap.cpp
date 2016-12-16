@@ -245,8 +245,8 @@ void BehaviorReactToDoubleTap::TransitionToSearchForCube(Robot& robot)
   
   SearchForNearbyObjectAction* action = new SearchForNearbyObjectAction(robot, objectID);
   
-  const f32 minWait_sec = 0.3;
-  const f32 maxWait_sec = 0.5;
+  const f32 minWait_sec = 0.3f;
+  const f32 maxWait_sec = 0.5f;
   action->SetSearchWaitTime(minWait_sec, maxWait_sec);
   
   StartActing(action,

@@ -201,7 +201,7 @@ private:
   const f32 kWheelDifForTurning_mmps       = 30;
   const u8  kMaxUnexpectedMovementCount    = 10;
   const f32 kMinWheelSpeed_mmps            = 20;
-  const f32 kExpectedVsActualGyroTol_radps = 0.2;
+  const f32 kExpectedVsActualGyroTol_radps = 0.2f;
   
   // Flags for whether or not we are currently directly driving the following motors
 

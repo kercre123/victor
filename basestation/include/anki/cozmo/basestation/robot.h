@@ -645,11 +645,25 @@ public:
   void ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
                  TimeStamp_t duration_ms, const std::string& name = "ShiftEyes");
   
-  AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
-  void SetNumAnimationBytesPlayed(s32 numAnimationsBytesPlayed) { _numAnimationBytesPlayed = numAnimationsBytesPlayed; }
-  void SetNumAnimationAudioFramesPlayed(s32 numAnimationAudioFramesPlayed) { _numAnimationAudioFramesPlayed = numAnimationAudioFramesPlayed; }
-  void SetEnabledAnimTracks(s32 enabledAnimTracks) { _enabledAnimTracks = enabledAnimTracks; }
-  void SetAnimationTag(s32 animationTag) { _animationTag = animationTag; }
+  AnimationStreamer& GetAnimationStreamer() {
+    return _animationStreamer;
+  }
+  
+  void SetNumAnimationBytesPlayed(s32 numAnimationsBytesPlayed) {
+    _numAnimationBytesPlayed = numAnimationsBytesPlayed;
+  }
+  
+  void SetNumAnimationAudioFramesPlayed(s32 numAnimationAudioFramesPlayed) {
+    _numAnimationAudioFramesPlayed = numAnimationAudioFramesPlayed;
+  }
+  
+  void SetEnabledAnimTracks(u8 enabledAnimTracks) {
+    _enabledAnimTracks = enabledAnimTracks;
+  }
+  
+  void SetAnimationTag(u8 animationTag) {
+    _animationTag = animationTag;
+  }
 
   // Returns true if the robot is currently playing an animation, according
   // to most recent state message. NOTE: Will also be true if the animation

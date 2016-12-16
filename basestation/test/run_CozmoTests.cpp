@@ -709,7 +709,7 @@ TEST(BlockWorld, CubeStacks)
   const std::vector<RotationVector3d> TestOutOfPlaneRotations{
     {DEG_TO_RAD(0),   X_AXIS_3D()},  // None
     {DEG_TO_RAD(5),   X_AXIS_3D()},  // Slightly rotated around X
-    {DEG_TO_RAD(7.5), Y_AXIS_3D()},  // Slightly rotated around Y
+    {DEG_TO_RAD(7.5f), Y_AXIS_3D()},  // Slightly rotated around Y
     {DEG_TO_RAD(88),  X_AXIS_3D()},  // Z not pointing up
     {DEG_TO_RAD(182), Y_AXIS_3D()},  // Z pointing down
   };
@@ -1356,10 +1356,10 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   
   auto getRandomFlatXRotation = [&randGen](){
     const std::vector<RotationVector3d> flatXRotations{
-      {0,   X_AXIS_3D()},
-      {M_PI_2,   X_AXIS_3D()},
-      {M_PI,   X_AXIS_3D()},
-      {-M_PI_2,  X_AXIS_3D()}
+      {0,         X_AXIS_3D()},
+      {M_PI_2_F,  X_AXIS_3D()},
+      {M_PI_F,    X_AXIS_3D()},
+      {-M_PI_2_F, X_AXIS_3D()}
     };
     const int xDegreeIndex = randGen.RandInt(static_cast<int>(flatXRotations.size()));
     return flatXRotations[xDegreeIndex];
@@ -1367,10 +1367,10 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   
   auto getRandomFlatYRotation = [&randGen](){
     const std::vector<RotationVector3d> flatYRotations{
-      {0,   Y_AXIS_3D()},
-      {M_PI_2,   Y_AXIS_3D()},
-      {M_PI,   Y_AXIS_3D()},
-      {-M_PI_2,  Y_AXIS_3D()}
+      {0,         Y_AXIS_3D()},
+      {M_PI_2_F,  Y_AXIS_3D()},
+      {M_PI_F,    Y_AXIS_3D()},
+      {-M_PI_2_F, Y_AXIS_3D()}
     };
     const int yDegreeIndex = randGen.RandInt(static_cast<int>(flatYRotations.size()));
     
@@ -1535,9 +1535,9 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   /////////
   const int numberOfStackTests = 500;
   const int numberOfTestsWithTwoBlocks = numberOfStackTests/2;
-  const float oddsFirstBlockOnGround = 0.7;
-  const float oddsSecondBlockInStack = 0.7;
-  const float oddsThirdBlockInStack = 0.7;
+  const float oddsFirstBlockOnGround = 0.7f;
+  const float oddsSecondBlockInStack = 0.7f;
+  const float oddsThirdBlockInStack = 0.7f;
   
   const float xMinGrid = 0;
   const float xMaxGrid = 100;
@@ -1720,7 +1720,7 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
   Json::Value fakeJSON;
   const int pyramidTestRepetitionCount = 10;
   
-  const std::vector<float> orientationList = {0, M_PI_2, M_PI, -M_PI_2};
+  const std::vector<float> orientationList = {0, M_PI_2_F, M_PI_F, -M_PI_2_F};
   
   const float blockSize = staticBlock->GetSize().x();
   const float blockHeightCenter = staticBlock->GetSize().z()/2;
@@ -1840,9 +1840,9 @@ TEST(FactoryTest, IdealCameraPose)
                                  Point3f( 0.5f*kDotSpacingX_mm, -0.5f*kDotSpacingY_mm, 0),
                                  Point3f( 0.5f*kDotSpacingX_mm,  0.5f*kDotSpacingY_mm, 0));
   
-  const std::vector<f32> kPitchAngle_deg = {0, 0.5, 1, 2, 4, 5};
-  const std::vector<f32> kYawAngle_deg   = {0, 0.5, 1, 2, 4, 5};
-  const std::vector<f32> kRollAngle_deg  = {0, 0.1, 0.5, 1};
+  const std::vector<f32> kPitchAngle_deg = {0, 0.5f, 1, 2, 4, 5};
+  const std::vector<f32> kYawAngle_deg   = {0, 0.5f, 1, 2, 4, 5};
+  const std::vector<f32> kRollAngle_deg  = {0, 0.1f, 0.5f, 1};
   
   
   Robot robot(1, cozmoContext);

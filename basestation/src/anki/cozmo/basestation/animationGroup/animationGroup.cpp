@@ -183,7 +183,7 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
     }
   }
       
-  float weightedSelection = rng.RandDbl(totalWeight);
+  float weightedSelection = Util::numeric_cast<float>(rng.RandDbl(totalWeight));
       
   const AnimationGroupEntry* lastEntry = nullptr;
       

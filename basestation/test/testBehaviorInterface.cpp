@@ -201,7 +201,7 @@ TEST(BehaviorInterface, Run)
 void TickAndCheckScore( Robot& robot, IBehavior& behavior, int num, float expectedScore )
 {
   auto startTime = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
-  const float dt = 0.01;
+  const float dt = 0.01f;
   
   for( int i=0; i<num; ++i ) {
     BaseStationTimer::getInstance()->UpdateTime( startTime + SEC_TO_NANOS( dt * i ) );

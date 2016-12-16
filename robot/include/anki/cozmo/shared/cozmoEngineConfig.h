@@ -135,7 +135,7 @@ namespace Anki {
     const f32 PLANNER_MAINTAIN_ANGLE_THRESHOLD = 0.392699081699f;
   
     // Tolerance on angular alignment with predock pose
-    const f32 DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE = DEG_TO_RAD(7.5);
+    const f32 DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE = DEG_TO_RAD(7.5f);
   
     // Default values in clad
     const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE = PathMotionProfile();

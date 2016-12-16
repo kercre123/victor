@@ -61,7 +61,7 @@
 // this is in units of seconds per mm, meaning the robot would drive X
 // seconds out of the way to avoid having to drive 1 mm through the
 // penalty
-#define DEFAULT_OBSTACLE_PENALTY 0.1
+#define DEFAULT_OBSTACLE_PENALTY 0.1f
 
 // how far (in mm) away from the path the robot needs to be before it gives up and plans a new path
 #define PLAN_ERROR_FOR_REPLAN 20.0
@@ -414,7 +414,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
     float closestDist2 = 0;
     bool found = false;
     
-    for(auto maxPenalty : (float[]){0.01, MAX_OBSTACLE_COST}) {
+    for(auto maxPenalty : (float[]){0.01f, MAX_OBSTACLE_COST}) {
       
       bestTargetID = 0;
       closestDist2 = 0;

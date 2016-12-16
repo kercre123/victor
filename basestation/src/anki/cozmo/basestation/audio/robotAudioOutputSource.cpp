@@ -85,7 +85,7 @@ bool RobotAudioOutputSource::encodeMuLaw( const MixingConsoleBuffer& in_samples,
   
   int16_t sample;
   bool sign;
-  uint8_t exponent, mantessa;
+  uint8_t exponent, mantissa;
   double vol = volumeScalar;
   for ( size_t idx = 0; idx < size; ++idx ) {
     
@@ -114,12 +114,12 @@ bool RobotAudioOutputSource::encodeMuLaw( const MixingConsoleBuffer& in_samples,
     exponent = MuLawCompressTable[sample >> 8];
     
     if (exponent) {
-      mantessa = (sample >> (exponent + 3)) & 0xF;
+      mantissa = (sample >> (exponent + 3)) & 0xF;
     } else {
-      mantessa = sample >> 4;
+      mantissa = (uint8_t)(sample >> 4);
     }
     
-    out_samples[idx] = Util::numeric_cast<uint8_t>( (sign ? 0x80 : 0) | (exponent << 4) | mantessa );
+    out_samples[idx] = Util::numeric_cast<uint8_t>( (sign ? 0x80 : 0) | (exponent << 4) | mantissa );
   }
   
   return true;

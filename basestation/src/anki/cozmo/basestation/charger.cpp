@@ -54,7 +54,7 @@ namespace Anki {
     {
       // TODO: Support multiple Charger types
       
-      Pose3d frontPose(-M_PI_2, Z_AXIS_3D(),
+      Pose3d frontPose(-M_PI_2_F, Z_AXIS_3D(),
                        Point3f{SlopeLength+PlatformLength, 0, MarkerZPosition});
       _marker = &AddMarker(Vision::MARKER_CHARGER, frontPose, Point2f(MarkerWidth, MarkerHeight));
 
@@ -100,7 +100,7 @@ namespace Anki {
     
     void Charger::SetPoseRelativeToRobot(Robot& robot) // const Pose3d& robotPose, BlockWorld& blockWorld)
     {
-      Pose3d relPose(-M_PI, Z_AXIS_3D(),
+      Pose3d relPose(-M_PI_F, Z_AXIS_3D(),
                      Point3f{RobotToChargerDistWhenDocked, 0, 0},
                      &robot.GetPose(),
                      "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");

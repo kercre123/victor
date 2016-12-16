@@ -265,14 +265,14 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
           if(leftGoingForward)
           {
             // Put obstacle on right side
-            obstaclePoseWrtRobot.SetRotation(-M_PI_2, Z_AXIS_3D());
+            obstaclePoseWrtRobot.SetRotation(-M_PI_2_F, Z_AXIS_3D());
             obstaclePoseWrtRobot.SetTranslation({0.f, -0.5f*ROBOT_BOUNDING_Y - obstaclePositionPad_mm, 0.f});
             debugStr = "to right of";
           }
           else
           {
             // Put obstacle on left side
-            obstaclePoseWrtRobot.SetRotation(M_PI_2, Z_AXIS_3D());
+            obstaclePoseWrtRobot.SetRotation(M_PI_2_F, Z_AXIS_3D());
             obstaclePoseWrtRobot.SetTranslation({0.f, 0.5f*ROBOT_BOUNDING_Y + obstaclePositionPad_mm, 0.f});
             debugStr = "to left of";
           }

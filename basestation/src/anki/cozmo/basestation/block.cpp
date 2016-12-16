@@ -93,7 +93,7 @@ namespace Cozmo {
     switch(whichFace)
     {
       case FRONT_FACE:
-        facePose = Pose3d(-M_PI_2, Z_AXIS_3D(), {-halfDepth, 0.f, 0.f},  &GetPose());
+        facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-halfDepth, 0.f, 0.f},  &GetPose());
         break;
         
       case LEFT_FACE:
@@ -110,12 +110,12 @@ namespace Cozmo {
         
       case TOP_FACE:
         // Rotate -90deg around X, then -90 around Z
-        facePose = Pose3d(2.09439510, {-0.57735027, 0.57735027, -0.57735027}, {0.f, 0.f, halfHeight},  &GetPose());
+        facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, halfHeight},  &GetPose());
         break;
         
       case BOTTOM_FACE:
         // Rotate +90deg around X, then -90 around Z
-        facePose = Pose3d(2.09439510, {0.57735027, -0.57735027, -0.57735027}, {0.f, 0.f, -halfHeight}, &GetPose());
+        facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -halfHeight}, &GetPose());
         break;
         
       default:
@@ -128,7 +128,7 @@ namespace Cozmo {
 
     // The four rotation vectors for the pre-action poses created below
     const std::array<RotationVector3d,4> preActionPoseRotations = {{
-      {0.f, Y_AXIS_3D()},  {M_PI_2, Y_AXIS_3D()},  {M_PI, Y_AXIS_3D()},  {-M_PI_2, Y_AXIS_3D()}
+      {0.f, Y_AXIS_3D()},  {M_PI_2_F, Y_AXIS_3D()},  {M_PI_F, Y_AXIS_3D()},  {-M_PI_2_F, Y_AXIS_3D()}
     }};
     
     // Add a pre-dock pose to each face, at fixed distance normal to the face,

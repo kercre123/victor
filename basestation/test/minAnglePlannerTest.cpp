@@ -103,7 +103,7 @@ TEST(MinAnglePlanner, NoFinalTurn)
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(0.392, Z_AXIS_3D(), Vec3f(5,7,0) );
+  Pose3d goal(0.392f, Z_AXIS_3D(), Vec3f(5,7,0) );
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
@@ -133,7 +133,7 @@ TEST(MinAnglePlanner, StraightAndTurn)
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(0.392, Z_AXIS_3D(), Vec3f(12.0,0.04,0) );
+  Pose3d goal(0.392f, Z_AXIS_3D(), Vec3f(12.0f,0.04f,0) );
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
@@ -192,7 +192,7 @@ TEST(MinAnglePlanner, TurnOnly)
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(DEG_TO_RAD(45.0), Z_AXIS_3D(), Vec3f(1.4,-0.54,0) );
+  Pose3d goal(DEG_TO_RAD(45.0f), Z_AXIS_3D(), Vec3f(1.4f,-0.54,0) );
 
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
@@ -219,8 +219,8 @@ TEST(MinAnglePlanner, OldBug)
   MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
   ASSERT_TRUE( planner != nullptr );
 
-  Pose3d start(0, Z_AXIS_3D(), Vec3f(166.914886, 153.714859, 0));
-  Pose3d goal( DEG_TO_RAD(-7.68), Z_AXIS_3D(), Vec3f(149.33, 153.33, 0));
+  Pose3d start(0, Z_AXIS_3D(), Vec3f(166.914886f, 153.714859f, 0));
+  Pose3d goal( DEG_TO_RAD(-7.68f), Z_AXIS_3D(), Vec3f(149.33f, 153.33f, 0));
   
   EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);

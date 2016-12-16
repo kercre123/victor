@@ -73,8 +73,8 @@ namespace Anki {
           const float animationX = -5.5;
           const float animationY = 69;
           const float animationZ = 0;
-          const float animationHead = 0.42;
-          const float animationLift = 91.7;
+          const float animationHead = 0.42f;
+          const float animationLift = 91.7f;
           
           const bool nearAngle = NEAR(angle, animationAngle, 1);
           const bool nearX = NEAR(x, animationX, 1);

@@ -36,6 +36,10 @@
 #define M_PI_2     1.57079632679489661923132169163975144
 #endif
 
+#ifndef M_PI_4
+#define M_PI_4     0.785398163397448309615660845819875721
+#endif
+
 #ifndef M_PI_F
 #define M_PI_F     ((float)M_PI)
 #endif
@@ -44,6 +48,9 @@
 #define M_PI_2_F   ((float)M_PI_2)
 #endif
 
+#ifndef M_PI_4_F
+#define M_PI_4_F   ((float)M_PI_4)
+#endif
 
 namespace Anki {
 namespace Util {
