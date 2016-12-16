@@ -26,6 +26,7 @@ __audioMetadataFileName= "audioEventMetadata.csv"
 __audioMetadataFilePath = path.join(__scriptDir, __audioMetadataFileName)
 __audioCladDir = path.join(__projectRoot, 'clad', 'src', 'clad', 'audio')
 __depsFilePath = path.join(__projectRoot, 'DEPS')
+__namespaceList = ['Anki', 'Cozmo', 'Audio']
 
 __errorMsg = "%s DOES NOT EXIST. Find your closest project Nerd!!"
 
@@ -158,7 +159,7 @@ def __updateSoundbanks(version, mergeMetadataPath):
 
 def __generateProjectFiles():
     # Update Project Clad files
-    generateCladCmd = [__wwiseToAppMetadataScript, 'clad', __wwiseIdsFilePath, __audioMetadataFilePath, __audioCladDir]
+    generateCladCmd = [__wwiseToAppMetadataScript, 'clad', __wwiseIdsFilePath, __audioMetadataFilePath, __audioCladDir] + __namespaceList
     #print("Running: %s" % ' '.join(generateCladCmd))
     subprocess.call(generateCladCmd)
     print("Project has been updated")
