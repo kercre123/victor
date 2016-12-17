@@ -176,7 +176,7 @@ namespace Cozmo {
       {
         // Sending the delocalize message one tic after actually moving the robot to be sure that no images
         // from the previous pose are processed after the delocalization.
-        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ForceDelocalizeRobot(_robotState.robotID)));
+        SendForceDeloc();
         
         _kidnapStartTime = GetSupervisor()->getTime();
         _testState = TestState::Kidnap;
@@ -186,7 +186,7 @@ namespace Cozmo {
       case TestState::Kidnap:
       {
         // Wait until we see that the robot has gotten the delocalization message
-        if(CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID < 0, _kidnapStartTime, 2))
+        if(CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), _kidnapStartTime, 2))
         {
           // Once kidnapping occurs, tell robot to turn to see the other object
           _objectsSeen.clear();

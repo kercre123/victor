@@ -131,6 +131,10 @@ protected:
                                    const Point3f& distThresh_mm,
                                    const Radians& angleThresh,
                                    const char* debugStr) const;
+
+  // Send a message to force the robot to delov  
+  void SendForceDeloc();
+  bool IsLocalizedToObject() const;
   
 }; // class CozmoSimTestController
 

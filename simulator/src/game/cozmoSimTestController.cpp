@@ -369,7 +369,17 @@ namespace Anki {
       
       return true;
     }
-    
+
+    void CozmoSimTestController::SendForceDeloc()
+    {
+      SendMessage(ExternalInterface::MessageGameToEngine(
+                    ExternalInterface::ForceDelocalizeRobot(GetRobotState().robotID)));
+    }
+  
+    bool CozmoSimTestController::IsLocalizedToObject() const
+    {
+      return GetRobotState().localizedToObjectID >= 0;
+    }    
       
     // =========== CozmoSimTestFactory ============
     
