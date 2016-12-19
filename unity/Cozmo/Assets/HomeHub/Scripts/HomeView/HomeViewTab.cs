@@ -10,6 +10,18 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private bool _DisableGameRequestsWhenOpen;
 
+    [SerializeField]
+    private Cozmo.UI.SnappableLayoutGroup _SnappableLayoutGroup;
+
+    [SerializeField]
+    private ParentLayoutContentSizeFitter _ParentLayoutContentSizeFitter;
+
+    public ParentLayoutContentSizeFitter ParentLayoutContentSizeFitter {
+      get {
+        return _ParentLayoutContentSizeFitter;
+      }
+    }
+
     private List<TabPanel> _TabPanelsList = new List<TabPanel>();
 
     private Transform _Container;
@@ -22,8 +34,19 @@ namespace Cozmo.HomeHub {
         TabPanel newTabPanel = UIManager.CreateUIElement(_TabViewPanelPrefabs[i].gameObject, _Container).GetComponent<TabPanel>();
         newTabPanel.Initialize(homeViewInstance);
         _TabPanelsList.Add(newTabPanel);
+        _SnappableLayoutGroup.RegisterLayoutElement(newTabPanel.LayoutElement);
       }
       EnableGameRequestsIfAllowed(!_DisableGameRequestsWhenOpen);
+    }
+
+    public float GetNormalizedSnapIndexPosition(int index) {
+      return _SnappableLayoutGroup.GetNormalizedSnapValue(index);
+    }
+
+    void OnDestroy() {
+      if (_DisableGameRequestsWhenOpen) {
+        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+      }
     }
 
     public void EnableGameRequestsIfAllowed(bool enable) {

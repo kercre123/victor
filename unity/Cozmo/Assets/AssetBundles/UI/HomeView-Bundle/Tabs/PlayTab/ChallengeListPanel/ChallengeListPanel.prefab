@@ -112,8 +112,8 @@ GameObject:
   - 224: {fileID: 22476092}
   - 225: {fileID: 22579018}
   - 114: {fileID: 11483340}
-  - 114: {fileID: 11494066}
   - 114: {fileID: 11479140}
+  - 114: {fileID: 11494066}
   m_Layer: 5
   m_Name: ChallengeListPanel
   m_TagString: Untagged
@@ -345,6 +345,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf07eb4b31a9423eb8aee4f93f18acc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _LayoutElement: {fileID: 11479140}
   _UnlockedChallengeButtonPrefab: {fileID: 11402620, guid: 7dcd9a3635461408cb723d74ad988f45,
     type: 2}
   _TopChallengeContainer: {fileID: 22401556}
@@ -406,6 +407,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d19915635dcd34752a39d00ae11e54c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _LayoutElement: {fileID: 11479140}
 --- !u!222 &22246492
 CanvasRenderer:
   m_ObjectHideFlags: 1
