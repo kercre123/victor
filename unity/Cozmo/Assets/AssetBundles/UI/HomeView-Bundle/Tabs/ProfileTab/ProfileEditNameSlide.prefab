@@ -136,6 +136,9 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
     JsonValue: 100
   - ObjectPath: ButtonText
@@ -178,7 +181,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.45882356, g: 0.45882356, b: 0.45882356, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -200,6 +203,7 @@ MonoBehaviour:
   m_Text: '#faceEnrollment.enterName.placeholderText'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11429988
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -506,8 +510,8 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -150}
-  m_SizeDelta: {x: 270, y: 203}
+  m_AnchoredPosition: {x: 140, y: -140}
+  m_SizeDelta: {x: 173, y: 173}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22481156
 RectTransform:
