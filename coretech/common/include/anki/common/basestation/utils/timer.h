@@ -62,6 +62,9 @@ class BaseStationTimer : public Anki::Util::ITickTimeProvider
   // will result in ZERO time passed.
   double GetCurrentTimeInSeconds() const;
 
+  // Same as above, but return a float
+  float GetCurrentTimeInSeconds_f() const;
+
   // Gets time in nanoseconds since the start of the program
   // WARNING: This value updates only once every tick! So measuring time differences within one update loop
   // will result in ZERO time passed.
