@@ -794,8 +794,6 @@ namespace Cozmo.HomeHub {
       }
       DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("success"));
       DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
-      int cubesRequired = ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).MinigameConfig.NumCubesRequired();
-      _CurrentChallengeId = null;
 
       if (_RequestDialog != null) {
         _RequestDialog.DisableAllButtons();
@@ -807,16 +805,19 @@ namespace Cozmo.HomeHub {
           MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
         }
         else {
-          // challenge request has become null due to cube(s) disconnecting.
+          int cubesRequired = ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).MinigameConfig.NumCubesRequired();
           if (RobotEngineManager.Instance.CurrentRobot.LightCubes.Count < cubesRequired) {
-            string title = Localization.Get(ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).ChallengeTitleLocKey);
-            OpenNeedCubesAlert(RobotEngineManager.Instance.CurrentRobot.LightCubes.Count, cubesRequired, title);
+            // challenge request has become null due to cube(s) disconnecting.
+            string challengeTitle = Localization.Get(ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).ChallengeTitleLocKey);
+            OpenNeedCubesAlert(RobotEngineManager.Instance.CurrentRobot.LightCubes.Count, cubesRequired, challengeTitle);
           }
           else {
             DAS.Error("HomeView.HandleMiniGameConfirm", "challenge request is null for an unknown reason");
           }
         }
       }
+
+      _CurrentChallengeId = null;
     }
 
     private void HandleExternalRejection(object messageObject) {
