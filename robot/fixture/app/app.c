@@ -18,8 +18,8 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 69;
-const char* BUILD_INFO = "MP";
+u8 g_fixtureReleaseVersion = 70;
+const char* BUILD_INFO = "EP1v1.5 beta-005";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
@@ -493,7 +493,9 @@ int main(void)
   InitEspressif();
 
   STM_EVAL_LEDOn(LEDRED);
-
+  
+  ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, g_fixtureReleaseVersion );
+  
   while (1)
   {  
     MainExecution();

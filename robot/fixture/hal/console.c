@@ -457,11 +457,21 @@ static void ParseCommand(void)
 {
   u32 i;
   char* buffer = m_parseBuffer;
-  if (!strcasecmp(buffer, "exit"))
+  
+  if(!strcasecmp(buffer, "reset"))
+  {
+      ConsoleWrite("\r\n");
+      MicroWait(10000);
+      NVIC_SystemReset();
+      while(1);
+  }
+  else if (!strcasecmp(buffer, "exit")) 
   {
     m_isInConsoleMode = 0;
     return;
-  } else if (!strcasecmp(buffer, "help") || !strcasecmp(buffer, "?")) {
+  }
+  else if (!strcasecmp(buffer, "help") || !strcasecmp(buffer, "?")) 
+  {
     ConsoleWrite("Available commands:\r\n");
     for (i = 0; i < sizeof(m_functions) / sizeof(CommandFunction); i++)
     {
@@ -469,7 +479,9 @@ static void ParseCommand(void)
       ConsoleWrite("\r\n");
     }
     ConsoleWrite("\r\n");
-  } else {
+  } 
+  else 
+  {
     // Tokenize by spaces
     m_numberOfArguments = 1;
     char* b = buffer;
