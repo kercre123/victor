@@ -13,6 +13,7 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionWatcher.h"
 #include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -43,7 +44,6 @@ namespace Anki {
   
     u32 IActionRunner::sTagCounter = ActionConstants::FIRST_ENGINE_TAG;
     std::set<u32> IActionRunner::sInUseTagSet;
-    
     
     u32 IActionRunner::NextIdTag()
     {
@@ -189,15 +189,8 @@ namespace Anki {
       // Erase the tags as they are no longer in use
       IActionRunner::sInUseTagSet.erase(_customTag);
       IActionRunner::sInUseTagSet.erase(_idTag);
-      
-      if (_emitCompletionSignal && ActionResult::INTERRUPTED != _state)
-      {
-        // Notify any listeners about this action's completion.
-        // TODO: Populate the signal with any action-specific info?
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(_robot.GetID(), GetTag(), _type, _state, _completionUnion)));
-      }
     
-      if(!_suppressTrackLocking && _state != ActionResult::FAILURE_NOT_STARTED)
+      if(!_suppressTrackLocking && _state != ActionResult::NOT_STARTED)
       {
         if(DEBUG_ANIM_TRACK_LOCKING)
         {
@@ -210,6 +203,8 @@ namespace Anki {
         }
         _robot.GetMoveComponent().UnlockTracks(_tracks, GetTag());
       }
+      
+      _robot.GetActionList().GetActionWatcher().ActionEnding(this);
     }
 
     
@@ -222,7 +217,7 @@ namespace Anki {
                             GetName().c_str(),
                             GetTag(),
                             tag);
-        _state = ActionResult::FAILURE_BAD_TAG;
+        _state = ActionResult::BAD_TAG;
         return false;
       }
       
@@ -237,7 +232,7 @@ namespace Anki {
          !IActionRunner::sInUseTagSet.insert(tag).second)
       {
         PRINT_NAMED_ERROR("IActionRunner.SetTag.InvalidTag", "Tag [%d] is invalid", tag);
-        _state = ActionResult::FAILURE_BAD_TAG;
+        _state = ActionResult::BAD_TAG;
         return false;
       }
       _customTag = tag;
@@ -284,10 +279,11 @@ namespace Anki {
     
     ActionResult IActionRunner::Update()
     {
+      _robot.GetActionList().GetActionWatcher().ActionStartUpdating(this);
       switch(_state)
       {
-        case ActionResult::FAILURE_RETRY:
-        case ActionResult::FAILURE_NOT_STARTED:
+        case ActionResult::RETRY:
+        case ActionResult::NOT_STARTED:
         case ActionResult::INTERRUPTED:
         {
           _state = ActionResult::RUNNING;
@@ -313,8 +309,9 @@ namespace Anki {
                                   AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
                                   _robot.GetMoveComponent().WhoIsLocking(tracksToLock).c_str());
               
-              _state = ActionResult::FAILURE_TRACKS_LOCKED;
-              return ActionResult::FAILURE_TRACKS_LOCKED;
+              _state = ActionResult::TRACKS_LOCKED;
+              _robot.GetActionList().GetActionWatcher().ActionEndUpdating(this);
+              return ActionResult::TRACKS_LOCKED;
             }
             
             if(DEBUG_ANIM_TRACK_LOCKING)
@@ -373,6 +370,7 @@ namespace Anki {
           }
         }
       }
+      _robot.GetActionList().GetActionWatcher().ActionEndUpdating(this);
       return _state;
     }
 
@@ -421,7 +419,7 @@ namespace Anki {
     void IActionRunner::UnlockTracks()
     {
       // Tracks aren't locked until the action starts so don't unlock them until then
-      if(!_suppressTrackLocking && _state != ActionResult::FAILURE_NOT_STARTED)
+      if(!_suppressTrackLocking && _state != ActionResult::NOT_STARTED)
       {
         u8 tracks = GetTracksToLock();
         if(DEBUG_ANIM_TRACK_LOCKING)
@@ -439,7 +437,7 @@ namespace Anki {
     
     void IActionRunner::SetTracksToLock(const u8 tracks)
     {
-      if(_state == ActionResult::FAILURE_NOT_STARTED)
+      if(_state == ActionResult::NOT_STARTED)
       {
         _tracks = tracks;
       }
@@ -451,11 +449,11 @@ namespace Anki {
     
     void IActionRunner::Cancel()
     {
-      if(_state != ActionResult::FAILURE_NOT_STARTED)
+      if(_state != ActionResult::NOT_STARTED)
       {
         PRINT_CH_INFO(kLogChannelName, "IActionRunner.Cancel",
                       "Cancelling action %s[%d]",
-                      _name.c_str(), _idTag);
+                      _name.c_str(), GetTag());
         _state = ActionResult::CANCELLED;
       }
     }
@@ -517,7 +515,7 @@ namespace Anki {
                               "%s timed out after %.1f seconds.",
                               GetName().c_str(), GetTimeoutInSeconds());
         }
-        result = ActionResult::FAILURE_TIMEOUT;
+        result = ActionResult::TIMEOUT;
       }
       
       // Don't do anything until we have reached the waitUntilTime
@@ -560,7 +558,8 @@ namespace Anki {
         }
       } // if(currentTimeInSeconds > _waitUntilTime)
       
-      if(result == ActionResult::FAILURE_RETRY && RetriesRemain()) {
+      const bool shouldRetry = (IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY);
+      if(shouldRetry && RetriesRemain()) {
         if(IsMessageDisplayEnabled()) {
           PRINT_CH_INFO(kLogChannelName, "IAction.Update.CurrentActionFailedRetrying",
                         "Robot %d failed running action %s. Retrying.",
@@ -579,7 +578,6 @@ namespace Anki {
 #     endif
       return result;
     } // UpdateInternal()
-    
     
   } // namespace Cozmo
 } // namespace Anki

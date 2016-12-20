@@ -99,8 +99,8 @@ namespace Cozmo {
     bool                      _sayNameWhenDone = false;
     bool                      _needToAbort = false;
     bool                      _enrollingSpecificID = false;
-    ActionResult              _saveEnrollResult = ActionResult::FAILURE_NOT_STARTED;
-    ActionResult              _saveAlbumResult  = ActionResult::FAILURE_NOT_STARTED;
+    ActionResult              _saveEnrollResult = ActionResult::NOT_STARTED;
+    ActionResult              _saveAlbumResult  = ActionResult::NOT_STARTED;
     
     struct EnrollStep {
       Vision::FaceEnrollmentPose pose;

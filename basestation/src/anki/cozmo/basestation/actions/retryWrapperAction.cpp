@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionWatcher.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
@@ -116,7 +117,7 @@ namespace Cozmo {
   {
     if(_subAction == nullptr)
     {
-      return ActionResult::FAILURE_ABORT;
+      return ActionResult::NULL_SUBACTION;
     }
     return ActionResult::SUCCESS;
   }
@@ -137,11 +138,15 @@ namespace Cozmo {
         ActionCompletedUnion completionUnion;
         _subAction->GetCompletionUnion(completionUnion);
         
+        std::vector<ActionResult> subActionResults;
+        _robot.GetActionList().GetActionWatcher().GetSubActionResults(_subAction->GetTag(), subActionResults);
+        
         using RCA = ExternalInterface::RobotCompletedAction;
         RCA robotCompletedAction = RCA(_robot.GetID(),
                                        _subAction->GetTag(),
                                        _subAction->GetType(),
                                        _subAction->GetState(),
+                                       subActionResults,
                                        completionUnion);
         
         // Reset the subAction before calling the retryCallback in case the callback modifies
@@ -168,7 +173,7 @@ namespace Cozmo {
           {
             PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone",
                              "Reached max num retries returning failure");
-            return ActionResult::FAILURE_RETRY;
+            return ActionResult::REACHED_MAX_NUM_RETRIES;
           }
           return ActionResult::RUNNING;
         }
@@ -201,7 +206,7 @@ namespace Cozmo {
         {
           PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone",
                            "Reached max num retries returning failure");
-          return ActionResult::FAILURE_RETRY;
+          return ActionResult::REACHED_MAX_NUM_RETRIES;
         }
       }
       return ActionResult::RUNNING;
@@ -209,7 +214,7 @@ namespace Cozmo {
     
     // Should not be possible to get here
     PRINT_NAMED_WARNING("RetryWrapperAction.CheckIfDone", "Reached supposedly unreachable code");
-    return ActionResult::FAILURE_ABORT;
+    return ActionResult::ABORT;
   }
   
   void RetryWrapperAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const

@@ -11,6 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/errorHandling.h"
 
 #include "anki/common/vectorTypes.h"
+#include "util/math/math.h"
 
 #if USE_M4_HOST_INTRINSICS
 
@@ -138,13 +139,13 @@ namespace Anki
           geBits._u8x4.v[i] = 0xFF;
         }
 
-        if(sum < s8_MIN) {
+        if(sum < std::numeric_limits<s8>::min()) {
           sum += 0x100;
-        } else if(sum > s8_MAX) {
+        } else if(sum > std::numeric_limits<s8>::max()) {
           sum -= 0x100;
         }
 
-        AnkiAssert(CLIP(sum, s8_MIN, s8_MAX) == sum);
+        AnkiAssert(CLIP(sum, static_cast<s32>(std::numeric_limits<s8>::min()), static_cast<s32>(std::numeric_limits<s8>::max())) == sum);
 
         register1._s8x4.v[i] = static_cast<s8>(sum);
       }
@@ -159,7 +160,7 @@ namespace Anki
 
       for(s32 i=0; i<4; i++) {
         const s32 result = static_cast<s32>(register1._s8x4.v[i]) + static_cast<s32>(register2._s8x4.v[i]);
-        register1._s8x4.v[i] = CLIP(result, s8_MIN, s8_MAX);
+        register1._s8x4.v[i] = CLIP(result, static_cast<s32>(std::numeric_limits<s8>::min()), static_cast<s32>(std::numeric_limits<s8>::max()));
       }
 
       return register1;
@@ -175,7 +176,7 @@ namespace Anki
 
         sum >>= 1;
 
-        AnkiAssert(CLIP(sum, s8_MIN, s8_MAX) == sum);
+        AnkiAssert(CLIP(sum, static_cast<s32>(std::numeric_limits<s8>::min()), static_cast<s32>(std::numeric_limits<s8>::max())) == sum);
 
         register1._s8x4.v[i] = static_cast<s8>(sum);
       }
@@ -194,12 +195,12 @@ namespace Anki
         u32 sum = static_cast<u32>(register1._u8x4.v[i]) + static_cast<u32>(register2._u8x4.v[i]);
 
         // Set the GE bits
-        if(sum > u8_MAX) {
+        if(sum > std::numeric_limits<u8>::max()) {
           geBits._u8x4.v[i] = 0xFF;
           sum -= 0x100;
         }
 
-        AnkiAssert(CLIP(sum, 0, u8_MAX) == sum);
+        AnkiAssert(CLIP(sum, static_cast<u32>(0), static_cast<u32>(std::numeric_limits<u8>::max())) == sum);
 
         register1._u8x4.v[i] = static_cast<u8>(sum);
       }
@@ -214,7 +215,7 @@ namespace Anki
 
       for(s32 i=0; i<4; i++) {
         const u32 result = static_cast<u32>(register1._u8x4.v[i]) + static_cast<u32>(register2._u8x4.v[i]);
-        register1._u8x4.v[i] = MIN(result, u8_MAX);
+        register1._u8x4.v[i] = MIN(result, static_cast<u32>(std::numeric_limits<u8>::max()));
       }
 
       return register1;
@@ -230,7 +231,7 @@ namespace Anki
 
         sum >>= 1;
 
-        AnkiAssert(sum <= u8_MAX);
+        AnkiAssert(sum <= std::numeric_limits<u8>::max());
 
         register1._u8x4.v[i] = static_cast<u8>(sum);
       }
@@ -266,7 +267,7 @@ namespace Anki
       for(s32 i=0; i<4; i++) {
         const s32 result = static_cast<s32>(register1._s8x4.v[i]) - static_cast<s32>(register2._s8x4.v[i]);
 
-        register1._s8x4.v[i] = CLIP(result, s8_MIN, s8_MAX);
+        register1._s8x4.v[i] = CLIP(result, static_cast<s32>(std::numeric_limits<s8>::min()), static_cast<s32>(std::numeric_limits<s8>::max()));
       }
 
       return register1;
@@ -282,7 +283,7 @@ namespace Anki
 
         result >>= 1;
 
-        AnkiAssert(CLIP(result, s8_MIN, s8_MAX) == result);
+        AnkiAssert(CLIP(result, static_cast<s32>(std::numeric_limits<s8>::min()), static_cast<s32>(std::numeric_limits<s8>::max())) == result);
 
         register1._s8x4.v[i] = static_cast<s8>(result);
       }
@@ -340,7 +341,7 @@ namespace Anki
           result += 0x100;
         }
 
-        AnkiAssert(result <= u8_MAX);
+        AnkiAssert(result <= std::numeric_limits<u8>::max());
 
         register1._u8x4.v[i] = static_cast<u8>(result);
       }
@@ -363,13 +364,13 @@ namespace Anki
           geBits._u16x2.v[i] = 0xFFFF;
         }
 
-        if(sum < s16_MIN) {
+        if(sum < std::numeric_limits<s16>::min()) {
           sum += 0x10000;
-        } else if(sum > s16_MAX) {
+        } else if(sum > std::numeric_limits<s16>::max()) {
           sum -= 0x10000;
         }
 
-        AnkiAssert(CLIP(sum, s16_MIN, s16_MAX) == sum);
+        AnkiAssert(CLIP(sum, static_cast<s32>(std::numeric_limits<s16>::min()), static_cast<s32>(std::numeric_limits<s16>::max())) == sum);
 
         register1._s16x2.v[i] = static_cast<s16>(sum);
       }
@@ -384,7 +385,7 @@ namespace Anki
 
       for(s32 i=0; i<2; i++) {
         const s32 result = static_cast<s32>(register1._s16x2.v[i]) + static_cast<s32>(register2._s16x2.v[i]);
-        register1._s16x2.v[i] = CLIP(result, s16_MIN, s16_MAX);
+        register1._s16x2.v[i] = CLIP(result, static_cast<s32>(std::numeric_limits<s16>::min()), static_cast<s32>(std::numeric_limits<s16>::max()));
       }
 
       return register1;
@@ -400,7 +401,7 @@ namespace Anki
 
         sum >>= 1;
 
-        AnkiAssert(CLIP(sum, s16_MIN, s16_MAX) == sum);
+        AnkiAssert(CLIP(sum, static_cast<s32>(std::numeric_limits<s16>::min()), static_cast<s32>(std::numeric_limits<s16>::max())) == sum);
 
         register1._s16x2.v[i] = static_cast<s16>(sum);
       }
@@ -419,12 +420,12 @@ namespace Anki
         u32 sum = static_cast<u32>(register1._u16x2.v[i]) + static_cast<u32>(register2._u16x2.v[i]);
 
         // Set the GE bits
-        if(sum > u16_MAX) {
+        if(sum > std::numeric_limits<u16>::max()) {
           geBits._u16x2.v[i] = 0xFFFF;
           sum -= 0x10000;
         }
 
-        AnkiAssert(CLIP(sum, 0, u16_MAX) == sum);
+        AnkiAssert(CLIP(sum, static_cast<u32>(0), static_cast<u32>(std::numeric_limits<u16>::max())) == sum);
 
         register1._u16x2.v[i] = static_cast<u16>(sum);
       }
@@ -439,7 +440,7 @@ namespace Anki
 
       for(s32 i=0; i<2; i++) {
         const u32 result = static_cast<u32>(register1._u16x2.v[i]) + static_cast<u32>(register2._u16x2.v[i]);
-        register1._u16x2.v[i] = MIN(result, u16_MAX);
+        register1._u16x2.v[i] = MIN(result, static_cast<u32>(std::numeric_limits<u16>::max()));
       }
 
       return register1;
@@ -455,7 +456,7 @@ namespace Anki
 
         sum >>= 1;
 
-        AnkiAssert(sum <= u16_MAX);
+        AnkiAssert(sum <= std::numeric_limits<u16>::max());
 
         register1._u16x2.v[i] = static_cast<u16>(sum);
       }
@@ -491,7 +492,7 @@ namespace Anki
       for(s32 i=0; i<2; i++) {
         const s32 result = static_cast<s32>(register1._s16x2.v[i]) - static_cast<s32>(register2._s16x2.v[i]);
 
-        register1._s16x2.v[i] = CLIP(result, s16_MIN, s16_MAX);
+        register1._s16x2.v[i] = CLIP(result, static_cast<s32>(std::numeric_limits<s16>::min()), static_cast<s32>(std::numeric_limits<s16>::max()));
       }
 
       return register1;

@@ -689,7 +689,7 @@ namespace Cozmo {
         // Move lift to correct height and head to correct angle
         CompoundActionParallel* headAndLiftAction = new CompoundActionParallel(robot, {
           new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY),
-          new MoveHeadToAngleAction(robot, DEG_TO_RAD_F32(2)),
+          new MoveHeadToAngleAction(robot, DEG_TO_RAD(2.f)),
         });
         StartActing(robot, headAndLiftAction,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -777,7 +777,7 @@ namespace Cozmo {
           auto driveAction = new DriveStraightAction(robot, 250, 100);
           auto headAction = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
           auto liftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
-          headAction->SetMaxSpeed(DEG_TO_RAD_F32(20));
+          headAction->SetMaxSpeed(DEG_TO_RAD(20.f));
           CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction, liftAction});
           compoundAction->ShouldEmitCompletionSignal(true);
           
@@ -933,7 +933,7 @@ namespace Cozmo {
       case FactoryTestState::ComputeCameraCalibration:
       {
         // Turn towards block
-        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, _expectedLightCubePose, PIDIV2_F);
+        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, _expectedLightCubePose, M_PI_2_F);
         StartActing(robot, turnAction);
         
         // Start calibration computation
@@ -1000,9 +1000,9 @@ namespace Cozmo {
                                                      
                                                      _factoryTestLogger.Append(msg);
                                                      
-                                                     static const f32 rollThresh_rad = DEG_TO_RAD_F32(5);
-                                                     static const f32 pitchThresh_rad = DEG_TO_RAD_F32(5);
-                                                     static const f32 yawThresh_rad = DEG_TO_RAD_F32(5);
+                                                     static const f32 rollThresh_rad = DEG_TO_RAD(5.f);
+                                                     static const f32 pitchThresh_rad = DEG_TO_RAD(5.f);
+                                                     static const f32 yawThresh_rad = DEG_TO_RAD(5.f);
                                                      static const f32 xThresh_mm = 5;
                                                      static const f32 yThresh_mm = 5;
                                                      static const f32 zThresh_mm = 5;
@@ -1013,7 +1013,7 @@ namespace Cozmo {
                                                        PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "Roll exceeds threshold");
                                                        exceedsThresh = true;
                                                      }
-                                                     if(!NEAR(msg.camPosePitch_rad - msg.headAngle, DEG_TO_RAD_F32(-4), pitchThresh_rad))
+                                                     if(!NEAR(msg.camPosePitch_rad - msg.headAngle, DEG_TO_RAD(-4.f), pitchThresh_rad))
                                                      {
                                                        PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "Pitch exceeds threshold");
                                                        exceedsThresh = true;
@@ -1188,7 +1188,7 @@ namespace Cozmo {
         
         // Goto predock pose and then turn towards the block again for good alignment
         DriveToPoseAction* driveAction = new DriveToPoseAction(robot, _closestPredockPose, false);
-        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, blockPose, PIDIV2_F);
+        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, blockPose, M_PI_2_F);
         CompoundActionSequential* compoundAction = new CompoundActionSequential(robot, {driveAction, turnAction});
         
         StartActing(robot, compoundAction,

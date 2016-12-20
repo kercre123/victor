@@ -28,6 +28,7 @@ enum class TestState {
   Init,
   VerifyObject,
   TurnAway,
+  WaitForDeloc,
   DontStartBehavior,
   TurnBack,
   Rolling,
@@ -81,9 +82,11 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
 
     case TestState::VerifyObject:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                       NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                       GetNumObjects() == 1, DEFAULT_TIMEOUT)
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                            !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
+                                            GetNumObjects() == 1,
+                                            IsLocalizedToObject())
       {
         ExternalInterface::QueueSingleAction m;
         m.robotID = 1;
@@ -91,7 +94,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         m.idTag = 11;
         m.numRetries = 1;
         uint8_t isAbsolute = 0; // relative turn
-        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(90), PI_F, 500.0f, isAbsolute, 1 ));
+        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(90), M_PI_F, 500.0f, isAbsolute, 1 ));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);
@@ -110,19 +113,27 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       }
       else {      
         IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING), 10) {
-          // deloc the robot, then try to start the behavior. Behavior shouldn't start
-          ExternalInterface::ForceDelocalizeRobot delocMsg;
-          delocMsg.robotID = 1;
-          SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
-
-          SendMessage(ExternalInterface::MessageGameToEngine(
-                        ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
-          SendMessage(ExternalInterface::MessageGameToEngine(
-                        ExternalInterface::ExecuteBehaviorByName(kBehaviorName)));
-
-          _behaviorStartedTime = GetSupervisor()->getTime();
-          SET_STATE(DontStartBehavior)
+          // Make sure we are still localized (to an object) before sending deloc
+          CST_ASSERT( IsLocalizedToObject(), "Should be localized to object before we deloc");
+          SendForceDeloc();
+          SET_STATE(WaitForDeloc);
         }
+      }
+      break;
+    }
+
+    case TestState::WaitForDeloc:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), 2) {
+
+        // once we are deloc'd, try to start the behavior (which shouldn't start)
+        SendMessage(ExternalInterface::MessageGameToEngine(
+                      ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+        SendMessage(ExternalInterface::MessageGameToEngine(
+                      ExternalInterface::ExecuteBehaviorByName(kBehaviorName)));
+        
+        _behaviorStartedTime = GetSupervisor()->getTime();
+        SET_STATE(DontStartBehavior);
       }
       break;
     }
@@ -142,7 +153,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         m.idTag = 17;
         m.numRetries = 1;
         uint8_t isAbsolute = 0; // relative turn
-        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( -DEG_TO_RAD(90), PI_F, 500.0f, isAbsolute, 1 ));
+        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( -DEG_TO_RAD(90), M_PI_F, 500.0f, isAbsolute, 1 ));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);

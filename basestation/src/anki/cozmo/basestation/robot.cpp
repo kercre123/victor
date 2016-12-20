@@ -142,17 +142,17 @@ static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //Thi
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-110.f); //This has not been tested
 
 // For gyro drift check
-static const float kDriftCheckMaxRate_rad_per_sec = DEG_TO_RAD_F32(10.f);
+static const float kDriftCheckMaxRate_rad_per_sec = DEG_TO_RAD(10.f);
 static const float kDriftCheckPeriod_ms = 5000.f;
-static const float kDriftCheckGyroZMotionThresh_rad_per_sec = DEG_TO_RAD_F32(1.f);
-static const float kDriftCheckMaxAngleChangeRate_rad_per_sec = DEG_TO_RAD_F32(0.1f);
+static const float kDriftCheckGyroZMotionThresh_rad_per_sec = DEG_TO_RAD(1.f);
+static const float kDriftCheckMaxAngleChangeRate_rad_per_sec = DEG_TO_RAD(0.1f);
 
 // For tool code reading
 // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
 const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-  0,             -0.0698,    0.9976,
- -1.0000,         0,         0,
-  0,             -0.9976,   -0.0698,
+  0,             -0.0698f,   0.9976f,
+ -1.0000f,        0,         0,
+  0,             -0.9976f,  -0.0698f,
 });
 
   
@@ -314,7 +314,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // Read all neccessary data off the robot and back it up
   // Potentially duplicates some reads like FaceAlbumData
   _nvStorageComponent->GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
-      
 } // Constructor: Robot
     
 Robot::~Robot()
@@ -485,7 +484,7 @@ void Robot::UpdateCliffDetectThreshold() {
     if( !GetMoveComponent().AreWheelsMoving() ) {
       
       auto poseMap = GetPoseHistory()->GetRawPoses();
-      u16 minVal = u16_MAX;
+      u16 minVal = std::numeric_limits<u16>::max();
       for (auto startIt = poseMap.lower_bound(_cliffStartTimestamp); startIt != poseMap.end(); ++startIt) {
         u16 currVal = startIt->second.GetCliffData();
         PRINT_NAMED_DEBUG("Robot.UpdateCliffRunningStats.CliffValueWhileStopping", "%d - %d", startIt->first, currVal);
@@ -933,11 +932,11 @@ void Robot::DetectGyroDrift(const RobotState& msg)
       if (headingAngleChange > angleChangeThresh) {
         // Report drift detected just one time during a session
         Util::sWarningF("robot.detect_gyro_drift.drift_detected",
-                        {{DDATA, TO_DDATA_STR(RAD_TO_DEG_F32(headingAngleChange))}},
+                        {{DDATA, TO_DDATA_STR(RAD_TO_DEG(headingAngleChange))}},
                         "mean: %f, min: %f, max: %f",
-                        RAD_TO_DEG_F32(_driftCheckCumSumGyroZ_rad_per_sec / _driftCheckNumReadings),
-                        RAD_TO_DEG_F32(_driftCheckMinGyroZ_rad_per_sec),
-                        RAD_TO_DEG_F32(_driftCheckMaxGyroZ_rad_per_sec));
+                        RAD_TO_DEG(_driftCheckCumSumGyroZ_rad_per_sec / _driftCheckNumReadings),
+                        RAD_TO_DEG(_driftCheckMinGyroZ_rad_per_sec),
+                        RAD_TO_DEG(_driftCheckMaxGyroZ_rad_per_sec));
         _gyroDriftReported = true;
       }
 
@@ -1048,9 +1047,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     
     Delocalize(isCarryingObject);
   }
-  else if(msg.pose_frame_id >= GetPoseFrameID()) // ignore state messages with old frame ID
+  else
   {
-    _numMismatchedFrameIDs = 0;
+    ASSERT_NAMED(msg.pose_frame_id <= GetPoseFrameID(), "Robot.UpdateFullRobotState.FrameFromFuture");
+    const bool frameIsCurrent = msg.pose_frame_id == GetPoseFrameID();
     
     Pose3d newPose;
         
@@ -1084,7 +1084,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       {
         case Ramp::DESCENDING:
           tiltAngle    *= -1.f;
-          headingAngle += M_PI;
+          headingAngle += M_PI_F;
           break;
         case Ramp::ASCENDING:
           break;
@@ -1171,35 +1171,40 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
                           "AddRawOdomPoseToHistory failed for timestamp=%d", msg.timestamp);
       return lastResult;
     }
-    
+
     if(UpdateCurrPoseFromHistory() == false) {
       lastResult = RESULT_FAIL;
     }
-  }
-  else // Robot frameID is less than engine frameID
-  {
-    // COZMO-5850 (Al) This is to catch the issue where our frameID is incremented but fails to send
-    // to the robot due to some origin issue. Somehow the robot's pose becomes an origin and doesn't exist
-    // in the PoseOriginList. The frameID mismatch then causes all sorts of issues in things (ie VisionSystem
-    // won't process the next image). Delocalizing will fix the mismatch by creating a new origin and sending
-    // a localization update
-    static const u32 kNumTicksWithMismatchedFrameIDs = 100; // 3 seconds (called each RobotState msg)
     
-    ++_numMismatchedFrameIDs;
-    
-    if(_numMismatchedFrameIDs > kNumTicksWithMismatchedFrameIDs)
-    {
-      PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.MismatchedFrameIDs",
-                        "Robot[%u] and engine[%u] frameIDs are mismatched, delocalizing",
-                        msg.pose_frame_id,
-                        GetPoseFrameID());
-      
+    if (frameIsCurrent) {
       _numMismatchedFrameIDs = 0;
+
+    } else {
+      // COZMO-5850 (Al) This is to catch the issue where our frameID is incremented but fails to send
+      // to the robot due to some origin issue. Somehow the robot's pose becomes an origin and doesn't exist
+      // in the PoseOriginList. The frameID mismatch then causes all sorts of issues in things (ie VisionSystem
+      // won't process the next image). Delocalizing will fix the mismatch by creating a new origin and sending
+      // a localization update
+      static const u32 kNumTicksWithMismatchedFrameIDs = 100; // 3 seconds (called each RobotState msg)
       
-      Delocalize(IsCarryingObject());
+      ++_numMismatchedFrameIDs;
       
-      return RESULT_FAIL;
+      if(_numMismatchedFrameIDs > kNumTicksWithMismatchedFrameIDs)
+      {
+        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.MismatchedFrameIDs",
+                          "Robot[%u] and engine[%u] frameIDs are mismatched, delocalizing",
+                          msg.pose_frame_id,
+                          GetPoseFrameID());
+        
+        _numMismatchedFrameIDs = 0;
+        
+        Delocalize(IsCarryingObject());
+        
+        return RESULT_FAIL;
+      }
+
     }
+    
   }
   
   DetectGyroDrift(msg);
@@ -1229,8 +1234,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     stateMsg,
     static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
     AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
-    (u8)MIN(((u8)imageFrameRate), u8_MAX),
-    (u8)MIN(((u8)imageProcRate), u8_MAX),
+    (u8)MIN(((u8)imageFrameRate), std::numeric_limits<u8>::max()),
+    (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
     _enabledAnimTracks,
     _animationTag);
       
@@ -1807,7 +1812,7 @@ Result Robot::Update()
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
-           (u8)MIN(((u8)imageProcRate), u8_MAX),
+           (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
            behaviorChooserName,
            behaviorDebugStr.c_str());
       
@@ -1942,7 +1947,7 @@ void Robot::SetHeadAngle(const f32& angle)
     if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
       PRINT_NAMED_WARNING("Robot.GetCameraHeadPose.HeadAngleOOB",
                           "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)",
-                          angle, RAD_TO_DEG_F32(angle));
+                          angle, RAD_TO_DEG(angle));
     }
         
     _visionComponent->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
@@ -2959,7 +2964,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
                         marker,
                         marker2,
                         dockAction,
-                        0, 0, u8_MAX,
+                        0, 0, std::numeric_limits<u8>::max(),
                         placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
                         useManualSpeed,
                         numRetries,
@@ -3012,7 +3017,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
   _lastPickOrPlaceSucceeded = false;
       
   // Sends a message to the robot to dock with the specified marker
-  // that it should currently be seeing. If pixel_radius == u8_MAX,
+  // that it should currently be seeing. If pixel_radius == std::numeric_limits<u8>::max(),
   // the marker can be seen anywhere in the image (same as above function), otherwise the
   // marker's center must be seen at the specified image coordinates
   // with pixel_radius pixels.
@@ -3738,7 +3743,7 @@ Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
   // COZMO-3309 Need to change poseHistory to robot status history
   const bool isCarryingObject = false;
   
-  RobotPoseStamp poseStamp(_frameId, pose, head_angle, lift_angle, u16_MAX, isCarryingObject);
+  RobotPoseStamp poseStamp(_frameId, pose, head_angle, lift_angle, std::numeric_limits<u16>::max(), isCarryingObject);
   return _poseHistory->AddVisionOnlyPose(t, poseStamp);
 }
 
@@ -4143,7 +4148,7 @@ Result Robot::SendFlashObjectIDs()
 Result Robot::SendDebugString(const char* format, ...)
 {
   int len = 0;
-  const int kMaxDebugStringLen = u8_MAX;
+  const int kMaxDebugStringLen = std::numeric_limits<u8>::max();
   char text[kMaxDebugStringLen];
   strcpy(text, format);
       
@@ -4371,7 +4376,7 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
   while(iteration++ < kMaxIterations)
   {
     if(DEBUG_HEAD_ANGLE_ITERATIONS) {
-      PRINT_NAMED_DEBUG("ComputeHeadAngle", "%d: %.1fdeg", iteration, RAD_TO_DEG_F32(searchAngle_rad));
+      PRINT_NAMED_DEBUG("ComputeHeadAngle", "%d: %.1fdeg", iteration, RAD_TO_DEG(searchAngle_rad));
     }
     
     // Get point w.r.t. camera at current search angle
@@ -4394,7 +4399,7 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
     if(Util::IsFltLE(std::abs(y), kYTol))
     {
       if(DEBUG_HEAD_ANGLE_ITERATIONS) {
-        PRINT_NAMED_DEBUG("ComputeHeadAngle", "CONVERGED: %.1fdeg", RAD_TO_DEG_F32(searchAngle_rad));
+        PRINT_NAMED_DEBUG("ComputeHeadAngle", "CONVERGED: %.1fdeg", RAD_TO_DEG(searchAngle_rad));
       }
       
       headAngle = searchAngle_rad;

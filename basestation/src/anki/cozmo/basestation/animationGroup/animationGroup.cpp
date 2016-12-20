@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 #include "anki/common/basestation/jsonTools.h"
 
@@ -164,7 +165,7 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
                       "%s: rejecting animation %s with head angle (%f) out of range (%f,%f)",
                       _name.c_str(),
                       entry->GetName().c_str(),
-                      RAD_TO_DEG_F32(headAngleRad),
+                      RAD_TO_DEG(headAngleRad),
                       entry->GetHeadAngleMin(),
                       entry->GetHeadAngleMax());
       }
@@ -182,7 +183,7 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
     }
   }
       
-  float weightedSelection = rng.RandDbl(totalWeight);
+  float weightedSelection = Util::numeric_cast<float>(rng.RandDbl(totalWeight));
       
   const AnimationGroupEntry* lastEntry = nullptr;
       

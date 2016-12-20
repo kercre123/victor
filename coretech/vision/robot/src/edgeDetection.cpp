@@ -13,6 +13,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/draw.h"
 #include "anki/vision/robot/histogram.h"
 
+#include "util/math/math.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -563,7 +565,7 @@ namespace Anki
         RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
         RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-      AnkiAssert(numTemplatePixels <= s32_MAX);
+      AnkiAssert(numTemplatePixels <= std::numeric_limits<s32>::max());
       
       const s32 requiredBytes = 512 + static_cast<s32>(numTemplatePixels)*sizeof(Point<s16>) + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 

@@ -116,7 +116,7 @@ namespace Anki {
         bool gotNewTrack = false;
         _previousTarget = _currentTarget;
         s32 largestDiagSizeSq = -1;
-        s32 smallestCenterDistSq = s32_MAX;
+        s32 smallestCenterDistSq = std::numeric_limits<s32>::max();
         for(auto & target : targets)
         {
           if(_isTracking) {

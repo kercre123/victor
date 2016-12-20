@@ -124,7 +124,7 @@ float atan_fast(float x)
     float res;
 
     if (absx >= 600) {
-      res = PIDIV2_F;
+      res = M_PI_2_F;
     }
     else if (absx >= 120) {
       res = SLOPE_TO_600 * (absx - 120) + ATAN120;
@@ -157,14 +157,14 @@ float atan_fast(float x)
 
   // Convert x to LUT index
   float x_lut_idx = ABS(x)*ATAN_LUT_INPUT_MULTIPLIER;
-  u8 x_lut_pre_idx = (int)(x_lut_idx);
+  u8 x_lut_pre_idx = (u8)(x_lut_idx);
   u8 x_lut_post_idx = x_lut_pre_idx + 1;
   float frac = x_lut_idx - (float)x_lut_pre_idx;
 
   // Check if input exceeds LUT range
   float lut_result;
   if (x_lut_post_idx >= ATAN_LUT_SIZE) {
-    lut_result = PIDIV2_F;
+    lut_result = M_PI_2_F;
   } else {
     u8 atan_pre_res = atan_lut[x_lut_pre_idx];
     u8 atan_post_res = atan_lut[x_lut_post_idx];
@@ -201,7 +201,7 @@ float asin_fast(float x)
 #ifdef USE_INTERPOLATION
   // Convert x to LUT index
   float x_lut_idx = ABS(x)*ASIN_LUT_INPUT_MULTIPLIER;
-  u8 x_lut_pre_idx = (int)(x_lut_idx);
+  u8 x_lut_pre_idx = (u8)(x_lut_idx);
   u8 x_lut_post_idx = x_lut_pre_idx + 1;
   float frac = x_lut_idx - (float)x_lut_pre_idx;
 
@@ -212,7 +212,7 @@ float asin_fast(float x)
   // Check if input exceeds LUT range
   float lut_result;
   if (x_lut_post_idx >= ASIN_LUT_SIZE) {
-    lut_result = PIDIV2_F;
+    lut_result = M_PI_2_F;
   } else {
     u8 asin_pre_res = asin_lut[x_lut_pre_idx];
     u8 asin_post_res = asin_lut[x_lut_post_idx];
@@ -253,13 +253,13 @@ float atan2_fast(float y, float x)
   if (x>0) {
     return atan_fast(y/x);
   } else if (y >= 0 && x < 0) {
-    return atan_fast(y/x) + PI_F;
+    return atan_fast(y/x) + M_PI_F;
   } else if (y < 0 && x < 0) {
-    return atan_fast(y/x) - PI_F;
+    return atan_fast(y/x) - M_PI_F;
   } else if (y > 0 && x == 0) {
-    return PIDIV2_F;
+    return M_PI_2_F;
   } else if (y < 0 && x == 0) {
-    return -PIDIV2_F;
+    return -M_PI_2_F;
   }
 
   return 0;
@@ -275,13 +275,13 @@ float atan2_acc(float y, float x)
   if (x > 0) {
     return atan_val;
   } else if (y >= 0 && x < 0) {
-    return atan_val + PI_F;
+    return atan_val + M_PI_F;
   } else if (y < 0 && x < 0) {
-    return atan_val - PI_F;
+    return atan_val - M_PI_F;
   } else if (y > 0 && x == 0) {
-    return PIDIV2_F;
+    return M_PI_2_F;
   }
   //else if (y < 0 && x == 0) {
-  return -PIDIV2_F;
+  return -M_PI_2_F;
   //}
 }

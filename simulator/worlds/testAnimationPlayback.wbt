@@ -1,4 +1,4 @@
-#VRML_SIM V8.0.5 utf8
+#VRML_SIM V8.2.1 utf8
 CozmoWorldInfo {
 }
 Viewpoint {
@@ -27,6 +27,8 @@ DirectionalLight {
 }
 CozmoMat {
   showMarkers FALSE
+  xSize 100
+  ySize 100
 }
 BlockWorldComms {
   filterLogs TRUE

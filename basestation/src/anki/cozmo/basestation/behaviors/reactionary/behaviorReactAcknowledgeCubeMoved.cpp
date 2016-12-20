@@ -188,7 +188,7 @@ void BehaviorReactAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock
   const Pose3d& blockPose = obj->GetPose();
   
   StartActing(new CompoundActionParallel(robot, {
-    new TurnTowardsPoseAction(robot, blockPose, PI),
+    new TurnTowardsPoseAction(robot, blockPose, M_PI_F),
     new WaitAction(robot, kDelayToRecognizeBlock_s) }),
               &BehaviorReactAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence);
 }

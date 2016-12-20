@@ -9,8 +9,6 @@
 #include "anki/cozmo/basestation/util/transferQueue/gameLogTransferTask.h"
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
-#include "anki/cozmo/shared/cozmoConfig_common.h"
-//#include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/random/randomGenerator.h"
 #include "util/environment/locale.h"

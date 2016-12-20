@@ -112,7 +112,7 @@ namespace FaceEnrollment {
       // cancelled for some reason other than UI back (eg. interrupt by picking up / place on back).
       // we also include FAILURE_NOT_STARTED because that can be triggered if the action was interrupted
       // before we even start the action (but it is queued).
-      bool actionCancelledOrInterrupted = message.result == Anki.Cozmo.ActionResult.CANCELLED || message.result == Anki.Cozmo.ActionResult.FAILURE_NOT_STARTED;
+      bool actionCancelledOrInterrupted = message.result == Anki.Cozmo.ActionResult.CANCELLED || message.result == Anki.Cozmo.ActionResult.NOT_STARTED;
       bool knownEnrollmentFailure = message.result != Anki.Cozmo.ActionResult.SUCCESS;
 
       if (_UserCancelledEnrollment) {

@@ -21,7 +21,8 @@
 namespace Anki {
   namespace Vision{
   
-    const Marker::Code Marker::ANY_CODE = s16_MAX;
+    const Marker::Code Marker::ANY_CODE = std::numeric_limits<s16>::max();
+    
     
     Marker::Marker(const Code& withCode)
     : _code(withCode)
@@ -29,14 +30,15 @@ namespace Anki {
       
     }
     
-    const char* Marker::GetCodeName() const
+    const char * Marker::GetCodeName() const
     {
-      if(_code >= 0 && _code < NUM_MARKER_TYPES) {
+      if (_code >= 0 && _code <= NUM_MARKER_TYPES) {
         return MarkerTypeStrings[_code];
-      }
-      else {
+      } else if (_code == ANY_CODE) {
+        return "MARKER_ANY";
+      } else {
         PRINT_NAMED_ERROR("Marker.GetCodeName", "Could not look up name for code=%d", _code);
-        return MarkerTypeStrings[MARKER_UNKNOWN];
+        return "UNKNOWN";
       }
     }
     

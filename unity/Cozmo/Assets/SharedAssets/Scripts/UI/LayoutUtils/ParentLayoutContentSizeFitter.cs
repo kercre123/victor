@@ -8,6 +8,14 @@ using UnityEngine.UI;
 // its content but still have it be under a parent with a layout group.
 public class ParentLayoutContentSizeFitter : MonoBehaviour {
 
+  public event System.Action OnResizedParent;
+
+  private RectTransform _RectTransform;
+
+  private void Start() {
+    _RectTransform = GetComponent<RectTransform>();
+  }
+
   private void OnRectTransformDimensionsChange() {
     if (transform.parent != null && gameObject.activeInHierarchy) {
       StartCoroutine(ResizeParent());
@@ -18,8 +26,11 @@ public class ParentLayoutContentSizeFitter : MonoBehaviour {
     yield return null;
     LayoutElement layoutElement = transform.parent.GetComponent<LayoutElement>();
     if (layoutElement != null) {
-      layoutElement.minWidth = GetComponent<RectTransform>().rect.width;
-      layoutElement.minHeight = GetComponent<RectTransform>().rect.height;
+      layoutElement.minWidth = _RectTransform.rect.width;
+      layoutElement.minHeight = _RectTransform.rect.height;
+    }
+    if (OnResizedParent != null) {
+      OnResizedParent();
     }
   }
 }

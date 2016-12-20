@@ -1669,7 +1669,7 @@ namespace Cozmo {
                                          GET_PARAM(s32, BodyMovementSpeedMinMax_mmps));
 
         // Drive straight sometimes, turn in place the rest of the time
-        s16 curvature = s16_MAX; // drive straight
+        s16 curvature = std::numeric_limits<s16>::max(); // drive straight
         if(_rng.RandDblInRange(0., 1.) > GET_PARAM(f32, BodyMovementStraightFraction)) {
           curvature = 0;
           
@@ -1742,7 +1742,7 @@ namespace Cozmo {
       {
         _headMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementDurationMin_ms),
                                                    GET_PARAM(s32, HeadMovementDurationMax_ms));
-        const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG_F32(robot.GetHeadAngle()));
+        const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
 
         if(DEBUG_ANIMATION_STREAMING) {
           PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",

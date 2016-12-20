@@ -14,6 +14,8 @@
 #ifndef _ANKICORETECH_COMMON_RADIANS_H_
 #define _ANKICORETECH_COMMON_RADIANS_H_
 
+#include "util/math/math.h"
+
 namespace Anki {
 
 // A radians class that automatically rescales the value after any computation
@@ -66,6 +68,8 @@ public:
   // Returns true if a <= b
   friend bool operator<=(const Radians& a, const Radians& b);
 
+  // Returns true if other is within epsilon radians
+  bool IsNear(const Radians& other, const Radians& epsilon = Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT) const;
 
   // Assignment operators
   void operator=(const Radians& b);

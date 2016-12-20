@@ -218,7 +218,8 @@ void BehaviorLookAround::TransitionToRoaming(Robot& robot)
 
   StartActing(new CompoundActionSequential(robot, {setHeadAndLiftAction, goToPoseAction}),
               [this, &robot](ActionResult result) {
-                if( result == ActionResult::SUCCESS || result == ActionResult::FAILURE_RETRY ) {
+                const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
+                if( resCat == ActionResultCategory::SUCCESS || resCat == ActionResultCategory::RETRY ) {
                   _currentDestination = GetNextDestination(_currentDestination);
                 }
                 if (_numDestinationsLeft == 0) {
@@ -235,7 +236,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
   SET_STATE(State::LookingAtPossibleObject);
 
   CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new TurnTowardsPoseAction(robot, _lastPossibleObjectPose, PI_F));
+  action->AddAction(new TurnTowardsPoseAction(robot, _lastPossibleObjectPose, M_PI_F));
 
   // if the pose is too far away, drive towards it 
   Pose3d relPose;
@@ -295,7 +296,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
                     recentObjectID.GetValue());
   
   StartActing(new CompoundActionSequential(robot, {
-                  new TurnTowardsObjectAction(robot, recentObjectID, PI_F),
+                  new TurnTowardsObjectAction(robot, recentObjectID, M_PI_F),
                   new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BlockReact) }),
                [this, &robot, recentObjectID](ActionResult result) {
                  if( result == ActionResult::SUCCESS ) {

@@ -10,8 +10,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/imageProcessing.h"
 
-#include "util/math/constantsAndMacros.h"
-
 #include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/hostIntrinsics_m4.h"

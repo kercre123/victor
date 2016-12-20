@@ -169,13 +169,15 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                                                                                const u8 retryCount,
                                                                                AnimationTrigger& retryAnimTrigger)
   {
+    retryAnimTrigger = AnimationTrigger::RollBlockRetry;
+  
     // Don't turn towards the face when retrying
     rollAction->DontTurnTowardsFace();
   
     // Only try to use another preAction pose if we aren't using an approach angle otherwise there is only
     // one preAction pose to roll the object upright and the roll action failed due to not seeing the object
     if(!rollAction->GetUseApproachAngle() &&
-       completion.completionInfo.Get_objectInteractionCompleted().result == ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
+       completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
     {
       // Use a different preAction pose if we are retrying
       rollAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, rollAction](ActionableObject* object,
@@ -186,18 +188,17 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
       });
     }
     
-    switch(completion.completionInfo.Get_objectInteractionCompleted().result)
+    switch(completion.result)
     {
-      case ObjectInteractionResult::INCOMPLETE:
-      case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+      case ActionResult::LAST_PICK_AND_PLACE_FAILED:
       {
-        retryAnimTrigger = AnimationTrigger::RollBlockRealign;
+        retryAnimTrigger = AnimationTrigger::RollBlockRetry;
         break;
       }
       
       default:
       {
-        retryAnimTrigger = AnimationTrigger::RollBlockRetry;
+        retryAnimTrigger = AnimationTrigger::RollBlockRealign;
         break;
       }
     }
@@ -241,17 +242,16 @@ void BehaviorRollBlock::SetupRetryAction(Robot& robot, const ExternalInterface::
   // with "isRetry" set to true.
   
   IActionRunner* animAction = nullptr;
-  switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+  switch(msg.result)
   {
-    case ObjectInteractionResult::INCOMPLETE:
-    case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+    case ActionResult::LAST_PICK_AND_PLACE_FAILED:
     {
-      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RollBlockRealign);
+      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RollBlockRetry);
       break;
     }
       
     default: {
-      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RollBlockRetry);
+      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RollBlockRealign);
       break;
     }
   }

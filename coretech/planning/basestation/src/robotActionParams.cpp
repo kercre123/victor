@@ -15,6 +15,7 @@
 #include "json/json.h"
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 
 using namespace std;
 

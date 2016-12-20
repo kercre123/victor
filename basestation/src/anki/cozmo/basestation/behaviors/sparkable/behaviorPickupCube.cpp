@@ -185,7 +185,7 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
   
   // Don't visually verify when using a tap intent object since it could be far away or obscured
   const bool shouldVisuallyVerify = !robot.GetBehaviorManager().GetWhiteboard().HasTapIntent();
-  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlockID, Radians(PI_F), shouldVisuallyVerify));
+  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlockID, Radians(M_PI_F), shouldVisuallyVerify));
   if(!_shouldStreamline){
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
   }
@@ -225,8 +225,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
     retryAnimTrigger = AnimationTrigger::RollBlockRealign;
     
     // Use a different preAction pose if we are retrying because we weren't seeing the object
-    if(completion.completionInfo.Get_objectInteractionCompleted().result ==
-       ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
+    if(completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
     {
       pickupAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc(
         [this, pickupAction](ActionableObject* object,
@@ -239,7 +238,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
       return true;
     }
     else {
-      return completion.result == ActionResult::FAILURE_RETRY;
+      return IActionRunner::GetActionResultCategory(completion.result) == ActionResultCategory::RETRY;
     }
   };
   
@@ -268,7 +267,7 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
     return;
   }
   
-  double turn_rad = robot.GetRNG().RandDblInRange(M_PI_4 ,PI_F);
+  double turn_rad = robot.GetRNG().RandDblInRange(M_PI_4 ,M_PI_F);
   if( robot.GetRNG().RandDbl() < 0.5 )
   {
     turn_rad *= -1;

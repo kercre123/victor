@@ -379,7 +379,7 @@ namespace Anki
       // Compute the histogram of orientations, and find the top 4 bins
       // NOTE: this histogram is a bit different than matlab's
       s32 histSize = 16;
-      f32 range[] = {-PI_F, PI_F + 1e-6f};
+      f32 range[] = {-M_PI_F, M_PI_F + 1e-6f};
       const f32 *ranges[] = { range };
       
       cv::Mat hist;
@@ -391,7 +391,7 @@ namespace Anki
       // Compute bin centers
       std::vector<Radians> binCenters(histSize);
       for(s32 iBin=0; iBin<histSize; ++iBin) {
-        binCenters[iBin] = (2.f*PI_F / (f32)histSize) * ((f32)iBin + 0.5f) - PI_F;
+        binCenters[iBin] = (2.f*M_PI_F / (f32)histSize) * ((f32)iBin + 0.5f) - M_PI_F;
       }
       
 #     elif LINE_FIT_METHOD == LINE_FIT_METHOD_KMEANS
@@ -465,7 +465,7 @@ namespace Anki
         // multiple edges)
         for(s32 i=0; i<boundaryLength; i++) {
           const f32 angDist = (Radians(pBin[i])-binCenters[thisBin]).getAbsoluteVal().ToFloat();
-          if(angDist < (2*PI_F)/histSize)
+          if(angDist < (2*M_PI_F)/histSize)
           {
             boundaryIndex.push_back(i);
             
@@ -488,7 +488,7 @@ namespace Anki
         // instead of the more standard y = mx + b
         if(numSide > 1) {
           // all(boundary(boundaryIndex,2)==boundary(boundaryIndex(1),2))
-          s32 minX = s32_MAX, maxX = s32_MIN, minY = s32_MAX, maxY = s32_MIN;
+          s32 minX = std::numeric_limits<s32>::max(), maxX = std::numeric_limits<s32>::min(), minY = std::numeric_limits<s32>::max(), maxY = std::numeric_limits<s32>::min();
           for(s32 i=0; i<numSide; ++i) {
             const s32 curX = pBoundary[boundaryIndex[i]].x;
             const s32 curY = pBoundary[boundaryIndex[i]].y;
@@ -802,7 +802,7 @@ namespace Anki
       s32 maximaValues[5];
       s32 maximaIndexes[5];
       for(s32 i=0; i<5; i++) {
-        maximaValues[i] = s32_MIN;
+        maximaValues[i] = std::numeric_limits<s32>::min();
         maximaIndexes[i] = -1;
       }
 
@@ -816,7 +816,7 @@ namespace Anki
           }
         }
         //CoreTechPrint("Maxima %d/%d is #%d %d\n", iMax, 4, maximaIndexes[iMax], maximaValues[iMax]);
-        pBoundaryFilteredAndCombined[maximaIndexes[iMax]] = s32_MIN;
+        pBoundaryFilteredAndCombined[maximaIndexes[iMax]] = std::numeric_limits<s32>::min();
       }
       
       peaks.Clear();

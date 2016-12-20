@@ -146,6 +146,7 @@ enum int_32 AnimationTrigger
   MemoryMatchPointRightBigFast,
   MemoryMatchPointRightSmallFast,
   MemoryMatchCozmoGetOut,
+  MemoryMatchCozmoFollowTapsSoundOnly,
   NamedFaceInitialGreeting,
   NeutralFace,
   NothingToDoBoredEvent,             // Cozmo doesn't have anything to do in freeplay - bored game in the middle

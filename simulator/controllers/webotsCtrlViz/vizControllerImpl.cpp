@@ -514,17 +514,17 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   sprintf(txt, "Pose: %6.1f, %6.1f, ang: %4.1f",
     payload.state.pose.x,
     payload.state.pose.y,
-    RAD_TO_DEG_F32(payload.state.pose.angle));
+    RAD_TO_DEG(payload.state.pose.angle));
   DrawText(VizTextLabelType::TEXT_LABEL_POSE, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Head: %5.1f deg, Lift: %4.1f mm",
-    RAD_TO_DEG_F32(payload.state.headAngle),
+    RAD_TO_DEG(payload.state.headAngle),
     payload.state.liftHeight);
   DrawText(VizTextLabelType::TEXT_LABEL_HEAD_LIFT, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Pitch: %4.1f deg (IMUHead: %4.1f deg)",
-    RAD_TO_DEG_F32(payload.state.pose.pitch_angle),
-    RAD_TO_DEG_F32(payload.state.pose.pitch_angle + payload.state.headAngle));
+    RAD_TO_DEG(payload.state.pose.pitch_angle),
+    RAD_TO_DEG(payload.state.pose.pitch_angle + payload.state.headAngle));
   DrawText(VizTextLabelType::TEXT_LABEL_PITCH, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "Acc:  %6.0f %6.0f %6.0f mm/s2",
@@ -534,9 +534,9 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "Gyro: %6.1f %6.1f %6.1f deg/s",
-    RAD_TO_DEG_F32(payload.state.gyro.x),
-    RAD_TO_DEG_F32(payload.state.gyro.y),
-    RAD_TO_DEG_F32(payload.state.gyro.z));
+    RAD_TO_DEG(payload.state.gyro.x),
+    RAD_TO_DEG(payload.state.gyro.y),
+    RAD_TO_DEG(payload.state.gyro.z));
   DrawText(VizTextLabelType::TEXT_LABEL_GYRO, Anki::NamedColors::GREEN, txt);
 
   bool cliffDetected = payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED;

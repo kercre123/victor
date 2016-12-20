@@ -129,8 +129,7 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
       retryAnimTrigger = AnimationTrigger::WorkoutPickupRealign;
     
       // Use a different preAction pose if we are retrying because we weren't seeing the object
-      const auto& interactionResult = completion.completionInfo.Get_objectInteractionCompleted().result;
-      if(interactionResult == ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
+      if(completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
       {
         using namespace std::placeholders;
         auto useSecondClosest = std::bind( &IBehavior::UseSecondClosestPreActionPose, this, driveToBlockAction, _1, _2, _3);
@@ -138,7 +137,7 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
         return true;
       }
       else {
-        return completion.result == ActionResult::FAILURE_RETRY;
+        return IActionRunner::GetActionResultCategory(completion.result) == ActionResultCategory::RETRY;
       }
     };
 
@@ -154,8 +153,7 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
       else {
         // only count driving failures if there are no predock poses (that way a different cube or behavior
         // will get selected)
-        const auto& interactionResult = completion.completionInfo.Get_objectInteractionCompleted().result;
-        const bool countFailure = interactionResult == ObjectInteractionResult::NO_PREACTION_POSES;
+        const bool countFailure = (res == ActionResult::NO_PREACTION_POSES);
         TransitionToFailureRecovery(robot, countFailure);
       }
     });

@@ -114,9 +114,9 @@ namespace Cozmo {
   
   // =========== Test class implementation ===========
   CST_RobotKidnappingComplex::CST_RobotKidnappingComplex()
-  : _kidnappedPose1(-M_PI_2, Z_AXIS_3D(), {0, -_gridSpacing_mm, 0})
-  , _kidnappedPose2( M_PI,   Z_AXIS_3D(), {-2*_gridSpacing_mm, _gridSpacing_mm, 0})
-  , _kidnappedPose3( M_PI_2, Z_AXIS_3D(), {-_gridSpacing_mm, 0, 0})
+  : _kidnappedPose1(-M_PI_2_F, Z_AXIS_3D(), {0, -_gridSpacing_mm, 0})
+  , _kidnappedPose2( M_PI_F,   Z_AXIS_3D(), {-2*_gridSpacing_mm, _gridSpacing_mm, 0})
+  , _kidnappedPose3( M_PI_2_F, Z_AXIS_3D(), {-_gridSpacing_mm, 0, 0})
   , _poseA_actual(0, Z_AXIS_3D(), {_gridSpacing_mm, 0.f, 22.f}, &_fakeOrigin)
   , _poseB_actual(0, Z_AXIS_3D(), {-_gridSpacing_mm, -_gridSpacing_mm, 22.f}, &_fakeOrigin)
   , _poseC_actual(0, Z_AXIS_3D(), {-2*_gridSpacing_mm, 0.f, 22.f}, &_fakeOrigin)
@@ -176,7 +176,7 @@ namespace Cozmo {
       {
         // Sending the delocalize message one tic after actually moving the robot to be sure that no images
         // from the previous pose are processed after the delocalization.
-        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ForceDelocalizeRobot(_robotState.robotID)));
+        SendForceDeloc();
         
         _kidnapStartTime = GetSupervisor()->getTime();
         _testState = TestState::Kidnap;
@@ -186,7 +186,7 @@ namespace Cozmo {
       case TestState::Kidnap:
       {
         // Wait until we see that the robot has gotten the delocalization message
-        if(CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID < 0, _kidnapStartTime, 2))
+        if(CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), _kidnapStartTime, 2))
         {
           // Once kidnapping occurs, tell robot to turn to see the other object
           _objectsSeen.clear();
@@ -286,7 +286,7 @@ namespace Cozmo {
 
           // Turn towards C again
           _turnInPlaceDone = false;
-          SendTurnInPlace(DEG_TO_RAD(179.5));
+          SendTurnInPlace(DEG_TO_RAD(179.5f));
           
           _testState = TestState::ReLocalizeToObjectC;
         }

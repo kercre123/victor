@@ -304,8 +304,10 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
   RetryWrapperAction::RetryCallback retryCallback = [this, driveAndPickupAction](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
   {
     animTrigger = AnimationTrigger::Count;
-    if(completion.result == ActionResult::FAILURE_ABORT ||
-       completion.result == ActionResult::FAILURE_RETRY)
+    
+    const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(completion.result);
+    if(resCat == ActionResultCategory::ABORT ||
+       resCat == ActionResultCategory::RETRY)
     {
       animTrigger = AnimationTrigger::OnboardingCubeDockFail;
       return true;

@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "util/logging/logging.h"
 #include "json/json.h"
-#include "util/math/constantsAndMacros.h"
+#include "util/math/math.h"
 
 
 namespace Anki {

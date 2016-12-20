@@ -145,7 +145,7 @@ public class HelloWorld {
     Foo fooD = new Foo(true, 0xf, 0xfd, 0x143, -25874, 0xbeefdeed,
                        AnkiTypes.AnkiEnum.e2,
                        "Yo Yo Yo");
-    myOD433 = new od433(new Foo[2] {fooA, fooB}, new Foo[2] {fooC, fooD}, 6);
+    myOD433 = new od433(new Foo[2] { fooA, fooB }, new Foo[2] { fooC, fooD }, 6);
     System.Console.WriteLine("myOD433 = " + myOD433.Size + " bytes");
     System.IO.MemoryStream stream = new System.IO.MemoryStream();
     myOD433.Pack(stream);
@@ -176,7 +176,7 @@ public class HelloWorld {
     od434 myOD434;
     od434 otherOD434;
 
-    myOD434 = new od434(new ulong[3] {1UL, 2UL, 3UL});
+    myOD434 = new od434(new ulong[3] { 1UL, 2UL, 3UL });
 
     System.Console.WriteLine("myOD434 = " + myOD434.Size + " bytes");
     System.IO.MemoryStream stream = new System.IO.MemoryStream();
@@ -215,9 +215,9 @@ public class HelloWorld {
 
     Bar myBar = new Bar();
 
-    myBar.boolBuff = new bool[3] {true, false, true};
+    myBar.boolBuff = new bool[3] { true, false, true };
     myBar.byteBuff = new sbyte[4] { 0x0f, 0x0e, 0x0c, 0x0a };
-    myBar.shortBuff = new short[4] { 0x0fed, 0x0caf, 0x0a2f, 0x0a12};
+    myBar.shortBuff = new short[4] { 0x0fed, 0x0caf, 0x0a2f, 0x0a12 };
     myBar.enumBuff = new AnkiTypes.AnkiEnum[2] { AnkiTypes.AnkiEnum.myReallySilly_EnumVal,
                                                  AnkiTypes.AnkiEnum.e2 };
     myBar.doubleBuff = new double[1] { double.NaN };
@@ -259,7 +259,7 @@ public class HelloWorld {
     SoManyStrings mySoManyStrings = new SoManyStrings();
 
     mySoManyStrings.varStringBuff = new string[2] { "one", "two" };
-    mySoManyStrings.fixedStringBuff =  new string[3] { "uno", "dos", "tres" };
+    mySoManyStrings.fixedStringBuff = new string[3] { "uno", "dos", "tres" };
     mySoManyStrings.anotherVarStringBuff = new string[4] { "yi", "ar", "san", "si" };
     mySoManyStrings.anotherFixedStringBuff = new string[2] { "un", "deux" };
 
@@ -301,7 +301,7 @@ public class HelloWorld {
     stream.Seek(0, System.IO.SeekOrigin.Begin);
     UnionOfUnion myOtherUnionOfUnion = new UnionOfUnion(stream);
     if (!myOtherUnionOfUnion.Equals(myUnionOfUnion)) {
-        return false;
+      return false;
     }
 
     return true;
@@ -335,7 +335,7 @@ public class HelloWorld {
     stream.Seek(0, System.IO.SeekOrigin.Begin);
     MessageOfUnion myOtherMessageOfUnion = new MessageOfUnion(stream);
     if (!myOtherMessageOfUnion.Equals(myMessageOfUnion)) {
-        return false;
+      return false;
     }
 
     return true;
@@ -393,7 +393,7 @@ public class HelloWorld {
     if (firstData.d != true) return false;
 
     // Ensure we can still fully specify the data
-    IntsWithDefaultValue otherData = new IntsWithDefaultValue( 1, 1, 1, false );
+    IntsWithDefaultValue otherData = new IntsWithDefaultValue(1, 1, 1, false);
     if (otherData.a != 1) return false;
     if (otherData.b != 1) return false;
     if (otherData.c != 1) return false;
@@ -420,7 +420,7 @@ public class HelloWorld {
     if (firstData.d != -2.0f) return false;
 
     // Ensure we can still fully specify the data
-    FloatsWithDefaultValue otherData = new FloatsWithDefaultValue( 1.0f, 1.0f, 1.0, 1.0f );
+    FloatsWithDefaultValue otherData = new FloatsWithDefaultValue(1.0f, 1.0f, 1.0, 1.0f);
     if (otherData.a != 1.0f) return false;
     if (otherData.b != 1.0f) return false;
     if (otherData.c != 1.0) return false;
@@ -434,6 +434,51 @@ public class HelloWorld {
     if (lastData.b != 12.0f) return false;
     if (lastData.c != -10) return false;
     if (lastData.d != 0.0f) return false;
+
+    return true;
+  }
+
+  public static bool Test_Enum_Complex() {
+    // For some reason doing "if ((uint)FooEnum.foo1 != 0) return false;" 
+    // resulted in unreachable code errrors so I had to do this
+    uint i = (uint)FooEnum.foo1;
+    if (i != 0) return false;
+
+    i = (uint)FooEnum.foo2;
+    if (i != 8) return false;
+
+    i = (uint)FooEnum.foo3;
+    if (i != 9) return false;
+
+    i = (uint)FooEnum.foo4;
+    if (i != 10) return false;
+
+    i = (uint)FooEnum.foo5;
+    if (i != 1280) return false;
+
+    i = (uint)FooEnum.foo6;
+    if (i != 1281) return false;
+
+    i = (uint)FooEnum.foo7;
+    if (i != 1000) return false;
+
+    i = (uint)BarEnum.bar1;
+    if (i != 0) return false;
+
+    i = (uint)BarEnum.bar2;
+    if (i != 8) return false;
+
+    i = (uint)BarEnum.bar3;
+    if (i != 9) return false;
+
+    i = (uint)BarEnum.bar4;
+    if (i != 1291) return false;
+
+    i = (uint)BarEnum.bar5;
+    if (i != 16) return false;
+
+    i = (uint)BarEnum.bar6;
+    if (i != 17) return false;
 
     return true;
   }
@@ -483,5 +528,8 @@ public class HelloWorld {
 
     System.Console.Write("Test_DefaultValuesFloat: ");
     System.Console.WriteLine(Test_DefaultValuesFloat() ? "PASS" : "FAIL");
+
+    System.Console.Write("Test_Enum_Complex: ");
+    System.Console.WriteLine(Test_Enum_Complex() ? "PASS" : "FAIL");
   }
 }

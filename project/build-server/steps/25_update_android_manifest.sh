@@ -18,6 +18,8 @@ DAS_VERSION_LINE="\(<meta-data android:name=\"dasVersionName\" android:value=\"\
 #Files
 MANIFEST=./unity/Cozmo/Assets/Plugins/Android/Cozmo/AndroidManifest.xml
 
+# print environment and short circuit script if run locally
+printenv | grep "ANKI_BUILD"
 
 pushdir ${ANKI_REPO_ROOT}
 
@@ -29,7 +31,16 @@ DAS_VERSION=`${VERSION_GENERATOR} \
      --build-type ${ANKI_BUILD_TYPE} \
      ${MARKETING_VERSION}`
 
-echo "Inserting das.version $DAS_VERSION in $MANIFEST"
+if [ -n "${TEAMCITY_BUILD_STEP_NAME}" ]; then
+    #Teamcity build
+    DAS_INSERT_STRING="${TEAMCITY_BUILD_STEP_NAME}: Inserted das.version $DAS_VERSION in $MANIFEST"
+else
+    #local build
+    DAS_INSERT_STRING="Inserted das.version $DAS_VERSION in $MANIFEST"
+    rm -f ${ANKI_DAS_VERSION_FILE}
+fi
+
+echo ${DAS_INSERT_STRING} | tee -a ${ANKI_DAS_VERSION_FILE} #--append is supported by BSD so -a
 
 sed -i '' "s@$DAS_VERSION_LINE@\1$DAS_VERSION\3@" $MANIFEST
 

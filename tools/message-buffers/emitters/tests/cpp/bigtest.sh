@@ -51,6 +51,7 @@ SRCFILES="$OUTPUT_DIR/cpptest.cpp \
     $OUTPUT_DIR/ExplicitUnion.cpp \
     $OUTPUT_DIR/ExplicitAutoUnion.cpp \
     $OUTPUT_DIR/UnionOfUnion.cpp \
+    $OUTPUT_DIR/TestEnum.cpp \
     $SUPPORTDIR/source/SafeMessageBuffer.cpp"
 
 echo "clang++ -std=gnu++11 $COMMON_CFLAGS -o $OUTPUT_DIR/cpptest_gnu.out $SRCFILES"

@@ -48,23 +48,22 @@ uint8_t encodeMuLaw(float in_val)
   // Convert float (-1.0, 1.0) to int16
 
   int16_t sample = Util::numeric_cast<int16_t>( Util::Clamp(in_val, -1.f, 1.f) * INT16_MAX_FLT );
+  const bool sign = (sample < 0);
   
-  bool sign = sample < 0;
-  
-  if (sign)	{
+  if (sign) {
     sample = ~sample;
   }
   
-  uint8_t exponent = MuLawCompressTable[sample >> 8];
-  uint8_t mantessa;
+  const uint8_t exponent = MuLawCompressTable[sample >> 8];
+  uint8_t mantissa;
   
   if (exponent) {
-    mantessa = (sample >> (exponent + 3)) & 0xF;
+    mantissa = (sample >> (exponent + 3)) & 0xF;
   } else {
-    mantessa = sample >> 4;
+    mantissa = (uint8_t)(sample >> 4);
   }
   
-  return (sign ? 0x80 : 0) | (exponent << 4) | mantessa;
+  return (uint8_t)((sign ? 0x80 : 0) | (exponent << 4) | mantissa);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

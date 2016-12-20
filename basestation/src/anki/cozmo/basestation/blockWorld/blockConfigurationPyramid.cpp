@@ -32,7 +32,6 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/observableObject.h"
 
-#include "util/math/constantsAndMacros.h"
 #include "util/math/math.h"
 
 

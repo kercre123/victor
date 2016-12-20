@@ -717,8 +717,8 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(RoundIfInteger<s32>(-1.6f) == -2); ASSERT_TRUE(RoundIfInteger<s32>(-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<s32>(0.0f) == 0); ASSERT_TRUE(RoundIfInteger<s32>(1.1f) == 1); ASSERT_TRUE(RoundIfInteger<s32>(1.6f) == 2);
   ASSERT_TRUE(RoundIfInteger<s64>(-1.6f) == -2); ASSERT_TRUE(RoundIfInteger<s64>(-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<s64>(0.0f) == 0); ASSERT_TRUE(RoundIfInteger<s64>(1.1f) == 1); ASSERT_TRUE(RoundIfInteger<s64>(1.6f) == 2);
 
-  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-1.6f), -1.6f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-0.4f), -0.4f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(0.0f), 0)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.1f), 1.1f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.6f), 1.6f));
-  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(-1.6f), -1.6));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(-0.4f), -0.4));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(0.0f), 0)); ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(1.1f), 1.1));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(1.6f), 1.6));
+  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-1.6f), -1.6f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-0.4f), -0.4f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(0.0f), 0.f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.1f), 1.1f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.6f), 1.6f));
+  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(-1.6f), -1.6));  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(-0.4f), -0.4));  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(0.0f), 0.0)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(1.1f), 1.1));  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(1.6f), 1.6));
 
   // f64
   /**/                                           ASSERT_TRUE(RoundIfInteger<u8> (-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<u8> (0.0)  == 0); ASSERT_TRUE(RoundIfInteger<u8> (1.1) == 1); ASSERT_TRUE(RoundIfInteger<u8> (1.6) == 2);
@@ -731,8 +731,8 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(RoundIfInteger<s32>(-1.6)  == -2); ASSERT_TRUE(RoundIfInteger<s32>(-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<s32>(0.0)  == 0); ASSERT_TRUE(RoundIfInteger<s32>(1.1) == 1); ASSERT_TRUE(RoundIfInteger<s32>(1.6) == 2);
   ASSERT_TRUE(RoundIfInteger<s64>(-1.6)  == -2); ASSERT_TRUE(RoundIfInteger<s64>(-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<s64>(0.0)  == 0); ASSERT_TRUE(RoundIfInteger<s64>(1.1) == 1); ASSERT_TRUE(RoundIfInteger<s64>(1.6) == 2);
 
-  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-1.6), -1.6f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-0.4), -0.4f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(0.0), 0)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.1), 1.1f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.6), 1.6f));
-  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(-1.6), -1.6));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(-0.4), -0.4));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(0.0), 0)); ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(1.1), 1.1));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(1.6), 1.6));
+  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-1.6), -1.6f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-0.4), -0.4f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(0.0), 0.f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.1), 1.1f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.6), 1.6f));
+  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(-1.6), -1.6));  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(-0.4), -0.4));  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(0.0), 0.0)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(1.1), 1.1));  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f64>(1.6), 1.6));
 
   //
   // saturate_cast<>
@@ -2145,9 +2145,9 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
 
       for(s32 x=0; x<arrayWidth; x++) {
         if(x==y) {
-          ASSERT_TRUE(DBL_NEAR(pOut[x], 1.0));
+          ASSERT_TRUE(FLT_NEAR(pOut[x], 1.0));
         } else {
-          ASSERT_TRUE(DBL_NEAR(pOut[x], 0.0));
+          ASSERT_TRUE(FLT_NEAR(pOut[x], 0.0));
         }
       }
     }
@@ -3956,7 +3956,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
   void * const buffer4 = ms.Allocate(0);
   void * const buffer5 = ms.Allocate(100);
   void * const buffer6 = ms.Allocate(0x3FFFFFFF);
-  void * const buffer7 = ms.Allocate(u32_MAX);
+  void * const buffer7 = ms.Allocate(std::numeric_limits<u32>::max());
 
   ASSERT_TRUE(buffer4 == NULL);
   ASSERT_TRUE(buffer5 == NULL);

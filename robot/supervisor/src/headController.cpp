@@ -76,14 +76,14 @@ namespace HeadController {
       } HeadCalibState;
 
       HeadCalibState calState_ = HCS_IDLE;
-      const f32 HEAD_CALIB_POWER = 0.35;
+      const f32 HEAD_CALIB_POWER = 0.35f;
       bool isCalibrated_ = false;
       u32 lastHeadMovedTime_ms = 0;
 
       u32 lastInPositionTime_ms_;
       const u32 IN_POSITION_TIME_MS = 200;
 
-      const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
+      const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001f;
 
       const u32 HEAD_STOP_TIME = 500;  // ms
 

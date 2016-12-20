@@ -346,7 +346,7 @@ TEST_F(LatticePlannerTest, MotionProfileSimple1)
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
   
-  f32 expectedSpeeds[] = {50, 42.42, 28.28, IPathPlanner::finalPathSegmentSpeed_mmps};
+  f32 expectedSpeeds[] = {50, 42.42f, 28.28f, IPathPlanner::finalPathSegmentSpeed_mmps};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
     Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
@@ -400,7 +400,7 @@ TEST_F(LatticePlannerTest, MotionProfileMedium1)
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
   
-  f32 expectedSpeeds[] = {24.49, 24.49, 2, 50, 2, 50};
+  f32 expectedSpeeds[] = {24.49f, 24.49f, 2, 50, 2, 50};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
     Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
@@ -423,7 +423,7 @@ TEST_F(LatticePlannerTest, MotionProfileSimple3)
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
   
-  f32 expectedSpeeds[] = {31.62};
+  f32 expectedSpeeds[] = {31.62f};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
     Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
@@ -450,7 +450,7 @@ TEST_F(LatticePlannerTest, MotionProfileMedium3)
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
   
-  f32 expectedSpeeds[] = {35.04, 24.49, IPathPlanner::finalPathSegmentSpeed_mmps};
+  f32 expectedSpeeds[] = {35.04f, 24.49f, IPathPlanner::finalPathSegmentSpeed_mmps};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
     Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
@@ -492,15 +492,15 @@ TEST_F(LatticePlannerTest, MotionProfileMedium2)
   motionProfile.decel_mmps2 = 20;
   
   Planning::Path path;
-  path.AppendLine(0, -140.000000, 340.000000, -122.360680, 340.000000, 100, 200, 20);
-  path.AppendArc(0, -122.360680, 245.278641, 94.721359, 1.570796, -0.463648, 100, 200, 20);
-  path.AppendLine(0, -80.000000, 330.000000, 262.111450, 158.944275, 100, 200, 20);
-  path.AppendArc(0, 300.000000, 234.721359, 84.721359, -2.034444, 0.463648, 100, 200, 20);
+  path.AppendLine(0, -140.000000f, 340.000000f, -122.360680f, 340.000000f, 100, 200, 20);
+  path.AppendArc(0, -122.360680f, 245.278641f, 94.721359f, 1.570796f, -0.463648f, 100, 200, 20);
+  path.AppendLine(0, -80.000000f, 330.000000f, 262.111450f, 158.944275f, 100, 200, 20);
+  path.AppendArc(0, 300.000000f, 234.721359f, 84.721359f, -2.034444f, 0.463648f, 100, 200, 20);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
   
-  f32 expectedSpeeds[] = {100, 100, 100, 39.63, IPathPlanner::finalPathSegmentSpeed_mmps};
+  f32 expectedSpeeds[] = {100, 100, 100, 39.63f, IPathPlanner::finalPathSegmentSpeed_mmps};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
     Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
@@ -516,19 +516,19 @@ TEST_F(LatticePlannerTest, MotionProfileComplex1)
   motionProfile.decel_mmps2 = 20;
   
   Planning::Path path;
-  path.AppendPointTurn(0, 250, -80, -2.03444, -2.5, 100, 100, DEG_TO_RAD(1), true);
-  path.AppendArc(0, 210.000000, -60.000000, 44.721359, -0.463648, -0.643501, 100, 200, 20);
+  path.AppendPointTurn(0, 250, -80, -2.03444f, -2.5, 100, 100, DEG_TO_RAD(1), true);
+  path.AppendArc(0, 210.000000f, -60.000000, 44.721359f, -0.463648f, -0.643501f, 100, 200, 20);
   path.AppendLine(0, 230, -100, -210, -320, 100, 200, 20);
-  path.AppendPointTurn(0, -210, -320, -2.356194, 2.5, 100, 100, DEG_TO_RAD(1), true);
-  path.AppendLine(0, -210, -320, -212.928925, -322.928925, 100, 200, 20);
-  path.AppendArc(0, -195.857864, -340, 24.142136, 2.356194, 0.785398, 100, 200, 20);
+  path.AppendPointTurn(0, -210, -320, -2.356194f, 2.5, 100, 100, DEG_TO_RAD(1), true);
+  path.AppendLine(0, -210, -320, -212.928925f, -322.928925f, 100, 200, 20);
+  path.AppendArc(0, -195.857864f, -340, 24.142136f, 2.356194f, 0.785398f, 100, 200, 20);
   path.AppendPointTurn(0, -220, -340, 0, 2.5, 100, 100, DEG_TO_RAD(1), true);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
   
-  f32 expectedSpeeds[] = {-2, 100, 100, 20, 2, 27.53, 27.53, 2};
-  f32 expectedLen[] = {0, 28.77, 241.93, 249.99, 0, 4.14, 18.96, 0};
+  f32 expectedSpeeds[] = {-2, 100, 100, 20, 2, 27.53f, 27.53f, 2};
+  f32 expectedLen[] = {0, 28.77f, 241.93f, 249.99f, 0, 4.14f, 18.96f, 0};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
     Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
@@ -546,20 +546,20 @@ TEST_F(LatticePlannerTest, MotionProfileComplex2)
   motionProfile.decel_mmps2 = 20;
   
   Planning::Path path;
-  path.AppendPointTurn(0, -80, -410, 0.463648, 2, 100, 100, DEG_TO_RAD(1), true);
-  path.AppendArc(0, -100.000000, -370.000000, 44.721359, -1.107149, 0.643501, 100, 200, 20);
-  path.AppendLine(0, -60.000000, -390.000000, 171.055725, 72.111458, 100, 200, 20);
-  path.AppendArc(0, 95.278641, 110.000000, 84.721359, -0.463648, 0.463648, 100, 200, 20);
-  path.AppendLine(0, 180.000000, 110.000000, 180.000000, 245.857864, 100, 200, 20);
-  path.AppendArc(0, 214.142136, 245.857864, 34.142136, 3.141593, -0.785398, 100, 200, 20);
-  path.AppendLine(0, 190.000000, 270.000000, 192.928925, 272.928925, 100, 200, 20);
-  path.AppendArc(0, 210.000000, 255.857864, 24.142136, 2.356194, -0.785398, 100, 200, 20);
+  path.AppendPointTurn(0, -80, -410, 0.463648f, 2, 100, 100, DEG_TO_RAD(1), true);
+  path.AppendArc(0, -100.000000, -370.000000, 44.721359f, -1.107149f, 0.643501f, 100, 200, 20);
+  path.AppendLine(0, -60.000000, -390.000000, 171.055725f, 72.111458f, 100, 200, 20);
+  path.AppendArc(0, 95.278641f, 110.000000, 84.721359f, -0.463648f, 0.463648f, 100, 200, 20);
+  path.AppendLine(0, 180.000000, 110.000000, 180.000000, 245.857864f, 100, 200, 20);
+  path.AppendArc(0, 214.142136f, 245.857864f, 34.142136f, 3.141593f, -0.785398f, 100, 200, 20);
+  path.AppendLine(0, 190.000000, 270.000000, 192.928925f, 272.928925f, 100, 200, 20);
+  path.AppendArc(0, 210.000000, 255.857864f, 24.142136f, 2.356194f, -0.785398f, 100, 200, 20);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
   
-  f32 expectedSpeeds[] = {2, 100, 100, 94.88, 86.20, 44.68, 30.39, 27.53, IPathPlanner::finalPathSegmentSpeed_mmps};
-  f32 expectedLen[] = {0, 28.77, 491.71, 24.94, 39.28, 135.85, 26.81, 4.14, 18.96};
+  f32 expectedSpeeds[] = {2, 100, 100, 94.88f, 86.20f, 44.68f, 30.39f, 27.53f, IPathPlanner::finalPathSegmentSpeed_mmps};
+  f32 expectedLen[] = {0, 28.77f, 491.71f, 24.94f, 39.28f, 135.85f, 26.81f, 4.14f, 18.96f};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
     Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
@@ -576,9 +576,9 @@ TEST_F(LatticePlannerTest, MotionProfileZeroLengthSeg)
   motionProfile.decel_mmps2 = 500;
   
   Planning::Path path;
-  path.AppendLine(0, 178.592758, -99.807365, 176.896408, -80.959740, 100, 200, 500);
-  path.AppendLine(0, 176.896408, -80.959740, 176.000000, -71.000000, 100, 200, 500);
-  path.AppendPointTurn(0, 176.000000, -71.000000, 1.570796, -2, 100, 500, DEG_TO_RAD_F32(2), true);
+  path.AppendLine(0, 178.592758f, -99.807365f, 176.896408f, -80.959740f, 100, 200, 500);
+  path.AppendLine(0, 176.896408f, -80.959740f, 176.000000, -71.000000, 100, 200, 500);
+  path.AppendPointTurn(0, 176.000000, -71.000000, 1.570796f, -2, 100, 500, DEG_TO_RAD(2.f), true);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
@@ -600,10 +600,10 @@ TEST_F(LatticePlannerTest, MotionProfileBackwardsForwards)
   
   Planning::Path path;
   path.AppendLine(0, 0, 0, -10, 0, -100, 200, 500);
-  path.AppendPointTurn(0, -10, 0, -0.463648, -2, 100, 500, DEG_TO_RAD_F32(2), true);
-  path.AppendLine(0, -10, 0, -30, 9.999996, -100, 200, 500);
+  path.AppendPointTurn(0, -10, 0, -0.463648f, -2, 100, 500, DEG_TO_RAD(2.f), true);
+  path.AppendLine(0, -10, 0, -30, 9.999996f, -100, 200, 500);
   path.AppendArc(0, 10, 10, 40, DEG_TO_RAD(180), DEG_TO_RAD(40), 100, 200, 500);
-  path.AppendLine(0, -20.641773, -15.711510, -33.541773, -31.01151, 100, 200, 500);
+  path.AppendLine(0, -20.641773f, -15.711510f, -33.541773f, -31.01151f, 100, 200, 500);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);

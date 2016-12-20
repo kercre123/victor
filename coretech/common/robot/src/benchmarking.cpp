@@ -69,7 +69,7 @@ typedef struct BasicBenchmarkElement
   const char * name;
 
   BasicBenchmarkElement(const char * name)
-    : inclusive_total(0), inclusive_min(u32_MAX), inclusive_max(0), exclusive_total(0), exclusive_min(u32_MAX), exclusive_max(0), numEvents(0), name(name)
+  : inclusive_total(0), inclusive_min(std::numeric_limits<u32>::max()), inclusive_max(0), exclusive_total(0), exclusive_min(std::numeric_limits<u32>::max()), exclusive_max(0), numEvents(0), name(name)
   {
   }
 } BasicBenchmarkElement;
@@ -155,7 +155,7 @@ namespace Anki
     } // void endBenchmark(const char *name)
 
     BenchmarkElement::BenchmarkElement(const char * name)
-      : inclusive_mean(0), inclusive_min(u32_MAX), inclusive_max(0), inclusive_total(0), exclusive_mean(0), exclusive_min(u32_MAX), exclusive_max(0), exclusive_total(0), numEvents(0)
+      : inclusive_mean(0), inclusive_min(std::numeric_limits<u32>::max()), inclusive_max(0), inclusive_total(0), exclusive_mean(0), exclusive_min(std::numeric_limits<u32>::max()), exclusive_max(0), exclusive_total(0), numEvents(0)
     {
       snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
     }

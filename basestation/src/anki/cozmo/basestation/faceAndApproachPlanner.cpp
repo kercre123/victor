@@ -123,9 +123,9 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
   if(doTurn0) {
     if(std::abs(deltaTheta) > FACE_AND_APPRACH_DELTA_THETA_FOR_BACKUP) {
       printf("FaceAndApproachPlanner: deltaTheta of %f above threshold, doing backup!\n", deltaTheta);
-      deltaTheta = (Radians(deltaTheta) + M_PI).ToFloat();
-      deltaTheta1 = (Radians(deltaTheta1) + M_PI).ToFloat();
-      intermediateTargetAngle = intermediateTargetAngle + M_PI;
+      deltaTheta = (Radians(deltaTheta) + M_PI_F).ToFloat();
+      deltaTheta1 = (Radians(deltaTheta1) + M_PI_F).ToFloat();
+      intermediateTargetAngle = intermediateTargetAngle + M_PI_F;
       backup = true;
     }
 

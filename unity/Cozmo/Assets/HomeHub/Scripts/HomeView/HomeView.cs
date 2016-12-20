@@ -23,6 +23,7 @@ namespace Cozmo.HomeHub {
     private const float _kFreeplayIntervalCheck = 60.0f;
     private float _FreeplayIntervalLastTimestamp = -1;
     private float _FreeplayStartedTimestamp = -1;
+    private const int kCubesCount = 3;
 
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
 
@@ -72,6 +73,8 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private CozmoButton _SettingsButton;
 
+    [SerializeField]
+    private UnityEngine.UI.Image _SettingsAlertImage;
     [SerializeField]
     private RectTransform _ScrollRectContent;
 
@@ -224,6 +227,11 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
+        _SettingsAlertImage.gameObject.SetActive(RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != kCubesCount);
+      }
+
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleCheckForLootView;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       RewardedActionManager.Instance.OnFreeplayRewardEvent += HandleFreeplayRewardedAction;
@@ -249,6 +257,10 @@ namespace Cozmo.HomeHub {
 
       // Start listening for Battery Level popups now that HomeView is fully initialized
       PauseManager.Instance.ListeningForBatteryLevel = true;
+    }
+
+    private void HandleBlockConnectivityChanged(int blocksConnected) {
+      _SettingsAlertImage.gameObject.SetActive(blocksConnected != kCubesCount);
     }
 
     private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
@@ -347,6 +359,15 @@ namespace Cozmo.HomeHub {
       }
       if (_CurrentTab != HomeTab.Settings) {
         SwitchToTab(HomeTab.Settings);
+
+        // auto scroll to the cubes setting panel if we don't have three cubes connected.
+        if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != kCubesCount) {
+          _CurrentTabInstance.ParentLayoutContentSizeFitter.OnResizedParent += () => {
+            const int kCubesHelpIndex = 1;
+            _ScrollRect.horizontalNormalizedPosition = _CurrentTabInstance.GetNormalizedSnapIndexPosition(kCubesHelpIndex);
+          };
+        }
+
       }
       else {
         SwitchToTab(_PreviousTab);
@@ -794,20 +815,30 @@ namespace Cozmo.HomeHub {
       }
       DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("success"));
       DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
-      _CurrentChallengeId = null;
 
       if (_RequestDialog != null) {
         _RequestDialog.DisableAllButtons();
         _RequestDialog.ViewClosed -= HandleRequestDialogClose;
       }
-      HandleMiniGameYesAnimEnd(true);
-    }
 
-    private void HandleMiniGameYesAnimEnd(bool success) {
-      DAS.Info(this, "HandleMiniGameYesAnimEnd");
       if (MinigameConfirmed != null) {
-        MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
+        if (RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest != null) {
+          MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
+        }
+        else {
+          int cubesRequired = ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).MinigameConfig.NumCubesRequired();
+          if (RobotEngineManager.Instance.CurrentRobot.LightCubes.Count < cubesRequired) {
+            // challenge request has become null due to cube(s) disconnecting.
+            string challengeTitle = Localization.Get(ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).ChallengeTitleLocKey);
+            OpenNeedCubesAlert(RobotEngineManager.Instance.CurrentRobot.LightCubes.Count, cubesRequired, challengeTitle);
+          }
+          else {
+            DAS.Error("HomeView.HandleMiniGameConfirm", "challenge request is null for an unknown reason");
+          }
+        }
       }
+
+      _CurrentChallengeId = null;
     }
 
     private void HandleExternalRejection(object messageObject) {
@@ -842,6 +873,27 @@ namespace Cozmo.HomeHub {
 
     #endregion
 
+    public void OpenNeedCubesAlert(int currentCubes, int neededCubes, string titleString) {
+      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
+      // Hook up callbacks
+      alertView.SetCloseButtonEnabled(true);
+      alertView.SetPrimaryButton(LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
+        () => {
+          UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpViewPrefab);
+        }
+      );
+
+      alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle;
+
+      int differenceCubes = neededCubes - currentCubes;
+      alertView.SetMessageArgs(new object[] {
+        differenceCubes,
+        ItemDataConfig.GetCubeData().GetAmountName(differenceCubes),
+        titleString
+      });
+      alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription;
+    }
+
     protected override void CleanUp() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
@@ -857,6 +909,10 @@ namespace Cozmo.HomeHub {
 
       if (_RewardSequence != null) {
         _RewardSequence.Kill();
+      }
+
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.OnNumBlocksConnectedChanged -= HandleBlockConnectivityChanged;
       }
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;

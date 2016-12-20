@@ -137,7 +137,10 @@ namespace MemoryMatch {
       _GameInstance.BlinkLight(id, MemoryMatchGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(id));
 
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
-      _CurrentRobot.TurnTowardsObject(cube, false, MemoryMatchGame.kTurnSpeed_rps, MemoryMatchGame.kTurnAccel_rps2);
+      _CurrentRobot.TurnTowardsObject(cube, false, MemoryMatchGame.kTurnSpeed_rps, MemoryMatchGame.kTurnAccel_rps2,
+                                      null, QueueActionPosition.IN_PARALLEL);
+      _CurrentRobot.SendAnimationTrigger(AnimationTrigger.MemoryMatchCozmoFollowTapsSoundOnly, null, QueueActionPosition.IN_PARALLEL);
+
     }
   }
 

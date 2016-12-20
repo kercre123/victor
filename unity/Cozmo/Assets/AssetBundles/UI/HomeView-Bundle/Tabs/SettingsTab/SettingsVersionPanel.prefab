@@ -211,12 +211,6 @@ MonoBehaviour:
   _SerialNumberLabel: {fileID: 0}
   _DeviceIDLabel: {fileID: 0}
   _AppRunLabel: {fileID: 0}
-  _AcknowledgementsLinkButton: {fileID: 0}
-  _AcknowledgementsTextFileName: Acknowledgements.txt
-  _PrivacyPolicyLinkButton: {fileID: 0}
-  _PrivacyPolicyTextFileName: PrivacyPolicy.txt
-  _TermsOfUseButton: {fileID: 0}
-  _TermsOfUseTextFileName: TermsOfUse.txt
   _SupportButton: {fileID: 0}
   _SupportInfoViewPrefab: {fileID: 11410082, guid: 950243296d8654fdba91f31eabdad971,
     type: 2}
@@ -396,6 +390,7 @@ MonoBehaviour:
   m_Text: '#settings.versionPanel.title'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11442254
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -434,6 +429,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d19915635dcd34752a39d00ae11e54c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _LayoutElement: {fileID: 11455450}
 --- !u!114 &11446800
 MonoBehaviour:
   m_ObjectHideFlags: 1

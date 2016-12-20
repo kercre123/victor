@@ -265,14 +265,14 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
           if(leftGoingForward)
           {
             // Put obstacle on right side
-            obstaclePoseWrtRobot.SetRotation(-M_PI_2, Z_AXIS_3D());
+            obstaclePoseWrtRobot.SetRotation(-M_PI_2_F, Z_AXIS_3D());
             obstaclePoseWrtRobot.SetTranslation({0.f, -0.5f*ROBOT_BOUNDING_Y - obstaclePositionPad_mm, 0.f});
             debugStr = "to right of";
           }
           else
           {
             // Put obstacle on left side
-            obstaclePoseWrtRobot.SetRotation(M_PI_2, Z_AXIS_3D());
+            obstaclePoseWrtRobot.SetRotation(M_PI_2_F, Z_AXIS_3D());
             obstaclePoseWrtRobot.SetTranslation({0.f, 0.5f*ROBOT_BOUNDING_Y + obstaclePositionPad_mm, 0.f});
             debugStr = "to left of";
           }
@@ -380,7 +380,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
     if (std::fabsf(turnSpeed) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
       PRINT_NAMED_WARNING("MovementComponent.EventHandler.TurnInPlaceAtSpeed.SpeedExceedsLimit",
                           "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
-                          RAD_TO_DEG_F32(turnSpeed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+                          RAD_TO_DEG(turnSpeed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
       turnSpeed = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, turnSpeed);
     }
     DirectDriveCheckSpeedAndLockTracks(turnSpeed,

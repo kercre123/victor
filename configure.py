@@ -197,7 +197,7 @@ def parse_game_arguments():
     # signing_group = parser.add_mutually_exclusive_group(required=False)
 
     parser.add_argument('--features', action='append', dest='features',
-                      choices=['factoryTest', 'factoryTestDev', 'sdkOnly'], nargs='+',
+                      choices=['factoryTest', 'factoryTestDev', 'sdkOnly', 'standalone'], nargs='+',
                       help="Generates feature flags for project")
 
     parser.add_argument(
@@ -545,6 +545,11 @@ class GamePlatformConfiguration(object):
                         platform=self.platform,
                         configuration=self.options.configuration,
                         simulator=self.options.simulator)
+        
+        if self.options.features is not None and 'standalone' in self.options.features[0]:
+            print("Building standalone-apk")
+            ankibuild.util.File.execute(['./standalone-apk/stage-assets.sh'])
+            ankibuild.util.File.execute(['buck', 'build', ':cozmoengine_standalone_app'])
 
     def call_engine(self, command):
         args = [os.path.join(ENGINE_ROOT, 'configure_engine.py'), command]

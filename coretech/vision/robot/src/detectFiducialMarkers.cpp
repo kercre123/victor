@@ -136,7 +136,7 @@ namespace Anki
       BeginBenchmark("ExtractComponentsViaCharacteristicScale");
 
       ConnectedComponents extractedComponents;
-      if(params.maxConnectedComponentSegments <= u16_MAX) {
+      if(params.maxConnectedComponentSegments <= std::numeric_limits<u16>::max()) {
         extractedComponents = ConnectedComponents(params.maxConnectedComponentSegments, imageWidth, true, scratchOffChip);
       } else {
         extractedComponents = ConnectedComponents(params.maxConnectedComponentSegments, imageWidth, false, scratchOffChip);
@@ -277,7 +277,7 @@ namespace Anki
         s16 * restrict pXEnd = xEnd.get();
         s16 * restrict pY = y.get();
 
-        if(maxConnectedComponentSegments <= u16_MAX) {
+        if(maxConnectedComponentSegments <= std::numeric_limits<u16>::max()) {
           const ConnectedComponentSegment<u16> * restrict pComponents = extractedComponents.get_componentsU16()->Pointer(0);
 
           std::shared_ptr<u16> id(new u16[numComponents]);

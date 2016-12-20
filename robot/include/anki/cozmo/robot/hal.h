@@ -384,6 +384,7 @@ namespace Anki
 
 #     ifdef SIMULATOR
       u32 GetCameraStartTime();
+      u32 GetVisionTimeStep();
 #     endif
 
       bool IsVideoEnabled();

@@ -27,7 +27,7 @@ static const uint8_t BW_200 = 0x19;           // Maybe?
 static const uint8_t CONF_GYRO = 0x09;    // 4x oversample, 200Hz update
 
 static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;      //In 2g mode, 16384 LSB/g
-static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f);   //In FS500 mode, 65.6 deg/s / LSB
+static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI_F/180.0f);   //In FS500 mode, 65.6 deg/s / LSB
 
 IMUData Anki::Cozmo::HAL::IMU::ReadState;
 IMUData Anki::Cozmo::HAL::IMU::IMUState;

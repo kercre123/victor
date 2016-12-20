@@ -10,8 +10,9 @@ static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
 
 enum BODY_VERS {
   BODY_VER_EP = 0,
-  BODY_VER_PILOT = 1,
-  BODY_VER_PROD = 2
+  BODY_VER_PILOT = 1,   // 8T head encoder
+  BODY_VER_PROD = 2,    // Final hardware version, 4T head encoder
+  BODY_VER_SHIP = 3,    // First shipping firmware version
 };
 
 enum IRQ_Priority {
@@ -72,13 +73,14 @@ enum e_nrf_gpio {
   PIN_TX_HEAD         = 12,
   PIN_TX_VEXT         = 6,    // This is the debug port on the battery charger
 };
-
+ 
+#ifndef FIXTURE
 enum AnalogInput {
   ANALOG_CLIFF_SENSE = ADC_CONFIG_PSEL_AnalogInput0,  // P26
   ANALOG_V_EXT_SENSE = ADC_CONFIG_PSEL_AnalogInput7,  // P6
   ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput6   // P5
 };
-
+#endif
 
 enum e_ppi_channel {
   PPI_MOTOR_CHANNEL_0,

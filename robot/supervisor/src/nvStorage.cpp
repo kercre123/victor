@@ -160,8 +160,16 @@ struct FactoryNVEntryHeader {
   u32 successor; /**< Left 0xFFFFffff when written, set to 0x00000000 for deletion or written address of successor if
                       replaced. @warning MUST be the last member of the struct. */
 };
+//Each entry is followed by a footer word which is set to 0 when valid
+typedef u32 FactoryNVEntryFooter;
 
-#define MAX_ENTRY_SIZE (sizeof(FactoryNVEntryHeader) + 1024 + 4)
+#define FOOTER(header) (((u32*)(header))[(header->size/sizeof(u32)) - 1])
+
+#define MAX_ENTRY_SIZE (sizeof(FactoryNVEntryHeader) + MAX_READ_SIZE + sizeof(FactoryNVEntryFooter))
+  
+
+
+  
 
 static inline void EspressifGetFactoryData(CommandState* self)
 {
@@ -192,13 +200,18 @@ static inline void EspressifGetFactoryData(CommandState* self)
         return;
       }
     } while (rslt != NV_OKAY);
-    const u32 footer = readBuffer[(header->size/sizeof(u32)) - 1]; // Get the footer of the entry
     if (header->tag == NVEntry_Invalid)
     {
       self->index = 0;
       Complete(self, numFound > 0 ? NV_OKAY : NV_NOT_FOUND);
     }
-    else if ((header->successor != 0xFFFFffff) || (footer != 0))
+    else if ((header->size < sizeof(FactoryNVEntryHeader)+sizeof(FactoryNVEntryFooter)) ||
+             header->size > MAX_ENTRY_SIZE)
+    {
+      self->index = 0;
+      Complete(self, NV_CORRUPT);
+    }
+    else if ((header->successor != 0xFFFFffff) || FOOTER(header) != 0)
     { // Entry is invalid, advance to next one
       self->index += header->size;
     }
@@ -209,7 +222,7 @@ static inline void EspressifGetFactoryData(CommandState* self)
       msg.offset    = header->tag - self->cmd.address;
       msg.operation = self->cmd.operation;
       msg.result    = self->cmd.length > 1 ? NV_MORE : NV_OKAY;
-      msg.blob_length = header->size - sizeof(FactoryNVEntryHeader) - 4;
+      msg.blob_length = header->size - sizeof(FactoryNVEntryHeader) - sizeof(FactoryNVEntryFooter);
       memcpy(msg.blob, readBuffer + (sizeof(FactoryNVEntryHeader)/sizeof(u32)), msg.blob_length);
       self->callback(msg);
       self->loopCount = 0;
@@ -327,7 +340,7 @@ static inline Result Erase(CommandState* self)
 
 static inline Result Write(CommandState* self)
 {
-  if (self->cmd.blob_length > 1024) Complete(self, NV_BAD_ARGS);
+  if (self->cmd.blob_length > MAX_READ_SIZE) Complete(self, NV_BAD_ARGS);
   else
   {
     u32 writeAddress = self->cmd.address;

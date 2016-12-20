@@ -25,12 +25,12 @@ TEST(RobotPoseHistory, AddGetPose)
   
   // Pose 1, 2, and 3
   const Pose3d p1(0, Z_AXIS_3D(), Vec3f(0,0,0), &origin );
-  const Pose3d p2(0.1, Z_AXIS_3D(), Vec3f(1,1,2), &origin );
+  const Pose3d p2(0.1f, Z_AXIS_3D(), Vec3f(1,1,2), &origin );
   const Pose3d p3(-0.5, Z_AXIS_3D(), Vec3f(-2,-2,-3), &origin );
-  const Pose3d p1p2avg(0.05, Z_AXIS_3D(), Vec3f(0.5, 0.5, 1) , &origin);
+  const Pose3d p1p2avg(0.05f, Z_AXIS_3D(), Vec3f(0.5, 0.5, 1) , &origin);
   const f32 h1 = 0;
-  const f32 h2 = 0.2;
-  const f32 h3 = -0.3;
+  const f32 h2 = 0.2f;
+  const f32 h3 = -0.3f;
   const f32 l1 = 0;
   const f32 l2 = 0.5f;
   const f32 l3 = 0.7f;
@@ -92,7 +92,7 @@ TEST(RobotPoseHistory, AddGetPose)
 
   // Request in range pose with interpolation
   ASSERT_TRUE(hist.ComputePoseAt(5, t, p, true) == RESULT_OK);
-  ASSERT_TRUE(p1p2avg.IsSameAs(p.GetPose(), 0.0001, 0.0001));
+  ASSERT_TRUE(p1p2avg.IsSameAs(p.GetPose(), 0.0001f, 0.0001f));
   
   // since interpolation is in the middle it should be the newest
   ASSERT_TRUE(p.IsCarryingObject() == carrying2);
@@ -152,16 +152,16 @@ TEST(RobotPoseHistory, GroundTruthPose)
   const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
   
   // Pose 1, 2, and 3
-  const Pose3d p1(0.25*PI_F, Z_AXIS_3D(), Vec3f(1,0,0), &origin );
-  const Pose3d p2(PIDIV2_F, Z_AXIS_3D(), Vec3f(1,2,0), &origin );
-  const Pose3d p3(PIDIV2_F - 0.25*PI_F, Z_AXIS_3D(), Vec3f(1 - sqrtf(2),2,0), &origin );
+  const Pose3d p1(0.25*M_PI_F, Z_AXIS_3D(), Vec3f(1,0,0), &origin );
+  const Pose3d p2(M_PI_2_F, Z_AXIS_3D(), Vec3f(1,2,0), &origin );
+  const Pose3d p3(M_PI_2_F - 0.25*M_PI_F, Z_AXIS_3D(), Vec3f(1 - sqrtf(2),2,0), &origin );
   Pose3d p1_by_p2Top3( p3 ); // Start by copying p3 so end result keeps origin
   p1_by_p2Top3 *= p2.GetInverse();
   p1_by_p2Top3 *= p1;
   
   const f32 h1 = 0;
-  const f32 h2 = 0.2;
-  const f32 h3 = -0.3;
+  const f32 h2 = 0.2f;
+  const f32 h3 = -0.3f;
   const f32 l1 = 0;
   const f32 l2 = 0.5f;
   const f32 l3 = 0.7f;

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/moodSystem/simpleMoodTypesHelpers.h"
 
@@ -103,8 +104,8 @@ namespace Anki {
           
           return RESULT_FAIL;
         }
-        _headAngleMin = DEG_TO_RAD_F32(minHeadAngle.asFloat());
-        _headAngleMax = DEG_TO_RAD_F32(maxHeadAngle.asFloat());
+        _headAngleMin = DEG_TO_RAD(minHeadAngle.asFloat());
+        _headAngleMax = DEG_TO_RAD(maxHeadAngle.asFloat());
       }
       
       return RESULT_OK;

@@ -2530,7 +2530,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         /*
         PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose.AddingMatMarkerOccluder",
                          "Adding mat marker '%s' as an occluder for robot %d.",
-                         Vision::MarkerTypeStrings[obsMarker->GetCode()],
+                         obsMarker->GetCodeName(),
                          robot->GetID());
          */
         _robot->GetVisionComponent().GetCamera().AddOccluder(*obsMarker);
@@ -3654,7 +3654,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           {
             // min length of the segment so that we can discard noise
             const float segLenSQ_mm = (segmentStart - segmentEnd).LengthSq();
-            const float isLongSegment = FLT_GT(segLenSQ_mm, kOverheadEdgeSegmentNoiseLen_mm);
+            const bool isLongSegment = FLT_GT(segLenSQ_mm, kOverheadEdgeSegmentNoiseLen_mm);
             if ( isLongSegment )
             {
               // we have a valid and long segment add clear from camera to segment

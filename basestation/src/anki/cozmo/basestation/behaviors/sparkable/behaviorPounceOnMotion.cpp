@@ -381,9 +381,9 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   // check the lift angle, after some time, transition state
   PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
                 robot.GetLiftHeight(),
-                RAD_TO_DEG_F32(robotBodyAngleDelta),
+                RAD_TO_DEG(robotBodyAngleDelta),
                 robotBodyAngleDelta,
-                RAD_TO_DEG_F32(_prePouncePitch),
+                RAD_TO_DEG(_prePouncePitch),
                 robot.GetPitchAngle().getDegrees());
 
   bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;

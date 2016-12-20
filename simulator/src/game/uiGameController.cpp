@@ -1451,12 +1451,12 @@ namespace Anki {
       SendMessage(message);
     }
 
-    void UiGameController::SendAnimation(const char* animName, u32 numLoops)
+    void UiGameController::SendAnimation(const char* animName, u32 numLoops, bool throttleMessages)
     {
       static double lastSendTime_sec = -1e6;
       
       // Don't send repeated animation commands within a half second
-      if(_supervisor.getTime() > lastSendTime_sec + 0.5f)
+      if(!throttleMessages || _supervisor.getTime() > lastSendTime_sec + 0.5f)
       {
         PRINT_NAMED_INFO("SendAnimation", "sending %s", animName);
         ExternalInterface::PlayAnimation m;
@@ -1473,11 +1473,11 @@ namespace Anki {
       }
     }
     
-    void UiGameController::SendAnimationGroup(const char* animName)
+    void UiGameController::SendAnimationGroup(const char* animName, bool throttleMessages)
     {
       static double lastSendTime_sec = -1e6;
       // Don't send repeated animation commands within a half second
-      if(_supervisor.getTime() > lastSendTime_sec + 0.5f)
+      if(!throttleMessages || _supervisor.getTime() > lastSendTime_sec + 0.5f)
       {
         PRINT_NAMED_INFO("SendAnimationGroup", "sending %s", animName);
         ExternalInterface::PlayAnimationTrigger m(1,1,AnimationTriggerFromString(animName),false,false,false,false);

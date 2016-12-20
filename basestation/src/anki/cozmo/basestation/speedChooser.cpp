@@ -41,7 +41,7 @@ namespace Anki {
       }
       
       // Random acceleration
-      motionProfile.accel_mmps2 = _robot.GetRNG().RandDblInRange(minAccel_mmps2, maxAccel_mmps2);
+      motionProfile.accel_mmps2 = Util::numeric_cast<float>(_robot.GetRNG().RandDblInRange(minAccel_mmps2, maxAccel_mmps2));
       
       // Deceleration is opposite of acceleration
       motionProfile.decel_mmps2 = maxAccel_mmps2 - motionProfile.accel_mmps2 + minAccel_mmps2;
@@ -55,7 +55,7 @@ namespace Anki {
       motionProfile.speed_mmps = speed;
       
       // Reverse speed 75% of forward speed
-      motionProfile.reverseSpeed_mmps = motionProfile.speed_mmps * 0.75;
+      motionProfile.reverseSpeed_mmps = motionProfile.speed_mmps * 0.75f;
       
       PRINT_NAMED_INFO("SpeedChooser.GetPathMotionProfile", "distToGoal:%f using speed:%f revSpeed:%f accel:%f",
                        distToObject,

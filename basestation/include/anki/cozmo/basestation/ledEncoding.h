@@ -15,6 +15,6 @@
                              ((((color >> 8) & (u32)Anki::Cozmo::LEDColor::LED_BLUE)  >> ( 0 + 3)) << (u32)Anki::Cozmo::LEDColorEncodedShifts::LED_ENC_BLU_SHIFT)
 
 /// Convert MS to LED FRAMES
-#define MS_TO_LED_FRAMES(ms)  (ms == u32_MAX ? u8_MAX : (((ms)+29)/30))
+#define MS_TO_LED_FRAMES(ms)  (ms == std::numeric_limits<u32>::max() ? std::numeric_limits<u8>::max() : (((ms)+29)/30))
 
 #endif

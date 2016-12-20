@@ -101,7 +101,7 @@ public:
   virtual double    GetMinAsDouble()  const override { return numeric_cast_clamped<double>(_minValue);  }
   virtual double    GetMaxAsDouble()  const override { return numeric_cast_clamped<double>(_maxValue);  }
   
-  virtual void ToggleValue() override { _value = !_value; }
+  virtual void ToggleValue() override { _value = !((bool)_value); }
   virtual void ResetToDefault() override { _value = _defaultValue; }
   virtual bool IsDefaultValue() const override { return (_value == _defaultValue); }
   

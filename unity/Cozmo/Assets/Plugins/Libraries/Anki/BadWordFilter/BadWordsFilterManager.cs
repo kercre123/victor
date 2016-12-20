@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class BadWordsFilterManager : MonoBehaviour {
 
   [SerializeField]
-  private TextAsset _BadWordsRegexSource;
+  private string _BadWordRegexSourceFileName;
 
   private List<Regex> _BadWordMatches = new List<Regex>();
 
@@ -18,7 +18,7 @@ public class BadWordsFilterManager : MonoBehaviour {
   }
 
   public void Load() {
-    string[] splitRegexSource = _BadWordsRegexSource.text.Split(new char[] { '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
+    string[] splitRegexSource = Localization.ReadLocalizedTextFromFile(_BadWordRegexSourceFileName).Split(new char[] { '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
     foreach (string regexSource in splitRegexSource) {
       if (regexSource.StartsWith("#")) {
         continue;

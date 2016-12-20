@@ -96,6 +96,7 @@ namespace NVStorage {
     NV_BAD_ARGS  = -6, // Invalid arguments to call
     NV_NO_MEM    = -7,
     NV_LOOP      = -8, // Looped too long without exiting
+    NV_CORRUPT   = -9, // Found corrupted tag
   }
 
   enum uint_8 NVOperation {

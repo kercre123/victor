@@ -177,9 +177,9 @@ namespace Cozmo {
         else
         {
           static const bool doThresholdCheck = false;
-          static const f32 rollThresh_rad = DEG_TO_RAD_F32(5);
-          static const f32 pitchThresh_rad = DEG_TO_RAD_F32(5);
-          static const f32 yawThresh_rad = DEG_TO_RAD_F32(5);
+          static const f32 rollThresh_rad = DEG_TO_RAD(5.f);
+          static const f32 pitchThresh_rad = DEG_TO_RAD(5.f);
+          static const f32 yawThresh_rad = DEG_TO_RAD(5.f);
           static const f32 xThresh_mm = 5;
           static const f32 yThresh_mm = 5;
           static const f32 zThresh_mm = 5;
@@ -190,7 +190,7 @@ namespace Cozmo {
             PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "Roll exceeds threshold");
             exceedsThresh = true;
           }
-          if(!NEAR(msg.camPosePitch_rad - msg.headAngle, DEG_TO_RAD_F32(-4), pitchThresh_rad))
+          if(!NEAR(msg.camPosePitch_rad - msg.headAngle, DEG_TO_RAD(-4.f), pitchThresh_rad))
           {
             PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "Pitch exceeds threshold");
             exceedsThresh = true;

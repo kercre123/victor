@@ -252,7 +252,7 @@ namespace Anki {
         const f32 DOCKING_K1 = 0.05f;
         const f32 DOCKING_K2 = 12.f;
         const f32 DOCKING_PATH_DIST_OFFSET_CAP_MM = 20;
-        const f32 DOCKING_PATH_ANG_OFFSET_CAP_RAD = 0.4;
+        const f32 DOCKING_PATH_ANG_OFFSET_CAP_RAD = 0.4f;
         bool appliedGains_ = false;
         
         // Save previous controller gains
@@ -618,7 +618,7 @@ namespace Anki {
           // Check that error signal is plausible
           // If not, treat as if tracking failed.
           // TODO: Get tracker to detect these situations and not even send the error message here.
-          if (dockingErrSignalMsg_.x_distErr > 0.f && ABS(dockingErrSignalMsg_.angleErr) < 0.75f*PIDIV2_F) {
+          if (dockingErrSignalMsg_.x_distErr > 0.f && ABS(dockingErrSignalMsg_.angleErr) < 0.75f*M_PI_2_F) {
 
             // Update time that last good error signal was received
             lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
@@ -871,7 +871,7 @@ namespace Anki {
                                                               HM_ROT_SPEED_RADPS,
                                                               HM_ROT_ACCEL_MMPS2,
                                                               HM_ROT_ACCEL_MMPS2,
-                                                              0.1, true);
+                                                              0.1f, true);
                     
                     PathFollower::AppendPathSegment_Line(0,
                                                          x,
@@ -971,7 +971,7 @@ namespace Anki {
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t)
       {
         // Check for readings that we do not expect to get
-        if (rel_x < 0.f || ABS(rel_rad) > 0.75f*PIDIV2_F) {
+        if (rel_x < 0.f || ABS(rel_rad) > 0.75f*M_PI_2_F) {
           AnkiWarn( 318, "DockingController.SetRelDockPose.OORErrorSignal", 576, "x: %f, y: %f, rad: %f", 3, rel_x, rel_y, rel_rad);
           return;
         }
@@ -1221,7 +1221,7 @@ namespace Anki {
             }
           }
 
-        } while (numPathSegments == 0 || maxSegmentSweepRad + 0.01f >= PIDIV2_F);
+        } while (numPathSegments == 0 || maxSegmentSweepRad + 0.01f >= M_PI_2_F);
 
         //PRINT("numPathSegments: %d, path_length: %f, distToBlock: %f, followBlockNormalPath: %d\n",
         //      numPathSegments, path_length, distToBlock, followingBlockNormalPath_);

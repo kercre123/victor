@@ -38,7 +38,6 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/console/consoleInterface.h"
-#include "util/math/constantsAndMacros.h"
 
 //
 // Embedded implementation holdovers:
@@ -811,7 +810,7 @@ namespace Cozmo {
       const CornerMethod cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
       
       ASSERT_NAMED(_detectionParameters.fiducialThicknessFraction.x() > 0 &&
-                   _detectionParameters.fiducialThicknessFraction.y(),
+                   _detectionParameters.fiducialThicknessFraction.y() > 0,
                    "VisionSystem.DetectMarkers.FiducialThicknessFractionParameterNotInitialized");
       
       // Convert "basestation" detection parameters to "embedded" parameters
@@ -1791,8 +1790,8 @@ namespace Cozmo {
     // one face for another. (If one face it was tracking from the last image is
     // now on top of a nearby face in the image, the tracker can't tell if that's
     // because the face moved or the camera moved.)
-    const bool hasHeadMoved = HasHeadAngleChanged(DEG_TO_RAD_F32(kFaceTrackingMaxHeadAngleChange_deg));
-    const bool hasBodyMoved = HasBodyPoseChanged(DEG_TO_RAD_F32(kFaceTrackingMaxBodyAngleChange_deg),
+    const bool hasHeadMoved = HasHeadAngleChanged(DEG_TO_RAD(kFaceTrackingMaxHeadAngleChange_deg));
+    const bool hasBodyMoved = HasBodyPoseChanged(DEG_TO_RAD(kFaceTrackingMaxBodyAngleChange_deg),
                                                  kFaceTrackingMaxPoseChange_mm);
     if(hasHeadMoved || hasBodyMoved)
     {
@@ -1977,9 +1976,9 @@ namespace Cozmo {
   
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
   {
-    const bool headSame = !HasHeadAngleChanged(DEG_TO_RAD_F32(kMotionDetectionMaxHeadAngleChange_deg));
+    const bool headSame = !HasHeadAngleChanged(DEG_TO_RAD(kMotionDetectionMaxHeadAngleChange_deg));
     
-    const bool poseSame = !HasBodyPoseChanged(DEG_TO_RAD_F32(kMotionDetectionMaxBodyAngleChange_deg),
+    const bool poseSame = !HasBodyPoseChanged(DEG_TO_RAD(kMotionDetectionMaxBodyAngleChange_deg),
                                               kMotionDetectionMaxPoseChange_mm);
     
     Vision::ImageRGB image;
@@ -2149,7 +2148,7 @@ namespace Cozmo {
           } else if(temp.z() <= 0.f) {
             PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadProjectedZ",
                                 "z<=0 (%f) when projecting motion centroid to ground. Bad homography at head angle %.3fdeg?",
-                                temp.z(), RAD_TO_DEG_F32(_poseData.poseStamp.GetHeadAngle()));
+                                temp.z(), RAD_TO_DEG(_poseData.poseStamp.GetHeadAngle()));
             // Don't report this centroid
             groundRegionArea = 0.f;
             groundPlaneCentroid = 0.f;
@@ -3535,9 +3534,9 @@ namespace Cozmo {
     }
     
     // All the conditions that must be met to bother trying to read the tool code:
-    const bool headMoving = !NEAR(_poseData.poseStamp.GetHeadAngle(), _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
+    const bool headMoving = !NEAR(_poseData.poseStamp.GetHeadAngle(), _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1f));
     
-    const bool liftMoving = !NEAR(_poseData.poseStamp.GetLiftAngle(), _prevPoseData.poseStamp.GetLiftAngle(), DEG_TO_RAD_F32(0.1));
+    const bool liftMoving = !NEAR(_poseData.poseStamp.GetLiftAngle(), _prevPoseData.poseStamp.GetLiftAngle(), DEG_TO_RAD(0.1f));
 
     const bool headDown = _poseData.poseStamp.GetHeadAngle() <= MIN_HEAD_ANGLE + HEAD_ANGLE_TOL;
     

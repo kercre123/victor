@@ -68,17 +68,17 @@ namespace Anki {
       
       // Front Face
       AddMarker(frontSideMarker,
-                Pose3d(M_PI_2, Z_AXIS_3D(), {length*.5f, 0.f, -.5f*height}),
+                Pose3d(M_PI_2_F, Z_AXIS_3D(), {length*.5f, 0.f, -.5f*height}),
                 markerSize_sides);
       
       // Back Face
       AddMarker(backSideMarker,
-                Pose3d(-M_PI_2, Z_AXIS_3D(), {-length*.5f, 0.f, -.5f*height}),
+                Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-length*.5f, 0.f, -.5f*height}),
                 markerSize_sides);
       
       // Right Face
       AddMarker(rightSideMarker,
-                Pose3d(M_PI, Z_AXIS_3D(), {0, width*.5f, -.5f*height}),
+                Pose3d(M_PI_F, Z_AXIS_3D(), {0, width*.5f, -.5f*height}),
                 markerSize_sides);
       
       // Left Face
@@ -88,16 +88,16 @@ namespace Anki {
 
       // Top Faces:
       AddMarker(topMarkerUL,
-                Pose3d(-M_PI_2, X_AXIS_3D(), {-length*.25f, -width*.25f, 0.f}),
+                Pose3d(-M_PI_2_F, X_AXIS_3D(), {-length*.25f, -width*.25f, 0.f}),
                 markerSize_top);
       AddMarker(topMarkerLL,
-                Pose3d(-M_PI_2, X_AXIS_3D(), {-length*.25f,  width*.25f, 0.f}),
+                Pose3d(-M_PI_2_F, X_AXIS_3D(), {-length*.25f,  width*.25f, 0.f}),
                 markerSize_top);
       AddMarker(topMarkerLR,
-                Pose3d(-M_PI_2, X_AXIS_3D(), { length*.25f, -width*.25f, 0.f}),
+                Pose3d(-M_PI_2_F, X_AXIS_3D(), { length*.25f, -width*.25f, 0.f}),
                 markerSize_top);
       AddMarker(topMarkerUR,
-                Pose3d(-M_PI_2, X_AXIS_3D(), { length*.25f,  width*.25f, 0.f}),
+                Pose3d(-M_PI_2_F, X_AXIS_3D(), { length*.25f,  width*.25f, 0.f}),
                 markerSize_top);
       
     } // Platform(type) Constructor

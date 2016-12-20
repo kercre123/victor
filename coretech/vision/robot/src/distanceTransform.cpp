@@ -44,8 +44,8 @@ namespace Anki
         //const u32 aX2 = static_cast<u32>(a) | (static_cast<u32>(a) << 16);
         //const u32 bX2 = static_cast<u32>(b) | (static_cast<u32>(b) << 16);
 
-        // To prevent overflow, maxDistance is a bit less than s16_MAX
-        const u16 maxDistance = s16_MAX - ( MAX(a,b) * (imageHeight + imageWidth) * (1<<numFractionalBits) );
+        // To prevent overflow, maxDistance is a bit less than std::numeric_limits<s16>::max()
+        const u16 maxDistance = std::numeric_limits<s16>::max() - ( MAX(a,b) * (imageHeight + imageWidth) * (1<<numFractionalBits) );
 
         AnkiConditionalErrorAndReturnValue(AreValid(image, distance),
           RESULT_FAIL_INVALID_OBJECT, "DistanceTransform", "Invalid objects");

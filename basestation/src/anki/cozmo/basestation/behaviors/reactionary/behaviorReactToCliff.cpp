@@ -114,7 +114,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
   
   // in case latency spiked between the Stop and Cliff message, add a small extra delay
   const float latencyDelay_s = 0.05f;
-  const float minWaitTime_s = (1.0 / 1000.0 ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
+  const float minWaitTime_s = (1.0f / 1000.0f ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
 
   // play the stop animation, but also wait at least the minimum time so we keep running
   _gotCliff = false;

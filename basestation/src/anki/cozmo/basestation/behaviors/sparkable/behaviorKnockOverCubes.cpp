@@ -43,7 +43,7 @@ const int kMaxNumRetries = 2;
 const float kMinThresholdRealign = 20.f;
 const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
-const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD_F32(90.f);
+const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD(90.f);
   
 const float kScoreIncreaseSoNoRoll = 10.f;
 }
@@ -161,10 +161,11 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
   DEBUG_SET_STATE(KnockingOverStack);
   
   auto flipCallback = [this, &robot](const ActionResult& result){
-    if(result == ActionResult::SUCCESS){
+    const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
+    if(resCat == ActionResultCategory::SUCCESS){
       //Knocked over stack successfully
       TransitionToPlayingReaction(robot);
-    }else if(result == ActionResult::FAILURE_RETRY){
+    }else if(resCat == ActionResultCategory::RETRY){
       //Assume we had an alignment issue
       if(_numRetries < kMaxNumRetries){
         TransitionToKnockingOverStack(robot);

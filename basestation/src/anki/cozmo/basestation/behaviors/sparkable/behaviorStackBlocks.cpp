@@ -365,53 +365,38 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
     
     // Don't turn towards face if retrying
     action->DontTurnTowardsFace();
-
-    if(completion.result == ActionResult::FAILURE_ABORT ||
-       completion.result == ActionResult::FAILURE_RETRY)
+    
+    animTrigger = AnimationTrigger::StackBlocksRetry;
+    
+    if(completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
     {
-      switch(completion.completionInfo.Get_objectInteractionCompleted().result)
-      {
-        case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
+      // Use a different preAction pose if we failed because we couldn't see the block
+      action->GetDriveToObjectAction()->SetGetPossiblePosesFunc(
+        [this, action](ActionableObject* object,
+                       std::vector<Pose3d>& possiblePoses,
+                       bool& alreadyInPosition)
         {
-          animTrigger = AnimationTrigger::StackBlocksRetry;
-          
-          // Use a different preAction pose if we failed because we couldn't see the block
-          action->GetDriveToObjectAction()->SetGetPossiblePosesFunc(
-            [this, action](ActionableObject* object,
-                           std::vector<Pose3d>& possiblePoses,
-                           bool& alreadyInPosition)
-            {
-              return IBehavior::UseSecondClosestPreActionPose(action->GetDriveToObjectAction(),
-                                                              object,
-                                                              possiblePoses,
-                                                              alreadyInPosition);
-            });
-          break;
-        }
-          
-        case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
-        case ObjectInteractionResult::INCOMPLETE:
-        {
-          // Smaller reaction if we just didn't get to the pre-action pose
-          // This is the intended animation trigger for now - don't change without consulting Mooly
-          animTrigger = AnimationTrigger::RollBlockRealign;
-          break;
-        }
-          
-        default:
-          animTrigger = AnimationTrigger::StackBlocksRetry;
-          break;
-      } // switch(objectInteractionResult)
-
-      // we want to retry if the action says we should, or if we got a visual verification failure
-      
-      const bool abortOk = completion.completionInfo.Get_objectInteractionCompleted().result ==
-        ObjectInteractionResult::VISUAL_VERIFICATION_FAILED;
-      const bool shouldRetry = completion.result == ActionResult::FAILURE_RETRY || abortOk;
-      return shouldRetry;
+          return IBehavior::UseSecondClosestPreActionPose(action->GetDriveToObjectAction(),
+                                                          object,
+                                                          possiblePoses,
+                                                          alreadyInPosition);
+        });
+      return true;
+    }
+    
+    const bool isRetryResult = (IActionRunner::GetActionResultCategory(completion.result) == ActionResultCategory::RETRY);
+    
+    if(isRetryResult &&
+       completion.result != ActionResult::LAST_PICK_AND_PLACE_FAILED &&
+       completion.result != ActionResult::NOT_CARRYING_OBJECT_RETRY)
+    {
+        // Smaller reaction if we didn't fail docking
+        // This is the intended animation trigger for now - don't change without consulting Mooly
+        animTrigger = AnimationTrigger::RollBlockRealign;
     }
 
-    return false;
+    // we want to retry if the action says we should
+    return isRetryResult;
   };
   
   RetryWrapperAction* retryWrapperAction = new RetryWrapperAction(robot, action, retryCallback, kBSB_MaxNumPickupRetries);
@@ -467,19 +452,19 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
   else {
     StartActing(new DriveToPlaceOnObjectAction(robot, _targetBlockBottom),
                 [this, &robot](const ExternalInterface::RobotCompletedAction& completion) {
-                  ActionResult res = completion.result;
+                  ActionResultCategory resCat = IActionRunner::GetActionResultCategory(completion.result);
                   
-                  if( res == ActionResult::SUCCESS ) {
+                  if( resCat == ActionResultCategory::SUCCESS ) {
                     if(!_shouldStreamline){
                       TransitionToPlayingFinalAnim(robot);
                     }
                     BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
                   }
-                  else if( res == ActionResult::FAILURE_RETRY ) {
+                  else if( resCat == ActionResultCategory::RETRY ) {
                     StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::StackBlocksRetry),
                                 &BehaviorStackBlocks::TransitionToStackingBlock);
                   }
-                  else if( res == ActionResult::FAILURE_ABORT ) {                    
+                  else if( resCat == ActionResultCategory::ABORT ) {
                     // mark the block as failed to stack on
                     const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockBottom);
                     if(failedObject){
@@ -487,8 +472,7 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                                                                                 AIWhiteboard::ObjectUseAction::StackOnObject);
                     }
                     
-                    if( completion.completionInfo.Get_objectInteractionCompleted().result ==
-                        ObjectInteractionResult::STILL_CARRYING ) {
+                    if( completion.result == ActionResult::STILL_CARRYING_OBJECT ) {
                       // robot thinks it should have stacked, but also thinks it is still carrying. This
                       // likely means it never was carrying in the first place, so go ahead and do a "put
                       // down" action, which will likely just verify that we don't have the cube in our lift

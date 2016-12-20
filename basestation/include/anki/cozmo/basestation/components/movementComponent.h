@@ -45,13 +45,13 @@ public:
   // - Cozmo is stuck on an object and is unable to turn
   void CheckForUnexpectedMovement(const RobotState& robotState);
   
-  // True if wheel speeds are non-zero in most recent RobotState message
-  bool   IsMoving() const {return _isMoving;}
+  // True if any motor speed (head, left, or wheels) is non-zero in most recent RobotState message
+  bool   IsMoving()        const { return _isMoving; }
   
-  // True if head/lift is on its way to a commanded angle/height
-  bool   IsHeadMoving() const {return _isHeadMoving;}
-  bool   IsLiftMoving() const {return _isLiftMoving;}
-  bool   AreWheelsMoving() const {return _areWheelsMoving;}
+  // True if head/lift/wheels are moving
+  bool   IsHeadMoving()    const { return _isHeadMoving; }
+  bool   IsLiftMoving()    const { return _isLiftMoving; }
+  bool   AreWheelsMoving() const { return _areWheelsMoving; }
   
   // Returns true if any of the tracks are locked
   bool AreAnyTracksLocked(u8 tracks) const;
@@ -201,7 +201,7 @@ private:
   const f32 kWheelDifForTurning_mmps       = 30;
   const u8  kMaxUnexpectedMovementCount    = 10;
   const f32 kMinWheelSpeed_mmps            = 20;
-  const f32 kExpectedVsActualGyroTol_radps = 0.2;
+  const f32 kExpectedVsActualGyroTol_radps = 0.2f;
   
   // Flags for whether or not we are currently directly driving the following motors
 

@@ -12,9 +12,11 @@
 **/
 
 #include <assert.h>
-#include <math.h>
+#include <cmath>
+#include <cstdlib>
 #include "anki/common/types.h"
 #include "anki/common/shared/radians.h"
+#include "util/math/math.h"
 
 namespace Anki {
   //////////////////////////////////////////////////////////////////
@@ -156,7 +158,7 @@ namespace Anki {
   // two radian values is within tolerance.
   bool operator==(const Radians& a, const Radians& b)
   {
-    return NEAR(a.radians_, b.radians_, FLOATING_POINT_COMPARISON_TOLERANCE);
+    return a.IsNear(b);
   }
 
   // Inequality operator: Returns true if the magnitude of difference between
@@ -190,6 +192,11 @@ namespace Anki {
     return(b >= a);
   }
 
+  bool Radians::IsNear(const Radians& other, const Radians& epsilon) const
+  {
+    return std::abs((radians_ - other).ToFloat()) < std::abs(epsilon.ToFloat());
+  }
+  
   // Assignment operators
   void Radians::operator=(const Radians& b)
   {
@@ -205,20 +212,20 @@ namespace Anki {
   // Returns a radians object that's the absolute value of this one
   Radians Radians::getAbsoluteVal() const
   {
-    return Radians(ABS(radians_));
+    return Radians(std::abs(radians_));
   }
 
   // Returns the object's radians value in degrees
   float Radians::getDegrees() const
   {
-    return RAD_TO_DEG_F32(radians_);
+    return RAD_TO_DEG(radians_);
   }
 
   // Converts the passed argument from degrees to radians and sets the object's
   // value to the result
   void Radians::setDegrees(float degrees)
   {
-    radians_ = DEG_TO_RAD_F32(degrees);
+    radians_ = DEG_TO_RAD(degrees);
     rescale();
   }
 
@@ -233,9 +240,9 @@ namespace Anki {
 
     // If clockwise then difference should be -ve, and vice versa.
     if(!clockwise && diff < 0.0f) {
-      diff += 2.0f*PI_F;
+      diff += 2.0f*M_PI_F;
     } else if(clockwise && diff > 0.0f) {
-      diff -= 2.0f*PI_F;
+      diff -= 2.0f*M_PI_F;
     }
 
     return diff;
@@ -251,25 +258,25 @@ namespace Anki {
     }
 
     // Check if already within range
-    if(radians_ > -PI_F  && radians_ <= PI_F) {
+    if(radians_ > -M_PI_F  && radians_ <= M_PI_F) {
       return;
     }
 
-    if(ABS(radians_) < 10.0f) {
+    if(std::abs(radians_) < 10.0f) {
       // For small values of radians, rescale manually to avoid doing division
-      while(radians_ <= -PI_F) {
-        radians_ += 2.0f*PI_F;
+      while(radians_ <= -M_PI_F) {
+        radians_ += 2.0f*M_PI_F;
       }
-      while(radians_ > PI_F) {
-        radians_ -= 2.0f*PI_F;
+      while(radians_ > M_PI_F) {
+        radians_ -= 2.0f*M_PI_F;
       }
     } else {
       // Otherwise compute and adjust at once (more expensive due to divide)
 
-      // If not, compute amount to shift by.  Divide by 2*PI_F but subtract .5 since
+      // If not, compute amount to shift by.  Divide by 2*M_PI_F but subtract .5 since
       // we're going to be in the (-PI, PI] range.
-      shiftAmt = (int)ceilf((radians_ / (2.0f * PI_F)) - 0.5f);
-      radians_ -= (2.0f * PI_F * (float)shiftAmt);
+      shiftAmt = (int)ceilf((radians_ / (2.0f * M_PI_F)) - 0.5f);
+      radians_ -= (2.0f * M_PI_F * (float)shiftAmt);
     }
   }
 
@@ -279,7 +286,7 @@ namespace Anki {
   {
     // Increase radians_ until it's positive
     while(radians_ < 0.0f) {
-      radians_ += 2.0f * PI_F;
+      radians_ += 2.0f * M_PI_F;
     }
   }
 
@@ -287,7 +294,7 @@ namespace Anki {
   {
     // Increase radians_ until it's negative
     while(radians_ > 0.0f) {
-      radians_ -= 2.0f * PI_F;
+      radians_ -= 2.0f * M_PI_F;
     }
   }
 } // namespace Anki

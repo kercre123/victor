@@ -61,7 +61,7 @@
 // this is in units of seconds per mm, meaning the robot would drive X
 // seconds out of the way to avoid having to drive 1 mm through the
 // penalty
-#define DEFAULT_OBSTACLE_PENALTY 0.1
+#define DEFAULT_OBSTACLE_PENALTY 0.1f
 
 // how far (in mm) away from the path the robot needs to be before it gives up and plans a new path
 #define PLAN_ERROR_FOR_REPLAN 20.0
@@ -74,7 +74,7 @@ const f32 TERMINAL_POINT_TURN_ACCEL = 100.f;
 const f32 TERMINAL_POINT_TURN_DECEL = 100.f;
 
 // The angular tolerance to use for the point turn that is appended at the end of every path
-const f32 TERMINAL_POINT_TURN_ANGLE_TOL = DEG_TO_RAD_F32(5.f);
+const f32 TERMINAL_POINT_TURN_ANGLE_TOL = DEG_TO_RAD(5.f);
 
 namespace Anki {
 namespace Cozmo {
@@ -414,7 +414,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
     float closestDist2 = 0;
     bool found = false;
     
-    for(auto maxPenalty : (float[]){0.01, MAX_OBSTACLE_COST}) {
+    for(auto maxPenalty : (float[]){0.01f, MAX_OBSTACLE_COST}) {
       
       bestTargetID = 0;
       closestDist2 = 0;

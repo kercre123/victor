@@ -69,8 +69,8 @@ namespace Anki
         idB--;
       }
 
-      const s64 idDifference = (static_cast<s64>(s16_MAX)+1) * (static_cast<s64>(s16_MAX)+1) * (static_cast<s64>(idA) - static_cast<s64>(idB));
-      const s64 yDifference = (static_cast<s64>(s16_MAX)+1) * (static_cast<s64>(a.y) - static_cast<s64>(b.y));
+      const s64 idDifference = (static_cast<s64>(std::numeric_limits<s16>::max())+1) * (static_cast<s64>(std::numeric_limits<s16>::max())+1) * (static_cast<s64>(idA) - static_cast<s64>(idB));
+      const s64 yDifference = (static_cast<s64>(std::numeric_limits<s16>::max())+1) * (static_cast<s64>(a.y) - static_cast<s64>(b.y));
       const s64 xStartDifference = (static_cast<s64>(a.xStart) - static_cast<s64>(b.xStart));
 
       return idDifference + yDifference + xStartDifference;
@@ -149,7 +149,7 @@ namespace Anki
       //AnkiConditionalErrorAndReturn(maxComponentSegments > 0 && maxComponentSegments <= Type_MAX,
       //  "ConnectedComponentsTemplate<Type>::ConnectedComponents", "maxComponentSegments must be greater than zero and less than 0xFFFF");
 
-      AnkiConditionalErrorAndReturn(maxImageWidth > 0 && maxImageWidth <= s16_MAX,
+      AnkiConditionalErrorAndReturn(maxImageWidth > 0 && maxImageWidth <= std::numeric_limits<s16>::max(),
         "ConnectedComponentsTemplate<Type>::ConnectedComponents", "maxImageWidth must be less than 0x7FFF");
 
       this->components = FixedLengthList<ConnectedComponentSegment<Type> >(maxComponentSegments, memory);
@@ -577,10 +577,10 @@ namespace Anki
       Rectangle<s16> * restrict pComponentBoundingBoxes = componentBoundingBoxes.Pointer(0);
 
       for(s32 i=0; i<numComponentBoundingBoxes; i++) {
-        pComponentBoundingBoxes[i].left = s16_MAX;
-        pComponentBoundingBoxes[i].right = s16_MIN;
-        pComponentBoundingBoxes[i].top = s16_MAX;
-        pComponentBoundingBoxes[i].bottom = s16_MIN;
+        pComponentBoundingBoxes[i].left = std::numeric_limits<s16>::max();
+        pComponentBoundingBoxes[i].right = std::numeric_limits<s16>::min();
+        pComponentBoundingBoxes[i].top = std::numeric_limits<s16>::max();
+        pComponentBoundingBoxes[i].bottom = std::numeric_limits<s16>::min();
       }
 
       for(s32 iComponent=0; iComponent<numComponents; iComponent++) {
@@ -725,10 +725,10 @@ namespace Anki
       memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
 
       for(s32 i=0; i<=maximumId; i++) {
-        minX[i] = s16_MAX;
-        maxX[i] = s16_MIN;
-        minY[i] = s16_MAX;
-        maxY[i] = s16_MIN;
+        minX[i] = std::numeric_limits<s16>::max();
+        maxX[i] = std::numeric_limits<s16>::min();
+        minY[i] = std::numeric_limits<s16>::max();
+        maxY[i] = std::numeric_limits<s16>::min();
       }
 
       // Compute the bounding box of each component ID
@@ -765,7 +765,7 @@ namespace Anki
         const s32 solidMultiply = solidMultiplyThreshold*componentSizes[id]; // (SQ26.5 * SQ31.0) -> SQ26.5
 
         if(sparseMultiply < boundingArea || solidMultiply > boundingArea) {
-          minX[id] = s16_MIN; // Set to invalid
+          minX[id] = std::numeric_limits<s16>::min(); // Set to invalid
         }
       }
 

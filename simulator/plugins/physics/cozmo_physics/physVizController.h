@@ -148,10 +148,10 @@ private:
   bool _drawEnabled = true;
 
   // Default height offset of paths (m)
-  float _heightOffset = 0.045;
+  float _heightOffset = 0.045f;
 
   // Default angular resolution of arc path segments (radians)
-  float _arcRes_rad = 0.2;
+  float _arcRes_rad = 0.2f;
 
   // Global offset
   float _globalRotation[4] = {0,0,0,0};    // angle, axis_x, axis_y, axis_z

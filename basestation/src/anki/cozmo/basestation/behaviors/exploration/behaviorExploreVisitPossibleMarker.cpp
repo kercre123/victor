@@ -147,7 +147,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
       static const int kNumImagesForVerification = 5;
       
       CompoundActionSequential* action = new CompoundActionSequential(robot, {
-          new TurnTowardsPoseAction(robot, relPose, PI_F),
+          new TurnTowardsPoseAction(robot, relPose, M_PI_F),
           new WaitForImagesAction(robot, kNumImagesForVerification, VisionMode::DetectingMarkers) });
 
       PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.WithinRange.Verify",
@@ -216,7 +216,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
 
     // if we're too close, back up
     if( std::pow(kEvpm_DistanceFromPossibleCubeMin_mm, 2) > relPose.GetTranslation().LengthSq() ) {
-      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, PI_F) );
+      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, M_PI_F) );
       const float backupDist = distanceRand - relPose.GetTranslation().Length();
       approachAction->AddAction( new DriveStraightAction(robot, -backupDist, kBEVPM_backupSpeed_mmps) );
     }
@@ -231,7 +231,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
                            &robot.GetPose());
 
       // turn first to signal intent
-      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, PI_F) );
+      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, M_PI_F) );
       approachAction->AddAction( new DriveToPoseAction(robot, newTargetPose, false) );
 
       // This requires us to bail out of this behavior if we see one, but that's not currently happening

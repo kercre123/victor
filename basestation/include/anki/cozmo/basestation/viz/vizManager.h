@@ -14,7 +14,6 @@
 #ifndef VIZ_MANAGER_H
 #define VIZ_MANAGER_H
 
-#include "util/math/constantsAndMacros.h"
 #include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/polygon.h"
@@ -639,7 +638,7 @@ namespace Anki {
                                 const ColorRGBA& color, bool clearPrevious, u32 numSegments, const T startAngle)
     {
       // Note we create the polygon clockwise intentionally
-      T anglePerSegment = static_cast<T>(-2) * static_cast<T>(PI) / static_cast<T>(numSegments);
+      T anglePerSegment = static_cast<T>(-2) * static_cast<T>(M_PI) / static_cast<T>(numSegments);
       
       // Use the tangential and radial factors to draw the segments without recalculating every time.
       // Algorithm found here: http://slabode.exofire.net/circle_draw.shtml
@@ -719,7 +718,7 @@ namespace Anki {
                                 u32 numSegments)
     {
       // Note we create the polygon clockwise intentionally
-      T anglePerSegment = static_cast<T>(-2) * static_cast<T>(PI) / static_cast<T>(numSegments);
+      T anglePerSegment = static_cast<T>(-2) * static_cast<T>(M_PI) / static_cast<T>(numSegments);
       
       // Use the tangential and radial factors to draw the segments without recalculating every time.
       // Algorithm found here: http://slabode.exofire.net/circle_draw.shtml

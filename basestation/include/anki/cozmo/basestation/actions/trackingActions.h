@@ -111,8 +111,6 @@ protected:
   virtual bool InterruptInternal() override final;
   
 private:
-
-  void HandleActionCompleted(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
   
   Mode     _mode = Mode::HeadAndBody;
   double   _updateTimeout_sec = 0.;
@@ -121,7 +119,6 @@ private:
   Radians  _tiltTolerance = HEAD_ANGLE_TOL;
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
   u32      _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
-  bool     _stopActionNow = false;
   
   u32      _eyeShiftTag;
   bool     _moveEyes    = false;
@@ -133,15 +130,13 @@ private:
   Radians  _minPanAngleForSound = DEG_TO_RAD(10);
   Radians  _minTiltAngleForSound = DEG_TO_RAD(10);
   
-  f32      _minTiltSpeed_radPerSec = DEG_TO_RAD_F32(30.f);
-  f32      _maxTiltSpeed_radPerSec = DEG_TO_RAD_F32(90.f);
-  f32      _minPanSpeed_radPerSec  = DEG_TO_RAD_F32(40.f);
-  f32      _maxPanSpeed_radPerSec  = DEG_TO_RAD_F32(120.f);
+  f32      _minTiltSpeed_radPerSec = DEG_TO_RAD(30.f);
+  f32      _maxTiltSpeed_radPerSec = DEG_TO_RAD(90.f);
+  f32      _minPanSpeed_radPerSec  = DEG_TO_RAD(40.f);
+  f32      _maxPanSpeed_radPerSec  = DEG_TO_RAD(120.f);
   
   u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;
   bool     _clampSmallAngles = false;
-
-  Signal::SmartHandle _actionCompletedHandle;
   
 }; // class ITrackAction
   

@@ -519,7 +519,7 @@ void RobotAudioClient::UnregisterRobotAudioBuffer(GameObjectType gameObject,
     _busConfigurationMap.erase(it);
   } else {
     // Bus doesn't exist
-    PRINT_NAMED_ERROR("RobotAudioClient.UnregisterRobotAudioBuffer", "Buss configuration doesn't exist for GameObject: %d",
+    PRINT_NAMED_ERROR("RobotAudioClient.UnregisterRobotAudioBuffer", "Bus configuration doesn't exist for GameObject: %d",
                       static_cast<uint32_t>(gameObject));
   }
   

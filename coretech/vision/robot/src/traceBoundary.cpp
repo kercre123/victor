@@ -69,7 +69,7 @@ namespace Anki
       //coordinate_bottom = max(component(:,1), [], 1);
       //coordinate_left = min(component(:,2), [], 1);
       //coordinate_right = max(component(:,3), [], 1);
-      Rectangle<s16> boundingBox(s16_MAX, s16_MIN, s16_MAX, s16_MIN);
+      Rectangle<s16> boundingBox(std::numeric_limits<s16>::max(), std::numeric_limits<s16>::min(), std::numeric_limits<s16>::max(), std::numeric_limits<s16>::min());
       endComponentIndex = numComponents - 1;
       
       if(useU16) {
@@ -106,7 +106,7 @@ namespace Anki
         }
       } // if(useU16) ... else
 
-      if(boundingBox.left == s16_MAX || boundingBox.right == s16_MIN || boundingBox.top == s16_MAX || boundingBox.bottom == s16_MIN) {
+      if(boundingBox.left == std::numeric_limits<s16>::max() || boundingBox.right == std::numeric_limits<s16>::min() || boundingBox.top == std::numeric_limits<s16>::max() || boundingBox.bottom == std::numeric_limits<s16>::min()) {
         AnkiWarn("ComputeQuadrilateralsFromConnectedComponents", "Something was corrupted with the input component");
         return RESULT_FAIL;
       }
@@ -121,13 +121,13 @@ namespace Anki
 
       // Set the right away, in case a buggy component is missing a row or column
       for(s32 i=0; i<boxHeight;i++){
-        edge_left[i] = s16_MAX;
-        edge_right[i] = s16_MIN;
+        edge_left[i] = std::numeric_limits<s16>::max();
+        edge_right[i] = std::numeric_limits<s16>::min();
       }
 
       for(s32 i=0; i<boxWidth;i++){
-        edge_top[i] = s16_MAX;
-        edge_bottom[i] = s16_MIN;
+        edge_top[i] = std::numeric_limits<s16>::max();
+        edge_bottom[i] = std::numeric_limits<s16>::min();
       }
 
       //% 1. Compute the extreme pixels of the components, on each edge
@@ -203,7 +203,7 @@ namespace Anki
       bool isNonContiguous = false;
 
       for(s32 y=0; y<boxHeight; y++) {
-        if(edge_left[y] == s16_MAX || edge_right[y] == s16_MIN) {
+        if(edge_left[y] == std::numeric_limits<s16>::max() || edge_right[y] == std::numeric_limits<s16>::min()) {
           //CoreTechPrint("edge_left[%d]=%d edge_right[%d]=%d\n", y, static_cast<s32>(edge_left[y]), y, static_cast<s32>(edge_right[y]));
           //AnkiWarn("TraceNextExteriorBoundary", "Bad edge");
           isNonContiguous = true;
@@ -211,7 +211,7 @@ namespace Anki
       }
 
       for(s32 x=0; x<boxWidth; x++) {
-        if(edge_top[x] == s16_MAX || edge_bottom[x] == s16_MIN) {
+        if(edge_top[x] == std::numeric_limits<s16>::max() || edge_bottom[x] == std::numeric_limits<s16>::min()) {
           //CoreTechPrint("edge_top[%d]=%d edge_bottom[%d]=%d\n", x, static_cast<s32>(edge_left[x]), x, static_cast<s32>(edge_right[x]));
           //AnkiWarn("TraceNextExteriorBoundary", "Bad edge");
           isNonContiguous = true;

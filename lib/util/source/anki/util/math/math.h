@@ -17,27 +17,55 @@
 #include <limits>
 #include <assert.h>
 #include <math.h>
-#include "util/math/constantsAndMacros.h" // basic pure-C macros for non-CPP code
 
 #include "util/global/globalDefinitions.h"
 #include "util/math/numericCast.h" // it used to be part of this file, leaving included until client code is tidied
 
 #include <stdint.h>
 
+
+//////////////////////////////////////////////////////////////////////////////
+// CONSTANTS
+//////////////////////////////////////////////////////////////////////////////
+
+#ifndef M_PI
+#define M_PI       3.14159265358979323846264338327950288
+#endif
+
+#ifndef M_PI_2
+#define M_PI_2     1.57079632679489661923132169163975144
+#endif
+
+#ifndef M_PI_4
+#define M_PI_4     0.785398163397448309615660845819875721
+#endif
+
+#ifndef M_PI_F
+#define M_PI_F     ((float)M_PI)
+#endif
+
+#ifndef M_PI_2_F
+#define M_PI_2_F   ((float)M_PI_2)
+#endif
+
+#ifndef M_PI_4_F
+#define M_PI_4_F   ((float)M_PI_4)
+#endif
+
 namespace Anki {
 namespace Util {
 
 // convert angle to range [0, 2PI)
 inline float ClampAngle2PI(float radians) {
-  radians = fmodf(radians, 2*PI);
-  radians = (radians < 0) ? (2*PI+radians) : radians;
+  radians = fmodf(radians, 2*M_PI_F);
+  radians = (radians < 0) ? (2*M_PI_F+radians) : radians;
   return radians;
 }
 
 // convert angle to range [0, 2PI)
 inline double ClampAngle2PI(double radians) {
-  radians = fmod(radians, 2*PI);
-  radians = (radians < 0) ? (2*PI+radians) : radians;
+  radians = fmod(radians, 2*M_PI_F);
+  radians = (radians < 0) ? (2*M_PI_F+radians) : radians;
   return radians;
 }
 
@@ -53,6 +81,7 @@ inline double ClampAngle2PI(double radians) {
 constexpr double FLOATING_POINT_COMPARISON_TOLERANCE = 1e-5;
 constexpr float  FLOATING_POINT_COMPARISON_TOLERANCE_FLT = (float)FLOATING_POINT_COMPARISON_TOLERANCE;
   
+// TODO (COZMO-7841): Why not use std::abs()?
 template<typename T>
 inline constexpr T Abs(const T& inVal)
 {
@@ -244,6 +273,27 @@ inline constexpr double ConvertMMToM(double inVal) {
   return inVal * 0.001;
 }
 
+// Convert between radians and degrees
+inline constexpr float DegToRad(float deg) {
+  return deg * 0.017453292519943295474f;
+}
+
+inline constexpr float DegToRad(int deg) {
+  return deg * 0.017453292519943295474f;
+}
+
+inline constexpr double DegToRad(double deg) {
+  return deg * 0.017453292519943295474;
+}
+
+inline constexpr float RadToDeg(float rad) {
+  return rad * 57.295779513082322865f;
+}
+
+inline constexpr double RadToDeg(double rad) {
+  return rad * 57.295779513082322865;
+}
+  
 // Basic clamp impl. For faster one use fmax/fmin approach
 template<class T>
 inline ANKI_NON_DEVELOPER_CONSTEXPR T Clamp(const T& val, const T& min, const T& max)
@@ -342,17 +392,32 @@ inline constexpr T ClampedAddition(T a, T b)
 #undef IN_RANGE
 #define IN_RANGE(val, minVal, maxVal)   Anki::Util::InRange(val, minVal, maxVal)
 
-#undef MAX
-#define MAX(a, b)   Anki::Util::Max(a, b)
-
-#undef MIN
-#define MIN(a, b)   Anki::Util::Min(a, b)
-
 #undef ABS
 #define ABS(a)    Anki::Util::Abs(a)
 
 #undef SQUARE
 #define SQUARE(x) Anki::Util::Square(x)
+
+
+// TODO( COZMO-7843): Get rid of this and use the templated version above eventually.
+// Will need to cast args appropriately throughout the code though.
+#undef MAX
+//#define MAX(a, b)   Anki::Util::Max(a, b)
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
+#undef MIN
+//#define MIN(a, b)   Anki::Util::Min(a, b)
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
+#undef CLIP
+//#define CLIP(val, lo, hi)   Anki::Util::Clamp(val, lo, hi)
+#define CLIP(val,lo,hi) ( (((((val) > (lo)) ? (val) : (lo)) < (hi)) ? (((val) > (lo)) ? (val) : (lo)) : (hi))   )
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+// UNIT CONVERSION MACROS
+//////////////////////////////////////////////////////////////////////////////
 
 #undef M_TO_MM
 #define M_TO_MM(x)   Anki::Util::ConvertMToMM(x)
@@ -360,10 +425,11 @@ inline constexpr T ClampedAddition(T a, T b)
 #undef MM_TO_M
 #define MM_TO_M(x)   Anki::Util::ConvertMMToM(x)
 
-#undef CLIP
-#define CLIP(val, lo, hi)   Anki::Util::Clamp(val, lo, hi)
+#undef DEG_TO_RAD
+#define DEG_TO_RAD(deg)      Anki::Util::DegToRad(deg)
 
-
+#undef RAD_TO_DEG
+#define RAD_TO_DEG(rad)      Anki::Util::RadToDeg(rad)
 
 
 #endif //UTIL_MATH_H_

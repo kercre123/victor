@@ -489,11 +489,11 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   {
     PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(),
       "Done %.2f deg so far",
-      fabsf(RAD_TO_DEG_F32(_behaviorBodyFacingDone_rad)));
+      fabsf(RAD_TO_DEG(_behaviorBodyFacingDone_rad)));
     
     // no cone of focus
     // while not completed a whole turn start another iteration
-    const bool hasDone360 = fabsf(_behaviorBodyFacingDone_rad) >= 2*PI;
+    const bool hasDone360 = fabsf(_behaviorBodyFacingDone_rad) >= 2*M_PI_F;
     startAnotherIteration = !hasDone360;
   }
   

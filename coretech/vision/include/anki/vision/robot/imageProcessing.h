@@ -75,8 +75,8 @@ template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
     const s32 xBig0 = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
 
     for(s32 dy=0; dy<upsampleFactorU8; dy++) {
-      const u8 alpha = 2*upsampleFactorU8 - 2*dy - 1;
-      const u8 alphaInverse = 2*dy + 1;
+      const u8 alpha = (u8)(2*upsampleFactorU8 - 2*dy - 1);
+      const u8 alphaInverse = (u8)(2*dy + 1);
 
       const u16 interpolatedPixelL0 = smallUL * alpha;
       const u16 interpolatedPixelL1 = smallLL * alphaInverse;
@@ -91,7 +91,7 @@ template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
       u16 curValue = 2*interpolatedPixelL + ((addAmount - subtractAmount)>>1);
 
       for(s32 dx=0; dx<upsampleFactorU8; dx++) {
-        const u8 curValueU8 = curValue >> (upsamplePowerU8+2);
+        const u8 curValueU8 = (u8)(curValue >> (upsamplePowerU8+2));
 
         pOut[xBig0 + dx] = curValueU8;
 
@@ -1079,15 +1079,15 @@ namespace Anki
             for(s32 dy=upsampleFactorU8>>1; dy<upsampleFactorU8; dy++) {
               u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2 + dy, 0);
 
-              const u16 subtractAmount = smallL << 2;
-              const u16 addAmount = smallR << 2;
+              const u16 subtractAmount = (u16)(smallL << 2);
+              const u16 addAmount = (u16)(smallR << 2);
 
               const s32 xBig0 = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
 
-              u16 curValue = (smallL << (upsamplePowerU8+2)) + ((addAmount - subtractAmount)>>1);
+              u16 curValue = (u16)((smallL << (upsamplePowerU8+2)) + ((addAmount - subtractAmount)>>1));
 
               for(s32 dx=0; dx<upsampleFactorU8; dx++) {
-                const u8 curValueU8 = curValue >> (upsamplePowerU8+2);
+                const u8 curValueU8 = (u8)(curValue >> (upsamplePowerU8+2));
 
                 pOut[xBig0 + dx] = curValueU8;
 
@@ -1113,13 +1113,13 @@ namespace Anki
             for(s32 dy=0; dy<upsampleFactorU8; dy++) {
               u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2 + dy, 0);
 
-              const u8 alpha = 2*upsampleFactorU8 - 2*dy - 1;
-              const u8 alphaInverse = 2*dy + 1;
+              const u8 alpha = (u8)(2*upsampleFactorU8 - 2*dy - 1);
+              const u8 alphaInverse = (u8)(2*dy + 1);
 
               const u16 interpolatedPixelL0 = smallU * alpha;
               const u16 interpolatedPixelL1 = smallL * alphaInverse;
               const u16 interpolatedPixelL = interpolatedPixelL0 + interpolatedPixelL1;
-              const u8 curValueU8 = interpolatedPixelL >> (upsamplePowerU8+1);
+              const u8 curValueU8 = (u8)(interpolatedPixelL >> (upsamplePowerU8+1));
 
               const s32 xBig0 = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
 
@@ -1141,13 +1141,13 @@ namespace Anki
             for(s32 dy=0; dy<upsampleFactorU8; dy++) {
               u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2 + dy, 0);
 
-              const u8 alpha = 2*upsampleFactorU8 - 2*dy - 1;
-              const u8 alphaInverse = 2*dy + 1;
+              const u8 alpha = (u8)(2*upsampleFactorU8 - 2*dy - 1);
+              const u8 alphaInverse = (u8)(2*dy + 1);
 
               const u16 interpolatedPixelL0 = smallU * alpha;
               const u16 interpolatedPixelL1 = smallL * alphaInverse;
               const u16 interpolatedPixelL = interpolatedPixelL0 + interpolatedPixelL1;
-              const u8 curValueU8 = interpolatedPixelL >> (upsamplePowerU8+1);
+              const u8 curValueU8 = (u8)(interpolatedPixelL >> (upsamplePowerU8+1));
 
               const s32 xBig0 = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
 
@@ -1173,15 +1173,15 @@ namespace Anki
             for(s32 dy=0; dy<upsampleFactorU8>>1; dy++) {
               u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2 + dy, 0);
 
-              const u16 subtractAmount = smallL << 2;
-              const u16 addAmount = smallR << 2;
+              const u16 subtractAmount = (u16)(smallL << 2);
+              const u16 addAmount = (u16)(smallR << 2);
 
               const s32 xBig0 = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
 
-              u16 curValue = (smallL << (upsamplePowerU8+2)) + ((addAmount - subtractAmount)>>1);
+              u16 curValue = (u16)((smallL << (upsamplePowerU8+2)) + ((addAmount - subtractAmount)>>1));
 
               for(s32 dx=0; dx<upsampleFactorU8; dx++) {
-                const u8 curValueU8 = curValue >> (upsamplePowerU8+2);
+                const u8 curValueU8 = (u8)(curValue >> (upsamplePowerU8+2));
 
                 pOut[xBig0 + dx] = curValueU8;
 

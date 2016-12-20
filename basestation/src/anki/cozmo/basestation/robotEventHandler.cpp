@@ -538,7 +538,7 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsObject& msg)
 {
   ObjectID objectID;
-  if(msg.objectID == u32_MAX) {
+  if(msg.objectID == std::numeric_limits<u32>::max()) {
     objectID = robot.GetBlockWorld().GetSelectedObject();
   } else {
     objectID = msg.objectID;
@@ -876,7 +876,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayFac
     {
       imageData_i[destI] = ((currentByte & 0x80) > 0) ? 255 : 0;
       ++destI;
-      currentByte = currentByte << 1;
+      currentByte = (uint8_t)(currentByte << 1);
     }
   }
   assert(destI == (ProceduralFace::WIDTH * ProceduralFace::HEIGHT));
@@ -1487,17 +1487,15 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotCompletedAct
     case RobotActionType::POP_A_WHEELIE:
     case RobotActionType::ROLL_OBJECT_LOW:
     {
-      auto const& completionInfo = msg.completionInfo.Get_objectInteractionCompleted();
-     
       // Don't log incomplete docks -- they can happen for many reasons (such as
       // interruptions / cancellations on the way to docking) and we're most interested
       // in figuring out how successful the robot is when it gets a chance to actually
       // start trying to dock with the object
-      if(completionInfo.result != ObjectInteractionResult::INCOMPLETE)
+      if(msg.result != ActionResult::NOT_STARTED)
       {
-        // Put action type in DDATA field and object interaction result in s_val
+        // Put action type in DDATA field and action result in s_val
         Util::sEventF("robot.dock_action_completed", {{DDATA, EnumToString(msg.actionType)}},
-                      "%s", EnumToString(completionInfo.result));
+                      "%s", EnumToString(msg.result));
       }
       
       break;

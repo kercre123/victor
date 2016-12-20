@@ -411,8 +411,8 @@ namespace Cozmo {
       bool      _isPoseSet   = false;
       bool      _nothingToDo = false;
       
-      static constexpr f32 kHeadAngleDistBias_rad = DEG_TO_RAD_F32(5);
-      static constexpr f32 kHeadAngleHeightBias_rad = DEG_TO_RAD_F32(7.5);      
+      static constexpr f32 kHeadAngleDistBias_rad = DEG_TO_RAD(5.f);
+      static constexpr f32 kHeadAngleHeightBias_rad = DEG_TO_RAD(7.5f);
       
     }; // class TurnTowardsPoseAction
   
@@ -515,8 +515,7 @@ namespace Cozmo {
       Vision::Marker::Code       _whichCode;
       bool                       _headTrackWhenDone;
       bool                       _doRefinedTurn = true;
-      f32                        _refinedTurnAngleTol_rad = DEG_TO_RAD_F32(5);
-      ObjectInteractionResult    _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
+      f32                        _refinedTurnAngleTol_rad = DEG_TO_RAD(5.f);
       
     }; // TurnTowardsObjectAction
     
@@ -528,7 +527,7 @@ namespace Cozmo {
     class TurnTowardsFaceAction : public TurnTowardsPoseAction
     {
     public:
-      TurnTowardsFaceAction(Robot& robot, Vision::FaceID_t faceID, Radians maxTurnAngle = PI_F, bool sayName = false);
+      TurnTowardsFaceAction(Robot& robot, Vision::FaceID_t faceID, Radians maxTurnAngle = M_PI_F, bool sayName = false);
       virtual ~TurnTowardsFaceAction();
       
       // Set the maximum number of frames we are will to wait to see a face after
@@ -599,7 +598,7 @@ namespace Cozmo {
     class TurnTowardsLastFacePoseAction : public TurnTowardsFaceAction
     {
     public:
-      TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle = PI_F, bool sayName = false)
+      TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle = M_PI_F, bool sayName = false)
       : TurnTowardsFaceAction(robot, Vision::UnknownFaceID, maxTurnAngle, sayName)
       {
         
@@ -617,7 +616,7 @@ namespace Cozmo {
                                    IActionRunner* action,
                                    bool turnBeforeAction = true,
                                    bool turnAfterAction = false,
-                                   Radians maxTurnAngle = PI_F,
+                                   Radians maxTurnAngle = M_PI_F,
                                    bool sayName = false);
     };
     

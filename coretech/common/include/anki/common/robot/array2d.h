@@ -576,7 +576,7 @@ namespace Anki
             const Type * restrict pOther = other.Pointer(i,0);
 
             for(s32 j=0; j<ncols; ++j) {
-              if(!NEAR(pThis[j], pOther[j], epsilon)) {
+              if (ABS(pThis[j] - pOther[j]) >= epsilon) {
                 isSame = false;
                 break;
               }

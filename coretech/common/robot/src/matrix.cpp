@@ -8,6 +8,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 #include "anki/common/robot/matrix.h"
+#include "util/math/math.h"
 
 namespace Anki {
   namespace Embedded {
@@ -23,14 +24,14 @@ namespace Anki {
         if (x > 0) {
           return atan_val;
         } else if (y >= 0 && x < 0) {
-          return atan_val + PI_F;
+          return atan_val + M_PI_F;
         } else if (y < 0 && x < 0) {
-          return atan_val - PI_F;
+          return atan_val - M_PI_F;
         } else if (y > 0 && x == 0) {
-          return PIDIV2_F;
+          return M_PI_2_F;
         }
         //else if (y < 0 && x == 0) {
-        return -PIDIV2_F;
+        return -M_PI_2_F;
         //}
       }
       

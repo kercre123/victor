@@ -114,7 +114,7 @@ Result SparksBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& 
   _objectiveToListenFor = BehaviorObjectiveFromString(config.get(kBehaviorObjectiveConfigKey, EnumToString(BehaviorObjective::Unknown)).asCString());
     
   //Ensures that these values have to be set in behavior_config for all sparks
-  ASSERT_NAMED(FLT_GE(_minTimeSecs, 0) && FLT_GE(_maxTimeSecs, 0)
+  ASSERT_NAMED(FLT_GE(_minTimeSecs, 0.f) && FLT_GE(_maxTimeSecs, 0.f)
                && _numberOfRepetitions >= 0 && _softSparkUpgradeTrigger != AnimationTrigger::Count
                && _objectiveToListenFor != BehaviorObjective::Count,
                "SparksBehaviorChooser.ReloadFromConfig: At least one parameter not set");

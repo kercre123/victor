@@ -1,3 +1,4 @@
+#include "util/helpers/quoteMacro.h"
 
 #ifndef BLOCK_DEFINITION_MODE
 

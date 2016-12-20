@@ -79,7 +79,7 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
 
   // Turn towards the object and then react to it before performing the pop a wheelie action
   StartActing(new CompoundActionSequential(robot, {
-    new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
+    new TurnTowardsObjectAction(robot, _targetBlock, M_PI_F),
     new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
   }),
   &BehaviorPopAWheelie::TransitionToPerformingAction);
@@ -153,15 +153,15 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                   SmartReEnableReactionaryBehavior(BehaviorType::ReactToRobotOnBack);
                 }
                 
-                switch(msg.result)
+                switch(IActionRunner::GetActionResultCategory(msg.result))
                 {
-                  case ActionResult::SUCCESS:
+                  case ActionResultCategory::SUCCESS:
                   {
                     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
                     BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
                     break;
                   }
-                  case ActionResult::FAILURE_RETRY:
+                  case ActionResultCategory::RETRY:
                   {
                     if(_numPopAWheelieActionRetries < kBPW_MaxRetries)
                     {
@@ -171,12 +171,13 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                     
                     // else: too many retries, fall through to failure abort
                   }
-                  case ActionResult::FAILURE_ABORT:
+                  case ActionResultCategory::ABORT:
                   {
                     // assume that failure is because we didn't visually verify (although it could be due to an
                     // error)
                     PRINT_NAMED_INFO("BehaviorPopAWheelie.FailedAbort",
-                                     "Failed to verify pop, searching for block");
+                                     "Failed to pop with %s, searching for block",
+                                     EnumToString(msg.result));
                     
                     // mark the block as inaccessible
                     const ObservableObject* failedObject = failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlock);
@@ -209,10 +210,9 @@ void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface
   // with "isRetry" set to true.
   
   IActionRunner* animAction = nullptr;
-  switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+  switch(msg.result)
   {
-    case ObjectInteractionResult::INCOMPLETE:
-    case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+    case ActionResult::DID_NOT_REACH_PREACTION_POSE:
     {
       animAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieRealign);
       break;

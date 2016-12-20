@@ -82,15 +82,15 @@ namespace Anki {
       
       //Pose3d leftMarkerPose(-M_PI_2, Z_AXIS_3D(), {-_size.x()*.5f+markerSize, 0.f, _size.z()});
       //leftMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f});
-      Pose3d leftMarkerPose(-M_PI_2, X_AXIS_3D(), {-bridgeSize.x()*.5f+markerSize, 0.f, 0.f});
+      Pose3d leftMarkerPose(-M_PI_2_F, X_AXIS_3D(), {-bridgeSize.x()*.5f+markerSize, 0.f, 0.f});
       
       //Pose3d rightMarkerPose(M_PI_2, Z_AXIS_3D(), { _size.x()*.5f-markerSize, 0.f, _size.z()});
       //rightMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f});
-      Pose3d rightMarkerPose(-M_PI_2, X_AXIS_3D(), { bridgeSize.x()*.5f-markerSize, 0.f, 0.f});
+      Pose3d rightMarkerPose(-M_PI_2_F, X_AXIS_3D(), { bridgeSize.x()*.5f-markerSize, 0.f, 0.f});
       
       const Vision::KnownMarker* leftMarker  = &AddMarker(leftMarkerType,  leftMarkerPose,  markerSize);
       const Vision::KnownMarker* rightMarker = &AddMarker(rightMarkerType, rightMarkerPose, markerSize);
-      AddMarker(middleMarkerType, Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f}), markerSize);
+      AddMarker(middleMarkerType, Pose3d(-M_PI_2_F, X_AXIS_3D(), {0.f, 0.f, 0.f}), markerSize);
       
       ASSERT_NAMED(leftMarker != nullptr, "Bridge.Constructor.InvalidLeftMarker");
       ASSERT_NAMED(rightMarker != nullptr, "Bridge.Constructor.InvalidRightMarker");

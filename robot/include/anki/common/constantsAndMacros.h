@@ -27,8 +27,8 @@
  *
  **/
 
-#ifndef UTIL_CONSTANTS_AND_MACROS_H_
-#define UTIL_CONSTANTS_AND_MACROS_H_
+#ifndef SHARED_CONSTANTS_AND_MACROS_H_
+#define SHARED_CONSTANTS_AND_MACROS_H_
 
 //////////////////////////////////////////////////////////////////////////////
 // MISCELLANEOUS CONSTANTS
@@ -45,82 +45,20 @@
 // MATH CONSTANTS
 //////////////////////////////////////////////////////////////////////////////
 
-/* Why not use M_PI and M_PI_2 that are provided by the math.h include above? */
 #ifndef M_PI
-#define M_PI       3.14159265358979323846f
+#define M_PI       3.14159265358979323846264338327950288
 #endif
 
 #ifndef M_PI_2
-#define M_PI_2     1.57079632679489661923f
+#define M_PI_2     1.57079632679489661923132169163975144
 #endif
 
-#ifndef PI
-#define PI M_PI
+#ifndef M_PI_F
+#define M_PI_F     ((float)M_PI)
 #endif
 
-#ifndef PI_F
-#define PI_F ((float) PI)
-#endif
-
-#ifndef PIDIV2
-#define PIDIV2 M_PI_2
-#endif
-
-#ifndef PIDIV2_F
-#define PIDIV2_F ((float) M_PI_2)
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-// MAX / MIN VALUES
-//////////////////////////////////////////////////////////////////////////////
-// Can't use numeric_limits because it needs to be pure C and has templates
-
-#ifndef u8_MAX
-#define u8_MAX ( (u8)(0xFF))
-#endif
-
-#ifndef u16_MAX
-#define u16_MAX ( (u16)(0xFFFF) )
-#endif
-
-#ifndef u32_MAX
-#define u32_MAX ( (u32)(0xFFFFFFFF) )
-#endif
-
-#ifndef u64_MAX
-#define u64_MAX ( (u64)(0xFFFFFFFFFFFFFFFFLL) )
-#endif
-
-#ifndef s8_MIN
-#define s8_MIN ( (s8)(-1 - 0x7F) )
-#endif
-
-#ifndef s8_MAX
-#define s8_MAX ( (s8)(0x7F) )
-#endif
-
-#ifndef s16_MIN
-#define s16_MIN ( (s16)(-1 - 0x7FFF) )
-#endif
-
-#ifndef s16_MAX
-#define s16_MAX ( (s16)(0x7FFF) )
-#endif
-
-#ifndef s32_MIN
-#define s32_MIN ( (s32)(-1 - 0x7FFFFFFF) )
-#endif
-
-#ifndef s32_MAX
-#define s32_MAX ( (s32)(0x7FFFFFFF) )
-#endif
-
-#ifndef s64_MIN
-#define s64_MIN ( (s64)(-1 - 0X7FFFFFFFFFFFFFFFLL) )
-#endif
-
-#ifndef s64_MAX
-#define s64_MAX ( (s64)(0x7FFFFFFFFFFFFFFFLL) )
+#ifndef M_PI_2_F
+#define M_PI_2_F   ((float)M_PI_2)
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -227,4 +165,4 @@
 #define QUOTE_HELPER(__ARG__) #__ARG__
 #define QUOTE(__ARG__) QUOTE_HELPER(__ARG__)
 
-#endif // UTIL_CONSTANTS_AND_MACROS_H_
+#endif // SHARED_CONSTANTS_AND_MACROS_H_

@@ -11,7 +11,7 @@ source "${SCRIPT_PATH}/../build_env.sh"
 # tools
 VERSION_GENERATOR="${ANKI_BUILD_TOOLS_ROOT}/version-generator.py"
 
-# print environment 
+# print environment and short circuit script if run locally
 printenv | grep "ANKI_BUILD"
 
 echo ""
@@ -46,6 +46,17 @@ if [ ! -z ${ANKI_BUILD_HOCKEYAPP_APP_ID+x} ]; then
     ${PLIST_BUDDY} -c "Set :com.anki.hockeyapp.appid ${ANKI_BUILD_HOCKEYAPP_APP_ID}" "${INFO_PLIST}"
     echo "com.anki.hockeyapp.appid: ${ANKI_BUILD_HOCKEYAPP_APP_ID}"
 fi
+
+if [ -n "${TEAMCITY_BUILD_STEP_NAME}" ]; then
+    #Teamcity build
+    DAS_INSERT_STRING="${TEAMCITY_BUILD_STEP_NAME}: Inserted das.version $DAS_VERSION in ${INFO_PLIST}"
+else
+    #local build
+    DAS_INSERT_STRING="Inserted das.version $DAS_VERSION in ${INFO_PLIST}"
+    rm -f ${ANKI_DAS_VERSION_FILE}
+fi
+
+echo ${DAS_INSERT_STRING} >> ${ANKI_DAS_VERSION_FILE}
 
 popdir
 

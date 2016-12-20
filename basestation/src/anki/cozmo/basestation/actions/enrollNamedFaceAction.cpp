@@ -146,8 +146,8 @@ namespace Cozmo {
     trackAction->SetSound(AnimationTrigger::Count);
     
     // Add constant small movement
-    trackAction->SetTiltTolerance(DEG_TO_RAD_F32(kMinTrackingTiltAngle_deg));
-    trackAction->SetPanTolerance(DEG_TO_RAD_F32(kMinTrackingPanAngle_deg));
+    trackAction->SetTiltTolerance(DEG_TO_RAD(kMinTrackingTiltAngle_deg));
+    trackAction->SetPanTolerance(DEG_TO_RAD(kMinTrackingPanAngle_deg));
     trackAction->SetClampSmallAnglesToTolerances(true);
     
     return trackAction;
@@ -166,7 +166,7 @@ namespace Cozmo {
                       "Turning towards faceID=%d (saveID=%d)",
                       faceID, saveID);
         
-        action = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD_F32(45.f));
+        action = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD(45.f));
       } else {
 
       }
@@ -204,7 +204,7 @@ namespace Cozmo {
                       "Turning towards faceID=%d last seen at t=%d (saveID=%d)",
                       faceToTurnTowards->GetID(), faceToTurnTowards->GetTimeStamp(), saveID);
         
-        action = new TurnTowardsFaceAction(robot, faceToTurnTowards->GetID(), DEG_TO_RAD_F32(90.f));
+        action = new TurnTowardsFaceAction(robot, faceToTurnTowards->GetID(), DEG_TO_RAD(90.f));
       }
     }
     
@@ -216,7 +216,7 @@ namespace Cozmo {
                     faceID, saveID);
       
       // No face found to look towards: fallback on looking at last face pose
-      action = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD_F32(45.f));
+      action = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD(45.f));
     }
     
     CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel(robot, {
@@ -470,7 +470,7 @@ namespace Cozmo {
     if(RESULT_OK != initSeqResult) {
       PRINT_NAMED_WARNING("EnrollNamedFaceAction.Init.InitSequenceFail",
                           "Requested sequence: %s", EnumToString(_whichSeq));
-      return ActionResult::FAILURE_ABORT;
+      return ActionResult::ABORT;
     }
     
     ASSERT_NAMED(!_enrollSequence.empty(), "EnrollNamedFaceAction.Init.EmptyEnrollSequence");
@@ -510,7 +510,7 @@ namespace Cozmo {
     if(_needToAbort)
     {
       // A handler told us to abort
-      return ActionResult::FAILURE_ABORT;
+      return ActionResult::ABORT;
     }
     
     switch(_state)
@@ -545,7 +545,7 @@ namespace Cozmo {
             Result stepInitResult = InitCurrentStep(); // Transitions us to PreActing
             if(RESULT_OK != stepInitResult) {
               PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.StepInitFailed", "");
-              return ActionResult::FAILURE_ABORT;
+              return ActionResult::ABORT;
             }
             
           }
@@ -568,7 +568,7 @@ namespace Cozmo {
       {
         if(_faceID <= Vision::UnknownFaceID) {
           PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.InvalidFaceID_PreActing", "");
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::ABORT;
         }
         
         if(_action != nullptr)
@@ -593,7 +593,7 @@ namespace Cozmo {
           Result duringResult = _seqIter->duringFcn();
           if(RESULT_OK != duringResult) {
             PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.DuringFcnFailed", "");
-            return ActionResult::FAILURE_ABORT;
+            return ActionResult::ABORT;
           }
         }
         
@@ -606,7 +606,7 @@ namespace Cozmo {
       {
         if(_faceID <= Vision::UnknownFaceID) {
           PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.InvalidFaceID_Enrolling", "");
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::ABORT;
         }
         
         if(_action != nullptr)
@@ -661,7 +661,7 @@ namespace Cozmo {
             Result result = _seqIter->stopFcn();
             if(RESULT_OK != result) {
               PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.StopFcnFailed", "");
-              return ActionResult::FAILURE_ABORT;
+              return ActionResult::ABORT;
             }
           }
           
@@ -676,7 +676,7 @@ namespace Cozmo {
       {
         if(_faceID <= Vision::UnknownFaceID) {
           PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.InvalidFaceID_PostActing", "");
-          return ActionResult::FAILURE_ABORT;
+          return ActionResult::ABORT;
         }
         
         if(_action != nullptr)
@@ -762,7 +762,7 @@ namespace Cozmo {
           Result stepInitResult = InitCurrentStep();
           if(RESULT_OK != stepInitResult) {
             PRINT_NAMED_WARNING("EnrollNamedFaceAction.Init.StepInitFailed", "");
-            return ActionResult::FAILURE_ABORT;
+            return ActionResult::ABORT;
           }
         } else {
           PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.WaitingForMinTimerPerStep",
@@ -792,7 +792,7 @@ namespace Cozmo {
             if(result == NVStorage::NVResult::NV_OKAY) {
               _saveEnrollResult = ActionResult::SUCCESS;
             } else {
-              _saveEnrollResult = ActionResult::FAILURE_ABORT;
+              _saveEnrollResult = ActionResult::ABORT;
             }
           };
           
@@ -801,7 +801,7 @@ namespace Cozmo {
             if(result == NVStorage::NVResult::NV_OKAY) {
               _saveAlbumResult = ActionResult::SUCCESS;
             } else {
-              _saveAlbumResult = ActionResult::FAILURE_ABORT;
+              _saveAlbumResult = ActionResult::ABORT;
             }
           };
           
@@ -816,8 +816,8 @@ namespace Cozmo {
       case State::SavingToRobot:
       {
         // Wait for Save to complete (success or failure)
-        if(ActionResult::FAILURE_NOT_STARTED != _saveEnrollResult &&
-           ActionResult::FAILURE_NOT_STARTED != _saveAlbumResult)
+        if(ActionResult::NOT_STARTED != _saveEnrollResult &&
+           ActionResult::NOT_STARTED != _saveAlbumResult)
         {
           if(ActionResult::SUCCESS == _saveEnrollResult &&
              ActionResult::SUCCESS == _saveAlbumResult)
@@ -840,7 +840,7 @@ namespace Cozmo {
             if(Vision::UnknownFaceID == _saveID)
             {
               _robot.GetVisionComponent().EraseFace(_faceID);
-              return ActionResult::FAILURE_ABORT;
+              return ActionResult::ABORT;
             }
             else
             {
@@ -1013,7 +1013,7 @@ namespace Cozmo {
           if(nullptr != myFace && nullptr != newFace &&
              newFace->GetHeadPose().IsSameAs(myFace->GetHeadPose(),
                                              kUpdateFacePositionThreshold_mm,
-                                             DEG_TO_RAD_F32(kUpdateFaceAngleThreshold_deg)))
+                                             DEG_TO_RAD(kUpdateFaceAngleThreshold_deg)))
           {
             PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotObservedFace.UpdatingFaceIDbyPose",
                           "Was enrolling ID=%d, changing to unnamed ID=%d based on pose (saveID=%d)",

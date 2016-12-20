@@ -63,7 +63,7 @@ ActionResult TestAction::CheckIfDone()
   if(_numRetries > 0)
   {
     _numRetries--;
-    return ActionResult::FAILURE_RETRY;
+    return ActionResult::RETRY;
   }
   return (_complete ? ActionResult::SUCCESS : ActionResult::RUNNING);
 }
@@ -230,7 +230,7 @@ ActionResult TestActionThatCancels::CheckIfDone()
   if(_numRetries > 0)
   {
     _numRetries--;
-    return ActionResult::FAILURE_RETRY;
+    return ActionResult::RETRY;
   }
   return (_complete ? ActionResult::SUCCESS : ActionResult::RUNNING);
 }

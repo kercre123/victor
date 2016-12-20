@@ -1,4 +1,3 @@
-#include "util/math/constantsAndMacros.h"
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 #include "util/logging/logging.h"
 #include <set>
@@ -11,6 +10,7 @@
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "util/helpers/quoteMacro.h"
 #include "util/jsonWriter/jsonWriter.h"
 #include "json/json.h"
 

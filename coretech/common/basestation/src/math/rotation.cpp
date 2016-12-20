@@ -225,7 +225,7 @@ namespace Anki {
     if(_angle == 0 && axisLength == 0) {
       // If angle is zero and axis is unspecified, then the axis is arbitrary
       _axis = X_AXIS_3D();
-    } else if(!NEAR(axisLength, 1.f, FLOATING_POINT_COMPARISON_TOLERANCE)) {
+    } else if(!FLT_NEAR(axisLength, 1.f)) {
       PRINT_NAMED_WARNING("RotationVector3d.Constructor.AxisNotUnitLength",
                           "Provided axis was not unit length (norm=%f).",
                           axisLength);
@@ -266,7 +266,7 @@ namespace Anki {
     const f32 halfAngle = angle.ToFloat() * 0.5f;
     const f32 q1 = std::cos(halfAngle);
     
-    assert(NEAR(axis.LengthSq(), 1.f, FLOATING_POINT_COMPARISON_TOLERANCE));
+    assert(FLT_NEAR(axis.LengthSq(), 1.f));
     
     const f32 sinHalfAngle = std::sin(halfAngle);
     const f32 q2 = sinHalfAngle * axis[0];

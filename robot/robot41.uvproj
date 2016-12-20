@@ -503,11 +503,6 @@
               <FileType>2</FileType>
               <FilePath>startup/startup_MK02F12810.s</FilePath>
             </File>
-            <File>
-              <FileName>startup.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>startup/startup.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>

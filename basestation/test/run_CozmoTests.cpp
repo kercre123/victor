@@ -709,7 +709,7 @@ TEST(BlockWorld, CubeStacks)
   const std::vector<RotationVector3d> TestOutOfPlaneRotations{
     {DEG_TO_RAD(0),   X_AXIS_3D()},  // None
     {DEG_TO_RAD(5),   X_AXIS_3D()},  // Slightly rotated around X
-    {DEG_TO_RAD(7.5), Y_AXIS_3D()},  // Slightly rotated around Y
+    {DEG_TO_RAD(7.5f), Y_AXIS_3D()},  // Slightly rotated around Y
     {DEG_TO_RAD(88),  X_AXIS_3D()},  // Z not pointing up
     {DEG_TO_RAD(182), Y_AXIS_3D()},  // Z pointing down
   };
@@ -1356,10 +1356,10 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   
   auto getRandomFlatXRotation = [&randGen](){
     const std::vector<RotationVector3d> flatXRotations{
-      {0,   X_AXIS_3D()},
-      {M_PI_2,   X_AXIS_3D()},
-      {M_PI,   X_AXIS_3D()},
-      {-M_PI_2,  X_AXIS_3D()}
+      {0,         X_AXIS_3D()},
+      {M_PI_2_F,  X_AXIS_3D()},
+      {M_PI_F,    X_AXIS_3D()},
+      {-M_PI_2_F, X_AXIS_3D()}
     };
     const int xDegreeIndex = randGen.RandInt(static_cast<int>(flatXRotations.size()));
     return flatXRotations[xDegreeIndex];
@@ -1367,10 +1367,10 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   
   auto getRandomFlatYRotation = [&randGen](){
     const std::vector<RotationVector3d> flatYRotations{
-      {0,   Y_AXIS_3D()},
-      {M_PI_2,   Y_AXIS_3D()},
-      {M_PI,   Y_AXIS_3D()},
-      {-M_PI_2,  Y_AXIS_3D()}
+      {0,         Y_AXIS_3D()},
+      {M_PI_2_F,  Y_AXIS_3D()},
+      {M_PI_F,    Y_AXIS_3D()},
+      {-M_PI_2_F, Y_AXIS_3D()}
     };
     const int yDegreeIndex = randGen.RandInt(static_cast<int>(flatYRotations.size()));
     
@@ -1535,9 +1535,9 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   /////////
   const int numberOfStackTests = 500;
   const int numberOfTestsWithTwoBlocks = numberOfStackTests/2;
-  const float oddsFirstBlockOnGround = 0.7;
-  const float oddsSecondBlockInStack = 0.7;
-  const float oddsThirdBlockInStack = 0.7;
+  const float oddsFirstBlockOnGround = 0.7f;
+  const float oddsSecondBlockInStack = 0.7f;
+  const float oddsThirdBlockInStack = 0.7f;
   
   const float xMinGrid = 0;
   const float xMaxGrid = 100;
@@ -1657,25 +1657,25 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
             finalOb1Pose.GetWithRespectToOrigin().GetTranslation().x(),
             finalOb1Pose.GetWithRespectToOrigin().GetTranslation().y(),
             finalOb1Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG_F32(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     fprintf(stdout, "Ob2 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
             finalOb2Pose.GetWithRespectToOrigin().GetTranslation().x(),
             finalOb2Pose.GetWithRespectToOrigin().GetTranslation().y(),
             finalOb2Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG_F32(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     fprintf(stdout, "Ob3 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
             finalOb3Pose.GetWithRespectToOrigin().GetTranslation().x(),
             finalOb3Pose.GetWithRespectToOrigin().GetTranslation().y(),
             finalOb3Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG_F32(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG_F32(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     ASSERT_EQ(stackShouldExist, stacks.ConfigurationCount() > 0);
     
@@ -1720,7 +1720,7 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
   Json::Value fakeJSON;
   const int pyramidTestRepetitionCount = 10;
   
-  const std::vector<float> orientationList = {0, M_PI_2, M_PI, -M_PI_2};
+  const std::vector<float> orientationList = {0, M_PI_2_F, M_PI_F, -M_PI_2_F};
   
   const float blockSize = staticBlock->GetSize().x();
   const float blockHeightCenter = staticBlock->GetSize().z()/2;
@@ -1756,17 +1756,17 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
                   staticPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
                   staticPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
                   staticPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                  RAD_TO_DEG_F32(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                  RAD_TO_DEG_F32(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                  RAD_TO_DEG_F32(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
           
           fprintf(stdout, "baseBlockPose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
                   basePoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
                   basePoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
                   basePoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                  RAD_TO_DEG_F32(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                  RAD_TO_DEG_F32(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                  RAD_TO_DEG_F32(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
           
           ASSERT_TRUE(bases.ConfigurationCount() == 1);
           
@@ -1791,9 +1791,9 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
                     topPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
                     topPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
                     topPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                    RAD_TO_DEG_F32(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                    RAD_TO_DEG_F32(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                    RAD_TO_DEG_F32(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
 
             
             ASSERT_TRUE(pyramids.ConfigurationCount() == 1);
@@ -1840,9 +1840,9 @@ TEST(FactoryTest, IdealCameraPose)
                                  Point3f( 0.5f*kDotSpacingX_mm, -0.5f*kDotSpacingY_mm, 0),
                                  Point3f( 0.5f*kDotSpacingX_mm,  0.5f*kDotSpacingY_mm, 0));
   
-  const std::vector<f32> kPitchAngle_deg = {0, 0.5, 1, 2, 4, 5};
-  const std::vector<f32> kYawAngle_deg   = {0, 0.5, 1, 2, 4, 5};
-  const std::vector<f32> kRollAngle_deg  = {0, 0.1, 0.5, 1};
+  const std::vector<f32> kPitchAngle_deg = {0, 0.5f, 1, 2, 4, 5};
+  const std::vector<f32> kYawAngle_deg   = {0, 0.5f, 1, 2, 4, 5};
+  const std::vector<f32> kRollAngle_deg  = {0, 0.1f, 0.5f, 1};
   
   
   Robot robot(1, cozmoContext);
@@ -1997,9 +1997,9 @@ TEST(FactoryTest, FindDotsInImages)
                      "'%s'[%s]: position=(%.1f,%.1f,%.1f)mm Roll=%.1fdeg Pitch=%.1fdeg, Yaw=%.1fdeg",
                      test.filename.c_str(), msg.success ? "SUCCESS" : "FAIL",
                      msg.camPoseX_mm, msg.camPoseY_mm, msg.camPoseZ_mm,
-                     RAD_TO_DEG_F32(msg.camPoseRoll_rad),
-                     RAD_TO_DEG_F32(msg.camPosePitch_rad),
-                     RAD_TO_DEG_F32(msg.camPoseYaw_rad));
+                     RAD_TO_DEG(msg.camPoseRoll_rad),
+                     RAD_TO_DEG(msg.camPosePitch_rad),
+                     RAD_TO_DEG(msg.camPoseYaw_rad));
     
     // TODO: Check the rest of the message contents for sane values
   }

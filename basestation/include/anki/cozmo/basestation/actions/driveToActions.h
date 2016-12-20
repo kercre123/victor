@@ -208,7 +208,6 @@ namespace Anki {
     private:
       GetPossiblePosesFunc _getPossiblePosesFunc;
       bool _lightsSet = false;
-      ObjectInteractionResult _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
       
     }; // DriveToObjectAction
 

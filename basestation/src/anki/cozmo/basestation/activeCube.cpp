@@ -223,7 +223,7 @@ namespace Anki {
         return WhichCubeLEDs::FRONT_LEFT;
       }
       
-      PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "ActiveCube " << GetID().GetValue() << "'s TopMarker is = " << Vision::MarkerTypeStrings[topMarker.GetCode()] << ", angle = " << std::setprecision(3) << topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees() << "deg");
+      PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "ActiveCube " << GetID().GetValue() << "'s TopMarker is = " << topMarker.GetCodeName() << ", angle = " << std::setprecision(3) << topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees() << "deg");
       
       Radians angle = std::atan2(v.y(), v.x());
       angle -= topMarkerPose.GetRotationAngle<'Z'>();
@@ -243,7 +243,7 @@ namespace Anki {
         }
       } else {
         //assert(angle >= -M_PI);
-        if(angle > -M_PI_2) {
+        if(angle > -M_PI_2_F) {
           // Between -90 and 0: Lower Right Corner
           PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Back Right");
           whichLEDs = WhichCubeLEDs::BACK_RIGHT;
@@ -281,24 +281,24 @@ namespace Anki {
       
       
       WhichCubeLEDs whichLEDs = WhichCubeLEDs::NONE;
-      if(angle < M_PI_4 && angle >= -M_PI_4) {
+      if(angle < M_PI_4_F && angle >= -M_PI_4_F) {
         // Between -45 and 45 degrees: Back Face
         whichLEDs = WhichCubeLEDs::BACK;
         PRINT_STREAM_INFO("ActiveCube.GetFaceClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest face to (" << xyPosition.x() << "," << xyPosition.y() << "): Back");
       }
-      else if(angle < 3*M_PI_4 && angle >= M_PI_4) {
+      else if(angle < 3*M_PI_4_F && angle >= M_PI_4_F) {
         // Between 45 and 135 degrees: Left Face
         whichLEDs = WhichCubeLEDs::LEFT;
         PRINT_STREAM_INFO("ActiveCube.GetFaceClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest face to (" << xyPosition.x() << "," << xyPosition.y() << "): Left");
       }
-      else if(angle < -M_PI_4 && angle >= -3*M_PI_4) {
+      else if(angle < -M_PI_4_F && angle >= -3*M_PI_4_F) {
         // Between -45 and -135: Right Face
         whichLEDs = WhichCubeLEDs::RIGHT;
         PRINT_STREAM_INFO("ActiveCube.GetFaceClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest face to (" << xyPosition.x() << "," << xyPosition.y() << "): Right");
       }
       else {
         // Between -135 && +135: Front Face
-        assert(angle < -3*M_PI_4 || angle > 3*M_PI_4);
+        assert(angle < -3*M_PI_4_F || angle > 3*M_PI_4_F);
         whichLEDs = WhichCubeLEDs::FRONT;
         PRINT_STREAM_INFO("ActiveCube.GetFaceClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest face to (" << xyPosition.x() << "," << xyPosition.y() << "): Front");
       }
@@ -359,7 +359,7 @@ namespace Anki {
       for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
         // Set the corresponding rotated bit if the current bit is set
         rotatedWhichLEDs |= ((currentBit & (u8)whichLEDs)>0) << rotatedPosition[iLED];
-        currentBit = currentBit << 1;
+        currentBit = (u8)(currentBit << 1);
       }
 
       return (WhichCubeLEDs)rotatedWhichLEDs;

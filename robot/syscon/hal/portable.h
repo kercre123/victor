@@ -12,6 +12,10 @@ typedef signed long long    s64;
 typedef float               f32;
 typedef double              f64;
 
+#ifndef Fixed
+typedef s32                 Fixed;
+#endif
+
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
 #endif

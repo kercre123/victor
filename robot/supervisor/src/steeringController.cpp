@@ -85,7 +85,7 @@ namespace Anki {
       
       f32 pointTurnKp_ = 150;
       f32 pointTurnKd_ = 4000;
-      f32 pointTurnKi_ = 0.3;
+      f32 pointTurnKi_ = 0.3f;
       f32 pointTurnMaxIntegralError_ = 100;
       f32 prevPointTurnAngleError_ = 0;
       f32 pointTurnAngleErrorSum_ = 0;
@@ -314,7 +314,7 @@ namespace Anki {
           offsetError_mm = 0;
           headingError_rad = 0;
         } else {
-          headingError_rad = -Radians(headingError_rad + PI_F).ToFloat();
+          headingError_rad = -Radians(headingError_rad + M_PI_F).ToFloat();
         }
       }
 
@@ -618,9 +618,9 @@ namespace Anki {
         // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
         // which determines the turning direction.
         if (currAngle > destAngle && maxAngularVel_ > 0) {
-          destAngle += 2*PI_F;
+          destAngle += 2*M_PI_F;
         } else if (currAngle < destAngle && maxAngularVel_ < 0) {
-          destAngle -= 2*PI_F;
+          destAngle -= 2*M_PI_F;
         }
       }
 

@@ -18,157 +18,166 @@
 
 namespace Anki {
 namespace Cozmo {
+
+namespace {
+static const constexpr float kTimeToWaitForAnimations_s = 3.0f;
+static const constexpr int kNumLoops = 1;
+}
   
-  enum class TestState {
-    InitCheck,
-    Setup,
-    ReadyForNextCommand,
-    ExecutingTestAnimation,
-    WaitUntilEndOfMessage,
-    TestDone
-  };
-  
-  // ============ Test class declaration ============
-  class CST_Animations : public CozmoSimTestController {
-    
+enum class TestState {
+  Setup,
+  SendingNextAnimation,
+  ExecutingAnimation,
+  TestDone
+};
+
+// ============ Test class declaration ============
+class CST_Animations : public CozmoSimTestController {
   private:
     virtual s32 UpdateSimInternal() override;
     
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
     virtual void HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg) override;
-    virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg) override;
+    virtual void HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg) override;
     
-    TestState _testState = TestState::InitCheck;
+    TestState _testState = TestState::Setup;
+    time_t _startedWaitingForAnimations_s = -1.f;
 
-    std::string _lastAnimPlayed = "";
+    std::vector<std::string> _allAnimations;
+    int _animationIndex = 0;
+    std::vector<std::string> _animationsFailed;
+  
+    std::string _lastAnimPlayed;
     double _lastAnimPlayedTime = 0;
-    bool _receivedAllAnimations = false;
-    std::string _animationToPlay = "";
-  };
   
-  // Register class with factory
-  REGISTER_COZMO_SIM_TEST_CLASS(CST_Animations);
-  
-  
-  // =========== Test class implementation ===========
+};
 
-  s32 CST_Animations::UpdateSimInternal()
-  {
-    switch (_testState) {
-      case TestState::InitCheck:
-      {
-        _animationToPlay = UiGameController::GetAnimationTestName();
-        PRINT_NAMED_DEBUG("CST_Animations.InitCheck",
-                          "Specified animation from .wbt world file: %s", _animationToPlay.c_str());
+// Register class with factory
+REGISTER_COZMO_SIM_TEST_CLASS(CST_Animations);
 
-        // If the sepcified animation is empty, wait until all the availalble animations have been
-        // broadcasted by the robot and exit. Useful to fetch and log available animations by
-        // running this test once without specifying animation to test.
-        if (_animationToPlay == "%ANIMATION_TEST_NAME%") {
-          _testState = TestState::WaitUntilEndOfMessage;
-        } else {
-          _testState = TestState::Setup;
-        }
 
-        break;
-      }
+// =========== Test class implementation ===========
 
-      case TestState::Setup:
-      {
+s32 CST_Animations::UpdateSimInternal()
+{
+  switch (_testState) {
+    case TestState::Setup: 
+    {
+      if(_startedWaitingForAnimations_s < 0){
         // Sends a CLAD message to robot so that RobotAudioOutputSource is set to PlayOnRobot,
         // otherwise a lot of the audio bugs will not occur. See robotAudioClient.h on the robot
         // side for more information
-        ExternalInterface::SetRobotAudioOutputSource m;
-        m.source = ExternalInterface::RobotAudioOutputSourceCLAD::PlayOnRobot;
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_SetRobotAudioOutputSource(m);
-        SendMessage(message);
-
-        _testState = TestState::ReadyForNextCommand;
-      }
-
-      case TestState::ReadyForNextCommand:
-      {
-        PRINT_NAMED_INFO("CST_Animations.PlayingAnimation", "%s", _animationToPlay.c_str());
-        u32 numLoops = 1;
-        SendAnimation(_animationToPlay.c_str(), numLoops);
-        _lastAnimPlayed = _animationToPlay;
-        _lastAnimPlayedTime = GetSupervisor()->getTime();
-        _testState = TestState::ExecutingTestAnimation;
-
-        break;
-      }
+        using namespace ExternalInterface;
+        MessageGameToEngine audioOutputMsg;
+        audioOutputMsg.Set_SetRobotAudioOutputSource(SetRobotAudioOutputSource(RobotAudioOutputSourceCLAD::PlayOnRobot));
+        SendMessage(audioOutputMsg);
         
-      case TestState::ExecutingTestAnimation:
-      {
-        double timeoutInSeconds = 99;
-        // If no action complete message, this will timeout with assert.
-        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, timeoutInSeconds)) {
-          _testState = TestState::TestDone;
+        // Setup Sound Banks for Tests
+        // Handle Text to Speech audio events
+        // Note: MessageGameToEngine uses the UnityAudioClient Connection to set audio state
+        using namespace Audio;
+        MessageGameToEngine audioStateMsg;
+        audioStateMsg.Set_PostAudioGameState(PostAudioGameState(static_cast<GameState::StateGroupType>(GameState::StateGroupType::External_Name),
+                                                                static_cast<GameState::GenericState>(GameState::External_Name::Unit_Test_Mock)));
+        SendMessage(audioStateMsg);
+        
+        time(&_startedWaitingForAnimations_s);
+      }else{
+        time_t currentTime;
+        time(&currentTime);
+        if(difftime(currentTime, _startedWaitingForAnimations_s) > kTimeToWaitForAnimations_s){
+          // we've waited longe enough to have buildup the animation list - start the test
+          _testState = TestState::SendingNextAnimation;
         }
-        break;
       }
-
-      case TestState::WaitUntilEndOfMessage:
-      {
-        double timeoutInSeconds = 10;
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_receivedAllAnimations, timeoutInSeconds){
-          _testState = TestState::TestDone;
-        }
-      }
-
-      case TestState::TestDone:
-        CST_EXIT();
-        break;
     }
-    
-    return _result;
-  }
 
-  
-  
-  // ================ Message handler callbacks ==================
-  
-  void CST_Animations::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
-  {
-    switch((RobotActionType)msg.actionType)
+    case TestState::SendingNextAnimation:
     {
-      case RobotActionType::PLAY_ANIMATION:
-        printf("Robot %d finished playing animation %s. [Tag=%d]\n",
-               msg.robotID, msg.completionInfo.Get_animationCompleted().animationName.c_str(), msg.idTag);
-        if ((_testState == TestState::ExecutingTestAnimation) &&
-            (msg.completionInfo.Get_animationCompleted().animationName.compare(_lastAnimPlayed) == 0)) {
-          
-          CST_EXPECT(msg.result == ActionResult::SUCCESS,
-                     _lastAnimPlayed << " failed to play");
-          
-          // Clear this to signal to state machine to play the next animation
-          _lastAnimPlayed.clear();
+      _lastAnimPlayed = _allAnimations[_animationIndex];
+      _lastAnimPlayedTime = GetSupervisor()->getTime();
+      _animationIndex++;
+      
+      PRINT_NAMED_INFO("CST_Animations.PlayingAnimation", "%s", _lastAnimPlayed.c_str());
+      SendAnimation(_lastAnimPlayed.c_str(), kNumLoops);
+      _testState = TestState::ExecutingAnimation;
+      break;
+    }
+      
+    case TestState::ExecutingAnimation:
+    {
+      double timeoutInSeconds = 99;
+      // If no action complete message, this will timeout with assert.
+      if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, timeoutInSeconds)) {
+        if(_animationIndex < _allAnimations.size()){
+          _testState = TestState::SendingNextAnimation;
+        }else{
+          _testState = TestState::TestDone;
         }
-        break;
-   
-      default:
-        break;
+      }
+      break;
     }
-   
-  }
 
-  void CST_Animations::HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg)
-  {
-    PRINT_NAMED_WARNING("CST_Animations.HandleAnimationAborted",
-                      "'%s' was aborted.",
-                      _animationToPlay.c_str());
-    _testState = TestState::TestDone;
-  }
-
-  void CST_Animations::HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg)
-  {
-    if (msg.messageType == ExternalInterface::MessageType::AnimationAvailable) {
-      PRINT_NAMED_INFO("CST_Animations.HandleEndOfMessage", "Received `EndOfMessage`; messageType: %s", ExternalInterface::MessageTypeToString(msg.messageType));
-      _receivedAllAnimations = true;
+    case TestState::TestDone:
+    {
+      PRINT_NAMED_INFO("Webots.AnimationPlayback.TestData", "##teamcity[buildStatisticValue key='%s' value='%lu']", "wbtsAnimationCount", _allAnimations.size());
+      PRINT_NAMED_INFO("Webots.AnimationPlayback.TestData", "##teamcity[buildStatisticValue key='%s' value='%lu']", "wbtsAnimationFailures", _animationsFailed.size());
+      if(!_animationsFailed.empty()){
+        // Print all animations that failed and then crash the test
+        for(const auto& anim: _animationsFailed){
+          PRINT_NAMED_ERROR("CST_Animations.AnimationFailed", "Animation %s printed an error", anim.c_str());
+        }
+      }
+      CST_EXIT();
+      break;
     }
   }
-  // ============== End of message handlers =================
+  
+  return _result;
+}
+
+// ================ Message handler callbacks ==================
+
+void CST_Animations::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
+{
+  switch((RobotActionType)msg.actionType)
+  {
+    case RobotActionType::PLAY_ANIMATION:
+    {
+      printf("Robot %d finished playing animation %s. [Tag=%d]\n",
+             msg.robotID, msg.completionInfo.Get_animationCompleted().animationName.c_str(), msg.idTag);
+      const bool isLastPlayedAnimation = msg.completionInfo.Get_animationCompleted().animationName.compare(_lastAnimPlayed) == 0;
+      if (_testState == TestState::ExecutingAnimation && isLastPlayedAnimation){
+        if(msg.result != ActionResult::SUCCESS){
+          _animationsFailed.push_back(_lastAnimPlayed);
+        }
+        
+        // Clear this to signal to state machine to play the next animation
+        _lastAnimPlayed.clear();
+      }
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+void CST_Animations::HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg)
+{
+  PRINT_NAMED_ERROR("CST_Animations.HandleAnimationAborted",
+                    "'%s' was aborted.",
+                    _lastAnimPlayed.c_str());
+  _animationsFailed.push_back(_lastAnimPlayed);
+  _lastAnimPlayed.clear();
+}
+
+void CST_Animations::HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg)
+{
+  _allAnimations.push_back(msg.animName);
+}
+
+
+// ============== End of message handlers =================
 
   
 

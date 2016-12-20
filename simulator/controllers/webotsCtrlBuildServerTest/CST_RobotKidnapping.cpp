@@ -63,7 +63,7 @@ namespace Cozmo {
   
   // =========== Test class implementation ===========
   CST_RobotKidnapping::CST_RobotKidnapping()
-  : _kidnappedPose(-M_PI_2, Z_AXIS_3D(), {150.f, -150.f, 0})
+  : _kidnappedPose(-M_PI_2_F, Z_AXIS_3D(), {150.f, -150.f, 0})
   , _poseAngleThresh(DEG_TO_RAD(5.f))
   {
     
@@ -111,7 +111,7 @@ namespace Cozmo {
       {
         // Sending the delocalize message one tic after actually moving the robot to be sure that no images
         // from the previous pose are processed after the delocalization.
-        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ForceDelocalizeRobot(_robotState.robotID)));
+        SendForceDeloc();
         
         _testState = TestState::Kidnap;
         break;
@@ -120,7 +120,7 @@ namespace Cozmo {
       case TestState::Kidnap:
       {
         // Wait until we see that the robot has gotten the delocalization message
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID < 0, 2)
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), 2)
         {
           // Once kidnapping occurs, tell robot to turn to see the other object
           SendTurnInPlace(DEG_TO_RAD(90));

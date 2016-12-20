@@ -38,6 +38,60 @@ typedef float    f32;
 typedef double   f64;
 #endif
 
+
+//////////////////////////////////////////////////////////////////////////////
+// MAX / MIN VALUES
+//////////////////////////////////////////////////////////////////////////////
+// Can't use numeric_limits because it needs to be pure C and has templates
+
+#ifndef u8_MAX
+#define u8_MAX ( (u8)(0xFF))
+#endif
+
+#ifndef u16_MAX
+#define u16_MAX ( (u16)(0xFFFF) )
+#endif
+
+#ifndef u32_MAX
+#define u32_MAX ( (u32)(0xFFFFFFFF) )
+#endif
+
+#ifndef u64_MAX
+#define u64_MAX ( (u64)(0xFFFFFFFFFFFFFFFFLL) )
+#endif
+
+#ifndef s8_MIN
+#define s8_MIN ( (s8)(-1 - 0x7F) )
+#endif
+
+#ifndef s8_MAX
+#define s8_MAX ( (s8)(0x7F) )
+#endif
+
+#ifndef s16_MIN
+#define s16_MIN ( (s16)(-1 - 0x7FFF) )
+#endif
+
+#ifndef s16_MAX
+#define s16_MAX ( (s16)(0x7FFF) )
+#endif
+
+#ifndef s32_MIN
+#define s32_MIN ( (s32)(-1 - 0x7FFFFFFF) )
+#endif
+
+#ifndef s32_MAX
+#define s32_MAX ( (s32)(0x7FFFFFFF) )
+#endif
+
+#ifndef s64_MIN
+#define s64_MIN ( (s64)(-1 - 0X7FFFFFFFFFFFFFFFLL) )
+#endif
+
+#ifndef s64_MAX
+#define s64_MAX ( (s64)(0x7FFFFFFFFFFFFFFFLL) )
+#endif
+
 #ifndef NULL
 #define NULL 0
 #endif

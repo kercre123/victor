@@ -165,11 +165,20 @@ class DeclEmitter(BaseEmitter):
         self.body_emitter.visit(node, *args, **kwargs)
 
         if node.namespace:
-            self.output.write('{qualified_decl_name} = {decl_name}\n'.format(**globals))
-            if need_to_save_name:
-                self.output.write('{decl_name} = {saved_name}\n\n'.format(**globals))
-            else:
-                self.output.write('del {decl_name}\n\n'.format(**globals))
+            # The idea is that if an enum is referencing another enum using the verbatim keyword then the enum that is being
+            # referenced has to specify no_cpp_class in order for the c++ code to compile. Generated python code needs to not
+            # delete the decl_name in this case
+            try:
+                # Only EnumDecls have cpp_class so this needs to be in a try except
+                # cpp_class is false if no_cpp_class was specified in the clad file so we need to save the decl name
+                need_to_save_name = not node.cpp_class
+            except AttributeError:
+                pass
+            finally:
+              self.output.write('{qualified_decl_name} = {decl_name}\n'.format(**globals))
+              # if we don't need to save the decl_name then delete it
+              if not need_to_save_name:
+                  self.output.write('del {decl_name}\n\n'.format(**globals))
 
         self.output.write('\n')
 
@@ -197,15 +206,15 @@ class EnumEmitter(BaseEmitter):
             starts = []
             ends = []
             enum_val = 0
+            enum_str_val = None
             for member in node.members():
-                if member.initializer:
-                    enum_val = member.initializer.value
-                    initializer = '0x{0:x}'.format(enum_val) if member.initializer.type == "hex" else '{0:d}'.format(enum_val)
-                else:
-                    initializer = '{0:d}'.format(enum_val)
+                value = member.value
+                
+                if type(value) is str and "::" in member.value:
+                    value = value.replace("::", ".")
+                
                 start = '\t{member_name}'.format(member_name=member.name)
-                end = ' = {initializer}\n'.format(initializer=initializer)
-                enum_val += 1
+                end = ' = {initializer}\n'.format(initializer=str(value))
 
                 starts.append(start)
                 ends.append(end)

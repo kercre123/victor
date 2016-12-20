@@ -105,7 +105,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::AT_END;
             m.idTag = 5;
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-PI/4, DEG_TO_RAD(100), 0, false, 1));
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/4, DEG_TO_RAD(100), 0, false, 1));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -173,10 +173,10 @@ namespace Anki {
                                            NEAR(GetRobotPose().GetTranslation().x(), 191, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 100, 10) &&
                                            GetCarryingObjectID() == -1 &&
-                                           NEAR(pose.GetRotationAxis().x(), 0.0, 0.1) &&
-                                           NEAR(pose.GetRotationAxis().y(), 0.0, 0.1) &&
-                                           (NEAR(pose.GetRotationAxis().z(), 1, 0.1) ||
-                                            NEAR(pose.GetRotationAxis().z(), -1, 0.1)), DEFAULT_TIMEOUT)
+                                           NEAR(pose.GetRotationAxis().x(), 0.0f, 0.1f) &&
+                                           NEAR(pose.GetRotationAxis().y(), 0.0f, 0.1f) &&
+                                           (NEAR(pose.GetRotationAxis().z(), 1.f, 0.1f) ||
+                                            NEAR(pose.GetRotationAxis().z(), -1.f, 0.1f)), DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueCompoundAction m;
             m.robotID = 1;

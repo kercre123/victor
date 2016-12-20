@@ -242,10 +242,10 @@ namespace Anki {
         ///////// IMUTest ////////
         bool imuTestDoTurns_ = false;
         bool IT_turnLeft;
-        const f32 IT_TARGET_ANGLE = DEG_TO_RAD_F32(180);
-        const f32 IT_MAX_ROT_VEL = DEG_TO_RAD_F32(90);
-        const f32 IT_ROT_ACCEL = DEG_TO_RAD_F32(720);
-        const f32 IT_ROT_TOL = DEG_TO_RAD_F32(5);
+        const f32 IT_TARGET_ANGLE = DEG_TO_RAD_F32(180.f);
+        const f32 IT_MAX_ROT_VEL = DEG_TO_RAD_F32(90.f);
+        const f32 IT_ROT_ACCEL = DEG_TO_RAD_F32(720.f);
+        const f32 IT_ROT_TOL = DEG_TO_RAD_F32(5.f);
         ///// End of IMUTest /////
 
 
@@ -386,7 +386,7 @@ namespace Anki {
       {
         AnkiInfo( 68, "TestModeController.PathFollowTestInit", 305, "", 0);
         pathStarted_ = false;
-        Localization::SetDriveCenterPose(0, 0, Radians(-PIDIV2_F));
+        Localization::SetDriveCenterPose(0, 0, Radians(-M_PI_2_F));
         ProxSensors::EnableCliffDetector(false);
         return RESULT_OK;
       }
@@ -399,11 +399,11 @@ namespace Anki {
           /*
           // Small circle drive test
           PathFollower::ClearPath();
-          Localization::SetDriveCenterPose(0, 0, PIDIV2_F);
+          Localization::SetDriveCenterPose(0, 0, M_PI_2_F);
           f32 speed = 20;
           f32 radius = WHEEL_DIST_HALF_MM;
-          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, 0,    PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
-          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, PI_F, PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, 0,    M_PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, M_PI_F, M_PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
           PathFollower::StartPathTraversal();
           pathStarted_ = true;
@@ -413,9 +413,9 @@ namespace Anki {
           // Create a path and follow it
           PathFollower::ClearPath();
 #if(PATH_FOLLOW_ALIGNED_START)
-          Localization::SetDriveCenterPose(0, 0, PIDIV2_F * (PATH_FOLLOW_BACKWARDS ? 1 : -1));
+          Localization::SetDriveCenterPose(0, 0, M_PI_2_F * (PATH_FOLLOW_BACKWARDS ? 1 : -1));
 
-          //PathFollower::AppendPathSegment_PointTurn(0, 0, 0, -PIDIV2_F, -1.5f, 2.f, 2.f);
+          //PathFollower::AppendPathSegment_PointTurn(0, 0, 0, -M_PI_2_F, -1.5f, 2.f, 2.f);
 
           float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
           f32 sweepAng = atan_fast((350-arc1_radius)/250);
@@ -452,7 +452,7 @@ namespace Anki {
           PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius - 2*arc2_radius, 200 - 2*arc2_radius, 350 + arc1_radius - 2*arc2_radius, 0,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc3_radius = 0.5f * (350 + arc1_radius - 2*arc2_radius);
-          PathFollower::AppendPathSegment_Arc(0, arc3_radius, 0, arc3_radius, 0, PI_F,
+          PathFollower::AppendPathSegment_Arc(0, arc3_radius, 0, arc3_radius, 0, M_PI_F,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
 
@@ -495,7 +495,7 @@ namespace Anki {
 
             case PFCF_DRIVE_ARC:
               AnkiInfo( 72, "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveArc", 312, "Started", 0);
-              if (!PathFollower::DriveArc(-PIDIV2_F, 40, 0.25, 0.25, 1)) {
+              if (!PathFollower::DriveArc(-M_PI_2_F, 40, 0.25, 0.25, 1)) {
                 AnkiInfo( 72, "TestModeController.PathFollowConvenienceFuncTestUpdate.DriveArc", 313, "FAILED", 0);
                 return RESULT_FAIL;
               }
@@ -504,7 +504,7 @@ namespace Anki {
               break;
             case PFCF_DRIVE_POINT_TURN:
               AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 312, "Started", 0);
-              if (!PathFollower::DrivePointTurn(-PIDIV2_F, 0.25, 0.25, DEG_TO_RAD_F32(1), 1)) {
+              if (!PathFollower::DrivePointTurn(-M_PI_2_F, 0.25, 0.25, DEG_TO_RAD_F32(1.f), 1)) {
               AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 313, "FAILED", 0);
                 return RESULT_FAIL;
               }
@@ -660,7 +660,7 @@ namespace Anki {
             const f32 midHeight = 0.5f * (highHeight + lowHeight);
             const f32 amplitude = highHeight - midHeight;
 
-            const f32 thetaStep = 2*PI_F / liftNodCycleTime_ms_ * TIME_STEP;
+            const f32 thetaStep = 2*M_PI_F / liftNodCycleTime_ms_ * TIME_STEP;
 
             f32 newHeight = amplitude * sinf(theta.ToFloat()) + midHeight;
             LiftController::SetDesiredHeight(newHeight);
@@ -882,7 +882,7 @@ namespace Anki {
             const f32 midAngle = 0.5f * (highAngle + lowAngle);
             const f32 amplitude = highAngle - midAngle;
 
-            const f32 thetaStep = 2*PI_F / headNodCycleTime_ms_ * TIME_STEP;
+            const f32 thetaStep = 2*M_PI_F / headNodCycleTime_ms_ * TIME_STEP;
 
             f32 newAngle = amplitude * sinf(theta.ToFloat()) + midAngle;
             HeadController::SetDesiredAngle(newAngle);

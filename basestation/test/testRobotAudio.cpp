@@ -21,7 +21,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/shared/cozmoConfig_common.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"

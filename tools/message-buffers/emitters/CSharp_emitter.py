@@ -120,11 +120,10 @@ class EnumEmitter(ast.NodeVisitor):
         {{
         """.format(node.name, type_translations[node.storage_type.name]))
         self.output.write(header)
-        enum_val = 0
         members = node.members()
         #print each member of the enum
         for i, member in enumerate(members):
-            enum_val = self.emitEnum(member, enum_val, i < len(members) - 1, prefix='')
+            self.emitEnum(member, i < len(members) - 1, prefix='')
         #print the footer
         footer = '};\n\n'
         self.output.write(footer)
@@ -143,25 +142,22 @@ class EnumEmitter(ast.NodeVisitor):
         current = -1
         values = set()
         for member in node.members():
+            if member.initializer and type(member.initializer.value) is str:
+              return False
             current = member.initializer.value if member.initializer else current + 1
             values.add(current)
 
         minimum, maximum, length = min(values), max(values), len(values)
         return minimum >= 0 and maximum - minimum + 1 != length
 
-    def emitEnum(self, member, enum_val, trailing_comma=True, prefix=''):
+    def emitEnum(self, member, trailing_comma=True, prefix=''):
         separator = ',' if trailing_comma else ''
-        if not member.initializer:
-            self.output.write('\t' + prefix + member.name + separator + '\t// %d\n' % enum_val)
-            return enum_val + 1
-        else:
-            initial_value = member.initializer
-            enum_val = initial_value.value
-            enum_str = hex(enum_val) if initial_value.type == "hex" else str(enum_val)
-            self.output.write("\t" + "%s%s = %s"
-                           % (prefix, member.name, enum_str) + separator
-                           + '\t// %d\n' % enum_val)
-            return enum_val + 1
+        value = member.value
+        
+        if type(value) is str and "::" in member.value:
+            value = value.replace("::", ".")
+    
+        self.output.write('\t' + prefix + member.name + ' = {0}'.format(value) + separator + '\n')
 
 class StructEmitter(ast.NodeVisitor):
     def __init__(self, output=sys.stdout):

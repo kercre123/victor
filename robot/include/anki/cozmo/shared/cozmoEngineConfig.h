@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include "anki/common/types.h"
+#include "util/math/math.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/pathMotionProfile.h"
 
@@ -18,7 +19,7 @@ namespace Anki {
     // Resolution of images that are streamed to basestation (dev purposes)
     const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
     
-    const f32 MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD = DEG_TO_RAD_F32(45.f);
+    const f32 MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD = DEG_TO_RAD(45.f);
     const f32 MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX = 40.f;
     
     /***************************************************************************
@@ -134,7 +135,7 @@ namespace Anki {
     const f32 PLANNER_MAINTAIN_ANGLE_THRESHOLD = 0.392699081699f;
   
     // Tolerance on angular alignment with predock pose
-    const f32 DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE = DEG_TO_RAD(7.5);
+    const f32 DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE = DEG_TO_RAD(7.5f);
   
     // Default values in clad
     const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE = PathMotionProfile();

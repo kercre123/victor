@@ -984,7 +984,7 @@ namespace Anki
         {
           this->verificationSamples.set_size(verifyGridSize*verifyGridSize);
 
-          const f32 verifyCoordScalarInv = static_cast<f32>(s8_MAX) / templateHalfWidth;
+          const f32 verifyCoordScalarInv = static_cast<f32>(std::numeric_limits<s8>::max()) / templateHalfWidth;
 
           // Store the scalar we need at tracking time to take the stored s8
           // coordinates into f32 values:
@@ -2198,7 +2198,7 @@ namespace Anki
         if(verify_numInBounds > 0) {
           verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
         } else {
-          verify_meanAbsoluteDifference = s32_MAX;
+          verify_meanAbsoluteDifference = std::numeric_limits<s32>::max();
         }
 
         return RESULT_OK;

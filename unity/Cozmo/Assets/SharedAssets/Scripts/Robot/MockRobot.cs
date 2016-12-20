@@ -17,6 +17,8 @@ public class MockRobot : IRobot {
 
   public event System.Action<ObservableObject> OnHeadTrackingObjectSet;
 
+  public event System.Action<int> OnNumBlocksConnectedChanged;
+
   public MockRobot(byte id) {
     ID = id;
     Rotation = Quaternion.identity;

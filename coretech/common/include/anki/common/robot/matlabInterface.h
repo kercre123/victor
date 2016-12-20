@@ -116,7 +116,7 @@ return;\
     mxArray* mxMatrix = mxCreateNumericArray(2, dims, whichClass, mxREAL);
     Type *data = static_cast<Type*>(mxGetData(mxMatrix));
     
-    AnkiConditionalErrorAndReturnValue(matrixHeight <= s32_MAX,
+    AnkiConditionalErrorAndReturnValue(matrixHeight <= std::numeric_limits<s32>::max(),
                                        RESULT_FAIL_INVALID_SIZE,
                                        "Anki.PutArray<Type>",
                                        "Matrix too large to use call to matrix.Pointer()");

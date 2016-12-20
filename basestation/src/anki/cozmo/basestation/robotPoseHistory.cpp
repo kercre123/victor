@@ -22,7 +22,7 @@ namespace Anki {
     
     RobotPoseStamp::RobotPoseStamp()
     {
-      SetAll(0, Pose3d(), 0.0f, 0.0f, u16_MAX, false);
+      SetAll(0, Pose3d(), 0.0f, 0.0f, std::numeric_limits<u16>::max(), false);
     }
     
 
@@ -216,6 +216,21 @@ namespace Anki {
         const_PoseMapIter_t prev_it = it;
         --prev_it;
 
+        // Check for same frameId
+        // (Shouldn't interpolate between poses from different frameIDs)
+        if(it->second.GetFrameId() != prev_it->second.GetFrameId())
+        {
+          PRINT_NAMED_INFO("RobotPoseHistory.GetRawPoseAt.MisMatchedFrameIds",
+                           "Cannot interpolate at t=%u as requested because the two frame IDs don't match: prev=%d vs next=%d",
+                           t_request,
+                           prev_it->second.GetFrameId(),
+                           it->second.GetFrameId());
+          
+          // they asked us for a t_request that is between two frame IDs, which for all intents and purposes is just
+          // as bad as trying to choose between two poses with mismatched origins (like above).
+          return RESULT_FAIL_ORIGIN_MISMATCH;
+        }
+        
         // Get the pose transform between the two poses.
         Pose3d pTransform;
         const bool inSameOrigin = it->second.GetPose().GetWithRespectTo(prev_it->second.GetPose(), pTransform);

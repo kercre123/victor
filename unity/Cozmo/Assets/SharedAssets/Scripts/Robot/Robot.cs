@@ -316,7 +316,7 @@ public class Robot : IRobot {
   }
 
   public event Action<ObservableObject> OnCarryingObjectSet;
-
+  public event Action<int> OnNumBlocksConnectedChanged;
 
   private ObservableObject _HeadTrackingObject = null;
 
@@ -887,6 +887,10 @@ public class Robot : IRobot {
       else {
         DeleteActiveObject((int)blockData.ObjectID);
       }
+    }
+
+    if (OnNumBlocksConnectedChanged != null) {
+      OnNumBlocksConnectedChanged(LightCubes.Count);
     }
   }
 

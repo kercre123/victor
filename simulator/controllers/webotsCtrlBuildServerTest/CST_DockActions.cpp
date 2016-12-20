@@ -145,10 +145,10 @@ namespace Anki {
                                            NEAR(GetRobotPose().GetTranslation().x(), 191, 20) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 100, 20) &&
                                            GetCarryingObjectID() == -1 &&
-                                           NEAR(pose.GetRotationAxis().x(), 0.0, 0.1) &&
-                                           NEAR(pose.GetRotationAxis().y(), 0.0, 0.1) &&
-                                           (NEAR(pose.GetRotationAxis().z(), 1, 0.1) ||
-                                            NEAR(pose.GetRotationAxis().z(), -1, 0.1)), 20)
+                                           NEAR(pose.GetRotationAxis().x(), 0.0f, 0.1f) &&
+                                           NEAR(pose.GetRotationAxis().y(), 0.0f, 0.1f) &&
+                                           (NEAR(pose.GetRotationAxis().z(), 1.f, 0.1f) ||
+                                            NEAR(pose.GetRotationAxis().z(), -1.f, 0.1f)), 20)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -171,11 +171,11 @@ namespace Anki {
           GetObjectPose(0, pose);
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
-                                           ((NEAR(pose.GetRotationAxis().x(), 0.707, 0.1) &&
-                                             NEAR(pose.GetRotationAxis().z(), 0.707, 0.1)) ||
-                                            (NEAR(pose.GetRotationAxis().x(), -0.707, 0.1) &&
-                                             NEAR(pose.GetRotationAxis().z(), -0.707, 0.1))) &&
-                                           NEAR(pose.GetRotationAxis().y(), 0.0, 0.1), 20)
+                                           ((NEAR(pose.GetRotationAxis().x(), 0.707f, 0.1f) &&
+                                             NEAR(pose.GetRotationAxis().z(), 0.707f, 0.1f)) ||
+                                            (NEAR(pose.GetRotationAxis().x(), -0.707f, 0.1f) &&
+                                             NEAR(pose.GetRotationAxis().z(), -0.707f, 0.1f))) &&
+                                           NEAR(pose.GetRotationAxis().y(), 0.0f, 0.1f), 20)
           {
             std::vector<s32> objects = GetAllObjectIDs();
             std::sort(objects.begin(), objects.end());
@@ -267,7 +267,7 @@ namespace Anki {
           _waitActionCompleted = true;
         }
       }
-      else if(msg.result == ActionResult::FAILURE_RETRY && msg.idTag == 12)
+      else if(IActionRunner::GetActionResultCategory(msg.result) == ActionResultCategory::RETRY && msg.idTag == 12)
       {
         PRINT_NAMED_INFO("CST_DockActions", "Pickup block failed requeueing action");
         

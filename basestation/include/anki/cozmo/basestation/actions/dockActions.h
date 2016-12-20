@@ -131,7 +131,6 @@ namespace Anki {
       struct PreActionPoseOutput
       {
         ActionResult actionResult;
-        ObjectInteractionResult interactionResult;
         std::vector<PreActionPose> preActionPoses;
         size_t closestIndex;
         Point2f closestPoint;
@@ -139,8 +138,7 @@ namespace Anki {
         Point2f distThresholdUsed;
         
         PreActionPoseOutput()
-        : actionResult(ActionResult::FAILURE_NOT_STARTED)
-        , interactionResult(ObjectInteractionResult::INCOMPLETE)
+        : actionResult(ActionResult::NOT_STARTED)
         , closestIndex(-1)
         , robotAtClosestPreActionPose(false)
         , distThresholdUsed(-1,-1)
@@ -151,9 +149,9 @@ namespace Anki {
       
       // Computes that angle (wrt world) at which the robot would have to approach the given pose
       // such that it places the carried object at the given pose
-      static Result ComputePlacementApproachAngle(const Robot& robot,
-                                                  const Pose3d& placementPose,
-                                                  f32& approachAngle_rad);
+      static ActionResult ComputePlacementApproachAngle(const Robot& robot,
+                                                        const Pose3d& placementPose,
+                                                        f32& approachAngle_rad);
       
       static void GetPreActionPoses(Robot& robot, const PreActionPoseInput& input, PreActionPoseOutput& output);
       
@@ -178,7 +176,7 @@ namespace Anki {
       
       // Pure virtual methods that must be implemented by derived classes in
       // order to define the parameters of docking and how to verify success.
-      virtual Result SelectDockAction(ActionableObject* object) = 0;
+      virtual ActionResult SelectDockAction(ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
       virtual ActionResult Verify() = 0;
       
@@ -189,7 +187,6 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
         // TODO: Annoying we have to copy this out, bet the Get_() method is const...
         ObjectInteractionCompleted interactionCompleted;
-        interactionCompleted.result = _interactionResult;
         interactionCompleted.numObjects = 1;
         interactionCompleted.objectIDs[0] = _dockObjectID;
         completionUnion.Set_objectInteractionCompleted(interactionCompleted);
@@ -211,7 +208,6 @@ namespace Anki {
       f32                        _dockSpeed_mmps                 = DEFAULT_PATH_MOTION_PROFILE.dockSpeed_mmps;
       f32                        _dockAccel_mmps2                = DEFAULT_PATH_MOTION_PROFILE.dockAccel_mmps2;
       f32                        _dockDecel_mmps2                = DEFAULT_PATH_MOTION_PROFILE.dockDecel_mmps2;
-      ObjectInteractionResult    _interactionResult              = ObjectInteractionResult::INCOMPLETE;
       bool                       _doNearPredockPoseCheck         = true;
       u8                         _numDockingRetries              = 0;
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
@@ -252,7 +248,7 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
       
@@ -268,11 +264,11 @@ namespace Anki {
       
     protected:
       
-      static constexpr f32 kMaxSuccessfulPitchAngle_rad = DEG_TO_RAD_F32(-70);
+      static constexpr f32 kMaxSuccessfulPitchAngle_rad = DEG_TO_RAD(-70.f);
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
       
@@ -297,7 +293,7 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::PLACE_RELATIVE; }
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
       
@@ -320,7 +316,7 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
       
@@ -352,7 +348,6 @@ namespace Anki {
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker = nullptr;
       IActionRunner*              _faceAndVerifyAction = nullptr;
-      ObjectInteractionResult     _interactionResult = ObjectInteractionResult::INCOMPLETE;
       bool                        _startedPlacing = false;
       
       
@@ -410,7 +405,7 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::PLACE_RELATIVE; }
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
       
@@ -463,7 +458,7 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
       
@@ -476,7 +471,7 @@ namespace Anki {
       
     private:
       // How much we should look down to be able to see the marker of the object we just rolled
-      const f32 kAngleToLookDown = DEG_TO_RAD_F32(-15);
+      const f32 kAngleToLookDown = DEG_TO_RAD(-15.f);
       
     }; // class RollObjectAction
 
@@ -490,7 +485,7 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
       
@@ -509,7 +504,7 @@ namespace Anki {
       
     protected:
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
       
@@ -529,7 +524,7 @@ namespace Anki {
       
     protected:
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
       

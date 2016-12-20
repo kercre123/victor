@@ -99,7 +99,7 @@ namespace Cozmo {
       {
         
         // Verify that head is in position
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) && NEAR(GetRobotHeadAngle_rad(), 0, 0.01), 2) {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) && NEAR(GetRobotHeadAngle_rad(), 0.f, 0.01f), 2) {
 
           // Verify that the expected number of blocks was observed
           IF_CONDITION_WITH_TIMEOUT_ASSERT(GetNumObjects() == NUM_BLOCKS_EXPECTED_ON_START, 2) {

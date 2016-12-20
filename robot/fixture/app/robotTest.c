@@ -113,7 +113,7 @@ void PlaypenWaitTest(void)
       current += MonitorGetCurrent();
     }
     current >>= 6;
-//  ConsolePrintf("%d..", current);
+    ConsolePrintf("%d..", current);
     if (current < PRESENT_CURRENT)
       offContact++;
     else {
@@ -338,7 +338,7 @@ void RobotFixtureDropSensor(void)
 
 void SpeakerTest(void)
 {
-  const int TEST_TIME_US = 1000000;
+  //const int TEST_TIME_US = 1000000;
   
   // Speaker test not on robot1 (head not yet properly fixtured)
   if (g_fixtureType == FIXTURE_ROBOT1_TEST)

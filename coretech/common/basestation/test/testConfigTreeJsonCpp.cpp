@@ -12,6 +12,7 @@
 
 #include <fstream>
 #include "util/helpers/includeGTest.h"
+#include "util/helpers/quoteMacro.h"
 #include "json/json.h"
 #include "anki/common/basestation/jsonTools.h"
 

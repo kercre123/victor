@@ -86,7 +86,9 @@ public class ChallengeDetailsDialog : BaseModal {
 
   private int _CubesRequired;
 
-  public void Initialize(ChallengeData challengeData) {
+  private Cozmo.HomeHub.HomeView _HomeViewInstance;
+
+  public void Initialize(ChallengeData challengeData, Cozmo.HomeHub.HomeView homeViewInstance) {
     _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
     _DescriptionTextLabel.text = Localization.Get(challengeData.ChallengeDescriptionLocKey);
     _ChallengeData = challengeData;
@@ -139,6 +141,7 @@ public class ChallengeDetailsDialog : BaseModal {
       _StartChallengeButton.Initialize(HandleStartButtonClicked, string.Format("{0}_start_button", challengeData.ChallengeID), DASEventViewName);
     }
     _ChallengeId = challengeData.ChallengeID;
+    _HomeViewInstance = homeViewInstance;
   }
 
   // When we unlock something new or trigger a free play goal, if this would cause a loot view sequence to trigger,
@@ -169,7 +172,8 @@ public class ChallengeDetailsDialog : BaseModal {
         }
       }
       else {
-        OpenNeedCubesAlert(currentNumCubes, _CubesRequired);
+        _HomeViewInstance.OpenNeedCubesAlert(currentNumCubes, _CubesRequired, Localization.Get(_ChallengeData.ChallengeTitleLocKey));
+        this.CloseView();
       }
     }
     else {
@@ -191,29 +195,6 @@ public class ChallengeDetailsDialog : BaseModal {
     alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsDescription;
     alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
-    this.CloseView();
-  }
-
-  private void OpenNeedCubesAlert(int currentCubes, int neededCubes) {
-    AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
-    // Hook up callbacks
-    alertView.SetCloseButtonEnabled(true);
-    alertView.SetPrimaryButton(LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
-      () => {
-        UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpViewPrefab);
-      }
-    );
-
-    alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle;
-
-    int differenceCubes = neededCubes - currentCubes;
-    alertView.SetMessageArgs(new object[] {
-      differenceCubes,
-      ItemDataConfig.GetCubeData().GetAmountName(differenceCubes),
-      Localization.Get(_ChallengeData.ChallengeTitleLocKey)
-    });
-    alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription;
-
     this.CloseView();
   }
 

@@ -26,6 +26,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/marker_battery.h"
 
+#include "util/math/math.h"
+
 #include <math.h>
 
 #define USE_ARM_ACCELERATION
@@ -274,21 +276,21 @@ namespace Anki
           Array<u8> rotatedBinaryTemplateWithBorder(binaryTemplateWithBorder.get_size(0), binaryTemplateWithBorder.get_size(1), slowMemory);
 
           s32 rotationOrder[4];
-          if(this->originalTemplateOrientation >= (-PI/4) && this->originalTemplateOrientation < (PI/4)) { // No rotation
+          if(this->originalTemplateOrientation >= (-M_PI_F/4) && this->originalTemplateOrientation < (M_PI_F/4)) { // No rotation
             rotatedBinaryTemplateWithBorder.Set(binaryTemplateWithBorder);
 
             rotationOrder[0] = 0;
             rotationOrder[1] = 1;
             rotationOrder[2] = 2;
             rotationOrder[3] = 3;
-          } else if(this->originalTemplateOrientation >= (PI/4) && this->originalTemplateOrientation < (3*PI/4)) { // Rotate 90 degrees clockwise
+          } else if(this->originalTemplateOrientation >= (M_PI_F/4) && this->originalTemplateOrientation < (3*M_PI_F/4)) { // Rotate 90 degrees clockwise
             Matrix::Rotate90<u8,u8>(binaryTemplateWithBorder, rotatedBinaryTemplateWithBorder);
 
             rotationOrder[0] = 2;
             rotationOrder[1] = 0;
             rotationOrder[2] = 3;
             rotationOrder[3] = 1;
-          } else if(this->originalTemplateOrientation >= (3*PI/4) && this->originalTemplateOrientation < (5*PI/4)) { // Rotate 180 degrees clockwise
+          } else if(this->originalTemplateOrientation >= (3*M_PI_F/4) && this->originalTemplateOrientation < (5*M_PI_F/4)) { // Rotate 180 degrees clockwise
             Matrix::Rotate180<u8,u8>(binaryTemplateWithBorder, rotatedBinaryTemplateWithBorder);
 
             rotationOrder[0] = 3;
@@ -2449,7 +2451,7 @@ namespace Anki
           RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-        AnkiAssert(numTemplatePixels < s32_MAX);
+        AnkiAssert(numTemplatePixels < std::numeric_limits<s32>::max());
         const s32 requiredBytes = 512 + static_cast<s32>(numTemplatePixels)*sizeof(Point<s16>) + Transformations::PlanarTransformation_f32::get_serializationSize() + 16*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
         return requiredBytes;

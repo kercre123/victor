@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/exceptions.h"
+#include "util/math/math.h"
 #include "clad/vizInterface/messageViz.h"
 #include <OpenGL/OpenGL.h>
 #pragma GCC diagnostic push
@@ -222,8 +223,8 @@ void PhysVizController::Draw(int pass, const char *view)
 
           // Object ID label
           std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
-          DrawTextAtOffset(idString, 0.6*obj->x_size_m, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
-          DrawTextAtOffset(idString, -0.6*obj->x_size_m, -0.6*obj->y_size_m, -0.6*obj->z_size_m);
+          DrawTextAtOffset(idString, 0.6f*obj->x_size_m, 0.6f*obj->y_size_m, 0.6f*obj->z_size_m);
+          DrawTextAtOffset(idString, -0.6f*obj->x_size_m, -0.6f*obj->y_size_m, -0.6f*obj->z_size_m);
           
           break;
         }
@@ -241,7 +242,7 @@ void PhysVizController::Draw(int pass, const char *view)
           
           // Object ID label
           std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CHARGER]);
-          DrawTextAtOffset(idString, 0, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
+          DrawTextAtOffset(idString, 0, 0.6f*obj->y_size_m, 0.6f*obj->z_size_m);
           
           break;
         }
@@ -258,7 +259,7 @@ void PhysVizController::Draw(int pass, const char *view)
           break;
       }
 
-      DrawAxes(0.005);
+      DrawAxes(0.005f);
       
       glFlush();
 
@@ -567,23 +568,23 @@ void PhysVizController::ProcessVizAppendPathSegmentArcMessage(const AnkiEvent<Vi
   float dir = (sweepRad > 0 ? 1 : -1);
 
   // Make endRad be between -PI and PI
-  while (endRad > PI) {
-    endRad -= 2*PI;
+  while (endRad > M_PI_F) {
+    endRad -= 2*M_PI_F;
   }
-  while (endRad < -PI) {
-    endRad += 2*PI;
+  while (endRad < -M_PI_F) {
+    endRad += 2*M_PI_F;
   }
 
 
   if (dir == 1) {
     // Make startRad < endRad
     while (startRad > endRad) {
-      startRad -= 2*PI;
+      startRad -= 2*M_PI_F;
     }
   } else {
     // Make startRad > endRad
     while (startRad < endRad) {
-      startRad += 2*PI;
+      startRad += 2*M_PI_F;
     }
   }
 
@@ -644,7 +645,7 @@ void PhysVizController::ProcessVizSetOriginMessage(const AnkiEvent<VizInterface:
 {
   const auto& payload = msg.GetData().Get_SetVizOrigin();
   
-  _globalRotation[0] = RAD_TO_DEG_F32(payload.rot_rad); // Note that global rotation angle is in degrees!
+  _globalRotation[0] = RAD_TO_DEG(payload.rot_rad); // Note that global rotation angle is in degrees!
   _globalRotation[1] = payload.rot_axis_x;
   _globalRotation[2] = payload.rot_axis_y;
   _globalRotation[3] = payload.rot_axis_z;
@@ -834,22 +835,22 @@ void PhysVizController::DrawRobot(Anki::Cozmo::VizRobotMarkerType type)
   // Location of robot origin project up above the head
   float x = 0;
   float y = 0;
-  float z = 0.068;
+  float z = 0.068f;
 
   // Dimensions
   float l,w,h;
 
   switch (type) {
     case VizRobotMarkerType::VIZ_ROBOT_MARKER_SMALL_TRIANGLE:
-      l = 0.03;
-      w = 0.02;
-      h = 0.01;
+      l = 0.03f;
+      w = 0.02f;
+      h = 0.01f;
       break;
     case VizRobotMarkerType::VIZ_ROBOT_MARKER_BIG_TRIANGLE:
-      x += 0.03;  // Move tip of marker to come forward, roughly up to lift position.
-      l = 0.062;
-      w = 0.08;
-      h = 0.01;
+      x += 0.03f;  // Move tip of marker to come forward, roughly up to lift position.
+      l = 0.062f;
+      w = 0.08f;
+      h = 0.01f;
       break;
   }
 

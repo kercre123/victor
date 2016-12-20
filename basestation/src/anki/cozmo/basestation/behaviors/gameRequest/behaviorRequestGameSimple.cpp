@@ -279,7 +279,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
   if( targetBlockID.IsSet() ) {
-    StartActing(new TurnTowardsObjectAction( robot, targetBlockID, PI_F ),
+    StartActing(new TurnTowardsObjectAction( robot, targetBlockID, M_PI_F ),
                 &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
     SET_STATE(FacingBlock);
   }
@@ -312,25 +312,27 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
   
   StartActing(action,
               [this, targetBlockID, &robot](const ExternalInterface::RobotCompletedAction& resultMsg) {
-                if ( resultMsg.result == ActionResult::SUCCESS ) {
+                ActionResultCategory resCat = IActionRunner::GetActionResultCategory(resultMsg.result);
+                if ( resCat == ActionResultCategory::SUCCESS ) {
                   ComputeFaceInteractionPose(robot);
                   TransitionToDrivingToFace(robot);
                 }
-                else if ( resultMsg.result == ActionResult::FAILURE_RETRY ) {
+                else if ( resCat == ActionResultCategory::RETRY ) {
                   _numRetriesPickingUpBlock++;
                   // TODO:(bn) animation groups here?
                   IActionRunner* animAction = nullptr;
-                  switch(resultMsg.completionInfo.Get_objectInteractionCompleted().result)
+                  switch(resultMsg.result)
                   {
-                    case ObjectInteractionResult::INCOMPLETE:
-                    case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+                    case ActionResult::NOT_CARRYING_OBJECT_RETRY:
+                    case ActionResult::LAST_PICK_AND_PLACE_FAILED:
                     {
-                      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RequestGameDrivingFail);
+                      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail);
                       break;
                     }
             
-                    default: {
-                      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail);
+                    default:
+                    {
+                      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RequestGameDrivingFail);
                       break;
                     }
                   }
@@ -370,7 +372,7 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
 
     CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
 
-    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, lastKnownPose, PI_F);
+    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, lastKnownPose, M_PI_F);
     turnTowardsPoseAction->SetPanTolerance(DEG_TO_RAD(5));
     searchAction->AddAction(turnTowardsPoseAction);
 
@@ -434,7 +436,7 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
                     // transition back here, but don't reset the face pose to drive to
                     TransitionToPlacingBlock(robot);
                   }
-                  else if (result == ActionResult::FAILURE_RETRY) {
+                  else if (IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY) {
                     _numRetriesDrivingToFace++;
                     TransitionToDrivingToFace(robot);
                   }
@@ -468,11 +470,12 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
 
   StartActing(action,
               [this, &robot](ActionResult result) {
-                if ( result == ActionResult::SUCCESS ) {
+                ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
+                if ( resCat == ActionResultCategory::SUCCESS ) {
                   _numRetriesPlacingBlock++;
                   TransitionToLookingAtFace(robot);
                 }
-                else if (result == ActionResult::FAILURE_RETRY) {
+                else if (resCat == ActionResultCategory::RETRY) {
                   TransitionToPlacingBlock(robot);
                 }
                 else {
@@ -494,7 +497,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
 void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 {
   const bool sayName = true;
-  StartActing(new TurnTowardsLastFacePoseAction(robot, PI_F, sayName),
+  StartActing(new TurnTowardsLastFacePoseAction(robot, M_PI_F, sayName),
               &BehaviorRequestGameSimple::TransitionToVerifyingFace);
   SET_STATE(LookingAtFace);
 }
@@ -531,7 +534,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
   // always turn back to the face after the animation in case the animation moves the head
   StartActing(new CompoundActionSequential(robot, {
         new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
-        new TurnTowardsLastFacePoseAction(robot, PI_F)}),
+        new TurnTowardsLastFacePoseAction(robot, M_PI_F)}),
     &BehaviorRequestGameSimple::TransitionToIdle);
   SET_STATE(PlayingRequestAnim);
 }
@@ -619,7 +622,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 
   // try a few different positions until we get one that isn't near another cube
   Radians targetAngle = std::atan2(facePose.GetTranslation().y(), facePose.GetTranslation().x());
-  float oneOverDist = 1.0 / xyDistToFace;
+  float oneOverDist = 1.0f / xyDistToFace;
 
   Pose3d targetPose;
   
