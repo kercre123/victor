@@ -103,6 +103,8 @@ namespace Cozmo.Minigame.CubePounce {
         _CurrentRobot.CancelCallback(HandleEndHandAnimFinish);
         _CurrentRobot.CancelCallback(HandleEndRoundAnimFinish);
         _CurrentRobot.CancelCallback(HandleEndGameAnimFinish);
+
+        _CurrentRobot.SetEnableCliffSensor(true);
       }
     }
   }

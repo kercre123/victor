@@ -16,6 +16,8 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Enter() {
       base.Enter();
 
+      _CurrentRobot.SetEnableCliffSensor(false);
+
       _InitialPitch_deg = Mathf.Rad2Deg * _CurrentRobot.PitchAngle;
 
       if (!_UseClosePounce) {
