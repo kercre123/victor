@@ -542,6 +542,16 @@ void ConsoleUpdate(void)
 
     if (m_isInConsoleMode)
     {
+      //single button "again" key
+      if( !m_index && c == '`' ) { //<-- 0x60, that little tick mark on the tilde key...
+          ConsolePutChar('a'); m_parseBuffer[m_index++] = 'a';
+          ConsolePutChar('g'); m_parseBuffer[m_index++] = 'g';
+          ConsolePutChar('a'); m_parseBuffer[m_index++] = 'a';
+          ConsolePutChar('i'); m_parseBuffer[m_index++] = 'i';
+          ConsolePutChar('n'); m_parseBuffer[m_index++] = 'n';
+          c = '\r'; //Enter
+      }
+      
       // Echo legal ASCII back to the console
       if (c >= 32 && c <= 126)
       {
@@ -555,9 +565,9 @@ void ConsoleUpdate(void)
         m_index = 0;
       } else if (c == 0x7F || c == 8) {  // Check for delete or backspace keys
         if( m_index > 0 ) {
-            ConsolePutChar(c);
-            ConsolePutChar(' ');
-            ConsolePutChar(c);
+            ConsolePutChar(c);      //overwrite the onscreen char with a space
+            ConsolePutChar(' ');    //"
+            ConsolePutChar(c);      //"
             m_parseBuffer[--m_index] = 0;
         }
       } else if (c == '\r' || c == '\n') {
