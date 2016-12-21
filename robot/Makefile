@@ -7,9 +7,11 @@
 ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
 ANKI_LOG_SRC_DIRS=supervisor/src hal espressif/app sim_hal/ syscon/hal
+ANKI_LOG_ST_ERR_MSG='Anki log pre-preprocessing incomplete. Run `make dev` to process macros. If you see this on the build server, you need to merge locally, run `make dev` and push again.'
 
 UV4=C:/Keil_v5/UV4/UV4.exe
 PY=python3
+ON_ERR=tools/on_error.bash
 
 GENERATED_DIR=generated
 BUILD_DIR=build
@@ -104,7 +106,7 @@ vesp:
 # Code generation and preprocessing
 
 $(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
-	$(PY) $(ANKI_LOG_PP) --string-table --output $@ $(ANKI_LOG_SRC_DIRS)
+	$(ON_ERR) $(ANKI_LOG_ST_ERR_MSG) $(PY) $(ANKI_LOG_PP) --string-table --output $@ $(ANKI_LOG_SRC_DIRS)
 
 AnkiLog: $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
 	$(PY) $(ANKI_LOG_PP) --preprocessor $(ANKI_LOG_SRC_DIRS)
