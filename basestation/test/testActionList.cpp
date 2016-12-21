@@ -1235,8 +1235,11 @@ TEST(ActionTag, ConflictingNormalTags)
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   EXPECT_EQ(testAction2->GetTag(), origTag2); // Tag will not change because of conflict
   
-  delete testAction1;
-  delete testAction2;
+  actionsDestroyed.clear();
+  // Trying to queue an action with a bad tag should delete the action
+  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction1);
+  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction2);
+  CheckActionDestroyed({"Test1", "Test2"});
 }
 
 // Tests when an auto-generated tag conflicts with an existing set tag

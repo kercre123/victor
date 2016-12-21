@@ -46,7 +46,8 @@ void RobotIdleTimeoutComponent::Update(double currentTime_s)
   if(_faceOffTimeout_s > 0.0f && _faceOffTimeout_s <= currentTime_s)
   {
     _faceOffTimeout_s = 0.0f;
-    _robot.GetActionList().QueueActionNow(CreateGoToSleepAnimSequence(_robot));
+    _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
+                                       CreateGoToSleepAnimSequence(_robot));
   }
   
   // If it's time to disconnect

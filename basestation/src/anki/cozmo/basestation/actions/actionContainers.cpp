@@ -40,6 +40,35 @@ namespace Anki {
     Result ActionList::QueueAction(QueueActionPosition inPosition,
                                    IActionRunner* action, u8 numRetries)
     {
+      if(action == nullptr)
+      {
+        PRINT_NAMED_ERROR("ActionList.QueueAction.NullAction", "Can't queue null action");
+        return RESULT_FAIL;
+      }
+      
+      // If we are ignoring external actions and this is an external action or
+      // if this action has a bad tag then delete it
+      if((action->GetRobot().GetIgnoreExternalActions() &&
+          IsExternalAction(action)) ||
+         action->GetState() == ActionResult::BAD_TAG)
+      {
+        if (action->GetRobot().GetIgnoreExternalActions())
+        {
+          PRINT_NAMED_INFO("ActionQueue.QueueAction.ExternalActionsDisabled",
+                           "Ignoring %s action while external actions are disabled",
+                           EnumToString(action->GetType()));
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("ActionQueue.QueueAction.ActionHasBadTag",
+                            "Failed to set tag, deleting action %s",
+                            EnumToString(action->GetType()));
+        }
+      
+        _queues[0].DeleteAction(action);
+        return RESULT_OK;
+      }
+    
       Result result = RESULT_OK;
       switch(inPosition)
       {
@@ -307,6 +336,19 @@ namespace Anki {
         }
         return false;
       }
+    }
+    
+    bool ActionList::IsExternalAction(const IActionRunner* action)
+    {
+      if(action != nullptr)
+      {
+        const u32 tag = action->GetTag();
+        return (tag >= ActionConstants::FIRST_GAME_TAG &&
+                tag <= ActionConstants::LAST_GAME_TAG) ||
+               (tag >= ActionConstants::FIRST_SDK_TAG &&
+                tag <= ActionConstants::LAST_SDK_TAG);
+      }
+      return false;
     }
     
 
@@ -619,19 +661,7 @@ namespace Anki {
              action->GetEmitCompletionSignal() &&
              action->GetState() != ActionResult::INTERRUPTED)
           {
-            std::vector<ActionResult> subActionResults;
-            action->GetRobot().GetActionList().GetActionWatcher().GetSubActionResults(action->GetTag(),
-                                                                                      subActionResults);
-            
-            ActionCompletedUnion acu;
-            action->GetCompletionUnion(acu);
-            
-            rca = ExternalInterface::RobotCompletedAction(action->GetRobot().GetID(),
-                                                          action->GetTag(),
-                                                          action->GetType(),
-                                                          action->GetState(),
-                                                          subActionResults,
-                                                          acu);
+            action->GetRobotCompletedActionMessage(rca);
             
             externalInterface = action->GetRobot().GetExternalInterface();
           }

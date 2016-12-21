@@ -343,7 +343,7 @@ TEST(BehaviorInterface, OutsideAction)
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
   
   WaitForLambdaAction* action = new WaitForLambdaAction(robot, [&done](Robot& r){ return done; });
-  robot.GetActionList().QueueActionNow(action);
+  robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
 
   DoTicks(robot, b);
 

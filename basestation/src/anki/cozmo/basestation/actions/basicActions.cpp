@@ -1340,7 +1340,8 @@ namespace Anki {
           // TODO:(bn) hang action here for consistency?
         }
         else {
-          _robot.GetActionList().QueueActionNext(new TrackObjectAction(_robot, _objectID));
+          _robot.GetActionList().QueueAction(QueueActionPosition::NEXT,
+                                             new TrackObjectAction(_robot, _objectID));
         }
       }
       return ActionResult::SUCCESS;

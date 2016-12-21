@@ -1129,28 +1129,8 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   // Now we fill out our Action and possibly update number of retries:
   IActionRunner* newAction = handlerIter->second.first(*robot, msg);
   const u8 numRetries = handlerIter->second.second;
-  
-  const bool didSetTag = newAction->SetTag(GetNextGameActionTag());
-      
-  // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  if(!didSetTag || robot->GetIgnoreExternalActions())
-  {
-    if (robot->GetIgnoreExternalActions()) {
-      PRINT_NAMED_INFO("RobotEventHandler.HandleActionEvents.ExternalActionsDisabled",
-                       "Ignoring %s GameToEngineEvent message for action type %s while external actions are disabled",
-                       ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()),
-                       EnumToString(newAction->GetType()));
-    } else
-    {
-      PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.FailedToSetTag",
-                        "Failed to set tag. deleting action %s (%hhu)",
-                        MessageGameToEngineTagToString(msg.GetTag()), msg.GetTag());
-    }
+  newAction->SetTag(GetNextGameActionTag());
 
-    newAction->PrepForCompletion();
-    Util::SafeDelete(newAction);
-    return;
-  }
   
   // Everything's ok and we have an action, so queue it
   robot->GetActionList().QueueAction(QueueActionPosition::NOW, newAction, numRetries);
@@ -1178,31 +1158,10 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
   }
   
   IActionRunner* action = handlerIter->second(*robot, msg.action);
-  
-  const bool didSetTag = action->SetTag(msg.idTag);
-  
-  // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  if(!didSetTag || robot->GetIgnoreExternalActions())
-  {
-    if(robot->GetIgnoreExternalActions())
-    {
-      PRINT_NAMED_INFO("RobotEventHandler.HandleQueueSingleAction.IgnoringExternalActions",
-                       "Ignoring QueueSingleAction message while external actions are disabled");
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueSingleAction.FailedToSetTag",
-                        "Failed to set tag. deleting action %s (%hhu)",
-                        RobotActionUnionTagToString(msg.action.GetTag()), msg.action.GetTag());
-    }
-    action->PrepForCompletion();
-    Util::SafeDelete(action);
-  }
-  else
-  {
-    // Put the action in the given position of the specified queue
-    robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
-  }
+  action->SetTag(msg.idTag);
+
+  // Put the action in the given position of the specified queue
+  robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1247,29 +1206,10 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
     
   } // for each action/actionType
   
-  // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  const bool didSetTag = compoundAction->SetTag(msg.idTag);
-  
-  if(!didSetTag || robot->GetIgnoreExternalActions())
-  {
-    if(robot->GetIgnoreExternalActions())
-    {
-      PRINT_NAMED_INFO("RobotEventHandler.QueueCompoundAction",
-                       "Ignoring QueueCompoundAction message while external actions are disabled");
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction", "Failure to set action tag deleting action");
-    }
-    
-    compoundAction->PrepForCompletion();
-    Util::SafeDelete(compoundAction);
-  }
-  else
-  {
-    // Put the action in the given position of the specified queue
-    robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
-  }
+  compoundAction->SetTag(msg.idTag);
+
+  // Put the action in the given position of the specified queue
+  robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
 }
 
   

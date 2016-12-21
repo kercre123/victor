@@ -458,6 +458,22 @@ namespace Anki {
       }
     }
     
+    void IActionRunner::GetRobotCompletedActionMessage(ExternalInterface::RobotCompletedAction& msg)
+    {
+      std::vector<ActionResult> subActionResults;
+      _robot.GetActionList().GetActionWatcher().GetSubActionResults(GetTag(), subActionResults);
+      
+      ActionCompletedUnion acu;
+      GetCompletionUnion(acu);
+      
+      msg = ExternalInterface::RobotCompletedAction(_robot.GetID(),
+                                                    GetTag(),
+                                                    GetType(),
+                                                    GetState(),
+                                                    subActionResults,
+                                                    acu);
+    }
+    
 #pragma mark ---- IAction ----
     
     IAction::IAction(Robot& robot,

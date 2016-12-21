@@ -1903,7 +1903,7 @@ namespace Cozmo {
     
     assert(_actionCallbackMap.count(actionCallbackTag) == 0);
     
-    if (robot.GetActionList().QueueActionNow(action) == RESULT_OK) {
+    if (robot.GetActionList().QueueAction(QueueActionPosition::NOW, action) == RESULT_OK) {
       _actionCallbackMap[actionCallbackTag] = callback;
     } else {
       PRINT_NAMED_WARNING("BehaviorFactory.StartActing.QueueActionFailed", "Action type %s", EnumToString(action->GetType()));

@@ -168,7 +168,7 @@ void BehaviorReactToPoke::AlwaysHandleInternal(const EngineToGameEvent& event,
   {
     
     _lastActionTag = action->GetTag();
-    robot.GetActionList().QueueActionAtEnd(action);
+    robot.GetActionList().QueueAction(QueueActionPosition::AT_END, action);
     _isActing = true;
   }
 

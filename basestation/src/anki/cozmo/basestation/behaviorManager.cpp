@@ -308,7 +308,8 @@ void BehaviorManager::SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32
     if(_robot.GetActionList().GetNumQueues() > 0 && _robot.GetActionList().GetQueueLength(0) == 0) {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_robot, _defaultHeadAngle);
       IActionRunner* moveLiftAction = new MoveLiftToHeightAction(_robot, _defaultLiftHeight);
-      _robot.GetActionList().QueueActionNow(new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
+      _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
+                                         new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
     }
     
   }else{
@@ -448,7 +449,8 @@ void BehaviorManager::TryToResumeBehavior()
   {
     IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_robot, _defaultHeadAngle);
     IActionRunner* moveLiftAction = new MoveLiftToHeightAction(_robot, _defaultLiftHeight);
-    _robot.GetActionList().QueueActionNow(new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
+    _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
+                                       new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
   }
     
   if ( _behaviorToResume != nullptr )

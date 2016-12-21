@@ -767,7 +767,7 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   _actingCallback = callback;
   _lastActionTag = action->GetTag();
   _extraRunningScore = 0.0f;
-  _robot.GetActionList().QueueActionNow(action);
+  _robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
   return true;
 }
 

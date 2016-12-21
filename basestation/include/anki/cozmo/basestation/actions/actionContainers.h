@@ -76,6 +76,13 @@ namespace Anki {
       const IActionRunner* GetCurrentAction() const;
       const IActionRunner* GetCurrentRunningAction() const { return _currentAction; }
       
+      // Deletes the action only if it isn't in the process of being deleted
+      // Safeguards against the action being deleted multiple times due to handling action
+      // completion signals
+      // Returns true if this call actually deleted the action, false if the action is already in the process
+      // of being deleted
+      bool DeleteAction(IActionRunner* &action);
+      
       void Print() const;
       
       typedef std::list<IActionRunner*>::const_iterator const_iterator;
@@ -84,12 +91,7 @@ namespace Anki {
       
     private:
       // Deletes the action only if it isn't in the process of being deleted
-      // Safeguards against the action being deleted multiple times due to handling action
-      // completion signals
-      // Returns true if this call actually deleted the action, false if the action is already in the process
-      // of being deleted
       // If iter is not the end of the queue, the iter will be removed from the queue (iter should always point to the action)
-      bool DeleteAction(IActionRunner* &action);
       bool DeleteActionIter(std::list<IActionRunner*>::iterator& iter);
       
       bool DeleteActionAndIter(IActionRunner* &action, std::list<IActionRunner*>::iterator& iter);
@@ -129,12 +131,6 @@ namespace Anki {
       SlotHandle AddConcurrentAction(IActionRunner* action, u8 numRetries = 0);
       
       // Queue an action
-      // These wrap correspondong QueueFoo() methods in ActionQueue.
-      Result     QueueActionNext(IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionAtEnd(IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionNow(IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionAtFront(IActionRunner* action, u8 numRetries = 0);
-      
       Result     QueueAction(QueueActionPosition inPosition,
                              IActionRunner* action, u8 numRetries = 0);
       
@@ -170,6 +166,9 @@ namespace Anki {
       // Blindly clears out the contents of the action list
       void       Clear();
       
+      // Returns true if the action has a game or sdk tag
+      bool       IsExternalAction(const IActionRunner* action);
+      
       ActionWatcher& GetActionWatcher() { return *_actionWatcher.get(); }
       
       typedef std::map<SlotHandle, ActionQueue>::const_iterator const_iterator;
@@ -177,6 +176,13 @@ namespace Anki {
       const_iterator end()   const { return _queues.end();   }
       
     protected:
+      // Queue an action
+      // These wrap correspondong QueueFoo() methods in ActionQueue.
+      Result     QueueActionNext(IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionAtEnd(IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionNow(IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionAtFront(IActionRunner* action, u8 numRetries = 0);
+    
       std::map<SlotHandle, ActionQueue> _queues;
     
     private:

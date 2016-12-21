@@ -1001,7 +1001,7 @@ namespace Anki {
     {
       assert(_actionCallbackMap.count(action->GetTag()) == 0);
       
-      if (robot.GetActionList().QueueActionNow(action) == RESULT_OK) {
+      if (robot.GetActionList().QueueAction(QueueActionPosition::NOW, action) == RESULT_OK) {
         _actionCallbackMap[action->GetTag()] = callback;
       } else {
         PRINT_NAMED_WARNING("BehaviorDockingTest.StartActing.QueueActionFailed", "Action type %s", EnumToString(action->GetType()));
