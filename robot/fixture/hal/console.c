@@ -475,9 +475,12 @@ static void ParseCommand(void)
     ConsoleWrite("Available commands:\r\n");
     for (i = 0; i < sizeof(m_functions) / sizeof(CommandFunction); i++)
     {
+      ConsoleWrite("  ");
       ConsoleWrite((char*)m_functions[i].command);
       ConsoleWrite("\r\n");
     }
+    ConsoleWrite("  reset\r\n");
+    ConsoleWrite("  exit\r\n");
     ConsoleWrite("\r\n");
   } 
   else 
