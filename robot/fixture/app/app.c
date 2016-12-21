@@ -122,14 +122,16 @@ void SetFixtureText(void)
   DisplayPutChar('c');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
-  DisplayMoveCursor(55, 2);
+  DisplayMoveCursor(45, 2);
   DisplayPutString("CERT/TEST ONLY");
+  DisplayMoveCursor(55, 2);
+  DisplayPutString(BUILD_INFO);
 #else
   DisplayMoveCursor(55, 110);
   DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
-  DisplayMoveCursor(55, 0);
+  DisplayMoveCursor(55, 2);
   DisplayPutString(BUILD_INFO);
 #endif
   DisplayFlip();
