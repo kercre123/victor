@@ -239,7 +239,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -261,6 +261,7 @@ MonoBehaviour:
   m_Text: '#button.unlock'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11420898
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -274,7 +275,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -296,6 +297,7 @@ MonoBehaviour:
   m_Text: 2
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11422432
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -424,7 +426,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -446,6 +448,7 @@ MonoBehaviour:
   m_Text: '#faceEnrollment.unlockView.description'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11481200
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -459,7 +462,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.48235297, g: 0.6862745, b: 0.050980397, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -481,6 +484,7 @@ MonoBehaviour:
   m_Text: '#label.available'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11482782
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -568,7 +572,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 28565cca262e9481280b50c6ba7e3892, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -741,8 +745,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -485, y: 197}
-  m_SizeDelta: {x: 764, y: 248}
+  m_AnchoredPosition: {x: -599.1, y: 202.1}
+  m_SizeDelta: {x: 1000, y: 248}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22433930
 RectTransform:
@@ -777,8 +781,8 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 379, y: 0}
-  m_SizeDelta: {x: 624, y: 203}
+  m_AnchoredPosition: {x: 449, y: 0}
+  m_SizeDelta: {x: 764, y: 203}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22437868
 RectTransform:
@@ -867,8 +871,8 @@ RectTransform:
   m_RootOrder: 4
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -1345, y: 189}
-  m_SizeDelta: {x: 900, y: 150}
+  m_AnchoredPosition: {x: -1504.1, y: 194.1}
+  m_SizeDelta: {x: 810, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22490530
 RectTransform:
@@ -885,8 +889,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 262, y: 3}
-  m_SizeDelta: {x: 209, y: 237}
+  m_AnchoredPosition: {x: 378, y: 2}
+  m_SizeDelta: {x: 257, y: 262}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &22592310
 CanvasGroup:
