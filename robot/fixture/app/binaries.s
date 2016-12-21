@@ -113,7 +113,7 @@ g_EspInitEnd
 g_EspSafe
   INCBIN releases\\esp.safe.bin
 g_EspSafeEnd
-
+#endif
 
   ALIGN
   EXPORT g_Radio
@@ -121,7 +121,6 @@ g_EspSafeEnd
 g_Radio
   INCBIN releases\\radio.bin
 g_RadioEnd
-#endif
 
   ALIGN
   EXPORT g_canary
