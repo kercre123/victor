@@ -3131,6 +3131,18 @@ void Robot::UnSetCarryingObjects(bool topOnly)
   if (!topOnly) {
     // Tell the robot it's not carrying anything
     if (_carryingObjectID.IsSet()) {
+      
+      // Since the PoseState of an object on the lift is Known, make it Dirty
+      // here when it's detached from the lift so that Cozmo doesn't try to localize to it.
+      // If the carry state is being unset due to placement, it will soon after get
+      // set to Known (if it is visually verified) or Unknown (if it's not visually verified).
+      // Setting PoseState to Unknown here might also be ok, but setting it to Dirty is less
+      // risky since that's what it was before we set the carry object state to Known.
+      ObservableObject* carriedObject = _blockWorld->GetObjectByID(_carryingObjectID);
+      if (nullptr != carriedObject) {
+        GetObjectPoseConfirmer().SetPoseState(carriedObject, PoseState::Dirty);
+      }
+      
       SendSetCarryState(CarryState::CARRY_NONE);
     }
 
