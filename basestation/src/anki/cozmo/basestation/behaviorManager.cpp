@@ -1075,7 +1075,7 @@ void BehaviorManager::UpdateTappedObject()
   {
     // If the tapped objects pose becomes unknown then give up and leave object tap interaction
     // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running)
-    const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_currDoubleTappedObject);
+    const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_currDoubleTappedObject);
     if(object != nullptr && object->IsPoseStateUnknown())
     {
       LeaveObjectTapInteraction();

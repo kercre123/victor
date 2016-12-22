@@ -179,8 +179,8 @@ bool PyramidBase::GetBaseInteriorMidpoint(const Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const ObservableObject* const targetObject) const
 {
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
   if(staticBlock == nullptr || baseBlock == nullptr || targetObject == nullptr){
     return false;
   }

@@ -438,7 +438,7 @@ ActionResult TrackObjectAction::InitInternal()
     return ActionResult::BAD_OBJECT;
   }
   
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
   if(nullptr == object) {
     PRINT_NAMED_ERROR("TrackObjectAction.Init.InvalidObject",
                       "Object %d does not exist in BlockWorld", _objectID.GetValue());
@@ -480,7 +480,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
       _robot.GetMoveComponent().SetTrackToObject(matchingObject->GetID());
     }
   } else {
-    matchingObject = _robot.GetBlockWorld().GetObjectByID(_objectID);
+    matchingObject = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
     if(nullptr == matchingObject) {
       PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.ObjectNoLongerExists",
                           "Object %d no longer exists in BlockWorld",

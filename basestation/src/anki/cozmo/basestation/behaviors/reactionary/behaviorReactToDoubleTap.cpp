@@ -137,7 +137,7 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
                   else if(msg.result == ActionResult::SUCCESS)
                   {
                     const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
-                    const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
+                    const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
                     
                     // If we turned towards the object and are seeing it but it's pose is still dirty then
                     // we should drive closer
@@ -201,7 +201,7 @@ bool BehaviorReactToDoubleTap::IsTappedObjectValid(const Robot& robot) const
   if(robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
     const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
-    const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
+    const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
     
     // The double tapped cube is valid for this reaction as long as it is not known and is not being
     // carried

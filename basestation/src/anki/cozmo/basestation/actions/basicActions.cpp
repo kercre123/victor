@@ -397,7 +397,7 @@ namespace Anki {
 
       if(_desiredObjectID.IsSet())
       {
-        const ObservableObject* desiredObject = _robot.GetBlockWorld().GetObjectByID(_desiredObjectID);
+        const ObservableObject* desiredObject = _robot.GetBlockWorld().GetLocatedObjectByID(_desiredObjectID);
         if(nullptr != desiredObject)
         {
           _desiredObjectLastObsTime = desiredObject->GetLastObservedTime();
@@ -420,7 +420,7 @@ namespace Anki {
     ActionResult SearchForNearbyObjectAction::CheckIfDone()
     {
       ActionResult internalResult = _compoundAction.Update();
-      const ObservableObject* desiredObject = _desiredObjectID.IsSet() ? _robot.GetBlockWorld().GetObjectByID(_desiredObjectID) : nullptr;
+      const ObservableObject* desiredObject = _desiredObjectID.IsSet() ? _robot.GetBlockWorld().GetLocatedObjectByID(_desiredObjectID) : nullptr;
       
       // check if the object has been located and actually observed
       if(desiredObject != nullptr &&
@@ -1225,7 +1225,7 @@ namespace Anki {
       }
       else
       {
-        _objectPtr = _robot.GetBlockWorld().GetObjectByID(_objectID);
+        _objectPtr = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
         if(nullptr == _objectPtr) {
           PRINT_NAMED_WARNING("TurnTowardsObjectAction.Init.ObjectNotFound",
                               "Object with ID=%d no longer exists in the world.",
@@ -1409,7 +1409,7 @@ namespace Anki {
       // Select the chosen action based on the object's type, if we haven't
       // already
       if(_chosenAction == nullptr) {
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.ObjectNotFound",
                             "Could not get actionable object with ID = %d from world.", _objectID.GetValue());

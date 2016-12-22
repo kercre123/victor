@@ -297,7 +297,7 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
         const ObjectID& matchedID = matchPair.second.matchedID;
         DEV_ASSERT(matchedID.IsSet(), "PotentialObjectsForLocalizingTo.LocalizeToRobot.NullMatchWithUnsetID");
         
-        matchedObj = _robot.GetBlockWorld().GetObjectByID(matchedID);
+        matchedObj = _robot.GetBlockWorld().GetLocatedObjectByID(matchedID);
         if(nullptr == matchedObj)
         {
           PRINT_NAMED_WARNING("PotentialObjectsForLocalizingTo.LocalizeToRobot.MissingMatchedObjectInCurrentFrame",

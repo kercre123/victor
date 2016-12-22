@@ -13,6 +13,7 @@
 
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
@@ -319,7 +320,7 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
     // outisde the beacon, since we would always want to drop it. Any other cube would be unusable until we drop this one
     if ( _robot.IsCarryingObject() )
     {
-      const ObservableObject* const carryingObject = _robot.GetBlockWorld().GetObjectByID( _robot.GetCarryingObject() );
+      const ObservableObject* const carryingObject = _robot.GetBlockWorld().GetLocatedObjectByID( _robot.GetCarryingObject() );
       if ( nullptr != carryingObject ) {
         outObjectList.emplace_back( carryingObject->GetID(), carryingObject->GetFamily() );
       } else {
@@ -336,25 +337,22 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
       BlockWorldFilter filter;
       filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
       filter.SetFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
-        if(!blockPtr->IsPoseStateUnknown())
+        // check if the robot can pick up this object
+        const bool canPickUp = _robot.CanPickUpObject(*blockPtr);
+        if ( canPickUp )
         {
-          // check if the robot can pick up this object
-          const bool canPickUp = _robot.CanPickUpObject(*blockPtr);
-          if ( canPickUp )
-          {
-            bool isBlockInAnyBeacon = false;
-            // check if the object is within any beacon
-            for ( const auto& beacon : _beacons ) {
-              isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-              if ( isBlockInAnyBeacon ) {
-                break;
-              }
+          bool isBlockInAnyBeacon = false;
+          // check if the object is within any beacon
+          for ( const auto& beacon : _beacons ) {
+            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
+            if ( isBlockInAnyBeacon ) {
+              break;
             }
-            
-            // this block should be carried to a beacon
-            if ( !isBlockInAnyBeacon ) {
-              outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
-            }
+          }
+          
+          // this block should be carried to a beacon
+          if ( !isBlockInAnyBeacon ) {
+            outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
           }
         }
         return false; // have to return true/false, even though not used
@@ -395,7 +393,7 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
     filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
     filter.SetFilterFcn([this, &robotRef, &outObjectList, beacon](const ObservableObject* blockPtr)
     {
-      if(!blockPtr->IsPoseStateUnknown() && !_robot.IsCarryingObject(blockPtr->GetID()) )
+      if(!_robot.IsCarryingObject(blockPtr->GetID()) )
       {
         const bool isBlockInBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose());
         if ( isBlockInBeacon ) {
@@ -437,6 +435,10 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
       filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
       filter.SetFilterFcn([this, &allInBeacon](const ObservableObject* blockPtr)
       {
+        // TODO: there is a bug here, Unknown objects are only retrieved if there has been no delocalization
+        // after they were discovered. I need to check discovered poses vs connected objects, and whether all
+        // discovered poses are inside the beacon
+      
         if(!blockPtr->IsPoseStateUnknown())
         {
           bool isBlockInAnyBeacon = false;
@@ -986,7 +988,7 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
 template<>
 void AIWhiteboard::HandleMessage(const ExternalInterface::RobotMarkedObjectPoseUnknown& msg)
 {
-  const ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(msg.objectID);
+  const ObservableObject* obj = _robot.GetBlockWorld().GetConnectedActiveObjectByID(msg.objectID);
   if( nullptr == obj ) {
     PRINT_NAMED_WARNING("AIWhiteboard.HandleMessage.RobotMarkedObjectPoseUnknown.NoBlock",
                         "couldnt get object with id %d",
@@ -1216,10 +1218,10 @@ void AIWhiteboard::UpdateBeaconRender()
   }
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
 {
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
   
   // We still want to do something with this double tapped object even if it doesn't exist in the
   // current frame
@@ -1258,6 +1260,7 @@ void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
   _haveTapIntentionObject = true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ClearObjectTapInteraction()
 {
   _haveTapIntentionObject = false;

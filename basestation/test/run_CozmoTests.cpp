@@ -871,7 +871,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   std::vector<ObservableObject*> objects;
   blockWorld.FindMatchingObjects(filter, objects);
   ASSERT_TRUE(objects.empty());
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 0);
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0);
   
   // Add object
   ObjectID objID1 = blockWorld.AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
@@ -896,7 +896,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ASSERT_EQ(object2->GetPoseState(), PoseState::Known);
   ASSERT_EQ(object2->IsActive(), true);
   ASSERT_EQ(object2->CanBeUsedForLocalization(), true);
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 1);
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 1);
   
   // Delocalizing will create a new frame but the old frame will still exist since
   // object2 is localizable
@@ -914,7 +914,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ObjectID objID3 = blockWorld.AddActiveObject(2, 2, ActiveObjectType::OBJECT_CUBE3);
   ObservableObject* object3 = blockWorld.GetObjectByID(objID3);
   ASSERT_NE(nullptr, object3);
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 2);
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 2);
 
   // Mark object2 in previous frame as unknown so that frame will become a zombie
   robot.GetObjectPoseConfirmer().SetPoseState(object2, PoseState::Unknown);
@@ -924,7 +924,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   // Since our new frame has no objects in it we will added all objects from all zombie frames to
   // the new frame
   robot.Delocalize(false);
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 1);
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 1);
   
   object1 = blockWorld.GetObjectByID(objID1);
   ASSERT_NE(nullptr, object1);
@@ -1350,7 +1350,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
     ASSERT_EQ(object->GetPoseState(), PoseState::Known);
     ASSERT_EQ(object->IsActive(), true);
     //ASSERT_EQ(object->CanBeUsedForLocalization(), true);
-    ASSERT_EQ(robot.GetBlockWorld().GetNumOrigins(), 1);
+    ASSERT_EQ(robot.GetBlockWorld().GetNumAliveOrigins(), 1);
     
   };
   
@@ -1512,7 +1512,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   std::vector<ObservableObject*> objects;
   blockWorld.FindMatchingObjects(filter, objects);
   ASSERT_TRUE(objects.empty());
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 0);
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0);
   
   // Add object
   ObjectID objID1 = blockWorld.AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);

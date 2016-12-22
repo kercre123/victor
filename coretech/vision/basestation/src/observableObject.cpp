@@ -143,6 +143,15 @@ namespace Vision {
 
     return latestReason;
   }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  const Pose3d& ObservableObject::GetPose() const
+  {
+    // We can't use the pose if the poseState is invalid, since it's potentially garbage. The calling code
+    // should instead handle the case of receiving an object whose pose is not valid
+    ASSERT_NAMED(HasValidPose(), "ObservableObject.GetPose.ObjectPoseIsNotValid");
+    return _pose;
+  }
 
   Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
                                                          const Pose3d&        atPose,
@@ -412,20 +421,9 @@ namespace Vision {
   }
 
 
-  const char* ObservableObject::PoseStateToString(const PoseState& state)
-  {
-    switch(state) {
-      case PoseState::Known: return "Known";
-      case PoseState::Dirty: return "Dirty";
-      case PoseState::Unknown: return "Unknown";
-    }
-  }
-  
   bool ObservableObject::IsRestingAtHeight(float height, float tolerence) const
   {
-    if(IsPoseStateUnknown()){
-      return false;
-    }
+    ASSERT_NAMED(HasValidPose(), "ObservableObject.IsRestingAtHeight.ObjectPoseIsNotValid");
     
     const Pose3d& pose = GetPose().GetWithRespectToOrigin();
     const f32 blockHeight = GetDimInParentFrame<'Z'>(pose);

@@ -177,19 +177,10 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
   
 void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
 {
-  ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_currTarget);
+  ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_currTarget);
   if( nullptr == obj ) {
     PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.StackedCube.NullTargetObject",
                         "Target object %d returned null from blockworld",
-                        _currTarget.GetValue());
-    FinishIteration(robot);
-    return;
-  }
-  else if(obj->IsPoseStateUnknown())
-  {
-    // Can't do the ghost object stuff below if object is unknown pose state
-    PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.StackedCube.TargetObjectInUnknownPose",
-                        "Target object %d has unknown pose state",
                         _currTarget.GetValue());
     FinishIteration(robot);
     return;

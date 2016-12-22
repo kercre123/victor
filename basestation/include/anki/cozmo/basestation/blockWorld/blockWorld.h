@@ -17,7 +17,6 @@
 #include <map>
 #include <vector>
 
-#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
@@ -41,7 +40,7 @@ namespace Anki
     class Robot;
     class RobotManager;
     class RobotMessageHandler;
-    class ActiveCube;
+    class ActiveObject;
     class IExternalInterface;
     class INavMemoryMap;
     namespace BlockConfigurations{
@@ -94,11 +93,6 @@ namespace Anki
       // notify the blockWorld that someone (poseConfirmer) has visually verified the given object at their current pose
       void OnObjectVisuallyVerified(const ObservableObject* object);
       
-      // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
-      // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
-      // is not a zombie even if it doesn't have any cubes yet.
-      bool IsZombiePoseOrigin(const Pose3d* origin) const;
-      
       //
       // Object Access
       //
@@ -123,120 +117,157 @@ namespace Anki
       // Get objects that exist in the world, by family, type, ID, etc.
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
-      const ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
+      inline const ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
       
-      // Return a pointer to an object with the specified ID (in the current world
-      // coordinate frame. If that object does not exist or its pose is unknown, nullptr is returned.
-      // Be sure to ALWAYS check for the return being null!
-      // Optionally, specify a family to search within.
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Get objects by ID or activeID
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      
+      // Return a pointer to an object with the specified ID in the current world coordinate frame.
+      // If that object does not exist in the current origin, nullptr is returned.
+      // If you want an object regardless of its pose, use GetConnectedActiveObjectById instead.
       // For more complex queries, use one of the Find methods with a BlockWorldFilter.
-      ObservableObject* GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown);
-      const ObservableObject* GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown) const;
+      inline const ObservableObject* GetLocatedObjectByID(const ObjectID& objectID) const;
+      inline       ObservableObject* GetLocatedObjectByID(const ObjectID& objectID);
       
-      // Return a pointer to an object with the specified activeID (in the current world coordinate frame)
-      ObservableObject* GetObjectByActiveID(const ActiveID& activeID);
-      const ObservableObject* GetObjectByActiveID(const ActiveID& activeID) const;
+      // Returns a pointer to a connected object with the specified objectID without any pose information. If you need to obtain
+      // the instance of this object in the current origin (if it exists), you can do so with GetLocatedObjectByID
+      inline const ActiveObject* GetConnectedActiveObjectByID(const ObjectID& objectID) const;
+      inline       ActiveObject* GetConnectedActiveObjectByID(const ObjectID& objectID);
       
-      // Like GetObjectByID but dynamically casts the given object ID into the
-      // ActiveObject type.
-      ActiveObject* GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown);
-      const ActiveObject* GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown) const;
+      // Returns a pointer to a connected object with the specified objectID without any pose information. If you need to obtain
+      // the instance of this object in the current origin (if it exists), you can do so with GetLocatedObjectByID
+      inline const ActiveObject* GetConnectedActiveObjectByActiveId(const ActiveID& activeID) const;
+      inline       ActiveObject* GetConnectedActiveObjectByActiveId(const ActiveID& activeID);
       
-      // Returns (in arguments) all objects matching a filter
-      // NOTE: does not clear result (thus can be used multiple times with the same vector)
-      void FindMatchingObjects(const BlockWorldFilter& filter, std::vector<const ObservableObject*>& result) const;
-      void FindMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result);
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Find objects by filter query
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
-      // Returns first object matching filter
-      const ObservableObject* FindMatchingObject(const BlockWorldFilter& filter) const;
-      ObservableObject* FindMatchingObject(const BlockWorldFilter& filter);
-      
-      // Applies given filter or modifier to all objects.
-      // NOTE: Calling FilterObjects this way doesn't return anything, so the only
+      // Applies given filter or modifier to located objects.
+      // NOTE: Calling FilterLocatedObjects this way doesn't return anything, so the only
       //  way it has any effect is via the filter's FilterFcn, which presumably
       //  is doing useful work for you somehow. Otherwise what are you doing?
       using ModifierFcn = std::function<void(ObservableObject*)>;
-      void FilterObjects(const BlockWorldFilter& filter) const;
-      void ModifyObjects(const ModifierFcn& modiferFcn, const BlockWorldFilter& filter = BlockWorldFilter());
+      inline void FilterLocatedObjects(const BlockWorldFilter& filter) const;
+      inline void ModifyLocatedObjects(const ModifierFcn& modiferFcn, const BlockWorldFilter& filter = BlockWorldFilter());
+      
+      // Returns (in arguments) all objects matching a filter, among objects that are currently located (their pose
+      // is valid in the origins matching the filter)
+      // NOTE: does not clear result (thus can be used multiple times with the same vector)
+      void FindLocatedMatchingObjects(const BlockWorldFilter& filter, std::vector<const ObservableObject*>& result) const;
+      void FindLocatedMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result);
+      
+      // Returns first object matching filter, among objects that are currently located (their pose is valid in
+      // the origins matching the filter)
+      inline const ObservableObject* FindLocatedMatchingObject(const BlockWorldFilter& filter) const;
+      inline       ObservableObject* FindLocatedMatchingObject(const BlockWorldFilter& filter);
+      
+      // Finds an object closer than the given distance (optional) (rotation -- not implemented yet) with respect
+      // to the given pose. Returns nullptr if no objects match, closest one if multiple matches are found.
+      inline const ObservableObject* FindLocatedObjectClosestTo(const Pose3d& pose,
+                                                                const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      inline       ObservableObject* FindLocatedObjectClosestTo(const Pose3d& pose,
+                                                                const BlockWorldFilter& filter = BlockWorldFilter());
+      inline const ObservableObject* FindLocatedObjectClosestTo(const Pose3d& pose,
+                                                                const Vec3f& distThreshold,
+                                                                const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      inline       ObservableObject* FindLocatedObjectClosestTo(const Pose3d& pose,
+                                                                const Vec3f& distThreshold,
+                                                                const BlockWorldFilter& filter = BlockWorldFilter());
+      
+      // Finds a matching object (one with the same family and type) that is closest to the given object, within the
+      // specified distance and angle thresholds.
+      // Returns nullptr if none found.
+      inline const ObservableObject* FindLocatedClosestMatchingObject(const ObservableObject& object,
+                                                                      const Vec3f& distThreshold,
+                                                                      const Radians& angleThreshold,
+                                                                      const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      inline       ObservableObject* FindLocatedClosestMatchingObject(const ObservableObject& object,
+                                                                      const Vec3f& distThreshold,
+                                                                      const Radians& angleThreshold,
+                                                                      const BlockWorldFilter& filter = BlockWorldFilter());
+      
+      // Finds the object of the given type that is closest to the given pose, within the specified distance and
+      // angle thresholds.
+      // Returns nullptr if none found.
+      inline const ObservableObject* FindLocatedClosestMatchingObject(ObjectType withType,
+                                                                      const Pose3d& pose,
+                                                                      const Vec3f& distThreshold,
+                                                                      const Radians& angleThreshold,
+                                                                      const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      inline       ObservableObject* FindLocatedClosestMatchingObject(ObjectType withType,
+                                                                      const Pose3d& pose,
+                                                                      const Vec3f& distThreshold,
+                                                                      const Radians& angleThreshold,
+                                                                      const BlockWorldFilter& filter = BlockWorldFilter());
+      
+      //
+      const ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      
+      // Finds existing objects whose XY bounding boxes intersect with objectSeen's XY bounding box, and pass
+      // the given filter.
+      void FindLocatedIntersectingObjects(const ObservableObject* objectSeen,
+                                          std::vector<const ObservableObject*>& intersectingExistingObjects,
+                                          f32 padding_mm,
+                                          const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      void FindLocatedIntersectingObjects(const ObservableObject* objectSeen,
+                                          std::vector<ObservableObject*>& intersectingExistingObjects,
+                                          f32 padding_mm,
+                                          const BlockWorldFilter& filter = BlockWorldFilter());
+      // same as above, except it takes Quad2f instead of an object
+      void FindLocatedIntersectingObjects(const Quad2f& quad,
+                                          std::vector<const ObservableObject*> &intersectingExistingObjects,
+                                          f32 padding_mm,
+                                          const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      void FindLocatedIntersectingObjects(const Quad2f& quad,
+                                          std::vector<ObservableObject*> &intersectingExistingObjects,
+                                          f32 padding_mm,
+                                          const BlockWorldFilter& filter = BlockWorldFilter());
+      
+      // Find an object on top of the given object, using a given height tolerance
+      // between the top of the given object on bottom and the bottom of existing
+      // candidate objects on top. Returns nullptr if no object is found.
+      inline const ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                       f32 zTolerance,
+                                                       const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      inline       ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                       f32 zTolerance,
+                                                       const BlockWorldFilter& filter = BlockWorldFilter());
+      // Similar to FindObjectOnTopOf, but in reverse: find object directly underneath given object
+      inline const ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                                          f32 zTolerance,
+                                                          const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
+      inline       ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                                          f32 zTolerance,
+                                                          const BlockWorldFilter& filterIn = BlockWorldFilter());
+      
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // BoundingBoxes
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension, relative to world origin!) and
       // returns a vector of quads of their outlines on the ground plane (z=0).
       // Can also pad the bounding boxes by a specified amount.
       // Optionally, will filter according to given BlockWorldFilter.
-      void GetObjectBoundingBoxesXY(const f32 minHeight,
-                                    const f32 maxHeight,
-                                    const f32 padding,
-                                    std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
-                                    const BlockWorldFilter& filter = BlockWorldFilter()) const;
-      
-      // Finds an object nearest the specified distance (and optionally, rotation -- not implemented yet)
-      // of the given pose. Returns nullptr if no objects match. Returns closest
-      // if multiple matches are found.
-      const ObservableObject* FindObjectClosestTo(const Pose3d& pose,
-                                                  const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      void GetLocatedObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight, const f32 padding,
+                                           std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
+                                           const BlockWorldFilter& filter = BlockWorldFilter()) const;
 
-      const ObservableObject* FindObjectClosestTo(const Pose3d& pose,
-                                                  const Vec3f&  distThreshold,
-                                                  const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      // Wrapper for GetLocatedObjectBoundingBoxesXY that returns bounding boxes of objects that are
+      // obstacles given the robot's current z height.
+      void GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
+                        const f32 padding = 0.f) const;
       
-      ObservableObject* FindObjectClosestTo(const Pose3d& pose,
-                                                  const BlockWorldFilter& filter = BlockWorldFilter());
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Localization
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
-      ObservableObject* FindObjectClosestTo(const Pose3d& pose,
-                                                  const Vec3f&  distThreshold,
-                                                  const BlockWorldFilter& filter = BlockWorldFilter());
-      
-      // Finds a matching object (one with the same type) that is closest to the
-      // given object, within the specified distance and angle thresholds.
-      // Returns nullptr if none found.
-      const ObservableObject* FindClosestMatchingObject(const ObservableObject& object,
-                                                        const Vec3f& distThreshold,
-                                                        const Radians& angleThreshold,
-                                                        const BlockWorldFilter& filter = BlockWorldFilter()) const;
-      
-      ObservableObject* FindClosestMatchingObject(const ObservableObject& object,
-                                                  const Vec3f& distThreshold,
-                                                  const Radians& angleThreshold,
-                                                  const BlockWorldFilter& filter = BlockWorldFilter());
-      
-      // Same as above, except type and pose are specified directly
-      const ObservableObject* FindClosestMatchingObject(ObjectType withType,
-                                                        const Pose3d& pose,
-                                                        const Vec3f& distThreshold,
-                                                        const Radians& angleThreshold,
-                                                        const BlockWorldFilter& filter = BlockWorldFilter()) const;
-      
-      ObservableObject* FindClosestMatchingObject(ObjectType withType,
-                                                  const Pose3d& pose,
-                                                  const Vec3f& distThreshold,
-                                                  const Radians& angleThreshold,
-                                                  const BlockWorldFilter& filter = BlockWorldFilter());
-      
-      const ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter = BlockWorldFilter()) const;
-      
-      // Finds existing objects whose XY bounding boxes intersect with objectSeen's
-      // XY bounding box, with the exception of those that are of ignoreFamilies or
-      // ignoreTypes.
-      void FindIntersectingObjects(const ObservableObject* objectSeen,
-                                   std::vector<const ObservableObject*>& intersectingExistingObjects,
-                                   f32 padding_mm,
-                                   const BlockWorldFilter& filter = BlockWorldFilter()) const;
-      
-      void FindIntersectingObjects(const Quad2f& quad,
-                                   std::vector<const ObservableObject*> &intersectingExistingObjects,
-                                   f32 padding,
-                                   const BlockWorldFilter& filter = BlockWorldFilter()) const;
-      
-      void FindIntersectingObjects(const ObservableObject* objectSeen,
-                                   std::vector<ObservableObject*>& intersectingExistingObjects,
-                                   f32 padding_mm,
-                                   const BlockWorldFilter& filter = BlockWorldFilter());
-      
-      void FindIntersectingObjects(const Quad2f& quad,
-                                   std::vector<ObservableObject*> &intersectingExistingObjects,
-                                   f32 padding,
-                                   const BlockWorldFilter& filter = BlockWorldFilter());
+      // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
+      // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
+      // is not a zombie even if it doesn't have any cubes yet.
+      bool IsZombiePoseOrigin(const Pose3d* origin) const;
       
       // Returns true if there are remaining objects that the robot could potentially
       // localize to
@@ -245,41 +276,10 @@ namespace Anki
       // returns true if there are localizable objects at the specified origin. It iterates all localizable objects
       // and returns true if any of them has the given origin as origin
       bool AnyRemainingLocalizableObjects(const Pose3d* origin) const;
-      
-      // Find an object on top of the given object, using a given height tolerance
-      // between the top of the given object on bottom and the bottom of existing
-      // candidate objects on top. Returns nullptr if no object is found.
-      const ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                f32 zTolerance,
-                                                const BlockWorldFilter& filter = BlockWorldFilter()) const;
-      
-      ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                          f32 zTolerance,
-                                          const BlockWorldFilter& filter = BlockWorldFilter());
-      
-      // Same as above, but in revers: find object directly underneath given object
-      const ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
-                                                   f32 zTolerance,
-                                                   const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
-      
-      ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
-                                             f32 zTolerance,
-                                             const BlockWorldFilter& filterIn = BlockWorldFilter());
-      
-      
-      
-      // Wrapper for above that returns bounding boxes of objects that are
-      // obstacles given the robot's current z height. Objects being carried
-      // and the object the robot is localized to are not considered obstacles.
-      void GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
-                        const f32 padding = 0.f) const;
-      
-      // Get objects newly-observed or re-observed objects in the last Update.
-      /*
-      using ObservedObjectBoundingBoxes = std::vector<std::pair<ObjectID, Rectangle<f32> > >;
-      const ObservedObjectBoundingBoxes& GetProjectedObservedObjects() const;
-      const std::vector<ObjectID>& GetObservedObjectIDs() const;
-      */
+
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Others. TODO Categorize/organize
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last call to Update().
@@ -302,8 +302,7 @@ namespace Anki
       // Find all objects with the given parent and update them to have flatten
       // their objects w.r.t. the origin. Call this when the robot rejiggers
       // origins.
-      Result UpdateObjectOrigins(const Pose3d* oldOrigin,
-                                 const Pose3d* newOrigin);
+      Result UpdateObjectOrigins(const Pose3d* oldOrigin, const Pose3d* newOrigin);
       
       // Find the given objectID in the given origin, and update it so that it is
       // stored according to its _current_ origin. (Move from old origin to current origin.)
@@ -314,7 +313,7 @@ namespace Anki
       // checks the origins currently storing objects and if they have become zombies it deletes them
       void DeleteObjectsFromZombieOrigins();
       
-      size_t GetNumOrigins() const { return _existingObjects.size(); }
+      size_t GetNumAliveOrigins() const { return _locatedObjects.size(); }
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Navigation memory
@@ -353,7 +352,6 @@ namespace Anki
       // Call every existing object's Visualize() method and call the
       // VisualizePreActionPoses() on the currently-selected ActionableObject.
       void DrawAllObjects() const;
-
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Navigation memory
@@ -367,23 +365,68 @@ namespace Anki
       const BlockConfigurations::BlockConfigurationManager& GetBlockConfigurationManager() const { assert(_blockConfigurationManager); return *_blockConfigurationManager;}
       void NotifyBlockConfigurationManagerObjectPoseChanged(const ObjectID& objectID) const;
       
-      
-    protected:
-      
+    private:
+
+      // active objects
+      using ActiveObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ActiveObject> >;
+      using ActiveObjectsMapByType_t   = std::map<ObjectType, ActiveObjectsMapByID_t >;
+      using ActiveObjectsMapByFamily_t = std::map<ObjectFamily, ActiveObjectsMapByType_t>;
+
+      // observable objects
       using ObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ObservableObject> >;
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
       using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
+      using ObjectsByOrigin_t    = std::map<const PoseOrigin*, ObjectsMapByFamily_t>;
       
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Helpers for accessors and queries
+      // Note: these helpers return non-const pointers despite being marked const,
+      // because they are private helpers wrapped by const/non-const public methods.
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      // Located by filter (most basic, other helpers rely on it)
+      ObservableObject* FindLocatedObjectHelper(const BlockWorldFilter& filter,
+                                                const ModifierFcn& modiferFcn = nullptr,
+                                                bool returnFirstFound = false) const;
+      
+      // Connected by filter (most basic, other helpers rely on it)
+      ActiveObject* FindConnectedObjectHelper(const BlockWorldFilter& filter,
+                                              const ModifierFcn& modiferFcn = nullptr,
+                                              bool returnFirstFound = false) const;
+
+      // By ID or activeID
+      ObservableObject* GetLocatedObjectByIdHelper(const ObjectID& objectID) const;
+      ActiveObject* GetConnectedActiveObjectByIdHelper(const ObjectID& objectID) const;
+      ActiveObject* GetConnectedActiveObjectByActiveIdHelper(const ActiveID& activeID) const;
+      
+      // By location/pose
+      ObservableObject* FindLocatedObjectClosestToHelper(const Pose3d& pose,
+                                                         const Vec3f&  distThreshold,
+                                                         const BlockWorldFilter& filterIn) const;
+
+      // Matching object
+      ObservableObject* FindLocatedClosestMatchingObjectHelper(const ObservableObject& object,
+                                                               const Vec3f& distThreshold,
+                                                               const Radians& angleThreshold,
+                                                               const BlockWorldFilter& filter) const;
+      
+      // Matching type and location
+      ObservableObject* FindLocatedClosestMatchingTypeHelper(ObjectType withType,
+                                                             const Pose3d& pose,
+                                                             const Vec3f& distThreshold,
+                                                             const Radians& angleThreshold,
+                                                             const BlockWorldFilter& filter) const;
+      
+
+      ObservableObject* FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,
+                                                          f32 zTolerance,
+                                                          const BlockWorldFilter& filterIn,
+                                                          bool onTop) const;
+      
+      
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       //
-      // Member Methods
-      //
-      
-      // Note these are marked const but return non-const pointers.
-      ObservableObject* GetObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
-      ActiveObject* GetActiveObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
-      ObservableObject* GetObjectByActiveIDHelper(const ActiveID& activeID) const;
-      
-      bool UpdateRobotPose(std::list<Vision::ObservedMarker>& obsMarkers, const TimeStamp_t atTimestamp);
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
       Result UpdateObjectPoses(std::list<Vision::ObservedMarker>& obsMarkers,
                                const ObjectFamily& inFamily,
@@ -467,21 +510,6 @@ namespace Anki
       // Use inOrigin=nullptr to use objects from all coordinate frames
       void BroadcastObjectStates(bool connectedObjectsOnly, const Pose3d* inOrigin);
       
-      // Note: these helpers return non-const pointers despite being marked const,
-      // but that's because they are protected helpers wrapped by const/non-const
-      // public methods:
-      ObservableObject* FindObjectHelper(const BlockWorldFilter& filter = BlockWorldFilter(),
-                                         const ModifierFcn& modiferFcn = nullptr,
-                                         bool returnFirstFound = false) const;
-      
-      ObservableObject* FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,
-                                                f32 zTolerance,
-                                                          const BlockWorldFilter& filterIn,
-                                                          bool onTop) const;
-      
-      ObservableObject* FindObjectClosestToHelper(const Pose3d& pose,
-                                                  const Vec3f&  distThreshold,
-                                                  const BlockWorldFilter& filterIn) const;
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
       
@@ -526,22 +554,22 @@ namespace Anki
       f32 _lastPlayAreaSizeEventSec;
       const f32 _playAreaSizeEventIntervalSec;
       
-      // A place to keep up with all objects' IDs and bounding boxes observed
-      // in a single call to Update()
-      //ObservedObjectBoundingBoxes _obsProjectedObjects;
-      //std::vector<ObjectID> _currentObservedObjectIDs;
-      
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)
       std::map<ObjectFamily, ObservableObjectLibrary> _objectLibrary;
       
-      // Store all observed objects, indexed first by Type, then by ID
-      // NOTE: If a new ObjectsMap_t is added here, a pointer to it needs to
-      //   be stored in allExistingObjects_ (below), initialized in the
-      //   BlockWorld cosntructor.
-      using ObjectsByOrigin_t = std::map<const Pose3d*, ObjectsMapByFamily_t>;
-      ObjectsByOrigin_t _existingObjects;
+      // Objects that we know about because they have connected, but for which we may or may not know their location.
+      // The instances of objects in this container are expected to NEVER have a valid Pose/PoseState. If they are
+      // present in any origin, a copy of the object with the proper pose will be placed in the located objects container.
+      // Note: by definition it stores ActiveObjects instead of ObservableObjects
+      ActiveObjectsMapByFamily_t _connectedObjects;
+
+      // Objects that we have located indexed by the origin they belong to.
+      // The instances of objects in this container are expected to always have a valid Pose/PoseState. If they are
+      // lost from an origin (for example by being unobserved), their master copy should be available through the
+      // connected objects container.
+      ObjectsByOrigin_t _locatedObjects;
       
       bool _didObjectsChange;
       TimeStamp_t _robotMsgTimeStampAtChange; // time of the last robot msg when objects changed
@@ -596,7 +624,8 @@ namespace Anki
     }; // class BlockWorld
 
     
-    inline const BlockWorld::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily whichFamily) const
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const BlockWorld::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily whichFamily) const
     {
       auto objectsWithFamilyIter = _objectLibrary.find(whichFamily);
       if(objectsWithFamilyIter != _objectLibrary.end()) {
@@ -607,50 +636,173 @@ namespace Anki
       }
     }
     
-    inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily) {
-      return GetObjectByIdHelper(objectID, inFamily); // returns non-const*
-    }
-    
-    inline const ObservableObject* BlockWorld::GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily) const {
-      return GetObjectByIdHelper(objectID, inFamily); // returns const*
-    }
-    
-    inline ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily) {
-      return GetActiveObjectByIdHelper(objectID, inFamily); // returns non-const*
-    }
-    
-    inline const ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily) const {
-      return GetActiveObjectByIdHelper(objectID, inFamily); // returns const*
-    }
-    
-    inline ObservableObject* BlockWorld::GetObjectByActiveID(const ActiveID& activeID) {
-      return GetObjectByActiveIDHelper(activeID);
-    }
-    
-    inline const ObservableObject* BlockWorld::GetObjectByActiveID(const ActiveID& activeID) const {
-      return GetObjectByActiveIDHelper(activeID);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID) const {
+      return GetLocatedObjectByIdHelper(objectID); // returns const*
     }
 
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID) {
+      return GetLocatedObjectByIdHelper(objectID); // returns non-const*
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ActiveObject* BlockWorld::GetConnectedActiveObjectByID(const ObjectID& objectID) const {
+      return GetConnectedActiveObjectByIdHelper(objectID);
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ActiveObject* BlockWorld::GetConnectedActiveObjectByID(const ObjectID& objectID) {
+      return GetConnectedActiveObjectByIdHelper(objectID);
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveId(const ActiveID& activeID) const {
+      return GetConnectedActiveObjectByActiveIdHelper(activeID);
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveId(const ActiveID& activeID)
+    {
+      return GetConnectedActiveObjectByActiveIdHelper(activeID);
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BlockWorld::FilterLocatedObjects(const BlockWorldFilter& filter) const
+    {
+      FindLocatedObjectHelper(filter, nullptr, false);
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BlockWorld::ModifyLocatedObjects(const ModifierFcn& modifierFcn, const BlockWorldFilter& filter)
+    {
+      if(modifierFcn == nullptr) {
+        PRINT_NAMED_WARNING("BlockWorld.ModifyLocatedObjects.NullModifierFcn", "Consider just using FilterLocatedObjects?");
+      }
+      FindLocatedObjectHelper(filter, modifierFcn, false);
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ObservableObject* BlockWorld::FindLocatedMatchingObject(const BlockWorldFilter& filter) const
+    {
+      return FindLocatedObjectHelper(filter, nullptr, true); // returns const
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ObservableObject* BlockWorld::FindLocatedMatchingObject(const BlockWorldFilter& filter)
+    {
+      return FindLocatedObjectHelper(filter, nullptr, true); // returns non-const
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ObservableObject* BlockWorld::FindLocatedObjectClosestTo(const Pose3d& pose,
+                                                                   const BlockWorldFilter& filter) const
+    {
+      return FindLocatedObjectClosestTo(pose, Vec3f{FLT_MAX}, filter); // returns const
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ObservableObject* BlockWorld::FindLocatedObjectClosestTo(const Pose3d& pose,
+                                                             const BlockWorldFilter& filter)
+    {
+      return FindLocatedObjectClosestTo(pose, Vec3f{FLT_MAX}, filter); // returns non-const
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ObservableObject* BlockWorld::FindLocatedObjectClosestTo(const Pose3d& pose,
+                                                                   const Vec3f&  distThreshold,
+                                                                   const BlockWorldFilter& filter) const
+    {
+      return FindLocatedObjectClosestToHelper(pose, distThreshold, filter); // returns const
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ObservableObject* BlockWorld::FindLocatedObjectClosestTo(const Pose3d& pose,
+                                                             const Vec3f&  distThreshold,
+                                                             const BlockWorldFilter& filter)
+    {
+      return FindLocatedObjectClosestToHelper(pose, distThreshold, filter); // returns non-const
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ObservableObject* BlockWorld::FindLocatedClosestMatchingObject(const ObservableObject& object,
+                                                                         const Vec3f& distThreshold,
+                                                                         const Radians& angleThreshold,
+                                                                        const BlockWorldFilter& filter) const
+    {
+      return FindLocatedClosestMatchingObjectHelper(object, distThreshold, angleThreshold, filter);
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ObservableObject* BlockWorld::FindLocatedClosestMatchingObject(const ObservableObject& object,
+                                                                    const Vec3f& distThreshold,
+                                                                    const Radians& angleThreshold,
+                                                                    const BlockWorldFilter& filter)
+    {
+      return FindLocatedClosestMatchingObjectHelper(object, distThreshold, angleThreshold, filter);
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ObservableObject* BlockWorld::FindLocatedClosestMatchingObject(ObjectType withType,
+                                                                         const Pose3d& pose,
+                                                                         const Vec3f& distThreshold,
+                                                                         const Radians& angleThreshold,
+                                                                         const BlockWorldFilter& filter) const
+    {
+      return FindLocatedClosestMatchingTypeHelper(withType, pose, distThreshold, angleThreshold, filter);
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ObservableObject* BlockWorld::FindLocatedClosestMatchingObject(ObjectType withType,
+                                                                   const Pose3d& pose,
+                                                                   const Vec3f& distThreshold,
+                                                                   const Radians& angleThreshold,
+                                                                   const BlockWorldFilter& filter)
+    {
+      return FindLocatedClosestMatchingTypeHelper(withType, pose, distThreshold, angleThreshold, filter);
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                          f32 zTolerance,
+                                                          const BlockWorldFilter& filter) const
+    {
+      return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns const
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                    f32 zTolerance,
+                                                    const BlockWorldFilter& filter)
+    {
+      return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns non-const
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                                             f32 zTolerance,
+                                                             const BlockWorldFilter& filter) const
+    {
+      return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns const
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                                       f32 zTolerance,
+                                                       const BlockWorldFilter& filter)
+    {
+      return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns non-const
+    }
+    
+    
+    
     inline ObjectID BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object,
                                              const ObservableObject* objectToCopyID)
 
     {
-      return AddNewObject(_existingObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object, objectToCopyID);
+      return AddNewObject(_locatedObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object, objectToCopyID);
     }
 
-    /*
-    inline const BlockWorld::ObservedObjectBoundingBoxes& BlockWorld::GetProjectedObservedObjects() const
-    {
-      return _obsProjectedObjects;
-    }
-     */
-    
-    /*
-    inline const std::vector<ObjectID>& BlockWorld::GetObservedObjectIDs() const {
-      return _currentObservedObjectIDs;
-    }
-     */
-    
     inline void BlockWorld::EnableObjectAddition(bool enable) {
       _canAddObjects = enable;
     }
@@ -659,84 +811,6 @@ namespace Anki
       _canDeleteObjects = enable;
     }
     
-    inline void BlockWorld::ModifyObjects(const ModifierFcn& modifierFcn, const BlockWorldFilter& filter) {
-      if(modifierFcn == nullptr) {
-        PRINT_NAMED_WARNING("BlockWorld.ModifyObjects.NullModifierFcn",
-                            "Consider just using FilterObjects?");
-      }
-      FindObjectHelper(filter, modifierFcn, false);
-    }
-    
-    inline void BlockWorld::FilterObjects(const BlockWorldFilter& filter) const {
-      FindObjectHelper(filter, nullptr, false);
-    }
-    
-    inline const ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                                 f32 zTolerance,
-                                                                 const BlockWorldFilter& filter) const
-    {
-      return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns const
-    }
-    
-    inline ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                           f32 zTolerance,
-                                                           const BlockWorldFilter& filter)
-    {
-      return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns non-const
-    }
-    
-    inline const ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
-                                                                 f32 zTolerance,
-                                                                 const BlockWorldFilter& filter) const
-    {
-      return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns const
-    }
-    
-    inline ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
-                                                              f32 zTolerance,
-                                                              const BlockWorldFilter& filter)
-    {
-      return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns non-const
-    }
-    
-    
-    inline const ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
-                                                                   const BlockWorldFilter& filter) const
-    {
-      return FindObjectClosestTo(pose, Vec3f{FLT_MAX}, filter); // returns const
-    }
-    
-    inline ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
-                                                             const BlockWorldFilter& filter)
-    {
-      return FindObjectClosestTo(pose, Vec3f{FLT_MAX}, filter); // returns non-const
-    }
-    
-    inline const ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
-                                                                   const Vec3f&  distThreshold,
-                                                                   const BlockWorldFilter& filter) const
-    {
-      return FindObjectClosestToHelper(pose, distThreshold, filter); // returns const
-    }
-    
-    inline ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
-                                                             const Vec3f&  distThreshold,
-                                                             const BlockWorldFilter& filter)
-    {
-      return FindObjectClosestToHelper(pose, distThreshold, filter); // returns non-const
-    }
-    
-    inline const ObservableObject* BlockWorld::FindMatchingObject(const BlockWorldFilter& filter) const
-    {
-      return FindObjectHelper(filter, nullptr, true); // returns const
-    }
-    
-    inline ObservableObject* BlockWorld::FindMatchingObject(const BlockWorldFilter& filter)
-    {
-      return FindObjectHelper(filter, nullptr, true); // returns non-const
-    }
-
-
     
   } // namespace Cozmo
 } // namespace Anki

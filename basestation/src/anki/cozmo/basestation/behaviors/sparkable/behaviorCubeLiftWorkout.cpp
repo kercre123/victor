@@ -347,7 +347,7 @@ void BehaviorCubeLiftWorkout::EndIteration(Robot& robot)
 
 void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool countFailure)
 {
-  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);
   if( nullptr == obj ) {
     // bail out of the behavior
     return;
@@ -374,7 +374,7 @@ void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool cou
                 [this, &robot, lastObservedTime, countFailure](ActionResult res) {
                   if( res == ActionResult::SUCCESS ) {
                     // check if it was actually observed again (another workaround for COZMO-6657)
-                    const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+                    const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);
                     if( nullptr != obj ) {
                       const TimeStamp_t mostRecentObservation = obj->GetLastObservedTime();
                       const bool wasObserved = mostRecentObservation > lastObservedTime;
@@ -389,7 +389,7 @@ void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool cou
 
                   if( countFailure ) {
                     // if we get here, we didn't find the block (or had another failure), set failure and bail out
-                    const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+                    const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);
                     if(failedObject){
                       const auto objectAction = AIWhiteboard::ObjectUseAction::PickUpObject;
                       robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);
@@ -400,7 +400,7 @@ void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool cou
   else {
     if( countFailure ) {
       // we don't want to search, so just set a failure and bail from the behavior
-      const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+      const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);
       if(failedObject){
         const auto objectAction = AIWhiteboard::ObjectUseAction::PickUpObject;
         robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);

@@ -209,7 +209,7 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRo
     for( const AIWhiteboard::ObjectInfo& objectInfo : cubesOutOfBeacons )
     {
       const ObservableObject* objPtr = preReqData.GetRobot().GetBlockWorld().
-                                        GetObjectByID( objectInfo.id, objectInfo.family );
+                                        GetLocatedObjectByID( objectInfo.id, objectInfo.family );
       if ( nullptr != objPtr )
       {
         const Pose3d& currentPose = objPtr->GetPose();
@@ -374,7 +374,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
       
       // failed to pick up this object, tell the whiteboard about it
       if ( pickUpFinalFail ) {
-        const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID );
+        const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID( _selectedObjectID );
         if ( failedObject ) {
           robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
         }
@@ -452,7 +452,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     
     // failed to stack on the bottom object, notify the whiteboard
     if ( stackOnCubeFinalFail ) {
-      const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( bottomCubeID );
+      const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID( bottomCubeID );
       if (failedObject) {
         robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::StackOnObject);
       }
@@ -527,7 +527,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
     
     // failed to place this cube at this location
     if ( placeAtCubeFinalFail ) {
-      const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID );
+      const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID( _selectedObjectID );
       if (failedObject) {
         robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PlaceObjectAt, pose);
       }
@@ -554,7 +554,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
   // if we successfully picked up the object we wanted we can continue, otherwise freak out
   if ( robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID )
   {
-    const ObservableObject* const pickedUpObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID);
+    const ObservableObject* const pickedUpObject = robot.GetBlockWorld().GetLocatedObjectByID( _selectedObjectID);
     if ( pickedUpObject == nullptr ) {
       PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.ObjectIsNull",
         "Could not obtain obj from ID '%d'", _selectedObjectID.GetValue());
@@ -707,7 +707,7 @@ bool CalculateDirectionalityAverage(AIWhiteboard::ObjectInfoList& objectsInBeaco
 
   for( const auto& objectInfo : objectsInBeacon )
   {
-    const ObservableObject* objectPtr = world.GetObjectByID( objectInfo.id, objectInfo.family );
+    const ObservableObject* objectPtr = world.GetLocatedObjectByID( objectInfo.id, objectInfo.family );
     if ( nullptr != objectPtr )
     {
       double upAngle = objectPtr->GetPose().GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToDouble();
@@ -745,7 +745,7 @@ bool CalculateDirectionalityClosest(AIWhiteboard::ObjectInfoList& objectsInBeaco
   
   for( const auto& objectInfo : objectsInBeacon )
   {
-    const ObservableObject* objectPtr = world.GetObjectByID( objectInfo.id, objectInfo.family );
+    const ObservableObject* objectPtr = world.GetLocatedObjectByID( objectInfo.id, objectInfo.family );
     if ( nullptr != objectPtr )
     {
       Pose3d relative;
@@ -891,7 +891,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::GetCandidate(const Blo
 {
   const ObservableObject* ret = nullptr;
   if ( index < _candidateObjects.size() ) {
-    ret = world.GetObjectByID(_candidateObjects[index].id, _candidateObjects[index].family);
+    ret = world.GetLocatedObjectByID(_candidateObjects[index].id, _candidateObjects[index].family);
   }
   return ret;
 }

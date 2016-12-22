@@ -528,7 +528,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
         robot->SetCharger(objID);
         if( robot->IsOnCharger() )
         {
-          Charger* charger = dynamic_cast<Charger*>(robot->GetBlockWorld().GetObjectByID(objID, ObjectFamily::Charger));
+          Charger* charger = dynamic_cast<Charger*>(robot->GetBlockWorld().GetLocatedObjectByID(objID, ObjectFamily::Charger));
           if( nullptr != charger )
           {
             charger->SetPoseRelativeToRobot(*robot);

@@ -23,6 +23,7 @@
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/utilities_shared.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/block.h"
@@ -394,65 +395,262 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     BroadcastObjectStates(msg.connectedObjectsOnly, nullptr);
   };
-
+  
   template<>
   void BlockWorld::HandleMessage(const ExternalInterface::SetMemoryMapBroadcastFrequency_sec& msg)
   {
     _memoryMapBroadcastRate_sec = msg.frequency;
     _nextMemoryMapBroadcastTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   };
-  
+    
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  
-  ObservableObject* BlockWorld::GetObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const
+  ObservableObject* BlockWorld::FindLocatedObjectHelper(const BlockWorldFilter& filterIn,
+                                                        const ModifierFcn& modifierFcn,
+                                                        bool returnFirstFound) const
+  {
+    ObservableObject* matchingObject = nullptr;
+    
+    BlockWorldFilter filter(filterIn);
+    
+    if(filter.IsOnlyConsideringLatestUpdate())
+    {
+      const TimeStamp_t atTimestamp = _currentObservedMarkerTimestamp;
+      
+      filter.AddFilterFcn([atTimestamp](const ObservableObject* object) -> bool
+                          {
+                            const bool seenAtTimestamp = (object->GetLastObservedTime() == atTimestamp);
+                            return seenAtTimestamp;
+                          });
+    }
+    
+    for(auto & objectsByOrigin : _locatedObjects) {
+      if(filter.ConsiderOrigin(objectsByOrigin.first, _robot->GetWorldOrigin())) {
+        for(auto & objectsByFamily : objectsByOrigin.second) {
+          if(filter.ConsiderFamily(objectsByFamily.first)) {
+            for(auto & objectsByType : objectsByFamily.second) {
+              if(filter.ConsiderType(objectsByType.first)) {
+                for(auto & objectsByID : objectsByType.second) {
+                  ObservableObject* object_nonconst = objectsByID.second.get();
+                  const ObservableObject* object = object_nonconst;
+                  
+                  if(nullptr == object)
+                  {
+                    PRINT_NAMED_WARNING("BlockWorld.FindObjectHelper.NullExistingObject",
+                                        "Origin:%s(%p) Family:%s Type:%s ID:%d is NULL",
+                                        objectsByOrigin.first->GetName().c_str(),
+                                        objectsByOrigin.first,
+                                        EnumToString(objectsByFamily.first),
+                                        EnumToString(objectsByType.first),
+                                        objectsByID.first.GetValue());
+                    continue;
+                  }
+                  
+                  if(filter.ConsiderObject(object))
+                  {
+                    matchingObject = object_nonconst;
+                    if(nullptr != modifierFcn) {
+                      modifierFcn(matchingObject);
+                    }
+                    if(returnFirstFound) {
+                      return matchingObject;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return matchingObject;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ActiveObject* BlockWorld::FindConnectedObjectHelper(const BlockWorldFilter& filter = BlockWorldFilter(),
+                                                      const ModifierFcn& modiferFcn = nullptr,
+                                                      bool returnFirstFound = false) const
+  {
+    ActiveObject* matchingObject = nullptr;
+    
+    // TODO COZMO-7848:  create BlockWorldActiveObjetFilter vs BlockWorldFilter because some of the parameters
+    // in BlockWorldFilter do not apply to connected objects. Eg: IsOnlyConsideringLatestUpdate, OriginMode, etc.
+    // Moreover, additional fields could be available like `allowedActiveID`
+    BlockWorldFilter filter(filterIn);
+    ASSERT_NAMED(!filter.IsOnlyConsideringLatestUpdate(), "BlockWorld.FindConnectedObjectHelper.InvalidFlag");
+    
+    for(auto & objectsByFamily : _connectedObjects) {
+      if(filter.ConsiderFamily(objectsByFamily.first)) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          if(filter.ConsiderType(objectsByType.first)) {
+            for(auto & objectsByID : objectsByType.second)
+            {
+              ActiveObject* object_nonconst = objectsByID.second.get();
+              const ActiveObject* object = object_nonconst;
+              
+              if(nullptr == object)
+              {
+                PRINT_NAMED_WARNING("BlockWorld.FindConnectedObjectHelper.NullObject",
+                                    "Family:%s Type:%s ID:%d is NULL",
+                                    EnumToString(objectsByFamily.first),
+                                    EnumToString(objectsByType.first),
+                                    objectsByID.first.GetValue());
+                continue;
+              }
+              
+              const bool considerObject = filter.ConsiderObject(object);
+              if(considerObject)
+              {
+                matchingObject = object_nonconst;
+                if(nullptr != modifierFcn) {
+                  modifierFcn(matchingObject);
+                }
+                if(returnFirstFound) {
+                  return matchingObject;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return matchingObject;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ObservableObject* BlockWorld::GetLocatedObjectByIdHelper(const ObjectID& objectID) const
   {
     // Find the object with the given ID with any pose state, in the current world origin
     BlockWorldFilter filter;
     filter.AddAllowedID(objectID);
     
-    if(inFamily != ObjectFamily::Unknown) {
-      filter.AddAllowedFamily(inFamily);
-    }
-    
-    // Any pose state:
+    // Any pose state
     filter.SetFilterFcn(nullptr);
     
-    ObservableObject* match = FindObjectHelper(filter, nullptr, true);
-    
-    return match;
-  } // GetObjectByIdHelper()
-  
-  ObservableObject* BlockWorld::GetObjectByActiveIDHelper(const ActiveID& activeID) const
-  {
-    BlockWorldFilter filter;
-    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    filter.SetFilterFcn([activeID](const ObservableObject* object) {
-      return object->IsActive() && object->GetActiveID() == activeID;
-    });
-    
-    ObservableObject* match = FindObjectHelper(filter, nullptr, true);
-    
+    // Find and return match
+    ObservableObject* match = FindLocatedObjectHelper(filter, nullptr, true);
     return match;
   }
   
-  ActiveObject* BlockWorld::GetActiveObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ActiveObject* BlockWorld::GetConnectedActiveObjectByIdHelper(const ObjectID& objectID) const
   {
+    // Find the object with the given ID
     BlockWorldFilter filter;
     filter.AddAllowedID(objectID);
     
-    if(inFamily != ObjectFamily::Unknown) {
-      filter.AddAllowedFamily(inFamily);
-    }
+    // Find and return among ConnectedObjects
+    ActiveObject* object = FindConnectedObjectHelper(filter, nullptr, true);
+    return object;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveIdHelper(const ActiveID& activeID) const
+  {
+    // Find object that matches given activeID
+    BlockWorldFilter filter;
+    filter.SetFilterFcn([activeID](const ObservableObject* object) {
+      return object->GetActiveID() == activeID;
+    });
     
-    // Note: this replaces default filter fcn, so it will also search over any pose state
-    filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
+    // Find and return among ConnectedObjects
+    ActiveObject* object = FindConnectedObjectHelper(filter, nullptr, true);
+    return object;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ObservableObject* BlockWorld::FindLocatedObjectClosestToHelper(const Pose3d& pose,
+                                                                 const Vec3f&  distThreshold,
+                                                                 const BlockWorldFilter& filterIn) const
+  {
+    // TODO: Keep some kind of OctTree data structure to make these queries faster?
     
-    ObservableObject* object = FindObjectHelper(filter, nullptr, true);
+    Vec3f closestDist(distThreshold);
+    //ObservableObject* matchingObject = nullptr;
     
-    return dynamic_cast<ActiveObject*>(object);
-  } // GetActiveObjectByIDHelper()
+    BlockWorldFilter filter(filterIn);
+    filter.AddFilterFcn([&pose, &closestDist](const ObservableObject* current)
+                        {
+                          Vec3f dist = ComputeVectorBetween(pose, current->GetPose());
+                          dist.Abs();
+                          if(dist.Length() < closestDist.Length()) {
+                            closestDist = dist;
+                            return true;
+                          } else {
+                            return false;
+                          }
+                        });
+    
+    return FindLocatedObjectHelper(filter);
+  }
+  
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ObservableObject* BlockWorld::FindLocatedClosestMatchingObjectHelper(const ObservableObject& object,
+                                                                       const Vec3f& distThreshold,
+                                                                       const Radians& angleThreshold,
+                                                                       const BlockWorldFilter& filter = BlockWorldFilter()) const
+  {
+    Vec3f closestDist(distThreshold);
+    Radians closestAngle(angleThreshold);
+    
+    // Don't check the object we're using as the comparison
+    BlockWorldFilter filter(filterIn);
+    filter.AddIgnoreID(object.GetID());
+    filter.AddFilterFcn([&object,&closestDist,&closestAngle](const ObservableObject* current)
+    {
+      Vec3f Tdiff;
+      Radians angleDiff;
+      if(current->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
+        closestDist = Tdiff.GetAbs();
+        closestAngle = angleDiff.getAbsoluteVal();
+        return true;
+      } else {
+        return false;
+      }
+    });
+
+    ObservableObject* closestObject = FindLocatedObjectHelper(filter);
+    return closestObject;
+  }
+  
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ObservableObject* BlockWorld::FindLocatedClosestMatchingTypeHelper(ObjectType withType,
+                                                                     const Pose3d& pose,
+                                                                     const Vec3f& distThreshold,
+                                                                     const Radians& angleThreshold,
+                                                                     const BlockWorldFilter& filter = BlockWorldFilter()) const
+  {
+    Vec3f closestDist(distThreshold);
+    Radians closestAngle(angleThreshold);
+    
+    BlockWorldFilter filter(filterIn);
+    filter.AddFilterFcn([withType,&pose,&closestDist,&closestAngle](const ObservableObject* current)
+    {
+      Vec3f Tdiff;
+      Radians angleDiff;
+      if(current->GetType() == withType &&
+         current->GetPose().IsSameAs(pose, closestDist, closestAngle, Tdiff, angleDiff))
+      {
+        closestDist = Tdiff.GetAbs();
+        closestAngle = angleDiff.getAbsoluteVal();
+        return true;
+      } else {
+        return false;
+      }
+    });
+    
+    ObservableObject* closestObject = FindLcoatedObjectHelper(filter);
+    return closestObject;
+  }
+  
+  
+  
+  
+  
 
 
     void CheckForOverlapHelper(const ObservableObject* objectToMatch,
@@ -513,57 +711,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
     }
   
-  static inline BlockWorldFilter GetIntersectingObjectsFilter(const Quad2f& quad, f32 padding_mm,
-                                                              const BlockWorldFilter& filterIn)
-  {
-    BlockWorldFilter filter(filterIn);
-    filter.AddFilterFcn([&quad,padding_mm](const ObservableObject* object) {
-      // Get quad of object and check for intersection
-      Quad2f quadExist = object->GetBoundingQuadXY(object->GetPose(), padding_mm);
-      if( quadExist.Intersects(quad) ) {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    
-    return filter;
-  }
-  
-  void BlockWorld::FindIntersectingObjects(const ObservableObject* objectSeen,
-                                           std::vector<const ObservableObject*>& intersectingExistingObjects,
-                                           f32 padding_mm,
-                                           const BlockWorldFilter& filter) const
-  {
-    Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
-    FindMatchingObjects(GetIntersectingObjectsFilter(quadSeen, padding_mm, filter), intersectingExistingObjects);
-  }
-  
-  void BlockWorld::FindIntersectingObjects(const ObservableObject* objectSeen,
-                                           std::vector<ObservableObject*>& intersectingExistingObjects,
-                                           f32 padding_mm,
-                                           const BlockWorldFilter& filter)
-  {
-    Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
-    FindMatchingObjects(GetIntersectingObjectsFilter(quadSeen, padding_mm, filter), intersectingExistingObjects);
-  }
-
-  void BlockWorld::FindIntersectingObjects(const Quad2f& quad,
-                                           std::vector<const ObservableObject *> &intersectingExistingObjects,
-                                           f32 padding_mm,
-                                           const BlockWorldFilter& filterIn) const
-  {
-    FindMatchingObjects(GetIntersectingObjectsFilter(quad, padding_mm, filterIn), intersectingExistingObjects);
-  }
-  
-  
-  void BlockWorld::FindIntersectingObjects(const Quad2f& quad,
-                                           std::vector<ObservableObject *> &intersectingExistingObjects,
-                                           f32 padding_mm,
-                                           const BlockWorldFilter& filterIn)
-  {
-    FindMatchingObjects(GetIntersectingObjectsFilter(quad, padding_mm, filterIn), intersectingExistingObjects);
-  }
   
   Result BlockWorld::BroadcastObjectObservation(const ObservableObject* observedObject) const
   {
@@ -668,8 +815,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   
   Result BlockWorld::UpdateObjectOrigin(const ObjectID& objectID, const Pose3d* oldOrigin)
   {
-    auto originIter = _existingObjects.find(oldOrigin);
-    if(originIter == _existingObjects.end())
+    auto originIter = _locatedObjects.find(oldOrigin);
+    if(originIter == _locatedObjects.end())
     {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.BadOrigin",
                     "Origin %s (%p) not found",
@@ -703,7 +850,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                           newOrigin->GetName().c_str(), newOrigin);
             
             // Add to object's current origin
-            _existingObjects[newOrigin][family][objType][objectID] = object;
+            _locatedObjects[newOrigin][family][objType][objectID] = object;
             
             // Notify pose confirmer
             _robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
@@ -720,7 +867,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                 originIter->second.erase(objectsByFamily.first);
                 if(originIter->second.empty())
                 {
-                  _existingObjects.erase(originIter);
+                  _locatedObjects.erase(originIter);
                 }
               }
             }
@@ -959,8 +1106,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
     }
   
-    ObjectsByOrigin_t::iterator originIt = _existingObjects.begin();
-    while( originIt != _existingObjects.end() )
+    ObjectsByOrigin_t::iterator originIt = _locatedObjects.begin();
+    while( originIt != _locatedObjects.end() )
     {
       const bool isZombie = IsZombiePoseOrigin( originIt->first );
       if ( isZombie ) {
@@ -994,7 +1141,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           }
         }
         
-        originIt = _existingObjects.erase(originIt);
+        originIt = _locatedObjects.erase(originIt);
       } else {
         PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.KeepingOrigin", 
                        "Origin (%p) is still good (keeping objects)", originIt->first);
@@ -1485,7 +1632,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         }
         
         // Add the object in the current coordinate frame, initially with Known pose
-        AddNewObject(_existingObjects[_robot->GetWorldOrigin()][inFamily], objSeen, objToCopy);
+        AddNewObject(_locatedObjects[_robot->GetWorldOrigin()][inFamily], objSeen, objToCopy);
         
         // Let "observedObject" used below refer to the new object
         observedObject = objSeen.get();
@@ -1607,7 +1754,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     while ( changedObjectIt != _objectPoseChangeList.end() )
     {
       // grab the object whose pose we changed (we can't trust caching pointers in case we rejigger)
-      ObservableObject* changedObjectPtr = GetObjectByID( changedObjectIt->_id );
+      ObservableObject* changedObjectPtr = GetLocatedObjectByID( changedObjectIt->_id );
       if ( changedObjectPtr )
       {
         // find the object that is currently on top of the old position
@@ -1697,8 +1844,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     std::vector<ObservableObject*> unobservedObjects; // not const pointers b/c we may mark as unobserved below
     std::vector<const ObservableObject*> observedObjects;
     
-    auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
-    if(originIter == _existingObjects.end()) {
+    auto originIter = _locatedObjects.find(_robot->GetWorldOrigin());
+    if(originIter == _locatedObjects.end()) {
       // No objects relative to this origin: Nothing to do
       return numVisibleObjects;
     }
@@ -2000,8 +2147,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Check if this prox obstacle already exists
     std::vector<ObservableObject*> existingObjects;
-    auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
-    if(originIter != _existingObjects.end())
+    auto originIter = _locatedObjects.find(_robot->GetWorldOrigin());
+    if(originIter != _locatedObjects.end())
     {
       FindOverlappingObjects(markerlessObject.get(), originIter->second[ObjectFamily::MarkerlessObject], existingObjects);
     }
@@ -2076,109 +2223,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     return customObject->GetID();
   }
 
-  void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
-  {
-    BlockWorldFilter filter;
-    filter.SetIgnoreIDs(std::set<ObjectID>(_robot->GetCarryingObjects()));
-    
-    // If the robot is localized, check to see if it is "on" the mat it is
-    // localized to. If so, ignore the mat as an obstacle.
-    // Note that the reason for checking IsPoseOn is that it's possible the
-    // robot is localized to a mat it sees but is not on because it has not
-    // yet seen the mat it is on. (For example, robot see side of platform
-    // and localizes to it because it hasn't seen a marker on the flat mat
-    // it is driving on.)
-    if(_robot->GetLocalizedTo().IsSet())
-    {
-      const ObservableObject* object = GetObjectByID(_robot->GetLocalizedTo(), ObjectFamily::Mat);
-      if(nullptr != object) // If the object localized to exists in the Mat family
-      {
-        const MatPiece* mat = dynamic_cast<const MatPiece*>(object);
-        if(mat != nullptr) {
-          if(mat->IsPoseOn(_robot->GetPose(), 0.f, .25*ROBOT_BOUNDING_Z)) {
-            // Ignore the ID of the mat we're on
-            filter.AddIgnoreID(_robot->GetLocalizedTo());
-            
-            // Add any "unsafe" regions this mat has
-            mat->GetUnsafeRegions(boundingBoxes, padding);
-          }
-        } else {
-          PRINT_NAMED_WARNING("BlockWorld.GetObstacles.DynamicCastFail",
-                              "Could not dynamic cast localization object %d to a Mat",
-                              _robot->GetLocalizedTo().GetValue());
-        }
-      }
-    }
-    
-    // Figure out height filters in world coordinates (because GetObjectBoundingBoxesXY()
-    // uses heights of objects in world coordinates)
-    const Pose3d robotPoseWrtOrigin = _robot->GetPose().GetWithRespectToOrigin();
-    const f32 minHeight = robotPoseWrtOrigin.GetTranslation().z();
-    const f32 maxHeight = minHeight + _robot->GetHeight();
-    
-    GetObjectBoundingBoxesXY(minHeight, maxHeight, padding, boundingBoxes, filter);
-    
-  } // GetObstacles()
-  
-  void BlockWorld::FindMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result)
-  {
-    // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
-    // the filter to the result vector
-    ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
-      result.push_back(candidateObject);
-    };
-    
-    // ignore return value, since the findLambda stored everything in result
-    FindObjectHelper(filter, addToResult, false);
-  }
-  
-  void BlockWorld::FindMatchingObjects(const BlockWorldFilter& filter, std::vector<const ObservableObject*>& result) const
-  {
-    // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
-    // the filter to the result vector
-    ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
-      result.push_back(candidateObject);
-    };
-    
-    // ignore return value, since the findLambda stored everything in result
-    FindObjectHelper(filter, addToResult, false);
-  }
-
-  void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight,
-                                            const f32 maxHeight,
-                                            const f32 padding,
-                                            std::vector<std::pair<Quad2f,ObjectID> >& rectangles,
-                                            const BlockWorldFilter& filterIn) const
-  {
-    BlockWorldFilter filter(filterIn);
-    
-    // Note that we add this filter function, meaning we still rely on the
-    // default filter function which rules out objects with unknown pose state
-    filter.AddFilterFcn([minHeight, maxHeight, padding, &rectangles](const ObservableObject* object)
-    {
-      const f32 zSize = object->GetDimInParentFrame<'Z'>();
-      const f32 objectCenter = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
-        
-      const f32 objectTop    = objectCenter + (0.5f * zSize);
-      const f32 objectBottom = objectCenter - (0.5f * zSize);
-        
-      const bool bothAbove = (objectTop >= maxHeight) && (objectBottom >= maxHeight);
-      const bool bothBelow = (objectTop <= minHeight) && (objectBottom <= minHeight);
-        
-      if( !bothAbove && !bothBelow )
-      {
-        rectangles.emplace_back(object->GetBoundingQuadXY(padding), object->GetID());
-        return true;
-      }
-      
-      return false;
-    });
-    
-    FindObjectHelper(filter);
-    
-  } // GetObjectBoundingBoxesXY()
-  
-  
   bool BlockWorld::DidObjectsChange() const {
     return _didObjectsChange;
   }
@@ -2187,411 +2231,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     return _robotMsgTimeStampAtChange;
   }
 
-  
-  bool BlockWorld::UpdateRobotPose(std::list<Vision::ObservedMarker>& observedMarkers, const TimeStamp_t atTimestamp)
-  {
-    bool wasPoseUpdated = false;
-    
-    // Get all mat objects *seen by this robot's camera*
-    std::multimap<f32, ObservableObject*> matsSeen;
-    _objectLibrary[ObjectFamily::Mat].CreateObjectsFromMarkers(observedMarkers, matsSeen,
-                                                               (_robot->GetVisionComponent().GetCamera().GetID()));
-
-    // Remove used markers from map container
-    RemoveUsedMarkers(observedMarkers);
-    
-    if(not matsSeen.empty()) {
-      /*
-      // TODO: False mat marker localization causes the mat to be created in weird places which is messing up game dev.
-      //       Seems to happen particular when looking at the number 1. Disabled for now.
-      PRINT_NAMED_WARNING("UpdateRobotPose.TempIgnore", "Ignoring mat marker. Robot localization disabled.");
-      return false;
-      */
-      
-      // Is the robot "on" any of the mats it sees?
-      // TODO: What to do if robot is "on" more than one mat simultaneously?
-      MatPiece* onMat = nullptr;
-      for(const auto& objectPair : matsSeen) {
-        Vision::ObservableObject* object = objectPair.second;
-        
-        // ObservedObjects are w.r.t. the arbitrary historical origin of the camera
-        // that observed them.  Hook them up to the current robot origin now:
-        DEV_ASSERT(object->GetPose().GetParent() != nullptr && object->GetPose().GetParent()->IsOrigin(),
-                   "BlockWorld.UpdateRobotPose.InvalidParentPose");
-        
-        object->SetPoseParent(_robot->GetWorldOrigin());
-        
-        MatPiece* mat = dynamic_cast<MatPiece*>(object);
-        DEV_ASSERT(mat != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatPiece");
-        
-        // Does this mat pose make sense? I.e., is the top surface flat enough
-        // that we could drive on it?
-        Vec3f rotAxis;
-        Radians rotAngle;
-        mat->GetPose().GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-        if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
-           !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
-        {
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose",
-                        "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
-                        ObjectTypeToString(mat->GetType()),
-                        rotAngle.getDegrees(),
-                        rotAxis.x(), rotAxis.y(), rotAxis.z());
-        }else if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
-          if(onMat != nullptr) {
-            PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.OnMultiplMats",
-                                "Robot is 'on' multiple mats at the same time. Will just use the first for now.");
-          } else {
-            onMat = mat;
-          }
-        }
-      }
-      
-      // This will point to the mat we decide to localize to below (or will
-      // remain null if we choose not to localize to any mat we see)
-      MatPiece* matToLocalizeTo = nullptr;
-      
-      if(onMat != nullptr)
-      {
-        
-        PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.OnMatLocalization",
-                                "Robot %d is on a %s mat and will localize to it.",
-                                _robot->GetID(), onMat->GetType().GetName().c_str());
-        
-        // If robot is "on" one of the mats it is currently seeing, localize
-        // the robot to that mat
-        matToLocalizeTo = onMat;
-      }
-      else {
-        // If the robot is NOT "on" any of the mats it is seeing...
-        
-        if(_robot->GetLocalizedTo().IsSet()) {
-          // ... and the robot is already localized, then see if it is
-          // localized to one of the mats it is seeing (but not "on")
-          // Note that we must match seen and existing objects by their pose
-          // here, and not by ID, because "seen" objects have not ID assigned
-          // yet.
-
-          ObservableObject* existingMatLocalizedTo = GetObjectByID(_robot->GetLocalizedTo());
-          if(existingMatLocalizedTo == nullptr) {
-            PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ExistingMatLocalizedToNull",
-                              "Robot %d is localized to mat with ID=%d, but that mat does not exist in the world.",
-                              _robot->GetID(), _robot->GetLocalizedTo().GetValue());
-            return false;
-          }
-          
-          std::vector<ObservableObject*> overlappingMatsSeen;
-          FindOverlappingObjects(existingMatLocalizedTo, matsSeen, overlappingMatsSeen);
-          
-          if(overlappingMatsSeen.empty()) {
-            // The robot is localized to a mat it is not seeing (and is not "on"
-            // any of the mats it _is_ seeing.  Just update the poses of the
-            // mats it is seeing, but don't localize to any of them.
-            PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatNoLocalize",
-                                    "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.",
-                                    _robot->GetID(), (unsigned long)matsSeen.size());
-          }
-          else {
-            if(overlappingMatsSeen.size() > 1) {
-              PRINT_STREAM_WARNING("BlockWorld.UpdateRobotPose.MultipleOverlappingMats",
-                                  "Robot " << _robot->GetID() << " is seeing " << overlappingMatsSeen.size() << " (i.e. more than one) mats "
-                                  "overlapping with the existing mat it is localized to. "
-                                  "Will use first.");
-            }
-            
-            PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
-                                    "Robot %d will re-localize to the %s mat it is not on, but already localized to.",
-                                    _robot->GetID(), overlappingMatsSeen[0]->GetType().GetName().c_str());
-            
-            // The robot is localized to one of the mats it is seeing, even
-            // though it is not _on_ that mat.  Remain localized to that mat
-            // and update any others it is also seeing
-            matToLocalizeTo = dynamic_cast<MatPiece*>(overlappingMatsSeen[0]);
-            DEV_ASSERT(matToLocalizeTo != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatLocalization");
-          }
-          
-          
-        } else {
-          // ... and the robot is _not_ localized, choose the observed mat
-          // with the closest observed marker (since that is likely to be the
-          // most accurate) and localize to that one.
-          f32 minDistSq = -1.f;
-          MatPiece* closestMat = nullptr;
-          for (const auto& matPair : matsSeen) {
-            Vision::ObservableObject* mat = matPair.second;
-            
-            std::vector<const Vision::KnownMarker*> observedMarkers;
-            mat->GetObservedMarkers(observedMarkers, atTimestamp);
-            if (observedMarkers.empty()) {
-              // TODO: handle this situation
-              PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers",
-                                "We saw a mat piece but it is returning no observed markers for "
-                                "the current timestamp.");
-              DEV_ASSERT(false, "BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers");
-            }
-            
-            Pose3d markerWrtRobot;
-            for (auto obsMarker : observedMarkers) {
-              if (obsMarker->GetPose().GetWithRespectTo(_robot->GetPose(), markerWrtRobot) == false) {
-                // TODO: handle this situation
-                PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMismatch",
-                                  "Could not get the pose of an observed marker w.r.t. the robot that "
-                                  "supposedly observed it.");
-                DEV_ASSERT(false, "BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMismatch");
-              }
-              
-              const f32 markerDistSq = markerWrtRobot.GetTranslation().LengthSq();
-              if (closestMat == nullptr || markerDistSq < minDistSq) {
-                closestMat = dynamic_cast<MatPiece*>(mat);
-                DEV_ASSERT(closestMat != nullptr, "BlockWorld.UpdateRobotPose.InvalidClosestMat");
-                minDistSq = markerDistSq;
-              }
-            } // for each observed marker
-          } // for each mat seen
-          
-          PRINT_LOCALIZATION_INFO("BLockWorld.UpdateRobotPose.NotOnMatLocalizationToClosest",
-                                  "Robot %d is not on a mat but will localize to %s mat ID=%d, which is the closest.",
-                                  _robot->GetID(), closestMat->GetType().GetName().c_str(), closestMat->GetID().GetValue());
-          
-          matToLocalizeTo = closestMat;
-          
-        } // if/else robot is localized
-      } // if/else (onMat != nullptr)
-      
-      ObjectsMapByType_t& existingMatPieces = _existingObjects[_robot->GetWorldOrigin()][ObjectFamily::Mat];
-      
-      // Keep track of markers we saw on existing/instantiated mats, to use
-      // for occlusion checking
-      std::vector<const Vision::KnownMarker *> observedMarkers;
-
-      std::shared_ptr<MatPiece> existingMatPiece = nullptr;
-      
-      // If we found a suitable mat to localize to, and we've seen it enough
-      // times, then use it for localizing
-      if(matToLocalizeTo != nullptr) {
-        
-        if(existingMatPieces.empty()) {
-          // If this is the first mat piece, add it to the world using the world
-          // origin as its pose
-          PRINT_STREAM_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
-                     "Instantiating first mat piece in the world.");
-          
-          existingMatPiece.reset( dynamic_cast<MatPiece*>(matToLocalizeTo->CloneType()) );
-          assert(existingMatPiece != nullptr);
-          AddNewObject(existingMatPieces, existingMatPiece);
-          
-          //existingMatPiece->SetPose( Pose3d() ); // Not really necessary, but ensures the ID makes it into the pose name, which is helpful for debugging
-          assert(existingMatPiece->GetPose().GetParent() == nullptr);
-          
-        }
-        else {
-          // We can't look up the existing piece by ID because the matToLocalizeTo
-          // is just a mat we _saw_, not one we've instantiated.  So look for
-          // one in approximately the same position, of those with the same
-          // type:
-          //ObservableObject* existingObject = GetObjectByID(matToLocalizeTo->GetID());
-          std::vector<ObservableObject*> existingObjects;
-          FindOverlappingObjects(matToLocalizeTo, existingMatPieces, existingObjects);
-        
-          if(existingObjects.empty())
-          {
-            // If the mat we are about to localize to does not exist yet,
-            // but it's not the first mat piece in the world, add it to the
-            // world, and give it a new origin, relative to the current
-            // world origin.
-            Pose3d poseWrtWorldOrigin = matToLocalizeTo->GetPose().GetWithRespectToOrigin();
-            
-            existingMatPiece.reset( dynamic_cast<MatPiece*>(matToLocalizeTo->CloneType()) );
-            assert(existingMatPiece != nullptr);
-            AddNewObject(existingMatPieces, existingMatPiece);
-            existingMatPiece->InitPose(poseWrtWorldOrigin, PoseState::Unknown); // Do after AddNewObject, once ID is set
-            
-            PRINT_STREAM_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
-                       "Robot " << _robot->GetID() << " localizing to new "
-                              << ObjectTypeToString(existingMatPiece->GetType()) << " mat with ID=" << existingMatPiece->GetID().GetValue() << ".");
-            
-          } else {
-            if(existingObjects.size() > 1) {
-              PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleExistingObjectMatches",
-                            "Robot %d found multiple existing mats matching the one it "
-                            "will localize to - using first.", _robot->GetID());
-            }
-            
-            // We are localizing to an existing mat piece: do not attempt to
-            // update its pose (we can't both update the mat's pose and use it
-            // to update the robot's pose at the same time!)
-            existingMatPiece.reset( dynamic_cast<MatPiece*>(existingObjects.front()) );
-            DEV_ASSERT(existingMatPiece != nullptr, "BlockWorld.UpdateRobotPose.InvalidExistingMatPiece");
-            
-            PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
-                                    "Robot %d localizing to existing %s mat with ID=%d.",
-                                    _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
-                                    existingMatPiece->GetID().GetValue());
-          }
-        } // if/else (existingMatPieces.empty())
-        
-        existingMatPiece->SetLastObservedTime(matToLocalizeTo->GetLastObservedTime());
-        existingMatPiece->UpdateMarkerObservationTimes(*matToLocalizeTo);
-        existingMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
-        
-        if(!existingMatPiece->IsPoseStateUnknown())
-        {
-          // Now localize to that mat
-          //wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
-          if(_robot->LocalizeToMat(matToLocalizeTo, existingMatPiece.get()) == RESULT_OK) {
-            wasPoseUpdated = true;
-          }
-        }
-        
-      } // if(matToLocalizeTo != nullptr)
-      
-      // Update poses of any other mats we saw (but did not localize to),
-      // just like they are any "regular" object, unless that mat is the
-      // robot's current "world" origin, [TODO:] in which case we will update the pose
-      // of the mat we are on w.r.t. that world.
-      for(const auto& matSeenPair : matsSeen) {
-        ObservableObject* matSeen = matSeenPair.second;
-        
-        if(matSeen != matToLocalizeTo) {
-          
-          // TODO: Make this w.r.t. whatever the robot is currently localized to?
-          Pose3d poseWrtOrigin = matSeen->GetPose().GetWithRespectToOrigin();
-          
-          // Does this mat pose make sense? I.e., is the top surface flat enough
-          // that we could drive on it?
-          Vec3f rotAxis;
-          Radians rotAngle;
-          poseWrtOrigin.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-          if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
-             !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
-          {
-            PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose",
-                          "Ignoring observation of %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
-                          ObjectTypeToString(matSeen->GetType()),
-                          rotAngle.getDegrees(),
-                          rotAxis.x(), rotAxis.y(), rotAxis.z());
-            continue;
-          }
-          
-          // Store pointers to any existing objects that overlap with this one
-          std::vector<ObservableObject*> overlappingObjects;
-          FindOverlappingObjects(matSeen, existingMatPieces, overlappingObjects);
-          
-          if(overlappingObjects.empty()) {
-            // no existing mats overlapped with the mat we saw, so add it
-            // as a new mat piece, relative to the world origin
-            std::shared_ptr<ObservableObject> newMatPiece(matSeen->CloneType());
-            AddNewObject(existingMatPieces, newMatPiece);
-            newMatPiece->InitPose(poseWrtOrigin, PoseState::Unknown); // do after AddNewObject, once ID is set
-            
-            // TODO: Make clone copy the observation times
-            newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
-            newMatPiece->UpdateMarkerObservationTimes(*matSeen);
-            
-            PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose",
-                          "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)",
-                          ObjectTypeToString(newMatPiece->GetType()),
-                          newMatPiece->GetID().GetValue(),
-                          newMatPiece->GetPose().GetTranslation().x(),
-                          newMatPiece->GetPose().GetTranslation().y(),
-                          newMatPiece->GetPose().GetTranslation().z());
-            
-            // Add observed mat markers to the occlusion map of the camera that saw
-            // them, so we can use them to delete objects that should have been
-            // seen between that marker and the robot
-            newMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
-
-          }
-          else {
-            if(overlappingObjects.size() > 1) {
-              PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose",
-                                      "More than one overlapping mat found -- will use first.");
-              // TODO: do something smarter here?
-            }
-            
-            if(&(overlappingObjects[0]->GetPose()) != _robot->GetWorldOrigin()) {
-              // The overlapping mat object is NOT the world origin mat, whose
-              // pose we don't want to update.
-              // Update existing observed mat we saw but are not on w.r.t.
-              // the robot's current world origin
-              
-              // TODO: better way of merging existing/observed object pose
-              _robot->GetObjectPoseConfirmer().AddObjectRelativeObservation(overlappingObjects[0], poseWrtOrigin, matSeen);
-              
-            } else {
-              /* PUNT - not sure this is working, nor we want to bother with this for now...
-              ASSERT_NAMED(robot->IsLocalized(), "BlockWorld.UpdateRobotPose.RobotIsNotLocalized");
-              
-              // Find the mat the robot is currently localized to
-              MatPiece* localizedToMat = nullptr;
-              for(auto & objectsByType : existingMatPieces) {
-                auto objectsByIdIter = objectsByType.second.find(robot->GetLocalizedTo());
-                if(objectsByIdIter != objectsByType.second.end()) {
-                  localizedToMat = dynamic_cast<MatPiece*>(objectsByIdIter->second);
-                }
-              }
-
-              ASSERT_NAMED(localizedToMat != nullptr, "BlockWorld.UpdateRobotPose.RobotIsNotLocalizedToMat");
-              
-              // Update the mat we are localized to (but may not have seen) w.r.t. the existing
-              // observed world origin mat we did see from it.  This should in turn
-              // update the pose of everything on that mat.
-              Pose3d newPose;
-              if(localizedToMat->GetPose().GetWithRespectTo(matSeen->GetPose(), newPose) == false) {
-                PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.FailedToUpdateWrtObservedOrigin",
-                                  "Robot %d failed to get pose of existing %s mat it is on w.r.t. observed world origin mat.",
-                                  robot->GetID(), existingMatPiece->GetType().GetName().c_str());
-              }
-              newPose.SetParent(robot->GetWorldOrigin());
-              // TODO: Switch new pose to be w.r.t. whatever robot is localized to??
-              localizedToMat->SetPose(newPose);
-               */
-            }
-            
-            overlappingObjects[0]->SetLastObservedTime(matSeen->GetLastObservedTime());
-            overlappingObjects[0]->UpdateMarkerObservationTimes(*matSeen);
-            overlappingObjects[0]->GetObservedMarkers(observedMarkers, atTimestamp);
-            
-          } // if/else overlapping existing mats found
-        } // if matSeen != matToLocalizeTo
-        
-        delete matSeen;
-      }
-      
-      // Add observed mat markers to the occlusion map of the camera that saw
-      // them, so we can use them to delete objects that should have been
-      // seen between that marker and the robot
-      for(auto obsMarker : observedMarkers) {
-        /*
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose.AddingMatMarkerOccluder",
-                         "Adding mat marker '%s' as an occluder for robot %d.",
-                         obsMarker->GetCodeName(),
-                         robot->GetID());
-         */
-        _robot->GetVisionComponent().GetCamera().AddOccluder(*obsMarker);
-      }
-      
-      /* Always re-drawing everything now
-      // If the robot just re-localized, trigger a draw of all objects, since
-      // we may have seen things while de-localized whose locations can now be
-      // snapped into place.
-      if(!wasLocalized && robot->IsLocalized()) {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose.RobotRelocalized",
-                         "Robot %d just localized after being de-localized.", robot->GetID());
-        DrawAllObjects();
-      }
-      */
-    } // IF any mat piece was seen
-
-    if(wasPoseUpdated) {
-      PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.RobotPoseChain", "%s",
-                              _robot->GetPose().GetNamedPathToOrigin(true).c_str());
-    }
-    
-    return wasPoseUpdated;
-    
-  } // UpdateRobotPose()
-  
   Result BlockWorld::UpdateObjectPoses(std::list<Vision::ObservedMarker>& obsMarkers,
                                        const ObjectFamily& inFamily,
                                        const TimeStamp_t atTimestamp)
@@ -2665,7 +2304,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         
         // Check if this prox obstacle already exists
         std::vector<ObservableObject*> existingObjects;
-        FindOverlappingObjects(m, _existingObjects[ObjectFamily::MarkerlessObject], existingObjects);
+        FindOverlappingObjects(m, _locatedObjects[ObjectFamily::MarkerlessObject], existingObjects);
         
         // Update the last observed time of existing overlapping obstacles
         for(auto obj : existingObjects) {
@@ -2704,8 +2343,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Delete any existing prox objects that are too old.
     // Note that we use find() here because there may not be any markerless objects
     // yet, and using [] indexing will create things.
-    auto markerlessFamily = _existingObjects.find(ObjectFamily::MarkerlessObject);
-    if(markerlessFamily != _existingObjects.end())
+    auto markerlessFamily = _locatedObjects.find(ObjectFamily::MarkerlessObject);
+    if(markerlessFamily != _locatedObjects.end())
     {
       auto proxTypeMap = markerlessFamily->second.find(ObjectType::ProxObstacle);
       if(proxTypeMap != markerlessFamily->second.end())
@@ -2739,6 +2378,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                                        ActiveObjectType activeObjectType,
                                        const ObservableObject* objToCopyId)
   {
+    todo_add_to_connectedObjectsOnly;
+  
     if (activeID >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
       PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.InvalidActiveID", "activeID %d", activeID);
       return ObjectID();
@@ -2929,13 +2570,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectPoseWillChange(const ObjectID& objectID, ObjectFamily family,
+  void BlockWorld::OnObjectPoseWillChange(const ObjectID& objectID, ObjectFamily family, // TODO: remove family unused
     const Pose3d& newPose, PoseState newPoseState)
   {
     DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseWillChange.InvalidObjectID");
 
     // find the object
-    const ObservableObject* object = GetObjectByID(objectID, family);
+    const ObservableObject* object = GetLocatedObjectByID(objectID);
     if ( nullptr == object )
     {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseWillChange.NotAnObject",
@@ -3155,7 +2796,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     for ( auto& pairIdToPoseInfoByOrigin : _navMapReportedPoses )
     {
       // find object in the world
-      const ObservableObject* object = GetObjectByID(pairIdToPoseInfoByOrigin.first);
+      const ObservableObject* object = GetLocatedObjectByID(pairIdToPoseInfoByOrigin.first);
       if ( nullptr == object )
       {
         PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectsReportedInMepMap.NotAnObject",
@@ -3248,24 +2889,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
   }
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool BlockWorld::IsZombiePoseOrigin(const Pose3d* origin) const
-  {
-    // really, pass in an origin
-    DEV_ASSERT(nullptr != origin && origin->IsOrigin(), "BlockWorld.IsZombiePoseOrigin.NotAnOrigin");
-  
-    // current world is not a zombie
-    const bool isCurrent = (origin == _robot->GetWorldOrigin());
-    if ( isCurrent ) {
-      return false;
-    }
-    
-    // check if there are any objects we can localize to
-    const bool hasLocalizableObjects = AnyRemainingLocalizableObjects(origin);
-    const bool isZombie = !hasLocalizableObjects;
-    return isZombie;
-  }
-
   Result BlockWorld::AddCliff(const Pose3d& p)
   {
     // at the moment we treat them as markerless objects
@@ -4361,7 +3984,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       ClearAllExistingObjects();
       
       //finally clear the entire map, now that everything inside has been deleted
-      _existingObjects.clear();
+      _locatedObjects.clear();
       
     }  else {
       PRINT_NAMED_WARNING("BlockWorld.DeleteAllExistingObjects.DeleteDisabled",
@@ -4419,66 +4042,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       _didObjectsChange = true;
       _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
     }
-  }
-  
-  ObservableObject* BlockWorld::FindObjectHelper(const BlockWorldFilter& filterIn, const ModifierFcn& modifierFcn, bool returnFirstFound) const
-  {
-    ObservableObject* matchingObject = nullptr;
-    
-    BlockWorldFilter filter(filterIn);
-    
-    if(filter.IsOnlyConsideringLatestUpdate())
-    {
-      const TimeStamp_t atTimestamp = _currentObservedMarkerTimestamp;
-      
-      filter.AddFilterFcn([atTimestamp](const ObservableObject* object) -> bool
-                          {
-                            const bool seenAtTimestamp = (object->GetLastObservedTime() == atTimestamp);
-                            return seenAtTimestamp;
-                          });
-    }
-    
-    for(auto & objectsByOrigin : _existingObjects) {
-      if(filter.ConsiderOrigin(objectsByOrigin.first, _robot->GetWorldOrigin())) {
-        for(auto & objectsByFamily : objectsByOrigin.second) {
-          if(filter.ConsiderFamily(objectsByFamily.first)) {
-            for(auto & objectsByType : objectsByFamily.second) {
-              if(filter.ConsiderType(objectsByType.first)) {
-                for(auto & objectsByID : objectsByType.second) {
-                  ObservableObject* object_nonconst = objectsByID.second.get();
-                  const ObservableObject* object = object_nonconst;
-                  
-                  if(nullptr == object)
-                  {
-                    PRINT_NAMED_WARNING("BlockWorld.FindObjectHelper.NullExistingObject",
-                                        "Origin:%s(%p) Family:%s Type:%s ID:%d is NULL",
-                                        objectsByOrigin.first->GetName().c_str(),
-                                        objectsByOrigin.first,
-                                        EnumToString(objectsByFamily.first),
-                                        EnumToString(objectsByType.first),
-                                        objectsByID.first.GetValue());
-                    continue;
-                  }
-                  
-                  if(filter.ConsiderObject(object))
-                  {
-                    matchingObject = object_nonconst;
-                    if(nullptr != modifierFcn) {
-                      modifierFcn(matchingObject);
-                    }
-                    if(returnFirstFound) {
-                      return matchingObject;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    return matchingObject;
   }
   
   ObservableObject* BlockWorld::FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,
@@ -4604,60 +4167,33 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     return foundObject;
   }
   
-  
-  ObservableObject* BlockWorld::FindObjectClosestToHelper(const Pose3d& pose,
-                                                          const Vec3f&  distThreshold,
-                                                          const BlockWorldFilter& filterIn) const
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FindLocatedMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result)
   {
-    // TODO: Keep some kind of OctTree data structure to make these queries faster?
+    // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
+    // the filter to the result vector
+    ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
+      result.push_back(candidateObject);
+    };
     
-    Vec3f closestDist(distThreshold);
-    //ObservableObject* matchingObject = nullptr;
-    
-    BlockWorldFilter filter(filterIn);
-    filter.AddFilterFcn([&pose, &closestDist](const ObservableObject* current)
-                        {
-                          Vec3f dist = ComputeVectorBetween(pose, current->GetPose());
-                          dist.Abs();
-                          if(dist.Length() < closestDist.Length()) {
-                            closestDist = dist;
-                            return true;
-                          } else {
-                            return false;
-                          }
-                        });
-    
-    return FindObjectHelper(filter);
+    // ignore return value, since the findLambda stored everything in result
+    FindLocatedObjectHelper(filter, addToResult, false);
   }
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool BlockWorld::AnyRemainingLocalizableObjects() const
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FindLocatedMatchingObjects(const BlockWorldFilter& filter, std::vector<const ObservableObject*>& result) const
   {
-    return AnyRemainingLocalizableObjects(nullptr);
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool BlockWorld::AnyRemainingLocalizableObjects(const Pose3d* origin) const
-  {
-    // Filter out anything that can't be used for localization 
-    BlockWorldFilter filter;
-    filter.SetFilterFcn([origin](const ObservableObject* obj) {
-      return obj->CanBeUsedForLocalization();
-    });
+    // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
+    // the filter to the result vector
+    ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
+      result.push_back(candidateObject);
+    };
     
-    // Allow all origins if origin is nullptr or allow only the specified origin
-    filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-    if(origin != nullptr) {
-      filter.AddAllowedOrigin(origin);
-    }
-    
-    if(nullptr != FindObjectHelper(filter, nullptr, true)) {
-      return true;
-    } else {
-      return false;
-    }
+    // ignore return value, since the findLambda stored everything in result
+    FindLocatedObjectHelper(filter, addToResult, false);
   }
-
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   const ObservableObject* BlockWorld::FindMostRecentlyObservedObject(const BlockWorldFilter& filterIn) const
   {
     TimeStamp_t bestTime = 0;
@@ -4676,64 +4212,160 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     return FindObjectHelper(filter);
   }
-
-  ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
-                                                          const Vec3f& distThreshold,
-                                                          const Radians& angleThreshold,
-                                                                const BlockWorldFilter& filterIn)
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  namespace {
+  
+  // Helper to create a filter common to several methods below
+  static inline BlockWorldFilter GetIntersectingObjectsFilter(const Quad2f& quad, f32 padding_mm,
+                                                              const BlockWorldFilter& filterIn)
   {
-    Vec3f closestDist(distThreshold);
-    Radians closestAngle(angleThreshold);
-    
-    // Don't check the object we're using as the comparison
     BlockWorldFilter filter(filterIn);
-    filter.AddIgnoreID(object.GetID());
-    filter.AddFilterFcn([&object,&closestDist,&closestAngle](const ObservableObject* current)
-    {
-      Vec3f Tdiff;
-      Radians angleDiff;
-      if(current->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
-        closestDist = Tdiff.GetAbs();
-        closestAngle = angleDiff.getAbsoluteVal();
+    filter.AddFilterFcn([&quad,padding_mm](const ObservableObject* object) {
+      // Get quad of object and check for intersection
+      Quad2f quadExist = object->GetBoundingQuadXY(object->GetPose(), padding_mm);
+      if( quadExist.Intersects(quad) ) {
         return true;
       } else {
         return false;
       }
     });
-
-    ObservableObject* closestObject = FindObjectHelper(filter);
-    return closestObject;
-  } // FindClosestMatchingObject(given object)
-  
-  ObservableObject* BlockWorld::FindClosestMatchingObject(ObjectType withType,
-                                                          const Pose3d& pose,
-                                                          const Vec3f& distThreshold,
-                                                                const Radians& angleThreshold,
-                                                          const BlockWorldFilter& filterIn)
-  {
-    Vec3f closestDist(distThreshold);
-    Radians closestAngle(angleThreshold);
     
+    return filter;
+  }
+  };
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FindLocatedIntersectingObjects(const ObservableObject* objectSeen,
+                                           std::vector<const ObservableObject*>& intersectingExistingObjects,
+                                           f32 padding_mm,
+                                           const BlockWorldFilter& filter) const
+  {
+    Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
+    FindLocatedMatchingObjects(GetIntersectingObjectsFilter(quadSeen, padding_mm, filter), intersectingExistingObjects);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FindLocatedIntersectingObjects(const ObservableObject* objectSeen,
+                                           std::vector<ObservableObject*>& intersectingExistingObjects,
+                                           f32 padding_mm,
+                                           const BlockWorldFilter& filter)
+  {
+    Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
+    FindLocatedMatchingObjects(GetIntersectingObjectsFilter(quadSeen, padding_mm, filter), intersectingExistingObjects);
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FindLocatedIntersectingObjects(const Quad2f& quad,
+                                           std::vector<const ObservableObject *> &intersectingExistingObjects,
+                                           f32 padding_mm,
+                                           const BlockWorldFilter& filterIn) const
+  {
+    FindLocatedMatchingObjects(GetIntersectingObjectsFilter(quad, padding_mm, filterIn), intersectingExistingObjects);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FindLocatedIntersectingObjects(const Quad2f& quad,
+                                           std::vector<ObservableObject *> &intersectingExistingObjects,
+                                           f32 padding_mm,
+                                           const BlockWorldFilter& filterIn)
+  {
+    FindLocatedMatchingObjects(GetIntersectingObjectsFilter(quad, padding_mm, filterIn), intersectingExistingObjects);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::GetLocatedObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight, const f32 padding,
+                                                   std::vector<std::pair<Quad2f,ObjectID> >& rectangles,
+                                                   const BlockWorldFilter& filterIn) const
+  {
     BlockWorldFilter filter(filterIn);
-    filter.AddFilterFcn([withType,&pose,&closestDist,&closestAngle](const ObservableObject* current)
+    
+    // Note that we add this filter function, meaning we still rely on the
+    // default filter function which rules out objects with unknown pose state
+    filter.AddFilterFcn([minHeight, maxHeight, padding, &rectangles](const ObservableObject* object)
     {
-      Vec3f Tdiff;
-      Radians angleDiff;
-      if(current->GetType() == withType &&
-         current->GetPose().IsSameAs(pose, closestDist, closestAngle, Tdiff, angleDiff))
+      const Point3f rotatedSize( object->GetPose().GetRotation() * object->GetSize() );
+      const f32 objectCenter = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
+        
+      const f32 objectTop = objectCenter + (0.5f * rotatedSize.z());
+      const f32 objectBottom = objectCenter - (0.5f * rotatedSize.z());
+        
+      const bool bothAbove = (objectTop >= maxHeight) && (objectBottom >= maxHeight);
+      const bool bothBelow = (objectTop <= minHeight) && (objectBottom <= minHeight);
+        
+      if( !bothAbove && !bothBelow )
       {
-        closestDist = Tdiff.GetAbs();
-        closestAngle = angleDiff.getAbsoluteVal();
+        rectangles.emplace_back(object->GetBoundingQuadXY(padding), object->GetID());
         return true;
-      } else {
-        return false;
       }
+      
+      return false;
     });
     
-    ObservableObject* closestObject = FindObjectHelper(filter);
-    return closestObject;
-  } // FindClosestMatchingObject(given pose)
+    FindObjectHelper(filter);
+  }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
+  {
+    BlockWorldFilter filter;
+    filter.SetIgnoreIDs(std::set<ObjectID>(_robot->GetCarryingObjects()));
+    
+    // Figure out height filters in world coordinates (because GetLocatedObjectBoundingBoxesXY()
+    // uses heights of objects in world coordinates)
+    const Pose3d robotPoseWrtOrigin = _robot->GetPose().GetWithRespectToOrigin();
+    const f32 minHeight = robotPoseWrtOrigin.GetTranslation().z();
+    const f32 maxHeight = minHeight + _robot->GetHeight();
+    
+    GetLocatedObjectBoundingBoxesXY(minHeight, maxHeight, padding, boundingBoxes, filter);
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool BlockWorld::IsZombiePoseOrigin(const Pose3d* origin) const
+  {
+    // really, pass in an origin
+    DEV_ASSERT(nullptr != origin && origin->IsOrigin(), "BlockWorld.IsZombiePoseOrigin.NotAnOrigin");
+  
+    // current world is not a zombie
+    const bool isCurrent = (origin == _robot->GetWorldOrigin());
+    if ( isCurrent ) {
+      return false;
+    }
+    
+    // check if there are any objects we can localize to
+    const bool hasLocalizableObjects = AnyRemainingLocalizableObjects(origin);
+    const bool isZombie = !hasLocalizableObjects;
+    return isZombie;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool BlockWorld::AnyRemainingLocalizableObjects() const
+  {
+    return AnyRemainingLocalizableObjects(nullptr);
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool BlockWorld::AnyRemainingLocalizableObjects(const Pose3d* origin) const
+  {
+    // Filter out anything that can't be used for localization 
+    BlockWorldFilter filter;
+    filter.SetFilterFcn([origin](const ObservableObject* obj) {
+      return obj->CanBeUsedForLocalization();
+    });
+    
+    // Allow all origins if origin is nullptr or allow only the specified origin
+    filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
+    if(origin != nullptr) {
+      filter.AddAllowedOrigin(origin);
+    }
+    
+    if(nullptr != FindLocatedObjectHelper(filter, nullptr, true)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
   {
     if(_canDeleteObjects) {
@@ -4776,8 +4408,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     if(_canDeleteObjects)
     {
-      auto originIter = _existingObjects.find(origin);
-      if(originIter != _existingObjects.end())
+      auto originIter = _locatedObjects.find(origin);
+      if(originIter != _locatedObjects.end())
       {
         // Using a separate set instead of the vector since ObservableObject pointers might not
         // be valid since we are deleting the origin the objects are in
@@ -4811,7 +4443,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             }
           }
         }
-        _existingObjects.erase(originIter);
+        _locatedObjects.erase(originIter);
         
         // Find all objects in all _other_ origins and remove their IDs from the
         // set of object IDs we found in _this_ origin. If anything is left in the
@@ -4849,7 +4481,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     if(_canDeleteObjects) {
       std::set<ObjectID> idsToBroadcast;
-      for(auto & objectsByOrigin : _existingObjects) {
+      for(auto & objectsByOrigin : _locatedObjects) {
         auto familyIter = objectsByOrigin.second.find(family);
         if(familyIter != objectsByOrigin.second.end()) {
           for(auto & objectsByType : familyIter->second) {
@@ -4877,7 +4509,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     if(_canDeleteObjects) {
       std::set<ObjectID> idsToBroadcast;
-      for(auto & objectsByOrigin : _existingObjects) {
+      for(auto & objectsByOrigin : _locatedObjects) {
         for(auto & objectsByFamily : objectsByOrigin.second) {
           auto typeIter = objectsByFamily.second.find(type);
           if(typeIter != objectsByFamily.second.end()) {
@@ -4937,7 +4569,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // And remove it from the container
         // Note: we're using shared_ptr to store the objects, so erasing from
         //       the container will delete it if nothing else is referring to it
-        const size_t numDeleted = _existingObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
+        const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
         DEV_ASSERT_MSG(numDeleted != 0,
                        "BlockWorld.DeleteObject.NoObjectsDeleted",
                        "Origin %p Type %s ID %u",
@@ -4968,7 +4600,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   bool BlockWorld::ClearObject(const ObjectID& withID)
   {
     // Note: In current frame only!
-    return ClearObject(GetObjectByID(withID));
+    return ClearObject(GetLocatedObjectByID(withID));
   } // ClearObject()
   
 
@@ -4986,7 +4618,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       
       // Erase from the container and return the iterator to the next element
       // Note: we're using a shared_ptr so this should delete the object as well.
-      return _existingObjects.at(origin).at(fromFamily).at(withType).erase(objIter);
+      return _locatedObjects.at(origin).at(fromFamily).at(withType).erase(objIter);
     } else {
       PRINT_NAMED_WARNING("BlockWorld.DeleteObject.DeleteDisabled",
                           "Will not delete object %d because object deletion is disabled.",
@@ -4999,7 +4631,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   void BlockWorld::DeselectCurrentObject()
   {
     if(_selectedObject.IsSet()) {
-      ActionableObject* curSel = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
+      ActionableObject* curSel = dynamic_cast<ActionableObject*>(GetLocatedObjectByID(_selectedObject));
       if(curSel != nullptr) {
         curSel->SetSelected(false);
       }
@@ -5010,7 +4642,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
   bool BlockWorld::SelectObject(const ObjectID& objectID)
   {
-    ActionableObject* newSelection = dynamic_cast<ActionableObject*>(GetObjectByID(objectID));
+    ActionableObject* newSelection = dynamic_cast<ActionableObject*>(GetLocatedObjectByID(objectID));
     
     if(newSelection != nullptr) {
       // Unselect current object of interest, if it still exists (Note that it may just get
@@ -5036,7 +4668,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // Unselect current object of interest, if it still exists (Note that it may just get
       // reselected here, but I don't think we care.)
       // Mark new object of interest as selected so it will draw differently
-      ActionableObject* object = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(GetLocatedObjectByID(_selectedObject));
       if(object != nullptr) {
         object->SetSelected(false);
       }
@@ -5107,7 +4739,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
     
     // Mark new object of interest as selected so it will draw differently
-    ActionableObject* object = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
+    ActionableObject* object = dynamic_cast<ActionableObject*>(GetLocatedObjectByID(_selectedObject));
     if (object != nullptr) {
       object->SetSelected(true);
       PRINT_STREAM_INFO("BlockWorld.CycleSelectedObject", "Object of interest: ID = " << _selectedObject.GetValue());
@@ -5150,7 +4782,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // (Re)Draw the selected object separately so we can get its pre-action poses
     if(GetSelectedObject().IsSet())
     {
-      const ActionableObject* selectedObject = dynamic_cast<const ActionableObject*>(GetObjectByID(GetSelectedObject()));
+      const ActionableObject* selectedObject = dynamic_cast<const ActionableObject*>(GetLocatedObjectByID(GetSelectedObject()));
       if(selectedObject == nullptr) {
         PRINT_NAMED_WARNING("BlockWorld.DrawAllObjects.NullSelectedObject",
                             "Selected object ID = %d, but it came back null.",

@@ -99,7 +99,7 @@ bool BlockConfigurationManager::DidAnyObjectsMovePastThreshold()
   
   // check to see if any block has moved past our update configuration threshold
   for(const auto& objectID: _objectsPoseChangedThisTick){
-    const ObservableObject* blockMoved = _robot.GetBlockWorld().GetObjectByID(objectID);
+    const ObservableObject* blockMoved = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
     if(blockMoved == nullptr){
       continue;
     }

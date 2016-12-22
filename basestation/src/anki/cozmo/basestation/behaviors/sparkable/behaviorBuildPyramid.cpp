@@ -65,9 +65,9 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
     // Pyramid is a complicated behavior with a lot of driving around. If we've
     // failed to use any of the blocks and we're not sparked don't bother attempting
     // this behavior - it will probably end poorly
-    auto staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-    auto baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
-    auto topBlock = robot.GetBlockWorld().GetObjectByID(_topBlockID);
+    auto staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+    auto baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
+    auto topBlock = robot.GetBlockWorld().GetLocatedObjectByID(_topBlockID);
     
     std::set<AIWhiteboard::ObjectUseAction> failToUseReasons =
                  {{AIWhiteboard::ObjectUseAction::StackOnObject,
@@ -179,8 +179,8 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
   UpdateAudioState(std::underlying_type<MusicState>::type(MusicState::TopBlockCarry));
   SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
   
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
   if(staticBlock  == nullptr || baseBlock == nullptr)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramid.TransitionToPlacingTopBlock.NullObject",

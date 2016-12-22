@@ -211,7 +211,7 @@ namespace Anki {
       }
     
       // Get carried object
-      const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(robot.GetCarryingObject());
+      const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(robot.GetCarryingObject());
       if(nullptr == object)
       {
         PRINT_NAMED_WARNING("DriveToActions.ComputePlacementApproachAngle.NullObject",
@@ -431,7 +431,7 @@ namespace Anki {
     {
       _waitToVerifyTime = -1.f;
 
-      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_dockObjectID));
+      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_dockObjectID));
       
       if(dockObject == nullptr)
       {
@@ -1312,7 +1312,7 @@ namespace Anki {
           // We should _not_ still see a object with the
           // same type as the one we were supposed to pick up in that
           // block's original position because we should now be carrying it.
-          ObservableObject* carryObject = blockWorld.GetObjectByID(_robot.GetCarryingObject());
+          ObservableObject* carryObject = blockWorld.GetLocatedObjectByID(_robot.GetCarryingObject());
           if(carryObject == nullptr) {
             PRINT_NAMED_WARNING("PickupObjectAction.Verify.CarryObjectNoLongerExists",
                                 "Object %d we were carrying no longer exists in the world.",
@@ -1621,7 +1621,7 @@ namespace Anki {
         case DockAction::DA_PLACE_LOW:
         {
           // TODO: Be able to fill in more objects in the stack
-          ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+          ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_dockObjectID);
           if(object == nullptr) {
             PRINT_NAMED_WARNING("PlaceRelObjectAction.EmitCompletionSignal.NullObject",
                                 "Docking object %d not found in world after placing.",
@@ -1792,7 +1792,7 @@ namespace Anki {
     
     ActionResult PlaceRelObjectAction::TransformPlacementOffsetsRelativeObject()
     {
-      ObservableObject* dockObject = _robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+      ObservableObject* dockObject = _robot.GetBlockWorld().GetLocatedObjectByID(_dockObjectID);
       if(dockObject == nullptr){
         return ActionResult::BAD_OBJECT;
       }

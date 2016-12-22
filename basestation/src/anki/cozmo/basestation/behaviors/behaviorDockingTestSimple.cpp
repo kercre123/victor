@@ -278,7 +278,7 @@ namespace Anki {
         {
           if(_blockObjectIDPickup.IsSet())
           {
-            ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
+            ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectIDPickup);
             if(nullptr == object)
             {
               EndAttempt(robot, ActionResult::ABORT, "PickupObjectIsNull", true);
@@ -344,7 +344,7 @@ namespace Anki {
         {
           if(_blockObjectIDPickup.IsSet())
           {
-            const ObservableObject* blockToPickup = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
+            const ObservableObject* blockToPickup = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectIDPickup);
             if(nullptr == blockToPickup)
             {
               EndAttempt(robot, ActionResult::ABORT, "BlockToPickupNull", true);
@@ -580,7 +580,7 @@ namespace Anki {
           }
           
           // Get the preActionPose relating to the marker we
-          ActionableObject* aObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup));
+          ActionableObject* aObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectIDPickup));
           
           if(aObject == nullptr)
           {
@@ -923,7 +923,7 @@ namespace Anki {
                                                          const ExternalInterface::RobotObservedObject &msg)
     {
       ObjectID objectID = msg.objectID;
-      const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+      const ObservableObject* oObject = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
       
       if(nullptr == oObject)
       {

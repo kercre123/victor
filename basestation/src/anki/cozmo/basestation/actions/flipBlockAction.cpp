@@ -276,7 +276,7 @@ void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
   
 ActionResult FlipBlockAction::Init()
 {
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("FlipBlockAction.Init.NullObject", "ObjectID=%d", _objectID.GetValue());
@@ -338,7 +338,7 @@ ActionResult FlipBlockAction::CheckIfDone()
     return result;
   }
   
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("FlipBlockAction.CheckIfDone.NullObject", "ObjectID=%d", _objectID.GetValue());

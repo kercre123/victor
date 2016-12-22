@@ -358,7 +358,7 @@ Robot::~Robot()
     
 void Robot::SetOnCharger(bool onCharger)
 {
-  ObservableObject* object = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
+  ObservableObject* object = GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
   Charger* charger = dynamic_cast<Charger*>(object);
   if (onCharger && !_isOnCharger)
   {
@@ -366,7 +366,7 @@ void Robot::SetOnCharger(bool onCharger)
     if (nullptr == charger)
     {
       ObjectID newObjID = AddUnconnectedCharger();
-      charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObjID));
+      charger = dynamic_cast<Charger*>(GetBlockWorld().GetLocatedObjectByID(newObjID));
       if(nullptr == charger)
       {
         PRINT_NAMED_ERROR("Robot.SetOnCharger.FailedToAddUnconnectedCharger", "NewID=%d",
@@ -394,7 +394,7 @@ void Robot::SetOnCharger(bool onCharger)
     
 ObjectID Robot::AddUnconnectedCharger()
 {
-  // ChargerId is unknown because it exists in a previous frame but not this one
+  // _chargerID is unknown because it exists in a previous frame but not this one
 
   BlockWorldFilter filter;
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
@@ -1064,58 +1064,59 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     Pose3d newPose;
         
     if(IsOnRamp()) {
-          
-      // Sanity check:
-      DEV_ASSERT(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
-          
-      // Don't update pose history while on a ramp.
-      // Instead, just compute how far the robot thinks it has gone (in the plane)
-      // and compare that to where it was when it started traversing the ramp.
-      // Adjust according to the angle of the ramp we know it's on.
-          
-      const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
-          
-      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld->GetObjectByID(_rampID, ObjectFamily::Ramp));
-      if(ramp == nullptr) {
-        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
-                          "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.",
-                          _ID, _rampID.GetValue());
-        return RESULT_FAIL;
-      }
-          
-      // Progress must be along ramp's direction (init assuming ascent)
-      Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>();
-          
-      // Initialize tilt angle assuming we are ascending
-      Radians tiltAngle = ramp->GetAngle();
-          
-      switch(_rampDirection)
-      {
-        case Ramp::DESCENDING:
-          tiltAngle    *= -1.f;
-          headingAngle += M_PI_F;
-          break;
-        case Ramp::ASCENDING:
-          break;
-              
-        default:
-          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
-                            "Robot is on a ramp, expecting the ramp direction to be either "
-                            "ASCEND or DESCENDING, not %d", _rampDirection);
-          return RESULT_FAIL;
-      }
-
-      const f32 heightAdjust = distanceTraveled*sin(tiltAngle.ToFloat());
-      const Point3f newTranslation(_rampStartPosition.x() + distanceTraveled*cos(headingAngle.ToFloat()),
-                                   _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
-                                   _rampStartHeight + heightAdjust);
-          
-      const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
-      const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
-          
-      newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
-      //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
-          
+// Unsupported, remove in new PR
+//
+//      // Sanity check:
+//      DEV_ASSERT(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
+//          
+//      // Don't update pose history while on a ramp.
+//      // Instead, just compute how far the robot thinks it has gone (in the plane)
+//      // and compare that to where it was when it started traversing the ramp.
+//      // Adjust according to the angle of the ramp we know it's on.
+//          
+//      const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
+//          
+//      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld->GetLocatedObjectByID(_rampID, ObjectFamily::Ramp));
+//      if(ramp == nullptr) {
+//        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
+//                          "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.",
+//                          _ID, _rampID.GetValue());
+//        return RESULT_FAIL;
+//      }
+//          
+//      // Progress must be along ramp's direction (init assuming ascent)
+//      Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>();
+//          
+//      // Initialize tilt angle assuming we are ascending
+//      Radians tiltAngle = ramp->GetAngle();
+//          
+//      switch(_rampDirection)
+//      {
+//        case Ramp::DESCENDING:
+//          tiltAngle    *= -1.f;
+//          headingAngle += M_PI_F;
+//          break;
+//        case Ramp::ASCENDING:
+//          break;
+//              
+//        default:
+//          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
+//                            "Robot is on a ramp, expecting the ramp direction to be either "
+//                            "ASCEND or DESCENDING, not %d", _rampDirection);
+//          return RESULT_FAIL;
+//      }
+//
+//      const f32 heightAdjust = distanceTraveled*sin(tiltAngle.ToFloat());
+//      const Point3f newTranslation(_rampStartPosition.x() + distanceTraveled*cos(headingAngle.ToFloat()),
+//                                   _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
+//                                   _rampStartHeight + heightAdjust);
+//          
+//      const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
+//      const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
+//          
+//      newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
+//      //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
+      
     } else {
       // This is "normal" mode, where we udpate pose history based on the
       // reported odometry from the physical robot
@@ -1440,7 +1441,7 @@ Result Robot::Update()
   
   
   // Update ChargerPlatform - this has to happen before the behaviors which might need this information
-  ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
+  ObservableObject* charger = GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
   if( nullptr != charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
   {
     // This state is useful for knowing not to play a cliff react when just driving off the charger.
@@ -1865,7 +1866,7 @@ Result Robot::Update()
                           "block:%d poseState:%8s moving?%d RestingFlat?%d carried?%d poseWRT?%d objOnTop:%d"
                           " z=%6.2f UpAxis:%s CanStack?%d CanPickUp?%d FromGround?%d",
                           obj->GetID().GetValue(),
-                          obj->PoseStateToString( obj->GetPoseState() ),
+                          PoseStateToString( obj->GetPoseState() ),
                           obj->IsMoving(),
                           obj->IsRestingFlat(),
                           (IsCarryingObject() && GetCarryingObject() == obj->GetID()),
@@ -2830,96 +2831,97 @@ Result Robot::ExecutePath(const Planning::Path& path, const bool useManualSpeed)
     
 Result Robot::SetOnRamp(bool t)
 {
-  ANKI_CPU_PROFILE("Robot::SetOnRamp");
+// Unsupported, remove in new PR
+//  ANKI_CPU_PROFILE("Robot::SetOnRamp");
+//  
+//  if(t == _onRamp) {
+//    // Nothing to do
+//    return RESULT_OK;
+//  }
+//      
+//  // We are either transition onto or off of a ramp
+//      
+//  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetLocatedObjectByID(_rampID, ObjectFamily::Ramp));
+//  if(ramp == nullptr) {
+//    PRINT_NAMED_WARNING("Robot.SetOnRamp.NoRampWithID",
+//                        "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world",
+//                        _ID, _rampID.GetValue());
+//    return RESULT_FAIL;
+//  }
+//      
+//  assert(_rampDirection == Ramp::ASCENDING || _rampDirection == Ramp::DESCENDING);
+//      
+//  const bool transitioningOnto = (t == true);
+//      
+//  if(transitioningOnto) {
+//    // Record start (x,y) position coming from robot so basestation can
+//    // compute actual (x,y,z) position from upcoming odometry updates
+//    // coming from robot (which do not take slope of ramp into account)
+//    _rampStartPosition = {_pose.GetTranslation().x(), _pose.GetTranslation().y()};
+//    _rampStartHeight   = _pose.GetTranslation().z();
+//        
+//    PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOntoRamp",
+//                     "Robot %d transitioning onto ramp %d, using start (%.1f,%.1f,%.1f)",
+//                     _ID, ramp->GetID().GetValue(), _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
+//        
+//  } else {
+//    // Just do an absolute pose update, setting the robot's position to
+//    // where we "know" he should be when he finishes ascending or
+//    // descending the ramp
+//    switch(_rampDirection)
+//    {
+//      case Ramp::ASCENDING:
+//        SetPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
+//        break;
+//            
+//      case Ramp::DESCENDING:
+//        SetPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
+//        break;
+//            
+//      default:
+//        PRINT_NAMED_WARNING("Robot.SetOnRamp.UnexpectedRampDirection",
+//                            "When transitioning on/off ramp, expecting the ramp direction to be either "
+//                            "ASCENDING or DESCENDING, not %d.", _rampDirection);
+//        return RESULT_FAIL;
+//    }
+//        
+//    _rampDirection = Ramp::UNKNOWN;
+//        
+//    const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
+//        
+//    PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOffRamp",
+//                     "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
+//                     _ID, ramp->GetID().GetValue(),
+//                     _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
+//                     _pose.GetRotationAngle<'Z'>().getDegrees(),
+//                     timeStamp);
+//        
+//    // We are creating a new pose frame at the top of the ramp
+//    //IncrementPoseFrameID();
+//    ++_frameId;
+//    Result lastResult = SendAbsLocalizationUpdate(_pose,
+//                                                  timeStamp,
+//                                                  _frameId);
+//    if(lastResult != RESULT_OK) {
+//      PRINT_NAMED_WARNING("Robot.SetOnRamp.SendAbsLocUpdateFailed",
+//                          "Robot %d failed to send absolute localization update.", _ID);
+//      return lastResult;
+//    }
+//
+//  } // if/else transitioning onto ramp
+//      
+//  _onRamp = t;
+//      
+//  return RESULT_OK;
   
-  if(t == _onRamp) {
-    // Nothing to do
-    return RESULT_OK;
-  }
-      
-  // We are either transition onto or off of a ramp
-      
-  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetObjectByID(_rampID, ObjectFamily::Ramp));
-  if(ramp == nullptr) {
-    PRINT_NAMED_WARNING("Robot.SetOnRamp.NoRampWithID",
-                        "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world",
-                        _ID, _rampID.GetValue());
-    return RESULT_FAIL;
-  }
-      
-  assert(_rampDirection == Ramp::ASCENDING || _rampDirection == Ramp::DESCENDING);
-      
-  const bool transitioningOnto = (t == true);
-      
-  if(transitioningOnto) {
-    // Record start (x,y) position coming from robot so basestation can
-    // compute actual (x,y,z) position from upcoming odometry updates
-    // coming from robot (which do not take slope of ramp into account)
-    _rampStartPosition = {_pose.GetTranslation().x(), _pose.GetTranslation().y()};
-    _rampStartHeight   = _pose.GetTranslation().z();
-        
-    PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOntoRamp",
-                     "Robot %d transitioning onto ramp %d, using start (%.1f,%.1f,%.1f)",
-                     _ID, ramp->GetID().GetValue(), _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
-        
-  } else {
-    // Just do an absolute pose update, setting the robot's position to
-    // where we "know" he should be when he finishes ascending or
-    // descending the ramp
-    switch(_rampDirection)
-    {
-      case Ramp::ASCENDING:
-        SetPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
-        break;
-            
-      case Ramp::DESCENDING:
-        SetPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
-        break;
-            
-      default:
-        PRINT_NAMED_WARNING("Robot.SetOnRamp.UnexpectedRampDirection",
-                            "When transitioning on/off ramp, expecting the ramp direction to be either "
-                            "ASCENDING or DESCENDING, not %d.", _rampDirection);
-        return RESULT_FAIL;
-    }
-        
-    _rampDirection = Ramp::UNKNOWN;
-        
-    const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
-        
-    PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOffRamp",
-                     "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
-                     _ID, ramp->GetID().GetValue(),
-                     _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
-                     _pose.GetRotationAngle<'Z'>().getDegrees(),
-                     timeStamp);
-        
-    // We are creating a new pose frame at the top of the ramp
-    //IncrementPoseFrameID();
-    ++_frameId;
-    Result lastResult = SendAbsLocalizationUpdate(_pose,
-                                                  timeStamp,
-                                                  _frameId);
-    if(lastResult != RESULT_OK) {
-      PRINT_NAMED_WARNING("Robot.SetOnRamp.SendAbsLocUpdateFailed",
-                          "Robot %d failed to send absolute localization update.", _ID);
-      return lastResult;
-    }
-
-  } // if/else transitioning onto ramp
-      
-  _onRamp = t;
-      
-  return RESULT_OK;
-      
-} // SetOnPose()
+}
     
     
 Result Robot::SetPoseOnCharger()
 {
   ANKI_CPU_PROFILE("Robot::SetPoseOnCharger");
   
-  Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger));
+  Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetLocatedObjectByID(_chargerID));
   if(charger == nullptr) {
     PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.NoChargerWithID",
                         "Robot %d has docked to charger, but Charger object with ID=%d not found in the world.",
@@ -3005,7 +3007,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const DockingMethod dockingMethod,
                              const bool doLiftLoadCheck)
 {
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(objectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetLocatedObjectByID(objectID));
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.DockWithObject.ObjectDoesNotExist",
                       "Object with ID=%d no longer exists for docking.", objectID.GetValue());
@@ -3086,7 +3088,7 @@ bool Robot::IsCarryingObject(const ObjectID& objectID) const
 
 void Robot::SetCarryingObject(ObjectID carryObjectID)
 {
-  ObservableObject* object = _blockWorld->GetObjectByID(carryObjectID);
+  ObservableObject* object = _blockWorld->GetLocatedObjectByID(carryObjectID);
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.SetCarryingObject.NullCarryObject",
                       "Object %d no longer exists in the world. Can't set it as robot's carried object.",
@@ -3124,7 +3126,7 @@ void Robot::UnSetCarryingObjects(bool topOnly)
       continue;
     }
         
-    ObservableObject* carriedObject = _blockWorld->GetObjectByID(objID);
+    ObservableObject* carriedObject = _blockWorld->GetLocatedObjectByID(objID);
     if(carriedObject == nullptr) {
       PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects.NullObject",
                         "Object %d robot %d thought it was carrying no longer exists in the world.",
@@ -3198,7 +3200,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
     return RESULT_FAIL;
   }
       
-  ObservableObject* object = _blockWorld->GetObjectByID(objectID);
+  ObservableObject* object = _blockWorld->GetLocatedObjectByID(objectID);
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
                       "Dock object with ID=%d no longer exists for picking up.", objectID.GetValue());
@@ -3281,7 +3283,7 @@ Result Robot::SetCarriedObjectAsUnattached(bool clearObjects)
     return RESULT_FAIL;
   }
       
-  ObservableObject* object = _blockWorld->GetObjectByID(_carryingObjectID);
+  ObservableObject* object = _blockWorld->GetLocatedObjectByID(_carryingObjectID);
       
   if(object == nullptr)
   {
@@ -3324,7 +3326,7 @@ Result Robot::SetCarriedObjectAsUnattached(bool clearObjects)
   _carryingMarker = nullptr;
       
   if(_carryingObjectOnTopID.IsSet()) {
-    ObservableObject* objectOnTop = _blockWorld->GetObjectByID(_carryingObjectOnTopID);
+    ObservableObject* objectOnTop = _blockWorld->GetLocatedObjectByID(_carryingObjectOnTopID);
     if(objectOnTop == nullptr)
     {
       // This really should not happen.  How can a object being carried get deleted?
@@ -3377,7 +3379,7 @@ bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& 
   }
 
   // check that the object is ready to place on top of
-  if( object.IsPoseStateUnknown() ||
+  if( !object.HasValidPose() ||
       !object.IsRestingFlat() ||
       (IsCarryingObject() && GetCarryingObject() == object.GetID()) ) {
     return false;

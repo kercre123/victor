@@ -305,7 +305,7 @@ namespace Anki {
     ActionResult DriveToObjectAction::Init()
     {
       ActionResult result = ActionResult::SUCCESS;
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
       if(object == nullptr)
       {
         PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
@@ -358,7 +358,7 @@ namespace Anki {
         // Initialization has now moved and we may not be in position, even if
         // we completed the planned path successfully. If that's the case, we
         // want to retry.
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
         if(object == nullptr)
         {
           PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone.NoObjectWithID",
@@ -448,7 +448,7 @@ namespace Anki {
       } else {
         _objectID = _robot.GetCarryingObject();
         
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NoObjectWithID",
                             "Robot %d's block world does not have an ActionableObject with ID=%d.",
@@ -514,7 +514,7 @@ namespace Anki {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     bool DriveToPlaceCarriedObjectAction::IsPlacementGoalFree() const
     {
-      ObservableObject* object = _robot.GetBlockWorld().GetObjectByID( _robot.GetCarryingObject() );
+      ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID( _robot.GetCarryingObject() );
       if ( nullptr != object )
       {
         BlockWorldFilter ignoreSelfFilter;
@@ -1522,7 +1522,7 @@ namespace Anki {
       blockWorld.GetObstacles(obstacles);
 
       // Compute approach angle so that rolling rights the block, using docking
-      ObservableObject* observableObject = _robot.GetBlockWorld().GetObjectByID(_objectID);
+      ObservableObject* observableObject = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
       if( nullptr == observableObject ) {
         PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.NullObject",
                             "[%d] invalid object id %d",
@@ -1721,7 +1721,7 @@ namespace Anki {
       const f32 waitTime = 3.0f;
       
 
-      ObservableObject* observableObject = robot.GetBlockWorld().GetObjectByID(objectID);
+      ObservableObject* observableObject = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
       if(nullptr == observableObject)
       {
         PRINT_NAMED_WARNING("DriveToRealignWithObjectAction.Constructor.NullObservableObject",

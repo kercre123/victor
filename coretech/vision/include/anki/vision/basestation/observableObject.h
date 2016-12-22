@@ -267,7 +267,8 @@ namespace Anki {
       PoseState GetPoseState() const { return _poseState; }
       void SetPoseState(PoseState newState) { _poseState = newState; }
       bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }
-      bool IsPoseStateUnknown() const { return _poseState == PoseState::Unknown; }
+      bool IsPoseStateUnknown() const { assert(false); return true; } // removing soon
+      inline bool HasValidPose() const;
 
       static const char* PoseStateToString(const PoseState& state);
       
@@ -292,7 +293,7 @@ namespace Anki {
       ObjectID     _ID;
       TimeStamp_t  _lastObservedTime = 0;
       ColorRGBA    _color;
-      PoseState    _poseState = PoseState::Unknown;
+      PoseState    _poseState = PoseState::Invalid;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -331,10 +332,6 @@ namespace Anki {
     
     inline const ColorRGBA& ObservableObject::GetColor() const {
       return _color;
-    }
-    
-    inline const Pose3d& ObservableObject::GetPose() const {
-      return _pose;
     }
     
     inline void ObservableObject::SetID() { //const ObjectID newID) {
@@ -414,6 +411,10 @@ namespace Anki {
       GetObservedMarkers(observedMarkers, GetLastObservedTime());
     }
     
+    inline bool ObservableObject::HasValidPose() const {
+      return _poseState != PoseState::Invalid;
+	}
+	
     inline Point3f ObservableObject::GetSizeInParentFrame(const Pose3d& atPose) const
     {
       const RotationMatrix3d& Rmat = atPose.GetRotation().GetRotationMatrix();

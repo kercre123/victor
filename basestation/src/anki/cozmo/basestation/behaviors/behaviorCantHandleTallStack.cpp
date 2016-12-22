@@ -68,7 +68,7 @@ bool BehaviorCantHandleTallStack::IsRunnableInternal(const BehaviorPreReqRobot& 
     if(auto tallestStack = _currentTallestStack.lock()){
       const bool tallEnoughStack = tallestStack->GetStackHeight() >= _minStackHeight;
       if(tallEnoughStack){
-        auto bottomBlock = robot.GetBlockWorld().GetObjectByID(tallestStack->GetBottomBlockID());
+        auto bottomBlock = robot.GetBlockWorld().GetLocatedObjectByID(tallestStack->GetBottomBlockID());
         if(bottomBlock == nullptr){
           return false;
         }
@@ -87,7 +87,7 @@ bool BehaviorCantHandleTallStack::IsRunnableInternal(const BehaviorPreReqRobot& 
 Result BehaviorCantHandleTallStack::InitInternal(Robot& robot)
 {
   if(auto tallestStack = _currentTallestStack.lock()){
-    auto bottomBlock = robot.GetBlockWorld().GetObjectByID(tallestStack->GetBottomBlockID());
+    auto bottomBlock = robot.GetBlockWorld().GetLocatedObjectByID(tallestStack->GetBottomBlockID());
     if(bottomBlock == nullptr){
       return Result::RESULT_FAIL;
     }

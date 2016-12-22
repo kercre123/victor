@@ -130,7 +130,7 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
 {
   DEBUG_SET_STATE(ReachingForBlock);
 
-  const ObservableObject* topBlock = robot.GetBlockWorld().GetObjectByID(_topBlockID);
+  const ObservableObject* topBlock = robot.GetBlockWorld().GetLocatedObjectByID(_topBlockID);
   
   if(topBlock == nullptr){
     ClearStack();

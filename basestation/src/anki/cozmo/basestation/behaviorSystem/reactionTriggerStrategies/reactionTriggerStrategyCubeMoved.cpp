@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyCubeMoved.h"
 
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -81,7 +82,7 @@ ReactionTriggerStrategyCubeMoved::ReactionTriggerStrategyCubeMoved(Robot& robot,
 bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
 {
   for(auto& object: _reactionObjects){
-    const ObservableObject* cube = robot.GetBlockWorld().GetObjectByID(object.GetObjectID());
+    const ObservableObject* cube = robot.GetBlockWorld().GetConnectedActiveObjectByID(object.GetObjectID());
     if(cube == nullptr){
       continue;
     }
@@ -230,7 +231,7 @@ bool ReactionObjectData::operator==(const ReactionObjectData &other) const
 
 bool ReactionObjectData::ObjectHasMovedLongEnough(const Robot& robot)
 {
-  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
   if(object == nullptr){
     return false;
   }
@@ -247,7 +248,7 @@ bool ReactionObjectData::ObjectHasMovedLongEnough(const Robot& robot)
 
 bool ReactionObjectData::ObjectUpAxisHasChanged(const Robot& robot)
 {
-  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
   if(object == nullptr){
     return false;
   }
@@ -257,7 +258,7 @@ bool ReactionObjectData::ObjectUpAxisHasChanged(const Robot& robot)
 
 bool ReactionObjectData::ObjectOutsideIgnoreArea(const Robot& robot)
 {
-  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
   if(object == nullptr){
     return false;
   }
@@ -276,7 +277,7 @@ bool ReactionObjectData::ObjectOutsideIgnoreArea(const Robot& robot)
 // update values for reactionObject
 void ReactionObjectData::ObjectStartedMoving(const Robot& robot, const ObjectMoved& msg)
 {
-  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
   if(object == nullptr){
     _isObjectMoving = false;
     return;
@@ -299,7 +300,7 @@ void ReactionObjectData::ObjectStoppedMoving(const Robot& robot)
 
 void ReactionObjectData::ObjectObserved(const Robot& robot)
 {
-  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
   if(object != nullptr){
     // don't trigger reactions while we're directly looking at the block
     ResetObject();

@@ -186,7 +186,7 @@ const ObservableObject* BehaviorCheckForStackAtInterval::GetKnownObject(const Ro
   const ObjectID& objID = GetKnownObjectID(index);
   if ( objID.IsSet() ) {
     // find object currently in world
-    const ObservableObject* ret = robot.GetBlockWorld().GetObjectByID( objID );
+    const ObservableObject* ret = robot.GetBlockWorld().GetLocatedObjectByID( objID );
     return ret;
   } else {
     return nullptr;

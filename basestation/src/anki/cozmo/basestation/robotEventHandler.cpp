@@ -1517,7 +1517,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
   {
     if(robot->IsCarryingObject()) {
       Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
-      const ObservableObject* carryObject = robot->GetBlockWorld().GetObjectByID(robot->GetCarryingObject());
+      const ObservableObject* carryObject = robot->GetBlockWorld().GetLocatedObjectByID(robot->GetCarryingObject());
       if(nullptr == carryObject)
       {
         PRINT_NAMED_WARNING("RobotEventHandler.HandleDrawPoseMarker.NullCarryObject",

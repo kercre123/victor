@@ -463,7 +463,7 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
       TransitionToExaminingFoundObject(robot);
     }
 
-    ObservableObject* object = robot.GetBlockWorld().GetObjectByID(msg.objectID);
+    ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(msg.objectID);
     if (nullptr != object)
     {
       UpdateSafeRegionForCube(object->GetPose().GetTranslation());

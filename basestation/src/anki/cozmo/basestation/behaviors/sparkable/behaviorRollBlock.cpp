@@ -89,7 +89,7 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
   }
   else
   {
-    const ObservableObject* carriedObj = robot.GetBlockWorld().GetObjectByID(robot.GetCarryingObject());
+    const ObservableObject* carriedObj = robot.GetBlockWorld().GetLocatedObjectByID(robot.GetCarryingObject());
     if (nullptr != carriedObj && carriedObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
     {
       _targetBlock = carriedObj->GetID();
@@ -226,7 +226,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                 {
                   PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort", "Failed to verify roll");
                   
-                  const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlock);
+                  const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
                   if(failedObject){
                     robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
                   }

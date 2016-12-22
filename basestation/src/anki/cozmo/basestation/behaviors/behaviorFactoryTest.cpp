@@ -1319,7 +1319,7 @@ namespace Cozmo {
         // Get closest predock pose. Default to _prePickupPose.
         _closestPredockPose = _prePickupPose;
         Pose3d blockPose = _expectedLightCubePose;
-        ObservableObject* obsObj = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
+        ObservableObject* obsObj = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectID);
         if (nullptr != obsObj) {
           blockPose = obsObj->GetPose();
           ActionableObject* actObj = dynamic_cast<ActionableObject*>(obsObj);
@@ -1413,7 +1413,7 @@ namespace Cozmo {
         }
 
         // Write cube's pose to nv storage
-        ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
+        ObservableObject* oObject = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectID);
         if(nullptr == oObject)
         {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.FailedToFindObject",
@@ -1803,7 +1803,7 @@ namespace Cozmo {
   {
 
     ObjectID objectID = msg.objectID;
-    const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+    const ObservableObject* oObject = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
     
     if(nullptr == oObject)
     {

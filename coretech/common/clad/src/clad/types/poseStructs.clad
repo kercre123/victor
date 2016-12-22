@@ -33,9 +33,10 @@ namespace Anki {
 
   enum uint_8 PoseState
   {
+    Invalid,  // used when objects are created but not seen in the real world, so their pose is not valid
     Known,
-    Dirty,
-    Unknown
+    Dirty
+    //Unknown
   }
 
 

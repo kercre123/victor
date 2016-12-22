@@ -65,7 +65,7 @@ public:
   struct ObjectInfo {
     ObjectInfo(const ObjectID& objId, ObjectFamily fam) : id(objId), family(fam) {}
     ObjectID id;
-    ObjectFamily family;
+    ObjectFamily family; // TODO: remove, unused since BlockWorld does not provide this API anymore
   };
   using ObjectInfoList = std::vector<ObjectInfo>;
   

@@ -197,7 +197,7 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
     UpdateBlockPlacementOffsets();
   }
   
-  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+  const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.TransitionToPlacingBaseBlock.NullObject",
@@ -299,7 +299,7 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
       _baseBlockID = GetNearestBlockToPose(robotPose, allBlocks);
     }
     
-    const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+    const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
     if(nullptr == baseBlock)
     {
       PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.UpdatePyramidTargets.BaseBlockNull",
@@ -312,7 +312,7 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
     auto baseBlockPose = baseBlock->GetPose().GetWithRespectToOrigin();
     
     _staticBlockID = GetNearestBlockToPose(baseBlockPose, allBlocks);
-    const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+    const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
     if(nullptr == staticBlock)
     {
       PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.UpdatePyramidTargets.StaticBlockNull",
@@ -332,7 +332,7 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
   
   // find the top block so the full pyramid construction can run
   if(!allBlocks.empty() && !_topBlockID.IsSet()){
-    const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+    const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
     if(staticBlock){
       auto staticBlockPose = staticBlock->GetPose().GetWithRespectToOrigin();
       _topBlockID = GetNearestBlockToPose(staticBlockPose, allBlocks);
@@ -343,7 +343,7 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
 {
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.UpdateBlockPlacementOffset.NullObject",
@@ -389,8 +389,8 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset) const
 {
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-  const ObservableObject* placingObject = _robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+  const ObservableObject* placingObject = _robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
   if(nullptr == object || nullptr == placingObject)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.CHeckBaseBlockPoseIsFree.NullObject",
@@ -445,7 +445,7 @@ ObjectID BehaviorBuildPyramidBase::GetNearestBlockToPose(const Pose3d& pose, con
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::SafeEraseBlockFromBlockList(const ObjectID& objectID, BlockList& blockList) const
 {
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
   auto iter = std::find(blockList.begin(), blockList.end(), object);
   if(iter != blockList.end()){
     iter = blockList.erase(iter);
@@ -563,8 +563,8 @@ ObjectLights BehaviorBuildPyramidBase::GetBaseFormedBaseLightsModifier(Robot& ro
   ObjectLights baseBlockLights;
   baseBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
 
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(staticID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(baseID);
   if(staticBlock == nullptr || baseBlock == nullptr){
     return baseBlockLights;
   }
@@ -589,8 +589,8 @@ ObjectLights BehaviorBuildPyramidBase::GetBaseFormedStaticLightsModifier(Robot& 
   ObjectLights staticBlockLights;
   staticBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
 
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(staticID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(baseID);
   if(staticBlock == nullptr || baseBlock == nullptr){
     return staticBlockLights;
   }
