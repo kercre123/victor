@@ -18,9 +18,17 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 80;
-//const char* BUILD_INFO = "EP1 v1.5 beta-007";
-const char* BUILD_INFO = "EP1 v1.5";
+u8 g_fixtureReleaseVersion = 81;
+#define BUILD_INFO_PREFIX "EP1 v1.5"
+
+//Set this flag to modify display info - indicates a debug/test build
+#define NOT_FOR_FACTORY 1
+
+#if NOT_FOR_FACTORY > 0
+#define BUILD_INFO (BUILD_INFO_PREFIX ## " beta-011")
+#else
+#define BUILD_INFO (BUILD_INFO_PREFIX)
+#endif
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
@@ -132,6 +140,10 @@ void SetFixtureText(void)
   DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+  #if defined(NOT_FOR_FACTORY) && NOT_FOR_FACTORY > 0
+  DisplayMoveCursor(45, 2);
+  DisplayPutString("DEV-NOT FOR FACTORY!!");
+  #endif
   DisplayMoveCursor(55, 2);
   DisplayPutString(BUILD_INFO);
 #endif
