@@ -337,7 +337,7 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
       // cooldown if it ran for a very short period
     
       // DAS
-      PRINT_NAMED_EVENT("AIGoalEvaluator.NewGoalSelected",
+      LOG_EVENT("AIGoalEvaluator.NewGoalSelected",
         "Switched goal from '%s' to '%s' (spark '%s')",
         _currentGoalPtr ? _currentGoalPtr->GetName().c_str() : "no goal",
         newGoal         ? newGoal->GetName().c_str() : "no goal",

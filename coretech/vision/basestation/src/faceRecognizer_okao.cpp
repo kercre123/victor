@@ -566,7 +566,8 @@ namespace Vision {
         
         // Log the enrollment ID we just completed and how many album entries it now has
         const size_t numAlbumEntries = entryToReturn.GetAlbumEntries().size();
-        Util::sEventF("robot.vision.face_enrollment_count_reached", {{DDATA, TO_DDATA_STR(numAlbumEntries)}},
+        Util::sEventF("robot.vision.face_enrollment_count_reached",
+                      {{DDATA, std::to_string(numAlbumEntries).c_str()}},
                       "%d", _enrollmentID);
         
         enrollmentCountReached = _origEnrollmentCount;
@@ -2201,21 +2202,24 @@ namespace Vision {
           
           for(auto & entry : _enrollmentData)
           {
+            const auto & faceID = entry.second.GetFaceID();
+            const auto & faceName = entry.second.GetName();
             PRINT_CH_DEBUG("FaceRecognizer", "SetSerializedData.AddedEnrollmentDataEntry",
                            "User '%s' with ID=%d",
-                           Util::HidePersonallyIdentifiableInfo(entry.second.GetName().c_str()),
-                           entry.second.GetFaceID());
+                           Util::HidePersonallyIdentifiableInfo(faceName.c_str()),
+                           faceID);
             
             // Log the ID and num of album entries (as DDATA) of each entry we load
             const size_t numAlbumEntries = entry.second.GetAlbumEntries().size();
-            Util::sEventF("robot.vision.loaded_face_enrollment_entry", {{DDATA, TO_DDATA_STR(numAlbumEntries)}},
-                          "%d", entry.second.GetFaceID());
+            Util::sEventF("robot.vision.loaded_face_enrollment_entry",
+                          {{DDATA, std::to_string(numAlbumEntries).c_str()}},
+                          "%d", faceID);
             
             loadedFaces.emplace_back(LoadedKnownFace(GetSecondsSince(nowTime, entry.second.GetEnrollmentTime()),
                                                      GetSecondsSince(nowTime, entry.second.GetLastUpdateTime()),
                                                      GetSecondsSince(nowTime, entry.second.FindLastSeenTime()),
-                                                     entry.second.GetFaceID(),
-                                                     entry.second.GetName()));
+                                                     faceID,
+                                                     faceName));
           }
         }
       }

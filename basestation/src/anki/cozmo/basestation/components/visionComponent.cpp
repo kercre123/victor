@@ -1386,7 +1386,7 @@ namespace Cozmo {
             break;
         }
         
-        PRINT_NAMED_EVENT("robot.vision.image_quality", "%s", EnumToString(errorCode));
+        LOG_EVENT("robot.vision.image_quality", "%s", EnumToString(errorCode));
         
         PRINT_CH_DEBUG("VisionComponent",
                        "VisionComponent.UpdateImageQuality.BroadcastingImageQualityChange",
@@ -2060,8 +2060,8 @@ namespace Cozmo {
                      "Initiated save of %zu-byte album data and %zu-byte enroll data to NVStorage",
                      _albumData.size(), _enrollData.size());
     
-    PRINT_NAMED_EVENT("robot.vision.save_face_album_data_size_bytes", "%zu", _albumData.size());
-    PRINT_NAMED_EVENT("robot.vision.save_face_enroll_data_size_bytes", "%zu", _enrollData.size());
+    LOG_EVENT("robot.vision.save_face_album_data_size_bytes", "%zu", _albumData.size());
+    LOG_EVENT("robot.vision.save_face_enroll_data_size_bytes", "%zu", _enrollData.size());
     
     return lastResult;
   } // SaveFaceAlbumToRobot()

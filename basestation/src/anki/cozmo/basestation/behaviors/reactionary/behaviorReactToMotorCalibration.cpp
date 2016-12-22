@@ -41,7 +41,7 @@ bool BehaviorReactToMotorCalibration::IsRunnableInternalReactionary(const Robot&
 
 Result BehaviorReactToMotorCalibration::InitInternalReactionary(Robot& robot)
 {
-  PRINT_NAMED_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
+  LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
   StartActing(new WaitAction(robot, _kTimeout_sec), [this, &robot](ActionResult res) {

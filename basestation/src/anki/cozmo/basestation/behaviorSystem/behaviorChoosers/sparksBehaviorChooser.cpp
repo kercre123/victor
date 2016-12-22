@@ -389,7 +389,7 @@ void SparksBehaviorChooser::CompleteSparkLogic()
       // / collecting data on failures). Only broadcast for hard sparks for now
       if( ! mngr.IsActiveSparkSoft() ) {
         Anki::Util::sEvent("meta.upgrade_replay_fail_cubes_observed",
-                           {{DDATA, TO_DDATA_STR( _observedObjectsSinceStarted.size() )}},
+                           {{DDATA, std::to_string( _observedObjectsSinceStarted.size()).c_str()}},
                            UnlockIdToString(mngr.GetActiveSpark()));
       }
     }

@@ -61,8 +61,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(Robot& robot)
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FlipDownFromBack),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     } else {
-      PRINT_NAMED_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead",
-                        "%d", robot.GetCliffDataRaw());
+      LOG_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d", robot.GetCliffDataRaw());
       StartActing(new CalibrateMotorAction(robot, true, false),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     }

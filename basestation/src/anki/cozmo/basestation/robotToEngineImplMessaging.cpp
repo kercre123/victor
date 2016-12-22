@@ -226,11 +226,11 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   
   if (payload.calibStarted) {
     Util::sEventF("HandleMotorCalibration.Start",
-                  {{DDATA, TO_DDATA_STR(payload.autoStarted)}},
+                  {{DDATA, std::to_string(payload.autoStarted).c_str()}},
                   "%s", EnumToString(payload.motorID));
   } else {
     Util::sEventF("HandleMotorCalibration.Complete",
-                  {{DDATA, TO_DDATA_STR(payload.autoStarted)}},
+                  {{DDATA, std::to_string(payload.autoStarted).c_str()}},
                   "%s", EnumToString(payload.motorID));
   }
   
@@ -260,9 +260,9 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
   if (!payload.enabled) {
     // Burnout protection triggered.
     // Someobody is probably messing with the lift
-    PRINT_NAMED_EVENT("HandleMotorAutoEnabled.MotorDisabled", "%s", EnumToString(payload.motorID));
+    LOG_EVENT("HandleMotorAutoEnabled.MotorDisabled", "%s", EnumToString(payload.motorID));
   } else {
-    PRINT_NAMED_EVENT("HandleMotorAutoEnabled.MotorEnabled", "%s", EnumToString(payload.motorID));
+    LOG_EVENT("HandleMotorAutoEnabled.MotorEnabled", "%s", EnumToString(payload.motorID));
   }
 
   // This probably applies here as it does in HandleMotorCalibration.
@@ -450,7 +450,7 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
   //const DockingStatus& payload = message.GetData().Get_dockingStatus();
   
   // Log event to help us track whether backup or "Hanns Manuever" is being used
-  PRINT_NAMED_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
+  LOG_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
 }
 
 void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -908,7 +908,7 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
   Util::sEventF("RobotImplMessaging.HandleRobotStopped",
-                {{DDATA, TO_DDATA_STR(robot->GetCliffRunningVar())}},
+                {{DDATA, std::to_string(robot->GetCliffRunningVar()).c_str()}},
                 "%d", payload.reason);
   
   robot->EvaluateCliffSuspiciousnessWhenStopped();

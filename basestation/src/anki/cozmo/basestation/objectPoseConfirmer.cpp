@@ -77,8 +77,11 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   _robot.GetLightsComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newPoseState);
   
   // if state changed from unknown to known or dirty
-  if (object->IsPoseStateUnknown() && newPoseState != PoseState::Unknown){
-    Util::sEventF("robot.object_seen", {{DDATA, TO_DDATA_STR(distance)}}, "%s", EnumToString(object->GetType()));
+  if (object->IsPoseStateUnknown() && newPoseState != PoseState::Unknown) {
+    Util::sEventF("robot.object_seen",
+                  {{DDATA, std::to_string(distance).c_str()}},
+                  "%s",
+                  EnumToString(object->GetType()));
   }
   
   if(newPoseState == PoseState::Unknown)

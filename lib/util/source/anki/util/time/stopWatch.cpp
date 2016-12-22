@@ -74,7 +74,8 @@ double StopWatch::Stop()
 void StopWatch::LogStats()
 {
   // log some data
-  #define SEND_STOPWATCH_STATS(eventNameThird, stat) { string eventName ("StopWatch."+ id_ + eventNameThird); PRINT_NAMED_EVENT(eventName.c_str(), "%f", (double)stat); }
+  #define SEND_STOPWATCH_STATS(eventNameThird, stat) \
+  { string eventName ("StopWatch."+ id_ + eventNameThird); LOG_EVENT(eventName.c_str(), "%f", (double)stat); }
 
   SEND_STOPWATCH_STATS(".f_average", average_);
   SEND_STOPWATCH_STATS(".i_tickCount", count_);

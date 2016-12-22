@@ -93,7 +93,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   }
   
   // log additional das info
-  PRINT_NAMED_EVENT("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
+  LOG_EVENT("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
   std::time_t t = std::time(nullptr);
   std::tm tm = *std::localtime(&t);
   std::stringstream timeZoneString;
@@ -404,7 +404,9 @@ Result CozmoEngine::Update(const float currTime_sec)
     const double maxUpdateDuration = BS_TIME_STEP;
     if (updateLengthMs > maxUpdateDuration)
     {
-      Anki::Util::sEventF("cozmo_engine.update.run.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP)}}, "%.2f", updateLengthMs);
+      Anki::Util::sEventF("cozmo_engine.update.run.slow",
+                          {{DDATA,std::to_string(BS_TIME_STEP).c_str()}},
+                          "%.2f", updateLengthMs);
     }
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS

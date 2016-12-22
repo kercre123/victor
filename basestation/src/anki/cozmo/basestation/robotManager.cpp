@@ -104,7 +104,7 @@ namespace Anki {
         }
       }
       
-      PRINT_NAMED_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
+      LOG_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
 
       _firmwareUpdater->LoadHeader(FirmwareType::Current, std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
     }

@@ -69,8 +69,7 @@ void BehaviorReactToReturnedToTreads::CheckForHighPitch(Robot& robot)
   // 10 degrees was a selected as a conservative value, but we should keep an eye out
   // for unnecessary head calibrations.
   if (std::fabsf(robot.GetPitchAngle().getDegrees()) > 10.f) {
-    PRINT_NAMED_EVENT("BehaviorReactToReturnedToTreads.CalibratingHead",
-                      "%f", robot.GetPitchAngle().getDegrees());
+    LOG_EVENT("BehaviorReactToReturnedToTreads.CalibratingHead", "%f", robot.GetPitchAngle().getDegrees());
     StartActing(new CalibrateMotorAction(robot, true, false));
   }
 }

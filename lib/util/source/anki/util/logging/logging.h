@@ -92,17 +92,7 @@ void sSetGlobal(const char* key, const char* value);
 } // namespace Util
 } // namespace Anki
 
-#define DPHYS "$phys"
-#define DDATA "$data"
-#define DGROUP "$group"
-#define DGAME "$game"
-
-#define TO_DDATA_STR(__val__) std::to_string(__val__).c_str()
-
 #define DEFAULT_CHANNEL_NAME "Unnamed"
-
-// send BI event
-#define PRINT_NAMED_EVENT(name, format, ...) do{::Anki::Util::sEventF(name, {}, format, ##__VA_ARGS__);}while(0)
 
 // Logging with names.
 #define PRINT_NAMED_ERROR(name, format, ...) do{::Anki::Util::sErrorF(name, {}, format, ##__VA_ARGS__); ::Anki::Util::_errG=true; }while(0)
@@ -187,6 +177,21 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
             DEBUG_ABORT;                                                              \
           }                                                                           \
         }while(0)
+
+//
+// DAS events are structured messages for use with backend analytics.
+// Event name and data fields are determined by the analytics team.
+// Do NOT use LOG_EVENT to report random messages from your code!
+//
+#define DPHYS "$phys"
+#define DDATA "$data"
+#define DGROUP "$group"
+#define DGAME "$game"
+
+// send BI event
+#define LOG_EVENT(name, format, ...) do { \
+  ::Anki::Util::sEventF(name, {}, format, ##__VA_ARGS__); \
+} while(0)
 
 #endif // __Util_Logging_Logging_H_
 

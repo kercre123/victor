@@ -1140,8 +1140,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const bool isZombie = IsZombiePoseOrigin( iter->first );
       if ( isZombie ) {
         // PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
-        PRINT_NAMED_EVENT("blockworld.memory_map.deleting_zombie_map",
-                          "%s", iter->first->GetName().c_str() );
+        LOG_EVENT("blockworld.memory_map.deleting_zombie_map", "%s", iter->first->GetName().c_str() );
         iter = _navMemoryMaps.erase(iter);
         
         // also remove the reported poses in this origin for every object (fixes a leak, and better tracks where objects are)
@@ -1152,8 +1151,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         }
       } else {
         //PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
-        PRINT_NAMED_EVENT("blockworld.memory_map.keeping_alive_map",
-                          "%s", iter->first->GetName().c_str() );
+        LOG_EVENT("blockworld.memory_map.keeping_alive_map", "%s", iter->first->GetName().c_str() );
         ++iter;
       }
     }

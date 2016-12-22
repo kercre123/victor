@@ -189,7 +189,10 @@ void AIGoal::Exit(Robot& robot)
   }
   
   // log event to das
-  Util::sEventF("robot.freeplay_goal_ended", {{DDATA, TO_DDATA_STR(static_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs))}}, "%s", _name.c_str());
+  const int nSecs = static_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs);
+  Util::sEventF("robot.freeplay_goal_ended",
+                {{DDATA, std::to_string(nSecs).c_str()}},
+                "%s", _name.c_str());
   
   // If the goal requires a tapped object make sure to unset the tapped object when the goal exits
   if(_requireObjectTapped)

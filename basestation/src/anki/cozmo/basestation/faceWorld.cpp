@@ -149,7 +149,8 @@ namespace Cozmo {
       const KnownFace& newKnownFace = result.first->second;
       if(oldID > 0 && newID > 0 && newKnownFace.HasStableID())
       {
-        Util::sEventF("robot.vision.update_face_id", {{DDATA, TO_DDATA_STR(oldID)}},
+        Util::sEventF("robot.vision.update_face_id",
+                      {{DDATA, std::to_string(oldID).c_str()}},
                       "%d", newID);
       }
       
@@ -505,7 +506,7 @@ namespace Cozmo {
           // Log to DAS the removal of any "stable" face that gets removed because
           // we haven't seen it in awhile
           Util::sEventF("robot.vision.remove_unobserved_session_only_face",
-                        {{DDATA, TO_DDATA_STR(face.GetTimeStamp())}},
+                        {{DDATA, std::to_string(face.GetTimeStamp()).c_str()}},
                         "%d", faceIter->first);
         }
         

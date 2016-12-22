@@ -367,13 +367,13 @@ void Robot::SetOnCharger(bool onCharger)
       }
     }
           
-    PRINT_NAMED_EVENT("robot.on_charger", "");
+    LOG_EVENT("robot.on_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
         
   }
   else if (!onCharger && _isOnCharger)
   {
-    PRINT_NAMED_EVENT("robot.off_charger", "");
+    LOG_EVENT("robot.off_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
   }
       
@@ -424,10 +424,10 @@ void Robot::IncrementSuspiciousCliffCount()
 {
   if (_cliffDetectThreshold > kCliffSensorMinDetectionThresh) {
     ++_suspiciousCliffCnt;
-    PRINT_NAMED_EVENT("IncrementSuspiciousCliffCount.Count", "%d", _suspiciousCliffCnt);
+    LOG_EVENT("IncrementSuspiciousCliffCount.Count", "%d", _suspiciousCliffCnt);
     if (_suspiciousCliffCnt >= kCliffSensorSuspiciousCliffCount) {
       _cliffDetectThreshold = MAX(_cliffDetectThreshold - kCliffSensorDetectionThreshStep, kCliffSensorMinDetectionThresh);
-      PRINT_NAMED_EVENT("IncrementSuspiciousCliffCount.NewThreshold", "%d", _cliffDetectThreshold);
+      LOG_EVENT("IncrementSuspiciousCliffCount.NewThreshold", "%d", _cliffDetectThreshold);
       SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(_cliffDetectThreshold);
       _suspiciousCliffCnt = 0;
     }
@@ -628,7 +628,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     // Falling seems worthy of a DAS event
     if (_awaitingConfirmationTreadState == OffTreadsState::Falling) {
       _fallingStartedTime_ms = GetLastMsgTimestamp();
-      PRINT_NAMED_EVENT("Robot.CheckAndUpdateTreadsState.FallingStarted",
+      LOG_EVENT("Robot.CheckAndUpdateTreadsState.FallingStarted",
                         "t=%dms",
                         _fallingStartedTime_ms);
       
@@ -638,7 +638,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     } else if (_offTreadsState == OffTreadsState::Falling) {
       // This is not an exact measurement of fall time since it includes some detection delays on the robot side
       // It may also include kRobotTimeToConsiderOfftreads_ms depending on how the robot lands
-      PRINT_NAMED_EVENT("Robot.CheckAndUpdateTreadsState.FallingStopped",
+      LOG_EVENT("Robot.CheckAndUpdateTreadsState.FallingStopped",
                         "t=%dms, duration=%dms",
                         GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
       _fallingStartedTime_ms = 0;
@@ -713,7 +713,7 @@ void Robot::Delocalize(bool isCarryingObject)
   _suspiciousCliffCnt = 0;
   if (_cliffDetectThreshold != CLIFF_SENSOR_DROP_LEVEL) {
     _cliffDetectThreshold = CLIFF_SENSOR_DROP_LEVEL;
-    PRINT_NAMED_EVENT("Robot.Delocalize.RestoringCliffDetectThreshold", "%d", _cliffDetectThreshold);
+    LOG_EVENT("Robot.Delocalize.RestoringCliffDetectThreshold", "%d", _cliffDetectThreshold);
     SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(_cliffDetectThreshold);
   }
   
@@ -741,8 +741,8 @@ void Robot::Delocalize(bool isCarryingObject)
   _worldOrigin->SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(originID));
   
   // Log delocalization, new origin name, and num origins to DAS
-  PRINT_NAMED_EVENT("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
-                    GetID(), _worldOrigin->GetName().c_str(), _poseOriginList->GetSize());
+  LOG_EVENT("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
+            GetID(), _worldOrigin->GetName().c_str(), _poseOriginList->GetSize());
   
   _pose.SetRotation(0, Z_AXIS_3D());
   _pose.SetTranslation({0.f, 0.f, 0.f});
@@ -932,7 +932,7 @@ void Robot::DetectGyroDrift(const RobotState& msg)
       if (headingAngleChange > angleChangeThresh) {
         // Report drift detected just one time during a session
         Util::sWarningF("robot.detect_gyro_drift.drift_detected",
-                        {{DDATA, TO_DDATA_STR(RAD_TO_DEG(headingAngleChange))}},
+                        {{DDATA, std::to_string(RAD_TO_DEG(headingAngleChange)).c_str()}},
                         "mean: %f, min: %f, max: %f",
                         RAD_TO_DEG(_driftCheckCumSumGyroZ_rad_per_sec / _driftCheckNumReadings),
                         RAD_TO_DEG(_driftCheckMinGyroZ_rad_per_sec),
@@ -2470,10 +2470,10 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   // rooted to this world origin will get updated to be w.r.t. the new origin.
   if(_worldOrigin != &existingObject->GetPose().FindOrigin())
   {
-    PRINT_NAMED_EVENT("Robot.LocalizeToObject.RejiggeringOrigins",
-                      "Robot %d's current origin is %s, about to localize to origin %s.",
-                      GetID(), _worldOrigin->GetName().c_str(),
-                      existingObject->GetPose().FindOrigin().GetName().c_str());
+    LOG_EVENT("Robot.LocalizeToObject.RejiggeringOrigins",
+              "Robot %d's current origin is %s, about to localize to origin %s.",
+              GetID(), _worldOrigin->GetName().c_str(),
+              existingObject->GetPose().FindOrigin().GetName().c_str());
     
     // Store the current origin we are about to change so that we can
     // find objects that are using it below

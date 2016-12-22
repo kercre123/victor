@@ -45,10 +45,12 @@ public:
     {
       // NOTE: Logging drop counts, putting associated frame count in Data field
       // So to get rate, divide s_val (count) by frame count (ddata)
-      Util::sEventF("robot.vision.dropped_frame_overall_count", {{DDATA, TO_DDATA_STR(_numFrames)}},
+      Util::sEventF("robot.vision.dropped_frame_overall_count",
+                    {{DDATA, std::to_string(_numFrames).c_str()}},
                     "%u", _numTotalDrops);
       
-      Util::sEventF("robot.vision.dropped_frame_recent_count", {{DDATA, TO_DDATA_STR(_numRecentFrames)}},
+      Util::sEventF("robot.vision.dropped_frame_recent_count",
+                    {{DDATA, std::to_string(_numRecentFrames).c_str()}},
                     "%u", _numRecentDrops);
       
       if(_numRecentDrops > 0)

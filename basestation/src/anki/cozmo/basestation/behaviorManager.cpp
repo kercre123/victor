@@ -645,10 +645,9 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   _lastRequestedSpark = UnlockId::Count;
 
   // channeled log and event
-  PRINT_NAMED_EVENT("BehaviorManager.SetBehaviorChooser",
-    "Switching behavior chooser from '%s' to '%s'",
-    _currentChooserPtr ? _currentChooserPtr->GetName() : "null",
-    newChooser->GetName());
+  LOG_EVENT("BehaviorManager.SetBehaviorChooser", "Switching behavior chooser from '%s' to '%s'",
+            _currentChooserPtr ? _currentChooserPtr->GetName() : "null",
+            newChooser->GetName());
   
   PRINT_CH_INFO("Behaviors",
                 "BehaviorManager.SetBehaviorChooser",
