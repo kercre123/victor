@@ -217,6 +217,9 @@ PROTO WebotsKeyboardController [
 
   # Whether or not to enable automatic block pool
   field SFBool doAutoBlockpool TRUE
+
+  # Which object to stream accelerometer data from when streaming is enabled
+  field SFInt32 streamObjectID 0
 ]
 {
 Supervisor {

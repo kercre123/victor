@@ -609,7 +609,7 @@ namespace Anki {
             if (CheckPickupWhileMoving() || cliffBasedPickupDetect || gyroZBasedMotionDetect) {
               if (++potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOVING) {
                 SetPickupDetect(true);
-                AnkiInfo( 418, "IMUFilter.PickupDetected", 629, "accX %f, accY %f, accZ %f, cliff %d, gyroZ %d", 5,
+                AnkiInfo( 421, "IMUFilter.PickupDetected", 629, "accX %f, accY %f, accZ %f, cliff %d, gyroZ %d", 5,
                          accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2], cliffBasedPickupDetect, gyroZBasedMotionDetect);
               }
             } else {

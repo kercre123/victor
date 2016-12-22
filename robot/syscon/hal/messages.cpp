@@ -90,6 +90,11 @@ static void Process_setPropSlot(const SetPropSlot& msg)
   Radio::assignProp(msg.slot, msg.factory_id);
 }
 
+static void Process_streamObjectAccel(const StreamObjectAccel& msg)
+{
+  Radio::enableAccelStreaming(msg.objectID, msg.enable);
+}
+
 static void Process_setAccessoryDiscovery(const SetAccessoryDiscovery& msg) {
   Radio::enableDiscovery(msg.enable);
 }

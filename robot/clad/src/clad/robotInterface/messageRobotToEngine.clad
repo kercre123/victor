@@ -62,6 +62,11 @@ message ManufacturingID
   int_32  hw_version,
 }
 
+message LiftLoad
+{
+  bool hasLoad
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -112,6 +117,7 @@ union RobotToEngine {
   ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD7,
   MotorAutoEnabled           motorAutoEnabled       = 0xD8,
   RobotErrorReport           robotError             = 0xD9,
+  LiftLoad                   liftLoad               = 0xDA,
 
   ManufacturingID            mfgId                  = 0xED,
   FirmwareVersion            firmwareVersion        = 0xEE,
@@ -123,6 +129,7 @@ union RobotToEngine {
   ImageChunk                 image                  = 0xF2,
   ObjectDiscovered           activeObjectDiscovered = 0xF3,
   ImageImuData               imageGyro              = 0xF4,
+  ObjectAccel                objectAccel            = 0xF5,
 }
 
 

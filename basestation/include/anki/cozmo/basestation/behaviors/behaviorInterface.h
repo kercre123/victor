@@ -208,7 +208,7 @@ public:
   
   // returns the required unlockID for the behavior
   const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
-  
+
   // Force a behavior to update its target blocks but only if it is in a state where it can
   void UpdateTargetBlocks(const Robot& robot) const { UpdateTargetBlocksInternal(robot); };
   

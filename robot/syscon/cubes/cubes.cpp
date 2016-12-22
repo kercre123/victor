@@ -79,6 +79,9 @@ static unsigned int   lastSlot = MAX_ACCESSORIES;
 static bool           handshakeReceived = false;
 static int            handshakeSlot = 0;
 
+// Which slot should accelerometer data be streaming for
+static int streamAccelSlot = -1;
+
 #ifdef CUBE_HOP
 static int8_t         _wifiChannel;
 #endif
@@ -113,6 +116,7 @@ void Radio::advertise(void) {
   wasTapped = false;
   handshakeReceived = false;
   sendDiscovery = true;
+  streamAccelSlot = -1;
 
   // ==== Configure Radio
   NRF_RADIO->POWER = 1;
@@ -653,6 +657,18 @@ extern "C" void RTC0_IRQHandler(void) {
   }
 }
 
+
+void Radio::enableAccelStreaming(unsigned int slot, bool enable)
+{
+  if (enable) {
+    if (slot < MAX_ACCESSORIES) {
+      streamAccelSlot = slot;
+    }
+  } else if (streamAccelSlot == slot) {
+    streamAccelSlot = -1;
+  }
+}
+
 static void ReportUpAxisChanged(uint8_t id, UpAxis a) {
   ObjectUpAxisChanged m;
   m.timestamp = g_dataToHead.timestamp;
@@ -836,6 +852,18 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
     m.robotID = 0;
     RobotInterface::SendMessage(m);
     target->isMoving = false;
+  }
+  
+  
+  // Stream accelerometer data
+  if (streamAccelSlot == id) {
+    ObjectAccel m;
+    m.timestamp = g_dataToHead.timestamp;
+    m.objectID = id;
+    m.accel.x = -az;   // Flipped for the same reason idxToUpAxis is flipped
+    m.accel.y = -ax;
+    m.accel.z = ay;
+    RobotInterface::SendMessage(m);
   }
 }
 

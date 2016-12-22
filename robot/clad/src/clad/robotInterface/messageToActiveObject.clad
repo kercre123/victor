@@ -34,7 +34,15 @@ namespace Cozmo {
     uint_32 objectID,
     bool    isBeingCarried,
   }
-  
+
+
+  // Enable/Disable streaming of ObjectAccel messages for the specified object
+  message StreamObjectAccel
+  {
+    uint_32 objectID,
+    bool enable
+  }
+
   /// XXX Temporary messages until more of cube control is moved into body
   structure SetPropState
   {

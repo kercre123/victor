@@ -1081,6 +1081,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::StreamObjectAccel>();
       
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
@@ -1610,6 +1611,26 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.StreamObjectAccel.InvalidRobotID", "Failed to find robot.");
+  }
+  else
+  {
+    ActiveObject* obj = robot->GetBlockWorld().GetActiveObjectByID(msg.objectID);
+    if (obj != nullptr) {
+      PRINT_NAMED_INFO("RobotEventHandler.StreamObjectAccel", "ObjectID %d (activeID %d), enable %d", msg.objectID, obj->GetActiveID(), msg.enable);
+      robot->SendMessage(RobotInterface::EngineToRobot(StreamObjectAccel(obj->GetActiveID(), msg.enable)));
+    }
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)

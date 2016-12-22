@@ -500,7 +500,8 @@ public:
                         const f32 placementOffsetAngle_rad = 0,
                         const bool useManualSpeed = false,
                         const u8 numRetries = 2,
-                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING);
+                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING,
+                        const bool doLiftLoadCheck = false);
   
   // Same as above but without specifying image location for marker
   Result DockWithObject(const ObjectID objectID,
@@ -515,7 +516,8 @@ public:
                         const f32 placementOffsetAngle_rad = 0,
                         const bool useManualSpeed = false,
                         const u8 numRetries = 2,
-                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING);
+                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING,
+                        const bool doLiftLoadCheck = false);
     
   // Transitions the object that robot was docking with to the one that it
   // is carrying, and puts it in the robot's pose chain, attached to the

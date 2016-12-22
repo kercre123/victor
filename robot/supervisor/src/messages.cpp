@@ -410,13 +410,14 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( 104, "Messages.Process_dockWithObject.Recvd", 353, "action %d, speed %f, acccel %f, decel %f, manualSpeed %d", 5,
-              msg.action, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
+        AnkiInfo( 422, "Messages.Process_dockWithObject.Recvd", 630, "action %d, dockMethod %d, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 7,
+                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
 
         DockingController::SetDockingMethod(msg.dockingMethod);
 
         // Currently passing in default values for rel_x, rel_y, and rel_angle
         PickAndPlaceController::DockToBlock(msg.action,
+                                            msg.doLiftLoadCheck,
                                             msg.speed_mmps,
                                             msg.accel_mmps2,
                                             msg.decel_mmps2,
@@ -657,6 +658,11 @@ namespace Anki {
         }
       }
 #endif
+      
+      void Process_checkLiftLoad(const RobotInterface::CheckLiftLoad& msg)
+      {
+        LiftController::CheckForLoad();
+      }
 
       void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)
       {
@@ -916,6 +922,12 @@ namespace Anki {
         rotationPeriod_ = msg.rotationPeriod_frames;
         cubIDSet_ = true;
       }
+      
+      void Process_streamObjectAccel(const StreamObjectAccel& msg)
+      {
+        HAL::StreamObjectAccel(msg.objectID, msg.enable);
+      }
+      
       void Process_setCubeLights(const CubeLights& msg)
       {
         if(!cubIDSet_)

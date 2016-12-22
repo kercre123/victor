@@ -135,6 +135,8 @@ namespace Anki {
       
       ActiveObjectSlotInfo activeObjectSlots_[MAX_NUM_ACTIVE_OBJECTS];
       
+      s32 streamAccelSlot_ = -1;
+      
       // Flag to automatically connect to any block it discovers as long as it's
       // not already connected to a block of the same type.
       // This makes it nearly as if all the blocks in the world are already paired
@@ -1180,6 +1182,38 @@ namespace Anki {
       SendBlockMessage(activeID, msg);
       return SendBlockMessage(activeID, m);
     }
+    
+    Result HAL::StreamObjectAccel(const u32 activeID, const bool enable)
+    {
+      BlockMessages::LightCubeMessage m;
+      m.tag = BlockMessages::LightCubeMessage::Tag_streamObjectAccel;
+      
+      if (enable) {
+        if (activeID >= MAX_NUM_ACTIVE_OBJECTS) {
+          return RESULT_FAIL;
+        }
+        
+        if (streamAccelSlot_ == activeID) {
+          return RESULT_OK;
+        }
+        
+        if (streamAccelSlot_ >= 0) {
+          // Disable the previously streaming slot first
+          m.streamObjectAccel.objectID = streamAccelSlot_;
+          m.streamObjectAccel.enable = false;
+          SendBlockMessage(activeID, m);
+        }
+        
+        streamAccelSlot_ = activeID;
+        
+      } else if (streamAccelSlot_ == activeID) {
+        streamAccelSlot_ = -1;
+      }
+
+      m.streamObjectAccel.objectID = activeID;
+      m.streamObjectAccel.enable = enable;
+      return SendBlockMessage(activeID, m);
+    }
 
     
     void SendObjectConnectionState(u32 slot_id)
@@ -1364,6 +1398,15 @@ namespace Anki {
               memcpy(m.GetBuffer(), lcm.tapped.GetBuffer(), lcm.tapped.Size());
               m.objectID = i;
               m.robotID = 0;
+              m.timestamp = HAL::GetTimeStamp();
+              RobotInterface::SendMessage(m);
+              break;
+            }
+            case BlockMessages::LightCubeMessage::Tag_accel:
+            {
+              ObjectAccel m;
+              memcpy(m.GetBuffer(), lcm.accel.GetBuffer(), lcm.accel.Size());
+              m.objectID = i;
               m.timestamp = HAL::GetTimeStamp();
               RobotInterface::SendMessage(m);
               break;

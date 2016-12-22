@@ -87,6 +87,8 @@ namespace {
   bool wasMoving_;
   double wasLastMovingTime_sec_;
   
+  bool streamAccel_ = false;
+  
   // Lookup table for which four LEDs are in the back, left, front, and right positions,
   // given the current up axis.
   // When the top marker is facing up, these positions are with respect to the top marker.
@@ -186,11 +188,17 @@ void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
   state_ = (isBeingCarried ? BEING_CARRIED : NORMAL);
 }
 
+void Process_streamObjectAccel(const StreamObjectAccel& msg)
+{
+  streamAccel_ = msg.enable;
+}
+  
 // Stubs to make linking work until we clean up how simulated cubes work.
 void Process_moved(const ObjectMoved& msg) {}
 void Process_stopped(const ObjectStoppedMoving& msg) {}
 void Process_tapped(const ObjectTapped& msg) {}
 void Process_upAxisChanged(const ObjectUpAxisChanged& msg) {}
+void Process_accel(const ObjectAccel& msg) {}
   
 void ProcessBadTag_LightCubeMessage(BlockMessages::LightCubeMessage::Tag badTag)
 {
@@ -579,6 +587,17 @@ Result Update() {
       discoveredSendCtr = 0;
     }
     
+    // Send accel data
+    if (streamAccel_) {
+      BlockMessages::LightCubeMessage msg;
+      msg.tag = BlockMessages::LightCubeMessage::Tag_accel;
+      msg.accel.objectID = blockID_;
+      f32 scaleFactor = 32.f/9.81f;  // 32 on physical blocks ~= 1g
+      msg.accel.accel.x = accelVals[0] * scaleFactor;
+      msg.accel.accel.y = accelVals[1] * scaleFactor;
+      msg.accel.accel.z = accelVals[2] * scaleFactor;
+      emitter_->send(msg.GetBuffer(), msg.Size());
+    }
     
     // Run FSM
     switch(state_)

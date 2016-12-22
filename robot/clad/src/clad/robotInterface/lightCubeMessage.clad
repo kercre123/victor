@@ -16,11 +16,14 @@ namespace BlockMessages
     CubeID              setCubeID,
     CubeLights          setCubeLights,
     ObjectBeingCarried  setObjectBeingCarried,
+    StreamObjectAccel   streamObjectAccel,
+
     ObjectDiscovered	  discovered,
     ObjectMoved         moved,
     ObjectStoppedMoving stopped,
     ObjectTapped        tapped,
     ObjectUpAxisChanged upAxisChanged,
+    ObjectAccel         accel,
   }
 
 } // Namespace BlockMessages

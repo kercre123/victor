@@ -80,6 +80,8 @@ namespace Anki {
       
       void SetDockingMethod(DockingMethod dockingMethod) { _dockingMethod = dockingMethod; }
       
+      void SetDoLiftLoadCheck(bool enable) { _doLiftLoadCheck = enable; }
+      
       void SetNumDockingRetries(u8 numRetries) { _numDockingRetries = numRetries; }
       
       // The offset for the preDock pose as opposed to the offset for the actual docking manuever
@@ -155,6 +157,14 @@ namespace Anki {
       
       static void GetPreActionPoses(Robot& robot, const PreActionPoseInput& input, PreActionPoseOutput& output);
       
+      // Whether or not the lift is believed to be carrying something based on liftLoadCheck
+      // at the end of a pickup action.
+      enum class LiftLoadState : uint8_t {
+        UNKNOWN,     // LiftLoad message was never received from robot
+        HAS_LOAD,
+        HAS_NO_LOAD
+      };
+      
     protected:
       
       // IDockAction implements these two required methods from IAction for its
@@ -213,6 +223,8 @@ namespace Anki {
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
       f32                        _preDockPoseDistOffsetX_mm      = 0;
       bool                       _checkForObjectOnTopOf          = true;
+      bool                       _doLiftLoadCheck                = false;
+      LiftLoadState              _liftLoadState                  = LiftLoadState::UNKNOWN;
       std::set<BehaviorType>     _behaviorsToSuppress;
       
     private:
@@ -223,6 +235,9 @@ namespace Anki {
       
       // Handler for when lift begins to move so that we can play an accompanying sound
       Signal::SmartHandle        _liftMovingSignalHandle;
+      
+      // Handler for when lift load message is received
+      Signal::SmartHandle        _liftLoadSignalHandle;
       
       // Name of animation to play when moving lift post-dock
       AnimationTrigger           _liftMovingAnimation = AnimationTrigger::Count;
@@ -325,8 +340,26 @@ namespace Anki {
       
     private:
     
-      TurnTowardsPoseAction* _verifyAction = nullptr;
+      IActionRunner*         _verifyAction = nullptr;
       bool                   _verifyActionDone = false;
+      TimeStamp_t            _firstVerifyCallTime = 0;
+      
+      const u32 kLiftLoadTimeout_ms = 500;
+      u32 _liftLoadWaitTime_ms = 0;
+      
+      // The max amount of time that cube motion is allowed to be moving after robot completes backup.
+      // This is to check that the cube is not in the user's hands.
+      const u32 kMaxObjectStillMovingAfterRobotStopTime_ms = 500;
+      
+      // The max amount of time that a cube is allowed to have not been moving before the point that the robot completes backup.
+      // This is to check to make sure the cube was moving at all during the pickup action.
+      const u32 kMaxObjectHasntMovedBeforeRobotStopTime_ms = 500;
+      
+      // Same as kMaxObjectHasntMovedBeforeRobotStopTime_ms but for high pickup.
+      // which often results in only brief motion when cube is first lifted compared to low pickup.
+      // This means the high pickup action is easier to fool if you move the block out of the way at
+      // the last second and set it down somewhere, but... you know... just stop being a dick.
+      const u32 kMaxObjectHasntMovedBeforeRobotStopTimeForHighPickup_ms = 2000;
       
     }; // class PickupObjectAction
     

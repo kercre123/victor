@@ -85,6 +85,13 @@ namespace Anki {
       // Stops any nodding or movement at all.
       void Stop();
       
+      void SendLiftLoadMessage(bool hasLoad);
+      
+      // Cuts power to lift briefly and checks for motion.
+      // If there's motion it's assumed that the lift is carrying something.
+      // Calls callback upon completion of check
+      void CheckForLoad(void (*callback)(bool) = SendLiftLoadMessage);
+      
     } // namespace LiftController
   } // namespcae Cozmo
 } // namespace Anki

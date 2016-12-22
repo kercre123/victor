@@ -2955,7 +2955,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const f32 placementOffsetAngle_rad,
                              const bool useManualSpeed,
                              const u8 numRetries,
-                             const DockingMethod dockingMethod)
+                             const DockingMethod dockingMethod,
+                             const bool doLiftLoadCheck)
 {
   return DockWithObject(objectID,
                         speed_mmps,
@@ -2968,7 +2969,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                         placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
                         useManualSpeed,
                         numRetries,
-                        dockingMethod);
+                        dockingMethod,
+                        doLiftLoadCheck);
 }
     
 Result Robot::DockWithObject(const ObjectID objectID,
@@ -2986,7 +2988,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const f32 placementOffsetAngle_rad,
                              const bool useManualSpeed,
                              const u8 numRetries,
-                             const DockingMethod dockingMethod)
+                             const DockingMethod dockingMethod,
+                             const bool doLiftLoadCheck)
 {
   ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(objectID));
   if(object == nullptr) {
@@ -3028,7 +3031,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                                                                       dockAction,
                                                                       useManualSpeed,
                                                                       numRetries,
-                                                                      dockingMethod);
+                                                                      dockingMethod,
+                                                                      doLiftLoadCheck);
   if(sendResult == RESULT_OK) {
         
     // When we are "docking" with a ramp or crossing a bridge, we
@@ -3132,15 +3136,12 @@ void Robot::UnSetCarryingObjects(bool topOnly)
     // Tell the robot it's not carrying anything
     if (_carryingObjectID.IsSet()) {
       
-      // Since the PoseState of an object on the lift is Known, make it Dirty
+      // Since the PoseState of an object on the lift is Known, make it Unknown.
       // here when it's detached from the lift so that Cozmo doesn't try to localize to it.
-      // If the carry state is being unset due to placement, it will soon after get
-      // set to Known (if it is visually verified) or Unknown (if it's not visually verified).
-      // Setting PoseState to Unknown here might also be ok, but setting it to Dirty is less
-      // risky since that's what it was before we set the carry object state to Known.
       ObservableObject* carriedObject = _blockWorld->GetObjectByID(_carryingObjectID);
       if (nullptr != carriedObject) {
-        GetObjectPoseConfirmer().SetPoseState(carriedObject, PoseState::Dirty);
+        PRINT_NAMED_INFO("Robot.UnSetCarryingObjects.SettingUnknownPoseState", "");
+        GetObjectPoseConfirmer().MarkObjectUnknown(carriedObject);
       }
       
       SendSetCarryState(CarryState::CARRY_NONE);

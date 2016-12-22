@@ -23,6 +23,7 @@
 #include "../behaviors/exploration/behaviorThinkAboutBeacons.h"
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
+#include "anki/cozmo/basestation/behaviors/behaviorLiftLoadTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
@@ -222,6 +223,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::DockingTestSimple:
     {
       newBehavior = new BehaviorDockingTestSimple(robot, config);
+      break;
+    }
+    case BehaviorType::LiftLoadTest:
+    {
+      newBehavior = new BehaviorLiftLoadTest(robot, config);
       break;
     }
     case BehaviorType::StackBlocks:

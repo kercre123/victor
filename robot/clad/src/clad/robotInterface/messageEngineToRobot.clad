@@ -292,6 +292,10 @@ message AnimEventToRTIP
   AnimEvent event_id
 }
 
+message CheckLiftLoad
+{
+}
+
 message EnableLiftPower
 {
   bool enable
@@ -397,7 +401,7 @@ union EngineToRobot
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
   SetBodyRadioMode              setBodyRadioMode            = 0x07,
-  //          FREE SLOT!!!                                  = 0x08,
+  StreamObjectAccel             streamObjectAccel           = 0x08,
   //          FREE SLOT!!!                                  = 0x09,
   SetAccessoryDiscovery         setAccessoryDiscovery       = 0x0A,
   SetHeadlight                  setHeadlight                = 0x0B,
@@ -450,7 +454,7 @@ union EngineToRobot
   ImageRequest                  imageRequest                = 0x4C,
   FlashObjectIDs                flashObjectIDs              = 0x4D,
   ObjectBeingCarried            setObjectBeingCarried       = 0x4E,
-  //          FREE SLOT!!!                                  = 0x4F,
+  CheckLiftLoad                 checkLiftLoad               = 0x4F,
   EnableLiftPower               enableLiftPower             = 0x50,
   SetMotionModelParams          setMotionModelParams        = 0x51,
   EnterSleepMode                enterSleepMode              = 0x52,

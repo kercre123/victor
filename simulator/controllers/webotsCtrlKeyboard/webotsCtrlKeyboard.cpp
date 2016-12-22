@@ -402,6 +402,8 @@ namespace Anki {
         printf("    Respond 'no' to game request:  Alt+n\n");
         printf("             Flip selected block:  y\n");
         printf("       Realign with block action:  _\n");
+        printf("Toggle accel from streamObjectID: |\n");
+        printf("               Toggle headlights: ,\n");
         printf("        Quit keyboard controller:  Alt+Shift+x\n");
         printf("                      Print help:  ?,/\n");
         printf("\n");
@@ -1143,6 +1145,17 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)'|':
+              {
+                static bool enableAccelStreaming = true;
+                u32 streamObjectID = root_->getField("streamObjectID")->getSFInt32();
+                printf("%s streaming of accel data from object %d\n", enableAccelStreaming ? "Enable" : "Disable", streamObjectID);
+                ExternalInterface::StreamObjectAccel msg(streamObjectID, enableAccelStreaming);
+                SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
+                enableAccelStreaming = !enableAccelStreaming;
+                break;
+              }
+                
               case (s32)'C':
               {
                 if(shiftKeyPressed) {
@@ -1175,6 +1188,9 @@ namespace Anki {
                                 ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
 
                   printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
+                  if (behaviorName == "LiftLoadTest") {
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsRunnable()));
+                  }
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                 ExternalInterface::ExecuteBehaviorByName(behaviorName)));
                 }

@@ -110,6 +110,8 @@ namespace Radio {
   void setLightGamma(uint8_t gamma);
   void setWifiChannel(int8_t wifiChannel);
   void enableDiscovery(bool enable);
+  
+  void enableAccelStreaming(unsigned int slot, bool enable);
 }
 
 #endif

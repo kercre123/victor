@@ -530,6 +530,9 @@ namespace Anki
       // Set the color and flashing of each LED on a block separately
       Result SetBlockLight(const u32 activeID, const u16* colors);
       
+      // Stream accelerometer data from object at activeID
+      Result StreamObjectAccel(const u32 activeID, const bool enable);
+      
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
       //

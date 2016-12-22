@@ -74,6 +74,7 @@ namespace Anki {
       // If DA_PLACE_LOW_BLIND, rel_* parameters are wrt to current robot pose. Otherwise, rel_* params
       // are ignored.
       void DockToBlock(const DockAction action,
+                       const bool doLiftLoadCheck,
                        const f32 speed_mmps,
                        const f32 accel_mmps2,
                        const f32 decel_mmps2,

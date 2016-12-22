@@ -478,6 +478,11 @@ message ExecuteBehaviorByName {
   string behaviorName
 }
 
+// Special message to make BehaviorLiftLoadTest runnable.
+// Send this message before sending ExecuteBehaviorByName("LiftLoadTest")
+message SetLiftLoadTestAsRunnable {
+}
+
 // Any message intended for a specific robot's behaviorManager
 message BehaviorManagerMessage {
   uint_8  robotID,
@@ -724,6 +729,12 @@ message EnableCubeLightsStateTransitionMessages {
 // Makes the specified object flash its lights
 message FlashCurrentLightsState {
   uint_32 objectID
+}
+
+message StreamObjectAccel
+{
+  uint_32 objectID,
+  bool enable
 }
 
 ///////////////////////////////////////////////////////////////////////////////

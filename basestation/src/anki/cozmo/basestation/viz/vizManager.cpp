@@ -799,6 +799,30 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::SaveState(enabled, path)));
     }
     
+    void VizManager::SendObjectConnectionState(u32 activeID, ObjectType type, bool connected)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendObjectConnectionState");
+      SendMessage(VizInterface::MessageViz(VizInterface::ObjectConnectionState(activeID, type, connected)));
+    }
+    
+    void VizManager::SendObjectMovingState(u32 activeID, bool moving)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendObjectMovingState");
+      SendMessage(VizInterface::MessageViz(VizInterface::ObjectMovingState(activeID, moving)));
+    }
+    
+    void VizManager::SendObjectUpAxisState(u32 activeID, UpAxis upAxis)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendObjectUpAxisState");
+      SendMessage(VizInterface::MessageViz(VizInterface::ObjectUpAxisState(activeID, upAxis)));
+    }
+    
+    void VizManager::SendObjectAccelState(u32 activeID, const ActiveAccel& accel)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendObjectAccelState");
+      SendMessage(VizInterface::MessageViz(VizInterface::ObjectAccelState(activeID, accel)));
+    }
+
   
     /*
     void VizManager::SendGreyImage(const RobotID_t robotID,

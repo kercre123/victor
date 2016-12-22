@@ -99,7 +99,7 @@ Result ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject* object) const
   if( !object->IsPoseStateUnknown() )
   {
     SetPoseState(object, PoseState::Unknown);
-
+    
     // Notify listeners if object is going fron !Unknown to Unknown
     using namespace ExternalInterface;
     _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), object->GetID().GetValue())));

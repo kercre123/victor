@@ -33,7 +33,8 @@ message DockWithObject
   DockAction action,
   bool       useManualSpeed,
   uint_8     numRetries,
-  DockingMethod dockingMethod
+  DockingMethod dockingMethod,
+  bool       doLiftLoadCheck,
 }
 
 message AbortDocking
