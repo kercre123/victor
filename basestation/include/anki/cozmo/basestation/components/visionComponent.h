@@ -274,6 +274,9 @@ struct DockingErrorSignal;
     template<typename T>
     void HandleMessage(const T& msg);
     
+    void SetAndDisableAutoExposure(u16 exposure_ms, f32 gain);
+    void EnableAutoExposure(bool enable) { _enableAutoExposure = enable; }
+    
   protected:
     
     bool _isInitialized = false;
@@ -360,6 +363,8 @@ struct DockingErrorSignal;
     // message. This runs on the main thread and should only be used for factory tests.
     // Is run automatically when _doFactoryDotTest=true and sets it back to false when done.
     bool _doFactoryDotTest = false;
+    
+    bool _enableAutoExposure = true;
     
   }; // class VisionComponent
   

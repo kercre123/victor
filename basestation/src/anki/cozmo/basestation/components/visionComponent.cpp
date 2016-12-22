@@ -1344,7 +1344,11 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
-    SetCameraSettings(procResult.exposureTime_ms, procResult.cameraGain);
+    // If auto exposure is not enabled don't set camera settings
+    if(_enableAutoExposure)
+    {
+      SetCameraSettings(procResult.exposureTime_ms, procResult.cameraGain);
+    }
 
     if(procResult.imageQuality != _lastImageQuality || _currentQualityBeginTime_ms==0)
     {
@@ -2284,6 +2288,12 @@ namespace Cozmo {
       return;
     }
     
+  }
+  
+  void VisionComponent::SetAndDisableAutoExposure(u16 exposure_ms, f32 gain)
+  {
+    SetCameraSettings(exposure_ms, gain);
+    EnableAutoExposure(false);
   }
   
   void VisionComponent::SetCameraSettings(const s32 exposure_ms, const f32 gain)

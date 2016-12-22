@@ -75,6 +75,7 @@ public class RobotEngineManager : MonoBehaviour {
   private DisconnectionReason _LastDisconnectionReason = DisconnectionReason.None;
 
   public event Action<string> ConnectedToClient;
+  public event Action<DisconnectionReason> DisconnectedFromClient;
 
   private bool _CozmoBindingStarted = false;
   private RobotChannel _Channel = null;
@@ -268,6 +269,10 @@ public class RobotEngineManager : MonoBehaviour {
   private void Disconnected(DisconnectionReason reason) {
     DAS.Debug("RobotEngineManager.Disconnected", reason.ToString());
     Disconnect();
+
+    if (DisconnectedFromClient != null) {
+      DisconnectedFromClient(reason);
+    }
   }
 
   public void SendMessage() {
