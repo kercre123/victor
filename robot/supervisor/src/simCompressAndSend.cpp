@@ -14,7 +14,12 @@
 #include "anki/cozmo/robot/hal.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "anki/common/robot/array2d.h"
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
+#endif
 
 
 namespace Anki {

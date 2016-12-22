@@ -4,10 +4,11 @@
 * Author: Andrew Stein (andrew)
 * Created: 10/7/2013
 *
-* Information on last revision to this file:
-*    $LastChangedDate$
-*    $LastChangedBy$
-*    $LastChangedRevision$
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*         !!!!!!!!!!!!!!    ROBOT TYPES     !!!!!!!!!!!!!
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*
 *
 * Description:
 *
@@ -19,8 +20,13 @@
 *
 **/
 
-#ifndef ANKICORETECH_COMMON_TYPES_H_
-#define ANKICORETECH_COMMON_TYPES_H_
+
+#ifndef COZMO_ROBOT
+#error robot/include/anki/types.h should only be used in robot files
+#endif
+
+#ifndef __COZMO_ROBOT_COMMON_TYPES_H__
+#define __COZMO_ROBOT_COMMON_TYPES_H__
 
 #ifdef TARGET_ESPRESSIF
 #include "c_types.h"
@@ -96,27 +102,6 @@ typedef double   f64;
 #define NULL 0
 #endif
 
-// A key associated with each computed pose retrieved from history
-// to be used to check its validity at a later time.
-typedef uint32_t HistPoseKey;
-
-typedef u32 UserDeviceID_t;
-typedef u32 RobotID_t;
-//typedef u16 BlockID_t;
-
-typedef u32 CameraID_t;
-
-const CameraID_t ANY_CAMERA = 0xFFFFffff;
-
-//const ObjectID ANY_OBJECT = u16_MAX;
-
-// move time related functionality to a separate file (use chrono)
-#define NSEC_PER_SEC	1000000000	/* nanoseconds per second */
-#define NANOS_TO_SEC(nanos) ((nanos) / 1000000000.0f)
-#define SEC_TO_NANOS(sec) ((sec) * 1000000000.0f)
-#define MILIS_TO_SEC(milis) ((milis)/1000.0)
-#define SEC_TO_MILIS(sec) ((sec)*1000.0)
-typedef unsigned long long int BaseStationTime_t;
 
 // If we're using c++, Result is in a namespace. In c, it's not.
 #ifdef __cplusplus
@@ -137,14 +122,7 @@ namespace Anki
 
   typedef u32 PoseOriginID_t;
   
-#ifdef __cplusplus
-} // namespace Anki
-#endif
 
-// If we're using c++, Result is in a namespace. In c, it's not.
-#ifdef __cplusplus
-namespace Anki {
-#endif
   // Return values:
   typedef enum {
     RESULT_OK                        = 0,
@@ -164,4 +142,4 @@ namespace Anki {
 } // namespace Anki
 #endif
 
-#endif /* ANKICORETECH_COMMON_TYPES_H_ */
+#endif /* __COZMO_ROBOT_COMMON_TYPES_H__ */

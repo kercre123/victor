@@ -927,7 +927,7 @@ void Robot::DetectGyroDrift(const RobotState& msg)
       
       // ...check if there was a sufficient change in heading angle or pitch. Otherwise, reset detector.
       const f32 headingAngleChange = std::fabsf((_driftCheckStartAngle_rad - GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
-      const f32 angleChangeThresh = kDriftCheckMaxAngleChangeRate_rad_per_sec * MILLIS_TO_SEC(kDriftCheckPeriod_ms);
+      const f32 angleChangeThresh = kDriftCheckMaxAngleChangeRate_rad_per_sec * Util::MilliSecToSec(kDriftCheckPeriod_ms);
       
       if (headingAngleChange > angleChangeThresh) {
         // Report drift detected just one time during a session

@@ -183,11 +183,11 @@ TEST(BehaviorInterface, Run)
   b.Init();
   for(int i=0; i<5; i++) {
     EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kRunningScore );
-    BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 0.01 * i ) );
+    BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 0.01 * i ) );
     b.Update();
   }
 
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
 
   b.Stop();
 
@@ -204,7 +204,7 @@ void TickAndCheckScore( Robot& robot, IBehavior& behavior, int num, float expect
   const float dt = 0.01f;
   
   for( int i=0; i<num; ++i ) {
-    BaseStationTimer::getInstance()->UpdateTime( startTime + SEC_TO_NANOS( dt * i ) );
+    BaseStationTimer::getInstance()->UpdateTime( startTime + Util::SecToNanoSec( dt * i ) );
     robot.GetActionList().Update();
     behavior.Update();
     EXPECT_FLOAT_EQ( expectedScore, behavior.EvaluateScore(robot) ) << "i=" << i;
@@ -271,7 +271,7 @@ TEST(BehaviorInterface, ScoreWhileRunning)
     TickAndCheckScore(robot, b, 5, kRunningScore);
   }
 
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
 
   b.Stop();
 
@@ -305,7 +305,7 @@ TEST(BehaviorInterface, HandleMessages)
   EXPECT_EQ(b._handleWhileRunningCalls, 1);
   EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
 
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );  
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
   b.Stop();
 
   robot.Broadcast( MessageEngineToGame( Ping() ) );
@@ -588,7 +588,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   DoTicks(robot, b, 3);
 
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
 
   b.Stop();
 
@@ -623,7 +623,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
   
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );  
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );  
 
   b.Stop();
   

@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/game/comms/gameComms.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"

@@ -16,7 +16,7 @@
 #error This file (sim_nvStorage.h) should not be used without SIMULATOR defined.
 #endif
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "clad/types/nvStorage.h"
 #include <array>
 

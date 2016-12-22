@@ -9,7 +9,7 @@
 #ifndef ACTIVE_BLOCK_H
 #define ACTIVE_BLOCK_H
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 
 namespace Anki {
   namespace Cozmo {

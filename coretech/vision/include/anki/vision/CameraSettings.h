@@ -9,15 +9,13 @@
 #ifndef ANKI_CAMERA_SETTINGS_H
 #define ANKI_CAMERA_SETTINGS_H
 
-#include "anki/common/types.h"
-
 namespace Anki {
   namespace Vision {
 
     typedef struct
     {
-      u16 width;
-      u16 height;
+      uint16_t width;
+      uint16_t height;
     } ImageDims;
 
     /// Must match definitions in ImageResolution enum in imageTypes.clad

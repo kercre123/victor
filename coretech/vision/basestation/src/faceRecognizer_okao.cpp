@@ -167,8 +167,8 @@ namespace Vision {
                           "Did not find '%s' group in config", JsonKey::PerformanceLoggingGroup);
     }
 
-    Profiler::SetPrintFrequency(SEC_TO_MILLIS(timeBetweenProfilerInfoPrints_sec));
-    Profiler::SetDasLogFrequency(SEC_TO_MILLIS(timeBetweenProfilerDasLogs_sec));
+    Profiler::SetPrintFrequency(Util::SecToMilliSec(timeBetweenProfilerInfoPrints_sec));
+    Profiler::SetDasLogFrequency(Util::SecToMilliSec(timeBetweenProfilerDasLogs_sec));
     Profiler::SetPrintChannelName("FaceRecognizer");
     Profiler::SetProfileGroupName("FaceRecognizer.Profiler");
   }

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorChooser_H__
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"

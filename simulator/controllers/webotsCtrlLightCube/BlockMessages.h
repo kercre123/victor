@@ -22,7 +22,7 @@
 #ifndef ROBOT_2_BLOCK_MESSAGES_H
 #define ROBOT_2_BLOCK_MESSAGES_H
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include <functional>
 
 namespace Anki {

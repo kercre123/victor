@@ -231,8 +231,8 @@ namespace Cozmo {
       
       Profiler::SetProfileGroupName("VisionSystem.Profiler");
       Profiler::SetPrintChannelName(kLogChannelName);
-      Profiler::SetPrintFrequency(SEC_TO_MILLIS(timeBetweenProfilerInfoPrints_sec));
-      Profiler::SetDasLogFrequency(SEC_TO_MILLIS(timeBetweenProfilerDasLogs_sec));
+      Profiler::SetPrintFrequency(Util::SecToMilliSec(timeBetweenProfilerInfoPrints_sec));
+      Profiler::SetDasLogFrequency(Util::SecToMilliSec(timeBetweenProfilerDasLogs_sec));
     }
     
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.InstantiatingFaceTracker",

@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_SimpleBehaviorChooser_H__
 
 #include "iBehaviorChooser.h"
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"

@@ -361,7 +361,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     case EngineState::Running:
     {
       // Update time
-      BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(currTime_sec));
+      BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(currTime_sec));
       
       _context->GetRobotManager()->UpdateRobotConnection();
       

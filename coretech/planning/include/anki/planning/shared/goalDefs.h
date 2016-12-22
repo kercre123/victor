@@ -1,7 +1,7 @@
 #ifndef _GOALDEFS_H_
 #define _GOALDEFS_H_
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include <stddef.h>
 
 namespace Anki {
