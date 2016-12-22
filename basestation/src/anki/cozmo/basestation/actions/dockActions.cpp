@@ -1239,7 +1239,7 @@ namespace Anki {
             if (obj->IsMoving(&lastMovingTime)) {
               if (currentTime > _firstVerifyCallTime + kMaxObjectStillMovingAfterRobotStopTime_ms) {
                 _robot.SetCarriedObjectAsUnattached(true);
-                PRINT_NAMED_EVENT("PickupObjectAction.Verify.ObjectStillMoving", "");
+                LOG_EVENT("PickupObjectAction.Verify.ObjectStillMoving", "");
                 return ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING;
               }
               return ActionResult::RUNNING;
@@ -1249,7 +1249,7 @@ namespace Anki {
             // If it hasn't moved at all we probably missed.
             else if (_firstVerifyCallTime > lastMovingTime + (_dockAction == DockAction::DA_PICKUP_LOW ? kMaxObjectHasntMovedBeforeRobotStopTime_ms : kMaxObjectHasntMovedBeforeRobotStopTimeForHighPickup_ms)) {
               _robot.SetCarriedObjectAsUnattached(true);
-              PRINT_NAMED_EVENT("PickupObjectAction.Verify.ObjectDidntMoveAsExpected", "lastMovedTime %d, firstTime: %d", lastMovingTime, _firstVerifyCallTime);
+              LOG_EVENT("PickupObjectAction.Verify.ObjectDidntMoveAsExpected", "lastMovedTime %d, firstTime: %d", lastMovingTime, _firstVerifyCallTime);
               return ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING;
             }
           }
