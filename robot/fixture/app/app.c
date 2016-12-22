@@ -18,8 +18,9 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 71;
-const char* BUILD_INFO = "EP1 v1.5 beta-006";
+u8 g_fixtureReleaseVersion = 80;
+//const char* BUILD_INFO = "EP1 v1.5 beta-007";
+const char* BUILD_INFO = "EP1 v1.5";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
