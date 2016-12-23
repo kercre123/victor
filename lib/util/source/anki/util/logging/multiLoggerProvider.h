@@ -74,12 +74,20 @@ namespace Anki {
         }
       }
       
+      inline void Flush() override {
+        for (ILoggerProvider* provider : _providers) {
+          provider->Flush();
+        }
+      }
+      
       inline ILoggerProvider* GetProvider(int index) {
         return _providers[index];
       }
+      
       inline const std::vector<ILoggerProvider*>& GetProviders() {
         return _providers;
       }
+      
     protected:
       std::vector<ILoggerProvider*> _providers;
       

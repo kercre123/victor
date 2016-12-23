@@ -33,6 +33,8 @@ public:
   
   void Log(ILoggerProvider::LogLevel logLevel, const std::string& message) override;
   
+  void Flush() override;
+  
 protected:
   
   // Don't want this to be copyable

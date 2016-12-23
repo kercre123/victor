@@ -51,11 +51,16 @@ public:
     const char* eventValue) override {
     _DAS_LogKv(DASLogLevel_Debug, eventName, eventValue, keyValues);
   }
-  
+ 
+  inline void Flush() override {
+    DASForceFlushNow();
+  }
+
   inline void SetGlobal(const char* key, const char* value) override {
     _DAS_SetGlobal(key, value);
   }
 
+  
   inline void EnableNetwork(int reason) override {
     DASEnableNetwork((DASDisableNetworkReason)reason);
   }

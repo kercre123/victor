@@ -77,6 +77,9 @@ public:
                           const std::vector<std::pair<const char*, const char*>>& keyValues,
                           const char* eventValue);
 
+  // Perform synchronous flush to underlying storage
+  virtual void Flush() {};
+  
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

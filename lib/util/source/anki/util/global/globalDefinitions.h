@@ -17,9 +17,11 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Use ANKI_DEVELOPER_CODE to strip down code that should only be available to developers in debug, but not for
 // testing in release, nor available to players.
-// Use ANKI_DEV_CHEATS to strip down code that should be available to developers in debug and testing in release, but not
-// avaiable to players.
-// Use ANKI_PRIVACY_GUARD and HidePersonallyIdentifiableInfo() for anything that should not be present in shipping mode, such as players' names in logs. NOTE: This is a separate flag from DEV_CHEATS to make it easier to find use cases in the code and in case we want to set it differently via other build flags later without changing code.
+// Use ANKI_DEV_CHEATS to strip down code that should be available to developers in debug and testing in release,
+// but not available to players.
+// Use ANKI_PRIVACY_GUARD and HidePersonallyIdentifiableInfo() for anything that should not be present in shipping mode,
+// such as players' names in logs. NOTE: This is a separate flag from DEV_CHEATS to make it easier to find use cases in
+// the code and in case we want to set it differently via other build flags later without changing code.
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if defined(DEBUG)
   #define ANKI_DEVELOPER_CODE     1

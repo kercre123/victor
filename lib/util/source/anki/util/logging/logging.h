@@ -23,6 +23,8 @@
 
 #include "util/logging/eventKeys.h"
 #include "util/logging/callstack.h"
+#include "util/global/globalDefinitions.h"
+
 #include <string>
 #include <vector>
 
@@ -89,23 +91,114 @@ void sChanneledDebug(const char* channelName, const char* eventName, const std::
 
 void sSetGlobal(const char* key, const char* value);
 
+//
+// Anki::Util::sLogFlush()
+// Perform synchronous flush of log data to underlying storage.
+// This calls blocks until log data has been flushed.
+//
+void sLogFlush();
+  
+// Anki::Util::sDebugBreak()
+// Break to debugger (if possible), then return to caller.
+// If break to debugger is not supported, this function provides
+// a convenient hook for developers to set a breakpoint by hand.
+//
+void sDebugBreak();
+
+//
+// Anki::Util::sAbort()
+// Dump core (if possible) and terminate process.
+// Does not flush buffers.
+// Does not invoke exit handlers.
+// Never returns to caller.
+//
+void sAbort();
+  
 } // namespace Util
 } // namespace Anki
 
 #define DEFAULT_CHANNEL_NAME "Unnamed"
 
+//
 // Logging with names.
-#define PRINT_NAMED_ERROR(name, format, ...) do{::Anki::Util::sErrorF(name, {}, format, ##__VA_ARGS__); ::Anki::Util::_errG=true; }while(0)
-#define PRINT_NAMED_WARNING(name, format, ...) do{::Anki::Util::sWarningF(name, {}, format, ##__VA_ARGS__);}while(0)
-#define PRINT_NAMED_INFO(name, format, ...) do{::Anki::Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__);}while(0)
-#define PRINT_NAMED_DEBUG(name, format, ...) do{::Anki::Util::sChanneledDebugF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__);}while(0)
+//
+#define PRINT_NAMED_ERROR(name, format, ...) do { \
+  ::Anki::Util::sErrorF(name, {}, format, ##__VA_ARGS__); \
+  ::Anki::Util::_errG=true; \
+  ::Anki::Util::sDebugBreak(); \
+} while(0)
 
-// Logging with channels.
-#define PRINT_CH_INFO(channel, name, format, ...) do{::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__);}while(0)
-#define PRINT_CH_DEBUG(channel, name, format, ...) do{::Anki::Util::sChanneledDebugF(channel, name, {}, format, ##__VA_ARGS__);}while(0)
+#define PRINT_NAMED_WARNING(name, format, ...) do { \
+  ::Anki::Util::sWarningF(name, {}, format, ##__VA_ARGS__); \
+} while(0)
+
+#define PRINT_NAMED_INFO(name, format, ...) do { \
+  ::Anki::Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__); \
+} while(0)
+
+#define PRINT_NAMED_DEBUG(name, format, ...) do { \
+  ::Anki::Util::sChanneledDebugF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__); \
+} while(0)
 
 //
-// Periodic logging with channels
+// VERIFY(expr, name, format, args...)
+// Helper macro for common error checks.
+//
+// If the conditional expression (expr) is true, VERIFY returns true.
+// If the conditional expression (expr) is false, VERIFY logs an error message and returns false.
+//
+// The conditional expression (expr) and additional arguments are evaluated exactly once.
+// Similar to ASSERT but enabled in both debug and release builds.
+//
+//
+// Example 1:
+// Use
+//   if (VERIFY(x == y, "VerifyXY", "%p != %p", x, y)) {
+//     /* do stuff */
+//   }
+// in place of
+//   if (x == y) {
+//     /* do stuff */
+//   } else {
+//     PRINT_NAMED_ERROR("VerifyXY", "%p != p", x, y);
+//   }
+//
+// Example 2:
+// Use
+//   if (!VERIFY(x == y, "VerifyXY", "%p != %p", x, y)) {
+//     return FAIL;
+//   }
+// in place of
+//   if (x != y) {
+//     PRINT_NAMED_ERROR("VerifyXY", "%p != %p", x, y);
+//     return FAIL;
+//   }
+//
+inline bool VERIFY(bool expr, const char * name, const char * format, ...) {
+  if (!expr) {
+    va_list args;
+    va_start(args, format);
+    ::Anki::Util::sErrorV(name, {}, format, args);
+    ::Anki::Util::_errG=true;
+    ::Anki::Util::sDebugBreak();
+    va_end(args);
+  }
+  return expr;
+}
+
+//
+// Logging with channels.
+//
+#define PRINT_CH_INFO(channel, name, format, ...) do { \
+  ::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__); \
+} while(0)
+
+#define PRINT_CH_DEBUG(channel, name, format, ...) do { \
+  ::Anki::Util::sChanneledDebugF(channel, name, {}, format, ##__VA_ARGS__); \
+} while(0)
+
+//
+// Periodic logging with channels.
 //
 
 // Helper used by debug/info versions below
@@ -128,22 +221,22 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 #define PRINT_STREAM_ERROR(eventName, args) do{         \
       std::stringstream ss; ss<<args;                   \
       ::Anki::Util::sError(eventName, {}, ss.str().c_str()); \
-    }while(0)
+    } while(0)
 
 #define PRINT_STREAM_WARNING(eventName, args) do{       \
       std::stringstream ss; ss<<args;                   \
       ::Anki::Util::sWarning(eventName, {}, ss.str().c_str()); \
-    }while(0)
+    } while(0)
 
 #define PRINT_STREAM_INFO(eventName, args) do{          \
       std::stringstream ss; ss<<args;                   \
       ::Anki::Util::sChanneledInfo(DEFAULT_CHANNEL_NAME, eventName, {}, ss.str().c_str()); \
-    }while(0)
+    } while(0)
 
 #define PRINT_STREAM_DEBUG(eventName, args) do{         \
       std::stringstream ss; ss<<args;                   \
       ::Anki::Util::sChanneledDebug(DEFAULT_CHANNEL_NAME, eventName, {}, ss.str().c_str()); \
-    }while(0)
+    } while(0)
 
 // Auto streams
 #define PRINT_AUTOSTREAM_DEBUG(args) do{ \
@@ -162,21 +255,74 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 #define DEBUG_ABORT ((void)0)
 #endif
 
-#define ASSERT_NAMED(exp, name) do{                                 \
-          if(!(exp)) {                                              \
-            PRINT_NAMED_ERROR(name, "Assertion Failed: %s", #exp);  \
-            Anki::Util::sDumpCallstack("AssertCallstack");          \
-            DEBUG_ABORT;                                            \
-          }                                                         \
-        }while(0)
+#define ASSERT_NAMED(expr, name) do {                       \
+  if (!(expr)) {                                            \
+    PRINT_NAMED_ERROR(name, "Assertion Failed: %s", #expr); \
+    Anki::Util::sDumpCallstack("AssertCallstack");          \
+    Anki::Util::sLogFlush();                                \
+    DEBUG_ABORT;                                            \
+  }                                                         \
+} while(0)
 
-#define ASSERT_NAMED_EVENT(exp, name, format, ...) do{                                \
-          if(!(exp)) {                                                                \
-            PRINT_NAMED_ERROR(name, "ASSERT ( %s ): " format, #exp, ##__VA_ARGS__);   \
-            Anki::Util::sDumpCallstack("AssertCallstack");                            \
-            DEBUG_ABORT;                                                              \
-          }                                                                           \
-        }while(0)
+#define ASSERT_NAMED_EVENT(expr, name, format, ...) do {                      \
+  if (!(expr)) {                                                              \
+    PRINT_NAMED_ERROR(name, "ASSERT ( %s ): " format, #expr, ##__VA_ARGS__);  \
+    Anki::Util::sDumpCallstack("AssertCallstack");                            \
+    Anki::Util::sLogFlush();                                                  \
+    DEBUG_ABORT;                                                              \
+  }                                                                           \
+} while(0)
+
+//
+// Developer assertions are compiled for debug builds ONLY.
+// Developer assertions are discarded for release and shipping builds.
+//
+// Code blocks that are only used for developer assertions should be guarded with #if DEV_ASSERT_ENABLED.
+// Variables that are only used for developer assertions should be guarded with DEV_ASSERT_ONLY.
+//
+#define DEV_ASSERT_ENABLED ANKI_DEVELOPER_CODE
+
+#if DEV_ASSERT_ENABLED
+
+#define DEV_ASSERT(expr, name) do { \
+  if (!(expr)) { \
+    PRINT_NAMED_ERROR(name, "ASSERT(%s): Assertion failed", #expr); \
+    Anki::Util::sDumpCallstack("ASSERT"); \
+    Anki::Util::sLogFlush(); \
+    Anki::Util::sAbort(); \
+  } \
+} while (0)
+
+#define DEV_ASSERT_MSG(expr, name, format, ...) do { \
+  if (!(expr)) { \
+    PRINT_NAMED_ERROR(name, "ASSERT(%s): " format, #expr, ##__VA_ARGS__); \
+    Anki::Util::sDumpCallstack("ASSERT"); \
+    Anki::Util::sLogFlush(); \
+    Anki::Util::sAbort(); \
+  } \
+} while (0)
+
+#define DEV_ASSERT_ONLY(expr) expr
+
+#else
+
+#define DEV_ASSERT(expr, name)
+
+#define DEV_ASSERT_MSG(expr, name, format, ...)
+
+#define DEV_ASSERT_ONLY(expr)
+
+#endif
+
+#if DEV_ASSERT_ENABLED
+
+#undef ASSERT_NAMED
+#undef ASSERT_NAMED_EVENT
+
+#define ASSERT_NAMED(expr, name) DEV_ASSERT(expr, name)
+#define ASSERT_NAMED_EVENT(expr, name, format, ...) DEV_ASSERT_MSG(expr, name, format, ##__VA_ARGS__)
+
+#endif
 
 //
 // DAS events are structured messages for use with backend analytics.

@@ -62,7 +62,8 @@ void RollingFileLogger::Write(std::string message)
     WriteInternal(message);
   });
 }
-  
+
+
 // Note that WriteInternal and everything it calls will occur on another thread.
 void RollingFileLogger::WriteInternal(const std::string& message)
 {
@@ -147,6 +148,28 @@ std::chrono::system_clock::time_point RollingFileLogger::GetSystemClockTimePoint
   
   return systemClockNow + timeDiff;
 }
+  
+void RollingFileLogger::FlushInternal()
+{
+  if (_currentLogFileHandle.is_open()) {
+    _currentLogFileHandle.flush();
+  }
+}
+  
+void RollingFileLogger::Flush()
+{
+  if (nullptr != _dispatchQueue)
+  {
+    Dispatch::Sync(_dispatchQueue, [this] {
+      FlushInternal();
+    });
+  }
+  else
+  {
+    FlushInternal();
+  }
+}
+
 
 } // end namespace Util
 } // end namespace Anki

@@ -37,6 +37,7 @@ public:
   virtual ~RollingFileLogger();
   
   void Write(std::string message);
+  void Flush();
   
   static std::string GetDateTimeString(const ClockType::time_point& time);
   static time_t GetTimeT(const ClockType::time_point& time);
@@ -54,6 +55,7 @@ private:
   std::ofstream     _currentLogFileHandle;
   
   void WriteInternal(const std::string& message);
+  void FlushInternal();
   void RollLogFile();
   std::string GetNextFileName();
 };
