@@ -24,7 +24,7 @@
 
 static __align(4) u8 m_globalBuffer[1024 * 16];
 
-// #define DEBUG_TESTPORT
+//#define DEBUG_TESTPORT
 
 // Enable the test port
 void InitTestPort(int baudRate)
@@ -115,7 +115,7 @@ u8* GetGlobalBuffer(void)
 }
 
 
-void SendTestChar(int val)
+void m_SendTestChar(int val)
 {
   int c = val;
   u32 start = getMicroCounter();
@@ -181,6 +181,22 @@ void SendTestChar(int val)
 #ifdef DEBUG_TESTPORT
 SlowPrintf("<%02x ", val);
 #endif  
+}
+
+void SendTestChar(int val)
+{
+    for( int x=0; x<3; x++)
+    {
+        try {
+            m_SendTestChar(val);
+            return;
+        }
+        catch(int e){
+            #ifdef DEBUG_TESTPORT
+            SlowPrintf("retry.%d ", x);
+            #endif  
+        }
+    }
 }
 
 int SendCommand(u8 test, s8 param, u8 buflen, u8* buf)
