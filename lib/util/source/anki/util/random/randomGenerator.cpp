@@ -9,21 +9,33 @@
  **/
 #include "randomGenerator.h"
 
+#include "util/logging/logging.h"
+
 namespace Anki{ namespace Util {
 
 
 RandomGenerator::RandomGenerator(uint32_t seed)
 : uniDbl(0, 1)
 {
-  if ( 0 == seed ) {
-    std::random_device rd;
-    rng.seed(rd());
-  } else{
-    rng.seed(seed);
-  }
+  SetSeed("", seed);
 }
 
-
+void RandomGenerator::SetSeed(const std::string& who, uint32_t seed)
+{
+  if ( 0 == seed ) {
+    std::random_device rd;
+    seed = rd();
+  }
+  
+  rng.seed(seed);
+  
+  if(!who.empty())
+  {
+    // Log the actual random seed used and who set it
+    Util::sEventF("app.random_seed", {{DDATA, who.c_str()}}, "%u", seed);
+  }
+}
+  
 double RandomGenerator::GetNextDbl()
 {
   double r = uniDbl(rng);

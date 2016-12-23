@@ -391,7 +391,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
                         0, // currPathSegment,
                         0); // numFreeSegmentSlots)
     
-    robot.GetVisionComponent().SetRunMode(VisionComponent::RunMode::Synchronous);
+    robot.GetVisionComponent().SetIsSynchronous(true);
     Result initResult = robot.GetVisionComponent().Init(config);
     ASSERT_EQ(RESULT_OK, initResult);
     

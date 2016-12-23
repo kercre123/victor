@@ -47,7 +47,6 @@ enum int_32 RobotActionType {
     DRIVE_PATH,
     DRIVE_TO_POSE,
     DRIVE_TO_PLACE_CARRIED_OBJECT,
-    ENROLL_NAMED_FACE,
     FACE_PLANT,
     FLIP_BLOCK,
     HANG,
@@ -118,16 +117,6 @@ structure ReadToolCodeCompleted {
   ToolCodeInfo info // info.code will be UnknownTool if failure
 }
 
-// Used by EnrollNamedFaceAction on success
-structure FaceEnrollmentCompleted {
-  int_32 faceID,
-  string name,
-  bool   neverSawValidFace,  // If true, faceID and name containt the (invalid, unenrollable) face we observed
-  bool   saidName,           // Indicates whether the action played the say name animation at end (iff action completed successfully)
-  bool   isFaceScanning      // Indicates whether Cozmo was still "scanning" when action completed
-                             // (and thus idle needs to be popped and GetOut animation needs to be called). Fix with COZMO-4138
-}
-
 // Used by actions that don't have extra info on completion
 structure DefaultCompleted {
 
@@ -140,7 +129,6 @@ union ActionCompletedUnion {
   DeviceAudioCompleted        deviceAudioCompleted,
   TrackFaceCompleted          trackFaceCompleted,
   ReadToolCodeCompleted       readToolCodeCompleted,
-  FaceEnrollmentCompleted     faceEnrollmentCompleted,
   DefaultCompleted            defaultCompleted,
 }
 

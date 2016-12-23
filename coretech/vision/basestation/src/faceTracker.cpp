@@ -66,6 +66,11 @@ namespace Vision {
     _pImpl->Reset();
   }
   
+  void FaceTracker::SetRecognitionIsSynchronous(bool isSynchronous)
+  {
+    _pImpl->SetRecognitionIsSynchronous(isSynchronous);
+  }
+  
   bool FaceTracker::IsRecognitionSupported()
   {
     return Impl::IsRecognitionSupported();

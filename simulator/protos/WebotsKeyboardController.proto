@@ -220,6 +220,9 @@ PROTO WebotsKeyboardController [
 
   # Which object to stream accelerometer data from when streaming is enabled
   field SFInt32 streamObjectID 0
+  
+  # Engine's RNG seed
+  field SFInt32  randomSeed 0
 ]
 {
 Supervisor {

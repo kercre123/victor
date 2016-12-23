@@ -17,6 +17,7 @@
 
 #include "anki/vision/basestation/trackedFace.h"
 
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "clad/types/actionTypes.h"
@@ -27,7 +28,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  // Forward declaration:
+  // Forward declarations:
   class Robot;
   
   class FaceWorld
@@ -75,6 +76,18 @@ namespace Cozmo {
     // GetLastObservedFace() will return 0.
     void ClearAllFaces();
     
+    // Specify a faceID to start an enrollment of a specific ID, i.e. with the intention
+    // of naming that person.
+    // Use UnknownFaceID to enable (or return to) ongoing "enrollment" of session-only / unnamed faces.
+    void Enroll(Vision::FaceID_t faceID);
+    
+    bool IsFaceEnrollmentComplete() const { return _lastEnrollmentCompleted; }
+    void SetFaceEnrollmentComplete(bool complete) { _lastEnrollmentCompleted = complete; }
+    
+    // template for all events we subscribe to
+    template<typename T>
+    void HandleMessage(const T& msg);
+    
   private:
     
     Robot& _robot;
@@ -99,6 +112,8 @@ namespace Cozmo {
     
     Pose3d      _lastObservedFacePose;
     TimeStamp_t _lastObservedFaceTimeStamp = 0;
+    
+    bool _lastEnrollmentCompleted = false;
     
     // Removes the face and advances the iterator. Notifies any listeners that
     // the face was removed if broadcast==true.

@@ -194,7 +194,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 #endif
   , _actionList(new ActionList())
   , _movementComponent(new MovementComponent(*this))
-  , _visionComponent( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
+  , _visionComponent( new VisionComponent(*this, _context))
   , _nvStorageComponent(new NVStorageComponent(*this, _context))
   , _textToSpeechComponent(new TextToSpeechComponent(_context))
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))

@@ -260,6 +260,8 @@ namespace Cozmo {
                                Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
                                s32 numEnrollments = -1);
     
+    void SetFaceRecognitionIsSynchronous(bool isSynchronous);
+    
     Result LoadFaceAlbum(const std::string& albumName, std::list<Vision::LoadedKnownFace>& loadedFaces);
     
     Result SaveFaceAlbum(const std::string& albumName);

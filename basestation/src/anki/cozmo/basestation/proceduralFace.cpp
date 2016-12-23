@@ -136,6 +136,15 @@ void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
     SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
   }
   
+  ASSERT_NAMED_EVENT(FLT_GT(GetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeScaleY), 0.f),
+                     "ProceduralFace.LookAt.NegativeLeftEyeScaleY",
+                     "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
+                     yShift, yscaleLR, yscaleUD, ymax);
+  ASSERT_NAMED_EVENT(FLT_GT(GetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY), 0.f),
+                     "ProceduralFace.LookAt.NegativeRightEyeScaleY",
+                     "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
+                     yShift, yscaleLR, yscaleUD, ymax);
+  
   //SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
   
   // If looking down (positive y), push eyes together (IOD=interocular distance)

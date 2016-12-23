@@ -4199,7 +4199,12 @@ namespace Cozmo {
     ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.SaveFaceAlbum.NullFaceTracker");
     return _faceTracker->SaveAlbum(albumName);
   }
-
+ 
+  void VisionSystem::SetFaceRecognitionIsSynchronous(bool isSynchronous)
+  {
+    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.SetFaceRecognitionRunMode.NullFaceTracker");
+    _faceTracker->SetRecognitionIsSynchronous(isSynchronous);
+  }
   
 } // namespace Cozmo
 } // namespace Anki

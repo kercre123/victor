@@ -16,7 +16,6 @@
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/emotionTypes.clad"
-#include "clad/types/faceEnrollmentPoses.clad"
 #include "clad/types/featureGateTypes.clad"
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
@@ -86,6 +85,7 @@ message DisconnectFromUiDevice {
 // StartEngine
 // Tell the engine to start running.
 message StartEngine {
+    uint_32 random_seed = 0   // Use 0 for randomly generated seed, or a specific value for repeatability
 }
 
 message ReliableTransportRunMode {
@@ -406,9 +406,25 @@ message VisionWhileMoving {
     uint_8 enable // True or false
 }
 
-// Set the face enrollment pose
-message SetFaceEnrollmentPose {
-  Vision::FaceEnrollmentPose pose
+// SetFaceToEnroll - Send face enrollments settings. Actual face enrollment only happens
+//                   when the BehaviorEnrollFace runs. That behavior requires these settings
+//                   be sent in order to be runnable.
+message SetFaceToEnroll {
+    string name,
+
+    int_32 observedID=0,  // The ID of a specific observed face to enroll (0 for next one we see)
+    int_32 saveID=0,      // The ID of an existing face to merge final enrollment into (0 for none,
+                          // i.e. use observedID)
+
+    bool saveToRobot=1,   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
+    bool sayName=0,       // Play say-name/celebration animations on success before completing
+    bool useMusic=0       // Starts special music during say-name animations (will leave music playing!)
+}
+
+// CancelFaceEnrollment - Unsets face enrollment settings, meaning BehaviorEnrollFace will no
+//                        longer be runnable
+message CancelFaceEnrollment {
+
 }
 
 // Erase a face record by ID

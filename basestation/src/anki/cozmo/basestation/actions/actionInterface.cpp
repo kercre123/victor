@@ -131,12 +131,6 @@ namespace Anki {
           break;
         }
         
-        case RobotActionType::ENROLL_NAMED_FACE:
-        {
-          _completionUnion.Set_faceEnrollmentCompleted(FaceEnrollmentCompleted());
-          break;
-        }
-        
         // These actions don't set completion unions
         case RobotActionType::ASCEND_OR_DESCEND_RAMP:
         case RobotActionType::CALIBRATE_MOTORS:

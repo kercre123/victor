@@ -34,6 +34,11 @@
 #include <ctime>
 
 namespace Anki {
+  
+namespace Util {
+  class RandomGenerator;
+}
+  
 namespace Vision {
   
   class FaceTracker::Impl : public Profiler
@@ -41,6 +46,8 @@ namespace Vision {
   public:
     Impl(const std::string& modelPath, const Json::Value& config);
     ~Impl();
+    
+    void SetRecognitionIsSynchronous(bool isSynchronous);
     
     Result Update(const Vision::Image&        frameOrig,
                   std::list<TrackedFace>&     faces,
@@ -120,6 +127,8 @@ namespace Vision {
     
     // Runs on a separate thread
     FaceRecognizer _recognizer;
+    
+    std::unique_ptr<Util::RandomGenerator> _rng;
     
   }; // class FaceTracker::Impl
   

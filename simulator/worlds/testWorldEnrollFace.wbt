@@ -1,0 +1,53 @@
+#VRML_SIM V8.2.1 utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.788396 0.286797 0.544224 5.10475
+  position -0.971579 -1.18062 1.09481
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  showMarkers FALSE
+}
+DEF Face_1 Face {
+  name "Face_1"
+  translation 0 -0.442 0.252
+  rotation 1 0 0 6.02139
+  image "face02.png"
+}
+DEF Face_2 Face {
+  name "Face_2"
+  translation -0.0469527 0.41004 0.39
+  image "face05.png"
+}
+BlockWorldComms {
+}
+CozmoBot {
+  rotation 0 0 1 4.71239
+  name "CozmoBot_1"
+}
+BuildServerTestController {
+  controllerArgs "%COZMO_SIM_TEST%"
+#  controllerArgs "CST_EnrollFace"
+}
+CozmoVizDisplay {
+}

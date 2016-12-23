@@ -128,6 +128,11 @@ namespace Anki {
       HandleLoadedKnownFace(msg);
     }
     
+    void UiGameController::HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg)
+    {
+      HandleFaceEnrollmentCompleted(msg);
+    }
+    
     void UiGameController::HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg)
     {
       HandleEngineErrorCode(msg);
@@ -433,6 +438,12 @@ namespace Anki {
         engineIP = engineIPField->getSFString();
       }
       
+      // Get random seed
+      webots::Field* randomSeedField = _root->getField("randomSeed");
+      if (randomSeedField) {
+        _randomSeed = randomSeedField->getSFInt32();
+      }
+        
       // Startup comms with engine
       if (!_gameComms) {
         PRINT_NAMED_INFO("UiGameController.Init",
@@ -538,6 +549,9 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGameTag::EngineLoadingDataStatus:
             HandleEngineLoadingStatusBase(message.Get_EngineLoadingDataStatus());
             break;
+          case ExternalInterface::MessageEngineToGameTag::FaceEnrollmentCompleted:
+            HandleFaceEnrollmentCompleted(message.Get_FaceEnrollmentCompleted());
+            break;
           default:
             // ignore
             break;
@@ -627,7 +641,7 @@ namespace Anki {
             
             PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.");
             // TODO: don't hardcode ID here
-            _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(ExternalInterface::StartEngine{}));
+            _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(ExternalInterface::StartEngine(_randomSeed)));
             
             _uiState = UI_WAITING_FOR_ENGINE_LOAD;
           }
@@ -1951,14 +1965,12 @@ namespace Anki {
       // TODO: Implement!
     }
     
-    void UiGameController::SetLightCubePose(int lightCubeId, const Pose3d& newPose)
+    void UiGameController::SetNodePose(webots::Node* node, const Pose3d& newPose)
     {
-      webots::Node* lightCube = GetLightCubeById(lightCubeId);
-
-      webots::Field* rotField = lightCube->getField("rotation");
+      webots::Field* rotField = node->getField("rotation");
       assert(rotField != nullptr);
       
-      webots::Field* transField = lightCube->getField("translation");
+      webots::Field* transField = node->getField("translation");
       assert(transField != nullptr);
       
       const RotationVector3d& Rvec = newPose.GetRotationVector();
@@ -1974,6 +1986,15 @@ namespace Anki {
         MM_TO_M(newPose.GetTranslation().z())
       };
       transField->setSFVec3f(translation);
+    }
+    
+    void UiGameController::SetLightCubePose(int lightCubeId, const Pose3d& newPose)
+    {
+      webots::Node* lightCube = GetLightCubeById(lightCubeId);
+
+      assert(lightCube != nullptr);
+      
+      SetNodePose(lightCube, newPose);
     }
   
     const Pose3d UiGameController::GetLightCubePoseActual(int lightCubeId)
@@ -1995,7 +2016,7 @@ namespace Anki {
       return _robotNode->getField("animationTestName")->getSFString();
     }
 
-    const Pose3d UiGameController::GetPose3dOfNode(webots::Node* node)
+    const Pose3d UiGameController::GetPose3dOfNode(webots::Node* node) const
     {
       const double* transActual = node->getPosition();
       const double* orientationActual = node->getOrientation();
@@ -2053,15 +2074,15 @@ namespace Anki {
       return _supervisor.getTime();
     }
 
-    const bool UiGameController::HasXSecondsPassedYet(double& waitTimer, double xSeconds)
+    const bool UiGameController::HasXSecondsPassedYet(double xSeconds)
     {
-      if (waitTimer < 0){
-        waitTimer = GetSupervisorTime();
+      if (_waitTimer < 0){
+        _waitTimer = GetSupervisorTime();
       }
 
-      if (GetSupervisorTime() > waitTimer + xSeconds){
+      if (GetSupervisorTime() > _waitTimer + xSeconds){
         // reset waitTimer so it can be reused next time.
-        waitTimer = -1;
+        _waitTimer = -1;
         return true;
       } else {
         return false;

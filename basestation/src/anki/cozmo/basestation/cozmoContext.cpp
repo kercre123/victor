@@ -74,6 +74,10 @@ void CozmoContext::SetSdkStatus(SdkStatusType statusType, std::string&& statusTe
   }
 }
 
+void CozmoContext::SetRandomSeed(uint32_t seed)
+{
+  _random->SetSeed("CozmoContext", seed);
+}
   
 } // namespace Cozmo
 } // namespace Anki

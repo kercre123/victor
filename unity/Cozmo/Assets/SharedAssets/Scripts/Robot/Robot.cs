@@ -1268,14 +1268,20 @@ public class Robot : IRobot {
     _RobotCallbacks.Clear();
   }
 
-  public void EnrollNamedFace(int faceID, int mergeIntoID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SetFaceToEnroll(int existingID, string name, bool saveToRobot = true, bool sayName = true, bool useMusic = true) {
+    
+    DAS.Debug(this, "Sending SetFaceToEnroll for name=" + PrivacyGuard.HidePersonallyIdentifiableInfo(name)
+    + " to be saved as existing ID=" + existingID);
 
-    DAS.Debug(this, "Sending EnrollNamedFace for ID=" + faceID
-    + " with name=" + PrivacyGuard.HidePersonallyIdentifiableInfo(name)
-    + " to be merged into ID=" + mergeIntoID);
-    SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, mergeIntoID, name, seq, saveToRobot), callback, queueActionPosition);
+    RobotEngineManager.Instance.Message.SetFaceToEnroll = Singleton<SetFaceToEnroll>.Instance.Initialize(name, 0, existingID, saveToRobot, sayName, useMusic);
+    RobotEngineManager.Instance.SendMessage();
   }
 
+  public void CancelFaceEnrollment() {
+    RobotEngineManager.Instance.Message.CancelFaceEnrollment = Singleton<CancelFaceEnrollment>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+  
   public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false) {
 
     DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + 1 + " loop " + useSafeLiftMotion);

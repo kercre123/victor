@@ -141,6 +141,10 @@ namespace Vision {
                           "Did not find '%s' group in config", JsonKey::FaceRecognitionGroup);
     }
     
+    PRINT_CH_INFO("FaceRecognizer", "FaceRecognizer.Constructor.RunMode",
+                  "Running in %s mode",
+                  (_isRunningAsync ? JsonKey::Asynchronous : JsonKey::Synchronous));
+    
     // Set up profiler logging frequencies
     f32 timeBetweenProfilerInfoPrints_sec = 5.f;
     f32 timeBetweenProfilerDasLogs_sec = 60.f;
@@ -177,10 +181,7 @@ namespace Vision {
   {
     // Wait for recognition thread to die before destructing since we gave it a
     // reference to *this
-    _isRunningAsync = false;
-    if(_featureExtractionThread.joinable()) {
-      _featureExtractionThread.join();
-    }
+    StopThread();
     
     if(NULL != _okaoFaceAlbum) {
       if(OKAO_NORMAL != OKAO_FR_DeleteAlbumHandle(_okaoFaceAlbum)) {
@@ -230,13 +231,62 @@ namespace Vision {
     
     _detectionInfo.nID = -1;
     
+    _isInitialized = true;
+
     if(_isRunningAsync) {
-      _featureExtractionThread = std::thread(&FaceRecognizer::Run, this);
+      StartThread();
     }
     
-    _isInitialized = true;
-    
     return RESULT_OK;
+  }
+  
+  void FaceRecognizer::StartThread()
+  {
+    if(_isInitialized)
+    {
+      if(_isRunningAsync)
+      {
+        // If already running,
+        StopThread();
+      }
+      
+      _featureExtractionThread = std::thread(&FaceRecognizer::Run, this);
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("FaceRecognizer.StartThread.NotInitialized", "");
+    }
+    
+    _isRunningAsync = true;
+  }
+  
+  void FaceRecognizer::StopThread()
+  {
+    if(_isRunningAsync)
+    {
+      _isRunningAsync = false; // Must be done first, to stop the thread and make it joinable
+      if(_featureExtractionThread.joinable()) {
+        _featureExtractionThread.join();
+      }
+    }
+  }
+  
+  void FaceRecognizer::SetIsSynchronous(bool shouldRunSynchronous)
+  {
+    if(shouldRunSynchronous && _isRunningAsync)
+    {
+      PRINT_NAMED_INFO("FaceRecognizer.SetSynchronousMode.SwitchToSynchronous", "");
+      StopThread();
+      
+    }
+    else if(!shouldRunSynchronous && !_isRunningAsync)
+    {
+      PRINT_NAMED_INFO("FaceRecognizer.SetSynchronousMode.SwitchToAsynchronous", "");
+      if(_isInitialized)
+      {
+        StartThread();
+      }
+    }
   }
   
   Result FaceRecognizer::SanityCheckBookkeeping(const HALBUM& okaoFaceAlbum,
@@ -454,6 +504,11 @@ namespace Vision {
     
   } // UpdateRecognitionData()
   
+  bool FaceRecognizer::HasRecognitionData(TrackingID_t forTrackingID) const
+  {
+    const bool haveEntry = (_trackingToFaceID.find(forTrackingID) != _trackingToFaceID.end());
+    return haveEntry;
+  }
   
   EnrolledFaceEntry FaceRecognizer::GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached)
   {
@@ -921,7 +976,7 @@ namespace Vision {
   Result FaceRecognizer::UpdateExistingAlbumEntry(AlbumEntryID_t albumEntry, HFEATURE& hFeature, RecognitionScore score)
   {
     ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
-                 "FaceRecognizer.UpdateExistingUser.FeaturesShouldBeReady");
+                 "FaceRecognizer.UpdateExistingAlbumEntry.FeaturesShouldBeReady");
     
     Result result = RESULT_OK;
     
@@ -931,13 +986,13 @@ namespace Vision {
     
     auto albumToFaceIter = _albumEntryToFaceID.find(albumEntry);
     ASSERT_NAMED_EVENT(albumToFaceIter != _albumEntryToFaceID.end(),
-                       "FaceRecognizer.UpdateExistingUser.MissingAlbumToFaceEntry",
+                       "FaceRecognizer.UpdateExistingAlbumEntry.MissingAlbumToFaceEntry",
                        "AlbumEntry:%d", albumEntry);
     const FaceID_t faceID = albumToFaceIter->second;
     
     auto enrollDataIter = _enrollmentData.find(faceID);
     ASSERT_NAMED_EVENT(enrollDataIter != _enrollmentData.end(),
-                       "FaceRecognizer.UpdateExistingUser.MissingEnrollmentStatus",
+                       "FaceRecognizer.UpdateExistingAlbumEntry.MissingEnrollmentStatus",
                        "FaceID:%d", faceID);
     
     auto & enrollData = enrollDataIter->second;
@@ -947,7 +1002,7 @@ namespace Vision {
     
     // Keep the tracking ID current
     if(_detectionInfo.nID != enrollData.GetTrackingID()) {
-      PRINT_CH_INFO("FaceRecognizer", "UpdateExistingUser.UpdateTrackID",
+      PRINT_CH_INFO("FaceRecognizer", "UpdateExistingAlbumEntry.UpdateTrackID",
                     "Update trackID for face %d: %d -> %d",
                     faceID, -enrollData.GetTrackingID(), -_detectionInfo.nID);
       _trackingToFaceID.erase(enrollData.GetTrackingID());
@@ -970,7 +1025,6 @@ namespace Vision {
     const bool isEnrollmentEnabled = _enrollmentCount != 0 && (_enrollmentID == UnknownFaceID ||
                                                                _enrollmentID == faceID);
     
-    
     const bool isNamedFace = !enrollData.GetName().empty();
     const bool hasEnrollSpaceLeft = numDataStored < kMaxEnrollDataPerAlbumEntry;
     const bool haveEnrollmentCountAndID = _enrollmentCount > 0 && _enrollmentID != UnknownFaceID;
@@ -980,7 +1034,7 @@ namespace Vision {
     if(isEnrollmentEnabled && isTimeToEnroll && (hasEnrollSpaceLeft || enrollEvenIfFull))
     {
       // Num data for user should be > 0 if we are updating!
-      ASSERT_NAMED(numDataStored > 0, "FaceRecognizer.UpdateExistingUser.BadNumData");
+      ASSERT_NAMED(numDataStored > 0, "FaceRecognizer.UpdateExistingAlbumEntry.BadNumData");
       
       AlbumEntryID_t entryToReplace = EnrolledFaceEntry::UnknownAlbumEntryID;
       if(hasEnrollSpaceLeft)
@@ -1115,6 +1169,13 @@ namespace Vision {
         --_enrollmentCount;
       }
       
+    }
+    else
+    {
+      PRINT_CH_DEBUG("FaceRecognizer", "FaceRecognizer.UpdateExistingAlbumEntry.NotAddingEnrollmentEntry",
+                     "FaceID:%d isEnabled:%d isNamed:%d hasSpaceLeft:%d haveCountAndID:%d enrollIfFull:%d isTime:%d",
+                     faceID, isEnrollmentEnabled, isNamedFace, hasEnrollSpaceLeft,
+                     haveEnrollmentCountAndID, enrollEvenIfFull, isTimeToEnroll);
     }
     
     return result;

@@ -26,6 +26,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorLiftLoadTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
+#include "anki/cozmo/basestation/behaviors/behaviorEnrollFace.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
@@ -36,6 +37,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
+#include "anki/cozmo/basestation/behaviors/behaviorRespondToRenameFace.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
@@ -118,6 +120,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToPickup:
     {
       newBehavior = new BehaviorReactToPickup(robot, config);
+      break;
+    }
+    case BehaviorType::RespondToRenameFace:
+    {
+      newBehavior = new BehaviorRespondToRenameFace(robot, config);
       break;
     }
     case BehaviorType::ReactToCliff:
@@ -363,6 +370,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::CheckForStackAtInterval:
     {
       newBehavior = new BehaviorCheckForStackAtInterval(robot, config);
+      break;
+    }
+    case BehaviorType::EnrollFace:
+    {
+      newBehavior = new BehaviorEnrollFace(robot, config);
       break;
     }
     case BehaviorType::Count:

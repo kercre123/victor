@@ -19,6 +19,8 @@
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/enrolledFaceStorage.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 
@@ -71,16 +73,17 @@ namespace Cozmo {
     }
   }
   
+  template<>
+  void FaceWorld::HandleMessage(const ExternalInterface::ClearAllObjects& msg)
+  {
+    ClearAllFaces();
+  }
+ 
   void FaceWorld::SetupEventHandlers(IExternalInterface& externalInterface)
   {
-    using EventType = AnkiEvent<ExternalInterface::MessageGameToEngine>;
-    
-    // ClearAllObjects
-    _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllObjects,
-                                                        [this] (const EventType& event)
-                                                        {
-                                                          ClearAllFaces();
-                                                        }));
+    using namespace ExternalInterface;
+    auto helper = MakeAnkiEventUtil(externalInterface, *this, _eventHandles);
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearAllObjects>();
   }
   
   void FaceWorld::RemoveFace(KnownFaceIter& knownFaceIter, bool broadcast)
@@ -642,6 +645,18 @@ namespace Cozmo {
 
   }
   
+  void FaceWorld::Enroll(Vision::FaceID_t faceID)
+  {
+    // If starting session enrollment, then set the num enrollments to -1 to get "ongoing"
+    // enrollment. Otherwise, use the max we can store.
+    const bool sessionOnly = (Vision::UnknownFaceID == faceID);
+    const s32 numEnrollmentsRequired = (sessionOnly ? -1 :
+                                        (s32)Vision::FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry);
+    
+    _robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight,
+                                                      faceID,
+                                                      numEnrollmentsRequired);
+  }
 
 } // namespace Cozmo
 } // namespace Anki

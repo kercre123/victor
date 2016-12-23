@@ -65,13 +65,8 @@ struct DockingErrorSignal;
   class VisionComponent : public Util::noncopyable
   {
   public:
-    
-    enum class RunMode : u8 {
-      Synchronous,
-      Asynchronous
-    };
-    
-    VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context);
+  
+    VisionComponent(Robot& robot, const CozmoContext* context);
     virtual ~VisionComponent();
     
     Result Init(const Json::Value& config);
@@ -79,7 +74,8 @@ struct DockingErrorSignal;
     // SetNextImage does nothing until enabled
     void Enable(bool enable) { _enabled = enable; }
     
-    void SetRunMode(RunMode mode);
+    // Set whether vision system runs synchronously or on its own thread
+    void SetIsSynchronous(bool isSync);
 
     // Calibration must be provided before Update() will run
     void SetCameraCalibration(Vision::CameraCalibration& camCalib);
@@ -295,8 +291,7 @@ struct DockingErrorSignal;
     bool                      _isCamCalibSet = false;
     bool                      _enabled = false;
     
-    RunMode _runMode = RunMode::Asynchronous;
-    
+    bool   _isSynchronous = false;
     bool   _running = false;
     bool   _paused  = false;
     std::mutex _lock;

@@ -39,7 +39,7 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
 , _cannedAnimations(new CannedAnimationContainer())
-, _animationGroups(new AnimationGroupContainer())
+, _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
 , _animationTriggerResponses(new AnimationTriggerResponsesContainer())
 {
 }

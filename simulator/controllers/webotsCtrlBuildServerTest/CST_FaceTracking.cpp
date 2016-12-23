@@ -38,8 +38,6 @@ private:
   bool _faceIsObserved = false;
   webots::Node* _face = nullptr;
 
-  double _waitTimer = -1;
-
   void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg) override;
 };
 
@@ -50,7 +48,7 @@ CST_FaceTracking::CST_FaceTracking() {}
 s32 CST_FaceTracking::UpdateSimInternal()
 {
   auto ZeroVelocityAfterXSeconds = [this](webots::Node* node, double xSeconds, TestState nextState){
-    IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(_waitTimer, xSeconds), xSeconds + 1){
+    IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(xSeconds), xSeconds + 1){
       node->setVelocity((double[]){0, 0, 0, 0, 0, 0});
       _testState = nextState;
     }
@@ -72,7 +70,7 @@ s32 CST_FaceTracking::UpdateSimInternal()
 
     case TestState::WaitToObserveFace:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(_waitTimer, 1) &&
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1) &&
                                        _faceIsObserved &&
                                        NEAR(GetRobotHeadAngle_rad(), headLookupAngle_rad, headAngleTolerance_rad),
                                        5) {

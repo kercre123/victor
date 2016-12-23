@@ -27,7 +27,6 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveOffChargerContactsAction.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/actions/enrollNamedFaceAction.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/setFaceAction.h"
@@ -700,16 +699,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetHeadAng
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::EnrollNamedFace& enrollNamedFace)
-{
-  EnrollNamedFaceAction* enrollAction = new EnrollNamedFaceAction(robot, enrollNamedFace.faceID, enrollNamedFace.name, enrollNamedFace.mergeIntoID);
-  enrollAction->SetSequenceType(enrollNamedFace.sequence);
-  enrollAction->EnableSaveToRobot(enrollNamedFace.saveToRobot);
-  return enrollAction;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Version for SayText message
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& sayText)
@@ -998,7 +987,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(displayProceduralFace,    DisplayProceduralFace,    0),
       DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),
       DEFINE_HANDLER(driveStraight,            DriveStraight,            0),
-      DEFINE_HANDLER(enrollNamedFace,          EnrollNamedFace,          0),
       DEFINE_HANDLER(facePlant,                FacePlant,                0),
       DEFINE_HANDLER(flipBlock,                FlipBlock,                0),
       DEFINE_HANDLER(gotoObject,               GotoObject,               0),

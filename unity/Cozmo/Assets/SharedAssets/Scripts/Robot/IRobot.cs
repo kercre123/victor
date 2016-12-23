@@ -34,8 +34,8 @@ public delegate void LightCubeStateEventHandler(LightCube cube);
 public delegate void ChargerStateEventHandler(ActiveObject charger);
 public delegate void FaceStateEventHandler(Face face);
 public delegate void PetFaceStateEventHandler(PetFace face);
-public delegate void EnrolledFaceRemoved(int faceId, string faceName);
-public delegate void EnrolledFaceRenamed(int faceId, string faceName);
+public delegate void EnrolledFaceRemoved(int faceId,string faceName);
+public delegate void EnrolledFaceRenamed(int faceId,string faceName);
 
 // Interface for Robot so we can mock it in unit tests
 public interface IRobot : IDisposable {
@@ -131,6 +131,7 @@ public interface IRobot : IDisposable {
   BehaviorType CurrentBehaviorType { get; set; }
 
   string CurrentBehaviorName { get; set; }
+
   string CurrentBehaviorDisplayNameKey { get; set; }
 
   bool PlayingReactionaryBehavior { get; set; }
@@ -216,7 +217,9 @@ public interface IRobot : IDisposable {
 
   void CancelAllCallbacks();
 
-  void EnrollNamedFace(int faceID, int mergeIntoID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void SetFaceToEnroll(int existingID, string name, bool saveToRobot = true, bool sayName = true, bool useMusic = true);
+
+  void CancelFaceEnrollment();
 
   void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false);
 

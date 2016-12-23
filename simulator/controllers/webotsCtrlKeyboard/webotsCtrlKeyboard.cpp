@@ -235,44 +235,15 @@ namespace Anki {
       printf("HandleEngineErrorCode: %s\n", EnumToString(msg.errorCode));
     }
 
-    void WebotsKeyboardController::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg)
+    void WebotsKeyboardController::HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg)
     {
-      switch(msg.actionType)
+      if(FaceEnrollmentResult::Success == msg.result)
       {
-        case RobotActionType::ENROLL_NAMED_FACE:
-        {
-          auto & completionInfo = msg.completionInfo.Get_faceEnrollmentCompleted();
-          if(msg.result == ActionResult::SUCCESS)
-          {
-            if(completionInfo.neverSawValidFace == true)
-            {
-              printf("ERROR: EnrollNamedFace returned success with neverSawValidFace=true!");
-            }
-            
-            printf("RobotEnrolledFace: Added '%s' with ID=%d\n",
-                   completionInfo.name.c_str(), completionInfo.faceID);
-            
-//            using namespace ExternalInterface;
-//            SayText sayText;
-//            sayText.text = completionInfo.name;
-//            //sayText.playEvent = AnimationTrigger::OnLearnedPlayerName;
-//            sayText.style = SayTextStyle::Name_Normal;
-//            
-//            SendMessage(MessageGameToEngine(std::move(sayText)));
-          } else if(completionInfo.neverSawValidFace) {
-            printf("RobotEnrolledFace FAILED because it never saw a valid face. Saw '%s' ID=%d instead\n",
-                   completionInfo.name.c_str(), completionInfo.faceID);
-          } else {
-            printf("RobotEnrolledFace FAILED\n");
-          }
-          break;
-        } // ENROLL_NAMED_FACE
-          
-        default:
-          // Just ignore other action types
-          break;
-          
-      } // switch(actionType)
+        printf("FaceEnrollmentCompleted: Added '%s' with ID=%d\n",
+               msg.name.c_str(), msg.faceID);
+      } else {
+        printf("FaceEnrollment FAILED with result = '%s'\n", EnumToString(msg.result));
+      }
       
     } // HandleRobotCompletedAction()
     
@@ -2222,22 +2193,21 @@ namespace Anki {
                         break;
                       }
 
+                      using namespace ExternalInterface;
+                      
+                      // Set face enrollment settings
                       bool saveFaceToRobot = saveFaceField->getSFBool();
                       
-                      printf("Enrolling face ID %d with name '%s'\n", GetLastObservedFaceID(), userName.c_str());
-                      ExternalInterface::EnrollNamedFace enrollNamedFace;
-                      enrollNamedFace.faceID      = 0; //GetLastObservedFaceID();
-                      enrollNamedFace.mergeIntoID = enrollToID;
-                      enrollNamedFace.name        = userName;
-                      enrollNamedFace.sequence    = FaceEnrollmentSequence::Simple;
-                      enrollNamedFace.saveToRobot = saveFaceToRobot;
-                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(enrollNamedFace)));
-                    } else {
-                      // No user name, enable enrollment
-                      ExternalInterface::SetFaceEnrollmentPose setEnrollmentPose;
-                      setEnrollmentPose.pose = Vision::FaceEnrollmentPose::LookingStraight;
-                      printf("Enabling enrollment of next face\n");
-                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(setEnrollmentPose)));
+                      const bool sayName = true;
+                      const bool useMusic = false;
+                      const s32 observedID = Vision::UnknownFaceID; // GetLastObservedFaceID();
+                      printf("Enrolling face ID %d with name '%s'\n", observedID, userName.c_str());
+                      SetFaceToEnroll setFaceToEnroll(userName, observedID, enrollToID, saveFaceToRobot, sayName, useMusic);
+                      SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
+                      
+                      // Enable selection chooser and specify EnrollFace now that settings are sent
+                      SendMessage(MessageGameToEngine(ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                      SendMessage(MessageGameToEngine(ExecuteBehaviorByName("EnrollFace")));
                     }
                     
                   } else {

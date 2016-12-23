@@ -68,12 +68,12 @@ namespace FaceEnrollment {
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.SetupViewAfterCozmoReady(newView, data);
 
+      RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.MeetCozmoFindFaces);
+
       // if we have no faces enrolled let's skip the face list UI and go directly to enroll a new face
       // with the default profile name pre-populated.
       if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
         EnterNameForNewFace(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
-        // explicitly disable reactionary behaviors because we are now skipping FaceSlideState.
-        SetReactionaryBehaviors(false);
       }
       else {
         if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeFaceEnrollmentHowToPlay) {
@@ -141,21 +141,8 @@ namespace FaceEnrollment {
       _StateMachine.SetNextState(new FaceEnrollmentHowToPlayState());
     }
 
-    public void SetReactionaryBehaviors(bool enable) {
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, enable);
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCliff, enable);
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToPickup, enable);
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToFrustration, enable);
-        // Note ReactToPet stays disabled during minigames to avoid false positive disruption
-      }
-    }
-
     protected override void CleanUpOnDestroy() {
-      SetReactionaryBehaviors(true);
+      
     }
 
   }

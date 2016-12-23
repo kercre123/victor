@@ -26,6 +26,11 @@ namespace Json {
 }
 
 namespace Anki {
+  
+namespace Util {
+  class RandomGenerator;
+}
+  
   namespace Cozmo {
     
     //Forward declaration
@@ -36,13 +41,15 @@ namespace Anki {
     {
     public:
       
-      explicit AnimationGroup(const std::string& name = "");
+      explicit AnimationGroup(Util::RandomGenerator& rng, const std::string& name = "");
       
       // For reading animation groups from files
       Result DefineFromJson(const std::string& name, const Json::Value& json, const CannedAnimationContainer* cannedAnimations);
 
       // Retrieve an animation based on the mood manager
-      const std::string& GetAnimationName(const MoodManager& moodManager, AnimationGroupContainer& animationGroupContainer, float headAngleRad=0.f) const;
+      const std::string& GetAnimationName(const MoodManager& moodManager,
+                                          AnimationGroupContainer& animationGroupContainer,
+                                          float headAngleRad=0.f) const;
 
       // Just retrieve first animation from the group
       const std::string& GetFirstAnimationName() const;
@@ -57,6 +64,8 @@ namespace Anki {
     private:
       // Retrieve an animation based on a simple mood
       const std::string& GetAnimationName(SimpleMoodType mood, float currentTime_s, AnimationGroupContainer& animationGroupContainer, float headAngleRad=0.f) const;
+      
+      Util::RandomGenerator&  _rng;
       
       // Name of this animation
       std::string _name;

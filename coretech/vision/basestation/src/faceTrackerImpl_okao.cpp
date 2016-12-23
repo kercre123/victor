@@ -22,6 +22,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
+#include "util/random/randomGenerator.h"
 
 namespace Anki {
 namespace Vision {
@@ -44,10 +45,16 @@ namespace Vision {
     CONSOLE_VAR(f32, kLookingUpMaxAngle_deg,        "Vision.FaceTracker",  45.f);
     CONSOLE_VAR(f32, kLookingDownMinAngle_deg,      "Vision.FaceTracker", -10.f);
     CONSOLE_VAR(f32, kLookingDownMaxAngle_deg,      "Vision.FaceTracker", -25.f);
+    
+    // No harm in using fixed seed here (just for shuffling order of processing
+    // multiple faces in the same image). It's hard to use CozmoContext's RNG here
+    // because this runs on a different thread and has no robot/context.
+    static const uint32_t kRandomSeed = 1;
   }
   
   FaceTracker::Impl::Impl(const std::string& modelPath, const Json::Value& config)
   : _recognizer(config)
+  , _rng(new Util::RandomGenerator(FaceEnrollParams::kRandomSeed))
   {
     if(config.isMember("FaceDetection")) {
       // TODO: Use string constants
@@ -310,6 +317,10 @@ namespace Vision {
     _recognizer.ClearAllTrackingData();
   }
   
+  void FaceTracker::Impl::SetRecognitionIsSynchronous(bool isSynchronous)
+  {
+    _recognizer.SetIsSynchronous(isSynchronous);
+  }
   
   static inline void SetFeatureHelper(const POINT* faceParts, std::vector<s32>&& indices,
                                       TrackedFace::FeatureName whichFeature,
@@ -503,14 +514,61 @@ namespace Vision {
     }
     Toc("FaceDetect");
     
-    for(INT32 detectionIndex=0; detectionIndex<numDetections; ++detectionIndex)
+    // If there are multiple faces, figure out which detected faces we already recognize
+    // so that we can choose to run recognition more selectively in the loop below,
+    // effectively prioritizing those we don't already recognize
+    std::vector<INT32> detectionIndices(numDetections);
+    std::set<INT32> skipRecognition;
+    if(numDetections == 1)
+    {
+      detectionIndices[0] = 0;
+    }
+    else if(numDetections > 1)
+    {
+      for(INT32 detectionIndex=0; detectionIndex<numDetections; ++detectionIndex)
+      {
+        detectionIndices[detectionIndex] = detectionIndex;
+        
+        DETECTION_INFO detectionInfo;
+        okaoResult = OKAO_DT_GetRawResultInfo(_okaoDetectionResultHandle, detectionIndex,
+                                              &detectionInfo);
+        
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoGetResultInfoFail1",
+                              "Detection index %d of %d. OKAO Result Code=%d",
+                              detectionIndex, numDetections, okaoResult);
+          return RESULT_FAIL;
+        }
+        
+        // Note that we don't consider the face currently being enrolled to be
+        // "known" because we're in the process of updating it and want to run
+        // recognition on it
+        const bool isKnown = _recognizer.HasRecognitionData(detectionInfo.nID);
+        if(isKnown && _recognizer.GetEnrollmentTrackID() != detectionInfo.nID)
+        {
+          skipRecognition.insert(detectionInfo.nID);
+        }
+      }
+      
+      // If we know everyone, no need to prioritize anyone, so don't skip anyone
+      // and instead just re-recognize all, but in random order
+      if(skipRecognition.size() == numDetections)
+      {
+        skipRecognition.clear();
+      }
+      
+      std::random_shuffle(detectionIndices.begin(), detectionIndices.end(),
+                          [this](int i) { return _rng->RandInt(i); });
+    }
+  
+    for(auto const& detectionIndex : detectionIndices)
     {
       DETECTION_INFO detectionInfo;
       okaoResult = OKAO_DT_GetRawResultInfo(_okaoDetectionResultHandle, detectionIndex,
                                             &detectionInfo);
-
+      
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoGetResultInfoFail",
+        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoGetResultInfoFail2",
                             "Detection index %d of %d. OKAO Result Code=%d",
                             detectionIndex, numDetections, okaoResult);
         return RESULT_FAIL;
@@ -563,20 +621,33 @@ namespace Vision {
       if(facePartsFound)
       {
         const bool enableEnrollment = IsEnrollable(detectionInfo, face);
+        
+        // Very Verbose:
         //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
         //                          "TrackerID:%d EnableEnrollment:%d",
         //                          -detectionInfo.nID, enableEnrollment);
         
-        bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
-                                                              detectionInfo,
-                                                              _okaoPartDetectionResultHandle,
-                                                              enableEnrollment);
-        if(recognizing) {
-          // The FaceRecognizer is now using whatever the partDetectionResultHandle is pointing to.
-          // Switch to using the other handle so we don't step on its toes.
-          std::swap(_okaoPartDetectionResultHandle, _okaoPartDetectionResultHandle2);
+        const bool doRecognition = !(skipRecognition.count(detectionInfo.nID)>0);
+        if(doRecognition)
+        {
+          const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
+                                                                      detectionInfo,
+                                                                      _okaoPartDetectionResultHandle,
+                                                                      enableEnrollment);
+          if(recognizing) {
+            // The FaceRecognizer is now using whatever the partDetectionResultHandle is pointing to.
+            // Switch to using the other handle so we don't step on its toes.
+            std::swap(_okaoPartDetectionResultHandle, _okaoPartDetectionResultHandle2);
+          }
         }
-      } 
+        // Very verbose:
+        //        else
+        //        {
+        //          PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.SkipRecognitionForAlreadyKnown",
+        //                            "TrackingID %d already known and there are %d faces detected",
+        //                            -detectionInfo.nID, numDetections);
+        //        }
+      }
       
       // Get whatever is the latest recognition information for the current tracker ID
       s32 enrollmentCompleted = 0;

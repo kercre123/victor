@@ -25,45 +25,53 @@ namespace Json {
 }
 
 namespace Anki {
-  namespace Cozmo {
-    
-    // Forward declaration
-    class CannedAnimationContainer;
-    
-    class AnimationGroupContainer
-    {
-    public:
-      AnimationGroupContainer();
+  
+namespace Util {
+  class RandomGenerator;
+}
 
-      Result DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName, const CannedAnimationContainer* cannedAnimations);
-      
-      Result AddAnimationGroup(const std::string& name);
-      
-      AnimationGroup* GetAnimationGroup(const std::string& name);
-      const AnimationGroup* GetAnimationGroup(const std::string& name) const;
-      bool HasGroup(const std::string& name) const;
-      
-      std::vector<std::string> GetAnimationGroupNames();
-      
-      void Clear();
-      
-      bool IsAnimationOnCooldown(const std::string& name, double currentTime_s) const;
+namespace Cozmo {
+  
+  // Forward declaration
+  class CannedAnimationContainer;
+  
+  class AnimationGroupContainer
+  {
+  public:
+    AnimationGroupContainer(Util::RandomGenerator& rng);
 
-      // returns how many seconds are left until the cooldown is over for name. Returns 0 if name isn't found,
-      // negative if it isn't on cooldown
-      float TimeUntilCooldownOver(const std::string& name, double currentTime_s) const;
-      
-      void SetAnimationCooldown(const std::string& name, double cooldownExpiration_s);
-      
-    private:
-      
-      std::unordered_map<std::string, AnimationGroup> _animationGroups;
-      
-      std::unordered_map<std::string, double> _animationCooldowns;
-      
-    }; // class AnimationGroupContainer
+    Result DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName,
+                          const CannedAnimationContainer* cannedAnimations);
     
-  } // namespace Cozmo
+    Result AddAnimationGroup(const std::string& name);
+    
+    AnimationGroup* GetAnimationGroup(const std::string& name);
+    const AnimationGroup* GetAnimationGroup(const std::string& name) const;
+    bool HasGroup(const std::string& name) const;
+    
+    std::vector<std::string> GetAnimationGroupNames();
+    
+    void Clear();
+    
+    bool IsAnimationOnCooldown(const std::string& name, double currentTime_s) const;
+
+    // returns how many seconds are left until the cooldown is over for name. Returns 0 if name isn't found,
+    // negative if it isn't on cooldown
+    float TimeUntilCooldownOver(const std::string& name, double currentTime_s) const;
+    
+    void SetAnimationCooldown(const std::string& name, double cooldownExpiration_s);
+    
+  private:
+    
+    std::unordered_map<std::string, AnimationGroup> _animationGroups;
+    
+    std::unordered_map<std::string, double> _animationCooldowns;
+    
+    Util::RandomGenerator& _rng;
+    
+  }; // class AnimationGroupContainer
+  
+} // namespace Cozmo
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_AnimationGroup_AnimationGroupContainer_H__

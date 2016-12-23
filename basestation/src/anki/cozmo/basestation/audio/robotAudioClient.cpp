@@ -235,9 +235,14 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
       break;
     }
       
-    default:
-      // Do Nothing
+    case RobotAudioOutputSource::None:
+    {
+      // We have no audio device, but we need the audio track to appear to be "done", so
+      // fast forward it to the end.
+      Animations::Track<RobotAudioKeyFrame>& audioTrack = anAnimation->GetTrack<RobotAudioKeyFrame>();
+      audioTrack.MoveToEnd();
       break;
+    }
   }
   
   // Did not create animation
@@ -368,9 +373,8 @@ bool RobotAudioClient::GetGameObjectAndAudioBufferFromPool(GameObjectType& out_g
   switch (_outputSource) {
     case RobotAudioOutputSource::None:
     {
-      // Should never be in this state
-      ASSERT_NAMED(_outputSource == RobotAudioOutputSource::None,
-                   "RobotAudioClient.GetGameObjectAndAudioBuffer.RobotAudioOutputSource.None");
+      PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                   "RobotAudioClient.GetGameObjectAndAudioBuffer.RobotAudioOutputSource.None", "");
       out_gameObj = GameObjectType::Invalid;
       out_buffer = nullptr;
       break;

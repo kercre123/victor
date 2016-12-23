@@ -15,6 +15,8 @@
 #include "clad/types/deviceDataTypes.clad"
 #include "clad/types/engineErrorCodes.clad"
 #include "clad/types/engineState.clad"
+#include "clad/types/faceEnrollmentResult.clad"
+#include "clad/types/facialExpressions.clad"
 #include "clad/types/factoryTestTypes.clad"
 #include "clad/types/featureGateTypes.clad"
 #include "clad/types/firmwareTypes.clad"
@@ -31,7 +33,6 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/cladPoint.clad"
 #include "clad/types/cladRect.clad"
-#include "clad/types/facialExpressions.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
@@ -350,12 +351,12 @@ message RobotReadToolCode {
   ToolCodeInfo info
 }
 
-// RobotReachedEnrollmentCount
-//  Sent when enrollment count hits zero and enroll ID is set
-//  (Used within Engine, probably not useful to Game)
-message RobotReachedEnrollmentCount {
-    int_32  faceID,
-    uint_8  count
+// RobotEnrolledFace - Broadcast by BehaviorEnrollFace when it completes
+message FaceEnrollmentCompleted
+{
+  FaceEnrollmentResult result,
+  int_32               faceID,
+  string               name
 }
 
 // NOTE: This is separate from deleting an _observed_ face.
@@ -622,12 +623,6 @@ message FirmwareUpdateComplete {
 // The behavior wants the UI to pop up a game request
 message RequestGameStart {
   bool firstRequest
-}
-
-// Special request for face enrollment
-message RequestEnrollFace {
-  bool firstRequest,
-  int_32 face_id
 }
 
 message SparkEnded {

@@ -47,7 +47,6 @@ private:
   TestState _testState = TestState::Init;
   s32 _result = 0;
 
-  double _waitTimer = -1;
   int _framesOn = 0;
   int _framesOff = 0;
   bool _onFramesMatched = false;
@@ -199,7 +198,7 @@ s32 CST_LEDColor::UpdateSimInternal()
 
     case TestState::WaitForMessageToTransmit:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(_waitTimer, 1), 2) {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1), 2) {
         _testState = TestState::VerifyLEDAnimation;
       }
       break;

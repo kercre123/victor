@@ -70,7 +70,7 @@ namespace Anki {
     {
       if (GetSupervisor()->getTime() - start_time > timeout) {
         if (!cond) {
-          PRINT_STREAM_WARNING("CONDITION_WITH_TIMEOUT_ASSERT", "(" << condAsString << ") still false after " << timeout << " seconds. (" << file << "." << func << "." << line << ")");
+          PRINT_STREAM_WARNING("CONDITION_WITH_TIMEOUT_ASSERT", "(" << condAsString << ") still false after " << timeout << " seconds. (" << file << "." << func << "." << line << " started at: " << start_time << ")");
           _result = 255;
           
           StopMovie();
@@ -112,7 +112,7 @@ namespace Anki {
             }
           }
           
-          PRINT_STREAM_WARNING("ALL_CONDITIONS_WITH_TIMEOUT_ASSERT", "Conditions: {" << conditionsAsString << "}. Which still false after " << timeout << " seconds: " << failedConditions << "(" << file << "." << func << "." << line << ")");
+          PRINT_STREAM_WARNING("ALL_CONDITIONS_WITH_TIMEOUT_ASSERT", "Conditions: {" << conditionsAsString << "}. Which still false after " << timeout << " seconds: " << failedConditions << "(" << file << "." << func << "." << line << " started at: " << start_time << ")");
           _result = 255;
           
           StopMovie();
@@ -144,6 +144,10 @@ namespace Anki {
           std::stringstream ss;
           ss << kScreenShotsPath << _screenshotID << "_" << timeString << "_" << _screenshotNum << ".png";
           GetSupervisor()->exportImage(ss.str(), 80);
+          
+          PRINT_NAMED_INFO("CozmoSimTestController.UpdateInternal.TookScreenshot",
+                           "ID:%s Num:%d Time:%s",
+                           _screenshotID.c_str(), _screenshotNum, timeString);
           
           _screenshotNum++;
           _timeOfLastScreenshot = simTime;
@@ -216,6 +220,9 @@ namespace Anki {
       
       _screenshotInterval = interval;
       _screenshotID = screenshotID;
+      
+      PRINT_NAMED_INFO("CozmoSimTestController.TakeScreenshotsAtInterval.SettingInterval",
+                       "Interval:%f Path:%s", _screenshotInterval, kScreenShotsPath.c_str());
     }
 
     

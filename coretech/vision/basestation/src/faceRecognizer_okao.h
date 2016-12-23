@@ -54,6 +54,8 @@ namespace Vision {
     
     Result Init(HCOMMON okaoCommonHandle);
 
+    void SetIsSynchronous(bool isSynchronous);
+    
     Result   AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
@@ -77,6 +79,9 @@ namespace Vision {
     // Use N = -1 to allow ongoing enrollment.
     void SetAllowedEnrollments(s32 N, FaceID_t forFaceID);
     
+    TrackingID_t GetEnrollmentTrackID() const { return _enrollmentTrackID; }
+    FaceID_t     GetEnrollmentID()      const { return _enrollmentID; }
+    
     void RemoveTrackingID(TrackingID_t trackerID);
     void ClearAllTrackingData();
     
@@ -85,6 +90,8 @@ namespace Vision {
     // completed (the count was just reached), then that count is returned in
     // 'enrollmentCountReached'. Otherwise 0 is returned.
     EnrolledFaceEntry GetRecognitionData(TrackingID_t forTrackingID, s32& enrollmentCountReached);
+    
+    bool HasRecognitionData(TrackingID_t forTrackingID) const;
     
     Result LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces);
     Result SaveAlbum(const std::string& albumName);
@@ -196,7 +203,9 @@ namespace Vision {
     bool            _isRunningAsync = true;
     bool            _isEnrollmentCancelled = false;
     ProcessingState _state = ProcessingState::Idle;
+    void StartThread();
     void Run();
+    void StopThread();
     
     // Passed-in state for processing
     Image          _img;

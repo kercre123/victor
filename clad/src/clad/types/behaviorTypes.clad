@@ -73,6 +73,8 @@ enum uint_8 BehaviorType {
   CubeLiftWorkout,
   LiftLoadTest,
   CheckForStackAtInterval,
+  EnrollFace,
+  RespondToRenameFace,
 
   Count
 }

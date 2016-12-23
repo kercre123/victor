@@ -19,7 +19,6 @@ namespace FaceEnrollment {
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
       _FaceEnrollmentGame.SharedMinigameView.ShowQuitButton();
       _FaceEnrollmentGame.ShowShelf();
-      _FaceEnrollmentGame.SetReactionaryBehaviors(true);
 
       _FaceListSlideInstance = _FaceEnrollmentGame.SharedMinigameView.ShowWideGameStateSlide(_FaceEnrollmentGame.FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
       _FaceListSlideInstance.Initialize(_CurrentRobot.EnrolledFaces, _FaceEnrollmentGame.UpdateThresholdLastSeenSeconds, _FaceEnrollmentGame.UpdateThresholdLastEnrolledSeconds);
@@ -29,7 +28,6 @@ namespace FaceEnrollment {
       _FaceListSlideInstance.OnDeleteEnrolledFace += RequestDeleteEnrolledFace;
       _FaceListSlideInstance.OnReEnrollFaceRequested += _FaceEnrollmentGame.RequestReEnrollFace;
 
-      _CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.MeetCozmoFindFaces);
       _CurrentRobot.OnEnrolledFaceRemoved += HandleEraseEnrolledFace;
     }
 
@@ -39,11 +37,8 @@ namespace FaceEnrollment {
 
       _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
       _FaceEnrollmentGame.SharedMinigameView.HideShelf();
-      _FaceEnrollmentGame.SetReactionaryBehaviors(false);
 
       if (_CurrentRobot != null) {
-        _CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-        _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
         _CurrentRobot.OnEnrolledFaceRemoved -= HandleEraseEnrolledFace;
       }
 

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+
 namespace FaceEnrollment {
   public class FaceEditDoneState : State {
 
@@ -23,6 +24,7 @@ namespace FaceEnrollment {
       base.Enter();
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
 
+      // Send rename and wait for confirmation
       _CurrentRobot.OnEnrolledFaceRenamed += HandleRobotRenamedEnrolledFace;
       _CurrentRobot.UpdateEnrolledFaceByID(_FaceID, _OldNameForFace, _NewNameForFace);
     }
@@ -33,11 +35,10 @@ namespace FaceEnrollment {
     }
 
     private void HandleRobotRenamedEnrolledFace(int faceId, string faceName) {
+      // Rename confirmed: now go back to face slide view (with updated name)
       _CurrentRobot.OnEnrolledFaceRenamed -= HandleRobotRenamedEnrolledFace;
       _FaceEnrollmentGame.SharedMinigameView.HideBackButton();
-      _CurrentRobot.SayTextWithEvent(faceName, Anki.Cozmo.AnimationTrigger.MeetCozmoRenameFaceSayName, Anki.Cozmo.SayTextIntent.Name_Normal, callback: (success) => {
-        _StateMachine.SetNextState(new FaceSlideState());
-      });
+      _StateMachine.SetNextState(new FaceSlideState());
     }
   }
 

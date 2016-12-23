@@ -224,6 +224,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::StartEngine& msg)
 {
+  _context->SetRandomSeed(msg.random_seed);
+  
   if (EngineState::Running == _engineState) {
     PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.StartEngine.AlreadyStarted", "");
     return;

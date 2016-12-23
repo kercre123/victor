@@ -100,12 +100,11 @@ namespace Cozmo {
     u16 kInitialExposureTime_ms = 16;
   }
   
-  VisionComponent::VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context)
+  VisionComponent::VisionComponent(Robot& robot, const CozmoContext* context)
   : _robot(robot)
   , _context(context)
   , _vizManager(context->GetVizManager())
   , _camera(robot.GetID())
-  , _runMode(mode)
   {
     std::string dataPath("");
     if(context->GetDataPlatform() != nullptr) {
@@ -130,7 +129,6 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByID>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::LoadFaceAlbumFromFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveFaceAlbumToFile>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceEnrollmentPose>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateEnrolledFaceByID>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionRunMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
@@ -214,7 +212,8 @@ namespace Cozmo {
       _visionSystem->UpdateCameraCalibration(_camCalib);
       Unlock();
      
-      if(_runMode == RunMode::Asynchronous) {
+      if(!_isSynchronous)
+      {
         Start();
       }
       
@@ -237,19 +236,20 @@ namespace Cozmo {
   } // SetCameraCalibration()
   
   
-  void VisionComponent::SetRunMode(RunMode mode) {
-    if(mode == RunMode::Synchronous && _runMode == RunMode::Asynchronous) {
-      PRINT_NAMED_INFO("VisionComponent.SetRunMode.SwitchToSync", "");
+  void VisionComponent::SetIsSynchronous(bool isSynchronous) {
+    if(isSynchronous && !_isSynchronous) {
+      PRINT_NAMED_INFO("VisionComponent.SetSynchronousMode.SwitchToSync", "");
       if(_running) {
         Stop();
       }
-      _runMode = mode;
+      _isSynchronous = true;
     }
-    else if(mode == RunMode::Asynchronous && _runMode == RunMode::Synchronous) {
-      PRINT_NAMED_INFO("VisionComponent.SetRunMode.SwitchToAsync", "");
-      _runMode = mode;
+    else if(!isSynchronous && _isSynchronous) {
+      PRINT_NAMED_INFO("VisionComponent.SetSynchronousMode.SwitchToAsync", "");
+      _isSynchronous = false;
       Start();
     }
+    _visionSystem->SetFaceRecognitionIsSynchronous(_isSynchronous);
   }
   
   void VisionComponent::Start()
@@ -578,48 +578,42 @@ namespace Cozmo {
                              "Vision: <PAUSED>");
       }
       
-      switch(_runMode)
+      if(_isSynchronous)
       {
-        case RunMode::Synchronous:
-        {
-          if(!_paused) {
-            UpdateVisionSystem(_nextPoseData, encodedImage);
-          }
-          break;
+        if(!_paused) {
+          UpdateVisionSystem(_nextPoseData, encodedImage);
         }
-        case RunMode::Asynchronous:
-        {
-          if(!_paused) {
-            ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
-            Lock();
+      }
+      else
+      {
+        if(!_paused) {
+          ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
+          Lock();
+          
+          const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
+                                                               _robot.GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
+          if(isDroppingFrame)
+          {
+            PRINT_CH_DEBUG("VisionComponent",
+                           "VisionComponent.SetNextImage.DroppedFrame",
+                           "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
+                           encodedImage.GetTimeStamp(),
+                           _nextImg.GetTimeStamp(),
+                           _currentImg.GetTimeStamp());
+          }
+          _dropStats.Update(isDroppingFrame);
+          
+          // Make encoded image the new "next" image
+          std::swap(_nextImg, encodedImage);
+          
+          // Because encodedImage mantains state in the form of _prevTimestamp and _nextImg has garbage data
+          // so after the swap encodedImage now has garbage data so we need to reassign prevTimestamp
+          encodedImage.SetPrevTimestamp(_nextImg.GetPrevTimestamp());
+          
+          Unlock();
+        }
+      }
 
-            const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
-                                                                 _robot.GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
-            if(isDroppingFrame)
-            {
-              PRINT_CH_DEBUG("VisionComponent",
-                             "VisionComponent.SetNextImage.DroppedFrame",
-                             "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
-                             encodedImage.GetTimeStamp(),
-                             _nextImg.GetTimeStamp(),
-                             _currentImg.GetTimeStamp());
-            }
-            _dropStats.Update(isDroppingFrame);
-            
-            // Make encoded image the new "next" image
-            std::swap(_nextImg, encodedImage);
-            
-            // Because encodedImage mantains state in the form of _prevTimestamp and _nextImg has garbage data
-            // so after the swap encodedImage now has garbage data so we need to reassign prevTimestamp
-            encodedImage.SetPrevTimestamp(_nextImg.GetPrevTimestamp());
-            
-            Unlock();
-          }
-          break;
-        }
-        default:
-          PRINT_NAMED_ERROR("VisionComponent.SetNextImage.InvalidRunMode", "");
-      } // switch(_runMode)
       
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Update.NoCamCalib",
@@ -1075,11 +1069,8 @@ namespace Cozmo {
       if(faceDetection.GetNumEnrollments() > 0) {
         PRINT_NAMED_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
                           "Count=%d", faceDetection.GetNumEnrollments());
-        ExternalInterface::RobotReachedEnrollmentCount enrollCountMsg;
-        enrollCountMsg.faceID = faceDetection.GetID();
-        enrollCountMsg.count  = faceDetection.GetNumEnrollments();
         
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
+        _robot.GetFaceWorld().SetFaceEnrollmentComplete(true);
       }
       
       // If we were moving too fast at the timestamp the face was detected then don't update it
@@ -2321,13 +2312,6 @@ namespace Cozmo {
     EnableMode(payload.mode, payload.enable);
   }
   
-  
-  template<>
-  void VisionComponent::HandleMessage(const ExternalInterface::SetFaceEnrollmentPose& msg)
-  {
-    SetFaceEnrollmentMode(msg.pose);
-  }
-  
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::VisionWhileMoving& msg)
   {
@@ -2337,7 +2321,7 @@ namespace Cozmo {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::VisionRunMode& msg)
   {
-    SetRunMode((msg.isSync ? RunMode::Synchronous : RunMode::Asynchronous));
+    SetIsSynchronous(msg.isSync);
   }
   
   template<>

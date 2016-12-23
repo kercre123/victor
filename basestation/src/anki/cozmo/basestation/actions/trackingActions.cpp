@@ -46,6 +46,7 @@ ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActi
           type,
           ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
 , _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
+, _originalEyeDartDist(-1.f)
 {
 
 }
@@ -58,8 +59,10 @@ ITrackAction::~ITrackAction()
     _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
   }
 
-  // Make sure to restore original eye dart distance
-  _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+  if(_originalEyeDartDist >= 0.f) {
+    // Make sure to restore original eye dart distance
+    _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+  }
   
   // Make sure we abort any sound actions we triggered
   _robot.GetActionList().Cancel(_soundAnimTag);
