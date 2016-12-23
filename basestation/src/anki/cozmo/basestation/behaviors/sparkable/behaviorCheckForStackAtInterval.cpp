@@ -116,7 +116,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(Robot& robo
     ghostPose.SetTranslation({
       ghostPose.GetTranslation().x(),
       ghostPose.GetTranslation().y(),
-      ghostPose.GetTranslation().z() + obj->GetSize().z()});
+      ghostPose.GetTranslation().z() + obj->GetDimInParentFrame<'Z'>(ghostPose)});
     
     robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
     

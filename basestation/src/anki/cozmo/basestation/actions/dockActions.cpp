@@ -711,14 +711,17 @@ namespace Anki {
       if(_checkForObjectOnTopOf)
       {
         Pose3d pose = dockObject->GetPose().GetWithRespectToOrigin();
-        const Point3f rotatedSize = dockObject->GetPose().GetRotation() * dockObject->GetSize();
-        pose.SetTranslation({pose.GetTranslation().x(),
-                             pose.GetTranslation().y(),
-                             pose.GetTranslation().z() + rotatedSize.z()});
-        
+        const Point3f rotatedSize = dockObject->GetSizeInParentFrame(pose);
+        pose.SetTranslation({
+          pose.GetTranslation().x(),
+          pose.GetTranslation().y(),
+          pose.GetTranslation().z() + rotatedSize.z()
+        });
+          
         VisuallyVerifyNoObjectAtPoseAction* verifyNoObjectOnTopOfAction = new VisuallyVerifyNoObjectAtPoseAction(_robot,
                                                                                                                  pose,
                                                                                                                  rotatedSize * 0.5f);
+
         verifyNoObjectOnTopOfAction->AddIgnoreID(dockObject->GetID());
         
         // Disable the visual verification from issuing a completion signal
@@ -1782,10 +1785,10 @@ namespace Anki {
       }
       
       Pose3d dockObjectWRTRobot;
-      dockObject->GetZRotatedPointAboveObjectCenter()
-                .GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
-      const float robotObjRelRotation_rad =
-                    dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
+      const Pose3d topPose = dockObject->GetZRotatedPointAboveObjectCenter(0.5f);
+      const bool success = topPose.GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
+      ASSERT_NAMED(success, "PlaceRelObjectAction.Verify.GetWrtRobotPoseFailed");
+      const float robotObjRelRotation_rad = dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       // consts for comparing relative robot/block alignment
       const float kRotationTolerence_rad = DEG_TO_RAD(15.f);
@@ -1814,7 +1817,8 @@ namespace Anki {
         yAbsolutePlacementOffset_mm = -_relOffsetY_mm;
       }else{
         PRINT_NAMED_WARNING("PlaceRelObjectAction.CalculatePlacementOffset.InvalidOrientation",
-                          "Robot and block are not within alignment threshold - rotation:%f threshold:%f", RAD_TO_DEG(robotObjRelRotation_rad), kRotationTolerence_rad);
+                            "Robot and block are not within alignment threshold - rotation:%f threshold:%f",
+                            RAD_TO_DEG(robotObjRelRotation_rad), kRotationTolerence_rad);
         return ActionResult::DID_NOT_REACH_PREACTION_POSE;
       }
       

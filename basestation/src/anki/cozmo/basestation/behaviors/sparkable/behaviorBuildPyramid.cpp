@@ -200,9 +200,9 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
         return;
       }
       
-      const Pose3d& idealTopMarkerPose = staticBlock->GetZRotatedPointAboveObjectCenter();
+      const Pose3d& idealUnrotatedPose = staticBlock->GetZRotatedPointAboveObjectCenter(0.f);
       Pose3d idealPlacementWRTUnrotatedStatic;
-      if(!idealTopPlacementWRTWorld.GetWithRespectTo(idealTopMarkerPose, idealPlacementWRTUnrotatedStatic)){
+      if(!idealTopPlacementWRTWorld.GetWithRespectTo(idealUnrotatedPose, idealPlacementWRTUnrotatedStatic)){
         return;
       }
       

@@ -641,7 +641,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
   // additional threshold so that we don't stack on top of a cube in the border. This prevents stacking on
   // a cube close to the border, which would cause the stacked cube to be out of the beacon
   const float kPrecisionOffset_mm = 10.0f; // this is just to account for errors when readjusting cube positions
-  const float inwardThreshold_mm = object->GetSize().x() + kPrecisionOffset_mm;
+  const float inwardThreshold_mm = object->GetDimInParentFrame<'X'>() + kPrecisionOffset_mm;
   
   filter.SetFilterFcn([object,beacon,&robot,inwardThreshold_mm,this](const ObservableObject* blockPtr)
   {

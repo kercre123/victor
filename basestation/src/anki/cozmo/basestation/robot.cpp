@@ -3382,21 +3382,6 @@ bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& 
 
   return true;
 }
-  
-// Helper for the following functions to reason about the object's height (mid or top)
-// relative to specified threshold
-inline static bool IsTooHigh(const ObservableObject& object, const Pose3d& poseWrtRobot,
-                             float heightMultiplier, float heightTol, bool useTop)
-{
-  const Point3f rotatedSize( poseWrtRobot.GetRotation() * object.GetSize() );
-  const float rotatedHeight = std::abs( rotatedSize.z() );
-  float z = poseWrtRobot.GetTranslation().z();
-  if(useTop) {
-    z += rotatedHeight*0.5f;
-  }
-  const bool isTooHigh = z > (heightMultiplier * rotatedHeight + heightTol);
-  return isTooHigh;
-}
     
 bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
 {
@@ -3410,7 +3395,7 @@ bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
   }
             
   // check if it's too high to stack on
-  if ( IsTooHigh(objectToStackOn, relPos, 1.f, STACKED_HEIGHT_TOL_MM, true) ) {
+  if ( objectToStackOn.IsPoseTooHigh(relPos, 1.f, STACKED_HEIGHT_TOL_MM, 0.5f) ) {
     return false;
   }
     
@@ -3426,7 +3411,7 @@ bool Robot::CanPickUpObject(const ObservableObject& objectToPickUp) const
   }
       
   // check if it's too high to pick up
-  if ( IsTooHigh(objectToPickUp, relPos, 2.f, STACKED_HEIGHT_TOL_MM, true) ) {
+  if ( objectToPickUp.IsPoseTooHigh(relPos, 2.f, STACKED_HEIGHT_TOL_MM, 0.5f) ) {
     return false;
   }
     
@@ -3442,7 +3427,7 @@ bool Robot::CanPickUpObjectFromGround(const ObservableObject& objectToPickUp) co
   }
       
   // check if it's too high to pick up
-  if ( IsTooHigh(objectToPickUp, relPos, 0.5f, ON_GROUND_HEIGHT_TOL_MM, false) ) {
+  if ( objectToPickUp.IsPoseTooHigh(relPos, 0.5f, ON_GROUND_HEIGHT_TOL_MM, 0.f) ) {
     return false;
   }
     

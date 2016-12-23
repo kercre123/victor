@@ -2118,11 +2118,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // default filter function which rules out objects with unknown pose state
     filter.AddFilterFcn([minHeight, maxHeight, padding, &rectangles](const ObservableObject* object)
     {
-      const Point3f rotatedSize( object->GetPose().GetRotation() * object->GetSize() );
+      const f32 zSize = object->GetDimInParentFrame<'Z'>();
       const f32 objectCenter = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
         
-      const f32 objectTop = objectCenter + (0.5f * rotatedSize.z());
-      const f32 objectBottom = objectCenter - (0.5f * rotatedSize.z());
+      const f32 objectTop    = objectCenter + (0.5f * zSize);
+      const f32 objectBottom = objectCenter - (0.5f * zSize);
         
       const bool bothAbove = (objectTop >= maxHeight) && (objectBottom >= maxHeight);
       const bool bothBelow = (objectTop <= minHeight) && (objectBottom <= minHeight);
@@ -2935,7 +2935,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
       // be smaller than the threshold to not report
-      ASSERT_NAMED(kObjectPositionChangeToReport_mm < object->GetSize().z()*0.5f, "OnObjectPoseWillChange.ChangeThresholdTooBig");
+      ASSERT_NAMED(kObjectPositionChangeToReport_mm < object->GetDimInParentFrame<'Z'>()*0.5f,
+                   "OnObjectPoseWillChange.ChangeThresholdTooBig");
       const float distThreshold = kObjectPositionChangeToReport_mm;
       const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
 
@@ -3002,11 +3003,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       {
         INavMemoryMap* memoryMap = matchPair->second.get();
         
-        // TODO turn into helper, see Robot.cpp's IsTooHigh
-        const Point3f rotatedSizeWrtRobot(objWrtRobot.GetRotation() * object.GetSize());
-        const f32 bottomOfObjectWrtRobot = objWrtRobot.GetTranslation().z() - (0.5f* std::abs(rotatedSizeWrtRobot.z()));
-        const float zFloatingThreshold = std::abs(rotatedSizeWrtRobot.z()*0.5f);
-        const bool isFloating = FLT_GT(std::abs(bottomOfObjectWrtRobot), zFloatingThreshold);
+        const bool isFloating = object.IsPoseTooHigh(objWrtRobot, 1.f, STACKED_HEIGHT_TOL_MM, 0.f);
         if ( isFloating )
         {
           // store in as a reported pose, but set as not in map (the pose value is not relevant)
@@ -4462,16 +4459,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Find the point at the top middle of the object on bottom
     // (or if !onTop, the bottom middle of the object on top)
-    const Vec3f& objSize = referenceObject.GetSize();
-    const Vec3f& zCoordRotation = refWrtOrigin.GetRotation().GetRotationMatrix().GetRow(2);
-    const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * objSize.x());
-    const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * objSize.y());
-    const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * objSize.z());
-    
-    const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
-                                                  std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
+    const f32 zSize = referenceObject.GetDimInParentFrame<'Z'>(refWrtOrigin);
     const f32 topOfObjectOnBottom = (refWrtOrigin.GetTranslation().z() +
-                                    (onTop ? 0.5f : -0.5f) * maxRotatedAxis_zValue);
+                                    (onTop ? 0.5f : -0.5f) * zSize);
     
     BlockWorldFilter filter(filterIn);
     filter.AddIgnoreID(referenceObject.GetID());
@@ -4504,7 +4494,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         candidateProjectedTranslation.z() = candidateCurrentZ;
         candidateWrtOrigin.SetTranslation(candidateProjectedTranslation);
 
-
         if(!projectedQuadsIntersect)
         {
           return false;
@@ -4512,16 +4501,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         
         // Find the point at bottom middle of the object we're checking to be on top
         // (or if !onTop, the top middle of object we're checking to be underneath)
-        const Vec3f& objSize = candidateObject->GetSize();
-        const Vec3f& zCoordRotation = candidateWrtOrigin.GetRotation().GetRotationMatrix().GetRow(2);
-        const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * objSize.x());
-        const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * objSize.y());
-        const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * objSize.z());
-        
-        const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
-                                                      std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
+        const f32 zSize = candidateObject->GetDimInParentFrame<'Z'>(candidateWrtOrigin);
         const f32 bottomOfCandidateObject = (candidateWrtOrigin.GetTranslation().z() +
-                                            (onTop ? -0.5f : 0.5f) * maxRotatedAxis_zValue);
+                                            (onTop ? -0.5f : 0.5f) * zSize);
         
         // If the top of the bottom object and the bottom the candidate top object are
         // close enough together, return this as the object on top

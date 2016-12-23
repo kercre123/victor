@@ -1401,9 +1401,9 @@ namespace Anki {
                 using PoseIter = std::vector<Pose3d>::iterator;
 
                 for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); ){
-                  const Pose3d& idealTopMarker = object->GetZRotatedPointAboveObjectCenter();
+                  const Pose3d& idealCenterPose = object->GetZRotatedPointAboveObjectCenter(0.f);
                   Pose3d preDocWRTBlock;
-                  fullIter->GetWithRespectTo(idealTopMarker, preDocWRTBlock);
+                  fullIter->GetWithRespectTo(idealCenterPose, preDocWRTBlock);
                   const float poseX = preDocWRTBlock.GetTranslation().x();
                   const float poseY = preDocWRTBlock.GetTranslation().y();
                   const float minIllegalOffset = 1.f;

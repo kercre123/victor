@@ -161,7 +161,7 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
     return;
   }
 
-  const float zSize = obj->GetSize().z();
+  const float zSize = obj->GetDimInParentFrame<'Z'>();
   
   const float offsetAboveTarget = zSize;
   const float offsetBelowTarget = -zSize;

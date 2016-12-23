@@ -89,8 +89,8 @@ bool PyramidBase::BlocksFormPyramidBase(const Robot& robot, const ObservableObje
   Pose3d baseCorner2;
   if(GetBaseInteriorCorners(robot, staticBlock, baseBlock, staticCorner1, staticCorner2) &&
      GetBaseInteriorCorners(robot, baseBlock, staticBlock, baseCorner1, baseCorner2)){
-    const Pose3d& basePoseCenterAtTop = baseBlock->GetZRotatedPointAboveObjectCenter();
-    const Pose3d& staticPoseCenterAtTop = staticBlock->GetZRotatedPointAboveObjectCenter();
+    const Pose3d& basePoseCenterAtTop = baseBlock->GetZRotatedPointAboveObjectCenter(0.5f);
+    const Pose3d& staticPoseCenterAtTop = staticBlock->GetZRotatedPointAboveObjectCenter(0.5f);
     
     float staticDist1;
     float staticDist2;
@@ -126,10 +126,12 @@ bool PyramidBase::GetBaseInteriorCorners(const Robot& robot,
   allPoints.push_back(boundingQuad.GetBottomLeft());
   allPoints.push_back(boundingQuad.GetTopLeft());
 
+  const float zSize = targetCube->GetDimInParentFrame<'Z'>();
+  
   // calculate distance from corners to center of other block
   for(const auto& point: allPoints){
     Pose3d pointAsPose = Pose3d(0, Z_AXIS_3D(),
-                                {point.x(), point.y(), targetCube->GetSize().z()},
+                                {point.x(), point.y(), zSize},
                                 robot.GetWorldOrigin());
     float dist;
     if(!ComputeDistanceSQBetween(pointAsPose, otherCube->GetPose(), dist)){
@@ -160,14 +162,15 @@ bool PyramidBase::GetBaseInteriorMidpoint(const Robot& robot,
     return false;
   }
   
-  const float edgeMiddleX = (corner1.GetWithRespectToOrigin().GetTranslation().x() +
-                                   corner2.GetWithRespectToOrigin().GetTranslation().x())/2;
-  const float edgeMiddleY = (corner1.GetWithRespectToOrigin().GetTranslation().y() +
-                                   corner2.GetWithRespectToOrigin().GetTranslation().y())/2;
+  corner1 = corner1.GetWithRespectToOrigin();
+  corner2 = corner2.GetWithRespectToOrigin();
   
-  midPoint = Pose3d(0, Z_AXIS_3D(), {edgeMiddleX,
-                                     edgeMiddleY,
-                                     targetCube->GetSize().z()},
+  const float edgeMiddleX = 0.5f * (corner1.GetTranslation().x() + corner2.GetTranslation().x());
+  const float edgeMiddleY = 0.5f * (corner1.GetTranslation().y() + corner2.GetTranslation().y());
+  
+  const float zSize = targetCube->GetDimInParentFrame<'Z'>();
+  
+  midPoint = Pose3d(0, Z_AXIS_3D(), {edgeMiddleX, edgeMiddleY, zSize},
                     &robot.GetPose().FindOrigin());
   return true;
 }
@@ -194,13 +197,13 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
   }
   
   // Check that the block is above the static block
-  const Pose3d staticWrtOrigin = staticBlock->GetPose().GetWithRespectToOrigin();
-  const Point3f rotatedBtmSize(staticWrtOrigin.GetRotation() * staticBlock->GetSize());
-  const float staticBlockTopZ = staticWrtOrigin.GetTranslation().z() + (0.5f * std::abs(rotatedBtmSize.z()));
+  const Pose3d  staticWrtOrigin = staticBlock->GetPose().GetWithRespectToOrigin();
+  const Point3f rotatedBtmSize  = staticBlock->GetSizeInParentFrame(staticWrtOrigin);
+  const float   staticBlockTopZ = staticWrtOrigin.GetTranslation().z() + (0.5f * std::abs(rotatedBtmSize.z()));
   
-  const Pose3d topWrtOrigin = targetObject->GetPose().GetWithRespectToOrigin();
-  const Point3f rotatedTopSize(topWrtOrigin.GetRotation() * targetObject->GetSize());
-  const float topBlockBottomZ = topWrtOrigin.GetTranslation().z() - (0.5f * std::abs(rotatedTopSize.z()));
+  const Pose3d  topWrtOrigin    = targetObject->GetPose().GetWithRespectToOrigin();
+  const float   rotatedTopZSize = targetObject->GetDimInParentFrame<'Z'>(topWrtOrigin);
+  const float   topBlockBottomZ = topWrtOrigin.GetTranslation().z() - (0.5f * rotatedTopZSize);
   
   const bool topAtAppropriateHeight = Util::IsNear(topBlockBottomZ, staticBlockTopZ, STACKED_HEIGHT_TOL_MM);
   if(!topAtAppropriateHeight){
@@ -214,8 +217,8 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
     return false;
   }
   
-  const float xTopBlockOverhangTolerence_mm = staticBlock->GetSize().x()/2 - kTopBlockOverhangMin_mm;
-  const float yTopBlockOverhangTolerence_mm = staticBlock->GetSize().y()/2 - kTopBlockOverhangMin_mm;
+  const float xTopBlockOverhangTolerence_mm = (0.5f * rotatedBtmSize.x()) - kTopBlockOverhangMin_mm;
+  const float yTopBlockOverhangTolerence_mm = (0.5f * rotatedBtmSize.y()) - kTopBlockOverhangMin_mm;
   const float arbitrarilyHighZ = 100.f; // this has already been checked
   const Point3f distanceTolerence = Point3f(xTopBlockOverhangTolerence_mm, yTopBlockOverhangTolerence_mm, arbitrarilyHighZ);
   

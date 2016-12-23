@@ -362,13 +362,16 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
   
   // Construct a list of valid Placement poses next to the block
   f32 nearestDistanceSQ = FLT_MAX;
-  f32 blockSize = object->GetSize().y() + kCubeSizeBuffer_mm;
+  const Point3f blockSize = object->GetSizeInParentFrame();
+  const f32 blockXSize = blockSize.x() + kCubeSizeBuffer_mm;
+  const f32 blockYSize = blockSize.y() + kCubeSizeBuffer_mm;
+  
   using Offsets =  std::pair<float,float>;
   std::vector<Offsets> offsetList;
-  offsetList.emplace_back(blockSize, 0);
-  offsetList.emplace_back(0, blockSize);
-  offsetList.emplace_back(0, -blockSize);
-  offsetList.emplace_back(-blockSize, 0);
+  offsetList.emplace_back(blockXSize, 0);
+  offsetList.emplace_back(0, blockYSize);
+  offsetList.emplace_back(0, -blockYSize);
+  offsetList.emplace_back(-blockXSize, 0);
   
   // assign default values, just in case
   _baseBlockOffsetX = offsetList[0].first;
@@ -376,11 +379,10 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
 
   for(const auto& entry: offsetList){
     if(CheckBaseBlockPoseIsFree(entry.first, entry.second)){
-      Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter();
-      Pose3d potentialPose = Pose3d(0, Z_AXIS_3D(), {entry.first,
-                                                     entry.second,
-                                                     -object->GetSize().z()},
-                                    &zRotatedPose);
+      Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter(0.f);
+      Pose3d potentialPose(0, Z_AXIS_3D(),
+                           {entry.first, entry.second, -blockSize.z()},
+                           &zRotatedPose);
       f32 newDistSquared;
       ComputeDistanceSQBetween(_robot.GetPose(), potentialPose, newDistSquared);
       
@@ -405,26 +407,19 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
     return false;
   }
   
-  
   BlockWorldFilter filter;
   filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
   filter.SetIgnoreIDs({_staticBlockID});
   
   // get the size of the placing object
-  const float xSize = placingObject->GetSize().x();
-  const float ySize = placingObject->GetSize().y();
-  const float zSize = placingObject->GetSize().z();
-
-  Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter();
-  Pose3d placePose = Pose3d(0, Z_AXIS_3D(), {xSize,
-                                             ySize,
-                                             0},
-                                &zRotatedPose);
+  const Point3f rotatedSize = placingObject->GetSizeInParentFrame();
   
-  ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(
-                                            placePose.GetWithRespectToOrigin(),
-                                            {xSize, ySize, zSize}, filter);
-  return closestObject == nullptr;
+  const Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter(0.f);
+  const Pose3d placePose(0, Z_AXIS_3D(), {rotatedSize.x(), rotatedSize.y(), 0}, &zRotatedPose);
+  
+  ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(placePose.GetWithRespectToOrigin(),
+                                                                               rotatedSize, filter);
+  return (closestObject == nullptr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
