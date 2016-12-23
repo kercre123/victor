@@ -395,8 +395,21 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void HandleRobotCarryingObjectSet(ObservableObject newObjectInLift) {
       bool isCubeInLift = (newObjectInLift != null && (newObjectInLift is LightCube));
-      if (_IsCubeInLift != isCubeInLift) {
+
+      // Only update on carry state if going from carrying to not carrying.
+      // Can only go from not carrying to carrying based on the result of the pickup action
+      // which is handled by HandlePickupActionResult()
+      if (_IsCubeInLift && !isCubeInLift) {
         _IsCubeInLift = isCubeInLift;
+        UpdateContextMenu();
+      }
+    }
+
+    // Updates context menus based on result of pickup action
+    // which can only take it from a non-carrying to a carrying state.
+    public void HandlePickupActionResult(bool success) {
+      if (!_IsCubeInLift && success) {
+        _IsCubeInLift = true;
         UpdateContextMenu();
       }
     }

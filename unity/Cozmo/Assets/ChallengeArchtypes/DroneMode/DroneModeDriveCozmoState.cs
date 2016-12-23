@@ -474,7 +474,7 @@ namespace Cozmo {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.PickupObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandleActionFinished);
+            _CurrentRobot.PickupObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandlePickupActionFinished);
             DisableInput();
             IsPerformingAction = true;
           }
@@ -556,6 +556,11 @@ namespace Cozmo {
           _CurrentRobot.CancelCallback(HandleActionFinished);
           EnableInput();
           IsPerformingAction = false;
+        }
+
+        private void HandlePickupActionFinished(bool success) {
+          _DroneModeControlsSlide.HandlePickupActionResult(success);
+          HandleActionFinished(success);
         }
 
         #endregion
