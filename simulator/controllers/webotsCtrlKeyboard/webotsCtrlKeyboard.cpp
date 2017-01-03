@@ -25,6 +25,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/behaviorChooserType.h"
