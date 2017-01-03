@@ -167,7 +167,7 @@ std::vector<u8> ImageBrightnessHistogram::ComputePercentiles(const std::set<f32>
     }
   }
     
-  ASSERT_NAMED(values.size() == p_list.size(), "ImageBrightnessHistogram.ComputePercentile.SizeMismatch");
+  DEV_ASSERT(values.size() == p_list.size(), "ImageBrightnessHistogram.ComputePercentile.SizeMismatch");
   
   return values;
 }

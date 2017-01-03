@@ -59,7 +59,7 @@ namespace Anki {
       for(auto & marker : markerList) {
         uniqueCodes.insert(marker.GetCode());
       }
-      ASSERT_NAMED(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
+      DEV_ASSERT(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
     }
     
     ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
@@ -67,10 +67,11 @@ namespace Anki {
     {
       
       ObjectType objType = GetTypeFromActiveObjectType(activeObjectType);
-      ASSERT_NAMED(objType == ObjectType::Block_LIGHTCUBE1 ||
-                   objType == ObjectType::Block_LIGHTCUBE2 ||
-                   objType == ObjectType::Block_LIGHTCUBE3,
-                   "ActiveCube.InvalidFactoryID");
+      DEV_ASSERT(objType == ObjectType::Block_LIGHTCUBE1 ||
+                 objType == ObjectType::Block_LIGHTCUBE2 ||
+                 objType == ObjectType::Block_LIGHTCUBE3,
+                 "ActiveCube.InvalidFactoryID");
+      DEV_ASSERT_USED(objType);
       
       _activeID = activeID;
       _factoryID = factoryID;

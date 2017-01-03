@@ -434,7 +434,7 @@ namespace Vision {
 
   void ObservableObject::SetObservationTimes(const ObservableObject* otherObject)
   {
-    ASSERT_NAMED(nullptr != otherObject, "ObservableObject.SetObservationTimes.NullOtherObject");
+    DEV_ASSERT(nullptr != otherObject, "ObservableObject.SetObservationTimes.NullOtherObject");
     
     _lastObservedTime = std::max(_lastObservedTime, otherObject->_lastObservedTime);
     

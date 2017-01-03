@@ -547,7 +547,7 @@ namespace Anki {
   {
     const T qmagsq = Point<4,T>::LengthSq();
     
-    ASSERT_NAMED(!NEAR_ZERO(qmagsq), "UnitQuaternion.Normalize.NearZero");
+    DEV_ASSERT(!NEAR_ZERO(qmagsq), "UnitQuaternion.Normalize.NearZero");
     
     if (std::abs(1.0 - qmagsq) < 2.107342e-08) {
       // This is an approximation of dividing by the square root, when the

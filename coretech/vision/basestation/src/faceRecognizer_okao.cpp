@@ -132,7 +132,7 @@ namespace Vision {
           } else if(runModeStr == JsonKey::Synchronous) {
             _isRunningAsync = false;
           } else {
-            ASSERT_NAMED(false, "FaceRecognizer.Constructor.BadRunMode");
+            DEV_ASSERT(false, "FaceRecognizer.Constructor.BadRunMode");
           }
         }
       }
@@ -382,8 +382,8 @@ namespace Vision {
       } else {
         
         auto recIDenrollData  = _enrollmentData.find(recognizedID);
-        ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
-                     "FaceRecognizer.UpdateRecognitionData.MissingEnrollmentData");
+        DEV_ASSERT(recIDenrollData  != _enrollmentData.end(),
+                   "FaceRecognizer.UpdateRecognitionData.MissingEnrollmentData");
         
         FaceID_t mergeTo = Vision::UnknownFaceID, mergeFrom = Vision::UnknownFaceID;
         
@@ -406,9 +406,9 @@ namespace Vision {
         else if(false == recIDenrollData->second.IsForThisSessionOnly() &&
                 false == faceIDenrollData->second.IsForThisSessionOnly())
         {
-          ASSERT_NAMED(!faceIDenrollData->second.GetName().empty() &&
-                       !recIDenrollData->second.GetName().empty(),
-                       "FaceRecognizer.UpdateRecognitionData.PermanentIDsWithNoNames");
+          DEV_ASSERT(!faceIDenrollData->second.GetName().empty() &&
+                     !recIDenrollData->second.GetName().empty(),
+                     "FaceRecognizer.UpdateRecognitionData.PermanentIDsWithNoNames");
           
           // Both IDs are named and permanent. Issue a warning, because it's
           // unclear we'd want to merge two separately enrolled people! We
@@ -428,9 +428,9 @@ namespace Vision {
         }
         else {
           // Both IDs are for this session only. Keep the oldest one.
-          ASSERT_NAMED(faceIDenrollData->second.IsForThisSessionOnly() &&
-                       recIDenrollData->second.IsForThisSessionOnly(),
-                       "FaceRecognizer.UpdateRecognitionData.BothIDsNotSessionOnly");
+          DEV_ASSERT(faceIDenrollData->second.IsForThisSessionOnly() &&
+                     recIDenrollData->second.IsForThisSessionOnly(),
+                     "FaceRecognizer.UpdateRecognitionData.BothIDsNotSessionOnly");
           
           if(faceIDenrollData->second.GetEnrollmentTime() <= recIDenrollData->second.GetEnrollmentTime())
           {
@@ -488,8 +488,7 @@ namespace Vision {
       
     } else {
       // We recognized this person as the same ID already assigned to its tracking ID
-      ASSERT_NAMED(faceID == recognizedID,
-                   "FaceRecognizer.UpdateRecognitionData.UnexpectedRecognizedID");
+      DEV_ASSERT(faceID == recognizedID, "FaceRecognizer.UpdateRecognitionData.UnexpectedRecognizedID");
     }
     
     // Update the stored faceID assigned to this trackerID
@@ -520,7 +519,7 @@ namespace Vision {
         // was received while the recognition thread was running on a detection.
         // That detection ID is no longer valid, so drop the result on the floor.
         // This should only be possible when running asynchronously.
-        ASSERT_NAMED(_isRunningAsync, "FaceRecognizer.GetRecognitionData.InvalidTrackIDinSyncMode");
+        DEV_ASSERT(_isRunningAsync, "FaceRecognizer.GetRecognitionData.InvalidTrackIDinSyncMode");
         PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.DroppingFeaturesComputedWhileClearing", "");
       }
       else if(_isEnrollmentCancelled)
@@ -569,8 +568,8 @@ namespace Vision {
           const Result sanityResult = SanityCheckBookkeeping(_okaoFaceAlbum,
                                                              _enrollmentData,
                                                              _albumEntryToFaceID);
-          ASSERT_NAMED(sanityResult == RESULT_OK,
-                       "FaceRecognizer.GetRecognitionData.SanityCheckFailed");
+          DEV_ASSERT(sanityResult == RESULT_OK, "FaceRecognizer.GetRecognitionData.SanityCheckFailed");
+          DEV_ASSERT_USED(sanityResult);
         }
       }
       
@@ -586,15 +585,13 @@ namespace Vision {
     auto iter = _trackingToFaceID.find(forTrackingID);
     if(iter != _trackingToFaceID.end()) {
       const FaceID_t faceID = iter->second;
-      ASSERT_NAMED(faceID != UnknownFaceID,
-                   "FaceRecognizer.GetRecognitionData.TrackedFaceWithUnknownID");
+      DEV_ASSERT(faceID != UnknownFaceID, "FaceRecognizer.GetRecognitionData.TrackedFaceWithUnknownID");
       auto enrollIter = _enrollmentData.find(faceID);
       
       // If this assert triggers, something has gotten messed up with bookkeeping:
       // For example the enrollment data got changed (via load?) without updating
       // or clearing the trackingToFaceID LUT.
-      ASSERT_NAMED(enrollIter != _enrollmentData.end(),
-                   "FaceRecognizer.GetRecognitionData.TrackedFaceWithNoEnrollData");
+      DEV_ASSERT(enrollIter != _enrollmentData.end(), "FaceRecognizer.GetRecognitionData.TrackedFaceWithNoEnrollData");
       
       auto & enrolledEntry = enrollIter->second;
       if(_enrollmentID != UnknownFaceID &&
@@ -701,8 +698,7 @@ namespace Vision {
   
   void FaceRecognizer::ExtractFeatures()
   {
-    ASSERT_NAMED(ProcessingState::HasNewImage == _state,
-                 "FaceRecognizer.ExtractFeatures.ShouldBeInHasNewImageState");
+    DEV_ASSERT(ProcessingState::HasNewImage == _state, "FaceRecognizer.ExtractFeatures.ShouldBeInHasNewImageState");
     
     _mutex.lock();
     _state = ProcessingState::ExtractingFeatures;
@@ -764,7 +760,7 @@ namespace Vision {
         
         auto & albumEntries = _enrollmentData.at(oldestSessionOnlyID).GetAlbumEntries();
         
-        ASSERT_NAMED(!albumEntries.empty(), "FaceRecognizer.GetNextAlbumEntryToUse.OldestFaceHasNoEntries");
+        DEV_ASSERT(!albumEntries.empty(), "FaceRecognizer.GetNextAlbumEntryToUse.OldestFaceHasNoEntries");
         
         _nextAlbumEntry = albumEntries.begin()->first;
         
@@ -853,8 +849,7 @@ namespace Vision {
   
   Result FaceRecognizer::RegisterNewUser(HFEATURE& hFeature, FaceID_t& faceID)
   {
-    ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
-                 "FaceRecognizer.RegisterNewUser.FeaturesShouldBeReady");
+    DEV_ASSERT(ProcessingState::FeaturesReady == _state, "FaceRecognizer.RegisterNewUser.FeaturesShouldBeReady");
     
     AlbumEntryID_t albumEntry = GetNextAlbumEntryToUse();
     faceID = GetNextFaceID();
@@ -975,8 +970,7 @@ namespace Vision {
   
   Result FaceRecognizer::UpdateExistingAlbumEntry(AlbumEntryID_t albumEntry, HFEATURE& hFeature, RecognitionScore score)
   {
-    ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
-                 "FaceRecognizer.UpdateExistingAlbumEntry.FeaturesShouldBeReady");
+    DEV_ASSERT(ProcessingState::FeaturesReady == _state, "FaceRecognizer.UpdateExistingAlbumEntry.FeaturesShouldBeReady");
     
     Result result = RESULT_OK;
     
@@ -985,15 +979,15 @@ namespace Vision {
                                                 std::chrono::system_clock::now());
     
     auto albumToFaceIter = _albumEntryToFaceID.find(albumEntry);
-    ASSERT_NAMED_EVENT(albumToFaceIter != _albumEntryToFaceID.end(),
-                       "FaceRecognizer.UpdateExistingAlbumEntry.MissingAlbumToFaceEntry",
-                       "AlbumEntry:%d", albumEntry);
+    DEV_ASSERT_MSG(albumToFaceIter != _albumEntryToFaceID.end(),
+                   "FaceRecognizer.UpdateExistingAlbumEntry.MissingAlbumToFaceEntry",
+                   "AlbumEntry:%d", albumEntry);
     const FaceID_t faceID = albumToFaceIter->second;
     
     auto enrollDataIter = _enrollmentData.find(faceID);
-    ASSERT_NAMED_EVENT(enrollDataIter != _enrollmentData.end(),
-                       "FaceRecognizer.UpdateExistingAlbumEntry.MissingEnrollmentStatus",
-                       "FaceID:%d", faceID);
+    DEV_ASSERT_MSG(enrollDataIter != _enrollmentData.end(),
+                   "FaceRecognizer.UpdateExistingAlbumEntry.MissingEnrollmentStatus",
+                   "FaceID:%d", faceID);
     
     auto & enrollData = enrollDataIter->second;
     
@@ -1034,7 +1028,7 @@ namespace Vision {
     if(isEnrollmentEnabled && isTimeToEnroll && (hasEnrollSpaceLeft || enrollEvenIfFull))
     {
       // Num data for user should be > 0 if we are updating!
-      ASSERT_NAMED(numDataStored > 0, "FaceRecognizer.UpdateExistingAlbumEntry.BadNumData");
+      DEV_ASSERT(numDataStored > 0, "FaceRecognizer.UpdateExistingAlbumEntry.BadNumData");
       
       AlbumEntryID_t entryToReplace = EnrolledFaceEntry::UnknownAlbumEntryID;
       if(hasEnrollSpaceLeft)
@@ -1142,7 +1136,7 @@ namespace Vision {
       else
       {
         // one of hasEnrollSpaceLeft or enrollEvenIfFull should be true
-        ASSERT_NAMED(false, "FaceRecognizer.UpdateExistingAlbumEntry.IfElseLogicError");
+        DEV_ASSERT(false, "FaceRecognizer.UpdateExistingAlbumEntry.IfElseLogicError");
       }
       
       // Even if we didn't actually update: the following will update the last time we at
@@ -1190,7 +1184,8 @@ namespace Vision {
                                                      _detectionInfo.nHeight,
                                                      0, &ptLeftTop, &ptRightTop,
                                                      &ptLeftBottom, &ptRightBottom);
-    ASSERT_NAMED(OKAO_NORMAL == okaoResult, "FaceRecognizer.SetEnrollmentImage.GetDetectionSquareFail");
+    DEV_ASSERT(OKAO_NORMAL == okaoResult, "FaceRecognizer.SetEnrollmentImage.GetDetectionSquareFail");
+    DEV_ASSERT_USED(okaoResult);
     
     const Rectangle<f32> detectionRect(ptLeftTop.x, ptLeftTop.y,
                                        ptRightBottom.x-ptLeftTop.x,
@@ -1427,8 +1422,8 @@ namespace Vision {
     faceID = UnknownFaceID;
     recognitionScore = 0;
     
-    ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
-                 "FaceRecognizer.RecognizerFace.FeaturesShouldBeReady");
+    DEV_ASSERT(ProcessingState::FeaturesReady == _state,
+               "FaceRecognizer.RecognizerFace.FeaturesShouldBeReady");
     
     INT32 numUsersInAlbum = 0;
     OkaoResult okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
@@ -1653,8 +1648,8 @@ namespace Vision {
                 }
                 
                 // If nextMatchingID is set, nextMatchIter should be as well
-                ASSERT_NAMED(nextMatchIter != _enrollmentData.end(),
-                             "FaceRecognizer.RecognizeFace.NextMatchIterNotSet");
+                DEV_ASSERT(nextMatchIter != _enrollmentData.end(),
+                           "FaceRecognizer.RecognizeFace.NextMatchIterNotSet");
                 
                 PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.AfterMergeOfLowerRankedMatch",
                                "Top match entries: %s. Next match entries: %s.",
@@ -1680,9 +1675,9 @@ namespace Vision {
                   
                   // If the recognized entry isn't part of the matched enrollment data anymore (matchIter),
                   // then neither should it be in the album entry to face ID lookup table anymore.
-                  ASSERT_NAMED_EVENT(_albumEntryToFaceID.find(recognizedAlbumEntryID) == _albumEntryToFaceID.end(),
-                                     "FaceRecognizer.RecognizeFace.UnexpectedAlbumEntryToFaceID",
-                                     "matchIndex:%d albumEntry:%d still maps to faceID:%d",
+                  DEV_ASSERT_MSG(_albumEntryToFaceID.find(recognizedAlbumEntryID) == _albumEntryToFaceID.end(),
+                                 "FaceRecognizer.RecognizeFace.UnexpectedAlbumEntryToFaceID",
+                                 "matchIndex:%d albumEntry:%d still maps to faceID:%d",
                                      matchIndex, recognizedAlbumEntryID,
                                      _albumEntryToFaceID.at(recognizedAlbumEntryID));
                 }
@@ -1735,7 +1730,7 @@ namespace Vision {
       
       if(enrollingSpecificFace && isTrackingEnrollmentID)
       {
-        ASSERT_NAMED(_detectionInfo.nID != UnknownFaceID, "FaceRecognizer.RecognizeFace.BadDetectionID");
+        DEV_ASSERT(_detectionInfo.nID != UnknownFaceID, "FaceRecognizer.RecognizeFace.BadDetectionID");
         
         // Did not recognize the current enrollmentID in the image, but the trackingID matches
         // the enrollment tracking ID. Update using the match score for _enrollmentID.
@@ -2421,8 +2416,8 @@ namespace Vision {
       const u8 * VersionPrefixU8 = (u8*)VersionPrefix;
       std::copy(VersionPrefixU8, VersionPrefixU8+4, std::back_inserter(serializedEnrollData));
       
-      ASSERT_NAMED( ((u32*)serializedEnrollData.data())[0] == ((u32*)VersionPrefix)[0] ,
-                   "FaceRecognizer.GetSerialzedEnrollData.AddingVersionPrefixFailed");
+      DEV_ASSERT(((u32*)serializedEnrollData.data())[0] == ((u32*)VersionPrefix)[0],
+                 "FaceRecognizer.GetSerialzedEnrollData.AddingVersionPrefixFailed");
       
       PRINT_CH_INFO("FaceRecognizer", "GetSerializedEnrollData.AddedVersionData",
                     "Added to front: %04X%04X",

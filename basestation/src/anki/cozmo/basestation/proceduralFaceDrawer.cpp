@@ -130,12 +130,12 @@ namespace Cozmo {
         const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
         cv::ellipse2Poly(cv::Point(0, eyeHeight/2 - lowerLidY),
                          cv::Size(xRad,yRad), angleDeg, 180, 360, ellipseDelta, segment);
-        ASSERT_NAMED(std::abs(segment.front().x - lowerLidPoly.back().x)<3 &&
-                     std::abs(segment.front().y-lowerLidPoly.back().y)<3,
-                     "First curved lower lid segment point not close to last lid poly point.");
-        ASSERT_NAMED(std::abs(segment.back().x - lowerLidPoly.front().x)<3 &&
-                     std::abs(segment.back().y - lowerLidPoly.front().y)<3,
-                     "Last curved lower lid segment point not close to first lid poly point.");
+        DEV_ASSERT(std::abs(segment.front().x - lowerLidPoly.back().x)<3 &&
+                   std::abs(segment.front().y-lowerLidPoly.back().y)<3,
+                   "First curved lower lid segment point not close to last lid poly point.");
+        DEV_ASSERT(std::abs(segment.back().x - lowerLidPoly.front().x)<3 &&
+                   std::abs(segment.back().y - lowerLidPoly.front().y)<3,
+                   "Last curved lower lid segment point not close to first lid poly point.");
         lowerLidPoly.insert(lowerLidPoly.end(), segment.begin(), segment.end());
       }
     }
@@ -158,12 +158,12 @@ namespace Cozmo {
         const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
         cv::ellipse2Poly(cv::Point(0, -eyeHeight/2 + upperLidY),
                          cv::Size(xRad,yRad), angleDeg, 0, 180, ellipseDelta, segment);
-        ASSERT_NAMED(std::abs(segment.front().x - upperLidPoly.back().x)<3 &&
-                     std::abs(segment.front().y - upperLidPoly.back().y)<3,
-                     "First curved upper lid segment point not close to last lid poly point.");
-        ASSERT_NAMED(std::abs(segment.back().x - upperLidPoly.front().x)<3 &&
-                     std::abs(segment.back().y - upperLidPoly.front().y)<3,
-                     "Last curved upper lid segment point not close to first lid poly point.");
+        DEV_ASSERT(std::abs(segment.front().x - upperLidPoly.back().x)<3 &&
+                   std::abs(segment.front().y - upperLidPoly.back().y)<3,
+                   "First curved upper lid segment point not close to last lid poly point");
+        DEV_ASSERT(std::abs(segment.back().x - upperLidPoly.front().x)<3 &&
+                   std::abs(segment.back().y - upperLidPoly.front().y)<3,
+                   "Last curved upper lid segment point not close to first lid poly point");
         upperLidPoly.insert(upperLidPoly.end(), segment.begin(), segment.end());
       }
     }

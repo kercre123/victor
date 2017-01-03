@@ -99,7 +99,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
   // do not support multiple initialization. A) we don't need it, B) it's easy to forget to clean up everything properly
   // when adding new stuff. During my refactoring I found several variables that were not properly reset, so
   // potentially double Init was never supported
-  ASSERT_NAMED(!_isInitialized, "BehaviorManager.InitConfiguration.AlreadyInitialized");
+  DEV_ASSERT(!_isInitialized, "BehaviorManager.InitConfiguration.AlreadyInitialized");
 
   // create choosers
   if ( !config.isNull() )
@@ -132,9 +132,9 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
         const size_t eBT = (size_t)executableBehaviorType;
         if (eBT < (size_t)ExecutableBehaviorType::Count)
         {
-          ASSERT_NAMED_EVENT((numEntriesOfExecutableType[eBT] == 0), "ExecutableBehaviorType.NotUnique",
-                             "Multiple behaviors marked as %s including '%s'",
-                             EnumToString(executableBehaviorType), behaviorName.c_str());
+          DEV_ASSERT_MSG((numEntriesOfExecutableType[eBT] == 0), "ExecutableBehaviorType.NotUnique",
+                         "Multiple behaviors marked as %s including '%s'",
+                         EnumToString(executableBehaviorType), behaviorName.c_str());
           ++numEntriesOfExecutableType[eBT];
         }
       }
@@ -146,7 +146,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
         IReactionaryBehavior*  reactionaryBehavior = behaviorPtr->AsReactionaryBehavior();
         if( nullptr == reactionaryBehavior ) {
           PRINT_NAMED_ERROR("BehaviorManager.ReactionaryBehaviorNotReactionary",
-                            "behavior %s is in the factory (ptr %p), but isn't reactionry",
+                            "behavior %s is in the factory (ptr %p), but isn't reactionary",
                             behaviorName.c_str(),
                             behaviorPtr);
           continue;
@@ -155,13 +155,15 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
       }
     }
     
+    #if (DEV_ASSERT_ENABLED)
     for( size_t i = 0; i < (size_t)ExecutableBehaviorType::Count; ++i)
     {
       const ExecutableBehaviorType executableBehaviorType = (ExecutableBehaviorType)i;
-      ASSERT_NAMED_EVENT((numEntriesOfExecutableType[i] == 1), "ExecutableBehaviorType.NotExactlyOne",
-                         "Should be exactly 1 behavior marked as %s but found %u",
-                         EnumToString(executableBehaviorType), numEntriesOfExecutableType[i]);
+      DEV_ASSERT_MSG((numEntriesOfExecutableType[i] == 1), "ExecutableBehaviorType.NotExactlyOne",
+                     "Should be exactly 1 behavior marked as %s but found %u",
+                     EnumToString(executableBehaviorType), numEntriesOfExecutableType[i]);
     }
+    #endif
     
   }
   
@@ -419,15 +421,15 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
 void BehaviorManager::ChooseNextBehaviorAndSwitch()
 {
   // we can't call ChooseNextBehaviorAndSwitch while there's a behavior to resume pending. Call TryToResumeBehavior instead
-  ASSERT_NAMED( _behaviorToResume == nullptr,
+  DEV_ASSERT( _behaviorToResume == nullptr,
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CalledWithResumeBehaviorPending");
 
   // shouldn't call ChooseNextBehaviorAndSwitch after a reactionary. Call TryToResumeBehavior instead
-  ASSERT_NAMED( (_currentBehavior == nullptr) || !_currentBehavior->IsReactionary(),
+  DEV_ASSERT( (_currentBehavior == nullptr) || !_currentBehavior->IsReactionary(),
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CantSelectAfterReactionary");
 
   // the current behavior has to be running. Otherwise current should be nullptr
-  ASSERT_NAMED( (_currentBehavior == nullptr) || _currentBehavior->IsRunning(),
+  DEV_ASSERT( (_currentBehavior == nullptr) || _currentBehavior->IsRunning(),
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CurrentBehaviorIsNotRunning");
  
   // ask the current chooser for the next behavior
@@ -627,8 +629,8 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   }
   
   // default head and lift states should not be preserved between choosers
-  ASSERT_NAMED(!AreDefaultHeandAndLiftStateSet(),
-               "BehaviorManager.ChooseNextBehaviorAndSwitch.DefaultHeadAndLiftStatesStillSet");
+  DEV_ASSERT(!AreDefaultHeandAndLiftStateSet(),
+             "BehaviorManager.ChooseNextBehaviorAndSwitch.DefaultHeadAndLiftStatesStillSet");
 
   bool currentNotReactionary = !(_currentBehavior != nullptr && _currentBehavior->IsReactionary());
   
@@ -1033,8 +1035,8 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
         {
           // The only possible reactionary behavior that can be interrupted with a double tap is
           // ReactToDouble
-          ASSERT_NAMED(_currentBehavior->GetType() == BehaviorType::ReactToDoubleTap,
-                       "Current reactionary behavior should only be ReactToDoubleTap");
+          DEV_ASSERT(_currentBehavior->GetType() == BehaviorType::ReactToDoubleTap,
+                     "Current reactionary behavior should only be ReactToDoubleTap");
           
           _runningReactionaryBehavior = false;
           

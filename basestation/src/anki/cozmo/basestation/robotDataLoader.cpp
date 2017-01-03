@@ -278,7 +278,7 @@ void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
     PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), path.c_str());
 
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    ASSERT_NAMED(nullptr != _cannedAnimations, "RobotDataLoader.LoadAnimationGroupFile.NullCannedAnimations");
+    DEV_ASSERT(nullptr != _cannedAnimations, "RobotDataLoader.LoadAnimationGroupFile.NullCannedAnimations");
     _animationGroups->DefineFromJson(animGroupDef, animationGroupName, _cannedAnimations.get());
   }
 }

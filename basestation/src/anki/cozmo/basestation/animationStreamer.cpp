@@ -69,7 +69,7 @@ namespace Cozmo {
     // For now, default the idle to be doing nothing, since that what it used to be.
     _idleAnimationNameStack.push_back(AnimationTrigger::Count);
     
-    ASSERT_NAMED(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
+    DEV_ASSERT(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
     
     SetupHandlers(_context->GetExternalInterface());
     
@@ -348,7 +348,7 @@ namespace Cozmo {
 
     _idleAnimationNameStack.pop_back();
     
-    ASSERT_NAMED(!_idleAnimationNameStack.empty(), "AnimationStreamer.PopIdleAnimation.EmptyIdleStack");
+    DEV_ASSERT(!_idleAnimationNameStack.empty(), "AnimationStreamer.PopIdleAnimation.EmptyIdleStack");
     
     // If what's left on the stack is "no idle", make sure to make idle null and isIdling = false:
     if(_idleAnimationNameStack.back() == AnimationTrigger::Count) {
@@ -1022,8 +1022,8 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-    ASSERT_NAMED(_startOfAnimationSent,
-                 "Should not be sending end of animation without having first sent start of animation.");
+    DEV_ASSERT(_startOfAnimationSent,
+               "Should not be sending end of animation without having first sent start of animation.");
     
     if(DEBUG_ANIMATION_STREAMING) {
       PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation", "Streaming EndOfAnimation at t=%dms.",
@@ -1362,7 +1362,7 @@ namespace Cozmo {
     
     const CozmoContext* cozmoContext = robot.GetContext();
     VizManager* vizManager = robot.GetContext()->GetVizManager();
-    ASSERT_NAMED(nullptr != vizManager, "Expecting a non-null VizManager");
+    DEV_ASSERT(nullptr != vizManager, "Expecting a non-null VizManager");
 
     // Update name in viz:
     if(nullptr == _streamingAnimation && nullptr == _idleAnimation)
@@ -1488,7 +1488,7 @@ namespace Cozmo {
         } // if(!idleAnimationGroupName.empty())
       } // else if(_idleAnimation == nullptr || IsFinished(_idleAnimation) || !_isIdling)
       
-      ASSERT_NAMED(_idleAnimation != nullptr, "AnimationStreamer.Update.NullIdleAnimation");
+      DEV_ASSERT(_idleAnimation != nullptr, "AnimationStreamer.Update.NullIdleAnimation");
       
       if( oldIdleAnimation != _idleAnimation ) {
         // We just changed idle animations, so we need to force re-init.
@@ -1563,13 +1563,12 @@ namespace Cozmo {
     s32 totalNumAudioFramesPlayed = robot.GetNumAnimationAudioFramesPlayed();
     
     bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
-    ASSERT_NAMED_EVENT((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow,
-                       "AnimationStreamer.UpdateAmountToSend.BytesPlayedExceedsStreamed",
-                       "totalNumBytesStreamed: %d, totalNumBytesPlayed: %d, overflow: %s",
-                       totalNumBytesStreamed,
-                       totalNumBytesPlayed,
-                       (overflow ? "Yes" : "No"));
-
+    DEV_ASSERT_MSG((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow,
+                   "AnimationStreamer.UpdateAmountToSend.BytesPlayedExceedsStreamed",
+                   "totalNumBytesStreamed: %d, totalNumBytesPlayed: %d, overflow: %s",
+                   totalNumBytesStreamed,
+                   totalNumBytesPlayed,
+                   (overflow ? "Yes" : "No"));
     
     s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
     if (overflow) {

@@ -278,7 +278,8 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 // Developer assertions are discarded for release and shipping builds.
 //
 // Code blocks that are only used for developer assertions should be guarded with #if DEV_ASSERT_ENABLED.
-// Variables that are only used for developer assertions should be guarded with DEV_ASSERT_ONLY.
+// Variables that are only used for developer assertions should be guarded with DEV_ASSERT_ONLY, or
+// declared to be used with DEV_ASSERT_USED.
 //
 #define DEV_ASSERT_ENABLED ANKI_DEVELOPER_CODE
 
@@ -304,6 +305,8 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 
 #define DEV_ASSERT_ONLY(expr) expr
 
+#define DEV_ASSERT_USED(varname) { }
+
 #else
 
 #define DEV_ASSERT(expr, name)
@@ -311,6 +314,8 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 #define DEV_ASSERT_MSG(expr, name, format, ...)
 
 #define DEV_ASSERT_ONLY(expr)
+
+#define DEV_ASSERT_USED(varname) { (void)varname; }
 
 #endif
 

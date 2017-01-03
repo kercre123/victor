@@ -489,7 +489,7 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    ASSERT_NAMED(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
+    DEV_ASSERT(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
     
     INT32 okaoResult = OKAO_NORMAL;
     //TIC;
@@ -689,7 +689,7 @@ namespace Vision {
       face.SetScore(recognitionData.GetScore()); // could still be zero!
       if(UnknownFaceID == recognitionData.GetFaceID()) {
         // No recognition ID: use the tracker ID as the face's handle/ID
-        ASSERT_NAMED(detectionInfo.nID > 0, "FaceTrackerImpl.Update.InvalidTrackerID");
+        DEV_ASSERT(detectionInfo.nID > 0, "FaceTrackerImpl.Update.InvalidTrackerID");
         face.SetID(-detectionInfo.nID);
       } else {
         face.SetID(recognitionData.GetFaceID());

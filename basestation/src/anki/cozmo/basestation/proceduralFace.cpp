@@ -136,14 +136,14 @@ void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
     SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
   }
   
-  ASSERT_NAMED_EVENT(FLT_GT(GetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeScaleY), 0.f),
-                     "ProceduralFace.LookAt.NegativeLeftEyeScaleY",
-                     "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
-                     yShift, yscaleLR, yscaleUD, ymax);
-  ASSERT_NAMED_EVENT(FLT_GT(GetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY), 0.f),
-                     "ProceduralFace.LookAt.NegativeRightEyeScaleY",
-                     "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
-                     yShift, yscaleLR, yscaleUD, ymax);
+  DEV_ASSERT_MSG(FLT_GT(GetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeScaleY), 0.f),
+                 "ProceduralFace.LookAt.NegativeLeftEyeScaleY",
+                 "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
+                 yShift, yscaleLR, yscaleUD, ymax);
+  DEV_ASSERT_MSG(FLT_GT(GetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY), 0.f),
+                 "ProceduralFace.LookAt.NegativeRightEyeScaleY",
+                 "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
+                 yShift, yscaleLR, yscaleUD, ymax);
   
   //SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
   
@@ -156,7 +156,7 @@ void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
   SetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeCenterX,  reduceIOD);
   SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeCenterX, -reduceIOD);
   
-  //PRINT_NAMED_DEBUG("ProceduraFaceParams.LookAt",
+  //PRINT_NAMED_DEBUG("ProceduralFace.LookAt",
   //                  "shift=(%.1f,%.1f), up/down scale=%.3f, left/right scale=%.3f), reduceIOD=%.3f",
   //                  xShift, yShift, yscaleUD, yscaleLR, reduceIOD);
 }

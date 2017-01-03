@@ -1285,8 +1285,8 @@ inline bool Robot::HasMovedSinceBeingLocalized() const {
   
 inline bool Robot::IsLocalized() const {
   
-  ASSERT_NAMED(_isLocalized || (!_isLocalized && !_localizedToID.IsSet()),
-               "Robot can't think it is localized and have localizedToID set!");
+  DEV_ASSERT(_isLocalized || (!_isLocalized && !_localizedToID.IsSet()),
+             "Robot can't think it is localized and have localizedToID set!");
   
   return _isLocalized;
 }

@@ -131,11 +131,11 @@ ObjectPoseConfirmer::PoseConfirmation::PoseConfirmation(const Pose3d& initPose, 
 Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const Pose3d& newPose,
                                                  bool robotWasMoving, f32 obsDistance_mm)
 {
-  ASSERT_NAMED(nullptr != object, "ObjectPoseConfirmer.AddVisualObservation.NullObject");
+  DEV_ASSERT(nullptr != object, "ObjectPoseConfirmer.AddVisualObservation.NullObject");
   
   const ObjectID& objectID = object->GetID();
   
-  ASSERT_NAMED(objectID.IsSet(), "ObjectPoseConfirmer.AddVisualObservation.UnSetObjectID");
+  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddVisualObservation.UnSetObjectID");
 
   auto iter = _poseConfirmations.find(objectID);
   if(iter == _poseConfirmations.end())
@@ -213,11 +213,11 @@ Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const
   
 Result ObjectPoseConfirmer::AddRobotRelativeObservation(ObservableObject* object, const Pose3d& poseRelToRobot, PoseState poseState)
 {
-  ASSERT_NAMED(nullptr != object, "ObjectPoseConfirmer.AddRobotRelativeObservation.NullObject");
+  DEV_ASSERT(nullptr != object, "ObjectPoseConfirmer.AddRobotRelativeObservation.NullObject");
   
   const ObjectID& objectID = object->GetID();
   
-  ASSERT_NAMED(objectID.IsSet(), "ObjectPoseConfirmer.AddRobotRelativeObservation.UnSetObjectID");
+  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddRobotRelativeObservation.UnSetObjectID");
   
   Pose3d poseWrtOrigin(poseRelToRobot);
   poseWrtOrigin.SetParent(&_robot.GetPose());
@@ -237,12 +237,12 @@ Result ObjectPoseConfirmer::AddRobotRelativeObservation(ObservableObject* object
 Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objectToUpdate, const Pose3d& newPose,
                                                          const ObservableObject* observedObject)
 {
-  ASSERT_NAMED(nullptr != objectToUpdate, "ObjectPoseConfirmer.AddRobotRelativeObservation.NullObjectToUpdate");
-  ASSERT_NAMED(nullptr != observedObject, "ObjectPoseConfirmer.AddRobotRelativeObservation.NullObservedObject");
+  DEV_ASSERT(nullptr != objectToUpdate, "ObjectPoseConfirmer.AddRobotRelativeObservation.NullObjectToUpdate");
+  DEV_ASSERT(nullptr != observedObject, "ObjectPoseConfirmer.AddRobotRelativeObservation.NullObservedObject");
   
   const ObjectID& objectID = objectToUpdate->GetID();
   
-  ASSERT_NAMED(objectID.IsSet(), "ObjectPoseConfirmer.AddObjectRelativeObservation.UnSetObjectID");
+  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddObjectRelativeObservation.UnSetObjectID");
 
   if(!observedObject->IsPoseStateUnknown())
   {
@@ -259,15 +259,15 @@ Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objec
 
 Result ObjectPoseConfirmer::AddLiftRelativeObservation(ObservableObject* object, const Pose3d& newPoseWrtLift)
 {
-  ASSERT_NAMED(nullptr != object, "ObjectPoseConfirmer.AddLiftRelativeObservation.NullObject");
+  DEV_ASSERT(nullptr != object, "ObjectPoseConfirmer.AddLiftRelativeObservation.NullObject");
   
   const ObjectID& objectID = object->GetID();
   
-  ASSERT_NAMED(objectID.IsSet(), "ObjectPoseConfirmer.AddLiftRelativeObservation.UnSetObjectID");
+  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddLiftRelativeObservation.UnSetObjectID");
   
   // Sanity check
-  ASSERT_NAMED(newPoseWrtLift.GetParent() == &_robot.GetLiftPose(),
-               "ObjectPoseConfirmer.AddLiftRelativeObservation.PoseNotWrtLift");
+  DEV_ASSERT(newPoseWrtLift.GetParent() == &_robot.GetLiftPose(),
+             "ObjectPoseConfirmer.AddLiftRelativeObservation.PoseNotWrtLift");
 
   // If the object is on the lift, consider its pose as accurately known
   SetPoseHelper(object, newPoseWrtLift, -1, PoseState::Known, "AddLiftRelativeObservation");
@@ -285,12 +285,12 @@ Result ObjectPoseConfirmer::AddLiftRelativeObservation(ObservableObject* object,
 Result ObjectPoseConfirmer::CopyWithNewPose(ObservableObject *newObject, const Pose3d &newPose,
                                             const ObservableObject *oldObject)
 {
-  ASSERT_NAMED(nullptr != newObject, "ObjectPoseConfirmer.CopyWithNewPose.NullNewObject");
-  ASSERT_NAMED(nullptr != oldObject, "ObjectPoseConfirmer.CopyWithNewPose.NullOldObject");
+  DEV_ASSERT(nullptr != newObject, "ObjectPoseConfirmer.CopyWithNewPose.NullNewObject");
+  DEV_ASSERT(nullptr != oldObject, "ObjectPoseConfirmer.CopyWithNewPose.NullOldObject");
   
   const ObjectID& objectID = newObject->GetID();
   
-  ASSERT_NAMED(objectID.IsSet(), "ObjectPoseConfirmer.CopyWithNewPose.UnSetObjectID");
+  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.CopyWithNewPose.UnSetObjectID");
   
   //SetPoseHelper(newObject, newPose, oldObject->GetLastPoseUpdateDistance(), oldObject->GetPoseState(), "CopyWithNewPose");
   newObject->SetPose(newPose, oldObject->GetLastPoseUpdateDistance(), oldObject->GetPoseState());
@@ -306,11 +306,11 @@ Result ObjectPoseConfirmer::CopyWithNewPose(ObservableObject *newObject, const P
 
 Result ObjectPoseConfirmer::AddInExistingPose(const ObservableObject* object)
 {
-  ASSERT_NAMED(nullptr != object, "ObjectPoseConfirmer.AddInExistingPose.NullObject");
+  DEV_ASSERT(nullptr != object, "ObjectPoseConfirmer.AddInExistingPose.NullObject");
   
   const ObjectID& objectID = object->GetID();
   
-  ASSERT_NAMED(objectID.IsSet(), "ObjectPoseConfirmer.AddInExistingPose.UnSetObjectID");
+  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddInExistingPose.UnSetObjectID");
   
   _poseConfirmations[objectID].lastPose = object->GetPose();
   
@@ -320,11 +320,11 @@ Result ObjectPoseConfirmer::AddInExistingPose(const ObservableObject* object)
   
 Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject* object)
 {
-  ASSERT_NAMED(nullptr != object, "ObjectPoseConfirmer.MarkObjectUnobserved.NullObject");
+  DEV_ASSERT(nullptr != object, "ObjectPoseConfirmer.MarkObjectUnobserved.NullObject");
   
   const ObjectID& objectID = object->GetID();
   
-  ASSERT_NAMED(objectID.IsSet(), "ObjectPoseConfirmer.MarkObjectUnobserved.UnSetObjectID");
+  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.MarkObjectUnobserved.UnSetObjectID");
   
   auto iter = _poseConfirmations.find(objectID);
   if(iter == _poseConfirmations.end())

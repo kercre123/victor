@@ -37,7 +37,7 @@ const char* ILoggerProvider::GetLogLevelString(LogLevel level)
     }
   };
 
-  ASSERT_NAMED_EVENT(false, "ILoggerProvider.GetLogLevelString.InvalidLogLevel", "%d is not a valid level", level);
+  DEV_ASSERT_MSG(false, "ILoggerProvider.GetLogLevelString.InvalidLogLevel", "%d is not a valid level", level);
   return "Invalid_Log_Level!";
 }
 
@@ -58,7 +58,7 @@ ILoggerProvider::LogLevel ILoggerProvider::GetLogLevelValue(const std::string& l
     return LOG_LEVEL_ERROR;
   }
   
-  ASSERT_NAMED_EVENT(false, "ILoggerProvider.GetLogLevelValue.InvalidLogLevel", "'%s' is not a valid level", levelStr.c_str());
+  DEV_ASSERT_MSG(false, "ILoggerProvider.GetLogLevelValue.InvalidLogLevel", "'%s' is not a valid level", levelStr.c_str());
   return _LOG_LEVEL_COUNT;
 }
 

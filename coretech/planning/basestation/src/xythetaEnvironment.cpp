@@ -311,7 +311,7 @@ Cost xythetaEnvironment::ApplyPathSegment(const PathSegment& pathSegment,
     = std::ceil(Anki::Util::Abs(Radians(segmentDef.turn.targetAngle - start_theta).ToFloat()) * kPrimAngleStepSizeRecip);
   // number of points, including start and end
   const size_t numIntermediatePoints = Anki::Util::Max((size_t)2, Anki::Util::Max(numPointsAngle, numPointsPosition));
-  ASSERT_NAMED(numIntermediatePoints>1,"Number of intermediate points for ApplyPathSegments must be >= 2");
+  DEV_ASSERT(numIntermediatePoints>1,"Number of intermediate points for ApplyPathSegments must be >= 2");
   
   float dx = 0.0f;
   float dy = 0.0f;

@@ -55,8 +55,7 @@ namespace Cozmo {
     // If this assertion fails, somebody is trying to construct an invalid
     // block type
     auto entry = BlockInfoLUT.find(type);
-    ASSERT_NAMED(entry != BlockInfoLUT.end(),
-                 "Block.LookupBlockInfo.InvalidBlockType");
+    DEV_ASSERT(entry != BlockInfoLUT.end(), "Block.LookupBlockInfo.InvalidBlockType");
     return entry->second;
   }
 
@@ -86,7 +85,7 @@ namespace Cozmo {
     const float flipPreActionPoseDist = FLIP_PREDOCK_POSE_DISTAMCE_MM / 1.414f;
     
     // SetSize() should have been called already
-    ASSERT_NAMED(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f, "Block.AddFace.InvalidHalfSize");
+    DEV_ASSERT(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f, "Block.AddFace.InvalidHalfSize");
     
     // The poses here are based on the Marker's canonical pose being in the
     // X-Z plane
@@ -216,7 +215,7 @@ namespace Cozmo {
     }
     
     // Every block should at least have a front face defined in the BlockDefinitions file
-    ASSERT_NAMED(markersByFace_[FRONT_FACE] != NULL, "Block.Constructor.InvalidFrontFace");
+    DEV_ASSERT(markersByFace_[FRONT_FACE] != NULL, "Block.Constructor.InvalidFrontFace");
     
   } // Constructor: Block(type)
   

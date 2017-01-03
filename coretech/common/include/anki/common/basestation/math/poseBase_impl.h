@@ -92,7 +92,7 @@ namespace Anki {
   template<class PoseNd>
   void PoseBase<PoseNd>::SetParent(const PoseNd* otherPose)
   {
-    ASSERT_NAMED(otherPose != this, "PoseBase.SetParent.ParentCannotBeSelf");
+    DEV_ASSERT(otherPose != this, "PoseBase.SetParent.ParentCannotBeSelf");
     Dev_SwitchParent(_parentPtr, otherPose, this);
     _parentPtr = otherPose;
   }
@@ -107,9 +107,7 @@ namespace Anki {
     {  
       // The only way the current originPose's _parent is null is if it is an
       // origin, which means we should have already exited the while loop.
-      ASSERT_NAMED(originPose->GetParent() != nullptr,
-                   "PoseBase.FindOrigin.OriginHasNullParent");
-      
+      DEV_ASSERT(originPose->GetParent() != nullptr, "PoseBase.FindOrigin.OriginHasNullParent");
       originPose = originPose->GetParent();
     }
     
@@ -232,8 +230,7 @@ namespace Anki {
     
     BOUNDED_WHILE(1000, depthDiff > 0)
     {
-      ASSERT_NAMED(from->GetParent() != nullptr,
-                   "PoseBase.GetWithRespectTo.FromParentIsNull");
+      DEV_ASSERT(from->GetParent() != nullptr, "PoseBase.GetWithRespectTo.FromParentIsNull");
       
       P_from.PreComposeWith( *(from->GetParent()) );
       from = from->GetParent();
@@ -254,8 +251,7 @@ namespace Anki {
     
     BOUNDED_WHILE(1000, depthDiff < 0)
     {
-      ASSERT_NAMED(to->GetParent() != nullptr,
-                   "PoseBase.GetWithRespectTo.ToParentIsNull");
+      DEV_ASSERT(to->GetParent() != nullptr, "PoseBase.GetWithRespectTo.ToParentIsNull");
       
       P_to.PreComposeWith( *(to->GetParent()) );
       to = to->GetParent();
@@ -279,9 +275,8 @@ namespace Anki {
     if(ANKI_DEVELOPER_CODE)
     {
       // Sanity check: Treedepths should now match:
-      ASSERT_NAMED(depthDiff == 0, "PoseBase.GetWithRespectTo.NonZeroDepthDiff");
-      ASSERT_NAMED(GetTreeDepth(to) == GetTreeDepth(from),
-                   "PoseBase.GetWithRespectTo.TreeDepthMisMatch");
+      DEV_ASSERT(depthDiff == 0, "PoseBase.GetWithRespectTo.NonZeroDepthDiff");
+      DEV_ASSERT(GetTreeDepth(to) == GetTreeDepth(from), "PoseBase.GetWithRespectTo.TreeDepthMismatch");
     }
     
     // Now that we are pointing to the nodes of the same depth, keep moving up
@@ -289,8 +284,8 @@ namespace Anki {
     // along the way
     BOUNDED_WHILE(1000, to->GetParent() != from->GetParent())
     {
-      ASSERT_NAMED(from->GetParent() != nullptr && to->GetParent() != nullptr,
-                   "PoseBase.GetWithRespectTo.FromOrToParentIsNull");
+      DEV_ASSERT(from->GetParent() != nullptr, "PoseBase.GetWithRespectTo.FromParentIsNull");
+      DEV_ASSERT(to->GetParent() != nullptr, "PoseBase.GetWithRespectTo.ToParentIsNull");
       
       P_from.PreComposeWith( *(from->GetParent()) );
       P_to.PreComposeWith( *(to->GetParent()) );
@@ -349,8 +344,8 @@ namespace Anki {
         if ( match != validPoses.end() )
         {
           // make sure we were not there before
-          ASSERT_NAMED(newParent->_devChildrenPtrs.find(castedChild) == newParent->_devChildrenPtrs.end(),
-            "PoseBase.Dev_SwitchParent.DuplicatedChildOfParent");
+          DEV_ASSERT(newParent->_devChildrenPtrs.find(castedChild) == newParent->_devChildrenPtrs.end(),
+                     "PoseBase.Dev_SwitchParent.DuplicatedChildOfParent");
           
           // add now
           const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(newParent);
@@ -359,7 +354,7 @@ namespace Anki {
         else
         {
           // this pose can't be a parent, how did you get the pointer?!
-          ASSERT_NAMED(false, "PoseBase.Dev_SwitchParent.NewParentIsNotAValidPose");
+          DEV_ASSERT(false, "PoseBase.Dev_SwitchParent.NewParentIsNotAValidPose");
         }
       }
     }
@@ -378,13 +373,17 @@ namespace Anki {
         // if we have a parent, check that:
         // a) the parent is a valid pose
         PoseCPtrSet& validPoses = Dev_GetValidPoses();
-        ASSERT_NAMED(validPoses.find(parent) != validPoses.end(), "PoseBase.Dev_AssertIsValidParentPointer.NotAValidPose");
+        DEV_ASSERT(validPoses.find(parent) != validPoses.end(), "PoseBase.Dev_AssertIsValidParentPointer.NotAValidPose");
+        DEV_ASSERT_USED(validPoses);
+        
         // b) we are a current child of it
         const PoseNd* downCastedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
         const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(parent);
-        ASSERT_NAMED(upCastedParent->_devChildrenPtrs.find(downCastedChild) != upCastedParent->_devChildrenPtrs.end(),
+        DEV_ASSERT(upCastedParent->_devChildrenPtrs.find(downCastedChild) != upCastedParent->_devChildrenPtrs.end(),
           "PoseBase.Dev_AssertIsValidParentPointer.ChildOfOldParent");
-
+        DEV_ASSERT_USED(downCastedChild);
+        DEV_ASSERT_USED(upCastedParent);
+        
         // Note on b): If you crash on b), it means that the child is pointing at this parent, and this parent
         // is indeed a valid pose, but it is not a valid parent of this child. This can happen by this series of steps:
         // Create pose A
@@ -416,7 +415,8 @@ namespace Anki {
       PoseCPtrSet& validPoses = Dev_GetValidPoses();
       const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
       const size_t removedCount = validPoses.erase(castedSelf);
-      ASSERT_NAMED(removedCount == 1, "PoseBase.Dev_PoseDestroyed.DestroyingInvalidPose");
+      DEV_ASSERT(removedCount == 1, "PoseBase.Dev_PoseDestroyed.DestroyingInvalidPose");
+      DEV_ASSERT_USED(removedCount);
     }
   }
 
@@ -434,7 +434,8 @@ namespace Anki {
       PoseCPtrSet& validPoses = Dev_GetValidPoses();
       const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
       const auto insertRetInfo = validPoses.insert(castedSelf);
-      ASSERT_NAMED(insertRetInfo.second, "PoseBase.Dev_PoseCreated.CreatingDuplicatedPointer");
+      DEV_ASSERT(insertRetInfo.second, "PoseBase.Dev_PoseCreated.CreatingDuplicatedPointer");
+      DEV_ASSERT_USED(insertRetInfo);
     }
   }
   

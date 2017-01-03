@@ -240,7 +240,7 @@ Result PetTracker::Update(const Vision::Image&       frameOrig,
     }
   }
   
-  ASSERT_NAMED(frameOrig.IsContinuous(), "PetTracker.Update.NonContinuousImage");
+  DEV_ASSERT(frameOrig.IsContinuous(), "PetTracker.Update.NonContinuousImage");
   
   INT32 omcvResult = OMCV_NORMAL;
   Tic("PetDetect");

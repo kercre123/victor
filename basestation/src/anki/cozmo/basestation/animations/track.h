@@ -177,7 +177,7 @@ void Track<FRAME_TYPE>::MoveToEnd()
 template<typename FRAME_TYPE>
 const FRAME_TYPE* Track<FRAME_TYPE>::GetNextKeyFrame() const
 {
-  ASSERT_NAMED(_frameIter != _frames.end(), "Frame iterator should not be at end.");
+  DEV_ASSERT(_frameIter != _frames.end(), "Frame iterator should not be at end");
   
   auto nextIter = _frameIter;
   ++nextIter;

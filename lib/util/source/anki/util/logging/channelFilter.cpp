@@ -37,15 +37,15 @@ void ChannelFilter::Initialize(const Json::Value& config)
   RegisterChannel(DEFAULT_CHANNEL_NAME, true);
 
   // parse config
-  if ( !config.isNull() ) {
-    for( const auto& channel : config[kChannelListKey] ) {
+  if (!config.isNull()) {
+    for (const auto& channel : config[kChannelListKey]) {
     
       // parse channel name
-      ASSERT_NAMED(channel[kChannelNameKey].isString(), "ChannelFilter.Initialize.BadName");
+      DEV_ASSERT(channel[kChannelNameKey].isString(), "ChannelFilter.Initialize.BadName");
       const std::string& channelName = channel[kChannelNameKey].asString();
 
       // parse value
-      ASSERT_NAMED(channel[kChannelEnabledKey].isBool(), "ChannelFilter.Initialize.BadEnableFlag");
+      DEV_ASSERT(channel[kChannelEnabledKey].isBool(), "ChannelFilter.Initialize.BadEnableFlag");
       const bool channelEnabled = channel[kChannelEnabledKey].asBool();
       
       // Register channel

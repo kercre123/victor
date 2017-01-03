@@ -46,8 +46,8 @@ namespace Anki {
                                    ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
         [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
         {
-          ASSERT_NAMED(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
-                       "Wrong event type from callback");
+          DEV_ASSERT(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
+                     "Wrong event type from callback");
           HandleActionCompleted(event.GetData().Get_RobotCompletedAction());
         } ));
         

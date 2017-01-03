@@ -108,7 +108,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
   const float lhs = x_r - x_g;
   const float rhs_denom = std::tan( maxTurnAngle );
 
-  ASSERT_NAMED( maxTurnAngle > 0.0f && maxTurnAngle < M_PI/2.0f, "MinimalAnglePlanner.InvalidMaxAngle" );
+  DEV_ASSERT(maxTurnAngle > 0.0f && maxTurnAngle < M_PI/2.0f, "MinimalAnglePlanner.InvalidMaxAngle");
   
   // now we know tan should be >= 0
 

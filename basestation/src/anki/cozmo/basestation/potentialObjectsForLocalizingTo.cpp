@@ -250,8 +250,8 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
   
   if(haveCrossFrameOptions)
   {
-    ASSERT_NAMED(currFrameIter != _pairMap.end(),
-                 "PotentialObjectsForLocalizingTo.LocalizeRobot.MustHaveCurrFrameObjectWithCrossFrameOptions");
+    DEV_ASSERT(currFrameIter != _pairMap.end(),
+               "PotentialObjectsForLocalizingTo.LocalizeRobot.MustHaveCurrFrameObjectWithCrossFrameOptions");
     
     // sort frames from farthest to closest
     using DistanceTable = std::multimap<f32, ObservedAndMatchedPair, std::greater<f32>>;
@@ -295,7 +295,7 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
       if(nullptr == matchedObj)
       {
         const ObjectID& matchedID = matchPair.second.matchedID;
-        ASSERT_NAMED(matchedID.IsSet(), "PotentialObjectsForLocalizingTo.LocalizeToRobot.NullMatchWithUnsetID");
+        DEV_ASSERT(matchedID.IsSet(), "PotentialObjectsForLocalizingTo.LocalizeToRobot.NullMatchWithUnsetID");
         
         matchedObj = _robot.GetBlockWorld().GetObjectByID(matchedID);
         if(nullptr == matchedObj)
@@ -337,10 +337,10 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
     // If there are no potential cross-frame localizations, then just localize
     // to the object in the current frame. Note the data structure
     // ensures this will be the closest object in this frame.
-    ASSERT_NAMED(currFrameIter != _pairMap.end(),
-                 "PotentialObjectsForLocalizingTo.LocalizeRobot.CurrFrameNotFound");
-    ASSERT_NAMED(_pairMap.size() == 1,
-                 "PotentialObjectsForLocalizingTo.LocalizeRobot.ExpectingSingleMatchPair");
+    DEV_ASSERT(currFrameIter != _pairMap.end(),
+               "PotentialObjectsForLocalizingTo.LocalizeRobot.CurrFrameNotFound");
+    DEV_ASSERT(_pairMap.size() == 1,
+               "PotentialObjectsForLocalizingTo.LocalizeRobot.ExpectingSingleMatchPair");
     
     ObservedAndMatchedPair& pair = currFrameIter->second;
     
