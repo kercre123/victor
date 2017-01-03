@@ -349,12 +349,24 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                   
                   // couldn't pick up this block. If we have another, try that. Otherwise, fail
                   if( SwitchRobotsBlock(robot) ) {
-                    TransitionToPickingUpBlock(robot);
+                    
+                    // Play failure animation
+                    if (resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
+                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail), &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
+                    } else {
+                      TransitionToPickingUpBlock(robot);
+                    }
                   }
                   else {
                     // if its an abort failure, do nothing, which will cause the behavior to stop
                     PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
                                      "failed to pick up block with no retry, so ending the behavior");
+                    
+                    // Play failure animation
+                    if (resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
+                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail));
+                    }
+
                   }
                 }
               } );

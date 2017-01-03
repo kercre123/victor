@@ -252,6 +252,11 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
               [this,&robot](ActionResult res) {
                 if(ActionResult::SUCCESS != res) {
                   FailedToPickupObject(robot);
+                  
+                  // Play failure animation
+                  if (res == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || res == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockRealign));
+                  }
                 } else {
                   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess),
                               &BehaviorPickUpCube::TransitionToDriveWithCube);

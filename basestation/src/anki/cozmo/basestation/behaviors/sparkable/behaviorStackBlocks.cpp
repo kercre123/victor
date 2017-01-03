@@ -416,8 +416,13 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
                     robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject,
                                                                               AIWhiteboard::ObjectUseAction::PickUpObject);
                   }
-                  
-                  TransitionToWaitForBlocksToBeValid(robot);
+                 
+                  // Play failure animation
+                  if (msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksRetry), &BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid);
+                  } else {
+                    TransitionToWaitForBlocksToBeValid(robot);
+                  }
                 }
               });
     
