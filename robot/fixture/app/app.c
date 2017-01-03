@@ -118,35 +118,32 @@ extern int g_canary;
 // Show the name of the fixture and version information
 void SetFixtureText(void)
 {
-  DisplayClear();
+#ifdef FCC
+  const bool fcc = true;
+#else
+  const bool fcc = false;
+#endif
   
+  DisplayClear();
   DisplayBigCenteredText(FIXTYPES[g_fixtureType]);
   
-  // Show the version number in the corner
+  //add verision #s and other useful info
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
-#ifdef FCC
-  DisplayInvert(1);
-  DisplayMoveCursor(55, 108);
-  DisplayPutChar('c');
+  DisplayInvert(fcc); //invert the display colors for fcc build (easy to idenfity)
+  DisplayMoveCursor(55, fcc ? 108 : 110 );
+  DisplayPutChar(fcc ? 'c' : 'v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+#ifdef FCC
   DisplayMoveCursor(45, 2);
   DisplayPutString("CERT/TEST ONLY");
-  DisplayMoveCursor(55, 2);
-  DisplayPutString(BUILD_INFO);
-#else
-  DisplayMoveCursor(55, 110);
-  DisplayPutChar('v');
-  DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
-  DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
-  #if defined(NOT_FOR_FACTORY) && NOT_FOR_FACTORY > 0
+#elif NOT_FOR_FACTORY > 0
   DisplayMoveCursor(45, 2);
   DisplayPutString("DEV-NOT FOR FACTORY!!");
-  #endif
+#endif
   DisplayMoveCursor(55, 2);
   DisplayPutString(BUILD_INFO);
-#endif
   DisplayFlip();
 }
 
