@@ -1,5 +1,5 @@
 /**
-* File: saveToFileLoggerProvider
+* File: rollingFileLogger
 *
 * Author: Lee Crippen
 * Created: 3/29/2016

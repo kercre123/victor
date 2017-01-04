@@ -72,7 +72,7 @@ ConsoleSystem::~ConsoleSystem()
       delete (*it);
     }
     
-    allocatedVariables_.empty();
+    allocatedVariables_.clear();
   }
   
   // Delete our allocated functions
@@ -84,7 +84,7 @@ ConsoleSystem::~ConsoleSystem()
       delete (*it);
     }
     
-    allocatedFunctions_.empty();
+    allocatedFunctions_.clear();
   }
   
   // JARROD-TODO: We should probably allocate all of our variables/functions so that we don't rely on some being static and
