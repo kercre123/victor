@@ -43,13 +43,11 @@ namespace Cozmo {
   
 // Forward declaration
 class BehaviorFactory;
-class AIWhiteboard;
 class AIGoalEvaluator;
 class IBehavior;
 class IBehaviorChooser;
 class IReactionaryBehavior;
 class Robot;
-class WorkoutComponent;
 
 template<typename TYPE> class AnkiEvent;
 
@@ -123,14 +121,7 @@ public:
   
   // Enable and disable reactionary behaviors
   void RequestEnableReactionaryBehavior(const std::string& requesterID, BehaviorType behavior, bool enable);
-  
-  // accessors: whiteboard
-  const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
-        AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
-  
-  const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }
-        WorkoutComponent& GetWorkoutComponent()       { assert(_workoutComponent); return *_workoutComponent; }
-
+    
   // accessors: audioController
   Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
   
@@ -317,13 +308,7 @@ private:
   
   // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
   std::unique_ptr<Audio::BehaviorAudioClient> _audioClient;
-  
-  // whiteboard for behaviors to share information, or to store information only useful to behaviors
-  std::unique_ptr<AIWhiteboard> _whiteboard;
-
-  // component for tracking cozmo's work-outs
-  std::unique_ptr< WorkoutComponent > _workoutComponent;
-    
+      
   // For storing event handlers
   std::vector<Signal::SmartHandle> _eventHandlers;
   

@@ -23,7 +23,6 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"

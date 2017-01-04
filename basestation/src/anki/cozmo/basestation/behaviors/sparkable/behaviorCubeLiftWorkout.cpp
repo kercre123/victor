@@ -19,9 +19,9 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -51,7 +51,7 @@ bool BehaviorCubeLiftWorkout::IsRunnableInternal(const Robot& robot) const
     return true;
   }
   else {
-    const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
     const bool hasCube = whiteboard.GetBestObjectForAction(kObjectIntention).IsSet();
     return hasCube;
   }
@@ -69,7 +69,7 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
   // disable idle
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
 
-  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+  const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
   _numStrongLiftsToDo = currWorkout.GetNumStrongLifts(robot);
   _numWeakLiftsToDo = currWorkout.GetNumWeakLifts(robot);
 
@@ -80,7 +80,7 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
   }
   else {
     _shouldBeCarrying = false;
-    const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
     _targetBlockID = whiteboard.GetBestObjectForAction(kObjectIntention);
 
     TransitionToAligningToCube(robot);
@@ -114,7 +114,7 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
                                                                     _targetBlockID,
                                                                     PreActionPose::ActionType::DOCKING);
 
-  const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
 
   RetryWrapperAction::RetryCallback retryCallback =
     [this, driveToBlockAction, &whiteboard](const ExternalInterface::RobotCompletedAction& completion,
@@ -161,7 +161,7 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
 
 void BehaviorCubeLiftWorkout::TransitionToPreLiftAnim(Robot& robot)
 {
-  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+  const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
 
   if( currWorkout.preLiftAnim == AnimationTrigger::Count ) {
     // skip the animation
@@ -208,7 +208,7 @@ void BehaviorCubeLiftWorkout::TransitionToPostLiftAnim(Robot& robot)
   // at this point we should be carrying the object
   _shouldBeCarrying = true;
 
-  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+  const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
 
   if( currWorkout.postLiftAnim == AnimationTrigger::Count ) {
     TransitionToStrongLifts(robot);
@@ -229,7 +229,7 @@ void BehaviorCubeLiftWorkout::TransitionToStrongLifts(Robot& robot)
     TransitionToWeakPose(robot);
   }
   else {
-    const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+    const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
     StartActing(new TriggerAnimationAction(robot, currWorkout.strongLiftAnim, _numStrongLiftsToDo),
                 &BehaviorCubeLiftWorkout::TransitionToWeakPose);
   }
@@ -237,7 +237,7 @@ void BehaviorCubeLiftWorkout::TransitionToStrongLifts(Robot& robot)
 
 void BehaviorCubeLiftWorkout::TransitionToWeakPose(Robot& robot)
 {
-  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+  const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
   if( currWorkout.transitionAnim == AnimationTrigger::Count ) {
     TransitionToWeakLifts(robot);
   }
@@ -257,7 +257,7 @@ void BehaviorCubeLiftWorkout::TransitionToWeakLifts(Robot& robot)
     TransitionToPuttingDown(robot);
   }
   else {
-    const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+    const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
     StartActing(new TriggerAnimationAction(robot, currWorkout.weakLiftAnim, _numWeakLiftsToDo),
                 &BehaviorCubeLiftWorkout::TransitionToPuttingDown);
   }
@@ -266,7 +266,7 @@ void BehaviorCubeLiftWorkout::TransitionToWeakLifts(Robot& robot)
 void BehaviorCubeLiftWorkout::TransitionToPuttingDown(Robot& robot)
 {
   _shouldBeCarrying = false;
-  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+  const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
   if( currWorkout.putDownAnim == AnimationTrigger::Count ) {
     TransitionToManualPutDown(robot);
   }
@@ -322,7 +322,7 @@ void BehaviorCubeLiftWorkout::EndIteration(Robot& robot)
 
   BehaviorObjectiveAchieved(BehaviorObjective::PerformedWorkout);
 
-  robot.GetBehaviorManager().GetWorkoutComponent().CompleteCurrentWorkout();
+  robot.GetAIComponent().GetWorkoutComponent().CompleteCurrentWorkout();
 }
 
 void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool countFailure)
@@ -372,7 +372,7 @@ void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool cou
                     const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
                     if(failedObject){
                       const auto objectAction = AIWhiteboard::ObjectUseAction::PickUpObject;
-                      robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);
+                      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);
                     }
                   }
                 });
@@ -383,7 +383,7 @@ void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool cou
       const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
       if(failedObject){
         const auto objectAction = AIWhiteboard::ObjectUseAction::PickUpObject;
-        robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);
+        robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);
       }
     }
   }

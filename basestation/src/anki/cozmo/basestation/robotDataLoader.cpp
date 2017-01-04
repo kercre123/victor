@@ -350,7 +350,7 @@ void RobotDataLoader::LoadRobotConfigs()
   // mood config
   {
     std::string jsonFilename = "config/basestation/config/mood_config.json";
-    bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotMoodConfig);
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotMoodConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.MoodConfigJsonNotFound",
@@ -362,7 +362,7 @@ void RobotDataLoader::LoadRobotConfigs()
   // behavior config
   {
     std::string jsonFilename = "config/basestation/config/behavior_config.json";
-    bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotBehaviorConfig);
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotBehaviorConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.BehaviorConfigJsonFailed",
@@ -372,10 +372,23 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
 
+  // Workout config
+  {
+    std::string jsonFilename = "config/basestation/config/workout_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.WorkoutConfigJsonFailed",
+                        "Workout Json config file %s failed to parse.",
+                        jsonFilename.c_str());
+      _robotWorkoutConfig.clear();
+    }
+  }
+
   // vision config
   {
     std::string jsonFilename = "config/basestation/config/vision_config.json";
-    bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotVisionConfig);
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotVisionConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.VisionConfigJsonNotFound",

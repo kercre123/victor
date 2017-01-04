@@ -11,8 +11,8 @@
  **/
 #include "iAIGoalStrategy.h"
 
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -129,7 +129,7 @@ bool IAIGoalStrategy::WantsToStart(const Robot& robot, float lastTimeGoalRanSec,
   if ( FLT_GT(_requiredRecentOnTreadsEvent_secs, 0.0f) )
   {
     // check if we recorded an event
-    const float lastEventSecs = robot.GetBehaviorManager().GetWhiteboard().GetTimeAtWhichRobotReturnedToTreadsSecs();
+    const float lastEventSecs = robot.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotReturnedToTreadsSecs();
     const bool everFiredEvent = FLT_GT(lastEventSecs, 0.0f);
     if ( !everFiredEvent ) {
       // no event, do not start, since it's required

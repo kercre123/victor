@@ -14,9 +14,8 @@
  **/
 #include "behaviorExploreVisitPossibleMarker.h"
 
-//#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -56,7 +55,7 @@ BehaviorExploreVisitPossibleMarker::~BehaviorExploreVisitPossibleMarker()
 bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const Robot& robot) const
 {
   // check whiteboard for known markers
-  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   whiteboard.GetPossibleObjectsWRTOrigin(_possibleObjects);
 
   const bool canRun = !_possibleObjects.empty(); // TODO: consider distance limit
@@ -250,7 +249,7 @@ void BehaviorExploreVisitPossibleMarker::MarkPossiblePoseAsEmpty(Robot& robot, O
   PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.ClearPose",
                    "robot looked at pose, so clear it");
 
-  robot.GetBehaviorManager().GetWhiteboard().FinishedSearchForPossibleCubeAtPose(objectType, pose);
+  robot.GetAIComponent().GetWhiteboard().FinishedSearchForPossibleCubeAtPose(objectType, pose);
 }
 
 

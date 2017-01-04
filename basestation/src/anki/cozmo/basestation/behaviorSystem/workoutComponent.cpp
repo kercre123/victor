@@ -118,6 +118,9 @@ Result WorkoutComponent::InitConfiguration(const Json::Value& config)
     _workouts.emplace_back( std::move( workout ) );
   }
 
+  PRINT_CH_INFO("Behaviors", "WorkoutComponent.Init",
+                "Loaded %zu workouts", _workouts.size());
+  
   if( _workouts.empty() ) {
     return RESULT_FAIL;
   }

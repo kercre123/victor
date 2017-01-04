@@ -12,17 +12,16 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
-
 
 
 namespace Anki {
@@ -151,7 +150,7 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
   
     // store in whiteboard our success
     const float curTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
-    robot.GetBehaviorManager().GetWhiteboard().GotOffChargerAtTime( curTime );
+    robot.GetAIComponent().GetWhiteboard().GotOffChargerAtTime( curTime );
     _internalScore = 0.0f;
 
     return Status::Complete;

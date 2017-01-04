@@ -17,16 +17,15 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -85,7 +84,7 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
   {
     using Intent = AIWhiteboard::ObjectUseIntention;
     const Intent intent = (_isBlockRotationImportant ? Intent::RollObjectWithAxisCheck : Intent::RollObjectNoAxisCheck);
-    _targetBlock = _robot.GetBehaviorManager().GetWhiteboard().GetBestObjectForAction(intent);
+    _targetBlock = _robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(intent);
   }
   else
   {
@@ -159,7 +158,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
     // If this behavior uses a tapped object then prevent ReactToDoubleTap from interrupting
     if(RequiresObjectTapped())
     {
-      robot.GetBehaviorManager().GetWhiteboard().SetSuppressReactToDoubleTap(true);
+      robot.GetAIComponent().GetWhiteboard().SetSuppressReactToDoubleTap(true);
     }
   };
   
@@ -228,7 +227,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                   
                   const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlock);
                   if(failedObject){
-                    robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
+                    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
                   }
                 }
               });

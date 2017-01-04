@@ -13,15 +13,15 @@
 #include "selectionBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviors/behaviorNone.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/templateHelpers.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -190,9 +190,9 @@ void SelectionBehaviorChooser::SetProcessEnabled(const IBehavior* behavior, bool
     if ( process != AIInformationAnalysis::EProcess::Invalid )
     {
       if( newValue ) {
-        _robot.GetAIInformationAnalyzer().AddEnableRequest(process, GetName());
+        _robot.GetAIComponent().GetAIInformationAnalyzer().AddEnableRequest(process, GetName());
       } else {
-        _robot.GetAIInformationAnalyzer().RemoveEnableRequest(process, GetName());
+        _robot.GetAIComponent().GetAIInformationAnalyzer().RemoveEnableRequest(process, GetName());
       }
     }
   }

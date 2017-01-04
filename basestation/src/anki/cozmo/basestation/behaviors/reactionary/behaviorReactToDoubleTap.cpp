@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -40,8 +41,8 @@ bool BehaviorReactToDoubleTap::IsRunnableInternalReactionary(const Robot& robot)
   return (!robot.IsPickingOrPlacing() &&
           IsTappedObjectValid(robot) &&
           (_lastObjectReactedTo != robot.GetBehaviorManager().GetCurrTappedObject() ||
-           robot.GetBehaviorManager().GetWhiteboard().CanReactToDoubleTapReactAgain()) &&
-          !robot.GetBehaviorManager().GetWhiteboard().IsSuppressingReactToDoubleTap());
+           robot.GetAIComponent().GetWhiteboard().CanReactToDoubleTapReactAgain()) &&
+          !robot.GetAIComponent().GetWhiteboard().IsSuppressingReactToDoubleTap());
 }
 
 Result BehaviorReactToDoubleTap::InitInternalReactionary(Robot& robot)
@@ -177,7 +178,7 @@ void BehaviorReactToDoubleTap::StopInternalReactionary(Robot& robot)
     // Update the tapped interaction since the tapped object may now be dirty/known and usable by the
     // object tap interaction behaviors
     const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
-    robot.GetBehaviorManager().GetWhiteboard().SetObjectTapInteraction(objectID);
+    robot.GetAIComponent().GetWhiteboard().SetObjectTapInteraction(objectID);
     
     UpdateTappedObjectLights(true);
   }
@@ -185,12 +186,12 @@ void BehaviorReactToDoubleTap::StopInternalReactionary(Robot& robot)
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior("ReactToDoubleTap", BehaviorType::AcknowledgeObject, true);
   
   // Let whiteboard know that this behavior can't react to the same object again
-  robot.GetBehaviorManager().GetWhiteboard().SetReactToDoubleTapCanReactAgain(false);
+  robot.GetAIComponent().GetWhiteboard().SetReactToDoubleTapCanReactAgain(false);
 }
 
 bool BehaviorReactToDoubleTap::IsTappedObjectValid(const Robot& robot) const
 {
-  if(robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+  if(robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
     const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
     const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);

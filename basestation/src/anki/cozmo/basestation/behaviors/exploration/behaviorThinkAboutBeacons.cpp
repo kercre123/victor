@@ -12,9 +12,9 @@
 **/
 #include "behaviorThinkAboutBeacons.h"
 
-#include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -46,7 +46,7 @@ bool BehaviorThinkAboutBeacons::IsRunnableInternal(const Robot& robot) const
   bool needsBeacon = true;
   
   // check current beacon
-  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   const AIBeacon* activeBeacon = whiteboard.GetActiveBeacon();
   if ( nullptr != activeBeacon )
   {
@@ -90,7 +90,7 @@ void BehaviorThinkAboutBeacons::LoadConfig(const Json::Value& config)
 void BehaviorThinkAboutBeacons::SelectNewBeacon(Robot& robot)
 {
   // TODO implement the real deal
-   AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+   AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   whiteboard.AddBeacon( robot.GetPose().GetWithRespectToOrigin() );
 }
 

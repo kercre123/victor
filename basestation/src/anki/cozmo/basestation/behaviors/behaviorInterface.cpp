@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -518,7 +519,7 @@ bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
   // check if required processes are running
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
   {
-    const bool isProcessOn = robot.GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
+    const bool isProcessOn = robot.GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
     if ( !isProcessOn ) {
       PRINT_NAMED_ERROR("IBehavior.IsRunnable.RequiredProcessNotFound",
         "Required process '%s' is not enabled for '%s'",
@@ -550,7 +551,7 @@ bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
   const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
   if ( requiresRecentDriveOff )
   {
-    const float lastDriveOff = robot.GetBehaviorManager().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
+    const float lastDriveOff = robot.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
     const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
     if ( !hasDrivenOff ) {
       // never driven off the charger, can't run
@@ -590,7 +591,7 @@ bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
   // check if the behavior needs a tapped object and if there is a tapped object
   if(_requireObjectTapped)
   {
-    if(!robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+    if(!robot.GetAIComponent().GetWhiteboard().HasTapIntent())
     {
       return false;
     }
@@ -645,7 +646,7 @@ Result IBehavior::ResumeInternal(Robot& robot)
   
   // If this behavior needs a tapped object and there is a tapped object make sure
   // to update our target blocks before trying to resume
-  if(_requireObjectTapped && robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+  if(_requireObjectTapped && robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
     UpdateTargetBlocks(robot);
   }
@@ -1009,7 +1010,7 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
   static bool behaviorDisabled = false;
 
   if(_requireObjectTapped &&
-     _robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+     _robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
     const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
     

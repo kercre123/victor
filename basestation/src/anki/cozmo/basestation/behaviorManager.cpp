@@ -16,14 +16,13 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoal.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalEvaluator.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
-#include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
@@ -74,8 +73,6 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _behaviorFactory(new BehaviorFactory())
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
-, _whiteboard( new AIWhiteboard(robot) )
-, _workoutComponent( new WorkoutComponent(robot) )
 {
 }
 
@@ -166,19 +163,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     #endif
     
   }
-  
-  // initialize whiteboard
-  assert( _whiteboard );
-  _whiteboard->Init();
-
-  // initialize workout component
-  assert( _workoutComponent );
-  if( _workoutComponent->InitConfiguration(config["workoutComponent"]) != RESULT_OK ) {
-    PRINT_NAMED_ERROR("BehaviorMAnager.Init.FailedToInitWorkoutComponent",
-                      "Couldn't init workout component, deleting");
-    _workoutComponent.reset(nullptr);
-  }
-  
+    
   if (_robot.HasExternalInterface())
   {
     IExternalInterface* externalInterface = _robot.GetExternalInterface();
@@ -546,8 +531,6 @@ Result BehaviorManager::Update(Robot& robot)
     PRINT_NAMED_ERROR("BehaviorManager.Update.NotInitialized", "");
     return RESULT_FAIL;
   }
-
-  _whiteboard->Update();
     
   _currentChooserPtr->Update(robot);
 
@@ -899,7 +882,7 @@ void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
 
 void BehaviorManager::LeaveObjectTapInteraction()
 {
-  if(!GetWhiteboard().HasTapIntent())
+  if(!_robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
     PRINT_CH_INFO("Behaviors", "BehaviorManager.LeaveObjectTapInteraction.NoTapIntent", "");
     return;
@@ -925,7 +908,7 @@ void BehaviorManager::LeaveObjectTapInteraction()
     }
   }
   
-  GetWhiteboard().ClearObjectTapInteraction();
+  _robot.GetAIComponent().GetWhiteboard().ClearObjectTapInteraction();
   
   _lastDoubleTappedObject.UnSet();
   _currDoubleTappedObject.UnSet();
@@ -957,7 +940,7 @@ void BehaviorManager::UpdateTappedObject()
   // If the tapped objects pose becomes unknown and we aren't currently in ReactToDoubleTap
   // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running) then give up and
   // leave object tap interaction
-  if(GetWhiteboard().HasTapIntent() &&
+  if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent() &&
      _currentBehavior != nullptr &&
      _currentBehavior->GetType() != BehaviorType::ReactToDoubleTap &&
      _tapInteractionDisabledIDs.empty())
@@ -992,7 +975,7 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
   }
   
   // Tell whiteboard we have a object with tap intention
-  GetWhiteboard().SetObjectTapInteraction(objectID);
+  _robot.GetAIComponent().GetWhiteboard().SetObjectTapInteraction(objectID);
   
   if(_currDoubleTappedObject == objectID)
   {

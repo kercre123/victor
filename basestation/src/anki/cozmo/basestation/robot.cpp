@@ -18,13 +18,12 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/activeCube.h"
-#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/animations/engineAnimationController.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -185,7 +184,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _faceWorld(new FaceWorld(*this))
   , _petWorld(new PetWorld(*this))
   , _behaviorMgr(new BehaviorManager(*this))
-  , _aiInformationAnalyzer(new AIInformationAnalyzer())
   , _audioClient(new Audio::RobotAudioClient(this))
   , _animationStreamer(_context, *_audioClient)
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
@@ -196,6 +194,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _movementComponent(new MovementComponent(*this))
   , _visionComponent( new VisionComponent(*this, _context))
   , _nvStorageComponent(new NVStorageComponent(*this, _context))
+  , _aiComponent(new AIComponent(*this))
   , _textToSpeechComponent(new TextToSpeechComponent(_context))
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
   , _lightsComponent( new LightsComponent( *this ) )
@@ -314,6 +313,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // Read all neccessary data off the robot and back it up
   // Potentially duplicates some reads like FaceAlbumData
   _nvStorageComponent->GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
+
+  // initialize AI
+  _aiComponent->Init();
+      
 } // Constructor: Robot
     
 Robot::~Robot()
@@ -821,7 +824,7 @@ void Robot::Delocalize(bool isCarryingObject)
   _blockWorld->DeselectCurrentObject();
       
   // notify behavior whiteboard
-  _behaviorMgr->GetWhiteboard().OnRobotDelocalized();
+  _aiComponent->OnRobotDelocalized();
   
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
@@ -869,7 +872,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   _isLocalized = true;
   
   // notify behavior whiteboard
-  _behaviorMgr->GetWhiteboard().OnRobotRelocalized();
+  _aiComponent->OnRobotRelocalized();
   
   // Update VizText
   GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
@@ -1458,9 +1461,9 @@ Result Robot::Update()
   _progressionUnlockComponent->Update();
   
   _tapFilterComponent->Update();
-  
-  // information analyzer should run before behaviors so that they can feed off its findings
-  _aiInformationAnalyzer->Update(*this);
+
+  // Update AI component before behaviors so that behaviors can use the latest information
+  _aiComponent->Update();
       
   const char* behaviorChooserName = "";
   std::string behaviorDebugStr("<disabled>");

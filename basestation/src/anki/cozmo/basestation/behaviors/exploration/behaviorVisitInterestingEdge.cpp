@@ -16,8 +16,8 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -215,7 +215,7 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
   ASSERT_NAMED(_cache.IsSet(), "BehaviorVisitInterestingEdge.InitInternal.CantTrustCache"); // this is the sauce, it's required
 
   // make sure we are not updating borders while running the behavior (useless)
-  robot.GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
+  robot.GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
 
   // reset operating state to pick the starting one
   _operatingState = EOperatingState::Invalid;
@@ -230,7 +230,7 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
 void BehaviorVisitInterestingEdge::StopInternal(Robot& robot)
 {
   // remove our request to disable the analysis process
-  robot.GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
+  robot.GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
 
   // clear debug render
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
@@ -401,7 +401,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
   validGoals.clear();
 
   // ask the information analyzer about the regions it has detected (should have been this frame)
-  const INavMemoryMap::BorderRegionVector& interestingRegions = robot.GetAIInformationAnalyzer().GetDetectedInterestingRegions();
+  const INavMemoryMap::BorderRegionVector& interestingRegions = robot.GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
   
   // process them and see if we can pick one
   if ( !interestingRegions.empty() )
@@ -697,7 +697,7 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(Robot& robot)
 
   // we know the distance to the closest border, so we can get as close as we want before playing the anim
   const float robotLen = (ROBOT_BOUNDING_X_FRONT + ROBOT_BOUNDING_X_LIFT);
-  const float lastEdgeDistance_mm = robot.GetBehaviorManager().GetWhiteboard().GetLastEdgeClosestDistance();
+  const float lastEdgeDistance_mm = robot.GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
   ASSERT_NAMED(!std::isnan(lastEdgeDistance_mm), "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.NaNEdgeDist");
   const float distanceToMoveForward_mm = lastEdgeDistance_mm - robotLen - _configParams.observationDistanceFromBorder_mm;
   
@@ -815,7 +815,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
   _waitForImagesActionTag = ActionConstants::INVALID_TAG;
   
   // check distance to closest detected edge
-  const float lastEdgeDistance_mm = robot.GetBehaviorManager().GetWhiteboard().GetLastEdgeClosestDistance();
+  const float lastEdgeDistance_mm = robot.GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
   const bool detectedEdges = !std::isnan(lastEdgeDistance_mm);
   if ( detectedEdges )
   {

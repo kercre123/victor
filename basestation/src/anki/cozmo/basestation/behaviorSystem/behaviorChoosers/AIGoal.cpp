@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategies/iAIGoalStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
@@ -153,7 +154,7 @@ void AIGoal::Enter(Robot& robot)
   
   // request analyzer process
   if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
-    robot.GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetName());
+    robot.GetAIComponent().GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetName());
   }
   
   // notify the persistant update function that the goal was entered
@@ -180,7 +181,7 @@ void AIGoal::Exit(Robot& robot)
   
   // (un)request analyzer process
   if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
-    robot.GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetName());
+    robot.GetAIComponent().GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetName());
   }
 
   // notify the persistant update function that the goal is exiting

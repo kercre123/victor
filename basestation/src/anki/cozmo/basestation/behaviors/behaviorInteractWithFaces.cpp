@@ -14,8 +14,8 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -323,7 +323,7 @@ void BehaviorInteractWithFaces::SelectFaceToTrack(const Robot& robot) const
   std::set< FaceID_t > faces = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(_lastImageTimestampWhileRunning,
                                                                                  considerTrackingOnlyFaces);
 
-  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   const bool preferName = true;
   _targetFace = whiteboard.GetBestFaceToTrack(faces, preferName);
 }

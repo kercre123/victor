@@ -23,8 +23,8 @@
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/utilities_shared.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/bridge.h"
@@ -1083,7 +1083,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
       // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
       // robot component, like a VisualInformationProcessingComponent
-      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(robotQuad);
+      _robot->GetAIComponent().GetWhiteboard().ProcessClearQuad(robotQuad);
 
       // update las reported pose
       _navMapReportedRobotPose = robotPoseWrtOrigin;
@@ -3205,7 +3205,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
       // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
       // robot component, like a VisualInformationProcessingComponent
-      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
+      _robot->GetAIComponent().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
     }
   }
   
@@ -3831,7 +3831,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
       // robot component, like a VisualInformationProcessingComponent
       // Note: we always consider quad here since whiteboard does not need the triangle optiomization
-      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(potentialClearQuad2D);
+      _robot->GetAIComponent().GetWhiteboard().ProcessClearQuad(potentialClearQuad2D);
     }
     
     // send border segments to memory map
@@ -3878,7 +3878,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // notify the whiteboard we just processed edge information from a frame
     const float closestPointDist_mm = std::isnan(closestPointDist_mm2) ?
       std::numeric_limits<float>::quiet_NaN() : sqrt(closestPointDist_mm2);
-    _robot->GetBehaviorManager().GetWhiteboard().SetLastEdgeInformation(frameInfo.timestamp, closestPointDist_mm);
+    _robot->GetAIComponent().GetWhiteboard().SetLastEdgeInformation(frameInfo.timestamp, closestPointDist_mm);
     
     return RESULT_OK;
   }

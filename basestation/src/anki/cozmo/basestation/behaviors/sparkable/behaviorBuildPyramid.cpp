@@ -12,13 +12,13 @@
 
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
 
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -72,7 +72,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
                    AIWhiteboard::ObjectUseAction::PickUpObject,
                    AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}};
     
-    const bool hasStaticFailed = robot.GetBehaviorManager().GetWhiteboard().
+    const bool hasStaticFailed = robot.GetAIComponent().GetWhiteboard().
                  DidFailToUse(_staticBlockID,
                               failToUseReasons,
                               kTimeObjectInvalidAfterAnyFailure_sec,
@@ -80,7 +80,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
                               DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
                               DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
     
-    const bool hasBaseFailed = robot.GetBehaviorManager().GetWhiteboard().
+    const bool hasBaseFailed = robot.GetAIComponent().GetWhiteboard().
     DidFailToUse(_baseBlockID,
                  failToUseReasons,
                  kTimeObjectInvalidAfterAnyFailure_sec,
@@ -88,7 +88,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
                  DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
                  DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
     
-    const bool hasTopFailed = robot.GetBehaviorManager().GetWhiteboard().
+    const bool hasTopFailed = robot.GetAIComponent().GetWhiteboard().
     DidFailToUse(_topBlockID,
                  failToUseReasons,
                  kTimeObjectInvalidAfterAnyFailure_sec,

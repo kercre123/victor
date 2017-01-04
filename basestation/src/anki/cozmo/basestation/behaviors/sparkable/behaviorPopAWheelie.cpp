@@ -16,14 +16,13 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "util/console/consoleInterface.h"
-
 
 
 namespace Anki {
@@ -70,7 +69,7 @@ void BehaviorPopAWheelie::StopInternalFromDoubleTap(Robot& robot)
 
 void BehaviorPopAWheelie::UpdateTargetBlock(const Robot& robot) const
 {
-  _targetBlock = _robot.GetBehaviorManager().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PopAWheelieOnObject);
+  _targetBlock = _robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PopAWheelieOnObject);
 }
 
 void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
@@ -141,7 +140,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
     // If this behavior uses a tapped object then prevent ReactToDoubleTap from interrupting
     if(RequiresObjectTapped())
     {
-      robot.GetBehaviorManager().GetWhiteboard().SetSuppressReactToDoubleTap(true);
+      robot.GetAIComponent().GetWhiteboard().SetSuppressReactToDoubleTap(true);
     }
   };
   goPopAWheelie->SetPreDockCallback(disableCliff);
@@ -182,7 +181,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                     // mark the block as inaccessible
                     const ObservableObject* failedObject = failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlock);
                     if(failedObject){
-                      robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
+                      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
                     }
                     break;
                   }

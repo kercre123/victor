@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -142,7 +143,7 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
   // check to make sure we haven't failed to interact with the block recently
-  const auto& whiteboard = robotPtr->GetBehaviorManager().GetWhiteboard();
+  const auto& whiteboard = robotPtr->GetAIComponent().GetWhiteboard();
   const bool recentlyFailed = whiteboard.DidFailToUse(obj->GetID(),
                                                       {{AIWhiteboard::ObjectUseAction::PickUpObject,
                                                         AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}},

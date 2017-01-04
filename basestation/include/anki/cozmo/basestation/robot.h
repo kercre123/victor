@@ -81,7 +81,7 @@ enum class ERobotDriveToPoseStatus {
 namespace Cozmo {
   
 // Forward declarations:
-class AIInformationAnalyzer;
+class AIComponent;
 class ActionList;
 class BehaviorFactory;
 class BehaviorManager;
@@ -126,10 +126,6 @@ class RobotToEngine;
 enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
-
-namespace ExternalInterface {
-class MessageEngineToGame;
-}
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
@@ -225,14 +221,6 @@ public:
   const BehaviorFactory& GetBehaviorFactory() const;
   BehaviorFactory&       GetBehaviorFactory();
   
-  inline const AIInformationAnalyzer& GetAIInformationAnalyzer() const {
-    assert(_aiInformationAnalyzer);
-    return *_aiInformationAnalyzer;
-  }
-  inline AIInformationAnalyzer& GetAIInformationAnalyzer() {
-    assert(_aiInformationAnalyzer);
-    return *_aiInformationAnalyzer;
-  }
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -250,6 +238,15 @@ public:
   inline NVStorageComponent& GetNVStorageComponent() {
     assert(_nvStorageComponent);
     return *_nvStorageComponent;
+  }
+
+  inline const AIComponent& GetAIComponent() const {
+    assert(_aiComponent);
+    return *_aiComponent;
+  }
+  inline AIComponent& GetAIComponent() {
+    assert(_aiComponent);
+    return *_aiComponent;
   }
   
   const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
@@ -848,7 +845,6 @@ protected:
   std::unique_ptr<PetWorld>              _petWorld;
  
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
-  std::unique_ptr<AIInformationAnalyzer> _aiInformationAnalyzer;
   
   ///////// Audio /////////
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;
@@ -874,6 +870,7 @@ protected:
   std::unique_ptr<MovementComponent>     _movementComponent;
   std::unique_ptr<VisionComponent>       _visionComponent;
   std::unique_ptr<NVStorageComponent>    _nvStorageComponent;
+  std::unique_ptr<AIComponent>           _aiComponent;
   std::unique_ptr<TextToSpeechComponent> _textToSpeechComponent;
   std::unique_ptr<ObjectPoseConfirmer>   _objectPoseConfirmerPtr;
   std::unique_ptr<LightsComponent>       _lightsComponent;

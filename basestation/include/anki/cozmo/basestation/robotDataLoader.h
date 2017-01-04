@@ -70,6 +70,7 @@ public:
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const { return _robotMoodConfig; }
   const Json::Value& GetRobotBehaviorConfig() const { return _robotBehaviorConfig; }
+  const Json::Value& GetRobotWorkoutConfig() const { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const { return _robotVisionConfig; }
 
 private:
@@ -111,6 +112,7 @@ private:
   Json::Value _robotMoodConfig;
   Json::Value _robotBehaviorConfig;
   Json::Value _robotVisionConfig;
+  Json::Value _robotWorkoutConfig;
   
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;
