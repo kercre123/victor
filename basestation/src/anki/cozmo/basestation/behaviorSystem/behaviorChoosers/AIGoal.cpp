@@ -103,7 +103,7 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
   
   // information analyzer process
   std::string inanProcessStr;
-  JsonTools::GetValueOptional(config, "infoAnalyzerProccess", inanProcessStr);
+  JsonTools::GetValueOptional(config, "infoAnalyzerProcess", inanProcessStr);
   _infoAnalysisProcess = inanProcessStr.empty() ?
     AIInformationAnalysis::EProcess::Invalid :
     AIInformationAnalysis::EProcessFromString(inanProcessStr.c_str());

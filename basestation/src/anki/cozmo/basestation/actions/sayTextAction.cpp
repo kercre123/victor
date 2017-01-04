@@ -142,11 +142,11 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
     
     // Get Duration val
     const SayTextIntentConfig::ConfigTrait& durationTrait = config.FindDurationTraitTextLength(Util::numeric_cast<uint>(text.length()));
-    _durationScalar = durationTrait.GetDurration( robot.GetRNG() );
+    _durationScalar = durationTrait.GetDuration( robot.GetRNG() );
     
     // Get Pitch val
     const SayTextIntentConfig::ConfigTrait& pitchTrait = config.FindPitchTraitTextLength(Util::numeric_cast<uint>(text.length()));
-    _voicePitch = pitchTrait.GetDurration( robot.GetRNG() );
+    _voicePitch = pitchTrait.GetDuration( robot.GetRNG() );
   }
   else {
     PRINT_NAMED_ERROR("SayTextAction.CanNotFind.SayTextIntentConfig", "%s", EnumToString(intent));
@@ -217,7 +217,7 @@ ActionResult SayTextAction::Init()
       }
       
       if (duration_ms * 0.001f > _timeout_sec) {
-        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareAudioEngine.DurrationTooLong", "Duration: %f", duration_ms);
+        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareAudioEngine.DurationTooLong", "Duration: %f", duration_ms);
       }
       
       const bool useBuiltInAnim = (AnimationTrigger::Count == _animationTrigger);
@@ -459,7 +459,7 @@ SayTextAction::SayTextIntentConfig::ConfigTrait::ConfigTrait(const Json::Value& 
   rangeStepSize = json.get("stepSize", Json::Value(0.f)).asFloat(); // If No step size use Range Min and don't randomize
 } // ConfigTrait()
   
-float SayTextAction::SayTextIntentConfig::ConfigTrait::GetDurration(Util::RandomGenerator& randomGen) const
+float SayTextAction::SayTextIntentConfig::ConfigTrait::GetDuration(Util::RandomGenerator& randomGen) const
 {
   // TODO: Move this into Random Util class
   float resultVal;

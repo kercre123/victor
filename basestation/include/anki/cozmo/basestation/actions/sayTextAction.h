@@ -115,7 +115,7 @@ private:
       ConfigTrait();
       ConfigTrait(const Json::Value& json);
       
-      float GetDurration(Util::RandomGenerator& randomGen) const;
+      float GetDuration(Util::RandomGenerator& randomGen) const;
     };
     
     std::string name = "";
