@@ -379,6 +379,9 @@ public class CoreUpgradeDetailsDialog : BaseModal {
   }
 
   private void UpdateAvailableCostLabels(string itemID, int cost, string promptLabelKey, string costLabelKey) {
+    if (this == null) {
+      return;
+    }
     _ButtonPromptContainer.SetActive(true);
 
     _ButtonPromptTitle.text = Localization.Get(promptLabelKey);

@@ -59,10 +59,9 @@ public class DebugMenuManager : MonoBehaviour {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleDemoModeVariable);
   }
 
-  // TODO: Pragma out this code for production
   public void OnDebugMenuButtonTap() {
 #if ENABLE_DEBUG_PANEL
-    if (!_DemoMode && FakeTouchManager.Instance != null && !FakeTouchManager.Instance.IsPlayingTouches && !FakeTouchManager.Instance.IsSoakingTouches) {
+    if (FakeTouchManager.Instance != null && !FakeTouchManager.Instance.IsPlayingTouches && !FakeTouchManager.Instance.IsSoakingTouches) {
       CreateDebugDialog();
     }
 #endif

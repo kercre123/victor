@@ -50,7 +50,11 @@ namespace MemoryMatch {
 
       IRobot robot = _GameInstance.CurrentRobot;
       foreach (int id in _GameInstance.CubeIdsForGame) {
-        cubesForGame.Add(robot.LightCubes[id]);
+        LightCube lightCube = null;
+        // if this is null, very likely that the "cube disconnect" message is coming up.
+        if (robot.LightCubes.TryGetValue(id, out lightCube)) {
+          cubesForGame.Add(lightCube);
+        }
       }
       LightCube cubeA, cubeB;
       LightCube.TryFindCubesFurthestApart(cubesForGame, out cubeA, out cubeB);

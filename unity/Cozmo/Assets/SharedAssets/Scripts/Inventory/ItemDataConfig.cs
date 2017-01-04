@@ -35,8 +35,17 @@ namespace Cozmo {
     [SerializeField]
     private int _StartingAmount;
 
+    [SerializeField]
+    private int _DemoStartingAmount = -1;
+
     public int StartingAmount {
-      get { return _StartingAmount; }
+      get {
+        // Only sparks has a specific demo amount, just use the normal default amount otherwise
+        if (DebugMenuManager.Instance.DemoMode && _DemoStartingAmount >= 0) {
+          return _DemoStartingAmount;
+        }
+        return _StartingAmount;
+      }
     }
 
     public string GetAmountName(int amount) {
