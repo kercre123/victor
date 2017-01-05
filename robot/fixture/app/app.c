@@ -22,10 +22,10 @@ u8 g_fixtureReleaseVersion = 81;
 #define BUILD_INFO_PREFIX "EP1 v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 0
+#define NOT_FOR_FACTORY 1
 
 #if NOT_FOR_FACTORY > 0
-#define BUILD_INFO (BUILD_INFO_PREFIX ## " beta-011")
+#define BUILD_INFO (BUILD_INFO_PREFIX ## " beta-013")
 #else
 #define BUILD_INFO (BUILD_INFO_PREFIX)
 #endif

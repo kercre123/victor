@@ -17,6 +17,16 @@
 
 using namespace Anki::Cozmo::RobotInterface;
 
+//debug flag: set 1 to enable verbose prints for debugging
+#define DBG_VERBOSE_PRINTING 0
+
+//inline macro
+#if DBG_VERBOSE_PRINTING > 0
+#define DBG_VERBOSE(x)  x
+#else
+#define DBG_VERBOSE(x)  {}
+#endif
+
 // Return true if device is detected on contacts
 bool BodyDetect(void)
 {
@@ -85,7 +95,7 @@ const int MDEG_PER_RADIAN = 0.5 + 4096.0 * (180*1000 / (3.14159265359*65536));  
 int TryMotor(s8 motor, s8 speed, bool limitToLimit = false)
 {
   const int MOTOR_RUNTIME = 100 * 1000;   // 100ms is plenty
-  static int first[4], second[4];
+  static int first[4], second[4], len_check;
   bool doPrint = true;
   
   if (motor < 0)
@@ -95,24 +105,41 @@ int TryMotor(s8 motor, s8 speed, bool limitToLimit = false)
   }
   
   // Reset motor watchdog
-  SendCommand(TEST_POWERON, 0, 0, NULL);
+  DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_POWERON)...") );
+  len_check = SendCommand(TEST_POWERON, 0, 0, NULL);
+  DBG_VERBOSE( ConsolePrintf("len=%d\r\n", len_check) );
+  if( len_check ) {}; //avoid compiler warnings, unused var
   
   // Get motor up to speed (if tread)
   if (motor < 2)
   {
-    SendCommand(TEST_RUNMOTOR, (speed&0xFC) + motor, 0, NULL);
+    DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_RUNMOTOR,speed=%i,motor=%u)...", (s8)(speed&0xFC), motor) );
+    len_check = SendCommand(TEST_RUNMOTOR, (speed&0xFC) + motor, 0, NULL);
+    DBG_VERBOSE( ConsolePrintf("len=%d\r\n", len_check) );
+    
     MicroWait(MOTOR_RUNTIME);   // Let tread spinup
-    SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
+    
+    DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_GETMOTOR,buflen=%u)...", sizeof(first)) );
+    len_check = SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
+    DBG_VERBOSE( ConsolePrintf("len=%d\r\n", len_check) );
+    
     MicroWait(MOTOR_RUNTIME);   // Then run it
  
   // For lift head/head, let motor -stop- moving first when it hits limit (but keep pushing)
   } else {
     MicroWait(MOTOR_RUNTIME);   // Let fast-spinning motor come to a stop first
-    SendCommand(TEST_RUNMOTOR, (speed&0xFC) + motor, 0, NULL);
+    
+    DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_RUNMOTOR,speed=%i,motor=%u)...", (s8)(speed&0xFC), motor) );
+    len_check = SendCommand(TEST_RUNMOTOR, (speed&0xFC) + motor, 0, NULL);
+    DBG_VERBOSE( ConsolePrintf("len=%d\r\n", len_check) );
+    
     if (limitToLimit)
       memcpy(first, second, sizeof(first));   // Copy from previous run (against limit)
-    else
-      SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
+    else {
+      DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_GETMOTOR,buflen=%u)...", sizeof(first)) );
+      len_check = SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
+      DBG_VERBOSE( ConsolePrintf("len=%d\r\n", len_check) );
+    }
     
     // Run it for a while
     MicroWait(MOTOR_RUNTIME*3);
@@ -121,8 +148,13 @@ int TryMotor(s8 motor, s8 speed, bool limitToLimit = false)
   }
   
   // Get end point, then stop motor
-  SendCommand(TEST_GETMOTOR, 0, sizeof(second), (u8*)second);
-  SendCommand(TEST_RUNMOTOR, 0 + motor, 0, NULL);
+  DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_GETMOTOR,buflen=%u)...", sizeof(second)) );
+  len_check = SendCommand(TEST_GETMOTOR, 0, sizeof(second), (u8*)second);
+  DBG_VERBOSE( ConsolePrintf("len=%d\r\n", len_check) );
+  
+  DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_RUNMOTOR,speed=%i,motor=%u)...", (0), motor) );
+  len_check = SendCommand(TEST_RUNMOTOR, 0 + motor, 0, NULL);
+  DBG_VERBOSE( ConsolePrintf("len=%d\r\n", len_check) );
   
   int ticks = second[motor] - first[motor];
   if (motor < 2)
@@ -138,22 +170,31 @@ int TryMotor(s8 motor, s8 speed, bool limitToLimit = false)
 const int THRESH = 975;   // 975mm/sec
 void BodyMotor(void)
 {
-  if (TryMotor(0, 124) < THRESH)
+  //try all the motors (collect debug info before failing out)
+  int mot_left_fwd  = TryMotor(0, 124);
+  int mot_left_rev  = TryMotor(0, -124);
+  int mot_right_fwd = TryMotor(1, 124);
+  int mot_right_rev = TryMotor(1, -124);
+  
+  if (mot_left_fwd < THRESH)
     throw ERROR_MOTOR_LEFT;
-  if (TryMotor(0, -124) > -THRESH)
+  if (mot_left_rev > -THRESH)
     throw ERROR_MOTOR_LEFT;
-    
-  if (TryMotor(1, 124) < THRESH)
+  if (mot_right_fwd < THRESH)
     throw ERROR_MOTOR_RIGHT;
-  if (TryMotor(1, -124) > -THRESH)
-    throw ERROR_MOTOR_RIGHT;    
+  if (mot_right_rev > -THRESH)
+    throw ERROR_MOTOR_RIGHT;
 }
 
 // Console test
 void DropSensor(void)
 {
   int onoff[2];
+  
+  DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_DROP)...") );
   SendCommand(TEST_DROP, 0, sizeof(onoff), (u8*)onoff);
+  DBG_VERBOSE( ConsolePrintf("ok\r\n") );
+  
   ConsolePrintf("drop,%d,%d\r\n", onoff[0], onoff[1]);
 }
 
@@ -163,18 +204,27 @@ const int DROP_LIMIT = 99;
 void DropLeakage(void)
 {
   int onoff[2];
+  
+  DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_DROP)...") );
   SendCommand(TEST_DROP, 0, sizeof(onoff), (u8*)onoff);
+  DBG_VERBOSE( ConsolePrintf("ok\r\n") );
+  
   ConsolePrintf("drop,%d,%d\r\n", onoff[0], onoff[1]);
+  
   if (onoff[0]-onoff[1] > DROP_LIMIT || onoff[1] > DROP_LIMIT)
     throw ERROR_DROP_LEAKAGE;
 }
 
 static void SleepCurrent(void)
 {
+  
   try {
+    DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_POWERON,off)...") );
     SendCommand(TEST_POWERON, 0x5A, 0, 0);  // Force power off
+    //DBG_VERBOSE( ConsolePrintf("ok\r\n") );
   } catch (int e) {
     // Duh, can't reply!
+    DBG_VERBOSE( ConsolePrintf("ok\r\n") );
   }
   
   EnableBAT();
@@ -183,6 +233,7 @@ static void SleepCurrent(void)
   MicroWait(100000);
   int total = 0;
   // Compute microamps by summing milliamps
+  
   for (int i = 0; i < 1000; i++)
     total += BatGetCurrent();
   ConsolePrintf("sleep-current,%d\r\n", total);
