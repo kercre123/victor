@@ -506,7 +506,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
   // than the max slot we're supposed to have as ActiveID. Extra checking here is necessary since the number is unsigned
   // and we do allow a negative ActiveID when calling AddActiveObject elsewhere, for adding the charger.
   if(payload.objectID >= Util::numeric_cast<uint32_t>(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS)) {
-    ASSERT_NAMED(false, "Robot.HandleActiveObjectConnectionState.InvalidActiveID");
+    DEV_ASSERT(false, "Robot.HandleActiveObjectConnectionState.InvalidActiveID");
     return;
   }
   
@@ -565,10 +565,11 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
         } else {
           // We expect all objects with the same active ID (across coordinate frames) to have the same
           // object ID
-          ASSERT_NAMED_EVENT(objID == obj->GetID(), "Robot.HandleActiveObjectConnectionState.MismatchedIDs",
-                             "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p)",
-                             objID.GetValue(), payload.objectID, payload.factoryID,
-                             payload.device_type, &obj->GetPose().FindOrigin());
+          DEV_ASSERT_MSG(objID == obj->GetID(),
+                         "Robot.HandleActiveObjectConnectionState.MismatchedIDs",
+                         "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p)",
+                         objID.GetValue(), payload.objectID, payload.factoryID,
+                         payload.device_type, &obj->GetPose().FindOrigin());
         }
         
         // When disconnecting from an object make sure to set the factoryIDs of all matching objects in all frames
@@ -674,7 +675,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     return;
   }
   
-  ASSERT_NAMED(firstObject->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
+  DEV_ASSERT(firstObject->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
   
   PRINT_NAMED_INFO(MAKE_EVENT_NAME("ObjectMovedOrStopped"),
                    "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f, time: %d ms",
@@ -787,7 +788,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
         // Note we are still "localized" by odometry, however.
         if(robot->GetLocalizedTo() == object->GetID())
         {
-          ASSERT_NAMED(robot->IsLocalized(), MAKE_EVENT_NAME("BadIsLocalizedCheck"));
+          DEV_ASSERT(robot->IsLocalized(), MAKE_EVENT_NAME("BadIsLocalizedCheck"));
           PRINT_NAMED_INFO(MAKE_EVENT_NAME("UnsetLocalizedToID"),
                            "Unsetting %s %d, which moved/stopped, as robot %d's localization object.",
                            ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());

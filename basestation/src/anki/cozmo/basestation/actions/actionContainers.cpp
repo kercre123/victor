@@ -380,7 +380,7 @@ namespace Anki {
       DeleteAction(_currentAction);
       
       for (auto listIter = _queue.begin(); listIter != _queue.end(); ) {
-        ASSERT_NAMED(*listIter != nullptr, "ActionQueue.Clear.NullAction");
+        DEV_ASSERT(*listIter != nullptr, "ActionQueue.Clear.NullAction");
         DeleteActionIter(listIter);
       }
       
@@ -403,7 +403,7 @@ namespace Anki {
       
       for(auto iter = _queue.begin(); iter != _queue.end();)
       {
-        ASSERT_NAMED(*iter != nullptr, "ActionQueue.CancelType.NullAction");
+        DEV_ASSERT(*iter != nullptr, "ActionQueue.CancelType.NullAction");
         
         if(withType == RobotActionType::UNKNOWN || (*iter)->GetType() == withType) {
           // If this doesn't actually delete the action then it must have already been deleted so
@@ -436,7 +436,7 @@ namespace Anki {
       
       for(auto iter = _queue.begin(); iter != _queue.end();)
       {
-        ASSERT_NAMED(*iter != nullptr, "ActionQueue.CancelTag.NullAction");
+        DEV_ASSERT(*iter != nullptr, "ActionQueue.CancelTag.NullAction");
         
         if((*iter)->GetTag() == idTag) {
           if(found == true) {
@@ -586,7 +586,7 @@ namespace Anki {
         
         const CozmoContext* cozmoContext = _currentAction->GetRobot().GetContext();
         VizManager* vizManager = cozmoContext->GetVizManager();
-        ASSERT_NAMED(nullptr != vizManager, "Expecting a non-null VizManager");
+        DEV_ASSERT(nullptr != vizManager, "Expecting a non-null VizManager");
         
         const ActionResult actionResult = _currentAction->Update();
         const bool isRunning = (actionResult == ActionResult::RUNNING);
@@ -645,7 +645,7 @@ namespace Anki {
       {
         if(iter != _queue.end())
         {
-          ASSERT_NAMED((*iter) == action, "ActionQueue.DeleteAction.IterAndActionNotTheSame");
+          DEV_ASSERT((*iter) == action, "ActionQueue.DeleteAction.IterAndActionNotTheSame");
         }
       
         // If the action isn't currently being deleted meaning it was successfully inserted into the set

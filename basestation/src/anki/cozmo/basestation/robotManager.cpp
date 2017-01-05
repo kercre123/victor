@@ -73,7 +73,9 @@ namespace Anki {
     
     RobotManager::~RobotManager()
     {
-      ASSERT_NAMED_EVENT(_robots.empty(), "robotmanager_robot_leak", "RobotManager::~RobotManager. Not all the robots have been destroyed. This is a memory leak");
+      DEV_ASSERT_MSG(_robots.empty(),
+                     "robotmanager_robot_leak",
+                     "RobotManager::~RobotManager. Not all the robots have been destroyed. This is a memory leak");
     }
     
     void RobotManager::Init(const Json::Value& config)

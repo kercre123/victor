@@ -155,8 +155,10 @@ public:
       return it->second;
     }
     
-    ASSERT_NAMED_EVENT(!assertOnInvalidEnum,"StringToEnumMapper.GetTypeFromString.NotFound",
-                       "No match found for '%s'", inString);
+    DEV_ASSERT_MSG(!assertOnInvalidEnum,
+                   "StringToEnumMapper.GetTypeFromString.NotFound",
+                   "No match found for '%s'",
+                   inString);
     
     PRINT_NAMED_WARNING("StringToEnumMapper.GetTypeFromString.NotFound", "No match found for '%s'", inString);
     
