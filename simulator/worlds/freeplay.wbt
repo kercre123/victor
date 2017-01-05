@@ -76,9 +76,9 @@ DEF Cozmo_1 CozmoBot {
 WebotsKeyboardController {
   robotVolume 0
   userName "Billy"
-  unlockName "CubeStackAction"
-  autoConnect FALSE
+  unlockName "Workout"
   filterLogs TRUE
+  autoConnect FALSE
 }
 CozmoVizDisplay {
   moodViz TRUE
