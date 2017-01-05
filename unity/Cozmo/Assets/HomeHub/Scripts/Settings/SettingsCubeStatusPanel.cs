@@ -8,6 +8,9 @@ namespace Cozmo.Settings {
   public class SettingsCubeStatusPanel : MonoBehaviour {
 
     [SerializeField]
+    private BaseModal _CubeHelpModalPrefab;
+
+    [SerializeField]
     private CozmoButton _RefreshBlockPoolButton;
 
     [SerializeField]
@@ -25,6 +28,10 @@ namespace Cozmo.Settings {
 
     private const string kDasEventViewController = "settings_cube_status_panel";
 
+    private ModalPriorityData _SettingsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                                                 LowPriorityModalAction.CancelSelf,
+                                                                                 HighPriorityModalAction.Stack);
+
     private void Awake() {
       _RefreshBlockPoolButton.Initialize(HandleRefreshBlockPoolTapped, "refresh_blockpool_button", kDasEventViewController);
       _ShowCubeHelpButton.Initialize(HandleOpenCubeHelpViewTapped, "show_cube_help_dialog_button", kDasEventViewController);
@@ -40,11 +47,11 @@ namespace Cozmo.Settings {
 
     void OnDestroy() {
       if (_SettingsCubeHelpDialogInstance != null) {
-        _SettingsCubeHelpDialogInstance.CloseViewImmediately();
+        _SettingsCubeHelpDialogInstance.CloseDialogImmediately();
       }
 
       if (_ConfirmBlockPoolRefreshView != null) {
-        _ConfirmBlockPoolRefreshView.CloseViewImmediately();
+        _ConfirmBlockPoolRefreshView.CloseDialogImmediately();
       }
     }
 
@@ -58,15 +65,17 @@ namespace Cozmo.Settings {
     }
 
     private void HandleRefreshBlockPoolTapped() {
-      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
-      // Hook up callbacks
-      alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonRefresh, HandleRefreshBlockPool);
-      alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, null);
-      alertView.TitleLocKey = LocalizationKeys.kSettingsCubeStatusPanelButtonCubeRefresh;
-      alertView.DescriptionLocKey = LocalizationKeys.kRefreshCubesPromptDescription;
+      var refreshBlockPoolAlert = new AlertModalData("refresh_block_pool_alert",
+                                                     LocalizationKeys.kSettingsCubeStatusPanelButtonCubeRefresh,
+                                                     LocalizationKeys.kRefreshCubesPromptDescription,
+                                                     new AlertModalButtonData("refresh_button", LocalizationKeys.kButtonRefresh, HandleRefreshBlockPool),
+                                                     new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel));
 
-      _ConfirmBlockPoolRefreshView = alertView;
+      System.Action<AlertModal> refreshBlockPoolCreated = (alertModal) => {
+        _ConfirmBlockPoolRefreshView = alertModal;
+      };
+
+      UIManager.OpenAlert(refreshBlockPoolAlert, _SettingsModalPriorityData, refreshBlockPoolCreated);
     }
 
     private void HandleRefreshBlockPool() {
@@ -75,7 +84,9 @@ namespace Cozmo.Settings {
 
     private void HandleOpenCubeHelpViewTapped() {
       if (_SettingsCubeHelpDialogInstance == null) {
-        _SettingsCubeHelpDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpViewPrefab);
+        UIManager.OpenModal(_CubeHelpModalPrefab, _SettingsModalPriorityData, (newView) => {
+          _SettingsCubeHelpDialogInstance = newView;
+        });
       }
     }
   }

@@ -17,7 +17,7 @@ namespace Cozmo {
         sLowBatteryEventLogged = true;
         DAS.Event("robot.low_battery", "");
       }
-      OpenLowBatteryDialog();
+      OpenLowBatteryAlert();
     }
 #endif
 
@@ -33,25 +33,22 @@ namespace Cozmo {
     private const float _kMaxValidBatteryVoltage = 4.2f;
     private float _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
     private bool _LowBatteryAlertTriggered = false;
-    private AlertModal _LowBatteryDialog = null;
+    private AlertModal _LowBatteryAlertInstance = null;
     public bool ListeningForBatteryLevel = false;
     public static bool sLowBatteryEventLogged = false;
 
     private AlertModal _SleepCozmoConfirmDialog;
 
-    public bool IsAnyDialogOpen {
-      get {
-        return (IsConfirmSleepDialogOpen || IsGoToSleepDialogOpen || IsLowBatteryDialogOpen);
-      }
-    }
-
     public bool IsConfirmSleepDialogOpen { get { return (null != _SleepCozmoConfirmDialog); } }
     public bool IsGoToSleepDialogOpen { get { return (null != _GoToSleepDialog); } }
-    public bool IsLowBatteryDialogOpen { get { return (null != _LowBatteryDialog); } }
+    public bool IsLowBatteryDialogOpen { get { return (null != _LowBatteryAlertInstance); } }
     public bool IsIdleTimeOutEnabled {
       get { return _IdleTimeOutEnabled; }
       set { _IdleTimeOutEnabled = value; }
     }
+
+    [SerializeField]
+    private AlertModal _LowBatteryAlertPrefab;
 
     public static PauseManager Instance {
       get {
@@ -95,7 +92,7 @@ namespace Cozmo {
             sLowBatteryEventLogged = true;
             DAS.Event("robot.low_battery", "");
           }
-          OpenLowBatteryDialog();
+          OpenLowBatteryAlert();
         }
       }
     }
@@ -290,34 +287,45 @@ namespace Cozmo {
 
       CloseLowBatteryDialog();
       if (!IsConfirmSleepDialogOpen) {
-        Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
-
-        _SleepCozmoConfirmDialog = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab,
-                                                      creationSuccessCallback: (AlertModal alertView) => {
-                                                        alertView.OpenAudioEvent = openEvt;
-                                                      },
-                                                      overrideBackgroundDim: null,
-                                                      overrideCloseOnTouchOutside: false);
-        _SleepCozmoConfirmDialog.SetCloseButtonEnabled(false);
-
+        AlertModalData confirmSleepCozmoAlert = null;
         if (handleOnChargerSleepCancel) {
-          _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel);
-          _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
-                                                    HandleConfirmSleepCozmoOnChargerButtonTapped,
-                                                    Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect));
+          confirmSleepCozmoAlert = new AlertModalData("sleep_cozmo_on_charger_alert",
+                                                      LocalizationKeys.kSettingsSleepCozmoPanelConfirmationModalTitle,
+                                                      LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription,
+                                                      new AlertModalButtonData("confirm_sleep_button",
+                                                                               LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
+                                                                               HandleConfirmSleepCozmoOnChargerButtonTapped,
+                                                                               Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect)),
+                                                      new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel));
+
         }
         else {
-          _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel);
-          _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
-                                                    HandleConfirmSleepCozmoButtonTapped,
-                                                    Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect));
+          confirmSleepCozmoAlert = new AlertModalData("sleep_cozmo_from_settings_alert",
+                                                      LocalizationKeys.kSettingsSleepCozmoPanelConfirmationModalTitle,
+                                                      LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription,
+                                                      new AlertModalButtonData("confirm_sleep_button",
+                                                                               LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
+                                                                               HandleConfirmSleepCozmoButtonTapped,
+                                                                               Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect)),
+                                                      new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel));
         }
 
-        _SleepCozmoConfirmDialog.TitleLocKey = LocalizationKeys.kSettingsSleepCozmoPanelConfirmationModalTitle;
-        _SleepCozmoConfirmDialog.DescriptionLocKey = LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription;
-        if (OnPauseDialogOpen != null) {
-          OnPauseDialogOpen.Invoke();
-        }
+        var confirmSleepCozmoPriority = new ModalPriorityData(ModalPriorityLayer.High, 1,
+                                                              LowPriorityModalAction.Queue,
+                                                              HighPriorityModalAction.ForceCloseOthersAndOpen);
+
+        Action<AlertModal> confirmSleepCreated = (alertModal) => {
+          _SleepCozmoConfirmDialog = alertModal;
+          alertModal.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
+
+          if (OnPauseDialogOpen != null) {
+            OnPauseDialogOpen.Invoke();
+          }
+        };
+
+        UIManager.OpenAlert(confirmSleepCozmoAlert, confirmSleepCozmoPriority, confirmSleepCreated,
+                            overrideBackgroundDim: null,
+                            overrideCloseOnTouchOutside: false);
       }
     }
 
@@ -330,42 +338,56 @@ namespace Cozmo {
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
       if (!IsGoToSleepDialogOpen) {
-        Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab,
-                                                          creationSuccessCallback: (AlertModal view) => {
-                                                            view.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
-                                                          },
-                                                          overrideCloseOnTouchOutside: false);
-        alertView.SetCloseButtonEnabled(false);
-        alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoSleepTitle;
-        alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoSleepDesc;
-        _GoToSleepDialog = alertView;
-        // Set Music State
-        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
-        if (OnPauseDialogOpen != null) {
-          OnPauseDialogOpen.Invoke();
-        }
+        var goToSleepAlertData = new AlertModalData("cozmo_going_to_sleep_alert",
+                                                    LocalizationKeys.kConnectivityCozmoSleepTitle,
+                                                    LocalizationKeys.kConnectivityCozmoSleepDesc);
+
+        var goToSleepPriority = new ModalPriorityData(ModalPriorityLayer.VeryHigh, 0,
+                                                      LowPriorityModalAction.Queue,
+                                                      HighPriorityModalAction.ForceCloseOthersAndOpen);
+
+        Action<AlertModal> goToSleepAlertCreated = (alertModal) => {
+          _GoToSleepDialog = alertModal;
+          // Set Music State
+          Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
+          if (OnPauseDialogOpen != null) {
+            OnPauseDialogOpen.Invoke();
+          }
+        };
+
+        UIManager.OpenAlert(goToSleepAlertData, goToSleepPriority, goToSleepAlertCreated,
+                            overrideCloseOnTouchOutside: false);
       }
     }
 
-    private void OpenLowBatteryDialog() {
+    private void OpenLowBatteryAlert() {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
       }
       if (!IsLowBatteryDialogOpen) {
-        Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.LowBatteryAlertModalPrefab);
-        alertView.SetCloseButtonEnabled(true);
-        alertView.DimBackground = true;
-        alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryTitle;
-        alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryDesc;
-        _LowBatteryDialog = alertView;
-        _LowBatteryAlertTriggered = true;
+        var lowBatteryAlertData = new AlertModalData("low_battery_alert",
+                                                     LocalizationKeys.kConnectivityCozmoLowBatteryTitle,
+                                                     LocalizationKeys.kConnectivityCozmoLowBatteryDesc,
+                                                     showCloseButton: true);
 
-        if (OnPauseDialogOpen != null) {
-          OnPauseDialogOpen.Invoke();
-        }
+        Action<BaseModal> lowBatteryAlertCreated = (newModal) => {
+          AlertModal alertModal = (AlertModal)newModal;
+          alertModal.InitializeAlertData(lowBatteryAlertData);
+
+          _LowBatteryAlertInstance = alertModal;
+          _LowBatteryAlertTriggered = true;
+
+          if (OnPauseDialogOpen != null) {
+            OnPauseDialogOpen.Invoke();
+          }
+        };
+
+        var lowBatteryPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryLow, 0,
+                                                           LowPriorityModalAction.Queue,
+                                                           HighPriorityModalAction.Queue);
+        UIManager.OpenModal(_LowBatteryAlertPrefab, lowBatteryPriorityData, lowBatteryAlertCreated);
       }
     }
-
 
     private void CloseAllDialogs() {
       CloseConfirmSleepDialog();
@@ -375,22 +397,22 @@ namespace Cozmo {
 
     private void CloseConfirmSleepDialog() {
       if (null != _SleepCozmoConfirmDialog) {
-        _SleepCozmoConfirmDialog.CloseView();
+        _SleepCozmoConfirmDialog.CloseDialog();
         _SleepCozmoConfirmDialog = null;
       }
     }
 
     private void CloseGoToSleepDialog() {
       if (null != _GoToSleepDialog) {
-        _GoToSleepDialog.CloseView();
+        _GoToSleepDialog.CloseDialog();
         _GoToSleepDialog = null;
       }
     }
 
     private void CloseLowBatteryDialog() {
-      if (null != _LowBatteryDialog) {
-        _LowBatteryDialog.CloseView();
-        _LowBatteryDialog = null;
+      if (null != _LowBatteryAlertInstance) {
+        _LowBatteryAlertInstance.CloseDialog();
+        _LowBatteryAlertInstance = null;
       }
     }
   }

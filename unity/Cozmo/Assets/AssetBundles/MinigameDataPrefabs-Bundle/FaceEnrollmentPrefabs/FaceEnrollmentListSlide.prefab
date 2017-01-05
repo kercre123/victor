@@ -117,7 +117,7 @@ MonoBehaviour:
     type: 2}
   _LockedNewFaceSlotPrefab: {fileID: 11481334, guid: 6935c21df1ca741bcb60384e00791ac1,
     type: 2}
-  _UnlockFaceCellViewPrefab: {fileID: 11443690, guid: 1c809a7639e4743bc9639a1a15a7a707,
+  _FaceEnrollmentUnlockSlotModalPrefab: {fileID: 11443690, guid: 1c809a7639e4743bc9639a1a15a7a707,
     type: 2}
 --- !u!114 &11480294
 MonoBehaviour:

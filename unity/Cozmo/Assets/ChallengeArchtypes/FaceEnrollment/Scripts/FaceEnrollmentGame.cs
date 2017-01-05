@@ -4,9 +4,9 @@ namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
     [SerializeField]
-    private FaceEnrollmentInstructionsView _FaceEnrollmentInstructionsViewPrefab;
-    public FaceEnrollmentInstructionsView FaceEnrollmentInstructionsViewPrefab {
-      get { return _FaceEnrollmentInstructionsViewPrefab; }
+    private FaceEnrollmentInstructionsModal _FaceEnrollmentInstructionsModalPrefab;
+    public FaceEnrollmentInstructionsModal FaceEnrollmentInstructionsModalPrefab {
+      get { return _FaceEnrollmentInstructionsModalPrefab; }
     }
 
     [SerializeField]

@@ -30,15 +30,12 @@ namespace Cozmo.HomeHub {
     }
 
     [SerializeField]
-    private GameObjectDataLink _ChallengeDetailsPrefabData;
+    private GameObjectDataLink _ChallengeDetailsModalPrefabData;
 
-    private ChallengeDetailsDialog _ChallengeDetailsDialogInstance;
-
-    public bool IsChallengeDetailsActive {
-      get {
-        return _ChallengeDetailsDialogInstance != null || _ChallengeAlertView != null;
-      }
-    }
+    private ModalPriorityData _ChallengeDetailsPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                                                    LowPriorityModalAction.CancelSelf,
+                                                                                    HighPriorityModalAction.Stack);
+    private BaseModal _ChallengeDetailsModalInstance;
 
     private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;
 
@@ -53,8 +50,6 @@ namespace Cozmo.HomeHub {
     private CompletedChallengeData _CurrentChallengePlaying;
 
     private AnimationTrigger _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
-
-    private AlertModal _ChallengeAlertView = null;
 
     // Total ConnectedTime For GameEvents
     private const float _kConnectedTimeIntervalCheck = 60.0f;
@@ -74,17 +69,14 @@ namespace Cozmo.HomeHub {
     public override void DestroyHubWorld() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       CloseMiniGameImmediately();
-      if (_ChallengeAlertView != null) {
-        _ChallengeAlertView.CloseViewImmediately();
-      }
-      if (_ChallengeDetailsDialogInstance != null) {
-        _ChallengeDetailsDialogInstance.CloseViewImmediately();
+      if (_ChallengeDetailsModalInstance != null) {
+        _ChallengeDetailsModalInstance.CloseDialogImmediately();
       }
       // Deregister events
       // Destroy dialog if it exists
       if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
-        _HomeViewInstance.CloseViewImmediately();
+        _HomeViewInstance.CloseDialogImmediately();
       }
       // Kill yourself HomeHub
       GameObject.Destroy(this.gameObject);
@@ -153,34 +145,35 @@ namespace Cozmo.HomeHub {
         yield return 0;
       }
 
-      _HomeViewInstance = UIManager.OpenModal(homeViewPrefab.GetComponent<HomeView>());
-      _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-      _HomeViewInstance.MinigameConfirmed += HandleStartChallengeRequest;
+      UIManager.OpenView(homeViewPrefab.GetComponent<HomeView>(), (newHomeView) => {
+        _HomeViewInstance = (HomeView)newHomeView;
+        _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
+        _HomeViewInstance.MinigameConfirmed += HandleStartChallengeRequest;
 
-      // Show the current state of challenges being locked/unlocked
-      _HomeViewInstance.Initialize(_ChallengeStatesById, this);
+        // Show the current state of challenges being locked/unlocked
+        _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
-      ResetRobotToFreeplaySettings();
+        ResetRobotToFreeplaySettings();
 
-      var robot = RobotEngineManager.Instance.CurrentRobot;
+        var robot = RobotEngineManager.Instance.CurrentRobot;
 
-      if (robot != null && !OnboardingManager.Instance.IsAnyOnboardingActive()) {
-        // Display Cozmo's default face
-        robot.DisplayProceduralFace(
-          0,
-          Vector2.zero,
-          Vector2.one,
-          ProceduralEyeParameters.MakeDefaultLeftEye(),
-          ProceduralEyeParameters.MakeDefaultRightEye());
+        if (robot != null && !OnboardingManager.Instance.IsAnyOnboardingActive()) {
+          // Display Cozmo's default face
+          robot.DisplayProceduralFace(
+            0,
+            Vector2.zero,
+            Vector2.one,
+            ProceduralEyeParameters.MakeDefaultLeftEye(),
+            ProceduralEyeParameters.MakeDefaultRightEye());
 
-        robot.ResetRobotState(() => {
-          robot.SendAnimationTrigger(_MinigameGetOutAnimTrigger, (bool success) => {
-            _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
-            StartFreeplay(robot);
+          robot.ResetRobotState(() => {
+            robot.SendAnimationTrigger(_MinigameGetOutAnimTrigger, (bool success) => {
+              _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
+              StartFreeplay(robot);
+            });
           });
-        });
-      }
-
+        }
+      });
     }
 
     public void StartFreeplay(IRobot robot) {
@@ -199,74 +192,90 @@ namespace Cozmo.HomeHub {
     }
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
-      if (_ChallengeDetailsDialogInstance == null) {
+      if (_ChallengeDetailsModalInstance == null) {
         bool available = UnlockablesManager.Instance.IsUnlockableAvailable(_ChallengeStatesById[challenge].Data.UnlockId.Value);
         UnlockableInfo unlockInfo = UnlockablesManager.Instance.GetUnlockableInfo(_ChallengeStatesById[challenge].Data.UnlockId.Value);
         if (unlockInfo.ComingSoon) {
-          AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab, overrideCloseOnTouchOutside: true);
-          alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
-
-          alertView.TitleLocKey = LocalizationKeys.kUnlockableComingSoonTitle;
-          alertView.DescriptionLocKey = LocalizationKeys.kUnlockableComingSoonDescription;
-          if (_ChallengeAlertView != null) {
-            _ChallengeAlertView.CloseViewImmediately();
-          }
-          _ChallengeAlertView = alertView;
+          OpenComingSoonAlert();
         }
         else if (!available) {
-
-          UnlockableInfo preReqInfo = null;
-          for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {
-            // if available but we haven't unlocked it yet, then it is the upgrade that is blocking us
-            if (!UnlockablesManager.Instance.IsUnlocked(unlockInfo.Prerequisites[i].Value)) {
-              preReqInfo = UnlockablesManager.Instance.GetUnlockableInfo(unlockInfo.Prerequisites[i].Value);
-            }
-          }
-
-          // Create alert view with Icon
-          AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.IconAlertModalPrefab, overrideCloseOnTouchOutside: true);
-          alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
-          alertView.TitleLocKey = unlockInfo.TitleKey;
-          alertView.SetIcon(_ChallengeStatesById[challenge].Data.ChallengeIcon);
-
-          string preReqTypeKey = "unlockable.Unlock";
-
-          switch (preReqInfo.UnlockableType) {
-          case UnlockableType.Action:
-            preReqTypeKey = LocalizationKeys.kUnlockableUpgrade;
-            break;
-          case UnlockableType.Game:
-            preReqTypeKey = LocalizationKeys.kUnlockableApp;
-            break;
-          default:
-            preReqTypeKey = LocalizationKeys.kUnlockableUnlock;
-            break;
-          }
-
-          alertView.DescriptionLocKey = LocalizationKeys.kUnlockablePreReqNeededDescription;
-          alertView.SetMessageArgs(new object[] { Localization.Get(preReqInfo.TitleKey), Localization.Get(preReqTypeKey) });
-          if (_ChallengeAlertView != null) {
-            _ChallengeAlertView.CloseViewImmediately();
-          }
-          _ChallengeAlertView = alertView;
+          OpenNotAvailableDialog(unlockInfo, challenge);
         }
         else {
-          // Throttle Multitouch bug potential
-          _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
-
-          _ChallengeDetailsPrefabData.LoadAssetData((GameObject challengeDetailsPrefab) => {
-            _ChallengeDetailsDialogInstance = UIManager.OpenModal(challengeDetailsPrefab.GetComponent<ChallengeDetailsDialog>(),
-              newView => {
-                newView.Initialize(_ChallengeStatesById[challenge].Data, _HomeViewInstance);
-              });
-
-            _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-            // React to when we should start the challenge.
-            _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
-          });
+          OpenAvailableDialog(challenge);
         }
-
       }
+    }
+
+    private void OpenComingSoonAlert() {
+      var comingSoonAlertData = new AlertModalData("activity_coming_soon_alert",
+                                                   LocalizationKeys.kUnlockableComingSoonTitle,
+                                                   LocalizationKeys.kUnlockableComingSoonDescription,
+                                                   new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+
+      UIManager.OpenAlert(comingSoonAlertData, _ChallengeDetailsPriorityData, HandleChallengeAlertViewCreated,
+                          overrideCloseOnTouchOutside: true);
+    }
+
+    private void OpenNotAvailableDialog(UnlockableInfo unlockInfo, string challenge) {
+      UnlockableInfo preReqInfo = null;
+      for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {
+        // if available but we haven't unlocked it yet, then it is the upgrade that is blocking us
+        if (!UnlockablesManager.Instance.IsUnlocked(unlockInfo.Prerequisites[i].Value)) {
+          preReqInfo = UnlockablesManager.Instance.GetUnlockableInfo(unlockInfo.Prerequisites[i].Value);
+        }
+      }
+      string preReqTypeKey = "unlockable.Unlock";
+      switch (preReqInfo.UnlockableType) {
+      case UnlockableType.Action:
+        preReqTypeKey = LocalizationKeys.kUnlockableUpgrade;
+        break;
+      case UnlockableType.Game:
+        preReqTypeKey = LocalizationKeys.kUnlockableApp;
+        break;
+      default:
+        preReqTypeKey = LocalizationKeys.kUnlockableUnlock;
+        break;
+      }
+
+      var descLocArgs = new object[] { Localization.Get(preReqInfo.TitleKey), Localization.Get(preReqTypeKey) };
+
+      var notAvailableAlertData = new AlertModalData("activity_locked_alert",
+                                                     unlockInfo.TitleKey,
+                                                     LocalizationKeys.kUnlockablePreReqNeededDescription,
+                                                     new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
+                                                     icon: _ChallengeStatesById[challenge].Data.ChallengeIcon,
+                                                     descLocArgs: descLocArgs);
+
+      UIManager.OpenAlert(notAvailableAlertData, _ChallengeDetailsPriorityData, HandleChallengeAlertViewCreated,
+                          overrideCloseOnTouchOutside: true);
+    }
+
+    private void HandleChallengeAlertViewCreated(AlertModal alertModal) {
+      if (_ChallengeDetailsModalInstance != null) {
+        _ChallengeDetailsModalInstance.CloseDialogImmediately();
+      }
+      _ChallengeDetailsModalInstance = alertModal;
+    }
+
+    private void OpenAvailableDialog(string challenge) {
+      // Throttle Multitouch bug potential
+      _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
+
+      System.Action<BaseModal> detailsModalCreated = (newModal) => {
+        // React to when we should start the challenge.
+        _ChallengeDetailsModalInstance = newModal;
+        ChallengeDetailsModal challengeModal = (ChallengeDetailsModal)newModal;
+        challengeModal.InitializeChallengeData(_ChallengeStatesById[challenge].Data, _HomeViewInstance);
+        challengeModal.ChallengeStarted += HandleStartChallengeClicked;
+      };
+
+      System.Action<GameObject> detailsModalLoaded = (GameObject challengeDetailsPrefab) => {
+        UIManager.OpenModal(challengeDetailsPrefab.GetComponent<ChallengeDetailsModal>(), _ChallengeDetailsPriorityData, detailsModalCreated);
+        _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
+      };
+
+      _ChallengeDetailsModalPrefabData.LoadAssetData(detailsModalLoaded);
     }
 
     private void HandleStartChallengeClicked(string challengeClicked) {
@@ -275,17 +284,6 @@ namespace Cozmo.HomeHub {
 
     private void HandleStartChallengeRequest(string challengeRequested) {
       PlayMinigame(challengeRequested, true);
-    }
-
-    // Kill Challenge Alerts, for use with alerts that are intended to interrupt both
-    // Challenge Details Popups. TODO: replace with proper alert ui rework
-    public void CloseAllChallengeDetailsPopups() {
-      if (_ChallengeAlertView != null) {
-        _ChallengeAlertView.CloseViewImmediately();
-      }
-      if (_ChallengeDetailsDialogInstance != null) {
-        _ChallengeDetailsDialogInstance.CloseViewImmediately();
-      }
     }
 
     private void PlayMinigame(string challengeId, bool wasRequest = false) {
@@ -323,7 +321,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleHomeViewCloseAnimationFinished() {
       if (_HomeViewInstance != null) {
-        _HomeViewInstance.ViewCloseAnimationFinished -= HandleHomeViewCloseAnimationFinished;
+        _HomeViewInstance.DialogCloseAnimationFinished -= HandleHomeViewCloseAnimationFinished;
         _HomeViewInstance = null;
       }
       AssetBundleManager.Instance.UnloadAssetBundle(_HomeViewPrefabData.AssetBundle);
@@ -357,7 +355,7 @@ namespace Cozmo.HomeHub {
     }
 
     private IEnumerator ShowMinigameAfterHomeViewCloses(ChallengeData challengeData, ChallengePrefabData prefabData) {
-      while (_HomeViewInstance != null || IsChallengeDetailsActive || _MiniGameInstance != null) {
+      while (_HomeViewInstance != null || _ChallengeDetailsModalInstance != null) {
         yield return 0;
       }
 
@@ -380,7 +378,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleSharedMinigameViewInitialized(Cozmo.MinigameWidgets.SharedMinigameView newView) {
       _MiniGameInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
-      newView.ViewCloseAnimationFinished += HandleMinigameFinishedClosing;
+      newView.DialogCloseAnimationFinished += HandleMinigameFinishedClosing;
     }
 
     private void HandleEndGameDialog() {
@@ -424,7 +422,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleMinigameFinishedClosing() {
-      _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished -= HandleMinigameFinishedClosing;
+      _MiniGameInstance.SharedMinigameView.DialogCloseAnimationFinished -= HandleMinigameFinishedClosing;
       UnloadMinigameAssetBundle();
       StartLoadHomeView();
     }
@@ -462,28 +460,27 @@ namespace Cozmo.HomeHub {
         _MiniGameInstance.OnShowEndGameDialog -= HandleEndGameDialog;
         _MiniGameInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
         if (MiniGameInstance.SharedMinigameView != null) {
-          _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished -= HandleMinigameFinishedClosing;
+          _MiniGameInstance.SharedMinigameView.DialogCloseAnimationFinished -= HandleMinigameFinishedClosing;
         }
       }
     }
 
     private void CloseHomeView() {
-      if (_ChallengeDetailsDialogInstance != null) {
-        _ChallengeDetailsDialogInstance.ChallengeStarted -= HandleStartChallengeClicked;
-        _ChallengeDetailsDialogInstance.ViewCloseAnimationFinished += HandleCloseDetailsDialogAnimationFinished;
-        _ChallengeDetailsDialogInstance.CloseView();
+      if (_ChallengeDetailsModalInstance != null) {
+        _ChallengeDetailsModalInstance.DialogCloseAnimationFinished += HandleCloseDetailsDialogAnimationFinished;
+        _ChallengeDetailsModalInstance.CloseDialog();
       }
 
       if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
-        _HomeViewInstance.ViewCloseAnimationFinished += HandleHomeViewCloseAnimationFinished;
-        _HomeViewInstance.CloseView();
+        _HomeViewInstance.DialogCloseAnimationFinished += HandleHomeViewCloseAnimationFinished;
+        _HomeViewInstance.CloseDialog();
       }
     }
 
     private void HandleCloseDetailsDialogAnimationFinished() {
-      _ChallengeDetailsDialogInstance.ViewCloseAnimationFinished -= HandleCloseDetailsDialogAnimationFinished;
-      _ChallengeDetailsDialogInstance = null;
+      _ChallengeDetailsModalInstance.DialogCloseAnimationFinished -= HandleCloseDetailsDialogAnimationFinished;
+      _ChallengeDetailsModalInstance = null;
     }
 
     private void DeregisterDialogEvents() {
@@ -517,7 +514,7 @@ namespace Cozmo.HomeHub {
 
         // Force refresh of the dialog
         DeregisterDialogEvents();
-        _HomeViewInstance.CloseViewImmediately();
+        _HomeViewInstance.CloseDialogImmediately();
         StartLoadHomeView();
       }
     }

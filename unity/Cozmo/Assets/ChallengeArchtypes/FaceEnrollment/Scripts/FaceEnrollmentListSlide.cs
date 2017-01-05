@@ -24,8 +24,8 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
   private FaceEnrollmentNewCell _LockedNewFaceSlotInstance;
 
   [SerializeField]
-  private FaceEnrollmentUnlockView _UnlockFaceCellViewPrefab;
-  private FaceEnrollmentUnlockView _UnlockFaceCellViewInstance;
+  private FaceEnrollmentUnlockSlotModal _FaceEnrollmentUnlockSlotModalPrefab;
+  private FaceEnrollmentUnlockSlotModal _FaceEnrollmentUnlockSlotModalInstance;
 
   private List<FaceEnrollmentCell> _FaceCellList = new List<FaceEnrollmentCell>();
   private List<FaceEnrollmentNewCell> _FaceNewCellList = new List<FaceEnrollmentNewCell>();
@@ -68,11 +68,18 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
           _LockedNewFaceSlotInstance.EnableCell(false);
         }
 
-        _LockedNewFaceSlotInstance.OnCreateNewButton += () => {
-          _UnlockFaceCellViewInstance = UIManager.OpenModal(_UnlockFaceCellViewPrefab);
+        // Open unlock slot modal when locked slot is pressed
+        System.Action<Cozmo.UI.BaseModal> unlockSlotModalCreatedCallback = (newUnlockFaceSlotModal) => {
+          _FaceEnrollmentUnlockSlotModalInstance = (FaceEnrollmentUnlockSlotModal)newUnlockFaceSlotModal;
           KeyValuePair<string, int> unlockCostInfo = UnlockablesManager.Instance.FaceUnlockCost(faceSlot);
-          _UnlockFaceCellViewInstance.Initialize(unlockCostInfo.Key, unlockCostInfo.Value);
+          _FaceEnrollmentUnlockSlotModalInstance.Initialize(unlockCostInfo.Key, unlockCostInfo.Value);
         };
+
+        System.Action unlockSlotButtonPressed = () => {
+          UIManager.OpenModal(_FaceEnrollmentUnlockSlotModalPrefab, new Cozmo.UI.ModalPriorityData(), unlockSlotModalCreatedCallback);
+        };
+
+        _LockedNewFaceSlotInstance.OnCreateNewButton += unlockSlotButtonPressed;
 
         foundFirstLockedSlot = true;
       }
@@ -89,8 +96,8 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
 
   private void OnDestroy() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleUnlockResults);
-    if (_UnlockFaceCellViewInstance != null) {
-      _UnlockFaceCellViewInstance.CloseViewImmediately();
+    if (_FaceEnrollmentUnlockSlotModalInstance != null) {
+      _FaceEnrollmentUnlockSlotModalInstance.CloseDialogImmediately();
     }
   }
 

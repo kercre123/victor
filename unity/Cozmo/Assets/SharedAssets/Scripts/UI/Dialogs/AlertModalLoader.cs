@@ -37,44 +37,17 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private AlertModal _BadLightAlertModalPrefab;
+      private ScrollingTextModal _ScrollingTextModalPrefab;
 
-      public AlertModal BadLightAlertModalPrefab {
-        get { return _BadLightAlertModalPrefab; }
+      public ScrollingTextModal ScrollingTextModalPrefab {
+        get { return _ScrollingTextModalPrefab; }
       }
 
       [SerializeField]
-      private AlertModal _LowBatteryAlertModalPrefab;
+      private LongPressConfirmationModal _LongPressConfirmationModalPrefab;
 
-      public AlertModal LowBatteryAlertModalPrefab {
-        get { return _LowBatteryAlertModalPrefab; }
-      }
-
-      [SerializeField]
-      private AlertModal _ComingSoonAlertModalPrefab;
-
-      public AlertModal ComingSoonAlertModalPrefab {
-        get { return _ComingSoonAlertModalPrefab; }
-      }
-
-      [SerializeField]
-      private ScrollingTextView _ScrollingTextViewPrefab;
-
-      public ScrollingTextView ScrollingTextViewPrefab {
-        get { return _ScrollingTextViewPrefab; }
-      }
-
-      [SerializeField]
-      private LongConfirmationView _LongConfirmationViewPrefab;
-
-      public LongConfirmationView LongConfirmationViewPrefab {
-        get { return _LongConfirmationViewPrefab; }
-      }
-
-      [SerializeField]
-      private BaseModal _CubeHelpViewPrefab;
-      public BaseModal CubeHelpViewPrefab {
-        get { return _CubeHelpViewPrefab; }
+      public LongPressConfirmationModal LongPressConfirmationModalPrefab {
+        get { return _LongPressConfirmationModalPrefab; }
       }
     }
   }

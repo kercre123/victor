@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Cozmo.UI;
 using System.Collections;
 
 public class FaceEnrollmentCell : MonoBehaviour {
@@ -15,18 +16,18 @@ public class FaceEnrollmentCell : MonoBehaviour {
   private Anki.UI.AnkiTextLabel _NameLabel;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _EditButton;
+  private CozmoButton _EditButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _DeleteButton;
+  private CozmoButton _DeleteButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _ReEnrollFace;
+  private CozmoButton _ReEnrollFace;
 
   [SerializeField]
   private UnityEngine.UI.Image _UpdateImage;
 
-  private Cozmo.UI.AlertModal _ReEnrollAlertView = null;
+  private AlertModal _ReEnrollAlertModal = null;
 
   public void Initialize(int faceID, string faceName, bool needsUpdate) {
     _FaceName = faceName;
@@ -42,26 +43,26 @@ public class FaceEnrollmentCell : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    if (_ReEnrollAlertView != null) {
-      _ReEnrollAlertView.CloseViewImmediately();
+    if (_ReEnrollAlertModal != null) {
+      _ReEnrollAlertModal.CloseDialogImmediately();
     }
   }
 
   private void HandleReEnrollFaceClicked() {
     if (OnReEnrollFaceRequested != null) {
-
-      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab);
-      alertView.SetDasEventName("reenroll_face_confirm");
-      alertView.SetCloseButtonEnabled(false);
-      alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentReenrollmentAlertTitle;
-      alertView.SetTitleArgs(new object[] { _FaceName });
-      alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentReenrollmentAlertDescription;
-      alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentReenrollmentAlertConfirmButton, HandleReEnrollConfirm);
-      alertView.SetPrimaryButtonArgs(new object[] { _FaceName });
-      alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
-      _ReEnrollAlertView = alertView;
-
+      AlertModalData reenrollAlertData = new AlertModalData("reenroll_face_alert",
+                                                                              LocalizationKeys.kFaceEnrollmentReenrollmentAlertTitle,
+                                                                              LocalizationKeys.kFaceEnrollmentReenrollmentAlertDescription,
+                                                                              new AlertModalButtonData("confirm_button", LocalizationKeys.kFaceEnrollmentReenrollmentAlertConfirmButton, HandleReEnrollConfirm),
+                                                                              new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel),
+                                                                              titleLocArgs: new object[] { _FaceName },
+                                                                              primaryButtonLocArgs: new object[] { _FaceName });
+      UIManager.OpenAlert(reenrollAlertData, new ModalPriorityData(), HandleReEnrollAlertCreated);
     }
+  }
+
+  private void HandleReEnrollAlertCreated(AlertModal alertModal) {
+    _ReEnrollAlertModal = alertModal;
   }
 
   private void HandleReEnrollConfirm() {

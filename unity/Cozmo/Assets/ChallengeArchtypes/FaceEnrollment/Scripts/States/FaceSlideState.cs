@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using Cozmo.UI;
 
 namespace FaceEnrollment {
   public class FaceSlideState : State {
@@ -43,7 +42,7 @@ namespace FaceEnrollment {
       }
 
       if (_DeleteConfirmationAlertView != null) {
-        _DeleteConfirmationAlertView.CloseViewImmediately();
+        _DeleteConfirmationAlertView.CloseDialogImmediately();
       }
     }
 
@@ -59,15 +58,17 @@ namespace FaceEnrollment {
 
     // pop up a confirmation for deleting an enrolled face
     private void RequestDeleteEnrolledFace(int faceID) {
-      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.NoTextAlertModalPrefab);
+      AlertModalData requestDeleteEnrolledData = new AlertModalData("delete_enrolled_face_alert",
+                                                                    LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle,
+                                                                    primaryButtonData: new AlertModalButtonData("confirm_delete_button",
+                                                                                                                LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton,
+                                                                                                                () => HandleDeleteEnrolledFaceConfirmButton(faceID)),
+                                                                    secondaryButtonData: new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel),
+                                                                    titleLocArgs: new object[] { _CurrentRobot.EnrolledFaces[faceID] });
 
-      alertView.SetDasEventName("delete_enrolled_face_confirm");
-      alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton, () => HandleDeleteEnrolledFaceConfirmButton(faceID));
-      alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
-      alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle;
-      alertView.SetTitleArgs(new object[] { _CurrentRobot.EnrolledFaces[faceID] });
-      _DeleteConfirmationAlertView = alertView;
+      UIManager.OpenAlert(requestDeleteEnrolledData, new ModalPriorityData(), (alertModal) => {
+        _DeleteConfirmationAlertView = alertModal;
+      });
     }
 
     private void HandleDeleteEnrolledFaceConfirmButton(int faceID) {
@@ -83,9 +84,6 @@ namespace FaceEnrollment {
       // log to das
       DAS.Event("robot.face_slots_used", _CurrentRobot.EnrolledFaces.Count.ToString(),
         DASUtil.FormatExtraData("-1"));
-
     }
-
   }
 }
-

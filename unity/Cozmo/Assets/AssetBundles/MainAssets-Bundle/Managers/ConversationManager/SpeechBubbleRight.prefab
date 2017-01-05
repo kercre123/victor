@@ -132,8 +132,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e22a1964e562e41dfaef9962c096c7d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: 
-  _DASEventViewType: 0
+  _DASEventDialogName: 
+  _DASEventDialogType: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0

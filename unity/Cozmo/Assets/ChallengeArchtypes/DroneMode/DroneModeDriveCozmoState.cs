@@ -161,7 +161,7 @@ namespace Cozmo {
           int timesPlayedDroneMode = 0;
           DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(_DroneModeGame.ChallengeID, out timesPlayedDroneMode);
           if (timesPlayedDroneMode <= 0) {
-            _DroneModeControlsSlide.OpenHowToPlayView(showCloseButton: false, playAnimations: true);
+            _DroneModeControlsSlide.OpenHowToPlayModal(showCloseButton: false, playAnimations: true);
           }
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);

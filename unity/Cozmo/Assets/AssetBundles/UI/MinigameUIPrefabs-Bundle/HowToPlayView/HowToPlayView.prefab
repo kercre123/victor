@@ -194,8 +194,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9172de1dedd64633b1eff2a990b05c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: how_to_play
-  _DASEventViewType: 0
+  _DASEventDialogName: how_to_play
+  _DASEventDialogType: 0
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
@@ -454,11 +454,11 @@ Prefab:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _DASEventViewName
+      propertyPath: _DASEventDialogName
       value: how_to_play_view
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _DASEventViewType
+      propertyPath: _DASEventDialogType
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []

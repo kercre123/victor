@@ -14,15 +14,15 @@ public class IntroManager : MonoBehaviour {
   }
 
   [SerializeField]
-  private GameObjectDataLink _FirstTimeConnectDialogPrefabData;
-  private GameObject _FirstTimeConnectDialogInstance;
+  private GameObjectDataLink _FirstTimeConnectViewPrefabData;
+  private FirstTimeConnectView _FirstTimeConnectViewInstance;
 
   [SerializeField]
   private AssetBundleNames _PlatformSpecificAssetBundleName;
 
   [SerializeField]
-  private GameObjectDataLink _CheckInDialogPrefabData;
-  private CheckInFlowDialog _CheckInDialogInstance;
+  private GameObjectDataLink _CheckInViewPrefabData;
+  private CheckInFlowView _CheckInViewInstance;
 
   [SerializeField]
   private HubWorldBase _HubWorldPrefab;
@@ -113,16 +113,16 @@ public class IntroManager : MonoBehaviour {
     }
 
     // if we are in a connection flow then they should handle the disconnects properly.
-    if (_FirstTimeConnectDialogInstance != null) {
-      _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().HandleRobotDisconnect();
+    if (_FirstTimeConnectViewInstance != null) {
+      _FirstTimeConnectViewInstance.HandleRobotDisconnect();
       return;
     }
-    else if (_CheckInDialogInstance != null && _CheckInDialogInstance.gameObject != null) {
-      _CheckInDialogInstance.HandleRobotDisconnect();
+    else if (_CheckInViewInstance != null && _CheckInViewInstance.gameObject != null) {
+      _CheckInViewInstance.HandleRobotDisconnect();
       return;
     }
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
-    UIManager.CloseAllModalsImmediately();
+    UIManager.CloseAllModals();
     UIManager.EnableTouchEvents();
 
     if (!_StartFlowInProgress) {
@@ -131,60 +131,78 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void HandleFirstTimeConnectionFlowComplete() {
-    HideFirstTimeConnectDialog();
+    AssetBundleManager.Instance.UnloadAssetBundle(_FirstTimeConnectViewPrefabData.AssetBundle);
+    if (_FirstTimeConnectViewInstance != null) {
+      _FirstTimeConnectViewInstance.ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
+      _FirstTimeConnectViewInstance.ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
+      _FirstTimeConnectViewInstance.CloseDialog();
+      _FirstTimeConnectViewInstance = null;
+    }
     IntroFlowComplete();
   }
 
   private void HandleCheckinFlowComplete() {
-    HideCheckInFlow();
+    AssetBundleManager.Instance.UnloadAssetBundle(_CheckInViewPrefabData.AssetBundle);
+    if (_CheckInViewInstance != null) {
+      _CheckInViewInstance.ConnectionFlowComplete -= HandleCheckinFlowComplete;
+      _CheckInViewInstance.CheckInFlowQuit -= HandleCheckInFlowQuit;
+      _CheckInViewInstance.CloseDialog();
+      _CheckInViewInstance = null;
+    }
     IntroFlowComplete();
   }
 
   private void HandleFirstTimeConnectFlowQuit() {
     // destroy and re-create the connect dialog to restart the flow
     DAS.Info("IntroManager.HandleConnectionFlowQuit", "Restarting Connection Dialog Flow");
-    HideFirstTimeConnectDialog();
+    if (_FirstTimeConnectViewInstance != null) {
+      _FirstTimeConnectViewInstance.ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
+      _FirstTimeConnectViewInstance.ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
+      _FirstTimeConnectViewInstance.CloseDialogImmediately();
+      _FirstTimeConnectViewInstance = null;
+    }
     ShowFirstTimeConnectDialog();
   }
 
   private void ShowFirstTimeConnectDialog() {
-    AssetBundleManager.Instance.LoadAssetBundleAsync(_FirstTimeConnectDialogPrefabData.AssetBundle, LoadConnectView);
+    AssetBundleManager.Instance.LoadAssetBundleAsync(_FirstTimeConnectViewPrefabData.AssetBundle, LoadConnectView);
   }
 
   private void HandleCheckInFlowQuit() {
     // destroy and re-create the connect dialog to restart the flow
     DAS.Info("IntroManager.HandleCheckInFlowQuit", "Restarting CheckIn Dialog Flow");
-    HideCheckInFlow();
+
+    if (_CheckInViewInstance != null) {
+      _CheckInViewInstance.ConnectionFlowComplete -= HandleCheckinFlowComplete;
+      _CheckInViewInstance.CheckInFlowQuit -= HandleCheckInFlowQuit;
+      _CheckInViewInstance.CloseDialogImmediately();
+      _CheckInViewInstance = null;
+    }
+
     ShowCheckInFlow();
   }
 
   private void ShowFirstTimeFlow() {
-    AssetBundleManager.Instance.LoadAssetBundleAsync(_FirstTimeConnectDialogPrefabData.AssetBundle, LoadConnectView);
+    AssetBundleManager.Instance.LoadAssetBundleAsync(_FirstTimeConnectViewPrefabData.AssetBundle, LoadConnectView);
   }
 
   private void LoadConnectView(bool assetBundleSuccess) {
     if (assetBundleSuccess) {
-      _FirstTimeConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
-        if (_FirstTimeConnectDialogInstance == null && connectViewPrefab != null) {
-          _FirstTimeConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
-          _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowComplete += HandleFirstTimeConnectionFlowComplete;
-          _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
+      _FirstTimeConnectViewPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
+        if (_FirstTimeConnectViewInstance == null && connectViewPrefab != null) {
+          UIManager.OpenView(connectViewPrefab.GetComponent<FirstTimeConnectView>(), HandleFirstTimeConnectViewCreated);
         }
       });
     }
     else {
-      DAS.Error("IntroManager.LoadConnectView", "Failed to load asset bundle" + _FirstTimeConnectDialogPrefabData.AssetBundle);
+      DAS.Error("IntroManager.LoadConnectView", "Failed to load asset bundle" + _FirstTimeConnectViewPrefabData.AssetBundle);
     }
   }
 
-  private void HideFirstTimeConnectDialog() {
-    AssetBundleManager.Instance.UnloadAssetBundle(_FirstTimeConnectDialogPrefabData.AssetBundle);
-    if (_FirstTimeConnectDialogInstance != null) {
-      _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
-      _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
-      GameObject.Destroy(_FirstTimeConnectDialogInstance);
-      _FirstTimeConnectDialogInstance = null;
-    }
+  private void HandleFirstTimeConnectViewCreated(Cozmo.UI.BaseView firstTimeConnectView) {
+    _FirstTimeConnectViewInstance = (FirstTimeConnectView)firstTimeConnectView;
+    _FirstTimeConnectViewInstance.ConnectionFlowComplete += HandleFirstTimeConnectionFlowComplete;
+    _FirstTimeConnectViewInstance.ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
   }
 
   private void IntroFlowComplete() {
@@ -196,31 +214,25 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void ShowCheckInFlow() {
-    AssetBundleManager.Instance.LoadAssetBundleAsync(_CheckInDialogPrefabData.AssetBundle, LoadCheckInView);
+    AssetBundleManager.Instance.LoadAssetBundleAsync(_CheckInViewPrefabData.AssetBundle, LoadCheckInView);
   }
 
   private void LoadCheckInView(bool assetBundleSuccess) {
     if (assetBundleSuccess) {
-      _CheckInDialogPrefabData.LoadAssetData((GameObject checkInViewPrefab) => {
-        if (_CheckInDialogInstance == null && checkInViewPrefab != null) {
-          _CheckInDialogInstance = UIManager.CreateUIElement(checkInViewPrefab.gameObject).GetComponent<CheckInFlowDialog>();
-          _CheckInDialogInstance.ConnectionFlowComplete += HandleCheckinFlowComplete;
-          _CheckInDialogInstance.CheckInFlowQuit += HandleCheckInFlowQuit;
+      _CheckInViewPrefabData.LoadAssetData((GameObject checkInViewPrefab) => {
+        if (_CheckInViewInstance == null && checkInViewPrefab != null) {
+          UIManager.OpenView(checkInViewPrefab.GetComponent<CheckInFlowView>(), HandleCheckInViewCreated);
         }
       });
     }
     else {
-      DAS.Error("IntroManager.LoadCheckInView", "Failed to load asset bundle " + _CheckInDialogPrefabData.AssetBundle);
+      DAS.Error("IntroManager.LoadCheckInView", "Failed to load asset bundle " + _CheckInViewPrefabData.AssetBundle);
     }
   }
 
-  private void HideCheckInFlow() {
-    AssetBundleManager.Instance.UnloadAssetBundle(_CheckInDialogPrefabData.AssetBundle);
-    if (_CheckInDialogInstance != null) {
-      _CheckInDialogInstance.ConnectionFlowComplete -= HandleCheckinFlowComplete;
-      _CheckInDialogInstance.CheckInFlowQuit -= HandleCheckInFlowQuit;
-      GameObject.Destroy(_CheckInDialogInstance.gameObject);
-      _CheckInDialogInstance = null;
-    }
+  private void HandleCheckInViewCreated(Cozmo.UI.BaseView checkInFlowView) {
+    _CheckInViewInstance = (CheckInFlowView)checkInFlowView;
+    _CheckInViewInstance.ConnectionFlowComplete += HandleCheckinFlowComplete;
+    _CheckInViewInstance.CheckInFlowQuit += HandleCheckInFlowQuit;
   }
 }

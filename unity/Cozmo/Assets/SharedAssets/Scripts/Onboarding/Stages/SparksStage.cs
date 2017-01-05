@@ -12,14 +12,14 @@ namespace Onboarding {
       // You have somehow managed to escape the sparks screen
       // Probably because we don't force a robot erase and have lots on unlocks.
       // so just move on from this part too
-      BaseModal.BaseViewClosed += HandleViewClosed;
+      BaseModal.BaseModalClosed += HandleModalClosed;
     }
 
     public override void OnDestroy() {
       base.OnDestroy();
       UnlockablesManager.Instance.OnSparkComplete -= HandleSparkComplete;
       UnlockablesManager.Instance.OnSparkStarted -= HandleSparkStarted;
-      BaseModal.BaseViewClosed -= HandleViewClosed;
+      BaseModal.BaseModalClosed -= HandleModalClosed;
       // turn off regardless sine we're going back to freeplay
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     }
@@ -27,8 +27,8 @@ namespace Onboarding {
     private void HandleSparkStarted(Anki.Cozmo.UnlockId unlock) {
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
     }
-    private void HandleSparkComplete(CoreUpgradeDetailsDialog dialog) {
-      dialog.CloseView();
+    private void HandleSparkComplete(CoreUpgradeDetailsModal modal) {
+      modal.CloseDialog();
     }
 
 #if ENABLE_DEBUG_PANEL
@@ -39,9 +39,9 @@ namespace Onboarding {
       // Gross but only done once we've hit this stage and only for debugging.
       // Basically waiting a minute sucks for testing and the the opened event is in the previous state.
       // So just find the window in scene in case "debug skip" is pressed.
-      BaseModal sparksView = FindObjectOfType<CoreUpgradeDetailsDialog>();
-      if (sparksView != null) {
-        sparksView.CloseView();
+      BaseModal sparksModal = FindObjectOfType<CoreUpgradeDetailsModal>();
+      if (sparksModal != null) {
+        sparksModal.CloseDialog();
       }
       else {
         // Handle case if hit before window is even open for spamming
@@ -50,8 +50,8 @@ namespace Onboarding {
     }
 #endif
 
-    private void HandleViewClosed(BaseModal view) {
-      if (view is CoreUpgradeDetailsDialog) {
+    private void HandleModalClosed(BaseModal modal) {
+      if (modal is CoreUpgradeDetailsModal) {
         OnboardingManager.Instance.GoToNextStage();
       }
     }

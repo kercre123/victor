@@ -12,9 +12,6 @@ namespace Cozmo {
     public class HowToPlayView : BaseModal {
 
       [SerializeField]
-      private CanvasGroup _AlphaController;
-
-      [SerializeField]
       private Transform _ContentsContainer;
 
       [SerializeField]
@@ -32,7 +29,7 @@ namespace Cozmo {
       #region Base View
 
       protected override void CleanUp() {
-        
+
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {

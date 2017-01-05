@@ -70,10 +70,14 @@ namespace Conversations {
     public void AddConversationLine(ConversationLine line) {
       _CurrentConversation.AddToConversation(line);
       if (_CurrBackground == null) {
-        _CurrBackground = UIManager.OpenModal(_ConvoOverlayPrefab);
-        _CurrBackground.InitButtonText(LocalizationKeys.kButtonContinue);
+        UIManager.OpenModal(_ConvoOverlayPrefab, new ModalPriorityData(), HandleConvoBackgroundCreated);
       }
       CreateSpeechBubble(line);
+    }
+
+    private void HandleConvoBackgroundCreated(Cozmo.UI.BaseModal newConvoBackground) {
+      _CurrBackground = (ConvoBackground)newConvoBackground;
+      _CurrBackground.InitButtonText(LocalizationKeys.kButtonContinue);
     }
 
     public void SaveConversationToHistory() {
@@ -82,24 +86,26 @@ namespace Conversations {
       StartNewConversation("Default");
     }
 
-    private SpeechBubble CreateSpeechBubble(ConversationLine line) {
-      SpeechBubble newBubble;
+    private void CreateSpeechBubble(ConversationLine line) {
       if (line.IsRight) {
         if (_CurrentRightSpeechBubble != null) {
           UIManager.CloseModal(_CurrentRightSpeechBubble);
         }
-        newBubble = _CurrentRightSpeechBubble = UIManager.OpenModal(_RightBubble);
+        UIManager.OpenModal(_RightBubble, new ModalPriorityData(), (newRightBubble) => {
+          _CurrentRightSpeechBubble = (SpeechBubble)newRightBubble;
+          _CurrentRightSpeechBubble.Initialize(line);
+        });
       }
       else {
         if (_CurrentLeftSpeechBubble != null) {
           UIManager.CloseModal(_CurrentLeftSpeechBubble);
         }
-        newBubble = _CurrentLeftSpeechBubble = UIManager.OpenModal(_LeftBubble);
+        UIManager.OpenModal(_LeftBubble, new ModalPriorityData(), (newLeftBubble) => {
+          _CurrentLeftSpeechBubble = (SpeechBubble)newLeftBubble;
+          _CurrentLeftSpeechBubble.Initialize(line);
+        });
       }
-      newBubble.Initialize(line);
-      return newBubble;
     }
-
   }
 
 }

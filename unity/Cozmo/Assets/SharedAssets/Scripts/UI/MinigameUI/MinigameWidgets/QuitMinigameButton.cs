@@ -46,7 +46,7 @@ namespace Cozmo {
       public override void DestroyWidgetImmediately() {
         _QuitButtonInstance.onClick.RemoveAllListeners();
         if (_QuitPopupInstance != null) {
-          _QuitPopupInstance.CloseViewImmediately();
+          _QuitPopupInstance.CloseDialogImmediately();
         }
         PauseManager.Instance.OnPauseDialogOpen -= HandlePauseDialogOpen;
         Destroy(gameObject);
@@ -61,30 +61,36 @@ namespace Cozmo {
       }
 
       private void HandleQuitButtonTap() {
-        if (UIManager.Instance.NumberOfOpenDialogues() == 0) {
-          // Open confirmation dialog instead
-          AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.NoTextAlertModalPrefab);
-          // Hook up callbacks
-          alertView.SetCloseButtonEnabled(false);
-          alertView.SetPrimaryButton(LocalizationKeys.kButtonQuit, HandleQuitConfirmed, Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
-          alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleQuitCancelled);
-          if (_IsMinigame) {
-            alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
-          }
-          else {
-            alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitleActivity;
-          }
-          // Listen for dialog close
+        string titleKey = _IsMinigame ? LocalizationKeys.kMinigameQuitViewTitle : LocalizationKeys.kMinigameQuitViewTitleActivity;
 
-          alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
-          _QuitPopupInstance = alertView;
-          _ConfimedQuit = false;
-        }
+        var confirmQuitButtonData = new AlertModalButtonData("confirm_button", LocalizationKeys.kButtonQuit, HandleQuitConfirmed,
+                                                             Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
+
+        var cancelQuitButtonData = new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel, HandleQuitCancelled);
+
+        var quitGameAlertData = new AlertModalData("quit_minigame_alert",
+                                                   titleKey,
+                                                   descLocKey: null,
+                                                   primaryButtonData: confirmQuitButtonData,
+                                                   secondaryButtonData: cancelQuitButtonData,
+                                                   dialogCloseAnimationFinishedCallback: HandleQuitViewClosed);
+
+        var quitGamePriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                         LowPriorityModalAction.CancelSelf,
+                                                         HighPriorityModalAction.Stack);
+
+        System.Action<AlertModal> quitAlertCreated = (alertModal) => {
+          _QuitPopupInstance = alertModal;
+        };
+
+        UIManager.OpenAlert(quitGameAlertData, quitGamePriorityData, quitAlertCreated);
+
+        _ConfimedQuit = false;
       }
 
       private void HandlePauseDialogOpen() {
         if (_QuitPopupInstance != null) {
-          _QuitPopupInstance.CloseViewImmediately();
+          _QuitPopupInstance.CloseDialogImmediately();
         }
       }
 

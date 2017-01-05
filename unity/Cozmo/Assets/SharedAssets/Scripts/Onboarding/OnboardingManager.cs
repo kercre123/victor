@@ -148,7 +148,7 @@ public class OnboardingManager : MonoBehaviour {
   public void InitHomeHubOnboarding(HomeView homeview) {
     _HomeView = homeview;
     _OnboardingTransform = homeview.transform;
-    _HomeView.ViewClosed += HandleHomeViewClosed;
+    _HomeView.DialogClosed += HandleHomeViewClosed;
 
     if (IsOnboardingRequired(OnboardingPhases.Home)) {
       StartPhase(OnboardingPhases.Home);

@@ -354,8 +354,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5be1f790cb104445592ef389f9bc14a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: icon_alert_view
-  _DASEventViewType: 2
+  _DASEventDialogName: icon_alert_view
+  _DASEventDialogType: 2
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
   _LayerPriority: 100
@@ -805,11 +805,11 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
-      propertyPath: _DASEventViewName
+      propertyPath: _DASEventDialogName
       value: icon_alert_view
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _DASEventViewType
+      propertyPath: _DASEventDialogType
       value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []

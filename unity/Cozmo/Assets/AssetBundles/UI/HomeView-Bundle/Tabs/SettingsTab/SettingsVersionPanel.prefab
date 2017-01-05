@@ -212,7 +212,7 @@ MonoBehaviour:
   _DeviceIDLabel: {fileID: 0}
   _AppRunLabel: {fileID: 0}
   _SupportButton: {fileID: 0}
-  _SupportInfoViewPrefab: {fileID: 11410082, guid: 950243296d8654fdba91f31eabdad971,
+  _SupportInfoModalPrefab: {fileID: 11410082, guid: 950243296d8654fdba91f31eabdad971,
     type: 2}
   _EraseCozmoButton: {fileID: 0}
   _SecondsToConfirmEraseCozmo: 5

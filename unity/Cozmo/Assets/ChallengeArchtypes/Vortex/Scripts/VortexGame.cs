@@ -50,21 +50,22 @@ namespace Vortex {
 
     protected void InitializeMinigameObjects(int numCubes) {
       DAS.Info(this, "VortexGame::Start");
-      _GamePanel = UIManager.OpenModal(_GamePanelPrefab);
+      UIManager.OpenModal(_GamePanelPrefab, new Cozmo.UI.ModalPriorityData(), (gamePanel) => {
+        _GamePanel = (VortexPanel)gamePanel;
+        _GamePanel.HandleSpinEnded = HandleSpinEnded;
+        _GamePanel.HandleSpinStarted = HandleSpinStarted;
+        _GamePanel.HandleDebugTap = HandleDebugTap;
+        _GamePanel.HandleReplayClicked = HandleReplaySelected;
+        _GamePanel.SetLockSpinner(true);
 
-      _GamePanel.HandleSpinEnded = HandleSpinEnded;
-      _GamePanel.HandleSpinStarted = HandleSpinStarted;
-      _GamePanel.HandleDebugTap = HandleDebugTap;
-      _GamePanel.HandleReplayClicked = HandleReplaySelected;
-      _GamePanel.SetLockSpinner(true);
+        LightCube.TappedAction += HandleBlockTapped;
 
-      LightCube.TappedAction += HandleBlockTapped;
+        // we need at least one for cozmo and one for at least one player but if we find more cool, stateintro will deal with it.
+        InitialCubesState initCubeState = new InitialCubesState(new StateIntro(), numCubes);
+        _StateMachine.SetNextState(initCubeState);
 
-      // we need at least one for cozmo and one for at least one player but if we find more cool, stateintro will deal with it.
-      InitialCubesState initCubeState = new InitialCubesState(new StateIntro(), numCubes);
-      _StateMachine.SetNextState(initCubeState);
-
-      _RoundNumber = 0;
+        _RoundNumber = 0;
+      });
     }
 
     protected override void CleanUpOnDestroy() {

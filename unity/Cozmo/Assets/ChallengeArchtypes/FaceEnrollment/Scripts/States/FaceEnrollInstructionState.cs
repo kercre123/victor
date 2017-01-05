@@ -1,12 +1,13 @@
 using UnityEngine;
 using Anki.Cozmo.ExternalInterface;
+using Cozmo.UI;
 
 namespace FaceEnrollment {
   public class FaceEnrollInstructionState : State {
 
-    private FaceEnrollmentInstructionsView _FaceEnrollmentInstructionsViewInstance;
+    private FaceEnrollmentInstructionsModal _FaceEnrollmentInstructionsModalInstance;
 
-    private Cozmo.UI.AlertModal _ErrorAlertView = null;
+    private AlertModal _ErrorAlertModal = null;
 
     private FaceEnrollmentGame _FaceEnrollmentGame;
     private System.Action _OnUserCancel;
@@ -15,7 +16,7 @@ namespace FaceEnrollment {
     private bool _UserCancelledEnrollment = false;
     private bool _EnrollingFace = false;
 
-    private Cozmo.UI.AlertModal _DoneAlertView = null;
+    private AlertModal _DoneAlertModal = null;
 
     public bool IsReEnrollment {
       get { return _ReEnrollFaceID != 0; }
@@ -37,11 +38,17 @@ namespace FaceEnrollment {
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
 
-      _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
-      _FaceEnrollmentInstructionsViewInstance = UIManager.OpenModal(_FaceEnrollmentGame.FaceEnrollmentInstructionsViewPrefab);
-      _FaceEnrollmentInstructionsViewInstance.ViewClosedByUser += HandleUserClosedView;
+      UIManager.OpenModal(_FaceEnrollmentGame.FaceEnrollmentInstructionsModalPrefab,
+                          new ModalPriorityData(), HandleInstructionsModalCreated);
+    }
 
-      _FaceEnrollmentInstructionsViewInstance.SetFaceName(_NameForFace);
+    private void HandleInstructionsModalCreated(BaseModal newInstructionsModal) {
+      _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
+      _FaceEnrollmentInstructionsModalInstance = (FaceEnrollmentInstructionsModal)newInstructionsModal;
+      _FaceEnrollmentInstructionsModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleUserClosedInstructionsModal;
+      _FaceEnrollmentInstructionsModalInstance.ModalForceClosedAnimationFinished += HandleInstructionsModalForceClosed;
+
+      _FaceEnrollmentInstructionsModalInstance.SetFaceName(_NameForFace);
 
       SendEnrollFace();
     }
@@ -52,23 +59,24 @@ namespace FaceEnrollment {
       // resume minigame music
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_FaceEnrollmentGame.GetDefaultMusicState());
 
-      if (_FaceEnrollmentInstructionsViewInstance != null) {
-        _FaceEnrollmentInstructionsViewInstance.CloseViewImmediately();
+      if (_FaceEnrollmentInstructionsModalInstance != null) {
+        _FaceEnrollmentInstructionsModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished -= HandleUserClosedInstructionsModal;
+        _FaceEnrollmentInstructionsModalInstance.ModalForceClosedAnimationFinished -= HandleInstructionsModalForceClosed;
+        _FaceEnrollmentInstructionsModalInstance.CloseDialogImmediately();
       }
 
-      if (_ErrorAlertView != null) {
-        _ErrorAlertView.CloseViewImmediately();
+      if (_ErrorAlertModal != null) {
+        _ErrorAlertModal.CloseDialogImmediately();
       }
 
-      if (_DoneAlertView != null) {
-        _DoneAlertView.CloseViewImmediately();
+      if (_DoneAlertModal != null) {
+        _DoneAlertModal.CloseDialogImmediately();
       }
 
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
     }
 
-    private void HandleUserClosedView() {
-
+    private void HandleUserClosedInstructionsModal() {
       _UserCancelledEnrollment = true;
 
       if (_EnrollingFace) {
@@ -83,16 +91,19 @@ namespace FaceEnrollment {
       ReturnToFaceSlide();
     }
 
+    private void HandleInstructionsModalForceClosed() {
+      ReturnToFaceSlide();
+    }
+
     private void SendEnrollFace() {
       _EnrollingFace = true;
       //_CurrentRobot.SetEnableCliffSensor(false); // TODO: Handle this in the behavior?
 
       // First send enrollment settings, then activate the behavior to use them
       _CurrentRobot.SetFaceToEnroll(_ReEnrollFaceID, _NameForFace);
-        }
+    }
 
-    private void HandleEnrolledFace(Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted message) {
-
+    private void HandleEnrolledFace(FaceEnrollmentCompleted message) {
       _EnrollingFace = false;
 
       //_CurrentRobot.SetEnableCliffSensor(true); // TODO: Handle this in the behavior?
@@ -102,50 +113,55 @@ namespace FaceEnrollment {
       }
       else if (message.result == Anki.Cozmo.FaceEnrollmentResult.Success) {
         HandleSuccessfulEnrollment(message);
-        }
+      }
       else {
         HandleKnownEnrollmentFailure(message);
       }
 
-      }
+    }
 
     private void HandleUserCancelledEnrollment() {
-        if (_OnUserCancel != null) {
-          _OnUserCancel();
-        }
+      if (_OnUserCancel != null) {
+        _OnUserCancel();
       }
+    }
 
-    private void HandleKnownEnrollmentFailure(Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted faceEnrollmentCompleted) {
-      // we didn't succeed so let's show an error to the user saying why
-      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab);
+    private void HandleKnownEnrollmentFailure(FaceEnrollmentCompleted faceEnrollmentCompleted) {
+      AlertModalData errorAlertData = null;
 
       switch (faceEnrollmentCompleted.result) {
 
       case Anki.Cozmo.FaceEnrollmentResult.SawWrongFace:
-        alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentErrorsNeverSawValidFaceTitle;
-        alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentErrorsNeverSawValidFaceDescription;
-        alertView.SetMessageArgs(new object[] { faceEnrollmentCompleted.name });
-        alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue, ReturnToFaceSlide);
-        alertView.ViewClosedByUser += ReturnToFaceSlide;
+        errorAlertData = new AlertModalData("enroll_never_saw_valid_face_alert",
+                                            LocalizationKeys.kFaceEnrollmentErrorsNeverSawValidFaceTitle,
+                                            LocalizationKeys.kFaceEnrollmentErrorsNeverSawValidFaceDescription,
+                                            new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, ReturnToFaceSlide),
+                                            descLocArgs: new object[] { faceEnrollmentCompleted.name });
         break;
 
       // TODO: Add other special-case messaging for other failures
 
       default:
-        alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentErrorsTimeOutTitle;
-        alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentErrorsTimeOutDescription;
-        alertView.SetPrimaryButton(LocalizationKeys.kButtonRetry, SendEnrollFace);
-        alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, ReturnToFaceSlide);
-        alertView.ViewClosedByUser += ReturnToFaceSlide;
+        errorAlertData = new AlertModalData("enroll_time_out_alert",
+                                            LocalizationKeys.kFaceEnrollmentErrorsTimeOutTitle,
+                                            LocalizationKeys.kFaceEnrollmentErrorsTimeOutDescription,
+                                            new AlertModalButtonData("retry_button", LocalizationKeys.kButtonRetry, SendEnrollFace),
+                                            new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel, ReturnToFaceSlide));
         break;
       }
 
-      _ErrorAlertView = alertView;
+      var errorAlertPriorityData = ModalPriorityData.CreateSlightlyHigherData(_FaceEnrollmentInstructionsModalInstance.PriorityData);
 
-      }
+      System.Action<AlertModal> errorAlertCreated = (alertModal) => {
+        alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += ReturnToFaceSlide;
+        _ErrorAlertModal = alertModal;
+      };
+
+      // we didn't succeed so let's show an error to the user saying why
+      UIManager.OpenAlert(errorAlertData, errorAlertPriorityData, errorAlertCreated);
+    }
 
     private void HandleSuccessfulEnrollment(Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted faceEnrollmentCompleted) {
-
       _FaceEnrollmentGame.ShowDoneShelf = true;
 
       if (_CurrentRobot.EnrolledFaces.ContainsKey(faceEnrollmentCompleted.faceID)) {
@@ -170,23 +186,28 @@ namespace FaceEnrollment {
         // for very first enrollment (not re-enrollment of first face!), exit Meet Cozmo completely when done
         // otherwise just go back to face list
         if (_CurrentRobot.EnrolledFaces.Count == 1) {
-        DoneAlertView();
-      }
-      else {
-        ReturnToFaceSlide();
+          ShowDoneAlertModal();
+        }
+        else {
+          ReturnToFaceSlide();
+        }
       }
     }
+
+    private void ShowDoneAlertModal() {
+      var doneAlertData = new AlertModalData("enroll_first_time_finished_alert",
+                                             LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertTitle,
+                                             LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertDescription,
+                                             new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, EndFirstEnrollment));
+
+      var doneAlertPriorityData = ModalPriorityData.CreateSlightlyHigherData(_FaceEnrollmentInstructionsModalInstance.PriorityData);
+
+      UIManager.OpenAlert(doneAlertData, doneAlertPriorityData, HandleDoneAlertModalCreated,
+                        overrideCloseOnTouchOutside: false);
     }
 
-    private void DoneAlertView() {
-      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab, overrideCloseOnTouchOutside: false);
-
-      // show alert
-      alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertTitle;
-      alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertDescription;
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue, EndFirstEnrollment);
-
-      _DoneAlertView = alertView;
+    private void HandleDoneAlertModalCreated(AlertModal alertModal) {
+      _DoneAlertModal = alertModal;
     }
 
     private void EndFirstEnrollment() {
@@ -197,6 +218,5 @@ namespace FaceEnrollment {
       ContextManager.Instance.AppFlash(playChime: true);
       _StateMachine.SetNextState(new FaceSlideState());
     }
-
-        }
-      }
+  }
+}

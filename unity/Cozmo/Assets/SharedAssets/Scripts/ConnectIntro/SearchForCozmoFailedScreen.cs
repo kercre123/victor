@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using Cozmo.UI;
 using Anki.Cozmo.ExternalInterface;
 
 
@@ -25,8 +25,8 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   private Anki.UI.AnkiTextLabel _AppVerLabel;
 
   [SerializeField]
-  private WifiInstructionsView _WifiInstructionsViewPrefab;
-  private WifiInstructionsView _WifiInstructionsViewInstance;
+  private WifiInstructionsModal _WifiInstructionsModalPrefab;
+  private WifiInstructionsModal _WifiInstructionsModalInstance;
 
   [SerializeField]
   private GameObject _WifiAnimationsPrefab;
@@ -86,8 +86,8 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    if (_WifiInstructionsViewInstance != null) {
-      UIManager.CloseModalImmediately(_WifiInstructionsViewInstance);
+    if (_WifiInstructionsModalInstance != null) {
+      UIManager.CloseModalImmediately(_WifiInstructionsModalInstance);
     }
     RobotEngineManager.Instance.RemoveCallback<DeviceDataMessage>(HandleDeviceDataMessage);
   }
@@ -111,8 +111,15 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   }
 
   private void HandleShowMeButton() {
-    _WifiInstructionsViewInstance = UIManager.OpenModal(_WifiInstructionsViewPrefab);
-    _WifiInstructionsViewInstance.ViewClosedByUser += QuitFlow;
-  }
+    System.Action<Cozmo.UI.BaseModal> wifiModalCreated = (wifiModal) => {
+      _WifiInstructionsModalInstance = (WifiInstructionsModal)wifiModal;
+      _WifiInstructionsModalInstance.ModalClosedWithCloseButtonOrOutside += QuitFlow;
+    };
 
+    var wifiInstructionsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryLow, 1,
+                                                                  LowPriorityModalAction.CancelSelf,
+                                                                  HighPriorityModalAction.Stack);
+
+    UIManager.OpenModal(_WifiInstructionsModalPrefab, wifiInstructionsModalPriorityData, wifiModalCreated);
+  }
 }

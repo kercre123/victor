@@ -765,15 +765,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73c2fe72024e4462a988635858b7a680, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: LootView
-  _DASEventViewType: 0
-  _CloseDialogOnTapOutside: 0
-  _OptionalCloseDialogButton: {fileID: 0}
-  _LayerPriority: 0
-  DimBackground: 0
+  _DASEventDialogName: LootView
+  _DASEventDialogType: 0
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
+  _CloseDialogOnTapOutside: 0
+  _OptionalCloseDialogButton: {fileID: 0}
+  _ModalPriorityData:
+    _PriorityLayer: 4000
+    _PriorityOffset: 0
+    _LowPriorityAction: 0
+    _HighPriorityAction: 2
+  DimBackground: 0
   _BoxIntroTweenDuration: 0.75
   _BoxIntroSettleDuration: 0.15
   _BoxIntroStartScale: 0.3
@@ -5171,11 +5175,11 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
-      propertyPath: _DASEventViewName
+      propertyPath: _DASEventDialogName
       value: LootView
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _DASEventViewType
+      propertyPath: _DASEventDialogType
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 0}

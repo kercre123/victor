@@ -33,7 +33,8 @@ namespace InvestorDemo {
     }
 
     protected void InitializeMinigameObjects() {
-      _GamePanel = UIManager.OpenModal(_GamePanelPrefab);
+      UIManager.OpenModal(_GamePanelPrefab, new Cozmo.UI.ModalPriorityData(),
+                          (newModal) => { _GamePanel = (InvestorDemoPanel)newModal; });
 
       CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
 

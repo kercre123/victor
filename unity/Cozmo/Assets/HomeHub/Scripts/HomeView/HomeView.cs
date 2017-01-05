@@ -11,7 +11,7 @@ using System;
 using DG.Tweening;
 
 namespace Cozmo.HomeHub {
-  public class HomeView : BaseModal {
+  public class HomeView : BaseView {
 
     public enum HomeTab {
       Cozmo,
@@ -29,6 +29,9 @@ namespace Cozmo.HomeHub {
 
     public Action<string> MinigameConfirmed;
     public Action<string> OnTabChanged;
+
+    [SerializeField]
+    private AlertModal _BadLightAlertPrefab;
 
     [SerializeField]
     private HomeViewTab _CozmoTabPrefab;
@@ -102,7 +105,6 @@ namespace Cozmo.HomeHub {
     private System.Diagnostics.Stopwatch _Stopwatch = null;
     private string _CurrentChallengeId = null;
 
-    public bool RewardSequenceActive = false;
     private Sequence _RewardSequence;
 
     [SerializeField]
@@ -160,12 +162,15 @@ namespace Cozmo.HomeHub {
     private Cozmo.UI.CozmoButton _HelpButton;
 
     [SerializeField]
-    private BaseModal _HelpViewPrefab;
-    private BaseModal _HelpViewInstance;
+    private BaseModal _HelpTipsModalPrefab;
+    private BaseModal _HelpTipsModalInstance;
+
+    [SerializeField]
+    private BaseModal _CubeHelpModalPrefab;
 
     private AlertModal _RequestDialog = null;
 
-    private AlertModal _BadLightDialog = null;
+    private AlertModal _BadLightAlertInstance = null;
 
     private HomeHub _HomeHubInstance;
 
@@ -177,14 +182,7 @@ namespace Cozmo.HomeHub {
     public Transform TabContentContainer {
       get { return _TabContentContainer.transform; }
     }
-    public bool HomeViewCurrentlyOccupied {
-      get {
-        return (_RequestDialog != null || _LootSequenceActive || _BadLightDialog != null ||
-                _HelpViewInstance != null || _HomeHubInstance.IsChallengeDetailsActive ||
-                RewardSequenceActive || PauseManager.Instance.IsAnyDialogOpen ||
-                DataPersistenceManager.Instance.IsSDKEnabled);
-      }
-    }
+
     public Transform TabButtonContainer {
       get { return _TabButtonContainer.transform; }
     }
@@ -212,7 +210,7 @@ namespace Cozmo.HomeHub {
       _FreeplayStartedTimestamp = Time.time;
       _HomeHubInstance = homeHubInstance;
 
-      DASEventViewName = "home_view";
+      DASEventDialogName = "home_view";
 
       _ChallengeStates = challengeStatesById;
 
@@ -220,8 +218,8 @@ namespace Cozmo.HomeHub {
       InitializeButtons(_PlayTabButtons, HandlePlayTabButton, "switch_to_play_tab_button");
       InitializeButtons(_ProfileTabButtons, HandleProfileTabButton, "switch_to_profile_tab_button");
 
-      _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventViewName);
-      _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventViewName);
+      _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventDialogName);
+      _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
 
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
@@ -265,30 +263,36 @@ namespace Cozmo.HomeHub {
 
     private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
       foreach (CozmoButton button in buttons) {
-        button.Initialize(callback, dasButtonName, DASEventViewName);
+        button.Initialize(callback, dasButtonName, DASEventDialogName);
       }
     }
 
     private void HandleEngineErrorCode(Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage message) {
-      if (_BadLightDialog != null && message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityGood) {
-        _BadLightDialog.CloseView();
+      if (_BadLightAlertInstance != null && message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityGood) {
+        _BadLightAlertInstance.CloseDialog();
       }
-      if (HomeViewCurrentlyOccupied) {
-        return;
-      }
-      if (message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooBright ||
+      else if (message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooBright ||
           message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooDark) {
-        CreateBadLightPopup();
+        CreateBadLightAlert();
       }
     }
 
-    private void CreateBadLightPopup() {
-      ContextManager.Instance.AppFlash(playChime: true);
-      // Create alert view with Icon
-      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.BadLightAlertModalPrefab, overrideCloseOnTouchOutside: true);
-      // Hook up callbacks
-      alertView.SetCloseButtonEnabled(true);
-      _BadLightDialog = alertView;
+    private void CreateBadLightAlert() {
+      System.Action<BaseModal> badLightAlertCreated = (alertModal) => {
+        ContextManager.Instance.AppFlash(playChime: true);
+
+        var badLightAlertData = new AlertModalData("bad_light_alert", null, showCloseButton: true);
+        var badLightAlert = (AlertModal)alertModal;
+        badLightAlert.InitializeAlertData(badLightAlertData);
+
+        _BadLightAlertInstance = badLightAlert;
+      };
+
+      var badLightPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryLow, 0,
+                                                       LowPriorityModalAction.CancelSelf,
+                                                       HighPriorityModalAction.Queue);
+      UIManager.OpenModal(_BadLightAlertPrefab, badLightPriorityData, badLightAlertCreated,
+                          overrideCloseOnTouchOutside: true);
     }
 
     private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded, bool instant = false) {
@@ -323,38 +327,37 @@ namespace Cozmo.HomeHub {
 
     private void HandleCozmoTabButton() {
       // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
+      if (!_LootSequenceActive) {
+        SwitchToTab(HomeTab.Cozmo);
       }
-      SwitchToTab(HomeTab.Cozmo);
     }
 
     private void HandlePlayTabButton() {
       // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
+      if (!_LootSequenceActive) {
+        SwitchToTab(HomeTab.Play);
       }
-      SwitchToTab(HomeTab.Play);
     }
 
     private void HandleProfileTabButton() {
       // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
+      if (!_LootSequenceActive) {
+        SwitchToTab(HomeTab.Profile);
       }
-      SwitchToTab(HomeTab.Profile);
     }
 
     private void HandleHelpButton() {
-      if (HomeViewCurrentlyOccupied) {
-        return;
-      }
-      _HelpViewInstance = UIManager.OpenModal(_HelpViewPrefab);
+      var helpTipsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                            LowPriorityModalAction.CancelSelf,
+                                                            HighPriorityModalAction.Stack);
+      UIManager.OpenModal(_HelpTipsModalPrefab, helpTipsModalPriorityData, (newHelpModal) => {
+        _HelpTipsModalInstance = newHelpModal;
+      });
     }
 
     private void HandleSettingsButton() {
       // Don't allow settings button to be clicked when the view is doing other things
-      if (HomeViewCurrentlyOccupied) {
+      if (_LootSequenceActive) {
         return;
       }
       if (_CurrentTab != HomeTab.Settings) {
@@ -435,10 +438,6 @@ namespace Cozmo.HomeHub {
     }
 
     public void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
-      }
       if (OnUnlockedChallengeClicked != null) {
         OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
       }
@@ -511,8 +510,7 @@ namespace Cozmo.HomeHub {
 
 
     // Every kFreeplayIntervalCheck seconds, fire the FreeplayInterval event for Freeplay time related goals
-    protected override void Update() {
-      base.Update();
+    protected void Update() {
       if (_FreeplayIntervalLastTimestamp < 0.0f) {
         _FreeplayIntervalLastTimestamp = Time.time;
       }
@@ -525,7 +523,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleFreeplayRewardedAction(RewardedActionData reward) {
       // Only update the chest progress bar and do context flash if the home view isn't currently occupied
-      if (!HomeViewCurrentlyOccupied) {
+      if (!_LootSequenceActive) {
         ContextManager.Instance.AppFlash(false);
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), false);
       }
@@ -611,15 +609,6 @@ namespace Cozmo.HomeHub {
 
     // Opens loot view and fires and relevant events
     private void OpenLootView() {
-      if (DataPersistenceManager.Instance.IsSDKEnabled) {
-        return;
-      }
-      if (HomeViewCurrentlyOccupied && RewardSequenceActive == false) {
-        // Avoid dupes but fail gracefully
-        DAS.Warn("HomeView.OpenLootView", "LootView Blocked by non-reward sequence");
-        HandleLootViewCloseAnimationFinished();
-        return;
-      }
       if (_LootSequenceActive) {
         DAS.Warn("HomeView.OpenLootview", "Attempted to Load LootView Twice");
         return;
@@ -630,20 +619,32 @@ namespace Cozmo.HomeHub {
 
       AssetBundleManager.Instance.LoadAssetBundleAsync(_LootViewPrefabData.AssetBundle, (bool success) => {
         if (success) {
-          _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
+          BaseDialog.SimpleBaseDialogHandler lootViewClosed = () => {
+            HandleLootViewCloseAnimationFinished();
+            // Only unload the asset bundle if we actually loaded it before
+            AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
+          };
+
+          Action<BaseModal> lootViewCreated = (newModal) => {
+            LootView lootView = (LootView)newModal;
+            lootView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
+            lootView.DialogCloseAnimationFinished += (lootViewClosed);
+          };
+
+          var lootViewPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryHigh, 0,
+                                                           LowPriorityModalAction.Queue,
+                                                           HighPriorityModalAction.ForceCloseOthersAndOpen);
+
+          Action<GameObject> lootViewPrefabLoaded = (GameObject prefabObject) => {
             if (prefabObject != null) {
-              LootView lootView = UIManager.OpenModal(prefabObject.GetComponent<LootView>());
-              lootView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
-              lootView.ViewCloseAnimationFinished += (() => {
-                HandleLootViewCloseAnimationFinished();
-                // Only unload the asset bundle if we actually loaded it before
-                AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
-              });
+              UIManager.OpenModal(prefabObject.GetComponent<LootView>(), lootViewPriorityData, lootViewCreated);
             }
             else {
               DAS.Error("HomeView.OpenLootView", "Error loading LootViewPrefabData");
             }
-          });
+          };
+
+          _LootViewPrefabData.LoadAssetData(lootViewPrefabLoaded);
         }
         else {
           DAS.Error("HomeView.OpenLootView", "Failed to load asset bundle " + _LootViewPrefabData.AssetBundle);
@@ -670,7 +671,6 @@ namespace Cozmo.HomeHub {
 
     private void HandleLootViewCloseAnimationFinished() {
       _EmotionChipTag.gameObject.SetActive(true);
-      RewardSequenceActive = false;
       _LootSequenceActive = false;
       EnableGameRequestsIfAllowed(true);
       CheckIfUnlockablesAffordableAndUpdateBadge();
@@ -682,7 +682,6 @@ namespace Cozmo.HomeHub {
     // Create Energy Reward particles, set up Tween Sequence, and get it started, prevent game requests
     // and other obnoxious logic when we are doing pretty things with particles
     public Sequence EnergyRewardsBurst(int pointsEarned, Transform energySource, Sequence rewardSeqeuence) {
-      RewardSequenceActive = true;
       EnableGameRequestsIfAllowed(false);
       GenericRewardsConfig rc = GenericRewardsConfig.Instance;
       int rewardCount = Mathf.CeilToInt((float)pointsEarned / (float)rc.ExpPerParticleEffect);
@@ -723,7 +722,6 @@ namespace Cozmo.HomeHub {
     private void ResolveRewardParticleBurst() {
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       if (ChestRewardManager.Instance.ChestPending == false) {
-        RewardSequenceActive = false;
         EnableGameRequestsIfAllowed(true);
         UIManager.EnableTouchEvents();
       }
@@ -752,43 +750,47 @@ namespace Cozmo.HomeHub {
     #region Request Game
 
     private void HandleAskForMinigame(object messageObject) {
-      if (HomeViewCurrentlyOccupied && !_HomeHubInstance.IsChallengeDetailsActive) {
-        // Avoid dupes or conflicting popups
-        // This popup kills ChallengeDetails popups so it makes an exception
-        // for them.
-        return;
-      }
-
       ChallengeData data = RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest;
       // Do not send the minigame message if the challenge is invalid or currently not unlocked.
       if (data == null || !UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
         return;
       }
 
-      if (_HomeHubInstance.IsChallengeDetailsActive) {
-        _HomeHubInstance.CloseAllChallengeDetailsPopups();
-      }
+      var requestGameData = new AlertModalData("request_game_alert",
+                                               LocalizationKeys.kRequestGameTitle,
+                                               LocalizationKeys.kRequestGameDescription,
+                                               new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYes, HandleMiniGameConfirm),
+                                               new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNo, HandleMiniGameRejection),
+                                               icon: data.ChallengeIcon,
+                                               dialogCloseAnimationFinishedCallback: HandleRequestDialogClose,
+                                               titleLocArgs: new object[] { Localization.Get(data.ChallengeTitleLocKey) });
 
-      ContextManager.Instance.AppFlash(playChime: true);
-      // start response timer
-      _Stopwatch = new System.Diagnostics.Stopwatch(); // allways create new sintance - GC can take care of previous ones.
-      _Stopwatch.Start();
-      _CurrentChallengeId = data.ChallengeID;
-      // Create alert view with Icon
-      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.IconAlertModalPrefab, overrideCloseOnTouchOutside: false);
-      // Hook up callbacks
-      alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
-      alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleMiniGameRejection);
-      alertView.SetIcon(data.ChallengeIcon);
-      alertView.ViewClosed += HandleRequestDialogClose;
-      alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
-      alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
-      alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Request_Game);
-      _RequestDialog = alertView;
+      var requestGamePriority = new ModalPriorityData(ModalPriorityLayer.VeryLow, 0,
+                                                      LowPriorityModalAction.CancelSelf,
+                                                      HighPriorityModalAction.Queue);
 
-      RobotEngineManager.Instance.RequestGameManager.StartGameRequested();
+      Action<AlertModal> requestGameCreated = (alertModal) => {
+        ContextManager.Instance.AppFlash(playChime: true);
+        // start response timer
+        _Stopwatch = new System.Diagnostics.Stopwatch(); // allways create new sintance - GC can take care of previous ones.
+        _Stopwatch.Start();
+        _CurrentChallengeId = data.ChallengeID;
+
+        // Hook up callbacks
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Request_Game);
+        _RequestDialog = alertModal;
+
+        RobotEngineManager.Instance.RequestGameManager.StartGameRequested();
+      };
+
+      Action<UIManager.CreationCancelledReason> requestGameCancelled = (cancelReason) => {
+        HandleMiniGameRejection();
+        HandleRequestDialogClose();
+      };
+
+      UIManager.OpenAlert(requestGameData, requestGamePriority, requestGameCreated,
+                          creationCancelledCallback: requestGameCancelled,
+                          overrideCloseOnTouchOutside: false);
     }
 
     private void HandleMiniGameRejection() {
@@ -818,7 +820,7 @@ namespace Cozmo.HomeHub {
 
       if (_RequestDialog != null) {
         _RequestDialog.DisableAllButtons();
-        _RequestDialog.ViewClosed -= HandleRequestDialogClose;
+        _RequestDialog.DialogClosed -= HandleRequestDialogClose;
       }
 
       if (MinigameConfirmed != null) {
@@ -856,7 +858,7 @@ namespace Cozmo.HomeHub {
       }
 
       if (_RequestDialog != null) {
-        _RequestDialog.CloseView();
+        _RequestDialog.CloseDialog();
         RobotEngineManager.Instance.RequestGameManager.StartRejectedRequestCooldown();
         EnableGameRequestsIfAllowed(true);
       }
@@ -865,7 +867,7 @@ namespace Cozmo.HomeHub {
     private void HandleRequestDialogClose() {
       DAS.Info(this, "HandleUnexpectedClose");
       if (_RequestDialog != null) {
-        _RequestDialog.ViewClosed -= HandleRequestDialogClose;
+        _RequestDialog.DialogCloseAnimationFinished -= HandleRequestDialogClose;
         RobotEngineManager.Instance.RequestGameManager.StartRejectedRequestCooldown();
         EnableGameRequestsIfAllowed(true);
       }
@@ -874,24 +876,38 @@ namespace Cozmo.HomeHub {
     #endregion
 
     public void OpenNeedCubesAlert(int currentCubes, int neededCubes, string titleString) {
-      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.AlertModalPrefab);
-      // Hook up callbacks
-      alertView.SetCloseButtonEnabled(true);
-      alertView.SetPrimaryButton(LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
-        () => {
-          UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpViewPrefab);
-        }
-      );
+      var needCubesPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 1,
+                                                        LowPriorityModalAction.CancelSelf,
+                                                        HighPriorityModalAction.Stack);
+      AlertModalButtonData openCubeHelpButtonData = CreateCubeHelpButtonData(needCubesPriorityData);
+      AlertModalData needCubesData = CreateNeedMoreCubesAlertData(openCubeHelpButtonData, currentCubes,
+                                                                  neededCubes, titleString);
 
-      alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle;
+      UIManager.OpenAlert(needCubesData, needCubesPriorityData);
+    }
 
+    private AlertModalButtonData CreateCubeHelpButtonData(ModalPriorityData basePriorityData) {
+      var cubeHelpModalPriorityData = ModalPriorityData.CreateSlightlyHigherData(basePriorityData);
+      Action cubeHelpButtonPressed = () => {
+        UIManager.OpenModal(_CubeHelpModalPrefab, cubeHelpModalPriorityData, null);
+      };
+      return new AlertModalButtonData("open_cube_help_modal_button",
+                                      LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
+                                      cubeHelpButtonPressed);
+    }
+
+    private AlertModalData CreateNeedMoreCubesAlertData(AlertModalButtonData primaryButtonData, int currentCubes, int neededCubes, string titleString) {
       int differenceCubes = neededCubes - currentCubes;
-      alertView.SetMessageArgs(new object[] {
+      object[] descLocArgs = new object[] {
         differenceCubes,
-        ItemDataConfig.GetCubeData().GetAmountName(differenceCubes),
+        (ItemDataConfig.GetCubeData().GetAmountName(differenceCubes)),
         titleString
-      });
-      alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription;
+      };
+
+      return new AlertModalData("game_needs_more_cubes_alert",
+                                LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle,
+                                LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription,
+                                primaryButtonData, showCloseButton: true, descLocArgs: descLocArgs);
     }
 
     protected override void CleanUp() {
@@ -903,8 +919,8 @@ namespace Cozmo.HomeHub {
       RewardedActionManager.Instance.OnFreeplayRewardEvent -= HandleFreeplayRewardedAction;
       DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdatePlayTabText;
 
-      if (_HelpViewInstance != null) {
-        UIManager.CloseModal(_HelpViewInstance);
+      if (_HelpTipsModalInstance != null) {
+        UIManager.CloseModal(_HelpTipsModalInstance);
       }
 
       if (_RewardSequence != null) {

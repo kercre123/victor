@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class SharedMinigameView : BaseModal {
+    public class SharedMinigameView : BaseView {
 
       public enum ContentLayer {
         Bottom,
@@ -442,7 +442,7 @@ namespace Cozmo {
       }
 
       private string ComposeDasViewName(string slideName) {
-        return string.Format("{0}_{1}", DASEventViewName,
+        return string.Format("{0}_{1}", DASEventDialogName,
           string.IsNullOrEmpty(slideName) ? "no_slide" : slideName);
       }
 

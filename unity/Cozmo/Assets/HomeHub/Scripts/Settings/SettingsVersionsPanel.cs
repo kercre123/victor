@@ -25,9 +25,9 @@ namespace Cozmo.Settings {
     private CozmoButton _SupportButton;
 
     [SerializeField]
-    private SettingsSupportInfoView _SupportInfoViewPrefab;
+    private SettingsSupportInfoModal _SupportInfoModalPrefab;
 
-    private SettingsSupportInfoView _SupportInfoViewInstance;
+    private SettingsSupportInfoModal _SupportInfoModalInstance;
 
     [SerializeField]
     private CozmoButton _EraseCozmoButton;
@@ -35,14 +35,18 @@ namespace Cozmo.Settings {
     [SerializeField]
     private float _SecondsToConfirmEraseCozmo = 5f;
 
-    private LongConfirmationView _EraseCozmoDialogInstance;
+    private LongPressConfirmationModal _EraseCozmoModalInstance;
 
     [SerializeField]
     private float _SecondsToConfirmRestoreCozmo = 5f;
 
-    private LongConfirmationView _RestoreCozmoDialogInstance;
+    private LongPressConfirmationModal _RestoreCozmoModalInstance;
 
     private bool _RestoreButtonIsActive = true;
+
+    private ModalPriorityData _SettingsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                                                 LowPriorityModalAction.CancelSelf,
+                                                                                 HighPriorityModalAction.Stack);
 
     private void Awake() {
       string dasEventViewName = "settings_version_panel";
@@ -70,17 +74,17 @@ namespace Cozmo.Settings {
       RobotEngineManager.Instance.RemoveCallback<DeviceDataMessage>(HandleDeviceDataMessage);
       RobotEngineManager.Instance.RemoveCallback<RestoreRobotStatus>(HandleEraseRobotStatus);
 
-      if (_SupportInfoViewInstance != null) {
-        _SupportInfoViewInstance.CloseViewImmediately();
-        _SupportInfoViewInstance.OnOpenRestoreCozmoViewButtonTapped -= HandleOpenRestoreCozmoViewButtonTapped;
+      if (_SupportInfoModalInstance != null) {
+        _SupportInfoModalInstance.CloseDialogImmediately();
+        _SupportInfoModalInstance.OnOpenRestoreCozmoViewButtonTapped -= HandleOpenRestoreCozmoViewButtonTapped;
       }
-      if (_EraseCozmoDialogInstance != null) {
-        _EraseCozmoDialogInstance.CloseViewImmediately();
+      if (_EraseCozmoModalInstance != null) {
+        _EraseCozmoModalInstance.CloseDialogImmediately();
       }
 
       RobotEngineManager.Instance.RemoveCallback<RestoreRobotStatus>(HandleRestoreRobotStatus);
-      if (_RestoreCozmoDialogInstance != null) {
-        _RestoreCozmoDialogInstance.CloseViewImmediately();
+      if (_RestoreCozmoModalInstance != null) {
+        _RestoreCozmoModalInstance.CloseDialogImmediately();
       }
     }
 
@@ -123,26 +127,29 @@ namespace Cozmo.Settings {
     }
 
     private void HandleOpenEraseCozmoViewButtonTapped() {
-      if (_EraseCozmoDialogInstance == null) {
-        _EraseCozmoDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.LongConfirmationViewPrefab);
-        _EraseCozmoDialogInstance.Initialize("erase_cozmo_dialog",
-                                             LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoTitle,
-                                             LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoWarningLabel,
-                                             LocalizationKeys.kButtonCancel,
-                                             LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoConfirmButton,
-                                             HandleConfirmEraseCozmo,
-                                             _SecondsToConfirmEraseCozmo);
-        string buttonText = Localization.Get(LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoConfirmButton);
-        _EraseCozmoDialogInstance.ShowInstructionsLabel(Localization.GetWithArgs(LocalizationKeys.kLabelPressAndHoldInstruction,
-                                                                                 new object[] { buttonText }));
+      if (_EraseCozmoModalInstance == null) {
+        System.Action<BaseModal> eraseCozmoModalCreated = (newModal) => {
+          _EraseCozmoModalInstance = (LongPressConfirmationModal)newModal;
+          _EraseCozmoModalInstance.Initialize("erase_cozmo_dialog",
+                                              LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoTitle,
+                                              LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoWarningLabel,
+                                              LocalizationKeys.kButtonCancel,
+                                              LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoConfirmButton,
+                                              HandleConfirmEraseCozmo,
+                                              _SecondsToConfirmEraseCozmo);
+          string buttonText = Localization.Get(LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoConfirmButton);
+          _EraseCozmoModalInstance.ShowInstructionsLabel(Localization.GetWithArgs(LocalizationKeys.kLabelPressAndHoldInstruction,
+                                                                                   new object[] { buttonText }));
+        };
+        UIManager.OpenModal(AlertModalLoader.Instance.LongPressConfirmationModalPrefab, _SettingsModalPriorityData, eraseCozmoModalCreated);
       }
     }
 
     private void HandleConfirmEraseCozmo() {
-      if (_EraseCozmoDialogInstance != null) {
+      if (_EraseCozmoModalInstance != null) {
         RobotEngineManager.Instance.SetEnableReactionaryBehaviors(false);
-        _EraseCozmoDialogInstance.ShowInProgressLabel(Localization.Get(LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoInProgressLabel));
-        _EraseCozmoDialogInstance.EnableButtons(false);
+        _EraseCozmoModalInstance.ShowInProgressLabel(Localization.Get(LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoInProgressLabel));
+        _EraseCozmoModalInstance.EnableButtons(false);
 
         RobotEngineManager.Instance.AddCallback<RestoreRobotStatus>(HandleEraseRobotStatus);
 
@@ -165,47 +172,56 @@ namespace Cozmo.Settings {
           data.Pack(ms);
           RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
 
-          _EraseCozmoDialogInstance.CloseView();
+          _EraseCozmoModalInstance.CloseDialog();
           PauseManager.Instance.StartPlayerInducedSleep(false);
         }
         else {
-          _EraseCozmoDialogInstance.ShowInstructionsLabel(Localization.Get(LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoErrorLabel));
-          _EraseCozmoDialogInstance.EnableButtons(true);
+          _EraseCozmoModalInstance.ShowInstructionsLabel(Localization.Get(LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoErrorLabel));
+          _EraseCozmoModalInstance.EnableButtons(true);
         }
       }
     }
 
     private void HandleOpenSupportViewButtonTapped() {
-      if (_SupportInfoViewInstance == null) {
-        _SupportInfoViewInstance = UIManager.OpenModal(_SupportInfoViewPrefab);
-        _SupportInfoViewInstance.OnOpenRestoreCozmoViewButtonTapped += HandleOpenRestoreCozmoViewButtonTapped;
-        _SupportInfoViewInstance.HideRestoreButton(_RestoreButtonIsActive);
+      if (_SupportInfoModalInstance == null) {
+        UIManager.OpenModal(_SupportInfoModalPrefab, _SettingsModalPriorityData, (newModal) => {
+          _SupportInfoModalInstance = (SettingsSupportInfoModal)newModal;
+          _SupportInfoModalInstance.OnOpenRestoreCozmoViewButtonTapped += HandleOpenRestoreCozmoViewButtonTapped;
+          _SupportInfoModalInstance.HideRestoreButton(_RestoreButtonIsActive);
+        });
       }
     }
 
     private void HandleOpenRestoreCozmoViewButtonTapped() {
-      if (_RestoreCozmoDialogInstance == null) {
-        if (_SupportInfoViewInstance != null) {
-          _SupportInfoViewInstance.CloseView();
+      if (_RestoreCozmoModalInstance == null) {
+        if (_SupportInfoModalInstance != null) {
+          _SupportInfoModalInstance.CloseDialog();
         }
-        _RestoreCozmoDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.LongConfirmationViewPrefab);
-        _RestoreCozmoDialogInstance.Initialize("restore_cozmo_dialog",
-                                               LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoTitle,
-                                               LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoWarningLabel,
-                                               LocalizationKeys.kButtonCancel,
-                                               LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoConfirmButton,
-                                               HandleRestoreCozmoConfirmed,
-                                               _SecondsToConfirmRestoreCozmo);
-        string buttonText = Localization.Get(LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoConfirmButton);
-        _RestoreCozmoDialogInstance.ShowInstructionsLabel(Localization.GetWithArgs(LocalizationKeys.kLabelPressAndHoldInstruction,
-                                                                                 new object[] { buttonText }));
+
+        System.Action<BaseModal> restoreCozmoModalCreated = (newModal) => {
+          _RestoreCozmoModalInstance = (LongPressConfirmationModal)newModal;
+          _RestoreCozmoModalInstance.Initialize("restore_cozmo_dialog",
+                                                LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoTitle,
+                                                LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoWarningLabel,
+                                                LocalizationKeys.kButtonCancel,
+                                                LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoConfirmButton,
+                                                HandleRestoreCozmoConfirmed,
+                                                _SecondsToConfirmRestoreCozmo);
+          string buttonText = Localization.Get(LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoConfirmButton);
+          _RestoreCozmoModalInstance.ShowInstructionsLabel(Localization.GetWithArgs(LocalizationKeys.kLabelPressAndHoldInstruction,
+                                                                                   new object[] { buttonText }));
+        };
+
+        var restoreCozmoModalPriorityData = ModalPriorityData.CreateSlightlyHigherData(_SettingsModalPriorityData);
+
+        UIManager.OpenModal(AlertModalLoader.Instance.LongPressConfirmationModalPrefab, restoreCozmoModalPriorityData, restoreCozmoModalCreated);
       }
     }
 
     private void HandleRestoreCozmoConfirmed() {
-      if (_RestoreCozmoDialogInstance != null) {
-        _RestoreCozmoDialogInstance.ShowInProgressLabel(Localization.Get(LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoInProgressLabel));
-        _RestoreCozmoDialogInstance.EnableButtons(false);
+      if (_RestoreCozmoModalInstance != null) {
+        _RestoreCozmoModalInstance.ShowInProgressLabel(Localization.Get(LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoInProgressLabel));
+        _RestoreCozmoModalInstance.EnableButtons(false);
 
         RobotEngineManager.Instance.AddCallback<RestoreRobotStatus>(HandleRestoreRobotStatus);
 
@@ -219,12 +235,12 @@ namespace Cozmo.Settings {
         RobotEngineManager.Instance.RemoveCallback<RestoreRobotStatus>(HandleRestoreRobotStatus);
 
         if (robotStatusMsg.success) {
-          _RestoreCozmoDialogInstance.CloseView();
+          _RestoreCozmoModalInstance.CloseDialog();
           PauseManager.Instance.StartPlayerInducedSleep(false);
         }
         else {
-          _RestoreCozmoDialogInstance.ShowInstructionsLabel(Localization.Get(LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoErrorLabel));
-          _RestoreCozmoDialogInstance.EnableButtons(true);
+          _RestoreCozmoModalInstance.ShowInstructionsLabel(Localization.Get(LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoErrorLabel));
+          _RestoreCozmoModalInstance.EnableButtons(true);
         }
       }
     }

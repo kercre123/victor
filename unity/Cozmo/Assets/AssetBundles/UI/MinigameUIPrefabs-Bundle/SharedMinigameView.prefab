@@ -552,8 +552,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feb456ebd4b684b649d9cadb24866ddc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: shared_minigame_view
-  _DASEventViewType: 0
+  _DASEventDialogName: shared_minigame_view
+  _DASEventDialogType: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   _LayerPriority: 0
@@ -1076,7 +1076,7 @@ Prefab:
       objectReference: {fileID: 11473774, guid: 8468318169eb444e19bb73e530a79d21,
         type: 2}
     - target: {fileID: 0}
-      propertyPath: _DASEventViewName
+      propertyPath: _DASEventDialogName
       value: shared_minigame_view
       objectReference: {fileID: 0}
     - target: {fileID: 0}

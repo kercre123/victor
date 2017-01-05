@@ -31,12 +31,18 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private CozmoUnlockableTile _UnlocksTilePrefab;
 
   [SerializeField]
-  private CoreUpgradeDetailsDialog _CoreUpgradeDetailsViewPrefab;
-  private BaseModal _CoreUpgradeDetailsViewInstance;
+  private CoreUpgradeDetailsModal _CoreUpgradeDetailsModalPrefab;
+  private ModalPriorityData _CoreUpgradeDetailsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                                                         LowPriorityModalAction.CancelSelf,
+                                                                                         HighPriorityModalAction.Stack);
+  private BaseModal _CoreUpgradeDetailsModalInstance;
 
   [SerializeField]
   private UnlockAnimation _CoreUpgradeAnimatedIconPrefab;
   private UnlockAnimation _CoreupgradeAnimatedIconInstance;
+
+  [SerializeField]
+  private AlertModal _ComingSoonAlertPrefab;
 
   void Start() {
     _UnlockedTiles = new List<CozmoUnlockableTile>();
@@ -63,8 +69,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   }
 
   void OnDestroy() {
-    if (_CoreUpgradeDetailsViewInstance != null) {
-      _CoreUpgradeDetailsViewInstance.CloseViewImmediately();
+    if (_CoreUpgradeDetailsModalInstance != null) {
+      _CoreUpgradeDetailsModalInstance.CloseDialogImmediately();
     }
 
     ClearTiles();
@@ -148,81 +154,45 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   private void HandleTappedUnlocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
-
-    if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
-      CoreUpgradeDetailsDialog detailView = UIManager.OpenModal<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
-      detailView.Initialize(unlockInfo, CozmoUnlockState.Unlocked, null);
-      _CoreUpgradeDetailsViewInstance = detailView;
-    }
+    System.Action<BaseModal> detailsModalCreatedCallback = (detailModal) => {
+      ((CoreUpgradeDetailsModal)detailModal).Initialize(unlockInfo, CozmoUnlockState.Unlocked, null);
+      _CoreUpgradeDetailsModalInstance = detailModal;
+    };
+    UIManager.OpenModal(_CoreUpgradeDetailsModalPrefab, _CoreUpgradeDetailsModalPriorityData, detailsModalCreatedCallback);
   }
 
   private void HandleTappedUnlockable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
-    if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
-      CoreUpgradeDetailsDialog detailView = UIManager.OpenModal<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
-      detailView.Initialize(unlockInfo, CozmoUnlockState.Unlockable, HandleUnlockableUpgradeUnlocked);
-      _CoreUpgradeDetailsViewInstance = detailView;
-    }
+    System.Action<BaseModal> detailsModalCreatedCallback = (detailModal) => {
+      ((CoreUpgradeDetailsModal)detailModal).Initialize(unlockInfo, CozmoUnlockState.Unlockable, HandleUnlockableUpgradeUnlocked);
+      _CoreUpgradeDetailsModalInstance = detailModal;
+    };
+    UIManager.OpenModal(_CoreUpgradeDetailsModalPrefab, _CoreUpgradeDetailsModalPriorityData, detailsModalCreatedCallback);
   }
-
 
   private void HandleTappedLocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
-    if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
-      CoreUpgradeDetailsDialog detailView = UIManager.OpenModal<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
-      detailView.Initialize(unlockInfo, CozmoUnlockState.Locked, HandleUnlockableUpgradeUnlocked);
-      _CoreUpgradeDetailsViewInstance = detailView;
-    }
+    System.Action<BaseModal> detailsModalCreatedCallback = (detailModal) => {
+      ((CoreUpgradeDetailsModal)detailModal).Initialize(unlockInfo, CozmoUnlockState.Locked, HandleUnlockableUpgradeUnlocked);
+      _CoreUpgradeDetailsModalInstance = detailModal;
+    };
+    UIManager.OpenModal(_CoreUpgradeDetailsModalPrefab, _CoreUpgradeDetailsModalPriorityData, detailsModalCreatedCallback);
   }
 
   private void HandleTappedUnavailable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped unavailable: " + unlockInfo.Id);
-    if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
+    // Open "Coming Soon" alert view
+    var closeAlertButtonData = new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose);
+    var comingSoonAlertData = new AlertModalData("coming_soon_alert", LocalizationKeys.kUnlockableComingSoonTitle,
+                                                            unlockInfo.DescriptionKey, closeAlertButtonData, icon: unlockInfo.CoreUpgradeIcon);
 
-      UnlockableInfo preReqInfo = null;
-      for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {
-        // if available but we haven't unlocked it yet, then it is the upgrade that is blocking us
-        if (!UnlockablesManager.Instance.IsUnlocked(unlockInfo.Prerequisites[i].Value)) {
-          preReqInfo = UnlockablesManager.Instance.GetUnlockableInfo(unlockInfo.Prerequisites[i].Value);
-        }
-      }
-      // Create alert view with Icon
-      AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.ComingSoonAlertModalPrefab, overrideCloseOnTouchOutside: true);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
-      alertView.TitleLocKey = unlockInfo.TitleKey;
-      alertView.SetIcon(unlockInfo.CoreUpgradeIcon);
+    System.Action<BaseModal> comingSoonAlertCreatedCallback = (alertModal) => {
+      ((AlertModal)alertModal).InitializeAlertData(comingSoonAlertData);
+      _CoreUpgradeDetailsModalInstance = alertModal;
+    };
 
-      if (unlockInfo.NeverAvailable) {
-        alertView.TitleLocKey = LocalizationKeys.kUnlockableComingSoonTitle;
-        alertView.DescriptionLocKey = unlockInfo.DescriptionKey;
-      }
-      else if (preReqInfo == null) {
-        alertView.DescriptionLocKey = LocalizationKeys.kUnlockableUnavailableDescription;
-        alertView.SetMessageArgs(new object[] { Localization.Get(unlockInfo.TitleKey) });
-      }
-      else {
-
-        string preReqTypeKey = "unlockable.Unlock";
-
-        switch (preReqInfo.UnlockableType) {
-        case UnlockableType.Action:
-          preReqTypeKey = LocalizationKeys.kUnlockableUpgrade;
-          break;
-        case UnlockableType.Game:
-          preReqTypeKey = LocalizationKeys.kUnlockableApp;
-          break;
-        default:
-          preReqTypeKey = LocalizationKeys.kUnlockableUnlock;
-          break;
-        }
-
-        alertView.DescriptionLocKey = LocalizationKeys.kUnlockablePreReqNeededDescription;
-        alertView.SetMessageArgs(new object[] { Localization.Get(preReqInfo.TitleKey), Localization.Get(preReqTypeKey) });
-      }
-
-      _CoreUpgradeDetailsViewInstance = alertView;
-    }
-
+    UIManager.OpenModal(_ComingSoonAlertPrefab, _CoreUpgradeDetailsModalPriorityData, comingSoonAlertCreatedCallback,
+                        overrideCloseOnTouchOutside: true);
   }
 
   private void HandleUnlockableUpgradeUnlocked(UnlockableInfo unlockInfo) {

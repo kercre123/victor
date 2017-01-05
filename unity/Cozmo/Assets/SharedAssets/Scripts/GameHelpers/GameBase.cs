@@ -224,29 +224,32 @@ public abstract class GameBase : MonoBehaviour {
     MinigameUIPrefabHolder.LoadSharedMinigameViewPrefab(minigameAssetBundleName, (GameObject viewPrefab) => {
       if (viewPrefab != null) {
         SharedMinigameView prefabScript = viewPrefab.GetComponent<SharedMinigameView>();
-        _SharedMinigameViewInstance = UIManager.OpenModal(prefabScript, newView => {
-          newView.Initialize(_ChallengeData);
-          InitializeMinigameView(newView, _ChallengeData);
-
-          if (OnSharedMinigameViewInitialized != null) {
-            OnSharedMinigameViewInitialized(newView);
-          }
-        });
-
-        bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
-        bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
-
-        if (videoPlayedAlready || noInstructionVideo) {
-          FinishedInstructionalVideo();
-        }
-        else {
-          SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
-        }
+        UIManager.OpenView(prefabScript, HandleSharedMinigameViewCreated);
       }
       else {
-        DAS.Error("GameBase.LoadSharedMinigameView", "Failed to shared minigame view");
+        DAS.Error("GameBase.LoadSharedMinigameView", "Failed to load shared minigame view");
       }
     });
+  }
+
+  private void HandleSharedMinigameViewCreated(BaseView newSharedMinigameView) {
+    _SharedMinigameViewInstance = (SharedMinigameView)newSharedMinigameView;
+    _SharedMinigameViewInstance.Initialize(_ChallengeData);
+    InitializeMinigameView(_SharedMinigameViewInstance, _ChallengeData);
+
+    if (OnSharedMinigameViewInitialized != null) {
+      OnSharedMinigameViewInitialized(_SharedMinigameViewInstance);
+    }
+
+    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
+    bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
+
+    if (videoPlayedAlready || noInstructionVideo) {
+      FinishedInstructionalVideo();
+    }
+    else {
+      _SharedMinigameViewInstance.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
+    }
   }
 
   private void FinishedInstructionalVideo() {
@@ -654,7 +657,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.SetGlobal(DASConstants.Game.kGlobal, null);
     DasTracker.Instance.TrackGameEnded();
     if (_SharedMinigameViewInstance != null) {
-      _SharedMinigameViewInstance.CloseViewImmediately();
+      _SharedMinigameViewInstance.CloseDialogImmediately();
       _SharedMinigameViewInstance = null;
     }
     DAS.Info(this, "Finished GameBase On Destroy");
@@ -673,8 +676,8 @@ public abstract class GameBase : MonoBehaviour {
 
   private void QuitMinigame() {
     try {
-      _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
-      _SharedMinigameViewInstance.CloseView();
+      _SharedMinigameViewInstance.DialogCloseAnimationFinished += QuitMinigameAnimationFinished;
+      _SharedMinigameViewInstance.CloseDialog();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
 
@@ -691,7 +694,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void QuitMinigameAnimationFinished() {
-    _SharedMinigameViewInstance.ViewCloseAnimationFinished -= QuitMinigameAnimationFinished;
+    _SharedMinigameViewInstance.DialogCloseAnimationFinished -= QuitMinigameAnimationFinished;
 
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
@@ -701,8 +704,8 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void CloseMinigame() {
-    _SharedMinigameViewInstance.ViewCloseAnimationFinished += CleanUp;
-    _SharedMinigameViewInstance.CloseView();
+    _SharedMinigameViewInstance.DialogCloseAnimationFinished += CleanUp;
+    _SharedMinigameViewInstance.CloseDialog();
   }
 
   public void CloseMinigameImmediately() {
@@ -713,7 +716,7 @@ public abstract class GameBase : MonoBehaviour {
     }
     _StateMachine.Stop();
     if (_SharedMinigameViewInstance != null) {
-      _SharedMinigameViewInstance.CloseViewImmediately();
+      _SharedMinigameViewInstance.CloseDialogImmediately();
       _SharedMinigameViewInstance = null;
     }
     CleanUp();
@@ -724,7 +727,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Debug("GameBase.CleanUp", "cleanup called");
 
     if (_SharedMinigameViewInstance != null) {
-      _SharedMinigameViewInstance.ViewCloseAnimationFinished -= CleanUp;
+      _SharedMinigameViewInstance.DialogCloseAnimationFinished -= CleanUp;
     }
 
     ContextManager.Instance.OnAppHoldStart -= HandleAppHoldStart;
@@ -745,7 +748,7 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     if (_InterruptedAlertView != null) {
-      _InterruptedAlertView.CloseViewImmediately();
+      _InterruptedAlertView.CloseDialogImmediately();
     }
 
     // Some CleanUpOnDestroy overrides send a robot animation as well
@@ -1172,7 +1175,8 @@ public abstract class GameBase : MonoBehaviour {
     // for all other cubes the game is using make sure to turn their lights off
     foreach (int id in CubeIdsForGame) {
       if (id == cube.ID) {
-        ShowInterruptionQuitGameView(LocalizationKeys.kMinigameLostTrackOfBlockTitle,
+        ShowInterruptionQuitGameView("cube_lost_alert",
+                                     LocalizationKeys.kMinigameLostTrackOfBlockTitle,
                                      LocalizationKeys.kMinigameLostTrackOfBlockDescription);
 
         // Remove this handler in the case multiple lightcubes are removed at the
@@ -1254,10 +1258,10 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void ShowDontMoveCozmoAlertView() {
-    ShowInterruptionQuitGameView(LocalizationKeys.kMinigameDontMoveCozmoTitle, LocalizationKeys.kMinigameDontMoveCozmoDescription);
+    ShowInterruptionQuitGameView("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle, LocalizationKeys.kMinigameDontMoveCozmoDescription);
   }
 
-  public void ShowInterruptionQuitGameView(string titleKey, string descriptionKey) {
+  public void ShowInterruptionQuitGameView(string dasAlertName, string titleKey, string descriptionKey) {
     _StateMachine.Stop();
 
     SoftEndGameRobotReset();
@@ -1265,22 +1269,39 @@ public abstract class GameBase : MonoBehaviour {
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.HideQuitButton();
     }
-    // Don't set everything on fire if its already on fire, that's a waste of perfectly good fire
-    if (_InterruptedAlertView == null && PauseManager.Instance.IsAnyDialogOpen == false) {
-      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab, overrideCloseOnTouchOutside: false);
-      alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonOkay, null);
-      alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
-      alertView.TitleLocKey = titleKey;
-      alertView.DescriptionLocKey = descriptionKey;
-      _InterruptedAlertView = alertView;
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
+
+    CreateInterruptionQuitGameView(dasAlertName, titleKey, descriptionKey);
+  }
+
+  private void CreateInterruptionQuitGameView(string dasAlertName, string titleKey, string descriptionKey) {
+    if (_InterruptedAlertView == null) {
+      var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
+                                                    new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
+                                                                             clickCallback: HandleInterruptionQuitGameViewClosed));
+
+      var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
+                                                               LowPriorityModalAction.Queue,
+                                                               HighPriorityModalAction.ForceCloseOthersAndOpen);
+
+      System.Action<AlertModal> interruptedAlertCreated = (alertModal) => {
+        alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleInterruptionQuitGameViewClosed;
+        alertModal.ModalForceClosedAnimationFinished += () => {
+          Debug.LogError(dasAlertName + " force closed");
+          _InterruptedAlertView = null;
+          CreateInterruptionQuitGameView(dasAlertName, titleKey, descriptionKey);
+        };
+        _InterruptedAlertView = alertModal;
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
+      };
+
+      UIManager.OpenAlert(interruptedAlertData, interruptedAlertPriorityData, interruptedAlertCreated,
+                          overrideCloseOnTouchOutside: false);
     }
   }
 
   private void HandlePauseManagerDialogOpened() {
     if (_InterruptedAlertView != null) {
-      _InterruptedAlertView.CloseViewImmediately();
+      _InterruptedAlertView.CloseDialogImmediately();
     }
   }
 

@@ -207,9 +207,6 @@ namespace Cozmo.UI {
     private Sequence _BoxSequence;
     private Sequence _RewardSequence;
 
-    [SerializeField]
-    private CanvasGroup _AlphaController;
-
     #region Onboarding
     [SerializeField]
     private AnkiTextLabel _LootTextInstructions1;
@@ -231,7 +228,7 @@ namespace Cozmo.UI {
     private void Awake() {
       _OnboardingRewardStart.gameObject.SetActive(false);
       _ContinueButtonInstance.gameObject.SetActive(false);
-      PauseManager.Instance.OnPauseDialogOpen += CloseView;
+      PauseManager.Instance.OnPauseDialogOpen += CloseDialog;
       _OpenBox.gameObject.SetActive(false);
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
       _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, _ReadyChestBurst);
@@ -471,7 +468,7 @@ namespace Cozmo.UI {
       }
 
       rewardSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionVariance + _RewardExplosionStayDuration, () => {
-        CloseView();
+        CloseDialog();
       });
       rewardSequence.Play();
       _RewardSequence = rewardSequence;
@@ -526,7 +523,7 @@ namespace Cozmo.UI {
       _OnboardingRewardStart.gameObject.SetActive(false);
       _ContinueButtonInstance.gameObject.SetActive(false);
       ContextManager.Instance.CozmoHoldFreeplayEnd();
-      CloseView();
+      CloseDialog();
     }
 
     private void TronLineBurst(int count) {
@@ -561,7 +558,7 @@ namespace Cozmo.UI {
       if (_RewardSequence != null) {
         _RewardSequence.Kill();
       }
-      PauseManager.Instance.OnPauseDialogOpen -= CloseView;
+      PauseManager.Instance.OnPauseDialogOpen -= CloseDialog;
       ChestRewardManager.Instance.ApplyChestRewards();
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();

@@ -224,6 +224,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1412cd5648f3c48f2910f13ddcda7b41, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _CubeHelpModalPrefab: {fileID: 11489240, guid: bbf4f5e51da9f4783b86a0fff9369348,
+    type: 2}
   _RefreshBlockPoolButton: {fileID: 0}
   _ShowCubeHelpButton: {fileID: 11468390}
   _LightCubeButtonLayoutGroup: {fileID: 11447886}

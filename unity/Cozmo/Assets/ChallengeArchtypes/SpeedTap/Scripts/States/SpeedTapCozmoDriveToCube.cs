@@ -72,8 +72,9 @@ namespace SpeedTap {
       }
       else {
         // unable to find cube - bail out
-        _SpeedTapGame.ShowInterruptionQuitGameView(LocalizationKeys.kMinigameLostTrackOfBlockTitle,
-          LocalizationKeys.kMinigameLostTrackOfBlockDescription);
+        _SpeedTapGame.ShowInterruptionQuitGameView("speed_tap_cube_lost_alert",
+                                                   LocalizationKeys.kMinigameLostTrackOfBlockTitle,
+                                                   LocalizationKeys.kMinigameLostTrackOfBlockDescription);
       }
     }
 

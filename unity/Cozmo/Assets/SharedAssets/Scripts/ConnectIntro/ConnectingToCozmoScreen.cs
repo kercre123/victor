@@ -8,7 +8,7 @@ public class ConnectingToCozmoScreen : MonoBehaviour {
   private bool _ConnectionComplete = false;
 
   private void Start() {
-    Invoke("MinimumDelayMet", ConnectionFlow.ConnectionFlowDelay);
+    Invoke("MinimumDelayMet", ConnectionFlowController.ConnectionFlowDelay);
   }
 
   private void MinimumDelayMet() {
