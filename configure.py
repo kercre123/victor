@@ -455,6 +455,8 @@ class GamePlatformConfiguration(object):
                 xcconfig += ['OTHER_CODE_SIGN_FLAGS="{0}"'.format(self.other_cs_flags)]
             if self.provision_profile_uuid is not None:
                 xcconfig += ['PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid)]
+	    if self.options.provision_profile is not None:
+		xcconfig += ['PROVISIONING_PROFILE_SPECIFIER="{0}"'.format(self.options.provision_profile.replace ("_", " "))]
             xcconfig += ['CODE_SIGN_IDENTITY="{0}"'.format(self.codesign_identity)]
             xcconfig += ['']
 
