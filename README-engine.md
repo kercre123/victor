@@ -3,9 +3,9 @@ products-cozmo
 
 The Cozmo core engine.
 
-******************************************************************************
-NOTE: These build instructions are outdated, see the readme in anki/cozmo-game
-******************************************************************************
+***************************************************************************************
+NOTE: These build instructions are outdated, see the readme in anki/cozmo-one/README.md
+***************************************************************************************
 
 ==================
 

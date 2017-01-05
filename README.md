@@ -2,7 +2,8 @@
 
 Cozmo Unity gameplay code. 
 
-If you are contributing to the Unity/C# codebase, please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wiki/Unity-Coding-Guidelines).
+If you are contributing to the Unity/C# codebase, please read [Unity C# Coding Guidelines](https://github.com/anki/cozmo-one/wiki/Eng---Unity-C%23-Coding-Guidelines)
+and follow [Unity Best Practices](https://github.com/anki/cozmo-one/wiki/Eng-Unity-Best-Practices).
 
 # Building cozmo-game
 
