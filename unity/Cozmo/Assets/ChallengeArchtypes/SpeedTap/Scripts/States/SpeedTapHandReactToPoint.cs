@@ -206,14 +206,19 @@ namespace SpeedTap {
     private void PlayReactToGameAnimationAndSendEvent() {
       AnimationTrigger animationEventToSend = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityGame();
-
-      if (_CurrentWinner == PointWinner.Player) {
-        animationEventToSend = (highIntensity) ?
-                  AnimationTrigger.OnSpeedtapGamePlayerWinHighIntensity : AnimationTrigger.OnSpeedtapGamePlayerWinLowIntensity;
+      if (DebugMenuManager.Instance.DemoMode) {
+        animationEventToSend = (_CurrentWinner == PointWinner.Player) ?
+                            AnimationTrigger.DemoSpeedTapCozmoLose : AnimationTrigger.DemoSpeedTapCozmoWin;
       }
       else {
-        animationEventToSend = (highIntensity) ?
-                  AnimationTrigger.OnSpeedtapGameCozmoWinHighIntensity : AnimationTrigger.OnSpeedtapGameCozmoWinLowIntensity;
+        if (_CurrentWinner == PointWinner.Player) {
+          animationEventToSend = (highIntensity) ?
+                    AnimationTrigger.OnSpeedtapGamePlayerWinHighIntensity : AnimationTrigger.OnSpeedtapGamePlayerWinLowIntensity;
+        }
+        else {
+          animationEventToSend = (highIntensity) ?
+                    AnimationTrigger.OnSpeedtapGameCozmoWinHighIntensity : AnimationTrigger.OnSpeedtapGameCozmoWinLowIntensity;
+        }
       }
       _IsPlayingWinGameAnimation = true;
       ListenForAnimationEnd(animationEventToSend, HandleEndGameAnimDone);

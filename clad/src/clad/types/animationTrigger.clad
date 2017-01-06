@@ -54,6 +54,8 @@ enum int_32 AnimationTrigger
   CubePounceWinHand,
   CubePounceWinRound,
   CubePounceWinSession,
+  DemoSpeedTapCozmoWin,
+  DemoSpeedTapCozmoLose,
   DriveEndAngry,
   DriveEndDefault,
   DriveEndLaunch,

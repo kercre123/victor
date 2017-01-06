@@ -165,6 +165,14 @@
       "AnimName": "ag_keepaway_idleliftdown"
     },
     {
+      "CladEvent": "DemoSpeedTapCozmoWin",
+      "AnimName": "ag_demo_win_01"
+    },
+    {
+      "CladEvent": "DemoSpeedTapCozmoLose",
+      "AnimName": "ag_demo_lose_01"
+    },
+    {
       "CladEvent": "DriveEndAngry",
       "AnimName": "ag_driving_upset_end"
     },
