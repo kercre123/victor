@@ -69,6 +69,9 @@ void SendTestChar(int c);
 
 void HeadlessBoot(void)
 { 
+  DBG_VERBOSE( u32 startTime = getMicroCounter() );
+  DBG_VERBOSE( ConsolePrintf("DBG: Headless Boot...") );
+  
   // Let last step drain out
   DisableVEXT();
   MicroWait(100000);
@@ -81,7 +84,8 @@ void HeadlessBoot(void)
   PIN_IN(GPIOC, PINC_TRX);
     
   // Make sure the robot really booted into test mode
-  SendTestChar(-1);  
+  SendTestChar(-1);
+  DBG_VERBOSE( ConsolePrintf("ok (in %u ms)\r\n", (getMicroCounter()-startTime)/1000 ) );
 }
 
 // The real (mass production) numbers are: 8 ticks/revolution, 28.5mm diameter, 172.3:1 
@@ -217,15 +221,10 @@ void DropLeakage(void)
 
 static void SleepCurrent(void)
 {
-  
-  try {
-    DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_POWERON,off)...") );
-    SendCommand(TEST_POWERON, 0x5A, 0, 0);  // Force power off
-    //DBG_VERBOSE( ConsolePrintf("ok\r\n") );
-  } catch (int e) {
-    // Duh, can't reply!
-    DBG_VERBOSE( ConsolePrintf("ok\r\n") );
-  }
+  DBG_VERBOSE( u32 startTime = getMicroCounter() );
+  DBG_VERBOSE( ConsolePrintf("DBG: SendCommandNoReply(TEST_POWERON,off)...") );
+  SendCommandNoReply(TEST_POWERON, 0x5A);  // Force power off (happens immediately - no reply is sent)
+  DBG_VERBOSE( ConsolePrintf("ok (in %u ms)\r\n", (getMicroCounter()-startTime)/1000 ) );
   
   EnableBAT();
   DisableVEXT();
