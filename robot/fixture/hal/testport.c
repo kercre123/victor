@@ -185,21 +185,27 @@ SlowPrintf("<%02x ", val);
 
 void SendTestChar(int val)
 {
-    for( int x=0; x<3; x++)
-    {
-        try {
-            m_SendTestChar(val);
-            return;
+  //having timing issues with comms/ack. Add some robustness to char sending
+  int retries = 0;
+  while(1)
+  {
+      try {
+        m_SendTestChar(val);
+        return;
+      }
+      catch(int e){
+        if(++retries <= 3) {
+          #ifdef DEBUG_TESTPORT
+          SlowPrintf("retry.%d ", retries);
+          #endif
+        } else {
+          throw e; //rethrow!
         }
-        catch(int e){
-            #ifdef DEBUG_TESTPORT
-            SlowPrintf("retry.%d ", x);
-            #endif  
-        }
-    }
+      }
+  }
 }
 
-int SendCommand(u8 test, s8 param, u8 buflen, u8* buf)
+int m_SendCommand(u8 test, s8 param, u8 buflen, u8* buf, bool get_reply )
 {
   const int CHAR_TIMEOUT = 1000;
  
@@ -219,28 +225,36 @@ int SendCommand(u8 test, s8 param, u8 buflen, u8* buf)
       SendTestChar(test & 0xff);
       
       // Now read reply
-      PIN_AF(GPIOC, PINC_CHGRX);
-      int c;
-      // Scan for header
-      while ((0xBE^0xFF) != (c = TestGetCharWait(CHAR_TIMEOUT)))
-        if (c == -1)
-          throw ERROR_TESTPORT_TIMEOUT;
-      u8 len = TestGetCharWait(CHAR_TIMEOUT);
-      if (len > buflen)
-        throw ERROR_TESTPORT_TMI;
-      for (int i = 0; i < len; i++)
+      u8 len = 0;
+      if( get_reply )
       {
-        int c = TestGetCharWait(CHAR_TIMEOUT);
-        if (c < 0)
+        PIN_AF(GPIOC, PINC_CHGRX);
+        int c;
+        // Scan for header
+        while ((0xBE^0xFF) != (c = TestGetCharWait(CHAR_TIMEOUT)))
+          if (c == -1)
+            throw ERROR_TESTPORT_TIMEOUT;
+        len = TestGetCharWait(CHAR_TIMEOUT);
+        if (len > buflen)
+          throw ERROR_TESTPORT_TMI;
+        for (int i = 0; i < len; i++)
+        {
+          int c = TestGetCharWait(CHAR_TIMEOUT);
+          if (c < 0)
+            throw ERROR_TESTPORT_TIMEOUT;
+          *buf++ = c;
+          if (0 != TestGetCharWait(CHAR_TIMEOUT))
+            throw ERROR_TESTPORT_PADDING;
+        }
+        if ((0xEF^0xFF) != TestGetCharWait(CHAR_TIMEOUT))
           throw ERROR_TESTPORT_TIMEOUT;
-        *buf++ = c;
-        if (0 != TestGetCharWait(CHAR_TIMEOUT))
-          throw ERROR_TESTPORT_PADDING;
+        PIN_IN(GPIOC, PINC_CHGRX);
       }
-      if ((0xEF^0xFF) != TestGetCharWait(CHAR_TIMEOUT))
-        throw ERROR_TESTPORT_TIMEOUT;
-      PIN_IN(GPIOC, PINC_CHGRX);
-          
+      else {
+        //assume a reply exists...wait it out to keep synchronization
+        MicroWait( 5 * (3 * CHAR_TIMEOUT) );
+      }
+      
 #ifdef DEBUG_TESTPORT
     SlowPrintf(" - OK!\r\n");
 #endif
@@ -253,3 +267,14 @@ int SendCommand(u8 test, s8 param, u8 buflen, u8* buf)
     }
   throw ERROR_UNKNOWN_MODE;
 }
+
+int SendCommand(u8 test, s8 param, u8 buflen, u8* buf )
+{
+  return m_SendCommand(test, param, buflen, buf, true /*get_reply*/);
+}
+
+int SendCommandNoReply(u8 test, s8 param)
+{
+  return m_SendCommand(test, param, 0, NULL, false /*get_reply*/);
+}
+
