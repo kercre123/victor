@@ -526,7 +526,7 @@ namespace Cozmo {
         
       case VisionMode::EstimatingFacialExpression:
       {
-        ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.EnableMode.NullFaceTracker");
+        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableMode.NullFaceTracker");
         
         PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableExpressionEstimation",
                       "Enabled=%c", (enabled ? 'Y' : 'N'));
@@ -809,9 +809,9 @@ namespace Cozmo {
 #     else
       const CornerMethod cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
       
-      ASSERT_NAMED(_detectionParameters.fiducialThicknessFraction.x() > 0 &&
-                   _detectionParameters.fiducialThicknessFraction.y() > 0,
-                   "VisionSystem.DetectMarkers.FiducialThicknessFractionParameterNotInitialized");
+      DEV_ASSERT(_detectionParameters.fiducialThicknessFraction.x() > 0 &&
+                 _detectionParameters.fiducialThicknessFraction.y() > 0,
+                 "VisionSystem.DetectMarkers.FiducialThicknessFractionParameterNotInitialized");
       
       // Convert "basestation" detection parameters to "embedded" parameters
       // TODO: Merge the fiducial detection parameters structs
@@ -984,7 +984,7 @@ namespace Cozmo {
         totalRoiArea += roiRects.back().Area();
       }
       
-      ASSERT_NAMED(totalRoiArea >= 0, "VisionSystem.CheckImageQuality.NegativeROIArea");
+      DEV_ASSERT(totalRoiArea >= 0, "VisionSystem.CheckImageQuality.NegativeROIArea");
       
       if(2*totalRoiArea < inputImage.GetNumElements())
       {
@@ -1714,7 +1714,7 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    ASSERT_NAMED(_faceTracker != nullptr, "VisionSystem.AssignNameToFace.NullFaceTracker");
+    DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.AssignNameToFace.NullFaceTracker");
     
     return _faceTracker->AssignNameToID(faceID, name, mergeWithID);
   }
@@ -1749,8 +1749,7 @@ namespace Cozmo {
     Vision::Image maskedImage;
     img.CopyTo(maskedImage);
     
-    ASSERT_NAMED(maskedImage.GetTimestamp() == img.GetTimestamp(),
-                 "VisionSystem.DetectFaces.BadImageTimestamp");
+    DEV_ASSERT(maskedImage.GetTimestamp() == img.GetTimestamp(), "VisionSystem.DetectFaces.BadImageTimestamp");
     
     for(auto rect : rects) // Deliberate copy because GetROI can modify 'rect'
     {
@@ -1769,7 +1768,7 @@ namespace Cozmo {
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
                                    std::vector<Anki::Rectangle<s32>>& detectionRects)
   {
-    ASSERT_NAMED(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
+    DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
    
     /*
     // Periodic printouts of face tracker timings
@@ -1819,8 +1818,7 @@ namespace Cozmo {
     {
       auto & currentFace = *faceIter;
       
-      ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
-                   "VisionSystem.DetectFaces.BadFaceTimestamp");
+      DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
       
       detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
                                   (s32)std::round(faceIter->GetRect().GetY()),
@@ -1921,14 +1919,14 @@ namespace Cozmo {
       }
     }
     
-    ASSERT_NAMED(xValues.size() == yValues.size(), "VisionSystem.GetCentroid.xyValuesSizeMismatch");
+    DEV_ASSERT(xValues.size() == yValues.size(), "VisionSystem.GetCentroid.xyValuesSizeMismatch");
     
     if(xValues.empty()) {
       centroid = 0.f;
       return 0;
     } else {
-      ASSERT_NAMED(xPercentile >= 0.f && xPercentile <= 1.f, "VisionSystem.GetCentroid.xPercentileOOR");
-      ASSERT_NAMED(yPercentile >= 0.f && yPercentile <= 1.f, "VisionSystem.GetCentroid.yPercentileOOR");
+      DEV_ASSERT(xPercentile >= 0.f && xPercentile <= 1.f, "VisionSystem.GetCentroid.xPercentileOOR");
+      DEV_ASSERT(yPercentile >= 0.f && yPercentile <= 1.f, "VisionSystem.GetCentroid.yPercentileOOR");
       const size_t area = xValues.size(); // NOTE: area > 0 if we get here
       auto xcen = xValues.begin() + std::round(xPercentile * (f32)(area-1));
       auto ycen = yValues.begin() + std::round(yPercentile * (f32)(area-1));
@@ -1936,12 +1934,12 @@ namespace Cozmo {
       std::nth_element(yValues.begin(), ycen, yValues.end());
       centroid.x() = *xcen;
       centroid.y() = *ycen;
-      ASSERT_NAMED_EVENT(centroid.x() >= 0.f && centroid.x() < motionImg.GetNumCols(),
-                         "VisionSystem.GetCentroid.xCenOOR",
-                         "xcen=%f, not in [0,%d)", centroid.x(), motionImg.GetNumCols());
-      ASSERT_NAMED_EVENT(centroid.y() >= 0.f && centroid.y() < motionImg.GetNumRows(),
-                         "VisionSystem.GetCentroid.yCenOOR",
-                         "ycen=%f, not in [0,%d)", centroid.y(), motionImg.GetNumRows());
+      DEV_ASSERT_MSG(centroid.x() >= 0.f && centroid.x() < motionImg.GetNumCols(),
+                     "VisionSystem.GetCentroid.xCenOOR",
+                     "xcen=%f, not in [0,%d)", centroid.x(), motionImg.GetNumCols());
+      DEV_ASSERT_MSG(centroid.y() >= 0.f && centroid.y() < motionImg.GetNumRows(),
+                     "VisionSystem.GetCentroid.yCenOOR",
+                     "ycen=%f, not in [0,%d)", centroid.y(), motionImg.GetNumRows());
       return area;
     }
 #   endif // USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
@@ -2191,12 +2189,12 @@ namespace Cozmo {
         
         if(imgRegionArea > 0)
         {
-          ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < image.GetNumCols() &&
-                       centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
-                       "VisionSystem.DetectMotion.CentroidOOB");
+          DEV_ASSERT(centroid.x() > 0.f && centroid.x() < image.GetNumCols() &&
+                     centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
+                     "VisionSystem.DetectMotion.CentroidOOB");
           
           // make relative to image center *at processing resolution*
-          ASSERT_NAMED(_camera.IsCalibrated(), "Camera must be calibrated");
+          DEV_ASSERT(_camera.IsCalibrated(), "Camera must be calibrated");
           centroid -= _camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier);
           
           // Filter so as not to move too much from last motion detection,
@@ -2340,7 +2338,7 @@ namespace Cozmo {
     if ( newCurrentChain.points.empty() ) {
       newCurrentChain.isBorder = isBorder;
     } else {
-      ASSERT_NAMED(newCurrentChain.isBorder == isBorder, "VisionSystem.AddEdgePoint.BadBorderFlag");
+      DEV_ASSERT(newCurrentChain.isBorder == isBorder, "VisionSystem.AddEdgePoint.BadBorderFlag");
     }
     
     // now add this point
@@ -2708,7 +2706,7 @@ namespace Cozmo {
         for(s32 i=0; i<chain.points.size(); ++i) {
           const Anki::Point2f& groundPoint = chain.points[i].position;
           Point3f temp = H * Anki::Point3f(groundPoint.x(), groundPoint.y(), 1.f);
-          ASSERT_NAMED(temp.z() > 0.f, "VisionSystem.DetectOverheadEdges.BadDisplayZ");
+          DEV_ASSERT(temp.z() > 0.f, "VisionSystem.DetectOverheadEdges.BadDisplayZ");
           const f32 divisor = 1.f / temp.z();
           dispEdgeImg.DrawPoint({temp.x()*divisor, temp.y()*divisor}, NamedColors::RED, 1);
         }
@@ -2888,9 +2886,9 @@ namespace Cozmo {
       sortedQuad = marker.corners;
     }
     
-    ASSERT_NAMED(_camera.IsCalibrated(), "VisionSystem.GetVisionMarkerPose.CameraNotCalibrated");
+    DEV_ASSERT(_camera.IsCalibrated(), "VisionSystem.GetVisionMarkerPose.CameraNotCalibrated");
     auto calib = _camera.GetCalibration();
-    ASSERT_NAMED(calib != nullptr, "VisionSystem.GetVisionMarkerPose.NullCalibration");
+    DEV_ASSERT(calib != nullptr, "VisionSystem.GetVisionMarkerPose.NullCalibration");
     
     return P3P::computePose(sortedQuad,
                             _canonicalMarker3d[0], _canonicalMarker3d[1],
@@ -3071,7 +3069,7 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
 
     // Currently assuming we detect markers first, so we won't make use of anything already detected
-    ASSERT_NAMED(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
+    DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
     
     switch(useCLAHE)
     {
@@ -3083,7 +3081,7 @@ namespace Cozmo {
         
       case MarkerDetectionCLAHE::On:
       {
-        ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
+        DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useOn.ImageIsEmpty");
         
         lastResult = DetectMarkers(claheImage, detectionRects);
         
@@ -3092,7 +3090,7 @@ namespace Cozmo {
         
       case MarkerDetectionCLAHE::Both:
       {
-        ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
+        DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useBoth.ImageIsEmpty");
         
         // First run will put quads into detectionRects
         lastResult = DetectMarkers(inputImageGray, detectionRects);
@@ -3111,7 +3109,7 @@ namespace Cozmo {
       {
         Vision::Image* whichImg = &inputImageGray;
         if(_currentUseCLAHE) {
-          ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
+          DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useAlternating.ImageIsEmpty");
           whichImg = &claheImage;
         }
         
@@ -3127,7 +3125,7 @@ namespace Cozmo {
         Vision::Image* whichImg = &inputImageGray;
         if(_currentUseCLAHE)
         {
-          ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
+          DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useWhenDark.ImageIsEmpty");
           whichImg = &claheImage;
         }
         
@@ -3243,8 +3241,8 @@ namespace Cozmo {
     Vision::Image claheImage;
     
     // Apply CLAHE if enabled:
-    ASSERT_NAMED(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
-                 "VisionSystem.ApplyCLAHE.BadUseClaheVal");
+    DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
+               "VisionSystem.ApplyCLAHE.BadUseClaheVal");
     
     MarkerDetectionCLAHE kUseCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
     
@@ -3845,11 +3843,11 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.DotsNotFound",
                             "Failed to find valid dot");
         
-        // Continuing to the next dot so that we atleast have images
+        // Continuing to the next dot so that we at least have images
         continue;
       }
       
-      ASSERT_NAMED(centroids.type() == CV_64F, "VisionSystem.ReadToolCode.CentroidTypeNotDouble");
+      DEV_ASSERT(centroids.type() == CV_64F, "VisionSystem.ReadToolCode.CentroidTypeNotDouble");
       const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
       observedPoints.push_back(Anki::Point2f(dotCentroid[0] + dotRectRoi.GetX(),
                                              dotCentroid[1] + dotRectRoi.GetY()));
@@ -3912,7 +3910,9 @@ namespace Cozmo {
       }
       
       Result lsqResult = LeastSquares(A,b,calibParams);
-      ASSERT_NAMED(lsqResult == RESULT_OK, "LeastSquares failed");
+      
+      DEV_ASSERT(lsqResult == RESULT_OK, "LeastSquares failed");
+      DEV_ASSERT_USED(lsqResult);
       
       camCen.x()  = calibParams[0];
       camCen.y()  = calibParams[1];
@@ -4140,10 +4140,10 @@ namespace Cozmo {
                                             0.f, // skew
                                             distCoeffsVec);
     
-    ASSERT_NAMED_EVENT(rvecs.size() == tvecs.size(),
-                       "VisionSystem.ComputeCalibration.BadCalibPoseData",
-                       "Got %zu rotations and %zu translations",
-                       rvecs.size(), tvecs.size());
+    DEV_ASSERT_MSG(rvecs.size() == tvecs.size(),
+                   "VisionSystem.ComputeCalibration.BadCalibPoseData",
+                   "Got %zu rotations and %zu translations",
+                   rvecs.size(), tvecs.size());
     
     _calibPoses.reserve(rvecs.size());
     for(s32 iPose=0; iPose<rvecs.size(); ++iPose)
@@ -4176,7 +4176,7 @@ namespace Cozmo {
   Result VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
                                              std::vector<u8>& enrollData) const
   {
-    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.GetSerializedFaceData.NullFaceTracker");
+    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.GetSerializedFaceData.NullFaceTracker");
     return _faceTracker->GetSerializedData(albumData, enrollData);
   }
   
@@ -4184,25 +4184,25 @@ namespace Cozmo {
                                              const std::vector<u8>& enrollData,
                                              std::list<Vision::LoadedKnownFace>& loadedFaces)
   {
-    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.SetSerializedFaceData.NullFaceTracker");
+    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SetSerializedFaceData.NullFaceTracker");
     return _faceTracker->SetSerializedData(albumData, enrollData, loadedFaces);
   }
   
   Result VisionSystem::LoadFaceAlbum(const std::string& albumName, std::list<Vision::LoadedKnownFace> &loadedFaces)
   {
-    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.LoadFaceAlbum.NullFaceTracker");
+    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.LoadFaceAlbum.NullFaceTracker");
     return _faceTracker->LoadAlbum(albumName, loadedFaces);
   }
   
   Result VisionSystem::SaveFaceAlbum(const std::string& albumName)
   {
-    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.SaveFaceAlbum.NullFaceTracker");
+    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SaveFaceAlbum.NullFaceTracker");
     return _faceTracker->SaveAlbum(albumName);
   }
  
   void VisionSystem::SetFaceRecognitionIsSynchronous(bool isSynchronous)
   {
-    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.SetFaceRecognitionRunMode.NullFaceTracker");
+    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SetFaceRecognitionRunMode.NullFaceTracker");
     _faceTracker->SetRecognitionIsSynchronous(isSynchronous);
   }
   

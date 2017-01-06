@@ -137,8 +137,7 @@ namespace Anki {
       _targetPose.SetParent(_robot.GetWorldOrigin());
       _initialPose = _robot.GetPose();
       
-      ASSERT_NAMED(_robot.GetPose().GetParent() == _robot.GetWorldOrigin(),
-                   "TurnInPlaceAction.Init.RobotOriginMismatch");
+      DEV_ASSERT(_robot.GetPose().GetParent() == _robot.GetWorldOrigin(), "TurnInPlaceAction.Init.RobotOriginMismatch");
       
       _initialAngle = _initialPose.GetRotation().GetAngleAroundZaxis();
       _currentAngle = _initialAngle;
@@ -462,7 +461,7 @@ namespace Anki {
         // internally. Yes, we could have just double-negated if the caller passed in
         // a negative speed already, but this avoids confusion on caller's side about
         // which signs to use and the documentation says speed should always be positive.
-        ASSERT_NAMED(_speed_mmps >= 0.f, "DriveStraightAction.Constructor.NegativeSpeed");
+        DEV_ASSERT(_speed_mmps >= 0.f, "DriveStraightAction.Constructor.NegativeSpeed");
         _speed_mmps = -_speed_mmps;
       }
       
@@ -661,7 +660,7 @@ namespace Anki {
       switch(preset) {
         case Preset::GROUND_PLANE_VISIBLE: { return DEG_TO_RAD(-15.0f); }
       }
-      ASSERT_NAMED(false, "MoveHeadToAngleAction.NotAPreset");
+      DEV_ASSERT(false, "MoveHeadToAngleAction.NotAPreset");
       return -1.0f;
     }
     
@@ -670,7 +669,7 @@ namespace Anki {
       switch(preset) {
         case Preset::GROUND_PLANE_VISIBLE: { return "GroundPlaneVisible"; }
       }
-      ASSERT_NAMED(false, "MoveHeadToAngleAction.NotAPreset");
+      DEV_ASSERT(false, "MoveHeadToAngleAction.NotAPreset");
       return "ERROR";
     }
     
@@ -1834,7 +1833,7 @@ namespace Anki {
               PRINT_NAMED_DEBUG("TurnTowardsFaceAction.CheckIfDone.NoFaceObservedYet",
                                 "Will wait no more than %d frames",
                                 _maxFramesToWait);
-              ASSERT_NAMED(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
+              DEV_ASSERT(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
               SetAction(new WaitForImagesAction(_robot, _maxFramesToWait, VisionMode::DetectingFaces));
               // TODO:(bn) parallel action with an animation here? This will let us span the gap a bit better
               // and buy us more time. Skipping for now
@@ -2006,10 +2005,10 @@ namespace Anki {
       
       auto imageProcLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
       {
-        ASSERT_NAMED(ExternalInterface::MessageEngineToGameTag::RobotProcessedImage == msg.GetData().GetTag(),
-                     "WaitForImagesAction.MessageTypeNotHandled");
+        DEV_ASSERT(ExternalInterface::MessageEngineToGameTag::RobotProcessedImage == msg.GetData().GetTag(),
+                   "WaitForImagesAction.MessageTypeNotHandled");
         const ExternalInterface::RobotProcessedImage& imageMsg = msg.GetData().Get_RobotProcessedImage();
-        if(imageMsg.timestamp > _afterTimeStamp)
+        if (imageMsg.timestamp > _afterTimeStamp)
         {
           if (VisionMode::Count == _visionMode)
           {

@@ -26,7 +26,7 @@ ActionWatcher::ActionWatcher()
 
 void ActionWatcher::ParentActionUpdating(const IActionRunner* action)
 {
-  ASSERT_NAMED(action != nullptr, "ActionWatcher.ParentActionUpdating.NullAction");
+  DEV_ASSERT(action != nullptr, "ActionWatcher.ParentActionUpdating.NullAction");
 
   _parentActionTag = action->GetTag();
   _currentActionTag = ActionConstants::INVALID_TAG;
@@ -35,7 +35,7 @@ void ActionWatcher::ParentActionUpdating(const IActionRunner* action)
   const auto root = _actionTrees.find(_parentActionTag);
   
   // If this is a new parent action
-  if(root == _actionTrees.end())
+  if (root == _actionTrees.end())
   {
     Node* node = new Node(_parentActionTag);
     _actionTrees[_parentActionTag] = node;
@@ -43,10 +43,12 @@ void ActionWatcher::ParentActionUpdating(const IActionRunner* action)
 
   // All of the updating action stacks should be empty since no actions besides the parent action are
   // currently updating
-  for(const auto& i : _parentToUpdatingActions)
+  #if DEV_ASSERT_ENABLED
+  for (const auto& i : _parentToUpdatingActions)
   {
-    ASSERT_NAMED(i.second.empty(), "ActionWatcher.ParentActionUpdating.ParentToUpdatingActionsNotEmpty");
+    DEV_ASSERT(i.second.empty(), "ActionWatcher.ParentActionUpdating.ParentToUpdatingActionsNotEmpty");
   }
+  #endif
 }
 
 void ActionWatcher::ActionStartUpdating(const IActionRunner* action)
@@ -64,7 +66,7 @@ void ActionWatcher::ActionStartUpdating(const IActionRunner* action)
     if(_lastActionTag != ActionConstants::INVALID_TAG)
     {
       const auto& iter = _actionTrees.find(_lastActionTag);
-      ASSERT_NAMED(iter != _actionTrees.end(), "ActionWatcher.ActionStartUpdating.LastActionNotInTree");
+      DEV_ASSERT(iter != _actionTrees.end(), "ActionWatcher.ActionStartUpdating.LastActionNotInTree");
       node->parent = iter->second;
       iter->second->children.push_back(node);
     }

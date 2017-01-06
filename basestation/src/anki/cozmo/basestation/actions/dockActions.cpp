@@ -174,7 +174,10 @@ namespace Anki {
     void IDockAction::SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad)
     {
       if(FLT_LT(offsetX_mm, -kMaxNegativeXPlacementOffset)) {
-        ASSERT_NAMED_EVENT(false, "IDockAction.SetPlacementOffset.InvalidOffset", "x offset %f cannot be negative (through block)", offsetX_mm);
+        DEV_ASSERT_MSG(false,
+                       "IDockAction.SetPlacementOffset.InvalidOffset",
+                       "x offset %f cannot be negative (through block)",
+                       offsetX_mm);
         // for release set offset to 0 so that Cozmo doesn't look stupid plowing through a block
         offsetX_mm = 0;
       }
@@ -1787,7 +1790,10 @@ namespace Anki {
       Pose3d dockObjectWRTRobot;
       const Pose3d topPose = dockObject->GetZRotatedPointAboveObjectCenter(0.5f);
       const bool success = topPose.GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
-      ASSERT_NAMED(success, "PlaceRelObjectAction.Verify.GetWrtRobotPoseFailed");
+      
+      DEV_ASSERT(success, "PlaceRelObjectAction.Verify.GetWrtRobotPoseFailed");
+      DEV_ASSERT_USED(success);
+      
       const float robotObjRelRotation_rad = dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       // consts for comparing relative robot/block alignment

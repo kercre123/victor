@@ -401,20 +401,22 @@ ObjectID Robot::AddUnconnectedCharger()
   GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
   
   ObservableObject* obj = nullptr;
-  for(auto object : matchingObjects)
+  for (auto object : matchingObjects)
   {
-    if(obj != nullptr)
+    if (obj != nullptr)
     {
-      ASSERT_NAMED(object->GetID() == obj->GetID(), "Matching charger ids not equal");
+      DEV_ASSERT(object->GetID() == obj->GetID(), "Matching charger ids not equal");
     }
     obj = object;
   }
+  
   ObjectID objID;
   s32 activeId = -1;
-  if(obj != nullptr)
+  if (obj != nullptr)
   {
     activeId = obj->GetActiveID();
   }
+  
   // Copying existing object's activeId and objectId if an existing object was found
   objID = GetBlockWorld().AddActiveObject(activeId, 0, ActiveObjectType::OBJECT_CHARGER, obj);
   
@@ -660,7 +662,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         _visionComponent->Pause(false);
       }
       
-      ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
+      DEV_ASSERT(!IsLocalized(), "Robot should be delocalized when first put back down!");
       
       // If we are not localized and there is nothing else left in the world that
       // we could localize to, then go ahead and mark us as localized (via
@@ -1052,7 +1054,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   }
   else
   {
-    ASSERT_NAMED(msg.pose_frame_id <= GetPoseFrameID(), "Robot.UpdateFullRobotState.FrameFromFuture");
+    DEV_ASSERT(msg.pose_frame_id <= GetPoseFrameID(), "Robot.UpdateFullRobotState.FrameFromFuture");
     const bool frameIsCurrent = msg.pose_frame_id == GetPoseFrameID();
     
     Pose3d newPose;
@@ -1060,7 +1062,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     if(IsOnRamp()) {
           
       // Sanity check:
-      ASSERT_NAMED(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
+      DEV_ASSERT(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
           
       // Don't update pose history while on a ramp.
       // Instead, just compute how far the robot thinks it has gone (in the plane)
@@ -1648,7 +1650,7 @@ Result Robot::Update()
           if( (!collisionsAcceptable) && (nullptr != _longPathPlanner) ) {
             const float startPoseAngle = GetPose().GetRotationAngle<'Z'>().ToFloat();
             const bool __attribute__((unused)) obstaclesLoaded = _longPathPlanner->PreloadObstacles();
-            ASSERT_NAMED(obstaclesLoaded, "Lattice planner didnt preload obstacles.");
+            DEV_ASSERT(obstaclesLoaded, "Lattice planner didn't preload obstacles.");
             if( !_longPathPlanner->CheckIsPathSafe(newPath, startPoseAngle) ) {
               // bad path. try with the fallback planner if possible
               if( nullptr != _fallbackPathPlanner ) {
@@ -1997,7 +1999,7 @@ void Robot::SetLiftAngle(const f32& angle)
       
   Robot::ComputeLiftPose(_currentLiftAngle, _liftPose);
 
-  ASSERT_NAMED(_liftPose.GetParent() == &_liftBasePose, "Robot.SetLiftAngle.InvalidPose");
+  DEV_ASSERT(_liftPose.GetParent() == &_liftBasePose, "Robot.SetLiftAngle.InvalidPose");
 }
     
 Radians Robot::GetPitchAngle() const
@@ -3001,7 +3003,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
     return RESULT_FAIL;
   }
       
-  ASSERT_NAMED(marker != nullptr, "Robot.DockWithObject.InvalidMarker");
+  DEV_ASSERT(marker != nullptr, "Robot.DockWithObject.InvalidMarker");
       
   // Need to store these so that when we receive notice from the physical
   // robot that it has picked up an object we can transition the docking
@@ -3508,8 +3510,8 @@ Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
   }
   
   // Sanity check: if we grab the origin the index we just got, it should be the one we searched for
-  ASSERT_NAMED(GetPoseOriginList().GetOriginByID(originID) == origin,
-               "Robot.SendAbsLocalizationUpdate.OriginIndexLookupFailed");
+  DEV_ASSERT(GetPoseOriginList().GetOriginByID(originID) == origin,
+             "Robot.SendAbsLocalizationUpdate.OriginIndexLookupFailed");
   
   return SendMessage(RobotInterface::EngineToRobot(
                        RobotInterface::AbsoluteLocalizationUpdate(
@@ -3554,7 +3556,7 @@ bool Robot::HasExternalInterface() const
 
 IExternalInterface* Robot::GetExternalInterface()
 {
-  ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
+  DEV_ASSERT(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
   return _context->GetExternalInterface();
 }
 
@@ -3643,7 +3645,9 @@ Pose3d Robot::GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
       
   Pose3d liftPoseWrtCam;
   bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
-  ASSERT_NAMED(result == true, "Lift and camera poses should be in same pose tree");
+  
+  DEV_ASSERT(result, "Lift and camera poses should be in same pose tree");
+  DEV_ASSERT_USED(result);
       
   return liftPoseWrtCam;
 }
@@ -3824,10 +3828,10 @@ bool Robot::UpdateCurrPoseFromHistory()
   
 Result Robot::ConnectToObjects(const FactoryIDArray& factory_ids)
 {
-  ASSERT_NAMED_EVENT(factory_ids.size() == _objectsToConnectTo.size(),
-                     "Robot.ConnectToObjects.InvalidArrayLength",
-                     "%zu slots requested. Max %zu",
-                     factory_ids.size(), _objectsToConnectTo.size());
+  DEV_ASSERT_MSG(factory_ids.size() == _objectsToConnectTo.size(),
+                 "Robot.ConnectToObjects.InvalidArrayLength",
+                 "%zu slots requested. Max %zu",
+                 factory_ids.size(), _objectsToConnectTo.size());
       
   std::stringstream strs;
   for (auto it = factory_ids.begin(); it != factory_ids.end(); ++it)
@@ -3974,8 +3978,9 @@ void Robot::ConnectToRequestedObjects()
 
   // Iterate over the connected objects and the new factory IDs to see what we need to send in the
   // message for every slot.
-  ASSERT_NAMED(_objectsToConnectTo.size() == _connectedObjects.size(),
-               "Robot.ConnectToRequestedObjects.InvalidArraySize");
+  DEV_ASSERT(_objectsToConnectTo.size() == _connectedObjects.size(),
+             "Robot.ConnectToRequestedObjects.InvalidArraySize");
+  
   for (int i = 0; i < _objectsToConnectTo.size(); ++i) {
         
     ObjectToConnectToInfo& newObjectToConnectTo = _objectsToConnectTo[i];
@@ -4283,7 +4288,7 @@ RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
 {
   if (!_context->GetRobotManager())
   {
-    ASSERT_NAMED(false, "Robot.GetRobotMessageHandler.nullptr");
+    DEV_ASSERT(false, "Robot.GetRobotMessageHandler.nullptr");
     return nullptr;
   }
         
