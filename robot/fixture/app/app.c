@@ -25,7 +25,7 @@ u8 g_fixtureReleaseVersion = 82;
 #define NOT_FOR_FACTORY 1
 
 #if NOT_FOR_FACTORY > 0
-#define BUILD_INFO (BUILD_INFO_PREFIX ## " beta-015")
+#define BUILD_INFO (BUILD_INFO_PREFIX ## " beta-016")
 #else
 #define BUILD_INFO (BUILD_INFO_PREFIX)
 #endif
