@@ -18,7 +18,7 @@
 using namespace Anki::Cozmo::RobotInterface;
 
 //debug flag: set 1 to enable verbose prints for debugging
-#define DBG_VERBOSE_PRINTING 0
+#define DBG_VERBOSE_PRINTING 1
 
 //inline macro
 #if DBG_VERBOSE_PRINTING > 0
