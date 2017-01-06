@@ -18,14 +18,14 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 82;
+u8 g_fixtureReleaseVersion = 83;
 #define BUILD_INFO_PREFIX "EP1 v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
 #define NOT_FOR_FACTORY 0
 
 #if NOT_FOR_FACTORY > 0
-#define BUILD_INFO (BUILD_INFO_PREFIX ## " beta-016")
+#define BUILD_INFO (BUILD_INFO_PREFIX ## " beta-017")
 #else
 #define BUILD_INFO (BUILD_INFO_PREFIX)
 #endif
