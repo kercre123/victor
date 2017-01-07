@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "app/tests.h"
+#include "nvReset.h"
 
 u8 g_fixtureReleaseVersion = 83;
 #define BUILD_INFO_PREFIX "EP1 v1.5"
@@ -507,6 +508,14 @@ int main(void)
   STM_EVAL_LEDOn(LEDRED);
   
   ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, g_fixtureReleaseVersion );
+  
+  //See what data we stuck into nvReset...
+  u8 resetDat[NV_RESET_MAX_LEN];
+  int len = nvResetGet( resetDat, NV_RESET_MAX_LEN );
+  ConsolePrintf("nvReset: ");
+  for( int i=0; i<len; i++)
+    ConsolePrintf("%x02", resetDat[i]);
+  ConsolePrintf(" (%i)\r\n", len);
   
   while (1)
   {  

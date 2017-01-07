@@ -14,6 +14,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include "../app/nvReset.h"
+#include "stdlib.h"
 
 // Which character to escape into command code
 #define ESCAPE_CODE 27
@@ -460,10 +462,22 @@ static void ParseCommand(void)
   
   if(!strcasecmp(buffer, "reset"))
   {
-      ConsoleWrite("\r\n");
-      MicroWait(10000);
-      NVIC_SystemReset();
-      while(1);
+    ConsoleWrite("\r\n");
+    MicroWait(10000);
+    
+    //stick some random data into nvReset
+    u8 resetDat[NV_RESET_MAX_LEN];
+    srand( getMicroCounter() );
+    for(int i=0; i<sizeof(resetDat); i++)
+      resetDat[i] = rand();
+    
+    //print nvReset dat for inspection
+    ConsolePrintf("nvReset: ");
+    for( int i=0; i<sizeof(resetDat); i++)
+      ConsolePrintf("%x02", resetDat[i]);
+    ConsolePrintf(" (%i)\r\n", sizeof(resetDat));
+    
+    nvReset( resetDat, sizeof(resetDat) );
   }
   else if (!strcasecmp(buffer, "exit")) 
   {
