@@ -374,15 +374,12 @@ namespace Anki {
         // a) the parent is a valid pose
         PoseCPtrSet& validPoses = Dev_GetValidPoses();
         DEV_ASSERT(validPoses.find(parent) != validPoses.end(), "PoseBase.Dev_AssertIsValidParentPointer.NotAValidPose");
-        DEV_ASSERT_USED(validPoses);
         
         // b) we are a current child of it
         const PoseNd* downCastedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
         const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(parent);
         DEV_ASSERT(upCastedParent->_devChildrenPtrs.find(downCastedChild) != upCastedParent->_devChildrenPtrs.end(),
           "PoseBase.Dev_AssertIsValidParentPointer.ChildOfOldParent");
-        DEV_ASSERT_USED(downCastedChild);
-        DEV_ASSERT_USED(upCastedParent);
         
         // Note on b): If you crash on b), it means that the child is pointing at this parent, and this parent
         // is indeed a valid pose, but it is not a valid parent of this child. This can happen by this series of steps:
@@ -416,7 +413,6 @@ namespace Anki {
       const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
       const size_t removedCount = validPoses.erase(castedSelf);
       DEV_ASSERT(removedCount == 1, "PoseBase.Dev_PoseDestroyed.DestroyingInvalidPose");
-      DEV_ASSERT_USED(removedCount);
     }
   }
 
@@ -435,7 +431,6 @@ namespace Anki {
       const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
       const auto insertRetInfo = validPoses.insert(castedSelf);
       DEV_ASSERT(insertRetInfo.second, "PoseBase.Dev_PoseCreated.CreatingDuplicatedPointer");
-      DEV_ASSERT_USED(insertRetInfo);
     }
   }
   

@@ -546,7 +546,6 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(const EnrolledFaceEntry& other
       DEV_ASSERT_MSG(_albumEntrySeenTimes.find(albumEntry) == _albumEntrySeenTimes.end(),
                      "EnrolledFaceEntry.MergeWithEntriesHelper.EntryKeptAndInRemovedList",
                      "AlbumEntry:%d", albumEntry);
-      DEV_ASSERT_USED(albumEntry);
     }
   }
   

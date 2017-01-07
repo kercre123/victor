@@ -3647,7 +3647,6 @@ Pose3d Robot::GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
   bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
   
   DEV_ASSERT(result, "Lift and camera poses should be in same pose tree");
-  DEV_ASSERT_USED(result);
       
   return liftPoseWrtCam;
 }

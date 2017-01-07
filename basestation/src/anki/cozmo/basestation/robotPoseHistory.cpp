@@ -388,7 +388,6 @@ namespace Anki {
         Pose3d p1_wrt_p0_parent;
         const bool inSameOrigin = p1.GetPose().GetWithRespectTo(*p0_it->second.GetPose().GetParent(), pTransform);
         DEV_ASSERT(inSameOrigin, "RobotPoseHistory.ComputePoseAt.FailedGetWRT1");
-        DEV_ASSERT_USED(inSameOrigin);
         pTransform *= p0_it->second.GetPose().GetInverse();
       }
       else
@@ -419,7 +418,6 @@ namespace Anki {
             Pose3d pMidTransform;
             const bool inSameOrigin = pMid1->second.GetPose().GetWithRespectTo(*pMid0->second.GetPose().GetParent(), pMidTransform);
             DEV_ASSERT(inSameOrigin, "RobotPoseHistory.ComputePoseAt.FailedGetWRT2");
-            DEV_ASSERT_USED(inSameOrigin);
             
             // pMidTransform = pMid1 * pMid0^(-1)
             pMidTransform *= pMid0->second.GetPose().GetInverse();

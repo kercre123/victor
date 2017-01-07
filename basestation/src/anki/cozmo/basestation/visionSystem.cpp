@@ -3912,7 +3912,6 @@ namespace Cozmo {
       Result lsqResult = LeastSquares(A,b,calibParams);
       
       DEV_ASSERT(lsqResult == RESULT_OK, "LeastSquares failed");
-      DEV_ASSERT_USED(lsqResult);
       
       camCen.x()  = calibParams[0];
       camCen.y()  = calibParams[1];

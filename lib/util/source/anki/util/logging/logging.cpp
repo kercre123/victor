@@ -392,7 +392,7 @@ void sDebugBreak()
   // in a release build.
   asm volatile ("svc #0");
   
-#elif defined(ANKI_PLATFORM_MAC)
+#elif defined(ANKI_PLATFORM_OSX)
   
   // MacOS X - break to supervisor process
   // This works for debug or release, but causes SIGTRAP if there is no supervisor.

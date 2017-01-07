@@ -1792,7 +1792,6 @@ namespace Anki {
       const bool success = topPose.GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
       
       DEV_ASSERT(success, "PlaceRelObjectAction.Verify.GetWrtRobotPoseFailed");
-      DEV_ASSERT_USED(success);
       
       const float robotObjRelRotation_rad = dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
       

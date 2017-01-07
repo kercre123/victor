@@ -71,7 +71,6 @@ namespace Anki {
                  objType == ObjectType::Block_LIGHTCUBE2 ||
                  objType == ObjectType::Block_LIGHTCUBE3,
                  "ActiveCube.InvalidFactoryID");
-      DEV_ASSERT_USED(objType);
       
       _activeID = activeID;
       _factoryID = factoryID;

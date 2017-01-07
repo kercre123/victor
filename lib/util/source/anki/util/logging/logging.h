@@ -278,21 +278,11 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 // Developer assertions are discarded for release and shipping builds.
 //
 // Code blocks that are only used for developer assertions should be guarded with #if DEV_ASSERT_ENABLED.
-// Variables that are only used for developer assertions should be guarded with DEV_ASSERT_ONLY, or
-// declared to be used with DEV_ASSERT_USED.
-//
+// Variables that are only used for developer assertions should be guarded with DEV_ASSERT_ONLY.
+
 #define DEV_ASSERT_ENABLED ANKI_DEVELOPER_CODE
 
 #if DEV_ASSERT_ENABLED
-
-#define DEV_ASSERT(expr, name) do { \
-  if (!(expr)) { \
-    PRINT_NAMED_ERROR(name, "ASSERT(%s): Assertion failed", #expr); \
-    Anki::Util::sDumpCallstack("ASSERT"); \
-    Anki::Util::sLogFlush(); \
-    Anki::Util::sAbort(); \
-  } \
-} while (0)
 
 #define DEV_ASSERT_MSG(expr, name, format, ...) do { \
   if (!(expr)) { \
@@ -305,20 +295,30 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 
 #define DEV_ASSERT_ONLY(expr) expr
 
-#define DEV_ASSERT_USED(varname) { }
-
 #else
 
-#define DEV_ASSERT(expr, name)
-
-#define DEV_ASSERT_MSG(expr, name, format, ...)
+//
+// Code within "if false" will be analyzed by compiler, so variables are counted as "used",
+// but the entire block will be discarded by the optimizer because it can't be executed.
+//
+#define DEV_ASSERT_MSG(expr, name, format, ...) do { \
+  if (false) { \
+    if (!(expr)) { \
+      PRINT_NAMED_ERROR(name, "ASSERT(%s): " format, #expr, ##__VA_ARGS__); \
+    } \
+  } \
+} while (0)
 
 #define DEV_ASSERT_ONLY(expr)
 
-#define DEV_ASSERT_USED(varname) { (void)varname; }
-
 #endif
 
+#define DEV_ASSERT(expr, name) DEV_ASSERT_MSG(expr, name, "Assertion failed")
+
+//
+// When DEV_ASSERT is enabled, use it as a drop-in replacement for old ASSERT_NAMED.
+// Otherwise, leave old ASSERT_NAMED in place, for any code that relies on old semantics.
+//
 #if DEV_ASSERT_ENABLED
 
 #undef ASSERT_NAMED

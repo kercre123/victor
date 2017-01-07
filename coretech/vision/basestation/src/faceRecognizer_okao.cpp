@@ -569,7 +569,6 @@ namespace Vision {
                                                              _enrollmentData,
                                                              _albumEntryToFaceID);
           DEV_ASSERT(sanityResult == RESULT_OK, "FaceRecognizer.GetRecognitionData.SanityCheckFailed");
-          DEV_ASSERT_USED(sanityResult);
         }
       }
       
@@ -1185,7 +1184,6 @@ namespace Vision {
                                                      0, &ptLeftTop, &ptRightTop,
                                                      &ptLeftBottom, &ptRightBottom);
     DEV_ASSERT(OKAO_NORMAL == okaoResult, "FaceRecognizer.SetEnrollmentImage.GetDetectionSquareFail");
-    DEV_ASSERT_USED(okaoResult);
     
     const Rectangle<f32> detectionRect(ptLeftTop.x, ptLeftTop.y,
                                        ptRightBottom.x-ptLeftTop.x,
