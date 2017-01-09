@@ -462,22 +462,32 @@ static void ParseCommand(void)
   
   if(!strcasecmp(buffer, "reset"))
   {
+    //=================================DEBUG===============================
+    {
+      //generate some random dat for nvReset
+      u8 resetDat[NV_RESET_MAX_LEN];
+      srand( getMicroCounter() );
+      for(int i=0; i < sizeof(resetDat); i++)
+        resetDat[i] = rand();
+      
+      //print for inspection
+      nvResetDbgInspect((char*)"reset write: ", resetDat, sizeof(resetDat));
+      
+      //ConsoleWrite("\r\n");
+      //MicroWait(10000);
+      
+      //store and reset
+      nvReset( resetDat, sizeof(resetDat) );
+      
+      //print nvReset internal dat - verify our write data is in tact before reset
+      nvResetDbgInspect((char*)"reset verif: ", NULL, 0);
+    }
+    //====================================================================*/
+    
     ConsoleWrite("\r\n");
     MicroWait(10000);
-    
-    //stick some random data into nvReset
-    u8 resetDat[NV_RESET_MAX_LEN];
-    srand( getMicroCounter() );
-    for(int i=0; i<sizeof(resetDat); i++)
-      resetDat[i] = rand();
-    
-    //print nvReset dat for inspection
-    ConsolePrintf("nvReset: ");
-    for( int i=0; i<sizeof(resetDat); i++)
-      ConsolePrintf("%x02", resetDat[i]);
-    ConsolePrintf(" (%i)\r\n", sizeof(resetDat));
-    
-    nvReset( resetDat, sizeof(resetDat) );
+    NVIC_SystemReset();
+    while(1);
   }
   else if (!strcasecmp(buffer, "exit")) 
   {
