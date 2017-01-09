@@ -5,6 +5,11 @@
 #include "hal/board.h"
 #include <string.h>
 
+#define DBG_ENABLE  1
+#if DBG_ENABLE > 0
+#include "hal/console.h"
+#endif
+
 #define NV_RESET_MAGIC_NUM  0xDEADBEEF
 
 //Data layout. Includes header/footer for internal use.
@@ -16,7 +21,7 @@ typedef struct {
 } nv_reset_storage_t;
 
 //allocate storage in no-init ram section
-static nv_reset_storage_t m_nv_region;// __attribute__( ( section( "NoInit")) );
+static nv_reset_storage_t m_nv_region __attribute__( ( section( "NoInit")) );
 
 void nvReset(u8 *dat, u16 len)
 {
@@ -32,8 +37,9 @@ void nvReset(u8 *dat, u16 len)
     pram->magic_num = NV_RESET_MAGIC_NUM; //mark data as good
   }
   
-  NVIC_SystemReset();
-  while(1);
+  //NVIC_SystemReset();
+  //while(1);
+  #warning "nvReset does not actually reset!"
 }
 
 int nvResetGetLen(void)
@@ -54,5 +60,28 @@ int nvResetGet(u8 *out_dat, u16 max_out_len)
   if( len > 0 && out_dat != NULL )
     memcpy( out_dat, pram->dat, max_out_len < len ? max_out_len : len );
   return len;
+}
+
+void nvResetDbgInspect(char* prefix, u8 *dat, u16 len)
+{
+#if DBG_ENABLE > 0
+  int dlen = len;
+  if( dat == NULL ) {
+    nv_reset_storage_t *pram = &m_nv_region;
+    dat = pram->dat;
+    dlen = nvResetGetLen();
+  }
+  
+  //ConsolePrintf("nvResetInspect: ");
+  if( prefix != NULL )
+    ConsoleWrite( prefix );
+  
+  for( int i=0; i < dlen; i++) {
+    if( i>0 && i%4==0 )
+      ConsolePrintf("-");
+    ConsolePrintf("%02x", dat[i]);
+  }
+  ConsolePrintf(" (%i)\r\n", dlen);
+#endif
 }
 
