@@ -509,13 +509,8 @@ int main(void)
   
   ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, g_fixtureReleaseVersion );
   
-  //See what data we stuck into nvReset...
-  u8 resetDat[NV_RESET_MAX_LEN];
-  int len = nvResetGet( resetDat, NV_RESET_MAX_LEN );
-  ConsolePrintf("nvReset: ");
-  for( int i=0; i<len; i++)
-    ConsolePrintf("%x02", resetDat[i]);
-  ConsolePrintf(" (%i)\r\n", len);
+  //See what data is stored in nvReset
+  nvResetDbgInspect((char*)"reset check: ", NULL, 0);
   
   while (1)
   {  
