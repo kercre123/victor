@@ -25,7 +25,7 @@ EProcess EProcessFromString(const char* inString)
     return EProcess::CalculateInterestingRegions;
   }
   
-  ASSERT_NAMED_EVENT(false, "AIInformationAnalysis.EProcessFromString.Fail", "'%s' is not a valid EProcess", inString);
+  DEV_ASSERT_MSG(false, "AIInformationAnalysis.EProcessFromString.Fail", "'%s' is not a valid EProcess", inString);
   return EProcess::Invalid;
 }
 
@@ -38,7 +38,7 @@ const char* StringFromEProcess(EProcess process)
     case EProcess::CalculateInterestingRegions: { return "CalculateInterestingRegions"; }
   }
 
-  ASSERT_NAMED_EVENT(false, "AIInformationAnalysis.EProcessFromString.Fail", "'%d' is not a valid EProcess", (int)process);
+  DEV_ASSERT_MSG(false, "AIInformationAnalysis.EProcessFromString.Fail", "'%d' is not a valid EProcess", (int)process);
   return "ERROR";
 }
 

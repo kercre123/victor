@@ -471,8 +471,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
   assert(nullptr != matchingObject);
   
-  ASSERT_NAMED(PoseState::Unknown != matchingObject->GetPoseState(),
-               "Object's pose state should not be Unknkown");
+  DEV_ASSERT(PoseState::Unknown != matchingObject->GetPoseState(), "Object's pose state should not be Unknown");
   
   _lastTrackToPose = matchingObject->GetPose();
   
@@ -526,7 +525,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     return false;
   }
   
-  ASSERT_NAMED(minDistSq > 0.f, "Distance to closest marker should be > 0.");
+  DEV_ASSERT(minDistSq > 0.f, "Distance to closest marker should be > 0");
   
   absTiltAngle = std::atan(zDist/std::sqrt(minDistSq));
   absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
@@ -632,7 +631,7 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   const f32 xyDistSq = xDist*xDist + yDist*yDist;
   if (xyDistSq <= 0.f)
   {
-    ASSERT_NAMED(false, "TrackFaceAction.GetAngles.ZeroDistance");
+    DEV_ASSERT(false, "TrackFaceAction.GetAngles.ZeroDistance");
     return false;
   }
   

@@ -141,12 +141,12 @@ namespace Anki {
       if(preActionPoseOutput.actionResult == ActionResult::SUCCESS){
         if(preActionPoseOutput.preActionPoses.size() > 0){
           const bool closestIndexValid = preActionPoseOutput.closestIndex < preActionPoseOutput.preActionPoses.size();
-          ASSERT_NAMED_EVENT(closestIndexValid,
-                              "DriveToObjectAction.GetClosestPreDockPose.ClosestIndexOutOfRange",
-                             "AttemptedToAccess closest index %zu when preactionPoses has a size %zu",
-                              preActionPoseOutput.closestIndex, preActionPoseOutput.preActionPoses.size());
+          DEV_ASSERT_MSG(closestIndexValid,
+                         "DriveToObjectAction.GetClosestPreDockPose.ClosestIndexOutOfRange",
+                         "Attempted to access closest index %zu when preactionPoses has a size %zu",
+                         preActionPoseOutput.closestIndex, preActionPoseOutput.preActionPoses.size());
           // ensure we don't crash in release
-          if(closestIndexValid){
+          if (closestIndexValid){
             closestPose = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetPose();
           }
           return closestIndexValid;
@@ -471,7 +471,7 @@ namespace Anki {
           // Create a temporary object of the same type at the desired pose so we
           // can get placement poses at that position
           ActionableObject* tempObject = dynamic_cast<ActionableObject*>(object->CloneType());
-          ASSERT_NAMED(tempObject != nullptr, "DriveToPlaceCarriedObjectAction.Init.DynamicCastFail");
+          DEV_ASSERT(tempObject != nullptr, "DriveToPlaceCarriedObjectAction.Init.DynamicCastFail");
           
           tempObject->InitPose(_placementPose, PoseState::Unknown);
           
@@ -1592,7 +1592,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      ASSERT_NAMED(_rollAction != nullptr, "DriveToRollObjectAction.actionIsNull");
+      DEV_ASSERT(_rollAction != nullptr, "DriveToRollObjectAction.actionIsNull");
       _rollAction->EnableDeepRoll(enable);
       return RESULT_OK;
     }
@@ -1688,7 +1688,7 @@ namespace Anki {
     {
       // Get DriveToObjectAction
       DriveToObjectAction* driveAction = GetDriveToObjectAction();
-      ASSERT_NAMED(driveAction != nullptr, "DriveToAndMountChargerAction.DriveToObjectSubActionNotFound");
+      DEV_ASSERT(driveAction != nullptr, "DriveToAndMountChargerAction.DriveToObjectSubActionNotFound");
       driveAction->DoPositionCheckOnPathCompletion(false);
       
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);

@@ -81,7 +81,7 @@ AudioController::AudioController( const CozmoContext* context )
 
 #if USE_AUDIO_ENGINE
   {
-    ASSERT_NAMED(nullptr != context, "AudioController.AudioController.CozmocContex.IsNull");
+    DEV_ASSERT(nullptr != context, "AudioController.AudioController.CozmocContex.IsNull");
     
     const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
@@ -191,7 +191,7 @@ AudioController::AudioController( const CozmoContext* context )
     _audioEngine->SetLogOutput( AudioEngine::ErrorLevel::All, &AudioEngineLogCallback );
     
     // If we're using the audio engine, assert that it was successfully initialized.
-    ASSERT_NAMED(_isInitialized, "AudioController.Initialize Audio Engine fail");
+    DEV_ASSERT(_isInitialized, "AudioController.Initialize Audio Engine fail");
   }
 #endif // USE_AUDIO_ENGINE
   
@@ -683,8 +683,7 @@ void AudioController:: SetupWavePortalPlugIn()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext )
 {
-  ASSERT_NAMED( nullptr != callbackContext, "AudioController.MoveCallbackContextToGarbageCollector Callback Context is \
-                NULL");
+  DEV_ASSERT(nullptr != callbackContext, "AudioController.MoveCallbackContextToGarbageCollector.CallbackContextIsNull");
   
   // FIXME: Is there a better way of doing this?
   ClearGarbageCollector();
@@ -693,16 +692,17 @@ void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::
   std::lock_guard<std::mutex> lock(_callbackContextMutex);
   const auto it = _callbackContextMap.find( callbackContext->GetPlayId() );
   if ( it != _callbackContextMap.end() ) {
-    ASSERT_NAMED( it->second == callbackContext, "AudioController.MoveCallbackContextToGarbageCollector PlayId does \
-                  NOT match Callback Context" );
+    DEV_ASSERT(it->second == callbackContext,
+               "AudioController.MoveCallbackContextToGarbageCollector.PlayIdDoesNotMatchCallbackContext");
     // Move to GarbageCollector
     it->second->ClearCallbacks();
     _callbackGarbageCollector.emplace_back( it->second );
     _callbackContextMap.erase( it );
   }
   else {
-    ASSERT_NAMED( it != _callbackContextMap.end(), ( "AudioController.MoveCallbackContextToGarbageCollector Can NOT \
-                  find PlayId: " + std::to_string( callbackContext->GetPlayId() )).c_str() );
+    DEV_ASSERT(it != _callbackContextMap.end(),
+               ("AudioController.MoveCallbackContextToGarbageCollector.CanNotFindPlayId: "
+                + std::to_string(callbackContext->GetPlayId() )).c_str());
   }
 }
 

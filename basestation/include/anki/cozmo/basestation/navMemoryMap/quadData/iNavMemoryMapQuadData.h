@@ -49,9 +49,9 @@ protected:
 template <class T>
 T* INavMemoryMapQuadDataCast(INavMemoryMapQuadData* ptr)
 {
-  ASSERT_NAMED( ptr, "INavMemoryMapQuadDataCast.NullQuadData" );
-  ASSERT_NAMED( ptr->type == T().type, "INavMemoryMapQuadDataCast.UnexpectedQuadData" );
-  ASSERT_NAMED( dynamic_cast<T*>(ptr), "INavMemoryMapQuadDataCast.BadQuadDataDynCast" );
+  DEV_ASSERT( ptr, "INavMemoryMapQuadDataCast.NullQuadData" );
+  DEV_ASSERT( ptr->type == T().type, "INavMemoryMapQuadDataCast.UnexpectedQuadData" );
+  DEV_ASSERT( dynamic_cast<T*>(ptr), "INavMemoryMapQuadDataCast.BadQuadDataDynCast" );
   return static_cast<T*>(ptr);
 }
 

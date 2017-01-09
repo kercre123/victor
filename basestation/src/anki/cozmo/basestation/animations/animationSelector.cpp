@@ -30,7 +30,7 @@ AnimationSelector::AnimationSelector(Audio::RobotAudioClient& audioClient)
 bool AnimationSelector::BufferStreamingAnimation(Animation* animation)
 {
   // Create & Store Streaming Animations by copying original animation
-  ASSERT_NAMED(animation != nullptr, "AnimationSelector::BufferStreamingAnimation.Animation.IsNull");
+  DEV_ASSERT(animation != nullptr, "AnimationSelector::BufferStreamingAnimation.Animation.IsNull");
   
   // FIXME: Need to set correct state
   const Audio::RobotAudioClient::RobotAudioOutputSource output = _audioClient.GetOutputSource();
@@ -54,7 +54,7 @@ bool AnimationSelector::BufferStreamingAnimation(Animation* animation)
   AnimationInfo info(std::unique_ptr<StreamingAnimation>(new StreamingAnimation(*animation)), output);
   auto animationIt = _animationMap.emplace(animation->GetName(), std::move(info));
   AnimationInfo& animationInfo = animationIt.first->second;
-  ASSERT_NAMED(animationIt.second, "AnimationSelector.BufferStreamingAnimation._animationMap.emplace.false");
+  DEV_ASSERT(animationIt.second, "AnimationSelector.BufferStreamingAnimation._animationMap.emplace.false");
   
   // Start Generating audio
   BufferAnimationAudio(animationInfo);
@@ -102,14 +102,14 @@ void AnimationSelector::BufferAnimationAudio(AnimationInfo& animationInfo)
   
   
   // Only call this once per streaming animation
-  ASSERT_NAMED(!animationInfo.isBuffering, "AnimationSelector.BufferAnimationAudio.isBuffering.ture");
+  DEV_ASSERT(!animationInfo.isBuffering, "AnimationSelector.BufferAnimationAudio.isBuffering.true");
   // Check output Source type
   switch (animationInfo.outputSource) {
     case Audio::RobotAudioClient::RobotAudioOutputSource::None:
     {
       // Should never be in this state
-      ASSERT_NAMED(animationInfo.outputSource != Audio::RobotAudioClient::RobotAudioOutputSource::None,
-                   "AnimationSelector.BufferAnimationAudio.outputSource.None");
+      DEV_ASSERT(animationInfo.outputSource != Audio::RobotAudioClient::RobotAudioOutputSource::None,
+                 "AnimationSelector.BufferAnimationAudio.outputSource.None");
       break;
     }
       

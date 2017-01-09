@@ -34,7 +34,7 @@ using namespace AudioEngine;
 AudioServer::AudioServer( AudioController* audioController ) :
   _audioController( audioController )
 {
-  ASSERT_NAMED( nullptr != _audioController, "AudioServer Audio Controller is NULL");
+  DEV_ASSERT(nullptr != _audioController, "AudioServer Audio Controller is NULL");
 
   // Register CLAD Game Objects
   RegisterCladGameObjectsWithAudioController();
@@ -55,7 +55,7 @@ AudioServer::~AudioServer()
 AudioServer::ConnectionIdType AudioServer::RegisterClientConnection( AudioClientConnection* clientConnection )
 {
   // Setup Client Connection with Server
-  ASSERT_NAMED( nullptr != clientConnection, "AudioServer.RegisterClientConnection Client Connection is NULL!");
+  DEV_ASSERT(nullptr != clientConnection, "AudioServer.RegisterClientConnection Client Connection is NULL!");
   ConnectionIdType connectionId = GetNewClientConnectionId();
   clientConnection->SetConnectionId( connectionId );
   clientConnection->SetAudioServer( this );
@@ -226,9 +226,8 @@ AudioServer::ConnectionIdType AudioServer::GetNewClientConnectionId()
 {
   // This only works for 255 Clients
   ++_previousClientConnectionId;
-  ASSERT_NAMED( 0 != _previousClientConnectionId,
-                "AudioServer.GetNewClientConnectionId Invalid ConnectionId, this can be caused by adding more then 255 \
-                clients");
+  DEV_ASSERT(0 != _previousClientConnectionId,
+             "AudioServer.GetNewClientConnectionId Invalid ConnectionId, this can be caused by adding more then 255 clients");
   
   return _previousClientConnectionId;
 }
