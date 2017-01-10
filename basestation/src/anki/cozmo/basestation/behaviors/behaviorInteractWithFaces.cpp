@@ -145,12 +145,12 @@ void BehaviorInteractWithFaces::StopInternal(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInteractWithFaces::CanDriveIdealDistanceFoward(const Robot& robot)
+bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward(const Robot& robot)
 {
   if( kDoMemoryMapCheckForDriveForward ) {
 
     const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-    ASSERT_NAMED(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceFoward.NeedMemoryMap");
+    DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
 
     const Vec3f& fromRobot = robot.GetPose().GetTranslation();
 
@@ -253,7 +253,7 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(Robot& robot)
   DEBUG_SET_STATE(DrivingForward);
   
   // check if we should do the long or short distance
-  const bool doLongDrive = CanDriveIdealDistanceFoward(robot);
+  const bool doLongDrive = CanDriveIdealDistanceForward(robot);
   const float distToDrive_mm = doLongDrive ? kDriveForwardIdealDist_mm : kDriveForwardMinDist_mm;
 
   // drive straight while keeping the head tracking the (players) face

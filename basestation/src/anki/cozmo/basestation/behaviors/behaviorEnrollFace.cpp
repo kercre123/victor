@@ -106,8 +106,8 @@ Result BehaviorEnrollFace::InitEnrollmentSettings(Robot& robot)
 {
   // Behavior should not even be runnable if face enrollment not requested,
   // so should not be attempting initialize
-  ASSERT_NAMED(IsEnrollmentRequested(),
-               "BehaviorEnrollFace.InitEnrollmentSettings.FaceEnrollmentNotRequested");
+  DEV_ASSERT(IsEnrollmentRequested(),
+             "BehaviorEnrollFace.InitEnrollmentSettings.FaceEnrollmentNotRequested");
   
   _faceID        = _settings->observedID;
   _saveID        = _settings->saveID;
@@ -863,7 +863,7 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
 {
-  ASSERT_NAMED(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceToEnroll.NullNewFace");
+  DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceToEnroll.NullNewFace");
   _faceID = newFace->GetID();
   _lastFaceSeenTime_ms = newFace->GetTimeStamp();
   
@@ -894,7 +894,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll(const Robot& robot)
     for(auto faceID : observedFaceIDs)
     {
       // We just checked that _faceID *wasn't* seen!
-      ASSERT_NAMED(faceID != _faceID, "BehaviorEnrollFace.UpdateFaceToEnroll.UnexpectedFaceID");
+      DEV_ASSERT(faceID != _faceID, "BehaviorEnrollFace.UpdateFaceToEnroll.UnexpectedFaceID");
       
       // We only care about this observed face if it is not for a "tracked" face
       // (one with negative ID, which we never want to try to enroll)

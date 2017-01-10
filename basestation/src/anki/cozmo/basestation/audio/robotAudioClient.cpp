@@ -134,7 +134,7 @@ RobotAudioClient::~RobotAudioClient()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( GameObjectType gameObject )
 {
-  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.GetRobotAudiobuffer.AudioControllerNull" );
+  DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.GetRobotAudiobuffer.AudioControllerNull");
   const AudioEngine::AudioGameObject aGameObject = static_cast<const AudioEngine::AudioGameObject>( gameObject );
   return _audioController->GetRobotAudioBufferWithGameObject( aGameObject );
 }
@@ -355,7 +355,7 @@ float RobotAudioClient::GetRobotVolume() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioClient::SetOutputSource( RobotAudioOutputSource outputSource )
 {
-  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.SetOutputSource.AudioControllerNull" );
+  DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.SetOutputSource.AudioControllerNull");
   using namespace AudioEngine;
   
   if ( _outputSource == outputSource ) {
@@ -401,7 +401,7 @@ bool RobotAudioClient::GetGameObjectAndAudioBufferFromPool(GameObjectType& out_g
       else {
         const auto gameObj = _robotBufferGameObjectPool.front();
         const auto buffer = GetRobotAudiobuffer(gameObj);
-        ASSERT_NAMED(buffer != nullptr, "RobotAudioClient.GetGameObjectAndAudioBufferFromPool.BufferIsNull");
+        DEV_ASSERT(buffer != nullptr, "RobotAudioClient.GetGameObjectAndAudioBufferFromPool.BufferIsNull");
         
         out_gameObj = gameObj;
         out_buffer = buffer;
@@ -431,7 +431,7 @@ void RobotAudioClient::ReturnGameObjectToPool(GameObjectType gameObject)
       
     default:
       // We should never get here!!
-      ASSERT_NAMED(false, "RobotAudioClient.ReturnGameObjectToPool.Invalid.GameObjectType");
+      DEV_ASSERT(false, "RobotAudioClient.ReturnGameObjectToPool.Invalid.GameObjectType");
       break;
   }
 }
@@ -480,7 +480,7 @@ RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer(GameObjectType game
                                                              PluginId_t pluginId,
                                                              Bus::BusType audioBus)
 {
-  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.RegisterRobotAudioBuffer.AudioControllerNull" );
+  DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.RegisterRobotAudioBuffer.AudioControllerNull");
   
   // Create Configuration Struct
   RobotBusConfiguration busConfiguration = { gameObject, pluginId, audioBus };
@@ -515,7 +515,7 @@ void RobotAudioClient::UnregisterRobotAudioBuffer(GameObjectType gameObject,
                                                   PluginId_t pluginId,
                                                   Bus::BusType audioBus)
 {
-  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.UnregisterRobotAudioBuffer.AudioControllerNull" );
+  DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.UnregisterRobotAudioBuffer.AudioControllerNull");
   
   // Remove Configuration Struct
   const auto it = _busConfigurationMap.find(gameObject);

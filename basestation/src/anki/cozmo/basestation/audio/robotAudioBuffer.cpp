@@ -59,7 +59,7 @@ void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sa
     return;
   }
   
-  ASSERT_NAMED(!_streamQueue.empty(), "RobotAudioBuffer.UpdateBuffer._streamQueue.IsEmpty");
+  DEV_ASSERT(!_streamQueue.empty(), "RobotAudioBuffer.UpdateBuffer._streamQueue.IsEmpty");
   if (_streamQueue.empty()) {
     return;
   }
@@ -103,7 +103,7 @@ bool RobotAudioBuffer::HasAudioBufferStream() const
 RobotAudioFrameStream* RobotAudioBuffer::GetFrontAudioBufferStream()
 {
   std::lock_guard<std::mutex> lock( _lock );
-  ASSERT_NAMED( !_streamQueue.empty(), "Must check if a Robot Audio Buffer Stream is in Queue befor calling this method") ;
+  DEV_ASSERT(!_streamQueue.empty(), "Must check if a Robot Audio Buffer Stream is in Queue before calling this method") ;
   if (_streamQueue.empty()) {
     return nullptr;
   }
@@ -125,7 +125,7 @@ void RobotAudioBuffer::PopAudioBufferStream()
     return;
   }
   
-  ASSERT_NAMED(_streamQueue.front().IsComplete(), "RobotAudioBuffer.PopAudioBufferStream._streamQueue.front.IsNOTComplete");
+  DEV_ASSERT(_streamQueue.front().IsComplete(), "RobotAudioBuffer.PopAudioBufferStream._streamQueue.front.IsNOTComplete");
   _streamQueue.pop();
 }
 

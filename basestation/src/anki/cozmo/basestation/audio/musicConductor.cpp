@@ -39,7 +39,7 @@ void MusicConductor::SetMusicState( AudioEngine::AudioStateId stateId,
                                     bool interrupt,
                                     uint32_t minDuratoin_ms )
 {
-  ASSERT_NAMED( stateId != kInvalidAudioEventId, "MusicConductor.SetMusicState.stateId.IsInvalidAudioEventId" );
+  DEV_ASSERT(stateId != kInvalidAudioEventId, "MusicConductor.SetMusicState.stateId.IsInvalidAudioEventId");
   
   std::lock_guard<std::mutex> lock( _lock );
   if ( interrupt ) {
@@ -82,8 +82,8 @@ void MusicConductor::StopMusic()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MusicConductor::UpdateMusicState()
 {
-  ASSERT_NAMED( _pendingStateId != kInvalidAudioEventId,
-                "MusicConductor.UpdateMusicState._pendingStateId.IsInvalidAudioEventId" );
+  DEV_ASSERT(_pendingStateId != kInvalidAudioEventId,
+             "MusicConductor.UpdateMusicState._pendingStateId.IsInvalidAudioEventId");
   
   _currentStateId = _pendingStateId;
   if ( _pendingStateMinDuration_ms != kZeroDuration ) {

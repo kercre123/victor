@@ -106,9 +106,9 @@ const std::string& RobotAudioAnimation::GetStringForAnimationState( AnimationSta
     "AnimationError",
     "AnimationStateCount"
   };
-  ASSERT_NAMED(animationStateStrings.size() == (size_t)AnimationState::AnimationStateCount + 1,
-               "animationStateStrings.missingEnum");
-  
+  DEV_ASSERT(animationStateStrings.size() == (size_t)AnimationState::AnimationStateCount + 1,
+             "animationStateStrings.missingEnum");
+   
   return animationStateStrings[ (size_t)state ];
 }
 

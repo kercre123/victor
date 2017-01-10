@@ -85,7 +85,7 @@ private:
   void TransitionToTrackingFace(Robot& robot);
   void TransitionToTriggerEmotionEvent(Robot& robot);
 
-  bool CanDriveIdealDistanceFoward(const Robot& robot);
+  bool CanDriveIdealDistanceForward(const Robot& robot);
   
   ////////////////////////////////////////////////////////////////////////////////
   // Members

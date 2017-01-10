@@ -60,8 +60,8 @@ RobotAudioAnimationOnDevice::AnimationState RobotAudioAnimationOnDevice::Update(
     {
       // If in animation mode wait for buffer to be ready before completing
       // If you hit this assert it is safe to comment out, please just let me know - Jordan R.
-      ASSERT_NAMED( GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationAbort,
-                    "Don't expect to get update calls after abort has been called" );
+      DEV_ASSERT(GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationAbort,
+                 "Don't expect to get update calls after abort has been called" );
       SetAnimationState( AnimationState::AnimationCompleted );
     }
       break;
