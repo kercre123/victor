@@ -20,16 +20,10 @@
 #include "nvReset.h"
 
 u8 g_fixtureReleaseVersion = 85;
-#define BUILD_INFO_PREFIX "EP1 v1.5"
+#define BUILD_INFO "EP1 v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
 #define NOT_FOR_FACTORY 1
-
-#if NOT_FOR_FACTORY > 0
-#define BUILD_INFO (BUILD_INFO_PREFIX ## " beta-021")
-#else
-#define BUILD_INFO (BUILD_INFO_PREFIX)
-#endif
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
@@ -128,23 +122,32 @@ void SetFixtureText(void)
   DisplayClear();
   DisplayBigCenteredText(FIXTYPES[g_fixtureType]);
   
-  //add verision #s and other useful info
+  //reset display sizing/defaults
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
   DisplayInvert(fcc); //invert the display colors for fcc build (easy to idenfity)
+  
+  //Dev builds show compile date-time across the top
+#if NOT_FOR_FACTORY
+  DisplayMoveCursor(1,2);
+  DisplayPutString("DEV-NOT FOR FACTORY!!");
+  DisplayMoveCursor(10,2);
+  DisplayPutString(__DATE__);
+  DisplayPutString(" ");
+  DisplayPutString(__TIME__);
+#endif
+  
+  //add verision #s and other useful info
+#ifdef FCC
+  DisplayMoveCursor(45, 2);
+  DisplayPutString("CERT/TEST ONLY");
+#endif
+  DisplayMoveCursor(55, 2);
+  DisplayPutString(BUILD_INFO);
   DisplayMoveCursor(55, fcc ? 108 : 110 );
   DisplayPutChar(fcc ? 'c' : 'v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
-#ifdef FCC
-  DisplayMoveCursor(45, 2);
-  DisplayPutString("CERT/TEST ONLY");
-#elif NOT_FOR_FACTORY > 0
-  DisplayMoveCursor(45, 2);
-  DisplayPutString("DEV-NOT FOR FACTORY!!");
-#endif
-  DisplayMoveCursor(55, 2);
-  DisplayPutString(BUILD_INFO);
   DisplayFlip();
 }
 
