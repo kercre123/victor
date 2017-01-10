@@ -74,7 +74,7 @@ public:
   const Json::Value& GetRobotVisionConfig() const { return _robotVisionConfig; }
 
 private:
-  void CollectJsonFiles();
+  void CollectAnimFiles();
   void LoadAnimationsInternal();
   void LoadAnimationFile(const std::string& path);
   void LoadAnimationGroups();

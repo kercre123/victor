@@ -20,6 +20,10 @@
 #include <unordered_map>
 #include <vector>
 
+namespace CozmoAnim {
+  struct AnimClip;
+}
+
 namespace Anki {
 namespace Cozmo {
   
@@ -31,6 +35,12 @@ namespace Cozmo {
     Result DefineHardCoded(); // called at construction
     
     Result DefineFromJson(const Json::Value& jsonRoot, std::string& loadedAnimName);
+
+    Result DefineFromFlatBuf(const CozmoAnim::AnimClip* animClip, std::string& animName);
+
+    Animation* GetAnimationWrapper(std::string& animationName);
+
+    Result SanityCheck(Result lastResult, Animation* animation, std::string& animationName);
     
     Result AddAnimation(const std::string& name);
     

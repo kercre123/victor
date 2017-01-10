@@ -9,6 +9,11 @@ import sys
 import tarfile
 import xml.etree.ElementTree as ET
 import json
+import tempfile
+
+# These are the Anki modules/packages:
+import binary_conversion
+
 
 VERBOSE = True
 # Replace True for name of log file if desired.
@@ -63,13 +68,37 @@ def is_up(url_string):
 
 
 def _extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
+  """
+  Given the path to a directory that contains .tar files and a list
+  of file types, eg. [".json", ".png"], this function will unpack
+  the given file types from all the .tar files.  If the optional
+  'put_in_subdir' input argument is set to True, then the files are
+  unpacked into a sub-directory named after the .tar file.
+  """
   for (dir_path, dir_names, file_names) in os.walk(extract_dir):
+
+    # Generate list of all .tar files in/under the directory provided by the caller (extract_dir)
     all_files = map(lambda x: os.path.join(dir_path, x), file_names)
     tar_files = [a_file for a_file in all_files if a_file.endswith('.tar')]
+
+    if tar_files and not put_in_subdir:
+      # If we have any .tar files to unpack and they will NOT be unpacked into a sub-directory,
+      # then first clean up existing files that may conflict with what will be unpacked. For
+      # example, if a .tar file previously contained foo.json and it now contains bar.json, we
+      # don't want foo.json lingering from a previous unpacking.
+      # PS, if the .tar files WILL be unpacked into a sub-directory, we don't need to do any cleanup
+      # here because unpack_tarball() will first delete the sub-directory if it already exists.
+      file_types_to_cleanup = file_types + [binary_conversion.BIN_FILE_EXT]
+      delete_files_from_dir(file_types_to_cleanup, dir_path, file_names)
+
     for tar_file in tar_files:
       unpack_tarball(tar_file, file_types, put_in_subdir)
       # No need to remove the tar file here after unpacking it - all tar files are
       # deleted from cozmo_resources/assets/ on the device by Builder.cs
+
+    if put_in_subdir:
+      # If we are extracting tar files into subdirs, don't recurse into those subdirs.
+      break
 
 
 def _get_specific_members(members, file_types):
@@ -89,34 +118,100 @@ def insert_source_rev_data_into_json(tar_file, tar_file_rev, json_file):
     file_obj.write("%s%s" % (json.dumps(metadata), os.linesep))
 
 
-def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=False):
+def delete_files_from_dir(file_types, dir_path, file_names):
+  delete_count = 0
+  file_types = [str(x) for x in file_types]
+  #print("Deleting all %s files from %s" % (file_types, dir_path))
+  for file_name in file_names:
+    file_ext = str(os.path.splitext(file_name)[1])
+    if file_ext in file_types:
+      os.remove(os.path.join(dir_path, file_name))
+      delete_count += 1
+  #print("Deleted %s files of types %s" % (delete_count, file_types))
+  return delete_count
+
+
+def get_file_stats(which_dir):
+  file_stats = {}
+  for (dir_path, dir_names, file_names) in os.walk(which_dir):
+    for file_name in file_names:
+      file_ext = str(os.path.splitext(file_name)[1])
+      if file_ext not in file_stats:
+        file_stats[file_ext] = 1
+      else:
+        file_stats[file_ext] += 1
+  return file_stats
+
+
+def convert_json_to_binary(json_files, bin_name, dest_dir, flatc_dir):
+    tmp_json_files = []
+    tmp_dir = tempfile.mkdtemp()
+    for json_file in json_files:
+        json_dest = os.path.join(tmp_dir, os.path.basename(json_file))
+        shutil.move(json_file, json_dest)
+        tmp_json_files.append(json_dest)
+    bin_name = bin_name.lower()
+    try:
+        bin_file = binary_conversion.main(tmp_json_files, bin_name, flatc_dir)
+    except StandardError, e:
+        print("%s: %s" % (type(e).__name__, e.message))
+        # If binary conversion failed, use the json files...
+        for json_file in tmp_json_files:
+            json_dest = os.path.join(dest_dir, os.path.basename(json_file))
+            shutil.move(json_file, json_dest)
+            print("Restored %s" % json_dest)
+    else:
+        bin_dest = os.path.join(dest_dir, bin_name)
+        shutil.move(bin_file, bin_dest)
+
+
+def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=False, convert_to_binary=True):
 
   # TODO: Set 'add_metadata' to True when we are ready to start inserting
   # metadata into the JSON files to indicate which .tar file and version
   # the data came from.
 
+  # If this function should convert .json data to binary, that conversion will be done with "flatc",
+  # so we need to specify the path to the directory that contains that FlatBuffers tool. See
+  # https://google.github.io/flatbuffers/flatbuffers_guide_using_schema_compiler.html for additional
+  # info about the "flatc" schema compiler.
+  flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external', 'flatbuffers', 'ios', 'Release')
+
+  # Set the destination directory where the contents of the .tar file will be unpacked.
   dest_dir = os.path.dirname(tar_file)
   if put_in_subdir:
-      subdir = os.path.splitext(os.path.basename(tar_file))[0]
-      dest_dir = os.path.join(dest_dir, subdir)
+    subdir = os.path.splitext(os.path.basename(tar_file))[0]
+    dest_dir = os.path.join(dest_dir, subdir)
+    if os.path.isdir(dest_dir):
+      # If the destination sub-directory already exists, get rid of it.
+      shutil.rmtree(dest_dir)
+
+  tar_file_rev = get_svn_file_rev(tar_file)
+
   try:
     tar = tarfile.open(tar_file)
   except tarfile.ReadError, e:
     raise RuntimeError("%s: %s" % (e, tar_file))
-  tar_file_rev = get_svn_file_rev(tar_file)
+
   if file_types:
     tar_members = _get_specific_members(tar, file_types)
     #print("Unpacking %s (version %s) (%s files)" % (tar_file, tar_file_rev, len(tar_members)))
     tar.extractall(dest_dir, members=tar_members)
-    if add_metadata and ".json" in file_types:
-      json_files = [tar_info.name for tar_info in tar_members]
+    tar.close()
+    if ".json" in file_types:
+      json_files = [tar_info.name for tar_info in tar_members if tar_info.name.endswith(".json")]
       json_files = map(lambda x: os.path.join(dest_dir, x), json_files)
-      for json_file in json_files:
-        insert_source_rev_data_into_json(tar_file, tar_file_rev, json_file)
+      if json_files:
+        if add_metadata:
+          for json_file in json_files:
+            insert_source_rev_data_into_json(tar_file, tar_file_rev, json_file)
+        if convert_to_binary:
+          bin_name = os.path.splitext(os.path.basename(tar_file))[0] + binary_conversion.BIN_FILE_EXT
+          convert_json_to_binary(json_files, bin_name, dest_dir, flatc_dir)
   else:
     #print("Unpacking %s (version %s) (all files)" % (tar_file, tar_file_rev))
     tar.extractall(dest_dir)
-  tar.close()
+    tar.close()
 
 
 def get_svn_file_rev(file_from_svn, cred=''):
@@ -175,12 +270,10 @@ def svn_checkout(checkout, cleanup, unpack, package, allow_extra_files, verbose=
 
 def svn_package(svn_dict):
     """
-
     Args:
         svn_dict: dict
 
-    Returns:
-
+    Returns: None
     """
     tool = "svn"
     ptool = "tar"
@@ -262,17 +355,20 @@ def svn_package(svn_dict):
                     put_in_subdir = os.path.basename(subdir) in UNPACK_INTO_SUBDIR
                     try:
                         _extract_files_from_tar(subdir, extract_types, put_in_subdir)
-                    except (OSError, IOError), e:
-                        print("Failed to unpack one or more tar files in [%s]" % subdir)
+                    except EnvironmentError, e:
+                        print("Failed to unpack one or more tar files in [%s] because: %s" % (subdir, e))
                         print(stale_warning)
+                    file_stats = get_file_stats(subdir)
+                    print("After unpacking tar files, '%s' contains the following files: %s"
+                          % (os.path.basename(subdir), file_stats))
 
         else:
             print "{0} does not need to be updated.  Current {1} revision at {2} ".format(repo, tool, l_rev)
 
 
 def git_package(git_dict):
-    # WIP
-    print("git stub")
+    # WIP.  Should this function raise a NotImplementedError exception until it is completed?
+    print("The git_package() function has NOT been implemented yet")
 
 
 def teamcity_package(tc_dict):
@@ -372,7 +468,6 @@ def extract_dependencies(version_file, location=RELATIVE_EXTERNALS_DIR):
 
     Args:
         version_file: path
-
         location: path
     """
     global DEPENDENCY_LOCATION
@@ -384,6 +479,13 @@ def extract_dependencies(version_file, location=RELATIVE_EXTERNALS_DIR):
 
 def json_parser(version_file):
     """
+    This function is used to parse the "DEPS" file and pull in
+    any external dependencies.
+
+    NOTE: This should pull in TeamCity dependencies, eg. CoreTech External,
+    before SVN dependencies, eg. cozmo-assets, because the latter may
+    depend on the former, eg. the Cozmo build uses FlatBuffers from
+    CoreTech External to process animation data from cozmo-assets.
 
     Returns:
         object: Null
@@ -392,21 +494,20 @@ def json_parser(version_file):
         version_file: path
     """
     if os.path.isfile(version_file):
-
         with open(version_file, mode="r") as file_obj:
             djson = json.load(file_obj)
-            if "svn" in djson:
-                svn_package(djson["svn"])
             if "teamcity" in djson:
                 teamcity_package(djson["teamcity"])
+            if "svn" in djson:
+                svn_package(djson["svn"])
             if "git" in djson:
-                djson["git"]
+                git_package(djson["git"])
     else:
         sys.exit("ERROR: %s does not exist" % version_file)
 
 def update_teamcity_version(version_file, teamcity_builds):
     """
-        Update version entries of teamcity builds for dependencies.
+    Update version entries of teamcity builds for dependencies.
 
     :rtype: Null
 
@@ -444,3 +545,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+

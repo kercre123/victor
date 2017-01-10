@@ -21,12 +21,15 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/time/universalTime.h"
+#include "cozmo_anim_generated.h"
 #include <json/json.h>
 #include <string>
 #include <sys/stat.h>
@@ -69,7 +72,7 @@ void RobotDataLoader::LoadNonConfigData()
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
-    CollectJsonFiles();
+    CollectAnimFiles();
   }
 
   {
@@ -124,7 +127,7 @@ void RobotDataLoader::AddToLoadingRatio(float delta)
   while (!_loadingCompleteRatio.compare_exchange_weak(current, current + delta));
 }
   
-void RobotDataLoader::CollectJsonFiles()
+void RobotDataLoader::CollectAnimFiles()
 {
   // animations
   {
@@ -146,20 +149,22 @@ void RobotDataLoader::CollectJsonFiles()
   // print results
   {
     for (const auto& fileListPair : _jsonFiles) {
-      PRINT_NAMED_INFO("RobotDataLoader.CollectJsonFiles", "found %zu json files of type %d", fileListPair.second.size(), (int)fileListPair.first);
+      PRINT_NAMED_INFO("RobotDataLoader.CollectAnimFiles", "found %zu animation files of type %d", fileListPair.second.size(), (int)fileListPair.first);
     }
   }
 }
 
 void RobotDataLoader::LoadAnimations()
 {
-  CollectJsonFiles();
+  CollectAnimFiles();
   LoadAnimationsInternal();
   _jsonFiles.clear();
 }
 
 void RobotDataLoader::LoadAnimationsInternal()
 {
+  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+
   // Disable super-verbose warnings about clipping face parameters in json files
   // To help find bad/deprecated animations, try removing this.
   ProceduralFace::EnableClippingWarning(false);
@@ -181,10 +186,15 @@ void RobotDataLoader::LoadAnimationsInternal()
   std::string test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
   if (Util::FileUtils::FileExists(test_anim)) {
     LoadAnimationFile(test_anim);
+    PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationsInternal", "Loaded %s", test_anim.c_str());
   }
 #endif
 
   ProceduralFace::EnableClippingWarning(true);
+
+  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  double loadTime = endTime - startTime;
+  PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationsInternal", "Time to load animations = %.2f ms", loadTime);
 }
 
 void RobotDataLoader::LoadAnimationGroups()
@@ -204,7 +214,8 @@ void RobotDataLoader::LoadAnimationGroups()
 void RobotDataLoader::WalkAnimationDir(const std::string& animationDir, TimestampMap& timestamps, const std::function<void(const std::string&)>& walkFunc)
 {
   const std::string animationFolder = _platform->pathToResource(Util::Data::Scope::Resources, animationDir);
-  auto filePaths = Util::FileUtils::FilesInDirectory(animationFolder, true, "json", true);
+  const std::vector<const char*> fileExts = {"json", "bin"};
+  auto filePaths = Util::FileUtils::FilesInDirectory(animationFolder, true, fileExts, true);
 
   for (const auto& path : filePaths) {
     struct stat attrib{0};
@@ -240,18 +251,49 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   if (_abortLoad.load(std::memory_order_relaxed)) {
     return;
   }
-  Json::Value animDefs;
-  // add json filename and callback (to perform load) here?
-  const bool success = _platform->readAsJson(path.c_str(), animDefs);
-  std::string animationId;
-  if (success && !animDefs.empty()) {
-    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    _cannedAnimations->DefineFromJson(animDefs, animationId);
 
-    if(path.find(animationId) == std::string::npos) {
-      PRINT_NAMED_WARNING("RobotDataLoader.LoadAnimationFile.AnimationNameMismatch",
-                          "Animation name '%s' does not match seem to match "
-                          "filename '%s'", animationId.c_str(), path.c_str());
+  PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationFile", "Loading animations from %s", path.c_str());
+
+  const bool binFile = Util::FileUtils::FilenameHasSuffix(path.c_str(), "bin");
+
+  if (binFile) {
+
+    // Read the binary file
+    auto binFileContents = Util::FileUtils::ReadFileAsBinary(path);
+    unsigned char *binData = binFileContents.data();
+
+    auto animClips = CozmoAnim::GetAnimClips(binData);
+    auto allClips = animClips->clips();
+    if (allClips->size() == 0) {
+      PRINT_NAMED_ERROR("RobotDataLoader::LoadAnimationFile", "Found no animations in %s", path.c_str());
+      return;
+    }
+
+    for (int clipIdx=0; clipIdx < allClips->size(); clipIdx++) {
+      auto animClip = allClips->Get(clipIdx);
+      auto animName = animClip->Name()->c_str();
+      PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimationFile", "Loading '%s' from %s", animName, path.c_str());
+      std::string strName = animName;
+
+      // TODO: Should this mutex lock happen here or immediately before this for loop (COZMO-8766)?
+      std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
+
+      _cannedAnimations->DefineFromFlatBuf(animClip, strName);
+    }
+
+  } else {
+    Json::Value animDefs;
+    // add json filename and callback (to perform load) here?
+    const bool success = _platform->readAsJson(path.c_str(), animDefs);
+    std::string animationId;
+    if (success && !animDefs.empty()) {
+      std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
+      _cannedAnimations->DefineFromJson(animDefs, animationId);
+      if(path.find(animationId) == std::string::npos) {
+        PRINT_NAMED_WARNING("RobotDataLoader.LoadAnimationFile.AnimationNameMismatch",
+                            "Animation name '%s' does not match seem to match "
+                            "filename '%s'", animationId.c_str(), path.c_str());
+      }
     }
   }
   AddToLoadingRatio(_perAnimationLoadingRatio);

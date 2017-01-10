@@ -26,9 +26,17 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
+#include "cozmo_anim_generated.h"
 
 #include <opencv2/core.hpp>
 #include <cassert>
+
+
+bool has_any_digits(const std::string& s)
+{
+  return std::any_of(s.begin(), s.end(), ::isdigit);
+}
+
 
 namespace Anki {
   namespace Cozmo {
@@ -136,6 +144,22 @@ return RESULT_FAIL; \
       
       return new RobotInterface::EngineToRobot(AnimKeyFrame::HeadAngle(_streamHeadMsg));
     }
+
+    Result HeadAngleKeyFrame::DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
+    {
+      _triggerTime_ms = (uint) headAngleKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(headAngleKeyframe, animNameDebug);
+      return lastResult;
+    }
+
+    Result HeadAngleKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
+    {
+      this->_durationTime_ms = headAngleKeyframe->durationTime_ms();
+      this->_angle_deg = headAngleKeyframe->angle_deg();
+      this->_angleVariability_deg = headAngleKeyframe->angleVariability_deg();
+
+      return RESULT_OK;
+    }
     
     Result HeadAngleKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
@@ -173,6 +197,22 @@ return RESULT_FAIL; \
       }
       
       return new RobotInterface::EngineToRobot(AnimKeyFrame::LiftHeight(_streamLiftMsg));
+    }
+
+    Result LiftHeightKeyFrame::DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug)
+    {
+      _triggerTime_ms = (uint) liftHeightKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(liftHeightKeyframe, animNameDebug);
+      return lastResult;
+    }
+
+    Result LiftHeightKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug)
+    {
+      this->_durationTime_ms = liftHeightKeyframe->durationTime_ms();
+      this->_height_mm = liftHeightKeyframe->height_mm();
+      this->_heightVariability_mm = liftHeightKeyframe->heightVariability_mm();
+
+      return RESULT_OK;
     }
     
     Result LiftHeightKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
@@ -237,20 +277,39 @@ return RESULT_FAIL; \
     Result FaceAnimationKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, animName);
-      
+
+      return Process(animNameDebug);
+    }
+
+    Result FaceAnimationKeyFrame::Process(const std::string& animNameDebug)
+    {
       // TODO: Take this out once root path is part of AnimationTool!
       size_t lastSlash = _animName.find_last_of("/");
       if(lastSlash != std::string::npos) {
-        PRINT_NAMED_WARNING("FaceAnimationKeyFrame.SetMembersFromJson",
+        PRINT_NAMED_WARNING("FaceAnimationKeyFrame.Process",
                             "%s: Removing path from animation name: %s",
                             animNameDebug.c_str(),
                             _animName.c_str());
         _animName = _animName.substr(lastSlash+1, std::string::npos);
       }
-      
+
       _curFrame = 0;
-      
+
       return RESULT_OK;
+    }
+
+    Result FaceAnimationKeyFrame::DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
+    {
+      _triggerTime_ms = (uint) faceAnimKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(faceAnimKeyframe, animNameDebug);
+      return lastResult;
+    }
+
+    Result FaceAnimationKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
+    {
+      this->_animName = faceAnimKeyframe->animName()->str();
+
+      return Process(animNameDebug);
     }
     
     bool FaceAnimationKeyFrame::IsDone()
@@ -304,6 +363,20 @@ return RESULT_FAIL; \
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame
     
+    Result ProceduralFaceKeyFrame::DefineFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug)
+    {
+      _triggerTime_ms = (uint) procFaceKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(procFaceKeyframe, animNameDebug);
+      return lastResult;
+    }
+
+    Result ProceduralFaceKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug)
+    {
+      _procFace.SetFromFlatBuf(procFaceKeyframe);
+      Reset();
+      return RESULT_OK;
+    }
+
     Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       _procFace.SetFromJson(jsonRoot);
@@ -363,7 +436,7 @@ return RESULT_FAIL; \
       
       return GetStreamMessageHelper(interpFace);
     }
-     */
+    */
     
     ProceduralFace ProceduralFaceKeyFrame::GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms)
     {
@@ -415,7 +488,43 @@ return RESULT_FAIL; \
       
       return _audioReferences[selectedAudioIndex];
     }
+
+    Result RobotAudioKeyFrame::DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
+    {
+      _triggerTime_ms = (uint) audioKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(audioKeyframe, animNameDebug);
+      return lastResult;
+    }
     
+    Result RobotAudioKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
+    {
+      f32 volume = audioKeyframe->volume();
+      f32 probability = audioKeyframe->probability();
+      bool hasAlts = audioKeyframe->hasAlts();;
+
+      if(audioKeyframe->audioName()->size() < 1) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.MissingAudioName",
+                          "%s: No 'audioName' field in FlatBuffers frame.",
+                          animNameDebug.c_str());
+        return RESULT_FAIL;
+      }
+
+      auto audioEventData = audioKeyframe->audioEventId();
+      for (int aeIdx=0; aeIdx < audioEventData->size(); aeIdx++) {
+        auto audioEventVal = audioEventData->Get(aeIdx);
+
+        // The casting to 64-bit was borrowed from RobotAudioKeyFrame::SetMembersFromJson(), where the corresponding
+        // comment is "We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit"
+        const auto eventId = static_cast<Audio::GameEvent::GenericEvent>( (uint64_t) audioEventVal );
+
+        Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
+        if(addResult != RESULT_OK) {
+          return addResult;
+        }
+      }
+
+      return RESULT_OK;
+    }
     
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
@@ -493,7 +602,28 @@ return RESULT_FAIL; \
     {
       return new RobotInterface::EngineToRobot(AnimKeyFrame::Event(_streamMsg));
     }
+
+    Result EventKeyFrame::DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
+    {
+      _triggerTime_ms = (uint) eventKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(eventKeyframe, animNameDebug);
+      return lastResult;
+    }
     
+    Result EventKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
+    {
+      // Convert event_id string to AnimEvent enum
+      const std::string& eventStr = eventKeyframe->event_id()->str();
+      AnimEvent e = AnimEventFromString(eventStr.c_str());
+      if (e == AnimEvent::Count) {
+        PRINT_NAMED_WARNING("EventKeyFrame.UnrecognizedEventName", "%s", eventStr.c_str());
+        return RESULT_FAIL;
+      }
+      _streamMsg.event_id = e;
+
+      return RESULT_OK;
+    }
+
     Result EventKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       // Convert event_id string to AnimEvent enum
@@ -521,6 +651,23 @@ return RESULT_FAIL; \
 #pragma mark -
 #pragma mark BackpackLightsKeyFrame
     
+    Result BackpackLightsKeyFrame::DefineFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug)
+    {
+      _triggerTime_ms = (uint) backpackKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(backpackKeyframe, animNameDebug);
+      return lastResult;
+    }
+
+    Result BackpackLightsKeyFrame::SetMembersFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug)
+    {
+      // TODO: IMPLEMENT THIS METHOD
+
+      PRINT_NAMED_ERROR("BackpackLightsKeyFrame::SetMembersFromFlatBuf",
+                        "The BackpackLightsKeyFrame::SetMembersFromFlatBuf() method still needs to be implemented");
+
+      return RESULT_OK;
+    }
+
     Result BackpackLightsKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       ColorRGBA color;
@@ -546,7 +693,6 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       
       return RESULT_OK;
     }
-    
     
     RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage()
     {
@@ -575,6 +721,75 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       _streamMsg.curvatureRadius_mm = curvatureRadius_mm;
     }
     
+    void BodyMotionKeyFrame::CheckRotationSpeed(const std::string& animNameDebug)
+    {
+      // Check that speed is valid
+      if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
+        PRINT_NAMED_INFO("BodyMotionKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
+                         "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
+                         animNameDebug.c_str(),
+                         std::abs(_streamMsg.speed),
+                         MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        _streamMsg.speed = CLIP((f32)_streamMsg.speed,
+                                -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
+                                MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+      }
+    }
+
+    void BodyMotionKeyFrame::CheckStraightSpeed(const std::string& animNameDebug)
+    {
+      // Check that speed is valid
+      if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
+        PRINT_NAMED_INFO("BodyMotionKeyFrame.CheckStraightSpeed.StraightSpeedExceedsLimit",
+                         "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                         animNameDebug.c_str(),
+                         std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+        _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
+      }
+    }
+
+    void BodyMotionKeyFrame::CheckTurnSpeed(const std::string& animNameDebug)
+    {
+      // Check that speed is valid
+      // NOTE: This should actually be checking the speed of the outer wheel
+      //       when driving at the given curvature, but not exactly sure what
+      //       speed limit should look like between straight and point turns so
+      //       just using straight limit for now as a sanity check.
+      if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
+        PRINT_NAMED_INFO("BodyMotionKeyFrame.CheckTurnSpeed.ArcSpeedExceedsLimit",
+                         "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                         animNameDebug.c_str(),
+                         std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+        _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
+      }
+    }
+
+    Result BodyMotionKeyFrame::DefineFromFlatBuf(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug)
+    {
+      _triggerTime_ms = (uint) bodyKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(bodyKeyframe, animNameDebug);
+      return lastResult;
+    }
+
+    Result BodyMotionKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug)
+    {
+      this->_durationTime_ms = bodyKeyframe->durationTime_ms();
+      this->_streamMsg.speed = bodyKeyframe->speed();
+
+      const std::string& radiusStr = bodyKeyframe->radius_mm()->str();
+      if (has_any_digits(radiusStr)) {
+        _streamMsg.curvatureRadius_mm = (uint16_t) std::atof(radiusStr.c_str());
+        CheckTurnSpeed(animNameDebug);
+      } else {
+        Result lastResult = ProcessRadiusString(radiusStr, animNameDebug);
+        if(lastResult != RESULT_OK) {
+          return lastResult;
+        }
+      }
+
+      return RESULT_OK;
+    }
+
     Result BodyMotionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
@@ -587,59 +802,36 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
         return RESULT_FAIL;
       } else if(jsonRoot["radius_mm"].isString()) {
         const std::string& radiusStr = jsonRoot["radius_mm"].asString();
-        if(radiusStr == "TURN_IN_PLACE" || radiusStr == "POINT_TURN") {
-          _streamMsg.curvatureRadius_mm = 0;
-          
-          // Check that speed is valid
-          if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
-            PRINT_NAMED_INFO("BodyMotionKeyFrame.SetMembersFromJson.PointTurnSpeedExceedsLimit",
-                             "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
-                             animNameDebug.c_str(),
-                             std::abs(_streamMsg.speed),
-                             MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-            _streamMsg.speed = CLIP((f32)_streamMsg.speed,
-                                    -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
-                                    MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-          }
-        } else if(radiusStr == "STRAIGHT") {
-          _streamMsg.curvatureRadius_mm = std::numeric_limits<s16>::max();
-          
-          // Check that speed is valid
-          if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-            PRINT_NAMED_INFO("BodyMotionKeyFrame.SetMembersFromJson.StraightSpeedExceedsLimit",
-                             "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
-                             animNameDebug.c_str(),
-                             std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
-            _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
-          }
-        } else {
-          PRINT_NAMED_ERROR("BodyMotionKeyFrame.BadRadiusString",
-                            "%s: Unrecognized string for 'radius_mm' field: %s",
-                            animNameDebug.c_str(),
-                            radiusStr.c_str());
-          return RESULT_FAIL;
+        Result lastResult = ProcessRadiusString(radiusStr, animNameDebug);
+        if(lastResult != RESULT_OK) {
+          return lastResult;
         }
       } else {
         _streamMsg.curvatureRadius_mm = (uint16_t)jsonRoot["radius_mm"].asInt();
-        
-        // Check that speed is valid
-        // NOTE: This should actually be checking the speed of the outer wheel
-        //       when driving at the given curvature, but not exactly sure what
-        //       speed limit should look like between straight and point turns so
-        //       just using straight limit for now as a sanity check.
-        if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-          PRINT_NAMED_INFO("BodyMotionKeyFrame.SetMembersFromJson.ArcSpeedExceedsLimit",
-                           "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
-                           animNameDebug.c_str(),
-                           std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
-          _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
-        }
+        CheckTurnSpeed(animNameDebug);
       }
       
       return RESULT_OK;
     }
     
-    
+    Result BodyMotionKeyFrame::ProcessRadiusString(const std::string& radiusStr, const std::string& animNameDebug)
+    {
+      if(radiusStr == "TURN_IN_PLACE" || radiusStr == "POINT_TURN") {
+        _streamMsg.curvatureRadius_mm = 0;
+        CheckRotationSpeed(animNameDebug);
+      } else if(radiusStr == "STRAIGHT") {
+        _streamMsg.curvatureRadius_mm = std::numeric_limits<s16>::max();
+        CheckStraightSpeed(animNameDebug);
+      } else {
+        PRINT_NAMED_ERROR("BodyMotionKeyFrame.BadRadiusString",
+                          "%s: Unrecognized string for 'radius_mm' field: %s",
+                          animNameDebug.c_str(),
+                          radiusStr.c_str());
+        return RESULT_FAIL;
+      }
+      return RESULT_OK;
+    }
+
     RobotInterface::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage()
     {
       //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",

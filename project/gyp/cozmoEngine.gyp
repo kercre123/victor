@@ -42,6 +42,26 @@
       '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
     ],
 
+    'flatbuffers_include': [
+      '<(coretech_external_path)/flatbuffers/include',
+    ],
+
+    'flatbuffers_libs': [
+      'libflatbuffers.a',
+    ],
+
+    'flatbuffers_libs_android': [
+      '<(coretech_external_path)/flatbuffers/android/armeabi-v7a/libflatbuffers.a',
+    ],
+
+    'flatbuffers_lib_search_path_mac': [
+      '<(coretech_external_path)/flatbuffers/ios/Release',
+    ],
+
+    'flatbuffers_lib_search_path_ios': [
+      '<(coretech_external_path)/flatbuffers/ios/Release',
+    ],
+
     'routing_http_server_libs': [
       'librouting_http_server.a',
     ],
@@ -276,6 +296,7 @@
                     '<@(cte_lib_search_path_ios_debug)',
                     '<@(opencv_lib_search_path_debug)',
                     '<(webots_path)/lib/',
+                    '<@(flatbuffers_lib_search_path_ios)',
                     '<@(flite_lib_search_path_ios)',
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
@@ -289,6 +310,7 @@
                     '<@(cte_lib_search_path_mac_debug)',
                     '<@(opencv_lib_search_path_debug)',
                     '<(webots_path)/lib/',
+                    '<@(flatbuffers_lib_search_path_mac)',
                     '<@(flite_lib_search_path_mac)',
                 ],
               },
@@ -314,6 +336,7 @@
                     '<@(cte_lib_search_path_ios_release)',
                     '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/',
+                    '<@(flatbuffers_lib_search_path_ios)',
                     '<@(flite_lib_search_path_ios)',
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
@@ -327,6 +350,7 @@
                     '<@(cte_lib_search_path_mac_release)',
                     '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/',
+                    '<@(flatbuffers_lib_search_path_mac)',
                     '<@(flite_lib_search_path_mac)',
                 ],
               },
@@ -352,6 +376,7 @@
                     '<@(cte_lib_search_path_ios_release)',
                     '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/',
+                    '<@(flatbuffers_lib_search_path_ios)',
                     '<@(flite_lib_search_path_ios)',
                 ],
                  'FRAMEWORK_SEARCH_PATHS': [
@@ -365,6 +390,7 @@
                     '<@(cte_lib_search_path_mac_release)',
                     '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/',
+                    '<@(flatbuffers_lib_search_path_mac)',
                     '<@(flite_lib_search_path_mac)',
                 ],
               },
@@ -569,6 +595,7 @@
             'include_dirs': [
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
+              '<@(flatbuffers_include)',
               '../../include',
               '../../robot/include',
             ],
@@ -595,6 +622,7 @@
               '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',  # Why is this needed for Viz?
               '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',     # Why is this needed for Viz?
               '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',     # Why is this needed for Viz?
+              '<@(flatbuffers_libs)',
               '<@(routing_http_server_libs)',                                 # Why is this needed for Viz?
             ],
             'conditions': [
@@ -667,18 +695,13 @@
             ]
           }, # end controller Robot
 
-
-
-
-
-
-
           {
             'target_name': 'webotsCtrlGameEngine',
             'type': 'executable',
             'include_dirs': [
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
+              '<@(flatbuffers_include)',
               '<@(flite_includes)',
               '<@(routing_http_server_include)',
             ],
@@ -704,6 +727,7 @@
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreBluetooth.framework',
+              '<@(flatbuffers_libs)',
               '<@(flite_libs)',
               '<@(opencv_libs)',
               '<@(face_library_libs)',
@@ -768,6 +792,7 @@
               '<(cti-cozmo_engine_path)/simulator/include',
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
+              '<@(flatbuffers_include)',
               '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
@@ -784,6 +809,7 @@
               ],
             'libraries': [
               'libCppController.dylib',
+              '<@(flatbuffers_libs)',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/Security.framework',      # Why is this needed for KB controller?
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',        # Why is this needed for KB controller?
@@ -820,9 +846,10 @@
             'target_name': 'webotsCtrlBuildServerTest',
             'type': 'executable',
             'include_dirs': [
-            '<(cti-cozmo_engine_path)/simulator/include',
+              '<(cti-cozmo_engine_path)/simulator/include',
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
+              '<@(flatbuffers_include)',
               '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
@@ -839,6 +866,7 @@
             ],
             'libraries': [
               'libCppController.dylib',
+              '<@(flatbuffers_libs)',
               '<@(opencv_libs)',
             ],
           }, # end controller Keyboard
@@ -1079,6 +1107,7 @@
               '../../basestation/test',
               '../../robot/include',
               '<@(opencv_includes)',
+              '<@(flatbuffers_include)',
               '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
@@ -1117,6 +1146,7 @@
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+              '<@(flatbuffers_libs)',
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
@@ -1302,6 +1332,7 @@
         '../../generated/clad/engine',
         '../../coretech/generated/clad/vision',
         '<@(opencv_includes)',
+        '<@(flatbuffers_include)',
         '<@(flite_includes)',
         '<@(routing_http_server_include)',
         '../../cozmoAPI/include',
@@ -1347,6 +1378,7 @@
               '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
               '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+              '<@(flatbuffers_libs)',
               '<@(flite_libs)',
               '<@(routing_http_server_libs)',
               '<@(libarchive_libs)',
@@ -1379,6 +1411,7 @@
               # does not work with ninja?!?!
               # '<@(face_library_libs)',
               # '<@(opencv_libs)',
+              '<@(flatbuffers_libs_android)',
               '<@(flite_libs_android)',
               '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/libIlmImf.a',
               '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjasper.a',
@@ -1435,6 +1468,8 @@
             ],
             'include_dirs': [
               '<(crash_path)/Breakpad/include',
+              '<@(flatbuffers_include)',
+              '../../include/anki/cozmo',
             ],
             'defines': [
               'USE_GOOGLE_BREAKPAD=1',

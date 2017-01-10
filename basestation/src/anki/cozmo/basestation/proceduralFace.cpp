@@ -14,6 +14,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/templateHelpers.h"
+#include "cozmo_anim_generated.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -75,7 +76,39 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
     SetParameter(eye, static_cast<ProceduralFace::Parameter>(i),eyeArray[i]);
   }
 }
-  
+
+void ProceduralFace::SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe)
+{
+  std::vector<Value> eyeParams;
+
+  auto leftEyeData = procFaceKeyframe->leftEye();
+  for (int leIdx=0; leIdx < leftEyeData->size(); leIdx++) {
+    auto leftEyeVal = leftEyeData->Get(leIdx);
+    eyeParams.push_back(leftEyeVal);
+  }
+  SetEyeArrayHelper(WhichEye::Left, eyeParams);
+
+  eyeParams.clear();
+
+  auto rightEyeData = procFaceKeyframe->rightEye();
+  for (int reIdx=0; reIdx < rightEyeData->size(); reIdx++) {
+    auto rightEyeVal = rightEyeData->Get(reIdx);
+    eyeParams.push_back(rightEyeVal);
+  }
+  SetEyeArrayHelper(WhichEye::Right, eyeParams);
+ 
+  f32 jsonFaceAngle = procFaceKeyframe->faceAngle();
+  SetFaceAngle(jsonFaceAngle);
+ 
+  f32 fbFaceCenterX = procFaceKeyframe->faceCenterX();
+  f32 fbFaceCenterY = procFaceKeyframe->faceCenterY();
+  SetFacePosition({fbFaceCenterX, fbFaceCenterY});
+ 
+  f32 fbFaceScaleX = procFaceKeyframe->faceScaleX();
+  f32 fbFaceScaleY = procFaceKeyframe->faceScaleY();
+  SetFaceScale({fbFaceScaleX, fbFaceScaleY});
+}
+
 void ProceduralFace::SetFromJson(const Json::Value &jsonRoot)
 {
   std::vector<Value> eyeParams;

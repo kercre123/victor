@@ -87,10 +87,22 @@ namespace Cozmo {
     }
     return v;
   }
+
+  Result CannedAnimationContainer::DefineFromFlatBuf(const CozmoAnim::AnimClip* animClip, std::string& animName)
+  {
+    Animation* animation = GetAnimationWrapper(animName);
+    if(animation == nullptr) {
+      return RESULT_FAIL;
+    }
+    Result lastResult = animation->DefineFromFlatBuf(animName, animClip);
+
+    return SanityCheck(lastResult, animation, animName);
+
+  } // CannedAnimationContainer::DefineFromFlatBuf()
   
   Result CannedAnimationContainer::DefineFromJson(const Json::Value& jsonRoot, std::string& animationName)
   {
-    
+
     Json::Value::Members animationNames = jsonRoot.getMemberNames();
     
     /*
@@ -100,7 +112,7 @@ namespace Cozmo {
     for(auto const& animationName : animationNames) {
       AddAnimation(animationName);
     }
-     */
+    */
     
     if(animationNames.empty()) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.EmptyFile",
@@ -114,12 +126,25 @@ namespace Cozmo {
     }
     
     animationName = animationNames[0];
+    PRINT_NAMED_DEBUG("CannedAnimationContainer::DefineFromJson", "Loading '%s'", animationName.c_str());
+
+    Animation* animation = GetAnimationWrapper(animationName);
+    if(animation == nullptr) {
+      return RESULT_FAIL;
+    }
+    Result lastResult = animation->DefineFromJson(animationName, jsonRoot[animationName]);
+
+    return SanityCheck(lastResult, animation, animationName);
     
+  } // CannedAnimationContainer::DefineFromJson()
+
+  Animation* CannedAnimationContainer::GetAnimationWrapper(std::string& animationName)
+  {
     if(animationName == FaceAnimationManager::ProceduralAnimName) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.ReservedName",
                         "Skipping animation with reserved name '%s'.",
                         FaceAnimationManager::ProceduralAnimName.c_str());
-      return RESULT_FAIL;
+      return nullptr;
     }
     
     if(RESULT_OK != AddAnimation(animationName)) {
@@ -133,13 +158,14 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
                         "Could not GetAnimation named '%s'.",
                         animationName.c_str());
-      return RESULT_FAIL;
+      return nullptr;
     }
-    
-    Result lastResult = animation->DefineFromJson(animationName,
-                                                  jsonRoot[animationName]);
-    
-    // Sanity check
+
+    return animation;
+  } // CannedAnimationContainer::GetAnimationWrapper()
+
+  Result CannedAnimationContainer::SanityCheck(Result lastResult, Animation* animation, std::string& animationName)
+  {
     if(animation->GetName() != animationName) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
                         "Animation's internal name ('%s') doesn't match container's name for it ('%s').",
@@ -156,12 +182,12 @@ namespace Cozmo {
     }
 
     return RESULT_OK;
-  } // CannedAnimationContainer::DefineFromJson()
+  } // CannedAnimationContainer::SanityCheck()
   
   Result CannedAnimationContainer::DefineHardCoded()
   {
     return RESULT_OK;
-    
+
   } // DefineHardCodedAnimations()
   
   void CannedAnimationContainer::Clear()
