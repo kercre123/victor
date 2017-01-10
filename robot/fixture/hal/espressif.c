@@ -81,20 +81,21 @@ struct FlashLoadLocation {
   const unsigned char* name;
   uint32_t addr;
   int length;
-  const uint8_t* data;
+  const uint8_t* data; //NULL: no rom available. Perform static fill
+  uint8_t static_fill; //static fill value
 };
-  
+
 static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 #ifdef FCC
-  { "FCC",  0x000000, g_EspUserEnd - g_EspUser, g_EspUser },
+  { "FCC",  0x000000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
 #else
-  { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot, g_EspBoot },
-  { "USER", 0x080000, g_EspUserEnd - g_EspUser, g_EspUser },
-  { "SAFE", 0x0c8000, g_EspSafeEnd - g_EspSafe, g_EspSafe },
-  { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit, g_EspInit },
-  { "BLANK",0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
+  { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot,   g_EspBoot,  0 },
+  { "USER", 0x080000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
+  { "SAFE", 0x0c8000, g_EspSafeEnd - g_EspSafe,   g_EspSafe,  0 },
+  { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit,   g_EspInit,  0 },
+  { "BLANK",0x1fe000, 0x1000,                     NULL,       0xFF },
 #endif
-  { 0, 0, NULL }
+  { NULL, 0, 0, NULL, 0},
 };
 
 void InitEspressif(void)
@@ -338,7 +339,7 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
   throw ERROR_HEAD_RADIO_TIMEOUT;
 }
 
-bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
+bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data, bool dat_static_fill) {
   union {
     uint8_t reply_buffer[0x100];
   };
@@ -383,12 +384,16 @@ bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
     if (copyLength < ESP_FLASH_BLOCK) {
       memset(block.data, 0xFF, ESP_FLASH_BLOCK);
     }
-    memcpy(block.data, data, copyLength);
+    
+    if( !dat_static_fill )
+      memcpy(block.data, data, copyLength);   //standard: copy image data for block write
+    else
+      memset(block.data, *data, copyLength);  //fill block (up to specified length) with static value
 
     int check = checksum(block.data, ESP_FLASH_BLOCK);
     replySize = Command("Flash Block", ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT, check);
     
-    data += ESP_FLASH_BLOCK;
+    data += dat_static_fill ? 0 : ESP_FLASH_BLOCK; //don't move ptr for static fill
     length -= ESP_FLASH_BLOCK;
     block.seq++;
   }
@@ -410,13 +415,16 @@ void ProgramEspressif(int serial)
   }
   
   bool setserial = false;
-  for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++) {
-    SlowPrintf("Load ROM %s\n", rom->name);
-
-    if (!ESPFlashLoad(rom->addr, rom->length, rom->data)) {
-      throw ERROR_HEAD_RADIO_ERASE;
-    }
-      
+  for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++)
+  {
+    bool static_fill = rom->data == NULL; //no ROM image. fill region with provided static value.
+    SlowPrintf("Load ROM %s", rom->name);
+    SlowPrintf( (static_fill ? ": static fill 0x%02x" : ""), rom->static_fill);
+    SlowPrintf("\n");
+    
+    if( !ESPFlashLoad(rom->addr, rom->length, static_fill ? &rom->static_fill : rom->data, static_fill) )
+        throw ERROR_HEAD_RADIO_ERASE;
+    
   #ifndef FCC
     // Set serial number, model number, random data in Espressif
     if (!setserial) {
@@ -433,7 +441,7 @@ void ProgramEspressif(int serial)
       for (int i = 0; i < DATALEN; i++)
         SlowPrintf("%08x,", data[i]);
       SlowPrintf("\n");
-      ESPFlashLoad(0x1000, sizeof(data), (uint8_t*)&data);
+      ESPFlashLoad(0x1000, sizeof(data), (uint8_t*)&data, false);
       setserial = true;
     }
   #endif
