@@ -71,15 +71,6 @@ g_stubK02
   INCBIN releases\\k02_stub.bin
 g_stubK02End
 
-
-
-  ALIGN
-  EXPORT g_EspBlank
-  EXPORT g_EspBlankEnd
-g_EspBlank
-  INCBIN releases\\esp.blank.bin
-g_EspBlankEnd
-
   ALIGN
   EXPORT g_EspUser
   EXPORT g_EspUserEnd
