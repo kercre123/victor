@@ -12,10 +12,12 @@
 #include "hal/espressif.h"
 #include "hal/random.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "app/app.h"
 #include "app/tests.h"
 #include "nvReset.h"
 
@@ -24,6 +26,9 @@ u8 g_fixtureReleaseVersion = 85;
 
 //Set this flag to modify display info - indicates a debug/test build
 #define NOT_FOR_FACTORY 1
+
+//other global dat
+app_reset_dat_t g_app_reset;
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
@@ -471,7 +476,11 @@ void StoreParams(void)
 int main(void)
 {
   __IO uint32_t i = 0;
- 
+  
+  //Check for nvReset data
+  memset( &g_app_reset, 0, sizeof(g_app_reset) );
+  g_app_reset.valid = sizeof(g_app_reset) == nvResetGet( (u8*)&g_app_reset, sizeof(g_app_reset) );
+  
   InitTimers();
   InitUART();
   FetchParams();
@@ -511,15 +520,7 @@ int main(void)
   STM_EVAL_LEDOn(LEDRED);
   
   ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, g_fixtureReleaseVersion );
-  
-  //See what data is stored in nvReset
-  //=====================DEBUG==========================
-  {
-    int len = nvResetGetLen();
-    ConsolePrintf("nvReset: %i bytes available\r\n", len);
-    //nvResetDbgInspect((char*)"  ->", NULL, 0);
-  }
-  //===================================================*/
+  ConsolePrintf("ConsoleMode=%u\r\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
   
   while (1)
   {  

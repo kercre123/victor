@@ -14,6 +14,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include "../app/app.h"
 #include "../app/nvReset.h"
 #include "stdlib.h"
 
@@ -228,6 +229,9 @@ void InitConsole(void)
   DMA_Cmd(DMA1_Stream2, ENABLE);
   
   SlowPutString("Console Initialized\r\n");
+  
+  //restore console mode from reset data
+  m_isInConsoleMode = g_app_reset.valid && g_app_reset.console.isInConsoleMode;
 }
 
 // The fixture bootloader uses just the hardware driver above, not the command parser below
@@ -464,7 +468,10 @@ static void ParseCommand(void)
   {
     ConsoleWrite("\r\n");
     MicroWait(10000);
-    nvReset(NULL,0);
+    
+    //save console state and issue soft reset
+    g_app_reset.console.isInConsoleMode = 1;
+    nvReset((u8*)&g_app_reset, sizeof(g_app_reset));
   }
   else if (!strcasecmp(buffer, "exit")) 
   {
