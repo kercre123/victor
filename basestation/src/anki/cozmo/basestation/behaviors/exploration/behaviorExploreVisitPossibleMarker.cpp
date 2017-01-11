@@ -73,8 +73,8 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
   for( const auto& possibleObject : _possibleObjects )
   {
     // all possible objects have to be in robot's origin, otherwise whiteboard lied to us
-    ASSERT_NAMED( (&possibleObject.pose.FindOrigin()) == (&robot.GetPose().FindOrigin()),
-      "BehaviorExploreVisitPossibleMarker.InitInternal.InvalidOrigin" );
+    DEV_ASSERT((&possibleObject.pose.FindOrigin()) == (&robot.GetPose().FindOrigin()),
+               "BehaviorExploreVisitPossibleMarker.InitInternal.InvalidOrigin" );
   
     // pick closest marker to us
     const Vec3f& dirToPossibleObject = possibleObject.pose.GetTranslation() - robot.GetPose().GetTranslation();
@@ -119,8 +119,8 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
                                                               const Pose3d& possibleCubePose)
 {
   // trust that the whiteboard will never return information that is not valid in the current origin
-  ASSERT_NAMED(&robot.GetPose().FindOrigin() == &possibleCubePose.FindOrigin(),
-    "BehaviorExploreVisitPossibleMarker.WhiteboardPossibleMarkersDirty");
+  DEV_ASSERT(&robot.GetPose().FindOrigin() == &possibleCubePose.FindOrigin(),
+             "BehaviorExploreVisitPossibleMarker.WhiteboardPossibleMarkersDirty");
 
   // TODO if we are closer than max, limit max to that. I dont want to simply face the cube in that case because
   // we may have seen the marker from afar from a different position, and something is blocking it now. Ideally

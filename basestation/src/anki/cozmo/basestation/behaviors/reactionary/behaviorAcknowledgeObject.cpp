@@ -94,9 +94,9 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
   _currTarget.UnSet();  
   s32 bestTarget = 0;
   Pose3d poseWrtRobot;
-  if( GetBestTarget(robot, bestTarget, poseWrtRobot) ) {
+  if (GetBestTarget(robot, bestTarget, poseWrtRobot)) {
     _currTarget = bestTarget;
-    ASSERT_NAMED(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
+    DEV_ASSERT(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
   }
   else {
     return;

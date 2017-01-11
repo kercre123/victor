@@ -99,16 +99,16 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
     _eventHandles.push_back(_robot.GetExternalInterface()->Subscribe(
                               EngineToGameTag::RobotCompletedAction,
                               [this](const EngineToGameEvent& event) {
-                                ASSERT_NAMED(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
-                                             "Wrong event type from callback");
+                                DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
+                                           "IBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
                                 HandleActionComplete(event.GetData().Get_RobotCompletedAction());
                               } ));
 
     _eventHandles.push_back(_robot.GetExternalInterface()->Subscribe(
                               EngineToGameTag::BehaviorObjectiveAchieved,
                               [this](const EngineToGameEvent& event) {
-                                ASSERT_NAMED(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
-                                             "Wrong event type from callback");
+                                DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
+                                           "IBehavior.BehaviorObjectiveAchieved.WrongEventTypeFromCallback");
                                 HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
                               } ));
   }
@@ -127,7 +127,7 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   const Json::Value& requiredUnlockJson = config[kRequiredUnlockKey];
   if ( !requiredUnlockJson.isNull() )
   {
-    ASSERT_NAMED(requiredUnlockJson.isString(), "IBehavior.ReadFromJson.NonStringUnlockId");
+    DEV_ASSERT(requiredUnlockJson.isString(), "IBehavior.ReadFromJson.NonStringUnlockId");
     
     // this is probably the only place where we need this, otherwise please refactor to proper header
     const UnlockId requiredUnlock = UnlockIdsFromString(requiredUnlockJson.asString());
@@ -144,17 +144,19 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   // - - - - - - - - - -
   // Got off charger timer
   const Json::Value& requiredDriveOffChargerJson = config[kRequiredDriveOffChargerKey];
-  if ( !requiredDriveOffChargerJson.isNull() )
+  if (!requiredDriveOffChargerJson.isNull())
   {
-    ASSERT_NAMED_EVENT(requiredDriveOffChargerJson.isNumeric(), "IBehavior.ReadFromJson", "Not a float: %s", kRequiredDriveOffChargerKey);
+    DEV_ASSERT_MSG(requiredDriveOffChargerJson.isNumeric(), "IBehavior.ReadFromJson", "Not a float: %s",
+                   kRequiredDriveOffChargerKey);
     _requiredRecentDriveOffCharger_sec = requiredDriveOffChargerJson.asFloat();
   }
   
   // - - - - - - - - - -
   // Required recent parent switch
   const Json::Value& requiredSwitchToParentJson = config[kRequiredParentSwitchKey];
-  if ( !requiredSwitchToParentJson.isNull() ) {
-    ASSERT_NAMED_EVENT(requiredSwitchToParentJson.isNumeric(), "IBehavior.ReadFromJson", "Not a float: %s", kRequiredParentSwitchKey);
+  if (!requiredSwitchToParentJson.isNull()) {
+    DEV_ASSERT_MSG(requiredSwitchToParentJson.isNumeric(), "IBehavior.ReadFromJson", "Not a float: %s",
+                   kRequiredParentSwitchKey);
     _requiredRecentSwitchToParent_sec = requiredSwitchToParentJson.asFloat();
   }
 
@@ -179,7 +181,7 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   }
   
   // make sure we only set one scorer (flat or mood)
-  ASSERT_NAMED( flatScoreJson.isNull() || _moodScorer.IsEmpty(), "IBehavior.ReadFromJson.MultipleScorers" );
+  DEV_ASSERT(flatScoreJson.isNull() || _moodScorer.IsEmpty(), "IBehavior.ReadFromJson.MultipleScorers");
   
   // - - - - - - - - - -
   // Repetition penalty
@@ -288,7 +290,7 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
 
 IBehavior::~IBehavior()
 {
-  ASSERT_NAMED(!IsOwnedByFactory(), "Behavior must be removed from factory before destroying it!");
+  DEV_ASSERT(!IsOwnedByFactory(), "Behavior must be removed from factory before destroying it!");
 }
   
 void IBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)
@@ -401,7 +403,7 @@ Result IBehavior::Init()
 Result IBehavior::Resume(BehaviorType resumingFromType)
 {
   PRINT_CH_INFO("Behaviors", (GetName() + ".Resume").c_str(), "Resuming...");
-  ASSERT_NAMED(!_isRunning, "IBehavior.Resume.ShouldNotBeRunningIfWeTryToResume");
+  DEV_ASSERT(!_isRunning, "IBehavior.Resume.ShouldNotBeRunningIfWeTryToResume");
   
   // Check and update the number of times we've resumed from cliff or unexpected movement
   if(resumingFromType == BehaviorType::ReactToCliff
@@ -443,7 +445,7 @@ Result IBehavior::Resume(BehaviorType resumingFromType)
 
 IBehavior::Status IBehavior::Update()
 {
-  ASSERT_NAMED(IsRunning(), "IBehavior::UpdateNotRunning");
+  DEV_ASSERT(IsRunning(), "IBehavior::UpdateNotRunning");
   // Ensure that behaviors which have been requested to stop, stop
   if(!_canStartActing && !IsActing()){
     UpdateInternal(_robot);
@@ -485,8 +487,8 @@ void IBehavior::Stop()
   }
   _customLightObjects.clear();
   
-  ASSERT_NAMED(_disabledReactions.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
-  ASSERT_NAMED(!_tapInteractionDisabled, "IBehavior.Stop.TapInteractionStillDisabled");
+  DEV_ASSERT(_disabledReactions.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
+  DEV_ASSERT(!_tapInteractionDisabled, "IBehavior.Stop.TapInteractionStillDisabled");
 }
 
 void IBehavior::StopOnNextActionComplete()
@@ -509,8 +511,8 @@ bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
   {
     // should not call IsRunnable for running behavior (or we should return true here), otherwise it can
     // destroy info cached by the running behavior
-    ASSERT_NAMED(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
-    if( IsRunning() ) {
+    DEV_ASSERT(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
+    if(IsRunning()) {
       // if it ever happened in production, we better not destroy info in the running behavior
       return true;
     }
@@ -1099,8 +1101,8 @@ Result IReactionaryBehavior::ResumeInternal(Robot& robot)
   // It's possible for behaviors to be both reactionary and sparkable - the different versions
   // are distinguished with IsReactionary so anything which overloads that shouldn't hit an Assert
   if(IsReactionary()){
-    //Never Called - reactionary behaviors don't resume
-    ASSERT_NAMED_EVENT(false, "IReactionaryBehavior.ResumeInternal", "Reactionary behaviors should not resume");
+    // Never called - reactionary behaviors don't resume
+    DEV_ASSERT_MSG(false, "IReactionaryBehavior.ResumeInternal", "Reactionary behaviors should not resume");
   }
   return Result::RESULT_OK;
 }

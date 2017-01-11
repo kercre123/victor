@@ -190,9 +190,9 @@ private:
 bool BehaviorLookInPlaceMemoryMap::NeedsChecking(int16_t index) const
 {
   // index should be valid
-  ASSERT_NAMED(index>=0 && index<_sectors.size(), "BehaviorLookInPlaceMemoryMap.NeedsChecking.InvalidIndex");
+  DEV_ASSERT(index>=0 && index<_sectors.size(), "BehaviorLookInPlaceMemoryMap.NeedsChecking.InvalidIndex");
   // visited indices should not be queried again
-  ASSERT_NAMED(_sectors[index] != SectorStatus::Visited, "BehaviorLookInPlaceMemoryMap.NeedsChecking.AlreadyVisitedSector");
+  DEV_ASSERT(_sectors[index] != SectorStatus::Visited, "BehaviorLookInPlaceMemoryMap.NeedsChecking.AlreadyVisitedSector");
   // check status
   const bool ret = (_sectors[index] == SectorStatus::NeedsChecking);
   return ret;
@@ -202,11 +202,11 @@ bool BehaviorLookInPlaceMemoryMap::NeedsChecking(int16_t index) const
 bool BehaviorLookInPlaceMemoryMap::NeedsVisit(int16_t index) const
 {
   // index should be valid
-  ASSERT_NAMED(index>=0 && index<_sectors.size(), "BehaviorLookInPlaceMemoryMap.NeedsVisit.InvalidIndex");
+  DEV_ASSERT(index>=0 && index<_sectors.size(), "BehaviorLookInPlaceMemoryMap.NeedsVisit.InvalidIndex");
   // indices that need raycast should not be queried yet
-  ASSERT_NAMED(_sectors[index] != SectorStatus::NeedsChecking, "BehaviorLookInPlaceMemoryMap.NeedsVisit.SectorNeedsChecking");
+  DEV_ASSERT(_sectors[index] != SectorStatus::NeedsChecking, "BehaviorLookInPlaceMemoryMap.NeedsVisit.SectorNeedsChecking");
   // visited indices should not be queried again
-  ASSERT_NAMED(_sectors[index] != SectorStatus::Visited, "BehaviorLookInPlaceMemoryMap.NeedsVisit.AlreadyVisitedSector");
+  DEV_ASSERT(_sectors[index] != SectorStatus::Visited, "BehaviorLookInPlaceMemoryMap.NeedsVisit.AlreadyVisitedSector");
   // check status
   const bool ret = (_sectors[index] == SectorStatus::Yes_NeedToVisit);
   return ret;

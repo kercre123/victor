@@ -234,11 +234,11 @@ void BehaviorLookInPlaceMemoryMap::FindAndVisitClosestVisitableSector(Robot& rob
   const int16_t lastIndex, const int16_t nextLeft, const int16_t nextRight)
 {
   // correct nextLeft if it went past 0 into negatives (it should wrap to kSectorsPerLocation-1)
-  ASSERT_NAMED(nextLeft<kSectorsPerLocation, "BehaviorLookInPlaceMemoryMap.FindClosestSector.LeftIndexMovedRight");
+  DEV_ASSERT(nextLeft<kSectorsPerLocation, "BehaviorLookInPlaceMemoryMap.FindClosestSector.LeftIndexMovedRight");
   const int16_t leftIdx = (nextLeft >= 0) ? nextLeft : (kSectorsPerLocation-1);
   
   // correct nextRight if it went past kSectorsPerLocation-1 (it should wrap to 0)
-  ASSERT_NAMED(nextRight>=0, "BehaviorLookInPlaceMemoryMap.FindClosestSector.RightIndexMovedLeft");
+  DEV_ASSERT(nextRight>=0, "BehaviorLookInPlaceMemoryMap.FindClosestSector.RightIndexMovedLeft");
   const int16_t rightIdx = (nextRight < kSectorsPerLocation) ? nextRight : 0;
   
   // check if we have reached the last sector from both sides
@@ -313,7 +313,7 @@ void BehaviorLookInPlaceMemoryMap::FindAndVisitClosestVisitableSector(Robot& rob
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(const Robot& robot, int16_t index)
 {
-  ASSERT_NAMED_EVENT(NeedsChecking(index),
+  DEV_ASSERT_MSG(NeedsChecking(index),
     "BehaviorLookInPlaceMemoryMap.CheckIfSectorNeedsVisit.MultipleChecksOnIndex",
     "Index %d already checked",
     index);
@@ -340,7 +340,7 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(const Robot& robot, i
   
   // grab mem map
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-  ASSERT_NAMED( memoryMap, "BehaviorLookInPlaceMemoryMap.NeedMemoryMap" ); // checked before
+  DEV_ASSERT(memoryMap, "BehaviorLookInPlaceMemoryMap.NeedMemoryMap"); // checked before
   
   // ask the memory map by tracing the ray cast whether we want to visit the sector
   const bool hasCollision = memoryMap->HasCollisionRayWithTypes(from3D, to3D, typesWeWantToVisit);
@@ -376,7 +376,7 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
   
     // The current index (we just visited) should match either both next indices (meaning we finished), or should
     // not match either, since next* should really point to new indices to explore
-    ASSERT_NAMED((index != nextLeft)==(index != nextRight), "BehaviorLookInPlaceMemoryMap.VisitSector.MatchAllOrNone");
+    DEV_ASSERT((index != nextLeft)==(index != nextRight), "BehaviorLookInPlaceMemoryMap.VisitSector.MatchAllOrNone");
     // we should check next if either one is not the one we just did
     const bool shouldCheckNext = ( index != nextLeft || index != nextRight );
     if ( shouldCheckNext )

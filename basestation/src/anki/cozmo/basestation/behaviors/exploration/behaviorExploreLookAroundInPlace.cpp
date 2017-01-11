@@ -299,8 +299,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(Robot& robot)
   }
   
   // request action with transition to proper state
-  ASSERT_NAMED( nullptr!=pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS2_Pause.NullAction");
-  StartActing( pauseAction, &BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn );
+  DEV_ASSERT(nullptr != pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS2_Pause.NullAction");
+  StartActing(pauseAction, &BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -398,8 +398,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
     (trigger != AnimationTrigger::Count) ? animGroupName.c_str() : "pause" );
   
   // request action with transition to proper state
-  ASSERT_NAMED( nullptr!=pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp.NullPauseAction");
-  StartActing( pauseAction, runAfterPause );
+  DEV_ASSERT(nullptr != pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp.NullPauseAction");
+  StartActing(pauseAction, runAfterPause);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

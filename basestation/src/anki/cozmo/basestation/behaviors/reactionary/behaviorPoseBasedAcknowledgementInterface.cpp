@@ -324,17 +324,17 @@ bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& b
   // TODO:(bn) cache targets instead of doing this per-tick?
   std::set<s32> targets;
   GetDesiredReactionTargets(robot, targets, matchAnyPose);
-  if( targets.empty() ) {
+  if (targets.empty()) {
     return false;
   }
 
-  if( targets.size() == 1 ) {
+  if (targets.size() == 1) {
     bestTarget = *targets.begin();
     
     auto reactionDataIter = _reactionData.find(bestTarget);
-    ASSERT_NAMED(reactionDataIter != _reactionData.end(), "IBehaviorPoseBasedAcknowledgement.BadBestTargetId");
+    DEV_ASSERT(reactionDataIter != _reactionData.end(), "IBehaviorPoseBasedAcknowledgement.BadBestTargetId");
     
-    if(false == reactionDataIter->second.lastPose.GetWithRespectTo(robot.GetPose(), poseWrtRobot))
+    if (false == reactionDataIter->second.lastPose.GetWithRespectTo(robot.GetPose(), poseWrtRobot))
     {
       // no transform, probably a different origin
       return false;
@@ -348,8 +348,8 @@ bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& b
 
   float bestCost = std::numeric_limits<float>::max();
   bool ret = false;
-  for( auto targetID : targets ) {
-    ASSERT_NAMED(_reactionData.find(targetID) != _reactionData.end(), "IBehaviorPoseBasedAcknowledgement.BadTargetId");
+  for (auto targetID : targets) {
+    DEV_ASSERT(_reactionData.find(targetID) != _reactionData.end(), "IBehaviorPoseBasedAcknowledgement.BadTargetId");
     
     if( ! _reactionData.at(targetID).lastPose.GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
       // no transform, probably a different origin

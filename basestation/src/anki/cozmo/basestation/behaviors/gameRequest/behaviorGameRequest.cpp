@@ -69,7 +69,7 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
   else
   {
     JsonTools::PrintJsonError(config, "IBehaviorRequestGame.NoGameFlag");
-    ASSERT_NAMED(!requiredGameFlagsJson.isNull(), "IBehaviorRequestGame.NoGameFlag");
+    DEV_ASSERT(!requiredGameFlagsJson.isNull(), "IBehaviorRequestGame.NoGameFlag");
   }
   
   SubscribeToTags({{

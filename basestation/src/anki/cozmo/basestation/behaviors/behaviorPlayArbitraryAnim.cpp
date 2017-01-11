@@ -43,8 +43,8 @@ bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlayArbitraryAnim::SetAnimationTrigger(AnimationTrigger trigger, int numLoops)
 {
-  ASSERT_NAMED_EVENT(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTrigger",
-                     "Animation set twice before being played");
+  DEV_ASSERT_MSG(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTrigger",
+                 "Animation set twice before being played");
   
   // clear current triggers and add new one
   _animTriggers.clear();
@@ -57,12 +57,12 @@ void BehaviorPlayArbitraryAnim::SetAnimationTrigger(AnimationTrigger trigger, in
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlayArbitraryAnim::SetAnimationTriggers(std::vector<AnimationTrigger>& triggers, int sequenceLoopCount)
 {
-  ASSERT_NAMED_EVENT(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTrigger",
-                     "Animation set twice before being played");
+  DEV_ASSERT_MSG(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTriggers",
+                 "Animation set twice before being played");
 
   // clear current triggers and add new ones
   _animTriggers.clear();
-  for( AnimationTrigger trigger : triggers ) {
+  for (AnimationTrigger trigger : triggers) {
     _animTriggers.emplace_back(trigger);
   }
   

@@ -613,9 +613,9 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 {
   Pose3d facePose;
   
-  if( HasFace(robot) ) {
+  if (HasFace(robot)) {
     TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(facePose);
-    ASSERT_NAMED( lastObservedFaceTime > 0, "BehaviorRequestGameSimple.HasFaceWithoutPose" );
+    DEV_ASSERT(lastObservedFaceTime > 0, "BehaviorRequestGameSimple.HasFaceWithoutPose");
   }
   else {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoFace",

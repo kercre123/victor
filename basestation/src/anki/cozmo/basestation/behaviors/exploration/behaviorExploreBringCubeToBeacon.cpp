@@ -72,7 +72,7 @@ struct LocationCalculator {
   LocationCalculator(const ObservableObject* pickedUpObject, const Vec3f& beaconCenter, const Rotation3d& directionality, float beaconRadius, const Robot& robot)
   : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius*beaconRadius), robotRef(robot), renderAsFirstFind(true)
   {
-    ASSERT_NAMED( nullptr != object, "BehaviorExploreBringCubeToBeacon.LocationCalculator.NullObjectWillCrash" );
+    DEV_ASSERT(nullptr != object, "BehaviorExploreBringCubeToBeacon.LocationCalculator.NullObjectWillCrash");
   }
   
   const ObservableObject* object;
@@ -93,7 +93,7 @@ struct LocationCalculator {
 float LocationCalculator::GetLocationOffset() const
 {
   const float cubeLen = object->GetSize().x();
-  ASSERT_NAMED( FLT_NEAR(object->GetSize().x(), object->GetSize().y()) , "LocationCalculator.GetLocationOffset");
+  DEV_ASSERT(FLT_NEAR(object->GetSize().x(), object->GetSize().y()) , "LocationCalculator.GetLocationOffset");
   return cubeLen + kBebctb_PaddingBetweenCubes_mm;
 }
 
@@ -240,8 +240,8 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
   {
     // we are carrying an object
     // assert what we expect from IsRunnable cache
-    ASSERT_NAMED( _candidateObjects.size() == 1 && _candidateObjects[0].id == robot.GetCarryingObject(),
-      "BehaviorExploreBringCubeToBeacon.InitInternal.CarryingObjectNotCached" );
+    DEV_ASSERT(_candidateObjects.size() == 1 && _candidateObjects[0].id == robot.GetCarryingObject(),
+               "BehaviorExploreBringCubeToBeacon.InitInternal.CarryingObjectNotCached" );
     
     // select it and pretend we just picked it up
     _selectedObjectID = _candidateObjects[0].id;
@@ -562,8 +562,8 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
     // grab the selected beacon (there should be one)
     AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
     AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
-    if ( nullptr == selectedBeacon ) {
-      ASSERT_NAMED( nullptr!= selectedBeacon, "BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NullBeacon");
+    if (nullptr == selectedBeacon) {
+      DEV_ASSERT(nullptr!= selectedBeacon, "BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NullBeacon");
       return;
     }
     
@@ -664,8 +664,8 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
       return false;
     }
     
-    ASSERT_NAMED( FLT_NEAR(object->GetSize().x(), object->GetSize().y()) ,
-                 "BehaviorExploreBringCubeToBeacon.FindFreeCubeToStackOn.AssumedXYEqual");
+    DEV_ASSERT(FLT_NEAR(object->GetSize().x(), object->GetSize().y()) ,
+               "BehaviorExploreBringCubeToBeacon.FindFreeCubeToStackOn.AssumedXYEqual");
     
     // check it this cube is in beacon, but also if it's actually closer than
     const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose(), inwardThreshold_mm);
@@ -712,8 +712,8 @@ bool CalculateDirectionalityAverage(AIWhiteboard::ObjectInfoList& objectsInBeaco
       // normalize to to range [-45deg,45deg], to align either axis
       const double closest90Angle = std::round(upAngle/M_PI_2) * M_PI_2;
       upAngle = upAngle - closest90Angle;
-      ASSERT_NAMED( upAngle <=  M_PI_4, "FindFreePoseInBeacon.OutOfRange.Positive" );
-      ASSERT_NAMED( upAngle >= -M_PI_4, "FindFreePoseInBeacon.OutOfRange.Negative" );
+      DEV_ASSERT(upAngle <=  M_PI_4, "FindFreePoseInBeacon.OutOfRange.Positive");
+      DEV_ASSERT(upAngle >= -M_PI_4, "FindFreePoseInBeacon.OutOfRange.Negative");
 
       // add angle to
       avgAngle += upAngle;

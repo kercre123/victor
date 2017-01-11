@@ -1602,10 +1602,11 @@ namespace Cozmo {
           std::vector<u8> packedBC;
           PackWrites({writeEntryVM, writeEntryBC}, packedBC);
           
-          ASSERT_NAMED(packedBC.size() == static_cast<u32>(NVStorage::NVConst::NVConst_SIZE_OF_VERSION_AND_BC),
-                       "BehaviorFactoryTest.PackedVMAndBCUnexpectedSize");
+          DEV_ASSERT(packedBC.size() == static_cast<u32>(NVStorage::NVConst::NVConst_SIZE_OF_VERSION_AND_BC),
+                     "BehaviorFactoryTest.PackedVMAndBCUnexpectedSize");
           
-          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FactoryBaseTag, packedBC.data(), packedBC.size(),
+          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FactoryBaseTag,
+                                              packedBC.data(), packedBC.size(),
                                               [this,&robot](NVStorage::NVResult res) {
                                                 if (res != NVStorage::NVResult::NV_OKAY) {
                                                   PRINT_NAMED_WARNING("BehaviorFactoryTest.BCWriteFail","");
