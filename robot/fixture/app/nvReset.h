@@ -4,7 +4,7 @@
 #include "hal/portable.h"
 
 //Max data size (bytes) nvReset can handle
-#define NV_RESET_MAX_LEN  8
+#define NV_RESET_MAX_LEN  20
 
 //Soft Resets the MCU. User data is stored in no-init ram for recovery at boot. dat==NULL clears stored data.
 void nvReset(u8 *dat, u16 len);
@@ -17,8 +17,13 @@ int nvResetGetLen(void);
 //@return -1 if no data exists.
 int nvResetGet(u8 *out_dat, u16 max_out_len);
 
+
+
 //inspect/print user data. NULL prints internal stored data.
 //prefix - string ptr to console prefix, before data dump
 void nvResetDbgInspect(char* prefix, u8 *dat, u16 len);
+
+//inspect the nv memory region (advanced debug. view internal mechanisms)
+void nvResetDbgInspectMemRegion(void);
 
 #endif
