@@ -33,41 +33,41 @@
 
 #include "util/console/consoleInterface.h"
 
-static const char * const kConsoleGroup = "Behavior.EnrollFace";
+#define CONSOLE_GROUP "Behavior.EnrollFace"
 
 namespace Anki {
 namespace Cozmo {
 
 namespace {
 
-  CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeoutForReLookForFace_ms,          kConsoleGroup, 1500);
+  CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeoutForReLookForFace_ms,          CONSOLE_GROUP, 1500);
   
   // Thresholds for when to update face ID based on pose
-  CONSOLE_VAR(f32,               kEnrollFace_UpdateFacePositionThreshold_mm,      kConsoleGroup, 100.f);
-  CONSOLE_VAR(f32,               kEnrollFace_UpdateFaceAngleThreshold_deg,        kConsoleGroup, 45.f);
+  CONSOLE_VAR(f32,               kEnrollFace_UpdateFacePositionThreshold_mm,      CONSOLE_GROUP, 100.f);
+  CONSOLE_VAR(f32,               kEnrollFace_UpdateFaceAngleThreshold_deg,        CONSOLE_GROUP, 45.f);
   
   // Default timeout for this action (vs. the one inherited from IAction)
-  CONSOLE_VAR(f32,               kEnrollFace_Timeout_sec,                         kConsoleGroup, 15.f);
-  CONSOLE_VAR(f32,               kEnrollFace_TimeoutMax_sec,                      kConsoleGroup, 35.f);
+  CONSOLE_VAR(f32,               kEnrollFace_Timeout_sec,                         CONSOLE_GROUP, 15.f);
+  CONSOLE_VAR(f32,               kEnrollFace_TimeoutMax_sec,                      CONSOLE_GROUP, 35.f);
   
   // Amount of "extra" time to add each time we re-start actually enrolling, in case we lose the face
   // mid way or take a while to initially find the face, up to the max timeout
-  CONSOLE_VAR(f32,               kEnrollFace_TimeoutExtraTime_sec,                kConsoleGroup, 8.f);
+  CONSOLE_VAR(f32,               kEnrollFace_TimeoutExtraTime_sec,                CONSOLE_GROUP, 8.f);
   
   // Amount to drive forward once face is found to signify intent
-  CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentDist_mm,           kConsoleGroup, 14.f);
-  CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentSpeed_mmps,        kConsoleGroup, 75.f);
+  CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentDist_mm,           CONSOLE_GROUP, 14.f);
+  CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentSpeed_mmps,        CONSOLE_GROUP, 75.f);
   
   // Minimum angles to turn during tracking to keep the robot moving and looking alive
-  CONSOLE_VAR(f32,               kEnrollFace_MinTrackingPanAngle_deg,             kConsoleGroup, 4.0f);
-  CONSOLE_VAR(f32,               kEnrollFace_MinTrackingTiltAngle_deg,            kConsoleGroup, 4.0f);
+  CONSOLE_VAR(f32,               kEnrollFace_MinTrackingPanAngle_deg,             CONSOLE_GROUP, 4.0f);
+  CONSOLE_VAR(f32,               kEnrollFace_MinTrackingTiltAngle_deg,            CONSOLE_GROUP, 4.0f);
 
   // Min/max distance to backup while looking for a face, up to max total amount
-  CONSOLE_VAR(f32,               kEnrollFace_MinBackup_mm,                        kConsoleGroup,  5.f);
-  CONSOLE_VAR(f32,               kEnrollFace_MaxBackup_mm,                        kConsoleGroup, 15.f);
-  CONSOLE_VAR(f32,               kEnrollFace_MaxTotalBackup_mm,                   kConsoleGroup, 50.f);
+  CONSOLE_VAR(f32,               kEnrollFace_MinBackup_mm,                        CONSOLE_GROUP,  5.f);
+  CONSOLE_VAR(f32,               kEnrollFace_MaxBackup_mm,                        CONSOLE_GROUP, 15.f);
+  CONSOLE_VAR(f32,               kEnrollFace_MaxTotalBackup_mm,                   CONSOLE_GROUP, 50.f);
   
-  CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     kConsoleGroup, 3);
+  CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     CONSOLE_GROUP, 3);
   
   static const char * const kLogChannelName = "FaceRecognizer";
 }
