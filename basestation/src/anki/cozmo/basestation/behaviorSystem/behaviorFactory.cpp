@@ -492,9 +492,9 @@ IBehavior* BehaviorFactory::CreateBehavior(const Json::Value& behaviorJson, Robo
   
 void BehaviorFactory::DestroyBehavior(IBehavior* behavior)
 {
-  ASSERT_NAMED_EVENT(behavior->IsOwnedByFactory(),
-               "BehaviorFactory.DestroyBehavior", "Attempted to destroy behavior not owned by factory"); // we assume all behaviors are created and owned by factory so this should always be true
-
+  // we assume all behaviors are created and owned by factory so this should always be true
+  DEV_ASSERT_MSG(behavior->IsOwnedByFactory(), "BehaviorFactory.DestroyBehavior",
+                 "Attempted to destroy behavior not owned by factory");
   RemoveBehaviorFromMap(behavior);
   DeleteBehaviorInternal(behavior);
 }

@@ -93,14 +93,19 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
   if ( JsonTools::GetValueOptional(config, "driveEndAnimTrigger", animTriggerStr) ) {
     _driveEndAnimTrigger = animTriggerStr.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerStr.c_str());
   }
-  // check that triggers are all or nothing
-  const bool hasAnyDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) ||
+
+  #if (DEV_ASSERT_ENABLED)
+  {
+    // check that triggers are all or nothing
+    const bool hasAnyDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) ||
                                  (_driveLoopAnimTrigger  != AnimationTrigger::Count) ||
                                  (_driveEndAnimTrigger   != AnimationTrigger::Count);
-  const bool hasAllDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) &&
+    const bool hasAllDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) &&
                                  (_driveLoopAnimTrigger  != AnimationTrigger::Count) &&
                                  (_driveEndAnimTrigger   != AnimationTrigger::Count);
-  ASSERT_NAMED(hasAllDrivingAnim || !hasAnyDrivingAnim, "AIGoal.Init.InvalidDrivingAnimTriggers_AllOrNothing");
+    DEV_ASSERT(hasAllDrivingAnim || !hasAnyDrivingAnim, "AIGoal.Init.InvalidDrivingAnimTriggers_AllOrNothing");
+  }
+  #endif
   
   // information analyzer process
   std::string inanProcessStr;

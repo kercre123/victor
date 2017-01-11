@@ -41,8 +41,8 @@ ObjectiveRequirements::ObjectiveRequirements(const Json::Value& config)
   randCompletionsMin = config.get("randomCompletionsNeededMin", 1).asUInt();
   randCompletionsMax = config.get("randomCompletionsNeededMax", 1).asUInt();
 
-  ASSERT_NAMED( randCompletionsMax >= randCompletionsMin, "FPSocialize.ObjectiveRequirement.InvalidConfig.MaxLTMin" );
-  ASSERT_NAMED( FLT_GE_ZERO( probabilityToRequire ), "FPSocialize.ObjectiveRequirement.InvalidConfig.NegativeProb" );
+  DEV_ASSERT(randCompletionsMax >= randCompletionsMin, "FPSocialize.ObjectiveRequirement.InvalidConfig.MaxLTMin");
+  DEV_ASSERT(FLT_GE_ZERO( probabilityToRequire ), "FPSocialize.ObjectiveRequirement.InvalidConfig.NegativeProb");
 }
 
 
@@ -56,13 +56,13 @@ FPSocializeBehaviorChooser::FPSocializeBehaviorChooser(Robot& robot, const Json:
   IBehavior* facesBehavior = robot.GetBehaviorFactory().FindBehaviorByName("findFaces_socialize");
   assert(dynamic_cast< BehaviorExploreLookAroundInPlace* >(facesBehavior));
   _findFacesBehavior = static_cast< BehaviorExploreLookAroundInPlace* >(facesBehavior);
-  ASSERT_NAMED( nullptr != _findFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.FindFaces" );
+  DEV_ASSERT(nullptr != _findFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.FindFaces");
 
   _interactWithFacesBehavior = robot.GetBehaviorFactory().FindBehaviorByName("interactWithFaces");
-  ASSERT_NAMED( nullptr != _interactWithFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.InteractWithFaces" );
+  DEV_ASSERT(nullptr != _interactWithFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.InteractWithFaces");
   
   _pounceOnMotionBehavior = robot.GetBehaviorFactory().FindBehaviorByName("pounceOnMotion_socialize");
-  ASSERT_NAMED( nullptr != _pounceOnMotionBehavior, "FPSocializeBehaviorChooser.MissingBehavior.PounceOnMotion" );
+  DEV_ASSERT(nullptr != _pounceOnMotionBehavior, "FPSocializeBehaviorChooser.MissingBehavior.PounceOnMotion");
 
   // defaults to 0 to mean allow infinite iterations
   _maxNumIterationsToAllowForSearch = config.get("maxNumFindFacesSearchIterations", 0).asUInt();
@@ -245,7 +245,7 @@ void FPSocializeBehaviorChooser::HandleMessage(const ExternalInterface::Behavior
     // update objective counts needed
     auto objectiveIt = _objectivesLeft.find(msg.behaviorObjective);
     if( objectiveIt != _objectivesLeft.end() ) {
-      ASSERT_NAMED(objectiveIt->second > 0, "FPSocializeStrategy.HandleMessage.CorruptObjectiveData");
+      DEV_ASSERT(objectiveIt->second > 0, "FPSocializeStrategy.HandleMessage.CorruptObjectiveData");
     
       objectiveIt->second--;
       if( objectiveIt->second == 0 ) {

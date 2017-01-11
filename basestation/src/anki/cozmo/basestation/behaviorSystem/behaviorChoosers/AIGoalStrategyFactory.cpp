@@ -56,7 +56,7 @@ IAIGoalStrategy* CreateAIGoalStrategy(Robot& robot, const Json::Value& config)
   else
   {
     JsonTools::PrintJsonError(config, "AIGoalStrategyFactory.CreateAIGoalStrategy.InvalidType");
-    ASSERT_NAMED(false, "AIGoalStrategyFactory.CreateAIGoalStrategy.InvalidType");
+    DEV_ASSERT(false, "AIGoalStrategyFactory.CreateAIGoalStrategy.InvalidType");
   }
   
   // if failed print information to debug

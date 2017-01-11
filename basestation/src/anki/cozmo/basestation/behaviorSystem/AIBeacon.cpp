@@ -28,13 +28,13 @@ CONSOLE_VAR(float, kB_BeaconRadius_mm, "AIBeacon", 175.0f);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIBeacon::IsLocWithinBeacon(const Pose3d& pose, float inwardThreshold_mm) const
 {
-  ASSERT_NAMED(inwardThreshold_mm < kB_BeaconRadius_mm, "Beacon.IsLocWithinBeacon.InvalidInwardTreshold");
+  DEV_ASSERT(inwardThreshold_mm < kB_BeaconRadius_mm, "AIBeacon.IsLocWithinBeacon.InvalidInwardTreshold");
   
   Pose3d relative;
   if ( !pose.GetWithRespectTo(_pose, relative) )
   {
     // we currently don't support beacons in arbitrary origins, so this should not happen
-    ASSERT_NAMED(false, "AIBeacon.IsLocWithinBeacon.NoPoseTransform");
+    DEV_ASSERT(false, "AIBeacon.IsLocWithinBeacon.NoPoseTransform");
     return false;
   }
 

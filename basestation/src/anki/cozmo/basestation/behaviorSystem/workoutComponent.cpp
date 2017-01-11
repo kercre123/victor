@@ -133,7 +133,7 @@ Result WorkoutComponent::InitConfiguration(const Json::Value& config)
 const WorkoutConfig& WorkoutComponent::GetCurrentWorkout() const
 {
   // there should always be a workout
-  ASSERT_NAMED(_currWorkout != _workouts.end(), "WorkoutComponent.GetCurrentWorkout.NoWorkout");
+  DEV_ASSERT(_currWorkout != _workouts.end(), "WorkoutComponent.GetCurrentWorkout.NoWorkout");
   return *_currWorkout;
 }
 

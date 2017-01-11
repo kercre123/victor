@@ -60,7 +60,7 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   else
   {
     JsonTools::PrintJsonError(config, "BehaviorChooserFactory.CreateBehaviorChooser.InvalidType");
-    ASSERT_NAMED(false, "BehaviorChooserFactory.CreateBehaviorChooser.InvalidType");
+    DEV_ASSERT(false, "BehaviorChooserFactory.CreateBehaviorChooser.InvalidType");
   }
   
   // if failed print information to debug

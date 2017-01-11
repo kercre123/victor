@@ -299,9 +299,9 @@ void BehaviorLookInPlaceMemoryMap::FindAndVisitClosestVisitableSector(Robot& rob
   // if we reach this point it means that we covered all indices and we don't have anything else to visit
   #if ANKI_DEVELOPER_CODE
   {
-    for( const auto& sectorStatus : _sectors ) {
-      ASSERT_NAMED((sectorStatus==SectorStatus::Visited)||(sectorStatus==SectorStatus::No_NeedToVisit),
-      "BehaviorLookInPlaceMemoryMap.FindClosestSector.AlgorithmFailure" );
+    for ( const auto& sectorStatus : _sectors ) {
+      DEV_ASSERT((sectorStatus==SectorStatus::Visited)||(sectorStatus==SectorStatus::No_NeedToVisit),
+                 "BehaviorLookInPlaceMemoryMap.FindClosestSector.AlgorithmFailure" );
     }
   }
   #endif

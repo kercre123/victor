@@ -223,7 +223,8 @@ void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
   // define lambda to sort. Note the container holds unique_ptrs
   auto sortByPriority = [](const std::unique_ptr<AIGoal>& goal1, const std::unique_ptr<AIGoal>& goal2) {
     // there's no tie-break
-    ASSERT_NAMED((goal1 == goal2) || (goal1->GetPriority() != goal2->GetPriority()), "AIGoalEvaluator.SamePriorityNotSupported");
+    DEV_ASSERT((goal1 == goal2) || (goal1->GetPriority() != goal2->GetPriority()),
+               "AIGoalEvaluator.SamePriorityNotSupported");
     const bool isBetterPriority = (goal1->GetPriority() < goal2->GetPriority());
     return isBetterPriority;
   };
@@ -265,7 +266,7 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
     GoalVector& goalsForThisSpark = goalVectorIt->second;
   
     // can't have the spark registered but have no goals in the container, programmer error
-    ASSERT_NAMED(!goalsForThisSpark.empty(), "AIGoalEvaluator.RegisteredSparkHasNoGoals");
+    DEV_ASSERT(!goalsForThisSpark.empty(), "AIGoalEvaluator.RegisteredSparkHasNoGoals");
     
     AIGoal* newGoal = nullptr;
     
@@ -483,7 +484,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
   if ( !getNewGoal )
   {
     // pick behavior
-    ASSERT_NAMED(nullptr!=_currentGoalPtr, "AIGoalEvaluator.CurrentGoalCantBeNull");
+    DEV_ASSERT(nullptr!=_currentGoalPtr, "AIGoalEvaluator.CurrentGoalCantBeNull");
     chosenBehavior = _currentGoalPtr->ChooseNextBehavior(robot, currentRunningBehavior);
     hasChosenBehavior = true;
 

@@ -303,8 +303,8 @@ void SimpleBehaviorChooser::ClearBehaviors()
   // behaviors should actually be smart pointers, since the factory can be destroyed before choosers
 
   // clear behavior none
-  ASSERT_NAMED((nullptr == _behaviorNone) || (_behaviorNone->IsOwnedByFactory()),
-    "SimpleBehaviorChooser.ClearBehaviors.BadNoneBehavior");
+  DEV_ASSERT((nullptr == _behaviorNone) || (_behaviorNone->IsOwnedByFactory()),
+             "SimpleBehaviorChooser.ClearBehaviors.BadNoneBehavior");
   _behaviorNone = nullptr;
   
   // clear all others
@@ -312,8 +312,8 @@ void SimpleBehaviorChooser::ClearBehaviors()
   {
     for( const auto& infoPair : _nameToBehaviorInfoMap )
     {
-      ASSERT_NAMED((nullptr != infoPair.second._behaviorPtr) && (infoPair.second._behaviorPtr->IsOwnedByFactory()),
-        "SimpleBehaviorChooser.ClearBehaviors.BehaviorNotOwnedByFactory");
+      DEV_ASSERT((nullptr != infoPair.second._behaviorPtr) && (infoPair.second._behaviorPtr->IsOwnedByFactory()),
+                 "SimpleBehaviorChooser.ClearBehaviors.BehaviorNotOwnedByFactory");
     }
   }
   #endif
@@ -331,8 +331,8 @@ void SimpleBehaviorChooser::AddFactoryBehaviorsFromGroupConfig(Robot& robot, con
   {
     const char* groupName = groupNameIt->asCString();
     const BehaviorGroup behaviorGroup = BehaviorGroupFromString(groupName);
-    ASSERT_NAMED(behaviorGroup != BehaviorGroup::Count,
-      "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.BadGroupInConfig");
+    DEV_ASSERT(behaviorGroup != BehaviorGroup::Count,
+               "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.BadGroupInConfig");
     behaviorGroupFlags.SetBitFlag(behaviorGroup, true);
     
     // log
@@ -349,10 +349,10 @@ void SimpleBehaviorChooser::AddFactoryBehaviorsFromGroupConfig(Robot& robot, con
     for( const auto& factoryMapPair : behaviorFactory.GetBehaviorMap() )
     {
       IBehavior* const behaviorToAdd = factoryMapPair.second;
-      ASSERT_NAMED(nullptr != behaviorToAdd,
-        "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.NullBehavior");
-      ASSERT_NAMED(behaviorToAdd->GetName() == factoryMapPair.first,
-        "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.NameInFactoryAndBehaviorNameMismatch");
+      DEV_ASSERT(nullptr != behaviorToAdd,
+                 "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.NullBehavior");
+      DEV_ASSERT(behaviorToAdd->GetName() == factoryMapPair.first,
+                 "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.NameInFactoryAndBehaviorNameMismatch");
       
       // check if this behavior has any of the groups defined for this chooser
       const bool shouldAddBehavior = behaviorToAdd->MatchesAnyBehaviorGroups(behaviorGroupFlags);
@@ -376,7 +376,7 @@ Result SimpleBehaviorChooser::TryAddBehavior(IBehavior* behavior)
   {
     // if we have an entry in our map under this name, it has to match the pointer in the factory, otherwise
     // who the hell are we pointing to?
-    ASSERT_NAMED( insertResult.first->second._behaviorPtr == behavior,
+    DEV_ASSERT(insertResult.first->second._behaviorPtr == behavior,
       "SimpleBehaviorChooser.TryAddBehavior.DuplicateNameDifferentPointer" );
   }
   else
@@ -421,7 +421,7 @@ void SimpleBehaviorChooser::SetBehaviorEnabledFromGroupConfig(const Json::Value&
   {
     const char* groupName = groupNameIt->asCString();
     const BehaviorGroup behaviorGroup = BehaviorGroupFromString(groupName);
-    ASSERT_NAMED(behaviorGroup != BehaviorGroup::Count,
+    DEV_ASSERT(behaviorGroup != BehaviorGroup::Count,
       "SimpleBehaviorChooser.SetBehaviorEnabledFromGroupConfig.BadGroupInConfig");
     behaviorGroupFlags.SetBitFlag(behaviorGroup, true);
     

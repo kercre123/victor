@@ -65,7 +65,7 @@ BehaviorGameFlag BehaviorGameFlagFromString(const std::string& inString)
     return BehaviorGameFlag::KeepAway;
   }
 
-  ASSERT_NAMED(false, "BehaviorGameFlagFromString.InvalidString");
+  DEV_ASSERT(false, "BehaviorGameFlagFromString.InvalidString");
   return BehaviorGameFlag::NoGame;
 }
 
