@@ -14,7 +14,8 @@
 
 #include "gtest/gtest.h"
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -27,7 +28,7 @@ using namespace Anki::Cozmo;
 
 static const char* kTestBehaviorJson =
 "{"
-"   \"behaviorType\" : \"PlayAnim\","
+"   \"behaviorClass\" : \"PlayAnim\","
 "   \"name\" : \"UnitTestPlayAnim\","
 "   \"animTriggers\" : [ \"UnitTestAnim\" ],"
 "   \"minTimeBetweenRuns\" : 5.0,"
@@ -209,9 +210,10 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   
   // Destroying a behavior will automatically remove it from the factory
   
-  behaviorFactory.SafeDestroyBehavior(newBehavior);
+  IBehavior* castForDestroy = static_cast<IBehavior*>(newBehavior);
+  behaviorFactory.SafeDestroyBehavior(castForDestroy);
   
   EXPECT_EQ(behaviorFactory.FindBehaviorByName(kTestBehaviorName), nullptr);
   EXPECT_EQ(behaviorFactory.GetBehaviorMap().size(), kBaseBehaviorCount);
-  EXPECT_EQ(newBehavior, nullptr);
+  EXPECT_EQ(castForDestroy, nullptr);
 }

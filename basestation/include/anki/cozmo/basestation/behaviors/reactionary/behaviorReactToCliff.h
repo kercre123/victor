@@ -13,17 +13,17 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/common/basestation/objectIDs.h"
 #include <vector>
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToCliff : public IReactionaryBehavior
+class BehaviorReactToCliff : public IBehavior
 {
 private:
-  using super = IReactionaryBehavior;
+  using super = IBehavior;
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -31,19 +31,20 @@ private:
   
 public:
   
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
-  virtual bool ShouldResumeLastBehavior() const override { return true; }
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool CarryingObjectHandledInternally() const override { return true;}
   
 protected:
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
   
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
-
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  
+  virtual Status UpdateInternal(Robot& robot) override;
 
 private:
-
+  using base = IBehavior;
   enum class State {
     PlayingStopReaction,
     PlayingCliffReaction,
@@ -61,6 +62,9 @@ private:
 
   u16 _cliffDetectThresholdAtStart = 0;
   bool _quitReaction = false;
+  
+  bool _shouldStopDueToCharger;
+  
   
 }; // class BehaviorReactToCliff
   

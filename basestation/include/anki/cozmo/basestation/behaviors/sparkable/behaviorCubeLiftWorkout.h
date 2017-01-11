@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_Sparkable_BehaviorCubeLiftWorkout_H__
 #define __Cozmo_Basestation_Behaviors_Sparkable_BehaviorCubeLiftWorkout_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 #include "anki/common/basestation/objectIDs.h"
 #include "clad/types/animationTrigger.h"
@@ -37,7 +37,7 @@ public:
 
 protected:
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
 
   virtual Result InitInternal(Robot& robot) override;
 

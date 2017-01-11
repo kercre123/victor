@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -38,15 +39,25 @@ static const uint32_t kMinAgeToPerformSearch_ms = 300;
 static const f32 kPostLiftDriveBackwardDist_mm = 20.f;
 static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;
   
+static   std::set<ReactionTrigger> kReactionsToDisable = {
+    ReactionTrigger::ObjectPositionUpdated,
+    ReactionTrigger::FacePositionUpdated,
+    ReactionTrigger::CubeMoved,
+    ReactionTrigger::StackOfCubesInitialDetection,
+    ReactionTrigger::UnexpectedMovement,
+    ReactionTrigger::PetInitialDetection
+  };
+  
 }
 
 BehaviorCubeLiftWorkout::BehaviorCubeLiftWorkout(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
+: IBehavior(robot, config)
 {
 }
 
-bool BehaviorCubeLiftWorkout::IsRunnableInternal(const Robot& robot) const
+bool BehaviorCubeLiftWorkout::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
   if( robot.IsCarryingObject() ) {
     return true;
   }
@@ -59,12 +70,7 @@ bool BehaviorCubeLiftWorkout::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
 {
-  SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
-  SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeFace);
-  SmartDisableReactionaryBehavior(BehaviorType::ReactToCubeMoved);
-  SmartDisableReactionaryBehavior(BehaviorType::ReactToStackOfCubes);
-  SmartDisableReactionaryBehavior(BehaviorType::ReactToUnexpectedMovement);
-  SmartDisableReactionaryBehavior(BehaviorType::ReactToPet);
+  SmartDisableReactionTrigger(kReactionsToDisable);
 
   // disable idle
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);

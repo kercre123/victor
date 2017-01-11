@@ -31,6 +31,8 @@ namespace Cozmo {
 
 
 class IBehavior;
+class IScoredBehavior;
+class IReactionaryBehavior;
 class Robot;
 
   
@@ -51,24 +53,25 @@ public:
   BehaviorFactory();
   ~BehaviorFactory();
   
-  IBehavior* CreateBehavior(BehaviorType behaviorType, Robot& robot, const Json::Value& config, NameCollisionRule nameCollisionRule = NameCollisionRule::ReuseOld);
+  IBehavior* CreateBehavior(BehaviorClass behaviorType, Robot& robot, const Json::Value& config, NameCollisionRule nameCollisionRule = NameCollisionRule::ReuseOld);
   IBehavior* CreateBehavior(const Json::Value& behaviorJson, Robot& robot, NameCollisionRule nameCollisionRule = NameCollisionRule::ReuseOld);
-  
+
+
   void DestroyBehavior(IBehavior* behavior);
   void SafeDestroyBehavior(IBehavior*& behaviorPtrRef); // destroy and null out the pointer
   
   IBehavior* FindBehaviorByName(const std::string& inName) const;
-  IBehavior* FindBehaviorByType(const BehaviorType& type) const;
   IBehavior* FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
   
   const NameToBehaviorMap& GetBehaviorMap() const { return _nameToBehaviorMap; }
-  
+
 private:
 
   // ============================== Private Member Funcs ==============================
   
   // NOTE: can modify newBehavior (e.g. on name collision if rule is to reuse existing behavior)
   IBehavior* AddToFactory(IBehavior* newBehavior, NameCollisionRule nameCollisionRule);
+
   
   bool RemoveBehaviorFromMap(IBehavior* behavior);
   void DeleteBehaviorInternal(IBehavior* behavior);
@@ -76,6 +79,7 @@ private:
   // ============================== Private Member Vars ==============================
   
   NameToBehaviorMap _nameToBehaviorMap;
+
 };
   
 

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -27,17 +28,18 @@ namespace Cozmo {
   static const int kTappedObjectPoseZThreshold_mm = 10;
   
 BehaviorReactToDoubleTap::BehaviorReactToDoubleTap(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToDoubleTap");
 }
 
-bool BehaviorReactToDoubleTap::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToDoubleTap::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // Is runnable while we have a double tapped object that has a not known pose (dirty or unknown),
   // the robot is not picking or placing, and we have not already reacted to the current tapped object
   // This prevents this behavior from running should the current tapped object become dirty from random moved
   // messages
+  const Robot& robot = preReqData.GetRobot();
   return (!robot.IsPickingOrPlacing() &&
           IsTappedObjectValid(robot) &&
           (_lastObjectReactedTo != robot.GetBehaviorManager().GetCurrTappedObject() ||
@@ -45,7 +47,7 @@ bool BehaviorReactToDoubleTap::IsRunnableInternalReactionary(const Robot& robot)
           !robot.GetAIComponent().GetWhiteboard().IsSuppressingReactToDoubleTap());
 }
 
-Result BehaviorReactToDoubleTap::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
 {
   _objectInCurrentFrame = true;
   _turningTowardsGhostObject = false;
@@ -157,14 +159,14 @@ Result BehaviorReactToDoubleTap::InitInternalReactionary(Robot& robot)
                   }
                 });
     
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior("ReactToDoubleTap", BehaviorType::AcknowledgeObject, false);
+    robot.GetBehaviorManager().RequestEnableReactionTrigger("ReactToDoubleTap", ReactionTrigger::ObjectPositionUpdated, false);
     
     return RESULT_OK;
   }
   return RESULT_FAIL;
 }
 
-void BehaviorReactToDoubleTap::StopInternalReactionary(Robot& robot)
+void BehaviorReactToDoubleTap::StopInternal(Robot& robot)
 {
   if(_leaveTapInteractionOnStop)
   {
@@ -183,7 +185,7 @@ void BehaviorReactToDoubleTap::StopInternalReactionary(Robot& robot)
     UpdateTappedObjectLights(true);
   }
 
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior("ReactToDoubleTap", BehaviorType::AcknowledgeObject, true);
+  robot.GetBehaviorManager().RequestEnableReactionTrigger("ReactToDoubleTap", ReactionTrigger::ObjectPositionUpdated, true);
   
   // Let whiteboard know that this behavior can't react to the same object again
   robot.GetAIComponent().GetWhiteboard().SetReactToDoubleTapCanReactAgain(false);

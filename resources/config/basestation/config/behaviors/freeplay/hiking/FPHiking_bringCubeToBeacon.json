@@ -8,7 +8,7 @@
 {
   "name": "Hiking_BringCubeToBeacon",
 
-  "behaviorType": "BringCubeToBeacon",
+  "behaviorClass": "BringCubeToBeacon",
   "displayNameKey":"behavior.BringCubeToBeacon",
   "flatScore": 4, // intended to interrupt lookInPlace behaviors
   "behaviorGroups": [

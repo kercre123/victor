@@ -13,13 +13,13 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToDoubleTap_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToDoubleTap_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include <vector>
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToDoubleTap : public IReactionaryBehavior
+class BehaviorReactToDoubleTap : public IBehavior
 {
 private:
   // Enforce creation through BehaviorFactory
@@ -27,15 +27,12 @@ private:
   BehaviorReactToDoubleTap(Robot& robot, const Json::Value& config);
   
 public:
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
-  virtual bool ShouldResumeLastBehavior() const override { return true; }
-  virtual bool ShouldComputationallySwitch(const Robot& robot) override { return true; }
-  virtual bool ShouldInterruptOtherReactionaryBehavior() override { return false; }
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
   
 protected:
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionaryFromDoubleTap(Robot& robot) override { StopInternalReactionary(robot); }
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
   
   // Returns true if the double tapped object is valid to be reacted to
   bool IsTappedObjectValid(const Robot& robot) const;

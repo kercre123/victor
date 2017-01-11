@@ -25,7 +25,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorDockingTestSimple_H__
 
 #include "anki/common/basestation/math/pose.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "anki/common/basestation/objectIDs.h"
@@ -49,7 +49,8 @@ namespace Anki {
       
         virtual ~BehaviorDockingTestSimple() { }
       
-        virtual bool IsRunnableInternal(const Robot& robot) const override;
+        virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+
         virtual bool CarryingObjectHandledInternally() const override { return false;}
 
       private:

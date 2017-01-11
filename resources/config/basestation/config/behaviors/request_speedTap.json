@@ -1,5 +1,5 @@
 {
-  "behaviorType" : "RequestGameSimple",
+  "behaviorClass" : "RequestGameSimple",
   "name" : "RequestSpeedTap",
   "displayNameKey":"behavior.RequestToPlay",
   "requiredGameFlags" : "SpeedTap",

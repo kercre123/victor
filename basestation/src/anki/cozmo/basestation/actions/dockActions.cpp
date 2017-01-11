@@ -140,16 +140,16 @@ namespace Anki {
       }
 
       if(GetState() != ActionResult::NOT_STARTED) {
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("dockAction",
-                                                                     BehaviorType::AcknowledgeObject,
-                                                                     true);
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger("dockAction",
+                                                                 ReactionTrigger::ObjectPositionUpdated,
+                                                                 true);
       }
 
       
       Util::SafeDelete(_faceAndVerifyAction);
       
-      for (auto& b : _behaviorsToSuppress) {
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), b, true);
+      for (auto& b : _reactionTriggersToSuppress) {
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), b, true);
       }
     }
 
@@ -553,8 +553,8 @@ namespace Anki {
 
       SetupTurnAndVerifyAction(dockObject);
       
-      for (auto& b : _behaviorsToSuppress) {
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), b, false);
+      for (auto& b : _reactionTriggersToSuppress) {
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), b, false);
       }
       
       if(!_lightsSet)
@@ -591,8 +591,8 @@ namespace Anki {
 
         // disable the reactionary behavior for objects, since we are about to interact with one
         // TODO:(bn) should some dock actions not do this? E.g. align with offset that doesn't touch the cube?
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("dockAction",
-                                                                     BehaviorType::AcknowledgeObject,
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger("dockAction",
+                                                                     ReactionTrigger::ObjectPositionUpdated,
                                                                      false);
         
         return ActionResult::SUCCESS;
@@ -873,9 +873,9 @@ namespace Anki {
     : IDockAction(robot, objectID, "FacePlant", RobotActionType::FACE_PLANT, useManualSpeed)
     {
       SetShouldCheckForObjectOnTopOf(false);
-      SetShouldSuppressReactionaryBehavior(BehaviorType::ReactToCubeMoved);
-      SetShouldSuppressReactionaryBehavior(BehaviorType::ReactToUnexpectedMovement);
-      SetShouldSuppressReactionaryBehavior(BehaviorType::ReactToCliff);
+      SetShouldSuppressReactionaryBehavior(ReactionTrigger::CubeMoved);
+      SetShouldSuppressReactionaryBehavior(ReactionTrigger::UnexpectedMovement);
+      SetShouldSuppressReactionaryBehavior(ReactionTrigger::CliffDetected);
     }
     
     void FacePlantAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -1409,8 +1409,8 @@ namespace Anki {
     {
       // COZMO-3434 manually request to enable AckObject
       if(GetState() != ActionResult::NOT_STARTED) {
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("PlaceObjectOnGroundAction",
-                                                                     BehaviorType::AcknowledgeObject,
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger("PlaceObjectOnGroundAction",
+                                                                     ReactionTrigger::ObjectPositionUpdated,
                                                                      true);
       }
     
@@ -1466,8 +1466,8 @@ namespace Anki {
          ActionResult::RUNNING == result)
       {
         // disable the reactionary behavior for objects, since we are placing one
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("PlaceObjectOnGroundAction",
-                                                                     BehaviorType::AcknowledgeObject,
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger("PlaceObjectOnGroundAction",
+                                                                     ReactionTrigger::ObjectPositionUpdated,
                                                                      false);
       }
       

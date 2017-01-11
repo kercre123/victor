@@ -95,7 +95,7 @@ BehaviorEnrollFace::BehaviorEnrollFace(Robot &robot, const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEnrollFace::IsRunnableInternal(const Robot& robot) const
+bool BehaviorEnrollFace::IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const
 {
   // This behavior is runnable iff a face enrollment has been requested
   return IsEnrollmentRequested();
@@ -202,15 +202,15 @@ Result BehaviorEnrollFace::InitInternal(Robot& robot)
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
                 _faceID, Util::HidePersonallyIdentifiableInfo(_faceName.c_str()), _saveID);
 
-  SmartDisableReactionaryBehavior({
-    BehaviorType::AcknowledgeFace,
-    BehaviorType::AcknowledgeObject,
-    BehaviorType::ReactToCliff,
-    BehaviorType::ReactToCubeMoved,
-    BehaviorType::ReactToFrustration,
-    BehaviorType::ReactToPickup,
-    BehaviorType::ReactToReturnedToTreads,
-    BehaviorType::ReactToUnexpectedMovement,
+  SmartDisableReactionTrigger({
+    ReactionTrigger::FacePositionUpdated,
+    ReactionTrigger::ObjectPositionUpdated,
+    ReactionTrigger::CliffDetected,
+    ReactionTrigger::CubeMoved,
+    ReactionTrigger::Frustration,
+    ReactionTrigger::RobotPickedUp,
+    ReactionTrigger::ReturnedToTreads,
+    ReactionTrigger::UnexpectedMovement,
   });
   
   // Start with this timeout (may increase as the behavior runs)

@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "util/console/consoleInterface.h"
@@ -34,9 +35,9 @@ BehaviorPutDownBlock::BehaviorPutDownBlock(Robot& robot, const Json::Value& conf
 
 }
 
-bool BehaviorPutDownBlock::IsRunnableInternal(const Robot& robot) const
+bool BehaviorPutDownBlock::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
-  return robot.IsCarryingObject() || IsActing();
+  return preReqData.GetRobot().IsCarryingObject() || IsActing();
 }
 
 Result BehaviorPutDownBlock::InitInternal(Robot& robot)
@@ -46,7 +47,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
   // For now, just back up blindly and play animation.
   const float backupDistance = GetRNG().RandDblInRange(kBPDB_kBackupDistanceMin_mm, kBPDB_kBackupDistanceMax_mm);
   
-  StartActing(new CompoundActionSequential(robot, {
+  StartActingExtraScore(new CompoundActionSequential(robot, {
                 new DriveStraightAction(robot, backupDistance, kBPDB_putDownBackupSpeed_mm),
                 new TriggerAnimationAction(robot, AnimationTrigger::PutDownBlockPutDown),
               }),
@@ -59,7 +60,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 
 void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 {
-  StartActing(CreateLookAfterPlaceAction(robot, true), kBPDB_scoreIncreasePostPutDown,
+  StartActingExtraScore(CreateLookAfterPlaceAction(robot, true), kBPDB_scoreIncreasePostPutDown,
               [this,&robot]() {
                 if(robot.IsCarryingObject()) {
                   // No matter what, even if we didn't see the object we were

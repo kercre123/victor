@@ -53,7 +53,7 @@ protected:
   
   void HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
-  IBehavior* AddNewBehavior(BehaviorType newType);
+  IBehavior* AddNewBehavior(BehaviorClass newType);
   
   // requests enabling processes required by behaviors when they are the selected one
   void SetProcessEnabled(const IBehavior* behavior, bool newValue);

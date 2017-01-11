@@ -13,21 +13,21 @@
 
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
 
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 
 #include "clad/types/unlockTypes.h"
 
@@ -98,8 +98,9 @@ BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(Robot& robot, const Json::Val
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramidBase::IsRunnableInternal(const Robot& robot) const
+bool BehaviorBuildPyramidBase::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
   UpdatePyramidTargets(robot);
 
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && !_topBlockID.IsSet();

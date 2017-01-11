@@ -20,7 +20,7 @@ public class StateMachine {
 
   private bool _IsPaused = false;
 
-  private Anki.Cozmo.BehaviorType _reactionThatPausedGame = Anki.Cozmo.BehaviorType.NoneBehavior;
+  private Anki.Cozmo.ReactionTrigger _reactionThatPausedGame = Anki.Cozmo.ReactionTrigger.NoneTrigger;
 
   public bool IsPaused {
     get {
@@ -88,7 +88,7 @@ public class StateMachine {
   private void ProgressToNextState() {
     if (_CurrState != null) {
       if (_IsPaused) {
-        _CurrState.Resume(State.PauseReason.ENGINE_MESSAGE, Anki.Cozmo.BehaviorType.Count);
+        _CurrState.Resume(State.PauseReason.ENGINE_MESSAGE, Anki.Cozmo.ReactionTrigger.Count);
       }
       _CurrState.Exit();
     }
@@ -109,7 +109,7 @@ public class StateMachine {
     _NextState = null;
   }
 
-  public void Pause(State.PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+  public void Pause(State.PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
     if (!_IsPaused) {
       _IsPaused = true;
       if (_CurrState != null) {
@@ -119,17 +119,17 @@ public class StateMachine {
     }
   }
 
-  public void Resume(State.PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+  public void Resume(State.PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
     if (_IsPaused) {
       _IsPaused = false;
       if (_CurrState != null) {
-        _reactionThatPausedGame = Anki.Cozmo.BehaviorType.NoneBehavior;
+        _reactionThatPausedGame = Anki.Cozmo.ReactionTrigger.NoneTrigger;
         _CurrState.Resume(reason, reactionaryBehavior);
       }
     }
   }
 
-  public Anki.Cozmo.BehaviorType GetReactionThatPausedGame() {
+  public Anki.Cozmo.ReactionTrigger GetReactionThatPausedGame() {
     return _reactionThatPausedGame;
   }
 }

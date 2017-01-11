@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorExploreVisitPossibleMarker_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorExploreVisitPossibleMarker_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 
 #include "anki/common/basestation/math/pose.h"
@@ -55,7 +55,7 @@ public:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false;}
 
 protected:

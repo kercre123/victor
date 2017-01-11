@@ -39,6 +39,7 @@
       { "channel": "NVStorage",       "enabled": false },
       { "channel": "Animations",      "enabled": false }, // Print every animation that is triggered
       { "channel": "Planner",         "enabled": false },
+      { "channel": "ReactionTriggers","enabled": false },
       { "channel": "LightsComponent", "enabled": false }
     ],
     "levels":
@@ -80,6 +81,7 @@
       { "channel": "BlockPool",       "enabled": false },
       { "channel": "NVStorage",       "enabled": false },
       { "channel": "Animations",      "enabled": false },
+      { "channel": "ReactionTriggers","enabled": false },
       { "channel": "LightsComponent", "enabled": false }
     ],
     "levels":
@@ -121,6 +123,7 @@
       { "channel": "BlockPool",       "enabled": false },
       { "channel": "NVStorage",       "enabled": false },
       { "channel": "Animations",      "enabled": false },
+      { "channel": "ReactionTriggers","enabled": false },
       { "channel": "LightsComponent", "enabled": false }
     ],
     "levels":

@@ -147,7 +147,7 @@ namespace Cozmo.Settings {
 
     private void HandleConfirmEraseCozmo() {
       if (_EraseCozmoModalInstance != null) {
-        RobotEngineManager.Instance.SetEnableReactionaryBehaviors(false);
+        RobotEngineManager.Instance.SetEnableAllReactionTriggers(false);
         _EraseCozmoModalInstance.ShowInProgressLabel(Localization.Get(LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoInProgressLabel));
         _EraseCozmoModalInstance.EnableButtons(false);
 
@@ -160,7 +160,7 @@ namespace Cozmo.Settings {
     private void HandleEraseRobotStatus(RestoreRobotStatus robotStatusMsg) {
       if (robotStatusMsg.isWipe) {
         RobotEngineManager.Instance.RemoveCallback<RestoreRobotStatus>(HandleEraseRobotStatus);
-        RobotEngineManager.Instance.SetEnableReactionaryBehaviors(true);
+        RobotEngineManager.Instance.SetEnableAllReactionTriggers(true);
 
         if (robotStatusMsg.success) {
 

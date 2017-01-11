@@ -21,7 +21,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorLiftLoadTest_H__
 
 #include "anki/common/basestation/math/pose.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -42,7 +42,7 @@ namespace Anki {
       
         virtual ~BehaviorLiftLoadTest() { }
       
-        virtual bool IsRunnableInternal(const Robot& robot) const override;
+        virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const override;
         virtual bool CarryingObjectHandledInternally() const override { return false;}
       private:
       

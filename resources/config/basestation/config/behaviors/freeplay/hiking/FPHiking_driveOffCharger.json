@@ -8,7 +8,7 @@
 {
   "name": "Hiking_DriveOffCharger",
 
-  "behaviorType": "DriveOffCharger",
+  "behaviorClass": "DriveOffCharger",
   "displayNameKey":"behavior.DriveOffCharger",
   "flatScore": 10.0,
   "behaviorGroups": [

@@ -352,7 +352,7 @@ namespace Anki {
     
     void UiGameController::HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg)
     {
-      PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s", msg.oldBehavior.c_str(), msg.newBehavior.c_str());
+      PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s", msg.oldBehaviorName.c_str(), msg.newBehaviorName.c_str());
       
       HandleBehaviorTransition(msg);
     }
@@ -1365,10 +1365,10 @@ namespace Anki {
     }
 
     
-    BehaviorType UiGameController::GetBehaviorType(const std::string& behaviorName) const
+    BehaviorClass UiGameController::GetBehaviorClass(const std::string& behaviorName) const
     {
-      const BehaviorType behaviorType = BehaviorTypeFromString(behaviorName);
-      return (behaviorType != BehaviorType::Count) ? behaviorType : BehaviorType::NoneBehavior;
+      const BehaviorClass behaviorClass = BehaviorClassFromString(behaviorName);
+      return (behaviorClass != BehaviorClass::Count) ? behaviorClass : BehaviorClass::NoneBehavior;
     }
     
     void UiGameController::SendAbortPath()

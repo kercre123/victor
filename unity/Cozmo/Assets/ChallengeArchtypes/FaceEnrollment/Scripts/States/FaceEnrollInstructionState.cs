@@ -22,7 +22,7 @@ namespace FaceEnrollment {
       get { return _ReEnrollFaceID != 0; }
     }
 
-    public override void Pause(State.PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+    public override void Pause(State.PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
       // don't quit from reactionary behaviors.
     }
 

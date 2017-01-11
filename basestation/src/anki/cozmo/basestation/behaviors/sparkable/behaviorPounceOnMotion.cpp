@@ -104,7 +104,7 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   _lastMotionTime = -1000.f;
 }
 
-bool BehaviorPounceOnMotion::IsRunnableInternal(const Robot& robot) const
+bool BehaviorPounceOnMotion::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }

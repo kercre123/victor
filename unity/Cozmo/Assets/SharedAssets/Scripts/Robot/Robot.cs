@@ -286,7 +286,8 @@ public class Robot : IRobot {
 
   public string CurrentBehaviorString { get; set; }
 
-  public BehaviorType CurrentBehaviorType { get; set; }
+  public BehaviorClass CurrentBehaviorClass { get; set; }
+  public ReactionTrigger CurrentReactionTrigger { get; set; }
 
   public string CurrentBehaviorName { get; set; }
 
@@ -457,8 +458,8 @@ public class Robot : IRobot {
   }
 
   private void HandleBehaviorTransition(Anki.Cozmo.ExternalInterface.BehaviorTransition message) {
-    CurrentBehaviorType = message.newBehaviorType;
-    CurrentBehaviorName = message.newBehavior;
+    CurrentBehaviorClass = message.newBehaviorClass;
+    CurrentBehaviorName = message.newBehaviorName;
     CurrentBehaviorDisplayNameKey = message.newBehaviorDisplayKey;
   }
 
@@ -615,7 +616,8 @@ public class Robot : IRobot {
     LiftHeight = float.MaxValue;
     BatteryVoltage = float.MaxValue;
     _LastProcessedVisionFrameEngineTimestamp = 0;
-    CurrentBehaviorType = BehaviorType.NoneBehavior;
+    CurrentBehaviorClass = BehaviorClass.NoneBehavior;
+    CurrentReactionTrigger = ReactionTrigger.NoneTrigger;
     // usually this is unique
     CurrentBehaviorName = "NoneBehavior";
     CurrentBehaviorDisplayNameKey = "";
@@ -1837,15 +1839,16 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void ExecuteBehavior(BehaviorType type) {
+  public void ExecuteBehaviorByExecutableType(ExecutableBehaviorType type) {
     DAS.Debug(this, "Execute Behavior " + type);
 
-    if (type == BehaviorType.LiftLoadTest) {
+    if (type == ExecutableBehaviorType.LiftLoadTest) {
       RobotEngineManager.Instance.Message.SetLiftLoadTestAsRunnable = Singleton<SetLiftLoadTestAsRunnable>.Instance;
       RobotEngineManager.Instance.SendMessage ();
     }
 
-    RobotEngineManager.Instance.Message.ExecuteBehavior = Singleton<ExecuteBehavior>.Instance.Initialize(type);
+    RobotEngineManager.Instance.Message.ExecuteBehaviorByExecutableType = 
+             Singleton<ExecuteBehaviorByExecutableType>.Instance.Initialize(type);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1867,7 +1870,7 @@ public class Robot : IRobot {
     }
     else {
       ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-      ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.NoneBehavior);
     }
   }
 
@@ -2059,13 +2062,13 @@ public class Robot : IRobot {
   }
 
 
-  public void EnableReactionaryBehaviors(bool enable) {
-    RobotEngineManager.Instance.Message.EnableReactionaryBehaviors = Singleton<EnableReactionaryBehaviors>.Instance.Initialize(enable);
+  public void EnableAllReactionTriggers(bool enable) {
+    RobotEngineManager.Instance.Message.EnableAllReactionTriggers = Singleton<EnableAllReactionTriggers>.Instance.Initialize("unity",enable);
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable) {
-    RobotEngineManager.Instance.Message.RequestEnableReactionaryBehavior = Singleton<RequestEnableReactionaryBehavior>.Instance.Initialize(id, behaviorType, enable);
+  public void RequestEnableReactionTrigger(string id, Anki.Cozmo.ReactionTrigger behaviorType, bool enable) {
+    RobotEngineManager.Instance.Message.RequestEnableReactionTrigger = Singleton<RequestEnableReactionTrigger>.Instance.Initialize(id, behaviorType, enable);
     RobotEngineManager.Instance.SendMessage();
   }
 

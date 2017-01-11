@@ -16,6 +16,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/groundPlaneROI.h"
@@ -82,10 +83,10 @@ BehaviorLookInPlaceMemoryMap::~BehaviorLookInPlaceMemoryMap()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const Robot& robot) const
+bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // obviously this behavior needs memory map
-  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  const INavMemoryMap* memoryMap = preReqData.GetRobot().GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {
     return false;
   }
@@ -97,7 +98,7 @@ bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const Robot& robot) const
   float distanceSQ;
   const float distThreshold = _configParams.distanceThresholdForLocations_mm;
   const float closeDistSQ = distThreshold*distThreshold;
-  const Pose3d& currentPose = robot.GetPose();
+  const Pose3d& currentPose = preReqData.GetRobot().GetPose();
   for( const auto& previousFullLocation : _previousFullLocations )
   {
     // try to grab distance between robot pose and previousFullLocation (if comparable)

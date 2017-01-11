@@ -1,5 +1,5 @@
 {
-  "behaviorType": "OnConfigSeen",
+  "behaviorClass": "OnConfigSeen",
   "name": "sparksPyramidOnConfigSeen",
   "requiredUnlockId": "BuildPyramid",
   "behaviorGroups": [

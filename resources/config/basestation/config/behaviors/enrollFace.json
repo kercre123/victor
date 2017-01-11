@@ -1,5 +1,5 @@
 {
-  "behaviorType": "EnrollFace",
+  "behaviorClass": "EnrollFace",
   "name": "EnrollFace",
   "behaviorGroups": [
     "MeetCozmo_Socialize"

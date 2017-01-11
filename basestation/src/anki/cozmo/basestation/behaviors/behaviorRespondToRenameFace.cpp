@@ -47,7 +47,7 @@ void BehaviorRespondToRenameFace::HandleWhileNotRunning(const GameToEngineEvent&
   _faceID = msg.faceID;
 }
   
-bool BehaviorRespondToRenameFace::IsRunnableInternal(const Robot& robot) const
+bool BehaviorRespondToRenameFace::IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const
 {
   const bool haveValidName = !_name.empty();
   return haveValidName;

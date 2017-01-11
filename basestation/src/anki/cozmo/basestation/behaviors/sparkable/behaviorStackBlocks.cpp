@@ -20,6 +20,8 @@
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -31,12 +33,9 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
 CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
 CONSOLE_VAR(s32, kBSB_MaxNumPickupRetries, "Behavior.StackBlocks", 2);
-//CONSOLE_VAR(f32, kBSB_SamePreactionPoseDistThresh_mm, "Behavior.StackBlocks", 30.f);
-//CONSOLE_VAR(f32, kBSB_SamePreactionPoseAngleThresh_deg, "Behavior.StackBlocks", 45.f);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
 static const float kWaitForValidTimeout_s = 0.4f;
@@ -45,9 +44,9 @@ static const float kTimeObjectInvalidAfterStackFailure_sec = 3.0f;
 
   
 BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _blockworldFilterForBottom( new BlockWorldFilter )
-  , _robot(robot)
+: IBehavior(robot, config)
+, _blockworldFilterForBottom( new BlockWorldFilter )
+, _robot(robot)
 {
   SetDefaultName("StackBlocks");
   
@@ -64,8 +63,9 @@ BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config
   });
 }
 
-bool BehaviorStackBlocks::IsRunnableInternal(const Robot& robot) const
+bool BehaviorStackBlocks::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
   // don't change blocks while we're running
   if( !IsRunning() ) {
     UpdateTargetBlocks(robot);
@@ -316,7 +316,8 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   if( ! AreBlocksStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
     UpdateTargetBlocks(robot);
-    if( IsRunnable(robot, true) ) {
+    BehaviorPreReqNone preReqData;
+    if( IsRunnableScored(preReqData) ) {
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Picking.RestartWithNewBlocks",
                        "had to change blocks, re-starting behavior");
@@ -436,7 +437,8 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
   if( ! AreBlocksStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
     UpdateTargetBlocks(robot);
-    if( IsRunnable(robot, true) ) {
+    BehaviorPreReqNone preReqData;
+    if( IsRunnableScored(preReqData) ) {
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Stacking.RestartWithNewBlocks.",
                        "had to change blocks, re-starting behavior");

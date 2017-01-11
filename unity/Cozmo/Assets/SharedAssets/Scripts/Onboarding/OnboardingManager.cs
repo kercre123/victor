@@ -183,7 +183,7 @@ public class OnboardingManager : MonoBehaviour {
     _CurrPhase = phase;
     if (_CurrPhase == OnboardingPhases.Home) {
       CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
-      CurrentRobot.RequestEnableReactionaryBehavior("onboardingHome", BehaviorType.ReactToOnCharger, false);
+      CurrentRobot.RequestEnableReactionTrigger("onboardingHome", ReactionTrigger.PlacedOnCharger, false);
       bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(UnlockId.StackTwoCubes);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
 
@@ -239,7 +239,7 @@ public class OnboardingManager : MonoBehaviour {
   private void PhaseCompletedInternal() {
     if (_CurrPhase == OnboardingPhases.Home) {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("onboardingHome", BehaviorType.ReactToOnCharger, true);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("onboardingHome", ReactionTrigger.PlacedOnCharger, true);
         RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
       }
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
@@ -447,7 +447,7 @@ public class OnboardingManager : MonoBehaviour {
       _HomeView.TabButtonContainer.gameObject.SetActive(showButtons);
     }
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.EnableReactionaryBehaviors(reactionsEnabled);
+      RobotEngineManager.Instance.CurrentRobot.EnableAllReactionTriggers(reactionsEnabled);
     }
   }
 

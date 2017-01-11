@@ -45,9 +45,10 @@ namespace Cozmo {
 class BehaviorFactory;
 class AIGoalEvaluator;
 class IBehavior;
+class IReactionTriggerStrategy;
 class IBehaviorChooser;
-class IReactionaryBehavior;
 class Robot;
+struct BehaviorRunningAndResumeInfo;
 
 template<typename TYPE> class AnkiEvent;
 
@@ -73,9 +74,11 @@ public:
 
   // initialize this behavior manager from the given Json config
   Result InitConfiguration(const Json::Value& config);
+  Result InitReactionTriggerMap(const Json::Value& config);
   
   // create a behavior from the given config and add to the factory. Can fail if the configuration is not valid
   Result CreateBehaviorFromConfiguration(const Json::Value& behaviorConfig);
+
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Games
@@ -111,27 +114,28 @@ public:
   // when it is needed (e.g. sparks). `stoppedByWhom` is a string for debugging so we know why this was stopped
   void RequestCurrentBehaviorEndImmediately(const std::string& stoppedByWhom);
   
-  // Returns nullptr if there is no current behavior
-  const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
-
+  // returns nullptr if there is no current behavior
+  const IBehavior* GetCurrentBehavior() const;
   const IBehaviorChooser* GetBehaviorChooser() const { return _currentChooserPtr; }
-    
+  bool CurrentBehaviorTriggeredAsReaction() const;
+  ReactionTrigger GetCurrentReactionTrigger() const;
+
+  
   const BehaviorFactory& GetBehaviorFactory() const { assert(_behaviorFactory); return *_behaviorFactory; }
         BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
   
   // Enable and disable reactionary behaviors
-  void RequestEnableReactionaryBehavior(const std::string& requesterID, BehaviorType behavior, bool enable);
-    
+  void RequestEnableReactionTrigger(const std::string& requesterID, ReactionTrigger trigger, bool enable);
+  void RequestEnableReactionTrigger(const std::string& requesterID, const std::set<ReactionTrigger>& triggers, bool enable);
+
   // accessors: audioController
   Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
   
   void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
   
-  void SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCurrent = false);
+  void EnableAllReactionTriggers(const std::string& requesterID, bool isEnabled, bool stopCurrent = false);
   void RequestCurrentBehaviorEndOnNextActionComplete();
   
-  // Returns first reactionary behavior with given type or nullptr if none found
-  IReactionaryBehavior* GetReactionaryBehaviorByType(BehaviorType behaviorType);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Freeplay - specific
@@ -182,46 +186,36 @@ public:
   void RequestEnableTapInteraction(const std::string& requesterID, bool enable);
   
 private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+  
   // switches to a given behavior (stopping the current behavior if necessary). Returns true if it switched
-  bool SwitchToBehavior(IBehavior* nextBehavior);
-
-  // same as SwitchToBehavior but also handles special reactionary logic
-  void SwitchToReactionaryBehavior(IReactionaryBehavior* nextBehavior);
+  bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehavior* nextBehavior);
+  bool SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo);
+  
+  
+  std::set<IBehavior*> GetBehaviorsForReactionTrigger(ReactionTrigger trigger);
   
   // checks the chooser and switches to a new behavior if neccesary
-  void ChooseNextBehaviorAndSwitch();
+  void ChooseNextScoredBehaviorAndSwitch();
   
   // try to resume back to the previous behavior (after interruptions). This method does not guarantee resuming
   // to a previous one. If there was no behavior to resume to, it will set null behavior as current.
   void TryToResumeBehavior();
 
   // stop the current behavior if it is non-null and running (i.e. Init was called)
-  void StopCurrentBehavior();
+  void StopAndNullifyCurrentBehavior();
   
   //Allow reactionary behaviors to request a switch without a message
-  void CheckForComputationalSwitch();
+  void CheckReactionTriggerStrategies();
 
-  void SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior);
-  
-  void AddReactionaryBehavior(IReactionaryBehavior* behavior);
+  void SendDasTransitionMessage(const BehaviorRunningAndResumeInfo& oldBehaviorInfo,
+                                const BehaviorRunningAndResumeInfo& newBehaviorInfo);
   
   // Allow unity to set head angles and lift heights to preserve after reactionary behaviors
   void SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32 liftHeight);
   bool AreDefaultHeandAndLiftStateSet() { return _defaultHeadAngle != kIgnoreDefaultHeandAndLiftState;}
-
-  // check if there is a matching reactionary behavior which wants to run for the given event, and switch to
-  // it if so
-  template<typename EventType>
-  void ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event);
   
   // update the tapped object should its pose change
   void UpdateTappedObject();
@@ -246,18 +240,8 @@ private:
   // current running behavior
   // - - - - - - - - - - - - - - -
   
-  bool _runningReactionaryBehavior = false;
-  
-  // behavior currently running and responsible for controlling the robot
-  IBehavior* _currentBehavior  = nullptr;
-  
-  // this is the behavior to go back to after a reactionary behavior is completed
-  IBehavior* _behaviorToResume = nullptr;
+  std::unique_ptr<BehaviorRunningAndResumeInfo> _runningAndResumeInfo;
 
-  // Once we are done with reactionary behaviors, should we try to go back to _behaviorToResume? If any
-  // reactionary behavior we run says "no", this will get set to false, otherwise it will stay true
-  bool _shouldResumeBehaviorAfterReaction = true;
-  
   // current behavior chooser (weak_ptr pointing to one of the others)
   IBehaviorChooser* _currentChooserPtr = nullptr;
   
@@ -279,8 +263,8 @@ private:
   IBehaviorChooser* _meetCozmoChooser = nullptr;
   
   // list of behaviors that fire automatically as reactions to events
-  std::vector<IReactionaryBehavior*> _reactionaryBehaviors;
-  bool                               _reactionsEnabled = true;
+  using mapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
+  std::vector<mapEntry> _reactionTriggerMap;
   
   // time at which last chooser was selected
   float _lastChooserSwitchTime;

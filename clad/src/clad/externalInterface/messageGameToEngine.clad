@@ -481,11 +481,6 @@ message ActivateBehaviorChooser {
 }
 
 // ExecuteBehavior
-message ExecuteBehavior {
-  BehaviorType behaviorType
-}
-
-// ExecuteBehavior
 message ExecuteBehaviorByExecutableType {
   ExecutableBehaviorType behaviorType
 }
@@ -530,9 +525,9 @@ message RequestEnabledBehaviorList{
 
 
 // EnableReactionaryBehaviors
-message RequestEnableReactionaryBehavior{
+message RequestEnableReactionTrigger{
     string requesterID,
-    BehaviorType behavior,
+    ReactionTrigger trigger,
     bool enable
 }
 
@@ -848,7 +843,8 @@ message GetJsonDasLogsMessage {
 }
 
 // Msg used by maya (and SDK) to disable reaction behaviors.
-message EnableReactionaryBehaviors {
+message EnableAllReactionTriggers {
+  string enableID,
   bool enabled
 }
 

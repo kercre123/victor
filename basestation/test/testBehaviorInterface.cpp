@@ -10,13 +10,16 @@
  *
  **/
 
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "gtest/gtest.h"
+
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -32,7 +35,7 @@ class TestBehavior : public IBehavior
 public:
 
   TestBehavior(Robot& robot, const Json::Value& config)
-    :IBehavior(robot, config)
+    : IBehavior(robot, config)
     {
       if(robot.HasExternalInterface()) {
         SubscribeToTags({EngineToGameTag::Ping});
@@ -44,7 +47,7 @@ public:
   bool _stopped = false;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override {
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override {
     return true;
   }
 
@@ -128,7 +131,8 @@ TEST(BehaviorInterface, Create)
 
   EXPECT_FALSE( b.IsRunning() );
   EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
-  EXPECT_TRUE( b.IsRunnable(robot) );
+  BehaviorPreReqNone noPreReqs;
+  EXPECT_TRUE( b.IsRunnable(noPreReqs));
   EXPECT_FALSE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -712,7 +716,7 @@ public:
 
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override {
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override {
     return true;
   }
 

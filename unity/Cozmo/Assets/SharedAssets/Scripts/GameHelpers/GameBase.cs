@@ -71,7 +71,7 @@ public abstract class GameBase : MonoBehaviour {
   protected bool _ShowScoreboardOnComplete = true;
   protected bool _ShowEndWinnerSlide = false;
 
-  protected List<Anki.Cozmo.BehaviorType> _DisabledReactionaryBehaviors = new List<BehaviorType>();
+  protected List<Anki.Cozmo.ReactionTrigger> _DisabledReactionaryBehaviors = new List<ReactionTrigger>();
 
   private List<DifficultySelectOptionData> _DifficultyOptions;
 
@@ -130,23 +130,23 @@ public abstract class GameBase : MonoBehaviour {
   // called when the game starts to disable reactionary behaviors, then again when the game exits to re-enable them
   private void InitializeReactionaryBehaviorsForGameStart() {
     AddDisabledReactionaryBehaviors();
-    foreach (Anki.Cozmo.BehaviorType reactionaryBehavior in _DisabledReactionaryBehaviors) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, reactionaryBehavior, false);
+    foreach (Anki.Cozmo.ReactionTrigger reactionaryBehavior in _DisabledReactionaryBehaviors) {
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger(_kReactionaryBehaviorOwnerId, reactionaryBehavior, false);
     }
   }
 
   protected virtual void AddDisabledReactionaryBehaviors() {
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCubeMoved);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeObject);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeFace);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToFrustration);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPet);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.CubeMoved);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FacePositionUpdated);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.Frustration);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
   }
 
   private void ResetReactionaryBehaviorsForGameEnd() {
-    foreach (Anki.Cozmo.BehaviorType reactionaryBehavior in _DisabledReactionaryBehaviors) {
+    foreach (Anki.Cozmo.ReactionTrigger reactionaryBehavior in _DisabledReactionaryBehaviors) {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, reactionaryBehavior, true);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger(_kReactionaryBehaviorOwnerId, reactionaryBehavior, true);
       }
     }
   }
@@ -393,11 +393,11 @@ public abstract class GameBase : MonoBehaviour {
 
   }
 
-  public void PauseStateMachine(State.PauseReason reason, BehaviorType reactionaryBehavior) {
+  public void PauseStateMachine(State.PauseReason reason, ReactionTrigger reactionaryBehavior) {
     _StateMachine.Pause(reason, reactionaryBehavior);
   }
 
-  public void ResumeStateMachine(State.PauseReason reason, BehaviorType reactionaryBehavior) {
+  public void ResumeStateMachine(State.PauseReason reason, ReactionTrigger reactionaryBehavior) {
     _StateMachine.Resume(reason, reactionaryBehavior);
   }
 
@@ -739,7 +739,7 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     if (CurrentRobot != null) {
-      if (_StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.BehaviorType.NoneBehavior) {
+      if (_StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.ReactionTrigger.NoneTrigger) {
         // clears the action queue before quitting the game.
         CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
       }
@@ -1247,13 +1247,13 @@ public abstract class GameBase : MonoBehaviour {
     if (currState != null) {
       currentStateString = currState.GetType().ToString();
     }
-    DAS.Event("robot.interrupt", currentStateString, DASUtil.FormatExtraData(behaviorTransition.reactionaryBehaviorType.ToString()));
+    DAS.Event("robot.interrupt", currentStateString, DASUtil.FormatExtraData(behaviorTransition.reactionaryBehaviorTrigger.ToString()));
 
     if (behaviorTransition.behaviorStarted) {
-      PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorType);
+      PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorTrigger);
     }
     else {
-      ResumeStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorType);
+      ResumeStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorTrigger);
     }
   }
 

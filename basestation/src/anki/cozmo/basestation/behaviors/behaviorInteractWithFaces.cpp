@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -91,7 +92,7 @@ static_assert(NavMemoryMapTypes::IsSequentialArray(typesToBlockDriving),
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
-  : IBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("InteractWithFaces");
 }
@@ -129,10 +130,10 @@ IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInteractWithFaces::IsRunnableInternal(const Robot& robot) const
+bool BehaviorInteractWithFaces::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   _targetFace = Vision::UnknownFaceID;
-  SelectFaceToTrack(robot);
+  SelectFaceToTrack(preReqData.GetRobot());
 
   return _targetFace != Vision::UnknownFaceID;
 }

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToMotorCalibration_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToMotorCalibration_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -22,28 +22,27 @@ namespace Cozmo {
 
 class Robot;
   
-class BehaviorReactToMotorCalibration : public IReactionaryBehavior
+class BehaviorReactToMotorCalibration : public IBehavior
 {
 private:
-  using super = IReactionaryBehavior;
+  using super = IBehavior;
   
   friend class BehaviorFactory;
   BehaviorReactToMotorCalibration(Robot& robot, const Json::Value& config);
   
-public:
-  
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
-  virtual bool ShouldResumeLastBehavior() const override { return true; }
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
-  
+public:  
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
+
 protected:
   
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override { };
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override { };
 
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-  
+
   constexpr static f32 _kTimeout_sec = 5.;
+  
 };
   
 }

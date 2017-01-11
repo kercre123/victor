@@ -1,9 +1,0 @@
-{
-  "behaviorType": "ReactToPet",
-  "name": "ReactToPet",
-  "displayNameKey":"behavior.ReactToPet",
-  "behaviorGroups": [
-    "Reactionary"
-  ],
-  "disableByDefault": false
-}

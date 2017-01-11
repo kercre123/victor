@@ -362,8 +362,10 @@ protected:
 
   const Vision::FaceID_t GetLastObservedFaceID() const;
   
-  BehaviorType GetBehaviorType(const std::string& behaviorName) const;
+  BehaviorClass GetBehaviorClass(const std::string& behaviorName) const;
+  ReactionTrigger GetReactionTrigger(const std::string& triggerName) const;
 
+  
   // NVStorage
   const std::vector<u8>* GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const;
   void ClearReceivedNVStorageData(NVStorage::NVEntryTag tag);

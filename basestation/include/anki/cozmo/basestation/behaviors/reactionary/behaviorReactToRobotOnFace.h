@@ -13,30 +13,28 @@
 #ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnFace_H__
 #define __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnFace_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToRobotOnFace : public IReactionaryBehavior
+class BehaviorReactToRobotOnFace : public IBehavior
 {
 private:
-  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorReactToRobotOnFace(Robot& robot, const Json::Value& config);
   
 public:
-  
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
-  virtual bool ShouldResumeLastBehavior() const override { return false; }
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
-  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
+  
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
+
 
 protected:
-    
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
 
 private:
   void FlipOverIfNeeded(Robot& robot);

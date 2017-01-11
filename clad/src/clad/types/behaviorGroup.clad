@@ -9,8 +9,7 @@ namespace Cozmo {
 
 enum uint_8 BehaviorGroup {
 
-    Reactionary = 0,
-    MiniGame,
+    MiniGame= 0,
     RequestSpeedTap,
     RequestMemoryMatch,
     RequestKeepAway,

@@ -22,6 +22,7 @@
 #include "../behaviors/exploration/behaviorLookInPlaceMemoryMap.h"
 #include "../behaviors/exploration/behaviorThinkAboutBeacons.h"
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
+#include "anki/cozmo/basestation/behaviors/behaviorCantHandleTallStack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLiftLoadTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
@@ -41,8 +42,7 @@
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
-#include "anki/cozmo/basestation/behaviors/reactionary/behaviorCantHandleTallStack.h"
-#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactAcknowledgeCubeMoved.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/BehaviorReactToDoubleTap.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToFrustration.h"
@@ -50,7 +50,6 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPet.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPickup.h"
-#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/BehaviorReactToPyramid.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToReturnedToTreads.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnBack.h"
@@ -74,12 +73,18 @@
 namespace Anki {
 namespace Cozmo {
 
-
+namespace {
+static const char* kBehaviorClassKey = "behaviorClass";
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFactory::BehaviorFactory()
 {
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFactory::~BehaviorFactory()
 {
   // Delete all behaviors owned by the factory
@@ -91,293 +96,315 @@ BehaviorFactory::~BehaviorFactory()
     assert(behavior->IsOwnedByFactory());
     DeleteBehaviorInternal(behavior);
   }
-  
+    
   _nameToBehaviorMap.clear();
 }
 
 
-IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& robot, const Json::Value& config, NameCollisionRule nameCollisionRule)
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehavior* BehaviorFactory::CreateBehavior(const Json::Value& behaviorJson, Robot& robot, NameCollisionRule nameCollisionRule)
+{
+  
+  const Json::Value& behaviorTypeJson = behaviorJson[kBehaviorClassKey];
+  const char* behaviorTypeString = behaviorTypeJson.isString() ? behaviorTypeJson.asCString() : "";
+  
+  // Check to see if it's a scored behavior type
+  const BehaviorClass behaviorClass = BehaviorClassFromString(behaviorTypeString);
+  
+  if (behaviorClass != BehaviorClass::Count)
+  {
+    IBehavior* newBehavior = CreateBehavior(behaviorClass, robot, behaviorJson, nameCollisionRule);
+    return newBehavior;
+  }
+  
+  return nullptr;
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& robot, const Json::Value& config, NameCollisionRule nameCollisionRule)
 {
   IBehavior* newBehavior = nullptr;
   
   switch (behaviorType)
   {
-    case BehaviorType::NoneBehavior:
+    case BehaviorClass::NoneBehavior:
     {
       newBehavior = new BehaviorNone(robot, config);
       break;
     }
-    case BehaviorType::LookAround:
+    case BehaviorClass::LookAround:
     {
       newBehavior = new BehaviorLookAround(robot, config);
       break;
     }
-    case BehaviorType::InteractWithFaces:
+    case BehaviorClass::InteractWithFaces:
     {
       newBehavior = new BehaviorInteractWithFaces(robot, config);
       break;
     }
-    case BehaviorType::ReactToPickup:
-    {
-      newBehavior = new BehaviorReactToPickup(robot, config);
-      break;
-    }
-    case BehaviorType::RespondToRenameFace:
-    {
-      newBehavior = new BehaviorRespondToRenameFace(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToCliff:
-    {
-      newBehavior = new BehaviorReactToCliff(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToPoke:
-    {
-      newBehavior = new BehaviorReactToPoke(robot, config);
-      break;
-    }
-    case BehaviorType::PlayAnim:
+    case BehaviorClass::PlayAnim:
     {
       newBehavior = new BehaviorPlayAnimSequence(robot, config);
       break;
     }
-    case BehaviorType::PlayArbitraryAnim:
+    case BehaviorClass::PlayArbitraryAnim:
     {
       newBehavior = new BehaviorPlayArbitraryAnim(robot, config);
       break;
     }
-    case BehaviorType::PounceOnMotion:
+    case BehaviorClass::PounceOnMotion:
     {
       newBehavior = new BehaviorPounceOnMotion(robot, config);
       break;
     }
-    case BehaviorType::FindFaces:
+    case BehaviorClass::FindFaces:
     {
       newBehavior = new BehaviorFindFaces(robot, config);
       break;
     }
-    case BehaviorType::RequestGameSimple:
+    case BehaviorClass::RequestGameSimple:
     {
       newBehavior = new BehaviorRequestGameSimple(robot, config);
       break;
     }
-    case BehaviorType::ExploreLookAroundInPlace:
+    case BehaviorClass::ExploreLookAroundInPlace:
     {
       newBehavior = new BehaviorExploreLookAroundInPlace(robot, config);
       break;
     }
-    case BehaviorType::ExploreVisitPossibleMarker:
+    case BehaviorClass::ExploreVisitPossibleMarker:
     {
       newBehavior = new BehaviorExploreVisitPossibleMarker(robot, config);
       break;
     }
-    case BehaviorType::BringCubeToBeacon:
+    case BehaviorClass::BringCubeToBeacon:
     {
       newBehavior = new BehaviorExploreBringCubeToBeacon(robot, config);
       break;
     }
-    case BehaviorType::LookInPlaceMemoryMap:
+    case BehaviorClass::LookInPlaceMemoryMap:
     {
       newBehavior = new BehaviorLookInPlaceMemoryMap(robot, config);
       break;
     }
-    case BehaviorType::ThinkAboutBeacons:
+    case BehaviorClass::ThinkAboutBeacons:
     {
       newBehavior = new BehaviorThinkAboutBeacons(robot, config);
       break;
     }
-    case BehaviorType::VisitInterestingEdge:
+    case BehaviorClass::VisitInterestingEdge:
     {
       newBehavior = new BehaviorVisitInterestingEdge(robot, config);
       break;
     }
-    case BehaviorType::RollBlock:
+    case BehaviorClass::RollBlock:
     {
       newBehavior = new BehaviorRollBlock(robot, config);
       break;
     }
-    case BehaviorType::FactoryTest:
+    case BehaviorClass::FactoryTest:
     {
       newBehavior = new BehaviorFactoryTest(robot, config);
       break;
     }
-    case BehaviorType::FactoryCentroidExtractor:
+    case BehaviorClass::FactoryCentroidExtractor:
     {
       newBehavior = new BehaviorFactoryCentroidExtractor(robot, config);
       break;
     }
-    case BehaviorType::ReactToReturnedToTreads:
-    {
-      newBehavior = new BehaviorReactToReturnedToTreads(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToRobotOnBack:
-    {
-      newBehavior = new BehaviorReactToRobotOnBack(robot, config);
-      break;     
-    }
-    case BehaviorType::ReactToRobotOnFace:
-    {
-      newBehavior = new BehaviorReactToRobotOnFace(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToRobotOnSide:
-    {
-      newBehavior = new BehaviorReactToRobotOnSide(robot, config);
-      break;
-    }
-    case BehaviorType::DockingTestSimple:
+    case BehaviorClass::DockingTestSimple:
     {
       newBehavior = new BehaviorDockingTestSimple(robot, config);
       break;
     }
-    case BehaviorType::LiftLoadTest:
-    {
-      newBehavior = new BehaviorLiftLoadTest(robot, config);
-      break;
-    }
-    case BehaviorType::StackBlocks:
+    case BehaviorClass::StackBlocks:
     {
       newBehavior = new BehaviorStackBlocks(robot, config);
       break;
     }
-    case BehaviorType::PutDownBlock:
+    case BehaviorClass::PutDownBlock:
     {
       newBehavior = new BehaviorPutDownBlock(robot, config);
       break;
     }
-    case BehaviorType::ReactToOnCharger:
-    {
-      newBehavior = new BehaviorReactToOnCharger(robot, config);
-      break;
-    }
-    case BehaviorType::DriveOffCharger:
+    case BehaviorClass::DriveOffCharger:
     {
       newBehavior = new BehaviorDriveOffCharger(robot, config);
       break;
     }
-    case BehaviorType::PopAWheelie:
+    case BehaviorClass::PopAWheelie:
     {
       newBehavior = new BehaviorPopAWheelie(robot, config);
       break;
     }
-    case BehaviorType::AcknowledgeObject:
-    {
-      newBehavior = new BehaviorAcknowledgeObject(robot, config);
-      break;
-    }
-    case BehaviorType::AcknowledgeFace:
-    {
-      newBehavior = new BehaviorAcknowledgeFace(robot, config);
-      break;
-    }
-    case BehaviorType::DrivePath:
+    case BehaviorClass::DrivePath:
     {
       newBehavior = new BehaviorDrivePath(robot, config);
       break;
     }
-    case BehaviorType::ReactToUnexpectedMovement:
-    {
-      newBehavior = new BehaviorReactToUnexpectedMovement(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToMotorCalibration:
-    {
-      newBehavior = new BehaviorReactToMotorCalibration(robot, config);
-      break;
-    }
-    case BehaviorType::PickUpCube:
+    case BehaviorClass::PickUpCube:
     {
       newBehavior = new BehaviorPickUpCube(robot, config);
       break;
     }
-    case BehaviorType::ReactToCubeMoved:
-    {
-      newBehavior = new BehaviorReactAcknowledgeCubeMoved(robot, config);
-      break;
-    }
-    case BehaviorType::KnockOverCubes:
+    case BehaviorClass::KnockOverCubes:
     {
       newBehavior = new BehaviorKnockOverCubes(robot, config);
       break;
     }
-    case BehaviorType::BuildPyramid:
+    case BehaviorClass::BuildPyramid:
     {
       newBehavior = new BehaviorBuildPyramid(robot, config);
       break;
     }
-    case BehaviorType::BuildPyramidBase:
+    case BehaviorClass::BuildPyramidBase:
     {
       newBehavior = new BehaviorBuildPyramidBase(robot, config);
       break;
     }
-    case BehaviorType::ReactToFrustration:
-    {
-      newBehavior = new BehaviorReactToFrustration(robot, config);
-      break;
-    }
-    case BehaviorType::CantHandleTallStack:
+    case BehaviorClass::CantHandleTallStack:
     {
       newBehavior = new BehaviorCantHandleTallStack(robot, config);
       break;
     }
-    case BehaviorType::OnboardingShowCube:
+    case BehaviorClass::OnboardingShowCube:
     {
       newBehavior = new BehaviorOnboardingShowCube(robot, config);
       break;
     }
-    case BehaviorType::ReactToSparked:
-    {
-      newBehavior = new BehaviorReactToSparked(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToStackOfCubes:
-    {
-      newBehavior = new BehaviorReactToStackOfCubes(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToPyramid:
-    {
-      newBehavior = new BehaviorReactToPyramid(robot, config);
-      break;
-    }
-    case BehaviorType::OnConfigSeen:
+    case BehaviorClass::OnConfigSeen:
     {
       newBehavior = new BehaviorOnConfigSeen(robot, config);
       break;
     }
-    case BehaviorType::ReactToPet:
-    {
-      newBehavior = new BehaviorReactToPet(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToDoubleTap:
-    {
-      newBehavior = new BehaviorReactToDoubleTap(robot, config);
-      break;
-    }
-    case BehaviorType::LookForFaceAndCube:
+    case BehaviorClass::LookForFaceAndCube:
     {
       newBehavior = new BehaviorLookForFaceAndCube(robot, config);
       break;
     }
-    case BehaviorType::CubeLiftWorkout:
+    case BehaviorClass::CubeLiftWorkout:
     {
       newBehavior = new BehaviorCubeLiftWorkout(robot, config);
       break;
     }
-    case BehaviorType::CheckForStackAtInterval:
+    case BehaviorClass::CheckForStackAtInterval:
     {
       newBehavior = new BehaviorCheckForStackAtInterval(robot, config);
       break;
     }
-    case BehaviorType::EnrollFace:
+    case BehaviorClass::EnrollFace:
     {
       newBehavior = new BehaviorEnrollFace(robot, config);
       break;
     }
-    case BehaviorType::Count:
+    case BehaviorClass::LiftLoadTest:
+    {
+      newBehavior = new BehaviorLiftLoadTest(robot, config);
+      break;
+    }
+    case BehaviorClass::RespondToRenameFace:
+    {
+      newBehavior = new BehaviorRespondToRenameFace(robot, config);
+      break;
+    }
+      
+    ////////////
+    // Behaviors that are used by reaction triggers
+    ////////////
+
+    case BehaviorClass::ReactToPickup:
+    {
+      newBehavior = new BehaviorReactToPickup(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToCliff:
+    {
+      newBehavior = new BehaviorReactToCliff(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToReturnedToTreads:
+    {
+      newBehavior = new BehaviorReactToReturnedToTreads(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToRobotOnBack:
+    {
+      newBehavior = new BehaviorReactToRobotOnBack(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToRobotOnFace:
+    {
+      newBehavior = new BehaviorReactToRobotOnFace(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToRobotOnSide:
+    {
+      newBehavior = new BehaviorReactToRobotOnSide(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToOnCharger:
+    {
+      newBehavior = new BehaviorReactToOnCharger(robot, config);
+      break;
+    }
+    case BehaviorClass::AcknowledgeObject:
+    {
+      newBehavior = new BehaviorAcknowledgeObject(robot, config);
+      break;
+    }
+    case BehaviorClass::AcknowledgeFace:
+    {
+      newBehavior = new BehaviorAcknowledgeFace(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToUnexpectedMovement:
+    {
+      newBehavior = new BehaviorReactToUnexpectedMovement(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToMotorCalibration:
+    {
+      newBehavior = new BehaviorReactToMotorCalibration(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToCubeMoved:
+    {
+      newBehavior = new BehaviorAcknowledgeCubeMoved(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToFrustration:
+    {
+      newBehavior = new BehaviorReactToFrustration(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToSparked:
+    {
+      newBehavior = new BehaviorReactToSparked(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToStackOfCubes:
+    {
+      newBehavior = new BehaviorReactToStackOfCubes(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToPyramid:
+    {
+      newBehavior = new BehaviorReactToPyramid(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToPet:
+    {
+      newBehavior = new BehaviorReactToPet(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToDoubleTap:
+    {
+      newBehavior = new BehaviorReactToDoubleTap(robot, config);
+      break;
+    }
+    case BehaviorClass::Count:
     {
       PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.BadType", "Unexpected type '%s'", EnumToString(behaviorType));
       break;
@@ -385,38 +412,34 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
   }
   
   
-  if (newBehavior)
-  {
-    newBehavior->SetBehaviorType(behaviorType);
-    //Handle disable by default
-    if(newBehavior->IsReactionary()){
-      IReactionaryBehavior* reactionary = newBehavior->AsReactionaryBehavior();
-      reactionary->HandleDisableByDefault(robot);
-    }
+  if(newBehavior != nullptr){
+    newBehavior->SetBehaviorClass(behaviorType);
     newBehavior = AddToFactory(newBehavior, nameCollisionRule);
   }
-    
-  if (newBehavior == nullptr)
-  {
+  
+  if (newBehavior == nullptr){
     PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.Failed",
-                      "Failed to create Behavior of type '%s'", BehaviorTypeToString(behaviorType));
+                      "Failed to create Behavior of type '%s'", BehaviorClassToString(behaviorType));
+    return nullptr;
   }
+  
   
   return newBehavior;
 }
+
   
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* BehaviorFactory::AddToFactory(IBehavior* newBehavior, NameCollisionRule nameCollisionRule)
 {
   assert(newBehavior);
   assert(!newBehavior->_isOwnedByFactory);
-  
   newBehavior->_isOwnedByFactory = true;
+  
   const std::string& newBehaviorName = newBehavior->GetName();
-  
   auto newEntry = _nameToBehaviorMap.insert( NameToBehaviorMap::value_type(newBehaviorName, newBehavior) );
-  const bool addedNewEntry = newEntry.second;
   
+  const bool addedNewEntry = newEntry.second;
+
   if (addedNewEntry)
   {
     PRINT_NAMED_INFO("BehaviorFactory::AddToFactory", "Added new behavior '%s' %p", newBehaviorName.c_str(), newBehavior);
@@ -424,7 +447,6 @@ IBehavior* BehaviorFactory::AddToFactory(IBehavior* newBehavior, NameCollisionRu
   else
   {
     // map insert failed (found an existing entry), handle this name collision
-    
     IBehavior* oldBehavior = newEntry.first->second;
     
     switch(nameCollisionRule)
@@ -464,32 +486,9 @@ IBehavior* BehaviorFactory::AddToFactory(IBehavior* newBehavior, NameCollisionRu
   
   return newBehavior;
 }
-
-
-static const char* kBehaviorTypeKey = "behaviorType";
-  
-  
-IBehavior* BehaviorFactory::CreateBehavior(const Json::Value& behaviorJson, Robot& robot, NameCollisionRule nameCollisionRule)
-{
-  // Find the behavior type
-  
-  const Json::Value& behaviorTypeJson = behaviorJson[kBehaviorTypeKey];
-  const char* behaviorTypeString = behaviorTypeJson.isString() ? behaviorTypeJson.asCString() : "";
-  
-  const BehaviorType behaviorType = BehaviorTypeFromString(behaviorTypeString);
-  
-  if (behaviorType == BehaviorType::Count)
-  {
-    PRINT_NAMED_WARNING("BehaviorFactory.CreateBehavior.UnknownType", "Unknown type '%s'", behaviorTypeString);
-    return nullptr;
-  }
-  
-  IBehavior* newBehavior = CreateBehavior(behaviorType, robot, behaviorJson, nameCollisionRule);
-  
-  return newBehavior;
-}
  
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFactory::DestroyBehavior(IBehavior* behavior)
 {
   // we assume all behaviors are created and owned by factory so this should always be true
@@ -500,13 +499,15 @@ void BehaviorFactory::DestroyBehavior(IBehavior* behavior)
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFactory::SafeDestroyBehavior(IBehavior*& behaviorPtrRef)
 {
   DestroyBehavior(behaviorPtrRef);
   behaviorPtrRef = nullptr;
 }
   
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFactory::DeleteBehaviorInternal(IBehavior* behavior)
 {
   behavior->_isOwnedByFactory = false;
@@ -514,16 +515,18 @@ void BehaviorFactory::DeleteBehaviorInternal(IBehavior* behavior)
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFactory::RemoveBehaviorFromMap(IBehavior* behavior)
 {
-  const auto& it = _nameToBehaviorMap.find(behavior->GetName());
-  if (it != _nameToBehaviorMap.end())
+  // check the scored behavior map
+  const auto& scoredIt = _nameToBehaviorMap.find(behavior->GetName());
+  if (scoredIt != _nameToBehaviorMap.end())
   {
     // check it's the same pointer
-    IBehavior* existingBehavior = it->second;
+    IBehavior* existingBehavior = scoredIt->second;
     if (existingBehavior == behavior)
     {
-      _nameToBehaviorMap.erase(it);
+      _nameToBehaviorMap.erase(scoredIt);
       return true;
     }
   }
@@ -531,34 +534,24 @@ bool BehaviorFactory::RemoveBehaviorFromMap(IBehavior* behavior)
   return false;
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* BehaviorFactory::FindBehaviorByName(const std::string& inName) const
 {
   IBehavior* foundBehavior = nullptr;
   
-  auto it = _nameToBehaviorMap.find(inName);
-  if (it != _nameToBehaviorMap.end())
+  auto scoredIt = _nameToBehaviorMap.find(inName);
+  if (scoredIt != _nameToBehaviorMap.end())
   {
-    foundBehavior = it->second;
+    foundBehavior = scoredIt->second;
+    return foundBehavior;
   }
   
-  return foundBehavior;
-}
-
-  
-IBehavior* BehaviorFactory::FindBehaviorByType(const BehaviorType& type) const
-{
-  for(const auto behavior : _nameToBehaviorMap)
-  {
-    if(behavior.second->GetType() == type)
-    {
-      return behavior.second;
-    }
-  }
   return nullptr;
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* BehaviorFactory::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {
   for(const auto behavior : _nameToBehaviorMap)
@@ -568,6 +561,7 @@ IBehavior* BehaviorFactory::FindBehaviorByExecutableType(ExecutableBehaviorType 
       return behavior.second;
     }
   }
+  
   return nullptr;
 }
 

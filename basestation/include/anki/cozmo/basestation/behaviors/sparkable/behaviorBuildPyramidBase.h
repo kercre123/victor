@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorBuildPyramidBase_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -40,6 +40,8 @@ protected:
 
   
 public:
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  
   // Match music Rounds to enum values - starts at 1 to match rounds set up
   // in the current audio sound banks
   enum class MusicState{
@@ -50,7 +52,6 @@ public:
     PyramidCompleteFlourish
   };
   
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
   

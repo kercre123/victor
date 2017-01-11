@@ -557,7 +557,7 @@ public class MockRobot : IRobot {
     RobotEngineManager.Instance.MockCallback(message, 0.5f);
   }
 
-  public void ExecuteBehavior(Anki.Cozmo.BehaviorType type) {
+  public void ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType type) {
     // Do nothing
   }
 
@@ -879,7 +879,9 @@ public class MockRobot : IRobot {
     get; set;
   }
 
-  public BehaviorType CurrentBehaviorType { get; set; }
+  public BehaviorClass CurrentBehaviorClass { get; set; }
+  public ReactionTrigger CurrentReactionTrigger { get; set; }
+
 
   public string CurrentBehaviorName { get; set; }
 
@@ -960,11 +962,11 @@ public class MockRobot : IRobot {
 
   }
 
-  public void EnableReactionaryBehaviors(bool enable) {
+  public void EnableAllReactionTriggers(bool enable) {
 
   }
 
-  public void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable) {
+  public void RequestEnableReactionTrigger(string id, Anki.Cozmo.ReactionTrigger behaviorType, bool enable) {
 
   }
 

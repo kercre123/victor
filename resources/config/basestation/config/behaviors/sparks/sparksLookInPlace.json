@@ -1,5 +1,5 @@
 {
-  "behaviorType": "ExploreLookAroundInPlace",
+  "behaviorClass": "ExploreLookAroundInPlace",
   "executableBehaviorType": "LookAroundInPlace",
   "name": "SparkedLookAroundInPlace",
   "flatScore" : 2.0,

@@ -17,7 +17,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/moodSystem/emotionAffector.h"
 #include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
@@ -392,7 +392,7 @@ TEST(MoodManager, DecayResetFromAwards)
 
 static const char* kTestBehavior1Json =
 "{"
-"   \"behaviorType\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"NoneBehavior\","
 "   \"name\" : \"TestHappy\","
 "   \"repetitionPenalty\" :"
 "   {"
@@ -413,7 +413,7 @@ static const char* kTestBehavior1Json =
 
 static const char* kTestBehavior2Json =
 "{"
-"   \"behaviorType\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"NoneBehavior\","
 "   \"name\" : \"TestCalm\","
 "   \"repetitionPenalty\" :"
 "   {"

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequence_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequence_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -31,7 +31,7 @@ public:
   
   virtual ~BehaviorPlayAnimSequence();
   
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
 protected:

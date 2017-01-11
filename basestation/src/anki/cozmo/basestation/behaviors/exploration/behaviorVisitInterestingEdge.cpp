@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -137,10 +138,12 @@ BehaviorVisitInterestingEdge::~BehaviorVisitInterestingEdge()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorVisitInterestingEdge::IsRunnableInternal(const Robot& robot) const
+bool BehaviorVisitInterestingEdge::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   ANKI_CPU_PROFILE("BehaviorVisitInterestingEdge::IsRunnableInternal"); // we are doing some processing now, keep an eye
 
+  const Robot& robot = preReqData.GetRobot();
+  
   // clear debug render from previous runs
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
   

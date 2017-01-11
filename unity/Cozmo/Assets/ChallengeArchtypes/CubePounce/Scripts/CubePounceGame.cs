@@ -78,7 +78,7 @@ namespace Cozmo.Minigame.CubePounce {
 
     protected override void CleanUpOnDestroy() {
       if (null != CurrentRobot) {
-        CurrentRobot.EnableReactionaryBehaviors(true);
+        CurrentRobot.EnableAllReactionTriggers(true);
         CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetOut, null);
         CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
       }
@@ -300,10 +300,10 @@ namespace Cozmo.Minigame.CubePounce {
     protected override void AddDisabledReactionaryBehaviors() {
       base.AddDisabledReactionaryBehaviors();
 
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPickup);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToReturnedToTreads);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.CliffDetected);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.RobotPickedUp);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.ReturnedToTreads);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.UnexpectedMovement);
     }
 
     protected override void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {

@@ -15,6 +15,7 @@
 #include "behaviorExploreVisitPossibleMarker.h"
 
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -52,10 +53,10 @@ BehaviorExploreVisitPossibleMarker::~BehaviorExploreVisitPossibleMarker()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const Robot& robot) const
+bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // check whiteboard for known markers
-  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = preReqData.GetRobot().GetAIComponent().GetWhiteboard();
   whiteboard.GetPossibleObjectsWRTOrigin(_possibleObjects);
 
   const bool canRun = !_possibleObjects.empty(); // TODO: consider distance limit

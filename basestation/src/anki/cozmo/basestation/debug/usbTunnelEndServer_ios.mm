@@ -222,8 +222,8 @@
   {
     bool is_enabled = [path containsString:@"true"];
     Anki::Cozmo::ExternalInterface::MessageGameToEngine reaction_enable_msg;
-    Anki::Cozmo::ExternalInterface::EnableReactionaryBehaviors reaction_enable_content(is_enabled);
-    reaction_enable_msg.Set_EnableReactionaryBehaviors(std::move(reaction_enable_content));
+    Anki::Cozmo::ExternalInterface::EnableAllReactionTriggers reaction_enable_content("sdk",is_enabled);
+    reaction_enable_msg.Set_EnableAllReactionTriggers(std::move(reaction_enable_content));
     external_interface->BroadcastDeferred(std::move(reaction_enable_msg));
     return YES;
   }

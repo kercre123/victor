@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigTypeHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
@@ -38,9 +39,9 @@ static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
 static const float kSecondsBetweenBlockWorldChecks = 0.5f;
   
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _lastBlockWorldCheck_s(0)
-  , _shouldPutCubeBackDown(true)
+: IBehavior(robot, config)
+, _lastBlockWorldCheck_s(0)
+, _shouldPutCubeBackDown(true)
 {
   SetDefaultName("BehaviorPickUpCube");
 
@@ -104,8 +105,9 @@ void BehaviorPickUpCube::StopInternalFromDoubleTap(Robot& robot)
   
 }
 
-bool BehaviorPickUpCube::IsRunnableInternal(const Robot& robot) const
+bool BehaviorPickUpCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
   // check even if we haven't seen a block so that we can pickup blocks we know of
   // that are outside FOV
   TimeStamp_t currentTime_s = robot.GetLastMsgTimestamp()/1000;

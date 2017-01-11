@@ -132,7 +132,7 @@ namespace Cozmo {
         CloseGoToSleepDialog();
         CloseConfirmSleepDialog();
 
-        DAS.Debug("PauseManager.HandleReactionaryBehavior.StopSleep", "Transition to: " + message.reactionaryBehaviorType.ToString());
+        DAS.Debug("PauseManager.HandleReactionaryBehavior.StopSleep", "Transition to: " + message.reactionaryBehaviorTrigger.ToString());
       }
     }
 
@@ -203,11 +203,9 @@ namespace Cozmo {
     }
 
     public void StartPlayerInducedSleep(bool fromCharger) {
-      if (!fromCharger) {
-        Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
-        if (null != robot) {
-          robot.EnableReactionaryBehaviors(false);
-        }
+      Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
+      if (null != robot) {
+        robot.EnableAllReactionTriggers(false);
       }
       StartIdleTimeout(Settings.PlayerSleepCozmo_TimeTilSleep_sec, Settings.PlayerSleepCozmo_TimeTilDisconnect_sec);
       OpenGoToSleepDialogAndFreezeUI();
@@ -272,7 +270,7 @@ namespace Cozmo {
 
       Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
-        robot.EnableReactionaryBehaviors(true);
+        robot.EnableAllReactionTriggers(true);
       }
     }
 

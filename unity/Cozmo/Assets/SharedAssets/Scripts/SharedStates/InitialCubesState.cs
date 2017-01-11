@@ -45,7 +45,7 @@ public class InitialCubesState : State {
     CheckForNewlySeenCubes();
   }
 
-  public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+  public override void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
     // Do nothing
     UpdateUI(0);
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
@@ -53,7 +53,7 @@ public class InitialCubesState : State {
     }
   }
 
-  public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+  public override void Resume(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
     // Reset cozmo's head
     SetupRobot();
   }

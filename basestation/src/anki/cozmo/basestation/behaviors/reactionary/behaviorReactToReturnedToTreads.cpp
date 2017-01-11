@@ -22,35 +22,19 @@ namespace Anki {
 namespace Cozmo {
   
 BehaviorReactToReturnedToTreads::BehaviorReactToReturnedToTreads(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToReturnedToTreads");
-  
-  SubscribeToTriggerTags({
-    EngineToGameTag::RobotOffTreadsStateChanged
-  });
+
 }
 
-bool BehaviorReactToReturnedToTreads::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event,
-                                                  const Robot& robot)
-{
-  if( event.GetTag() != EngineToGameTag::RobotOffTreadsStateChanged ) {
-    PRINT_NAMED_ERROR("BehaviorReactToReturnedToTreads.ShouldRunForEvent.InvalidTag",
-                      "Received trigger event with unhandled tag %hhu",
-                      event.GetTag());
-    return false;
-  }
   
-  return event.Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads;
-} // ShouldRunForEvent()
-  
-  
-bool BehaviorReactToReturnedToTreads::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToReturnedToTreads::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
 
-Result BehaviorReactToReturnedToTreads::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToReturnedToTreads::InitInternal(Robot& robot)
 {
   // Wait for a bit to allow pitch to correct
   StartActing(new WaitAction(robot, 0.5f),
@@ -74,7 +58,7 @@ void BehaviorReactToReturnedToTreads::CheckForHighPitch(Robot& robot)
   }
 }
 
-void BehaviorReactToReturnedToTreads::StopInternalReactionary(Robot& robot)
+void BehaviorReactToReturnedToTreads::StopInternal(Robot& robot)
 {
 }
 

@@ -1,8 +1,0 @@
-{
-  "behaviorType": "ReactToRobotOnSide",
-  "displayNameKey":"behavior.ReactToOnSide",
-  "behaviorGroups": [
-    "Reactionary"
-  ],
-  "disableByDefault": false
-}

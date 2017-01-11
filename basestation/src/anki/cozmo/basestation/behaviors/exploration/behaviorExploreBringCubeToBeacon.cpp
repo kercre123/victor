@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -175,10 +176,10 @@ BehaviorExploreBringCubeToBeacon::~BehaviorExploreBringCubeToBeacon()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) const
+bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   _candidateObjects.clear();
-  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = preReqData.GetRobot().GetAIComponent().GetWhiteboard();
   
   // check that we have an active beacon
   const AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
@@ -207,7 +208,8 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) co
     // so that we don't go into a loop on pick up
     for( const AIWhiteboard::ObjectInfo& objectInfo : cubesOutOfBeacons )
     {
-      const ObservableObject* objPtr = robot.GetBlockWorld().GetObjectByID( objectInfo.id, objectInfo.family );
+      const ObservableObject* objPtr = preReqData.GetRobot().GetBlockWorld().
+                                        GetObjectByID( objectInfo.id, objectInfo.family );
       if ( nullptr != objPtr )
       {
         const Pose3d& currentPose = objPtr->GetPose();

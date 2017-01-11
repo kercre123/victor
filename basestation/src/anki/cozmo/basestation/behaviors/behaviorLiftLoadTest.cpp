@@ -33,6 +33,17 @@
 
 #define END_TEST_IN_HANDLER(RESULT, NAME) EndAttempt(robot, RESULT, NAME); return;
 
+namespace{
+  // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
+  // All args following the first are passed directly to the chosen print macro
+#define BEHAVIOR_VERBOSE_PRINT(_BEHAVIORDEF, ...) do { \
+if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
+else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
+} while(0) \
+
+}
+
+
 namespace Anki {
   namespace Cozmo {
     
@@ -62,14 +73,14 @@ namespace Anki {
       });
     }
     
-    bool BehaviorLiftLoadTest::IsRunnableInternal(const Robot& robot) const
+    bool BehaviorLiftLoadTest::IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const
     {
       return _canRun && (_currentState == State::Init || _currentState == State::TestComplete);
     }
     
     Result BehaviorLiftLoadTest::InitInternal(Robot& robot)
     {
-      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
+      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("LiftLoadTest",false);
 
       _abortTest = false;
       _currentState = State::Init;
@@ -190,7 +201,7 @@ namespace Anki {
     
     void BehaviorLiftLoadTest::StopInternal(Robot& robot)
     {
-      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(true);
+      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("LiftLoadTest", true);
     }
     
     void BehaviorLiftLoadTest::SetCurrState(State s)

@@ -205,7 +205,7 @@ void AIGoal::Exit(Robot& robot)
   {
     robot.GetLightsComponent().ClearAllTapInteractionObjects();
     
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior("ObjectTapInteraction", BehaviorType::ReactToCubeMoved, true);
+    robot.GetBehaviorManager().RequestEnableReactionTrigger("ObjectTapInteraction", ReactionTrigger::CubeMoved, true);
     
     robot.GetBehaviorManager().LeaveObjectTapInteraction();
   }

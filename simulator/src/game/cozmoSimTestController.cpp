@@ -41,21 +41,21 @@ namespace Anki {
   void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
   {
     // by default we don't want pick these reactions, you can override this function if you tests needs them
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
                                                          "CozmoSimTestController",
-                                                         BehaviorType::ReactToPickup,
+                                                         ReactionTrigger::RobotPickedUp,
                                                          false)));
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
                                                          "CozmoSimTestController",
-                                                         BehaviorType::ReactToCubeMoved,
+                                                         ReactionTrigger::CubeMoved,
                                                          false)));
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
                                                          "CozmoSimTestController",
-                                                         BehaviorType::AcknowledgeObject,
+                                                         ReactionTrigger::ObjectPositionUpdated,
                                                          false)));
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
                                                          "CozmoSimTestController",
-                                                         BehaviorType::ReactToReturnedToTreads,
+                                                         ReactionTrigger::ReturnedToTreads,
                                                          false)));
 
   }

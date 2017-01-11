@@ -17,7 +17,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
@@ -49,7 +49,7 @@ protected:
 public:
 
   virtual bool CarryingObjectHandledInternally() const override { return false;}
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
     
 protected:
 

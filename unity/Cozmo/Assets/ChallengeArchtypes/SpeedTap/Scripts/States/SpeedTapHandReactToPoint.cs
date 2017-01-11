@@ -128,7 +128,7 @@ namespace SpeedTap {
       base.Exit();
     }
 
-    public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+    public override void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
       // COZMO-2033; some of the win game animations cause Cozmo's cliff sensor to trigger
       // So in those cases don't show the "Cozmo Moved; Quit Game" dialog
       if (!_IsPlayingWinGameAnimation) {

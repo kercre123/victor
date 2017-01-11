@@ -43,7 +43,7 @@ static const char* kMaxTimeBeforeTimeoutSecKey = "Timeout_Sec";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("OnboardingShowCubes");
   
@@ -61,7 +61,7 @@ BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json:
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnboardingShowCube::IsRunnableInternal(const Robot& robot) const
+bool BehaviorOnboardingShowCube::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   // behavior will be killed by unity, the only thing that can start it...
   return true;
@@ -107,14 +107,14 @@ void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, co
     const ExternalInterface::ReactionaryBehaviorTransition& msg = event.GetData().Get_ReactionaryBehaviorTransition();
     if( msg.behaviorStarted &&  _state != State::ErrorCozmo && _state != State::Inactive && _state != State::ErrorFinal)
     {
-      switch (msg.reactionaryBehaviorType)
+      switch (msg.reactionaryBehaviorTrigger)
       {
-        case BehaviorType::ReactToCliff:
-        case BehaviorType::ReactToPickup:
-        case BehaviorType::ReactToRobotOnSide:
-        case BehaviorType::ReactToRobotOnBack:
-        case BehaviorType::ReactToRobotOnFace:
-        case BehaviorType::ReactToUnexpectedMovement:
+        case ReactionTrigger::CliffDetected:
+        case ReactionTrigger::RobotPickedUp:
+        case ReactionTrigger::RobotOnSide:
+        case ReactionTrigger::RobotOnBack:
+        case ReactionTrigger::RobotOnFace:
+        case ReactionTrigger::UnexpectedMovement:
         {
           TransitionToErrorState(State::ErrorCozmo,robot);
           break;
@@ -424,11 +424,11 @@ bool BehaviorOnboardingShowCube::IsSequenceComplete()
 void BehaviorOnboardingShowCube::EnableSpecificReactionaryBehavior(Robot& robot, bool enable)
 {
   BehaviorManager& mgr = robot.GetBehaviorManager();
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::AcknowledgeFace, enable);
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::AcknowledgeObject, enable);
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToCubeMoved, enable);
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToFrustration, enable);
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToPet, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::FacePositionUpdated, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::ObjectPositionUpdated, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::CubeMoved, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::Frustration, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::PetInitialDetection, enable);
 }
 
   

@@ -18,6 +18,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -72,7 +73,7 @@ BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) const
+bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
   // mapped the floor around me 'recently'.
@@ -87,7 +88,7 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) co
   {
     // check distance to recent location (if can wrt robot)
     Pose3d distancePose;
-    if( recentLocation.GetWithRespectTo(robot.GetPose(), distancePose) )
+    if( recentLocation.GetWithRespectTo(preReqData.GetRobot().GetPose(), distancePose) )
     {
       // if close to any recent location, flag
       const float distSQ = distancePose.GetTranslation().LengthSq();

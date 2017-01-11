@@ -98,7 +98,7 @@ namespace Anki {
       void SetShouldCheckForObjectOnTopOf(const bool b) { _checkForObjectOnTopOf = b; }
       
       // Whether or not to suppress the given behavior during this action
-      void SetShouldSuppressReactionaryBehavior(BehaviorType behavior) { _behaviorsToSuppress.insert(behavior); }
+      void SetShouldSuppressReactionaryBehavior(ReactionTrigger behavior) { _reactionTriggersToSuppress.insert(behavior); }
       
       struct PreActionPoseInput
       {
@@ -225,7 +225,7 @@ namespace Anki {
       bool                       _checkForObjectOnTopOf          = true;
       bool                       _doLiftLoadCheck                = false;
       LiftLoadState              _liftLoadState                  = LiftLoadState::UNKNOWN;
-      std::set<BehaviorType>     _behaviorsToSuppress;
+      std::set<ReactionTrigger>  _reactionTriggersToSuppress;
       
     private:
     

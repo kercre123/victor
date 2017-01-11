@@ -7,7 +7,7 @@
 {
   "name": "PutDownDispatch_LookForFaceAndCube",
   
-  "behaviorType": "LookForFaceAndCube",
+  "behaviorClass": "LookForFaceAndCube",
   "displayNameKey":"behavior.LookForFaceAndCube",
   "flatScore": 1.0,
   "behaviorGroups": [

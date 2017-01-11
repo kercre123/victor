@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorCheckForStackAtInterval.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -47,12 +48,12 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(Robot& robot, c
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCheckForStackAtInterval::IsRunnableInternal(const Robot& robot) const
+bool BehaviorCheckForStackAtInterval::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currTime > _nextCheckTime_s)
   {
-    UpdateTargetBlocks(robot);
+    UpdateTargetBlocks(preReqData.GetRobot());
     const bool hasBlocks = !_knownBlockIDs.empty();
     return hasBlocks;
   }

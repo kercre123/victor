@@ -1,5 +1,5 @@
 {
-  "behaviorType": "FindFaces",
+  "behaviorClass": "FindFaces",
   "executableBehaviorType": "FindFaces",
   "name": "findFaces_socialize",
   "displayNameKey":"behavior.LookingForFaces",

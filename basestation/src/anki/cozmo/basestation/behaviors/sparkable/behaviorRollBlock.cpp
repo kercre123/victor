@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
@@ -38,9 +39,9 @@ CONSOLE_VAR(f32, kBRB_MaxTowardFaceAngle_deg, "Behavior.RollBlock", 90.f);
 CONSOLE_VAR(s32, kBRB_MaxRollRetries,         "Behavior.RollBlock", 1);
   
 BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _isBlockRotationImportant(true)
-  , _robot(robot)
+: IBehavior(robot, config)
+, _isBlockRotationImportant(true)
+, _robot(robot)
 {
   SetDefaultName("RollBlock");
 
@@ -48,9 +49,9 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   _isBlockRotationImportant = config.get(kIsBlockRotationImportant, true).asBool();
 }
 
-bool BehaviorRollBlock::IsRunnableInternal(const Robot& robot) const
+bool BehaviorRollBlock::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
-  UpdateTargetBlock(robot);
+  UpdateTargetBlock(preReqData.GetRobot());
   
   return _targetBlock.IsSet() || IsActing();
 }

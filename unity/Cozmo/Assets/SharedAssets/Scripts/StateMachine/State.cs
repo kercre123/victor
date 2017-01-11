@@ -32,11 +32,11 @@ public class State {
     DAS.Info("State.Exit", this.GetType().ToString());
   }
 
-  public virtual void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+  public virtual void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
     ShowDontMoveCozmoView();
   }
 
-  public virtual void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+  public virtual void Resume(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
     // Do nothing
   }
 

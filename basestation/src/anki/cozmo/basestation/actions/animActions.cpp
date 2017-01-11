@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

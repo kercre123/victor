@@ -83,10 +83,10 @@ public class ConsoleLogPane : MonoBehaviour {
       var game = HomeHub.Instance.MiniGameInstance;
       if (game != null) {
         if (game.Paused == false && enable) {
-          game.PauseStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.BehaviorType.NoneBehavior);
+          game.PauseStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.ReactionTrigger.NoneTrigger);
         }
         else if (game.Paused && !enable) {
-          game.ResumeStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.BehaviorType.NoneBehavior);
+          game.ResumeStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.ReactionTrigger.NoneTrigger);
         }
       }
     }

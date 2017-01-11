@@ -56,11 +56,11 @@ void SdkStatus::StopRobotDoingAnything()
   using GToE = ExternalInterface::MessageGameToEngine;
   
   // Disable reactionary behaviors
-  _externalInterface->Broadcast( GToE(ExternalInterface::EnableReactionaryBehaviors(false)) );
+  _externalInterface->Broadcast( GToE(ExternalInterface::EnableAllReactionTriggers("sdk", false)) );
   
   // Clear Behaviors
   _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)) );
-  _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehavior(BehaviorType::NoneBehavior)) );
+  _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior)) );
   
   // Turn off all Cube Lights
   _externalInterface->Broadcast( GToE(ExternalInterface::EnableLightStates(false, -1)) );

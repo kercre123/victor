@@ -16,7 +16,8 @@
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -489,7 +490,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
     hasChosenBehavior = true;
 
     // if the picked behavior is not good, we want a new goal too
-    if ( (chosenBehavior == nullptr) || (chosenBehavior->GetType() == BehaviorType::NoneBehavior))
+    if ( (chosenBehavior == nullptr) || (chosenBehavior->GetClass() == BehaviorClass::NoneBehavior))
     {
       getNewGoal = true;
       isCurrentAllowedToBePicked = false;
@@ -555,7 +556,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
         // The goal will be asked to leave next frame if it continues to pick null/None.
         // TODO in this case we might want to apply a different cooldown, rather than the default for
         // the goal.
-        if ( changedGoal && ((!chosenBehavior)||(chosenBehavior->GetType() == BehaviorType::NoneBehavior)))
+        if ( changedGoal && ((!chosenBehavior)||(chosenBehavior->GetClass() == BehaviorClass::NoneBehavior)))
         {
           PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior.NewGoalDidNotChooseBehavior",
             "The new goal '%s' picked no behavior. It probably didn't cover the same conditions as the behaviors.",

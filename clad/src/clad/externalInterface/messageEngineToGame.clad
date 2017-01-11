@@ -654,13 +654,17 @@ message SdkStatus {
 
 //notify the game that behavior has transitioned
 message BehaviorTransition{
-  string oldBehavior,
-  string newBehavior,
-  BehaviorType oldBehaviorType,
-  BehaviorType newBehaviorType,
-  bool isOldReactionary,
-  bool isNewReactionary,
+  string oldBehaviorName,
+  string newBehaviorName,
+  BehaviorClass oldBehaviorClass,
+  BehaviorClass newBehaviorClass,
   string newBehaviorDisplayKey
+}
+
+
+message ReactionaryBehaviorTransition{
+  ReactionTrigger reactionaryBehaviorTrigger,
+  bool behaviorStarted
 }
 
 //respond with the list of freeplay behavior
@@ -668,10 +672,6 @@ message RespondEnabledBehaviorList{
   string behaviors[uint_8]
 }
 
-message ReactionaryBehaviorTransition{
-  BehaviorType reactionaryBehaviorType,
-  bool behaviorStarted
-}
 
 message BehaviorObjectiveAchieved{
   BehaviorObjective behaviorObjective

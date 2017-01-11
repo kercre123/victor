@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorEnrollFace_H__
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
@@ -49,7 +49,7 @@ public:
   virtual bool CarryingObjectHandledInternally() const override { return false;}
   
   // Is runnable when FaceWorld has enrollment settings set
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const override;
   
 protected:
 

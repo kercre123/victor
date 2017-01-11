@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorNone_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorNone_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -37,7 +37,7 @@ public:
   //
   // Abstract methods to be overloaded:
   //
-  virtual bool IsRunnableInternal(const Robot& robot) const override { return true; }
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override { return true; }
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
 protected:

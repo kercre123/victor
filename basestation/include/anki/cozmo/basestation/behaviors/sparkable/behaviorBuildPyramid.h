@@ -16,7 +16,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/BehaviorBuildPyramidBase.h"
 
 namespace Anki {
@@ -36,7 +36,7 @@ protected:
   
 public:
   
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
 protected:

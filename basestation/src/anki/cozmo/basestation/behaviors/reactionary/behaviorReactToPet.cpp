@@ -11,6 +11,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iReactToPetListener.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/petWorld.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -26,13 +27,11 @@ static const char* kLogChannel = "Behaviors";
 // Console parameters
 #define CONSOLE_GROUP "Behavior.ReactToPet"
 
-CONSOLE_VAR(bool, kReactToPetEnable, CONSOLE_GROUP, true);
-CONSOLE_VAR(f32, kReactToPetCooldown_s, CONSOLE_GROUP, 60.0f);
 CONSOLE_VAR(f32, kReactToPetMinTime_s, CONSOLE_GROUP, 10.0f);
 CONSOLE_VAR(f32, kReactToPetMaxTime_s, CONSOLE_GROUP, 15.0f);
 CONSOLE_VAR(s32, kReactToPetSneezePercent, CONSOLE_GROUP, 20);
-CONSOLE_VAR(s32, kReactToPetNumTimesObserved, CONSOLE_GROUP, 3);
 CONSOLE_VAR(f32, kReactToPetTrackUpdateTimeout, CONSOLE_GROUP, 3.0f);
+  
 } // end namespace
   
 using namespace Anki::Vision;
@@ -60,55 +59,12 @@ BehaviorReactToPet::BehaviorReactToPet(Robot& robot, const Json::Value& config)
   SetDefaultName("ReactToPet");
 }
 
-bool BehaviorReactToPet::AlreadyReacting() const
-{
-  return (_target != UnknownFaceID);
-}
-  
-bool BehaviorReactToPet::RecentlyReacted() const
-{
-  if (_lastReactionTime_s > NEVER) {
-    if (_lastReactionTime_s + kReactToPetCooldown_s > GetCurrentTimeInSeconds()) {
-      return true;
-    }
-  }
-  return false;
-}
-  
-//
-// Called to update list of petIDs that we should not trigger reaction.
-// Any petIDs observed during cooldown will not trigger reaction.
-//
-void BehaviorReactToPet::UpdateReactedTo(const Robot& robot)
-{
-  const auto & petWorld = robot.GetPetWorld();
-  for (const auto & it : petWorld.GetAllKnownPets()) {
-    const auto petID = it.first;
-    _reactedTo.insert(petID);
-  }
-}
-  
-void BehaviorReactToPet::InitReactedTo(const Robot& robot)
-{
-  _reactedTo.clear();
-  UpdateReactedTo(robot);
-}
 
 //
 // Called at the start of each tick. Return true if behavior can run.
 //
-bool BehaviorReactToPet::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToPet::IsRunnableInternal(const BehaviorPreReqAcknowledgePet& preReqData) const
 {
-  if (!kReactToPetEnable) {
-    PRINT_TRACE("ReactToPet.IsRunnable.ReactionDisabled", "Reaction is disabled");
-    return false;
-  }
-  
-  if (robot.IsOnCharger() || robot.IsOnChargerPlatform()) {
-    PRINT_TRACE("ReactToPet.IsRunnable.RobotOnCharger", "Robot is on charger");
-    return false;
-  }
-  
   if (AlreadyReacting()) {
     PRINT_TRACE("ReactToPet.IsRunnable.AlreadyReacting", "Already reacting to a pet");
     return true;
@@ -117,49 +73,12 @@ bool BehaviorReactToPet::IsRunnableInternalReactionary(const Robot& robot) const
   PRINT_TRACE("ReactToPet.IsRunnable.Runnable", "Behavior is runnable");
   return true;
 }
+  
 
-//
-// Called at the start of each tick when behavior is runnable but not active.
-// Return true if behavior should become active.
-//
-bool BehaviorReactToPet::ShouldComputationallySwitch(const Robot &robot)
-{
-  // Keep track of petIDs observed during cooldown.  This prevents Cozmo from
-  // suddenly reacting to a "known" pet when cooldown expires.
-  if (RecentlyReacted()) {
-    PRINT_TRACE("ReactToPet.ShouldSwitch.RecentlyReacted", "Recently reacted to a pet");
-    UpdateReactedTo(robot);
-    return false;
-  }
-  
-  // Check for new pets
-  const auto & petWorld = robot.GetPetWorld();
-  const auto & pets = petWorld.GetAllKnownPets();
-  
-  for (const auto & it : pets) {
-    const auto petID = it.first;
-    if (_reactedTo.find(petID) != _reactedTo.end()) {
-      PRINT_TRACE("ReactToPet.ShouldSwitch.AlreadyReacted", "Already reacted to petID %d", petID);
-      continue;
-    }
-    const auto & pet = it.second;
-    const auto numTimesObserved = pet.GetNumTimesObserved();
-    if (numTimesObserved < kReactToPetNumTimesObserved) {
-      PRINT_TRACE("ReactToPet.ShouldSwitch.NumTimesObserved", "PetID %d does not meet observation threshold (%d < %d)",
-                  petID, numTimesObserved, kReactToPetNumTimesObserved);
-      continue;
-    }
-    _targets.insert(petID);
-  }
-  
-  // If we found a good target, behavior should become active.
-  return !_targets.empty();
-}
-  
 //
 // Called each time behavior becomes active.
 //
-Result BehaviorReactToPet::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToPet::InitInternal(Robot& robot)
 {
   PRINT_INFO("ReactToPet.Init.BeginIteration", "Begin iteration");
   BeginIteration(robot);
@@ -201,12 +120,15 @@ IBehavior::Status BehaviorReactToPet::UpdateInternal(Robot& robot)
 //
 // Called when behavior becomes inactive.
 //
-void BehaviorReactToPet::StopInternalReactionary(Robot& robot)
+void BehaviorReactToPet::StopInternal(Robot& robot)
 {
   PRINT_TRACE("ReactToPet.Stop", "Stop behavior");
-  _lastReactionTime_s = GetCurrentTimeInSeconds();
   _endReactionTime_s = NEVER;
   _target = UnknownFaceID;
+  
+  for(auto listener: _petListeners){
+    listener->UpdateLastReactionTime();
+  }
 }
   
 //
@@ -320,18 +242,33 @@ void BehaviorReactToPet::EndIteration(Robot& robot)
   // Note that if pet moves out of frame, then back into frame, it may be assigned a new petID.
   // This means the behavior may trigger again for the same pet, but only if we lose track of the pet.
   //
-  InitReactedTo(robot);
+  for(auto listener: _petListeners){
+    listener->RefreshReactedToIDs();
+  }
   
   // Update target state
   _targets.clear();
   _target = UnknownFaceID;
-  _lastReactionTime_s = currTime_s;
   _endReactionTime_s = NEVER;
+  for(auto listener: _petListeners){
+    listener->UpdateLastReactionTime();
+  }
 
   // Do we need a behavior objective?
   // BehaviorObjectiveAchieved(BehaviorObjective::ReactedToPet);
 }
 
+bool BehaviorReactToPet::AlreadyReacting() const
+{
+  return (_target != Vision::UnknownFaceID);
+}
+  
+void BehaviorReactToPet::AddListener(IReactToPetListener* listener)
+{
+  _petListeners.insert(listener);
+}
+
+  
 } // namespace Cozmo
 } // namespace Anki
 

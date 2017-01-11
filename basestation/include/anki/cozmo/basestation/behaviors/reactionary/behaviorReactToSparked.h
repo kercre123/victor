@@ -13,25 +13,24 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToSparked_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToSparked_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorReactToSparked : public IReactionaryBehavior
+class BehaviorReactToSparked : public IBehavior
 {
 public:
-  virtual bool ShouldResumeLastBehavior() const override { return false; }
-  virtual bool CarryingObjectHandledInternally() const override {return false;}  
-  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
   
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorReactToSparked(Robot& robot, const Json::Value& config);
 
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool ShouldRunWhileOffTreads() const override { return true;}
   
 }; // class BehaviorReactToSparked
 

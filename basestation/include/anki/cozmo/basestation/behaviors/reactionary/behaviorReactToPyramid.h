@@ -13,12 +13,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToPyramid_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToPyramid_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToPyramid : public IReactionaryBehavior
+class BehaviorReactToPyramid : public IBehavior
 {
 private:
   // Enforce creation through BehaviorFactory
@@ -26,12 +26,12 @@ private:
   BehaviorReactToPyramid(Robot& robot, const Json::Value& config);
 
 public:
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
-  virtual bool ShouldResumeLastBehavior() const override { return true; }
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool ShouldRunWhileOffTreads() const override { return false;}
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
   
 protected:
-  virtual Result InitInternalReactionary(Robot& robot) override;
+  virtual Result InitInternal(Robot& robot) override;
   
 private:
   TimeStamp_t _nextValidReactionTime_s;

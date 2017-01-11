@@ -8,7 +8,7 @@
 {
   "name": "Hiking_LookInPlace360",
 
-  "behaviorType": "ExploreLookAroundInPlace",
+  "behaviorClass": "ExploreLookAroundInPlace",
   "displayNameKey":"behavior.ExploreLookAroundInPlace",
   "flatScore": 1.0,
 //  "behaviorGroups": [

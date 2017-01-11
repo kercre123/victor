@@ -26,26 +26,18 @@ using namespace ExternalInterface;
 static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
   
 BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToRobotOnBack");
-
-
-}
-
-  
-bool BehaviorReactToRobotOnBack::ShouldComputationallySwitch(const Robot& robot)
-{
-  return robot.GetOffTreadsState() == OffTreadsState::OnBack;
 }
 
 
-bool BehaviorReactToRobotOnBack::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToRobotOnBack::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
 
-Result BehaviorReactToRobotOnBack::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToRobotOnBack::InitInternal(Robot& robot)
 {
   FlipDownIfNeeded(robot);
   return Result::RESULT_OK;
@@ -82,7 +74,7 @@ void BehaviorReactToRobotOnBack::DelayThenFlipDown(Robot& robot)
   }
 }
 
-void BehaviorReactToRobotOnBack::StopInternalReactionary(Robot& robot)
+void BehaviorReactToRobotOnBack::StopInternal(Robot& robot)
 {
 }
 

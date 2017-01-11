@@ -1,5 +1,5 @@
 {
-  "behaviorType": "OnboardingShowCube",
+  "behaviorClass": "OnboardingShowCube",
   "name": "OnboardingShowCube",
   "behaviorGroups": [
   ],

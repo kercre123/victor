@@ -98,7 +98,7 @@ public class RobotEngineManager : MonoBehaviour {
   private Anki.Cozmo.ExternalInterface.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new Anki.Cozmo.ExternalInterface.RunDebugConsoleFuncMessage();
   private Anki.Cozmo.ExternalInterface.DenyGameStart _DenyGameStartMessage = new Anki.Cozmo.ExternalInterface.DenyGameStart();
   private Anki.Cozmo.ExternalInterface.ResetFirmware _ResetFirmwareMessage = new Anki.Cozmo.ExternalInterface.ResetFirmware();
-  private Anki.Cozmo.ExternalInterface.EnableReactionaryBehaviors _EnableReactionaryBehaviorMessage = new Anki.Cozmo.ExternalInterface.EnableReactionaryBehaviors();
+  private Anki.Cozmo.ExternalInterface.EnableAllReactionTriggers _EnableReactionaryBehaviorMessage = new Anki.Cozmo.ExternalInterface.EnableAllReactionTriggers();
   private Anki.Cozmo.ExternalInterface.RequestDeviceData _RequestDeviceDataMessage = new Anki.Cozmo.ExternalInterface.RequestDeviceData();
   private Anki.Cozmo.ExternalInterface.RequestUnlockDataFromBackup _RequestUnlockDataFromBackupMessage = new Anki.Cozmo.ExternalInterface.RequestUnlockDataFromBackup();
 
@@ -420,12 +420,12 @@ public class RobotEngineManager : MonoBehaviour {
       CurrentRobot.ResetRobotState();
     }
 
-    SetEnableReactionaryBehaviors(false);
+    SetEnableAllReactionTriggers(false);
   }
 
-  public void SetEnableReactionaryBehaviors(bool enable) {
+  public void SetEnableAllReactionTriggers(bool enable) {
     _EnableReactionaryBehaviorMessage.enabled = enable;
-    Message.EnableReactionaryBehaviors = _EnableReactionaryBehaviorMessage;
+    Message.EnableAllReactionTriggers = _EnableReactionaryBehaviorMessage;
     SendMessage();
   }
 

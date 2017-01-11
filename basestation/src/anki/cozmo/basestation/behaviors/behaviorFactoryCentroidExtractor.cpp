@@ -73,7 +73,7 @@ namespace Cozmo {
     }});
   }
   
-  bool BehaviorFactoryCentroidExtractor::IsRunnableInternal(const Robot& robot) const
+  bool BehaviorFactoryCentroidExtractor::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
   {
     return !IsActing() && !_waitingForDots;
   }
@@ -100,7 +100,7 @@ namespace Cozmo {
     }
     
     // Disable reactionary behaviors
-    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("Factory centroid extractor",false);
     
 #if IS_FACTORY_BRANCH
     // Set robot body to accessory mode

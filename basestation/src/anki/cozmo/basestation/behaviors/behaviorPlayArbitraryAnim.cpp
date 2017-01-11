@@ -16,12 +16,15 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 
 namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPlayArbitraryAnim::BehaviorPlayArbitraryAnim(Robot& robot, const Json::Value& config)
   : BehaviorPlayAnimSequence(robot, config, false)
   , _animationAlreadySet(false)
@@ -29,14 +32,19 @@ BehaviorPlayArbitraryAnim::BehaviorPlayArbitraryAnim(Robot& robot, const Json::V
   SetDefaultName("PlayArbitraryAnim");
   _numLoops = -1;
 }
-    
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPlayArbitraryAnim::~BehaviorPlayArbitraryAnim()
 {  
 }
   
-bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const Robot& robot) const
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
-  const bool retVal = _numLoops >= 0 && BaseClass::IsRunnableInternal(robot);
+  BehaviorPreReqNone noPreReqs;
+  const bool retVal = _numLoops >= 0 && BaseClass::IsRunnableInternal(noPreReqs);
   return retVal;
 }
   
@@ -70,12 +78,16 @@ void BehaviorPlayArbitraryAnim::SetAnimationTriggers(std::vector<AnimationTrigge
   _animationAlreadySet = true;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPlayArbitraryAnim::InitInternal(Robot& robot)
 {
   _animationAlreadySet = false;
   return BaseClass::InitInternal(robot);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPlayArbitraryAnim::ResumeInternal(Robot& robot)
 {
   return RESULT_OK;

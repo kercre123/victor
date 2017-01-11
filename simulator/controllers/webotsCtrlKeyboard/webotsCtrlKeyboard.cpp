@@ -1152,7 +1152,7 @@ namespace Anki {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
 
                     
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableReactionaryBehaviors(false)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableAllReactionTriggers("webots",false)));
                     SendSetRobotVolume(1.f);
                   }
                   
@@ -2288,10 +2288,11 @@ namespace Anki {
                 // Toggle enabling of reactionary behaviors
                 static bool enable = false;
                 printf("Enable reactionary behaviors: %d\n", enable);
-                ExternalInterface::EnableReactionaryBehaviors m;
+                ExternalInterface::EnableAllReactionTriggers m;
                 m.enabled = enable;
+                m.enableID = "webots";
                 ExternalInterface::MessageGameToEngine message;
-                message.Set_EnableReactionaryBehaviors(m);
+                message.Set_EnableAllReactionTriggers(m);
                 SendMessage(message);
                 
                 enable = !enable;

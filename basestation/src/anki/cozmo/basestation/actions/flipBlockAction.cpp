@@ -256,8 +256,8 @@ FlipBlockAction::~FlipBlockAction()
     _robot.GetActionList().Cancel(_flipTag);
   }
   
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, true);
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), ReactionTrigger::UnexpectedMovement, true);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), ReactionTrigger::CubeMoved, true);
 }
 
 void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
@@ -304,8 +304,8 @@ ActionResult FlipBlockAction::Init()
   _compoundAction.ShouldSuppressTrackLocking(true);
   
   // Ensure that the robot doesn't react to slowing down when it hits the blocks
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, false);
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, false);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), ReactionTrigger::UnexpectedMovement, false);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), ReactionTrigger::CubeMoved, false);
   
   // Drive through the block
   DriveStraightAction* drive = new DriveStraightAction(_robot, p.GetTranslation().Length() + kDrivingDist_mm, kDrivingSpeed_mmps);

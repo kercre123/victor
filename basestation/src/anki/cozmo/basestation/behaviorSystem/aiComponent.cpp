@@ -16,7 +16,6 @@
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"

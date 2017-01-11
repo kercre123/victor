@@ -26,24 +26,18 @@ using namespace ExternalInterface;
 static const float kWaitTimeBeforeRepeatAnim_s = 15.f;
   
 BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToRobotOnSide");
 }
-  
-  
-bool BehaviorReactToRobotOnSide::ShouldComputationallySwitch(const Robot& robot)
-{
-  return robot.GetOffTreadsState() == OffTreadsState::OnLeftSide
-      || robot.GetOffTreadsState() == OffTreadsState::OnRightSide;
-}
 
-bool BehaviorReactToRobotOnSide::IsRunnableInternalReactionary(const Robot& robot) const
+
+bool BehaviorReactToRobotOnSide::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
 
-Result BehaviorReactToRobotOnSide::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToRobotOnSide::InitInternal(Robot& robot)
 {
   ReactToBeingOnSide(robot);
   return Result::RESULT_OK;
@@ -102,7 +96,7 @@ void BehaviorReactToRobotOnSide::HoldingLoop(Robot& robot)
   }
 }
 
-void BehaviorReactToRobotOnSide::StopInternalReactionary(Robot& robot)
+void BehaviorReactToRobotOnSide::StopInternal(Robot& robot)
 {
 }
 

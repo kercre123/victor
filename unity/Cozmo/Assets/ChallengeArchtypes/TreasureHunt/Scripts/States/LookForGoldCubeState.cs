@@ -22,14 +22,14 @@ namespace TreasureHunt {
     void SearchForAvailableBlock() {
       if (_LookingAround == false) {
         _LookingAround = true;
-        _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+        _CurrentRobot.ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.LookAroundInPlace);
       }
     }
 
     public override void Exit() {
       base.Exit();
       if (_CurrentRobot != null) {
-        _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+        _CurrentRobot.ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.NoneBehavior);
       }
       _LookingAround = false;
     }

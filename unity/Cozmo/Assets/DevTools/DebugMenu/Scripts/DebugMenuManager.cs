@@ -88,7 +88,7 @@ public class DebugMenuManager : MonoBehaviour {
       GameBase game = GetCurrMinigame();
       if (game != null) {
         if (game.Paused == false) {
-          game.PauseStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.BehaviorType.NoneBehavior);
+          game.PauseStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.ReactionTrigger.NoneTrigger);
           _DebugPause = true;
         }
       }
@@ -107,7 +107,7 @@ public class DebugMenuManager : MonoBehaviour {
       GameBase game = GetCurrMinigame();
       if (game != null) {
         if (game.Paused) {
-          game.ResumeStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.BehaviorType.NoneBehavior);
+          game.ResumeStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.ReactionTrigger.NoneTrigger);
         }
       }
     }

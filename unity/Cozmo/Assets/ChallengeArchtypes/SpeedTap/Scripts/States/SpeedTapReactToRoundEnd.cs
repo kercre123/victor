@@ -57,11 +57,11 @@ namespace SpeedTap {
       base.Exit();
 
       // re-enable react to pickup during the next round
-      _CurrentRobot.RequestEnableReactionaryBehavior("speed_tap_anim", BehaviorType.ReactToPickup, true);
-      _CurrentRobot.RequestEnableReactionaryBehavior("speed_tap_anim", BehaviorType.ReactToReturnedToTreads, true);
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, true);
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, true);
     }
 
-    public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+    public override void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
       // COZMO-2033; some of the win game animations cause Cozmo's cliff sensor to trigger
       // So in those cases don't show the "Cozmo Moved; Quit Game" dialog
       // Do nothing
@@ -69,8 +69,8 @@ namespace SpeedTap {
 
     private void PlayReactToRoundAnimationAndSendEvent() {
       // Don't listen to pickup in case cozmo lifts himself on top of the cube for an animation
-      _CurrentRobot.RequestEnableReactionaryBehavior("speed_tap_anim", BehaviorType.ReactToPickup, false);
-      _CurrentRobot.RequestEnableReactionaryBehavior("speed_tap_anim", BehaviorType.ReactToReturnedToTreads, false);
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, false);
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, false);
 
       AnimationTrigger animEvent = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityRound();

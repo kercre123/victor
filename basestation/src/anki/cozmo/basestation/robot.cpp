@@ -23,8 +23,8 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
@@ -118,7 +118,7 @@ CONSOLE_VAR(bool, kDoProgressiveThresholdAdjustOnSuspiciousCliff, "Robot", true)
 // timeToConsiderOfftreads is tuned based on the fact that we have to wait half a second from the time the cliff sensor detects
 // ground to when the robot state message updates to the fact that it is no longer picked up
 static const float kRobotTimeToConsiderOfftreads_ms = 250.0f;
-static const float kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 5.0f;
+static const float kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 3.0f;
 
 // Laying flat angles
 static const float kPitchAngleOntreads_rads = DEG_TO_RAD(0);
@@ -283,6 +283,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   LoadBehaviors();
 
   _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotBehaviorConfig());
+  _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
   
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
@@ -2298,6 +2299,7 @@ void Robot::LoadEmotionEvents()
 
 void Robot::LoadBehaviors()
 {
+  // Load Scored Behaviors
   const auto& behaviorData = _context->GetDataLoader()->GetBehaviorJsons();
   for( const auto& fileJsonPair : behaviorData )
   {
@@ -2308,12 +2310,12 @@ void Robot::LoadBehaviors()
       // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
       const Result ret = _behaviorMgr->CreateBehaviorFromConfiguration(behaviorJson);
       if ( ret != RESULT_OK ) {
-        PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed", "Failed to create behavior from '%s'", filename.c_str());
+        PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed", "Failed to create scored behavior from '%s'", filename.c_str());
       }
     }
     else
     {
-      PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", filename.c_str());
+      PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read scored behavior file '%s'", filename.c_str());
     }
     // don't print anything if we read an empty json
   }

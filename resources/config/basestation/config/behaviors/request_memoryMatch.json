@@ -1,5 +1,5 @@
 {
-  "behaviorType" : "RequestGameSimple",
+  "behaviorClass" : "RequestGameSimple",
   "name" : "RequestMemoryMatch",
   "displayNameKey":"behavior.RequestToPlay",
   "requiredGameFlags" : "MemoryMatch",

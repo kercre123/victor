@@ -62,7 +62,7 @@ namespace FaceEnrollment {
       // FaceSlideState class.
 
       // Disable ReactToPet to avoid false positive disruptions
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPet);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
     }
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -140,7 +140,7 @@ namespace FaceEnrollment {
       ContextManager.Instance.AppFlash(playChime: true);
       _StateMachine.SetNextState(new FaceEnrollmentHowToPlayState());
     }
-
+   
     protected override void CleanUpOnDestroy() {
       
     }

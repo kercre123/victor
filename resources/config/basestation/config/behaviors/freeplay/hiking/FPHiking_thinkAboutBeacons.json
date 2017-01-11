@@ -8,7 +8,7 @@
 {
   "name": "Hiking_ThinkAboutBeacons",
   
-  "behaviorType": "ThinkAboutBeacons",
+  "behaviorClass": "ThinkAboutBeacons",
   "displayNameKey":"behavior.ThinkAboutBeacons",
   "flatScore": 8.0,
   "behaviorGroups": [

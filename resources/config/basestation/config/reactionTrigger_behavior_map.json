@@ -1,0 +1,87 @@
+{ "reactionTriggerBehaviorMap":
+  [
+    {
+      "reactionTrigger": "FacePositionUpdated",
+      "behaviorName": "AcknowledgeFace"
+    },
+    {
+      "reactionTrigger": "ObjectPositionUpdated",
+      "behaviorName": "AcknowledgeObject"
+    },
+    {
+      "reactionTrigger": "CliffDetected",
+      "behaviorName": "reactToCliff"
+    },
+    {
+      "reactionTrigger": "CubeMoved",
+      "behaviorName": "reactToCubeMoved"
+    },
+    {
+      "reactionTrigger": "DoubleTapDetected",
+      "behaviorName": "reactToDoubleTap"
+    },
+    {
+      "reactionTrigger": "Frustration",
+      "behaviorName": "ReactToFrustrationMinor",
+      "frustrationParams": {
+        "maxConfidence": -0.6,
+        "cooldownTime_s": 60.0
+      } 
+    },
+    {
+      "reactionTrigger": "Frustration",
+      "behaviorName": "ReactToFrustrationMajor",
+      "frustrationParams": {
+        "maxConfidence": -0.9
+      } 
+    },
+    {
+      "reactionTrigger": "MotorCalibration",
+      "behaviorName": "reactToMotorCalibration"
+    },
+    {
+      "reactionTrigger": "PlacedOnCharger",
+      "behaviorName": "reactToOnCharger"
+    },
+    {
+      "reactionTrigger": "PetInitialDetection",
+      "behaviorName": "ReactToPet"
+    },
+    {
+      "reactionTrigger": "RobotPickedUp",
+      "behaviorName": "reactToPickup"
+    },
+    {
+      "reactionTrigger": "PyramidInitialDetection",
+      "behaviorName": "reactToPyramid"
+    },
+    {
+      "reactionTrigger": "ReturnedToTreads",
+      "behaviorName": "ReactToReturnedToTreads"
+    },
+    {
+      "reactionTrigger": "RobotOnBack",
+      "behaviorName": "reactToRobotOnBack"
+    },
+    {
+      "reactionTrigger": "RobotOnFace",
+      "behaviorName": "reactToRobotOnFace"
+    },
+    {
+      "reactionTrigger": "RobotOnSide",
+      "behaviorName": "reactToRobotOnSide"
+    },
+    {
+      "reactionTrigger": "Sparked",
+      "behaviorName": "reactToSparked"
+    },
+    {
+      "reactionTrigger": "StackOfCubesInitialDetection",
+      "behaviorName": "reactToStackOfCubes"
+    },
+    {
+      "reactionTrigger": "UnexpectedMovement",
+      "behaviorName": "reactToUnexpectedMovement"
+    }
+  ]
+}

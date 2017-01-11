@@ -1,5 +1,5 @@
 {
-  "behaviorType": "KnockOverCubes",
+  "behaviorClass": "KnockOverCubes",
   "executableBehaviorType": "KnockOverCubes",
   "displayNameKey":"behavior.KnockOverCubes",
   "name": "sparksKnockOverCubes",

@@ -1,5 +1,5 @@
 {
-  "behaviorType": "CubeLiftWorkout",
+  "behaviorClass": "CubeLiftWorkout",
   "name": "cubeLiftWorkout",
   "displayNameKey":"behavior.Workout",
   "requiredUnlockId": "Workout",

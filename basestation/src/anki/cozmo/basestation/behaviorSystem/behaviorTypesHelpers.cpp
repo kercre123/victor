@@ -19,14 +19,25 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IMPLEMENT_ENUM_INCREMENT_OPERATORS(BehaviorType);
+IMPLEMENT_ENUM_INCREMENT_OPERATORS(BehaviorClass);
 
 // One global instance, created at static initialization on app launch
-static Anki::Util::StringToEnumMapper<BehaviorType> gStringToBehaviorTypeMapper;
+static Anki::Util::StringToEnumMapper<BehaviorClass> gStringToBehaviorClassMapper;
 
-BehaviorType BehaviorTypeFromString(const char* inString)
+BehaviorClass BehaviorClassFromString(const char* inString)
 {
-  return gStringToBehaviorTypeMapper.GetTypeFromString(inString);
+  return gStringToBehaviorClassMapper.GetTypeFromString(inString, false);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IMPLEMENT_ENUM_INCREMENT_OPERATORS(ReactionTrigger);
+
+// One global instance, created at static initialization on app launch
+static Anki::Util::StringToEnumMapper<ReactionTrigger> gStringToReactionTriggerMapper;
+
+ReactionTrigger ReactionTriggerFromString(const char* inString)
+{
+  return gStringToReactionTriggerMapper.GetTypeFromString(inString, false);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

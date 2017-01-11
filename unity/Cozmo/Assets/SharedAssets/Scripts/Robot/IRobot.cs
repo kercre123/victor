@@ -128,7 +128,8 @@ public interface IRobot : IDisposable {
 
   string CurrentBehaviorString { get; set; }
 
-  BehaviorType CurrentBehaviorType { get; set; }
+  BehaviorClass CurrentBehaviorClass { get; set; }
+  ReactionTrigger CurrentReactionTrigger { get; set; }
 
   string CurrentBehaviorName { get; set; }
 
@@ -308,7 +309,7 @@ public interface IRobot : IDisposable {
 
   void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked);
 
-  void ExecuteBehavior(BehaviorType type);
+  void ExecuteBehaviorByExecutableType(ExecutableBehaviorType type);
 
   void ExecuteBehaviorByName(string behaviorName);
 
@@ -350,9 +351,9 @@ public interface IRobot : IDisposable {
 
   void LoadFaceAlbumFromFile(string path, bool isPathRelative = true);
 
-  void EnableReactionaryBehaviors(bool enable);
+  void EnableAllReactionTriggers(bool enable);
 
-  void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable);
+  void RequestEnableReactionTrigger(string id, Anki.Cozmo.ReactionTrigger behaviorType, bool enable);
 
   void EnableDroneMode(bool enable);
 

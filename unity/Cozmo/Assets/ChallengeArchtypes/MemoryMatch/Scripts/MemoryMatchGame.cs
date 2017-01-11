@@ -92,11 +92,11 @@ namespace MemoryMatch {
     protected override void AddDisabledReactionaryBehaviors() {
       base.AddDisabledReactionaryBehaviors();
 
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToCliff);
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToPickup);
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToReturnedToTreads);
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToUnexpectedMovement);
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToCubeMoved);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.CliffDetected);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.RobotPickedUp);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.ReturnedToTreads);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.UnexpectedMovement);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.CubeMoved);
     }
 
     // Use this for initialization

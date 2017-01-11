@@ -1,5 +1,5 @@
 {
-  "behaviorType": "InteractWithFaces",
+  "behaviorClass": "InteractWithFaces",
   "name": "meetCozmo_interactWithFaces",
   "displayNameKey":"behavior.InteractWithFaces",
   "behaviorGroups": [

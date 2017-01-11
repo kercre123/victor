@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorPickUpCube_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 #include <vector>
 
@@ -36,7 +36,7 @@ class ObservableObject;
   
 class BehaviorPickUpCube : public IBehavior
 {
-  using super = IBehavior;
+using super = IBehavior;
 protected:  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -47,7 +47,7 @@ protected:
   virtual void   StopInternal(Robot& robot) override;
   virtual void   StopInternalFromDoubleTap(Robot& robot) override;
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
 
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;

@@ -101,7 +101,12 @@ void RobotDataLoader::LoadNonConfigData()
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
     LoadBehaviors();
   }
-
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadReactionTriggerMap");
+    LoadReactionTriggerMap();
+  }
+  
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadGameEventResponses");
     LoadAnimationTriggerResponses();
@@ -348,24 +353,34 @@ void RobotDataLoader::LoadBehaviors()
 {
   // rsam: 05/02/16 we are moving behaviors to basestation, but at the moment we support both paths for legacy
   // reasons. Eventually I will move them to BS
-  const std::vector<std::string> paths = {"assets/behaviors/", "config/basestation/config/behaviors/"};
+  const std::string path =  "config/basestation/config/behaviors/";
 
-  for (const std::string& path : paths) {
-    const std::string behaviorFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
-    auto behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
-    for (const auto& filename : behaviorJsonFiles)
+  const std::string behaviorFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+  auto behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
+  for (const auto& filename : behaviorJsonFiles)
+  {
+    Json::Value behaviorJson;
+    const bool success = _platform->readAsJson(filename, behaviorJson);
+    if (success && !behaviorJson.empty())
     {
-      Json::Value behaviorJson;
-      const bool success = _platform->readAsJson(filename, behaviorJson);
-      if (success && !behaviorJson.empty())
-      {
-        _behaviors.emplace(std::piecewise_construct, std::forward_as_tuple(filename), std::forward_as_tuple(std::move(behaviorJson)));
-      }
-      else if (!success)
-      {
-        PRINT_NAMED_WARNING("RobotDataLoader.Behavior", "Failed to read '%s'", filename.c_str());
-      }
+      _behaviors.emplace(std::piecewise_construct, std::forward_as_tuple(filename), std::forward_as_tuple(std::move(behaviorJson)));
     }
+    else if (!success)
+    {
+      PRINT_NAMED_WARNING("RobotDataLoader.Behavior", "Failed to read '%s'", filename.c_str());
+    }
+  }
+}
+  
+void RobotDataLoader::LoadReactionTriggerMap()
+{
+  const std::string filename = "config/basestation/config/reactionTrigger_behavior_map.json";
+
+  Json::Value reactionJSON;
+  const bool success = _platform->readAsJson(Util::Data::Scope::Resources, filename, _reactionTriggerMap);
+  if (!success)
+  {
+    PRINT_NAMED_ERROR("RobotDataLoader.ReactionTriggerMap", "Failed to read '%s'", filename.c_str());
   }
 }
 

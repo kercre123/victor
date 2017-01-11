@@ -15,14 +15,14 @@ namespace ArtistCozmo {
       base.Enter();
       ((ArtistCozmoGame)_StateMachine.GetGame()).RandomizeFilter();
 
-      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FindFaces);
+      _CurrentRobot.ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.FindFaces);
     }
 
     public override void Update() {
       if (_CurrentRobot.Faces.Count > 0) {
 
         if (!_HasSeenFace) {
-          _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+          _CurrentRobot.ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.NoneBehavior);
           _CurrentRobot.TurnTowardsFace(_CurrentRobot.Faces[0]);
           _HasSeenFace = true;
           _StartLookingAtFaceTime = Time.time;
@@ -35,7 +35,7 @@ namespace ArtistCozmo {
       else {
         if (_HasSeenFace) {
           _HasSeenFace = false;
-          _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FindFaces);
+          _CurrentRobot.ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.FindFaces);
         }
       }
     }

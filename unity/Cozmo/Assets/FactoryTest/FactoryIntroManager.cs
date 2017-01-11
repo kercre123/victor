@@ -103,7 +103,7 @@ public class FactoryIntroManager : MonoBehaviour {
       RobotEngineManager.Instance.SendMessage();
 
       // runs the factory test.
-      RobotEngineManager.Instance.CurrentRobot.EnableReactionaryBehaviors(false);
+      RobotEngineManager.Instance.CurrentRobot.EnableAllReactionTriggers(false);
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
       RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FactoryTest);

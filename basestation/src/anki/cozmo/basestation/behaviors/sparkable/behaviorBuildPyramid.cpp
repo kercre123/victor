@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -54,8 +55,9 @@ BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& conf
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
+bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
   UpdatePyramidTargets(robot);
   
   bool allSetAndUsable = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
@@ -175,7 +177,7 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 {
   SET_STATE(PlacingTopBlock);
   UpdateAudioState(std::underlying_type<MusicState>::type(MusicState::TopBlockCarry));
-  SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
+  SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
   
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
   const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);

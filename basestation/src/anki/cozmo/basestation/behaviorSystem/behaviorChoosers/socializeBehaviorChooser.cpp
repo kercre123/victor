@@ -14,9 +14,10 @@
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/behaviors/exploration/behaviorExploreLookAroundInPlace.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -106,7 +107,7 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
 
   bestBehavior = BaseClass::ChooseNextBehavior(robot, currentRunningBehavior);
 
-  if( bestBehavior != nullptr && bestBehavior->GetType() != BehaviorType::NoneBehavior ) {
+  if( bestBehavior != nullptr && bestBehavior->GetClass() != BehaviorClass::NoneBehavior ) {
     if( bestBehavior != currentRunningBehavior ) {
       PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.ChooseNext.UseSimple",
                     "Simple behavior chooser chose behavior '%s', so use it",
@@ -114,16 +115,16 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
     }
     return bestBehavior;
   }
-
+  BehaviorPreReqRobot preReqData(robot);
   // otherwise, check if it's time to change behaviors
   switch( _state ) {
     case State::Initial: {
-      if( _interactWithFacesBehavior->IsRunnable(robot) ) {
+      if( _interactWithFacesBehavior->IsRunnable(preReqData) ) {
         // if we can just right to interact, do that
         bestBehavior = _interactWithFacesBehavior;
         _state = State::Interacting;
       }
-      else if( _findFacesBehavior->IsRunnable(robot) ) {
+      else if( _findFacesBehavior->IsRunnable(preReqData) ) {
         // otherwise, search for a face
         bestBehavior = _findFacesBehavior;
         _state = State::FindingFaces;
@@ -133,7 +134,7 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
     }
 
     case State::FindingFaces: {
-      if( _interactWithFacesBehavior->IsRunnable(robot) ) {
+      if( _interactWithFacesBehavior->IsRunnable(preReqData) ) {
         bestBehavior = _interactWithFacesBehavior;
         _state = State::Interacting;
       }
@@ -156,7 +157,7 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
     case State::Interacting: {
       // keep interacting until the behavior ends. If we can't interact (e.g. we lost the face) then go back
       // to searching
-      if( _interactWithFacesBehavior->IsRunning() || _interactWithFacesBehavior->IsRunnable(robot) ) {
+      if( _interactWithFacesBehavior->IsRunning() || _interactWithFacesBehavior->IsRunnable(preReqData) ) {
         bestBehavior = _interactWithFacesBehavior;
       }
       else {
@@ -200,7 +201,7 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
         }
       }
       
-      if( _pounceOnMotionBehavior->IsRunning() || _pounceOnMotionBehavior->IsRunnable(robot) ) {
+      if( _pounceOnMotionBehavior->IsRunning() || _pounceOnMotionBehavior->IsRunnable(preReqData) ) {
         bestBehavior = _pounceOnMotionBehavior;
       }
       break;

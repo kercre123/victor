@@ -28,24 +28,18 @@ static const float kRobotMinLiftAngleForArmUpAnim_s = 45.f;
 
   
 BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToRobotOnFace");
 }
-  
-  
-bool BehaviorReactToRobotOnFace::ShouldComputationallySwitch(const Robot& robot)
-{
-  return robot.GetOffTreadsState() == OffTreadsState::OnFace;
-}
-  
 
-bool BehaviorReactToRobotOnFace::IsRunnableInternalReactionary(const Robot& robot) const
+
+bool BehaviorReactToRobotOnFace::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
 
-Result BehaviorReactToRobotOnFace::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToRobotOnFace::InitInternal(Robot& robot)
 {
   FlipOverIfNeeded(robot);
   return Result::RESULT_OK;
@@ -85,7 +79,7 @@ void BehaviorReactToRobotOnFace::CheckFlipSuccess(Robot& robot)
   }
 }
 
-void BehaviorReactToRobotOnFace::StopInternalReactionary(Robot& robot)
+void BehaviorReactToRobotOnFace::StopInternal(Robot& robot)
 {
 }
 

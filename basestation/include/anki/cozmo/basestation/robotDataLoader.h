@@ -62,7 +62,7 @@ public:
   using FileJsonMap = std::unordered_map<std::string, const Json::Value>;
   const FileJsonMap& GetEmotionEventJsons() const { return _emotionEvents; }
   const FileJsonMap& GetBehaviorJsons() const { return _behaviors; }
-
+  
   CannedAnimationContainer* GetCannedAnimations() const { return _cannedAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
   AnimationTriggerResponsesContainer* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
@@ -72,7 +72,9 @@ public:
   const Json::Value& GetRobotBehaviorConfig() const { return _robotBehaviorConfig; }
   const Json::Value& GetRobotWorkoutConfig() const { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const { return _robotVisionConfig; }
+  const Json::Value& GetReactionTriggerMap() const { return _reactionTriggerMap; }
 
+  
 private:
   void CollectAnimFiles();
   void LoadAnimationsInternal();
@@ -88,6 +90,7 @@ private:
 
   void LoadEmotionEvents();
   void LoadBehaviors();
+  void LoadReactionTriggerMap();
 
   const CozmoContext* const _context;
   const Util::Data::DataPlatform* _platform;
@@ -112,6 +115,7 @@ private:
   Json::Value _robotMoodConfig;
   Json::Value _robotBehaviorConfig;
   Json::Value _robotVisionConfig;
+  Json::Value _reactionTriggerMap;
   Json::Value _robotWorkoutConfig;
   
   bool                  _isNonConfigDataLoaded = false;

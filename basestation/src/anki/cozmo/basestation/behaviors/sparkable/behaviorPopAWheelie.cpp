@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -28,9 +29,21 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace{
 CONSOLE_VAR(f32, kBPW_ScoreIncreaseForAction, "Behavior.PopAWheelie", 0.8f);
 CONSOLE_VAR(f32, kBPW_MaxTowardFaceAngle_deg, "Behavior.PopAWheelie", 90.f);
 CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
+ 
+static std::set<ReactionTrigger> kReactionsToDisable = {
+  ReactionTrigger::CliffDetected,
+  ReactionTrigger::RobotPickedUp,
+  ReactionTrigger::RobotOnBack,
+  ReactionTrigger::CubeMoved,
+  ReactionTrigger::UnexpectedMovement,
+  ReactionTrigger::ReturnedToTreads
+};
+
+}
 
 BehaviorPopAWheelie::BehaviorPopAWheelie(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
@@ -39,9 +52,9 @@ BehaviorPopAWheelie::BehaviorPopAWheelie(Robot& robot, const Json::Value& config
   SetDefaultName("PopAWheelie");
 }
 
-bool BehaviorPopAWheelie::IsRunnableInternal(const Robot& robot) const
+bool BehaviorPopAWheelie::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
-  UpdateTargetBlock(robot);
+  UpdateTargetBlock(preReqData.GetRobot());
   
   return _targetBlock.IsSet();
 }
@@ -117,18 +130,13 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                                                                          maxTurnToFaceAngle);
   goPopAWheelie->SetSayNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionNamedFace);
   goPopAWheelie->SetNoNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionUnnamedFace);
-
+  
   // once we get to the predock pose, before docking, disable the cliff sensor and associated reactions so
   // that we play the correct animation instead of getting interrupted)  
   auto disableCliff = [this](Robot& robot) {
     // disable reactions we don't want
-    SmartDisableReactionaryBehavior(BehaviorType::ReactToCliff);
-    SmartDisableReactionaryBehavior(BehaviorType::ReactToPickup);
-    SmartDisableReactionaryBehavior(BehaviorType::ReactToRobotOnBack);
-    SmartDisableReactionaryBehavior(BehaviorType::ReactToCubeMoved);
-    SmartDisableReactionaryBehavior(BehaviorType::ReactToUnexpectedMovement);
-    SmartDisableReactionaryBehavior(BehaviorType::ReactToReturnedToTreads);
-
+    this->SmartDisableReactionTrigger(kReactionsToDisable);
+    
     // Wheelies (or the animation afterwards) sometimes cause false double tap events, so disable tap
     // interaction until the behavior is complete
     SmartDisableTapInteraction();
@@ -149,7 +157,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   StartActing(goPopAWheelie,
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
                 if(msg.result != ActionResult::SUCCESS){
-                  SmartReEnableReactionaryBehavior(BehaviorType::ReactToRobotOnBack);
+                  this->SmartReEnableReactionTrigger(ReactionTrigger::RobotOnBack);
                 }
                 
                 switch(IActionRunner::GetActionResultCategory(msg.result))

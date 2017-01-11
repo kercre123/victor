@@ -413,10 +413,10 @@ public class ConnectionFlowController : MonoBehaviour {
 
     // explicitly enable charger behavior since it should be off by default in engine.
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.ReactToCubeMoved, true);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeFace, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("default_disabled", Anki.Cozmo.ReactionTrigger.PlacedOnCharger, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, true);
     }
 
     if (ConnectionFlowComplete != null) {
@@ -534,9 +534,9 @@ public class ConnectionFlowController : MonoBehaviour {
     }
 
     //Disable reactionary behaviors during wakeup
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeObject, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.ReactToCubeMoved, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeFace, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, false);
   }
 
   public void HandleRobotDisconnect() {

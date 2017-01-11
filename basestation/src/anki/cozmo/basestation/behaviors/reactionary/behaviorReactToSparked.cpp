@@ -19,34 +19,19 @@ namespace Anki {
 namespace Cozmo {
   
 BehaviorReactToSparked::BehaviorReactToSparked(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToSparked");
   
   
 }
-  
-bool BehaviorReactToSparked::ShouldComputationallySwitch(const Robot& robot)
-{
-  const IBehavior* currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
-  if(currentBehavior == nullptr){
-    return false;
-  }
-  
-  const bool cancelCurrentReaction = currentBehavior->IsReactionary()
-                                         && robot.GetBehaviorManager().ShouldSwitchToSpark();
-  
-  const bool behaviorWhitelisted = currentBehavior->GetType() == BehaviorType::ReactToCliff;
-  
-  return cancelCurrentReaction && !behaviorWhitelisted;
-}
 
-Result BehaviorReactToSparked::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToSparked::InitInternal(Robot& robot)
 {
   return Result::RESULT_OK;
 }
 
-bool BehaviorReactToSparked::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToSparked::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }

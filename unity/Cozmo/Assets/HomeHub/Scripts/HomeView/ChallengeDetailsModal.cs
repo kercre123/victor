@@ -159,7 +159,7 @@ public class ChallengeDetailsModal : BaseModal {
         // Don't attempt to refresh home view if we are already destroying it to start a game
         if (ChallengeStarted != null) {
           // don't hit the sides of the charger if he's still driving off.
-          if (robot.CurrentBehaviorType == Anki.Cozmo.BehaviorType.DriveOffCharger) {
+          if (robot.CurrentBehaviorClass == Anki.Cozmo.BehaviorClass.DriveOffCharger) {
             OpenCozmoNotReadyAlert();
           }
           else if (robot.TreadState != Anki.Cozmo.OffTreadsState.OnTreads) {

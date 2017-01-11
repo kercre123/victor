@@ -1,5 +1,5 @@
 {
-  "behaviorType": "RespondToRenameFace",
+  "behaviorClass": "RespondToRenameFace",
   "name": "RespondToRenameFace",
   "displayNameKey":"behavior.RespondToRenameFace",
   "behaviorGroups": [

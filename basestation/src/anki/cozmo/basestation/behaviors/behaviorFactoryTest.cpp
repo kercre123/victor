@@ -220,7 +220,7 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorFactoryTest::IsRunnableInternal(const Robot& robot) const
+  bool BehaviorFactoryTest::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
   {
     return _testResult == FactoryTestResultCode::UNKNOWN;
   }
@@ -286,7 +286,7 @@ namespace Cozmo {
     robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(driveAnimsMsg));
     
     // Disable reactionary behaviors
-    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("lock", false);
     
     // Only enable vision modes we actually need
     // NOTE: we do not (yet) restore vision modes afterwards!
@@ -1747,9 +1747,6 @@ namespace Cozmo {
     _stateTransitionTimestamps[static_cast<u32>(s)] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
     UpdateStateName();
-
-    //BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR, "BehaviorFactoryTest.SetState",
-     //                      "set state to '%s'", GetStateName().c_str());
   }
 
   void BehaviorFactoryTest::UpdateStateName()

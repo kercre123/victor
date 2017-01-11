@@ -1,5 +1,5 @@
 {
-  "behaviorType": "KnockOverCubes",
+  "behaviorClass": "KnockOverCubes",
   "name": "knockOverCubes",
   "displayNameKey":"behavior.KnockOverCubes",
   "flatScore": 20,

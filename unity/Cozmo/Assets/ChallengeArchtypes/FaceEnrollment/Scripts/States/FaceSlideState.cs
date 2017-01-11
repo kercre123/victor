@@ -9,7 +9,7 @@ namespace FaceEnrollment {
 
     private Cozmo.UI.AlertModal _DeleteConfirmationAlertView = null;
 
-    public override void Pause(State.PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+    public override void Pause(State.PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
       // don't quit from reactionary behaviors.
     }
 

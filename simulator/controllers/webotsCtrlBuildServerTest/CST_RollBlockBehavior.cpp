@@ -209,13 +209,13 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
 void CST_RollBlockBehavior::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
   PRINT_NAMED_INFO("CST_RollBlockBehavior.transition", "%s -> %s",
-                   msg.oldBehavior.c_str(),
-                   msg.newBehavior.c_str());
+                   msg.oldBehaviorName.c_str(),
+                   msg.newBehaviorName.c_str());
   
-  if(msg.oldBehavior == kBehaviorName) {
+  if(msg.oldBehaviorName == kBehaviorName) {
     _stoppedBehavior = true;
   }
-  if(msg.newBehavior == kBehaviorName) {
+  if(msg.newBehaviorName == kBehaviorName) {
     _startedBehavior = true;
   }
 }

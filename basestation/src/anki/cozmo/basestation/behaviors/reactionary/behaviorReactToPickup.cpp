@@ -34,24 +34,20 @@ CONSOLE_VAR(f32, kMaxTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 6.0f)
 CONSOLE_VAR(f32, kRepeatAnimMultIncrease, "Behavior.ReactToPickup", 0.33f);
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToPickup");
 
 }
+
   
-bool BehaviorReactToPickup::ShouldComputationallySwitch(const Robot& robot)
+bool BehaviorReactToPickup::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
-  return robot.GetOffTreadsState() == OffTreadsState::InAir;
-}
-  
-bool BehaviorReactToPickup::IsRunnableInternalReactionary(const Robot& robot) const
-{
-  return robot.GetOffTreadsState() == OffTreadsState::InAir;
+  return true;
 }
   
 
-Result BehaviorReactToPickup::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToPickup::InitInternal(Robot& robot)
 {
   _repeatAnimatingMultiplier = 1;
   
@@ -166,7 +162,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
   return Status::Running;
 }
   
-void BehaviorReactToPickup::StopInternalReactionary(Robot& robot)
+void BehaviorReactToPickup::StopInternal(Robot& robot)
 {
 }
 

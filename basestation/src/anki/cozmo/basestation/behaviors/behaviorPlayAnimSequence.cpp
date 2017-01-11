@@ -55,7 +55,7 @@ BehaviorPlayAnimSequence::~BehaviorPlayAnimSequence()
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimSequence::IsRunnableInternal(const Robot& robot) const
+bool BehaviorPlayAnimSequence::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   const bool hasAnims = !_animTriggers.empty();
   return hasAnims;
