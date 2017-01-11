@@ -6,13 +6,14 @@
 #include <assert.h>
 #include <string.h>
 
-#define DBG_ENABLE  1
+#define DBG_ENABLE  0
 #if DBG_ENABLE > 0
 #include "hal/console.h"
 #endif
 
 #define NV_RESET_MAGIC_NUM  0xDEADBEEF
 
+//MCU Backup SRAM info
 static const uint32_t nv_ram_addr = BKPSRAM_BASE; /*(AHB1PERIPH_BASE + 0x4000) -> 0x40024000*/
 static const uint32_t nv_ram_size = 0x1000;       /*4k*/
 
@@ -52,13 +53,12 @@ void nvReset(u8 *dat, u16 len)
   if( dat != NULL && len > 0 ) {
     memcpy( pram->dat, dat, len );
     pram->len = len;
-    pram->crc = crc16_compute( pram->dat, pram->len+2, NULL );  //calculate data+len CRC
+    pram->crc = crc16_compute( pram->dat, pram->len, NULL );  //calculate data CRC
     pram->magic_num = NV_RESET_MAGIC_NUM; //mark data as good
   }
   
-  //NVIC_SystemReset();
-  //while(1);
-  #warning "nvReset does not actually reset!"
+  NVIC_SystemReset();
+  while(1);
 }
 
 int nvResetGetLen(void)
@@ -67,7 +67,7 @@ int nvResetGetLen(void)
   nv_reset_storage_t *pram = (nv_reset_storage_t*)nv_ram_addr;
   
   if( pram->magic_num == NV_RESET_MAGIC_NUM && pram->len <= NV_RESET_MAX_LEN )
-    if( pram->crc == crc16_compute( pram->dat, pram->len+2, NULL ) )
+    if( pram->crc == crc16_compute( pram->dat, pram->len, NULL ) )
       return pram->len;
   
   return -1;
@@ -82,9 +82,9 @@ int nvResetGet(u8 *out_dat, u16 max_out_len)
   return len;
 }
 
+#if DBG_ENABLE > 0
 void nvResetDbgInspect(char* prefix, u8 *dat, u16 len)
 {
-#if DBG_ENABLE > 0
   int dlen = len;
   if( dat == NULL ) {
     nv_reset_storage_t *pram = (nv_reset_storage_t*)nv_ram_addr;
@@ -102,12 +102,12 @@ void nvResetDbgInspect(char* prefix, u8 *dat, u16 len)
     ConsolePrintf("%02x", dat[i]);
   }
   ConsolePrintf(" (%i)\r\n", dlen);
-#endif
 }
+#endif
 
+#if DBG_ENABLE > 0
 void nvResetDbgInspectMemRegion(void)
 {
-#if DBG_ENABLE > 0
   nv_reset_storage_t *pram = (nv_reset_storage_t*)nv_ram_addr;
   ConsolePrintf("nvRam address 0x%08x\r\n", nv_ram_addr);
   ConsolePrintf(".magic num: 0x%08x\r\n", pram->magic_num );
@@ -120,6 +120,6 @@ void nvResetDbgInspectMemRegion(void)
     ConsolePrintf("%02x", pram->dat[i]);
   }
   ConsolePrintf("\r\n");
-#endif
 }
+#endif
 
