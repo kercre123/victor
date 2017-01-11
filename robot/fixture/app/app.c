@@ -513,7 +513,13 @@ int main(void)
   ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, g_fixtureReleaseVersion );
   
   //See what data is stored in nvReset
-  nvResetDbgInspect((char*)"reset check: ", NULL, 0);
+  //=====================DEBUG==========================
+  {
+    int len = nvResetGetLen();
+    ConsolePrintf("nvReset: %i bytes available\r\n", len);
+    //nvResetDbgInspect((char*)"  ->", NULL, 0);
+  }
+  //===================================================*/
   
   while (1)
   {  

@@ -462,43 +462,9 @@ static void ParseCommand(void)
   
   if(!strcasecmp(buffer, "reset"))
   {
-    //=================================DEBUG===============================
-    {
-      u8 resetDat[NV_RESET_MAX_LEN];
-      u8 resetVer[NV_RESET_MAX_LEN];
-      srand( getMicroCounter() );
-      
-      for(int i=0; i <= NV_RESET_MAX_LEN; i++ )
-      {
-        //generate some random dat
-        for(int x=0; x < i; x++)
-          resetDat[x] = rand();
-        
-        //print for inspection
-        nvResetDbgInspect((char*)"reset write: ", resetDat, i);
-        
-        //store (reset disable for debug testing)
-        nvReset( resetDat, i );
-        
-        //recover data to verify
-        memset( resetVer, 0, sizeof(resetVer) );
-        int len = nvResetGet(resetVer, sizeof(resetVer));
-        if( !((!i && len==-1) || (i && i==len)) || 0 != memcmp(resetDat,resetVer,i) )
-          ConsoleWrite("--VERIFY FAILED!--\r\n");
-        
-        //print nvReset internal dat - verify our write data is in tact before reset
-        nvResetDbgInspect((char*)"reset verif: ", NULL, 0);
-        
-        //print memory region & internal headers
-        //nvResetDbgInspectMemRegion();
-      }
-    }
-    //====================================================================*/
-    
     ConsoleWrite("\r\n");
     MicroWait(10000);
-    NVIC_SystemReset();
-    while(1);
+    nvReset(NULL,0);
   }
   else if (!strcasecmp(buffer, "exit")) 
   {
