@@ -132,7 +132,7 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
   }
   
   _currTarget = *_targets.begin();
-  ASSERT_NAMED(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
+  DEV_ASSERT(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
   Pose3d poseWrtRobot;
   robot.GetBlockWorld().GetObjectByID(_currTarget)->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot);
   

@@ -172,7 +172,7 @@ public:
   const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
 
   // Force a behavior to update its target blocks but only if it is in a state where it can
-  void UpdateTargetBlocks(const Robot& robot) const { UpdateTargetBlocksInternal(robot); };
+  void UpdateTargetBlocks(const Robot& robot) const { UpdateTargetBlocksInternal(robot); }
   
   // Get the ObjectUseIntentions this behavior uses
   virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const { return {}; }
@@ -185,13 +185,13 @@ public:
   
   // Add Listeners to a behavior which will notify them of milestones/events in the behavior's lifecycle
   virtual void AddListener(ISubtaskListener* listener)
-                { ASSERT_NAMED(false, "AddListener.FrustrationListener.Unimplemented");}
+                { DEV_ASSERT(false, "AddListener.FrustrationListener.Unimplemented"); }
   virtual void AddListener(IReactToFaceListener* listener)
-                { ASSERT_NAMED(false, "AddListener.FaceListener.Unimplemented");}
+                { DEV_ASSERT(false, "AddListener.FaceListener.Unimplemented"); }
   virtual void AddListener(IReactToObjectListener* listener)
-                { ASSERT_NAMED(false, "AddListener.ObjectListener.Unimplemented");}
+                { DEV_ASSERT(false, "AddListener.ObjectListener.Unimplemented"); }
   virtual void AddListener(IReactToPetListener* listener)
-                { ASSERT_NAMED(false, "AddListener.PetListener.Unimplemented");}
+                { DEV_ASSERT(false, "AddListener.PetListener.Unimplemented"); }
   
 protected:
   
@@ -219,14 +219,14 @@ protected:
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData ) const
                  { BehaviorPreReqNone noPreReqs;  return IsRunnableInternal(noPreReqs);}
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const
-                 { ASSERT_NAMED(false, "IsRunnableInternal.PreReqNone.NoOverride"); return false;}
+                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqNone.NoOverride"); return false;}
   
   virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData ) const
-                 { ASSERT_NAMED(false, "IsRunnableInternal.PreReqAcknowledgeObject.NoOverride"); return false;}
+                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqAcknowledgeObject.NoOverride"); return false;}
   virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData ) const
-                 { ASSERT_NAMED(false, "IsRunnableInternal.PreReqAcknowledgFace.NoOverride"); return false;}
+                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqAcknowledgeFace.NoOverride"); return false;}
   virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgePet& preReqData ) const
-                 { ASSERT_NAMED(false, "IsRunnableInternal.PreReqAcknowledgePet.NoOverride"); return false;}
+                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqAcknowledgePet.NoOverride"); return false;}
 
   // This function can be implemented by behaviors. It should return Running while it is running, and Complete
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to

@@ -49,8 +49,8 @@ const char* EnumToString(const ConfigurationType t)
     case ConfigurationType::Pyramid:
       return "Pyramid";
     case ConfigurationType::Count:
-      ASSERT_NAMED_EVENT(false, "BlockConfigTypeHelpers.EnumToSTring.InvalidString",
-                         "Attempted to convert unknown value %d to string", t);
+      DEV_ASSERT_MSG(false, "BlockConfigTypeHelpers.EnumToString.InvalidString",
+                     "Attempted to convert unknown value %d to string", t);
       return nullptr;
   }
 }

@@ -68,7 +68,7 @@ SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& co
   IBehavior* acknowledgeObjectBehavior = robot.GetBehaviorFactory().FindBehaviorByName("AcknowledgeObject");
   assert(dynamic_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior));
   _behaviorAcknowledgeObject = static_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior);
-  ASSERT_NAMED( nullptr != _behaviorAcknowledgeObject, "SparksBehaviorChooser.BehaviorAcknowledgeObjectNotFound" );
+  DEV_ASSERT(nullptr != _behaviorAcknowledgeObject, "SparksBehaviorChooser.BehaviorAcknowledgeObjectNotFound");
   
   // Listen for behavior objective achieved messages for spark repetitions counter
   if(robot.HasExternalInterface()) {
@@ -115,19 +115,20 @@ Result SparksBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& 
   _behaviorPlayAnimation = dynamic_cast<BehaviorPlayArbitraryAnim*>(
                                robot.GetBehaviorFactory().CreateBehavior(
                                   BehaviorClass::PlayArbitraryAnim, robot, Json::Value()));
-  ASSERT_NAMED(_behaviorPlayAnimation, "SparksBehaviorChooser.Behavior pointer not set");
+  DEV_ASSERT(_behaviorPlayAnimation, "SparksBehaviorChooser.Behavior pointer not set");
   
   _minTimeSecs = JsonTools::ParseFloat(config, kMinTimeConfigKey, "Failed to parse min time");
   _maxTimeSecs = JsonTools::ParseFloat(config, kMaxTimeConfigKey, "Failed to parse max time");
-  _numberOfRepetitions =  JsonTools::ParseUint8(config, kNumberOfRepetitionsConfigKey, "Failed to parse number of repetitions");
+  _numberOfRepetitions =  JsonTools::ParseUint8(config, kNumberOfRepetitionsConfigKey,
+                                                "Failed to parse number of repetitions");
   
   _objectiveToListenFor = BehaviorObjectiveFromString(config.get(kBehaviorObjectiveConfigKey, EnumToString(BehaviorObjective::Unknown)).asCString());
     
   //Ensures that these values have to be set in behavior_config for all sparks
-  ASSERT_NAMED(FLT_GE(_minTimeSecs, 0.f) && FLT_GE(_maxTimeSecs, 0.f)
-               && _numberOfRepetitions >= 0 && _softSparkUpgradeTrigger != AnimationTrigger::Count
-               && _objectiveToListenFor != BehaviorObjective::Count,
-               "SparksBehaviorChooser.ReloadFromConfig: At least one parameter not set");
+  DEV_ASSERT(FLT_GE(_minTimeSecs, 0.f) && FLT_GE(_maxTimeSecs, 0.f)
+             && _numberOfRepetitions >= 0 && _softSparkUpgradeTrigger != AnimationTrigger::Count
+             && _objectiveToListenFor != BehaviorObjective::Count,
+             "SparksBehaviorChooser.ReloadFromConfig: At least one parameter not set");
   
   return RESULT_OK;
 }

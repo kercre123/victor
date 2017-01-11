@@ -95,8 +95,7 @@ struct BehaviorRunningAndResumeInfo{
   IBehavior* GetBehaviorToResume() const{ return _behaviorToResume;}
   
   void SetCurrentReactionType(ReactionTrigger trigger){
-    ASSERT_NAMED(trigger != ReactionTrigger::Count,
-                 "Invalid Reaction trigger state");
+    DEV_ASSERT(trigger != ReactionTrigger::Count, "Invalid ReactionTrigger state");
     _currentReactionType = trigger;
   }
   
@@ -278,10 +277,10 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
       IBehavior* behavior = _behaviorFactory->FindBehaviorByName(behaviorName);
       
       
-      ASSERT_NAMED_EVENT(behavior != nullptr, "BehaviorManager.InitReactionTriggerMap.BehaviorNullptr Behavior name",
-                         "Behavior name %s returned nullptr from factory", behaviorName.c_str());
-      ASSERT_NAMED_EVENT(strategy != nullptr, "BehaviorManager.InitReactionTriggerMap.StrategyNullptr",
-                         "Reaction trigger string %s returned nullptr", reactionTriggerString.c_str());
+      DEV_ASSERT_MSG(behavior != nullptr, "BehaviorManager.InitReactionTriggerMap.BehaviorNullptr Behavior name",
+                     "Behavior name %s returned nullptr from factory", behaviorName.c_str());
+      DEV_ASSERT_MSG(strategy != nullptr, "BehaviorManager.InitReactionTriggerMap.StrategyNullptr",
+                     "Reaction trigger string %s returned nullptr", reactionTriggerString.c_str());
       
       if(strategy != nullptr && behavior != nullptr){
         PRINT_CH_INFO("ReactionTriggers","BehaviorManager.InitReactionTriggerMap.AddingReactionTrigger",
@@ -1161,8 +1160,8 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
 
         std::set<IBehavior*> reactToDoubleTapBehaviors = GetBehaviorsForReactionTrigger(ReactionTrigger::DoubleTapDetected);
         // this logic assumes there is only one react to double tap behavior
-        ASSERT_NAMED(reactToDoubleTapBehaviors.size() == 1,
-                     "BehaviorManager.UpdateBehaviorWithObjectTapInteraction.TooManyDoubleTapTriggers");
+        DEV_ASSERT(reactToDoubleTapBehaviors.size() == 1,
+                   "BehaviorManager.UpdateBehaviorWithObjectTapInteraction.TooManyDoubleTapTriggers");
         if(reactToDoubleTapBehaviors.size() == 1){
           IBehavior* reactToDoubleTap = *reactToDoubleTapBehaviors.begin();
           BehaviorPreReqNone noPreReqs;

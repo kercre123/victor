@@ -114,11 +114,11 @@ void BLESystem::OnVehicleMessageReceived(const UUIDBytes& vehicleId, std::vector
   Util::Dispatch::Async(_queue, [vehicleId, messageBytes = std::move(messageBytes), this] {
     PRINT_NAMED_DEBUG("BLESystem.OnVehicleMessageReceived", "ID: %s message chunk received", StringFromUUIDBytes(const_cast<UUIDBytes* const>(&vehicleId)));
     
-    ASSERT_NAMED(!_bleMessageInProgress->IsMessageComplete(), "BLESystem.OnVehicleMessageReceived.MessageAlreadyComplete");
-    ASSERT_NAMED(Anki::Cozmo::BLECozmoMessage::kMessageExactMessageLength == messageBytes.size(), "BLESystem.OnVehicleMessageReceived.MessageChunkIncorrectSize");
+    DEV_ASSERT(!_bleMessageInProgress->IsMessageComplete(), "BLESystem.OnVehicleMessageReceived.MessageAlreadyComplete");
+    DEV_ASSERT(Anki::Cozmo::BLECozmoMessage::kMessageExactMessageLength == messageBytes.size(), "BLESystem.OnVehicleMessageReceived.MessageChunkIncorrectSize");
     if (!_bleMessageInProgress->AppendChunk(static_cast<const uint8_t*>(messageBytes.data()), (uint32_t) messageBytes.size()))
     {
-      ASSERT_NAMED(false, "BLESystem.OnVehicleMessageReceived.MessageChunkAppendFail");
+      PRINT_NAMED_ERROR("BLESystem.OnVehicleMessageReceived.MessageChunkAppendFail", "Unable to append message chunk");
     }
     
     if (_bleMessageInProgress->IsMessageComplete())

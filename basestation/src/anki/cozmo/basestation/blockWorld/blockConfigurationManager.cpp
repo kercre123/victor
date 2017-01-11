@@ -162,8 +162,8 @@ BlockConfigurationContainer& BlockConfigurationManager::GetCacheByType(Configura
     }
     case ConfigurationType::Count:
     {
-      ASSERT_NAMED_EVENT(false, "BlockConfigurationManager.GetCacheByType.InvalidType",
-                         "Configuration requested for invalid type");
+      DEV_ASSERT_MSG(false, "BlockConfigurationManager.GetCacheByType.InvalidType",
+                     "Configuration requested for invalid type");
       //return value set for compilation;
       return _stackCache;
     }
@@ -188,8 +188,8 @@ const BlockConfigurationContainer& BlockConfigurationManager::GetCacheByType(Con
     }
     case ConfigurationType::Count:
     {
-      ASSERT_NAMED_EVENT(false, "BlockConfigurationManager.GetCacheByType.InvalidType",
-                         "Configuration requested for invalid type");
+      DEV_ASSERT_MSG(false, "BlockConfigurationManager.GetCacheByType.InvalidType",
+                     "Configuration requested for invalid type");
       //return value set for compilation;
       return _stackCache;
     }
