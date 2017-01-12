@@ -20,10 +20,11 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoal.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalEvaluator.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
@@ -1164,8 +1165,8 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
                    "BehaviorManager.UpdateBehaviorWithObjectTapInteraction.TooManyDoubleTapTriggers");
         if(reactToDoubleTapBehaviors.size() == 1){
           IBehavior* reactToDoubleTap = *reactToDoubleTapBehaviors.begin();
-          BehaviorPreReqNone noPreReqs;
-          if(reactToDoubleTap->IsRunnable(noPreReqs))
+          BehaviorPreReqRobot preReqRobot(_robot);
+          if(reactToDoubleTap->IsRunnable(preReqRobot))
           {
             PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.StartingReactToDoubleTap",
                           "Forcing ReactToDoubleTap to run because %s can't run with newly double tapped object",
