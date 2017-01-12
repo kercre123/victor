@@ -43,7 +43,7 @@ bool NodeContent::operator!=(const NodeContent& other) const
 ENodeContentTypePackedType ENodeContentTypeToFlag(ENodeContentType nodeContentType)
 {
   const int contentTypeValue = Util::numeric_cast<int>( nodeContentType );
-  ASSERT_NAMED(contentTypeValue < sizeof(ENodeContentTypePackedType)*8, "ENodeContentTypeToFlag.InvalidContentType");
+  DEV_ASSERT(contentTypeValue < sizeof(ENodeContentTypePackedType)*8, "ENodeContentTypeToFlag.InvalidContentType");
   const ENodeContentTypePackedType flag = (1 << contentTypeValue);
   return flag;
 }
@@ -94,7 +94,7 @@ Vec3f EDirectionToNormalVec3f(EDirection dir)
     case NavMeshQuadTreeTypes::EDirection::Invalid: {};
   }
   
-  ASSERT_NAMED(!"Invalid direction", "EDirectionToNormalVec3f.InvalidDirection");
+  DEV_ASSERT(!"Invalid direction", "EDirectionToNormalVec3f.InvalidDirection");
   return Vec3f{0.0f, 0.0f, 0.0f};
 }
 

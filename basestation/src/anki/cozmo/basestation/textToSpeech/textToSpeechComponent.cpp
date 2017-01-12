@@ -141,8 +141,8 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
                 "OperationId: %u",
                 operationId);
   
-  ASSERT_NAMED(AudioCreationState::Ready == ttsBundle->state,
-               "TextToSpeechComponent.PrepareAudioEngine.ttsBundle.state.NotReady");
+  DEV_ASSERT(AudioCreationState::Ready == ttsBundle->state,
+             "TextToSpeechComponent.PrepareAudioEngine.ttsBundle.state.NotReady");
   
   if (nullptr == ttsBundle->waveData) {
     PRINT_NAMED_ERROR("TextToSpeechComponent.PrepareAudioEngine", "WaveDataPtr.IsNull");
@@ -150,9 +150,9 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
   }
   
   using namespace Audio;
-  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.PrepareAudioEngine.NullAudioController");
+  DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.PrepareAudioEngine.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.PrepareAudioEngine.NullAudioControllerPluginInterface");
+  DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.PrepareAudioEngine.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
   if (pluginInterface->WavePortalHasAudioDataInfo()) {
@@ -177,9 +177,9 @@ void TextToSpeechComponent::CleanupAudioEngine(const OperationId operationId)
                 "TextToSpeechComponent.CleanupAudioEngine", "");
   
   using namespace Audio;
-  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.CleanupAudioEngine.NullAudioController");
+  DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.CleanupAudioEngine.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.CleanupAudioEngine.NullAudioControllerPluginInterface");
+  DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.CleanupAudioEngine.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
   if (pluginInterface->WavePortalHasAudioDataInfo()) {

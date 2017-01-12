@@ -441,8 +441,8 @@ namespace Cozmo {
     _lastReceivedImageTimeStamp_ms = encodedImage.GetTimeStamp();
     
     if(_isCamCalibSet) {
-      ASSERT_NAMED(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
-      ASSERT_NAMED(_visionSystem->IsInitialized(), "VisionComponent.SetNextImage.VisionSystemNotInitialized");
+      DEV_ASSERT(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
+      DEV_ASSERT(_visionSystem->IsInitialized(), "VisionComponent.SetNextImage.VisionSystemNotInitialized");
 
       // Populate IMU data history for this image, for rolling shutter correction
       GetImuDataHistory().CalculateTimestampForImageIMU(encodedImage.GetImageID(),
@@ -629,7 +629,7 @@ namespace Cozmo {
   {
     const Pose3d& robotPose = _robot.GetPose();
     
-    ASSERT_NAMED(_camera.IsCalibrated(), "VisionComponent.PopulateGroundPlaneHomographyLUT.CameraNotCalibrated");
+    DEV_ASSERT(_camera.IsCalibrated(), "VisionComponent.PopulateGroundPlaneHomographyLUT.CameraNotCalibrated");
     
     const Matrix_3x3f K = _camera.GetCalibration()->GetCalibrationMatrix();
     
@@ -726,8 +726,8 @@ namespace Cozmo {
     PRINT_NAMED_INFO("VisionComponent.Processor",
                      "Starting Robot VisionComponent::Processor thread...");
     
-    ASSERT_NAMED(_visionSystem != nullptr && _visionSystem->IsInitialized(),
-                 "VisionComponent.Processor.VisionSystemNotReady");
+    DEV_ASSERT(_visionSystem != nullptr && _visionSystem->IsInitialized(),
+               "VisionComponent.Processor.VisionSystemNotReady");
     
     
     const char* threadName = "VisionSystem";
@@ -894,9 +894,8 @@ namespace Cozmo {
           debugRGB.second.Display(debugRGB.first.c_str());
         }
         
-        // Store frame rate and last image processed time
-        ASSERT_NAMED(result.timestamp >= _lastProcessedImageTimeStamp_ms,
-                     "VisionComponent.UpdateAllResults.BadTimeStamp"); // Time should only move forward
+        // Store frame rate and last image processed time. Time should only move forward.
+        DEV_ASSERT(result.timestamp >= _lastProcessedImageTimeStamp_ms, "VisionComponent.UpdateAllResults.BadTimeStamp");
         _processingPeriod_ms = result.timestamp - _lastProcessedImageTimeStamp_ms;
         _lastProcessedImageTimeStamp_ms = result.timestamp;
         
@@ -1662,10 +1661,10 @@ namespace Cozmo {
                           "Requested %zu, only %zu available", whichPose, calibPoses.size());
     } else {
       auto & calibImages = _visionSystem->GetCalibrationImages();
-      ASSERT_NAMED_EVENT(calibImages.size() >= calibPoses.size(),
-                         "VisionComponent.WriteCalibrationPoseToRobot.SizeMismatch",
-                         "Expecting at least %zu calibration images, got %zu",
-                         calibPoses.size(), calibImages.size());
+      DEV_ASSERT_MSG(calibImages.size() >= calibPoses.size(),
+                     "VisionComponent.WriteCalibrationPoseToRobot.SizeMismatch",
+                     "Expecting at least %zu calibration images, got %zu",
+                     calibPoses.size(), calibImages.size());
       
       if(!calibImages[whichPose].dotsFound) {
         PRINT_NAMED_INFO("VisionComponent.WriteCalibrationPoseToRobot.PoseNotComputed",
@@ -1923,7 +1922,7 @@ namespace Cozmo {
   {
     // Pad to a multiple of 4 for NVStorage
     const size_t paddedNumBytes = (numBytes + 3) & ~0x03;
-    ASSERT_NAMED(paddedNumBytes % 4 == 0, "EnrolledFaceEntry.Serialize.PaddedSizeNotMultipleOf4");
+    DEV_ASSERT(paddedNumBytes % 4 == 0, "EnrolledFaceEntry.Serialize.PaddedSizeNotMultipleOf4");
     
     return paddedNumBytes;
   }
@@ -2029,8 +2028,7 @@ namespace Cozmo {
     
     // If one of the data is not empty, neither should be (we can't have album data with
     // no enroll data or vice versa)
-    ASSERT_NAMED(!_albumData.empty() && !_enrollData.empty(),
-                 "VisionComponent.SaveFaceAlbumToRobot.BadAlbumOrEnrollData");
+    DEV_ASSERT(!_albumData.empty() && !_enrollData.empty(), "VisionComponent.SaveFaceAlbumToRobot.BadAlbumOrEnrollData");
     
     // Use NVStorage to save it
     bool sendSucceeded = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
@@ -2061,8 +2059,7 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-    ASSERT_NAMED(_visionSystem != nullptr,
-                 "VisionComponent.LoadFaceAlbumFromRobot.VisionSystemNotReady");
+    DEV_ASSERT(_visionSystem != nullptr, "VisionComponent.LoadFaceAlbumFromRobot.VisionSystemNotReady");
     
     NVStorageComponent::NVStorageReadCallback readCallback =
     [this](u8* data, size_t size, NVStorage::NVResult result)

@@ -1018,7 +1018,7 @@ Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID, const 
     }
     
     std::array<Anki::Cozmo::LightState, 4> lights;
-    ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
+    DEV_ASSERT((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.lights");
     for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
       const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
       lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
@@ -1106,7 +1106,7 @@ Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID,
                           turnOffUnspecifiedLEDs);
     
     std::array<Anki::Cozmo::LightState, 4> lights;
-    ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
+    DEV_ASSERT((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.lights");
     for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
       const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
       lights[i].onColor  = ENCODED_COLOR(ledState.onColor);

@@ -161,9 +161,9 @@ void NVStorageComponent::InitSizeTable() {
     auto nextIt = currIt;
     nextIt++;
     if (nextIt != _maxSizeTable.end()) {
-      ASSERT_NAMED_EVENT(IsValidEntryTag(currIt->first),
-                         "NVStorageComponent.InitSizeTable.InvalidTag", "0x%x",
-                         currIt->first);
+      DEV_ASSERT_MSG(IsValidEntryTag(currIt->first),
+                     "NVStorageComponent.InitSizeTable.InvalidTag", "0x%x",
+                     currIt->first);
       
       currIt->second = static_cast<u32>(nextIt->first) - static_cast<u32>(currIt->first);
       PRINT_CH_INFO("NVStorage", "NVStorageComponent.InitSizeTable",
@@ -549,7 +549,8 @@ void NVStorageComponent::ProcessRequest()
       _writeDataObject.sendIndex = 0;      
       _writeDataObject.sending   = true;
       
-      ASSERT_NAMED_EVENT(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending1", "0x%x", _writeDataAckInfo.tag);
+      DEV_ASSERT_MSG(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending1",
+                     "0x%x", _writeDataAckInfo.tag);
       
       // Set associated ack info
       _writeDataAckInfo.tag                   = req.tag;
@@ -564,7 +565,7 @@ void NVStorageComponent::ProcessRequest()
 
       PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.ProcessRequest.SendingWrite",
                      "StartTag: 0x%x (%s), timeoutTime: %d, currTime: %d",
-                     entryTag, EnumToString(req.tag), _writeDataAckInfo.timeoutTimeStamp, _robot.GetLastMsgTimestamp() );
+                     entryTag, EnumToString(req.tag), _writeDataAckInfo.timeoutTimeStamp, _robot.GetLastMsgTimestamp());
       
       SetState(NVSCState::SENDING_WRITE_DATA);
       
@@ -572,7 +573,8 @@ void NVStorageComponent::ProcessRequest()
     }
     case NVOperation::NVOP_ERASE:
     {
-      ASSERT_NAMED_EVENT(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending2", "0x%x", _writeDataAckInfo.tag);
+      DEV_ASSERT_MSG(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending2",
+                     "0x%x", _writeDataAckInfo.tag);
 
       _writeDataObject.sending = false;
       
@@ -622,7 +624,8 @@ void NVStorageComponent::ProcessRequest()
     case NVOperation::NVOP_READ:
     {
       
-      ASSERT_NAMED_EVENT(!_recvDataInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedReadPending", "0x%x", _recvDataInfo.tag);
+      DEV_ASSERT_MSG(!_recvDataInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedReadPending",
+                     "0x%x", _recvDataInfo.tag);
       
       // If factory tag, request entire range
       _lastCommandSent.address   = entryTag;
@@ -712,7 +715,7 @@ void NVStorageComponent::Update()
         // Send the next blob of data to send for this multi-blob message
         u32 bytesLeftToSend = static_cast<u32>(sendData->data->size()) - sendData->sendIndex;
         u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
-        ASSERT_NAMED(bytesToSend > 0, "NVStorageComponent.Update.ExpectedPositiveNumBytesToSend");
+        DEV_ASSERT(bytesToSend > 0, "NVStorageComponent.Update.ExpectedPositiveNumBytesToSend");
         
         // If this is the first blob, prepend header
         _lastCommandSent.blob.clear();
@@ -1115,8 +1118,8 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
   
 void NVStorageComponent::BroadcastNVStorageOpResult(NVEntryTag tag, NVResult res, NVOperation op, u8 index, const u8* data, u32 data_length)
 {
-  ASSERT_NAMED_EVENT(data_length <= _kMaxNvStorageBlobSize,
-                     "NVStorageComponent.BroadcastNVStorageOpResult.DataLengthTooLarge", "%u", data_length);
+  DEV_ASSERT_MSG(data_length <= _kMaxNvStorageBlobSize,
+                 "NVStorageComponent.BroadcastNVStorageOpResult.DataLengthTooLarge", "%u", data_length);
   
   ExternalInterface::NVStorageOpResult msg;
   msg.tag = tag;

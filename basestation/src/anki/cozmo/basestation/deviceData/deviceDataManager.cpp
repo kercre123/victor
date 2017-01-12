@@ -39,7 +39,7 @@ DeviceDataManager::~DeviceDataManager() = default;
 template<>
 void DeviceDataManager::HandleMessage(const ExternalInterface::RequestDeviceData& msg)
 {
-  ASSERT_NAMED(nullptr != _externalInterface, "DeviceDataManager.HandleMessage.NullExternalInterface");
+  DEV_ASSERT(nullptr != _externalInterface, "DeviceDataManager.HandleMessage.NullExternalInterface");
   
   _deviceData->Refresh();
   const auto& dataMap = _deviceData->GetDataMap();
