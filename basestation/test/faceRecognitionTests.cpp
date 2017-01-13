@@ -74,7 +74,7 @@ static void Recognize(Robot& robot, TimeStamp_t timestamp, RobotState& stateMsg,
   
   if(filename.empty())
   {
-    ASSERT_NAMED(!img.IsEmpty(), "FaceRecognitionTests.Recognize.EmptyImage");
+    DEV_ASSERT(!img.IsEmpty(), "FaceRecognitionTests.Recognize.EmptyImage");
     img.FillWith(128);
   }
   else

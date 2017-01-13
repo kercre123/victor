@@ -214,11 +214,11 @@ s32 CST_LEDColor::UpdateSimInternal()
       const double* kLed2Color = GetNodeByDefName("cube.led2")->getField("betterColor")->getSFVec3f();  // Front
       const double* kLed3Color = GetNodeByDefName("cube.led3")->getField("betterColor")->getSFVec3f();  // Right
 
-      ASSERT_NAMED_EVENT(EqualityCStyleArray(kLed0Color, kLed1Color, 3) &&
-                         EqualityCStyleArray(kLed1Color, kLed2Color, 3) &&
-                         EqualityCStyleArray(kLed2Color, kLed3Color, 3),
-                         "CST_LEDColor.VerifyLEDAnimation",
-                         "All the LEDs should have the same color at this stage.");
+      DEV_ASSERT_MSG(EqualityCStyleArray(kLed0Color, kLed1Color, 3) &&
+                     EqualityCStyleArray(kLed1Color, kLed2Color, 3) &&
+                     EqualityCStyleArray(kLed2Color, kLed3Color, 3),
+                     "CST_LEDColor.VerifyLEDAnimation",
+                     "All the LEDs should have the same color at this stage.");
 
       if (kOnPeriod_ms % BS_TIME_STEP != 0 || kOffPeriod_ms % BS_TIME_STEP != 0) {
         PRINT_NAMED_WARNING("CST_LEDColor.VerifyLEDAnimation",

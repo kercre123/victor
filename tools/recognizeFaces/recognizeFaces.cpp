@@ -47,7 +47,7 @@ void ShowBlanks(Vision::FaceTracker& faceTracker, s32 kNumBlankFramesBetweenPeop
     std::list<Vision::UpdatedFaceID> updatedIDs;
     Result result = faceTracker.Update(blankImg, faces, updatedIDs);
     
-    ASSERT_NAMED(RESULT_OK == result, "RecognizeFaces.FaceTrackerBlankUpdateFailed");
+    DEV_ASSERT(RESULT_OK == result, "RecognizeFaces.FaceTrackerBlankUpdateFailed");
     
     // Since we won't detect anything in these blank frames, we could
     // move through them too quickly and cause the tracker to persist
@@ -175,7 +175,7 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
     Vision::FaceEnrollmentPose::Disabled
   };
   
-  ASSERT_NAMED(sequence.size() < 10, "Enroll.EnrollmentSequenceTooLong");
+  DEV_ASSERT(sequence.size() < 10, "Enroll.EnrollmentSequenceTooLong");
 
   // Helpers for speaking the instructions and waiting until we're ready
   auto sayInstructions = [&instructions, &enrollPose, &lastModeChangeTime_ms, &frame]() {
@@ -216,7 +216,7 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
           std::list<Vision::TrackedFace> faces;
           std::list<Vision::UpdatedFaceID> updatedIDs;
           Result result = faceTracker.Update(frame.ToGray(), faces, updatedIDs);
-          ASSERT_NAMED(RESULT_OK == result, "Enroll.FaceTrackerUpdateFail");
+          DEV_ASSERT(RESULT_OK == result, "Enroll.FaceTrackerUpdateFail");
           
           if(!faces.empty())
           {
@@ -288,7 +288,7 @@ void LiveRecognize(Vision::FaceTracker& faceTracker, const std::string& albumNam
   // Load album of faces to recognize
   std::list<Vision::LoadedKnownFace> loadedFaces;
   Result loadResult = faceTracker.LoadAlbum(albumName, loadedFaces);
-  ASSERT_NAMED(loadResult == RESULT_OK, "Recognize.LoadAlbumFail");
+  DEV_ASSERT(loadResult == RESULT_OK, "Recognize.LoadAlbumFail");
   
   // Set up capture device
   cv::VideoCapture vidCap(0);
@@ -334,7 +334,7 @@ void LiveRecognize(Vision::FaceTracker& faceTracker, const std::string& albumNam
         std::list<Vision::TrackedFace> faces;
         std::list<Vision::UpdatedFaceID> updatedIDs;
         Result result = faceTracker.Update(frame.ToGray(), faces, updatedIDs);
-        ASSERT_NAMED(RESULT_OK == result, "Enroll.FaceTrackerUpdateFail");
+        DEV_ASSERT(RESULT_OK == result, "Enroll.FaceTrackerUpdateFail");
         
         if(!faces.empty())
         {
@@ -433,7 +433,7 @@ void CannedRun(const std::string& mode, Vision::FaceTracker& faceTracker, const 
           std::list<Vision::UpdatedFaceID> updatedIDs;
           Result result = faceTracker.Update(img, faces, updatedIDs);
           
-          ASSERT_NAMED(RESULT_OK == result, "RecognizeFaces.FaceTrackerUpdateFailed");
+          DEV_ASSERT(RESULT_OK == result, "RecognizeFaces.FaceTrackerUpdateFailed");
           
           if(faces.size() > 0) {
             if(faces.size() > 1) {
@@ -557,7 +557,7 @@ void CannedRun(const std::string& mode, Vision::FaceTracker& faceTracker, const 
           std::list<Vision::UpdatedFaceID> updatedIDs;
           Result result = faceTracker.Update(img, faces, updatedIDs);
           
-          ASSERT_NAMED(RESULT_OK == result, "RecognizeFaces.FaceTrackerUpdateFailed");
+          DEV_ASSERT(RESULT_OK == result, "RecognizeFaces.FaceTrackerUpdateFailed");
           
           Vision::TrackedFace face;
           const ColorRGBA* drawColor = &NamedColors::GREEN;

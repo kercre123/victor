@@ -48,7 +48,7 @@ WebotsDevLogController::WebotsDevLogController(int32_t stepTime_ms)
 , _selfNode(_supervisor->getSelf())
 , _savingImages(false)
 {
-  ASSERT_NAMED(nullptr != _selfNode, "WebotsDevLogController.Constructor.SelfNodeMissing");
+  DEV_ASSERT(nullptr != _selfNode, "WebotsDevLogController.Constructor.SelfNodeMissing");
   _supervisor->keyboardEnable(stepTime_ms);
   _vizConnection->Connect("127.0.0.1", Util::EnumToUnderlying(VizConstants::VIZ_SERVER_PORT));
 
