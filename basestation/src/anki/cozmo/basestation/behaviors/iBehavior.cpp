@@ -1161,8 +1161,8 @@ void IBehavior::ScoredConstructor(Robot& robot)
     _eventHandles.push_back(_robot.GetExternalInterface()->Subscribe(
        EngineToGameTag::BehaviorObjectiveAchieved,
        [this](const EngineToGameEvent& event) {
-         ASSERT_NAMED(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
-                      "Wrong event type from callback");
+         DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
+                    "IBehavior.ScoredConstructor.WrongEventTypeFromCallback");
          HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
        } ));
   }

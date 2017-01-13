@@ -628,7 +628,7 @@ namespace Anki {
       if (_sdkStatus.IsInSdkMode())
       {
         const ISocketComms* sdkSocketComms = GetSdkSocketComms();
-        ASSERT_NAMED(sdkSocketComms, "Sdk.InModeButNoComms");
+        DEV_ASSERT(sdkSocketComms, "Sdk.InModeButNoComms");
         
         if (!sdkSocketComms)
         {

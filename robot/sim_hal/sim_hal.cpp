@@ -702,7 +702,7 @@ namespace Anki {
 
     bool IsSameTypeActiveObjectAssigned(u32 device_type)
     {
-      ASSERT_NAMED_EVENT(device_type != 0, "sim_hal.IsSameTypeActiveObjectAssigned.InvalidType", "");
+      DEV_ASSERT(device_type != 0, "sim_hal.IsSameTypeActiveObjectAssigned.InvalidType");
       
       for (u32 i = 0; i < MAX_NUM_ACTIVE_OBJECTS; ++i) {
         if (activeObjectSlots_[i].assignedFactoryID != 0 && activeObjectSlots_[i].device_type == device_type) {

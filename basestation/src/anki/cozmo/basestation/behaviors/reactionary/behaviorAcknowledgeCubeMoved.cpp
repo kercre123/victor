@@ -48,9 +48,8 @@ BehaviorAcknowledgeCubeMoved::BehaviorAcknowledgeCubeMoved(Robot& robot, const J
 bool BehaviorAcknowledgeCubeMoved::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const
 {
   const int targetCount = static_cast<int>(preReqData.GetTargets().size());
-  ASSERT_NAMED_EVENT(targetCount == 1,
-                     "BehaviorAcknowledgeCubeMoved.IsRunnableInternal.ImproperSize",
-                     "Pre req of size %d passed in, expected size of 1", targetCount);
+  DEV_ASSERT_MSG(targetCount == 1, "BehaviorAcknowledgeCubeMoved.IsRunnableInternal.ImproperSize",
+                 "Prereq of size %d passed in, expected size of 1", targetCount);
   if(targetCount == 1){
     _activeObjectID = (*preReqData.GetTargets().begin());
     return true;

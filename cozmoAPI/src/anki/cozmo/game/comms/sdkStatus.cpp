@@ -45,7 +45,8 @@ inline double GetTimeBetween_s(double startTime_s, double endTime_s)
   }
   
   const double timeSince_s = endTime_s - startTime_s;
-  ASSERT_NAMED_EVENT((timeSince_s >= 0.0), "GetTimeBetween_s.NegTime", "timeSince_s = %f (%f - %f)", timeSince_s, endTime_s, startTime_s);
+  DEV_ASSERT_MSG((timeSince_s >= 0.0), "GetTimeBetween_s.NegTime", "timeSince_s = %f (%f - %f)",
+                 timeSince_s, endTime_s, startTime_s);
   
   return timeSince_s;
 }
@@ -72,7 +73,7 @@ void SdkStatus::StopRobotDoingAnything()
 
 void SdkStatus::EnterMode()
 {
-  ASSERT_NAMED_EVENT(!_isInSdkMode, "SdkStatus.EnterMode.AlreadyInMode", "");
+  DEV_ASSERT(!_isInSdkMode, "SdkStatus.EnterMode.AlreadyInMode");
   Util::sEventF("robot.sdk_mode_on", {}, "");
   
   StopRobotDoingAnything();
@@ -84,7 +85,7 @@ void SdkStatus::EnterMode()
 
 void SdkStatus::ExitMode()
 {
-  ASSERT_NAMED_EVENT(_isInSdkMode, "SdkStatus.ExitMode.NotInMode", "");
+  DEV_ASSERT(_isInSdkMode, "SdkStatus.ExitMode.NotInMode");
   const double timeInSdkMode = TimeInMode_s(GetCurrentTime_s());
   Util::sEventF("robot.sdk_mode_off", {{DDATA, std::to_string(timeInSdkMode).c_str()}}, "%d", _numTimesConnected);
   

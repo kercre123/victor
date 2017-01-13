@@ -25,7 +25,7 @@ TransferTaskHttp::TransferTaskHttp()
 
 void TransferTaskHttp::OnTransferReady(Dispatch::Queue* queue, const TransferQueueMgr::TaskCompleteFunc& completionFunc)
 {
-  ASSERT_NAMED(_numTransfers == 0, "TransferTaskHttp.InvalidStartTransferCount");
+  DEV_ASSERT(_numTransfers == 0, "TransferTaskHttp.InvalidStartTransferCount");
   _numTransfers = 0;
   bool transfersStarted = false;
 
