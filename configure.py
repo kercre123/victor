@@ -25,6 +25,7 @@ from configure_engine import BUILD_TOOLS_ROOT, print_header, print_status
 from configure_engine import ArgumentParser, generate_gyp, configure
 
 sys.path.insert(0, BUILD_TOOLS_ROOT)
+import ankibuild.android
 import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.unity
@@ -306,12 +307,11 @@ class GamePlatformConfiguration(object):
             self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
 
         if platform == 'android':
+            ankibuild.android.setup_android_ndk_and_sdk()
             if os.environ.get("ANDROID_NDK_ROOT"):
                 self.android_ndk_root = os.environ.get("ANDROID_NDK_ROOT")
-            elif os.environ.get("ANDROID_NDK"):
-                self.android_ndk_root = os.environ.get("ANDROID_NDK")
             else:
-                sys.exit("Cannot find android ndk. Remember to set the environment variable ANDROID_NDK_ROOT")
+                sys.exit("Cannot find ANDROID_NDK_ROOT env var, script should have installed it. Perhaps internet is not available?")
 
             self.android_opencv_target = os.path.join(CTE_ROOT, 'build', 'opencv-android',
                                                       'OpenCV-android-sdk', 'sdk', 'native', 'libs')
@@ -591,7 +591,7 @@ class GamePlatformConfiguration(object):
         print_status('Stripping library symbols (if necessary)...')
         args = [os.path.join(self.gyp_dir, 'android-strip-libs.py')]
         args += ["--ndk-toolchain", os.path.join(self.android_ndk_root, 'toolchains',
-                                                 'arm-linux-androideabi-4.8', 'prebuilt', 'darwin-x86_64')]
+                                                 'arm-linux-androideabi-4.9', 'prebuilt', 'darwin-x86_64')]
         args += ["--source-libs-dir", self.android_prestrip_lib_dir]
         args += ["--target-libs-dir", self.android_lib_dir]
         ankibuild.util.File.execute(args)

@@ -203,10 +203,10 @@
         'target_archs%': ['armveabi-v7a'],
         'target_cpu': ['arm'],
         'compiler_flags': [
-          '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
+          '--sysroot=<(ndk_root)/platforms/android-23/arch-arm',
           '-DANDROID=1',
           '-D__ARM_NEON=1',
-          '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
+          '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
           '-fpic',
           '-ffunction-sections',
           '-funwind-tables',
@@ -220,14 +220,14 @@
           '-mthumb',
           '-fomit-frame-pointer',
           '-fno-strict-aliasing',
-          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/libcxx/include',
-          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/../llvm-libc++abi/libcxxabi/include',
-          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/../../android/support/include',
-          '-I<(ndk_root)/platforms/android-18/arch-arm/usr/include',
+          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/include',
+          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++abi/include',
+          '-I<(ndk_root)/sources/android/support/include',
+          '-I<(ndk_root)/platforms/android-23/arch-arm/usr/include',
         ],
         'linker_flags': [
-            '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
-            '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
+            '--sysroot=<(ndk_root)/platforms/android-23/arch-arm',
+            '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
             '-no-canonical-prefixes',
             '-target armv7-none-linux-androideabi',
             '-Wl,--fix-cortex-a8',
@@ -236,7 +236,7 @@
             '-Wl,-z,relro',
             '-Wl,-z,now',
             '-mthumb',
-            '-L<(ndk_root)/platforms/android-18/arch-arm/usr/lib',
+            '-L<(ndk_root)/platforms/android-23/arch-arm/usr/lib',
             '-L<(ndk_root)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a',
             # '-L<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
             # '-L<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a',
@@ -1407,7 +1407,7 @@
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoFr.a',    # Face Recognition
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOmcvPd.a',    # Pet Detection
               '<(coretech_external_path)/libarchive/project/android/DerivedData/libarchive.a',
-              '<(crash_path)/prebuilt/armeabi-v7a/libbreakpadclient.a',   # Google Breakpad
+              '<(crash_path)/Breakpad/libs/armeabi-v7a/libbreakpad_client.a',   # Google Breakpad
               # does not work with ninja?!?!
               # '<@(face_library_libs)',
               # '<@(opencv_libs)',
@@ -1467,7 +1467,7 @@
 
             ],
             'include_dirs': [
-              '<(crash_path)/Breakpad/include',
+              '<(crash_path)/Breakpad/include/breakpad',
               '<@(flatbuffers_include)',
               '../../include/anki/cozmo',
             ],
