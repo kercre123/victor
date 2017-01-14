@@ -328,8 +328,9 @@ Robot::~Robot()
   // to actions shutting down
   _behaviorMgr.reset();
   
-  // Destroy our actionList before things like the path planner, since actions often rely on those
-  // things existing
+  // Destroy our actionList before things like the path planner, since actions often rely on those.
+  // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
+  _actionList->Clear();
   _actionList.reset();
       
   // destroy vision component first because its thread might be using things from Robot. This fixes a crash

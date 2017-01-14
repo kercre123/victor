@@ -863,9 +863,6 @@ protected:
   ///////// NEW Animation /////////
   std::unique_ptr<RobotAnimation::EngineAnimationController>  _animationController;
   
-  // Note that we want _actionList as a pointer instead of unique_ptr. This is because unique_ptrs are
-  // set to nullptr before being deleted, while regular pointers are not. Actions sometimes interact with
-  // the ActionList upon destruction, and we don't want to cause a crash because the pointer has already been nulled.
   std::unique_ptr<ActionList>            _actionList;
   std::unique_ptr<MovementComponent>     _movementComponent;
   std::unique_ptr<VisionComponent>       _visionComponent;
