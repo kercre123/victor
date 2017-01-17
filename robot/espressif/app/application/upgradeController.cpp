@@ -41,7 +41,7 @@ extern "C" {
 
 #define CRC32_POLYNOMIAL (0xedb88320L)
 
-#define DEBUG_OTA 0
+#define DEBUG_OTA 2
 
 void gen_random(void* ptr, int length)
 {
@@ -126,35 +126,42 @@ namespace UpgradeController {
     self.retries = MAX_RETRIES;
     sha512_init(firmware_digest);
     
-    // No matter which of the three images we're loading, we can get a header here
+    // No matter which of the three images we're loading, we can get a header here, factory will get header A
     const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
     
-    FWImageSelection selectedImage = GetImageSelection();
-    self.nextImageNumber = ourHeader->imageNumber + 1;
-    
-    switch (selectedImage)
+    if (FACTORY_UPGRADE_CONTROLLER) {
+      os_printf("Factory Firmware\r\n");
+      self.fwWriteAddress = APPLICATION_A_SECTOR * SECTOR_SIZE; // Factory firmware always writes image A
+      self.nextImageNumber = ourHeader->imageNumber + 2; // Force image to be higher even if B was higher
+    }
+    else
     {
-      case FW_IMAGE_A:
+      FWImageSelection selectedImage = GetImageSelection();
+      self.nextImageNumber = ourHeader->imageNumber + 1;
+      switch (selectedImage)
       {
-        os_printf("Am image A\r\n");
-        self.fwWriteAddress = APPLICATION_B_SECTOR * SECTOR_SIZE;
-        break;
-      }
-      case FW_IMAGE_B:
-      {
-        os_printf("Am image B\r\n");
-        self.fwWriteAddress = APPLICATION_A_SECTOR * SECTOR_SIZE;
-        break;
-      }
-      default:
-      {
-        os_printf("UPC: Unexpected selectedImage key %08x. Not enabling OTA\r\n", selectedImage);
-        recordBootError((void*)GetImageSelection, selectedImage);
-        self.phase = OTAT_Uninitalized;
-        return false;
+        case FW_IMAGE_A:
+        {
+          os_printf("Am image A\r\n");
+          self.fwWriteAddress = APPLICATION_B_SECTOR * SECTOR_SIZE;
+          break;
+        }
+        case FW_IMAGE_B:
+        {
+          os_printf("Am image B\r\n");
+          self.fwWriteAddress = APPLICATION_A_SECTOR * SECTOR_SIZE;
+          break;
+        }
+        default:
+        {
+          os_printf("UPC: Unexpected selectedImage key %08x. Not enabling OTA\r\n", selectedImage);
+          recordBootError((void*)GetImageSelection, selectedImage);
+          self.phase = OTAT_Uninitalized;
+          return false;
+        }
       }
     }
-    
+
     // Copy version metadata into RAM for unaligned access required for string search
     uint32_t versionMetaDataBuffer[(VERSION_INFO_MAX_LENGTH/sizeof(uint32_t))+1]; // allow extra room for null term
     os_memcpy(versionMetaDataBuffer, GetVersionInfo(), VERSION_INFO_MAX_LENGTH);
@@ -172,7 +179,7 @@ namespace UpgradeController {
     const char* buildTypeStr = os_strstr(json, BUILD_TYPE_TAG);
     if (buildTypeStr) COZMO_BUILD_TYPE = *(buildTypeStr+os_strlen(BUILD_TYPE_TAG));
     else COZMO_BUILD_TYPE = 'U';
-    
+
     self.phase = OTAT_Ready;
     return true;
   }
@@ -205,14 +212,19 @@ namespace UpgradeController {
 
   LOCAL bool FlashWriteOkay(const u32 address, const u32 length)
   {
-    switch (GetImageSelection())
+    FWImageSelection selectedImage = GetImageSelection();
+    switch (selectedImage)
     {
+      case FW_IMAGE_FACTORY:  //factory allows writing to A.
       case FW_IMAGE_A:
       { // Am image A so writing to B okay
         if ((address >= (APPLICATION_B_SECTOR * SECTOR_SIZE)) && ((address + length) <= (NV_STORAGE_SECTOR * SECTOR_SIZE))) return true;
         else if ((address >= (APPLICATION_A_SECTOR * SECTOR_SIZE + ESP_FW_MAX_SIZE - ESP_FW_NOTE_SIZE)) && ((address + length) <= (FACTORY_WIFI_FW_SECTOR * SECTOR_SIZE))) return true; // Allow setting firmware note
         else if ((address == (APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4)) && (length == 4)) return true; // Allow invalidating our own image
-        else break;
+        else if (selectedImage != FW_IMAGE_FACTORY) {
+          break; 
+        }
+        //FACTORY image falls through, allows writing to B also.
       }
       case FW_IMAGE_B:
       { // Am image B so writing to A okay
@@ -426,10 +438,6 @@ namespace UpgradeController {
         else // Done with erase, advance state
         {
           AnkiDebug( 172, "UpgradeController.state", 469, "sync recovery", 0);
-          #if DEBUG_OTA
-          os_printf("I2SPI_SYNC\r\n");
-          #endif
-          i2spiSwitchMode(I2SPI_SYNC); // Start synchronizing with the bootloader
           self.phase = OTAT_Sync_Recovery;
           self.timer = system_get_time() + 5000000; // 5 second timeout
           self.retries = MAX_RETRIES;
@@ -740,7 +748,7 @@ namespace UpgradeController {
                 {
                   self.dsCommanded = 1;
                   #if DEBUG_OTA
-                  os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
+                  os_printf("Write RTIP 0x%08x\t", fwb->blockAddress);
                   #endif
                   self.timer = system_get_time() + 20000; // 20ms
                   #if DEBUG_OTA > 1
@@ -1197,10 +1205,25 @@ namespace UpgradeController {
     }
   }
   
-  u32* GetVersionInfo()
+  extern "C" bool i2spiRecoveryCallback(uint32 param)
   {
+    if (self.phase < OTAT_Delay)
+    {
+      os_printf("I2SPI Recovery Synchronized\r\n");
+      self.phase = OTATR_Set_Evil_A;
+    }
+    return false;
+  }
+
+  const u32* GetVersionInfo()
+  {
+    #if FACTORY_USE_STATIC_VERSION_DATA
+    static const char FACTORY_STATIC_VERSION_DATA[] ICACHE_RODATA_ATTR STORE_ATTR = "{\"build\": \"FACTORY\", \"version\": \"F1.5.1\", \"date\": \"Tue Jan 10 17:29:46 2017\", \"time\": 1484098209}\0\0\0\0\0\0\0\0"; //< Ensure at u32 null padding
+    return reinterpret_cast<const u32*>(FACTORY_STATIC_VERSION_DATA);
+    #else
     const uint32_t VERSION_INFO_ADDR = (APPLICATION_A_SECTOR * SECTOR_SIZE) + ESP_FW_MAX_SIZE - 0x800; // Memory offset of version info for both apps
     return FLASH_CACHE_POINTER + (VERSION_INFO_ADDR/4);  // Use A address because both images see it mapped in that place.
+    #endif
   }
 
   char GetBuildType()
@@ -1231,7 +1254,7 @@ namespace UpgradeController {
       u32 noteAddr = ESP_FW_MAX_SIZE - ESP_FW_NOTE_SIZE + (offset * sizeof(u32));
       switch (GetImageSelection())
       {
-        case FW_IMAGE_A:
+         case FW_IMAGE_A:
         {
           noteAddr += APPLICATION_A_SECTOR * SECTOR_SIZE;
           break;

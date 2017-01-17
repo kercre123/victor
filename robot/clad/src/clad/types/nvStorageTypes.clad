@@ -15,11 +15,8 @@ namespace NVStorage {
 
     NVConst_FACTORY_DATA_BIT = 0x80000000,  // aka playpen tags
     NVConst_FIXTURE_DATA_BIT = 0xC0000000,  // aka pre-playpen tags
-
+    NVConst_VERSION_MAGIC    = 0x00000015,  // Written by version 1.5 or greater
     NVConst_FACTORY_BLOCK_SIZE = 0x1e000, // Size of factory block in bytes
-
-    NVConst_VERSION_MAGIC = 0x15,
-
     NVConst_SIZE_OF_VERSION_AND_BC = 0x30,
   }
 

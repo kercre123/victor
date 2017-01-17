@@ -76,7 +76,8 @@ __Vectors       DCD     __initial_sp                        ; Top of Stack
 __Vectors_End
 __Vectors_Size 	EQU     __Vectors_End - __Vectors
 
-
+                EXPORT HW_VERSION
+HW_VERSION      DCD   0x01050000    ; THIS MUST BE SET TO 0xFFFFFFFF FOR 1.0 HEADS
 
 _NVIC_ICER0     EQU   0xE000E180
 _NVIC_ICPR0     EQU   0xE000E280

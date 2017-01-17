@@ -12,6 +12,7 @@ extern "C" {
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/rec_protocol.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/robot/buildTypes.h"
 
 #include "timer.h"
 #include "storage.h"
@@ -27,6 +28,7 @@ extern "C" {
 #include "messages.h"
 #include "watchdog.h"
 #include "temp.h"
+#include "tests.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
@@ -81,5 +83,9 @@ int main(void)
     Radio::rotate(Lights::manage());
     Backpack::manage();
     Temp::manage();
+
+    #ifdef FACTORY
+    TestFixtures::manage();
+    #endif
   }
 }

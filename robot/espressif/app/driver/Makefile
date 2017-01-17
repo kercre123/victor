@@ -39,6 +39,7 @@ endif
 
 INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ../../../espressif_bootloader
+INCLUDES += -I ../../../generated
 INCLUDES += -I ./
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile

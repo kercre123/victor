@@ -336,7 +336,7 @@
 --gnu</MiscControls>
               <Define>COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>k02_hal/lib;include;k02_hal;../crypto;./sideload</IncludePath>
+              <IncludePath>k02_hal/lib;include;k02_hal;../crypto;./sideload;lib</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -351,7 +351,7 @@
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls>--cpreproc --diag_suppress=1609,1581 </MiscControls>
-              <Define>DEBUG</Define>
+              <Define></Define>
               <Undefine></Undefine>
               <IncludePath></IncludePath>
             </VariousControls>
@@ -422,20 +422,15 @@
               <FileType>8</FileType>
               <FilePath>..\crypto\crc32.cpp</FilePath>
             </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>startup</GroupName>
-          <Files>
-            <File>
-              <FileName>system_MK02F12810.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\boot_startup\system_MK02F12810.c</FilePath>
-            </File>
             <File>
               <FileName>startup_MK02F12810.s</FileName>
               <FileType>2</FileType>
-              <FilePath>.\boot_startup\startup_MK02F12810.s</FilePath>
+              <FilePath>.\boot\startup_MK02F12810.s</FilePath>
+            </File>
+            <File>
+              <FileName>system_MK02F12810.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\boot\system_MK02F12810.c</FilePath>
             </File>
           </Files>
         </Group>

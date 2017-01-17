@@ -39,13 +39,5 @@ static const uint8_t InitDisplay[] = {
 void Anki::Cozmo::HAL::OLED::Init(void) {
   using namespace Anki::Cozmo::HAL;
   
-  GPIO_OUT(GPIO_OLED_RST, PIN_OLED_RST);
-  PORTA_PCR19  = PORT_PCR_MUX(1);
-
-  MicroWait(80);
-  GPIO_RESET(GPIO_OLED_RST, PIN_OLED_RST);
-  MicroWait(80);
-  GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);
-
   I2C::WriteSync(InitDisplay, sizeof(InitDisplay));
 }

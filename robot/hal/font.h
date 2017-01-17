@@ -1,6 +1,6 @@
 #ifdef ONLY_DIGITS
-static const int CHAR_WIDTH = 5, CHAR_HEIGHT = 8, CHAR_START = '0', CHAR_END = '9';
-static const u8 FONT[][5] = {
+static const int CHAR_WIDTH = 6, CHAR_HEIGHT = 8, CHAR_START = '0', CHAR_END = '9';
+static const u8 FONT[][6] = {
    { 0x3E,0x51,0x49,0x45,0x3E },
    { 0x00,0x42,0x7F,0x40,0x00 },
    { 0x72,0x49,0x49,0x49,0x46 },
@@ -13,8 +13,8 @@ static const u8 FONT[][5] = {
    { 0x46,0x49,0x49,0x29,0x1E }
 };
 #else
-static const int CHAR_WIDTH = 5, CHAR_HEIGHT = 8, CHAR_START = ' ', CHAR_END = 127;
-static const u8 FONT[][5] = {
+static const int CHAR_WIDTH = 6, CHAR_HEIGHT = 8, CHAR_START = ' ', CHAR_END = 127;
+static const u8 FONT[][6] = {
    { 0x00,0x00,0x00,0x00,0x00 },
    { 0x00,0x00,0x5F,0x00,0x00 },
    { 0x00,0x07,0x00,0x07,0x00 },

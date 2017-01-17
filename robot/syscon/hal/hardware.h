@@ -67,7 +67,7 @@ enum e_nrf_gpio {
   // IR drop sensor
   PIN_CLIFF_SENSE     = 26,
   PIN_IR_DROP         = 21,
-  PIN_IR_FORWARD      = 22,   // TODO
+  PIN_IR_FORWARD      = 22,
 
   // Spine
   PIN_TX_HEAD         = 12,

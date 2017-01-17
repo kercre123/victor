@@ -24,6 +24,7 @@ extern "C" {
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
+bool motorOverride;
 
 struct MotorConfig
 {
@@ -345,7 +346,8 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
 void Motors::init()
 {
   // NOTE: Motors are not actually enabled, this only stages them
-  
+  motorOverride = false;
+    
   // Configure TIMER0 and TIMER2 with the appropriate task and PPI channels
   ConfigurePPI(NRF_TIMER0, 0, 0);
   ConfigurePPI(NRF_TIMER2, 2, 4);
@@ -514,17 +516,19 @@ void Motors::manage()
   g_dataToHead.positions[3] = m_motors[3].position;
 
   // Update our power settings
-  if (!Head::spokenTo || motorDisable) {
-    // Head not spoken to, motors are disabled, set power to 0
-    for (int i = 0; i < MOTOR_COUNT; i++) {
-      Motors::setPower(i, 0);
+  if (!motorOverride) {
+    if (!Head::spokenTo || motorDisable) {
+      // Head not spoken to, motors are disabled, set power to 0
+      for (int i = 0; i < MOTOR_COUNT; i++) {
+        Motors::setPower(i, 0);
+      }
+      return ;
     }
-    return ;
-  }
 
-  // Copy (valid) data to update motors
-  for (int i = 0; i < MOTOR_COUNT; i++) {
-    Motors::setPower(i, g_dataToBody.motorPWM[i]);
+    // Copy (valid) data to update motors
+    for (int i = 0; i < MOTOR_COUNT; i++) {
+      Motors::setPower(i, g_dataToBody.motorPWM[i]);
+    }
   }
 
   // Stop the timer task and clear it, along with GPIO for the motors

@@ -56,6 +56,7 @@ static LightState lightState[BACKPACK_LAYERS][BACKPACK_LIGHTS];
 static BackpackLayer currentLayer = BPL_IMPULSE;
 static CurrentChargeState chargeState = CHARGE_OFF_CHARGER;
 static bool isBatteryLow = false;
+static bool override = false;
 
 extern "C" void TIMER1_IRQHandler(void);
 
@@ -80,9 +81,22 @@ void Backpack::init()
   nrf_gpio_cfg_output(PIN_LED3);
   nrf_gpio_cfg_output(PIN_LED4);
   #endif
+  
+  override = false;
+}
+
+void Backpack::testLight(int channel) {
+  if (channel > 0) {
+    led_value[channel-1] = 0xFFFF >> TIMER_DIVIDE;
+    override = true;
+  } else {
+    override = false;
+  }
 }
 
 void Backpack::manage() {
+  if (override) return ;
+  
   for (int i = 0; i < LIGHT_COUNT; i++) {
     const BackpackLight& light = setting[i];
     uint8_t* rgbi = (uint8_t*) &lightController.backpack[light.controller_pos].values;

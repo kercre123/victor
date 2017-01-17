@@ -103,7 +103,8 @@ namespace Radio {
   void prepare();
   void resume();
   void rotate(int frames);
-
+  void sendTestPacket(void);
+  
   void setPropLightsID(unsigned int slot, uint8_t rotationPeriod);
   void setPropLights(const Anki::Cozmo::LightState *state);
   void assignProp(unsigned int slot, uint32_t accessory);

@@ -47,14 +47,14 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\</OutputDirectory>
-          <OutputName>robot</OutputName>
+          <OutputDirectory>.\build\robot_boot_update\</OutputDirectory>
+          <OutputName>robot_boot_update</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\build\app\</ListingPath>
+          <ListingPath>.\build\robot_boot_update\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -80,9 +80,9 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>1</RunUserProg2>
-            <UserProg1Name>python tools\boot_header.py build\robot.axf</UserProg1Name>
-            <UserProg2Name>fromelf --bin build\robot.axf --output binaries\robot.bin</UserProg2Name>
+            <RunUserProg2>0</RunUserProg2>
+            <UserProg1Name>python tools\boot_header.py build\robot_boot_update\robot_boot_update.axf</UserProg1Name>
+            <UserProg2Name>fromelf --bin build\robot_boot_update.axf --output binaries\robot.bin</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopA1X>0</nStopA1X>
@@ -158,7 +158,7 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>0</AdsALst>
+            <AdsALst>1</AdsALst>
             <AdsACrf>0</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
@@ -378,11 +378,6 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
-              <FileName>main.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>hal/main.cpp</FilePath>
-            </File>
-            <File>
               <FileName>camera.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\camera.cpp</FilePath>
@@ -468,14 +463,63 @@
               <FilePath>.\hal\crashlogger.cpp</FilePath>
             </File>
             <File>
-              <FileName>bootloader.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\bootloader.cpp</FilePath>
-            </File>
-            <File>
               <FileName>fcc.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\fcc.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>bootupdate.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\bootupdate.cpp</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>2</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>1</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>2</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>0</v6Lto>
+                    <v6WtE>0</v6WtE>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
           </Files>
         </Group>
@@ -487,120 +531,20 @@
               <FileType>2</FileType>
               <FilePath>startup/startup_MK02F12810.s</FilePath>
             </File>
+            <File>
+              <FileName>bootupdate.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\hal\bootupdate.s</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>clad</GroupName>
           <Files>
             <File>
-              <FileName>messages.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\messages.cpp</FilePath>
-            </File>
-            <File>
               <FileName>clad.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\generated\clad\clad.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>supervisor</GroupName>
-          <Files>
-            <File>
-              <FileName>cozmoBot.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\cozmoBot.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>liftController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\liftController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>velocityProfileGenerator.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>radians.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\radians.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>headController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\headController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>imuFilter.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\imuFilter.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>trig_fast.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>dockingController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\dockingController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>localization.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\localization.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>localization_geometry.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\localization_geometry.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>path.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\path.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pathFollower.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pickAndPlaceController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>speedController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\speedController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>steeringController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\steeringController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>timeProfiler.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>wheelController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>proxSensors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>testModeController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
             </File>
           </Files>
         </Group>

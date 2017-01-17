@@ -20,6 +20,7 @@
 #include "imageSender.h"
 #include "driver/crash.h"
 #include "anki/cozmo/robot/crashLogs.h"
+#include "anki/cozmo/robot/buildTypes.h"
 
 #define I2SPI_DEBUG 0
 #if I2SPI_DEBUG
@@ -724,6 +725,10 @@ void dmaisrSync(void* arg)
     {
       i2spiSwitchMode(I2SPI_BOOTLOADER);
       self.rtipBootloaderState = STATE_IDLE;
+      if (FACTORY_UPGRADE_CONTROLLER)
+      {
+        foregroundTaskPost(i2spiRecoveryCallback, self.rtipBootloaderState);
+      }
     }
     prepSdioQueue(desc, 0);
   }
@@ -990,6 +995,11 @@ bool ICACHE_FLASH_ATTR i2spiBootloaderCommandDone(void)
 
 bool i2spiSwitchMode(const I2SPIMode mode)
 {
+   os_put_char('I');
+   os_put_char('2');
+   os_put_char('S');
+   os_put_char('=');
+   os_put_hex(mode,1);
   if (mode == I2SPI_SYNC)
   {
     self.mode = I2SPI_SYNC;

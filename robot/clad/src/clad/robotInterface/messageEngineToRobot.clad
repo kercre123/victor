@@ -72,6 +72,19 @@ namespace RobotInterface {
  * and to make debugging from message dumps more sane.
  */
 
+message GenerateTestTone
+{
+
+}
+
+message SendDTMCommand
+{
+  int_32 command,
+  int_32 freq,
+  int_32 length,
+  int_32 payload
+}
+
 message SetHeadlight
 {
   bool enable
@@ -411,6 +424,7 @@ union EngineToRobot
   WriteBodyStorage              writeBodyStorage            = 0x0F,
   CubeID                        setCubeID                   = 0x10,
   BackpackLightsTurnSignals    setBackpackLightsTurnSignals = 0x11,
+  SendDTMCommand                sendDTMCommand              = 0x12,
 
   GetManufacturingInfo          getMfgInfo                  = 0x25,
   DiffieHellmanResults          diffieHellmanResults        = 0x26,
@@ -470,6 +484,7 @@ union EngineToRobot
   ObjectConnectionStateToRobot  objectConnectionStateToRobot = 0x62,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x63,
   SetAudioVolume                setAudioVolume              = 0x64,
+  GenerateTestTone              generateTestTone            = 0x65,
 
   
   // 0x80 to 0xAF: To WiFi

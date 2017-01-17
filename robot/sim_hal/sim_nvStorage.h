@@ -17,6 +17,7 @@
 #endif
 
 #include "anki/types.h"
+#include "anki/cozmo/robot/hal.h"
 #include "clad/types/nvStorage.h"
 #include <array>
 
@@ -25,6 +26,7 @@ namespace Anki {
   namespace Cozmo {
     class SimNVStorage
     {
+       friend bool HAL::FlashWriteOkay(u32 address, u32 length);
     public:
       SimNVStorage();
       ~SimNVStorage();

@@ -18,7 +18,7 @@ JumpToOTA       PROC
 OTA_IMAGE       DCD     LoadAddress
                 DCD     (OTA_IMAGE_SIZE - OTA_IMAGE_START)
 OTA_IMAGE_START 
-                INCBIN  build/ota/ota_bin.raw
+                ;INCBIN  build/ota/ota_bin.raw
 OTA_IMAGE_SIZE
 
                 END

@@ -14,6 +14,7 @@ extern "C" {
 #define OLD_NV_STORAGE_A_SECTOR (0x1c0)
 #define OLD_NV_STORAGE_B_SECTOR (0x1de)
 #define NVSTORAGE_END_SECTOR (ESP_INIT_DATA_SECTOR)
+#define FACTORY_NVSTORAGE_END_SECTOR (FIXTURE_STORAGE_SECTOR)
 #define OLD_NV_AREA_MAGIC (0xDEADBEEF)
 
 static bool correctOldNVHeader(const uint16_t sector)
@@ -57,13 +58,15 @@ void Anki::Cozmo::HAL::FlashInit()
 }
 
 // Prevent writing to places that could cause damage or security breach
-static bool writeOkay(const u32 address, const u32 length)
+bool Anki::Cozmo::HAL::FlashWriteOkay(const u32 address, const u32 length)
 {
   if ((address + length) <= address) return false; // Check for integer overflow or 0 length
   // NVStorage region is default okay region
   else if ((address >= (NV_STORAGE_SECTOR * SECTOR_SIZE)) && ((address + length) <= (OLD_NV_STORAGE_A_SECTOR * SECTOR_SIZE))) return true; // First allowable segment of NVStorage
   else if ((address >= ((OLD_NV_STORAGE_A_SECTOR + 1) * SECTOR_SIZE)) && ((address + length) <= (OLD_NV_STORAGE_B_SECTOR * SECTOR_SIZE))) return true; // Second allowable segment of NVStorage
   else if ((address >= ((OLD_NV_STORAGE_B_SECTOR + 1) * SECTOR_SIZE)) && ((address + length) <= (NVSTORAGE_END_SECTOR * SECTOR_SIZE))) return true; // Third allowable segment of NVStorage
+  else if (ALLOW_FACTORY_NV_WRITE &&
+           (address >= ((FACTORY_NV_STORAGE_SECTOR) * SECTOR_SIZE)) && ((address + length) <= (FACTORY_NVSTORAGE_END_SECTOR * SECTOR_SIZE))) return true; // Factory NVStorage only in Factory Builds
   else return false;
 }
 
@@ -83,8 +86,8 @@ Anki::Cozmo::NVStorage::NVResult Anki::Cozmo::HAL::FlashWrite(u32 address, u32* 
 {
   using namespace Anki::Cozmo::NVStorage;
   
-  if ((int)data & 0x3) return NV_BAD_ARGS; // Check for alinment
-  else if (writeOkay(address, length))
+  if ((int)data & 0x3) return NV_BAD_ARGS; // Check for alignment
+  else if (FlashWriteOkay(address, length))
   {
     return RSLT_CONV(spi_flash_write(address, data, length));
   }
@@ -95,7 +98,7 @@ Anki::Cozmo::NVStorage::NVResult Anki::Cozmo::HAL::FlashRead (u32 address, u32* 
 {
   using namespace Anki::Cozmo::NVStorage;
   
-  if ((int)data & 0x3) return NV_BAD_ARGS; // Check for alinment
+  if ((int)data & 0x3) return NV_BAD_ARGS; // Check for alignment
   else if (readOkay(address, length))
   {
     return RSLT_CONV(spi_flash_read(address, data, length));
@@ -108,7 +111,7 @@ Anki::Cozmo::NVStorage::NVResult Anki::Cozmo::HAL::FlashErase(u32 address)
   using namespace Anki::Cozmo::NVStorage;
   
   if ((int)address & SECTOR_MASK) return NV_BAD_ARGS;
-  else if (writeOkay(address, SECTOR_SIZE))
+  else if (FlashWriteOkay(address, SECTOR_SIZE))
   {
     u16 sector = address / SECTOR_SIZE;
     return RSLT_CONV(spi_flash_erase_sector(sector));

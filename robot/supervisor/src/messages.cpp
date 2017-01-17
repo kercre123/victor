@@ -40,6 +40,7 @@
 #include "anki/cozmo/robot/logging.h"
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
+extern void GenerateTestTone(void);
 
 namespace Anki {
   namespace Cozmo {
@@ -567,8 +568,13 @@ namespace Anki {
                                                     msg.driveDuration_ms,
                                                     msg.backupDist_mm);
       }
-      
-      
+
+      void Process_generateTestTone(const RobotInterface::GenerateTestTone& msg) {
+        #ifdef TARGET_K02
+        GenerateTestTone();
+        #endif
+      }
+
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {
@@ -947,6 +953,10 @@ namespace Anki {
         // nothing to do here
       }
        */
+      void Process_sendDTMCommand(const RobotInterface::SendDTMCommand&)
+      {
+        // nothing to do here
+      }
       void Process_setBodyRadioMode(const SetBodyRadioMode&)
       {
         // nothing to do here

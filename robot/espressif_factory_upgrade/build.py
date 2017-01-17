@@ -6,7 +6,7 @@ from wifiAppImageHeader import fix_image
 
 BUILD_DIR = 'build'
 FW_DIR    = 'firmware'
-STAGING   = '../staging'
+STAGING   = '../build'
 SECTOR_SIZE = 4096
 WIFI_IMAGE_SECTORS = 0xc8-0x80
 

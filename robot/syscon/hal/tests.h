@@ -4,10 +4,6 @@
 // Used when sending messages up to head
 #include "../../generated/clad/robot/clad/types/fwTestMessages.h"
 
-//#define DO_ENCODER_TESTING
-//#define DO_MOTOR_TESTING
-//#define DO_LIGHTS_TESTING
-
 enum {
   TEST_POWERON       = 0x80,
   TEST_RADIOTX       = 0x81,
@@ -22,13 +18,9 @@ enum {
   TEST_ADC           = 0x8A,
 };
 
-#if defined(DO_ENCODER_TESTING) || defined(DO_MOTOR_TESTING) || defined(DO_LIGHTS_TESTING)
-  #define RUN_TESTS
-#endif
-
 namespace TestFixtures {
-  void run();
   void dispatch(uint8_t test, uint8_t param);
+  void manage();
 }
 
 #endif

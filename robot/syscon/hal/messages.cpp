@@ -12,6 +12,7 @@
 #include "backpack.h"
 #include "battery.h"
 #include "storage.h"
+#include "dtm.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
@@ -48,6 +49,10 @@ static QueueSlot queue[QUEUE_DEPTH];
 
 static void Process_diffieHellmanResults(const DiffieHellmanResults& msg) {
   Bluetooth::diffieHellmanResults(msg);
+}
+
+static void Process_sendDTMCommand(const RobotInterface::SendDTMCommand& msg) {
+  DTM::testCommand(msg.command, msg.freq, msg.length, msg.payload);
 }
 
 static void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer &msg)

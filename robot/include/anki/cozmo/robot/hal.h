@@ -269,6 +269,13 @@ namespace Anki
        */
       NVStorage::NVResult FlashErase(u32 address);
 
+      /** Verifies that write or erase is allowed
+       * @param address The address to write or erase.
+       * @param length  The length in bytes to write or erase
+       * @return true on allowed, false on disallowed.
+       */
+      bool FlashWriteOkay(const u32 address, const u32 length);
+      
       /** Initalize flash controller
        */
       void FlashInit();

@@ -6,6 +6,7 @@
 #include "nrf_gpio.h"
 
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/buildTypes.h"
 
 #include "protocol.h"
 #include "hardware.h"
@@ -196,7 +197,7 @@ static void Radio::resume() {
 
   if (tx_queued) {
     // Dequeue fifo
-    radio_mainstate = UESB_STATE_PTX;    
+    radio_mainstate = UESB_STATE_PTX;
     NRF_RADIO->TASKS_TXEN  = 1;
   } else {
     radio_mainstate = UESB_STATE_PRX;
@@ -555,7 +556,22 @@ static void transmitHandshake(void) {
   target->messages_sent++;
 }
 
-static void Radio::prepare(void) {
+void Radio::sendTestPacket(void) {
+  const AdvertisePacket test_packet = {
+    0x0D0B3D09,
+    0xFF03,     // I'm a cube 3
+    0x0000,     // Don't patch me, I have them all!
+    0x06,       // I'm a pilot/production cube
+    0xFF
+  };
+
+  radio_stop();
+  tx_queued = true;
+  configure_rf((void*)&test_packet, ADVERTISE_ADDRESS, ADV_CHANNEL, sizeof(test_packet));
+  Radio::resume();
+}
+
+void Radio::prepare(void) {
   // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
     currentAccessory = 0;

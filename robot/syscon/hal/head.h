@@ -11,6 +11,7 @@ namespace Head {
   void manage();
   void enterLowPowerMode();
   void leaveLowPowerMode();
+  void enableFixtureComms(bool enable); 
 }
 
 #endif

@@ -53,6 +53,9 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
 
 __Vectors_End	
 __Vectors_Size  EQU     __Vectors_End - __Vectors
+    
+                EXPORT  HW_VERSION
+HW_VERSION      DCD     0x01050000
 
                 AREA    |.text|, CODE, READONLY
 

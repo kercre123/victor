@@ -6,6 +6,7 @@ SDK_BASE ?= /opt/esp-open-sdk/sdk
 
 UPGRADER_BUILD_BASE ?= build
 UPGRADER_FW_BASE    ?= firmware
+UPGRADER_EXTRA_INCDIR = -I../include
 
 CC := xtensa-lx106-elf-gcc
 LD := xtensa-lx106-elf-gcc
