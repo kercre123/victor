@@ -36,8 +36,6 @@ DEF WorldComms BlockWorldComms {
   filterLogs TRUE
 }
 CozmoVizDisplay {
-  moodViz TRUE
-  behaviorSelectionViz TRUE
 }
 WebotsKeyboardController{
   forcedRobotIsSimulated FALSE

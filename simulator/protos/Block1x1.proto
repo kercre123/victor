@@ -200,7 +200,7 @@ Supervisor {
         ly = idx[i][2] * (hWidth - ledWidth/2 + 0.0001)
         lz = idx[i][3] * (hWidth - ledWidth/2 + 0.0001)
     }%
-    DEF %{=led_name}% BetterLED {
+    DEF %{=led_name}% LED {
       name "%{=led_name}%"
       children [
         DEF LED_SHAPE Group {
@@ -237,6 +237,12 @@ Supervisor {
     # Radio send channel for messages to Robot
     Emitter {
       name   "emitter"
+      type   "radio"
+    }
+
+    # Radio send channel for discovery messages to Robot
+    Emitter {
+      name   "discoveryEmitter"
       type   "radio"
     }
  

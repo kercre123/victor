@@ -164,7 +164,7 @@ PROTO WebotsKeyboardController [
   field SFFloat imageCenter_y 120
 
   # Vision system params
-  field SFString streamResolution "CVGA"
+  field SFString streamResolution "QVGA"
   field SFInt32 camera_autoexposureOn 1
   field SFFloat camera_exposureTime 0.2
   field SFInt32 camera_integerCountsIncrement 3
@@ -203,9 +203,6 @@ PROTO WebotsKeyboardController [
   
   # Cozmo engine location
   field SFString engineIP "127.0.0.1"
-  
-  # UI camera display
-  field SFFloat  uiCamDisplayPixelSize 0.0
 
   # UI device ID 
   # TODO: Get rid of this. The UI should not be assigning it's own ID.
@@ -271,26 +268,19 @@ Supervisor {
       %{ if fields.streamResolution.value == "VGA" then }%
       width 640
       height 480
-      #pixelSize 0.5
       %{ elseif fields.streamResolution.value == "CVGA" then }%
       width 400
       height 296
-      #pixelSize 1
       %{ elseif fields.streamResolution.value == "QVGA" then }%
       width 320
       height 240
-      #pixelSize 1
       %{ elseif fields.streamResolution.value == "QQVGA" then }%
       width 160
       height 120
-      #pixelSize 2
       %{ elseif fields.streamResolution.value == "QQQVGA" then }%
       width 80
       height 60
-      #pixelSize 4
       %{ end }%
-      pixelSize %{=fields.uiCamDisplayPixelSize.value}%
-      windowPosition 1 0
     }
   ]
   name IS name

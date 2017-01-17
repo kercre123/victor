@@ -17,8 +17,6 @@ Supervisor {
         name "playback_display"
         height 24
         width 400
-        windowPosition 0.5 1
-        pixelSize %{=fields.pixelSize.value}%
 
         children [
         DEF SHAPE Shape {

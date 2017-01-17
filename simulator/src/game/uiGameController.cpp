@@ -709,16 +709,13 @@ namespace Anki {
           webots::Node* nd = rootChildren->getMFNode(n);
           
           // Get the node name
-          std::string nodeName = "";
-          webots::Field* nameField = nd->getField("name");
-          if (nameField) {
-            nodeName = nameField->getSFString();
-          }
+          std::string nodeName = nd->getTypeName();
           
           //PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses", " Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"",
           //       n, nodeName.c_str(), nd->getTypeName().c_str(), controllerName.c_str());
+          int nodeType = nd->getType();
           
-          if (nd->getTypeName().find("Supervisor") != std::string::npos &&
+          if (nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
               nodeName.find("CozmoBot") != std::string::npos) {
 
             PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
@@ -969,6 +966,7 @@ namespace Anki {
     void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution)
     {
       ExternalInterface::SetRobotImageSendMode m;
+      m.robotID = 1;
       m.mode = mode;
       m.resolution = resolution;
       ExternalInterface::MessageGameToEngine message;

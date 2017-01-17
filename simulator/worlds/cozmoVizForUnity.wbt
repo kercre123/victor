@@ -25,6 +25,4 @@ DEF CozmoViz_1 CozmoBot {
   vizMode TRUE
 }
 CozmoVizDisplay {
-  moodViz TRUE
-  behaviorSelectionViz TRUE
 }
