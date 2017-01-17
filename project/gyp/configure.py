@@ -267,7 +267,7 @@ def main(scriptArgs):
   gtestPath = os.path.join(options.ankiUtilPath, 'libs/framework')
 
   if not options.webotsPath:
-    options.webotsPath = '/Applications/Webots.app'
+    options.webotsPath = '/Applications/Webots'
   if not os.path.exists(options.webotsPath):
     UtilLog.error('webots not found [%s]' % options.webotsPath)
     return False

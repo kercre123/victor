@@ -110,13 +110,7 @@ void VizControllerImpl::Init()
   _activeObjectDisp = _vizSupervisor.getDisplay("cozmo_active_object_display");
   _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
-
-  _disp->setFont("Lucida Console", 8, true);
-  _moodDisp->setFont("Lucida Console", 8, true);
-  _activeObjectDisp->setFont("Lucida Console", 8, true);
-
   DrawText(_activeObjectDisp, 0, (u32)Anki::NamedColors::WHITE, "Slot | Moving | UpAxis");
-  
   
   // === Look for CozmoBot in scene tree ===
 
@@ -131,8 +125,12 @@ void VizControllerImpl::Init()
     webots::Node* nd = rootChildren->getMFNode(n);
 
     // Get the node name
-    std::string nodeName = nd->getTypeName();
-    
+    std::string nodeName = "";
+    webots::Field* nameField = nd->getField("name");
+    if (nameField) {
+      nodeName = nameField->getSFString();
+    }
+
     // Get the vizMode status
     bool vizMode = false;
     webots::Field* vizModeField = nd->getField("vizMode");
@@ -142,9 +140,8 @@ void VizControllerImpl::Init()
 
     //printf(" Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"\n",
     //       n, nodeName.c_str(), nd->getTypeName().c_str(), controllerName.c_str());
-    int nodeType = nd->getType();
-    
-    if (nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
+
+    if (nd->getTypeName().find("Supervisor") != std::string::npos &&
       nodeName.find("CozmoBot") != std::string::npos &&
       vizMode) {
 
@@ -292,7 +289,7 @@ void VizControllerImpl::DrawText(webots::Display* disp, u32 lineNum, u32 color, 
 
   // Clear line specified by lineNum
   SetColorHelper(disp, NamedColors::BLACK);
-  disp->fillRectangle(0, baseYOffset + yLabelStep * lineNum, disp->getWidth(), yLabelStep);
+  disp->fillRectangle(0, baseYOffset + yLabelStep * lineNum, disp->getWidth(), 8);
 
   // Draw text
   SetColorHelper(disp, color);

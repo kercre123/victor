@@ -23,7 +23,6 @@
 #include "util/math/numericCast.h"
 #include <webots/Display.hpp>
 #include <webots/Supervisor.hpp>
-#include <webots/Keyboard.hpp>
 
 #include <functional>
 
@@ -293,10 +292,10 @@ void WebotsDevLogController::UpdateKeyboard()
   for(auto key : _lastKeysPressed)
   {
     // Extract modifier key(s)
-    int modifier_key = key & ~webots::Keyboard::KEY;
+    int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
     
     // Set key to its modifier-less self
-    key &= webots::Keyboard::KEY;
+    key &= webots::Supervisor::KEYBOARD_KEY;
   
     switch(key)
     {
@@ -358,7 +357,7 @@ void WebotsDevLogController::UpdateKeyboard()
 
       case (int)'J':
       {
-        const bool dropMessages = modifier_key & webots::Keyboard::SHIFT;
+        const bool dropMessages = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
           
         int ms = _selfNode->getField("jumpToMS")->getSFInt32();
         JumpToMS(ms, dropMessages);
@@ -456,11 +455,11 @@ void WebotsDevLogController::JumpToMS(uint32_t targetTime_ms, bool dropMessages)
 bool WebotsDevLogController::UpdatePressedKeys()
 {
   std::set<int> currentKeysPressed;
-  int key = _supervisor->getKeyboard()->getKey();
+  int key = _supervisor->keyboardGetKey();
   while(key != 0)
   {
     currentKeysPressed.insert(key);
-    key = _supervisor->getKeyboard()->getKey();
+    key = _supervisor->keyboardGetKey();
   }
   
   // If exact same keys were pressed last tic, do nothing.

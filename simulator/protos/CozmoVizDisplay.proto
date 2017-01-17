@@ -5,6 +5,18 @@ PROTO CozmoVizDisplay
   # Resolution of incoming camera images.
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
   field SFString streamResolution "QVGA"
+  
+  # Following (but with PixelSize=2) works well on Macbook screen (size=1 for monitor)
+  field SFFloat pixelSize 1.0
+
+  field SFBool moodViz FALSE
+  field SFVec2f moodPos 1.0 0.25
+  field SFBool behaviorSelectionViz FALSE
+  field SFVec2f behaviorSelectionPos 1.0 0.50
+
+  field SFBool dockViz FALSE
+  field SFBool infoViz TRUE
+  field SFBool camViz TRUE
 
   field SFBool filterLogs FALSE
 ]
@@ -12,7 +24,7 @@ PROTO CozmoVizDisplay
 Supervisor {
   
   children [
-    Display {
+    DEF DOCKING_DISPLAY Display {
       # Hide display plane far away
       translation 1000 0.1 0
 
@@ -33,10 +45,16 @@ Supervisor {
       name "cozmo_docking_display"
       width 200
       height 240
+      windowPosition 1 1
+      %{ if fields.dockViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
     }
 
 
-    Display {
+    DEF DISPLAY_PLANE Display {
       # Hide display plane far away
       translation 1000 0.1 0
 
@@ -57,9 +75,15 @@ Supervisor {
       name "cozmo_viz_display"
       width 400
       height 240
+      windowPosition 1 1
+      %{ if fields.infoViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
     }
     
-    Display {
+    DEF DISPLAY_PLANE Display {
       # Hide display plane far away
       translation 1000 0.1 0
 
@@ -80,6 +104,12 @@ Supervisor {
       name "cozmo_mood_display"
       width 450
       height 150
+      windowPosition %{=fields.moodPos.value.x}% %{=fields.moodPos.value.y}%
+      %{ if fields.moodViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
     }
 
     DEF ACTIVE_OBJECT_DISPLAY Display {
@@ -130,7 +160,7 @@ Supervisor {
     }
 
     
-    Display {
+    DEF DISPLAY_PLANE Display {
       # Hide display plane far away
       translation 1000 0.1 0
 
@@ -151,9 +181,15 @@ Supervisor {
       name "cozmo_behavior_display"
       width 450
       height 150
+      windowPosition %{=fields.behaviorSelectionPos.value.x}% %{=fields.behaviorSelectionPos.value.y}%
+      %{ if fields.behaviorSelectionViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
     }
 
-    Display {
+    DEF CAM_DISPLAY_PLANE Display {
       # Hide display plane far away
       translation 1000 0.1 0
 
@@ -177,19 +213,32 @@ Supervisor {
       %{ if fields.streamResolution.value == "VGA" then }%
       width 640
       height 480
+      #pixelSize 0.5
       %{ elseif fields.streamResolution.value == "QVGA" then }%
       width 320
       height 240
+      #pixelSize 1
       %{ elseif fields.streamResolution.value == "QQVGA" then }%
       width 160
       height 120
+      #pixelSize 2
       %{ elseif fields.streamResolution.value == "QQQVGA" then }%
       width 80
       height 60
+      #pixelSize 4
       %{ elseif fields.streamResolution.value == "CVGA" then }%
       width 400
       height 296
+      #pixelSize 1
       %{ end }%
+
+      %{ if fields.camViz.value then }%
+        pixelSize %{=fields.pixelSize.value}%
+      %{ else }%
+        pixelSize 0
+      %{ end }%
+
+      windowPosition 0 1
     }
   ]
 

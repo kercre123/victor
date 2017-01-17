@@ -48,7 +48,6 @@ namespace {
   
   webots::Receiver* receiver_;
   webots::Emitter*  emitter_;
-  webots::Emitter*  discoveryEmitter_;
   
   webots::Accelerometer* accel_;
   
@@ -78,7 +77,7 @@ namespace {
   BlockState state_ = NORMAL;
   
   webots::LED* led_[NUM_CUBE_LEDS];
-  webots::Field* ledColorField_ = nullptr;
+  webots::Node* betterLed_[NUM_CUBE_LEDS];
 
   LightState ledParams_[NUM_CUBE_LEDS];
   TimeStamp_t ledPhases_[NUM_CUBE_LEDS];
@@ -144,11 +143,7 @@ inline void SetLED_helper(u32 index, u32 rgbaColor) {
   double green = (rgbaColor & 0x0000ff00) >> 8;  // second byte
   double blue = (rgbaColor & 0x000000ff);  // third byte
   double betterColor[3] = {red, green, blue};
-  if (ledColorField_) {
-    ledColorField_->setMFVec3f(index, betterColor);
-    //const double *p = ledColorField_->getMFVec3f(index);
-    //PRINT_NAMED_WARNING("SetLED", "Cube %d, LED %d, Color %f %f %f (%0llx)", blockID_, index, p[0], p[1], p[2], (u64)p);
-  }
+  betterLed_[index]->getField("betterColor")->setSFVec3f(betterColor);
 }
 
 // ========== Callbacks for messages from robot =========
@@ -307,10 +302,10 @@ Result Init()
     sprintf(led_name, "led%d", i);
     led_[i] = active_object_controller.getLED(led_name);
     assert(led_[i] != nullptr);
+
+    betterLed_[i] = active_object_controller.getFromDef(led_name);
+    assert(betterLed_[i] != nullptr);
   }
-  
-  // Field for monitoring color from webots tests
-  ledColorField_ = selfNode->getField("ledColors");
   
   // Get radio receiver
   receiver_ = active_object_controller.getReceiver("receiver");
@@ -322,11 +317,6 @@ Result Init()
   emitter_ = active_object_controller.getEmitter("emitter");
   assert(emitter_ != nullptr);
   emitter_->setChannel(factoryID_);
-  
-  // Get radio emitter for discovery
-  discoveryEmitter_ = active_object_controller.getEmitter("discoveryEmitter");
-  assert(discoveryEmitter_ != nullptr);
-  discoveryEmitter_->setChannel(OBJECT_DISCOVERY_CHANNEL);
   
   // Get accelerometer
   accel_ = active_object_controller.getAccelerometer("accel");
@@ -591,7 +581,9 @@ Result Update() {
       msg.tag = BlockMessages::LightCubeMessage::Tag_discovered;
       msg.discovered.factory_id = factoryID_;
       msg.discovered.device_type = activeObjectType_;
-      discoveryEmitter_->send(msg.GetBuffer(), msg.Size());
+      emitter_->setChannel(OBJECT_DISCOVERY_CHANNEL);
+      emitter_->send(msg.GetBuffer(), msg.Size());
+      emitter_->setChannel(factoryID_);
       discoveredSendCtr = 0;
     }
     

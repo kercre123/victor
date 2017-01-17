@@ -183,7 +183,7 @@ namespace Anki {
       time(&t);
       std::stringstream ss;
       ss << kBuildDirectory << name << ".mp4";
-      GetSupervisor()->movieStartRecording(ss.str(), 854, 480, 0, 90, speed, false);
+      GetSupervisor()->startMovie(ss.str(), 854, 480, 0, 90, speed, false);
       _isRecording =  GetSupervisor()->getMovieStatus() == webots::Supervisor::MOVIE_RECORDING;
       PRINT_NAMED_INFO("Is Movie Recording?","_isRecording:%d", _isRecording);
     }
@@ -194,16 +194,12 @@ namespace Anki {
     {
       if(_isRecording && GetSupervisor()->getMovieStatus() == GetSupervisor()->MOVIE_RECORDING)
       {
-        GetSupervisor()->movieStopRecording();
+        GetSupervisor()->stopMovie();
         PRINT_NAMED_INFO("CozmoSimTestController.StopMovie", "Movie Stop Command issued");
         
-        while(GetSupervisor()->movieIsReady()){
+        while(GetSupervisor()->getMovieStatus() == webots::Supervisor::MOVIE_SAVING){
         }
-
-        if(GetSupervisor()->movieFailed()){
-          PRINT_NAMED_ERROR("CozmoSimTestController.StopMovie", "Movie failed to save properly");
-        }
-        
+        PRINT_NAMED_INFO("CozmoSimTestController.StopMovie", "Movie stopped with status: %d", GetSupervisor()->getMovieStatus());
         _isRecording = false;
       }
     }

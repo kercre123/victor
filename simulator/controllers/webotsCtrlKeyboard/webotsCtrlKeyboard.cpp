@@ -44,7 +44,6 @@
 #include <webots/Display.hpp>
 #include <webots/GPS.hpp>
 #include <webots/ImageRef.hpp>
-#include <webots/Keyboard.hpp>
 
 
 
@@ -257,7 +256,7 @@ namespace Anki {
       root_ = GetSupervisor()->getSelf();
 
       // enable keyboard
-      GetSupervisor()->getKeyboard()->enable(GetStepTimeMS());
+      GetSupervisor()->keyboardEnable(GetStepTimeMS());
     }
   
     void WebotsKeyboardController::WaitOnKeyboardToConnect()
@@ -279,12 +278,12 @@ namespace Anki {
                     "Press Shift+Enter to start the engine");
       
       const int EnterKey = 4; // tested experimentally... who knows if this will work on other platforms
-      const int ShiftEnterKey = EnterKey | webots::Keyboard::SHIFT;
+      const int ShiftEnterKey = EnterKey | webots::Supervisor::KEYBOARD_SHIFT;
 
       bool start = false;
       while( !start && !_shouldQuit ) {
         int key = -1;
-        while((key = GetSupervisor()->getKeyboard()->getKey()) != 0 && !_shouldQuit) {
+        while((key = GetSupervisor()->keyboardGetKey()) != 0 && !_shouldQuit) {
           if(!start && key == ShiftEnterKey) {
             start = true;
             PRINT_CH_INFO("Keyboard", "WebotsKeyboardController.StartEngine",
@@ -405,15 +404,15 @@ namespace Anki {
         
         static bool keyboardRestart = false;
         if (keyboardRestart) {
-          GetSupervisor()->getKeyboard()->disable();
-          GetSupervisor()->getKeyboard()->enable(BS_TIME_STEP);
+          GetSupervisor()->keyboardDisable();
+          GetSupervisor()->keyboardEnable(BS_TIME_STEP);
           keyboardRestart = false;
         }
         
         // Get all keys pressed this tic
         std::set<int> keysPressed;
         int key;
-        while((key = GetSupervisor()->getKeyboard()->getKey()) >= 0) {
+        while((key = GetSupervisor()->keyboardGetKey()) != 0) {
           keysPressed.insert(key);
         }
         
@@ -426,12 +425,12 @@ namespace Anki {
         for(auto key : keysPressed)
         {
           // Extract modifier key(s)
-          const int modifier_key = key & ~webots::Keyboard::KEY;
-          const bool shiftKeyPressed = modifier_key & webots::Keyboard::SHIFT;
-          const bool altKeyPressed = modifier_key & webots::Keyboard::ALT;
+          const int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
+          const bool shiftKeyPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
+          const bool altKeyPressed = modifier_key & webots::Supervisor::KEYBOARD_ALT;
           
           // Set key to its modifier-less self
-          key &= webots::Keyboard::KEY;
+          key &= webots::Supervisor::KEYBOARD_KEY;
           
           lastKeyPressTime_ = GetSupervisor()->getTime();
           
@@ -621,25 +620,25 @@ namespace Anki {
             // Check for (mostly) single key commands
             switch (key)
             {
-              case webots::Keyboard::UP:
+              case webots::Robot::KEYBOARD_UP:
               {
                 ++throttleDir;
                 break;
               }
                 
-              case webots::Keyboard::DOWN:
+              case webots::Robot::KEYBOARD_DOWN:
               {
                 --throttleDir;
                 break;
               }
                 
-              case webots::Keyboard::LEFT:
+              case webots::Robot::KEYBOARD_LEFT:
               {
                 --steeringDir;
                 break;
               }
                 
-              case webots::Keyboard::RIGHT:
+              case webots::Robot::KEYBOARD_RIGHT:
               {
                 ++steeringDir;
                 break;
@@ -666,13 +665,13 @@ namespace Anki {
                 break;
               }
                 
-              case webots::Keyboard::PAGEUP:
+              case webots::Supervisor::KEYBOARD_PAGEUP:
               {
                 SendMoveHeadToAngle(MAX_HEAD_ANGLE, 20, 2);
                 break;
               }
                 
-              case webots::Keyboard::PAGEDOWN:
+              case webots::Supervisor::KEYBOARD_PAGEDOWN:
               {
                 SendMoveHeadToAngle(MIN_HEAD_ANGLE, 20, 2);
                 break;
@@ -1188,7 +1187,7 @@ namespace Anki {
                     break;
                   }
 
-                  if( shiftKeyPressed ) {
+                  if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ) {
                     webots::Field* unlockNameField = root_->getField("unlockName");
                     if (unlockNameField == nullptr) {
                       printf("ERROR: No unlockNameField field found in WebotsKeyboardController.proto\n");
@@ -1959,7 +1958,7 @@ namespace Anki {
                 msg.leftEye.resize(static_cast<size_t>(Param::NumParameters),  0);
                 msg.rightEye.resize(static_cast<size_t>(Param::NumParameters), 0);
                 
-                if(altKeyPressed) {
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   // Reset to base face
                   msg.leftEye[static_cast<s32>(Param::EyeCenterX)]  = 32;
                   msg.leftEye[static_cast<s32>(Param::EyeCenterY)]  = 32;
@@ -2162,7 +2161,9 @@ namespace Anki {
                 
               case (s32)'F':
               {
-                if (shiftKeyPressed && !altKeyPressed) {
+                const bool shiftPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
+                const bool altPressed   = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+                if (shiftPressed && !altPressed) {
                   // SHIFT+F: Associate name with current face
                   webots::Field* userNameField = root_->getField("userName");
                   webots::Field* enrollToIDField = root_->getField("enrollToID");
@@ -2214,7 +2215,7 @@ namespace Anki {
                     printf("No 'userName' field\n");
                   }
                   
-                } else if(altKeyPressed && !shiftKeyPressed) {
+                } else if(altPressed && !shiftPressed) {
                   // ALT+F: Turn to face the pose of the last observed face:
                   printf("Turning to last face\n");
                   ExternalInterface::TurnTowardsLastFacePose turnTowardsPose; // construct w/ defaults for speed
@@ -2223,7 +2224,7 @@ namespace Anki {
                   turnTowardsPose.robotID = 1;
                   turnTowardsPose.sayName = true;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
-                } else if(altKeyPressed && shiftKeyPressed) {
+                } else if(altPressed && shiftPressed) {
                   // SHIFT+ALT+F: Erase current face
                   using namespace ExternalInterface;
                   SendMessage(MessageGameToEngine(EraseEnrolledFaceByID(GetLastObservedFaceID())));
@@ -2246,7 +2247,7 @@ namespace Anki {
 
               case (s32)'N':
               {
-                if( altKeyPressed ) {
+                if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DenyGameStart()));
                 }
                 else {
@@ -2263,7 +2264,7 @@ namespace Anki {
                   }
 
                   UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
-                  bool val = !shiftKeyPressed;
+                  bool val = ! ( modifier_key & webots::Supervisor::KEYBOARD_SHIFT );
                   SendMessage( ExternalInterface::MessageGameToEngine(
                                  ExternalInterface::RequestSetUnlock(unlock, val)));
 
@@ -2327,11 +2328,14 @@ namespace Anki {
               
               case (s32)'Y':
               {
-                if(altKeyPressed && shiftKeyPressed)
+                bool alt = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+                bool shift = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
+                
+                if(alt && shift)
                 {
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RestoreRobotFromBackup()));
                 }
-                else if(altKeyPressed)
+                else if(alt)
                 {
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WipeRobotGameData()));
                 }

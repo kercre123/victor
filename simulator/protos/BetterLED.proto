@@ -1,0 +1,31 @@
+#VRML_SIM V7.3.0 utf8
+
+# This proto is meant to replace the built in LED node. BetterLED adds the field `betterColor` as a
+# field that the controller (the one that sets the LED) can update as it sets the LED colors. This
+# is needed because there are cases where you have access to the LED in the scene tree (and by
+# extension, its fields), but might not have access to the actual LED node functions like get() and
+# set() because your controller is for a different supervisor than the one that the LED lives under
+# (for example, light cubes and robot controllers).
+
+PROTO BetterLED [
+  field SFVec3f translation 0 0 0
+  field SFVec3f betterColor 0 0 0
+  field SFBool gradual FALSE
+  field SFString name ""
+  field MFNode children []
+  field MFColor color []
+]
+{
+  LED {
+    translation IS translation
+    gradual IS gradual
+    name IS name
+    children IS children
+    color IS color
+
+    # This pointless if statement is to prevent webots errors of not using the field betterColor
+    # anywhere in the .proto file
+    %{ if fields.betterColor.value.nonExistentValue == nil then }%
+    %{ end }%
+  }
+}
