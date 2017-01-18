@@ -141,19 +141,19 @@ void sAbort();
 } while(0)
 
 //
-// VERIFY(expr, name, format, args...)
+// ANKI_VERIFY(expr, name, format, args...)
 // Helper macro for common error checks.
 //
-// If the conditional expression (expr) is true, VERIFY returns true.
-// If the conditional expression (expr) is false, VERIFY logs an error message and returns false.
+// If the conditional expression (expr) is true, ANKI_VERIFY returns true.
+// If the conditional expression (expr) is false, ANKI_VERIFY logs an error message and returns false.
 //
 // The conditional expression (expr) and additional arguments are evaluated exactly once.
-// Similar to ASSERT but enabled in both debug and release builds.
+// Similar to DEV_ASSERT (below) but enabled in both debug and release builds.
 //
 //
 // Example 1:
 // Use
-//   if (VERIFY(x == y, "VerifyXY", "%p != %p", x, y)) {
+//   if (ANKI_VERIFY(x == y, "VerifyXY", "%p != %p", x, y)) {
 //     /* do stuff */
 //   }
 // in place of
@@ -165,7 +165,7 @@ void sAbort();
 //
 // Example 2:
 // Use
-//   if (!VERIFY(x == y, "VerifyXY", "%p != %p", x, y)) {
+//   if (!ANKI_VERIFY(x == y, "VerifyXY", "%p != %p", x, y)) {
 //     return FAIL;
 //   }
 // in place of
@@ -174,7 +174,7 @@ void sAbort();
 //     return FAIL;
 //   }
 //
-inline bool VERIFY(bool expr, const char * name, const char * format, ...) {
+inline bool ANKI_VERIFY(bool expr, const char * name, const char * format, ...) {
   if (!expr) {
     va_list args;
     va_start(args, format);
@@ -248,6 +248,8 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 #define GENERATE_EVENT_NAME(nameBuf, nameBufLen) { snprintf(nameBuf, nameBufLen, "%s.%s.%d", (SHORT_FILE), __FUNCTION__, __LINE__); }
 
 
+#ifdef defunct
+
 // Anki assert definition
 #if (!defined(NDEBUG)) && !(defined(UNIT_TEST))
 #define DEBUG_ABORT __builtin_trap()
@@ -272,6 +274,8 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
     DEBUG_ABORT;                                                              \
   }                                                                           \
 } while(0)
+
+#endif
 
 //
 // Developer assertions are compiled for debug builds ONLY.
@@ -314,20 +318,6 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 #endif
 
 #define DEV_ASSERT(expr, name) DEV_ASSERT_MSG(expr, name, "Assertion failed")
-
-//
-// When DEV_ASSERT is enabled, use it as a drop-in replacement for old ASSERT_NAMED.
-// Otherwise, leave old ASSERT_NAMED in place, for any code that relies on old semantics.
-//
-#if DEV_ASSERT_ENABLED
-
-#undef ASSERT_NAMED
-#undef ASSERT_NAMED_EVENT
-
-#define ASSERT_NAMED(expr, name) DEV_ASSERT(expr, name)
-#define ASSERT_NAMED_EVENT(expr, name, format, ...) DEV_ASSERT_MSG(expr, name, format, ##__VA_ARGS__)
-
-#endif
 
 //
 // DAS events are structured messages for use with backend analytics.

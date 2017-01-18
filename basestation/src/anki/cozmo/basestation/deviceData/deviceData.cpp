@@ -29,7 +29,7 @@ void DeviceData::Refresh()
   const DAS::IDASPlatform* platform = DASGetPlatform();
   if (nullptr == platform)
   {
-    ASSERT_NAMED(false, "DASPlatform.InstanceMissing");
+    DEV_ASSERT(false, "DASPlatform.InstanceMissing");
     return;
   }
 
