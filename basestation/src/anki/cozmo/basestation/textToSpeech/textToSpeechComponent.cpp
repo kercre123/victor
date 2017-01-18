@@ -251,7 +251,8 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   }
   
   // Add Duration Stretch feature to voice
-  feat_set_float(_voice->features, "duration_stretch", durationScalar);
+  // If durationScalar is too small, the flite code crashes; so we clamp it here
+  feat_set_float(_voice->features, "duration_stretch", std::max(durationScalar, 0.05f));
   // Generate wave data
   cst_wave* waveData = flite_text_to_wave(text.c_str(), _voice);
   
