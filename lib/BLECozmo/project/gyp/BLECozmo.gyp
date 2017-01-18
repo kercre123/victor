@@ -60,7 +60,7 @@
       ['OS=="android"', {
         'target_archs%': ['armveabi-v7a'],
         'compiler_flags': [
-          '--sysroot=<(ndk_root)/platforms/android-23/arch-arm',
+          '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
           '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
           '-fpic',
@@ -79,10 +79,10 @@
           '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/include',
           '-I<(ndk_root)/sources/cxx-stl/llvm-libc++abi/include',
           '-I<(ndk_root)/sources/android/support/include',
-          '-I<(ndk_root)/platforms/android-23/arch-arm/usr/include',
+          '-I<(ndk_root)/platforms/android-18/arch-arm/usr/include',
         ],
         'linker_flags': [
-            '--sysroot=<(ndk_root)/platforms/android-23/arch-arm',
+            '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
             '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
             '-no-canonical-prefixes',
             '-target armv7-none-linux-androideabi',
@@ -92,7 +92,7 @@
             '-Wl,-z,relro',
             '-Wl,-z,now',
             '-mthumb',
-            '-L<(ndk_root)/platforms/android-23/arch-arm/usr/lib',
+            '-L<(ndk_root)/platforms/android-18/arch-arm/usr/lib',
             '-L<(ndk_root)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a',
             '-lgcc',
             '-lc',
@@ -210,7 +210,7 @@
               "ANDROID=1",
             ],
             'ldflags': [
-              '--sysroot=<(ndk_root)/platforms/android-23/arch-arm',
+              '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
               '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
               '-no-canonical-prefixes',
               '-target armv7-none-linux-androideabi',
@@ -220,7 +220,7 @@
               '-Wl,-z,relro',
               '-Wl,-z,now',
               '-mthumb',
-              '-L<(ndk_root)/platforms/android-23/arch-arm/usr/lib',
+              '-L<(ndk_root)/platforms/android-18/arch-arm/usr/lib',
               '-L<(ndk_root)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a',
               '-lgcc',
               '-lc',

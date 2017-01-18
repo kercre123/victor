@@ -88,7 +88,7 @@
           '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/include',
           '-I<(ndk_root)/sources/cxx-stl/llvm-libc++abi/include',
           '-I<(ndk_root)/sources/android/support/include',
-          '-I<(ndk_root)/platforms/android-23/arch-arm/usr/include',
+          '-I<(ndk_root)/platforms/android-18/arch-arm/usr/include',
         ],
         'linker_flags': [
             '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
@@ -101,7 +101,7 @@
             '-Wl,-z,relro',
             '-Wl,-z,now',
             '-mthumb',
-            '-L<(ndk_root)/platforms/android-23/arch-arm/usr/lib',
+            '-L<(ndk_root)/platforms/android-18/arch-arm/usr/lib',
             '-L<(ndk_root)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a',
             '-lgcc',
             '-lc',
