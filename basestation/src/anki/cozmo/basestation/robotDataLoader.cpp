@@ -12,28 +12,39 @@
 
 #include "anki/cozmo/basestation/robotDataLoader.h"
 
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
-#include "anki/cozmo/basestation/actions/sayTextAction.h"
-#include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "cozmo_anim_generated.h"
+#include "threadedPrintStressTester.h"
+#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
-#include "cozmo_anim_generated.h"
 #include <json/json.h>
 #include <string>
 #include <sys/stat.h>
 
+namespace {
+
+CONSOLE_VAR(bool, kStressTestThreadedPrintsDuringLoad, "RobotDataLoader", false);
+
+#if REMOTE_CONSOLE_ENABLED
+static Anki::Cozmo::ThreadedPrintStressTester stressTester;
+#endif // REMOTE_CONSOLE_ENABLED
+
+}
 
 namespace Anki {
 namespace Cozmo {
@@ -69,6 +80,10 @@ void RobotDataLoader::LoadNonConfigData()
 
   // Uncomment this line to enable the profiling of loading data
   //ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadNonConfigData");
+
+  if( kStressTestThreadedPrintsDuringLoad ) {
+    REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Start() );
+  }
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
@@ -120,6 +135,10 @@ void RobotDataLoader::LoadNonConfigData()
 
   // this map doesn't need to be persistent
   _jsonFiles.clear();
+
+  if( kStressTestThreadedPrintsDuringLoad ) {
+    REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Stop() );
+  }
   
   // we're done
   _loadingCompleteRatio.store(1.0f);
