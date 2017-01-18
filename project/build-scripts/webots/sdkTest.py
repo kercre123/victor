@@ -743,7 +743,7 @@ def main(args):
   parser.add_argument('--sdkScriptLocation',
                       dest='sdk_root',
                       action='store',
-                      default=os.path.join(COZMO_ENGINE_ROOT, 'tools', 'sdk_devonly'),
+                      default=os.path.join(COZMO_ENGINE_ROOT, 'tools', 'sdk_devonly', 'test_scripts'),
                       type=str,
                       help='Location of where to look for the sdk scripts which will be ran.')
 
