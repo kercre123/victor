@@ -324,6 +324,10 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   }
 
   public void NeedPermissions() {
+    if (_Stage <= Stage.Permissions) {
+      return;
+    }
+
     if (_PermissionIssueCount > 0) {
       OnCancelFlow();
     }
