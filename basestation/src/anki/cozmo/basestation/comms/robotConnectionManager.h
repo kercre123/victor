@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/comms/robotConnectionMessageData.h"
 #include "util/stats/recentStatsAccumulator.h"
+#include "util/signals/signalHolder.h"
 
 #include <memory>
 #include <deque>
@@ -32,7 +33,7 @@ namespace Cozmo {
 class RobotManager;
 class RobotConnectionData;
 
-class RobotConnectionManager {
+class RobotConnectionManager : private Util::SignalHolder {
 public:
   RobotConnectionManager(RobotManager* robotManager);
   virtual ~RobotConnectionManager();

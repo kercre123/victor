@@ -1,5 +1,8 @@
 ﻿using Anki.Cozmo;
 using UnityEngine;
+using System;
+using System.Collections;
+using System.Linq;
 using Cozmo.UI;
 
 public class ConnectionFlowController : MonoBehaviour {
@@ -15,7 +18,10 @@ public class ConnectionFlowController : MonoBehaviour {
 
   [SerializeField]
   private SearchForCozmoScreen _SearchForCozmoScreenPrefab;
-  private SearchForCozmoScreen _SearchForCozmoScreenInstance;
+  [SerializeField]
+  private AndroidConnectionFlow _AndroidConnectionFlowPrefab;
+
+  private GameObject _SearchForCozmoScreenInstance;
 
   [SerializeField]
   private SearchForCozmoFailedScreen _SearchForCozmoFailedScreenPrefab;
@@ -128,7 +134,7 @@ public class ConnectionFlowController : MonoBehaviour {
     else {
       _CurrentRobotIP = RobotEngineManager.kRobotIP;
     }
-    CreateConnectionFlowBackground();
+    InitConnectionFlow();
   }
 
   private void ReturnToTitle() {
@@ -155,13 +161,58 @@ public class ConnectionFlowController : MonoBehaviour {
     ShowSearchForCozmo();
   }
 
-  private void CreateConnectionFlowBackground() {
-    UIManager.OpenModal(_ConnectionFlowBackgroundModalPrefab, new ModalPriorityData(), HandleConnectionFlowBackgroundCreationFinished);
+  private void InitConnectionFlow() {
+    if (FeatureGate.Instance.IsFeatureEnabled(FeatureType.AndroidConnectionFlow)) {
+      #if UNITY_ANDROID && !UNITY_EDITOR
+      if (AndroidConnectionFlow.IsAvailable()) {
+        ShowSearchForCozmoAndroid();
+        return;
+      }
+      #endif
+    }
+    // fall-thru from not selecting android flow
+    CreateConnectionFlowBackground();
   }
 
-  private void HandleConnectionFlowBackgroundCreationFinished(BaseModal newConnectionFlowBackground) {
+  private void CreateConnectionFlowBackground() {
+    CreateConnectionFlowBackgroundWithCallback(ShowSearchForCozmo);
+  }
+
+  private void CreateConnectionFlowBackgroundWithCallback(Action onComplete) {
+    UIManager.OpenModal(_ConnectionFlowBackgroundModalPrefab, new ModalPriorityData(), (arg) => HandleConnectionFlowBackgroundCreationFinished(arg, onComplete));
+  }
+
+  private void HandleConnectionFlowBackgroundCreationFinished(BaseModal newConnectionFlowBackground, Action launchAction) {
     _ConnectionFlowBackgroundModalInstance = (ConnectionFlowBackgroundModal)newConnectionFlowBackground;
-    ShowSearchForCozmo();
+    launchAction();
+  }
+
+  private void ShowSearchForCozmoAndroid() {
+    DAS.Info("ConnectionFlow.ShowAndroid", "Instantiating android flow");
+    var androidFlowInstance = GameObject.Instantiate(_AndroidConnectionFlowPrefab.gameObject).GetComponent<AndroidConnectionFlow>();
+    _SearchForCozmoScreenInstance = androidFlowInstance.gameObject;
+
+    // Set up event handlers for things the Android flow might tell us:
+    // - if we want to start the flow over again
+    androidFlowInstance.OnRestartFlow += () => {
+      // explicitly unregister handlers before instantiating a new instance,
+      // since OnDestroy() invocation is delayed until after frame
+      androidFlowInstance.Disable();
+      GameObject.Destroy(androidFlowInstance.gameObject);
+      ShowSearchForCozmoAndroid();
+    };
+    // - when the screen finishes, either continue old connection flow accordingly
+    //   or go to "search failed" screen
+    Action<bool, string> onCompleteFunc = (success, stringName) => {
+      DAS.Info("ConnectionFlow.ShowAndroid", stringName);
+      CreateConnectionFlowBackgroundWithCallback(() => {
+        _ConnectionFlowBackgroundModalInstance.SetStateInProgress(0);
+        HandleSearchForCozmoScreenDone(success);
+      });
+    };
+    androidFlowInstance.OnScreenComplete += (success) => onCompleteFunc(success, "OnComplete");
+    // - if the old flow is requested, start it
+    androidFlowInstance.OnCancelFlow += () => onCompleteFunc(false, "CancelAndroid");
   }
 
   private void ShowSearchForCozmo() {
@@ -172,22 +223,22 @@ public class ConnectionFlowController : MonoBehaviour {
       return;
     }
 
-    _SearchForCozmoScreenInstance = UIManager.CreateUIElement(_SearchForCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<SearchForCozmoScreen>();
-    _SearchForCozmoScreenInstance.Initialize(_PingStatus);
-    _SearchForCozmoScreenInstance.OnScreenComplete += HandleSearchForCozmoScreenDone;
+    var screenInstance = UIManager.CreateUIElement(_SearchForCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<SearchForCozmoScreen>();
+    screenInstance.Initialize(_PingStatus);
+    screenInstance.OnScreenComplete += HandleSearchForCozmoScreenDone;
+    _SearchForCozmoScreenInstance = screenInstance.gameObject;
     // Start Scan loop sound for connection phase
     PlayScanLoopAudio(true);
   }
 
   private void HandleSearchForCozmoScreenDone(bool success) {
-    GameObject.Destroy(_SearchForCozmoScreenInstance.gameObject);
+    GameObject.Destroy(_SearchForCozmoScreenInstance);
 
     if (success || RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
       _ConnectionFlowBackgroundModalInstance.SetStateComplete(0);
       ShowConnectingToCozmoScreen();
     }
     else {
-      // TODO: do BLE search before showing wifi screens
       _SearchForCozmoFailedScreenInstance = UIManager.CreateUIElement(_SearchForCozmoFailedScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<SearchForCozmoFailedScreen>();
       _SearchForCozmoFailedScreenInstance.OnEndpointFound += HandleEndpointFound;
       _SearchForCozmoFailedScreenInstance.OnQuitFlow += HandleOnQuitFlowFromFailedSearch;
@@ -559,7 +610,7 @@ public class ConnectionFlowController : MonoBehaviour {
 
     CancelInvoke("TransitionConnectionFlowToPullCubeTabs");
     Cleanup();
-    CreateConnectionFlowBackground();
+    InitConnectionFlow();
   }
 
   // Debounce Audio Loop events

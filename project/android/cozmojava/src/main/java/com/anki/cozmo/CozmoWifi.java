@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
@@ -29,20 +30,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.anki.daslib.DAS;
+import com.anki.util.AnkitivityDispatcher;
+import com.anki.util.LocationUtil;
+import com.anki.util.WifiUtil;
 
 public final class CozmoWifi {
 
   private static Activity mActivity;
   private static WifiManager mWifiManager;
+  private static boolean mNetworkBound = false;
+  private static boolean mNetworkBinding = false;
 
   private static BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
       logWifiEvents(context, intent);
+
+      if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+        handleNetworkUpdate(intent);
+      }
     }
   };
 
-  public static boolean register(Activity activity) {
+  public static boolean register(Activity activity, AnkitivityDispatcher dispatcher) {
+    WifiUtil.register(activity, dispatcher);
     mActivity = activity;
     mWifiManager = (WifiManager)mActivity.getSystemService(Context.WIFI_SERVICE);
     IntentFilter intentFilter = new IntentFilter();
@@ -63,8 +74,41 @@ public final class CozmoWifi {
       mActivity.unregisterReceiver(mBroadcastReceiver);
       mActivity = null;
     }
+    WifiUtil.unregister();
   }
 
+  private static void handleNetworkUpdate(final Intent intent) {
+    final NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+    boolean isWifiNetwork = info.getType() == ConnectivityManager.TYPE_WIFI;
+    if (isWifiNetwork) {
+
+      // if we're currently bound to a network but receive an update that we're not connected
+      // anymore, unbind ourselves
+      // else, if we're NOT currently bound and we detect that we ARE connected to a network,
+      // and that network SSID looks like a Cozmo robot, bind ourselves to that network
+      if (mNetworkBound && !WifiUtil.isConnectedState(info.getDetailedState())) {
+        WifiUtil.unbindFromNetwork();
+        mNetworkBound = false;
+        mNetworkBinding = false;
+      }
+      else if (!mNetworkBound && !mNetworkBinding && WifiUtil.isConnectedState(info.getDetailedState())) {
+        WifiInfo wifiInfo = intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
+        if (isCozmoSSID(wifiInfo.getSSID())) {
+          mNetworkBinding = true;
+          WifiUtil.bindToNetwork(info, new WifiUtil.BindCallback() {
+            @Override public void run (boolean success) {
+              mNetworkBinding = false;
+              mNetworkBound = success;
+            }
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * Logs DAS events related to network connectivity
+   */
   private static void logWifiEvents(Context context, Intent intent) {
     final String action = intent.getAction();
     if (WifiManager.NETWORK_IDS_CHANGED_ACTION.equals(action)) {
@@ -86,7 +130,7 @@ public final class CozmoWifi {
                 frequencyStr = "no.freq.api";
               }
               DAS.Event("android.wifi.connected_to_cozmo_access_point",
-                dequoteSSID(wifiInfo.getSSID()) + ","
+                WifiUtil.dequoteSSID(wifiInfo.getSSID()) + ","
                 + wifiInfo.getBSSID() + ","
                 + getHostAddress(wifiInfo.getIpAddress()) + ","
                 + (wifiInfo.getHiddenSSID() ? "hidden" : "visible") + ","
@@ -114,7 +158,7 @@ public final class CozmoWifi {
           if (isCozmoAP) {
             cozmoAPs++;
             DAS.Event("android.wifi.cozmo_ap_scanned",
-              dequoteSSID(scanResult.SSID) + ","
+              WifiUtil.dequoteSSID(scanResult.SSID) + ","
               + scanResult.BSSID + ","
               + scanResult.level + ","
               + scanResult.timestamp + ","
@@ -127,8 +171,11 @@ public final class CozmoWifi {
       boolean zeroAPs = otherAPs + cozmoAPs == 0;
       boolean hasLocationPermission =
         ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+      boolean isLocationOn = LocationUtil.isLocationServiceEnabled(mActivity);
       if (zeroAPs && !hasLocationPermission) {
         DAS.Event("android.wifi.scan_results.no_permission", "");
+      } else if (zeroAPs && !isLocationOn) {
+        DAS.Event("android.wifi.scan_results.no_location", "");
       } else {
         DAS.Event("android.wifi.scan_results.cozmo_vs_other_ap_counts",
           "" + cozmoAPs + "," + otherAPs);
@@ -140,6 +187,11 @@ public final class CozmoWifi {
     } else if (WifiManager.SUPPLICANT_STATE_CHANGED_ACTION.equals(action)) {
       SupplicantState supplicantState = intent.getParcelableExtra(WifiManager.EXTRA_NEW_STATE);
       DAS.Event("android.wifi.supplicant_state_changed", supplicantState.toString());
+      int defaultValue = -1234; // random value to detect if the intent contains an EXTRA_SUPPLICANT_ERROR value
+      int supplicantError = intent.getIntExtra(WifiManager.EXTRA_SUPPLICANT_ERROR, defaultValue);
+      if (supplicantError != defaultValue) {
+        DAS.Event("android.wifi.supplicant_error", "" + supplicantError);
+      }
     } else if (WifiManager.WIFI_STATE_CHANGED_ACTION.equals(action)) {
       int wifiState =
         intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_UNKNOWN);
@@ -185,20 +237,9 @@ public final class CozmoWifi {
     if (ssid == null) {
       return false;
     }
-    String dequotedSSID = dequoteSSID(ssid);
+    String dequotedSSID = WifiUtil.dequoteSSID(ssid);
     Pattern p = Pattern.compile("^Cozmo_[0-8]{2}[0-9A-F]{4}$");
     Matcher m = p.matcher(dequotedSSID);
     return m.matches();
-  }
-
-  private static String dequoteSSID(final String ssid) {
-    if (ssid == null) {
-      return null;
-    }
-    if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
-      return ssid.substring(1, ssid.length() - 1);
-    } else {
-      return ssid;
-    }
   }
 }

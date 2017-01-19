@@ -78,6 +78,16 @@ def find_unity_app_path():
 
     return unity_app_path
 
+def copy_unity_classes(destination_dir, configuration):
+    jar_target = os.path.join(destination_dir, 'unity-classes.jar')
+    jar_config = "Development" if configuration.lower() == "debug" else "Release"
+    jar_source = os.path.join(find_unity_app_path(), '..', 'PlaybackEngines', 'AndroidPlayer', \
+                              'Variations', 'mono', jar_config, 'Classes', 'classes.jar')
+
+    ankibuild.util.File.rm(jar_target)
+    ankibuild.util.File.cp(jar_source, jar_target)
+
+
 def get_android_device():
     process = subprocess.Popen("adb devices -l", shell=True, stdout=subprocess.PIPE)
     output = process.communicate()[0]
@@ -580,9 +590,16 @@ class GamePlatformConfiguration(object):
                     sys.exit("Cannot locate {0}".format(original))
 
     def build_java(self, command):
+        # copy unity jars
+        unity_jar_dir = os.path.join(GAME_ROOT, 'project', 'android', 'cozmojava', 'lib')
+        copy_unity_classes(unity_jar_dir, self.options.configuration)
+
         buck_args = ['buck', 'build', ':cozmojava']
         ankibuild.util.File.execute(buck_args)
-        built_lib_path = os.path.join(GAME_ROOT, 'buck-out', 'gen', 'cozmojava.aar')
+        built_lib_path = subprocess.Popen( \
+            'buck targets --show-output :cozmojava | awk \'{print $2;}\'', \
+            stdout=subprocess.PIPE, shell=True).communicate()[0].strip()
+
         if not os.path.exists(self.android_unity_plugin_dir):
             os.makedirs(self.android_unity_plugin_dir)
         ankibuild.util.File.cp(built_lib_path, self.android_unity_plugin_dir)
@@ -658,7 +675,7 @@ class GamePlatformConfiguration(object):
         elif self.platform == 'android':
             device = get_android_device()
             if len(device) > 0:
-                activity = "com.anki.cozmo/com.unity3d.player.UnityPlayerActivity"
+                activity = "com.anki.cozmo/com.anki.cozmo.CozmoActivity"
                 cmd = "adb -s {0} shell am start -n {1}".format(device, activity)
                 subprocess.call(cmd, shell=True)
             else:

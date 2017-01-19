@@ -111,7 +111,8 @@ public static class CozmoBinding {
     result = (AnkiResult)CozmoBinding.cozmo_startup (configurationData.ToString());
     Profiler.EndSample ();
     #if UNITY_ANDROID
-    new AndroidJavaClass("com.anki.cozmo.CozmoJava").CallStatic("init", GetCurrentActivity());
+    var activity = GetCurrentActivity();
+    new AndroidJavaClass("com.anki.cozmo.CozmoJava").CallStatic("init", activity, activity.Call<AndroidJavaObject>("getDispatcher"));
     #endif
     #endif
     
@@ -170,14 +171,35 @@ public static class CozmoBinding {
   public static string GetDeviceIDFilePath(string persistentDataPath) {
     return CozmoBinding.cozmo_get_device_id_file_path(persistentDataPath);
   }
-  #endif
 
-  #if (UNITY_ANDROID && !UNITY_EDITOR)
+  private static AndroidJavaObject _ActivityObject;
   public static AndroidJavaObject GetCurrentActivity() {
-    AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-    return unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+    if (_ActivityObject == null) {
+      AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+      _ActivityObject = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+    }
+    return _ActivityObject;
+  }
+
+  static AndroidJavaObject _WifiUtil;
+  public static AndroidJavaObject GetWifiUtilClass() {
+    if (_WifiUtil == null) {
+      _WifiUtil = new AndroidJavaClass("com.anki.util.WifiUtil");
+    }
+    return _WifiUtil;
+  }
+
+  static AndroidJavaObject _LocationUtil;
+  public static AndroidJavaObject GetLocationUtilClass() {
+    if (_LocationUtil == null) {
+      _LocationUtil = new AndroidJavaClass("com.anki.util.LocationUtil");
+    }
+    return _LocationUtil;
+  }
+  #else
+  public static AndroidJavaObject GetCurrentActivity() {
+    return null;
   }
   #endif
 
 }
-

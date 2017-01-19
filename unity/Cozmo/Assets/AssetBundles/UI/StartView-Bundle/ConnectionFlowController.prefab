@@ -56,6 +56,8 @@ MonoBehaviour:
     type: 2}
   _SearchForCozmoScreenPrefab: {fileID: 11444488, guid: c677cbd7776a840608bc4f5b163d7f91,
     type: 2}
+  _AndroidConnectionFlowPrefab: {fileID: 11454340, guid: d780fc17ccb40442bb7b5f8d5d54b6d1,
+    type: 2}
   _SearchForCozmoFailedScreenPrefab: {fileID: 11473130, guid: 1415aad84f16e4344961253b2c208889,
     type: 2}
   _SecuringConnectionScreenPrefab: {fileID: 11466002, guid: 815460a25f88d47e1a0291c7f90845f7,

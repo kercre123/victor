@@ -86,5 +86,44 @@
   },
   "wifi.getHelp.linkText": {
     "translation": "Get Help"
+  },
+  "wifi.enterPassword": {
+    "translation": "Enter password for {0}"
+  },
+  "wifi.passwordFormat": {
+    "translation": "Password must have 12 alphanumeric characters, no spaces"
+  },
+  "wifi.selectNetwork": {
+    "translation": "Select a Cozmo to connect to:"
+  },
+  "wifi.lookingForNetworks": {
+    "translation": "Searching for Cozmo networks..."
+  },
+  "wifi.currentSsid": {
+    "translation": "Current SSID: {0}"
+  },
+  "wifi.currentStatus": {
+    "translation": "Status: {0}"
+  },
+  "wifi.wrongPassword": {
+    "translation": "The previous password was wrong."
+  },
+  "wifi.enableWifi": {
+    "translation": "Wifi is turned off. Please press the button below to turn it on."
+  },
+  "wifi.locationPermission": {
+    "translation": "Let the Cozmo App make connecting easier! Tap \"Allow\" when asked for Location Permissions, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
+  },
+  "wifi.pleaseLocationPermission": {
+    "translation": "Are you sure? Without Location Permissions, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap \"Allow\" when asked to allow the Cozmo App to connect for you, or tap \"Cancel\" to connect yourself."
+  },
+  "wifi.enableLocation": {
+    "translation": "Tap \"Yes\" when asked to turn on Location, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
+  },
+  "wifi.pleaseEnableLocation": {
+    "translation": "Are you sure? Without Location, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap \"Yes\" when asked to allow the Cozmo App to connect for you, or tap \"Cancel\" to connect yourself."
+  },
+  "wifi.connecting": {
+    "translation": "Connecting to Wifi"
   }
 }

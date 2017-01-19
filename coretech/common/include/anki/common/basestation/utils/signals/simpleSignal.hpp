@@ -224,7 +224,7 @@ namespace Signal {
       /// ***YOUR CALLBACK WILL BE UNREGISTERED WHEN THIS HANDLE IS DESTROYED.***
       /// If you call this function and don't store the return value, you're almost certainly doing it wrong.
       /// This handle can also be manually unsubscribed by assigning it nullptr.
-      SmartHandle ScopedSubscribe(const CbFunction &cb) {
+      SmartHandle ScopedSubscribe(const CbFunction &cb) __attribute__((warn_unused_result)) {
         ensure_ring();
         return SmartHandle(new ScopedHandleContainer(new ProtoHandle(this, callback_ring_->add_before(cb), heartbeat_)));
       }

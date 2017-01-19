@@ -90,6 +90,9 @@
   "label.dayCount": {
     "translation": "Day {0}"
   },
+  "label.waiting": {
+    "translation": "Waiting..."
+  },
   "requestGame.title": {
     "translation": "{0}!"
   },

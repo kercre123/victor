@@ -20,6 +20,7 @@
 #include "util/transport/udpTransport.h"
 #include "util/transport/reliableConnection.h"
 #include "util/transport/reliableTransport.h"
+#include "util/wifi/wifiUtil_android.h"
 
 // Match embedded reliableTransport.h
 #define RELIABLE_PACKET_HEADER_PREFIX "COZ\x03"
@@ -34,7 +35,11 @@ RobotConnectionManager::RobotConnectionManager(RobotManager* robotManager)
 , _reliableTransport(new Util::ReliableTransport(_udpTransport.get(), _currentConnectionData.get()))
 , _robotManager(robotManager)
 {
-  
+  #ifdef ANKI_PLATFORM_ANDROID
+  // Provide our UDP socket instance to Android's WifiUtil, so that
+  // we can reset the socket when directed by our Java code
+  AddSignalHandle(Util::WifiUtil::RegisterTransport(_udpTransport.get()));
+  #endif
 }
 
 RobotConnectionManager::~RobotConnectionManager()

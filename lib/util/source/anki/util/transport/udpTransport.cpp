@@ -351,6 +351,7 @@ UDPTransport::UDPTransport()
   , _socketId(-1)
   , _port(kDefaultPort)
   , _ownsSocketImpl(false)
+  , _reset(false)
 {
   SetSocketImpl(&g_PosixSocketImpl);
 }
@@ -514,6 +515,11 @@ bool UDPTransport::CloseSocket()
   _socketId = -1;
 
   return (closeResult >= 0);
+}
+
+void UDPTransport::ResetSocket()
+{
+  _reset = true;
 }
   
 
@@ -833,6 +839,13 @@ void UDPTransport::UpdateSocketImplForNetEmulation()
 
 void UDPTransport::Update()
 {
+  if (_reset) {
+    if (CloseSocket()) {
+      OpenSocket(_port);
+    }
+    _reset = false;
+  }
+
   if (_socketId < 0)
   {
     return;

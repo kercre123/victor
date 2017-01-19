@@ -1,5 +1,5 @@
 [android]
-  build_tools_version=21.1.2
-  target=android-21
+  build_tools_version=23.0.3
+  target=android-23
 [ndk]
   ndk_version=13.1.3345770

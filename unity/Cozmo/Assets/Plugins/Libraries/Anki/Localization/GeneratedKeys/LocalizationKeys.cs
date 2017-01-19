@@ -708,6 +708,8 @@ public static class LocalizationKeys {
   public const string kWifiGethelpDescription2 = "wifi.gethelp.description2";
   public const string kWifiGethelpFooter = "wifi.gethelp.footer";
   public const string kWifiGetHelpLinkText = "wifi.getHelp.linkText";
+  public const string kWifiEnterPassword = "wifi.enterPassword";
+  public const string kWifiPasswordFormat = "wifi.passwordFormat";
 
   #endregion
 }
