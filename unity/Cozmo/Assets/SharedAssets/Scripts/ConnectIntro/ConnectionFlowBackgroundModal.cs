@@ -29,7 +29,7 @@ public class ConnectionFlowBackgroundModal : Cozmo.UI.BaseModal {
 
   private int _CurrentState = 0;
 
-  private void Start() {
+  private void Awake() {
     DasTracker.Instance.TrackConnectFlowStarted();
     ResetAllProgress();
   }
