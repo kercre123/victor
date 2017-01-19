@@ -81,6 +81,8 @@ void RobotDataLoader::LoadNonConfigData()
   // Uncomment this line to enable the profiling of loading data
   //ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadNonConfigData");
 
+  ANKI_VERIFY( !_context->IsMainThread(), "RobotDataLoadingShouldNotBeOnMainThread", "" );
+  
   if( kStressTestThreadedPrintsDuringLoad ) {
     REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Start() );
   }
@@ -275,6 +277,8 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   if (_abortLoad.load(std::memory_order_relaxed)) {
     return;
   }
+
+  ANKI_VERIFY( !_context->IsMainThread(), "RobotDataLoader.AnimFileOnMainThread", "" );
 
   PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationFile", "Loading animations from %s", path.c_str());
 

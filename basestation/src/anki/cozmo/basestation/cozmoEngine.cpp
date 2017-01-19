@@ -91,6 +91,13 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
+
+  // The "main" thread is meant to be the one Update is run on. However, on some systems, some messaging
+  // happens during Init which is on one thread, then later, a different thread runs the updates. This will
+  // trigger asserts because more than one thread is sending messages. To work around this, we consider the
+  // "main thread" to be whatever thread Init is called from, until the first call of Update, at which point
+  // we switch our notion of "main thread" to the updating thread
+  _context->SetMainThread();
   
   // log additional das info
   LOG_EVENT("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
@@ -160,7 +167,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
     return RESULT_FAIL;
   }
   
-  Result lastResult = _uiMsgHandler->Init(_config);
+  Result lastResult = _uiMsgHandler->Init(_context.get(), _config);
   if (RESULT_OK != lastResult)
   {
     PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing UIMessageHandler");
@@ -214,7 +221,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   }
   
   _isInitialized = true;
-
+  
   _context->GetDataLoader()->LoadRobotConfigs();
   _context->GetRobotManager()->Init(_config);
 
@@ -304,6 +311,16 @@ Result CozmoEngine::Update(const float currTime_sec)
     PRINT_NAMED_ERROR("CozmoEngine.Update", "Cannot update CozmoEngine before it is initialized.");
     return RESULT_FAIL;
   }
+
+  // This is a bit of a hack, but on some systems the thread that calls Update is different from the thread
+  // that does all of the setup. This flag assures that we set the "main" thread to be the one that's going to
+  // be doing the updating
+  if( !_hasRunFirstUpdate ) {
+    _context->SetMainThread();
+    _hasRunFirstUpdate = true;
+  }
+
+  DEV_ASSERT( _context->IsMainThread(), "ComzoEngine.EngineNotONMainThread" );
   
 #if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
@@ -553,6 +570,9 @@ Result CozmoEngine::InitInternal()
       PRINT_NAMED_WARNING("CozmoEngine.InitInternal.ArchivedFactoryLogsFailed", "");
     }
   }
+
+  // clear the first update flag
+  _hasRunFirstUpdate = false;
   
   return RESULT_OK;
 }

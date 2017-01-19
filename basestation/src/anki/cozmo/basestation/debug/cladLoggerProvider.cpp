@@ -31,7 +31,7 @@ void CLADLoggerProvider::Log(Anki::Util::ILoggerProvider::LogLevel logLevel, con
     {
       sendMsg.line = message.substr(0,kMaxStrLen);
     }
-    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(sendMsg)));
+    _externalInterface->BroadcastDeferred(ExternalInterface::MessageEngineToGame(std::move(sendMsg)));
   }
 }
 

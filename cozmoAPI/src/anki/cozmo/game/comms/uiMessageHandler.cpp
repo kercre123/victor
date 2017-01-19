@@ -14,6 +14,7 @@
 #include "util/global/globalDefinitions.h"
 
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -160,8 +161,8 @@ namespace Anki {
     }
     
     
-    Result UiMessageHandler::Init(const Json::Value& config)
-    {
+    Result UiMessageHandler::Init(CozmoContext* context, const Json::Value& config)
+    {      
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
         ISocketComms* socketComms = GetSocketComms(i);
@@ -175,6 +176,8 @@ namespace Anki {
       }
       
       _isInitialized = true;
+
+      _context = context;
       
       // We'll use this callback for simple events we care about
       auto commonCallback = std::bind(&UiMessageHandler::HandleEvents, this, std::placeholders::_1);
@@ -421,6 +424,9 @@ namespace Anki {
     void UiMessageHandler::Broadcast(const ExternalInterface::MessageGameToEngine& message)
     {
       ANKI_CPU_PROFILE("UiMH::Broadcast_GToE"); // Some expensive and untracked - TODO: Capture message type for profile
+
+      DEV_ASSERT(nullptr == _context || _context->IsMainThread(),
+                 "UiMessageHandler.GameToEngineRef.BroadcastOffMainThread");
       
       _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.GetTag()), message));
@@ -430,7 +436,10 @@ namespace Anki {
     void UiMessageHandler::Broadcast(ExternalInterface::MessageGameToEngine&& message)
     {
       ANKI_CPU_PROFILE("UiMH::BroadcastMove_GToE");
-      
+
+      DEV_ASSERT(nullptr == _context || _context->IsMainThread(),
+                 "UiMessageHandler.GameToEngineRval.BroadcastOffMainThread");
+
       u32 type = static_cast<u32>(message.GetTag());
       _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
@@ -443,7 +452,7 @@ namespace Anki {
       ANKI_CPU_PROFILE("UiMH::BroadcastDeferred_GToE");
       
       std::lock_guard<std::mutex> lock(_mutex);
-      _threadedMsgs.emplace_back(message);
+      _threadedMsgsToEngine.emplace_back(message);
     }
     
     
@@ -452,7 +461,7 @@ namespace Anki {
       ANKI_CPU_PROFILE("UiMH::BroadcastDeferredMove_GToE");
       
       std::lock_guard<std::mutex> lock(_mutex);
-      _threadedMsgs.emplace_back(std::move(message));
+      _threadedMsgsToEngine.emplace_back(std::move(message));
     }
     
     
@@ -460,6 +469,9 @@ namespace Anki {
     void UiMessageHandler::Broadcast(const ExternalInterface::MessageEngineToGame& message)
     {
       ANKI_CPU_PROFILE("UiMH::Broadcast_EToG");
+
+      DEV_ASSERT(nullptr == _context || _context->IsMainThread(),
+                 "UiMessageHandler.EnginetoGameRef.BroadcastOffMainThread");
       
       DeliverToGame(message);
       _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
@@ -470,13 +482,34 @@ namespace Anki {
     void UiMessageHandler::Broadcast(ExternalInterface::MessageEngineToGame&& message)
     {
       ANKI_CPU_PROFILE("UiMH::BroadcastMove_EToG");
-      
+
+      DEV_ASSERT(nullptr == _context || _context->IsMainThread(),
+                 "UiMessageHandler.EngineToGameRval.BroadcastOffMainThread");
+
       DeliverToGame(message);
       u32 type = static_cast<u32>(message.GetTag());
       _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
     } // Broadcast(MessageEngineToGame &&)
+
+  
+    void UiMessageHandler::BroadcastDeferred(const ExternalInterface::MessageEngineToGame& message)
+    {
+      ANKI_CPU_PROFILE("UiMH::BroadcastDeferred_EToG");
+      
+      std::lock_guard<std::mutex> lock(_mutex);
+      _threadedMsgsToGame.emplace_back(message);
+    }
     
+    
+    void UiMessageHandler::BroadcastDeferred(ExternalInterface::MessageEngineToGame&& message)
+    {
+      ANKI_CPU_PROFILE("UiMH::BroadcastDeferredMove_EToG");
+      
+      std::lock_guard<std::mutex> lock(_mutex);
+      _threadedMsgsToGame.emplace_back(std::move(message));
+    }
+
     
     // Provides a way to subscribe to message types using the AnkiEventMgrs
     Signal::SmartHandle UiMessageHandler::Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType,
@@ -606,14 +639,26 @@ namespace Anki {
       }
       
       {
-        ANKI_CPU_PROFILE("UiMH::BroadcastThreadedMessages");
+        ANKI_CPU_PROFILE("UiMH::BroadcastThreadedMessagesToEngine");
         std::lock_guard<std::mutex> lock(_mutex);
-        if( _threadedMsgs.size() > 0 )
+        if( _threadedMsgsToEngine.size() > 0 )
         {
-          for(auto& threaded_msg : _threadedMsgs) {
+          for(auto& threaded_msg : _threadedMsgsToEngine) {
             Broadcast(std::move(threaded_msg));
           }
-          _threadedMsgs.clear();
+          _threadedMsgsToEngine.clear();
+        }
+      }
+
+      {
+        ANKI_CPU_PROFILE("UiMH::BroadcastThreadedMessagesToGame");
+        std::lock_guard<std::mutex> lock(_mutex);
+        if( _threadedMsgsToGame.size() > 0 )
+        {
+          for(auto& threaded_msg : _threadedMsgsToGame) {
+            Broadcast(std::move(threaded_msg));
+          }
+          _threadedMsgsToGame.clear();
         }
       }
       

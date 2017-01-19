@@ -42,10 +42,10 @@ namespace Anki {
   namespace Cozmo {
     
 
+    class CozmoContext;
     class Robot;
     class RobotManager;
     class GameMessagePort;
-    
     
     class UiMessageHandler : public IExternalInterface
     {
@@ -54,7 +54,7 @@ namespace Anki {
       UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* messagePipe); // Force construction with stuff in Init()?
       virtual ~UiMessageHandler();
       
-      Result Init(const Json::Value& config);
+      Result Init(CozmoContext* context, const Json::Value& config);
       
       Result Update();
       
@@ -65,6 +65,8 @@ namespace Anki {
       
       virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) override;
       virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) override;
+      virtual void BroadcastDeferred(const ExternalInterface::MessageEngineToGame& message) override;
+      virtual void BroadcastDeferred(ExternalInterface::MessageEngineToGame&& message) override;
       
       virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler) override;
       
@@ -159,7 +161,8 @@ namespace Anki {
       AnkiEventMgr<MessageEngineToGame>   _eventMgrToGame;
       AnkiEventMgr<MessageGameToEngine>   _eventMgrToEngine;
       
-      std::vector<MessageGameToEngine>    _threadedMsgs;
+      std::vector<MessageGameToEngine>    _threadedMsgsToEngine;
+      std::vector<MessageEngineToGame>    _threadedMsgsToGame;
       std::mutex                          _mutex;
       
       SdkStatus                           _sdkStatus;
@@ -169,6 +172,8 @@ namespace Anki {
       uint32_t                            _updateCount = 0;
       
       bool                                _isInitialized = false;
+
+      CozmoContext*                       _context = nullptr;
       
     }; // class MessageHandler
     
