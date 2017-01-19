@@ -5,7 +5,8 @@ PROTO LightCube [
   field SFVec3f    translation  0 0 0
   field SFRotation rotation     0 0 1 0
   field SFInt32    ID           0
-  field SFBool filterLogs FALSE
+  field MFVec3f    ledColors    [ 0 0 0, 0 0 0, 0 0 0, 0 0 0 ]
+  field SFBool     filterLogs FALSE
 ]
 {
   Block1x1 {

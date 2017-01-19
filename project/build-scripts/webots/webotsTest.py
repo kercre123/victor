@@ -322,10 +322,9 @@ def run_webots(output, wbt_file_path, show_graphics, log_file_name):
   stop_webots()
 
   run_command = [
-    '/Applications/Webots/webots',
+    '/Applications/Webots.app/webots',
     '--stdout',
     '--stderr',
-    '--disable-modules-download',
     '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
     get_subpath("simulator/worlds", GENERATED_WORLD_FILE_NAME)
@@ -359,7 +358,7 @@ def wait_until(condition_fn, timeout, period=0.25):
   return False
 
 def is_webots_running():
-  process = subprocess.Popen("ps -ax | grep [/]Applications/Webots/webots.app", shell=True, stdout=subprocess.PIPE)
+  process = subprocess.Popen("ps -ax | grep [/]Applications/Webots.app/webots", shell=True, stdout=subprocess.PIPE)
   result = process.communicate()[0]
   if len(result) > 0:
     return True

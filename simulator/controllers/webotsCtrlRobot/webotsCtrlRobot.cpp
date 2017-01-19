@@ -14,13 +14,9 @@
 #include "../shared/ctrlCommonInitialization.h"
 #include "testModeController.h"
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/simulator/robot/keyboardController.h"
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
 #include "anki/cozmo/robot/hal.h"
 #include <cstdio>
-
-// If this is enabled here, it should be disabled in the basestation. (See ENABLE_BS_KEYBOARD_CONTROL.)
-#define ENABLE_KEYBOARD_CONTROL 0
 
 /*
  * This is the main program.
@@ -44,11 +40,6 @@ int main(int argc, char **argv)
     return -1;
   }
 
-
-#if(ENABLE_KEYBOARD_CONTROL)
-  Sim::KeyboardController::Enable();
-#endif
-
   Sim::OverlayDisplay::Init();
 
   HAL::Step();
@@ -60,9 +51,6 @@ int main(int argc, char **argv)
       break;
     }
 
-    if(Sim::KeyboardController::IsEnabled() && TestModeController::GetMode() == TM_NONE) {
-      Sim::KeyboardController::ProcessKeystroke();
-    }
     HAL::Step();      
   }
 
