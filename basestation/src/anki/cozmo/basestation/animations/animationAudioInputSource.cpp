@@ -48,5 +48,5 @@ void AnimationAudioInputSource::SetNextFrame(const Audio::AudioFrameData* audioF
 }
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

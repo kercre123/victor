@@ -36,7 +36,7 @@ using EngineToRobotMessageList = std::list<const RobotInterface::EngineToRobot*>
   
   
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki
 
 

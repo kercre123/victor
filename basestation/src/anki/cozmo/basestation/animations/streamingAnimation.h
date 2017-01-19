@@ -56,18 +56,18 @@ public:
     Completed       // Has all audio data for animation
   };
   
-  // Init a Sreaming Aunimation by copying a parrent Animation
-  StreamingAnimation(const Animation& origalAnimation);
+  // Init a Streaming Animation by copying a parent Animation
+  StreamingAnimation(const Animation& originalAnimation);
   
   // Reset Animation Playhead to beginning
   Result Init();
   
   BufferState GetBufferState() const { return _state; }
   
-  // Return true if the animation's audio has random events, therefore only playonce and throw away
+  // Return true if the animation's audio has random events, therefore only play once and throw away
   bool GetHasRandomAudioEvents() const { return _hasRandomEvents; }
   
-  // Return true if an animtaion audio event event has alternat audio when it is played
+  // Return true if an animation audio event event has alternate audio when it is played
   bool GetHasAlternateEventAudio() const { return _hasAltEventAudio; }
   
   // Check if the next audio frame is ready
@@ -77,7 +77,7 @@ public:
   void Update();
 
   
-  // Return false if there are no audio data frames to tick frame, check state to deturmine why (either still buffering
+  // Return false if there are no audio data frames to tick frame, check state to determine why (either still buffering
   // or complete)
   // Note: Next frame must be ready before ticking
   void TickPlayhead(KeyframeList& out_keyframeList, const Audio::AudioFrameData*& out_audioFrame);
@@ -88,7 +88,7 @@ public:
   bool IsPlaybackComplete() const { return _state == BufferState::Completed &&
                                            _playheadFrame == _audioBufferedFrameCount; }
   
-  // Returns the known value of frames left or UINT32_MAX to identify undknow because audio frames are still buffering
+  // Returns the known value of frames left or UINT32_MAX to identify unknown because audio frames are still buffering
   static constexpr uint32_t kUnknownFramesLeft = UINT32_MAX;
   uint32_t FramesLeft() const { return _state == BufferState::Completed ?
                                       (_audioBufferedFrameCount - _playheadFrame) : kUnknownFramesLeft; }
@@ -102,7 +102,7 @@ public:
   void GenerateAudioEventList(Util::RandomGenerator& randomGenerator);
   
   // Begin to buffer Animation's audio data
-  // Note: Besure the audioClient has an available buffer in it's pool before calling
+  // Note: Be sure the audioClient has an available buffer in its pool before calling
   void GenerateAudioData(Audio::RobotAudioClient* audioClient);
   
   // This creates the events needed to play synchronous cozmo audio on device
@@ -137,7 +137,7 @@ private:
     , volume(volume) {}
   };
   
-  // Provide week pointers to help with callbacks
+  // Provide weak pointers to help with callbacks
   std::shared_ptr<char> _isAliveSharedPtr = std::make_shared<char>();
   
   // Streaming Animation State
@@ -158,7 +158,7 @@ private:
   bool HasCurrentBufferStream() const { return _currentBufferStream != nullptr; }
   
   // Add audio frame data to animation
-  // NOTE: Takes owner ship of frame
+  // NOTE: Takes ownership of frame
   void PushFrameIntoBuffer(const Audio::AudioFrameData* frame);
   using AudioFrameList = std::list<const Audio::AudioFrameData*>;
   AudioFrameList            _audioFrames;
@@ -177,9 +177,9 @@ private:
   using AudioEventList = std::vector<AnimationEvent>;
   AudioEventList _animationAudioEvents;
   
-  // Track the time the first stream was created and audio event to calculate the streams relevant animation time
-  const double kInvalidAudioSreamOffsetTime = std::numeric_limits<double>::min();
-  double _audioStreamOffsetTime_ms = kInvalidAudioSreamOffsetTime;
+  // Track the time the first stream was created and audio event to calculate the stream's relevant animation time
+  const double kInvalidAudioStreamOffsetTime = std::numeric_limits<double>::min();
+  double _audioStreamOffsetTime_ms = kInvalidAudioStreamOffsetTime;
 
   // Get the next audio event
   // Note: Will return null when there are no more events left
@@ -222,7 +222,7 @@ private:
 };
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki
 
 #endif /* __Basestation_Animations_StreamingAnimation_H__ */

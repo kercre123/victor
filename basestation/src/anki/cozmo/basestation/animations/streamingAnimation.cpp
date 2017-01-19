@@ -32,8 +32,8 @@ namespace Cozmo {
 namespace RobotAnimation {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StreamingAnimation::StreamingAnimation(const Animation& origalAnimation)
-: Anki::Cozmo::Animation(origalAnimation)
+StreamingAnimation::StreamingAnimation(const Animation& originalAnimation)
+: Anki::Cozmo::Animation(originalAnimation)
 {
   // Get Animation Info
   _lastKeyframeTime_ms = GetLastKeyFrameTime_ms();
@@ -416,7 +416,7 @@ void StreamingAnimation::AddAudioSilenceFrames()
     
     
     // Check Initial case
-    if (kInvalidAudioSreamOffsetTime ==_audioStreamOffsetTime_ms
+    if (kInvalidAudioStreamOffsetTime ==_audioStreamOffsetTime_ms
         && nextStream != nullptr) {
       // Calculate the time (relative to the time when Audio Engine creates stream) stream offset
       _audioStreamOffsetTime_ms = nextStream->GetCreatedTime_ms() - nextEvent->time_ms;
@@ -430,7 +430,7 @@ void StreamingAnimation::AddAudioSilenceFrames()
       
       // This implies that we will not buffer any silence until we get the first audio stream. This method expects there
       // there is 1+ audio events.
-      if ((kInvalidAudioSreamOffsetTime != _audioStreamOffsetTime_ms) && (nextStream != nullptr)) {
+      if ((kInvalidAudioStreamOffsetTime != _audioStreamOffsetTime_ms) && (nextStream != nullptr)) {
         
         const uint32_t streamRelevantTime_ms = floor(nextStream->GetCreatedTime_ms() - _audioStreamOffsetTime_ms);
         // Note: Intentionally set this only if less then frameTime, will sync with event time
@@ -543,5 +543,5 @@ bool StreamingAnimation::IsAnimationDone() const
 }
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

@@ -135,7 +135,7 @@ protected:
   
   // Dispatch event
   Util::Dispatch::Queue* _postEventTimerQueue = nullptr;
-  // Provide week pointers to help with callbacks
+  // Provide weak pointers to help with callbacks
   std::shared_ptr<char> _isAliveSharedPtr = std::make_shared<char>();
   
   // Ordered list of animation audio event

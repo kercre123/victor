@@ -239,5 +239,5 @@ bool AnimationMessageBuffer::SendMessages(Robot& robot, uint32_t maxByteCount)
 
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

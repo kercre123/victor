@@ -32,7 +32,7 @@ namespace Anki {
       TestMode GetMode();
       
     } // namespace TestModeController
-  } // namespcae Cozmo
+  } // namespace Cozmo
 } // namespace Anki
 
 #endif // TEST_MODE_CONTROLLER_H_

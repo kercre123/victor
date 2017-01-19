@@ -93,7 +93,7 @@ namespace Anki {
       void CheckForLoad(void (*callback)(bool) = SendLiftLoadMessage);
       
     } // namespace LiftController
-  } // namespcae Cozmo
+  } // namespace Cozmo
 } // namespace Anki
 
 #endif // COZMO_LIFT_CONTROLLER_H_

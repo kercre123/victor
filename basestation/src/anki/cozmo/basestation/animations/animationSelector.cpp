@@ -148,5 +148,5 @@ void AnimationSelector::BufferAnimationAudio(AnimationInfo& animationInfo)
 }
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

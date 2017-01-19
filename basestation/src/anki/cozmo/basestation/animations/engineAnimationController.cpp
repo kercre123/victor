@@ -182,5 +182,5 @@ void EngineAnimationController::HandleMessage(const ExternalInterface::PlayAnima
 
   
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

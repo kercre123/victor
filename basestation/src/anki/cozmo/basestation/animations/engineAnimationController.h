@@ -88,7 +88,7 @@ private:
   
   
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki
 
 #endif /* __Basestation_Animations_EngineAnimationController_H__ */

@@ -283,5 +283,5 @@ void AnimationFrameInterleaver::CreateAnimationMessages(AnimationPositionState p
 
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

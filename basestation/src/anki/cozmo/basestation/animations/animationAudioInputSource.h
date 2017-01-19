@@ -46,7 +46,7 @@ public:
 
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki
 
 #endif /* __Basestation_Animations_AnimationAudioInputSource_H__ */

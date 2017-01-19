@@ -88,7 +88,7 @@ namespace Anki {
       void Stop();
       
     } // namespace HeadController
-  } // namespcae Cozmo
+  } // namespace Cozmo
 } // namespace Anki
 
 #endif // COZMO_HEAD_CONTROLLER_H_
