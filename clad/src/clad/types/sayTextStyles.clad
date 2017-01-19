@@ -6,20 +6,20 @@
 namespace Anki {
 namespace Cozmo {
 
-  // Text to speach voice processing style
+  // Text To Speech voice processing style
   enum uint_8 SayTextVoiceStyle
   {
-    Unprocessed = 0,              // Say text with no processing on Text to Speach output
+    Unprocessed = 0,              // Say text with no processing on Text To Speech output
     CozmoProcessing_Name,         // Say name in Cozmo's voice with quick inflection
     CozmoProcessing_Sentence,     // Say text in Cozmo's voice with "rhythm" inflection
     Count
   }
 
-  // Text to Speach Intent
+  // Text To Speech Intent
   enum uint_8 SayTextIntent
   {
-    UnProcessed = 0,            // Speak text with no processing on Text to Speach output
-    Text,                       // Speak text in Cozmo's voice & default speed
+    Unprocessed = 0,            // Speak text with no processing on Text To Speech output
+    Text,                       // Speak text in Cozmo's voice at default speed
     Cozmo_Says,                 // Speak text in Cozmo's voice for "Cozmo Says" mini game
     Name_Normal,                // Speak in Cozmo's voice & chose bounded random speed for names
     Name_FirstIntroduction_1,   // Speak in Cozmo's voice & chose bounded random speed for saying names slowest

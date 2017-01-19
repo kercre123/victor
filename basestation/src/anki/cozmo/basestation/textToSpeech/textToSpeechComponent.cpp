@@ -77,7 +77,7 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
   
   const auto it =_ttsWaveDataMap.emplace(opId, TtsBundle());
   if (!it.second) {
-    PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAysnc", "OperationId %d already in cache", opId);
+    PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "OperationId %d already in cache", opId);
     return kInvalidOperationId;
   }
   // Set inital state
@@ -101,7 +101,7 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
       
       // Check if audio was generated for Text to Speech
       if (nullptr == audioData) {
-        PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAysnc", "No Audio data was created");
+        PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "No Audio data was created");
         bundle->state = AudioCreationState::None;
         return;
       }
