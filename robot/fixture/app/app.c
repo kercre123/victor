@@ -249,6 +249,9 @@ void WaitForDeviceOff(bool error)
 
   // In normal mode, just debounce the connection
   } else {
+    if( g_fixtureType == FIXTURE_HEAD1_TEST || g_fixtureType == FIXTURE_HEAD2_TEST ) //head tests leave this on!
+      DisableVEXT();
+    
     // ENBAT off
     DisableBAT();
     
