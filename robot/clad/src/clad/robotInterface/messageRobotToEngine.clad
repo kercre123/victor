@@ -28,6 +28,11 @@ message SyncTimeAck
 {
 }
 
+message BackpackButton
+{
+  bool depressed
+}
+
 message RobotPoked
 {
   uint_32 robotID
@@ -118,6 +123,7 @@ union RobotToEngine {
   MotorAutoEnabled           motorAutoEnabled       = 0xD8,
   RobotErrorReport           robotError             = 0xD9,
   LiftLoad                   liftLoad               = 0xDA,
+  BackpackButton             backpackButton         = 0xDB,
 
   ManufacturingID            mfgId                  = 0xED,
   FirmwareVersion            firmwareVersion        = 0xEE,

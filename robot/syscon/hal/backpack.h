@@ -24,6 +24,7 @@ enum DefaultBackpackPattern {
 namespace Backpack {
   void init();
   void manage();
+  void trigger();
   
   void setLayer(BackpackLayer);
 

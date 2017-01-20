@@ -14,6 +14,11 @@
 
 #include "backpackLightData.h"
 
+#include "messages.h"
+
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+
 //#define DISABLE_LIGHTS
 
 using namespace Anki::Cozmo;
@@ -29,39 +34,37 @@ struct BackpackLight {
   uint8_t gamma;
 };
 
-static const BackpackLight setting[] = {
+static const BackpackLight setting[] = { 
   { 0, 0, PIN_LED1, PIN_LED2, 0x10 }, // 0
   { 1, 0, PIN_LED1, PIN_LED4, 0x10 }, // 1
-  
-  { 2, 0, PIN_LED3, PIN_LED1, 0x0D }, // 5
-  { 2, 1, PIN_LED3, PIN_LED2, 0x0B }, // 6
-  { 2, 2, PIN_LED3, PIN_LED4, 0x10 }, // 7
-
   { 3, 0, PIN_LED2, PIN_LED1, 0x0D }, // 2
   { 3, 1, PIN_LED2, PIN_LED3, 0x0B }, // 3
   { 3, 2, PIN_LED2, PIN_LED4, 0x10 }, // 4
-
+  { 2, 0, PIN_LED3, PIN_LED1, 0x0D }, // 5
+  { 2, 1, PIN_LED3, PIN_LED2, 0x0B }, // 6
+  { 2, 2, PIN_LED3, PIN_LED4, 0x10 }, // 7
   { 4, 0, PIN_LED4, PIN_LED1, 0x0D }, // 8
   { 4, 1, PIN_LED4, PIN_LED3, 0x0B }, // 9
   { 4, 2, PIN_LED4, PIN_LED2, 0x10 }, // 10
+  { 0, 0, PIN_LED1, PIN_LED1,    0 }, // 10
 };
 
 static const int LIGHT_COUNT = sizeof(setting) / sizeof(setting[0]);
 
 static uint32_t TIMER_MINIMUM = 0xC0;
-static uint32_t TIMER_DIVIDE = 9; // This must be AT LEAST 8
-static uint32_t DARK_TIME = 0xFFFF00 >> TIMER_DIVIDE;
+static uint32_t TIMER_DIVIDE  = 9;
+static uint32_t TIMER_SKIPS   = 4;
 
 static LightState lightState[BACKPACK_LAYERS][BACKPACK_LIGHTS];
 static BackpackLayer currentLayer = BPL_IMPULSE;
 static CurrentChargeState chargeState = CHARGE_OFF_CHARGER;
+static uint32_t drive_value[LIGHT_COUNT];
+
 static bool isBatteryLow = false;
 static bool override = false;
+static bool button_pressed = false ;
 
 extern "C" void TIMER1_IRQHandler(void);
-
-// Charlieplexing magic constants
-static uint32_t led_value[LIGHT_COUNT];
 
 // Start all pins as input
 void Backpack::init()
@@ -87,7 +90,7 @@ void Backpack::init()
 
 void Backpack::testLight(int channel) {
   if (channel > 0) {
-    led_value[channel-1] = 0xFFFF >> TIMER_DIVIDE;
+    drive_value[channel-1] = 0xFFFF >> TIMER_DIVIDE;
     override = true;
   } else {
     override = false;
@@ -95,15 +98,25 @@ void Backpack::testLight(int channel) {
 }
 
 void Backpack::manage() {
+  static bool was_button_pressed = false;
+
+  if (was_button_pressed != button_pressed) {
+    RobotInterface::BackpackButton msg;
+    msg.depressed = button_pressed;
+    RobotInterface::SendMessage(msg);
+
+    was_button_pressed = button_pressed;
+  }
+
   if (override) return ;
-  
-  for (int i = 0; i < LIGHT_COUNT; i++) {
+
+  for (int i = 0; i < LIGHT_COUNT - 1; i++) {
     const BackpackLight& light = setting[i];
     uint8_t* rgbi = (uint8_t*) &lightController.backpack[light.controller_pos].values;
     uint32_t drive = light.gamma * (uint32_t)rgbi[light.controller_index];
 
     // We shift by 16 to adjust for the gain from gamma (which is a 24:8 fixed)
-    led_value[i] = (drive * drive) >> TIMER_DIVIDE;
+    drive_value[i] = (drive * drive) >> TIMER_DIVIDE;
   }
 }
 
@@ -217,13 +230,8 @@ void Backpack::useTimer() {
   NRF_TIMER1->MODE = TIMER_MODE_MODE_Timer;
   NRF_TIMER1->PRESCALER = 0;
 
-  NRF_TIMER1->CC[1] = DARK_TIME;
-  
   NRF_TIMER1->INTENCLR = ~0;
-  NRF_TIMER1->INTENSET = TIMER_INTENSET_COMPARE0_Msk
-                       | TIMER_INTENSET_COMPARE1_Msk;
-
-  NRF_TIMER1->SHORTS = TIMER_SHORTS_COMPARE1_CLEAR_Msk;
+  NRF_TIMER1->SHORTS = 0;
 
   NRF_TIMER1->TASKS_START = 1;
 
@@ -246,46 +254,74 @@ void Backpack::detachTimer() {
   #endif
 }
 
+void Backpack::trigger() {
+  static int countdown = 0;
+  static int button_count = 0;
+
+  if (button_pressed) {
+    if (++button_count >= 200*5) {
+      Battery::setOperatingMode(BODY_IDLE_OPERATING_MODE);
+    }
+  } else {
+    button_count = 0;
+  }
+
+  if (--countdown > 0) {
+    return ;
+  }
+  countdown = TIMER_SKIPS;
+
+  #ifndef DISABLE_LIGHTS
+  switch (*HW_VERSION) {
+  case 0x000000F9:
+  case 0x01050000:
+    nrf_gpio_pin_clear(PIN_BUTTON_DRIVE);
+    nrf_gpio_cfg_output(PIN_BUTTON_DRIVE);
+    MicroWait(100);
+    button_pressed = !nrf_gpio_pin_read(PIN_BUTTON_SENSE);
+    nrf_gpio_cfg_input(PIN_BUTTON_DRIVE, NRF_GPIO_PIN_NOPULL);
+  }
+
+  TIMER1_IRQHandler();
+  #endif
+}
+
 extern "C" void TIMER1_IRQHandler(void) { 
-  static uint32_t drive_value[LIGHT_COUNT];
+  static const BackpackLight* currentChannel = &setting[0];
   static int active_channel = 0;
 
-  // Turn off lights
-  #ifndef DISABLE_LIGHTS
-  nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
-  #endif
-
-  // This just clears out lights
+    // This just clears out lights
   NRF_TIMER1->EVENTS_COMPARE[0] = 0;
 
+  // Turn off lights
+  nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(currentChannel->cathode, NRF_GPIO_PIN_NOPULL);
+
   // Setup next LED
-  if (NRF_TIMER1->EVENTS_COMPARE[1]) {
-    NRF_TIMER1->EVENTS_COMPARE[1] = 0;
-
-    if (++active_channel >= LIGHT_COUNT) {
+  for (;;) {
+    currentChannel = &setting[active_channel];
+    uint32_t delta = drive_value[active_channel];
+    ++active_channel;
+    
+    if (currentChannel->gamma == 0 ) {
       active_channel = 0;
-
-      // Prevent sheering of single LED value
-      memcpy(drive_value, led_value, sizeof(drive_value));
+      NRF_TIMER1->INTENCLR = TIMER_INTENSET_COMPARE0_Msk;
+      return ;
     }
 
-    const BackpackLight* currentChannel = &setting[active_channel];
+    if (delta >= TIMER_MINIMUM) {
+      NRF_TIMER1->TASKS_CAPTURE[0] = 1;
+      NRF_TIMER1->CC[0] += delta;
+      NRF_TIMER1->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
 
-    uint32_t delta = drive_value[active_channel];
-    NRF_TIMER1->CC[0] = delta;
-    
-    if (delta > TIMER_MINIMUM) {
       // Turn on our light
-      #ifndef DISABLE_LIGHTS
       nrf_gpio_pin_clear(currentChannel->cathode);
       nrf_gpio_pin_set(currentChannel->anode);
 
       nrf_gpio_cfg_output(currentChannel->cathode);
       nrf_gpio_cfg_output(currentChannel->anode);
-      #endif
+
+      return ;
     }
   }
 }

@@ -40,7 +40,8 @@ void main_execution(void) {
   Head::manage();
   Battery::manage();
   Bluetooth::manage();
-
+  Backpack::trigger();
+ 
   Watchdog::kick(WDOG_MAIN_LOOP);
 
   g_dataToHead.timestamp += TIME_STEP;
