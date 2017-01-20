@@ -75,12 +75,6 @@
   "minigame.text.waitForCozmo": {
     "translation": "Cozmo is getting ready..."
   },
-  "droneMode.actionLockedModal.title": {
-    "translation": "Action Locked"
-  },
-  "droneMode.actionLockedModal.description": {
-    "translation": "Unlock {0} Upgrade to use!"
-  },
   "droneMode.unknownFaceReticleLabel": {
     "translation": "Human"
   },

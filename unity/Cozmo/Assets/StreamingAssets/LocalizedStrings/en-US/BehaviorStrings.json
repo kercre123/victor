@@ -21,9 +21,6 @@
   "behavior.BringCubeToBeacon": {
     "translation": "Cozmo is collecting his Cubes"
   },
-  "behavior.LookAround": {
-    "translation": "Cozmo is exploring his surroundings"
-  },
   "behavior.ExploreVisitPossibleMarker": {
     "translation": "Cozmo is exploring his surroundings"
   },
@@ -38,9 +35,6 @@
   },
   "behavior.VisitInterestingEdge": {
     "translation": "Cozmo is exploring his surroundings"
-  },
-  "behavior.BuildPyramid": {
-    "translation": ""
   },
   "behavior.KnockOverCubes": {
     "translation": "Cozmo is knocking over a stack of Cubes"

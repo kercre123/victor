@@ -3,13 +3,11 @@ public static class LocalizationKeys {
   #region BehaviorStrings
 
   public const string kBehaviorBringCubeToBeacon = "behavior.BringCubeToBeacon";
-  public const string kBehaviorLookAround = "behavior.LookAround";
   public const string kBehaviorExploreVisitPossibleMarker = "behavior.ExploreVisitPossibleMarker";
   public const string kBehaviorLookInPlaceMemoryMap = "behavior.LookInPlaceMemoryMap";
   public const string kBehaviorExploreLookAroundInPlace = "behavior.ExploreLookAroundInPlace";
   public const string kBehaviorThinkAboutBeacons = "behavior.ThinkAboutBeacons";
   public const string kBehaviorVisitInterestingEdge = "behavior.VisitInterestingEdge";
-  public const string kBehaviorBuildPyramid = "behavior.BuildPyramid";
   public const string kBehaviorKnockOverCubes = "behavior.KnockOverCubes";
   public const string kBehaviorPopAWheelie = "behavior.PopAWheelie";
   public const string kBehaviorPounceOnMotion = "behavior.PounceOnMotion";
@@ -277,8 +275,6 @@ public static class LocalizationKeys {
   public const string kMinigameLabelCozmoPrep = "minigame.label.cozmoPrep";
   public const string kMinigameLabelGameOver = "minigame.label.gameOver";
   public const string kMinigameTextWaitForCozmo = "minigame.text.waitForCozmo";
-  public const string kDroneModeActionLockedModalTitle = "droneMode.actionLockedModal.title";
-  public const string kDroneModeActionLockedModalDescription = "droneMode.actionLockedModal.description";
   public const string kDroneModeUnknownFaceReticleLabel = "droneMode.unknownFaceReticleLabel";
   public const string kDroneModeChargerReticleLabel = "droneMode.chargerReticleLabel";
   public const string kDroneModeCubeReticleLabel = "droneMode.cubeReticleLabel";
@@ -710,6 +706,12 @@ public static class LocalizationKeys {
   public const string kWifiGetHelpLinkText = "wifi.getHelp.linkText";
   public const string kWifiEnterPassword = "wifi.enterPassword";
   public const string kWifiPasswordFormat = "wifi.passwordFormat";
+  public const string kWifiSelectNetwork = "wifi.selectNetwork";
+  public const string kWifiLookingForNetworks = "wifi.lookingForNetworks";
+  public const string kWifiCurrentSsid = "wifi.currentSsid";
+  public const string kWifiCurrentStatus = "wifi.currentStatus";
+  public const string kWifiWrongPassword = "wifi.wrongPassword";
+  public const string kWifiConnecting = "wifi.connecting";
 
   #endregion
 }
