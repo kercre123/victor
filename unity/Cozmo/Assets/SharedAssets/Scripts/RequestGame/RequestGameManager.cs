@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using Anki.Cozmo;
+using Anki.Debug;
 
 namespace Cozmo.RequestGame {
   public class RequestGameManager {
@@ -33,12 +34,16 @@ namespace Cozmo.RequestGame {
     private BehaviorGameFlag _ChallengeToRequest = BehaviorGameFlag.NoGame;
     private bool _AllowedToRequest = false;
 
+    private bool _IsDebugRequest = false;
+
     private void TrackRobot(IRobot robot) {
       StopTrackingRobot();
 
       _RobotToTrack = robot;
       _RobotToTrack.OnLightCubeAdded += HandleNumberCubesUpdated;
       _RobotToTrack.OnLightCubeRemoved += HandleNumberCubesUpdated;
+
+      DebugConsoleData.Instance.AddConsoleFunction("Select Game To Request", "Game Request", DebugSelectGameToRequest);
     }
 
     private void StopTrackingRobot() {
@@ -172,7 +177,7 @@ namespace Cozmo.RequestGame {
             && data.MinigameConfig.NumCubesRequired() <= currentNumLightCubes
             && UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
           bool isDailyGoal = DailyGoalManager.Instance.IsAnyGoalActiveForGame(requestGameConfig.RequestList[i].ChallengeID);
-          float score = requestGameConfig.RequestList[i].GetCurrentScore(isDailyGoal);
+          float score = requestGameConfig.RequestList[i].GetCurrentScore(isDailyGoal, _IsDebugRequest);
           if (score > float.Epsilon) {
             outRequestData.Add(requestGameConfig.RequestList[i]);
             outChallengeData.Add(data);
@@ -180,6 +185,12 @@ namespace Cozmo.RequestGame {
           }
         }
       }
+    }
+
+    private void DebugSelectGameToRequest(string param) {
+      _IsDebugRequest = true;
+      EnableRequestGameBehaviorGroups();
+      _IsDebugRequest = false;
     }
   }
 }

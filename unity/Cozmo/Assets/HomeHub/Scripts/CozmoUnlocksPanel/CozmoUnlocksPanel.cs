@@ -32,7 +32,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   [SerializeField]
   private CoreUpgradeDetailsModal _CoreUpgradeDetailsModalPrefab;
-  private ModalPriorityData _CoreUpgradeDetailsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+  private ModalPriorityData _CoreUpgradeDetailsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryLow, 1,
                                                                                          LowPriorityModalAction.CancelSelf,
                                                                                          HighPriorityModalAction.Stack);
   private BaseModal _CoreUpgradeDetailsModalInstance;

@@ -765,9 +765,9 @@ namespace Cozmo.HomeHub {
                                                dialogCloseAnimationFinishedCallback: HandleRequestDialogClose,
                                                titleLocArgs: new object[] { Localization.Get(data.ChallengeTitleLocKey) });
 
-      var requestGamePriority = new ModalPriorityData(ModalPriorityLayer.VeryLow, 0,
+      var requestGamePriority = new ModalPriorityData(ModalPriorityLayer.VeryLow, 2,
                                                       LowPriorityModalAction.CancelSelf,
-                                                      HighPriorityModalAction.Queue);
+                                                      HighPriorityModalAction.Stack);
 
       Action<AlertModal> requestGameCreated = (alertModal) => {
         ContextManager.Instance.AppFlash(playChime: true);
