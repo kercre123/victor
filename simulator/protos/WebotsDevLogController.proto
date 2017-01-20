@@ -12,6 +12,8 @@ Supervisor {
   name IS name
   controller "webotsCtrlDevLog"
 
+  %{ dummy = fields.logsDirectory.value }%
+
   children [
     DEF PLAYBACK Display {
         name "playback_display"

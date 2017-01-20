@@ -457,7 +457,7 @@ bool WebotsDevLogController::UpdatePressedKeys()
 {
   std::set<int> currentKeysPressed;
   int key = _supervisor->getKeyboard()->getKey();
-  while(key != 0)
+  while(key >= 0)
   {
     currentKeysPressed.insert(key);
     key = _supervisor->getKeyboard()->getKey();
