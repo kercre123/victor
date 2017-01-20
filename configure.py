@@ -255,7 +255,14 @@ def parse_game_arguments():
             required=False,
             default=EXTERNALS_ROOT,
             metavar='path',
-            help='Use this flag to specify external dependency location.')
+            help='Use this flag to specify a non defaul external dependency location.')
+
+    parser.add_argument(
+            '--use-cte',
+            required=False,
+            default=None,
+            metavar='path',
+            help='Use this flag to specify a non default location for Coretech Eternal(absolute path).')
 
     parser.add_argument(
             '-l', '--logcat',
@@ -281,6 +288,22 @@ class GamePlatformConfiguration(object):
         if options.verbose:
             print_status('Initializing paths for platform {0}...'.format(platform))
 
+        global CTE_ROOT
+        if options.use_external is not None:
+            global EXTERNALS_ROOT
+            if os.path.exists(options.use_external):
+                EXTERNALS_ROOT = options.use_external
+                CTE_ROOT = os.path.join(EXTERNALS_ROOT, 'coretech_external')
+            else:
+                print("Warning invalid path given for EXTERNAL using default!")
+
+        if options.use_cte is not None:
+            if os.path.exists(options.use_cte):
+                CTE_ROOT = options.use_cte
+            else:
+                print("Warning invalid path given for CTE using default!")
+        else:
+            options.use_cte = CTE_ROOT
         self.platform = platform
         self.options = options
 
