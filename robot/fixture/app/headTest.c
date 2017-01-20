@@ -15,12 +15,19 @@
 
 #include "hal/motorled.h"
 
+//Debug hack. We sometimes want to update head firmware through the face, without
+//connecting the spine cable (e.g. VBAT). We can instead use a charge base powered
+//by our VEXT source so we can still cycle power as needed.
+#define DEBUG_SPINELESS 1
+
 // Return true if device is detected on contacts
 bool HeadDetect(void)
 {
   // HORRIBLE PERMANENT HACK TIME - if we leave battery power enabled, the CPU will pull SWD high
   // Main problem is that power is always enabled, not exactly what we want
   EnableBAT();
+  if( DEBUG_SPINELESS )
+    EnableVEXT();
   
   // First drive SWD low for 1uS to remove any charge from the pin
   GPIO_InitTypeDef  GPIO_InitStructure;
@@ -79,6 +86,8 @@ void BootK02Test(void)
   // Turn off and let power drain out
   DeinitEspressif();  // XXX - would be better to ensure it was like this up-front
   SWDDeinit();
+  if( DEBUG_SPINELESS )
+    DisableVEXT();
   DisableBAT();     // This has a built-in delay while battery power leaches out
   /*
   // Let head discharge (this takes a while)
@@ -90,6 +99,8 @@ void BootK02Test(void)
   */
   InitEspressif();
   EnableBAT();
+  if( DEBUG_SPINELESS )
+    EnableVEXT();
 }
 
 // Connect to and flash the Espressif
@@ -128,8 +139,11 @@ void HeadQ1Test(void)
   sum >>= OVERSAMPLE;
   ConsolePrintf("q1-mv,%d\r\n", sum);
   
-  if (sum > SAFE_THRESHOLD)
-    throw ERROR_HEAD_Q1;
+  //TODO: fix Q1 threshold for 1.5
+  #warning "head Q1 test disabled"
+  ConsolePrintf("---- HeadQ1Test DISABLED. q1-mv safe threshold = %u\r\n", SAFE_THRESHOLD);
+  //if (sum > SAFE_THRESHOLD)
+  //  throw ERROR_HEAD_Q1;
 }
 
 TestFunction* GetHeadTestFunctions(void)
@@ -139,7 +153,7 @@ TestFunction* GetHeadTestFunctions(void)
     HeadK02,
     BootK02Test,
     HeadESP,
-    //HeadQ1Test, //TODO: fix this test. not working correctly.
+    HeadQ1Test,
     HeadTest,
     NULL
   };
@@ -153,7 +167,7 @@ TestFunction* GetHead2TestFunctions(void)
   {
     HeadK02,
     BootK02Test,
-    //HeadQ1Test, //TODO: fix this test. not working correctly.
+    HeadQ1Test,
     NULL
   };
 
