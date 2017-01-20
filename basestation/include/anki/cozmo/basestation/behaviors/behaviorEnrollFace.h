@@ -62,8 +62,9 @@ protected:
   virtual void   StopInternal(Robot& robot)   override;
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
-  virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) override;
+  virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) override;
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) override;
   
 private:
   
@@ -86,7 +87,8 @@ private:
     SuccessNoSave,
     SuccessWithSave,
     Failed_WrongFace,
-    Failed_UnknownReason
+    Failed_UnknownReason,
+    Cancelled
   };
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

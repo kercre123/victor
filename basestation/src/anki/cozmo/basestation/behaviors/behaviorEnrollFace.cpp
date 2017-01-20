@@ -243,6 +243,7 @@ IBehavior::Status BehaviorEnrollFace::UpdateInternal(Robot& robot)
     case State::Failed_WrongFace:
     case State::Failed_UnknownReason:
     case State::SaveFailed:
+    case State::Cancelled:
     {
       return Status::Complete;
     }
@@ -364,6 +365,15 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
         break;
       }
 
+      case State::Cancelled:
+        // If we were enrolling a new face (i.e. not re-enrolling), then make sure
+        // we don't end up with an entry if we get cancelled before completing
+        if(Vision::UnknownFaceID == _saveID)
+        {
+          robot.GetVisionComponent().EraseFace(_faceID);
+        }
+        // NOTE: deliberate fall through to the other "incomplete" states
+        
       case State::LookingForFace:
       case State::Enrolling:
       case State::ScanningInterrupted:
@@ -1070,11 +1080,10 @@ void BehaviorEnrollFace::HandleWhileRunning(const EngineToGameEvent& event, Robo
                         MessageEngineToGameTagToString(event.GetData().GetTag()));
   }
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::AlwaysHandle(const GameToEngineEvent& event, const Robot& robot)
-{
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot)
+{
   switch(event.GetData().GetTag())
   {
     case GameToEngineTag::SetFaceToEnroll:
@@ -1097,13 +1106,44 @@ void BehaviorEnrollFace::AlwaysHandle(const GameToEngineEvent& event, const Robo
       
     case GameToEngineTag::CancelFaceEnrollment:
     {
-      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleCancelFaceEnrollmentMessage", "");
-      DisableEnrollment();
+      // Handled while running
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleWhileNotRunning.IgnoringCancelEnrollment",
+                    "Not running, ignoring cancellation message");
       break;
     }
       
     default:
-      PRINT_NAMED_ERROR("BehaviorEnrollFace.AlwaysHandle.UnexpectedGameToEngineTag",
+      PRINT_NAMED_ERROR("BehaviorEnrollFace.HandleWhileNotRunning.UnexpectedGameToEngineTag",
+                        "Received unexpected GameToEngine tag %s",
+                        MessageGameToEngineTagToString(event.GetData().GetTag()));
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    case GameToEngineTag::SetFaceToEnroll:
+    {
+      // Handled while NOT running
+      auto & msg = event.GetData().Get_SetFaceToEnroll();
+      PRINT_NAMED_WARNING("BehaviorEnrollFace.HandleWhileRunning.IgnoringSetFaceToEnroll",
+                          "Already enrolling, ignoring SetFaceToEnroll message with ID:%d SaveID:%d Name:%s",
+                          msg.observedID, msg.saveID, Util::HidePersonallyIdentifiableInfo(msg.name.c_str()));
+      break;
+    }
+      
+    case GameToEngineTag::CancelFaceEnrollment:
+    {
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleCancelFaceEnrollmentMessage", "");
+      DisableEnrollment();
+      SET_STATE(Cancelled);
+      break;
+    }
+      
+    default:
+      PRINT_NAMED_ERROR("BehaviorEnrollFace.HandleWhileRunning.UnexpectedGameToEngineTag",
                         "Received unexpected GameToEngine tag %s",
                         MessageGameToEngineTagToString(event.GetData().GetTag()));
   }
