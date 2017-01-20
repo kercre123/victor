@@ -45,6 +45,7 @@ if [ -d $_COZMO_REPO_DIR ]; then
         $GIT branch | grep -v '* master' | xargs git branch -D
     fi
     $GIT checkout $_GIT_BRANCH_NAME
+    $GIT pull origin $_GIT_BRANCH_NAME
     popd
 else
     $GIT clone $_GIT_COZMO_SDK_URI
@@ -53,15 +54,16 @@ else
     popd
 fi
 
-#install the pulled down repo
-$PIP install --ignore-installed ./$_COZMO_REPO_DIR
 
-# install latest clad and SDK with pip
+# build the latest clad and SDK
 pushd $_TOPLEVEL_COZMO/tools/sdk/cozmoclad
 make copy-clad
 make dist
-$PIP install --ignore-installed $_TOPLEVEL_COZMO/tools/sdk/cozmoclad/dist/*.whl
 popd
+
+#install the pulled down repo and clad
+$PIP install -e ./$_COZMO_REPO_DIR
+$PIP install --ignore-installed $_TOPLEVEL_COZMO/tools/sdk/cozmoclad/dist/*.whl
 
 NUM_RUNS_PARAM=""
 if [[ ${NUM_RUNS:-} ]];then
