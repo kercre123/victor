@@ -148,14 +148,14 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     // connection flow. This ping test is the successful exit point of this flow;
     // the only other way out is if the user hits a button to leave and use the old
     // flow, or if we detect failure on the Connecting screen.
-    CallJava("beginPingTest", RobotEngineManager.kRobotIP, kPingTimeoutMs, kPingRetryDelayMs);
+    StartPingTest();
     StartCoroutine("CheckConnectivity");
 
     RegisterJavaListener(_MessageReceiver, "scanPermissionsIssue", p => NeedPermissions());
   }
 
   public void Disable() {
-    CallJava("endPingTest");
+    StopPingTest();
     StopCoroutine("CheckConnectivity");
     if (_StageInstance != null) {
       GameObject.Destroy(_StageInstance.gameObject);
@@ -172,6 +172,25 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
       Disable();
     }
     base.OnDestroy();
+  }
+
+  public static void StartPingTest() {
+    CallJava("beginPingTest", RobotEngineManager.kRobotIP, kPingTimeoutMs, kPingRetryDelayMs);
+  }
+
+  public static void StopPingTest() {
+    CallJava("endPingTest");
+  }
+
+  // test if we're already connected and shut down the ping test if so
+  // return if connected or not
+  public static bool HandleAlreadyConnected() {
+    if (CallJava<bool>("isPingSuccessful")) {
+      StopPingTest();
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private void SelectNextStage() {

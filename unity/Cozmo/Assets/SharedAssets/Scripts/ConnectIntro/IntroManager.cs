@@ -92,6 +92,12 @@ public class IntroManager : MonoBehaviour {
       // Later on Robot unlocks happen
     }
 
+    #if UNITY_ANDROID && !UNITY_EDITOR
+    if (AndroidConnectionFlow.IsAvailable()) {
+      AndroidConnectionFlow.StartPingTest();
+    }
+    #endif
+
     OnboardingManager.Instance.PreloadOnboarding();
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
       ShowFirstTimeFlow();

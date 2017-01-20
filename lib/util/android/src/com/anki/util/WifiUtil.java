@@ -180,8 +180,8 @@ public final class WifiUtil {
   }
 
   public static void endPingTest() throws InterruptedException {
-    Log.v(TAG, "ending ping test");
     if (mPingTester != null) {
+      Log.v(TAG, "ending ping test");
       mPingTester.interrupt();
       mPingTester.join();
       mPingTester = null;
