@@ -46,7 +46,8 @@
 #include <webots/ImageRef.hpp>
 #include <webots/Keyboard.hpp>
 
-
+#define LOG_CHANNEL "Keyboard"
+#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 // CAUTION: If enabled, you can mess up stuff stored on the robot's flash.
 #define ENABLE_NVSTORAGE_WRITE 0
@@ -275,8 +276,7 @@ namespace Anki {
         }
       }
 
-      PRINT_CH_INFO("Keyboard", "WebotsKeyboardController.WaitForStart",
-                    "Press Shift+Enter to start the engine");
+      LOG_INFO("WebotsKeyboardController.WaitForStart", "Press Shift+Enter to start the engine");
       
       const int EnterKey = 4; // tested experimentally... who knows if this will work on other platforms
       const int ShiftEnterKey = EnterKey | webots::Keyboard::SHIFT;
@@ -287,8 +287,7 @@ namespace Anki {
         while((key = GetSupervisor()->getKeyboard()->getKey()) != 0 && !_shouldQuit) {
           if(!start && key == ShiftEnterKey) {
             start = true;
-            PRINT_CH_INFO("Keyboard", "WebotsKeyboardController.StartEngine",
-                          "Starting our engines....");
+            LOG_INFO("WebotsKeyboardController.StartEngine", "Starting our engines....");
           }
         }
         // manually step simulation
@@ -304,7 +303,7 @@ namespace Anki {
       
       auto doAutoBlockpoolField = root_->getField("doAutoBlockpool");
       if (doAutoBlockpoolField) {
-        PRINT_CH_INFO("Keyboard", "WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
+        LOG_INFO("WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
         EnableAutoBlockpool(doAutoBlockpoolField->getSFBool());
       }
       
@@ -357,11 +356,11 @@ namespace Anki {
         printf("              Reset 'owner' face:  Alt+Shift+f\n");
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
-        printf("        Force-add specifed robot:  Shift+r\n");
+        printf("       Force-add specified robot:  Shift+r\n");
         printf("                 Select behavior:  Shift+c\n");
         printf("         Select behavior chooser:  h\n");
         printf("       Select spark (unlockName):  Shift+h\n");
-        printf("         exit spark (unlockName):  Alt+h\n");
+        printf("         Exit spark (unlockName):  Alt+h\n");
         printf("            Set emotion to value:  m\n");
         printf("     Rainbow pattern on backpack:  l\n");        
         printf("      Search side to side action:  Shift+l\n");
@@ -370,13 +369,16 @@ namespace Anki {
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Alt+Shift+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
-        printf("       unlock progression unlock:  n\n");
-        printf("         lock progression unlock:  Shift+n\n");
+        printf("       Unlock progression unlock:  n\n");
+        printf("         Lock progression unlock:  Shift+n\n");
         printf("    Respond 'no' to game request:  Alt+n\n");
         printf("             Flip selected block:  y\n");
+        printf("                Set robot volume:  v\n");
+        printf("      Toggle vision while moving:  V\n");
         printf("       Realign with block action:  _\n");
         printf("Toggle accel from streamObjectID: |\n");
         printf("               Toggle headlights: ,\n");
+        printf("             Pronounce sayString: \" <double-quote>\n");
         printf("        Quit keyboard controller:  Alt+Shift+x\n");
         printf("                      Print help:  ?,/\n");
         printf("\n");
@@ -1273,8 +1275,8 @@ namespace Anki {
                   }
                   else
                   {
-                    PRINT_CH_INFO("Keyboard", "SendNVStorageEraseEntry.Disabled",
-                                  "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                    LOG_INFO("SendNVStorageEraseEntry.Disabled",
+                             "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
                   }
                 }
                 // Shift + M: Stores random data to tag
@@ -1302,8 +1304,8 @@ namespace Anki {
                   }
                   else
                   {
-                    PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.Disabled",
-                                  "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                    LOG_INFO("SendNVStorageWriteEntry.Disabled",
+                             "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
                   }
                   
                   break;
@@ -1540,7 +1542,8 @@ namespace Anki {
                   msgWrapper.Set_VisionWhileMoving(msg);
                   SendMessage(msgWrapper);
                 } else {
-                  f32 robotVolume = root_->getField("robotVolume")->getSFFloat();
+                  const f32 robotVolume = root_->getField("robotVolume")->getSFFloat();
+                  printf("Set robot volume to %f\n", robotVolume);
                   SendSetRobotVolume(robotVolume);
                 }
                 break;
@@ -1754,7 +1757,7 @@ namespace Anki {
                 
               case (s32)'`':
               {
-                PRINT_CH_INFO("Keyboard", "KeyboardCtrl.ProcessKeyStroke", "Updating viz origin");
+                LOG_INFO("KeyboardCtrl.ProcessKeyStroke", "Updating viz origin");
                 CycleVizOrigin();
                 break;
               }
@@ -1774,8 +1777,7 @@ namespace Anki {
                       continue;
                     }
                     
-                    PRINT_CH_INFO("Keyboard", "BlockSelected", "factoryID 0x%x, connect %d",
-                                  msg.factoryId, msg.selected);
+                    LOG_INFO("BlockSelected", "factoryID 0x%x, connect %d", msg.factoryId, msg.selected);
                     ExternalInterface::MessageGameToEngine msgWrapper;
                     msgWrapper.Set_BlockSelectedMessage(msg);
                     SendMessage(msgWrapper);
@@ -1791,7 +1793,7 @@ namespace Anki {
                 msg.robotID = 1;
                 msg.enable = enable;
                 
-                PRINT_CH_INFO("Keyboard", "SendAvailableObjects", "enable: %d", enable);
+                LOG_INFO("SendAvailableObjects", "enable: %d", enable);
                 ExternalInterface::MessageGameToEngine msgWrapper;
                 msgWrapper.Set_SendAvailableObjects(msg);
                 SendMessage(msgWrapper);
@@ -1824,7 +1826,7 @@ namespace Anki {
               case (s32)'&':
               {
                 if(altKeyPressed) {
-                  PRINT_CH_INFO("Keyboard", "SendNVStorageReadEntry", "NVEntry_CameraCalib");
+                  LOG_INFO("SendNVStorageReadEntry", "NVEntry_CameraCalib");
                   ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                 } else {
@@ -1837,9 +1839,9 @@ namespace Anki {
                       f32 focalLength_y = root_->getField("focalLength_y")->getSFFloat();
                       f32 center_x = root_->getField("imageCenter_x")->getSFFloat();
                       f32 center_y = root_->getField("imageCenter_y")->getSFFloat();
-                      PRINT_CH_INFO("Keyboard", "SendCameraCalibrationraseEntry",
-                                    "fx: %f, fy: %f, cx: %f, cy: %f",
-                                    focalLength_x, focalLength_y, center_x, center_y);
+                      LOG_INFO("SendCameraCalibrationEraseEntry",
+                               "fx: %f, fy: %f, cx: %f, cy: %f",
+                               focalLength_x, focalLength_y, center_x, center_y);
 
                       // Method 1
                       //SendCameraCalibration(focalLength_x, focalLength_y, center_x, center_y);
@@ -1854,14 +1856,14 @@ namespace Anki {
                                               calibVec.data(), calibVec.size(),
                                               0, 1);
                     } else {
-                      PRINT_CH_INFO("Keyboard", "SendNVStorageEraseEntry", "NVEntry_CameraCalib");
+                      LOG_INFO("SendNVStorageEraseEntry", "NVEntry_CameraCalib");
                       SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                     }
                     writeNotErase = !writeNotErase;
                     
                   } else {
-                    PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.CameraCalibration.Disabled",
-                                  "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                    LOG_INFO("SendNVStorageWriteEntry.CameraCalibration.Disabled",
+                             "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
                   }
                   
                 }
@@ -1873,7 +1875,7 @@ namespace Anki {
                 
                 // NVStorage multiWrite / multiRead test
                 if(altKeyPressed) {
-                  PRINT_CH_INFO("Keyboard", "SendNVStorageReadEntry", "Putting image in %s", EnumToString(tag));
+                  LOG_INFO("SendNVStorageReadEntry", "Putting image in %s", EnumToString(tag));
                   ClearReceivedNVStorageData(tag);
                   SendNVStorageReadEntry(tag);
                 } else {
@@ -1888,16 +1890,16 @@ namespace Anki {
                         std::vector<u8> d(30000);
                         size_t numBytes = fread(d.data(), 1, d.size(), fp);
                         d.resize(numBytes);
-                        PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.ReadInputImage",
-                                      "Tag: %s, read %zu bytes", EnumToString(tag), numBytes);
+                        LOG_INFO("SendNVStorageWriteEntry.ReadInputImage",
+                                 "Tag: %s, read %zu bytes", EnumToString(tag), numBytes);
                         
                         ExternalInterface::NVStorageWriteEntry temp;
                         size_t MAX_BLOB_SIZE = temp.data.size();
                         u8 numTotalBlobs = static_cast<u8>(ceilf(static_cast<f32>(numBytes) / MAX_BLOB_SIZE));
                         
-                        PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.Sending",
-                                      "Tag: %s, NumBlobs %d, maxBlobSize %zu",
-                                      EnumToString(tag), numTotalBlobs, MAX_BLOB_SIZE);
+                        LOG_INFO("SendNVStorageWriteEntry.Sending",
+                                 "Tag: %s, NumBlobs %d, maxBlobSize %zu",
+                                 EnumToString(tag), numTotalBlobs, MAX_BLOB_SIZE);
 
                         for (int i=0; i<numTotalBlobs; ++i) {
                           SendNVStorageWriteEntry(tag,
@@ -1908,15 +1910,14 @@ namespace Anki {
                         printf("%s open failed\n", inFile);
                       }
                     } else {
-                      
-                      PRINT_CH_INFO("Keyboard", "SendNVStorageEraseEntry", "%s", EnumToString(tag));
+                      LOG_INFO("SendNVStorageEraseEntry", "%s", EnumToString(tag));
                       SendNVStorageEraseEntry(tag);
                     }
                     writeNotErase = !writeNotErase;
                   } else {
-                    PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.Disabled",
-                                  "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this! (Tag: %s)",
-                                  EnumToString(tag));
+                    LOG_INFO("SendNVStorageWriteEntry.Disabled",
+                             "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this! (Tag: %s)",
+                             EnumToString(tag));
                   }
                   
                 }
@@ -1924,7 +1925,7 @@ namespace Anki {
               }
               case (s32)')':
               {
-                PRINT_CH_INFO("Keyboard", "RetrievingAllMfgTestData", "...");
+                LOG_INFO("RetrievingAllMfgTestData", "...");
                 
                 // Get all Mfg test images and results
                 if(altKeyPressed) {
@@ -2528,7 +2529,7 @@ namespace Anki {
         
         const std::vector<u8>* recvdData = GetReceivedNVStorageData(msg.tag);
         if (recvdData == nullptr) {
-          PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.Read.NoDataReceived", "Tag: %s", EnumToString(msg.tag));
+          LOG_INFO("HandleNVStorageOpResult.Read.NoDataReceived", "Tag: %s", EnumToString(msg.tag));
           return;
         }
         
@@ -2537,8 +2538,8 @@ namespace Anki {
           {
             IMUInfo info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.IMUInfo.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.IMUInfo.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2551,8 +2552,8 @@ namespace Anki {
           {
             CameraCalibration calib;
             if (recvdData->size() != MakeWordAligned(calib.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CamCalibration.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(calib.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.CamCalibration.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(calib.Size()), recvdData->size());
               break;
             }
             calib.Unpack(recvdData->data(), calib.Size());
@@ -2565,8 +2566,8 @@ namespace Anki {
           {
             CalibMetaInfo info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CalibMetaInfo.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.CalibMetaInfo.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2579,8 +2580,8 @@ namespace Anki {
           {
             ToolCodeInfo info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.ToolCodeInfo.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.ToolCodeInfo.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2593,8 +2594,8 @@ namespace Anki {
           {
             PoseData info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CalibPose.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.CalibPose.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2607,8 +2608,8 @@ namespace Anki {
           {
             PoseData info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2622,8 +2623,8 @@ namespace Anki {
           {
             FactoryTestResultEntry result;
             if (recvdData->size() != MakeWordAligned(result.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.PlaypenTestResults.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.PlaypenTestResults.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
               break;
             }
             result.Unpack(recvdData->data(), result.Size());
@@ -2636,8 +2637,8 @@ namespace Anki {
           {
             BirthCertificate result;
             if (recvdData->size() != MakeWordAligned(result.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.BirthCertificate.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.BirthCertificate.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
               break;
             }
             result.Unpack(recvdData->data(), result.Size());
@@ -2667,7 +2668,7 @@ namespace Anki {
           }
           case NVStorage::NVEntryTag::NVEntry_IMUAverages:
           {
-            PRINT_CH_INFO("Keyboard", "IMUAveragesData", "size: %lu", recvdData->size());
+            LOG_INFO("IMUAveragesData", "size: %lu", recvdData->size());
             PrintBytesHex((char*)(recvdData->data()), (int)recvdData->size());
             
             break;

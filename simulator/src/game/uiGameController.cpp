@@ -23,7 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
-
+#define LOG_CHANNEL "Keyboard"
+#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace Anki {
   namespace Cozmo {
@@ -294,7 +295,7 @@ namespace Anki {
 
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
     {
-      PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
+      LOG_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
 
       HandleAnimationAvailable(msg);
     }
@@ -424,7 +425,7 @@ namespace Anki {
       _root = _supervisor.getSelf();
       
       // Set deviceID
-      // TODO: Get rid of this. The UI should not be assigning it's own ID.
+      // TODO: Get rid of this. The UI should not be assigning its own ID.
       int deviceID = 1;
       webots::Field* deviceIDField = _root->getField("deviceID");
       if (deviceIDField) {
@@ -678,7 +679,7 @@ namespace Anki {
           if ((_supervisor.getTime() - startTime) > TIME_UNTIL_READY_SEC) {
             
             // Initialize the block pool to detect cubes automatically. Ideally we would put this in
-            // InitIniternal but it is called before engine can receive messages
+            // InitInternal but it is called before engine can receive messages
             if (_doAutoBlockPool && !_isBlockPoolInitialized) {
               SendEnableBlockPool(0, true);
               _isBlockPoolInitialized = true;
@@ -772,8 +773,7 @@ namespace Anki {
     void UiGameController::CycleVizOrigin()
     {
       auto UpdateVizOriginToRobotAndLog = [this]() {
-        PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
-        "Aligning viz to match robot's pose.");
+        LOG_INFO("UiGameController.UpdateVizOrigin", "Aligning viz to match robot's pose.");
         UpdateVizOriginToRobot();
       };
 
@@ -789,9 +789,9 @@ namespace Anki {
         if (_lightCubeOriginIter != _lightCubes.end()) {
           // If we haven't iterated through all the observed light cubes yet, localize to the newly
           // iterated light cube.
-          PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
-                        "Aligning viz to match next known LightCube to object %d",
-                        _robotStateMsg.localizedToObjectID);
+          LOG_INFO("UiGameController.UpdateVizOrigin",
+                   "Aligning viz to match next known LightCube to object %d",
+                   _robotStateMsg.localizedToObjectID);
           
           correctionPose = GetPose3dOfNode(*_lightCubeOriginIter)  * _objectIDToPoseMap[_robotStateMsg.localizedToObjectID].GetInverse();
           UpdateVizOrigin(correctionPose);
