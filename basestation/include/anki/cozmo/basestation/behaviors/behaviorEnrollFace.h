@@ -111,6 +111,9 @@ private:
 
   bool HasTimedOut() const;
   
+  // Helper which returns false if the robot is not on its treads or a cliff is being detected
+  bool CanMoveTreads(const Robot& robot) const;
+  
   bool IsEnrollmentRequested() const;
   void DisableEnrollment();
   

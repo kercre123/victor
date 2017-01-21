@@ -83,13 +83,15 @@ BehaviorEnrollFace::BehaviorEnrollFace(Robot &robot, const Json::Value& config)
   SetDefaultName("EnrollFace");
   
   SubscribeToTags({{
-    ExternalInterface::MessageEngineToGameTag::UnexpectedMovement,
-    ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID,
+    EngineToGameTag::UnexpectedMovement,
+    EngineToGameTag::RobotChangedObservedFaceID,
+    EngineToGameTag::RobotOffTreadsStateChanged,
+    EngineToGameTag::CliffEvent
   }});
   
   SubscribeToTags({{
-    ExternalInterface::MessageGameToEngineTag::SetFaceToEnroll,
-    ExternalInterface::MessageGameToEngineTag::CancelFaceEnrollment,
+    GameToEngineTag::SetFaceToEnroll,
+    GameToEngineTag::CancelFaceEnrollment,
   }});
   
 }
@@ -448,6 +450,22 @@ bool BehaviorEnrollFace::HasTimedOut() const
   const bool hasTimedOut = (currTime_sec > _startTime_sec + _timeout_sec);
   return hasTimedOut;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorEnrollFace::CanMoveTreads(const Robot& robot) const
+{
+  if(robot.GetOffTreadsState() != OffTreadsState::OnTreads)
+  {
+    return false;
+  }
+ 
+  if(robot.IsCliffDetected())
+  {
+    return false;
+  }
+  
+  return true;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToLookingForFace(Robot& robot)
@@ -497,16 +515,27 @@ void BehaviorEnrollFace::TransitionToLookingForFace(Robot& robot)
                                 "Found face %d to enroll. Timeout set to %.1fsec",
                                 _faceID, _timeout_sec);
                   
-                  // Turn towards the person we've chosen to enroll, play the "get in" animation
-                  // to start "scanning" and move towards the person a bit to show intentionality
-                  CompoundActionSequential* action = new CompoundActionSequential(robot, {
-                    new TurnTowardsFaceAction(robot, _faceID, M_PI, false),
-                    new CompoundActionParallel(robot, {
-                      new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceGetIn),
-                      new DriveStraightAction(robot, kEnrollFace_DriveForwardIntentDist_mm,
-                                              kEnrollFace_DriveForwardIntentSpeed_mmps, false)
-                    })
-                  });
+                  auto getInAnimAction = new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceGetIn);
+                  
+                  IActionRunner* action = nullptr;
+                  if(CanMoveTreads(robot))
+                  {
+                    // Turn towards the person we've chosen to enroll, play the "get in" animation
+                    // to start "scanning" and move towards the person a bit to show intentionality
+                    action = new CompoundActionSequential(robot, {
+                      new TurnTowardsFaceAction(robot, _faceID, M_PI, false),
+                      new CompoundActionParallel(robot, {
+                        getInAnimAction,
+                        new DriveStraightAction(robot, kEnrollFace_DriveForwardIntentDist_mm,
+                                                kEnrollFace_DriveForwardIntentSpeed_mmps, false)
+                      })
+                    });
+                  }
+                  else
+                  {
+                    // Just play the get-in if we aren't able to move the treads
+                    action = getInAnimAction;
+                  }
                   
                   StartActing(action, &BehaviorEnrollFace::TransitionToEnrolling);
                 }
@@ -527,9 +556,10 @@ void BehaviorEnrollFace::TransitionToEnrolling(Robot& robot)
   // Disable tracking sounds because we have a scanning animation with sound
   trackAction->SetSound(AnimationTrigger::Count);
   
-  if(robot.GetOffTreadsState() != OffTreadsState::OnTreads)
+  if(!CanMoveTreads(robot))
   {
-    // Only move head if off the ground
+    // Only move head during tracking if robot is off the ground or a cliff is detected
+    // (the latter can happen if picked up but held very level)
     trackAction->SetMode(ITrackAction::Mode::HeadOnly);
   }
   
@@ -733,13 +763,22 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Robot& robot, Vis
                                                                Vision::FaceID_t saveID,
                                                                bool playScanningGetOut)
 {
+  CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel(robot, {
+    new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK)
+  });
   
-  MoveLiftToHeightAction* moveLift = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
-  
-  if(robot.GetOffTreadsState() != OffTreadsState::OnTreads)
+  if(playScanningGetOut)
   {
-    // If being held in the air, don't try to turn, just move lift
-    return moveLift;
+    // If we we are enrolling, we need to get out of the "scanning face" animation while
+    // doing this
+    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceInterrupt));
+  }
+  
+  if(!CanMoveTreads(robot))
+  {
+    // If being held in the air, don't try to turn, so just return the parallel
+    // compound action as it is now
+    return liftAndTurnTowardsAction;
   }
   
   IActionRunner* turnAction = nullptr;
@@ -814,14 +853,8 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Robot& robot, Vis
     turnAction = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD(45.f));
   }
   
-  CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel(robot, {moveLift, turnAction});
-  
-  if(playScanningGetOut)
-  {
-    // If we we are enrolling, we need to get out of the "scanning face" animation while
-    // doing this
-    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceInterrupt));
-  }
+  // Add whatever turn action we decided to create to the parallel action and return it
+  liftAndTurnTowardsAction->AddAction(turnAction);
   
   return liftAndTurnTowardsAction;
   
@@ -844,7 +877,7 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction(Robot& robot)
   
   CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
   
-  if(robot.GetOffTreadsState() == OffTreadsState::OnTreads)
+  if(CanMoveTreads(robot))
   {
     compoundAction->AddAction(new PanAndTiltAction(robot, relBodyAngle, absHeadAngle, false, true));
     
@@ -1042,6 +1075,8 @@ void BehaviorEnrollFace::AlwaysHandle(const EngineToGameEvent& event, const Robo
       break;
     }
     case EngineToGameTag::UnexpectedMovement:
+    case EngineToGameTag::RobotOffTreadsStateChanged:
+    case EngineToGameTag::CliffEvent:
     {
       // Handled while running
       break;
@@ -1065,11 +1100,15 @@ void BehaviorEnrollFace::HandleWhileRunning(const EngineToGameEvent& event, Robo
       break;
     }
     case EngineToGameTag::UnexpectedMovement:
+    case EngineToGameTag::RobotOffTreadsStateChanged:
+    case EngineToGameTag::CliffEvent:
     {
       if(State::LookingForFace == _state && IsActing())
       {
         // Cancel and replace the existing look-around action so we don't fight a
-        // person trying to re-orient Cozmo towards themself
+        // person trying to re-orient Cozmo towards themselves, nor do we leave
+        // the treads moving if a look around action had already started (but not
+        // completed) before a pickup/cliff
         TransitionToLookingForFace(robot);
       }
       break;
