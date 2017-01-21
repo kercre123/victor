@@ -85,15 +85,30 @@ struct FlashLoadLocation {
   uint8_t static_fill; //static fill value
 };
 
+//Choose wether to do full erase, or only first sector (for speed)
+#define ERASE_SIZE(x)   x
+//#define ERASE_SIZE(x)   0x1000
+
 static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 #ifdef FCC
-  { "FCC",  0x000000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
+  { "ERASEALL", 0x000000, 0x200000,                   NULL,       0xFF },
+  { "FCC",      0x000000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
 #else
-  { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot,   g_EspBoot,  0 },
-  { "USER", 0x080000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
-  { "SAFE", 0x0c8000, g_EspSafeEnd - g_EspSafe,   g_EspSafe,  0 },
-  { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit,   g_EspInit,  0 },
-  { "BLANK",0x1fe000, 0x1000,                     NULL,       0xFF },
+  { "BOOT",     0x000000, g_EspBootEnd - g_EspBoot,   g_EspBoot,  0 },    //Espressif Flash Map::Bootloader
+  { "FAC.DAT",  0x001000, ERASE_SIZE(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Factory Data
+  { "CRASHDMP", 0x002000, ERASE_SIZE(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Crash Dumps
+  { "APP.A",    0x003000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code A
+  { "USER",     0x080000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },    //Espressif Flash Map::Factory WiFi Firmware
+  { "SAFE",     0x0c8000, g_EspSafeEnd - g_EspSafe,   g_EspSafe,  0 },    //Espressif Flash Map::Factory RTIP+Body Firmware
+  { "NV.STOR",  0x0de000, ERASE_SIZE(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::Factory NV Storage
+  { "FIX.STOR", 0x0fc000, ERASE_SIZE(0x004000),       NULL,       0xFF }, //Espressif Flash Map::Factory Fixture Storage
+  { "DHCP",     0x100000, ERASE_SIZE(0x003000),       NULL,       0xFF }, //Espressif Flash Map::DHCP Storage
+  { "APP.B",    0x103000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code B
+  { "ASS.STOR", 0x180000, ERASE_SIZE(0x040000),       NULL,       0xFF }, //Espressif Flash Map::Asset Storage
+  { "NV.SEG.1", 0x1c0000, ERASE_SIZE(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::NV Storage Segment 1
+  { "NV.SEG.2", 0x1de000, ERASE_SIZE(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::NV Storage Segment 2
+  { "ESP.INIT", 0x1fc000, g_EspInitEnd - g_EspInit,   g_EspInit,  0 },    //Espressif Flash Map::ESP Init Data
+  { "WIFI.CFG", 0x1fe000, ERASE_SIZE(0x002000),       NULL,       0xFF }, //Espressif Flash Map::ESP wifi configuration data
 #endif
   { NULL, 0, 0, NULL, 0},
 };
