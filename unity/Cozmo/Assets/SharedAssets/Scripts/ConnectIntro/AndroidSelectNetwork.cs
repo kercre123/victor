@@ -10,7 +10,8 @@ using UnityEngine;
 //
 // This screen also runs a coroutine in the background that continues
 // scanning for new networks and updates the list of available Cozmos
-// accordingly
+// accordingly.  Also removes Cozmos from the list (when a Cozmo is
+// turned off, for example.)
 public class AndroidSelectNetwork : AndroidConnectionFlowStage {
 
   [SerializeField]
@@ -29,6 +30,8 @@ public class AndroidSelectNetwork : AndroidConnectionFlowStage {
 
   private AndroidNetworkCell _SelectedCell;
 
+  private Dictionary<string, AndroidNetworkCell> _CellButtons = new Dictionary<string, AndroidNetworkCell>();
+
   private void Start() {
     var networks = AndroidConnectionFlow.Instance.CozmoSSIDs;
     AddNetworkCells(networks);
@@ -42,10 +45,12 @@ public class AndroidSelectNetwork : AndroidConnectionFlowStage {
   }
 
   private void AddNetworkCells(string[] networks) {
+    // Add any networks that aren't in the UI list yet
     foreach (string network in networks) {
       if (!_CurrentNetworks.Contains(network)) {
         _CurrentNetworks.Add(network);
         AndroidNetworkCell cell = GameObject.Instantiate(_NetworkCellPrefab.gameObject).GetComponent<AndroidNetworkCell>();
+        _CellButtons[network] = cell;
         cell.Init(network, () => {
           if (_SelectedCell != null) {
             _SelectedCell.Deselect();
@@ -57,6 +62,21 @@ public class AndroidSelectNetwork : AndroidConnectionFlowStage {
         cell.transform.SetParent(_ScrollViewContent, false);
       }
     }
+
+    // Remove any networks in the UI list that are no longer in the actual list
+    foreach (var network in _CurrentNetworks) {
+      if (!networks.Contains(network)) {
+        var cell = _CellButtons[network];
+        if (_SelectedCell == cell) {
+          _SelectedCell.Deselect();
+          _SelectedCell = null;
+          _ContinueButton.Interactable = false;
+        }
+        GameObject.Destroy(cell.gameObject);
+        _CellButtons.Remove(network);
+      }
+    }
+    _CurrentNetworks.RemoveAll(i => !networks.Contains(i));
   }
 
   private void HandleScanResults(string[] ssids) {
