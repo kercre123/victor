@@ -96,7 +96,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
       _wasTapped = false;
       _wasStopped = false;
       _wasMoved = false;
-      UiGameController::SendApplyForce("cube", 0, 0, 6);
+      UiGameController::SendApplyForce("cube", 6, 0, 0);
       _testState = TestState::CheckForMovedMessage;
       break;
     }

@@ -2,6 +2,7 @@
 
 import os
 import errno
+import inspect
 import subprocess
 import sys
 import argparse
@@ -369,10 +370,12 @@ def is_webots_not_running():
 
 # sleep for some time, then kill webots if needed
 def stop_webots():
+  currFile = inspect.getfile(inspect.currentframe())
+
   # kill all webots processes
   ps   = subprocess.Popen(('ps', 'Aux'), stdout=subprocess.PIPE)
   grep = subprocess.Popen(('grep', '[w]ebots'), stdin=ps.stdout, stdout=subprocess.PIPE)
-  grep_minus_this_process = subprocess.Popen(('grep', '-v', '.py'), stdin=grep.stdout, stdout=subprocess.PIPE)
+  grep_minus_this_process = subprocess.Popen(('grep', '-v', currFile), stdin=grep.stdout, stdout=subprocess.PIPE)
   awk  = subprocess.Popen(('awk', '{print $2}'), stdin=grep_minus_this_process.stdout, stdout=subprocess.PIPE)
   kill = subprocess.Popen(('xargs', 'kill', '-9'), stdin=awk.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   out, err = kill.communicate()
