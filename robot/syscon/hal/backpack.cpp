@@ -49,7 +49,7 @@ static const BackpackLight setting[] = {
   { 0, 0, PIN_LED1, PIN_LED1,    0 }, // 10
 };
 
-static const int LIGHT_COUNT = sizeof(setting) / sizeof(setting[0]);
+static const int LIGHT_COUNT = sizeof(setting) / sizeof(setting[0]) - 1;
 
 static uint32_t TIMER_MINIMUM = 0xC0;
 static uint32_t TIMER_DIVIDE  = 9;
@@ -110,7 +110,7 @@ void Backpack::manage() {
 
   if (override) return ;
 
-  for (int i = 0; i < LIGHT_COUNT - 1; i++) {
+  for (int i = 0; i < LIGHT_COUNT; i++) {
     const BackpackLight& light = setting[i];
     uint8_t* rgbi = (uint8_t*) &lightController.backpack[light.controller_pos].values;
     uint32_t drive = light.gamma * (uint32_t)rgbi[light.controller_index];
@@ -256,15 +256,6 @@ void Backpack::detachTimer() {
 
 void Backpack::trigger() {
   static int countdown = 0;
-  static int button_count = 0;
-
-  if (button_pressed) {
-    if (++button_count >= 200*5) {
-      Battery::setOperatingMode(BODY_IDLE_OPERATING_MODE);
-    }
-  } else {
-    button_count = 0;
-  }
 
   if (--countdown > 0) {
     return ;
@@ -273,13 +264,14 @@ void Backpack::trigger() {
 
   #ifndef DISABLE_LIGHTS
   switch (*HW_VERSION) {
-  case 0x000000F9:
   case 0x01050000:
     nrf_gpio_pin_clear(PIN_BUTTON_DRIVE);
     nrf_gpio_cfg_output(PIN_BUTTON_DRIVE);
     MicroWait(100);
     button_pressed = !nrf_gpio_pin_read(PIN_BUTTON_SENSE);
     nrf_gpio_cfg_input(PIN_BUTTON_DRIVE, NRF_GPIO_PIN_NOPULL);
+
+    Battery::hookButton(button_pressed);
   }
 
   TIMER1_IRQHandler();

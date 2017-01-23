@@ -175,6 +175,20 @@ void Battery::init()
   startADCsample(ANALOG_CLIFF_SENSE);
 }
 
+void Battery::hookButton(bool button_pressed) {
+  static int button_count = 0;
+
+  if (button_pressed) {
+    // 4 seconds (thanks to backpack divider)
+    if (++button_count >= 200) {
+      Battery::powerOff();
+      NVIC_SystemReset();
+    }
+  } else {
+    button_count = 0;
+  }
+}
+
 void Battery::setOperatingMode(Anki::Cozmo::BodyRadioMode mode) {
   current_operating_mode = mode;
 }
