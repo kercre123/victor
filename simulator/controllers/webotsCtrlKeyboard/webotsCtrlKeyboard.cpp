@@ -284,7 +284,7 @@ namespace Anki {
       bool start = false;
       while( !start && !_shouldQuit ) {
         int key = -1;
-        while((key = GetSupervisor()->getKeyboard()->getKey()) != 0 && !_shouldQuit) {
+        while((key = GetSupervisor()->getKeyboard()->getKey()) >= 0 && !_shouldQuit) {
           if(!start && key == ShiftEnterKey) {
             start = true;
             LOG_INFO("WebotsKeyboardController.StartEngine", "Starting our engines....");

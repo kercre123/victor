@@ -81,6 +81,4 @@ WebotsKeyboardController {
   autoConnect FALSE
 }
 CozmoVizDisplay {
-  moodViz TRUE
-  behaviorSelectionViz TRUE
 }
