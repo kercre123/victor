@@ -93,6 +93,9 @@ public class IntroManager : MonoBehaviour {
     }
 
     #if UNITY_ANDROID && !UNITY_EDITOR
+    // begin attempting to ping Cozmo now on Android;
+    // if we're already connected to his wifi, we want to detect that
+    // before we start the Android connection flow
     if (AndroidConnectionFlow.IsAvailable()) {
       AndroidConnectionFlow.StartPingTest();
     }

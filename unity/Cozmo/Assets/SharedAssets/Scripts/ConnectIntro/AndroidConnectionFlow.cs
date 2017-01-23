@@ -184,7 +184,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
 
   // test if we're already connected and shut down the ping test if so
   // return if connected or not
-  public static bool HandleAlreadyConnected() {
+  public static bool HandleAlreadyOnCozmoWifi() {
     if (CallJava<bool>("isPingSuccessful")) {
       StopPingTest();
       return true;

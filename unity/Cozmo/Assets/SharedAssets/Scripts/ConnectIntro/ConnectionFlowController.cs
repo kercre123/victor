@@ -164,7 +164,7 @@ public class ConnectionFlowController : MonoBehaviour {
   private void InitConnectionFlow() {
     if (FeatureGate.Instance.IsFeatureEnabled(FeatureType.AndroidConnectionFlow)) {
       #if UNITY_ANDROID && !UNITY_EDITOR
-      if (AndroidConnectionFlow.IsAvailable() && !AndroidConnectionFlow.HandleAlreadyConnected()) {
+      if (AndroidConnectionFlow.IsAvailable() && !AndroidConnectionFlow.HandleAlreadyOnCozmoWifi()) {
         ShowSearchForCozmoAndroid();
         return;
       }

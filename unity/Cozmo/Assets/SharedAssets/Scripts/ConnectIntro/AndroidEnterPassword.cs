@@ -28,6 +28,7 @@ public class AndroidEnterPassword : AndroidConnectionFlowStage {
 
   private void Start() {
     _PasswordField.onValueChanged.AddListener(HandlePasswordChanged);
+    _PasswordField.onValidateInput = ValidateCharacter;
     _InstructionsLabel.FormattingArgs = new object[] { AndroidConnectionFlow.Instance.SelectedSSID };
 
     _ContinueButton.Initialize(HandleContinueButton, "continue_button", "android_enter_password");
@@ -47,11 +48,17 @@ public class AndroidEnterPassword : AndroidConnectionFlowStage {
         }
       }
     }
+    password = password.ToUpper();
+    _PasswordField.text = password;
     _ErrorLabel.gameObject.SetActive(!validPassword);
     _ContinueButton.Interactable = validPassword;
     if (validPassword) {
-      AndroidConnectionFlow.Instance.Password = password.ToUpper();
+      AndroidConnectionFlow.Instance.Password = password;
     }
+  }
+
+  private char ValidateCharacter(string text, int index, char inputChar) {
+    return char.ToUpper(inputChar);
   }
 
   private void HandleContinueButton() {
