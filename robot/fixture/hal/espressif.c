@@ -86,16 +86,19 @@ struct FlashLoadLocation {
 };
 
 //Choose wether to do full erase, or only first sector (for speed)
-#define ERASE_SIZE(x)   x
-//#define ERASE_SIZE(x)   0x1000
+//#define ERASE_SIZE(x)   x
+#define ERASE_SIZE(x)   0x1000
 
 static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 #ifdef FCC
-  { "ERASEALL", 0x000000, 0x200000,                   NULL,       0xFF },
+  //{ "ERASE.0",  0x000000, 0x080000,                   NULL,       0xFF },
+  //{ "ERASE.1",  0x080000, 0x080000,                   NULL,       0xFF },
+  //{ "ERASE.2",  0x100000, 0x080000,                   NULL,       0xFF },
+  //{ "ERASE.3",  0x180000, 0x080000,                   NULL,       0xFF },
   { "FCC",      0x000000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
 #else
   { "BOOT",     0x000000, g_EspBootEnd - g_EspBoot,   g_EspBoot,  0 },    //Espressif Flash Map::Bootloader
-  { "FAC.DAT",  0x001000, ERASE_SIZE(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Factory Data
+  //{ "FAC.DAT",  0x001000, ERASE_SIZE(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Factory Data (EXCLUDE! THIS IS WRITTEN WITH SERIAL DAT!)
   { "CRASHDMP", 0x002000, ERASE_SIZE(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Crash Dumps
   { "APP.A",    0x003000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code A
   { "USER",     0x080000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },    //Espressif Flash Map::Factory WiFi Firmware
@@ -329,24 +332,29 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
   SlowPrintf("%s=%02X {", debug, cmd);
   ESPCommand(cmd, data, length, checksum);
   
+  const u32 cmd_timeout = 5000000; //max 5s (for large erase ops)
+  u32 start_time_us = getMicroCounter();
+  
   // I don't know how long to wait - during initial erase, I've seen as many as 19 retries
-  for (int retry = 0 ; retry < 50; retry++)
+  for (u32 time_us=0, retry=0; time_us < cmd_timeout;  )
   {    
     int replySize = ESPRead(reply, max, timeout);
-
+    time_us = getMicroCounter() - start_time_us;
+    
     // esptool says retry a command until it at least acks the command
     // NOTE:  This check is hardcoded to deal with flashing commands and will fail on readback commands
     if (replySize < 10 || reply[1] != cmd || reply[8] != 0) {
-      SlowPrintf("retry..");
+      retry++;
       continue;
     }
+    SlowPrintf("retries: %u}", retry);
     
-    SlowPrintf("..} <- %d { ", replySize);
+    SlowPrintf(" <- %d { ", replySize);
 #ifdef ESP_DEBUG
     for (int i = 0; i < replySize; i++)
       SlowPrintf("%02X ", reply[i]);
 #endif
-    SlowPrintf("}\n");
+    SlowPrintf("} %u.%03ums\n", time_us/1000, time_us%1000 );
 
     return replySize;
   }
@@ -394,23 +402,27 @@ bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data, bool dat_st
   // Write BEGIN command (erase, wait for flash to blank)
   int replySize = Command("Flash Begin", ESP_FLASH_BEGIN, (uint8_t*) &begin, sizeof(begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
   
-  while (length > 0) {
-    int copyLength = (length > ESP_FLASH_BLOCK) ? ESP_FLASH_BLOCK : length;
-    if (copyLength < ESP_FLASH_BLOCK) {
-      memset(block.data, 0xFF, ESP_FLASH_BLOCK);
-    }
-    
-    if( !dat_static_fill )
-      memcpy(block.data, data, copyLength);   //standard: copy image data for block write
-    else
-      memset(block.data, *data, copyLength);  //fill block (up to specified length) with static value
+  if( !(dat_static_fill && *data == 0xFF) ) //skip write phase if we are "writing" all FFs (erase only)
+  {
+    while (length > 0) {
+      int copyLength = (length > ESP_FLASH_BLOCK) ? ESP_FLASH_BLOCK : length;
+      if (copyLength < ESP_FLASH_BLOCK) {
+        memset(block.data, 0xFF, ESP_FLASH_BLOCK);
+      }
+      
+      if( !dat_static_fill )
+        memcpy(block.data, data, copyLength);   //standard: copy image data for block write
+      else
+        memset(block.data, *data, copyLength);  //fill block (up to specified length) with static value
 
-    int check = checksum(block.data, ESP_FLASH_BLOCK);
-    replySize = Command("Flash Block", ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT, check);
-    
-    data += dat_static_fill ? 0 : ESP_FLASH_BLOCK; //don't move ptr for static fill
-    length -= ESP_FLASH_BLOCK;
-    block.seq++;
+      int check = checksum(block.data, ESP_FLASH_BLOCK);
+      SlowPrintf("Flash Block %06X ", block.seq * ESP_FLASH_BLOCK);
+      replySize = Command(/*"Flash Block"*/ "", ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT, check);
+      
+      data += dat_static_fill ? 0 : ESP_FLASH_BLOCK; //don't move ptr for static fill
+      length -= ESP_FLASH_BLOCK;
+      block.seq++;
+    }
   }
 
   // FINISH with this hack from esptool.py - to prevent chip locking
@@ -422,13 +434,14 @@ bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data, bool dat_st
 
 void ProgramEspressif(int serial)
 {
-  SlowPrintf("ESP Syncronizing...");
+  SlowPrintf("ESP Syncronizing...\n");
 
   if (!ESPSync()) { 
     SlowPrintf("Sync Failed.\n");
     throw ERROR_HEAD_RADIO_SYNC;
   }
   
+  u32 start_time_us = getMicroCounter();
   bool setserial = false;
   for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++)
   {
@@ -461,4 +474,7 @@ void ProgramEspressif(int serial)
     }
   #endif
   }
+  
+  u32 total_time_us = getMicroCounter() - start_time_us;
+  SlowPrintf("ProgramEspressif() total time: %u.%03ums\n", total_time_us/1000, total_time_us%1000);
 }
