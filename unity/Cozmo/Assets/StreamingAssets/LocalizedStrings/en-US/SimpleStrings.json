@@ -45,9 +45,6 @@
   "button.again": {
     "translation": "Play Again"
   },
-  "button.ready": {
-    "translation": "Ready"
-  },
   "button.refresh": {
     "translation": "Refresh"
   },
@@ -107,9 +104,6 @@
   },
   "label.start": {
     "translation": "Start"
-  },
-  "button.save": {
-    "translation": "Save"
   },
   "cozmoTab.title": {
     "translation": "Upgrades"

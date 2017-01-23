@@ -39,18 +39,6 @@
   "challengeDetails.needsMoreCubesModal.button": {
     "translation": "Show Me How"
   },
-  "artistCozmo.title": {
-    "translation": "Artist Cozmo"
-  },
-  "artistCozmo.description": {
-    "translation": "Artist Cozmo Description"
-  },
-  "patternGuess01.title": {
-    "translation": "Pattern Guess"
-  },
-  "patternGuess01.description": {
-    "translation": "Cozmo will think of a code and you have a certain number of tries to get it right."
-  },
   "cubeSlap.title": {
     "translation": "Keepaway"
   },
@@ -69,12 +57,6 @@
   "faceEnrollment.description": {
     "translation": "Introduce Cozmo to new people so he can learn to say their name."
   },
-  "selfieGame01.title": {
-    "translation": "Selfie Time"
-  },
-  "selfieGame01.description": {
-    "translation": "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
-  },
   "memoryMatchGame.title": {
     "translation": "Memory Match"
   },
@@ -86,12 +68,6 @@
   },
   "speedTap.description": {
     "translation": "A color matching game of fast reflexes and sharp wits."
-  },
-  "treasureHuntGame01.title": {
-    "translation": "Treasure Hunt Challenge"
-  },
-  "treasureHuntGame01.description": {
-    "translation": "Find the treasure!"
   },
   "cozmoSays.title": {
     "translation": "Cozmo Says"
