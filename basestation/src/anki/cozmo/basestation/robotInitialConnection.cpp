@@ -131,16 +131,40 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   if(!reader.parse(jsonString, headerData))
   {
     PRINT_NAMED_ERROR("RobotInitialConnection.HandleFirmwareVersion.ParseJson",
-                      "Failed to parse header data from robot: %s", jsonString.c_str());
+                      "Failed to parse header data from robot");
     // If parsing failed than report outdatedfirmware so the firmware gets updated to hopefully fix
     // what could be a malformed header
+    
+    OnNotified(RobotConnectionResult::OutdatedFirmware, 0);
+    return;
+  }
+
+  std::string robotBuildType = headerData[FirmwareUpdater::kFirmwareBuildTypeKey].asString();
+
+  if(robotBuildType == "FACTORY")
+  {
+    // Factory firmware's version is a string as it has an 'F' at the start
+    const std::string& version = headerData[FirmwareUpdater::kFirmwareVersionKey].asString();
+    
+    if(version.at(0) != 'F')
+    {
+      PRINT_NAMED_ERROR("RobotInitialConnection.HandleFirmwareVersion.UnknownVersion",
+                        "Robot has unexpected firmware version %s",
+                        version.c_str());
+    }
+    else
+    {
+      PRINT_NAMED_INFO("RobotInitialConnection.HandleFirmwareVersion.FactoryFirmware",
+                       "Robot has factory firmware version %s",
+                       version.c_str());
+    }
+    
     OnNotified(RobotConnectionResult::OutdatedFirmware, 0);
     return;
   }
 
   uint32_t robotVersion = headerData[FirmwareUpdater::kFirmwareVersionKey].asUInt();
   uint32_t robotTime = headerData[FirmwareUpdater::kFirmwareTimeKey].asUInt();
-  std::string robotBuildType = headerData[FirmwareUpdater::kFirmwareBuildTypeKey].asString();
 
   // for firmware that came from a build server, a version number will be baked in,
   // but for local dev builds, the version field will equal the time field

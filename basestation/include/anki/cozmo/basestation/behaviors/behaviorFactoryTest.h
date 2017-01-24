@@ -99,6 +99,7 @@ namespace Cozmo {
     void HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleFactoryFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message);
 
     void SetCurrState(FactoryTestState s);
     void UpdateStateName();
@@ -159,8 +160,8 @@ namespace Cozmo {
     
     bool _gotHWVersion = false;
     bool _hasWrongFirmware = false;
-    std::string _fwBuildType;
-    u32         _fwVersion = 0;
+    std::string _fwBuildType = "";
+    std::string _fwVersion = "";
     
     Pose3d _closestPredockPose;
     

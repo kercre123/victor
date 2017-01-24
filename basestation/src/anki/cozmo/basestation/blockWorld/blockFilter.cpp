@@ -59,8 +59,12 @@ void BlockFilter::Init(const std::string &path)
     // Load the existing list of objects if there is one. Then copy them to the runtime pool and connect to all the objects
     PRINT_CH_INFO("BlockPool", "BlockFilter.Init", "Loading from file %s", path.c_str());
     Load();
-    CopyPersistentPoolToRuntimePool();
-    ConnectToObjects();
+  
+    if(_enabled)
+    {
+      CopyPersistentPoolToRuntimePool();
+      ConnectToObjects();
+    }
 }
   
 void BlockFilter::Update()

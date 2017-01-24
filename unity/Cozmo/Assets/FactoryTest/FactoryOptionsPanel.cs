@@ -6,6 +6,7 @@ using System.Collections;
 public class FactoryOptionsPanel : MonoBehaviour {
 
   public System.Action<bool> OnSetSim;
+  public System.Action<bool> OnWipeAll;
 
   [SerializeField]
   private UnityEngine.UI.Button _CloseButton;
@@ -30,8 +31,12 @@ public class FactoryOptionsPanel : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Toggle _CheckFirmwareVersion;
 
-  public void Initialize(bool sim, Canvas canvas, PingStatus pingStatusComponent) {
+  [SerializeField]
+  private UnityEngine.UI.Toggle _WipeAll;
+
+  public void Initialize(bool sim, Canvas canvas, PingStatus pingStatusComponent, bool wipeAll) {
     _SimToggle.isOn = sim;
+    _WipeAll.isOn = wipeAll;
     _EnableNVStorageWrites.isOn = PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1) == 1;
     _CheckPreviousResults.isOn = PlayerPrefs.GetInt("CheckPreviousResult", 0) == 1;
     _EnableRobotSound.isOn = PlayerPrefs.GetInt("EnableRobotSound", 1) == 1;
@@ -50,6 +55,8 @@ public class FactoryOptionsPanel : MonoBehaviour {
     _EnableRobotSound.onValueChanged.AddListener(HandleEnableRobotSound);
     _ConnectToRobotOnly.onValueChanged.AddListener(HandleConnectToRobotOnly);
     _CheckFirmwareVersion.onValueChanged.AddListener(HandleCheckFirmwareVersion);
+
+    _WipeAll.onValueChanged.AddListener(HandleOnWipeAll);
 
     // Disable the options that shouldn't be available in non-dev mode. Using a local variable
     // instead of the constant solves a compiler error about unreacheable code.
@@ -119,6 +126,12 @@ public class FactoryOptionsPanel : MonoBehaviour {
   void HandleOnSetSimType(bool isSim) {
     if (OnSetSim != null) {
       OnSetSim(isSim);
+    }
+  }
+
+  private void HandleOnWipeAll(bool wipeAll) {
+    if(OnWipeAll != null){
+      OnWipeAll(wipeAll);
     }
   }
 }

@@ -48,7 +48,12 @@
 
 #include <iomanip>
 
+// If you are running from webots only set this to one
+#define RUNNING_FROM_WEBOTS 0
+
 #define DEBUG_FACTORY_TEST_BEHAVIOR 1
+
+#define ENABLE_FACTORY_TEST 0
 
 #define END_TEST_IN_HANDLER(ERRCODE) EndTest(robot, ERRCODE); return RESULT_OK;
 
@@ -118,8 +123,8 @@ namespace Cozmo {
   static constexpr f32 _kCalibrationTimeout_sec = 4.f;
   static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 15;
   static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
-  static constexpr f32 _kExpectedCubePoseDistThresh_mm = 40;
-  static constexpr f32 _kExpectedCubePoseHeightThresh_mm = 15;
+  static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;
+  static constexpr f32 _kExpectedCubePoseHeightThresh_mm = 10;
   static constexpr f32 _kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
   static constexpr u32 _kNumPickupRetries = 1;
   static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
@@ -133,7 +138,7 @@ namespace Cozmo {
   // Check for these firmware versions if kBFT_CheckFWVersion is true
   // TODO: Update these once we have a good build
   static constexpr u32 _kMinBodyHWVersion = 3;
-  static constexpr u32 _kFWVersion = 1482187831;
+  static const std::string _kFWVersion = "F1.5.1";
   
   // If no change in behavior state for this long then trigger failure
   static constexpr f32 _kWatchdogTimeout = 20;
@@ -213,8 +218,17 @@ namespace Cozmo {
     doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered, &BehaviorFactoryTest::HandleActiveObjectDiscovered);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::pickAndPlaceResult, &BehaviorFactoryTest::HandlePickAndPlaceResult);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::firmwareVersion, &BehaviorFactoryTest::HandleFirmwareVersion);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryFirmwareVersion, &BehaviorFactoryTest::HandleFactoryFirmwareVersion);
     
     _stateTransitionTimestamps.resize(_testResultEntry.timestamps.size());
+    
+    // If we are running from webots we need to disable block pool immediately since we will have
+    // already connected to a robot. The factory app is able to disable block pool before connecting
+    if(ENABLE_FACTORY_TEST && RUNNING_FROM_WEBOTS)
+    {
+      // Disable block pool from auto connecting
+      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::BlockPoolEnabledMessage>(0, false);
+    }
   }
   
 #pragma mark -
@@ -249,7 +263,7 @@ namespace Cozmo {
     // Set known poses
     _camCalibPose = Pose3d(0, Z_AXIS_3D(), {-50, 0, 0}, &robot.GetPose().FindOrigin()); // Relative to cliff
     _prePickupPose = Pose3d( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 100, 0}, &robot.GetPose().FindOrigin());
-    _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-50, 250, 22}, &robot.GetPose().FindOrigin());
+    _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-90, 250, 22}, &robot.GetPose().FindOrigin());
     _expectedChargerPose = Pose3d(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin());
 
     _numPlacementAttempts = 0;
@@ -669,6 +683,13 @@ namespace Cozmo {
   IBehavior::Status BehaviorFactoryTest::UpdateInternal(Robot& robot)
   {
     #define END_TEST(ERRCODE) EndTest(robot, ERRCODE); return Status::Running;
+    
+    if(!ENABLE_FACTORY_TEST)
+    {
+      PRINT_NAMED_ERROR("BehaviorFactoryTest.UpdateInternal.NotEnabled",
+                        "Factory test is not enabled");
+      return Status::Complete;
+    }
 
     const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
@@ -752,8 +773,8 @@ namespace Cozmo {
         if(_hasWrongFirmware)
         {
           PRINT_NAMED_ERROR("BehaviorFactoryTest.HandleFirmwareVersion.WrongVersion",
-                            "Expected %u FACTORY got %u %s",
-                            _kFWVersion, _fwVersion, _fwBuildType.c_str());
+                            "Expected %s FACTORY got %s %s",
+                            _kFWVersion.c_str(), _fwVersion.c_str(), _fwBuildType.c_str());
           END_TEST(FactoryTestResultCode::WRONG_FIRMWARE_VERSION);
         }
         
@@ -1431,6 +1452,9 @@ namespace Cozmo {
                               _expectedLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
                               Tdiff.x(), Tdiff.y(), Tdiff.z(),
                               angleDiff.getDegrees());
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpectedZ", "%f %f",
+                              oObject->GetPose().GetTranslation().z(),
+                              (0.5f*oObject->GetSize().z()));
           END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
         
@@ -1707,26 +1731,36 @@ namespace Cozmo {
   
   void BehaviorFactoryTest::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message)
   {
-    const auto& fwData = message.GetData().Get_firmwareVersion().json;
-    std::string jsonString{fwData.begin(), fwData.end()};
-    Json::Reader reader;
-    Json::Value headerData;
-    if(!reader.parse(jsonString, headerData))
+    if(kBFT_CheckFWVersion)
     {
-      PRINT_NAMED_ERROR("RobotInitialConnection.HandleFirmwareVersion.ParseJson",
-                        "Failed to parse header data from robot: %s", jsonString.c_str());
-      EndTest(_robot, FactoryTestResultCode::PARSE_HEADER_FAILED);
+      const auto& fwData = message.GetData().Get_firmwareVersion().json;
+      std::string jsonString{fwData.begin(), fwData.end()};
+      Json::Reader reader;
+      Json::Value headerData;
+      if(!reader.parse(jsonString, headerData))
+      {
+        EndTest(_robot, FactoryTestResultCode::PARSE_HEADER_FAILED);
+        return;
+      }
+      
+      _fwVersion = headerData["version"].asString();
+      _fwBuildType = headerData["build"].asString();
+      
+      if(_fwVersion != _kFWVersion ||
+         _fwBuildType != "FACTORY")
+      {
+        // This message is handled before the behavior starts so we need to set a flag
+        _hasWrongFirmware = true;
+      }
     }
-    
-    _fwVersion = headerData["version"].asUInt();
-    _fwBuildType = headerData["build"].asString();
-    
-    if(kBFT_CheckFWVersion &&
-       (_fwVersion != _kFWVersion ||
-        _fwBuildType != "FACTORY"))
+  }
+  
+  void BehaviorFactoryTest::HandleFactoryFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+  {
+    if(ENABLE_FACTORY_TEST)
     {
-      // This message is handled before the behavior starts so we need to set a flag
-      _hasWrongFirmware = true;
+      // Only 1.0 factory firmware has this message
+      SendTestResultToGame(_robot, FactoryTestResultCode::ONE_POINT_ZERO_FIRMWARE);
     }
   }
     
@@ -1803,6 +1837,7 @@ namespace Cozmo {
         } else {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedBlock", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
           END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
+          return RESULT_OK;
         }
         break;
         
