@@ -27,7 +27,7 @@
 #define GRESET(gp, pin)    gp->BSRRH = (pin)
 #define GREAD(gp)          gp->IDR
 
-void SlowPrintf(const char* format, ...);
+int SlowPrintf(const char* format, ...);
 
 //#define SWD_DEBUG
 
