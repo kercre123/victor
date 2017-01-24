@@ -2,6 +2,7 @@
 #define APP_H
 
 #include "hal/portable.h"
+#include "binaries.h"
 
 //data preserved through a soft-reset
 typedef struct {

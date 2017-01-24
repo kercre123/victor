@@ -105,14 +105,15 @@ int ConsoleGetCharWait(u32 timeout)
   return value;
 }
 
-void ConsolePrintf(const char* format, ...)
+int ConsolePrintf(const char* format, ...)
 {
   char dest[64];
   va_list argptr;
   va_start(argptr, format);
-  vsnprintf(dest, 64, format, argptr);
+  int len = vsnprintf(dest, 64, format, argptr);
   va_end(argptr);
   ConsoleWrite(dest);
+  return len;
 }
 
 void ConsolePutChar(char c)
@@ -122,14 +123,18 @@ void ConsolePutChar(char c)
     ;
 }
 
-void ConsoleWrite(char* s)
+int ConsoleWrite(char* s)
 {
+  int len = 0;
   while (*s)
   {
     UART4->DR = *s++;
     while (!(UART4->SR & USART_FLAG_TXE))
       ;
+    len++;
   }
+  
+  return len;
 }
 
 char ConsoleGetChar()
@@ -372,6 +377,19 @@ static void DumpFixtureSerials(void)
   ConsoleWriteHex(serials, 0x400);
 }
 
+static void BinVersionCmd(void)
+{
+  bool format_csv = true;
+  try {
+    char* arg = GetArgument(1);
+    format_csv = false; //format for console view if user provided an arg.
+  }
+  catch (int e) {
+  }
+  
+  binPrintInfo(format_csv);
+}
+
 #if 0
 // Cozmo doesn't know how to do this, yet
 static void Charge(void)
@@ -442,6 +460,7 @@ static CommandFunction m_functions[] =
   {"AllowOutdated", AllowOutdated, FALSE},
   {"Drop", DropSensor, FALSE},
   {"GetSerial", GetSerialCmd, FALSE},
+  {"BinVersion", BinVersionCmd, FALSE},
   {"RedoTest", RedoTest, FALSE},
   {"SetDateCode", SetDateCode, FALSE},
   {"SetLotCode", SetLotCode, FALSE},
@@ -466,32 +485,32 @@ static void ParseCommand(void)
   
   if(!strcasecmp(buffer, "reset"))
   {
-    ConsoleWrite("\r\n");
+    ConsoleWrite((char*)"\r\n");
     MicroWait(10000);
     
     //save console state and issue soft reset
     g_app_reset.console.isInConsoleMode = 1;
     nvReset((u8*)&g_app_reset, sizeof(g_app_reset));
   }
-  else if (!strcasecmp(buffer, "exit")) 
+  else if (!strcasecmp(buffer, "exit"))
   {
     m_isInConsoleMode = 0;
     return;
   }
   else if (!strcasecmp(buffer, "help") || !strcasecmp(buffer, "?")) 
   {
-    ConsoleWrite("Available commands:\r\n");
+    ConsoleWrite((char*)"Available commands:\r\n");
     for (i = 0; i < sizeof(m_functions) / sizeof(CommandFunction); i++)
     {
-      ConsoleWrite("  ");
+      ConsoleWrite((char*)"  ");
       ConsoleWrite((char*)m_functions[i].command);
-      ConsoleWrite("\r\n");
+      ConsoleWrite((char*)"\r\n");
     }
-    ConsoleWrite("  reset\r\n");
-    ConsoleWrite("  exit\r\n");
-    ConsoleWrite("\r\n");
-  } 
-  else 
+    ConsoleWrite((char*)"  reset\r\n");
+    ConsoleWrite((char*)"  exit\r\n");
+    ConsoleWrite((char*)"\r\n");
+  }
+  else
   {
     // Tokenize by spaces
     m_numberOfArguments = 1;

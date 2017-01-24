@@ -506,6 +506,11 @@
               <FilePath>.\app\binaries.s</FilePath>
             </File>
             <File>
+              <FileName>binariesc.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\binariesc.c</FilePath>
+            </File>
+            <File>
               <FileName>bodyTest.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\app\bodyTest.c</FilePath>
@@ -1152,6 +1157,11 @@
               <FileName>binaries.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\app\binaries.s</FilePath>
+            </File>
+            <File>
+              <FileName>binariesc.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\binariesc.c</FilePath>
             </File>
             <File>
               <FileName>bodyTest.c</FileName>
