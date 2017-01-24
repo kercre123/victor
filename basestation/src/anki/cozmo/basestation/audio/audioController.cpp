@@ -61,9 +61,10 @@ using namespace AudioEngine;
   
 const char* AudioController::kAudioLogChannelName = "Audio";
 
-// Resolve audio asset file path
-static bool ResolvePathToAudioFile( const std::string&, const char*, char*, const size_t );
 #if USE_AUDIO_ENGINE
+  // Resolve audio asset file path
+  static bool ResolvePathToAudioFile( const std::string&, const char*, char*, const size_t );
+
   // Setup Ak Logging callback
   static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlayingId, AudioGameObject );
 #endif
@@ -105,17 +106,20 @@ AudioController::AudioController( const CozmoContext* context )
                                     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     
     // Add Assets Zips to list.
-
 #ifdef ANDROID
     // Add to the APK file and OBB file (if it exists) to the list of valid zip files where the audio assets can be
     {
       auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
       JNIEnv* env = envWrapper->GetEnv();
       JNI_CHECK(env);
-
+      
       // Get a handle to the activity instance
       Util::JClassHandle contextClass{env->FindClass("android/content/ContextWrapper"), env};
       Util::JObjectHandle activity{Util::JNIUtils::getCurrentActivity(env), env};
+
+      // Link Java VM
+      config.javaVm = Util::JNIUtils::GetJvm();
+      config.javaActivity = env->NewLocalRef(activity.get());
 
       // Get a handle to the object representing the OBB folder
       jmethodID obbDirMethodID = env->GetMethodID(contextClass.get(), "getObbDir", "()Ljava/io/File;");
@@ -156,8 +160,8 @@ AudioController::AudioController( const CozmoContext* context )
 
       std::string apkPath = Util::JNIUtils::getStringFromObjectMethod(env, contextClass.get(), activity.get(), "getPackageCodePath", "()Ljava/lang/String;");
       std::string apkZipPath = apkPath + "?" + "assets/cozmo_resources/sound/AudioAssets.zip";
-      config.pathToZipFiles.push_back(std::move(apkZipPath));
       PRINT_CH_INFO(kAudioLogChannelName, "AudioController.AudioController", "APK file: %s", apkZipPath.c_str());
+      config.pathToZipFiles.push_back(std::move(apkZipPath));
     }
 #else
     // iOS & Mac Platfroms
@@ -715,6 +719,7 @@ void AudioController::ClearGarbageCollector()
   _callbackGarbageCollector.clear();
 }
 
+#if USE_AUDIO_ENGINE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ResolvePathToAudioFile( const std::string& dataPlatformResourcePath,
                              const char* inName,
@@ -737,7 +742,6 @@ bool ResolvePathToAudioFile( const std::string& dataPlatformResourcePath,
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#if USE_AUDIO_ENGINE
 // Setup Ak Logging callback
 void AudioEngineLogCallback( uint32_t akErrorCode,
                             const char* errorMessage,
