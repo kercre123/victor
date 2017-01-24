@@ -1181,6 +1181,10 @@
       "AnimName": "ag_askForBlock"
     },
     {
+      "CladEvent": "WaitOnSideLoop",
+      "AnimName": "ag_reacttocliff_wait"
+    },    
+    {
       "CladEvent": "WorkoutPickupRealign",
       "AnimName": "rollCube_realign"
     },

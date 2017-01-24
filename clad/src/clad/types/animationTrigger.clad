@@ -311,6 +311,7 @@ enum int_32 AnimationTrigger
   Surprise,
   TurtleRoll,  
   UnitTestAnim,
+  WaitOnSideLoop,
   WorkoutPickupRealign,
   WorkoutPickupRetry,
   WorkoutPostLift_highEnergy,

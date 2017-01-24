@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnSide.h"
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -39,6 +40,9 @@ bool BehaviorReactToRobotOnSide::IsRunnableInternal(const BehaviorPreReqNone& pr
 
 Result BehaviorReactToRobotOnSide::InitInternal(Robot& robot)
 {
+  // clear bored animation timer
+  _timeToPerformBoredAnim_s = -1.0f;
+  
   ReactToBeingOnSide(robot);
   return Result::RESULT_OK;
 }
@@ -82,17 +86,35 @@ void BehaviorReactToRobotOnSide::AskToBeRighted(Robot& robot)
   
 void BehaviorReactToRobotOnSide::HoldingLoop(Robot& robot)
 {
-  
   if( robot.GetOffTreadsState() == OffTreadsState::OnRightSide
      || robot.GetOffTreadsState() == OffTreadsState::OnLeftSide) {
-    StartActing(new CompoundActionSequential(robot, {
-      new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
+
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    
+    if( _timeToPerformBoredAnim_s < 0.0f ) {
+      // set timer for when to perform the bored animations
+      _timeToPerformBoredAnim_s = currTime_s + kWaitTimeBeforeRepeatAnim_s;
+    }
+    
+    if( currTime_s >= _timeToPerformBoredAnim_s ) {
+      // reset timer
+      _timeToPerformBoredAnim_s = -1.0f;
+
+      // play bored animation sequence, then return to holding
+      
       // note: NothingToDoBored anims can move the robot, so Intro/Outro may not work here well, should
       // we be playing a specific loop here?
-      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredIntro),
-      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredEvent),
-      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredOutro)
-    }),  &BehaviorReactToRobotOnSide::HoldingLoop);
+      StartActing(new CompoundActionSequential(robot, {
+                    new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredIntro),
+                    new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredEvent),
+                    new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredOutro) }),
+                  &BehaviorReactToRobotOnSide::HoldingLoop);
+    }
+    else {
+      // otherwise, we just loop this animation
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::WaitOnSideLoop),
+                  &BehaviorReactToRobotOnSide::HoldingLoop);
+    }
   }
 }
 

@@ -43,6 +43,8 @@ private:
   void AskToBeRighted(Robot& robot);
   //Ensures no other behaviors run while Cozmo is still on his side
   void HoldingLoop(Robot& robot);
+
+  float _timeToPerformBoredAnim_s = -1.0f;
   
 };
 
