@@ -20,6 +20,15 @@
 namespace Anki {
 namespace Cozmo {
   
+static std::set<ReactionTrigger> kReactionsToDisable = {
+  ReactionTrigger::CliffDetected,
+  ReactionTrigger::ReturnedToTreads,
+  ReactionTrigger::RobotOnBack,
+  ReactionTrigger::RobotOnFace,
+  ReactionTrigger::RobotOnSide,
+  ReactionTrigger::RobotPickedUp
+};
+  
 BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
@@ -38,6 +47,8 @@ bool BehaviorReactToMotorCalibration::IsRunnableInternal(const BehaviorPreReqNon
 Result BehaviorReactToMotorCalibration::InitInternal(Robot& robot)
 {
   LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
+ 
+  SmartDisableReactionTrigger(kReactionsToDisable);
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
   StartActing(new WaitAction(robot, _kTimeout_sec), [this, &robot](ActionResult res) {

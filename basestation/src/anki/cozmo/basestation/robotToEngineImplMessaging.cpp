@@ -1160,13 +1160,13 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
   }
   
   _imuLogFileStream
+  << static_cast<int>(payload.timestamp) << " "
   << payload.a.data()[0] << " "
   << payload.a.data()[1] << " "
   << payload.a.data()[2] << " "
   << payload.g.data()[0] << " "
   << payload.g.data()[1] << " "
-  << payload.g.data()[2] << " "
-  << static_cast<int>(payload.timestamp) << "\n";
+  << payload.g.data()[2] << "\n";
   
   // Close file when last chunk received
   if (payload.order == 2) {
