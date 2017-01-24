@@ -163,7 +163,10 @@ namespace Cozmo {
           if (timesPlayedDroneMode <= 0) {
             _DroneModeControlsSlide.OpenHowToPlayModal(showCloseButton: false, playAnimations: true);
           }
+          _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.DroneModeGetIn, SetUpRobotAnimations);
+        }
 
+        private void SetUpRobotAnimations(bool getInSuccess) {
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
           _RobotAnimator.OnTurboTransitionAnimationStarted += HandleTurboTransitionAnimationFinished;
           _RobotAnimator.OnTurboTransitionAnimationFinished += HandleTurboTransitionAnimationFinished;
@@ -197,14 +200,21 @@ namespace Cozmo {
 
         public override void Update() {
           if (!IsPerformingAction) {
-            // Send drive wheels / drive head messages if needed
-            SendDriveRobotMessages();
-            if (_IsPlayingTurboTransitionAnimation) {
-              SetHeadSliderToCurrentPosition();
-            }
+            // Wait until the initial get in animation is done before accepting input
+            if (_RobotAnimator != null) {
+              // Send drive wheels / drive head messages if needed
+              SendDriveRobotMessages();
+              if (_IsPlayingTurboTransitionAnimation) {
+                SetHeadSliderToCurrentPosition();
+              }
 
-            _DroneModeControlsSlide.TiltText.text = TiltDrivingDebugText + HeadDrivingDebugText;
-            _DroneModeControlsSlide.DebugText.text = _RobotAnimator.ToString();
+              _DroneModeControlsSlide.TiltText.text = TiltDrivingDebugText + HeadDrivingDebugText;
+
+              _DroneModeControlsSlide.DebugText.text = _RobotAnimator.ToString();
+            }
+            else {
+              SetSlidersToCurrentPosition();
+            }
           }
           else {
             SetSlidersToCurrentPosition();
