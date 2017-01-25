@@ -2353,6 +2353,7 @@ namespace Anki {
                 ExternalInterface::SetCameraSettings settings;
                 settings.exposure_ms = root_->getField("exposure_ms")->getSFFloat();
                 settings.gain = root_->getField("gain")->getSFFloat();
+                settings.enableAutoExposure = root_->getField("enableAutoExposure")->getSFBool();
                 ExternalInterface::MessageGameToEngine message;
                 message.Set_SetCameraSettings(settings);
                 SendMessage(message);

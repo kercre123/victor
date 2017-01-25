@@ -2286,9 +2286,14 @@ namespace Cozmo {
   
   void VisionComponent::SetCameraSettings(const s32 exposure_ms, const f32 gain)
   {
+    if(!_visionSystem->IsExposureValid(exposure_ms) || !_visionSystem->IsGainValid(gain))
+    {
+      return;
+    }
+  
     PRINT_CH_INFO("VisionComponent",
                   "VisionComponent.SetCameraSettings",
-                  "Exp: %ums Gain:%f",
+                  "Exp:%ums Gain:%f",
                   exposure_ms,
                   gain);
     
@@ -2365,7 +2370,13 @@ namespace Cozmo {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SetCameraSettings& payload)
   {
-    SetCameraSettings(payload.exposure_ms, payload.gain);
+    EnableAutoExposure(payload.enableAutoExposure);
+    
+    // If we are not enabling auto exposure (we are disabling it) then set the exposure and gain
+    if(!payload.enableAutoExposure)
+    {
+      SetCameraSettings(payload.exposure_ms, payload.gain);
+    }
   }
   
   template<>

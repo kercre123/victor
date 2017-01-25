@@ -995,7 +995,11 @@ message NVStorageReadEntry {
   NVStorage::NVEntryTag tag
 }
 
+// Enable/disable auto exposure
+// If enableAutoExposure == false then exposure and gain are set to the specified values
+// If enableAutoExposure == true then exposure and gain fields are ignored
 message SetCameraSettings {
+  bool enableAutoExposure,
   uint_16 exposure_ms,
   float_32 gain
 }

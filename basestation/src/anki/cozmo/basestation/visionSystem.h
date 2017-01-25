@@ -309,6 +309,10 @@ namespace Cozmo {
     Result CheckImageQuality(const Vision::Image& inputImage,
                              const std::vector<Anki::Rectangle<s32>>& detectionRects);
     
+    bool IsExposureValid(s32 exposure) const;
+    
+    bool IsGainValid(f32 gain) const;
+    
   protected:
   
     RollingShutterCorrector _rollingShutterCorrector;

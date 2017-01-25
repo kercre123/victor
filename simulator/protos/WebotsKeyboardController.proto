@@ -192,6 +192,7 @@ PROTO WebotsKeyboardController [
   field SFString drivingLoopAnim ""
   field SFString drivingEndAnim ""
 
+  field SFBool  enableAutoExposure TRUE
   field SFFloat exposure_ms 16.8
   field SFFloat gain 1.0
 

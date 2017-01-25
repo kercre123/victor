@@ -4206,5 +4206,27 @@ namespace Cozmo {
     _faceTracker->SetRecognitionIsSynchronous(isSynchronous);
   }
   
+  bool VisionSystem::IsExposureValid(s32 exposure) const
+  {
+    const bool inRange = IN_RANGE(exposure, _minCameraExposureTime_ms, _maxCameraExposureTime_ms);
+    if(!inRange)
+    {
+      PRINT_NAMED_WARNING("VisionSystem.IsExposureValid.OOR", "Exposure %dms not in range %dms to %dms",
+                          exposure, _minCameraExposureTime_ms, _maxCameraExposureTime_ms);
+    }
+    return inRange;
+  }
+  
+  bool VisionSystem::IsGainValid(f32 gain) const
+  {
+    const bool inRange = IN_RANGE(gain, _minCameraGain, _maxCameraGain);
+    if(!inRange)
+    {
+      PRINT_NAMED_WARNING("VisionSystem.IsGainValid.OOR", "Gain %f not in range %f to %f",
+                          gain, _minCameraGain, _maxCameraGain);
+    }
+    return inRange;
+  }
+  
 } // namespace Cozmo
 } // namespace Anki
