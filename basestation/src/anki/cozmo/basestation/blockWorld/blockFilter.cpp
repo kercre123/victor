@@ -60,11 +60,8 @@ void BlockFilter::Init(const std::string &path)
     PRINT_CH_INFO("BlockPool", "BlockFilter.Init", "Loading from file %s", path.c_str());
     Load();
   
-    if(_enabled)
-    {
-      CopyPersistentPoolToRuntimePool();
-      ConnectToObjects();
-    }
+    CopyPersistentPoolToRuntimePool();
+    ConnectToObjects();
 }
   
 void BlockFilter::Update()

@@ -1226,6 +1226,14 @@ namespace Anki {
 
     Result IDriveToInteractWithObject::UpdateDerived()
     {
+      // The only way the driveToObjectAction can be null is if it wasn't newed in the constructor
+      if(_driveToObjectAction == nullptr)
+      {
+        PRINT_NAMED_ERROR("IDriveToInteractWithObject.UpdateDerived.NullAction",
+                          "_driveToObjectAction is null, returning failure");
+        return RESULT_FAIL;
+      }
+      
       if(!_lightsSet) {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
@@ -1688,8 +1696,10 @@ namespace Anki {
     {
       // Get DriveToObjectAction
       DriveToObjectAction* driveAction = GetDriveToObjectAction();
-      DEV_ASSERT(driveAction != nullptr, "DriveToAndMountChargerAction.DriveToObjectSubActionNotFound");
-      driveAction->DoPositionCheckOnPathCompletion(false);
+      if(driveAction != nullptr)
+      {
+        driveAction->DoPositionCheckOnPathCompletion(false);
+      }
       
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
       SetProxyTag(action->GetTag());
