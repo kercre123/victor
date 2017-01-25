@@ -391,6 +391,7 @@ namespace Cozmo {
   VisionSystem::~VisionSystem()
   {
     Util::SafeDelete(_faceTracker);
+    Util::SafeDelete(_petTracker);
   }
   
   
