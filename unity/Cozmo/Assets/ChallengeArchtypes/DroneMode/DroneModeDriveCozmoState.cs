@@ -564,7 +564,9 @@ namespace Cozmo {
 
         private void HandleActionFinished(bool success) {
           _CurrentRobot.CancelCallback(HandleActionFinished);
-          EnableInput();
+          if (!_StateMachine.IsPaused) {
+            EnableInput();
+          }
           IsPerformingAction = false;
         }
 
