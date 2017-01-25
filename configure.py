@@ -420,8 +420,6 @@ class GamePlatformConfiguration(object):
             relative_gyp_project = os.path.relpath(self.gyp_project_path, self.platform_output_dir)
             workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
             workspace.add_project(relative_gyp_project)
-        else:
-            self.call_engine('generate')
         # END ENGINE GENERATE
 
         #FEATURES BUILD FLAGS
@@ -596,7 +594,9 @@ class GamePlatformConfiguration(object):
             args += ['--verbose']
         if self.options.do_not_check_dependencies:
             args += ['--do-not-check-dependencies']
+        print_status( "\nBeginning to {0} engine".format(command))
         ankibuild.util.File.execute(args)
+        print_status("Finished {0} step of engine\n".format(command))
 
     def move_ndk(self):
         #this must be more dynamic. But I'm not sure how to do this at the moment.
