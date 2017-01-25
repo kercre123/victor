@@ -112,6 +112,8 @@ namespace Anki {
       Pose3d _objectPoseGoalsGeneratedFrom;
       bool _useObjectPose = false;
       
+      int _debugPrintCtr = 0;
+      
     }; // class DriveToPoseAction
 
     

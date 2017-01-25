@@ -827,13 +827,12 @@ namespace Anki {
           // clear abort timing, since we got a path
           _timeToAbortPlanning = -1.0f;
           
-          static int ctr = 0;
-          if(ctr++ % 10 == 0) {
+          if(_debugPrintCtr++ % 10 == 0) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
                              "[%d] Waiting for robot to complete its path traversal (%d), "
                              "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.",
                              GetTag(),
-                             ctr,
+                             _debugPrintCtr,
                              _robot.GetCurrentPathSegment(),
                              _robot.GetLastSentPathID(),
                              _robot.GetLastRecvdPathID());
