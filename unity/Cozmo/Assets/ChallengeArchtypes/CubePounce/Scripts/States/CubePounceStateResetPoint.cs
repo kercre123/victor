@@ -21,7 +21,6 @@ namespace Cozmo.Minigame.CubePounce {
 
     public override void Enter() {
       base.Enter();
-      _CubePounceGame.StopCycleCube(_CubePounceGame.GetCubeTarget().ID);
       _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPushCubeTowardCozmo);
       _CubePounceGame.SharedMinigameView.HideNarrowInfoTextSlide();
 

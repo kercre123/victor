@@ -404,14 +404,12 @@ namespace SpeedTap {
 
     public void ClearWinningLightPatterns() {
       if (PlayerBlockID != -1) {
-        StopCycleCube(PlayerBlockID);
         if (CurrentRobot != null) {
           CurrentRobot.LightCubes[PlayerBlockID].SetLEDsOff();
         }
       }
 
       if (CozmoBlockID != -1) {
-        StopCycleCube(CozmoBlockID);
         if (CurrentRobot != null) {
           CurrentRobot.LightCubes[CozmoBlockID].SetLEDsOff();
         }

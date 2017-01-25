@@ -1,0 +1,88 @@
+{
+    "Pairs": [
+        {
+            "CladEvent": "Carrying",
+            "AnimName": "interacting"
+        },
+        {
+            "CladEvent": "Connected",
+            "AnimName": "connected"
+        },
+        {
+            "CladEvent": "CubePouncePlayerLose",
+            "AnimName": "cubePouncePlayerLose"
+        },
+        {
+            "CladEvent": "CubePouncePlayerWin",
+            "AnimName": "cubePouncePlayerWin"
+        },
+        {
+            "CladEvent": "DoubleTappedKnown",
+            "AnimName": "doubleTappedKnown"
+        },
+        {
+            "CladEvent": "DoubleTappedUnsure",
+            "AnimName": "doubleTappedUnsure"
+        },
+        {
+            "CladEvent": "DrivingTo",
+            "AnimName": "interacting"
+        },
+        {
+            "CladEvent": "Flash",
+            "AnimName": "flash"
+        },
+        {
+            "CladEvent": "Interacting",
+            "AnimName": "interacting"
+        },
+        {
+            "CladEvent": "Onboarding",
+            "AnimName": "onboarding"
+        },
+        {
+            "CladEvent": "PyramidBaseBottom",
+            "AnimName": "pyramidBaseBottom"
+        },
+        {
+            "CladEvent": "PyramidBaseTop",
+            "AnimName": "pyramidBaseTop"
+        },
+        {
+            "CladEvent": "PyramidDenouement",
+            "AnimName": "pyramidDenouement"
+        },
+        {
+            "CladEvent": "PyramidFlourish",
+            "AnimName": "pyramidFlourish"
+        },
+        {
+            "CladEvent": "PyramidPickup",
+            "AnimName": "pyramidPickup"
+        },
+        {
+            "CladEvent": "PyramidSingle",
+            "AnimName": "interacting"
+        },
+        {
+            "CladEvent": "Sleep",
+            "AnimName": "sleep"
+        },
+        {
+            "CladEvent": "SpeedTapWin",
+            "AnimName": "speedTapWin"
+        },
+        {
+            "CladEvent": "SpeedTapLose",
+            "AnimName": "speedTapLose"
+        },
+        {
+            "CladEvent": "Visible",
+            "AnimName": "visible"
+        },
+        {
+            "CladEvent": "WakeUp",
+            "AnimName": "wakeUp"
+        }
+    ]
+}

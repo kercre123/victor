@@ -536,6 +536,16 @@
                 ],
             },
             {
+                'action_name': 'create_symlink_resources_cube_anim_group_maps',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_asset_path)/cubeAnimationGroupMaps',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/cubeAnimationGroupMaps'
+                ],
+            },
+            {
                 'action_name': 'create_symlink_resources_sound',
                 'inputs': [],
                 'outputs': [],

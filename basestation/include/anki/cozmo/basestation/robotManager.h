@@ -44,8 +44,10 @@ enum class RobotToEngineTag : uint8_t;
 }
 class Robot;
 class IExternalInterface;
-class CozmoContext;
+class BackpackLightAnimationContainer;
 class CannedAnimationContainer;
+class CubeLightAnimationContainer;
+class CozmoContext;
 class AnimationGroupContainer;
 enum class FirmwareType : uint8_t;
 class FirmwareUpdater;
@@ -95,8 +97,10 @@ public:
   // Return the number of availale robots
   size_t GetNumRobots() const;
 
-  CannedAnimationContainer& GetCannedAnimations() { return *_cannedAnimations; }
-  AnimationGroupContainer& GetAnimationGroups() { return *_animationGroups; }
+  CannedAnimationContainer&        GetCannedAnimations()        { return *_cannedAnimations; }
+  CubeLightAnimationContainer&     GetCubeLightAnimations()     { return *_cubeLightAnimations; }
+  BackpackLightAnimationContainer& GetBackpackLightAnimations() { return *_backpackLightAnimations; }
+  AnimationGroupContainer&         GetAnimationGroups()         { return *_animationGroups; }
   
   RobotEventHandler& GetRobotEventHandler() { return _robotEventHandler; }
   
@@ -104,6 +108,8 @@ public:
   bool HasAnimationGroup(const std::string& groupName);
   bool HasAnimationForTrigger( AnimationTrigger ev );
   std::string GetAnimationForTrigger( AnimationTrigger ev );
+  bool HasCubeAnimationForTrigger( CubeAnimationTrigger ev );
+  std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev );
   
   // Read the animations in a dir
   void ReadAnimationDir();
@@ -129,9 +135,12 @@ protected:
   std::vector<RobotID_t>     _IDs;
   const CozmoContext* _context;
   RobotEventHandler _robotEventHandler;
+  BackpackLightAnimationContainer* const _backpackLightAnimations;
   CannedAnimationContainer* const _cannedAnimations;
+  CubeLightAnimationContainer* const _cubeLightAnimations;
   AnimationGroupContainer* const _animationGroups;
   AnimationTriggerResponsesContainer* const _animationTriggerResponses;
+  AnimationTriggerResponsesContainer* const _cubeAnimationTriggerResponses;
   std::unique_ptr<FirmwareUpdater> _firmwareUpdater;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;

@@ -29,7 +29,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -350,12 +350,12 @@ namespace Cozmo {
     
     if (res == FactoryTestResultCode::SUCCESS) {
       PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestPASSED", "");
-      robot.GetLightsComponent().SetBackpackLights(passLights);
+      robot.GetBodyLightComponent().SetBackpackLights(passLights);
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestFAILED",
                           "%s (code %d, state %s)",
                           EnumToString(res), static_cast<u8>(res), GetDebugStateName().c_str());
-      robot.GetLightsComponent().SetBackpackLights(failLights);
+      robot.GetBodyLightComponent().SetBackpackLights(failLights);
     }
     
   };

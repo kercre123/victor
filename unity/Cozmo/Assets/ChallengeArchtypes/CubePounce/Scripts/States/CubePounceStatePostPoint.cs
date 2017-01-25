@@ -13,6 +13,8 @@ namespace Cozmo.Minigame.CubePounce {
 
     private Anki.Cozmo.Audio.GameState.Music _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Invalid;
 
+    private Anki.Cozmo.CubeAnimationTrigger _cubeAnim;
+
     public override void Enter() {
       base.Enter();
 
@@ -23,13 +25,15 @@ namespace Cozmo.Minigame.CubePounce {
       if (_CozmoWon) {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinPoint);
         _CubePounceGame.AddPoint(false);
-        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.red }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
+        _cubeAnim = Anki.Cozmo.CubeAnimationTrigger.CubePouncePlayerLose;
       }
       else {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPlayerWinPoint);
         _CubePounceGame.AddPoint(true);
-        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.green }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.white);
+        _cubeAnim = Anki.Cozmo.CubeAnimationTrigger.CubePouncePlayerWin;
       }
+
+      _CubePounceGame.GetCubeTarget().PlayAnim(_cubeAnim);
 
       bool roundIsOver = _CubePounceGame.CheckAndUpdateRoundScore();
       if (roundIsOver) {
@@ -78,15 +82,17 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void HandleEndHandAnimFinish(bool success) {
+      _CubePounceGame.GetCubeTarget().StopAnim(_cubeAnim);
       _StateMachine.SetNextState(new CubePounceStateResetPoint());
     }
 
     private void HandleEndRoundAnimFinish(bool success) {
+      _CubePounceGame.GetCubeTarget().StopAnim(_cubeAnim);
       _StateMachine.SetNextState(new CubePounceStateInitGame());
     }
 
     private void HandleEndGameAnimFinish(bool success) {
-      _CubePounceGame.StopCycleCube(_CubePounceGame.GetCubeTarget().ID);
+      _CubePounceGame.GetCubeTarget().StopAnim(_cubeAnim);
       _CubePounceGame.StartRoundBasedGameEnd();
       _CubePounceGame.UpdateUIForGameEnd();
     }

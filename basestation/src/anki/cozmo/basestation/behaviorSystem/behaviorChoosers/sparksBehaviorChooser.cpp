@@ -23,7 +23,8 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -162,7 +163,7 @@ void SparksBehaviorChooser::OnSelected()
                                                                AnimationTrigger::SparkDrivingLoop,
                                                                AnimationTrigger::SparkDrivingStop});
     _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-    _robot.GetLightsComponent().StartLoopingBackpackLights(kLoopingSparkLights);
+    _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights);
 
     _idleAnimationsSet = true;
   }
@@ -183,9 +184,7 @@ void SparksBehaviorChooser::OnDeselected()
   mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, true);
 
   // clear any custom light events set during the spark
-  _robot.GetLightsComponent().ClearAllCustomPatterns();
-
-
+  _robot.GetCubeLightComponent().StopAllAnims();
 }
   
 void SparksBehaviorChooser::ResetLightsAndAnimations()
@@ -195,7 +194,7 @@ void SparksBehaviorChooser::ResetLightsAndAnimations()
   _robot.GetAnimationStreamer().PopIdleAnimation();
   _idleAnimationsSet = false;
   
-  _robot.GetLightsComponent().StopLoopingBackpackLights();
+  _robot.GetBodyLightComponent().StopLoopingBackpackLights();
 }
 
   

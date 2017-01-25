@@ -27,7 +27,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -1165,6 +1165,7 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
                    "BehaviorManager.UpdateBehaviorWithObjectTapInteraction.TooManyDoubleTapTriggers");
         if(reactToDoubleTapBehaviors.size() == 1){
           IBehavior* reactToDoubleTap = *reactToDoubleTapBehaviors.begin();
+
           BehaviorPreReqRobot preReqRobot(_robot);
           if(reactToDoubleTap->IsRunnable(preReqRobot))
           {

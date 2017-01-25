@@ -60,6 +60,7 @@ enum int_32 RobotActionType {
     PLACE_OBJECT_LOW,          //   "
     PLACE_OBJECT_HIGH,         //   "
     PLAY_ANIMATION,
+    PLAY_CUBE_ANIMATION,
     POP_A_WHEELIE,
     READ_TOOL_CODE,
     ROLL_OBJECT_LOW,           // Possible sub-type of PickAndPlaceAction

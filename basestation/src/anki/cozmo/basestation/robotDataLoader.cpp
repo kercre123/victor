@@ -15,9 +15,13 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/animationContainers/backpackLightAnimationContainer.h"
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/animations/animationTransfer.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
@@ -53,8 +57,11 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
 , _cannedAnimations(new CannedAnimationContainer())
+, _cubeLightAnimations(new CubeLightAnimationContainer())
 , _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
 , _animationTriggerResponses(new AnimationTriggerResponsesContainer())
+, _cubeAnimationTriggerResponses(new AnimationTriggerResponsesContainer())
+, _backpackLightAnimations(new BackpackLightAnimationContainer())
 {
 }
 
@@ -102,6 +109,16 @@ void RobotDataLoader::LoadNonConfigData()
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
     LoadAnimationGroups();
   }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
+    LoadCubeLightAnimations();
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
+    LoadBackpackLightAnimations();
+  }
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadFaceAnimations");
@@ -125,8 +142,13 @@ void RobotDataLoader::LoadNonConfigData()
   }
   
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadGameEventResponses");
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
     LoadAnimationTriggerResponses();
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
+    LoadCubeAnimationTriggerResponses();
   }
   
   {
@@ -163,6 +185,22 @@ void RobotDataLoader::CollectAnimFiles()
         _jsonFiles[FileType::Animation].push_back(filename);
       });
     }
+  }
+  
+  // cube light animations
+  {
+    TimestampMap timestamps;
+    WalkAnimationDir("config/basestation/lights/cubeLights", timestamps, [this] (const std::string& filename) {
+      _jsonFiles[FileType::CubeLightAnimation].push_back(filename);
+    });
+  }
+  
+  // backpack light animations
+  {
+    TimestampMap timestamps;
+    WalkAnimationDir("config/basestation/lights/backpackLights", timestamps, [this] (const std::string& filename) {
+      _jsonFiles[FileType::BackpackLightAnimation].push_back(filename);
+    });
   }
 
   // animation groups
@@ -221,6 +259,73 @@ void RobotDataLoader::LoadAnimationsInternal()
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;
   PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationsInternal", "Time to load animations = %.2f ms", loadTime);
+}
+
+void RobotDataLoader::LoadCubeLightAnimations()
+{
+  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadCubeLightAnimationFile, this, std::placeholders::_1);
+  MyDispatchWorker myWorker(loadFileFunc);
+  
+  const auto& fileList = _jsonFiles[FileType::CubeLightAnimation];
+  const auto size = fileList.size();
+  for (int i = 0; i < size; i++) {
+    myWorker.PushJob(fileList[i]);
+  }
+
+  myWorker.Process();
+  
+  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  double loadTime = endTime - startTime;
+  PRINT_NAMED_INFO("RobotDataLoader.LoadCubeLightAnimations",
+                   "Time to load cube light animations = %.2f ms",
+                   loadTime);
+}
+
+void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
+{
+  Json::Value animDefs;
+  const bool success = _platform->readAsJson(path.c_str(), animDefs);
+  std::string animationName = Util::FileUtils::GetFileName(path, true, true);
+  if (success && !animDefs.empty()) {
+    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
+    _cubeLightAnimations->DefineFromJson(animDefs, animationName);
+  }
+}
+
+void RobotDataLoader::LoadBackpackLightAnimations()
+{
+  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadBackpackLightAnimationFile, this, std::placeholders::_1);
+  MyDispatchWorker myWorker(loadFileFunc);
+  
+  const auto& fileList = _jsonFiles[FileType::BackpackLightAnimation];
+  const auto size = fileList.size();
+  for (int i = 0; i < size; i++) {
+    myWorker.PushJob(fileList[i]);
+  }
+  
+  myWorker.Process();
+  
+  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  double loadTime = endTime - startTime;
+  PRINT_NAMED_INFO("RobotDataLoader.LoadCubeLightAnimations",
+                   "Time to load cube light animations = %.2f ms",
+                   loadTime);
+}
+
+void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
+{
+  Json::Value animDefs;
+  const bool success = _platform->readAsJson(path.c_str(), animDefs);
+  if (success && !animDefs.empty()) {
+    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
+    _backpackLightAnimations->DefineFromJson(animDefs);
+  }
 }
 
 void RobotDataLoader::LoadAnimationGroups()
@@ -418,6 +523,11 @@ void RobotDataLoader::LoadFaceAnimations()
 void RobotDataLoader::LoadAnimationTriggerResponses()
 {
   _animationTriggerResponses->Load(_platform, "assets/animationGroupMaps");
+}
+
+void RobotDataLoader::LoadCubeAnimationTriggerResponses()
+{
+  _cubeAnimationTriggerResponses->Load(_platform, "assets/cubeAnimationGroupMaps");
 }
 
 void RobotDataLoader::LoadRobotConfigs()

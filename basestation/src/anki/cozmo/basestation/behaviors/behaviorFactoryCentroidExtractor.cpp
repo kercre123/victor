@@ -21,7 +21,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -147,7 +147,7 @@ namespace Cozmo {
                   {
                     PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.MoveHead", "Moving head to 0 degrees failed");
                     failLights.onColors = fail_onColorMagenta;
-                    robot.GetLightsComponent().SetBackpackLights(failLights);
+                    robot.GetBodyLightComponent().SetBackpackLights(failLights);
                   }
                 });
   }
@@ -163,7 +163,7 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.DotTestFailed",
                             "Failed to find all 4 dots");
         failLights.onColors = fail_onColorRed;
-        robot.GetLightsComponent().SetBackpackLights(failLights);
+        robot.GetBodyLightComponent().SetBackpackLights(failLights);
       }
       else
       {
@@ -172,7 +172,7 @@ namespace Cozmo {
           PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.DidNotComputeCameraPose",
                               "Failed to compute camPose camera is not calibrated");
           failLights.onColors = fail_onColorOrange;
-          robot.GetLightsComponent().SetBackpackLights(failLights);
+          robot.GetBodyLightComponent().SetBackpackLights(failLights);
         }
         else
         {
@@ -219,11 +219,11 @@ namespace Cozmo {
           if(doThresholdCheck && exceedsThresh)
           {
             failLights.onColors = fail_onColorBlue;
-            robot.GetLightsComponent().SetBackpackLights(failLights);
+            robot.GetBodyLightComponent().SetBackpackLights(failLights);
           }
           else
           {
-            robot.GetLightsComponent().SetBackpackLights(passLights);
+            robot.GetBodyLightComponent().SetBackpackLights(passLights);
           }
         }
       }

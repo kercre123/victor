@@ -26,17 +26,17 @@ IMPLEMENT_ENUM_INCREMENT_OPERATORS(ConfigurationType);
 
 
 // One global instance, created at static initialization on app launch
-static Anki::Util::StringToEnumMapper<ConfigurationType> gStringToAnimationTriggerMapper;
+static Anki::Util::StringToEnumMapper<ConfigurationType> gStringToBlockConfigurationMapper;
 
 // Unlike other Enums to string, this will assert on fails by default
 ConfigurationType BlockConfigurationFromString(const char* inString, bool assertOnInvalidEnum )
 {
-  return gStringToAnimationTriggerMapper.GetTypeFromString(inString,assertOnInvalidEnum);
+  return gStringToBlockConfigurationMapper.GetTypeFromString(inString,assertOnInvalidEnum);
 }
 
 bool IsBlockConfiguration(const char* inString)
 {
-  return gStringToAnimationTriggerMapper.HasType(inString);
+  return gStringToBlockConfigurationMapper.HasType(inString);
 }
   
 const char* EnumToString(const ConfigurationType t)

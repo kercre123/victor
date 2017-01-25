@@ -382,4 +382,6 @@ public interface IRobot : IDisposable {
   void ExitSDKMode();
 
   void SetNightVision(bool enable);
+
+  void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null);
 }

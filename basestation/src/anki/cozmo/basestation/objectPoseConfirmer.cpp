@@ -17,7 +17,7 @@
 
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -74,7 +74,7 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   
   // Notify about the change we are about to make from old to new:
   _robot.GetBlockWorld().OnObjectPoseWillChange(object->GetID(), object->GetFamily(), newPose, newPoseState);
-  _robot.GetLightsComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newPoseState);
+  _robot.GetCubeLightComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newPoseState);
   
   // if state changed from unknown to known or dirty
   if (object->IsPoseStateUnknown() && newPoseState != PoseState::Unknown) {
@@ -113,7 +113,7 @@ Result ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject* object) const
 
 void ObjectPoseConfirmer::SetPoseState(ObservableObject* object, PoseState newState) const
 {
-  _robot.GetLightsComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newState);
+  _robot.GetCubeLightComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newState);
   
   object->SetPoseState(newState);
 }

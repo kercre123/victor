@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -73,7 +73,6 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::OnboardingDriveStart,
     AnimationTrigger::OnboardingDriveLoop,
     AnimationTrigger::OnboardingDriveEnd});
-  _lightsNeedReEnable = false;
   EnableSpecificReactionaryBehavior(robot,false);
   // Some reactionary behaviors don't trigger resume like cliff react followed by "react to on back"
   // So just handle init doesn't always reset to "inactive"
@@ -92,10 +91,7 @@ void BehaviorOnboardingShowCube::StopInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   EnableSpecificReactionaryBehavior(robot, true);
-  if( _lightsNeedReEnable )
-  {
-    robot.GetLightsComponent().SetEnableComponent(true);
-  }
+  robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Onboarding);
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }
 
@@ -293,11 +289,8 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(Robot& robot)
   
 void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
 {
-  // Because only actions set lights and onboarding is a behavior, we want the illusion of him thinking about the lights
-  // so just manually set up to green
-  _lightsNeedReEnable = true;
-  robot.GetLightsComponent().SetEnableComponent(false);
-  robot.GetLightsComponent().SetObjectLights(_targetBlock, robot.GetLightsComponent().GetLightsForState(LightsComponent::CubeLightsState::Interacting));
+  // Manually set lights to Interacting (green) lights
+  robot.GetCubeLightComponent().PlayLightAnim(_targetBlock, CubeAnimationTrigger::Onboarding);
   
   DriveToPickupObjectAction* driveAndPickupAction = new DriveToPickupObjectAction(robot, _targetBlock);
   driveAndPickupAction->SetPostDockLiftMovingAnimation(AnimationTrigger::OnboardingSoundOnlyLiftEffortPickup);
@@ -357,8 +350,7 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
   StartActing(action,
               [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
               {
-                _lightsNeedReEnable = false;
-                robot.GetLightsComponent().SetEnableComponent(true);
+                robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Onboarding);
                 SET_STATE(WaitForFinalContinue,robot);
               });
 }

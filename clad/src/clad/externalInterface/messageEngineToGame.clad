@@ -555,7 +555,7 @@ message EngineErrorCodeMessage {
   EngineErrorCode errorCode
 }
 
-// Sent when a cube lights change state in LightsComponent
+// Sent when a cube lights change in CubeLightComponent
 message CubeLightsStateTransition {
   uint_32 objectID,
   uint_32 factoryID,

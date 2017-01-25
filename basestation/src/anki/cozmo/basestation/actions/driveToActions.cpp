@@ -18,7 +18,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
@@ -99,7 +99,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DrivingTo, _objectID);
       }
       _compoundAction.PrepForCompletion();
     }
@@ -334,7 +334,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetLightsComponent().SetInteractionObject(_objectID);
+        _robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
         _lightsSet = true;
       }
       
@@ -1017,6 +1017,9 @@ namespace Anki {
         innerAction->AddAction(_driveToObjectAction, false);
 
         auto waitLambda = [this](Robot& robot) {
+          // Keep the cube lights set while the waitForLambda action is running
+          robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+        
           // if this lambda gets called, that means the drive to must have succeeded.
           if( _dockAction ) {
             PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.DriveToSuccess",
@@ -1083,6 +1086,9 @@ namespace Anki {
       // TODO:(bn) this could be done much more elegantly as part of CompoundActionSequential
       {
         auto lambdaToWaitFor = [this](Robot& robot) {
+          // Keep the cube lights set while the waitForLambda action is running
+          _robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+          
           if( _preDockCallback ) {
             _preDockCallback(robot);
           }
@@ -1237,7 +1243,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetLightsComponent().SetInteractionObject(_objectID);
+        _robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
         _lightsSet = true;
       }
       return RESULT_OK;
@@ -1249,7 +1255,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DrivingTo, _objectID);
         _lightsSet = false;
       }
     }

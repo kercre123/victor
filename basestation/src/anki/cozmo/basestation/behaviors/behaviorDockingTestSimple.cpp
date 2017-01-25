@@ -28,7 +28,7 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -234,7 +234,7 @@ namespace Anki {
           }
           
           // Turn off backpack lights in case we needed to be manually reset
-          robot.GetLightsComponent().SetBackpackLights(failLights);
+          robot.GetBodyLightComponent().SetBackpackLights(failLights);
           
           _blockObjectIDPickup.UnSet();
           
@@ -768,11 +768,11 @@ namespace Anki {
     {
       if(_yellForHelp)
       {
-        robot.GetLightsComponent().SetBackpackLights(failLights);
+        robot.GetBodyLightComponent().SetBackpackLights(failLights);
       }
       else if(_yellForCompletion)
       {
-        robot.GetLightsComponent().SetBackpackLights(passLights);
+        robot.GetBodyLightComponent().SetBackpackLights(passLights);
       }
       SetCurrState(s);
     }

@@ -98,7 +98,7 @@ namespace Anki {
           break;
           
         default:
-          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY", "Unrecognized relateive LED mode %s.", MakeRelativeModeToString(mode));
+          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY", "Unrecognized relative LED mode %s.", MakeRelativeModeToString(mode));
           return;
       }
       

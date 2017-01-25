@@ -29,8 +29,8 @@ namespace Anki {
   namespace Cozmo {
     
     // Forward Declaration
-    class MoodManager;
     class CannedAnimationContainer;
+    class MoodManager;
     
     class AnimationGroupEntry
     {

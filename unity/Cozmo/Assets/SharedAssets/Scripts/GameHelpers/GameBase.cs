@@ -94,18 +94,6 @@ public abstract class GameBase : MonoBehaviour {
   [HideInInspector]
   public List<int> CubeIdsForGame;
 
-  private Dictionary<int, CycleData> _CubeCycleTimers;
-
-  private class CycleData {
-    public int cubeID;
-    public float timeElaspedSeconds;
-    public float cycleIntervalSeconds;
-    public Color[] cycleColors;
-    public int colorIndex;
-    public bool cycleSingleColorOnly;
-    public uint singleColor;
-  }
-
   private Dictionary<int, BlinkData> _BlinkCubeTimers;
 
   private class BlinkData {
@@ -183,7 +171,6 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
 
-    _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
 
     SkillSystem.Instance.StartGame(_ChallengeData);
@@ -361,7 +348,6 @@ public abstract class GameBase : MonoBehaviour {
   #region Update
 
   protected virtual void Update() {
-    UpdateCubeCycleLights();
     UpdateBlinkLights();
     UpdateStateMachine();
     AutoAdvanceCheck();
@@ -1017,18 +1003,10 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void StartCycleCube(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
-    StartCycleCubeInternal(cubeID, lightColorsCounterclockwise, cycleIntervalSeconds, false);
+    StartCycleCubeInternal(cubeID, lightColorsCounterclockwise, cycleIntervalSeconds);
   }
 
-  public void StartCycleCubeSingleColor(int cubeID, Color[] lightColors, float cycleIntervalSeconds, Color rotateColor) {
-    StartCycleCubeInternal(cubeID, lightColors, cycleIntervalSeconds, true);
-    if (_CubeCycleTimers.ContainsKey(cubeID)) {
-      _CubeCycleTimers[cubeID].cycleSingleColorOnly = true;
-      _CubeCycleTimers[cubeID].singleColor = rotateColor.ToUInt();
-    }
-  }
-
-  private void StartCycleCubeInternal(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds, bool isSingleColor) {
+  private void StartCycleCubeInternal(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
     // Remove from blink lights if it exists there
     StopBlinkLight(cubeID);
 
@@ -1041,74 +1019,8 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     cube.SetLEDs(lightColorsCounterclockwise);
-    if (isSingleColor) {
-      cube.rotationPeriodMs = 0f;
-    }
-    else {
-      cube.rotationPeriodMs = cycleIntervalSeconds * 1000f;
-    }
 
-    // Set up timing data
-    CycleData data = new CycleData();
-    data.cubeID = cubeID;
-    data.cycleIntervalSeconds = cycleIntervalSeconds;
-    data.timeElaspedSeconds = 0f;
-    data.colorIndex = 0;
-    data.cycleColors = lightColorsCounterclockwise;
-    data.cycleSingleColorOnly = false;
-
-    // Update data
-    if (_CubeCycleTimers.ContainsKey(cubeID)) {
-      _CubeCycleTimers[cubeID] = data;
-    }
-    else {
-      _CubeCycleTimers.Add(cubeID, data);
-    }
-  }
-
-  public void StopCycleCube(int cubeID) {
-    if (_CubeCycleTimers.ContainsKey(cubeID)) {
-      _CubeCycleTimers.Remove(cubeID);
-    }
-  }
-
-  private void UpdateCubeCycleLights() {
-    foreach (KeyValuePair<int, CycleData> kvp in _CubeCycleTimers) {
-      kvp.Value.timeElaspedSeconds += Time.deltaTime;
-
-      if (kvp.Value.timeElaspedSeconds > kvp.Value.cycleIntervalSeconds) {
-        if (kvp.Value.cycleSingleColorOnly) {
-          CycleLightsSingleColor(kvp.Value);
-        }
-        else {
-          // This is now handled engine-side
-          // CycleLightsClockwise(kvp.Value);
-        }
-        kvp.Value.timeElaspedSeconds %= kvp.Value.cycleIntervalSeconds;
-      }
-    }
-  }
-
-  private void CycleLightsSingleColor(CycleData data) {
-    if (CurrentRobot == null) {
-      return;
-    }
-
-    LightCube cube = null;
-    CurrentRobot.LightCubes.TryGetValue(data.cubeID, out cube);
-    if (cube == null) {
-      return;
-    }
-
-    data.colorIndex++;
-    data.colorIndex %= cube.Lights.Length;
-    for (int i = 0; i < cube.Lights.Length; i++) {
-      cube.Lights[i].OnColor = data.cycleColors[i % data.cycleColors.Length].ToUInt();
-      if (i == data.colorIndex) {
-        cube.Lights[i].OnColor = data.singleColor;
-      }
-      cube.Lights[i].OnPeriodMs = LightCube.Light.FOREVER;
-    }
+    cube.rotationPeriodMs = cycleIntervalSeconds * 1000f;
   }
 
   public void BlinkLight(int cubeId, float duration, Color blinkColor, Color originalColor) {
@@ -1116,9 +1028,6 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void BlinkLight(int cubeId, float duration, Color[] blinkColorsCounterclockwise, Color[] originalColors) {
-    // Remove from cycle cubes if it's there
-    StopCycleCube(cubeId);
-
     // Set up timing data
     BlinkData data = new BlinkData();
     data.cubeID = cubeId;

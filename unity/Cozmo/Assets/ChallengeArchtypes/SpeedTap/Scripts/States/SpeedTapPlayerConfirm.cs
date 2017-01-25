@@ -36,7 +36,6 @@ namespace SpeedTap {
         if (id != _SpeedTapGame.CozmoBlockID) {
           foreach (var kvp in _CurrentRobot.LightCubes) {
             if (kvp.Value.ID != _SpeedTapGame.CozmoBlockID) {
-              _SpeedTapGame.StopCycleCube(kvp.Value.ID);
               kvp.Value.SetLEDsOff();
             }
           }
@@ -45,7 +44,6 @@ namespace SpeedTap {
         }
       }
       else if (_SpeedTapGame.PlayerBlockID == id) {
-        _SpeedTapGame.StopCycleCube(_SpeedTapGame.PlayerBlockID);
         _CurrentRobot.LightCubes[_SpeedTapGame.PlayerBlockID].SetLEDsOff();
         HandlePlayerCubeTap();
       }

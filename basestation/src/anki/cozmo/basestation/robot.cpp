@@ -30,7 +30,8 @@
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -197,7 +198,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _aiComponent(new AIComponent(*this))
   , _textToSpeechComponent(new TextToSpeechComponent(_context))
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
-  , _lightsComponent( new LightsComponent( *this ) )
+  , _cubeLightComponent(new CubeLightComponent(*this, _context))
+  , _bodyLightComponent(new BodyLightComponent(*this, _context))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
@@ -1831,7 +1833,8 @@ Result Robot::Update()
     _lastDebugStringHash = curr_hash;
   }
 
-  _lightsComponent->Update();
+  _cubeLightComponent->Update();
+  _bodyLightComponent->Update();
 
 
   if( kDebugPossibleBlockInteraction ) {

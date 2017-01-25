@@ -1033,4 +1033,7 @@ public class MockRobot : IRobot {
 
   public void SetNightVision(bool enable) {
   }
+
+  public void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
+  }
 }

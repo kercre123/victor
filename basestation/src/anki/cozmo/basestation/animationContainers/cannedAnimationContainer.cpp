@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 
 #include "util/logging/logging.h"
@@ -69,6 +69,7 @@ namespace Cozmo {
     
     return animPtr;
   }
+  
   bool CannedAnimationContainer::HasAnimation(const std::string& name) const
   {
     auto retVal = _animations.find(name);

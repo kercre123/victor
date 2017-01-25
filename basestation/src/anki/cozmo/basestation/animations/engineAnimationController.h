@@ -17,7 +17,6 @@
 
 #include "anki/cozmo/basestation/animations/animationControllerTypes.h"
 
-
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
 #include <memory>
@@ -25,8 +24,8 @@
 namespace Anki {
 namespace Cozmo {
   
-class CannedAnimationContainer;
 class AnimationGroupContainer;
+class CannedAnimationContainer;
 class CozmoContext;
 class Robot;
 

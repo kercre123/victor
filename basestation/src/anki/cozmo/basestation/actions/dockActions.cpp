@@ -21,7 +21,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/charger.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -128,7 +128,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDockAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _dockObjectID.GetValue());
-        _robot.GetLightsComponent().UnSetInteractionObject(_dockObjectID);
+        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Interacting, _dockObjectID);
       }
       
       // Stop squinting
@@ -562,7 +562,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDockAction.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _dockObjectID.GetValue());
-        _robot.GetLightsComponent().SetInteractionObject(_dockObjectID);
+        _robot.GetCubeLightComponent().PlayLightAnim(_dockObjectID, CubeAnimationTrigger::Interacting);
         _lightsSet = true;
       }
       

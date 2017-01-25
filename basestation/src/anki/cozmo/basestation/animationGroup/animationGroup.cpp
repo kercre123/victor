@@ -13,9 +13,9 @@
  *
  **/
 
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroup.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"

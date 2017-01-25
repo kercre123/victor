@@ -32,8 +32,8 @@ namespace Cozmo {
   // Forward declaration
   class Robot;
   class ProceduralFace;
-  class CozmoContext;
   class CannedAnimationContainer;
+  class CozmoContext;
   class AnimationGroupContainer;
   
   class IExternalInterface;

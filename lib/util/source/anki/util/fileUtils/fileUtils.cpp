@@ -387,12 +387,16 @@ std::string FileUtils::FullFilePath(std::vector<std::string>&& names)
   return fullpath;
 }
                         
-std::string FileUtils::GetFileName(const std::string& fullPath, bool mustHaveExtension)
+std::string FileUtils::GetFileName(const std::string& fullPath, bool mustHaveExtension, bool removeExtension)
 {
   size_t i = fullPath.rfind(kFileSeparator, fullPath.length());
   if (i != std::string::npos &&  i != fullPath.length() - 1) {
     std::string potentialFile = fullPath.substr(i+1, fullPath.length() - i);
-    if (!mustHaveExtension || potentialFile.find(".") != std::string::npos) {
+    size_t j = potentialFile.find(".");
+    if (!mustHaveExtension || j != std::string::npos) {
+      if(removeExtension) {
+        return potentialFile.substr(0, j);
+      }
       return potentialFile;
     }
   }

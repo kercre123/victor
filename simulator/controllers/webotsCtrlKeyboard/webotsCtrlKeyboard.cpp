@@ -2359,6 +2359,29 @@ namespace Anki {
                 SendMessage(message);
                 break;
               }
+              
+              case (s32)'-':
+              {
+                if(altKeyPressed)
+                {
+                  ExternalInterface::PlayCubeAnim s;
+                  s.trigger = CubeAnimationTrigger::WakeUp;
+                  s.objectID = 1;
+                  ExternalInterface::MessageGameToEngine m;
+                  m.Set_PlayCubeAnim(s);
+                  SendMessage(m);
+                }
+                else
+                {
+                  ExternalInterface::PlayCubeAnim s;
+                  s.trigger = CubeAnimationTrigger::Flash;
+                  s.objectID = 1;
+                  ExternalInterface::MessageGameToEngine m;
+                  m.Set_PlayCubeAnim(s);
+                  SendMessage(m);
+                }
+                break;
+              }
             
               case 0x04: // Webots carriage return?
               {

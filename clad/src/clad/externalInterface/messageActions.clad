@@ -213,6 +213,13 @@ message PlayAnimation_DEV {
   string animationName
 }
 
+// PlayCubeAnimationTrigger
+message PlayCubeAnimationTrigger {
+  uint_8  robotID,
+  uint_32 objectID,
+  CubeAnimationTrigger trigger,
+}
+
 // PopAWheelie
 message PopAWheelie {
   int_32 objectID, // negative value means "currently selected object"
@@ -530,6 +537,7 @@ union RobotActionUnion {
   PlaceRelObject            placeRelObject,
   PlayAnimation             playAnimation,
   PlayAnimationTrigger      playAnimationTrigger,
+  PlayCubeAnimationTrigger  playCubeAnimationTrigger,
   PopAWheelie               popAWheelie,
   ReadToolCode              readToolCode,
   RealignWithObject         realignWithObject,

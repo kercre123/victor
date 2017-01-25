@@ -742,6 +742,18 @@ message FlashCurrentLightsState {
   uint_32 objectID
 }
 
+// Plays a cube animation on the specified object
+message PlayCubeAnim {
+  uint_32 objectID,
+  CubeAnimationTrigger trigger
+}
+
+// Stops a cube animation that is playing on the specified object
+message StopCubeAnim {
+  uint_32 objectID,
+  CubeAnimationTrigger trigger
+}
+
 message StreamObjectAccel
 {
   uint_32 objectID,

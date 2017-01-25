@@ -35,7 +35,9 @@ class DataPlatform;
 namespace Cozmo {
 
 class AnimationGroupContainer;
+class BackpackLightAnimationContainer;
 class CannedAnimationContainer;
+class CubeLightAnimationContainer;
 class CozmoContext;
 class AnimationTriggerResponsesContainer;
 
@@ -64,8 +66,11 @@ public:
   const FileJsonMap& GetBehaviorJsons() const { return _behaviors; }
   
   CannedAnimationContainer* GetCannedAnimations() const { return _cannedAnimations.get(); }
+  CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
   AnimationTriggerResponsesContainer* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
+  AnimationTriggerResponsesContainer* GetCubeAnimationTriggerResponses() const { return _cubeAnimationTriggerResponses.get(); }
+  BackpackLightAnimationContainer* GetBackpackLightAnimations() const { return _backpackLightAnimations.get(); }
 
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const { return _robotMoodConfig; }
@@ -77,11 +82,22 @@ public:
   
 private:
   void CollectAnimFiles();
+  
   void LoadAnimationsInternal();
   void LoadAnimationFile(const std::string& path);
+  
+  void LoadCubeLightAnimations();
+  void LoadCubeLightAnimationFile(const std::string& path);
+  
+  void LoadBackpackLightAnimations();
+  void LoadBackpackLightAnimationFile(const std::string& path);
+  
   void LoadAnimationGroups();
   void LoadAnimationGroupFile(const std::string& path);
+  
   void LoadAnimationTriggerResponses();
+  void LoadCubeAnimationTriggerResponses();
+  
   void AddToLoadingRatio(float delta);
 
   using TimestampMap = std::unordered_map<std::string, time_t>;
@@ -99,15 +115,20 @@ private:
   FileJsonMap _behaviors;
 
   enum FileType {
-      Animation
-    , AnimationGroup
+      Animation,
+      AnimationGroup,
+      CubeLightAnimation,
+      BackpackLightAnimation
   };
   std::unordered_map<int, std::vector<std::string>> _jsonFiles;
 
   // animation data
-  std::unique_ptr<CannedAnimationContainer> _cannedAnimations;
-  std::unique_ptr<AnimationGroupContainer> _animationGroups;
+  std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
+  std::unique_ptr<CubeLightAnimationContainer>        _cubeLightAnimations;
+  std::unique_ptr<AnimationGroupContainer>            _animationGroups;
   std::unique_ptr<AnimationTriggerResponsesContainer> _animationTriggerResponses;
+  std::unique_ptr<AnimationTriggerResponsesContainer> _cubeAnimationTriggerResponses;
+  std::unique_ptr<BackpackLightAnimationContainer>    _backpackLightAnimations;
   TimestampMap _animFileTimestamps;
   TimestampMap _groupAnimFileTimestamps;
 

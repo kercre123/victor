@@ -938,15 +938,15 @@ TEST(QueueAction, QueueInParallel)
   r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction1);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
   EXPECT_EQ(r.GetActionList().GetNumQueues(), 1);
   
   r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction2);
   
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
   EXPECT_EQ(r.GetActionList().GetNumQueues(), 2);
   
   r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction3);
@@ -954,9 +954,9 @@ TEST(QueueAction, QueueInParallel)
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
   EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(3), 1);
   EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
   
   r.GetActionList().Update();
@@ -969,9 +969,9 @@ TEST(QueueAction, QueueInParallel)
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(3), 1);
   EXPECT_EQ(r.GetActionList().GetNumQueues(), 2);
   
   testAction2->_complete = true;
@@ -981,9 +981,9 @@ TEST(QueueAction, QueueInParallel)
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 0);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(3), 1);
   EXPECT_EQ(r.GetActionList().GetNumQueues(), 1);
   
   testAction3->_complete = true;
@@ -993,9 +993,9 @@ TEST(QueueAction, QueueInParallel)
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
   EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(2), 0);
+  EXPECT_EQ(r.GetActionList().GetQueueLength(3), 0);
   EXPECT_EQ(r.GetActionList().GetNumQueues(), 0);
   
   CheckActionDestroyed({"Test1", "Test2", "Test3"});

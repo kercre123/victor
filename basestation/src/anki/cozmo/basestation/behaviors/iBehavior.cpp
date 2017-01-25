@@ -24,7 +24,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
@@ -400,9 +400,8 @@ void IBehavior::Stop()
   _lockingNameToTracksMap.clear();
   
   // Clear any light patterns which were set on cubes
-  for(const auto& objID : _customLightObjects){
-    _robot.GetLightsComponent().ClearCustomLightPattern(objID, GetName());
-  }
+  _robot.GetCubeLightComponent().StopAllAnims();
+  
   _customLightObjects.clear();
   
   DEV_ASSERT(_disabledReactionTriggers.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
@@ -791,12 +790,13 @@ bool IBehavior::SmartUnLockTracks(const std::string& who)
   }
 }
   
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::SmartSetCustomLightPattern(const ObjectID& objectID, const ObjectLights& objectLights)
+bool IBehavior::SmartSetCustomLightPattern(const ObjectID& objectID,
+                                           const CubeAnimationTrigger& anim,
+                                           const ObjectLights& modifier)
 {
   if(std::find(_customLightObjects.begin(), _customLightObjects.end(), objectID) == _customLightObjects.end()){
-    _robot.GetLightsComponent().SetCustomLightPattern(objectID, objectLights, GetName());
+    _robot.GetCubeLightComponent().PlayLightAnim(objectID, anim, nullptr, true, modifier);
     _customLightObjects.push_back(objectID);
     return true;
   }else{
@@ -808,11 +808,15 @@ bool IBehavior::SmartSetCustomLightPattern(const ObjectID& objectID, const Objec
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID)
+bool IBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
+                                              const std::vector<CubeAnimationTrigger>& anims)
 {
   auto objectIter = std::find(_customLightObjects.begin(), _customLightObjects.end(), objectID);
   if(objectIter != _customLightObjects.end()){
-    _robot.GetLightsComponent().ClearCustomLightPattern(objectID, GetName());
+    for(const auto& anim : anims)
+    {
+      _robot.GetCubeLightComponent().StopLightAnim(anim, objectID);
+    }
     _customLightObjects.erase(objectIter);
     return true;
   }else{
@@ -861,11 +865,12 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
   {
     const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
     
-    _robot.GetLightsComponent().ClearAllTapInteractionObjects();
+    _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedKnown);
+    _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedUnsure);
     
     if(on)
     {
-      _robot.GetLightsComponent().SetTapInteractionObject(_tappedObject);
+      _robot.GetCubeLightComponent().SetTapInteractionObject(_tappedObject);
     
       if(!behaviorDisabled)
       {

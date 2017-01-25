@@ -93,7 +93,6 @@ class DrivingAnimationHandler;
 class FaceWorld;
 class IExternalInterface;
 class IPathPlanner;
-class LightsComponent;
 class MatPiece;
 class MoodManager;
 class MovementComponent;
@@ -105,6 +104,13 @@ class ProgressionUnlockComponent;
 class RobotIdleTimeoutComponent;
 class RobotPoseHistory;
 class RobotPoseStamp;
+class IExternalInterface;
+struct RobotState;
+class ActiveCube;
+class SpeedChooser;
+class DrivingAnimationHandler;
+class CubeLightComponent;
+class BodyLightComponent;
 class RobotToEngineImplMessaging;
 class SpeedChooser;
 class TextToSpeechComponent;
@@ -209,8 +215,23 @@ public:
     return *_movementComponent;
   }
  
-  inline LightsComponent&       GetLightsComponent()       { assert(_lightsComponent); return *_lightsComponent; }
-  inline const LightsComponent& GetLightsComponent() const { assert(_lightsComponent); return *_lightsComponent; }
+  inline CubeLightComponent& GetCubeLightComponent() {
+    assert(_cubeLightComponent);
+    return *_cubeLightComponent;
+  }
+  inline const CubeLightComponent& GetCubeLightComponent() const {
+    assert(_cubeLightComponent);
+    return *_cubeLightComponent;
+  }
+  
+  inline BodyLightComponent& GetBodyLightComponent() {
+    assert(_bodyLightComponent);
+    return *_bodyLightComponent;
+  }
+  inline const BodyLightComponent& GetBodyLightComponent() const {
+    assert(_bodyLightComponent);
+    return *_bodyLightComponent;
+  }
 
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
@@ -716,7 +737,7 @@ public:
   bool UpdateCurrPoseFromHistory();
 
   Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const;
-      
+
   // =========  Block messages  ============
 
   // Assign which objects the robot should connect to.
@@ -780,7 +801,7 @@ public:
   Util::Stats::RecentStatsAccumulator& GetRecentImageStats() { return _imageStats; }
   void SetTimeSinceLastImage(double timeSinceLastImage) { _timeSinceLastImage_s = 0.0; }
   double GetCurrentImageDelay() const { return std::max(_lastImageLatencyTime_s, _timeSinceLastImage_s); }
-  
+
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
@@ -870,7 +891,8 @@ protected:
   std::unique_ptr<AIComponent>           _aiComponent;
   std::unique_ptr<TextToSpeechComponent> _textToSpeechComponent;
   std::unique_ptr<ObjectPoseConfirmer>   _objectPoseConfirmerPtr;
-  std::unique_ptr<LightsComponent>       _lightsComponent;
+  std::unique_ptr<CubeLightComponent>    _cubeLightComponent;
+  std::unique_ptr<BodyLightComponent>    _bodyLightComponent;
   
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;

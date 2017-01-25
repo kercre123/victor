@@ -35,7 +35,6 @@ namespace Util {
     
     //Forward declaration
     class AnimationGroupContainer;
-    class CannedAnimationContainer;
     
     class AnimationGroup
     {

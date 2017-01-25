@@ -545,10 +545,6 @@ public class Robot : IRobot {
     RobotStartIdle();
     SetNightVision(false);
 
-    foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
-      kvp.Value.SetLEDs(Color.black);
-    }
-
     SetBackpackLEDs(Color.black.ToUInt());
     SetAllBackpackLEDs();
 
@@ -1271,7 +1267,7 @@ public class Robot : IRobot {
   }
 
   public void SetFaceToEnroll(int existingID, string name, bool saveToRobot = true, bool sayName = true, bool useMusic = true) {
-    
+
     DAS.Debug(this, "Sending SetFaceToEnroll for name=" + PrivacyGuard.HidePersonallyIdentifiableInfo(name)
     + " to be saved as existing ID=" + existingID);
 
@@ -1283,7 +1279,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.Message.CancelFaceEnrollment = Singleton<CancelFaceEnrollment>.Instance;
     RobotEngineManager.Instance.SendMessage();
   }
-  
+
   public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false) {
 
     DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + 1 + " loop " + useSafeLiftMotion);
@@ -1844,10 +1840,10 @@ public class Robot : IRobot {
 
     if (type == ExecutableBehaviorType.LiftLoadTest) {
       RobotEngineManager.Instance.Message.SetLiftLoadTestAsRunnable = Singleton<SetLiftLoadTestAsRunnable>.Instance;
-      RobotEngineManager.Instance.SendMessage ();
+      RobotEngineManager.Instance.SendMessage();
     }
 
-    RobotEngineManager.Instance.Message.ExecuteBehaviorByExecutableType = 
+    RobotEngineManager.Instance.Message.ExecuteBehaviorByExecutableType =
              Singleton<ExecuteBehaviorByExecutableType>.Instance.Initialize(type);
     RobotEngineManager.Instance.SendMessage();
   }
@@ -1857,7 +1853,7 @@ public class Robot : IRobot {
 
     if (behaviorName == "LiftLoadTest") {
       RobotEngineManager.Instance.Message.SetLiftLoadTestAsRunnable = Singleton<SetLiftLoadTestAsRunnable>.Instance;
-      RobotEngineManager.Instance.SendMessage ();
+      RobotEngineManager.Instance.SendMessage();
     }
 
     RobotEngineManager.Instance.Message.ExecuteBehaviorByName = Singleton<ExecuteBehaviorByName>.Instance.Initialize(behaviorName);
@@ -2063,7 +2059,7 @@ public class Robot : IRobot {
 
 
   public void EnableAllReactionTriggers(bool enable) {
-    RobotEngineManager.Instance.Message.EnableAllReactionTriggers = Singleton<EnableAllReactionTriggers>.Instance.Initialize("unity",enable);
+    RobotEngineManager.Instance.Message.EnableAllReactionTriggers = Singleton<EnableAllReactionTriggers>.Instance.Initialize("unity", enable);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -2148,5 +2144,9 @@ public class Robot : IRobot {
   public void SetNightVision(bool enable) {
     RobotEngineManager.Instance.Message.SetHeadlight = Singleton<SetHeadlight>.Instance.Initialize(enable);
     RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
+    SendQueueSingleAction(Singleton<PlayCubeAnimationTrigger>.Instance.Initialize(ID, obj, trigger), callback, QueueActionPosition.IN_PARALLEL);
   }
 }

@@ -291,3 +291,41 @@ TEST_F(FileUtilsTest, FullFilePath)
   ASSERT_EQ(result, groundTruth2);
   
 }
+
+TEST_F(FileUtilsTest, RemoveExtension)
+{
+# ifdef _WIN32
+# define FILESEP "\\"
+# else
+# define FILESEP "/"
+# endif
+  
+  const std::string path1("path" FILESEP "to" FILESEP "given" FILESEP "file.jpg");
+  const std::string path2(FILESEP "path" FILESEP "to" FILESEP "given" FILESEP "file.jpg");
+  const std::string path3("path" FILESEP "file.jpg");
+  const std::string path4("file.jpg");
+  const std::string path5("path" FILESEP "to" FILESEP "given" FILESEP "file");
+  
+  const std::string groundTruth("file");
+  
+  std::string result = Anki::Util::FileUtils::GetFileName(path1, true, true);
+  ASSERT_EQ(result, groundTruth);
+  
+  result = Anki::Util::FileUtils::GetFileName(path2, true, true);
+  ASSERT_EQ(result, groundTruth);
+  
+  result = Anki::Util::FileUtils::GetFileName(path3, true, true);
+  ASSERT_EQ(result, groundTruth);
+  
+  // There is no separator in path4 so an empty string is returned
+  // TODO: Instead of returning an empty string this should probably return "file"
+  result = Anki::Util::FileUtils::GetFileName(path4, true, true);
+  ASSERT_EQ(result, "");
+  
+  // path5 does not have an extension so an empty string is returned
+  result = Anki::Util::FileUtils::GetFileName(path5, true, true);
+  ASSERT_EQ(result, "");
+  
+  result = Anki::Util::FileUtils::GetFileName(path5, false, true);
+  ASSERT_EQ(result, groundTruth);
+}

@@ -32,9 +32,6 @@ namespace Util {
 
 namespace Cozmo {
   
-  // Forward declaration
-  class CannedAnimationContainer;
-  
   class AnimationGroupContainer
   {
   public:

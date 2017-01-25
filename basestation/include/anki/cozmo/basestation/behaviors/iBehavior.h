@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include <set>
@@ -57,7 +58,7 @@ class IReactToFaceListener;
 class IReactToObjectListener;
 class IReactToPetListener;
 
-struct ObjectLights;
+enum class CubeAnimationTrigger;
 
 namespace ExternalInterface {
 class MessageEngineToGame;
@@ -349,8 +350,11 @@ protected:
   bool SmartUnLockTracks(const std::string& who);
 
   // Allows the behavior to set a custom light pattern which will be automatically canceled if the behavior ends
-  bool SmartSetCustomLightPattern(const ObjectID& objectID, const ObjectLights& objectLights);
-  bool SmartRemoveCustomLightPattern(const ObjectID& objectID);
+  bool SmartSetCustomLightPattern(const ObjectID& objectID,
+                                  const CubeAnimationTrigger& anim,
+                                  const ObjectLights& modifier = {});
+  bool SmartRemoveCustomLightPattern(const ObjectID& objectID,
+                                     const std::vector<CubeAnimationTrigger>& anims);
 
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const {};
   

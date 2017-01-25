@@ -267,8 +267,8 @@ namespace Anki {
         return -1;
       }
 
-      // Find an empty slot
-      SlotHandle currentSlot = 0;
+      // Find an empty slot starting at 1 since all other queue positions will queue into slot 0
+      SlotHandle currentSlot = 1;
       while(_queues.find(currentSlot) != _queues.end()) {
         ++currentSlot;
       }

@@ -126,6 +126,11 @@ public class ObservableObject : IVisibleInCamera {
 
   public bool LightsChanged {
     get {
+      if (animFinished) {
+        animFinished = false;
+        return true;
+      }
+
       if (lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY || lastRotationPeriodMs != rotationPeriodMs)
         return true;
 
@@ -186,6 +191,7 @@ public class ObservableObject : IVisibleInCamera {
 
   private U2G.SetAllActiveObjectLEDs SetAllActiveObjectLEDsMessage;
 
+  private bool animFinished = false;
 
 
   public ObservableObject() {
@@ -460,6 +466,31 @@ public class ObservableObject : IVisibleInCamera {
     this.relativeMode = relativeMode;
     this.relativeToX = relativeToX;
     this.relativeToY = relativeToY;
+  }
+
+  // Play an animation on the cube. If the animation has infinite duration then it must be stopped by calling
+  // StopAnim()
+  // If you want a callback when the animation finishes use Robot.PlayCubeAnimationTrigger() instead
+  public void PlayAnim(CubeAnimationTrigger trigger) {
+    G2U.PlayCubeAnim anim = new U2G.PlayCubeAnim();
+    anim.trigger = trigger;
+    anim.objectID = (uint)ID;
+
+    RobotEngineManager.Instance.Message.PlayCubeAnim = anim;
+    RobotEngineManager.Instance.SendMessage();
+
+    animFinished = false;
+  }
+
+  public void StopAnim(CubeAnimationTrigger trigger) {
+    G2U.StopCubeAnim anim = new U2G.StopCubeAnim();
+    anim.trigger = trigger;
+    anim.objectID = (uint)ID;
+
+    RobotEngineManager.Instance.Message.StopCubeAnim = anim;
+    RobotEngineManager.Instance.SendMessage();
+
+    animFinished = true;
   }
 
   public Color[] GetLEDs() {

@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -88,6 +88,19 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimation& msg)
 {
   return new PlayAnimationAction(robot, msg.animationName, msg.numLoops);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helper function that is friended by TriggerCubeAnimationAction so we can call its private constructor
+IActionRunner* GetPlayCubeAnimationHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
+{
+  return new TriggerCubeAnimationAction(robot, msg.objectID, msg.trigger);
+}
+  
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
+{
+  return GetPlayCubeAnimationHelper(robot, msg);
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1000,6 +1013,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(placeRelObject,           PlaceRelObject,           1),
       DEFINE_HANDLER(playAnimation,            PlayAnimation,            0),
       DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
+      DEFINE_HANDLER(playCubeAnimationTrigger, PlayCubeAnimationTrigger, 0),
       DEFINE_HANDLER(popAWheelie,              PopAWheelie,              1),
       DEFINE_HANDLER(readToolCode,             ReadToolCode,             0),
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
@@ -1594,8 +1608,8 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
     robot->GetActionList().Cancel();
     robot->GetAnimationStreamer().SetIdleAnimation(AnimationTrigger::Count);
     robot->GetMoveComponent().StopAllMotors();
-    robot->GetLightsComponent().TurnOffBackpackLights();
-    robot->GetLightsComponent().StopLoopingBackpackLights();
+    robot->GetBodyLightComponent().TurnOffBackpackLights();
+    robot->GetBodyLightComponent().StopLoopingBackpackLights();
   }
 }
 
