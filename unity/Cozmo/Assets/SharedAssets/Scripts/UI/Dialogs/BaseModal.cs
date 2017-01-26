@@ -115,17 +115,6 @@ namespace Cozmo {
           BaseModalCloseAnimationFinished(this);
         }
       }
-
-      protected virtual void Update() {
-#if (UNITY_ANDROID && !UNITY_EDITOR)
-        // Android Back button.
-        if (_OptionalCloseDialogButton != null) {
-          if (Input.GetKeyDown(KeyCode.Escape)) {
-            HandleUserClose();
-          }
-        }
-#endif
-      }
     }
 
     [System.Serializable]

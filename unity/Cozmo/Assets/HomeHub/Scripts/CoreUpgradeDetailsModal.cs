@@ -406,8 +406,7 @@ public class CoreUpgradeDetailsModal : BaseModal {
     _SparkButtonCostLabel.text = string.Format("{0}", cost);
   }
 
-  protected override void Update() {
-    base.Update();
+  protected void Update() {
     if (RobotEngineManager.Instance != null) {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {

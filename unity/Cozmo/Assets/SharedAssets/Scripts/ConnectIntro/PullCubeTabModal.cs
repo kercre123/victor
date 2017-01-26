@@ -71,8 +71,7 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
     }
   }
 
-  protected override void Update() {
-    base.Update();
+  protected void Update() {
     if (_AllObjectsConnected || IsClosed) {
       return;
     }

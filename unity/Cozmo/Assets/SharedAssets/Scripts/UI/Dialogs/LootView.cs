@@ -308,8 +308,7 @@ namespace Cozmo.UI {
       }
     }
 
-    protected override void Update() {
-      base.Update();
+    protected void Update() {
 
       // Handle Recent Tap Decay
       if (_recentTapCharge > 0.0f) {

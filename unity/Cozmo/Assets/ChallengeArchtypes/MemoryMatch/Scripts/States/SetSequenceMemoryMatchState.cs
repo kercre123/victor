@@ -130,7 +130,9 @@ namespace MemoryMatch {
     }
 
     public LightCube GetCurrentTarget() {
-      if (_CurrentRobot != null && _CurrentRobot.LightCubes.ContainsKey(_CurrentSequence[_CurrentSequenceIndex])) {
+      if (_CurrentRobot != null &&
+          _CurrentSequenceIndex > 0 && _CurrentSequenceIndex < _CurrentSequence.Count &&
+          _CurrentRobot.LightCubes.ContainsKey(_CurrentSequence[_CurrentSequenceIndex])) {
         return _CurrentRobot.LightCubes[_CurrentSequence[_CurrentSequenceIndex]];
       }
       return null;
