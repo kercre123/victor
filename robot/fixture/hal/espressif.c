@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 #include "hal/board.h"
 #include "hal/portable.h"
@@ -80,39 +81,54 @@ struct ESPHeader {
 struct FlashLoadLocation {
   const unsigned char* name;
   uint32_t addr;
+  uint32_t max_length; //size of the region @ addr (for image size checks)
   int length;
   const uint8_t* data; //NULL: no rom available. Perform static fill
   uint8_t static_fill; //static fill value
 };
 
-//Choose wether to do full erase, or only first sector (for speed)
-//#define ERASE_SIZE(x)   x
-#define ERASE_SIZE(x)   0x1000
-
 static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 #ifdef FCC
-  //{ "ERASE.0",  0x000000, 0x080000,                   NULL,       0xFF },
-  //{ "ERASE.1",  0x080000, 0x080000,                   NULL,       0xFF },
-  //{ "ERASE.2",  0x100000, 0x080000,                   NULL,       0xFF },
-  //{ "ERASE.3",  0x180000, 0x080000,                   NULL,       0xFF },
-  { "FCC",      0x000000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
+  { "FCC",      0x000000, 0x200000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
 #else
-  { "BOOT",     0x000000, g_EspBootEnd - g_EspBoot,   g_EspBoot,  0 },    //Espressif Flash Map::Bootloader
-  //{ "FAC.DAT",  0x001000, ERASE_SIZE(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Factory Data (EXCLUDE! THIS IS WRITTEN WITH SERIAL DAT!)
-  { "CRASHDMP", 0x002000, ERASE_SIZE(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Crash Dumps
-  { "APP.A",    0x003000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code A
-  { "USER",     0x080000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },    //Espressif Flash Map::Factory WiFi Firmware
-  { "SAFE",     0x0c8000, g_EspSafeEnd - g_EspSafe,   g_EspSafe,  0 },    //Espressif Flash Map::Factory RTIP+Body Firmware
-  { "NV.STOR",  0x0de000, ERASE_SIZE(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::Factory NV Storage
-  { "FIX.STOR", 0x0fc000, ERASE_SIZE(0x004000),       NULL,       0xFF }, //Espressif Flash Map::Factory Fixture Storage
-  { "DHCP",     0x100000, ERASE_SIZE(0x003000),       NULL,       0xFF }, //Espressif Flash Map::DHCP Storage
-  { "APP.B",    0x103000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code B
-  { "ASS.STOR", 0x180000, ERASE_SIZE(0x040000),       NULL,       0xFF }, //Espressif Flash Map::Asset Storage
-  { "NV.SEG.1", 0x1c0000, ERASE_SIZE(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::NV Storage Segment 1
-  { "NV.SEG.2", 0x1de000, ERASE_SIZE(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::NV Storage Segment 2
-  { "ESP.INIT", 0x1fc000, g_EspInitEnd - g_EspInit,   g_EspInit,  0 },    //Espressif Flash Map::ESP Init Data
-  { "WIFI.CFG", 0x1fe000, ERASE_SIZE(0x002000),       NULL,       0xFF }, //Espressif Flash Map::ESP wifi configuration data
+  { "BOOT",     0x000000, 0x001000, g_EspBootEnd - g_EspBoot,   g_EspBoot,  0 },    //Espressif Flash Map::Bootloader
+  { "USER",     0x080000, 0x048000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },    //Espressif Flash Map::Factory WiFi Firmware
+  { "SAFE",     0x0c8000, 0x016000, g_EspSafeEnd - g_EspSafe,   g_EspSafe,  0 },    //Espressif Flash Map::Factory RTIP+Body Firmware
+  { "ESP.INIT", 0x1fc000, 0x002000, g_EspInitEnd - g_EspInit,   g_EspInit,  0 },    //Espressif Flash Map::ESP Init Data
 #endif
+  { NULL, 0, 0, NULL, 0},
+};
+
+#ifndef MIN
+#define MIN(a,b)  ((a) < (b) ? (a) : (b))
+#endif
+
+#define ERASE_FULL(x)       x
+#define ERASE_SIZE(x)       0x1000 /*invalidate regions by erasing first sector (speedy)*/
+#define ERASE_SIZE2(x)      (MIN(0x2000,x)) /*erase 2 sectors - for NV regions that may index past 1st sector*/
+
+//define regions to erase
+static const FlashLoadLocation ESPRESSIF_ERASE[] = {
+  //{ "ERASE.ALL",0x000000, 0x200000, 0x200000,                   NULL,       0xFF },
+  { "ERASE.0",  0x000000, 0x080000, 0x080000,                   NULL,       0xFF },
+  { "ERASE.1",  0x080000, 0x080000, 0x080000,                   NULL,       0xFF },
+  { "ERASE.2",  0x100000, 0x080000, 0x080000,                   NULL,       0xFF },
+  { "ERASE.3",  0x180000, 0x080000, 0x080000,                   NULL,       0xFF },
+  //{ "BOOT",     0x000000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Bootloader
+  //{ "FAC.DAT",  0x001000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Factory Data
+  //{ "CRASHDMP", 0x002000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Crash Dumps
+  //{ "APP.A",    0x003000, 0x07D000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code A
+  //{ "USER",     0x080000, 0x048000, ERASE_SIZE(0x048000),       NULL,       0xFF }, //Espressif Flash Map::Factory WiFi Firmware
+  //{ "SAFE",     0x0c8000, 0x016000, ERASE_SIZE(0x016000),       NULL,       0xFF }, //Espressif Flash Map::Factory RTIP+Body Firmware
+  //{ "NV.STOR",  0x0de000, 0x01E000, ERASE_FULL(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::Factory NV Storage
+  //{ "FIX.STOR", 0x0fc000, 0x004000, ERASE_SIZE(0x004000),       NULL,       0xFF }, //Espressif Flash Map::Factory Fixture Storage
+  //{ "DHCP",     0x100000, 0x003000, ERASE_FULL(0x003000),       NULL,       0xFF }, //Espressif Flash Map::DHCP Storage
+  //{ "APP.B",    0x103000, 0x07D000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code B
+  //{ "ASS.STOR", 0x180000, 0x040000, ERASE_SIZE(0x040000),       NULL,       0xFF }, //Espressif Flash Map::Asset (DHCP) Storage
+  //{ "NV.SEG.1", 0x1c0000, 0x01E000, ERASE_FULL(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::NV Storage Segment 1
+  //{ "NV.SEG.2", 0x1de000, 0x01E000, ERASE_FULL(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::NV Storage Segment 2
+  //{ "ESP.INIT", 0x1fc000, 0x002000, ERASE_FULL(0x002000),       NULL,       0xFF }, //Espressif Flash Map::ESP Init Data
+  //{ "WIFI.CFG", 0x1fe000, 0x002000, ERASE_FULL(0x002000),       NULL,       0xFF }, //Espressif Flash Map::ESP wifi configuration data
   { NULL, 0, 0, NULL, 0},
 };
 
@@ -332,7 +348,7 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
   SlowPrintf("%s=%02X {", debug, cmd);
   ESPCommand(cmd, data, length, checksum);
   
-  const u32 cmd_timeout = 5000000; //max 5s (for large erase ops)
+  const u32 cmd_timeout = 15000000; //max 15s (for large erase ops)
   u32 start_time_us = getMicroCounter();
   
   // I don't know how long to wait - during initial erase, I've seen as many as 19 retries
@@ -450,6 +466,12 @@ void ProgramEspressif(int serial)
     SlowPrintf( (static_fill ? ": static fill 0x%02x" : ""), rom->static_fill);
     SlowPrintf("\n");
     
+    SlowPrintf("@ 0x%06X, size 0x%06X of 0x%06X\n", rom->addr, rom->length, rom->max_length);
+    if( rom->length > rom->max_length ) {
+      SlowPrintf("ROM LENGTH EXCEEDS REGION BY 0x%06X bytes\n", rom->length - rom->max_length);
+      throw ERROR_HEAD_ROM_SIZE;
+    }
+    
     if( !ESPFlashLoad(rom->addr, rom->length, static_fill ? &rom->static_fill : rom->data, static_fill) )
         throw ERROR_HEAD_RADIO_ERASE;
     
@@ -478,3 +500,32 @@ void ProgramEspressif(int serial)
   u32 total_time_us = getMicroCounter() - start_time_us;
   SlowPrintf("ProgramEspressif() total time: %u.%03ums\n", total_time_us/1000, total_time_us%1000);
 }
+
+void EraseEspressif(void)
+{
+  SlowPrintf("ESP Syncronizing...\n");
+
+  if (!ESPSync()) { 
+    SlowPrintf("Sync Failed.\n");
+    throw ERROR_HEAD_RADIO_SYNC;
+  }
+  
+  u32 start_time_us = getMicroCounter();
+  for(const FlashLoadLocation* rom = &ESPRESSIF_ERASE[0]; rom->length; rom++)
+  {
+    assert( rom->data == NULL && rom->static_fill == 0xFF ); //no ROM image, 0xFF fill data
+    SlowPrintf("Erase Region %s @ 0x%06X. length 0x%06X of 0x%06X\n", rom->name, rom->addr, rom->length, rom->max_length);
+    
+    if( rom->length > rom->max_length ) {
+      SlowPrintf("ERASE LENGTH EXCEEDS REGION BY 0x%06X bytes!\n", rom->length - rom->max_length);
+      throw ERROR_HEAD_ROM_SIZE;
+    }
+    
+    if( !ESPFlashLoad(rom->addr, rom->length, &rom->static_fill, true) )
+        throw ERROR_HEAD_RADIO_ERASE;
+  }
+  
+  u32 total_time_us = getMicroCounter() - start_time_us;
+  SlowPrintf("EraseEspressif() total time: %u.%03ums\n", total_time_us/1000, total_time_us%1000);
+}
+

@@ -138,6 +138,7 @@ u32 GetSerial();
 
 // Head errors
 #define ERROR_HEAD_BOOTLOADER       500   // Can't load bootloader into K02
+#define ERROR_HEAD_ROM_SIZE         501   // binary image too large for target region
 
 #define ERROR_HEAD_RADIO_SYNC       510   // Can't sync with radio
 #define ERROR_HEAD_RADIO_ERASE      511   // Problem erasing flash

@@ -106,6 +106,11 @@ void BootK02Test(void)
 // Connect to and flash the Espressif
 void HeadESP(void)
 {
+  EraseEspressif();
+  
+  //power cycle before we can reprogram the erased pages (ESP limitation?)
+  BootK02Test();
+  
   // Program espressif, which will start up, following the program
   ProgramEspressif(serial_);
 }
