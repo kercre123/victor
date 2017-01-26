@@ -143,26 +143,36 @@ Result BehaviorEnrollFace::InitEnrollmentSettings(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorEnrollFace::InitInternal(Robot& robot)
 {
-  // If we were interrupted after finishing enrolling, fast forward
-  if(_state == State::SayingName)
+  // Check if we were interrupted and need to fast forward:
+  switch(_state)
   {
-    TransitionToSayingName(robot);
-    return RESULT_OK;
+    case State::SayingName:
+    {
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSayingName", "");
+      TransitionToSayingName(robot);
+      return RESULT_OK;
+    }
+      
+    case State::SavingToRobot:
+    case State::SaveFailed:
+    {
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSavingToRobot", "");
+      TransitionToSavingToRobot(robot);
+      return RESULT_OK;
+    }
+      
+    case State::ScanningInterrupted:
+    {
+      // If we were interrupted while getting out of the scanning animation and have
+      // now resumed, we need to complete the animation
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToScanningInterrupted", "");
+      TransitionToScanningInterrupted(robot);
+      return RESULT_OK;
+    }
+    default:
+      // Not fast forwarding: just start at the beginning
+      SET_STATE(NotStarted);
   }
-  else if(_state == State::SavingToRobot)
-  {
-    TransitionToSavingToRobot(robot);
-    return RESULT_OK;
-  }
-  else if(_state == State::ScanningInterrupted)
-  {
-    // If we were interrupted while getting out of the scanning animation and have
-    // now resumed, we need to complete the animation
-    TransitionToScanningInterrupted(robot);
-    return RESULT_OK;
-  }
-  
-  SET_STATE(NotStarted);
   
   const Result settingsResult = InitEnrollmentSettings(robot);
   if(RESULT_OK != settingsResult)
@@ -368,6 +378,7 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
       }
 
       case State::Cancelled:
+        DisableEnrollment();
         // If we were enrolling a new face (i.e. not re-enrolling), then make sure
         // we don't end up with an entry if we get cancelled before completing
         if(Vision::UnknownFaceID == _saveID)
@@ -417,14 +428,17 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
     // Log enrollment to DAS, with result type
     Util::sEventF("robot.face_enrollment", {{DDATA, EnumToString(info.result)}}, "%d", info.faceID);
     
-    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.BroadcastCompletion",
+    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.BroadcastCompletion",
                   "In state:%hhu, FaceEnrollmentResult=%s",
                   _state, EnumToString(info.result));
     
     robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(info)));
     
-    _state = State::NotStarted;
+    SET_STATE(NotStarted);
   }
+  
+  PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.StopInternal.FinalState",
+                 "Stopping EnrollFace in state %s", GetDebugStateName().c_str());
 }
 
 #pragma mark -
@@ -660,14 +674,16 @@ void BehaviorEnrollFace::TransitionToSayingName(Robot& robot)
     {
       PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToSayingName.FinalAnimationFailed", "");
     }
-    
-    if(_saveToRobot)
-    {
-      TransitionToSavingToRobot(robot);
-    }
     else
     {
-      SET_STATE(SuccessNoSave);
+      if(_saveToRobot)
+      {
+        TransitionToSavingToRobot(robot);
+      }
+      else
+      {
+        SET_STATE(SuccessNoSave);
+      }
     }
   });
   
@@ -1103,13 +1119,29 @@ void BehaviorEnrollFace::HandleWhileRunning(const EngineToGameEvent& event, Robo
     case EngineToGameTag::RobotOffTreadsStateChanged:
     case EngineToGameTag::CliffEvent:
     {
-      if(State::LookingForFace == _state && IsActing())
+      if(IsActing())
       {
-        // Cancel and replace the existing look-around action so we don't fight a
-        // person trying to re-orient Cozmo towards themselves, nor do we leave
-        // the treads moving if a look around action had already started (but not
-        // completed) before a pickup/cliff
-        TransitionToLookingForFace(robot);
+        if(State::LookingForFace == _state)
+        {
+          // Cancel and replace the existing look-around action so we don't fight a
+          // person trying to re-orient Cozmo towards themselves, nor do we leave
+          // the treads moving if a look around action had already started (but not
+          // completed) before a pickup/cliff
+          PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleWhileRunning.LookForFaceInterrupted",
+                        "Restarting look-for-face due to %s event",
+                        MessageEngineToGameTagToString(event.GetData().GetTag()));
+          TransitionToLookingForFace(robot);
+        }
+        else if(State::Enrolling == _state)
+        {
+          // Stop tracking the face and start over (to create a new tracking action, e.g. in case the robot is now
+          // picked up and its treads should stop moving
+          PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleWhileRunning.EnrollmentInterrupted",
+                        "Restarting enrollment due to %s event",
+                        MessageEngineToGameTagToString(event.GetData().GetTag()));
+          StopActing(false);
+          TransitionToEnrolling(robot);
+        }
       }
       break;
     }

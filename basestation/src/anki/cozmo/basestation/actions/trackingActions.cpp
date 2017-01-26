@@ -66,6 +66,26 @@ ITrackAction::~ITrackAction()
   
   // Make sure we abort any sound actions we triggered
   _robot.GetActionList().Cancel(_soundAnimTag);
+  
+  if(HasStarted())
+  {
+    // Make sure we don't leave the head/body moving
+    switch(_mode)
+    {
+      case Mode::HeadAndBody:
+        _robot.GetMoveComponent().StopBody();
+        _robot.GetMoveComponent().StopHead();
+        break;
+        
+      case Mode::BodyOnly:
+        _robot.GetMoveComponent().StopBody();
+        break;
+        
+      case Mode::HeadOnly:
+        _robot.GetMoveComponent().StopHead();
+        break;
+    }
+  }
 }
 
 // TODO:(bn) if we implemented a parallel compound action function like "Stop on first action complete"

@@ -602,6 +602,38 @@ Result MovementComponent::StopAllMotors()
   
   return _robot.SendRobotMessage<RobotInterface::StopAllMotors>();
 }
+
+Result MovementComponent::StopHead()
+{
+  // If we are direct driving then make sure to unlock tracks and set flags appropriately
+  if(IsDirectDriving())
+  {
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingHead,   (u8)AnimTrackFlag::HEAD_TRACK, kDrivingHeadStr,   kDrivingHeadStr);
+  }
+  return _robot.SendRobotMessage<RobotInterface::MoveHead>(RobotInterface::MoveHead(0.f));
+}
+  
+Result MovementComponent::StopLift()
+{
+  // If we are direct driving then make sure to unlock tracks and set flags appropriately
+  if(IsDirectDriving())
+  {
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingLift,   (u8)AnimTrackFlag::LIFT_TRACK, kDrivingLiftStr,   kDrivingLiftStr);
+  }
+  return _robot.SendRobotMessage<RobotInterface::MoveLift>(RobotInterface::MoveLift(0.f));
+}
+  
+Result MovementComponent::StopBody()
+{
+  // If we are direct driving then make sure to unlock tracks and set flags appropriately
+  if(IsDirectDriving())
+  {
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr, kDrivingWheelsStr);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr, kDrivingArcStr);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr, kDrivingTurnStr);
+  }
+  return _robot.SendRobotMessage<RobotInterface::DriveWheels>(RobotInterface::DriveWheels(0.f,0.f,0.f,0.f));
+}
   
 int MovementComponent::GetFlagIndex(uint8_t flag) const
 {
