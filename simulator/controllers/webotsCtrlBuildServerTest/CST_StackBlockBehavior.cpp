@@ -29,6 +29,7 @@ enum class TestState {
   WaitForCubeConnections,
   VerifyObject1,
   TurnAway,
+  WaitForDeloc,
   VerifyObject2,
   DontStartBehavior,
   TurnBack,
@@ -118,7 +119,8 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
                                             !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                             NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
-                                            GetNumObjects() == 1)
+                                            GetNumObjects() == 1,
+                                            IsLocalizedToObject())
       {
         ExternalInterface::QueueSingleAction m;
         m.robotID = 1;
@@ -131,7 +133,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         message.Set_QueueSingleAction(m);
         SendMessage(message);
         _startedMoving = false;
-        SET_STATE(TurnAway)
+        SET_STATE(TurnAway);
       }
       break;
     }
@@ -147,43 +149,34 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       }
       else {      
         IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING), 10) {
+          // Make sure we are still localized (to an object) before sending deloc
+          CST_ASSERT( IsLocalizedToObject(), "Should be localized to object before we deloc");
           // deloc the robot so it doesn't see both cubes in the same frame
-          ExternalInterface::ForceDelocalizeRobot delocMsg;
-          delocMsg.robotID = 1;
-          SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
-
-          // add a small delay between the deloc and the turn action to work around a potential timing issue
-          // (we think the robot may start turning before it delocs, due to IPC and timing issues)
-          {
-            ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
-            m.position = QueueActionPosition::NOW;
-            m.idTag = 15;
-            m.numRetries = 1;
-            const float kTimeToWait_s = 0.5f;
-            m.action.Set_wait( ExternalInterface::Wait( kTimeToWait_s ) );
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_QueueSingleAction(m);
-            SendMessage(message);
-          }
-
-          {
-            // Turn the robot to see the second cube
-            ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
-            m.position = QueueActionPosition::NEXT;
-            m.idTag = 16;
-            m.numRetries = 1;
-            uint8_t isAbsolute = 0; // relative turn
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(30), M_PI_F, 500.0f, isAbsolute, 1 ));
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_QueueSingleAction(m);
-            SendMessage(message);
-          }
-          
-          _startedMoving = false;
-          SET_STATE(VerifyObject2)
+          SendForceDeloc();
+          SET_STATE(WaitForDeloc);
         }
+      }
+      break;
+    }
+
+    case TestState::WaitForDeloc:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), 2) {
+
+        // Turn the robot to see the second cube
+        ExternalInterface::QueueSingleAction m;
+        m.robotID = 1;
+        m.position = QueueActionPosition::NEXT;
+        m.idTag = 16;
+        m.numRetries = 1;
+        uint8_t isAbsolute = 0; // relative turn
+        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(30), M_PI_F, 500.0f, isAbsolute, 1 ));
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_QueueSingleAction(m);
+        SendMessage(message);
+          
+        _startedMoving = false;
+        SET_STATE(VerifyObject2);
       }
       break;
     }

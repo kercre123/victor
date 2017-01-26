@@ -83,6 +83,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &105672
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22458686}
+  - 222: {fileID: 22290168}
+  - 114: {fileID: 11485722}
+  m_Layer: 5
+  m_Name: SettingsButtonImage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &106582
 GameObject:
   m_ObjectHideFlags: 1
@@ -1212,7 +1229,7 @@ GameObject:
   - 222: {fileID: 22233902}
   - 114: {fileID: 11467394}
   m_Layer: 5
-  m_Name: SettingsButtonImage
+  m_Name: SettingsAlertBadge
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2490,7 +2507,7 @@ MonoBehaviour:
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
-  - targetImage: {fileID: 11467394}
+  - targetImage: {fileID: 11485722}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
     pressedColor: {r: 1, g: 1, b: 1, a: 0.759}
@@ -3459,14 +3476,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.497}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: d69bd8649b999441faa9a440c4676922, type: 3}
+  m_Sprite: {fileID: 21300000, guid: dd350cf88c8124d77a33bd1a75545537, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -3558,6 +3575,7 @@ MonoBehaviour:
   _PlaySelectedTabs: {fileID: 128218}
   _ProfileSelectedTabs: {fileID: 163956}
   _SettingsButton: {fileID: 11429614}
+  _SettingsAlertImage: {fileID: 11467394}
   _ScrollRectContent: {fileID: 22415210}
   _RequirementPointsProgressBar: {fileID: 11401482}
   _EmotionChipTag: {fileID: 11406946}
@@ -3818,6 +3836,33 @@ MonoBehaviour:
   _ItemIcon: {fileID: 0}
   _ItemId: treat
   _CountOnly: 1
+--- !u!114 &11485722
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 105672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.497}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_Sprite: {fileID: 21300000, guid: d69bd8649b999441faa9a440c4676922, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
 --- !u!114 &11487632
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3941,25 +3986,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 161112, guid: 43d1ce34393574c8cbcf2842a813e6d5, type: 2}
-  ModifiedValues:
-  - ObjectPath: WidgetWindow/ContentGridContainer/RowSparksContainer/IconSparksAlignContainer
-    FieldName: UnityEngine.UI.VerticalLayoutGroup:m_Padding
-    JsonValue: '{"left":0,"right":0,"top":0,"bottom":0,"horizontal":0,"vertical":0}'
-  - ObjectPath: WidgetWindow/ContentGridContainer/RowSparksContainer
-    FieldName: UnityEngine.UI.HorizontalLayoutGroup:m_Padding
-    JsonValue: '{"left":0,"right":0,"top":40,"bottom":0,"horizontal":0,"vertical":40}'
-  - ObjectPath: WidgetWindow/ContentGridContainer/RowBitsContainer/IconBitsAlignContainer
-    FieldName: UnityEngine.UI.VerticalLayoutGroup:m_Padding
-    JsonValue: '{"left":0,"right":0,"top":0,"bottom":0,"horizontal":0,"vertical":0}'
-  - ObjectPath: WidgetWindow/ContentGridContainer/RowBitsContainer
-    FieldName: UnityEngine.UI.HorizontalLayoutGroup:m_Padding
-    JsonValue: '{"left":0,"right":0,"top":40,"bottom":0,"horizontal":0,"vertical":40}'
-  - ObjectPath: WidgetWindow/ContentGridContainer/infoWidgetHeadline
-    FieldName: UnityEngine.UI.Text:m_Text
-    JsonValue: '"Fill the meter and get..."'
-  - ObjectPath: WidgetWindow/ContentGridContainer
-    FieldName: UnityEngine.UI.VerticalLayoutGroup:m_Padding
-    JsonValue: '{"left":10,"right":10,"top":0,"bottom":0,"horizontal":20,"vertical":0}'
+  ModifiedValues: []
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11494348
@@ -6048,6 +6075,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 195304}
+--- !u!222 &22290168
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 105672}
 --- !u!222 &22291138
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -6153,6 +6186,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
+  - {fileID: 22458686}
   - {fileID: 22476122}
   m_Father: {fileID: 22441376}
   m_RootOrder: 3
@@ -7463,6 +7497,24 @@ RectTransform:
   m_AnchoredPosition: {x: -0.000047683716, y: 0}
   m_SizeDelta: {x: 0.000045776367, y: 0}
   m_Pivot: {x: 0, y: 0.5}
+--- !u!224 &22458686
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 105672}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22401150}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22458894
 RectTransform:
   m_ObjectHideFlags: 1
@@ -7719,11 +7771,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22401150}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -32, y: -41}
+  m_SizeDelta: {x: -64, y: -82}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22479662
 RectTransform:

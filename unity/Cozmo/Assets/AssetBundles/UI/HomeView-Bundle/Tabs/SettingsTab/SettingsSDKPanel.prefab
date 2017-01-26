@@ -135,6 +135,7 @@ MonoBehaviour:
   m_Text: '#settings.sdkPanel.sdkUrl.label'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11434894
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -225,6 +226,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d19915635dcd34752a39d00ae11e54c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _LayoutElement: {fileID: 11454530}
 --- !u!114 &11470806
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -260,6 +262,7 @@ MonoBehaviour:
   m_Text: '#settings.sdkPanel.label.title'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!222 &22200438
 CanvasRenderer:
   m_ObjectHideFlags: 1

@@ -40,8 +40,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43befffdaa67f4473ba171525a22cda3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _BadWordsRegexSource: {fileID: 4900000, guid: ae4614d60edb9e44a9de4fbebd48c325,
-    type: 3}
+  _BadWordRegexSourceFileName: BadWordsFilter.txt
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

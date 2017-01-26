@@ -43,6 +43,21 @@ namespace Anki {
       }
 #endif
 
+      [MenuItem(Build.Builder._kProjectName + "/Build/Use SD Assets")]
+      public static void UseSDAssets() {
+        EditorPrefs.SetString(Anki.Build.BuildKeyConstants.kAssetsPrefKey, Anki.Build.BuildKeyConstants.kSDAssetsValueKey);
+      }
+
+      [MenuItem(Build.Builder._kProjectName + "/Build/Use HD Assets")]
+      public static void UseHDAssets() {
+        EditorPrefs.SetString(Anki.Build.BuildKeyConstants.kAssetsPrefKey, Anki.Build.BuildKeyConstants.kHDAssetsValueKey);
+      }
+
+      [MenuItem(Build.Builder._kProjectName + "/Build/Use UHD Assets")]
+      public static void UseUHDAssets() {
+        EditorPrefs.SetString(Anki.Build.BuildKeyConstants.kAssetsPrefKey, Anki.Build.BuildKeyConstants.kUHDAssetsValueKey);
+      }
+
       [MenuItem(Build.Builder._kProjectName + "/Build/Find Duplicate Assets in Bundles")]
       public static void FindDuplicateAssetsInBundles() {
         BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;

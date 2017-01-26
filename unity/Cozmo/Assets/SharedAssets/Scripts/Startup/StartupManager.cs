@@ -273,6 +273,20 @@ public class StartupManager : MonoBehaviour {
       variant = _kSDVariant;
     }
 
+#if UNITY_EDITOR
+    string assetPrefsValue = UnityEditor.EditorPrefs.GetString(Anki.Build.BuildKeyConstants.kAssetsPrefKey);
+    switch (assetPrefsValue) {
+    case Anki.Build.BuildKeyConstants.kSDAssetsValueKey:
+      variant = _kSDVariant;
+      break;
+    case Anki.Build.BuildKeyConstants.kHDAssetsValueKey:
+      variant = _kHDVariant;
+      break;
+    case Anki.Build.BuildKeyConstants.kUHDAssetsValueKey:
+      variant = _kUHDVariant;
+      break;
+    }
+#endif
 
     return variant;
   }
