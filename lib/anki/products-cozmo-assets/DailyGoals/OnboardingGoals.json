@@ -44,15 +44,6 @@
       "GenConditions": [],
       "ProgressConditions": [
         {
-          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
           "ChallengeID": "SpeedTapGame",
           "Label": {
