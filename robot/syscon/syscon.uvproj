@@ -473,6 +473,16 @@
               <FileType>2</FileType>
               <FilePath>.\hal\ota_binary.s</FilePath>
             </File>
+            <File>
+              <FileName>dtm.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\dtm.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ble_dtm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\hal\ble_dtm.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

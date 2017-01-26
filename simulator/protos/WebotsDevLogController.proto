@@ -12,6 +12,8 @@ Supervisor {
   name IS name
   controller "webotsCtrlDevLog"
 
+  # Workaround for suppressing Webots errors due to fields not being used
+  # directly in the proto.
   %{ dummy = fields.logsDirectory.value }%
 
   children [

@@ -22,6 +22,14 @@ extern "C" {
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+// Whether or not this is 1.5 body
+// TODO: Replace this with an actual check of BODY_VER indicative of 1.5 hardware
+#define COZMO_15 0
+
+// Whether or not to effectively halve the encoder res of 1.0 robots so that
+// performance matches with 1.5.
+#define USE_HALF_ENCODER_RES_FOR_COZMO_10 1
+
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 bool motorOverride;
@@ -59,10 +67,12 @@ const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
 // for 8 encoder ticks per revolution, we compute the meters per tick as:
 // Applying a slip factor correction of 94.8%
 const u32 METERS_PER_TICK = TO_FIXED_0_32((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43);
+Fixed metersPerWheelTick;
 
 // Given a gear ratio of 172.68:1 and 4 encoder ticks per revolution, we
 // compute the radians per tick on the lift as:
 const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 172.68);
+Fixed radiansPerLiftTick;
 
 // Given a gear ratio of 348.77:1 and 4 encoder ticks per revolution, we
 // compute the radians per tick on the head as:
@@ -70,7 +80,7 @@ const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.25 * 3.14159265359) / 348.77);
 
 // Pre-production hardware had 8 ticks
 const Fixed RADIANS_PER_HEAD_TICK_PRE_PROD = TO_FIXED((0.125 * 3.14159265359) / 348.77);
-Fixed g_radiansPerHeadTick;   // XXX: Remove this once Pilot robots are obsolete
+Fixed radiansPerHeadTick;
 
 // If no encoder activity for 200ms, we may as well be stopped
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
@@ -135,12 +145,12 @@ static MotorInfo m_motors[MOTOR_COUNT] =
   },
   {
     0,
-    RADIANS_PER_LIFT_TICK,
+    1, // units per tick = 1 tick
     0, 0, 0, 0, 0, 0
   },
   {
     0,
-    RADIANS_PER_HEAD_TICK,
+    1, // units per tick = 1 tick
     0, 0, 0, 0, 0, 0
   },
 };
@@ -351,11 +361,24 @@ void Motors::init()
   // Configure TIMER0 and TIMER2 with the appropriate task and PPI channels
   ConfigurePPI(NRF_TIMER0, 0, 0);
   ConfigurePPI(NRF_TIMER2, 2, 4);
+
+  metersPerWheelTick = METERS_PER_TICK;
+  radiansPerLiftTick = RADIANS_PER_LIFT_TICK;
+  radiansPerHeadTick = RADIANS_PER_HEAD_TICK;
   
   // Setup head encoder tick rate for production or pre-production hardware
-  g_radiansPerHeadTick = RADIANS_PER_HEAD_TICK;
+  // Pre-prod head encoder has 8-flags
+  // XXX: Remove this once Pilot robots are obsolete
   if (BODY_VER < BODY_VER_PROD)
-    g_radiansPerHeadTick = RADIANS_PER_HEAD_TICK_PRE_PROD;
+    radiansPerHeadTick = RADIANS_PER_HEAD_TICK_PRE_PROD;
+  
+  // On 1.0 robots, encoders have 4-flags
+  // On 1.5 robots, encoders have 2-flags
+  if (COZMO_15 != 0) {
+    metersPerWheelTick <<= 1;
+    radiansPerLiftTick <<= 1;
+    radiansPerHeadTick <<= 1;
+  }
 
   // Enable PPI channels for timer PWM and reset
   sd_ppi_channel_enable_set(0xFF);
@@ -420,11 +443,12 @@ static const int MAX_DRIVE_TIME[] = {
   200  // 1s
 };
 
+// Minimum drive speed in ticks
 static const int DRIVE_MINIMUM_SPEED[] ={
   1,
   1,
-  RADIANS_PER_LIFT_TICK * 2,
-  RADIANS_PER_HEAD_TICK * 2
+  2,
+  2
 };
 
 static s16 limitPower(u8 motorID) {
@@ -505,15 +529,18 @@ Fixed Motors::getSpeed(u8 motorID)
 void Motors::manage()
 {
   // Update the SPI data structure to send data back to the head
-  g_dataToHead.speeds[0] = FIXED_MUL(Motors::getSpeed(0), METERS_PER_TICK);
-  g_dataToHead.speeds[1] = FIXED_MUL(Motors::getSpeed(1), METERS_PER_TICK);
-  g_dataToHead.speeds[2] = Motors::getSpeed(2);
-  g_dataToHead.speeds[3] = Motors::getSpeed(3);
+  g_dataToHead.speeds[MOTOR_LEFT_WHEEL] = FIXED_MUL(Motors::getSpeed(MOTOR_LEFT_WHEEL), metersPerWheelTick);
+  g_dataToHead.speeds[MOTOR_RIGHT_WHEEL] = FIXED_MUL(Motors::getSpeed(MOTOR_RIGHT_WHEEL), metersPerWheelTick);
+  g_dataToHead.speeds[MOTOR_LIFT] = Motors::getSpeed(MOTOR_LIFT) * radiansPerLiftTick;
+  g_dataToHead.speeds[MOTOR_HEAD] = Motors::getSpeed(MOTOR_HEAD) * radiansPerHeadTick;
   
-  g_dataToHead.positions[0] = FIXED_MUL(m_motors[0].position, METERS_PER_TICK);
-  g_dataToHead.positions[1] = FIXED_MUL(m_motors[1].position, METERS_PER_TICK);
-  g_dataToHead.positions[2] = m_motors[2].position;
-  g_dataToHead.positions[3] = m_motors[3].position;
+  // If this is a 1.0 body, fake it to have the same 2-flag encoder resolution as a 1.5 body
+  const s32 neg_mask = (USE_HALF_ENCODER_RES_FOR_COZMO_10 && (COZMO_15 == 0)) ? 1 : 0;
+  
+  g_dataToHead.positions[MOTOR_LEFT_WHEEL] = FIXED_MUL(m_motors[MOTOR_LEFT_WHEEL].position & ~neg_mask, metersPerWheelTick);
+  g_dataToHead.positions[MOTOR_RIGHT_WHEEL] = FIXED_MUL(m_motors[MOTOR_RIGHT_WHEEL].position & ~neg_mask, metersPerWheelTick);
+  g_dataToHead.positions[MOTOR_LIFT] = (m_motors[MOTOR_LIFT].position & ~neg_mask) * radiansPerLiftTick;
+  g_dataToHead.positions[MOTOR_HEAD] = (m_motors[MOTOR_HEAD].position & ~neg_mask) * radiansPerHeadTick;
 
   // Update our power settings
   if (!motorOverride) {
@@ -593,15 +620,15 @@ void GPIOTE_IRQHandler()
       {
         fast_gpio_cfg_sense_input(PIN_ENCODER_HEADA, NRF_GPIO_PIN_SENSE_HIGH);      
         if (state & (1 << PIN_ENCODER_HEADB))    // Forward vs backward
-          m_motors[MOTOR_HEAD].position += g_radiansPerHeadTick;
+          ++m_motors[MOTOR_HEAD].position;
         else
-          m_motors[MOTOR_HEAD].position -= g_radiansPerHeadTick;
+          --m_motors[MOTOR_HEAD].position;
       } else {
         fast_gpio_cfg_sense_input(PIN_ENCODER_HEADA, NRF_GPIO_PIN_SENSE_LOW);
         if (state & (1 << PIN_ENCODER_HEADB))   // Forward vs backward
-          m_motors[MOTOR_HEAD].position -= g_radiansPerHeadTick;
+          --m_motors[MOTOR_HEAD].position;
         else
-          m_motors[MOTOR_HEAD].position += g_radiansPerHeadTick;      
+          ++m_motors[MOTOR_HEAD].position;
       }    
     }           
     // Lift encoder (next fastest)
@@ -612,15 +639,15 @@ void GPIOTE_IRQHandler()
       {
         fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_HIGH); 
         if (state & (1 << PIN_ENCODER_LIFTB))   // Forward vs backward
-          m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;
+          ++m_motors[MOTOR_LIFT].position;
         else
-          m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;      
+          --m_motors[MOTOR_LIFT].position;
       } else {
         fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_LOW);
         if (state & (1 << PIN_ENCODER_LIFTB))   // Forward vs backward
-          m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;
+          --m_motors[MOTOR_LIFT].position;
         else
-          m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;  
+          ++m_motors[MOTOR_LIFT].position;
       }    
     }
     // Left wheel
