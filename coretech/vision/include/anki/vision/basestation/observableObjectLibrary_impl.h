@@ -30,6 +30,17 @@ namespace Vision {
   const std::set<const ObsObjectType*> ObservableObjectLibrary<ObsObjectType>::sEmptyObjectVector;
   
   template<class ObsObjectType>
+  ObservableObjectLibrary<ObsObjectType>::~ObservableObjectLibrary<ObsObjectType>()
+  {
+    for (auto iter = _knownObjects.begin(); iter != _knownObjects.end(); ++iter)
+    {
+      Util::SafeDelete(*iter);
+    }
+    // List will be cleared by std::list destructor
+    //_knownObjects.clear();
+  }
+  
+  template<class ObsObjectType>
   std::set<const ObsObjectType*> const& // Return value
   ObservableObjectLibrary<ObsObjectType>::GetObjectsWithCode(const Marker::Code& code) const
   {
@@ -54,7 +65,7 @@ namespace Vision {
   {
     // TODO: Warn/error if we are overwriting an existing object with this type?
     
-    for (auto knownObjectIter = _knownObjects.begin(); knownObjectIter != _knownObjects.end();)
+    for (auto knownObjectIter = _knownObjects.begin(); knownObjectIter != _knownObjects.end(); )
     {
       auto knownObject = *knownObjectIter;
       if (knownObject->GetType() == object->GetType())
@@ -67,6 +78,7 @@ namespace Vision {
         {
           _objectsWithCode[marker.GetCode()].clear();
         }
+        Util::SafeDelete(*knownObjectIter);
         knownObjectIter = _knownObjects.erase(knownObjectIter);
       }
       else
