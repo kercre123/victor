@@ -14,6 +14,7 @@ import os
 import subprocess
 import shutil
 import re
+import hashlib
 
 from Crypto.Hash import SHA512
 from Crypto.PublicKey import RSA
@@ -21,9 +22,8 @@ from Crypto.Cipher import AES
 from Crypto import Random
 from hashlib import sha1
 
-sys.path.insert(0, os.path.join("generated", "cladPython", "robot"))
-from clad.robotInterface.messageEngineToRobot_hash import messageEngineToRobotHash
-from clad.robotInterface.messageRobotToEngine_hash import messageRobotToEngineHash
+global messageEngineToRobotHash
+global messageRobotToEngineHash
 
 parser = argparse.ArgumentParser()
 parser.add_argument("output", type=str,
@@ -31,8 +31,12 @@ parser.add_argument("output", type=str,
 
 parser.add_argument("-r", "--rtip", type=str,
                     help="K02 ELF Image")
+parser.add_argument("-rb", "--rtipbin", type=str,
+                    help="K02 Raw binary image")
 parser.add_argument("-b", "--body", type=str,
                     help="NRF ELF Image")
+parser.add_argument("-bb", "--bodybin", type=str,
+                    help="NRF Raw binary image")
 parser.add_argument("-w", "--wifi", type=str,
                     help="ESP Raw binary image")
 parser.add_argument("-s", "--sign", nargs=2, type=str,
@@ -217,6 +221,11 @@ def get_version_comment_block(args):
 if __name__ == '__main__':
     args = parser.parse_args()
 
+    if not args.prepend_size_word: #cladPython doesn't exist in prepend use environment
+        sys.path.insert(0, os.path.join("generated", "cladPython", "robot"))
+        from clad.robotInterface.messageEngineToRobot_hash import messageEngineToRobotHash
+        from clad.robotInterface.messageRobotToEngine_hash import messageRobotToEngineHash
+
     # start building our firmware image
     fo = DigestFile(args.output, "wb", SHA512)
     
@@ -245,7 +254,7 @@ if __name__ == '__main__':
     print ("Writting rom block")
     # this is our rom information
     # It is nessessary to be in this order or it hangs for reasons not presently known :'(
-    for kind, fn in [('body', args.body), ('rtip', args.rtip), ('wifi', args.wifi)]:
+    for kind, fn in [('body', args.body), ('bodybin', args.bodybin), ('rtip', args.rtip), ('rtipbin', args.rtipbin), ('wifi', args.wifi)]:
         if fn == None:
             continue
 
@@ -253,11 +262,24 @@ if __name__ == '__main__':
             base_addr = WIFI_BLOCK
             rom_data = open(fn, "rb").read()
             assert len(rom_data) <= WIFI_MAX_FW_SIZE
-        else:    
+        elif kind == 'bodybin':
+            base_addr = 0x18000 #found experimentally from output of syscon.axf
+            base_addr |= BODY_BLOCK
+            rom_data = open(fn, "rb").read()
+            rom_data = rom_data[:24] + b'\xFF\xFF\xFF\xFF' + rom_data[28:] #WTF? copied from get_image() method. "Clear our our evil byte"?
+            assert len(rom_data) <= 0x6C00 #BODY_MAX_FW_SIZE, from syscon project config
+        elif kind == 'rtipbin':
+            base_addr = 0x1000 #found experimentally from output of robot.axf
+            rom_data = open(fn, "rb").read()
+            rom_data = rom_data[:24] + b'\xFF\xFF\xFF\xFF' + rom_data[28:] #WTF? copied from get_image() method. "Clear our our evil byte"?
+            assert len(rom_data) <= 0xF000 #RTIP_MAX_FW_SIZE, from robot41 project config
+        else:
             rom_data, base_addr = get_image(fn)
             if kind == 'body':
                 base_addr |= BODY_BLOCK
 
+        #print('%s'%kind, '%s'%fn, 'len=%i'%len(rom_data), 'addr=%s'%hex(base_addr), 'md5:%s'% hashlib.md5(rom_data).hexdigest())
+        
         for block, data in chunk(rom_data, BLOCK_LENGTH):
             fo.write(data, block+base_addr, aes_key)
         if kind == 'wifi' and commentBlock is not None:
