@@ -134,6 +134,8 @@ BehaviorManager::~BehaviorManager()
   // destroy choosers before factory
   Util::SafeDelete(_freeplayChooser);
   Util::SafeDelete(_selectionChooser);
+  Util::SafeDelete(_meetCozmoChooser);
+  
   Util::SafeDelete(_behaviorFactory);
 }
 
