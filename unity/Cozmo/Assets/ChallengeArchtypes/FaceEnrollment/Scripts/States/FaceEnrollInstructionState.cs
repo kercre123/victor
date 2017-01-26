@@ -13,7 +13,6 @@ namespace FaceEnrollment {
     private System.Action _OnUserCancel;
     private string _NameForFace;
     private int _ReEnrollFaceID;
-    private bool _UserCancelledEnrollment = false;
     private bool _EnrollingFace = false;
 
     private AlertModal _DoneAlertModal = null;
@@ -26,7 +25,8 @@ namespace FaceEnrollment {
       // don't quit from reactionary behaviors.
     }
 
-    // reEnrollID set to 0 if we aren't doing a re-enrollment
+    // reEnrollID defaults to 0, meaning we are doing a first time enrollment.
+    // otherwise reEnrollID is the faceID of the person we are re-enrolling.
     public void Initialize(string faceName, System.Action onUserCancel, int reEnrollID = 0) {
       _NameForFace = faceName;
       _OnUserCancel = onUserCancel;
@@ -48,7 +48,7 @@ namespace FaceEnrollment {
       _FaceEnrollmentInstructionsModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleUserClosedInstructionsModal;
       _FaceEnrollmentInstructionsModalInstance.ModalForceClosedAnimationFinished += HandleInstructionsModalForceClosed;
 
-      _FaceEnrollmentInstructionsModalInstance.SetFaceName(_NameForFace);
+      _FaceEnrollmentInstructionsModalInstance.SetNameForFace(_NameForFace);
 
       SendEnrollFace();
     }
@@ -77,18 +77,10 @@ namespace FaceEnrollment {
     }
 
     private void HandleUserClosedInstructionsModal() {
-      _UserCancelledEnrollment = true;
-
       if (_EnrollingFace) {
         _CurrentRobot.CancelFaceEnrollment();
       }
-      else {
-        // we are not actively enrolling a face, but still in this state, probably because we are playing
-        // a reactionary behavior.
-        HandleUserCancelledEnrollment();
-      }
-
-      ReturnToFaceSlide();
+      HandleUserCancelledEnrollment();
     }
 
     private void HandleInstructionsModalForceClosed() {
@@ -97,8 +89,6 @@ namespace FaceEnrollment {
 
     private void SendEnrollFace() {
       _EnrollingFace = true;
-      //_CurrentRobot.SetEnableCliffSensor(false); // TODO: Handle this in the behavior?
-
       // First send enrollment settings, then activate the behavior to use them
       _CurrentRobot.SetFaceToEnroll(_ReEnrollFaceID, _NameForFace);
     }
@@ -106,12 +96,7 @@ namespace FaceEnrollment {
     private void HandleEnrolledFace(FaceEnrollmentCompleted message) {
       _EnrollingFace = false;
 
-      //_CurrentRobot.SetEnableCliffSensor(true); // TODO: Handle this in the behavior?
-
-      if (_UserCancelledEnrollment) {
-        HandleUserCancelledEnrollment();
-      }
-      else if (message.result == Anki.Cozmo.FaceEnrollmentResult.Success) {
+      if (message.result == Anki.Cozmo.FaceEnrollmentResult.Success) {
         HandleSuccessfulEnrollment(message);
       }
       else {
@@ -183,8 +168,6 @@ namespace FaceEnrollment {
         DAS.Event("robot.face_slots_used", _CurrentRobot.EnrolledFaces.Count.ToString(),
           DASUtil.FormatExtraData("1"));
 
-        // for very first enrollment (not re-enrollment of first face!), exit Meet Cozmo completely when done
-        // otherwise just go back to face list
         if (_CurrentRobot.EnrolledFaces.Count == 1) {
           ShowDoneAlertModal();
         }
@@ -198,7 +181,7 @@ namespace FaceEnrollment {
       var doneAlertData = new AlertModalData("enroll_first_time_finished_alert",
                                              LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertTitle,
                                              LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertDescription,
-                                             new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, EndFirstEnrollment));
+                                             new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, ReturnToFaceSlide));
 
       var doneAlertPriorityData = ModalPriorityData.CreateSlightlyHigherData(_FaceEnrollmentInstructionsModalInstance.PriorityData);
 
@@ -208,10 +191,6 @@ namespace FaceEnrollment {
 
     private void HandleDoneAlertModalCreated(AlertModal alertModal) {
       _DoneAlertModal = alertModal;
-    }
-
-    private void EndFirstEnrollment() {
-      _FaceEnrollmentGame.RaiseMiniGameQuit();
     }
 
     private void ReturnToFaceSlide() {

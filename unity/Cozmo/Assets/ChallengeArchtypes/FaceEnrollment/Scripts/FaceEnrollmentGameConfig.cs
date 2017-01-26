@@ -1,16 +1,15 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿namespace FaceEnrollment {
+  public class FaceEnrollmentGameConfig : MinigameConfigBase {
 
-public class FaceEnrollmentGameConfig : MinigameConfigBase {
+    public long UpdateThresholdLastSeenSeconds;
+    public long UpdateThresholdLastEnrolledSeconds;
 
-  public long UpdateThresholdLastSeenSeconds;
-  public long UpdateThresholdLastEnrolledSeconds;
+    public override int NumCubesRequired() {
+      return 0;
+    }
 
-  public override int NumCubesRequired() {
-    return 0;
-  }
-
-  public override int NumPlayersRequired() {
-    return 1;
+    public override int NumPlayersRequired() {
+      return 1;
+    }
   }
 }

@@ -22,14 +22,18 @@ namespace FaceEnrollment {
     }
 
     [SerializeField]
-    private GameObject _FaceEnrollmentHowToPlaySlidePrefab;
-    public GameObject FaceEnrollmentHowToPlaySlidePrefab {
-      get { return _FaceEnrollmentHowToPlaySlidePrefab; }
+    private FaceEnrollmentDetailsSlide _FaceEnrollmentDetailsSlidePrefab;
+    public FaceEnrollmentDetailsSlide FaceEnrollmentDetailsSlidePrefab {
+      get { return _FaceEnrollmentDetailsSlidePrefab; }
     }
 
     [SerializeField]
-    private FaceEnrollmentShelfContent _FaceEnrollmentShelfContentPrefab;
-    private FaceEnrollmentShelfContent _FaceEnrollmentShelfContentInstance;
+    private FaceSlidesShelfContent _FaceEnrollmentShelfContentPrefab;
+    private FaceSlidesShelfContent _FaceEnrollmentShelfContentInstance;
+
+    [SerializeField]
+    private FaceDetailsShelfContent _FaceDetailsShelfContentPrefab;
+    private FaceDetailsShelfContent _FaceDetailsShelfContentInstance;
 
     private long _UpdateThresholdLastSeenSeconds;
     public long UpdateThresholdLastSeenSeconds {
@@ -76,26 +80,9 @@ namespace FaceEnrollment {
         EnterNameForNewFace(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
       }
       else {
-        if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeFaceEnrollmentHowToPlay) {
-          ShowHowToPlay();
-          DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeFaceEnrollmentHowToPlay = false;
-        }
-        else {
-          _StateMachine.SetNextState(new FaceSlideState());
-        }
-
+        _StateMachine.SetNextState(new FaceSlideState());
       }
 
-    }
-
-    public void EditExistingName(int faceID, string existingName) {
-      FaceNameSlideState editNameSlideState = new FaceNameSlideState();
-      editNameSlideState.Initialize(existingName, (string newFaceName) => {
-        FaceEditDoneState faceEditEnteredState = new FaceEditDoneState();
-        faceEditEnteredState.Initialize(faceID, existingName, newFaceName);
-        _StateMachine.SetNextState(faceEditEnteredState);
-      });
-      _StateMachine.SetNextState(editNameSlideState);
     }
 
     public void EnterNameForNewFace(string preFilledName) {
@@ -108,15 +95,16 @@ namespace FaceEnrollment {
       _StateMachine.SetNextState(newNameSlideState);
     }
 
-    public void RequestReEnrollFace(int faceId, string faceName) {
+    public void RequestReEnrollFace(int faceId, string nameForFace) {
       FaceEnrollInstructionState faceEnrollInstructionState = new FaceEnrollInstructionState();
-      faceEnrollInstructionState.Initialize(faceName, () => _StateMachine.SetNextState(new FaceSlideState()), faceId);
+      faceEnrollInstructionState.Initialize(nameForFace, () => _StateMachine.SetNextState(new FaceSlideState()), faceId);
       _StateMachine.SetNextState(faceEnrollInstructionState);
     }
 
-    public void ShowShelf() {
+    public void ShowFaceListShelf() {
       SharedMinigameView.ShowShelf();
-      _FaceEnrollmentShelfContentInstance = SharedMinigameView.ShelfWidget.SetShelfContent(_FaceEnrollmentShelfContentPrefab).GetComponent<FaceEnrollmentShelfContent>();
+      _FaceEnrollmentShelfContentInstance = SharedMinigameView.ShelfWidget.SetShelfContent(_FaceEnrollmentShelfContentPrefab).GetComponent<FaceSlidesShelfContent>();
+      _FaceEnrollmentShelfContentInstance.AddNewPersonPressed += HandleNewEnrollmentRequested;
       if (_ShowDoneShelf) {
         _FaceEnrollmentShelfContentInstance.SetShelfTextKey(LocalizationKeys.kFaceEnrollmentConditionAllChangesSaved);
         _FaceEnrollmentShelfContentInstance.ShowDoneButton(true);
@@ -128,21 +116,33 @@ namespace FaceEnrollment {
         _FaceEnrollmentShelfContentInstance.SetShelfTextKey(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
         _FaceEnrollmentShelfContentInstance.ShowDoneButton(false);
       }
-
-      _FaceEnrollmentShelfContentInstance.HowToPlayButtonPressed += () => {
-        ShowHowToPlay();
-      };
-
+      _FaceEnrollmentShelfContentInstance.ShowAddNewPersonButton(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count < UnlockablesManager.Instance.FaceSlotsSize());
     }
 
-    public void ShowHowToPlay() {
-      // this is our first face enrollment so show the how to play first
-      ContextManager.Instance.AppFlash(playChime: true);
-      _StateMachine.SetNextState(new FaceEnrollmentHowToPlayState());
+    public void ShowDetailsShelf(System.Action onDeleteCallback) {
+      SharedMinigameView.ShowShelf();
+      _FaceDetailsShelfContentInstance = SharedMinigameView.ShelfWidget.SetShelfContent(_FaceDetailsShelfContentPrefab).GetComponent<FaceDetailsShelfContent>();
+      _FaceDetailsShelfContentInstance.EraseFacePressed += onDeleteCallback;
     }
-   
+
+    public void HandleDetailsViewRequested(int faceID, string nameForFace) {
+      FaceEnrollmentDetailsSlideState detailsState = new FaceEnrollmentDetailsSlideState();
+      detailsState.Initialize(faceID, nameForFace);
+      _StateMachine.SetNextState(detailsState);
+    }
+
+    private void HandleNewEnrollmentRequested() {
+      // if this the first name then we should pre-populate the name with the profile name.
+      if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
+        EnterNameForNewFace(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      }
+      else {
+        EnterNameForNewFace("");
+      }
+    }
+
     protected override void CleanUpOnDestroy() {
-      
+
     }
 
   }

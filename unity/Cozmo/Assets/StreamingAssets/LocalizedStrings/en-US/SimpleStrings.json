@@ -159,15 +159,6 @@
   "button.skip": {
     "translation": "Skip"
   },
-  "button.addPerson": {
-    "translation": "Add Person"
-  },
-  "label.update": {
-    "translation": "Update"
-  },
-  "button.unlock": {
-    "translation": "Unlock"
-  },
   "soundcheck.description.confirm": {
     "translation": "Did you hear the sound?"
   },
@@ -212,5 +203,8 @@
   },
   "label.termsInstructions": {
     "translation": "By tapping \"Start\", you agree to the terms below:"
+  },
+  "label.simpleCount": {
+    "translation": "{0} {1}"
   }
 }

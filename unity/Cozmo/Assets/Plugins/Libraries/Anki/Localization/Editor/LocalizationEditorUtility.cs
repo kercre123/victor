@@ -335,10 +335,12 @@ public static class LocalizationEditorUtility {
         // Check C# code, prefabs, assets.
         // Check configs for game
         // Check Config code from engine...
-        if (StringContainedInDir(VariableNameFromLocalizationKey(locKey.Key), "Assets/", "*.cs", "LocalizationKeys.cs") ||
+        if (locKey.Key.Contains(".plural") || locKey.Key.Contains(".singular") ||
+            StringContainedInDir(VariableNameFromLocalizationKey(locKey.Key), "Assets/", "*.cs", "LocalizationKeys.cs") ||
             StringContainedInDir(locKey.Key, "Assets/", new string[] { ".prefab", ".asset" }) ||
             StringContainedInDir(locKey.Key, Application.dataPath + "/../../../lib/anki/products-cozmo-assets/", "*.json") ||
-            StringContainedInDir(locKey.Key, Application.dataPath + "/../../../resources/config/basestation/config", "*.json")) {
+            StringContainedInDir(locKey.Key, Application.dataPath + "/../../../resources/config/basestation/config", "*.json")
+            ) {
           // orring for fast out
           keyFound = true;
         }

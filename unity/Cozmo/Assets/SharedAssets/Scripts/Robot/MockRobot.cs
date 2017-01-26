@@ -257,14 +257,31 @@ public class MockRobot : IRobot {
     _Callbacks.Clear();
   }
 
+  private int _FaceIDAssignment = 1;
+
   public void SetFaceToEnroll(int existingID, string name, bool saveToRobot = true, bool sayName = true, bool useMusic = true) {
-    // Do nothing
+    MessageEngineToGame messageEngineToGame = new MessageEngineToGame();
+    FaceEnrollmentCompleted faceEnrollmentCompletedMessage = new FaceEnrollmentCompleted();
+    if (existingID != 0) {
+      faceEnrollmentCompletedMessage.faceID = existingID;
+    }
+    else {
+      faceEnrollmentCompletedMessage.faceID = _FaceIDAssignment;
+      _FaceIDAssignment++;
+    }
+
+    faceEnrollmentCompletedMessage.name = name;
+    faceEnrollmentCompletedMessage.result = FaceEnrollmentResult.Success;
+
+    messageEngineToGame.FaceEnrollmentCompleted = faceEnrollmentCompletedMessage;
+
+    RobotEngineManager.Instance.MockCallback(messageEngineToGame, 2.0f);
   }
 
   public void CancelFaceEnrollment() {
     // Do nothing
   }
-  
+
   public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false) {
     QueueCallback(0.5f, callback);
   }

@@ -1,16 +1,17 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &110348
+--- !u!1 &103968
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
-  - 224: {fileID: 22452682}
-  - 114: {fileID: 11420850}
+  - 224: {fileID: 22430022}
+  - 222: {fileID: 22256350}
+  - 114: {fileID: 11401430}
   m_Layer: 5
-  m_Name: HowToPlayButton
+  m_Name: ButtonsContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -35,15 +36,16 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &125796
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22453742}
   - 114: {fileID: 11438582}
+  - 114: {fileID: 11417390}
   m_Layer: 5
-  m_Name: GameDoneButton
+  m_Name: AddNewPersonButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -58,35 +60,93 @@ GameObject:
   m_Component:
   - 224: {fileID: 22442306}
   - 225: {fileID: 22522506}
-  - 114: {fileID: 11481566}
+  - 114: {fileID: 11467002}
   m_Layer: 5
-  m_Name: FaceEnrollmentShelfContent
+  m_Name: FaceSlidesShelfContent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &11420850
+--- !u!1 &142448
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22460106}
+  - 114: {fileID: 11434426}
+  - 114: {fileID: 11467088}
+  m_Layer: 5
+  m_Name: GameDoneButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &11401430
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 110348}
+  m_GameObject: {fileID: 103968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -405508275, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 5
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 1
+--- !u!114 &11417390
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 125796}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: 800
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+--- !u!114 &11434426
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 142448}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
-  ModifiedValues: []
+  Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+  ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#button.done"'
   ModifiedLocalReferences:
-  - ObjectPath: ../
-    FieldName: FaceEnrollmentShelfContent:_HowToPlayButton
+  - ObjectPath: ../../
+    FieldName: FaceEnrollment.FaceSlidesShelfContent:_DoneButton
     ReferencePath: 
-  ModifiedGlobalReferences:
-  - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Sprite
-    Reference: {fileID: 21300000, guid: 83aad157cd82f421aa6d1723743578c7, type: 3}
+  ModifiedGlobalReferences: []
 --- !u!114 &11438582
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -104,11 +164,14 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
     JsonValue: false
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    JsonValue: 6
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#button.done"'
+    JsonValue: '"#faceEnrollment.button.addNewPerson"'
   ModifiedLocalReferences:
-  - ObjectPath: ../
-    FieldName: FaceEnrollmentShelfContent:_DoneButton
+  - ObjectPath: ../../
+    FieldName: FaceEnrollment.FaceSlidesShelfContent:_AddNewPersonButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11441670
@@ -147,7 +210,7 @@ MonoBehaviour:
   _AllUppercase: 0
   GlowText: 0
   IsRaycastBlocker: 0
---- !u!114 &11481566
+--- !u!114 &11467002
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -155,18 +218,62 @@ MonoBehaviour:
   m_GameObject: {fileID: 126060}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ff14861040592426c83f92691b5454ad, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f0462d7430944ae8aed25227f81cd33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _ShelfText: {fileID: 11441670}
+  _AddNewPersonButton: {fileID: 0}
   _DoneButton: {fileID: 0}
-  _HowToPlayButton: {fileID: 0}
+--- !u!114 &11467088
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 142448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: 600
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
 --- !u!222 &22239626
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 118970}
+--- !u!222 &22256350
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 103968}
+--- !u!224 &22430022
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 103968}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 22453742}
+  - {fileID: 22460106}
+  m_Father: {fileID: 22442306}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: 0, y: 100}
+  m_SizeDelta: {x: 0, y: 200}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22442306
 RectTransform:
   m_ObjectHideFlags: 1
@@ -179,33 +286,14 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22490682}
-  - {fileID: 22452682}
-  - {fileID: 22453742}
+  - {fileID: 22430022}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 50}
+  m_SizeDelta: {x: 0, y: 50}
   m_Pivot: {x: 0.5, y: 1}
---- !u!224 &22452682
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 110348}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
-  m_Father: {fileID: 22442306}
-  m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 99, y: 0}
-  m_SizeDelta: {x: 175, y: 175}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22453742
 RectTransform:
   m_ObjectHideFlags: 1
@@ -217,12 +305,30 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22442306}
-  m_RootOrder: 2
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -257, y: 120}
-  m_SizeDelta: {x: 600, y: 200}
+  m_Father: {fileID: 22430022}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22460106
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 142448}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22430022}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22490682
 RectTransform:
@@ -239,8 +345,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 25, y: 112.500244}
-  m_SizeDelta: {x: -450, y: 250}
+  m_AnchoredPosition: {x: -70, y: 100}
+  m_SizeDelta: {x: -260, y: 250}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!225 &22522506
 CanvasGroup:
