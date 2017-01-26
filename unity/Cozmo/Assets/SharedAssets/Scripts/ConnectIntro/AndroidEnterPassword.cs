@@ -62,9 +62,10 @@ public class AndroidEnterPassword : AndroidConnectionFlowStage {
   }
 
   private void HandleContinueButton() {
-    var SSID = AndroidConnectionFlow.Instance.SelectedSSID;
-    var password = AndroidConnectionFlow.Instance.Password;
-    bool result = AndroidConnectionFlow.CallJava<bool>("connect", SSID, password, AndroidConnectionFlow.kTimeoutMs);
+    var instance = AndroidConnectionFlow.Instance;
+    var SSID = instance.SelectedSSID;
+    var password = instance.Password;
+    bool result = instance.Connect(SSID, password);
     DAS.Info("AndroidEnterPassword.Continue", "Connecting to network " + SSID + ", result " + result);
     OnStageComplete();
   }

@@ -80,6 +80,8 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   public Action OnRestartFlow;
   [NonSerialized]
   public Action OnCancelFlow;
+  [NonSerialized]
+  public Action OnStartConnect;
 
   // how long to wait for connection attempt to time out
   public const int kTimeoutMs = 10000;
@@ -89,8 +91,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     Permissions,
     FindAny,
     Select,
-    Password,
-    Connecting
+    Password
   }
 
   // stage evaluation functions
@@ -126,8 +127,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
       SkipPermissions,
       SkipFindAny,
       SkipSelectNetwork,
-      SkipPassword,
-      SkipConnecting
+      SkipPassword
     };
 
     _StagePrefabs = new AndroidConnectionFlowStage[] {
@@ -135,8 +135,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
       _PermissionsPrefab,
       _ScanNetworksPrefab,
       _SelectSSIDPrefab,
-      _EnterPasswordPrefab,
-      _ConnectingPrefab
+      _EnterPasswordPrefab
     };
 
     _Stage = Stage.Init;
@@ -207,7 +206,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     while (isSkipping && (int)_Stage < numStages) {
       _Stage++;
       if ((int)_Stage >= numStages) {
-        isSkipping = false;
+        return;
       } else {
         var skipHandler = _StageSkipHandlers[(int)_Stage];
         if (!skipHandler()) {
@@ -217,11 +216,6 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
           DAS.Info("AndroidConnectionFlow.NextStage", "skipping " + _Stage.ToString());
         }
       }
-    }
-    if ((int)_Stage >= numStages) {
-      DAS.Info("AndroidConnectionFlow.NextStage", "OnComplete overflow");
-      OnScreenComplete(true);
-      return;
     }
 
     // instantiate new stage prefab
@@ -282,7 +276,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     bool shouldSkip = CallJava<bool>("isExistingConfigurationForNetwork", SelectedSSID);
     if (shouldSkip) {
       // initiate connection
-      bool result = CallJava<bool>("connectExisting", SelectedSSID, kTimeoutMs);
+      bool result = ConnectExisting(SelectedSSID);
       DAS.Info("AndroidConnectFlow.SkipPassword", "connect result to existing network " + SelectedSSID + " is " + result);
     }
     return shouldSkip;
@@ -294,6 +288,11 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
 
   private void HandleStageComplete() {
     SelectNextStage();
+  }
+
+  public void AddConnectingPrefab(GameObject parentObject) {
+    var connectingOverlay = GameObject.Instantiate(_ConnectingPrefab);
+    connectingOverlay.gameObject.transform.SetParent(parentObject.transform, false);
   }
 
   public static bool IsAvailable() {
@@ -332,6 +331,18 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   }
   public static string[] GetCozmoSSIDs(string[] allSSIDs) {
     return allSSIDs.Where(s => s.StartsWith("Cozmo_")).ToArray();
+  }
+
+  public bool Connect(string SSID, string password) {
+    bool result = CallJava<bool>("connect", SSID, password, kTimeoutMs);
+    OnStartConnect();
+    return result;
+  }
+
+  public bool ConnectExisting(string SSID) {
+    bool result = CallJava<bool>("connectExisting", SelectedSSID, kTimeoutMs);
+    OnStartConnect();
+    return result;
   }
 
   public void RestartFlow() {

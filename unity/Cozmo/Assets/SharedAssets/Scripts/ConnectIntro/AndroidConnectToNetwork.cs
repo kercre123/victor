@@ -21,30 +21,16 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
   private AnkiTextLabel _StatusLabel;
 
   [SerializeField]
-  private AnkiTextLabel _ConnectingLabel;
-
-  [SerializeField]
-  private AnkiButton _TryAgainButton;
-
-  [SerializeField]
-  private AnkiButton _RestartButton;
+  private AnkiButton _CancelButton;
 
   private int _ConnectCount = 1;
-  private int _NumDots = 1;
-  private string _ConnectingBaseText;
   private DateTime _StartTime;
 
   private void Start() {
     DasTracker.Instance.TrackConnectFlowStarted();
     _StartTime = DateTime.Now;
 
-    _TryAgainButton.Initialize(() => {
-      var SSID = AndroidConnectionFlow.Instance.SelectedSSID;
-      bool result = AndroidConnectionFlow.CallJava<bool>("reconnect", AndroidConnectionFlow.kTimeoutMs);
-      DAS.Info("AndroidConnectToNetwork", "Retrying connection to " + SSID + ", result = " + result);
-    }, "retry_button", "android_connect_to_network");
-
-    _RestartButton.Initialize(AndroidConnectionFlow.Instance.RestartFlow, "restart_button", "android_connect_to_network");
+    _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "cancel_button", "android_connect_to_network");
 
     UpdateStatusLabels(AndroidConnectionFlow.CallJava<string>("getCurrentSSID"), AndroidConnectionFlow.CallJava<string>("getCurrentStatus"));
 
@@ -52,9 +38,6 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
     var receiver = AndroidConnectionFlow.Instance.GetMessageReceiver();
     RegisterJavaListener(receiver, "connectionFinished", HandleConnectionFinished);
     RegisterJavaListener(receiver, "wifiStatus", HandleWifiStatus);
-
-    _ConnectingBaseText = Localization.Get(_ConnectingLabel.text);
-    StartCoroutine("ConnectingDots");
   }
 
   private void HandleConnectionFinished(string[] args) {
@@ -93,14 +76,5 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
   private void UpdateStatusLabels(string ssid, string status) {
     _SSIDLabel.text = string.Format(Localization.Get("wifi.currentSsid"), ssid);
     _StatusLabel.text = string.Format(Localization.Get("wifi.currentStatus"), status);
-  }
-
-  private System.Collections.IEnumerator ConnectingDots() {
-    while (true) {
-      int renderDots = Math.Min(_NumDots, 3); // clamp to 3 dots
-      _ConnectingLabel.text = _ConnectingBaseText + new string('.', renderDots);
-      yield return new WaitForSeconds(0.5f);
-      _NumDots = (_NumDots % 4) + 1; // cycle from 1...4 (displays 3 dots for two cycles)
-    }
   }
 }

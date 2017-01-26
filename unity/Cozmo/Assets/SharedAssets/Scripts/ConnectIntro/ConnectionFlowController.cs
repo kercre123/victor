@@ -18,10 +18,11 @@ public class ConnectionFlowController : MonoBehaviour {
 
   [SerializeField]
   private SearchForCozmoScreen _SearchForCozmoScreenPrefab;
+  private GameObject _SearchForCozmoScreenInstance;
+
   [SerializeField]
   private AndroidConnectionFlow _AndroidConnectionFlowPrefab;
-
-  private GameObject _SearchForCozmoScreenInstance;
+  private GameObject _AndroidConnectionFlowInstance;
 
   [SerializeField]
   private SearchForCozmoFailedScreen _SearchForCozmoFailedScreenPrefab;
@@ -124,6 +125,10 @@ public class ConnectionFlowController : MonoBehaviour {
     if (_WakingUpCozmoScreenInstance != null) {
       GameObject.Destroy(_WakingUpCozmoScreenInstance.gameObject);
     }
+
+    if (_AndroidConnectionFlowInstance != null) {
+      GameObject.Destroy(_AndroidConnectionFlowInstance);
+    }
   }
 
   public void StartConnectionFlow() {
@@ -190,7 +195,7 @@ public class ConnectionFlowController : MonoBehaviour {
   private void ShowSearchForCozmoAndroid() {
     DAS.Info("ConnectionFlow.ShowAndroid", "Instantiating android flow");
     var androidFlowInstance = GameObject.Instantiate(_AndroidConnectionFlowPrefab.gameObject).GetComponent<AndroidConnectionFlow>();
-    _SearchForCozmoScreenInstance = androidFlowInstance.gameObject;
+    _AndroidConnectionFlowInstance = androidFlowInstance.gameObject;
 
     // Set up event handlers for things the Android flow might tell us:
     // - if we want to start the flow over again
@@ -201,18 +206,38 @@ public class ConnectionFlowController : MonoBehaviour {
       GameObject.Destroy(androidFlowInstance.gameObject);
       ShowSearchForCozmoAndroid();
     };
-    // - when the screen finishes, either continue old connection flow accordingly
-    //   or go to "search failed" screen
-    Action<bool, string> onCompleteFunc = (success, stringName) => {
-      DAS.Info("ConnectionFlow.ShowAndroid", stringName);
+    // - when the android flow starts connecting, transition to the normal search
+    //   screen while still monitoring the connection
+    androidFlowInstance.OnStartConnect += () => {
       CreateConnectionFlowBackgroundWithCallback(() => {
-        _ConnectionFlowBackgroundModalInstance.SetStateInProgress(0);
-        HandleSearchForCozmoScreenDone(success);
+        ShowSearchForCozmo();
+        androidFlowInstance.AddConnectingPrefab(_SearchForCozmoScreenInstance);
       });
     };
-    androidFlowInstance.OnScreenComplete += (success) => onCompleteFunc(success, "OnComplete");
+    // - when the screen finishes, either continue old connection flow accordingly
+    //   or go to "search failed" screen
+    androidFlowInstance.OnScreenComplete += (success) => {
+      DAS.Info("ConnectionFlow.ShowAndroid", "OnComplete: " + success);
+      GameObject.Destroy(_AndroidConnectionFlowInstance);
+      _AndroidConnectionFlowInstance = null;
+      HandleSearchForCozmoScreenDone(success);
+    };
     // - if the old flow is requested, start it
-    androidFlowInstance.OnCancelFlow += () => onCompleteFunc(false, "CancelAndroid");
+    androidFlowInstance.OnCancelFlow += () => {
+      DAS.Info("ConnectionFlow.ShowAndroid", "CancelAndroid");
+      Action cancelFunc = () => {
+        GameObject.Destroy(_AndroidConnectionFlowInstance);
+        _AndroidConnectionFlowInstance = null;
+        HandleSearchForCozmoScreenDone(false);
+      };
+      // create background if not created yet
+      if (_SearchForCozmoScreenInstance == null) {
+        CreateConnectionFlowBackgroundWithCallback(cancelFunc);
+      }
+      else {
+        cancelFunc();
+      }
+    };
   }
 
   private void ShowSearchForCozmo() {
@@ -224,7 +249,8 @@ public class ConnectionFlowController : MonoBehaviour {
     }
 
     var screenInstance = UIManager.CreateUIElement(_SearchForCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<SearchForCozmoScreen>();
-    screenInstance.Initialize(_PingStatus);
+    bool androidFlowActive = _AndroidConnectionFlowInstance != null;
+    screenInstance.Initialize(androidFlowActive ? null : _PingStatus);
     screenInstance.OnScreenComplete += HandleSearchForCozmoScreenDone;
     _SearchForCozmoScreenInstance = screenInstance.gameObject;
     // Start Scan loop sound for connection phase
