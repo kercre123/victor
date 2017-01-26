@@ -62,7 +62,8 @@ static uint32_t drive_value[LIGHT_COUNT];
 
 static bool isBatteryLow = false;
 static bool override = false;
-static bool button_pressed = false ;
+static bool button_pressed = false;
+static bool lights_enabled = false;
 
 extern "C" void TIMER1_IRQHandler(void);
 
@@ -237,6 +238,8 @@ void Backpack::useTimer() {
 
   NVIC_SetPriority(TIMER1_IRQn, LIGHT_PRIORITY);
   NVIC_EnableIRQ(TIMER1_IRQn);
+
+  lights_enabled = true;
 }
 
 void Backpack::detachTimer() {
@@ -252,6 +255,8 @@ void Backpack::detachTimer() {
   nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
   #endif
+
+  lights_enabled = false;
 }
 
 void Backpack::trigger() {
@@ -274,7 +279,7 @@ void Backpack::trigger() {
     Battery::hookButton(button_pressed);
   }
 
-  TIMER1_IRQHandler();
+  if (lights_enabled) TIMER1_IRQHandler();
   #endif
 }
 
