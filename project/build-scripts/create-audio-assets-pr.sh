@@ -65,6 +65,7 @@ svn_rev=$(svn info $_SVN_COZMOSOUNDBANKS_REPO --username $SVN_USERNAME --passwor
 
 exit_status=0
 output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT update $svn_rev) || exit_status=$?
+echo "UpdateAudioAssets.py update output: {$output}"
 
 if [ $exit_status -ne 0 ]; then
     send_slack_message_and_exit "There was a problem getting r${svn_rev} audio assets.\n${output}" "danger" $exit_status
@@ -73,10 +74,11 @@ else
 fi
 
 output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT generate) || exit_status=$?
+echo "UpdateAudioAssets.py generate output: {$output}"
 if [ $exit_status -ne 0 ]; then
     send_slack_message_and_exit "There was a problem generating CLAD files.\n${output}" "danger" $exit_status
 else
-    send_slack_message "UpdateAudioAssets.py generate: ${output}" "warning"
+    send_slack_message "UpdateAudioAssets.py generate output: ${output}" "warning"
 fi
 
 pushd $_TOPLEVEL_COZMO
