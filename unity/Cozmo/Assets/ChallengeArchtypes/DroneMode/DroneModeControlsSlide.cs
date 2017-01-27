@@ -267,10 +267,16 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void EnableInput() {
-      EnableHeadSlider();
+      // COZMO-7257: Preventing internal unity crash by not triggering transitions when not needed
+      if (!_LiftSlider.interactable) {
+        _LiftSlider.interactable = true;
+      }
+      if (!_SpeedThrottle.interactable) {
+        _SpeedThrottle.interactable = true;
+      }
+
       _NightVisionButton.Interactable = true;
-      _LiftSlider.interactable = true;
-      _SpeedThrottle.interactable = true;
+      EnableHeadSlider();
       UpdateContextualButtons();
 
       _UpdateContextMenuBasedOnCurrentFocus = true;
@@ -278,10 +284,17 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void DisableInput() {
-      DisableHeadSlider();
+      // COZMO-7257: Preventing internal unity crash by not triggering transitions when not needed
+      if (_LiftSlider.interactable) {
+        _LiftSlider.interactable = false;
+      }
+      if (_SpeedThrottle.interactable) {
+        _SpeedThrottle.interactable = false;
+      }
+
       _NightVisionButton.Interactable = false;
-      _LiftSlider.interactable = false;
-      _SpeedThrottle.interactable = false;
+      DisableHeadSlider();
+
       foreach (DroneModeActionButton button in _ContextualButtons) {
         button.Interactable = false;
       }
