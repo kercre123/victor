@@ -67,13 +67,13 @@
     "translation": "Programs Run: {0}"
   },
   "settings.sdkPanel.sdkConnected.text": {
-    "translation": "SDK Connected"
+    "translation": "SDK Program Running"
   },
   "settings.sdkPanel.sdkUrl.label": {
     "translation": "To learn about the Cozmo SDK visit:\n\ngo.anki.com/cozmo-app-sdk"
   },
   "settings.sdkPanel.sdkNotConnected.text": {
-    "translation": "SDK Not Connected"
+    "translation": "No SDK Program Currently Running"
   },
   "settings.sdkPanel.wrongVersion.text": {
     "translation": "Incompatible SDK Version"
