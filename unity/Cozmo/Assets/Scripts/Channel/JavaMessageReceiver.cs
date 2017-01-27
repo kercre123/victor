@@ -58,7 +58,8 @@ public class JavaMessageReceiver : MonoBehaviour {
 
     if (_Listeners.TryGetValue(tag, out listeners)) {
       listeners.Add(newEntry);
-    } else {
+    }
+    else {
       listeners = new List<HandleListener>();
       listeners.Add(newEntry);
       _Listeners.Add(tag, listeners);
@@ -98,7 +99,9 @@ public class JavaMessageReceiver : MonoBehaviour {
   private void HandleMessage(string tag, string[] parameters) {
     List<HandleListener> tagListeners;
     if (_Listeners.TryGetValue(tag, out tagListeners)) {
-      foreach (var tuple in tagListeners) {
+      // Copy to an array because a listener can remove itself during this iteration
+      HandleListener[] tempListeners = tagListeners.ToArray();
+      foreach (var tuple in tempListeners) {
         tuple.Listener(parameters);
       }
     }
