@@ -310,7 +310,7 @@ namespace AnimationController {
   {
     u16 size;
     GetFromBuffer(reinterpret_cast<u8*>(&size), 2);
-    if (GetNumBytesAvailable() < size)
+    if (GetNumBytesInBuffer() < size)
     {
       AnkiError( 136, "AnimationController.BufferCorrupt", 392, "Message size header (%d) greater than available bytes (%d), assuming corrupt and clearing", 2, GetNumBytesAvailable(), size);
       Clear();
