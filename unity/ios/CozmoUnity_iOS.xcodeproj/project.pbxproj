@@ -157,6 +157,7 @@
 		D6DD471E9F344635DE53A2FC /* Bulk_Generics_17.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2C55C4525175AB918541276 /* Bulk_Generics_17.cpp */; };
 		D860ACF82B3464CF57ADFF0D /* UnityAppController+UnityInterface.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1B551AAF42AE0E6A719E2CDF /* UnityAppController+UnityInterface.mm */; };
 		D947CCEE681433936E1FE609 /* Il2CppInvokerTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0A4EE89A6BAF578930CF5988 /* Il2CppInvokerTable.cpp */; };
+		DA4CFCA31E3954CB00D56793 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = DA4CFCA21E3954CB00D56793 /* Settings.bundle */; };
 		DB69BDC882CA17962DF3C327 /* UnityAdsUnityWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = DE853B150001873BCA2B52A4 /* UnityAdsUnityWrapper.mm */; };
 		DCF9F6AD5A278885DED8F3D8 /* Bulk_Generics_10.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E9C1032951130D9DB2974A7 /* Bulk_Generics_10.cpp */; };
 		DD37D7B33548878A51FF4F9B /* Bulk_Assembly-CSharp_4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 128C338A16E7AD2B170E7F06 /* Bulk_Assembly-CSharp_4.cpp */; };
@@ -395,6 +396,7 @@
 		D553E3C3AE3E9F95BAEFE9A7 /* LaunchScreen-iPhonePortrait.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LaunchScreen-iPhonePortrait.png"; path = "UnityBuild/LaunchScreen-iPhonePortrait.png"; sourceTree = "<group>"; };
 		D76119896990C817E42B1E38 /* PLCrashReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PLCrashReporter.h; path = UnityBuild/Classes/PLCrashReporter.h; sourceTree = "<group>"; };
 		DA379A57EB615B22B0880E66 /* libiPhone-lib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libiPhone-lib.a"; path = "UnityBuild/Libraries/libiPhone-lib.a"; sourceTree = "<group>"; };
+		DA4CFCA21E3954CB00D56793 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		DC814581D953FDA1AB4D78E8 /* ObjCRuntime.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = ObjCRuntime.mm; path = UnityBuild/Classes/Unity/ObjCRuntime.mm; sourceTree = "<group>"; };
 		DE853B150001873BCA2B52A4 /* UnityAdsUnityWrapper.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = UnityAdsUnityWrapper.mm; path = UnityBuild/Classes/UnityAds/UnityAdsUnityWrapper.mm; sourceTree = "<group>"; };
 		DEEFAC7EF2342596541B73D3 /* iAD_Scripting.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = iAD_Scripting.mm; path = UnityBuild/Classes/UI/iAD_Scripting.mm; sourceTree = "<group>"; };
@@ -639,6 +641,7 @@
 				F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */,
+				DA4CFCA21E3954CB00D56793 /* Settings.bundle */,
 			);
 			name = Config;
 			sourceTree = "<group>";
@@ -898,6 +901,7 @@
 				17E2C07577A687C86B439BF7 /* LaunchScreen-iPhoneLandscape.png in Resources */,
 				8D061DB0D685A1DA6CA66039 /* LaunchScreen-iPhonePortrait.png in Resources */,
 				D688A0149C5A80EFB1884568 /* LaunchScreen-iPhone.xib in Resources */,
+				DA4CFCA31E3954CB00D56793 /* Settings.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

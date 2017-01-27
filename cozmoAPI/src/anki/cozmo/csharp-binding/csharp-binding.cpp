@@ -237,6 +237,7 @@ int cozmo_startup(const char *configuration_data)
 #if defined(ANKI_PLATFORM_IOS)
   // init DAS among other things
   result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform, appRunId);
+  Anki::Cozmo::iOSBinding::update_settings_bundle(appRunId.c_str(), DASGetPlatform()->GetDeviceId());
 #elif defined(ANKI_PLATFORM_ANDROID) && USE_DAS
   std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId, dataPlatform->pathToResource(Anki::Util::Data::Scope::Persistent, DEVICE_ID_FILE))};
   if (config.get("standalone", false).asBool()) {

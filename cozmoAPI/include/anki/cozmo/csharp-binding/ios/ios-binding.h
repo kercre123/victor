@@ -32,7 +32,10 @@ int cozmo_engine_wifi_setup(const char* wifiSSID, const char* wifiPasskey);
   
 void cozmo_engine_send_to_clipboard(const char* log);
 
-} // namespace CSharpBinding
+// Update the iOS app settings
+void update_settings_bundle(const char* appRunId, const char* deviceId);
+
+} // namespace iOSBinding
 } // namespace Cozmo
 } // namespace Anki
 
