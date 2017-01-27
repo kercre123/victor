@@ -315,10 +315,6 @@ namespace Cozmo {
         Action<AlertModal> confirmSleepCreated = (alertModal) => {
           _SleepCozmoConfirmDialog = alertModal;
           alertModal.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
-
-          if (OnPauseDialogOpen != null) {
-            OnPauseDialogOpen.Invoke();
-          }
         };
 
         UIManager.OpenAlert(confirmSleepCozmoAlert, confirmSleepCozmoPriority, confirmSleepCreated,
@@ -348,9 +344,6 @@ namespace Cozmo {
           _GoToSleepDialog = alertModal;
           // Set Music State
           Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
-          if (OnPauseDialogOpen != null) {
-            OnPauseDialogOpen.Invoke();
-          }
         };
 
         UIManager.OpenAlert(goToSleepAlertData, goToSleepPriority, goToSleepAlertCreated,
@@ -374,10 +367,6 @@ namespace Cozmo {
 
           _LowBatteryAlertInstance = alertModal;
           _LowBatteryAlertTriggered = true;
-
-          if (OnPauseDialogOpen != null) {
-            OnPauseDialogOpen.Invoke();
-          }
         };
 
         var lowBatteryPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryLow, 0,

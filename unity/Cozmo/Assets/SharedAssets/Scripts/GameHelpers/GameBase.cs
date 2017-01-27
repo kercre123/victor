@@ -268,7 +268,6 @@ public abstract class GameBase : MonoBehaviour {
     newView.QuitMiniGameConfirmed += HandleQuitConfirmed;
     ContextManager.Instance.OnAppHoldStart += HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd += HandleAppHoldEnd;
-    PauseManager.Instance.OnPauseDialogOpen += HandlePauseManagerDialogOpened;
   }
 
   private void PrepRobotForGame() {
@@ -718,7 +717,6 @@ public abstract class GameBase : MonoBehaviour {
 
     ContextManager.Instance.OnAppHoldStart -= HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd -= HandleAppHoldEnd;
-    PauseManager.Instance.OnPauseDialogOpen -= HandlePauseManagerDialogOpened;
 
     if (ContextManager.Instance.ManagerBusy) {
       ContextManager.Instance.OnAppHoldEnd();
@@ -1205,12 +1203,6 @@ public abstract class GameBase : MonoBehaviour {
 
       UIManager.OpenAlert(interruptedAlertData, interruptedAlertPriorityData, interruptedAlertCreated,
                           overrideCloseOnTouchOutside: false);
-    }
-  }
-
-  private void HandlePauseManagerDialogOpened() {
-    if (_InterruptedAlertView != null) {
-      _InterruptedAlertView.CloseDialogImmediately();
     }
   }
 

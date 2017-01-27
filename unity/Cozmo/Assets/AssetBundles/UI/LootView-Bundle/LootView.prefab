@@ -387,6 +387,7 @@ GameObject:
   - 224: {fileID: 22456968}
   - 222: {fileID: 22256932}
   - 114: {fileID: 11401128}
+  - 225: {fileID: 22538302}
   m_Layer: 5
   m_Name: LootViewBackground
   m_TagString: Untagged
@@ -599,9 +600,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22468726}
-  - 225: {fileID: 22536050}
-  - 222: {fileID: 22252344}
-  - 114: {fileID: 11411860}
   - 114: {fileID: 11449586}
   m_Layer: 5
   m_Name: LootView
@@ -673,33 +671,6 @@ MonoBehaviour:
   _AllUppercase: 0
   GlowText: 0
   IsRaycastBlocker: 0
---- !u!114 &11411860
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 199250}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.14901961, b: 0.28235295, a: 0}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 0}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
 --- !u!114 &11417378
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -766,17 +737,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DASEventDialogName: LootView
-  _DASEventDialogType: 0
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
+  _AlphaController: {fileID: 22538302}
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
-  _ModalPriorityData:
-    _PriorityLayer: 4000
-    _PriorityOffset: 0
-    _LowPriorityAction: 0
-    _HighPriorityAction: 2
   DimBackground: 0
   _BoxIntroTweenDuration: 0.75
   _BoxIntroSettleDuration: 0.15
@@ -803,6 +769,7 @@ MonoBehaviour:
   _RewardExplosionFinalVariance: 0.75
   _RewardSpreadRadiusMax: 575
   _RewardSpreadRadiusMin: 0
+  _VfxParent: {fileID: 22476342}
   _TronBurstLow: 3
   _TronBurstMid: 5
   _TronBurstAlmost: 8
@@ -841,7 +808,6 @@ MonoBehaviour:
   _LootGlow: {fileID: 11484582}
   _LootFlash: {fileID: 22524592}
   _OpenBox: {fileID: 22481126}
-  _AlphaController: {fileID: 22594492}
   _LootTextInstructions1: {fileID: 11457488}
   _LootTextInstructions2: {fileID: 11488944}
   _OnboardingRewardTransforms1:
@@ -4292,12 +4258,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 171520}
---- !u!222 &22252344
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 199250}
 --- !u!222 &22253620
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -5134,17 +5094,17 @@ CanvasGroup:
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 1
---- !u!225 &22536050
+--- !u!225 &22538302
 CanvasGroup:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 199250}
+  m_GameObject: {fileID: 174660}
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 1
+  m_IgnoreParentGroups: 0
 --- !u!225 &22538348
 CanvasGroup:
   m_ObjectHideFlags: 1

@@ -92,14 +92,14 @@ public class IntroManager : MonoBehaviour {
       // Later on Robot unlocks happen
     }
 
-    #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
     // begin attempting to ping Cozmo now on Android;
     // if we're already connected to his wifi, we want to detect that
     // before we start the Android connection flow
     if (AndroidConnectionFlow.IsAvailable()) {
       AndroidConnectionFlow.StartPingTest();
     }
-    #endif
+#endif
 
     OnboardingManager.Instance.PreloadOnboarding();
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
@@ -131,7 +131,6 @@ public class IntroManager : MonoBehaviour {
       return;
     }
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
-    UIManager.CloseAllModals();
     UIManager.EnableTouchEvents();
 
     if (!_StartFlowInProgress) {

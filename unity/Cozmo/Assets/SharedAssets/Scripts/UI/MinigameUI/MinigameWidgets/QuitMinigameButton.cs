@@ -36,7 +36,6 @@ namespace Cozmo {
 
       public void Initialize(bool isMinigame) {
         _IsMinigame = isMinigame;
-        PauseManager.Instance.OnPauseDialogOpen += HandlePauseDialogOpen;
       }
 
       public bool IsQuitAlertViewOpen() {
@@ -48,7 +47,6 @@ namespace Cozmo {
         if (_QuitPopupInstance != null) {
           _QuitPopupInstance.CloseDialogImmediately();
         }
-        PauseManager.Instance.OnPauseDialogOpen -= HandlePauseDialogOpen;
         Destroy(gameObject);
       }
 
@@ -86,12 +84,6 @@ namespace Cozmo {
         UIManager.OpenAlert(quitGameAlertData, quitGamePriorityData, quitAlertCreated);
 
         _ConfimedQuit = false;
-      }
-
-      private void HandlePauseDialogOpen() {
-        if (_QuitPopupInstance != null) {
-          _QuitPopupInstance.CloseDialogImmediately();
-        }
       }
 
       private void HandleQuitViewClosed() {
