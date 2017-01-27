@@ -381,7 +381,34 @@ void LifeTest(void)
 //Send a command up to the ESP to force factory revert
 void FactoryRevert(void)
 {
-  ConsolePrintf("placeholder for factory revert\r\n");
+  //Make sure charge comms are established (watch for robot pulses)
+  SendTestChar(-1);
+  SendTestChar(-1);
+  SendTestChar(-1);
+  
+  ConsolePrintf("SendCommand(21) factory revert\n");
+  SendCommand(21, 0, 0, 0);
+  
+  //Wait for comms to fail...indicates things are resetting
+  u32 start_time_us = getMicroCounter();
+  bool resetting = false;
+  while( getMicroCounter() - start_time_us < 3000000 )
+  {
+    try { 
+      SendTestChar(-1);
+    } catch(int e) { 
+      resetting = true;
+    }
+    
+    if( resetting )
+      break;
+  }
+  
+  u32 time_us = getMicroCounter() - start_time_us;
+  if( resetting )
+    ConsolePrintf("Robot in reset %u.%03ums\r\n", time_us/1000, time_us%1000 );
+  else
+    ConsolePrintf("Could not detect reset\r\n");
 }
 
 TestFunction* GetRechargeTestFunctions(void)

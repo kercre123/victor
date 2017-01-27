@@ -597,10 +597,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>31</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>3</TopLine>
-      <CurrentLine>14</CurrentLine>
+      <TopLine>178</TopLine>
+      <CurrentLine>214</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\app.c</PathWithFileName>
       <FilenameWithoutPath>app.c</FilenameWithoutPath>
@@ -615,7 +615,7 @@
       <Focus>0</Focus>
       <ColumnNumber>19</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>14</TopLine>
+      <TopLine>18</TopLine>
       <CurrentLine>28</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\binaries.s</PathWithFileName>
@@ -631,7 +631,7 @@
       <Focus>0</Focus>
       <ColumnNumber>27</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>66</TopLine>
+      <TopLine>68</TopLine>
       <CurrentLine>73</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\binariesc.c</PathWithFileName>
@@ -645,10 +645,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>126</TopLine>
+      <CurrentLine>116</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\bodyTest.c</PathWithFileName>
       <FilenameWithoutPath>bodyTest.c</FilenameWithoutPath>
@@ -679,8 +679,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>88</TopLine>
-      <CurrentLine>105</CurrentLine>
+      <TopLine>1</TopLine>
+      <CurrentLine>1</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\headTest.c</PathWithFileName>
       <FilenameWithoutPath>headTest.c</FilenameWithoutPath>
@@ -695,8 +695,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>379</TopLine>
+      <CurrentLine>413</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\robotTest.c</PathWithFileName>
       <FilenameWithoutPath>robotTest.c</FilenameWithoutPath>
@@ -771,7 +771,7 @@
 
   <Group>
     <GroupName>hal</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -847,7 +847,7 @@
       <Focus>0</Focus>
       <ColumnNumber>3</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>18</TopLine>
+      <TopLine>22</TopLine>
       <CurrentLine>30</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\swd.c</PathWithFileName>
@@ -879,7 +879,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>15</TopLine>
+      <TopLine>19</TopLine>
       <CurrentLine>29</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\uart.c</PathWithFileName>
@@ -925,10 +925,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>25</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>514</TopLine>
-      <CurrentLine>515</CurrentLine>
+      <TopLine>293</TopLine>
+      <CurrentLine>322</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\console.c</PathWithFileName>
       <FilenameWithoutPath>console.c</FilenameWithoutPath>
@@ -957,10 +957,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>84</TopLine>
-      <CurrentLine>105</CurrentLine>
+      <TopLine>493</TopLine>
+      <CurrentLine>513</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\espressif.c</PathWithFileName>
       <FilenameWithoutPath>espressif.c</FilenameWithoutPath>
@@ -989,10 +989,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>27</ColumnNumber>
+      <ColumnNumber>4</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>109</TopLine>
+      <CurrentLine>135</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\testport.c</PathWithFileName>
       <FilenameWithoutPath>testport.c</FilenameWithoutPath>
@@ -1039,7 +1039,7 @@
       <Focus>0</Focus>
       <ColumnNumber>3</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>8</TopLine>
+      <TopLine>12</TopLine>
       <CurrentLine>22</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\swdnrf.c</PathWithFileName>
