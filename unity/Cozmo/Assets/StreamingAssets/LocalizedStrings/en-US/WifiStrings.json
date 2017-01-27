@@ -110,5 +110,8 @@
   },
   "wifi.connecting": {
     "translation": "Connecting to Wifi"
+  },
+  "wifi.passwordRememberStatement": {
+    "translation": "Password is visible on Cozmo's face, enter it carefully! Your device should remember this password, so you will only need to enter it once."
   }
 }
