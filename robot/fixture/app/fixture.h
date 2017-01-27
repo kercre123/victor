@@ -48,13 +48,15 @@
 
 #define FIXTURE_SOUND_TEST     29
 
+#define FIXTURE_COZ187_TEST    30   // murder cozmo, kill code to fac-revert via charge-contact cmd
+
 #define FIXTURE_DEBUG          32   // Should be last ID
 
 typedef unsigned char FixtureType;
 #define FIXTURE_TYPES { "NO ID",   "BODY1",  "HEAD1",  "MOTOR1H","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
                         "ROBOT1",  "BODY2",  "MOTOR1L","MOTOR2L","MOTOR2H", "BODY3",  "INFO",  "PLAYPEN", \
                         "FINISHC", "FINISH1","FINISH2","FINISH3","FINISHX", "CUBEX",  "ROBOT2","ROBOT3", \
-                        "PACKOUT","LIFETEST","RECHARGE","JAM",   "HEAD2",   "SOUND",  "","", \
+                        "PACKOUT","LIFETEST","RECHARGE","JAM",   "HEAD2",   "SOUND",  "COZ187","", \
                         "DEBUG" }
 
 extern FixtureType g_fixtureType;

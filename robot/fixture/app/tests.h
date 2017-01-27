@@ -23,6 +23,7 @@ TestFunction* GetPackoutTestFunctions(void);
 TestFunction* GetLifetestTestFunctions(void);
 TestFunction* GetRechargeTestFunctions(void);
 TestFunction* GetSoundTestFunctions(void);
+TestFunction* GetFacRevertTestFunctions(void);
     
 bool MotorDetect(void);
 TestFunction* GetMotor1TestFunctions(void);

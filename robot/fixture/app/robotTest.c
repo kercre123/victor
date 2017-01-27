@@ -378,6 +378,12 @@ void LifeTest(void)
   SendCommand(TEST_MOTORSLAM, 0, 0, 0);
 }
 
+//Send a command up to the ESP to force factory revert
+void FactoryRevert(void)
+{
+  ConsolePrintf("placeholder for factory revert\r\n");
+}
+
 TestFunction* GetRechargeTestFunctions(void)
 {
   static TestFunction functions[] =
@@ -423,6 +429,18 @@ TestFunction* GetSoundTestFunctions(void)
   {
     InfoTest,
     SpeakerTest,
+    NULL
+  };
+
+  return functions;
+}
+
+TestFunction* GetFacRevertTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    FactoryRevert,
     NULL
   };
 
