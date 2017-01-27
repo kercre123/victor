@@ -220,6 +220,9 @@ Result BehaviorEnrollFace::InitInternal(Robot& robot)
     ReactionTrigger::CliffDetected,
     ReactionTrigger::CubeMoved,
     ReactionTrigger::Frustration,
+    ReactionTrigger::RobotOnBack,
+    ReactionTrigger::RobotOnFace,
+    ReactionTrigger::RobotOnSide,
     ReactionTrigger::RobotPickedUp,
     ReactionTrigger::ReturnedToTreads,
     ReactionTrigger::UnexpectedMovement,
@@ -1135,7 +1138,7 @@ void BehaviorEnrollFace::HandleWhileRunning(const EngineToGameEvent& event, Robo
         else if(State::Enrolling == _state)
         {
           // Stop tracking the face and start over (to create a new tracking action, e.g. in case the robot is now
-          // picked up and its treads should stop moving
+          // picked up and its treads should stop moving)
           PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleWhileRunning.EnrollmentInterrupted",
                         "Restarting enrollment due to %s event",
                         MessageEngineToGameTagToString(event.GetData().GetTag()));
