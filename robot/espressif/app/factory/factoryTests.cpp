@@ -120,7 +120,9 @@ static const FTMenuItem faceMenuItems[] = {
 static const FTMenuItem stateMenuItems[] = {
   {"ADC info",        RobotInterface::FTM_ADCInfo,       30000000 },
   {"IMU info",        RobotInterface::FTM_ImuInfo,       30000000 },
+#if FACTORY_FACE_MENUS
   {"Encoder info",    RobotInterface::FTM_EncoderInfo,   30000000 },
+#endif  
   {"<--",             RobotInterface::FTM_menus, MENU_TIMEOUT}
 };
 #define NUM_STATE_MENU_ITEMS (sizeof(stateMenuItems)/sizeof(FTMenuItem))
@@ -484,7 +486,7 @@ void Update()
           }
           else
           {
-            SetMode(RobotInterface::FTM_Sleepy);
+            SetMode(FACTORY_FACE_MENUS ? RobotInterface::FTM_SSID : RobotInterface::FTM_Sleepy);
           }
         }
         break;
@@ -492,7 +494,7 @@ void Update()
       case RobotInterface::FTM_SSID:
       {
         //toggle High/low every 30 seconds.
-        bool toggle = (now/30*IDLE_SECONDS) % 2;
+        bool toggle = (now/(30*IDLE_SECONDS)) % 2;
         ShowSSIDAndPwd(toggle);
         // Explicit fall through to next case to allow power off
       }
