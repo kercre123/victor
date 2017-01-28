@@ -54,6 +54,18 @@
   "unlockable.Mystery.Description": {
     "translation": "More great Upgrades coming soon!"
   },
+  "unlockable.FistBump.Title": {
+    "translation": "Fist Bump"
+  },
+  "unlockable.FistBump.Description": {
+    "translation": "Want to show Cozmo that you're proud of him? Give him a little fist bump! With this upgrade, Cozmo will hold his lift in the air and wait for you to bump it."
+  },
+  "unlockable.FistBump.SparkButtonDescription": {
+    "translation": "Tap to ask Cozmo to fist bump"
+  },
+  "unlockable.FistBump.SparkedStateDescription": {
+    "translation": "When he's ready, fist bump Cozmo"
+  },
   "unlockable.Workout.Title": {
     "translation": "Workout with Cubes"
   },

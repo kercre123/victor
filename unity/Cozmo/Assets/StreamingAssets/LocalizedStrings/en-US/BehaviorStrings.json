@@ -45,6 +45,9 @@
   "behavior.PounceOnMotion": {
     "translation": "Cozmo wants to pounce on your finger"
   },
+  "behavior.FistBump": {
+    "translation": "Cozmo wants to fist bump"
+  },
   "behavior.RollBlock": {
     "translation": "Cozmo is rolling a Cube"
   },
