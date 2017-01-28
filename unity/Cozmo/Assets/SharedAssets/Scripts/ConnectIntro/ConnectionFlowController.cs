@@ -443,8 +443,11 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void WakeupSequence() {
     _WakingUpCozmoScreenInstance = UIManager.CreateUIElement(_WakingUpCozmoScreenPrefab, _ConnectionFlowBackgroundModalInstance.transform);
-
-    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
+      // just a quick animation to kick the eyes on in SDK mode, but not hold for seconds
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.NeutralFace, HandleWakeAnimationComplete);
+    }
+    else if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
       HandleWakeAnimationComplete(true);
     }
     else {

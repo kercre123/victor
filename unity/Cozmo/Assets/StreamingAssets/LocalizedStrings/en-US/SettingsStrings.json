@@ -78,6 +78,9 @@
   "settings.sdkPanel.wrongVersion.text": {
     "translation": "Incompatible SDK Version"
   },
+  "settings.sdkPanel.hideScreenButton.text": {
+    "translation": "Hide Screen"
+  },
   "settings.sleepCozmoPanel.button.sleepCozmo": {
     "translation": "Sleep Cozmo"
   },

@@ -19,10 +19,28 @@ namespace Cozmo.Settings {
     [SerializeField]
     private Text _ConnectionStatusLabel;
 
+    // Some SDK users are reporting burn in on their phones.
+    // Allow this setting for "screensaver mode"
+    // We can't use Unity's Screen.sleepTimeout because it makes the app disconnect
+    [SerializeField]
+    private CozmoButton _HideScreenButton;
+
+    [SerializeField]
+    private CozmoButton _ShowScreenButton;
+
+    [SerializeField]
+    private GameObject _ParentScreenElements;
+
     private bool _BackgroundTimeoutSent = false;
 
     private void Awake() {
       _DisableSDKButton.Initialize(HandleDisableSDKButtonTapped, "disable_sdk_button", "sdk_view");
+
+      _HideScreenButton.Initialize(HandleHideScreenButtonTapped, "hide_screen_sdk_button", "sdk_view");
+
+      _ShowScreenButton.Initialize(HandleShowScreenButtonTapped, "show_screen_sdk_button", "sdk_view");
+
+      ShowElements(true);
     }
 
     // Use this for initialization
@@ -65,6 +83,18 @@ namespace Cozmo.Settings {
         return string.Format("{0:D2}h:{1:D2}m:{2:D2}.{3:D1}s", timespan.Hours, timespan.Minutes,
                                     timespan.Seconds, tenthsOfASecond);
       }
+    }
+
+    private void HandleShowScreenButtonTapped() {
+      ShowElements(true);
+    }
+    private void HandleHideScreenButtonTapped() {
+      ShowElements(false);
+    }
+    // Screen saver burn in mode, tap to show
+    private void ShowElements(bool show) {
+      _ShowScreenButton.gameObject.SetActive(!show);
+      _ParentScreenElements.SetActive(show);
     }
 
     private void HandleSDKMessageReceived(Anki.Cozmo.ExternalInterface.SdkStatus message) {

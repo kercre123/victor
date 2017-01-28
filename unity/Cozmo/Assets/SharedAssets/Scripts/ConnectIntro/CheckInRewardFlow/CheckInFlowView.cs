@@ -132,8 +132,13 @@ namespace Cozmo.CheckInFlow.UI {
       ChestRewardManager.Instance.ApplyChestRewards();
       UpdateEnergyProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
 
+
+      // SDK users always should skip...
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
+        HandleConnectButton();
+      }
       // Do Check in Rewards if we need a new session
-      if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
+      else if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
         ShowCheckInRewardFlowUI();
       }
       else {
