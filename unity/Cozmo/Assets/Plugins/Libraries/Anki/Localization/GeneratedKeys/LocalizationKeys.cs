@@ -532,6 +532,7 @@ public static class LocalizationKeys {
   public const string kLabelTotalCount = "label.totalCount";
   public const string kLabelFractionCount = "label.fractionCount";
   public const string kLabelDayCount = "label.dayCount";
+  public const string kLabelWaiting = "label.waiting";
   public const string kRequestGameTitle = "requestGame.title";
   public const string kRequestGameDescription = "requestGame.description";
   public const string kDailyGoalTitle = "dailyGoal.title";
@@ -687,7 +688,13 @@ public static class LocalizationKeys {
   public const string kWifiCurrentSsid = "wifi.currentSsid";
   public const string kWifiCurrentStatus = "wifi.currentStatus";
   public const string kWifiWrongPassword = "wifi.wrongPassword";
+  public const string kWifiEnableWifi = "wifi.enableWifi";
+  public const string kWifiLocationPermission = "wifi.locationPermission";
+  public const string kWifiPleaseLocationPermission = "wifi.pleaseLocationPermission";
+  public const string kWifiEnableLocation = "wifi.enableLocation";
+  public const string kWifiPleaseEnableLocation = "wifi.pleaseEnableLocation";
   public const string kWifiConnecting = "wifi.connecting";
+  public const string kWifiPasswordRememberStatement = "wifi.passwordRememberStatement";
 
   #endregion
 }

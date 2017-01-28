@@ -22,7 +22,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
   private CozmoButton _ExecuteButton;
 
   [SerializeField]
-  private AnkiButton _CancelButton;
+  private CozmoButton _CancelButton;
 
   private void Start() {
     _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "cancel_button", "android_get_permissions");
@@ -43,7 +43,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
       return;
     }
 
-    InitStage("wifi.enableWifi", () => {
+    InitStage(LocalizationKeys.kWifiEnableWifi, () => {
       AndroidConnectionFlow.CallJava("enableWifi");
       nextStage();
     });
@@ -59,7 +59,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
 
     Action successAction = () => nextStage(true);
 
-    InitStage("wifi.locationPermission", () => {
+    InitStage(LocalizationKeys.kWifiLocationPermission, () => {
       SetWaitingLabel();
       RegisterJavaListener(AndroidConnectionFlow.Instance.GetMessageReceiver(), "permissionResult",
         args => ParseJavaResult(args, successAction, () => HandlePermissionRejected(successAction)));
@@ -78,7 +78,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
 
     // ask again nicely, this time just bail if they still say no
     ClearJavaListeners();
-    InitStage("wifi.pleaseLocationPermission", () => {
+    InitStage(LocalizationKeys.kWifiPleaseLocationPermission, () => {
       SetWaitingLabel();
       RegisterJavaListener(AndroidConnectionFlow.Instance.GetMessageReceiver(), "permissionResult",
         args => ParseJavaResult(args, successAction, OnCatastrophicFailure));
@@ -87,7 +87,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
   }
 
   private void SetWaitingLabel() {
-    _Instructions.text = Localization.Get("label.waiting");
+    _Instructions.text = Localization.Get(LocalizationKeys.kLabelWaiting);
   }
 
   private void CheckLocationEnabled(bool didGetPermissions) {
@@ -110,7 +110,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
     if (didGetPermissions) {
       stageAction();
     } else {
-      InitStage("wifi.enableLocation", () => {
+      InitStage(LocalizationKeys.kWifiEnableLocation, () => {
         SetWaitingLabel();
         stageAction();
       });
@@ -120,7 +120,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
   private void HandleLocationRejected(Action successAction) {
     // ask again nicely, this time just bail if they still say no
     ClearJavaListeners();
-    InitStage("wifi.pleaseEnableLocation", () => {
+    InitStage(LocalizationKeys.kWifiPleaseEnableLocation, () => {
       SetWaitingLabel();
       RegisterJavaListener(AndroidConnectionFlow.Instance.GetMessageReceiver(), "locationResult",
         args => ParseJavaResult(args, successAction, AndroidConnectionFlow.Instance.UseOldFlow));

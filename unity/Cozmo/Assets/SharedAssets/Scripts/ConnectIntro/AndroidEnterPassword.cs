@@ -19,7 +19,7 @@ public class AndroidEnterPassword : AndroidConnectionFlowStage {
   private CozmoButton _ContinueButton;
 
   [SerializeField]
-  private AnkiButton _WrongCozmoButton;
+  private CozmoButton _WrongCozmoButton;
 
   [SerializeField]
   private AnkiTextLabel _WrongPasswordLabel;
@@ -30,6 +30,7 @@ public class AndroidEnterPassword : AndroidConnectionFlowStage {
     _PasswordField.onValueChanged.AddListener(HandlePasswordChanged);
     _PasswordField.onValidateInput = ValidateCharacter;
     _InstructionsLabel.FormattingArgs = new object[] { AndroidConnectionFlow.Instance.SelectedSSID };
+    _ErrorLabel.gameObject.SetActive(false);
 
     _ContinueButton.Initialize(HandleContinueButton, "continue_button", "android_enter_password");
     _ContinueButton.Interactable = false;

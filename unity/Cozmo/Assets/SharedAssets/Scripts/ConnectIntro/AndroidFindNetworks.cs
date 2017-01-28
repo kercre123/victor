@@ -7,14 +7,10 @@ public class AndroidFindNetworks : AndroidConnectionFlowStage {
   private const float kInstructionsDelaySeconds = 5.0f;
 
   [SerializeField]
-  private Anki.UI.AnkiButton _CancelButton;
-
-  [SerializeField]
-  private GameObject _WifiAnimationsPrefab;
+  private GameObject _SearchForCozmoFailedPrefab;
 
   private void Start() {
     StartCoroutine("UpdateNetworks");
-    _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "cancel", "android_find_networks");
 
     // register listeners to get scan results from Java, or be notified if we get a permissions issue
     var receiver = AndroidConnectionFlow.Instance.GetMessageReceiver();
@@ -31,8 +27,10 @@ public class AndroidFindNetworks : AndroidConnectionFlowStage {
   }
 
   private void ShowAnimations() {
-    GameObject wifiAnimations = GameObject.Instantiate(_WifiAnimationsPrefab);
-    wifiAnimations.transform.SetParent(this.transform, false);
+    GameObject instructionsObject = GameObject.Instantiate(_SearchForCozmoFailedPrefab);
+    instructionsObject.transform.SetParent(this.transform, false);
+    var searchFailedScreen = instructionsObject.GetComponent<SearchForCozmoFailedScreen>();
+    searchFailedScreen.OnQuitFlow += AndroidConnectionFlow.Instance.OnRestartFlow;
   }
 
   // coroutine to request a new wifi scan every few seconds

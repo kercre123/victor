@@ -74,7 +74,12 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
   }
 
   private void UpdateStatusLabels(string ssid, string status) {
-    _SSIDLabel.text = string.Format(Localization.Get("wifi.currentSsid"), ssid);
-    _StatusLabel.text = string.Format(Localization.Get("wifi.currentStatus"), status);
+    if (Debug.isDebugBuild) {
+      _SSIDLabel.text = string.Format(Localization.Get("wifi.currentSsid"), ssid);
+      _StatusLabel.text = string.Format(Localization.Get("wifi.currentStatus"), status);
+    } else {
+      _SSIDLabel.gameObject.SetActive(false);
+      _StatusLabel.gameObject.SetActive(false);
+    }
   }
 }
