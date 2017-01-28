@@ -20,9 +20,9 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     End
   }
 
-  private List<CozmoUnlockableTile> _UnlockedTiles;
-  private List<CozmoUnlockableTile> _UnlockableTiles;
-  private List<CozmoUnlockableTile> _LockedTiles;
+  private List<CozmoUnlockableTile> _UnlockedTiles = new List<CozmoUnlockableTile>();
+  private List<CozmoUnlockableTile> _UnlockableTiles = new List<CozmoUnlockableTile>();
+  private List<CozmoUnlockableTile> _LockedTiles = new List<CozmoUnlockableTile>();
 
   [SerializeField]
   private RectTransform _UnlocksContainer;
@@ -45,9 +45,6 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private AlertModal _ComingSoonAlertPrefab;
 
   void Start() {
-    _UnlockedTiles = new List<CozmoUnlockableTile>();
-    _UnlockableTiles = new List<CozmoUnlockableTile>();
-    _LockedTiles = new List<CozmoUnlockableTile>();
 
     // Did they already complete this section of onboarding on a different robot?
     // Needs to be evaluated before we load tiles since thier interactable state depends on this
@@ -146,9 +143,10 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       _LockedTiles[i].OnTapped -= HandleTappedLocked;
     }
     _LockedTiles.Clear();
-
-    for (int i = 0; i < _UnlocksContainer.transform.childCount; ++i) {
-      Destroy(_UnlocksContainer.transform.GetChild(i).gameObject);
+    if (_UnlocksContainer != null) {
+      for (int i = 0; i < _UnlocksContainer.transform.childCount; ++i) {
+        Destroy(_UnlocksContainer.transform.GetChild(i).gameObject);
+      }
     }
   }
 

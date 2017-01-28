@@ -1,7 +1,7 @@
 {
   "behaviorClass": "ReactToFrustration",
   "name": "ReactToFrustrationMajor",
-  "displayNameKey":"behavior.ReactToFrustrationMajor",
+  "displayNameKey":"behavior.ReactToFrustration",
 
   "anim": "FrustratedByFailureMajor",
   "finalEmotionEvent": "FinishedMajorFrustration",
