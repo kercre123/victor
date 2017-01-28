@@ -62,7 +62,7 @@ Build everything from the cozmo-game folder.
 
 Webots is what we use for simulation and visualization. It is also used to run the engine on desktop/Mac when we connect to a physical robot.
 
-We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/webots-8.2.1.dmg). You will need to get a license from IT.
+We are currently using [version 8.5.3](https://www.cyberbotics.com/archive/mac/webots-8.5.3.dmg). You will need to get a license from IT.
 
 Webots runs concurrent processes for each active simulation object via "controllers". Cozmo simulations consist of the following controllers which can be found in /simulator/controllers. In order to debug with breakpoints you'll need to first attach to the appropriate process.
 
