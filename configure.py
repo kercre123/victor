@@ -360,6 +360,7 @@ class GamePlatformConfiguration(object):
                     tmp_pp = os.path.join(CERT_ROOT, self.options.provision_profile + '.mobileprovision')
                     self.provision_profile_uuid = subprocess.check_output(
                             '{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True).strip()
+                    self.cert_type = subprocess.check_output('{0}/mpParse -f {1}'.format(CERT_ROOT, tmp_pp), shell=True).strip()
                     if self.options.codesign_force_dev:
                         self.codesign_identity = "iPhone Developer"
                     else:
@@ -368,14 +369,16 @@ class GamePlatformConfiguration(object):
                 else:
                     self.provision_profile_uuid = None
                     self.codesign_identity = "iPhone Developer"
+                    self.cert_type = "debug"
                 if self.options.use_keychain is not None:
                     self.other_cs_flags = '--keychain ' + self.options.use_keychain
                 else:
                     self.other_cs_flags = None
-            except TypeError or AttributeError:
+            except TypeError or AttributeError or subprocess.CalledProcessError:
                 self.provision_profile_uuid = None
                 self.codesign_identity = "iPhone Developer"
                 self.other_cs_flags = None
+                self.cert_type = "debug"
 
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
             #there should be a 1-to-1 with self.symlink_list for _symlink
@@ -484,6 +487,10 @@ class GamePlatformConfiguration(object):
 
             if self.other_cs_flags is not None:
                 xcconfig += ['OTHER_CODE_SIGN_FLAGS="{0}"'.format(self.other_cs_flags)]
+            if self.cert_type == 'universal':
+                xcconfig += ['DEVELOPMENT_TEAM=V9998YVMU5'] # Enterprise
+            else:
+                xcconfig += ['DEVELOPMENT_TEAM=BEJF9NAYCL'] # DEV, STORE, etc
             if self.provision_profile_uuid is not None:
                 xcconfig += ['PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid)]
 	    if self.options.provision_profile is not None:
