@@ -39,8 +39,8 @@ namespace Onboarding {
     public override void OnDestroy() {
       base.OnDestroy();
       GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
-      BaseModal.BaseModalOpened += HandleModalOpened;
-      BaseModal.BaseModalClosed += HandleModalClosed;
+      BaseModal.BaseModalOpened -= HandleModalOpened;
+      BaseModal.BaseModalClosed -= HandleModalClosed;
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
     }
 

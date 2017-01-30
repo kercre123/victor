@@ -195,6 +195,7 @@ namespace Onboarding {
           _ShowCozmoCubesLabel.text = "";
           _ShowShelfTextLabel.text = "";
           _ContinueButtonInstance.gameObject.SetActive(true);
+          _ContinueButtonInstance.Interactable = true;
           _CozmoMovedErrorTransform.gameObject.SetActive(false);
           _CozmoCubeRightSideUpTransform.gameObject.SetActive(false);
           _CozmoImageTransform.gameObject.SetActive(false);

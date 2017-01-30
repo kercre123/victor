@@ -132,6 +132,9 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const EngineToGameEvent& eve
       HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
       break;
     }
+    case MessageEngineToGameTag::ReactionaryBehaviorTransition:
+      // Handled by AlwaysHandle, but don't want error printing...
+    break;
     default: {
       PRINT_NAMED_ERROR("BehaviorOnboardingShowCube.HandleWhileRunning.InvalidEvent", "");
       break;
@@ -320,11 +323,16 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
                 else
                 {
                   // Play failure animation
-                  if (msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
+                  if (msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING)
+                  {
                     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingCubeDockFail));
                   }
-                  
-                  SET_STATE(ErrorFinal,robot);
+                  // During an interrupt behavior is cancelled only for a max_num_retries do we assume that the
+                  // pickup is just not working for some other reason than them messing with the robot.
+                  if( msg.result == ActionResult::REACHED_MAX_NUM_RETRIES )
+                  {
+                    SET_STATE(ErrorFinal,robot);
+                  }
                 }
               });
 }

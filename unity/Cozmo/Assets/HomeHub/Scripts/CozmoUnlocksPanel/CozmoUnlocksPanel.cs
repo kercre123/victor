@@ -62,6 +62,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
         OnboardingManager.Instance.SetOutlineRegion(_UnlockableTiles[0].transform);
       }
       OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Upgrades);
+      OnboardingManager.Instance.OnOnboardingPhaseCompleted += HandleOnboardingCompleted;
     }
   }
 
@@ -72,6 +73,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
     ClearTiles();
 
+    OnboardingManager.Instance.OnOnboardingPhaseCompleted -= HandleOnboardingCompleted;
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleRequestSetUnlockResult);
   }
 
@@ -167,6 +169,20 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     };
     UIManager.OpenModal(_CoreUpgradeDetailsModalPrefab, _CoreUpgradeDetailsModalPriorityData, detailsModalCreatedCallback);
   }
+
+  private void HandleOnboardingCompleted(OnboardingManager.OnboardingPhases phase) {
+    // should be after Spark's "okay"
+    for (int i = 0; i < _UnlockedTiles.Count; ++i) {
+      _UnlockedTiles[i]._TileButton.Interactable = true;
+    }
+    for (int i = 0; i < _UnlockableTiles.Count; ++i) {
+      _UnlockableTiles[i]._TileButton.Interactable = true;
+    }
+    for (int i = 0; i < _LockedTiles.Count; ++i) {
+      _LockedTiles[i]._TileButton.Interactable = true;
+    }
+  }
+
 
   private void HandleTappedLocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);

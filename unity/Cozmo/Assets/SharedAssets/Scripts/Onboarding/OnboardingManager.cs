@@ -22,6 +22,7 @@ public class OnboardingManager : MonoBehaviour {
   };
 
   public Action<OnboardingPhases, int> OnOnboardingStageStarted;
+  public Action<OnboardingPhases> OnOnboardingPhaseCompleted;
 
   public bool FirstTime { get; set; }
 
@@ -237,6 +238,9 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   private void PhaseCompletedInternal() {
+    if (OnOnboardingPhaseCompleted != null) {
+      OnOnboardingPhaseCompleted.Invoke(_CurrPhase);
+    }
     if (_CurrPhase == OnboardingPhases.Home) {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("onboardingHome", ReactionTrigger.PlacedOnCharger, true);
