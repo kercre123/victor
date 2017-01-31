@@ -29,7 +29,7 @@ class ActionWatcher
 
 public:
   ActionWatcher();
-  virtual ~ActionWatcher() { };
+  ~ActionWatcher();
   
   // Called when a parent action in the actionQueue is being updated
   void ParentActionUpdating(const IActionRunner* action);

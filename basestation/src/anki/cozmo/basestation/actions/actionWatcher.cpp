@@ -24,6 +24,14 @@ ActionWatcher::ActionWatcher()
 
 }
 
+ActionWatcher::~ActionWatcher()
+{
+  for(auto& pair : _parentToUpdatingActions)
+  {
+    DeleteActionTree(pair.first);
+  }
+}
+
 void ActionWatcher::ParentActionUpdating(const IActionRunner* action)
 {
   DEV_ASSERT(action != nullptr, "ActionWatcher.ParentActionUpdating.NullAction");
@@ -192,14 +200,15 @@ void ActionWatcher::DeleteActionTree(const ActionTag tag)
   }
   
   // Helper function to recursively delete nodes and actionTags from _actionTrees
-  std::function<void(const Node* node)> helper = [&](const Node* node){
-    for(const auto& n : node->children)
+  std::function<void(Node* node)> helper = [&](Node* node){
+    for(auto& n : node->children)
     {
       helper(n);
       const auto& iter = _actionTrees.find(n->actionTag);
+
+      Util::SafeDelete(n);
       if(iter != _actionTrees.end())
       {
-        Util::SafeDelete(iter->second);
         _actionTrees.erase(iter);
       }
     }
