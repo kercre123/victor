@@ -59,7 +59,7 @@ namespace ExternalInterface {
 class BehaviorManagerMessageUnion;
 }
 
-static const f32 kIgnoreDefaultHeandAndLiftState = FLT_MAX;
+static const f32 kIgnoreDefaultHeadAndLiftState = FLT_MAX;
   
 class BehaviorManager
 {
@@ -87,11 +87,16 @@ public:
   // get if the given flags are available, you can check for all or if any is set
   inline bool AreAllGameFlagsAvailable(BehaviorGameFlag gameFlag) const;
   inline bool IsAnyGameFlagAvailable(BehaviorGameFlag gameFlag) const;
-  UnlockId GetActiveSpark() const { return _activeSpark; };
-  UnlockId GetRequestedSpark() const { return _lastRequestedSpark; };
-  bool IsActiveSparkSoft() const  { return (_activeSpark != UnlockId::Count) && _isSoftSpark;}
-  bool IsRequestedSparkSoft() const  { return (_lastRequestedSpark != UnlockId::Count) && _isRequestedSparkSoft;}
-
+  
+  UnlockId GetActiveSpark() const { return _activeSpark; }
+  UnlockId GetRequestedSpark() const { return _lastRequestedSpark; }
+  
+  bool IsActiveSparkSoft() const { return (_activeSpark != UnlockId::Count) && _isSoftSpark; }
+  bool IsActiveSparkHard() const { return (_activeSpark != UnlockId::Count) && !_isSoftSpark; }
+  
+  bool IsRequestedSparkSoft() const { return (_lastRequestedSpark != UnlockId::Count) && _isRequestedSparkSoft; }
+  bool IsRequestedSparkHard() const { return (_lastRequestedSpark != UnlockId::Count) && !_isRequestedSparkSoft; }
+  
   // sets which games are available by setting the mask/flag combination
   void SetAvailableGame(BehaviorGameFlag availableGames) { _availableGames = Util::EnumToUnderlying(availableGames); }
   
@@ -106,7 +111,7 @@ public:
   // (if there is one) and the IBehaviors it contains
   void SetBehaviorChooser(IBehaviorChooser* newChooser);
   
-  // returns last time we changerd behavior chooser
+  // returns last time we changed behavior chooser
   float GetLastBehaviorChooserSwitchTime() const { return _lastChooserSwitchTime; }
 
   // Stops the current behavior and switches to null. The next time Update is called, the behavior chooser
@@ -176,7 +181,7 @@ public:
   // Handles switching behavior chooser, goal, and updating whiteboard for object tap interactions
   void HandleObjectTapInteraction(const ObjectID& objectID);
   
-  // Leave object interaction state resets the goal and clears the tap intented object in the whiteboard
+  // Leave object interaction state resets the goal and clears the tap-intended object in the whiteboard
   void LeaveObjectTapInteraction();
   
   const ObjectID& GetLastTappedObject() const { return _lastDoubleTappedObject; }
@@ -215,7 +220,7 @@ private:
   
   // Allow unity to set head angles and lift heights to preserve after reactionary behaviors
   void SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32 liftHeight);
-  bool AreDefaultHeandAndLiftStateSet() { return _defaultHeadAngle != kIgnoreDefaultHeandAndLiftState;}
+  bool AreDefaultHeadAndLiftStateSet() { return _defaultHeadAngle != kIgnoreDefaultHeadAndLiftState;}
   
   // update the tapped object should its pose change
   void UpdateTappedObject();
@@ -232,7 +237,7 @@ private:
     
   Robot& _robot;
   
-  // Set by unity to preserve the heand and lift angle after reactionary behaviors
+  // Set by unity to preserve the head and lift angle after reactionary behaviors
   f32 _defaultHeadAngle;
   f32 _defaultLiftHeight;
   
@@ -280,8 +285,9 @@ private:
   using BehaviorGameFlagMask = std::underlying_type<BehaviorGameFlag>::type;
   BehaviorGameFlagMask _availableGames = Util::EnumToUnderlying( BehaviorGameFlag::NoGame );
   
-  // current active spark (this does guarantee that behaviors will kick in, only that Cozmo is in a Sparked state)
+  // current active spark (this does not guarantee that behaviors will kick in, only that Cozmo is in a Sparked state)
   UnlockId _activeSpark = UnlockId::Count;
+  
   // Identifies if the spark is a "soft spark" - played when upgrade is unlocked and has some different playback features than normal sparks
   bool _isSoftSpark = false;
   

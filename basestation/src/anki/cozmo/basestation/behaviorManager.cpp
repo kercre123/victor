@@ -115,8 +115,8 @@ private:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::BehaviorManager(Robot& robot)
 : _robot(robot)
-, _defaultHeadAngle(kIgnoreDefaultHeandAndLiftState)
-, _defaultLiftHeight(kIgnoreDefaultHeandAndLiftState)
+, _defaultHeadAngle(kIgnoreDefaultHeadAndLiftState)
+, _defaultLiftHeight(kIgnoreDefaultHeadAndLiftState)
 , _runningAndResumeInfo(new BehaviorRunningAndResumeInfo())
 , _behaviorFactory(new BehaviorFactory())
 , _lastChooserSwitchTime(-1.0f)
@@ -344,8 +344,8 @@ void BehaviorManager::SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32
     }
     
   }else{
-    _defaultHeadAngle = kIgnoreDefaultHeandAndLiftState;
-    _defaultLiftHeight = kIgnoreDefaultHeandAndLiftState;
+    _defaultHeadAngle = kIgnoreDefaultHeadAndLiftState;
+    _defaultLiftHeight = kIgnoreDefaultHeadAndLiftState;
   }
 }
 
@@ -492,7 +492,7 @@ void BehaviorManager::TryToResumeBehavior()
   // if a behavior checks the head or lift angle right as they start this may introduce a race condition
   // blame Brad
   
-  if(AreDefaultHeandAndLiftStateSet() &&
+  if(AreDefaultHeadAndLiftStateSet() &&
      (_robot.GetActionList().GetNumQueues() > 0 && _robot.GetActionList().GetQueueLength(0) == 0))
   {
     IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_robot, _defaultHeadAngle);
@@ -501,7 +501,7 @@ void BehaviorManager::TryToResumeBehavior()
                                        new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
   }
   
-  // re-set features disabled during reactions and update the game
+  // reset features disabled during reactions and update the game
   _robot.GetExternalInterface()->BroadcastToGame<
                                    ExternalInterface::ReactionaryBehaviorTransition>(
                                     _runningAndResumeInfo->GetCurrentReactionTrigger(), false);
@@ -676,7 +676,7 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   }
   
   // default head and lift states should not be preserved between choosers
-  DEV_ASSERT(!AreDefaultHeandAndLiftStateSet(),
+  DEV_ASSERT(!AreDefaultHeadAndLiftStateSet(),
              "BehaviorManager.ChooseNextBehaviorAndSwitch.DefaultHeadAndLiftStatesStillSet");
 
   const bool currentIsReactionary = false;
@@ -690,7 +690,7 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   
   _runningAndResumeInfo->SetBehaviorToResume(nullptr);
   
-  // ensure spraks are re-set when the chooser changes
+  // ensure sparks are reset when the chooser changes
   _activeSpark = UnlockId::Count;
   _lastRequestedSpark = UnlockId::Count;
 

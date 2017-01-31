@@ -607,7 +607,7 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(Robot& robot, void(T::*c
     });
   });
   
-  // re-set count
+  // reset count
   _motionObservedNoPounceCount = 0;
 }
   
