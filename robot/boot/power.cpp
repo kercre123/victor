@@ -18,30 +18,23 @@ void Anki::Cozmo::HAL::Power::init()
   SOURCE_SETUP(PTA, 18, SourceGPIO);
   SOURCE_SETUP(PTA, 19, SourceGPIO);
 
+  // Setup initial state for power on sequencing
   // Initial state of the machine (Powered down, disabled)
-  GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-  GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-  SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
-
-  GPIO_RESET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);
-  GPIO_OUT(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);
-  SOURCE_SETUP(GPIO_CAM_OLED_RESET_N, SOURCE_CAM_OLED_RESET_N, SourceGPIO);
-
-  #ifdef HEAD_1_0
-  // Drive the OLED reset line low on startup
-  GPIO_RESET(GPIO_OLED_RST, PIN_OLED_RST);
-  GPIO_OUT(GPIO_OLED_RST, PIN_OLED_RST);
-  SOURCE_SETUP(GPIO_OLED_RST, SOURCE_OLED_RST, SourceGPIO);
-  #endif
-  
-  #ifndef HEAD_1_0
-  GPIO_SET(GPIO_nV18_EN, PIN_nV18_EN);
-  GPIO_OUT(GPIO_nV18_EN, PIN_nV18_EN);
-  SOURCE_SETUP(GPIO_nV18_EN, SOURCE_nV18_EN, SourceGPIO);
-  #endif
   GPIO_RESET(GPIO_POWEREN, PIN_POWEREN);
+  GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
+  GPIO_RESET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
+  GPIO_RESET(GPIO_OLED_RESET_N, PIN_OLED_RESET_N);
+
+  // Configure pins as outputs
   GPIO_OUT(GPIO_POWEREN, PIN_POWEREN);
   SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
+  GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
+  SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
+  GPIO_OUT(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
+  SOURCE_SETUP(GPIO_CAM_RESET_N, SOURCE_CAM_RESET_N, SourceGPIO);
+  GPIO_OUT(GPIO_OLED_RESET_N, PIN_OLED_RESET_N);
+  SOURCE_SETUP(GPIO_OLED_RESET_N, SOURCE_OLED_RESET_N, SourceGPIO);
+  MicroWait(3000);
 
   // Configure spine communication
   GPIO_IN(GPIO_BODY_UART_RX, PIN_BODY_UART_RX);
@@ -102,24 +95,18 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
   GPIO_IN(GPIO_WS, PIN_WS);
   SOURCE_SETUP(GPIO_WS, SOURCE_WS, SourceGPIO | SourcePullUp);
 
-  // Power sequencing
-  #ifndef HEAD_1_0
-  GPIO_RESET(GPIO_nV18_EN, PIN_nV18_EN);                    // Enable 1v8 rail
-  MicroWait(1000);
-  GPIO_SET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);    // Release /RESET
+  // Power-up Sequence
+  GPIO_SET(GPIO_OLED_RESET_N, PIN_OLED_RESET_N);
+  MicroWait(3000);
+
+  GPIO_SET(GPIO_POWEREN, PIN_POWEREN);
   MicroWait(10);
-  #endif
-  GPIO_SET(GPIO_POWEREN, PIN_POWEREN);                      // Enable 2v8 / 3v3 rail
-  MicroWait(1000);
-  GPIO_RESET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);  // Assert /RESET
+
+  GPIO_RESET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
   MicroWait(10);
-  GPIO_RESET(GPIO_CAM_PWDN, PIN_CAM_PWDN);                  // Release camera /PWDN
+
+  GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
   MicroWait(10);
-  #ifdef HEAD_1_0
-  GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);                    // Release /RESET (OLED)
-  #endif
-  GPIO_SET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);    // Release /RESET
-  MicroWait(5000);
 
   // Wait for Espressif to toggle out 4 words of I2SPI
   for (int i = 0; i < 32 * 512; i++)

@@ -19,32 +19,21 @@ namespace Anki
         {
           // Setup initial state for power on sequencing
           // Initial state of the machine (Powered down, disabled)
-          GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-          GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-          SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
-
-          GPIO_RESET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);
-          GPIO_OUT(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);
-          SOURCE_SETUP(GPIO_CAM_OLED_RESET_N, SOURCE_CAM_OLED_RESET_N, SourceGPIO);
-
-          // NOTE: THESE TWO ARE ACTUALLY IDENTICAL, ONLY DOING THIS INCASE
-          // WE DECIDE TO CHANGE PIN MAPPING
-
-          if (*HW_VERSION != 0x01050000) {
-            // Drive the OLED reset line low on startup
-            GPIO_RESET(GPIO_OLED_RST, PIN_OLED_RST);
-            GPIO_OUT(GPIO_OLED_RST, PIN_OLED_RST);
-            SOURCE_SETUP(GPIO_OLED_RST, SOURCE_OLED_RST, SourceGPIO);
-          } else {
-            // Disable V18 rail
-            GPIO_SET(GPIO_nV18_EN, PIN_nV18_EN);
-            GPIO_OUT(GPIO_nV18_EN, PIN_nV18_EN);
-            SOURCE_SETUP(GPIO_nV18_EN, SOURCE_nV18_EN, SourceGPIO);
-          }
-          
           GPIO_RESET(GPIO_POWEREN, PIN_POWEREN);
+          GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
+          GPIO_RESET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
+          GPIO_RESET(GPIO_OLED_RESET_N, PIN_OLED_RESET_N);
+
+          // Configure pins as outputs
           GPIO_OUT(GPIO_POWEREN, PIN_POWEREN);
           SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
+          GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
+          SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
+          GPIO_OUT(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
+          SOURCE_SETUP(GPIO_CAM_RESET_N, SOURCE_CAM_RESET_N, SourceGPIO);
+          GPIO_OUT(GPIO_OLED_RESET_N, PIN_OLED_RESET_N);
+          SOURCE_SETUP(GPIO_OLED_RESET_N, SOURCE_OLED_RESET_N, SourceGPIO);
+          MicroWait(3000);
 
           // Pull-up MISO during ESP8266 boot
           GPIO_IN(GPIO_MISO, PIN_MISO);
@@ -66,18 +55,17 @@ namespace Anki
 
           Anki::Cozmo::HAL::MicroWait(10000);
 
-          // Power sequencing
-          if (*HW_VERSION == 0x01050000) {
-            GPIO_RESET(GPIO_nV18_EN, PIN_nV18_EN);                  // Enable 1v8 rail
-            MicroWait(1000);
-            GPIO_SET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);  // Release /RESET
-            MicroWait(10);
-          }
-          GPIO_SET(GPIO_POWEREN, PIN_POWEREN);                      // Enable 2v8 / 3v3 rail
-          MicroWait(1000);
-          GPIO_RESET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);  // Assert /RESET
+          // Power-up Sequence
+          GPIO_SET(GPIO_OLED_RESET_N, PIN_OLED_RESET_N);
+          MicroWait(3000);
+
+          GPIO_SET(GPIO_POWEREN, PIN_POWEREN);
           MicroWait(10);
-          GPIO_RESET(GPIO_CAM_PWDN, PIN_CAM_PWDN);                  // Release camera /PWDN
+
+          GPIO_RESET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
+          MicroWait(10);
+
+          GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
           MicroWait(10);
 
           #ifndef FCC_TEST
@@ -101,13 +89,6 @@ namespace Anki
           #endif
 
           SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
-
-          if (*HW_VERSION != 0x01050000) {
-            GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);                  // Release /RESET (OLED)
-          }
-
-          GPIO_SET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);    // Release /RESET
-          MicroWait(5000);
         }
 
         void enterSleepMode(void)

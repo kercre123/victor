@@ -4,7 +4,6 @@
 #define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
 static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
-static uint32_t* const HW_VERSION = (uint32_t*)0x001F044;
 
 #define BODY_VER (*((s32*) 0x1F010))  // Between -1 (unprogrammed) and BODY_VERS
 #define BODY_ESN (*((u32*) 0x1F014))
@@ -14,6 +13,7 @@ enum BODY_VERS {
   BODY_VER_PILOT = 1,   // 8T head encoder
   BODY_VER_PROD = 2,    // Final hardware version, 4T head encoder
   BODY_VER_SHIP = 3,    // First shipping firmware version
+  BODY_VER_1v5  = 5
 };
 
 enum IRQ_Priority {
