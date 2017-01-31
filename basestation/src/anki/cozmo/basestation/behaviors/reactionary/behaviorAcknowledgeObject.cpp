@@ -16,6 +16,7 @@
 
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
@@ -134,7 +135,7 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
   _currTarget = *_targets.begin();
   DEV_ASSERT(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
   Pose3d poseWrtRobot;
-  robot.GetBlockWorld().GetObjectByID(_currTarget)->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot);
+  robot.GetBlockWorld().GetLocatedObjectByID(_currTarget)->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot);
   
   // Only bother checking below the robot if the object is significantly above the robot
   _shouldCheckBelowTarget = poseWrtRobot.GetTranslation().z() > ROBOT_BOUNDING_Z * 0.5f;

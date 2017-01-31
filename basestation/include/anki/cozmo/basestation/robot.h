@@ -551,12 +551,10 @@ public:
   void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf;  }
   bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
     
-  // Places the object that the robot was carrying in its current position
-  // w.r.t. the world, and removes it from the lift pose chain so it is no
-  // longer "attached" to the robot. Set clearObjects=true to call
-  // BlockWorld::ClearObject() on all carried objects at the end (e.g. to set
-  // objects' pose states as Unknown instead of the default Dirty)
-  Result SetCarriedObjectAsUnattached(bool clearObjects = false);
+  // Places the object that the robot was carrying in its current position w.r.t. the world, and removes
+  // it from the lift pose chain so it is no "attached" to the robot. Set deleteLocatedObject=true to delete
+  // the object instead of leaving it at the pose
+  Result SetCarriedObjectAsUnattached(bool deleteLocatedObjects = false);
 
   // Send a message to the robot to place whatever it is carrying on the
   // ground right where it is. Returns RESULT_FAIL if robot is not carrying

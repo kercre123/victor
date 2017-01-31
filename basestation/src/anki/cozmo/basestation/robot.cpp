@@ -72,6 +72,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
@@ -358,77 +359,58 @@ Robot::~Robot()
     
 void Robot::SetOnCharger(bool onCharger)
 {
-  ObservableObject* object = GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
-  Charger* charger = dynamic_cast<Charger*>(object);
-  if (onCharger && !_isOnCharger)
+  // If we are being set on a charger, we can update the instance of the charger in the current world to
+  // match the robot. If we don't have an instance, we can add an instance now
+  if ( onCharger )
   {
-    // If we don't actually have a charger, add an unconnected one now
-    if (nullptr == charger)
+    const Pose3d& poseWrtRobot = Charger::GetDockPoseRelativeToRobot(*this);
+    
+    // find instance in current origin
+    BlockWorldFilter filter;
+    filter.AddAllowedFamily(ObjectFamily::Charger);
+    filter.AddAllowedType(ObjectType::Charger_Basic);
+    ObservableObject* chargerInstance = GetBlockWorld().FindLocatedMatchingObject(filter);
+    if ( nullptr == chargerInstance )
     {
-      ObjectID newObjID = AddUnconnectedCharger();
-      charger = dynamic_cast<Charger*>(GetBlockWorld().GetLocatedObjectByID(newObjID));
-      if(nullptr == charger)
-      {
-        PRINT_NAMED_ERROR("Robot.SetOnCharger.FailedToAddUnconnectedCharger", "NewID=%d",
-                          newObjID.GetValue());
+      // there's currently no located instance, we need to create one.
+      ActiveID unconnectedActiveID = ObservableObject::InvalidActiveID;
+      FactoryID unconnectedFactoryID = ObservableObject::InvalidFactoryID;
+      chargerInstance = GetBlockWorld().CreateActiveObject(ActiveObjectType::OBJECT_CHARGER,
+                                                           unconnectedActiveID, unconnectedFactoryID);
+      
+      // check if there is a connected instance, because we can inherit its IDs (objectID, activeID, factoryID)
+      ActiveObject* connectedInstance = GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+      if ( nullptr != connectedInstance ) {
+        chargerInstance->CopyID(connectedInstance);
+        chargerInstance->SetActiveID(connectedInstance->GetActiveID()); // should CopyID be virtual and do this?
+        chargerInstance->SetFactoryID(connectedInstance->GetFactoryID());
       }
     }
-          
+    
+    // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
+    // that timestamp refers to visual observations only (TODO: maybe that should be more explicit or any
+    // observation should set that timestamp)
+    GetObjectPoseConfirmer().AddRobotRelativeObservation(chargerInstance, poseWrtRobot, PoseState::Known);
+  }
+  
+  // log events when onCharger status changes
+  if (onCharger && !_isOnCharger)
+  {
+    // offCharger -> onCharger
     LOG_EVENT("robot.on_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
-        
   }
   else if (!onCharger && _isOnCharger)
   {
+    // onCharger -> offCharger
     LOG_EVENT("robot.off_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
   }
-      
-  if( onCharger && nullptr != charger )
-  {
-    charger->SetPoseRelativeToRobot(*this);
-  }
-      
+
+  // update flag now (note this gets updated after notifying; this might be an issue for listerners)
   _isOnCharger = onCharger;
 }
     
-ObjectID Robot::AddUnconnectedCharger()
-{
-  // _chargerID is unknown because it exists in a previous frame but not this one
-
-  BlockWorldFilter filter;
-  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn(nullptr);
-  filter.AddAllowedType(ObjectType::Charger_Basic);
-  
-  std::vector<ObservableObject *> matchingObjects;
-  GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
-  
-  ObservableObject* obj = nullptr;
-  for (auto object : matchingObjects)
-  {
-    if (obj != nullptr)
-    {
-      DEV_ASSERT(object->GetID() == obj->GetID(), "Matching charger ids not equal");
-    }
-    obj = object;
-  }
-  
-  ObjectID objID;
-  s32 activeId = -1;
-  if (obj != nullptr)
-  {
-    activeId = obj->GetActiveID();
-  }
-  
-  // Copying existing object's activeId and objectId if an existing object was found
-  objID = GetBlockWorld().AddActiveObject(activeId, 0, ActiveObjectType::OBJECT_CHARGER, obj);
-  
-  SetCharger(objID);
-  
-  return _chargerID;
-}
-
 void Robot::IncrementSuspiciousCliffCount()
 {
   if (_cliffDetectThreshold > kCliffSensorMinDetectionThresh) {
@@ -1846,7 +1828,7 @@ Result Robot::Update()
     BlockWorldFilter filter;
     filter.SetAllowedFamilies({ObjectFamily::LightCube});
     std::vector<ObservableObject*> matchingObjects;
-    GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+    GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects); // note this doesn't retrieve unknowns anymore
     for( const auto obj : matchingObjects ) {
         const ObservableObject* topObj = GetBlockWorld().FindObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
         Pose3d relPose;
@@ -2913,7 +2895,7 @@ Result Robot::SetOnRamp(bool t)
 //  _onRamp = t;
 //      
 //  return RESULT_OK;
-  
+  return RESULT_FAIL;
 }
     
     
@@ -2931,7 +2913,7 @@ Result Robot::SetPoseOnCharger()
       
   // Just do an absolute pose update, setting the robot's position to
   // where we "know" he should be when he finishes ascending the charger.
-  SetPose(charger->GetDockedPose().GetWithRespectToOrigin());
+  SetPose(charger->GetRobotDockedPose().GetWithRespectToOrigin());
 
   const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
     
@@ -3154,7 +3136,7 @@ void Robot::UnSetCarryingObjects(bool topOnly)
       
       // Since the PoseState of an object on the lift is Known, make it Unknown.
       // here when it's detached from the lift so that Cozmo doesn't try to localize to it.
-      ObservableObject* carriedObject = _blockWorld->GetObjectByID(_carryingObjectID);
+      ObservableObject* carriedObject = _blockWorld->GetLocatedObjectByID(_carryingObjectID);
       if (nullptr != carriedObject) {
         PRINT_NAMED_INFO("Robot.UnSetCarryingObjects.SettingUnknownPoseState", "");
         GetObjectPoseConfirmer().MarkObjectUnknown(carriedObject);
@@ -3274,7 +3256,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
 } // AttachObjectToLift()
     
     
-Result Robot::SetCarriedObjectAsUnattached(bool clearObjects)
+Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
 {
   if(IsCarryingObject() == false) {
     PRINT_NAMED_WARNING("Robot.SetCarriedObjectAsUnattached.CarryingObjectNotSpecified",
@@ -3355,11 +3337,11 @@ Result Robot::SetCarriedObjectAsUnattached(bool clearObjects)
                      objectOnTop->GetID().GetValue());
   }
   
-  if(clearObjects)
+  if(deleteLocatedObjects)
   {
     for(auto const& objectID : carriedObjectIDs)
     {
-      GetBlockWorld().ClearObject(objectID); // Marks as unknown
+      GetBlockWorld().DeleteLocatedObjectByIDInCurOrigin(objectID);
     }
   }
     

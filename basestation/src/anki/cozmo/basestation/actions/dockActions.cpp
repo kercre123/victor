@@ -1240,7 +1240,7 @@ namespace Anki {
         // wasn't in the lift during pickup.
         if (checkObjectMotion) {
           BlockWorld& blockWorld = _robot.GetBlockWorld();
-          ActiveObject* obj = blockWorld.GetActiveObjectByID(_dockObjectID);
+          ObservableObject* obj = blockWorld.GetLocatedObjectByID(_dockObjectID);
           if (nullptr == obj) {
             PRINT_NAMED_WARNING("PickupObjectAction.Verify.nullObject", "ObjectID %d", _dockObjectID.GetValue());
             return ActionResult::BAD_OBJECT;
@@ -1309,7 +1309,7 @@ namespace Anki {
           
           BlockWorld& blockWorld = _robot.GetBlockWorld();
           
-          // We should _not_ still see a object with the
+          // We should _not_ still see an object with the
           // same type as the one we were supposed to pick up in that
           // block's original position because we should now be carrying it.
           ObservableObject* carryObject = blockWorld.GetLocatedObjectByID(_robot.GetCarryingObject());
@@ -1324,7 +1324,7 @@ namespace Anki {
           BlockWorldFilter filter;
           filter.SetAllowedTypes({carryObject->GetType()});
           std::vector<ObservableObject*> objectsWithType;
-          blockWorld.FindMatchingObjects(filter, objectsWithType);
+          blockWorld.FindLocatedMatchingObjects(filter, objectsWithType);
           
           // Robot's pose parent could have changed due to delocalization.
           // Assume it's actual pose is relatively accurate w.r.t. that original
@@ -1376,7 +1376,7 @@ namespace Anki {
               
               _robot.GetObjectPoseConfirmer().CopyWithNewPose(carryObject, objectInOriginalPose->GetPose(), objectInOriginalPose);
               
-              blockWorld.DeleteObject(objectInOriginalPose->GetID());
+              blockWorld.DeleteLocatedObjectByIDInCurOrigin(objectInOriginalPose->GetID());
             }
             _robot.UnSetCarryingObjects();
             
@@ -1512,7 +1512,7 @@ namespace Anki {
           PRINT_NAMED_WARNING("PlaceObjectOnGroundAction.CheckIfDone.FaceAndVerifyFailed",
                               "FaceAndVerify action reported failure, just deleting object %d.",
                               _carryingObjectID.GetValue());
-          _robot.GetBlockWorld().ClearObject(_carryingObjectID);
+          _robot.GetBlockWorld().ClearLocatedObjectByIDInCurOrigin(_carryingObjectID);
         }
         
       } // if robot is not picking/placing or moving
@@ -1740,7 +1740,7 @@ namespace Anki {
                                     _dockAction == DockAction::DA_PLACE_LOW ? "low" : "high",
                                     _carryObjectID.GetValue());
                 
-                _robot.GetBlockWorld().ClearObject(_carryObjectID);  
+                _robot.GetBlockWorld().ClearLocatedObjectByIDInCurOrigin(_carryObjectID);  
               }
               else if(_dockAction == DockAction::DA_PLACE_HIGH && !_verifyComplete) {
                 

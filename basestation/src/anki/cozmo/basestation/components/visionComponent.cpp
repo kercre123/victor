@@ -830,7 +830,7 @@ namespace Cozmo {
       return true;
     });
     
-    _robot.GetBlockWorld().FindMatchingObject(filter);
+    _robot.GetBlockWorld().FindLocatedMatchingObject(filter);
     
   } // VisualizeObservedMarkerIn3D()
   

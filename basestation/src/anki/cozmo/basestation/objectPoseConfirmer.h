@@ -34,8 +34,20 @@ public:
   
   ObjectPoseConfirmer(Robot& robot);
   
-  // Saw object with camera from given distance at given time in history
-  Result AddVisualObservation(ObservableObject* object, const Pose3d& newPose, bool robotWasMoving, f32 obsDistance_mm);
+  // Search for an unconfirmed or confirmed object match. Returns true if the object is already confirmed,
+  // false if the object is not yet confirmed.
+  // outMatch: if there is a match for the object in the current origin, regardless of whether it is confirmed or not,
+  // the matched object is stored in outMatch. If there are no confirmed nor unconfirmed matches, outMatch is nullptr
+  bool IsObjectConfirmed(const std::shared_ptr<ObservableObject>& objSeen, const ObservableObject*& outMatch) const;
+  
+  // Saw object with camera from given distance at given time in history. Pose and ID are expected to be properly
+  // set in the object passed in.
+  // returns true if the object is confirmed or becomes confirmed, false if this observation is for an object
+  // not confirmed, and it does not cause a confirmation
+  bool AddVisualObservation(const std::shared_ptr<ObservableObject>& observation,
+                            ObservableObject* confirmedMatch,
+                            bool robotWasMoving,
+                            f32 obsDistance_mm);
   
   // Immediately update object with a give pose relative to the robot, with the given PoseState.
   // Pose will be set w.r.t. origin (not "attached to" robot).
@@ -86,16 +98,39 @@ protected:
   
   struct PoseConfirmation
   {
-    Pose3d lastPose;
+    Pose3d referencePose;
     s32    numTimesObserved   = 0; // at this pose, using vision
     s32    numTimesUnobserved = 0;
     TimeStamp_t    lastPoseUpdatedTime = 0;
     
+    // pointer to the object while it's not confirmed. Once it is confirmed in a pose, its ownership is passed
+    // onto the blockworld, and this pointer is set to nullptr.
+    std::shared_ptr<ObservableObject> unconfirmedObject;
+    
     PoseConfirmation() { }
-    PoseConfirmation(const Pose3d& initPose, s32 initNumTimesObserved, TimeStamp_t initLastPoseUpdatedTime);
+    
+    // note this entry will gain ownership of the pointer passed in.
+    // this constructor is used when we grab an unconfirmed object
+    PoseConfirmation(const std::shared_ptr<ObservableObject>& observation,
+                     s32 initNumTimesObserved,
+                     TimeStamp_t initLastPoseUpdatedTime);
+
+    // note this entry will gain ownership of the pointer passed in.
+    // this constructor is used when we confirm an object in the first observation
+    PoseConfirmation(const Pose3d& initPose,
+                     s32 initNumTimesObserved,
+                     TimeStamp_t initLastPoseUpdatedTime);
+    
   };
   
   using PoseConfirmations = std::map<ObjectID, PoseConfirmation>;
+  
+  void UpdatePoseInInstance(ObservableObject* object,
+                            const ObservableObject* observation,
+                            const ObservableObject* confirmedMatch,
+                            const Pose3d& newPose,
+                            bool robotWasMoving,
+                            f32 obsDistance_mm);
   
   void SetPoseHelper(ObservableObject* object, const Pose3d& newPose, f32 distance,
                      PoseState newPoseState, const char* debugStr) const;

@@ -9,8 +9,9 @@
  * Copyright: Anki, Inc. 2015
  *
  **/
+#include "anki/cozmo/basestation/robotEventHandler.h"
 
-
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -18,7 +19,6 @@
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotEventHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
@@ -1625,7 +1625,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel
   }
   else
   {
-    ActiveObject* obj = robot->GetBlockWorld().GetActiveObjectByID(msg.objectID);
+    ActiveObject* obj = robot->GetBlockWorld().GetConnectedActiveObjectByID(msg.objectID);
     if (obj != nullptr) {
       PRINT_NAMED_INFO("RobotEventHandler.StreamObjectAccel", "ObjectID %d (activeID %d), enable %d", msg.objectID, obj->GetActiveID(), msg.enable);
       robot->SendMessage(RobotInterface::EngineToRobot(StreamObjectAccel(obj->GetActiveID(), msg.enable)));

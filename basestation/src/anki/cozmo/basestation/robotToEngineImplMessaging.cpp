@@ -511,99 +511,65 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
   }
   
   ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
-  if (payload.connected) {
+  if (payload.connected)
+  {
     // log event to das
-    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "0x%x,%s", payload.factoryID, EnumToString(payload.device_type));
+    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "0x%x,%s",
+                        payload.factoryID, EnumToString(payload.device_type));
 
-    // Add active object to blockworld if not already there
-    objID = robot->GetBlockWorld().AddActiveObject(payload.objectID, payload.factoryID, payload.device_type);
+    // Add active object to blockworld
+    objID = robot->GetBlockWorld().AddConnectedActiveObject(payload.objectID, payload.factoryID, payload.device_type);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
                        "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx)",
                        objID.GetValue(), payload.objectID, payload.factoryID, payload.device_type);
       
-      // if a charger, and robot is on the charger, add a pose for the charager
-      if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER )
-      {
-        robot->SetCharger(objID);
-        if( robot->IsOnCharger() )
-        {
-          Charger* charger = dynamic_cast<Charger*>(robot->GetBlockWorld().GetLocatedObjectByID(objID, ObjectFamily::Charger));
-          if( nullptr != charger )
-          {
-            charger->SetPoseRelativeToRobot(*robot);
-          }
-        }
-      }
+      // rsam: I don't think this should be needed here, we already update the charger pose from SetOnCharger,
+      // which should happen when we place Cozmo on the charger at the new origin. Why do we update the pose
+      // here just because we hear the connection?
+// Bold decision to remove this, but I think it makes sense to not support another path to change charger poses.
+//      // if a charger, and robot is on the charger, add a pose for the charger in the current origin
+//      if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER )
+//      {
+//        robot->SetCharger(objID);
+//        if( robot->IsOnCharger() )
+//        {
+//          Charger* charger = dynamic_cast<Charger*>(robot->GetBlockWorld().GetLocatedObjectByID(objID, ObjectFamily::Charger));
+//          if( nullptr != charger )
+//          {
+//            charger->SetPoseRelativeToRobot(*robot);
+//          }
+//          else
+//          {
+//            todo_add_first_observation;
+//          }
+//        }
+//      }
       
+      // do bookkeeping in robot
       robot->HandleConnectedToObject(payload.objectID, payload.factoryID, objType);
     }
   } else {
     // log event to das
-    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"disconnected"}}, "0x%x,%s", payload.factoryID, EnumToString(payload.device_type));
+    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"disconnected"}}, "0x%x,%s",
+                        payload.factoryID, EnumToString(payload.device_type));
 
-    // Remove active object from blockworld if it exists (in any coordinate frame)
-    BlockWorldFilter filter;
-    filter.SetFilterFcn([&payload](const ObservableObject* object) {
-      return object->IsActive() && object->GetActiveID() == payload.objectID;
-    });
-    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    
-    std::vector<ObservableObject*> matchingObjects;
-    robot->GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
-    
-    if(matchingObjects.empty()) {
-      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.SlotAlreadyDisconnected",
-                       "Received disconnected for activeID %d, factoryID 0x%x, but slot is already disconnected",
-                       payload.objectID, payload.factoryID);
-    } else {
-      for(auto obj : matchingObjects)
-      {
-        bool clearedObject = false;
-        if(objID.IsUnknown()) {
-          objID = obj->GetID();
-        } else {
-          // We expect all objects with the same active ID (across coordinate frames) to have the same
-          // object ID
-          DEV_ASSERT_MSG(objID == obj->GetID(),
-                         "Robot.HandleActiveObjectConnectionState.MismatchedIDs",
-                         "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p)",
-                         objID.GetValue(), payload.objectID, payload.factoryID,
-                         payload.device_type, &obj->GetPose().FindOrigin());
-        }
-        
-        // When disconnecting from an object make sure to set the factoryIDs of all matching objects in all frames
-        // to zero in case we see this disconnected object in the world
-        // Also update activeIDs so we don't try to localize to it.
-        // Also reset moving state if it's moving.
-        obj->SetFactoryID(0);
-        obj->SetActiveID(-1);
-        if (obj->IsMoving()) {
-          obj->SetIsMoving(false, robot->GetLastMsgTimestamp());
-        }
-        
-        if( !obj->IsPoseStateUnknown() ) {
-          robot->GetBlockWorld().ClearObject(objID);
-          clearedObject = true;
-        }
-        
-        PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
-                         "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p) cleared? %d",
-                         objID.GetValue(), payload.objectID, payload.factoryID,
-                         payload.device_type, &obj->GetPose().FindOrigin(), clearedObject);
-      } // for(auto obj : matchingObjects)
+    // Remove active object from blockworld if it exists, and remove all instances in all origins
+    objID = robot->GetBlockWorld().RemoveConnectedActiveObject(payload.objectID);
+    if ( objID.IsSet() )
+    {
+      // do bookkeeping in robot
+      robot->HandleDisconnectedFromObject(payload.objectID, payload.factoryID, objType);
     }
-    
-    robot->HandleDisconnectedFromObject(payload.objectID, payload.factoryID, objType);
   }
+  
+  PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Recvd", "FactoryID 0x%x, connected %d",
+                   payload.factoryID, payload.connected);
   
   // Viz info
   robot->GetContext()->GetVizManager()->SendObjectConnectionState(payload.objectID, objType, payload.connected);
   
-  PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Recvd",
-                   "FactoryID 0x%x, connected %d",
-                   payload.factoryID, payload.connected);
-  
+  // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {
     // Update the objectID to be blockworld ID
     payload.objectID = objID.GetValue();
@@ -657,12 +623,22 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   });
   
   std::vector<ObservableObject *> matchingObjects;
-  robot->GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+  robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
   
   if(matchingObjects.empty())
   {
-    PRINT_NAMED_WARNING(MAKE_EVENT_NAME("UnknownActiveID"),
-                        "Could not find match for active object ID %d", payload.objectID);
+    #if ANKI_DEVELOPER_CODE
+    {
+      // maybe we do not have located instances, there should be a connected one though
+      const bool isConnected = ( nullptr != robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID) );
+      if ( !isConnected ) {
+        PRINT_NAMED_WARNING(MAKE_EVENT_NAME("UnknownActiveID"),
+                            "Could not find match for active object ID %d", payload.objectID);
+      }
+    }
+    #endif
+    
+    // always finish here if no instances found
     return;
   }
   
@@ -860,12 +836,22 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
   });
 
   std::vector<ObservableObject *> matchingObjects;
-  robot->GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+  robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
 
   if(matchingObjects.empty())
   {
-    PRINT_NAMED_WARNING("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
-                        "Could not find match for active object ID %d", payload.objectID);
+    #if ANKI_DEVELOPER_CODE
+    {
+      // maybe we do not have located instances, there should be a connected one though
+      const ActiveID& activeID = payload.objectID;
+      const bool isConnected = ( nullptr != robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID) );
+      if ( !isConnected ) {
+        PRINT_NAMED_WARNING("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
+                            "Could not find match for active object ID %d", payload.objectID);
+      }
+    }
+    #endif
+  
     return;
   }
 
@@ -885,7 +871,6 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
   payload.objectID = object->GetID();
   payload.robotID = robot->GetID();
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectUpAxisChanged(payload)));
-  
 }
 
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -1265,7 +1250,7 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   
   // Forward to game
   const BlockWorld & blockWorld = robot->GetBlockWorld();
-  const ObservableObject * object = blockWorld.GetObjectByActiveID(activeID);
+  const ActiveObject * object = blockWorld.GetConnectedActiveObjectByActiveID(activeID);
   if (object != nullptr) {
     const uint32_t objectID = object->GetID();
     PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Broadcast",

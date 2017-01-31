@@ -109,7 +109,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Robo
 {
   SET_STATE(TurningToLastLocationOfBlock);
   
-  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_activeObjectID );
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_activeObjectID );
   if(obj == nullptr)
   {
     PRINT_NAMED_WARNING("BehaviorAcknowledgeCubeMoved.TransitionToTurningToLastLocationOfBlock.NullObject",

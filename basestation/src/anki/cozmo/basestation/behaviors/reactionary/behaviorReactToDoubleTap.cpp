@@ -61,7 +61,7 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
     filter.SetAllowedIDs({objectID});
     filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
-    ObservableObject* object = robot.GetBlockWorld().FindMatchingObject(filter);
+    ObservableObject* object = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
     
     IAction* action = nullptr;
     
@@ -69,20 +69,27 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
     if(object == nullptr)
     {
       filter.SetOriginMode(BlockWorldFilter::OriginMode::NotInRobotFrame);
-      object = robot.GetBlockWorld().FindMatchingObject(filter);
+      object = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
       if(object == nullptr)
       {
-        // This should never happen, the object needs to exist in a frame in order to get taps from
-        // it
-        PRINT_NAMED_ERROR("BehaviorReactToDoubleTap.NullObject",
-                          "ObjectID %d not found in any frame",
+        // This can happen if the object has never been seen. Use 0,0,0 pose, which is what the old
+        // code used to do for Unknown
+        Pose3d zeroPose;
+        zeroPose.SetParent(robot.GetWorldOrigin());
+        
+        
+        PRINT_NAMED_ERROR("BehaviorReactToDoubleTap.UnknownPose",
+                          "ObjectID %d not found in any frame. Using zero pose.",
                           objectID.GetValue());
-        return RESULT_FAIL;
+        action = new TurnTowardsPoseAction(robot, zeroPose, DEG_TO_RAD(180.f));
       }
-      PRINT_CH_INFO("Behaviors", "ReactToDoubleTap.ObjectInOtherFrame",
-                    "Turning towards pose in old frame");
+      else
+      {
+        PRINT_CH_INFO("Behaviors", "ReactToDoubleTap.ObjectInOtherFrame",
+                      "Turning towards pose in old frame");
       
-      action = new TurnTowardsPoseAction(robot, object->GetPose(), DEG_TO_RAD(180.f));
+        action = new TurnTowardsPoseAction(robot, object->GetPose(), DEG_TO_RAD(180.f));
+      }
       _objectInCurrentFrame = false;
       
       // Treat this as the same as turning towards a ghost object

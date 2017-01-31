@@ -20,14 +20,14 @@
  *
  * Copyright: Anki, Inc. 2016
  **/
+#include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -41,6 +41,8 @@
 #include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "anki/common/basestation/utils/timer.h"
 
 #include "clad/types/fwTestMessages.h"
 

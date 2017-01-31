@@ -141,7 +141,10 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
 
     // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
     std::vector<const ObservableObject *> intersectingObjects;
-    robotRef.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kBebctb_PaddingBetweenCubes_mm, ignoreSelfFilter);
+    robotRef.GetBlockWorld().FindLocatedIntersectingObjects(candidateQuad,
+                                                            intersectingObjects,
+                                                            kBebctb_PaddingBetweenCubes_mm,
+                                                            ignoreSelfFilter);
     
     collidesWithObjects = !intersectingObjects.empty();
   }
@@ -645,7 +648,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
   const float kPrecisionOffset_mm = 10.0f; // this is just to account for errors when readjusting cube positions
   const float inwardThreshold_mm = object->GetDimInParentFrame<'X'>() + kPrecisionOffset_mm;
   
-  filter.SetFilterFcn([object,beacon,&robot,inwardThreshold_mm,this](const ObservableObject* blockPtr)
+  filter.AddFilterFcn([object,beacon,&robot,inwardThreshold_mm,this](const ObservableObject* blockPtr)
   {
     // if this is our block or state is not good, skip
     if ( blockPtr == object || !blockPtr->IsPoseStateKnown() ) {
@@ -685,8 +688,8 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
     return false;
   });
                       
-  return robot.GetBlockWorld().FindMatchingObject(filter);
-  
+  const ObservableObject* ret = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+  return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorCheckForStackAtInterval.h"
 
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
@@ -199,20 +200,20 @@ void BehaviorCheckForStackAtInterval::UpdateTargetBlocks(const Robot& robot) con
   
   BlockWorldFilter knownBlockFilter;
   knownBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  knownBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
-                                 {
-                                  // originally we had !known, but if cubes are not at localizable distance, Cozmo
-                                  // never checks back on them, or if you build a tower and doing so they become
-                                  // dirty. Trying Unknown instead
-                                   if(blockPtr->IsPoseStateUnknown()){
-                                     return false;
-                                   }
-                                   
-                                   return true;
-                                 });
+//  knownBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
+//                                 {
+//                                  // originally we had !known, but if cubes are not at localizable distance, Cozmo
+//                                  // never checks back on them, or if you build a tower and doing so they become
+//                                  // dirty. Trying Unknown instead
+//                                   if(blockPtr->IsPoseStateUnknown()){
+//                                     return false;
+//                                   }
+//                                   
+//                                   return true;
+//                                 });
  
   std::vector<const ObservableObject*> objectList;
-  robot.GetBlockWorld().FindMatchingObjects(knownBlockFilter, objectList);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(knownBlockFilter, objectList);
   for( const auto& objPtr : objectList ) {
     _knownBlockIDs.emplace_back( objPtr->GetID() );
   }

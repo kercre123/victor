@@ -336,7 +336,7 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
       // ask for all cubes we know, and if any is not inside a beacon, add to the list
       BlockWorldFilter filter;
       filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-      filter.SetFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
+      filter.AddFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
         // check if the robot can pick up this object
         const bool canPickUp = _robot.CanPickUpObject(*blockPtr);
         if ( canPickUp )
@@ -358,7 +358,7 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
         return false; // have to return true/false, even though not used
       });
       
-      _robot.GetBlockWorld().FilterObjects(filter);
+      _robot.GetBlockWorld().FilterLocatedObjects(filter);
     }
   }
 
@@ -391,7 +391,7 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
     // ask for all cubes we know about inside the beacon
     BlockWorldFilter filter;
     filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    filter.SetFilterFcn([this, &robotRef, &outObjectList, beacon](const ObservableObject* blockPtr)
+    filter.AddFilterFcn([this, &robotRef, &outObjectList, beacon](const ObservableObject* blockPtr)
     {
       if(!_robot.IsCarryingObject(blockPtr->GetID()) )
       {
@@ -403,7 +403,7 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
       return false; // have to return true/false, even though not used
     });
     
-    _robot.GetBlockWorld().FilterObjects(filter);
+    _robot.GetBlockWorld().FilterLocatedObjects(filter);
   }
   
   return !outObjectList.empty();
@@ -428,18 +428,15 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
     // robot can't be carrying an object, otherwise they are not in beacons
     if ( !_robot.IsCarryingObject() )
     {
-      allInBeacon = true;
+      int locatedCubesInBeacon = 0;
+      int connectedCubes = 0;
       
-      // ask for all cubes we know if they are in beacons
-      BlockWorldFilter filter;
-      filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-      filter.SetFilterFcn([this, &allInBeacon](const ObservableObject* blockPtr)
+      // ask located cubes which ones are in a beacon. Note some cubes might be in the beacon already, but
+      // if Cozmo doesn't know about them he won't count them before detecting them.
       {
-        // TODO: there is a bug here, Unknown objects are only retrieved if there has been no delocalization
-        // after they were discovered. I need to check discovered poses vs connected objects, and whether all
-        // discovered poses are inside the beacon
-      
-        if(!blockPtr->IsPoseStateUnknown())
+        BlockWorldFilter filter;
+        filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+        filter.AddFilterFcn([this, &locatedCubesInBeacon](const ObservableObject* blockPtr)
         {
           bool isBlockInAnyBeacon = false;
           // check if the object is within any beacon
@@ -450,20 +447,29 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
             }
           }
         
-          // this block should be carried to a beacon
-          if ( !isBlockInAnyBeacon ) {
-            allInBeacon = false;
+          // if the block is in a beacon, count as located
+          if ( isBlockInAnyBeacon ) {
+            ++locatedCubesInBeacon;
           }
-        }
-        else
-        {
-          // object position is unknown, consider not in beacon
-          allInBeacon = false;
-        }
-        return false; // have to return true/false, even though not used
-      });
+          return false; // have to return true/false, even though not used
+        });
+        
+        _robot.GetBlockWorld().FilterLocatedObjects(filter);
+      }
       
-      _robot.GetBlockWorld().FilterObjects(filter);
+      // Find how many connected cubes we have and compare
+      {
+        BlockWorldFilter filter;
+        filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+        
+        std::vector<const ActiveObject*> connectedObjects;
+        _robot.GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedObjects);
+
+        connectedCubes = Util::numeric_cast<int>( connectedObjects.size() );
+      }
+      
+      allInBeacon = (connectedCubes == locatedCubesInBeacon);
+      
     }
   }
 
@@ -1078,7 +1084,7 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
   Vec3f maxLocDist(kBW_PossibleObjectClose_mm);
   Radians maxLocAngle(kBW_PossibleObjectClose_rad);
   ObservableObject* prevObservedObject =
-    _robot.GetBlockWorld().FindClosestMatchingObject( objectType, obsPose, maxLocDist, maxLocAngle);
+    _robot.GetBlockWorld().FindLocatedClosestMatchingObject( objectType, obsPose, maxLocDist, maxLocAngle);
   
   // found object nearby, no need
   if ( nullptr != prevObservedObject )
@@ -1129,7 +1135,7 @@ void AIWhiteboard::UpdateValidObjects()
       validObjectIDSet.clear();
       
       std::vector<const ObservableObject*> objects;
-      _robot.GetBlockWorld().FindMatchingObjects(*filterPtr, objects);
+      _robot.GetBlockWorld().FindLocatedMatchingObjects(*filterPtr, objects);
       for( const ObservableObject* obj : objects ) {
         if( obj ) {
           validObjectIDSet.insert( obj->GetID() );
@@ -1141,7 +1147,7 @@ void AIWhiteboard::UpdateValidObjects()
     if(!_haveTapIntentionObject)
     {
       // select best object
-      const ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(_robot.GetPose(),
+      const ObservableObject* closestObject = _robot.GetBlockWorld().FindLocatedObjectClosestTo(_robot.GetPose(),
                                                                                          * filterPair.second);
       if( closestObject != nullptr ) {
         _bestObjectForAction[ filterPair.first ] = closestObject->GetID();

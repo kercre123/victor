@@ -283,7 +283,7 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
   BlockList allBlocks;
   BlockWorldFilter bottomBlockFilter;
   bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  robot.GetBlockWorld().FindMatchingObjects(bottomBlockFilter, allBlocks);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(bottomBlockFilter, allBlocks);
   
   // set the base blocks for either pyramid base or full pyramid
   if(allBlocks.size() < 2){
@@ -394,7 +394,8 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
   if(nullptr == object || nullptr == placingObject)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.CHeckBaseBlockPoseIsFree.NullObject",
-                        "Static block with id %d or base block with id %d is NULL", _staticBlockID.GetValue(), _baseBlockID.GetValue());
+                        "Static block with id %d or base block with id %d is NULL",
+                        _staticBlockID.GetValue(), _baseBlockID.GetValue());
     return false;
   }
   
@@ -408,8 +409,8 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
   const Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter(0.f);
   const Pose3d placePose(0, Z_AXIS_3D(), {rotatedSize.x(), rotatedSize.y(), 0}, &zRotatedPose);
   
-  ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(placePose.GetWithRespectToOrigin(),
-                                                                               rotatedSize, filter);
+  ObservableObject* closestObject =
+    _robot.GetBlockWorld().FindLocatedObjectClosestTo(placePose.GetWithRespectToOrigin(), rotatedSize, filter);
   return (closestObject == nullptr);
 }
 

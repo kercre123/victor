@@ -367,36 +367,12 @@ message DefineCustomObject {
 // Vision Settings and Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-// ClearAllBlocks
-//   Clears just blocks (active and passive)
-message ClearAllBlocks {
-    uint_8 robotID
-}
-
-// ClearAllObjects
-//   Clears all objects the robot knows about (blocks, faces, ramps, mats, etc)
-message ClearAllObjects {
-    uint_8 robotID
-}
-
-// DeleteAllObjects
-// Deletes all current objects out of blockworld completely, while clear only marks as unknown
-message DeleteAllObjects {
-    uint_8 robotID
-}
-
 // DeleteAllCustomObjects
 // Deletes all custom objects, leaves blocks, chargers, faces and ledges
 message DeleteAllCustomObjects {
     uint_8 robotID
 }
 
-
-message SetObjectAdditionAndDeletion {
-    uint_8 robotID,
-    bool   enableAddition,
-    bool   enableDeletion
-}
 
 // VisionWhileMoving
 // For development, enable/disable robots' ability to use VisionMarkers while moving
@@ -548,10 +524,15 @@ message SetDefaultHeadAndLiftState {
 // Blockworld
 ///////////////////////////////////////////////////////////////////////////////
 
-message RequestObjectStates {
-  bool connectedObjectsOnly
+// request currently located instances of objects in the current origin
+// pose information can be trusted from this objects
+message RequestLocatedObjectStates {
 }
 
+// request currently connected objects, regardless of their pose state in current or any origin
+// pose information is not provided for this objects
+message RequestConnectedObjects {
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Visualization (Viz) Related

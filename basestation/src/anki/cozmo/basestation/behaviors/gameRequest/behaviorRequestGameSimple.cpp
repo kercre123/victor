@@ -650,7 +650,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
     BlockWorldFilter filter;
     filter.OnlyConsiderLatestUpdate(false);
     filter.SetFilterFcn( [&](const ObservableObject* obj) {
-        if( obj->GetPoseState() != PoseState::Known ) {
+        if( obj->GetPoseState() != PoseState::Known ) { // TODO Brad review this. This is ignoring !Known which is not =Unknown
           // ignore unknown obstacles
           return false;
         }
@@ -674,7 +674,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
       });
 
     std::vector<ObservableObject*> blocks;
-    robot.GetBlockWorld().FindMatchingObjects(filter, blocks);
+    robot.GetBlockWorld().FindLocatedMatchingObjects(filter, blocks);
 
     if(blocks.empty()) {
       targetPoseRet = targetPose;

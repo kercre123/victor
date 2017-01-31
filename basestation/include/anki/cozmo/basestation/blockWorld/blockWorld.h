@@ -76,15 +76,26 @@ namespace Anki
       
       // Processes the edges found in the given frame
       Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
-      
-      // Adds an active object of the appropriate type based on factoryID at
-      // an unknown pose. To be used when the active object first comes into radio contact.
-      // This function does nothing if an active object of the same type with the active ID already exists.
-      // If objToCopyID is not null then the new object will have the same id as objToCopyID
-      ObjectID AddActiveObject(ActiveID activeID,
-                               FactoryID factoryID,
-                               ActiveObjectType activeObjectType,
-                               const ObservableObject* objToCopyId = nullptr);
+
+      // Creates and adds an active object of the appropriate type based on factoryID to the connected objects container.
+      // Note there is no information about pose, so no instance of this object in the current origin is updated.
+      // However, if an object of the same type is found as an unconnected object, the objectID is inherited, and
+      // the unconnected instances (in origins) become linked to this connected object instance.
+      // It returns the new or inherited objectID on success, or invalid objectID if it fails.
+      ObjectID AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
+      // Removes connected object from the connected objects container. Returns matching objectID if found
+      ObjectID RemoveConnectedActiveObject(ActiveID activeID);
+
+      // Creates an object from the given active object type. Current API design prevents BlockWorld from setting
+      // the pose, that's why we have AddLocatedObject(shared_ptr), that checks the pose and ID have already been
+      // set. We should revisit this API where we need to expose this CreateActiveObject
+      // Note memory management is responsibility of the calling code
+      ActiveObject* CreateActiveObject(ActiveObjectType activeObjectType, ActiveID activeID, FactoryID factoryID);
+
+      // Adds the given object to the BlockWorld according to its current objectID and pose. The objectID is expected
+      // to be set, and not be currently in use in the BlockWorld. Otherwise it's a sign that something went
+      // wrong matching the current BlockWorld objects
+      void AddLocatedObject(const std::shared_ptr<ObservableObject>& object);
       
       // notify the blockWorld that someone is about to change the pose of an object
       void OnObjectPoseWillChange(const ObjectID& objectID, ObjectFamily family,
@@ -93,26 +104,24 @@ namespace Anki
       // notify the blockWorld that someone (poseConfirmer) has visually verified the given object at their current pose
       void OnObjectVisuallyVerified(const ObservableObject* object);
       
-      //
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Object Access
-      //
-      
-      // Clearing objects: all, by type, by family, or by ID.
-      // NOTE: Clearing does not _delete_ an object; it marks its pose as unknown.
-      void ClearAllExistingObjects();
-      void ClearObjectsByFamily(const ObjectFamily family);
-      void ClearObjectsByType(const ObjectType type);
-      bool ClearObject(const ObjectID& withID); // Returns true if object with ID is found and cleared, false otherwise.
-      bool ClearObject(ObservableObject* object);
-      
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-      // First clears the object and then actually deletes it, removing it from
-      // BlockWorld entirely.
-      void DeleteAllExistingObjects();
-      bool DeleteObject(const ObjectID withID); // Deletes all objects with ID from all origins
-      void DeleteObjectsByOrigin(const Pose3d* origin, bool clearFirst); // can disable clearing before deletion
-      void DeleteObjectsByFamily(const ObjectFamily family);
-      void DeleteObjectsByType(const ObjectType type);
+      // Delete located instances will delete object instances of both active and passive objects. However
+      // from connected objects, only the located instances are affected. The unlocated instances, that are stored
+      // regardless of pose, are not affected by this. Passive objects don't have connected instances.
+      void DeleteAllLocatedObjects();                              // all instances in all origins
+      void DeleteLocatedObjectsByOrigin(const PoseOrigin* origin); // all instances in the given origin
+      void DeleteLocatedObjectsByFamily(ObjectFamily family);      // all instances of the given family in all origins
+      void DeleteLocatedObjectsByType(ObjectType type);            // all instances of the given type in all origins
+      void DeleteLocatedObjectsByID(const ObjectID& withID);       // all instances of the given object in all origins
+      void DeleteLocatedObjectByIDInCurOrigin(const ObjectID& withID); // the given instance in the current origin
+      
+      // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
+      // without those system lingering
+      void ClearLocatedObjectByIDInCurOrigin(const ObjectID& withID);
+      void ClearLocatedObject(ObservableObject* object);
       
       // Get objects that exist in the world, by family, type, ID, etc.
       // NOTE: Like IDs, object types are unique across objects so they can be
@@ -127,8 +136,8 @@ namespace Anki
       // If that object does not exist in the current origin, nullptr is returned.
       // If you want an object regardless of its pose, use GetConnectedActiveObjectById instead.
       // For more complex queries, use one of the Find methods with a BlockWorldFilter.
-      inline const ObservableObject* GetLocatedObjectByID(const ObjectID& objectID) const;
-      inline       ObservableObject* GetLocatedObjectByID(const ObjectID& objectID);
+      inline const ObservableObject* GetLocatedObjectByID(const ObjectID& objectID, ObjectFamily family=ObjectFamily::Invalid) const;
+      inline       ObservableObject* GetLocatedObjectByID(const ObjectID& objectID, ObjectFamily family=ObjectFamily::Invalid);
       
       // Returns a pointer to a connected object with the specified objectID without any pose information. If you need to obtain
       // the instance of this object in the current origin (if it exists), you can do so with GetLocatedObjectByID
@@ -137,8 +146,23 @@ namespace Anki
       
       // Returns a pointer to a connected object with the specified objectID without any pose information. If you need to obtain
       // the instance of this object in the current origin (if it exists), you can do so with GetLocatedObjectByID
-      inline const ActiveObject* GetConnectedActiveObjectByActiveId(const ActiveID& activeID) const;
-      inline       ActiveObject* GetConnectedActiveObjectByActiveId(const ActiveID& activeID);
+      inline const ActiveObject* GetConnectedActiveObjectByActiveID(const ActiveID& activeID) const;
+      inline       ActiveObject* GetConnectedActiveObjectByActiveID(const ActiveID& activeID);
+
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Find connected objects by filter query
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      
+      // Returns first object matching filter, among objects that are currently connected (regardless of pose)
+      // Note OriginMode in the filter is ignored (TODO: provide ConnectedFilter API without origin)
+      inline const ActiveObject* FindConnectedActiveMatchingObject(const BlockWorldFilter& filter) const;
+      inline       ActiveObject* FindConnectedActiveMatchingObject(const BlockWorldFilter& filter);
+
+      // Returns (in arguments) all objects matching a filter, among objects that are currently connected (regardless
+      // of pose). Note OriginMode in the filter is ignored (TODO: provide ConnectedFilter API without origin)
+      // NOTE: does not clear result (thus can be used multiple times with the same vector)
+      void FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<const ActiveObject*>& result) const;
+      void FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<ActiveObject*>& result);
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Find objects by filter query
@@ -241,6 +265,7 @@ namespace Anki
       inline       ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
                                                           f32 zTolerance,
                                                           const BlockWorldFilter& filterIn = BlockWorldFilter());
+      
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // BoundingBoxes
@@ -395,7 +420,7 @@ namespace Anki
                                               bool returnFirstFound = false) const;
 
       // By ID or activeID
-      ObservableObject* GetLocatedObjectByIdHelper(const ObjectID& objectID) const;
+      ObservableObject* GetLocatedObjectByIdHelper(const ObjectID& objectID, ObjectFamily family) const;
       ActiveObject* GetConnectedActiveObjectByIdHelper(const ObjectID& objectID) const;
       ActiveObject* GetConnectedActiveObjectByActiveIdHelper(const ActiveID& activeID) const;
       
@@ -470,15 +495,15 @@ namespace Anki
       // for use in filtering objects to mark them as dirty
       bool CheckForCollisionWithRobot(const ObservableObject* object) const;
       
-      // Adds a new object based on its origin/family/type. Its ID will be assigned
-      // if it isn't already, or it will be copied from objectToCopyID if that object
-      // is not null.
-      ObjectID AddNewObject(const std::shared_ptr<ObservableObject>& object,
-                            const ObservableObject* objectToCopyID = nullptr);
-      
-      ObjectID AddNewObject(ObjectsMapByType_t& existingFamily,
-                            const std::shared_ptr<ObservableObject>& object,
-                            const ObservableObject* objectToCopyID = nullptr);
+//      // Adds a new object based on its origin/family/type. Its ID will be assigned
+//      // if it isn't already, or it will be copied from objectToCopyID if that object
+//      // is not null.
+//      ObjectID AddNewObject(const std::shared_ptr<ObservableObject>& object,
+//                            const ObservableObject* objectToCopyID = nullptr);
+//      
+//      ObjectID AddNewObject(ObjectsMapByType_t& existingFamily,
+//                            const std::shared_ptr<ObservableObject>& object,
+//                            const ObservableObject* objectToCopyID = nullptr);
       
       // NOTE: this function takes control over the passed-in ObservableObject*'s and
       //  will either directly add them to BlockWorld's existing objects or delete them
@@ -497,19 +522,22 @@ namespace Anki
       // adds a markerless object at the given pose
       Result AddMarkerlessObject(const Pose3d& pose, ObjectType type);
       
-      void ClearObjectHelper(ObservableObject* object);
+      // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
+      // without those system lingering
+      void ClearLocatedObjectHelper(ObservableObject* object);
       
       // Delete an object when you have a direct iterator pointing to it. Returns
       // the iterator to the next object in the container.
-      ObjectsMapByID_t::iterator DeleteObject(const ObjectsMapByID_t::iterator objIter,
-                                              const ObjectType&    withType,
-                                              const ObjectFamily&  fromFamily);
+      ObjectsMapByID_t::iterator DeleteLocatedObjectAt(const ObjectsMapByID_t::iterator objIter,
+                                                       const ObjectType&    withType,
+                                                       const ObjectFamily&  fromFamily);
       
       Result BroadcastObjectObservation(const ObservableObject* observedObject) const;
-      
-      // Use inOrigin=nullptr to use objects from all coordinate frames
-      void BroadcastObjectStates(bool connectedObjectsOnly, const Pose3d* inOrigin);
-      
+
+      // broadcast currently located objects (in current origin)
+      void BroadcastLocatedObjectStates();
+      // broadcast currently connected objects (regardless of pose states in any origin)
+      void BroadcastConnectedObjects();
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
       
@@ -573,8 +601,6 @@ namespace Anki
       
       bool _didObjectsChange;
       TimeStamp_t _robotMsgTimeStampAtChange; // time of the last robot msg when objects changed
-      bool _canDeleteObjects;
-      bool _canAddObjects;
       
       ObjectID _selectedObject;
 
@@ -637,13 +663,13 @@ namespace Anki
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID) const {
-      return GetLocatedObjectByIdHelper(objectID); // returns const*
+    const ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID, ObjectFamily family) const {
+      return GetLocatedObjectByIdHelper(objectID, family); // returns const*
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID) {
-      return GetLocatedObjectByIdHelper(objectID); // returns non-const*
+    ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID, ObjectFamily family) {
+      return GetLocatedObjectByIdHelper(objectID, family); // returns non-const*
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -657,14 +683,26 @@ namespace Anki
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveId(const ActiveID& activeID) const {
+    const ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveID(const ActiveID& activeID) const {
       return GetConnectedActiveObjectByActiveIdHelper(activeID);
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveId(const ActiveID& activeID)
+    ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveID(const ActiveID& activeID)
     {
       return GetConnectedActiveObjectByActiveIdHelper(activeID);
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    const ActiveObject* BlockWorld::FindConnectedActiveMatchingObject(const BlockWorldFilter& filter) const
+    {
+      return FindConnectedObjectHelper(filter); // returns non-const
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ActiveObject* BlockWorld::FindConnectedActiveMatchingObject(const BlockWorldFilter& filter)
+    {
+      return FindConnectedObjectHelper(filter); // returns non-const
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -796,20 +834,12 @@ namespace Anki
     
     
     
-    inline ObjectID BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object,
-                                             const ObservableObject* objectToCopyID)
-
-    {
-      return AddNewObject(_locatedObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object, objectToCopyID);
-    }
-
-    inline void BlockWorld::EnableObjectAddition(bool enable) {
-      _canAddObjects = enable;
-    }
-    
-    inline void BlockWorld::EnableObjectDeletion(bool enable) {
-      _canDeleteObjects = enable;
-    }
+//    inline ObjectID BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object,
+//                                             const ObservableObject* objectToCopyID)
+//
+//    {
+//      return AddNewObject(_locatedObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object, objectToCopyID);
+//    }
     
     
   } // namespace Cozmo

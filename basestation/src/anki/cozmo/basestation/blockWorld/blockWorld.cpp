@@ -183,8 +183,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
   , _robotMsgTimeStampAtChange(0)
-  , _canDeleteObjects(true)
-  , _canAddObjects(true)
   , _currentNavMemoryMapOrigin(nullptr)
   , _isNavMemoryMapRenderEnabled(true)
   , _trackPoseChanges(false)
@@ -303,16 +301,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     using namespace ExternalInterface;
     auto helper = MakeAnkiEventUtil(externalInterface, *this, _eventHandles);
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearAllBlocks>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearAllObjects>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::DeleteAllObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DeleteAllCustomObjects>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetObjectAdditionAndDeletion>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SelectNextObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CreateFixedCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapRenderEnabled>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestObjectStates>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocatedObjectStates>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestConnectedObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapBroadcastFrequency_sec>();
   }
 
@@ -322,44 +317,15 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   } // ~BlockWorld() Destructor
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::ClearAllBlocks& msg)
-  {
-    _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
-    ClearObjectsByFamily(ObjectFamily::Block);
-    ClearObjectsByFamily(ObjectFamily::LightCube);
-  };
-  
-  template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::ClearAllObjects& msg)
-  {
-    _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
-    ClearAllExistingObjects();
-  };
-  
-  template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::DeleteAllObjects& msg)
-  {
-    _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
-    DeleteAllExistingObjects();
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedAllObjects>(_robot->GetID());
-  };
   
   template<>
   void BlockWorld::HandleMessage(const ExternalInterface::DeleteAllCustomObjects& msg)
   {
     _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
-    DeleteObjectsByFamily(ObjectFamily::CustomObject);
+    DeleteLocatedObjectsByFamily(ObjectFamily::CustomObject);
     _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedAllCustomObjects>(_robot->GetID());
   };
   
-  template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::SetObjectAdditionAndDeletion& msg)
-  {
-    EnableObjectAddition(msg.enableAddition);
-    EnableObjectDeletion(msg.enableDeletion);
-  };
-
   template<>
   void BlockWorld::HandleMessage(const ExternalInterface::SelectNextObject& msg)
   {
@@ -391,9 +357,15 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   };
 
   template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::RequestObjectStates& msg)
+  void BlockWorld::HandleMessage(const ExternalInterface::RequestLocatedObjectStates& msg)
   {
-    BroadcastObjectStates(msg.connectedObjectsOnly, nullptr);
+    BroadcastLocatedObjectStates();
+  };
+
+  template<>
+  void BlockWorld::HandleMessage(const ExternalInterface::RequestConnectedObjects& msg)
+  {
+    BroadcastConnectedObjects();
   };
   
   template<>
@@ -468,9 +440,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ActiveObject* BlockWorld::FindConnectedObjectHelper(const BlockWorldFilter& filter = BlockWorldFilter(),
-                                                      const ModifierFcn& modiferFcn = nullptr,
-                                                      bool returnFirstFound = false) const
+  ActiveObject* BlockWorld::FindConnectedObjectHelper(const BlockWorldFilter& filterIn,
+                                                      const ModifierFcn& modifierFcn,
+                                                      bool returnFirstFound) const
   {
     ActiveObject* matchingObject = nullptr;
     
@@ -520,11 +492,16 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ObservableObject* BlockWorld::GetLocatedObjectByIdHelper(const ObjectID& objectID) const
+  ObservableObject* BlockWorld::GetLocatedObjectByIdHelper(const ObjectID& objectID, ObjectFamily family) const
   {
     // Find the object with the given ID with any pose state, in the current world origin
     BlockWorldFilter filter;
     filter.AddAllowedID(objectID);
+    
+    // Restrict family if specified
+    if ( ObjectFamily::Invalid != family ) {
+      filter.AddAllowedFamily(family);
+    }
     
     // Any pose state
     filter.SetFilterFcn(nullptr);
@@ -591,7 +568,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   ObservableObject* BlockWorld::FindLocatedClosestMatchingObjectHelper(const ObservableObject& object,
                                                                        const Vec3f& distThreshold,
                                                                        const Radians& angleThreshold,
-                                                                       const BlockWorldFilter& filter = BlockWorldFilter()) const
+                                                                       const BlockWorldFilter& filterIn) const
   {
     Vec3f closestDist(distThreshold);
     Radians closestAngle(angleThreshold);
@@ -622,7 +599,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                                                                      const Pose3d& pose,
                                                                      const Vec3f& distThreshold,
                                                                      const Radians& angleThreshold,
-                                                                     const BlockWorldFilter& filter = BlockWorldFilter()) const
+                                                                     const BlockWorldFilter& filterIn) const
   {
     Vec3f closestDist(distThreshold);
     Radians closestAngle(angleThreshold);
@@ -643,7 +620,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
     });
     
-    ObservableObject* closestObject = FindLcoatedObjectHelper(filter);
+    ObservableObject* closestObject = FindLocatedObjectHelper(filter);
     return closestObject;
   }
   
@@ -769,50 +746,62 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
   } // BroadcastObjectObservation()
   
-  
-  void BlockWorld::BroadcastObjectStates(bool connectedObjectsOnly, const Pose3d* inOrigin)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::BroadcastLocatedObjectStates()
   {
     using namespace ExternalInterface;
     
-    // Create filter
+    // Create default filter: current origin, any object, any poseState
     BlockWorldFilter filter;
-    if(nullptr == inOrigin)
-    {
-      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    }
-    else
-    {
-      filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-      filter.AddAllowedOrigin(inOrigin);
-    }
     
-    ObjectStates objectStates;
-    
-    filter.SetFilterFcn([this,&objectStates,connectedObjectsOnly](const ObservableObject* obj)
+    LocatedObjectStates objectStates;
+    filter.SetFilterFcn([this,&objectStates](const ObservableObject* obj)
                         {
                           const bool isConnected = obj->GetActiveID() >= 0;
-                          if(isConnected || !connectedObjectsOnly)
-                          {
-                            ObjectState objectState(obj->GetID(),
-                                                    obj->GetLastObservedTime(),
-                                                    obj->GetFamily(),
-                                                    obj->GetType(),
-                                                    obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
-                                                    obj->GetPoseState(),
-                                                    isConnected);
-                            
-                            objectStates.objects.push_back(std::move(objectState));
-                            return true;
-                          }
-                          return false;
+                          LocatedObjectState objectState(obj->GetID(),
+                                                  obj->GetLastObservedTime(),
+                                                  obj->GetFamily(),
+                                                  obj->GetType(),
+                                                  obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
+                                                  obj->GetPoseState(),
+                                                  isConnected);
+                          
+                          objectStates.objects.push_back(std::move(objectState));
+                          return true;
                         });
     
     // Iterate over all objects and add them to the available objects list if they pass the filter
-    FindObjectHelper(filter, nullptr, false);
+    FindLocatedObjectHelper(filter, nullptr, false);
     
     _robot->Broadcast(MessageEngineToGame(std::move(objectStates)));
   }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::BroadcastConnectedObjects()
+  {
+    using namespace ExternalInterface;
+  
+    // Create default filter: any object
+    BlockWorldFilter filter;
+  
+    ConnectedObjectStates objectStates;
+    filter.SetFilterFcn([this,&objectStates](const ObservableObject* obj)
+                        {
+                          ConnectedObjectState objectState(obj->GetID(),
+                                                  obj->GetFamily(),
+                                                  obj->GetType());
+                          
+                          objectStates.objects.push_back(std::move(objectState));
+                          return true;
+                        });
+    
+    // Iterate over all objects and add them to the available objects list if they pass the filter
+    FindLocatedObjectHelper(filter, nullptr, false);
+    
+    _robot->Broadcast(MessageEngineToGame(std::move(objectStates)));
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::UpdateObjectOrigin(const ObjectID& objectID, const Pose3d* oldOrigin)
   {
     auto originIter = _locatedObjects.find(oldOrigin);
@@ -853,7 +842,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             _locatedObjects[newOrigin][family][objType][objectID] = object;
             
             // Notify pose confirmer
-            _robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
+            //_robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
             
             // Delete from old origin
             objectsByType.second.erase(objectIter);
@@ -940,7 +929,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       filterNew.AddAllowedFamily(oldObject->GetFamily());
       filterNew.AddAllowedType(oldObject->GetType());
       filterNew.AddAllowedID(oldObject->GetID());
-      ObservableObject* newObject = FindMatchingObject(filterNew);
+      ObservableObject* newObject = FindLocatedMatchingObject(filterNew);
       
       bool addNewObject = false;
       if(nullptr == newObject)
@@ -980,7 +969,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       if(addNewObject) {
         // Note: need to call SetPose first because that sets the origin which
         // controls which map the object gets added to
-        AddNewObject(std::shared_ptr<ObservableObject>(newObject), oldObject);
+        AddLocatedObject(std::shared_ptr<ObservableObject>(newObject));
         
         PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.NoMatchingObjectInNewFrame",
                       "Adding %s object with ID %d to new origin %s (%p)",
@@ -993,13 +982,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     };
     
     // Apply the filter and modify each object that matches
-    FindObjectHelper(filterOld, originUpdater, false);
+    FindLocatedObjectHelper(filterOld, originUpdater, false);
     
     if(RESULT_OK == result) {
       // Erase all the objects in the old frame now that their counterparts in the new
-      // frame have had their poses updated. Note that we set clearFirst to false
-      // because all the objects in the oldOrigin should now exist in the new origin
-      DeleteObjectsByOrigin(oldOrigin, false);
+      // frame have had their poses updated
+      DeleteLocatedObjectsByOrigin(oldOrigin);
     }
     
     // Now go through all the objects already in the origin we are switching _to_
@@ -1014,13 +1002,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       _robot->GetObjectPoseConfirmer().AddInExistingPose(object);
     };
     
-    FindObjectHelper(filterNew, addToPoseConfirmer, false);
+    FindLocatedObjectHelper(filterNew, addToPoseConfirmer, false);
     
     // Notify the world about the objects in the new coordinate frame, in case
     // we added any based on rejiggering (not observation). Include unconnected
     // ones as well.
-    const bool broadCastConnectedOnly = false;
-    BroadcastObjectStates(broadCastConnectedOnly, newOrigin);
+    BroadcastLocatedObjectStates();
     
     // if memory maps are enabled, we can merge old into new
     {
@@ -1083,29 +1070,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DeleteObjectsFromZombieOrigins()
   {
-    BlockWorldFilter filter;
-    filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-    filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
-
-    // Get all active objects in current origin
-    filter.SetAllowedOrigins({_robot->GetWorldOrigin()});
-    std::vector<ObservableObject*> objectsInCurrent;
-    FindMatchingObjects(filter, objectsInCurrent);
-    
-    std::set<ObjectType> typesInCurrent;
-    for(const auto& object : objectsInCurrent)
-    {
-      auto result = typesInCurrent.insert(object->GetType());
-      
-      const bool typeInserted = result.second;
-      if(!typeInserted)
-      {
-        PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsFromZombieOrigins.DuplicateObjectsWithSameType",
-                            "Found duplicate %s object in current origin (%p)",
-                            EnumToString(object->GetType()), _robot->GetWorldOrigin());
-      }
-    }
-  
     ObjectsByOrigin_t::iterator originIt = _locatedObjects.begin();
     while( originIt != _locatedObjects.end() )
     {
@@ -1113,34 +1077,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       if ( isZombie ) {
         PRINT_CH_INFO("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.DeletingOrigin", 
                       "Deleting objects from (%p) because it was zombie", originIt->first);
-        
-        // Get all active objects in zombie origin
-        filter.SetAllowedOrigins({originIt->first});
-        std::vector<ObservableObject*> objectsInZombie;
-        FindMatchingObjects(filter, objectsInZombie);
-        
-        // For all active objects that are in the zombie origin that are not in the current origin
-        // add them to the current origin before deleting the zombie origin
-        for(const auto& objectInZombie : objectsInZombie)
-        {
-          // The object in the zombie origin is not in the current origin (works because we can't have
-          // multiple objects of the same type in a given origin)
-          if(typesInCurrent.count(objectInZombie->GetType()) == 0)
-          {
-            PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.AddActiveObjectToCurrentOrigin",
-                           "Adding %s %d to current origin before deleting zombie (%p)",
-                           EnumToString(objectInZombie->GetType()),
-                           objectInZombie->GetID().GetValue(), originIt->first);
-            
-            typesInCurrent.insert(objectInZombie->GetType());
-            
-            AddActiveObject(objectInZombie->GetActiveID(),
-                            objectInZombie->GetFactoryID(),
-                            ActiveObject::GetActiveObjectTypeFromType(objectInZombie->GetType()),
-                            objectInZombie);
-          }
-        }
-        
         originIt = _locatedObjects.erase(originIt);
       } else {
         PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.KeepingOrigin", 
@@ -1410,59 +1346,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // set new value
     _isNavMemoryMapRenderEnabled = enabled;
   }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ObjectID BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily,
-                                    const std::shared_ptr<ObservableObject>& object,
-                                    const ObservableObject* objectToCopyID)
-  {
-    if(!_canAddObjects)
-    {
-      // TODO: Just remove this?
-      PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.AddingDisabled",
-                          "Saw a new %s%s object, but adding objects is disabled.",
-                          object->IsActive() ? "active " : "",
-                          ObjectTypeToString(object->GetType()));
-      
-      // Keep looking through objects we saw
-      return ObjectID();
-    }
-    
-    if(objectToCopyID != nullptr)
-    {
-      object->CopyID(objectToCopyID);
-      
-      if(objectToCopyID->IsActive())
-      {
-        object->SetActiveID(objectToCopyID->GetActiveID());
-        object->SetFactoryID(objectToCopyID->GetFactoryID());
-      }
-    }
-    
-    if(!object->GetID().IsSet())
-    {
-      object->SetID();
-    }
-    
-    // Set the viz manager on this new object
-    object->SetVizManager(_robot->GetContext()->GetVizManager());
-    
-    existingFamily[object->GetType()][object->GetID()] = object;
-
-    PRINT_CH_INFO("BlockWorld", "BlockWorld.AddNewObject",
-                  "Adding new %s%s object and ID=%d ActID=%d FacID=0x%x at (%.1f, %.1f, %.1f), in frame %s.",
-                  object->IsActive() ? "active " : "",
-                  EnumToString(object->GetType()),
-                  object->GetID().GetValue(),
-                  object->GetActiveID(),
-                  object->GetFactoryID(),
-                  object->GetPose().GetTranslation().x(),
-                  object->GetPose().GetTranslation().y(),
-                  object->GetPose().GetTranslation().z(),
-                  object->GetPose().FindOrigin().GetName().c_str());
-    
-    return object->GetID();
-  }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
@@ -1479,8 +1362,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       // Note that we wrap shared_ptr around the passed-in object, which was created
       // by the caller (via Cloning from the library of known objects). We will either
-      // put this object directly into our existing objects if its new, in which case
-      // it will not get deleted (since the existing objects will increase its refcount),
+      // add this object to the poseConfirmer, in which case it will not get deleted,
       // or it will simply be used to update an existing object's pose and/or for
       // localization, both done by potentialObjectsForLocalizingTo. In that case,
       // once potentialObjectsForLocalizingTo is done with it, and we have exited
@@ -1491,6 +1373,63 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // close enough to do localization/identification and (b) to use only the
       // closest object in each coordinate frame for localization.
       const f32 distToObjSeen = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
+      
+      // First thing that we have to do is ask the PoseConfirmer whether this is a confirmed object,
+      // or a visual observation of an object that we want to consider for the future (unconfirmed object).
+      // Pass in the object as an observation
+      const ObservableObject* poseConfirmerMatch = nullptr;
+      const bool isConfirmed = _robot->GetObjectPoseConfirmer().IsObjectConfirmed(objSeen, poseConfirmerMatch);
+      
+      /* 
+        Note: Andrew and Raul think that next iteration of PoseConfirmer vs PotentialObjectsToLocalizeTo should
+              separate 'observations' from 'confirmations', where PoseConfirmer turns into ObservationFilter,
+              and only reports accepted observations (aka confirmation) towards this method/PotentialOTLT. In 
+              that scenario, observations that come here would either udpate the robot (localizing) or update
+              the object in blockworld (not localizing), but there would be no need to feed back that observation
+              back into the PoseConfirmer/ObservationFilter, which is a one-way filter. 
+              
+              For now, to prevent adding an observation twice or not adding it at all, flag here whether the
+              observation is used by the PoseConfirmer before letting it cascade down when it confirms an object (which
+              is a fix for a bug in which observations that confirm an object where not used for localization, 
+              which would delay rejiggering by one tick, while any other system already had access to the object from
+              the BlockWorld.)
+      */
+      bool observationAlreadyUsed = false;
+      
+      // if the object is not confirmed add this observation to the poseConfirmer. If this observation causes
+      // a confirmation, we don't need to localize to it in the current origin because we are setting its pose
+      // wrt robot based on this observation. However, we could bring other origins with it.
+      if ( !isConfirmed )
+      {
+        DEV_ASSERT( !objSeen->GetID().IsSet(), "BlockWorld.AddAndUpdateObjects.ObservationAlreadyHasID");
+        
+        // inherit the ID of the match, or assign a new one depending if there were no matches
+        if ( nullptr != poseConfirmerMatch ) {
+          objSeen->CopyID( poseConfirmerMatch );
+        } else {
+          objSeen->SetID();
+        }
+        
+        // Add observation
+        const bool wasRobotMoving = false; // assume false, otherwise we wouldn't have gotten this far w/ marker?
+        const bool isConfirmingObservation = _robot->GetObjectPoseConfirmer().AddVisualObservation(objSeen,
+                                                                                nullptr, // not confirmed
+                                                                                wasRobotMoving,
+                                                                                distToObjSeen);
+        if ( !isConfirmingObservation ) {
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
+            "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+          continue;
+        }
+
+        // the observation was used to confirm the object. If the observation is not used to localize, do not
+        // add it back again to the PoseConfirmer (see note in declaration of variable)
+        observationAlreadyUsed = true;
+      }
+      
+      // At this point the object is confirmed in the current origin, find matches and see if we want to localize to it
+      // Note that if it just became confirmed we still want to localize to it in case that in can rejigger
+      // other origins
       
       // Keep a list of objects matching this objSeen, by coordinate frame
       std::map<const Pose3d*, ObservableObject*> matchingObjects;
@@ -1507,27 +1446,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       
       if (objSeen->IsActive())
       {
-        // Can consider matches for active objects in other coordinate frames,
-        // so use "Custom" mode and don't set any "allowed" or "ignored" origins,
-        // meaning all will be considered
-        filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
+        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
         filter.AddFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
         
         // For active objects, just match based on type, since we assume there is only one
         // active object of each type
         std::vector<ObservableObject*> objectsFound;
-        FindMatchingObjects(filter, objectsFound);
-        
-        if(objectsFound.empty()) {
-          // We expect to have already heard from all (powered) active objects,
-          // so if we see one we haven't heard from (and therefore added) yet, then
-          // perhaps it isn't on?
-          PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
-                              "Observed active object of type %d does not match an existing object. "
-                              "Is the battery plugged in?",
-                              objSeen->GetType());
-        }
-        
+        FindLocatedMatchingObjects(filter, objectsFound);
+
         bool matchedCarryingObject = false;
         for(ObservableObject* objectFound : objectsFound)
         {
@@ -1592,10 +1518,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           return !isObjectBeingCarried;
         });
         
-        ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
-                                                                     objSeen->GetSameDistanceTolerance(),
-                                                                     objSeen->GetSameAngleTolerance(),
-                                                                     filter);
+        ObservableObject* matchingObject = FindLocatedClosestMatchingObject(*objSeen,
+                                                                            objSeen->GetSameDistanceTolerance(),
+                                                                            objSeen->GetSameAngleTolerance(),
+                                                                            filter);
         if (nullptr != matchingObject) {
           DEV_ASSERT(&matchingObject->GetPose().FindOrigin() == currFrame,
                      "BlockWorld.AddAndUpdateObjects.MatchedPassiveObjectInOtherCoordinateFrame");
@@ -1604,80 +1530,43 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         
       } // if/else object is active
 
-      // After the if/else below, this should point to either the new object we
-      // create in the current frame, or to an existing matched object in the current
-      // frame
+      // We know the object was confirmed, so we must have found the instance in the current origin
       ObservableObject* observedObject = nullptr;
-      ObservableObject* objToCopy = nullptr;
       
       auto currFrameMatchIter = matchingObjects.find(currFrame);
-      if(currFrameMatchIter == matchingObjects.end())
+      if(currFrameMatchIter != matchingObjects.end())
       {
-        // We did not find a match for the object in the current coordinate frame
-        // If we didn't find a match in the current frame,
-        
-        // If we _did_ find matches for this object in _other_ coordinate frames...
-        if(!matchingObjects.empty())
-        {
-          // ...keep the same ID(s)
-          // NOTE: This kinda breaks the whole point of the ObjectID class that only one object can
-          //  exist with each ID :-/
-          objToCopy = matchingObjects.begin()->second;
-          
-          if(objSeen->IsActive())
-          {
-            objSeen->SetActiveID(matchingObjects.begin()->second->GetActiveID()); // NOTE: also marks as "identified"
-            objSeen->SetFactoryID(matchingObjects.begin()->second->GetFactoryID());
-          }
-        }
-        
-        // Add the object in the current coordinate frame, initially with Known pose
-        AddNewObject(_locatedObjects[_robot->GetWorldOrigin()][inFamily], objSeen, objToCopy);
-        
-        // Let "observedObject" used below refer to the new object
-        observedObject = objSeen.get();
-
-        const bool wasRobotMoving = false; // assume false, otherwise we wouldn't have gotten this far w/ marker?
-        _robot->GetObjectPoseConfirmer().AddVisualObservation(observedObject, observedObject->GetPose(),
-                                                              wasRobotMoving, distToObjSeen);
+        observedObject = currFrameMatchIter->second;
       }
       else
       {
-        // We found a match in the current frame, so update it:
-        ObservableObject* matchingObject = currFrameMatchIter->second;
-        
-        // TODO: Do the same adjustment for blocks that are _below_ observed blocks? Does this make sense?
-        
-        // Update lastObserved times of this object
-        // (Do this before possibly attempting to localize to the object below!)
-        matchingObject->SetLastObservedTime(objSeen->GetLastObservedTime());
-        matchingObject->UpdateMarkerObservationTimes(*objSeen);
-        
-        // Let "observedObject" used below refer to the object we matched in the
-        // current frame
-        observedObject = matchingObject;
-        
-        // See if we might want to localize to the object matched in the current frame
-        const bool wantedToInsertObjectInCurrentFrame = potentialObjectsForLocalizingTo.Insert(objSeen, matchingObject, distToObjSeen);
-        
-        if(wantedToInsertObjectInCurrentFrame)
+        PRINT_NAMED_ERROR("BlockWorld.UpdateObjectPoses.AddAndUpdateNoCurrentOriginMatch",
+                          "Must find match in current origin, since object is confirmed.");
+        continue;
+      }
+      
+      // Update lastObserved times of this object
+      // (Do this before possibly attempting to localize to the object below!)
+      observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
+      observedObject->UpdateMarkerObservationTimes(*objSeen);
+      
+      // See if we might want to localize to the object matched in the current frame
+      const bool wantedToInsertObjectInCurrentFrame = potentialObjectsForLocalizingTo.Insert(objSeen, observedObject, distToObjSeen, observationAlreadyUsed);
+      if(wantedToInsertObjectInCurrentFrame)
+      {
+         // Add all other match pairs from other frames as potentials for localization.
+         // We will decide which object(s) to localize to from this list after we've
+         // processed all objects seen in this update.
+        for(auto & match : matchingObjects)
         {
-           // Add all other match pairs from other frames as potentials for localization.
-           // We will decide which object(s) to localize to from this list after we've
-           // processed all objects seen in this update.
-          for(auto & match : matchingObjects)
-          {
-             // Don't try to reinsert the object in the current frame (already did this above)
-             if(match.second != matchingObject)
-             {
-               potentialObjectsForLocalizingTo.Insert(objSeen, match.second, distToObjSeen);
-             }
+           // Don't try to reinsert the object in the current frame (already did this above)
+           if(match.second != observedObject)
+           {
+             potentialObjectsForLocalizingTo.Insert(objSeen, match.second, distToObjSeen, true); // all observations used since they are matches
            }
-        }
-      
-      } // if/else (currFrameMatchIter == matchingObjects.end())
-      
-
+         }
+      }
+    
       /* This is pretty verbose...
        fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
        objSeen->GetType().GetName().c_str(),
@@ -1897,7 +1786,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                               "Deleting %s object %d with unknown pose state.",
                               ObjectTypeToString(object->GetType()),
                               object->GetID().GetValue());
-                objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
+                objectIter = DeleteLocatedObjectAt(objectIter, objectsByType.first, objectFamily.first);
                 objectDeleted = true;
               }
             }
@@ -1917,7 +1806,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                                 EnumToString(object->GetType()),
                                 object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
                   
-                  objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
+                  objectIter = DeleteLocatedObjectAt(objectIter, objectsByType.first, objectFamily.first);
                   objectDeleted = true;
                 } else {
                   // Don't delete objects that are still in radio communication. Retrigger Identify?
@@ -2170,12 +2059,16 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // Ignore the mat object that the robot is localized to (?)
       filter.AddIgnoreID(_robot->GetLocalizedTo());
     }
-    FindIntersectingObjects(markerlessObject.get(), existingObjects, 0, filter);
+    FindLocatedIntersectingObjects(markerlessObject.get(), existingObjects, 0, filter);
     if (!existingObjects.empty()) {
       return RESULT_OK;
     }
+    
+    // set new ID before adding to the world, since this is a new object
+    DEV_ASSERT( !markerlessObject->GetID().IsSet(), "BlockWorld.AddMarkerlessObject.NewObjectHasID" );
+    markerlessObject->SetID();
 
-    AddNewObject(markerlessObject);
+    AddLocatedObject(markerlessObject);
     _didObjectsChange = true;
     _robotMsgTimeStampAtChange = lastTimestamp;
     
@@ -2216,7 +2109,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Initialize with Known pose so it won't delete immediately because it isn't re-seen
     customObject->InitPose(obsPose, PoseState::Known);
 
-    AddNewObject(customObject);
+    // set new ID before adding to the world, since this is a new object
+    DEV_ASSERT( !customObject->GetID().IsSet(), "BlockWorld.CreateFixedCustomObject.NewObjectHasID" );
+    customObject->SetID();
+
+    AddLocatedObject(customObject);
     _didObjectsChange = true;
     _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
     
@@ -2373,62 +2270,96 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   */
 
 
-  ObjectID BlockWorld::AddActiveObject(ActiveID activeID,
-                                       FactoryID factoryID,
-                                       ActiveObjectType activeObjectType,
-                                       const ObservableObject* objToCopyId)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ObjectID BlockWorld::AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
   {
-    todo_add_to_connectedObjectsOnly;
+    const ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(activeObjectType);
+    
+    // only connected objects should be added through this method, so a required activeID is a must
+    DEV_ASSERT(activeID != ObservableObject::InvalidActiveID, "BlockWorld.AddConnectedActiveObject.CantAddInvalidActiveID");
   
     if (activeID >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-      PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.InvalidActiveID", "activeID %d", activeID);
+      PRINT_NAMED_WARNING("BlockWorld.AddConnectedActiveObject.InvalidActiveID", "activeID %d", activeID);
+      return ObjectID();
+    }
+
+    // NOTE: If you hit any of the following VERIFY, please notify Raul and Al.
+    // rsam: Al and I have made assumptions about when this gets called. Checking here that the assumptions are correct,
+    // and if they are not, we need to re-evaluate this code, for example due to robot timing issues.
+  
+    // Validate that ActiveID is not currently a connected object. We assume that if the robot is reporting
+    // an activeID, it should not be still used here (should have reported a disconnection)
+    const ActiveObject* const conObjWithActiveID = GetConnectedActiveObjectByActiveID( activeID );
+    VERIFY( nullptr == conObjWithActiveID, "BlockWorld.AddConnectedActiveObject.ActiveIDAlreadyUsed", "%d", activeID );
+
+    // Validate that factoryId is not currently a connected object. We assume that if the robot is reporting
+    // a factoryID, the same object should not be in any current activeIDs.
+    BlockWorldFilter filter;
+    filter.SetFilterFcn([factoryID](const ObservableObject* object) {
+      return object->GetFactoryID() == factoryID;
+    });
+    const ActiveObject* const conObjectWithFactoryID = FindConnectedObjectHelper(filter, nullptr, true);
+    VERIFY( nullptr == conObjectWithFactoryID, "BlockWorld.AddConnectedActiveObject.FactoryIDAlreadyUsed", "%u", factoryID );
+
+    // This is the new object we are going to create. We can't insert it in _connectedObjects until
+    // we know the objectID, so we create it first, and then we look for unconnected matches (we have seen the
+    // object but we had not connected to it.) If we find one, we will inherit the objectID from that match; if
+    // we don't find a match, we will assign it a new objectID. Then we can add to the container of _connectedObjects.
+    ActiveObject* newActiveObjectPtr = CreateActiveObject(activeObjectType, activeID, factoryID);
+    if ( nullptr == newActiveObjectPtr ) {
+      // failed to create the object (that function should print the error, exit here with unSet ID)
       return ObjectID();
     }
     
-    if (activeID < 0)
-    {
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject",
-                    "Adding object with negative ActiveID %d FactoryID %d",
-                    activeID, factoryID);
-    }
+    // we can't add to the _connectedObjects until the objectID has been decided
     
-    // Is there an active object with the same activeID that already exists?
-    ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(activeObjectType);
-    const char* objTypeStr = EnumToString(objType);
-    BlockWorldFilter filter;
-    filter.AddFilterFcn([activeID](const ObservableObject* object) { return object->GetActiveID() == activeID;} );
+    // Is there an active object with the same activeID and type that already exists?
+    BlockWorldFilter filterByActiveID;
+    filterByActiveID.AddFilterFcn([activeID](const ObservableObject* object) { return object->GetActiveID() == activeID;} );
+    filterByActiveID.SetAllowedTypes({objType});
     std::vector<ObservableObject*> matchingObjects;
-    FindMatchingObjects(filter, matchingObjects);
+    FindLocatedMatchingObjects(filterByActiveID, matchingObjects);
     
-    if (matchingObjects.empty()) {
-      // If no match found, find one of the same type with an invalid activeID and assume it's that
-      BlockWorldFilter filter;
-      filter.SetFilterFcn(nullptr);
-      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-      filter.SetAllowedTypes({objType});
-      
+    if (matchingObjects.empty())
+    {
+      // If no match found, find one of the same type with an invalid activeID and assume that's the one we are
+      // connecting to
+      BlockWorldFilter filterInAny;
+      filterInAny.SetFilterFcn(nullptr);
+      filterInAny.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+      filterInAny.SetAllowedTypes({objType});
       std::vector<ObservableObject*> objectsOfSameType;
-      FindMatchingObjects(filter, objectsOfSameType);
+      FindLocatedMatchingObjects(filterInAny, objectsOfSameType);
       
       if(!objectsOfSameType.empty())
       {
-        ObjectID ret;
+        ObjectID matchObjectID;
+      
+        // we found located instances of this object that we were not connected to
+        for (auto& sameTypeObject : objectsOfSameType)
+        {
+          if ( matchObjectID.IsSet() ) {
+            // check they all have the same objectID across frames
+            DEV_ASSERT( matchObjectID == sameTypeObject->GetID(), "BlockWorld.AddConnectedActiveObject.NotSAmeObjectID");
+          } else {
+            // set once
+            matchObjectID = sameTypeObject->GetID();
+          }
         
-        // Assume we will need to add a new object to this frame
-        bool needToAddNewObject = true;
-        
-        for (auto& sameTypeObject : objectsOfSameType) {
-          ret = sameTypeObject->GetID();
-          if (sameTypeObject->GetActiveID() < 0) {
+          // check if the instance has activeID
+          if (sameTypeObject->GetActiveID() == ObservableObject::InvalidActiveID)
+          {
+            // it doesn't have an activeID, we are connecting to it, set
             sameTypeObject->SetActiveID(activeID);
             sameTypeObject->SetFactoryID(factoryID);
-            PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.FoundMatchingObjectWithNoActiveID",
+            PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundMatchingObjectWithNoActiveID",
                           "objectID %d, activeID %d, type %s",
-                          sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), objTypeStr);
+                          sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), EnumToString(objType));
           } else {
-            // If found an existing object of the same type but not same factoryID then ignore it
-            // until we figure out how to deal with multiple objects of same type.
-            if ( sameTypeObject->GetFactoryID() != factoryID ) {
+            // it has an activeID, we were connected. Is it the same object?
+            if ( sameTypeObject->GetFactoryID() != factoryID )
+            {
+              // uhm, this is a different object (or factoryID was not set)
               PRINT_CH_INFO("BlockWorld",
                             "AddActiveObject.FoundOtherActiveObjectOfSameType",
                             "ActiveID %d (factoryID 0x%x) is same type as another existing object (objectID %d, activeID %d, factoryID 0x%x, type %s) updating ids to match",
@@ -2437,73 +2368,84 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                             sameTypeObject->GetID().GetValue(),
                             sameTypeObject->GetActiveID(),
                             sameTypeObject->GetFactoryID(),
-                            objTypeStr);
+                            EnumToString(objType));
               
+              // if we have a new factoryID, override the old instances with the new one we connected to
               if(factoryID > 0)
               {
                 sameTypeObject->SetActiveID(activeID);
                 sameTypeObject->SetFactoryID(factoryID);
               }
             } else {
-              PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.FoundIdenticalObjectOnDifferentSlot",
+              PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundIdenticalObjectOnDifferentSlot",
                             "Updating activeID of block with factoryID 0x%x from %d to %d",
                             sameTypeObject->GetFactoryID(), sameTypeObject->GetActiveID(), activeID);
+              // same object, somehow in different activeID now
               sameTypeObject->SetActiveID(activeID);
             }
           }
-          
-          // We need to add a new object to this frame, as long as we don't find one already
-          // in this frame, that is copied from a good matching object in another frame
-          if(&sameTypeObject->GetPose().FindOrigin() != _robot->GetWorldOrigin() && needToAddNewObject)
-          {
-            if(objToCopyId == nullptr)
-            {
-              objToCopyId = sameTypeObject;
-            }
-          }
-          else
-          {
-            needToAddNewObject = false;
-          }
         }
         
-        if(!needToAddNewObject)
-        {
-          return ret;
-        }
+        // inherit objectID from matches
+        newActiveObjectPtr->CopyID(objectsOfSameType.front());
       }
-    } else {
-      if(matchingObjects.size() != 1)
+      else
       {
-        PRINT_NAMED_ERROR("BlockWorld.AddActiveObject.TooManyMatchingObjects",
-                          "Expecting only one matching object in current frame but found %zu",
-                          matchingObjects.size());
+        // there are no matches of the same type, set new objectID
+        newActiveObjectPtr->SetID();
       }
+    }
+    else
+    {
+      // We can't find more than one object of the same type in a single origin. Otherwise something went really bad
+      DEV_ASSERT(matchingObjects.size() <= 1,"BlockWorld.AddConnectedActiveObject.TooManyMatchingObjects" );
+      
+      // NOTE: If this error does not happen for some time, we should remove this `else` block to simplify code.
+      // We should not find any objects in any origins that have this activeID. Otherwise that means they have
+      // not disconnected properly. If there's a timing issue with connecting an object to an activeID before
+      // disconnecting a previous object, we would like to know, so we can act accordingly. Add this error here
+      // to detect that situation.
+      PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.ConflictingActiveID",
+                        "Objects with ActiveID:%d were found when we tried to add that activeID as connected object.",
+                        activeID);
+      
+      // In case there is a timing issue, see how we would fix it:
+      // 1) if the match has the same factoryID, we must not have cleaned it up on disconnection, inherit objectID
+      // 2) if the match has an invalid factoryID, we did not clean up activeID properly, bind again any origin
+      // 3) if the match has a different factoryID, we missed that object's disconnection, delete it and do not bind
       
       ObservableObject* matchingObject = matchingObjects.front();
 
       // A match was found but does it have the same factory ID?
-      if(matchingObject->GetFactoryID() == factoryID) {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.FoundMatchingActiveObject",
+      if (matchingObject->GetFactoryID() == factoryID)
+      {
+        // somehow (error) we did not have an active connected object for it despite having activeID
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundMatchingActiveObject",
                       "objectID %d, activeID %d, type %s, factoryID 0x%x",
-                      matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
-        return matchingObject->GetID();
-      } else if (matchingObject->GetFactoryID() == 0) {
-        // Existing object was only previously observed, never connected, so its factoryID is 0
-        PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.FoundMatchingActiveObjectThatWasNeverConnected",
-                         "objectID %d, activeID %d, type %s, factoryID 0x%x",
-                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
+                      matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), matchingObject->GetFactoryID());
         
+        // inherit objectID in the activeObject we created
+        newActiveObjectPtr->CopyID(matchingObject);
+      }
+      else if (matchingObject->GetFactoryID() == 0)
+      {
+        // somehow (error) it never connected before (it shouldn't have had activeID)
+        PRINT_NAMED_WARNING("BlockWorld.AddConnectedActiveObject.FoundMatchingActiveObjectThatWasNeverConnected",
+                         "objectID %d, activeID %d, type %s, factoryID 0x%x",
+                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), matchingObject->GetFactoryID());
+        
+        // if now we have a factoryID, go fix all located instances of the new object setting their factoryID
         if(factoryID > 0)
         {
           // Need to check existing objects in other frames and update to match new object
-          // (only if new object has a valid factory id)
           std::vector<ObservableObject*> matchingObjectsInAllFrames;
-          BlockWorldFilter filter;
-          filter.AddFilterFcn([activeID](const ObservableObject* object) { return object->GetActiveID() == activeID;} );
-          FindMatchingObjects(filter, matchingObjectsInAllFrames);
+          BlockWorldFilter filterInAnyByID;
+          filterInAnyByID.AddFilterFcn([activeID](const ObservableObject* object) { return object->GetActiveID() == activeID;} );
+          filterInAnyByID.SetAllowedTypes({objType});
+          filterInAnyByID.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+          FindLocatedMatchingObjects(filterInAnyByID, matchingObjectsInAllFrames);
         
-          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.UpdateExistingObjects",
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.UpdateExistingObjectsFactoryID",
                            "Updating %zu existing objects in other frames to match object with factoryID 0x%x and activeID %d",
                            matchingObjectsInAllFrames.size(),
                            factoryID,
@@ -2516,57 +2458,162 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           }
           for(ObservableObject* obj : matchingObjectsInAllFrames)
           {
-            obj->SetFactoryID(factoryID);
-            obj->SetActiveID(activeID);
             DEV_ASSERT(obj->GetID() == idPrev, "Matching objects in different frames don't have same ObjectId");
+            obj->SetFactoryID(factoryID);
+            obj->SetActiveID(activeID); // should not be necessary
             idPrev = obj->GetID();
           }
         }
         
-        return matchingObject->GetID();
-      } else {
-        // FactoryID mismatch. Delete the current object and fall through to add a new one
-        PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.MismatchedFactoryID",
-                            "objectID %d, activeID %d, type %s, factoryID 0x%x (expected 0x%x)",
-                            matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, factoryID, matchingObject->GetFactoryID());
-        DeleteObject(matchingObject->GetID());
+        // we updated all located instances of the new connected object, so we can inherit the objectID
+        newActiveObjectPtr->CopyID(matchingObject);
+      }
+      else
+      {
+        // ActiveID matched, but FactoryID did not, delete the located instance of this object
+        PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.MismatchedFactoryID",
+                          "objectID %d, activeID %d, type %s, factoryID 0x%x (expected 0x%x)",
+                          matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), factoryID, matchingObject->GetFactoryID());
+        DeleteLocatedObjectByIDInCurOrigin(matchingObject->GetID());
+        
+        // do not inherit the objectID we just removed
+        DEV_ASSERT( !newActiveObjectPtr->GetID().IsSet(), "BlockWorld.AddConnectedActiveObject.UnexpectedObjectID" );
+        newActiveObjectPtr->SetID();
       }
     }
     
-
-    // An existing object with activeID was not found so add it
-    ObservableObject* newObjectPtr = nullptr;
+    // at this point the new active connected object has a valid objectID, we can finally add it to the world
+    DEV_ASSERT( newActiveObjectPtr->GetID().IsSet(), "BlockWorld.AddConnectedActiveObject.ObjectIDWasNeverSet" );
+    _connectedObjects[newActiveObjectPtr->GetFamily()][newActiveObjectPtr->GetType()][newActiveObjectPtr->GetID()].reset( newActiveObjectPtr );
+    
+    // return the assigned objectID
+    return newActiveObjectPtr->GetID();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ObjectID BlockWorld::RemoveConnectedActiveObject(ActiveID activeID)
+  {
+    ObjectID removedObjectID;
+    
+    // search in each family
+    ActiveObjectsMapByFamily_t::iterator familyIt = _connectedObjects.begin();
+    const ActiveObjectsMapByFamily_t::iterator familyEnd = _connectedObjects.end();
+    while( familyIt != familyEnd )
+    {
+      // search in each objectType
+      ActiveObjectsMapByType_t& objectTypeMap = familyIt->second;
+      ActiveObjectsMapByType_t::iterator objectTypeIt = objectTypeMap.begin();
+      const ActiveObjectsMapByType_t::iterator objectTypeEnd = objectTypeMap.end();
+      while( objectTypeIt != objectTypeEnd )
+      {
+        // search in every object (indexed byID)
+        ActiveObjectsMapByID_t& objectIDMap = objectTypeIt->second;
+        ActiveObjectsMapByID_t::iterator objectIt = objectIDMap.begin();
+        const ActiveObjectsMapByID_t::iterator objectEnd = objectIDMap.end();
+        while( objectIt != objectEnd )
+        {
+          // grab reference to the smartptr
+          std::shared_ptr<ActiveObject>& object = objectIt->second;
+          if( object->GetActiveID() == activeID )
+          {
+            // found the object, set objectID so we can flag located instances
+            removedObjectID = object->GetID();
+            // now reset the shared_ptr (via reference), and erase the entry (to prevent using nullptr later)
+            object.reset();
+            objectIt = objectIDMap.erase( objectIt );
+            break;
+          } else {
+            ++objectIt;
+          }
+        } // - objects
+        
+        // if found, finish loop, otherwise go to next object type
+        if ( removedObjectID.IsSet() ) {
+          break;
+        } else {
+          ++objectTypeIt;
+        }
+      } // - object types
+      
+      // if found, finish loop, otherwise go to next family
+      if ( removedObjectID.IsSet() ) {
+        break;
+      } else {
+        ++familyIt;
+      }
+    } // - families
+    
+    // TODO: consider a new poseState here as "it was previously useful, but we can't trust the pose anymore since
+    // the object has disconnected and we may miss moved messages".
+    // For now, the old code used to flag as unknown, which in the new code equals to removing the objects
+    if ( removedObjectID.IsSet() ) {
+      DeleteLocatedObjectsByID(removedObjectID);
+    }
+    
+    // return the objectID
+    return removedObjectID;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ActiveObject* BlockWorld::CreateActiveObject(ActiveObjectType activeObjectType, ActiveID activeID, FactoryID factoryID)
+  {
+    ActiveObject* retPtr = nullptr;
+    const ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(activeObjectType);
     switch(objType) {
       case ObjectType::Block_LIGHTCUBE1:
       case ObjectType::Block_LIGHTCUBE2:
       case ObjectType::Block_LIGHTCUBE3:
       {
-        newObjectPtr = new ActiveCube(activeID, factoryID, activeObjectType);
+        retPtr = new ActiveCube(activeID, factoryID, activeObjectType);
         break;
       }
       case ObjectType::Charger_Basic:
       {
-        newObjectPtr = new Charger(activeID, factoryID, activeObjectType);
+        retPtr = new Charger(activeID, factoryID, activeObjectType);
         break;
       }
       default:
-        PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.UnsupportedActiveObjectType",
-                            "%s (ActiveObjectType: 0x%hx)", objTypeStr, activeObjectType);
-        return ObjectID();
+      {
+        PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.UnsupportedActiveObjectType",
+                           "%s (ActiveObjectType: 0x%hx)", EnumToString(objType), activeObjectType);
+      }
     }
+    return retPtr;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::AddLocatedObject(const std::shared_ptr<ObservableObject>& object)
+  {
+    DEV_ASSERT(object->HasValidPose(), "BlockWorld.AddLocatedObject.NotAValidPoseState");
+    DEV_ASSERT(object->GetID().IsSet(), "BlockWorld.AddLocatedObject.ObjectIDNotSet");
+
+    const PoseOrigin* objectOrigin = &object->GetPose().FindOrigin();
     
-    std::shared_ptr<ObservableObject> newObject(newObjectPtr);
-    Pose3d newObjectPose;
-    newObjectPose.SetParent(_robot->GetWorldOrigin());
-    newObject->InitPose(newObjectPose, PoseState::Unknown);
+    // allow adding only in current origin
+    DEV_ASSERT(objectOrigin == _robot->GetWorldOrigin(), "BlockWorld.AddLocatedObject.NotCurrentOrigin");
     
-    AddNewObject(newObject, objToCopyId);
+    // grab the current pointer and check it's empty (do not allow overwriting)
+    std::shared_ptr<ObservableObject>& objectLocation =
+      _locatedObjects[objectOrigin][object->GetFamily()][object->GetType()][object->GetID()];
+    DEV_ASSERT(objectLocation == nullptr, "BlockWorld.AddLocatedObject.ObjectIDInUseInOrigin");
     
-    PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.AddedNewObject",
-                  "objectID %d, type %s, activeID %d, factoryID 0x%x",
-                  newObject->GetID().GetValue(), objTypeStr, newObject->GetActiveID(), newObject->GetFactoryID());
+    // store the new object, this increments refcount
+    objectLocation = object;
+
+    // set the viz manager on this new object
+    object->SetVizManager(_robot->GetContext()->GetVizManager());
     
-    return newObject->GetID();
+    PRINT_CH_INFO("BlockWorld", "BlockWorld.AddNewObject",
+                  "Adding new %s%s object and ID=%d ActID=%d FacID=0x%x at (%.1f, %.1f, %.1f), in frame %s.",
+                  object->IsActive() ? "active " : "",
+                  EnumToString(object->GetType()),
+                  object->GetID().GetValue(),
+                  object->GetActiveID(),
+                  object->GetFactoryID(),
+                  object->GetPose().GetTranslation().x(),
+                  object->GetPose().GetTranslation().y(),
+                  object->GetPose().GetTranslation().z(),
+                  object->GetPose().FindOrigin().GetName().c_str());
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3639,14 +3686,15 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
       // Optional: don't allow markers seen enclosed in other markers
       //RemoveMarkersWithinMarkers(currentObsMarkers);
-      
-      // Only update robot's poses using VisionMarkers while not on a ramp
-      if(!_robot->IsOnRamp()) {
-        if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
-          // Note that this removes markers from the list that it uses
-          UpdateRobotPose(currentObsMarkers, atTimestamp);
-        }
-      }
+
+// rsam: this code was for Mat localization. Now that localization happens by cubes, this code makes no sense
+//      // Only update robot's poses using VisionMarkers while not on a ramp
+//      if(!_robot->IsOnRamp()) {
+//        if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
+//          // Note that this removes markers from the list that it uses
+//          UpdateRobotPose(currentObsMarkers, atTimestamp);
+//        }
+//      }
       
       // Reset the flag telling us objects changed here, before we update any objects:
       _didObjectsChange = false;
@@ -3773,7 +3821,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         }
       };
       
-      ModifyObjects(markAsDirty, unobservedCollidingObjectFilter);
+      ModifyLocatedObjects(markAsDirty, unobservedCollidingObjectFilter);
     }
     
     
@@ -3947,101 +3995,69 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                         });
     
     std::vector<ObservableObject*> intersectingAndOldObjects;
-    FindMatchingObjects(filter, intersectingAndOldObjects);
+    FindLocatedMatchingObjects(filter, intersectingAndOldObjects);
     
     for(ObservableObject* object : intersectingAndOldObjects)
     {
-      DeleteObject(object->GetID());
+      DeleteLocatedObjectByIDInCurOrigin(object->GetID());
     }
     
     return RESULT_OK;
   }
-  
-  
-  void BlockWorld::ClearAllExistingObjects()
-  {
-    if(_canDeleteObjects) {
-      BlockWorldFilter filter;
-      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-      filter.SetFilterFcn(nullptr);
-      
-      ModifyObjects([this](ObservableObject* object) { ClearObjectHelper(object); });
-      
-    }  else {
-      PRINT_NAMED_WARNING("BlockWorld.ClearAllExistingObjects.DeleteDisabled",
-                          "Will not clear all objects because object deletion is disabled.");
-    }
-  }
 
-  void BlockWorld::DeleteAllExistingObjects()
-  {
-    // TODO Fix the lightcube calls which rely on these objects still existing
-    if(_canDeleteObjects) {
-      
-      // Note: no need to explicitly delete objects because they are now stored
-      // as shared pointers, so just call clear on all of them individually,
-      // and then clear the container.
-      ClearAllExistingObjects();
-      
-      //finally clear the entire map, now that everything inside has been deleted
-      _locatedObjects.clear();
-      
-    }  else {
-      PRINT_NAMED_WARNING("BlockWorld.DeleteAllExistingObjects.DeleteDisabled",
-                          "Will not delete all objects because object deletion is disabled.");
-    }
-  }
-
-  void BlockWorld::ClearObjectHelper(ObservableObject* object)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::ClearLocatedObjectHelper(ObservableObject* object)
   {
     if(object == nullptr) {
       PRINT_NAMED_WARNING("BlockWorld.ClearObjectHelper.NullObjectPointer",
                           "BlockWorld asked to clear a null object pointer.");
-    } else {
-      // Check to see if this object is the one the robot is localized to.
-      // If so, the robot needs to be marked as localized to nothing.
-      if(_robot->GetLocalizedTo() == object->GetID()) {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.LocalizeRobotToNothing",
-                      "Setting robot %d as localized to no object, because it "
-                      "is currently localized to %s object with ID=%d, which is "
-                      "about to be cleared.",
-                      _robot->GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
-        _robot->SetLocalizedTo(nullptr);
-      }
-      
-      // TODO: If this is a mat piece, check to see if there are any objects "on" it (COZMO-138)
-      // If so, clear them too or update their poses somehow? (Deleting seems easier)
-      
-      // Check to see if this object is the one the robot is carrying.
-      if(_robot->GetCarryingObject() == object->GetID()) {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingCarriedObject",
-                      "Clearing %s object %d which robot %d thinks it is carrying.",
-                      ObjectTypeToString(object->GetType()),
-                      object->GetID().GetValue(),
-                      _robot->GetID());
-        _robot->UnSetCarryingObjects();
-      }
-      
-      if(_selectedObject == object->GetID()) {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingSelectedObject",
-                      "Clearing %s object %d which is currently selected.",
-                      ObjectTypeToString(object->GetType()),
-                      object->GetID().GetValue());
-        _selectedObject.UnSet();
-      }
-
-      ObservableObject* objectOnTop = FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
-      if(objectOnTop != nullptr)
-      {
-        ClearObject(objectOnTop);
-      }
-      
-      _robot->GetObjectPoseConfirmer().MarkObjectUnknown(object);
-      
-      // Flag that we removed an object
-      _didObjectsChange = true;
-      _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
+      return;
     }
+    
+    // Check to see if this object is the one the robot is localized to.
+    // If so, the robot needs to be marked as localized to nothing.
+    if(_robot->GetLocalizedTo() == object->GetID()) {
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.LocalizeRobotToNothing",
+                    "Setting robot %d as localized to no object, because it "
+                    "is currently localized to %s object with ID=%d, which is "
+                    "about to be cleared.",
+                    _robot->GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
+      _robot->SetLocalizedTo(nullptr);
+    }
+    
+    // TODO: If this is a mat piece, check to see if there are any objects "on" it (COZMO-138)
+    // If so, clear them too or update their poses somehow? (Deleting seems easier)
+    
+    // Check to see if this object is the one the robot is carrying.
+    if(_robot->GetCarryingObject() == object->GetID()) {
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingCarriedObject",
+                    "Clearing %s object %d which robot %d thinks it is carrying.",
+                    ObjectTypeToString(object->GetType()),
+                    object->GetID().GetValue(),
+                    _robot->GetID());
+      _robot->UnSetCarryingObjects();
+    }
+    
+    if(_selectedObject == object->GetID()) {
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingSelectedObject",
+                    "Clearing %s object %d which is currently selected.",
+                    ObjectTypeToString(object->GetType()),
+                    object->GetID().GetValue());
+      _selectedObject.UnSet();
+    }
+
+    ObservableObject* objectOnTop = FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+    if(objectOnTop != nullptr)
+    {
+      ClearLocatedObjectHelper(objectOnTop);
+    }
+    
+    // TODO: evaluate if we want the concept of "previously known to be somewhere"
+    // _robot->GetObjectPoseConfirmer().MarkObjectUnknown(object);
+    
+    // Flag that we removed an object
+    _didObjectsChange = true;
+    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
   }
   
   ObservableObject* BlockWorld::FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,
@@ -4120,7 +4136,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         }
       });
     
-    ObservableObject* foundObject = FindObjectHelper(filter, nullptr, true);
+    ObservableObject* foundObject = FindLocatedObjectHelper(filter, nullptr, true);
     
     if(kVisualizeStacks && _robot->GetContext()->GetVizManager() != nullptr)
     {
@@ -4167,10 +4183,40 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     return foundObject;
   }
   
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<const ActiveObject*>& result) const
+  {
+    // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
+    // the filter to the result vector
+    ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
+      // TODO this could be a checked_cast (dynamic in dev, static in shipping)
+      const ActiveObject* candidateActiveObject = dynamic_cast<ActiveObject*>(candidateObject);
+      result.push_back(candidateActiveObject);
+    };
+    
+    // ignore return value, since the findLambda stored everything in result
+    FindConnectedObjectHelper(filter, addToResult, false);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<ActiveObject*>& result)
+  {
+    // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
+    // the filter to the result vector
+    ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
+      ActiveObject* candidateActiveObject = dynamic_cast<ActiveObject*>(candidateObject);
+      result.push_back(candidateActiveObject);
+    };
+    
+    // ignore return value, since the findLambda stored everything in result
+    FindConnectedObjectHelper(filter, addToResult, false);  
+  }
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::FindLocatedMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result)
   {
-    // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
+    // slight abuse of the FindLocatedObjectHelper, I just use it for filtering, then I add everything that passes
     // the filter to the result vector
     ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
       result.push_back(candidateObject);
@@ -4183,7 +4229,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::FindLocatedMatchingObjects(const BlockWorldFilter& filter, std::vector<const ObservableObject*>& result) const
   {
-    // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
+    // slight abuse of the FindLocatedObjectHelper, I just use it for filtering, then I add everything that passes
     // the filter to the result vector
     ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
       result.push_back(candidateObject);
@@ -4210,7 +4256,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
     });
     
-    return FindObjectHelper(filter);
+    return FindLocatedObjectHelper(filter);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4302,7 +4348,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       return false;
     });
     
-    FindObjectHelper(filter);
+    FindLocatedObjectHelper(filter);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4366,266 +4412,268 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
   }
 
-  void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
-  {
-    if(_canDeleteObjects) {
-      
-      BlockWorldFilter filter;
-      filter.AddAllowedFamily(family);
-      filter.SetFilterFcn(nullptr);
-      
-      ModifierFcn clearObjectFcn = [this](ObservableObject* object) { ClearObjectHelper(object); };
-      
-      FindObjectHelper(filter, clearObjectFcn, false);
-      
-    } else {
-      PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily.ClearDisabled",
-                          "Will not clear family %d objects because object deletion is disabled.",
-                          family);
-    }
-  }
+//  void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
+//  {
+//    if(_canDeleteObjects) {
+//      
+//      BlockWorldFilter filter;
+//      filter.AddAllowedFamily(family);
+//      filter.SetFilterFcn(nullptr);
+//      
+//      ModifierFcn clearObjectFcn = [this](ObservableObject* object) { ClearObjectHelper(object); };
+//      
+//      FindObjectHelper(filter, clearObjectFcn, false);
+//      
+//    } else {
+//      PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily.ClearDisabled",
+//                          "Will not clear family %d objects because object deletion is disabled.",
+//                          family);
+//    }
+//  }
+//  
+//  void BlockWorld::ClearObjectsByType(const ObjectType type)
+//  {
+//    if(_canDeleteObjects) {
+//      BlockWorldFilter filter;
+//      filter.AddAllowedType(type);
+//      filter.SetFilterFcn(nullptr);
+//      
+//      ModifierFcn clearObjectFcn = [this](ObservableObject* object) { ClearObjectHelper(object); };
+//      
+//      FindObjectHelper(filter, clearObjectFcn, false);
+//      
+//    } else {
+//      PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType.DeleteDisabled",
+//                          "Will not clear %s objects because object deletion is disabled.",
+//                          ObjectTypeToString(type));
+//
+//    }
+//  } // ClearBlocksByType()
   
-  void BlockWorld::ClearObjectsByType(const ObjectType type)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DeleteAllLocatedObjects()
   {
-    if(_canDeleteObjects) {
-      BlockWorldFilter filter;
-      filter.AddAllowedType(type);
-      filter.SetFilterFcn(nullptr);
-      
-      ModifierFcn clearObjectFcn = [this](ObservableObject* object) { ClearObjectHelper(object); };
-      
-      FindObjectHelper(filter, clearObjectFcn, false);
-      
-    } else {
-      PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType.DeleteDisabled",
-                          "Will not clear %s objects because object deletion is disabled.",
-                          ObjectTypeToString(type));
+    // clear all objects in the current origin (other origins should not be necessary)
+    ModifyLocatedObjects([this](ObservableObject* object) { ClearLocatedObjectHelper(object); });
+    
+    // clear the entire map of located instances (smart pointers will free)
+    _locatedObjects.clear();    
+  }
 
-    }
-  } // ClearBlocksByType()
-
-  void BlockWorld::DeleteObjectsByOrigin(const Pose3d* origin, bool clearFirst)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DeleteLocatedObjectsByOrigin(const Pose3d* origin)
   {
-    if(_canDeleteObjects)
+    auto originIter = _locatedObjects.find(origin);
+    if(originIter != _locatedObjects.end())
     {
-      auto originIter = _locatedObjects.find(origin);
-      if(originIter != _locatedObjects.end())
+      const bool isCurrentOrigin = (originIter->first == _robot->GetWorldOrigin());
+      
+      // cache objectIDs since we are going to destroy the objects
+      std::set<ObjectID> objectsInOrigin;
+      
+      // iterate all families and types
+      for(auto & objectsByFamily : originIter->second)
       {
-        // Using a separate set instead of the vector since ObservableObject pointers might not
-        // be valid since we are deleting the origin the objects are in
-        std::set<ObjectID> objectsInOrigin;
-        
-        for(auto & objectsByFamily : originIter->second)
+        for(auto & objectsByType : objectsByFamily.second)
         {
-          for(auto & objectsByType : objectsByFamily.second)
+          // for every object
+          auto objectIter = objectsByType.second.begin();
+          while(objectIter != objectsByType.second.end())
           {
-            auto objectIter = objectsByType.second.begin();
-            while(objectIter != objectsByType.second.end())
-            {
-              objectsInOrigin.insert(objectIter->second->GetID());
-              
-              if(clearFirst)
-              {
-                ClearObjectHelper(objectIter->second.get());
-              }
-              if(ANKI_DEVELOPER_CODE)
-              {
-                // Full blown nuke of each object's memory to force a crash if
-                // we ever try to use this object again
-                ObservableObject* objectPtr = objectIter->second.get();
-                objectIter = objectsByType.second.erase(objectIter);
-                memset((void*)objectPtr, 0, sizeof(ObservableObject));
-              }
-              else
-              {
-                ++objectIter;
-              }
+            // cache its ID (for later usage)
+            objectsInOrigin.insert(objectIter->second->GetID());
+            
+            // clear the object if it's in the current origin (other origins should not be necessary)
+            if ( isCurrentOrigin ) {
+              ClearLocatedObjectHelper(objectIter->second.get());
             }
+            
+            // we used to have a delete here with memset(0), I don't think we need that anymore or that it's safe
+            // now that the memory is managed by smart pointers
+            ++objectIter;
           }
         }
-        _locatedObjects.erase(originIter);
-        
-        // Find all objects in all _other_ origins and remove their IDs from the
-        // set of object IDs we found in _this_ origin. If anything is left in the
-        // set, then that object ID did not exist in any other frame and thus its
-        // deletion should be broadcast below. Note that we can search all origins
-        // now because we just erased "origin".
-        BlockWorldFilter filter;
-        filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-        filter.SetFilterFcn([&objectsInOrigin](const ObservableObject* object)
-                            {
-                              objectsInOrigin.erase(object->GetID());
-                              return true;
-                            });
-        
-        FilterObjects(filter);
-        
-        for(const ObjectID& objectID : objectsInOrigin)
-        {
-          PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsByOrigin.RemovedObjectFromAllFrames",
-                         "Broadcasting deletion of object %d, which no longer exists in any frame",
-                         objectID.GetValue());
-          
-          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
-                                                                                                         objectID)));
-        }
       }
-    } else {
-      PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsByOrigin.DeleteDisabled",
-                          "Will not delete origin %p objects because object deletion is disabled.",
-                          origin);
+      _locatedObjects.erase(originIter);
+      
+      // rsampedro: I don't know if this is useful anymore. Some of these things were due to active/unique objects
+      // being destroyed, which now can be tracked separately due to the connected objects container
+      
+      // Find all objects in all _other_ origins and remove their IDs from the
+      // set of object IDs we found in _this_ origin. If anything is left in the
+      // set, then that object ID did not exist in any other frame and thus its
+      // deletion should be broadcast below. Note that we can search all origins
+      // now because we just erased "origin".
+      BlockWorldFilter filter;
+      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+      filter.SetFilterFcn([&objectsInOrigin](const ObservableObject* object)
+                          {
+                            objectsInOrigin.erase(object->GetID());
+                            return true;
+                          });
+      
+      FilterLocatedObjects(filter);
+      
+      for(const ObjectID& objectID : objectsInOrigin)
+      {
+        PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsByOrigin.RemovedObjectFromAllFrames",
+                       "Broadcasting deletion of object %d, which no longer exists in any frame",
+                       objectID.GetValue());
+        
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
+                                                                                                       objectID)));
+      }
     }
   }
 
-  void BlockWorld::DeleteObjectsByFamily(const ObjectFamily family)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DeleteLocatedObjectsByFamily(const ObjectFamily family)
   {
-    if(_canDeleteObjects) {
-      std::set<ObjectID> idsToBroadcast;
-      for(auto & objectsByOrigin : _locatedObjects) {
-        auto familyIter = objectsByOrigin.second.find(family);
-        if(familyIter != objectsByOrigin.second.end()) {
-          for(auto & objectsByType : familyIter->second) {
-            for(auto & objectsByID : objectsByType.second) {
-              idsToBroadcast.insert(objectsByID.first);
-              ClearObjectHelper(objectsByID.second.get());
+    // TODO what happens when we try to delete ActiveObjects? We do not remove their connected instance at the moment,
+    // is that expected from this method?
+  
+    std::set<ObjectID> idsToBroadcast;
+    for(auto & objectsByOrigin : _locatedObjects) {
+      auto familyIter = objectsByOrigin.second.find(family);
+      if(familyIter != objectsByOrigin.second.end()) {
+        for(auto & objectsByType : familyIter->second) {
+          for(auto & objectsByID : objectsByType.second) {
+            idsToBroadcast.insert(objectsByID.first);
+            
+            // clear object in current origin (others should not be needed)
+            const bool isCurrentOrigin = (&objectsByID.second->GetPose().FindOrigin() == _robot->GetWorldOrigin());
+            if ( isCurrentOrigin ) {
+              ClearLocatedObjectHelper(objectsByID.second.get());
             }
           }
-          objectsByOrigin.second.erase(familyIter);
         }
+        //
+        objectsByOrigin.second.erase(familyIter);
       }
-      
-      for(auto id : idsToBroadcast) {
-        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
-                                                                                                       id)));
-      }
-    } else {
-      PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsByFamily.DeleteDisabled",
-                          "Will not delete family %d objects because object deletion is disabled.",
-                          family);
+    }
+    
+    for(const auto& id : idsToBroadcast) {
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
+                                                                                                     id)));
     }
   }
   
-  void BlockWorld::DeleteObjectsByType(const ObjectType type)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DeleteLocatedObjectsByType(ObjectType type)
   {
-    if(_canDeleteObjects) {
-      std::set<ObjectID> idsToBroadcast;
-      for(auto & objectsByOrigin : _locatedObjects) {
-        for(auto & objectsByFamily : objectsByOrigin.second) {
-          auto typeIter = objectsByFamily.second.find(type);
-          if(typeIter != objectsByFamily.second.end()) {
-            for(auto & objectsByID : typeIter->second) {
-              idsToBroadcast.insert(objectsByID.first);
-              ClearObjectHelper(objectsByID.second.get());
+    std::set<ObjectID> idsToBroadcast;
+    for(auto & objectsByOrigin : _locatedObjects) {
+      for(auto & objectsByFamily : objectsByOrigin.second) {
+        auto typeIter = objectsByFamily.second.find(type);
+        if(typeIter != objectsByFamily.second.end()) {
+          for(auto & objectsByID : typeIter->second) {
+          
+            idsToBroadcast.insert(objectsByID.first);
+            const bool isCurrentOrigin = (&objectsByID.second->GetPose().FindOrigin() == _robot->GetWorldOrigin());
+            if ( isCurrentOrigin ) {
+              ClearLocatedObjectHelper(objectsByID.second.get());
             }
-            
-            objectsByFamily.second.erase(typeIter);
-            
-            // Types are unique.  No need to keep looking
-            return;
           }
+          
+          objectsByFamily.second.erase(typeIter);
         }
       }
-      
-      for(auto id : idsToBroadcast) {
-        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
-                                                                                                       id)));
-      }
-    } else {
-      PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsByType.DeleteDisabled",
-                          "Will not delete %s objects because object deletion is disabled.",
-                          ObjectTypeToString(type));
-      
+    }
+    
+    for(auto id : idsToBroadcast) {
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
+                                                                                                     id)));
     }
   }
 
-  bool BlockWorld::DeleteObject(const ObjectID withID)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DeleteLocatedObjectsByID(const ObjectID& withID)
   {
     BlockWorldFilter filter;
     filter.SetAllowedIDs({withID});
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
     
     // Disable default filter so we consider all objects regardless of poseState
+    // TODO this should not be needed after Unknown is removed
     filter.SetFilterFcn(nullptr);
     
     std::vector<ObservableObject*> objects;
-    FindMatchingObjects(filter, objects);
+    FindLocatedMatchingObjects(filter, objects);
 
-    bool retval = false;
-    for(auto object : objects)
+    for(auto* object : objects)
     {
-      if(nullptr != object)
-      {
-        // Inform caller that we found the requested ID:
-        retval = true;
-        
-        // Need to do all the same cleanup as Clear() calls
-        ClearObjectHelper(object);
-        
-        // Actually delete the object we found
-        const Pose3d* origin = &object->GetPose().FindOrigin();
-        ObjectFamily inFamily = object->GetFamily();
-        ObjectType   withType = object->GetType();
-        
-        // And remove it from the container
-        // Note: we're using shared_ptr to store the objects, so erasing from
-        //       the container will delete it if nothing else is referring to it
-        const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
-        DEV_ASSERT_MSG(numDeleted != 0,
-                       "BlockWorld.DeleteObject.NoObjectsDeleted",
-                       "Origin %p Type %s ID %u",
-                       origin, EnumToString(withType), object->GetID().GetValue());
-      }
+      DEV_ASSERT(nullptr != object, "BlockWorld.DeleteLocatedObjectByID.NullObject");
+      
+      // Need to do all the same cleanup as Clear() calls
+      ClearLocatedObjectHelper(object);
+      
+      // Actually delete the object we found
+      const Pose3d* origin = &object->GetPose().FindOrigin();
+      ObjectFamily inFamily = object->GetFamily();
+      ObjectType   withType = object->GetType();
+      
+      // And remove it from the container
+      // Note: we're using shared_ptr to store the objects, so erasing from
+      //       the container will delete it if nothing else is referring to it
+      const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
+      DEV_ASSERT_MSG(numDeleted != 0,
+                     "BlockWorld.DeleteObject.NoObjectsDeleted",
+                     "Origin %p Type %s ID %u",
+                     origin, EnumToString(withType), object->GetID().GetValue());
     }
     
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(), withID)));
-    
-    return retval;
-  } // DeleteObject()
-
-  bool BlockWorld::ClearObject(ObservableObject* object)
+    // notify something was deleted
+    if ( !objects.empty() ) {
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(), withID)));
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DeleteLocatedObjectByIDInCurOrigin(const ObjectID& withID)
   {
-    if(nullptr == object) {
-      return false;
-    } else if(_canDeleteObjects) {
-      ClearObjectHelper(object);
-      return true;
-    } else {
-      PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
-                          "Will not clear object %d because object deletion is disabled.",
-                          object->GetID().GetValue());
-      return false;
+    // find the object in the current origin
+    ObservableObject* object = GetLocatedObjectByID(withID);
+    if ( nullptr != object )
+    {
+      // clear and delete
+      ClearLocatedObjectHelper(object);
+      
+      const PoseOrigin* origin    = &object->GetPose().FindOrigin();
+      const ObjectFamily inFamily = object->GetFamily();
+      const ObjectType   withType = object->GetType();
+      
+      // And remove it from the container (smart pointer will delete)
+      const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
+      DEV_ASSERT_MSG(numDeleted != 0,
+                     "BlockWorld.DeleteObject.NoObjectsDeleted",
+                     "Origin %p Type %s ID %u",
+                     origin, EnumToString(withType), object->GetID().GetValue());
+
+      // TODO we need to revise Deleted vs InstanceDeleted (old Unknown)
+      // broadcast if there was a deletion
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
+                                                                                                     withID)));
     }
   }
 
-  bool BlockWorld::ClearObject(const ObjectID& withID)
-  {
-    // Note: In current frame only!
-    return ClearObject(GetLocatedObjectByID(withID));
-  } // ClearObject()
-  
-
-  BlockWorld::ObjectsMapByID_t::iterator BlockWorld::DeleteObject(const ObjectsMapByID_t::iterator objIter,
-                                                                  const ObjectType&   withType,
-                                                                  const ObjectFamily& fromFamily)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  BlockWorld::ObjectsMapByID_t::iterator BlockWorld::DeleteLocatedObjectAt(const ObjectsMapByID_t::iterator objIter,
+                                                                           const ObjectType&   withType,
+                                                                           const ObjectFamily& fromFamily)
   {
     ObservableObject* object = objIter->second.get();
     
-    if(_canDeleteObjects)
-    {
-      const Pose3d* origin = &objIter->second->GetPose().FindOrigin();
-      
-      ClearObjectHelper(object);
-      
-      // Erase from the container and return the iterator to the next element
-      // Note: we're using a shared_ptr so this should delete the object as well.
-      return _locatedObjects.at(origin).at(fromFamily).at(withType).erase(objIter);
-    } else {
-      PRINT_NAMED_WARNING("BlockWorld.DeleteObject.DeleteDisabled",
-                          "Will not delete object %d because object deletion is disabled.",
-                          object->GetID().GetValue());
-      auto retIter(objIter);
-      return ++retIter;
+    // clear if in current origin
+    const PoseOrigin* origin = &objIter->second->GetPose().FindOrigin();
+    const bool isCurrentOrigin = (origin == _robot->GetWorldOrigin());
+    if ( isCurrentOrigin ) {
+      ClearLocatedObjectHelper(object);
     }
+      
+    // Erase from the container and return the iterator to the next element
+    // Note: we're using a shared_ptr so this should delete the object as well.
+    const ObjectsMapByID_t::iterator next = _locatedObjects.at(origin).at(fromFamily).at(withType).erase(objIter);
+    return next;
   }
 
   void BlockWorld::DeselectCurrentObject()
@@ -4638,7 +4686,19 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       _selectedObject.UnSet();
     }
   }
-
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::ClearLocatedObjectByIDInCurOrigin(const ObjectID& withID)
+  {
+    ObservableObject* object = GetLocatedObjectByID(withID);
+    ClearLocatedObjectHelper(object);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::ClearLocatedObject(ObservableObject* object)
+  {
+    ClearLocatedObjectHelper(object);
+  }
 
   bool BlockWorld::SelectObject(const ObjectID& objectID)
   {
@@ -4682,7 +4742,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Markerless objects are not Actionable, so ignore them for selection
     filter.SetIgnoreFamilies({ObjectFamily::MarkerlessObject, ObjectFamily::CustomObject});
     std::vector<ObservableObject*> allObjects;
-    FindMatchingObjects(filter, allObjects);
+    FindLocatedMatchingObjects(filter, allObjects);
     for(auto const & obj : allObjects)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
@@ -4777,7 +4837,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
     };
 
-    FindObjectHelper(filter, visualizeHelper, false);
+    FindLocatedObjectHelper(filter, visualizeHelper, false);
     
     // (Re)Draw the selected object separately so we can get its pre-action poses
     if(GetSelectedObject().IsSet())

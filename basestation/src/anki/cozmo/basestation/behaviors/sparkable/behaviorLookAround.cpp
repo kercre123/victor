@@ -184,9 +184,7 @@ void BehaviorLookAround::TransitionToRoaming(Robot& robot)
     Quad2f robotQuad = robot.GetBoundingQuadXY(destPose);
     
     std::vector<ObservableObject*> existingObjects;
-    robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
-                                                   existingObjects,
-                                                   10);
+    robot.GetBlockWorld().FindLocatedIntersectingObjects(robotQuad, existingObjects, 10);
     
     if (existingObjects.empty()) {
       break;

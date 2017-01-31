@@ -525,7 +525,7 @@ namespace Anki {
         
         // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
         std::vector<ObservableObject *> intersectingObjects;
-        _robot.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, _destinationObjectPadding_mm, ignoreSelfFilter);
+        _robot.GetBlockWorld().FindLocatedIntersectingObjects(candidateQuad, intersectingObjects, _destinationObjectPadding_mm, ignoreSelfFilter);
         bool isFree = intersectingObjects.empty();
         return isFree;
       }

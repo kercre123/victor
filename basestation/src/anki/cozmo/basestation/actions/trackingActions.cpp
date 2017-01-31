@@ -465,7 +465,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     BlockWorldFilter filter;
     filter.OnlyConsiderLatestUpdate(true);
     
-    matchingObject = _robot.GetBlockWorld().FindClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
+    matchingObject = _robot.GetBlockWorld().FindLocatedClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
     
     if(nullptr == matchingObject) {
       // Did not see an object of the right type during latest blockworld update

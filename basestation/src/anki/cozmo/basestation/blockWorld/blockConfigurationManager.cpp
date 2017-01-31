@@ -211,7 +211,7 @@ void BlockConfigurationManager::UpdateLastConfigCheckBlockPoses()
   BlockWorldFilter blockFilter;
   blockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
   std::vector<const ObservableObject*> allBlocks;
-  _robot.GetBlockWorld().FindMatchingObjects(blockFilter, allBlocks);
+  _robot.GetBlockWorld().FindLocatedMatchingObjects(blockFilter, allBlocks);
   
   for(const auto& block: allBlocks){
     if(block != nullptr) {

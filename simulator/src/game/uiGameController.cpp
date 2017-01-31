@@ -273,12 +273,31 @@ namespace Anki {
       
       HandleActiveObjectTapped(msg);
     }
-    
-    void UiGameController::HandleObjectStatesBase(ExternalInterface::ObjectStates const& msg)
+
+    void UiGameController::HandleConnectedObjectStatesBase(ExternalInterface::ConnectedObjectStates const& msg)
     {
       for(auto & objectState : msg.objects)
       {
-        PRINT_NAMED_INFO("HandleObjectStates",
+        PRINT_NAMED_INFO("HandleConnectedObjectStates",
+                         "Received message about connected object %d (type: %s)",
+                         objectState.objectID,
+                         EnumToString(objectState.objectType));
+
+// TODO: should these add at 0?
+//        AddOrUpdateObject(objectState.objectID,
+//                          objectState.objectType,
+//                          objectState.objectFamily,
+//                          objectState.pose);
+      }
+      
+      HandleConnectedObjectStates(msg);
+    }
+    
+    void UiGameController::HandleLocatedObjectStatesBase(ExternalInterface::LocatedObjectStates const& msg)
+    {
+      for(auto & objectState : msg.objects)
+      {
+        PRINT_NAMED_INFO("HandleLocatedObjectStates",
                          "Received message about known object %d (type: %s, poseState: %hhu)",
                          objectState.objectID,
                          EnumToString(objectState.objectType),
@@ -290,7 +309,7 @@ namespace Anki {
                           objectState.pose);
       }
       
-      HandleObjectStates(msg);
+      HandleLocatedObjectStates(msg);
     }
 
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
@@ -511,8 +530,11 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::ObjectTapped:
             HandleActiveObjectTappedBase(message.Get_ObjectTapped());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::ObjectStates:
-            HandleObjectStatesBase(message.Get_ObjectStates());
+          case ExternalInterface::MessageEngineToGame::Tag::ConnectedObjectStates:
+            HandleConnectedObjectStatesBase(message.Get_ConnectedObjectStates());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::LocatedObjectStates:
+            HandleLocatedObjectStatesBase(message.Get_LocatedObjectStates());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
@@ -1110,23 +1132,23 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendClearAllBlocks()
-    {
-      ExternalInterface::ClearAllBlocks m;
-      m.robotID = 1;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_ClearAllBlocks(m);
-      SendMessage(message);
-    }
+//    void UiGameController::SendClearAllBlocks()
+//    {
+//      ExternalInterface::ClearAllBlocks m;
+//      m.robotID = 1;
+//      ExternalInterface::MessageGameToEngine message;
+//      message.Set_ClearAllBlocks(m);
+//      SendMessage(message);
+//    }
     
-    void UiGameController::SendClearAllObjects()
-    {
-      ExternalInterface::ClearAllObjects m;
-      m.robotID = 1;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_ClearAllObjects(m);
-      SendMessage(message);
-    }
+//    void UiGameController::SendClearAllObjects()
+//    {
+//      ExternalInterface::ClearAllObjects m;
+//      m.robotID = 1;
+//      ExternalInterface::MessageGameToEngine message;
+//      message.Set_ClearAllObjects(m);
+//      SendMessage(message);
+//    }
     
     void UiGameController::SendSelectNextObject()
     {

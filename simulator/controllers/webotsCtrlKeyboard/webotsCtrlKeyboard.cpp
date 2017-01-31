@@ -903,26 +903,8 @@ namespace Anki {
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
                 } else if(shiftKeyPressed) {
                   
-                  static const std::array<std::pair<bool,bool>,4> enableModes = {{
-                    {false, false}, {false, true}, {true, false}, {true, true}
-                  }};
-                  static auto enableModeIter = enableModes.begin();
+                  // FREE KEY COMBO!!!
                   
-                  printf("Setting addition/deletion mode to %s/%s.\n",
-                         enableModeIter->first ? "TRUE" : "FALSE",
-                         enableModeIter->second ? "TRUE" : "FALSE");
-                  ExternalInterface::SetObjectAdditionAndDeletion msg;
-                  msg.robotID = 1;
-                  msg.enableAddition = enableModeIter->first;
-                  msg.enableDeletion = enableModeIter->second;
-                  ExternalInterface::MessageGameToEngine msgWrapper;
-                  msgWrapper.Set_SetObjectAdditionAndDeletion(msg);
-                  SendMessage(msgWrapper);
-                  
-                  ++enableModeIter;
-                  if(enableModeIter == enableModes.end()) {
-                    enableModeIter = enableModes.begin();
-                  }
                 } else if(altKeyPressed) {
 
                   // FREE KEY COMBO!!!
@@ -1171,11 +1153,21 @@ namespace Anki {
                                 ExternalInterface::ExecuteBehaviorByName(behaviorName)));
                 }
                 else if(altKeyPressed) {
-                  SendClearAllObjects();
+                
+                  // rsam: Clear and Delete have change its meaning. Removing until someone complains that it's gone,
+                  // at which point we can evaluate what they need. Sorry if this causes interruptions, unfortunately
+                  // I can't keep supporting all current features in the refactor.
+                  
+                  // SendClearAllObjects();
                 }
                 else {
+                
+                  // rsam: Clear and Delete have change its meaning. Removing until someone complains that it's gone,
+                  // at which point we can evaluate what they need. Sorry if this causes interruptions, unfortunately
+                  // I can't keep supporting all current features in the refactor.
+                
                   // 'c' without SHIFT
-                  SendClearAllBlocks();
+                  // SendClearAllBlocks();
                 }
                 break;
               }

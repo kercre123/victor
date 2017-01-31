@@ -401,7 +401,7 @@ void AIGoalEvaluator::CalculateDesiredGoalFromObjects()
   // check if we have discovered new cubes since we delocalized (any not unknown in current origin)
   BlockWorldFilter cubeFilter;
   cubeFilter.SetAllowedFamilies({{ ObjectFamily::Block, ObjectFamily::LightCube }});
-  const bool hasNewCube = (_robot.GetBlockWorld().FindMatchingObject(cubeFilter) != nullptr);
+  const bool hasNewCube = (_robot.GetBlockWorld().FindLocatedMatchingObject(cubeFilter) != nullptr);
 
   // depending on what we see, request the goal we want
   if ( hasNewFace && hasNewCube ) {

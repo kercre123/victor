@@ -141,7 +141,7 @@ void ReactionTriggerStrategyCubeMoved::EnabledStateChanged(bool enabled)
     std::vector<const ObservableObject*> blocksOnly;
     BlockWorldFilter blocksOnlyFilter;
     blocksOnlyFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    _robot.GetBlockWorld().FindMatchingObjects(blocksOnlyFilter, blocksOnly);
+    _robot.GetBlockWorld().FindLocatedMatchingObjects(blocksOnlyFilter, blocksOnly);
     
     for(const auto& block: blocksOnly){
       if(block->IsPoseStateKnown()){

@@ -138,7 +138,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
     }
   }
 
-  const ObservableObject* bottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
+  const ObservableObject* bottomObject = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(),
                                                                              *_blockworldFilterForBottom);
   if( nullptr != bottomObject ) {
     _targetBlockBottom = bottomObject->GetID();
@@ -288,7 +288,7 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
   // Check to see if better bottom block identified for stacking on
   // New bottom must be closer to cozmo and currently visible while the old target base is not
   if(robot.IsCarryingObject()){
-    const ObservableObject* newBottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
+    const ObservableObject* newBottomObject = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(),
                                                                                      *_blockworldFilterForBottom);
     const ObservableObject* currentTarget = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
     
@@ -537,6 +537,7 @@ void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObje
     case PoseState::Known: poseStateStr = "known"; break;
     case PoseState::Unknown: poseStateStr = "unknown"; break;
     case PoseState::Dirty: poseStateStr = "dirty"; break;
+    case PoseState::Invalid: poseStateStr = "invalid"; break;
   }
   
   PRINT_NAMED_DEBUG(event,

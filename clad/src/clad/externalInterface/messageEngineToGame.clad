@@ -361,7 +361,7 @@ message RobotMarkedObjectPoseUnknown {
     uint_32 objectID
 }
 
-structure ObjectState {
+structure LocatedObjectState {
     uint_32      objectID,
     uint_32      lastObservedTimestamp,
     ObjectFamily objectFamily,
@@ -371,10 +371,19 @@ structure ObjectState {
     bool         isConnected,
 }
 
-message ObjectStates {
-    ObjectState objects[uint_8]
+message LocatedObjectStates {
+    LocatedObjectState objects[uint_8]
 }
 
+structure ConnectedObjectState {
+    uint_32      objectID,
+    ObjectFamily objectFamily,
+    ObjectType   objectType
+}
+
+message ConnectedObjectStates {
+    ConnectedObjectState objects[uint_8]
+}
 
 // RobotReadToolCode
 message RobotReadToolCode {

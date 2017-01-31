@@ -163,7 +163,6 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   // There should now be an object of the right type, with the right ID in BlockWorld
   objects.clear();
-  filter.SetFilterFcn(nullptr);
   filter.SetAllowedTypes({testType});
   blockWorld.FindMatchingObjects(filter, objects);
   ASSERT_EQ(1, objects.size());

@@ -334,7 +334,7 @@ ActionResult FlipBlockAction::CheckIfDone()
   if(result != ActionResult::RUNNING)
   {
     // By clearing the bottom block the entire stack will get cleared
-    _robot.GetBlockWorld().ClearObject(_objectID);
+    _robot.GetBlockWorld().ClearLocatedObjectByIDInCurOrigin(_objectID);
     return result;
   }
   

@@ -87,7 +87,7 @@ namespace Anki {
     }
 
     
-    Pose3d Charger::GetDockedPose() const
+    Pose3d Charger::GetRobotDockedPose() const
     {
       Pose3d pose(M_PI, Z_AXIS_3D(),
                   Point3f{RobotToChargerDistWhenDocked, 0, 0},
@@ -98,15 +98,23 @@ namespace Anki {
       return pose;
     }
     
-    void Charger::SetPoseRelativeToRobot(Robot& robot) // const Pose3d& robotPose, BlockWorld& blockWorld)
+    Pose3d Charger::GetDockPoseRelativeToRobot(const Robot& robot)
     {
-      Pose3d relPose(-M_PI_F, Z_AXIS_3D(),
-                     Point3f{RobotToChargerDistWhenDocked, 0, 0},
-                     &robot.GetPose(),
-                     "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
-      
-      robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(this, relPose, PoseState::Known);
+      return Pose3d(M_PI_F, Z_AXIS_3D(),
+                    Point3f{RobotToChargerDistWhenDocked, 0, 0},
+                    &robot.GetPose(),
+                    "ChargerDockPose");
     }
+    
+//    void Charger::SetPoseRelativeToRobot(Robot& robot) // const Pose3d& robotPose, BlockWorld& blockWorld)
+//    {
+//      Pose3d relPose(-M_PI_F, Z_AXIS_3D(),
+//                     Point3f{RobotToChargerDistWhenDocked, 0, 0},
+//                     &robot.GetPose(),
+//                     "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
+//      
+//      robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(this, relPose, PoseState::Known);
+//    }
     
     
 #if 0

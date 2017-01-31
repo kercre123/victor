@@ -168,7 +168,7 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
       return !isPartOfIllegalConfiguration;
     });
   
-  const ObservableObject* closestObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), filter);
+  const ObservableObject* closestObject = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(), filter);
   
   if(closestObject != nullptr)
   {

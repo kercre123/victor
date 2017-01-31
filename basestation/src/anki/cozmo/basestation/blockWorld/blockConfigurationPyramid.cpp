@@ -320,7 +320,7 @@ std::vector<const PyramidBase*> Pyramid::BuildAllPyramidBasesForBlock(const Robo
                                      return true;
                                    });
     
-    robot.GetBlockWorld().FindMatchingObjects(bottomBlockFilter, blocksOnGround);
+    robot.GetBlockWorld().FindLocatedMatchingObjects(bottomBlockFilter, blocksOnGround);
   }
   
   // check to see if there are enough blocks on the ground for a pyramid to exist
@@ -376,7 +376,7 @@ std::vector<const Pyramid*> Pyramid::BuildAllPyramidsForBlock(const Robot& robot
                                      
                                      return true;
                                    });
-      robot.GetBlockWorld().FindMatchingObjects(topBlocksFilter, potentialTopBlocks);
+      robot.GetBlockWorld().FindLocatedMatchingObjects(topBlocksFilter, potentialTopBlocks);
     }
     
     // check to see if the target block is part of any pyramid bases

@@ -336,7 +336,7 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
     // If there is an object at the given pose within the threshold then fail
     // Only do this check once we have turned towards the pose and have started waiting for images in case
     // there isn't actually an object at the pose but blockworld thinks there is
-    if(_robot.GetBlockWorld().FindObjectClosestTo(_pose, _thresholds_mm, _filter) != nullptr)
+    if(_robot.GetBlockWorld().FindLocatedObjectClosestTo(_pose, _thresholds_mm, _filter) != nullptr)
     {
       PRINT_CH_DEBUG("Actions", "VisuallyVerifyNoObjectAtPose.FoundObject",
                      "Seeing object near pose (%f %f %f)",

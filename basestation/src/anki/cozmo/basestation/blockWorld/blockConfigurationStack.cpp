@@ -148,7 +148,7 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
                                      return true;
                                    });
     
-    robot.GetBlockWorld().FindMatchingObjects(bottomBlockFilter, blocksOnGround);
+    robot.GetBlockWorld().FindLocatedMatchingObjects(bottomBlockFilter, blocksOnGround);
   }
 
   
