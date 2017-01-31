@@ -168,12 +168,12 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void InitConnectionFlow() {
     if (FeatureGate.Instance.IsFeatureEnabled(FeatureType.AndroidConnectionFlow)) {
-      #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
       if (AndroidConnectionFlow.IsAvailable() && !AndroidConnectionFlow.HandleAlreadyOnCozmoWifi()) {
         ShowSearchForCozmoAndroid();
         return;
       }
-      #endif
+#endif
     }
     // fall-thru from not selecting android flow
     CreateConnectionFlowBackground();
@@ -510,7 +510,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void Disconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
-    DAS.Error("ConnectionFlow.Disconnected", "Robot Disconnected");
+    DAS.Warn("ConnectionFlow.Disconnected", "Robot Disconnected");
   }
 
   private void RobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
