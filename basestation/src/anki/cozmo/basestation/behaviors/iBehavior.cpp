@@ -421,11 +421,10 @@ void IBehavior::StopOnNextActionComplete()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::IsRunnableBase(const Robot& robot) const
 {
-  // should not call IsRunnable for running behavior (or we should return true here), otherwise it can
-  // destroy info cached by the running behavior
-  DEV_ASSERT(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
-  if( IsRunning() ) {
-    // if it ever happened in production, we better not destroy info in the running behavior
+  // Some reaction trigger strategies allow behaviors to interrupt themselves.
+  // DEV_ASSERT(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
+  if (IsRunning()) {
+    //PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetName().c_str());
     return true;
   }
   
