@@ -216,10 +216,10 @@ bool DetectDevice(void)
     case FIXTURE_PLAYPEN_TEST:
     case FIXTURE_SOUND_TEST:
       return RobotDetect();
-    case FIXTURE_MOTOR1A_TEST:
-    case FIXTURE_MOTOR1B_TEST:
-    case FIXTURE_MOTOR2A_TEST:      
-    case FIXTURE_MOTOR2B_TEST:      
+    case FIXTURE_MOTOR1L_TEST:
+    case FIXTURE_MOTOR1H_TEST:
+    case FIXTURE_MOTOR2L_TEST:
+    case FIXTURE_MOTOR2H_TEST:
       return MotorDetect();
     case FIXTURE_FINISHC_TEST:
     case FIXTURE_FINISH1_TEST:
@@ -419,15 +419,17 @@ static void MainExecution()
     case FIXTURE_SOUND_TEST:
       m_functions = GetSoundTestFunctions();
       break;      
-    case FIXTURE_MOTOR1A_TEST:
-    case FIXTURE_MOTOR1B_TEST:
-      m_functions = GetMotor1TestFunctions();
+    case FIXTURE_MOTOR1L_TEST:
+      m_functions = GetMotor1LTestFunctions();
       break;
-    case FIXTURE_MOTOR2A_TEST:      
-      m_functions = GetMotor2ATestFunctions();
+    case FIXTURE_MOTOR1H_TEST:
+      m_functions = GetMotor1HTestFunctions();
       break;
-    case FIXTURE_MOTOR2B_TEST:      
-      m_functions = GetMotor2BTestFunctions();
+    case FIXTURE_MOTOR2L_TEST:      
+      m_functions = GetMotor2LTestFunctions();
+      break;
+    case FIXTURE_MOTOR2H_TEST:      
+      m_functions = GetMotor2HTestFunctions();
       break;
     case FIXTURE_FINISHC_TEST:
     case FIXTURE_FINISH1_TEST:

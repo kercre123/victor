@@ -26,9 +26,10 @@ TestFunction* GetSoundTestFunctions(void);
 TestFunction* GetFacRevertTestFunctions(void);
     
 bool MotorDetect(void);
-TestFunction* GetMotor1TestFunctions(void);
-TestFunction* GetMotor2ATestFunctions(void);
-TestFunction* GetMotor2BTestFunctions(void);
+TestFunction* GetMotor1LTestFunctions(void);
+TestFunction* GetMotor1HTestFunctions(void);
+TestFunction* GetMotor2LTestFunctions(void);
+TestFunction* GetMotor2HTestFunctions(void);
 
 bool FinishDetect(void);
 TestFunction* GetFinishTestFunctions(void);

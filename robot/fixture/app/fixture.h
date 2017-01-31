@@ -10,10 +10,10 @@
 
 #define FIXTURE_HEAD1_TEST    2     // ID 2  
 
-#define FIXTURE_MOTOR1A_TEST  10    // ID 4 + 2         MOTORxL = lift
-#define FIXTURE_MOTOR2A_TEST  11    // ID 4 + 2 + 1
-#define FIXTURE_MOTOR1B_TEST  3     // ID 2 + 1         MOTORxH = head
-#define FIXTURE_MOTOR2B_TEST  12    // ID 4 + 3
+#define FIXTURE_MOTOR1L_TEST  10    // ID 4 + 2         MOTORxL = lift
+#define FIXTURE_MOTOR2L_TEST  11    // ID 4 + 2 + 1
+#define FIXTURE_MOTOR1H_TEST  3     // ID 2 + 1         MOTORxH = head
+#define FIXTURE_MOTOR2H_TEST  12    // ID 4 + 3
 
 // Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
 #define FIXTURE_CHARGER_TEST  4     // ID 3

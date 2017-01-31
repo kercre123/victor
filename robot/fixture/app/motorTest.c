@@ -15,8 +15,8 @@ const int ENCODER_DETECT_VOLTAGE = 1400;  // Above 1400mV, an encoder is probabl
 
 void AllOn()
 {
-  // Light up all the LEDs in fixture 2B
-  if (g_fixtureType == FIXTURE_MOTOR2B_TEST)
+  // Light up all the LEDs in fixture 2H
+  if (g_fixtureType == FIXTURE_MOTOR2H_TEST)
   {
     static int x = 0;
     LEDOn(x++); 
@@ -83,7 +83,7 @@ void TestLEDs(void)
 // Test encoder (not motor)
 const int MIN_ENC_ON = 2310, MAX_ENC_OFF = 800;   // In millivolts (with padding) - must be 0.3x to 0.7x VDD
 const int ENC_SLOW_US = 1000;
-const int ENC_A_US = 200, ENC_B_US = 200;   // Rise/fall time for 2.5KHz (since real thing must get to 2KHz)
+const int ENC_L_US = 200, ENC_H_US = 200;   // Rise/fall time for 2.5KHz (since real thing must get to 2KHz)
 void TestEncoders(void)
 {
   // Read encoder when turned on and off
@@ -103,7 +103,7 @@ void TestEncoders(void)
       throw ERROR_ENCODER_FAULT;
 
   // "Warm up" encoder by toggling the LED, then grab "A" side on last toggle
-  const int ENC_US = (g_fixtureType == FIXTURE_MOTOR1A_TEST) ? ENC_A_US : ENC_B_US;
+  const int ENC_US = (g_fixtureType == FIXTURE_MOTOR1L_TEST) ? ENC_L_US : ENC_H_US;
   for (int i = 0; i < 50; i++)
   {
     ReadEncoder(true, ENC_US, ona, onb);
@@ -179,9 +179,9 @@ int MeasureMotor(int speed, bool fast)
   return normalized;
 }
 
-// Motor A: Lift motor with encoders
+// MotorL: Lift motor with encoders
 const int MOTOR_LOW_MV = 1000, MOTOR_FULL_MV = 5000;   // In millivolts
-void TestMotorA(void)
+void TestMotorL(void)
 {
   const int TICKS_SLOW = 10;
   const int TICKS_FAST = 80;
@@ -191,8 +191,8 @@ void TestMotorA(void)
     throw ERROR_MOTOR_FAST;    
 }
 
-// Motor B (head motor) makes about same number of ticks
-void TestMotorB(void)
+// MotorH (head motor) makes about same number of ticks
+void TestMotorH(void)
 {
   const int TICKS_SLOW = 10;
   const int TICKS_FAST = 80;
@@ -203,24 +203,29 @@ void TestMotorB(void)
 }
 
 // List of all functions invoked by the test, in order
-TestFunction* GetMotor1TestFunctions(void)
+TestFunction* GetMotor1LTestFunctions(void)
 {
   static TestFunction functions[] =
   {
     // LEDs are not yet wired in at this station
-    TestEncoders,   // 1A (lift) and 1B (head) use same test
+    TestEncoders,   // 1L (lift) and 1H (head) use same test
     NULL
   };
 
   return functions;
 }
 
+TestFunction* GetMotor1HTestFunctions(void)
+{
+  return GetMotor1LTestFunctions();
+}
+
 // List of all functions invoked by the test, in order
-TestFunction* GetMotor2ATestFunctions(void)
+TestFunction* GetMotor2LTestFunctions(void)
 {
   static TestFunction functions[] =
   {
-    TestMotorA,
+    TestMotorL,
     NULL
   };
 
@@ -228,12 +233,12 @@ TestFunction* GetMotor2ATestFunctions(void)
 }
 
 // List of all functions invoked by the test, in order
-TestFunction* GetMotor2BTestFunctions(void)
+TestFunction* GetMotor2HTestFunctions(void)
 {
   static TestFunction functions[] =
   {
     TestLEDs,
-    TestMotorB,
+    TestMotorH,
     NULL
   };
 
