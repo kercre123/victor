@@ -10,6 +10,8 @@
 #include "app/fixture.h"
 #include "binaries.h"
 
+#define CUBE_TEST_DEBUG 1
+
 // Return true if device is detected on contacts
 bool CubeDetect(void)
 {
@@ -81,6 +83,9 @@ void CubePOST(void)
 
   // Let power stabilize, then free from reset
   MicroWait(25000);
+  #if CUBE_TEST_DEBUG > 0
+  ConsolePrintf("cube power up\r\n");
+  #endif
   PIN_IN(GPIOC, PINC_RESET);
 
   // Set up fast measurement thresholds (for charger or cube)
@@ -92,24 +97,38 @@ void CubePOST(void)
   // It takes us 110uS to read one sample, and LEDs are on for 770uS, off for 770uS
   // So, a 7 sample sliding window is sufficient to detect the rising edge of a blink
   // Cubes blink 16 LEDs + 1 LED per type (1, 2, or 3) - chargers blink 11 LEDs
-  int on = 0, blinks = 0, sample = 0;
+  int on = 0, blinks = 0, sample = 0, peak = 0, current = 0, avgpeak = 0;
+  #if CUBE_TEST_DEBUG > 0
+  int imax=0, imin=9999, absdiffmax=0;
+  #endif
   const int MASK = 15, WINDOW = 7;
   int buf[MASK+1];
-  int peak = 0, current = 0, avgpeak = 0;
   u32 start = getMicroCounter();
   while (getMicroCounter() - start < CUBE_TEST_TIME)
   {
-    int diff = 0;
     if (g_fixtureType == FIXTURE_CHARGER_TEST)
       current = ChargerGetCurrent() * 5;   // Because charger runs at 5x the voltage
     else
       current = BatGetCurrent();
     buf[sample&MASK] = current;
-    if (current > peak)
+    if (current > peak)  //save peak for this blink cycle
       peak = current;
+    
+    int diff = 0;
     if (sample > MASK)   // Look back WINDOW samples, average 3 adjacent samples
       diff = ((buf[(sample-1)&MASK] + buf[(sample)&MASK] + buf[(sample+1)&MASK])
              -(buf[(sample-WINDOW-1)&MASK] + buf[(sample-WINDOW)&MASK] + buf[(sample-WINDOW+1)&MASK])) / 3;
+    
+    #if CUBE_TEST_DEBUG > 0
+    if( current > imax ) //save current maximum for entire sampling procedure
+      imax = current;
+    if( current < imin ) //save current minimum
+      imin = current;
+    #define ABS(x)  ( (x)>=0 ? (x) : -(x) )
+    if( ABS(diff) > absdiffmax ) //find maximum window difference
+      absdiffmax = ABS(diff);
+    #endif
+    
     if (diff > deltaMA && !on)
     {
       blinks++;
@@ -127,6 +146,11 @@ void CubePOST(void)
   int microamps = 0;
   for (int i = 0; i < 1000; i++)
     microamps += BatGetCurrent();
+  
+  #if CUBE_TEST_DEBUG > 0
+  ConsolePrintf("finished window sampling\r\n");
+  #endif
+  
   // Calculate how many LEDs we saw light
   int leds = (blinks + 32) >> 6;  // Each LED blinks 64 times
   int expected = (g_fixtureType - FIXTURE_CHARGER_TEST);
@@ -136,10 +160,18 @@ void CubePOST(void)
     expected += 16;   // Other cubes light 16 LEDs + their ID code
   
   // Shut down and print results
-  avgpeak /= blinks;
+  avgpeak = blinks > 0 ? avgpeak/blinks : 0;
+  #if CUBE_TEST_DEBUG > 0
+  ConsolePrintf("disabling power\r\n");
+  #endif
   DisableVEXT();
   DisableBAT();
+  
   ConsolePrintf("cube-test,%d,%d,%d,%d,%d,%d,%d\r\n", leds, expected, blinks, microamps, avgpeak, sample, deltaMA);
+  
+  #if CUBE_TEST_DEBUG > 0
+  ConsolePrintf("debug: imax=%d,imin=%d,absdiffmax=%d\r\n", imax, imin, absdiffmax);
+  #endif
   
   // Check all the results and throw exceptions if faults are found
   if (avgpeak < MIN_MA)
