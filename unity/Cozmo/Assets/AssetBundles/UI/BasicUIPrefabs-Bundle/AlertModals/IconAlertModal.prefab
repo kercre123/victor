@@ -355,20 +355,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DASEventDialogName: icon_alert_view
-  _DASEventDialogType: 2
-  _CloseDialogOnTapOutside: 1
-  _OptionalCloseDialogButton: {fileID: 0}
-  _LayerPriority: 100
-  DimBackground: 1
   _OpenAudioEvent:
     _Event: Play__Ui__Window_Open
     _EventType: Ui
+  _AlphaController: {fileID: 22536050}
+  _CloseDialogOnTapOutside: 1
+  _OptionalCloseDialogButton: {fileID: 0}
+  DimBackground: 1
   _AlertTitleText: {fileID: 11411324}
   _AlertMessageText: {fileID: 11464646}
   _PrimaryButton: {fileID: 0}
   _SecondaryButton: {fileID: 0}
   _SecondaryButtonLayoutElement: {fileID: 11469058}
-  _AlphaController: {fileID: 22536050}
   _Icon: {fileID: 0}
 --- !u!114 &11460328
 MonoBehaviour:
@@ -421,7 +419,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -429,10 +427,10 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
-    m_FontSize: 80
+    m_FontSize: 70
     m_FontStyle: 0
     m_BestFit: 0
-    m_MinSize: 8
+    m_MinSize: 6
     m_MaxSize: 80
     m_Alignment: 4
     m_AlignByGeometry: 0
@@ -476,6 +474,9 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"No"'
   ModifiedLocalReferences:
@@ -496,6 +497,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Play"'
@@ -556,8 +560,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -32}
-  m_SizeDelta: {x: -400, y: 100}
+  m_AnchoredPosition: {x: 0, y: -36}
+  m_SizeDelta: {x: -284, y: 129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22419290
 RectTransform:
@@ -574,8 +578,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -6}
-  m_SizeDelta: {x: -400, y: 260.84744}
+  m_AnchoredPosition: {x: 0, y: -71}
+  m_SizeDelta: {x: -400, y: 196}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22428002
 RectTransform:
