@@ -140,7 +140,7 @@ void CubeLightComponent::Update()
         }
         
         // Remove this animation from the stack
-        // Note: objectAnim is invalid until it gets reassigned below
+        // Note: objectAnim is now invalid. It can NOT be reassigned or accessed
         objectInfo.second.animationsOnLayer[layer].pop_back();
       
         // If there are no more animations being played on this layer
@@ -173,12 +173,29 @@ void CubeLightComponent::Update()
         }
 
         // There are still animations being played on this layer so switch to the next anim
-        objectAnim = objectInfo.second.animationsOnLayer[layer].back();
+        // Note: A new variable objectAnim2 is created instead of reassigning objectAnim
+        // This is because objectAnim has become invalid by the call to pop_back() which means
+        // trying to assign to it is not valid
+        //
+        // std::list<std::string> l; l.push_back("a"); l.push_back("b");
+        // std::string& x = l.back(); // reference to "b"
+        // l.pop_back(); // removes "b" and invalidates x
+        // x = l.back(); // this looks like it should make x reference "a" however x is
+        // invalid from the pop_back and cannot be reassigned
+        const auto& prevObjectAnim = objectInfo.second.animationsOnLayer[layer].back();
         PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.Update.PlayingPrevious",
                       "Have previous anim %s on layer %s id %u",
-                      objectAnim.name.c_str(),
+                      prevObjectAnim.name.c_str(),
                       LayerToString(layer),
                       objectInfo.first.GetValue());
+        
+        SendTransitionMessage(objectInfo.first, prevObjectAnim.curPattern->lights);
+        Result res = SetObjectLights(objectInfo.first, prevObjectAnim.curPattern->lights);
+        if(res != RESULT_OK)
+        {
+          PRINT_NAMED_WARNING("CubeLightComponent.Update.SetLightsFailed", "");
+        }
+        continue;
       }
       // Otherwise, we are going to the next pattern in the animation so update the time the pattern will end
       else

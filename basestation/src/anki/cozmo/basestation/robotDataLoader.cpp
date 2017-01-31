@@ -313,8 +313,8 @@ void RobotDataLoader::LoadBackpackLightAnimations()
   
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;
-  PRINT_NAMED_INFO("RobotDataLoader.LoadCubeLightAnimations",
-                   "Time to load cube light animations = %.2f ms",
+  PRINT_NAMED_INFO("RobotDataLoader.LoadBackpackLightAnimations",
+                   "Time to load backpack light animations = %.2f ms",
                    loadTime);
 }
 
