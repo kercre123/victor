@@ -57,6 +57,11 @@ void Anki::Cozmo::HAL::Power::init()
 
   // We are on likely on a test fixure, power up espressif
   if (!GPIO_READ(GPIO_DEBUG_UART)) {
+    // Drive TX 
+    GPIO_SET(GPIO_BODY_UART_TX, PIN_BODY_UART_TX);
+    GPIO_OUT(GPIO_BODY_UART_TX, PIN_BODY_UART_TX);
+    SOURCE_SETUP(GPIO_BODY_UART_TX, SOURCE_BODY_UART_TX, SourceGPIO); 
+    
     enableEspressif(true);
 
     // XXX: For now, just wait - for 1.5, we have to run additional tests
