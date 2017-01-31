@@ -34,8 +34,8 @@ public delegate void LightCubeStateEventHandler(LightCube cube);
 public delegate void ChargerStateEventHandler(ActiveObject charger);
 public delegate void FaceStateEventHandler(Face face);
 public delegate void PetFaceStateEventHandler(PetFace face);
-public delegate void EnrolledFaceRemoved(int faceId,string faceName);
-public delegate void EnrolledFaceRenamed(int faceId,string faceName);
+public delegate void EnrolledFaceRemoved(int faceId, string faceName);
+public delegate void EnrolledFaceRenamed(int faceId, string faceName);
 
 // Interface for Robot so we can mock it in unit tests
 public interface IRobot : IDisposable {
@@ -134,8 +134,6 @@ public interface IRobot : IDisposable {
   string CurrentBehaviorName { get; set; }
 
   string CurrentBehaviorDisplayNameKey { get; set; }
-
-  bool PlayingReactionaryBehavior { get; set; }
 
   string CurrentDebugAnimationString { get; set; }
 

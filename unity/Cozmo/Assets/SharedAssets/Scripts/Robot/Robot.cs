@@ -399,7 +399,6 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehaviorTransition);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
 
     ObservableObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
@@ -431,7 +430,6 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehaviorTransition);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
 
     ActiveObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
@@ -461,10 +459,6 @@ public class Robot : IRobot {
     CurrentBehaviorClass = message.newBehaviorClass;
     CurrentBehaviorName = message.newBehaviorName;
     CurrentBehaviorDisplayNameKey = message.newBehaviorDisplayKey;
-  }
-
-  private void HandleReactionaryBehaviorTransition(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
-    PlayingReactionaryBehavior = message.behaviorStarted;
   }
 
   private void HandleDebugAnimationString(Anki.Cozmo.ExternalInterface.DebugAnimationString message) {
