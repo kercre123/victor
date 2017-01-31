@@ -95,8 +95,13 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
     {
       ObservableObject* obj = object->CloneType();
       Pose3d p = object->GetPose().GetWithRespectToOrigin();
-      p.SetTranslation({object->GetPose().GetTranslation().x(), object->GetPose().GetTranslation().y(), object->GetSize().z()*0.5f});
-      obj->Vision::ObservableObject::SetPose(p);
+      p.SetTranslation({
+        object->GetPose().GetTranslation().x(),
+        object->GetPose().GetTranslation().y(),
+        object->GetSize().z()*0.5f
+      });
+      
+      obj->InitPose(p, object->GetPoseState());
       auto* turnAction = new TurnTowardsObjectAction(robot, ObjectID(), DEG_TO_RAD(180.f));
       turnAction->UseCustomObject(obj);
       

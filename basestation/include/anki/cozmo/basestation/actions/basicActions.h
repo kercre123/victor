@@ -508,6 +508,7 @@ namespace Cozmo {
       bool                       _facePoseCompoundActionDone = false;
       
       VisuallyVerifyObjectAction*_visuallyVerifyAction = nullptr;
+      bool                       _visuallyVerifyWhenDone = false;
       bool                       _refinedTurnTowardsDone = false;
       
       ObjectID                   _objectID;
