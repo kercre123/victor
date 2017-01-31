@@ -36,6 +36,9 @@
 #define DEBUG_TEST_ALL_ANIM_TRIGGERS 0
 #define DEBUG_LIGHTS 0
 
+// Scales colors by this factor when applying white balancing
+static constexpr f32 kWhiteBalanceScale = 0.6f;
+
 namespace Anki {
 namespace Cozmo {
 
@@ -1010,9 +1013,10 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotat
   std::array<Anki::Cozmo::LightState, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> lights;
   for(int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
   {
-    const ActiveObject::LEDstate& ledState = object->GetLEDState(i);
-    lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
-    lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+    // Apply white balancing and encode colors
+    const ActiveObject::LEDstate ledState = object->GetLEDState(i);
+    lights[i].onColor  = ENCODED_COLOR(WhiteBalanceColor(ledState.onColor));
+    lights[i].offColor = ENCODED_COLOR(WhiteBalanceColor(ledState.offColor));
     lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
     lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
     lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
@@ -1045,6 +1049,18 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotat
   _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)object->GetActiveID(),
                                                           MS_TO_LED_FRAMES(rotationPeriod_ms))));
   return _robot.SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
+}
+
+// TEMP (Kevin): WhiteBalancing is eventually to be done in body so just doing something simple here to get us by.
+//               Basically if there is any red at all, then blue and green channels are scaled down to 60%.
+ColorRGBA CubeLightComponent::WhiteBalanceColor(const ColorRGBA& origColor) const
+{
+  ColorRGBA color = origColor;
+  if(color.GetR() > 0) {
+    color.SetB( kWhiteBalanceScale * color.GetB());
+    color.SetG( kWhiteBalanceScale * color.GetG());
+  }
+  return color;
 }
 
 }

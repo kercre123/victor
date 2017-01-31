@@ -20,6 +20,7 @@
 #ifndef __Anki_Cozmo_Basestation_Components_CubeLightComponent_H__
 #define __Anki_Cozmo_Basestation_Components_CubeLightComponent_H__
 
+#include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/types.h"
@@ -39,9 +40,10 @@ namespace Anki {
 namespace Cozmo {
 
 class ActiveObject;
+class CozmoContext;
 class CubeLightAnimationContainer;
 class Robot;
-class CozmoContext;
+
 
 using ObjectLEDArray = std::array<u32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS>;
 struct ObjectLights {
@@ -249,6 +251,9 @@ private:
   ActiveObject* GetActiveObjectInAnyFrame(const ObjectID& objectID);
   
   Result SetLights(const ActiveObject* object, const u32 rotationPeriod_ms);
+  
+  // Applies white balancing to a color
+  ColorRGBA WhiteBalanceColor(const ColorRGBA& color) const;
 
   Robot& _robot;
   
