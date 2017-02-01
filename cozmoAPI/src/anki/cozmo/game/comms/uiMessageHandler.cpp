@@ -763,6 +763,12 @@ namespace Anki {
                                                            kBuildVersion);
 
       Broadcast( ExternalInterface::MessageEngineToGame(std::move(deviceConnected)) );
+      
+      if (success)
+      {
+        // Ask Robot to send per-robot settings to Game/SDK
+        Broadcast( ExternalInterface::MessageGameToEngine(ExternalInterface::RequestRobotSettings()) );
+      }
     
       return success;
     }

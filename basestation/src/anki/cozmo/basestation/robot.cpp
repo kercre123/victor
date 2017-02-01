@@ -3572,6 +3572,8 @@ Util::Data::DataPlatform* Robot::GetContextDataPlatform()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Message handlers subscribed to in RobotToEngineImplMessaging::InitRobotMessageComponent
+  
 template<>
 void Robot::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
 {
@@ -3579,7 +3581,34 @@ void Robot::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
   SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(!msg.isStarted)));
 }
   
+template<>
+void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
+{
+  const VisionComponent& visionComponent = GetVisionComponent();
+  const Vision::CameraCalibration& cameraCalibration = visionComponent.GetCameraCalibration();
+  
+  ExternalInterface::CameraConfig cameraConfig(cameraCalibration.GetFocalLength_x(),
+                                               cameraCalibration.GetFocalLength_y(),
+                                               cameraCalibration.GetCenter_x(),
+                                               cameraCalibration.GetCenter_y(),
+                                               cameraCalibration.ComputeHorizontalFOV().getDegrees(),
+                                               cameraCalibration.ComputeVerticalFOV().getDegrees(),
+                                               visionComponent.GetMinCameraExposureTime_ms(),
+                                               visionComponent.GetMaxCameraExposureTime_ms(),
+                                               visionComponent.GetMinCameraGain(),
+                                               visionComponent.GetMaxCameraGain());
+  
+  ExternalInterface::PerRobotSettings robotSettings(GetID(),
+                                                    GetHeadSerialNumber(),
+                                                    GetBodySerialNumber(),
+                                                    _modelNumber,
+                                                    _hwVersion,
+                                                    std::move(cameraConfig));
+  
+  Broadcast( ExternalInterface::MessageEngineToGame(std::move(robotSettings)) );
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimeStamp_t Robot::GetLastImageTimeStamp() const {
   return GetVisionComponent().GetLastProcessedImageTimeStamp();
 }

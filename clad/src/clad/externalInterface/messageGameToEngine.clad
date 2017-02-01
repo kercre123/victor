@@ -1016,6 +1016,10 @@ message SetCameraSettings {
   float_32 gain
 }
 
+// Request robot sends back any per-robot settings
+message RequestRobotSettings {
+}
+
 // explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 // DO NOT CHANGE ANY EXPLICITELY DECLARED VALUES - they must be compatible across all versions so we can reliably

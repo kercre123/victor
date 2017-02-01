@@ -33,6 +33,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/cladPoint.clad"
 #include "clad/types/cladRect.clad"
+#include "clad/types/gameStatusFlag.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
@@ -120,6 +121,35 @@ message Bogus {
 }
 */
 
+message CurrentCameraParams {
+  float_32 cameraGain,
+  uint_16  exposure_ms,
+  bool     autoExposureEnabled
+}
+
+// Camera configuration for the Robot (set per-robot at the factory)
+structure CameraConfig {
+  float_32 focalLengthX,
+  float_32 focalLengthY,
+  float_32 centerX,
+  float_32 centerY,
+  float_32 fovX,  // Full FOV in degrees
+  float_32 fovY,  // Full FOV in degrees
+  int_32   minCameraExposureTime_ms,
+  int_32   maxCameraExposureTime_ms,
+  float_32 minCameraGain,
+  float_32 maxCameraGain
+}
+
+// All settings that are static and unique for a given robot
+message PerRobotSettings {
+  uint_32 robotID,
+  uint_32 serialNumberHead,
+  uint_32 serialNumberBody,
+  uint_32 modelNumber,
+  int_32  hwVersion,
+  CameraConfig cameraConfig
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////  ROBOT STATE  ///////////////////////////////////
