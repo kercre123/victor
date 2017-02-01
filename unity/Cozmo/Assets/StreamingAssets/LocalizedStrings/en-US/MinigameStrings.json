@@ -211,7 +211,7 @@
     "translation": "Tap your Cube to begin the next round."
   },
   "minigame.dontMoveCozmo.title": {
-    "translation": "Cozmo has moved!"
+    "translation": "Cozmo Has Moved!"
   },
   "minigame.dontMoveCozmo.description": {
     "translation": "Cozmo has moved and can't continue the game."
@@ -223,7 +223,7 @@
     "translation": "Cozmo lost track of his Cube and can't continue the game."
   },
   "minigame.timeout.title": {
-    "translation": "The Game has Ended"
+    "translation": "The Game Has Ended"
   },
   "minigame.timeout.description": {
     "translation": "Cozmo is tired of waiting, and wants to do other things."
