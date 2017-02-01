@@ -380,18 +380,18 @@ protected:
   virtual void StopInternalFromDoubleTap(Robot& robot) { if(!RequiresObjectTapped()) { StopInternal(robot); } }
   
   inline void SetBehaviorClass(BehaviorClass classID) {if(_behaviorClassID == BehaviorClass::NoneBehavior){ _behaviorClassID = classID;}};
-  
-  
+
   //Allows behaviors to skip certain steps when streamlined
   //Can be set in json (for sparks) or programatically
   bool _shouldStreamline;
+  
+private:
   
   std::vector<::Signal::SmartHandle> _eventHandles;
   Robot& _robot;
   double _lastRunTime_s;
   double _startedRunningTime_s;
   
-private:
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool IsRunnableBase(const Robot& robot) const;
   
