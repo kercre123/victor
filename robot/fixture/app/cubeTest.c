@@ -1,3 +1,4 @@
+#include <string.h>
 #include "app/tests.h"
 #include "hal/portable.h"
 #include "hal/testport.h"
@@ -93,12 +94,20 @@ void CubePOST(void)
   if (g_deltaMA)  deltaMA = g_deltaMA;    // Override
   MonitorSetDoubleSpeed();
   
+  #if CUBE_TEST_DEBUG > 0
+  deltaMA = 10;
+  ConsolePrintf("======== SET DELTA %dma ==========\r\n", deltaMA);
+  #endif
+  
   // Monitor self-test sequence for LED indicators
   // It takes us 110uS to read one sample, and LEDs are on for 770uS, off for 770uS
   // So, a 7 sample sliding window is sufficient to detect the rising edge of a blink
   // Cubes blink 16 LEDs + 1 LED per type (1, 2, or 3) - chargers blink 11 LEDs
   int on = 0, blinks = 0, sample = 0, peak = 0, current = 0, avgpeak = 0;
   #if CUBE_TEST_DEBUG > 0
+  #define HISTORY_LEN 3000
+  static s32 sample_history[HISTORY_LEN];
+  memset( &sample_history, 0, sizeof(sample_history) );
   int imax=0, imin=9999, absdiffmax=0;
   #endif
   const int MASK = 15, WINDOW = 7;
@@ -120,11 +129,13 @@ void CubePOST(void)
              -(buf[(sample-WINDOW-1)&MASK] + buf[(sample-WINDOW)&MASK] + buf[(sample-WINDOW+1)&MASK])) / 3;
     
     #if CUBE_TEST_DEBUG > 0
+    #define ABS(x)  ( (x)>=0 ? (x) : -(x) )
+    if( sample < HISTORY_LEN )
+      sample_history[sample] = current;// > 32000 ? 32001 : current < -32000 ? -32001 : current;
     if( current > imax ) //save current maximum for entire sampling procedure
       imax = current;
     if( current < imin ) //save current minimum
       imin = current;
-    #define ABS(x)  ( (x)>=0 ? (x) : -(x) )
     if( ABS(diff) > absdiffmax ) //find maximum window difference
       absdiffmax = ABS(diff);
     #endif
@@ -171,6 +182,10 @@ void CubePOST(void)
   
   #if CUBE_TEST_DEBUG > 0
   ConsolePrintf("debug: imax=%d,imin=%d,absdiffmax=%d\r\n", imax, imin, absdiffmax);
+  ConsolePrintf("sample_history(%d):\r\n", sample);
+  for( int x=0; x<sample; x++ )
+    ConsolePrintf("%i,", sample_history[x]);
+  ConsolePrintf("\r\n");
   #endif
   
   // Check all the results and throw exceptions if faults are found
@@ -191,7 +206,8 @@ TestFunction* GetCubeTestFunctions(void)
 {
   static TestFunction functions[] =
   {
-    CubeBurn,
+    #warning "skip cube burn"
+    //CubeBurn,
     CubePOST,
     NULL
   };
