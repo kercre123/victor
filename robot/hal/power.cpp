@@ -60,13 +60,13 @@ namespace Anki
           MicroWait(3000);
 
           GPIO_SET(GPIO_POWEREN, PIN_POWEREN);
-          MicroWait(10);
+          MicroWait(1000);
 
           GPIO_RESET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-          MicroWait(10);
+          MicroWait(1000);
 
           GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
-          MicroWait(10);
+          MicroWait(1000);
 
           #ifndef FCC_TEST
           // Wait for Espressif to toggle out 4 words of I2SPI
