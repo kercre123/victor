@@ -193,16 +193,21 @@ public final class WifiUtil {
   }
 
   public static boolean hasLocationPermission() {
-    return ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION)
-      == PackageManager.PERMISSION_GRANTED;
+    return PermissionUtil.hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
   }
 
   public static boolean shouldShowLocationPermissionRequest() {
-    return ActivityCompat.shouldShowRequestPermissionRationale(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION);
+    return PermissionUtil.shouldShowRationale(Manifest.permission.ACCESS_COARSE_LOCATION);
   }
 
   public static void requestLocationPermission() {
-    askForPermission(mActivity, mDispatcher, Manifest.permission.ACCESS_COARSE_LOCATION);
+    final AnkitivityDispatcher.PermissionListener listener = new AnkitivityDispatcher.PermissionListener() {
+      @Override public void onRequestPermissionsResult(final String[] permissions, final int[] grantResults) {
+        MessageSender.sendMessage("permissionResult",
+          new String[] { grantResults[0] == PackageManager.PERMISSION_GRANTED ? "true" : "false" });
+      }
+    };
+    PermissionUtil.askForPermission(Manifest.permission.ACCESS_COARSE_LOCATION, listener);
   }
 
   public static boolean needLocationService() {
@@ -539,19 +544,6 @@ public final class WifiUtil {
       Log.v(TAG, "AAAHHH COULDN'T FIND NETWORK");
     }
     return foundNetwork != null ? foundNetwork : lessStrictNetwork;
-  }
-
-  private static void askForPermission(final Activity activity,
-                                       final AnkitivityDispatcher dispatcher,
-                                       final String permission) {
-    final AnkitivityDispatcher.PermissionListener listener = new AnkitivityDispatcher.PermissionListener() {
-      @Override public void onRequestPermissionsResult(final String[] permissions, final int[] grantResults) {
-        MessageSender.sendMessage("permissionResult",
-          new String[] { grantResults[0] == PackageManager.PERMISSION_GRANTED ? "true" : "false" });
-      }
-    };
-    final int requestCode = dispatcher.subscribePermissionResult(listener);
-    ActivityCompat.requestPermissions(activity, new String[]{permission}, requestCode);
   }
 
   private static boolean isVersionAtLeast(int versionCode) {
