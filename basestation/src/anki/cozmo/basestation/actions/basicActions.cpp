@@ -1185,7 +1185,10 @@ namespace Anki {
       
       SetName("TurnTowardsCustomObject" + std::to_string(_objectPtr->GetID().GetValue()));
       
-      DEV_ASSERT(_objectPtr->GetID().IsSet(), "TurnTowardsObjectAction.UseCustomObject.NoCustomID");
+      if(!_objectPtr->GetID().IsSet())
+      {
+        PRINT_CH_INFO("Actions", "TurnTowardsObjectAction.UseCustomObject.NoCustomID", "");
+      }
     }
 
     ActionResult TurnTowardsObjectAction::Init()

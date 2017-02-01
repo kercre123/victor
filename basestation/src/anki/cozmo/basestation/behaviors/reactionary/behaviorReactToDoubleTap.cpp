@@ -93,7 +93,7 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
     // see markers
     else if(object->GetPose().GetWithRespectToOrigin().GetTranslation().z() < kTappedObjectPoseZThreshold_mm)
     {
-      ObservableObject* obj = object->CloneType();
+      _ghostObject.reset(object->CloneType());
       Pose3d p = object->GetPose().GetWithRespectToOrigin();
       p.SetTranslation({
         object->GetPose().GetTranslation().x(),
@@ -101,9 +101,9 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
         object->GetSize().z()*0.5f
       });
       
-      obj->InitPose(p, object->GetPoseState());
+      _ghostObject->InitPose(p, object->GetPoseState());
       auto* turnAction = new TurnTowardsObjectAction(robot, ObjectID(), DEG_TO_RAD(180.f));
-      turnAction->UseCustomObject(obj);
+      turnAction->UseCustomObject(_ghostObject.get());
       
       // Don't do a refined turn because in many cases when the object is in the ground it is because
       // we just delocalized and both the object and the robot are now at the origin. Turning around
