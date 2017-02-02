@@ -11,7 +11,7 @@
 #include "app/fixture.h"
 #include "binaries.h"
 
-#define CUBE_TEST_DEBUG 1
+#define CUBE_TEST_DEBUG 0
 
 // Return true if device is detected on contacts
 bool CubeDetect(void)
@@ -206,8 +206,11 @@ TestFunction* GetCubeTestFunctions(void)
 {
   static TestFunction functions[] =
   {
+    #if CUBE_TEST_DEBUG > 0
     #warning "skip cube burn"
-    //CubeBurn,
+    #else
+    CubeBurn,
+    #endif
     CubePOST,
     NULL
   };
