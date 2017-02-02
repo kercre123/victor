@@ -113,5 +113,8 @@
   },
   "behavior.LookForFaceAndCube": {
     "translation": " "
-  }
+  },
+  "behavior.LookInPlaceForCube": {
+    "translation": "Cozmo is looking for a cube"
+  }    
 }
