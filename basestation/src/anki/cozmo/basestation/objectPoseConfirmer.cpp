@@ -215,9 +215,13 @@ ObjectPoseConfirmer::PoseConfirmation::PoseConfirmation(const Pose3d& initPose,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectPoseConfirmer::IsObjectConfirmed(const std::shared_ptr<ObservableObject>& objSeen,
-                                            const ObservableObject*& outMatch) const
+bool ObjectPoseConfirmer::IsObjectConfirmedInCurrentOrigin(const std::shared_ptr<ObservableObject>& objSeen,
+                                                           const ObservableObject*& outMatchInOrigin,
+                                                           const ObservableObject*& outMatchInOtherOrigin) const
 {
+  outMatchInOrigin = nullptr;
+  outMatchInOtherOrigin = nullptr;
+
   BlockWorldFilter filter;
   filter.AddAllowedFamily(objSeen->GetFamily());
   filter.AddAllowedType(objSeen->GetType());
@@ -236,7 +240,8 @@ bool ObjectPoseConfirmer::IsObjectConfirmed(const std::shared_ptr<ObservableObje
     // if there is a match, return that one
     if ( confirmedMatches.size() == 1 )
     {
-      outMatch = confirmedMatches.front();
+      outMatchInOrigin = confirmedMatches.front();
+      outMatchInOtherOrigin = nullptr;
       return true;
     }
     else
@@ -254,14 +259,27 @@ bool ObjectPoseConfirmer::IsObjectConfirmed(const std::shared_ptr<ObservableObje
           if ( matchOk ) {
             DEV_ASSERT(confirmationInfo.unconfirmedObject->GetID() == confirmationInfoPair.first,
                        "ObjectPoseConfirmer.IsObjectConfirmed.KeyNotMatchingID");
-            outMatch = confirmationInfo.unconfirmedObject.get();
+            outMatchInOrigin = confirmationInfo.unconfirmedObject.get();
+            outMatchInOtherOrigin = nullptr;
             return false;
           }
         }
       }
       
       // did not find an unconfirmed entry
-      outMatch = nullptr;
+      outMatchInOrigin = nullptr;
+      
+      // search for this object in other frames
+      filter.SetOriginMode(BlockWorldFilter::OriginMode::NotInRobotFrame);
+      outMatchInOtherOrigin = _robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+      if ( nullptr == outMatchInOtherOrigin ) {
+        // note originMode means nothing for connected objects. However clear Unknown filter set by default
+        // TODO remove when filter is not default
+        filter.SetFilterFcn(nullptr);
+        outMatchInOtherOrigin = _robot.GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+      }
+      
+      // not confirmed in origin
       return false;
     }
     
@@ -284,11 +302,13 @@ bool ObjectPoseConfirmer::IsObjectConfirmed(const std::shared_ptr<ObservableObje
     if ( nullptr != matchingObject )
     {
       // we did
-      outMatch = matchingObject;
+      outMatchInOrigin = matchingObject;
+      outMatchInOtherOrigin = nullptr;
       return true;
     }
     else
     {
+      // we didn't find a confirmed match in current origin
       const ObservableObject* closestObject = nullptr;
       Vec3f closestDist(objSeen->GetSameDistanceTolerance());
       Radians closestAngle(objSeen->GetSameAngleTolerance());
@@ -324,13 +344,15 @@ bool ObjectPoseConfirmer::IsObjectConfirmed(const std::shared_ptr<ObservableObje
       if ( nullptr != closestObject )
       {
         // found a close match
-        outMatch = closestObject;
+        outMatchInOrigin = closestObject;
+        outMatchInOtherOrigin = nullptr;
         return true;
       }
       else
       {
         // did not find an unconfirmed entry
-        outMatch = nullptr;
+        outMatchInOrigin = nullptr;
+        outMatchInOtherOrigin = nullptr;
         return false;
       }
     }
@@ -382,13 +404,15 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
     PoseConfirmation& poseConf = iter->second;
     ObservableObject* unconfirmedObjectPtr = poseConf.unconfirmedObject.get();
     
-    // Confirmed and unconfirmed have to be mutually exclusive
+    // Confirmed and unconfirmed have to be mutually exclusive. If we bring an object from a different origin
+    // during rejigeering, it should release at that point the unconfirmed instance (not the reference pose or
+    // the count, but the instance itself)
     DEV_ASSERT( (nullptr == confirmedMatch) != (nullptr == unconfirmedObjectPtr),
                 "ObjectPoseConfirmer.AddVisualObservation.ConfirmedAndUnconfirmedPointers" );
   
     // Check if the new observation is (roughly) in the same pose as the last one.
-    const Point3f distThreshold  = unconfirmedObjectPtr->GetSameDistanceTolerance();
-    const Radians angleThreshold = unconfirmedObjectPtr->GetSameAngleTolerance();
+    const Point3f distThreshold  = observation->GetSameDistanceTolerance();
+    const Radians angleThreshold = observation->GetSameAngleTolerance();
     const bool poseIsSame = newPose.IsSameAs(poseConf.referencePose, distThreshold, angleThreshold);
     
     if(poseIsSame)

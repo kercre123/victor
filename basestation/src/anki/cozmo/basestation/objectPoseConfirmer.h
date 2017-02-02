@@ -36,9 +36,18 @@ public:
   
   // Search for an unconfirmed or confirmed object match. Returns true if the object is already confirmed,
   // false if the object is not yet confirmed.
-  // outMatch: if there is a match for the object in the current origin, regardless of whether it is confirmed or not,
-  // the matched object is stored in outMatch. If there are no confirmed nor unconfirmed matches, outMatch is nullptr
-  bool IsObjectConfirmed(const std::shared_ptr<ObservableObject>& objSeen, const ObservableObject*& outMatch) const;
+  // outMatchInOrigin: if there is a match for the object in the current origin, regardless of whether it is confirmed
+  // or not, the matched object is stored in outMatch. If there are no confirmed nor unconfirmed matches -> nullptr
+  // outMatchInOtherOrigin: if there isn't a match in the current origin, this method will search in other origins. If
+  // found, the match is stored in outMatchInOtherOrigin. Note this is set to nullptr if a match in the current
+  // origin is found (por performance and simplicity, no semantic reason). Additionally, passive objects can't match
+  // in other origins (not Unique). If no match in other origin is found, another search for an Active connected
+  // object can be performed. Note active conneted object's do not have a valid pose, but are otherwise valid; its ID
+  // can be used to match them.
+  // TODO Andrew evaluate match of Unique vs Passive
+  bool IsObjectConfirmedInCurrentOrigin(const std::shared_ptr<ObservableObject>& objSeen,
+                                        const ObservableObject*& outMatchInOrigin,
+                                        const ObservableObject*& outMatchInOtherOrigin) const;
   
   // Saw object with camera from given distance at given time in history. Pose and ID are expected to be properly
   // set in the object passed in.

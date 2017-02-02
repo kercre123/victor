@@ -450,7 +450,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // in BlockWorldFilter do not apply to connected objects. Eg: IsOnlyConsideringLatestUpdate, OriginMode, etc.
     // Moreover, additional fields could be available like `allowedActiveID`
     BlockWorldFilter filter(filterIn);
-    ASSERT_NAMED(!filter.IsOnlyConsideringLatestUpdate(), "BlockWorld.FindConnectedObjectHelper.InvalidFlag");
+    DEV_ASSERT(!filter.IsOnlyConsideringLatestUpdate(), "BlockWorld.FindConnectedObjectHelper.InvalidFlag");
     
     for(auto & objectsByFamily : _connectedObjects) {
       if(filter.ConsiderFamily(objectsByFamily.first)) {
@@ -517,6 +517,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Find the object with the given ID
     BlockWorldFilter filter;
     filter.AddAllowedID(objectID);
+    
+    filter.SetFilterFcn(nullptr); // Damn this is error prone
     
     // Find and return among ConnectedObjects
     ActiveObject* object = FindConnectedObjectHelper(filter, nullptr, true);
@@ -941,12 +943,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // CopyWithNewPose needs the correct object ID which normally would be set by AddNewObject
         // Since this is a circular dependency we need to set the ID first outside of AddNewObject
         newObject->CopyID(oldObject);
-        
-        if(newObject->IsActive())
-        {
-          newObject->SetActiveID(oldObject->GetActiveID());
-          newObject->SetFactoryID(oldObject->GetFactoryID());
-        }
+
+// This responsibility has been moved to AddLocatedObject
+//        if(newObject->IsActive())
+//        {
+//          newObject->SetActiveID(oldObject->GetActiveID());
+//          newObject->SetFactoryID(oldObject->GetFactoryID());
+//        }
         
         addNewObject = true;
       }
@@ -1378,7 +1381,20 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // or a visual observation of an object that we want to consider for the future (unconfirmed object).
       // Pass in the object as an observation
       const ObservableObject* poseConfirmerMatch = nullptr;
-      const bool isConfirmed = _robot->GetObjectPoseConfirmer().IsObjectConfirmed(objSeen, poseConfirmerMatch);
+      const ObservableObject* matchInOtherOrigin = nullptr;
+      const bool isConfirmed = _robot->GetObjectPoseConfirmer().IsObjectConfirmedInCurrentOrigin(objSeen,
+                                                                  poseConfirmerMatch,
+                                                                  matchInOtherOrigin);
+      
+      // inherit the ID of a match, or assign a new one depending if there were no matches
+      DEV_ASSERT( !objSeen->GetID().IsSet(), "BlockWorld.AddAndUpdateObjects.ObservationAlreadyHasID");
+      if ( nullptr != poseConfirmerMatch ) {
+        objSeen->CopyID( poseConfirmerMatch );
+      } else if ( nullptr != matchInOtherOrigin ) {
+        objSeen->CopyID( matchInOtherOrigin );
+      } else {
+        objSeen->SetID();
+      }
       
       /* 
         Note: Andrew and Raul think that next iteration of PoseConfirmer vs PotentialObjectsToLocalizeTo should
@@ -1401,15 +1417,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // wrt robot based on this observation. However, we could bring other origins with it.
       if ( !isConfirmed )
       {
-        DEV_ASSERT( !objSeen->GetID().IsSet(), "BlockWorld.AddAndUpdateObjects.ObservationAlreadyHasID");
-        
-        // inherit the ID of the match, or assign a new one depending if there were no matches
-        if ( nullptr != poseConfirmerMatch ) {
-          objSeen->CopyID( poseConfirmerMatch );
-        } else {
-          objSeen->SetID();
-        }
-        
         // Add observation
         const bool wasRobotMoving = false; // assume false, otherwise we wouldn't have gotten this far w/ marker?
         const bool isConfirmingObservation = _robot->GetObjectPoseConfirmer().AddVisualObservation(objSeen,
@@ -2290,7 +2297,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Validate that ActiveID is not currently a connected object. We assume that if the robot is reporting
     // an activeID, it should not be still used here (should have reported a disconnection)
     const ActiveObject* const conObjWithActiveID = GetConnectedActiveObjectByActiveID( activeID );
-    VERIFY( nullptr == conObjWithActiveID, "BlockWorld.AddConnectedActiveObject.ActiveIDAlreadyUsed", "%d", activeID );
+    ANKI_VERIFY( nullptr == conObjWithActiveID, "BlockWorld.AddConnectedActiveObject.ActiveIDAlreadyUsed", "%d", activeID );
 
     // Validate that factoryId is not currently a connected object. We assume that if the robot is reporting
     // a factoryID, the same object should not be in any current activeIDs.
@@ -2299,7 +2306,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       return object->GetFactoryID() == factoryID;
     });
     const ActiveObject* const conObjectWithFactoryID = FindConnectedObjectHelper(filter, nullptr, true);
-    VERIFY( nullptr == conObjectWithFactoryID, "BlockWorld.AddConnectedActiveObject.FactoryIDAlreadyUsed", "%u", factoryID );
+    ANKI_VERIFY( nullptr == conObjectWithFactoryID, "BlockWorld.AddConnectedActiveObject.FactoryIDAlreadyUsed", "%u", factoryID );
 
     // This is the new object we are going to create. We can't insert it in _connectedObjects until
     // we know the objectID, so we create it first, and then we look for unconnected matches (we have seen the
@@ -2597,13 +2604,30 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       _locatedObjects[objectOrigin][object->GetFamily()][object->GetType()][object->GetID()];
     DEV_ASSERT(objectLocation == nullptr, "BlockWorld.AddLocatedObject.ObjectIDInUseInOrigin");
     
+    // hook with activeID/factoryID if a connected object is available.
+    // rsam: I would like to do this in a cleaner way, maybe just refactoring the code, but here seems fishy design-wise
+    {
+      // should not be connected if we are just adding to the world
+      DEV_ASSERT(object->GetActiveID() == ObservableObject::InvalidActiveID,
+                 "BlockWorld.AddLocatedObject.AlreadyHadActiveID");
+      DEV_ASSERT(object->GetFactoryID() == ObservableObject::InvalidFactoryID,
+                 "BlockWorld.AddLocatedObject.AlreadyHadFactoryID");
+    
+      // find by ObjectID. The objectID should match, since observations search for objectID even in connected
+      ActiveObject* connectedObj = GetConnectedActiveObjectByID(object->GetID());
+      if ( nullptr != connectedObj ) {
+        object->SetActiveID( connectedObj->GetActiveID() );
+        object->SetFactoryID( connectedObj->GetFactoryID() );
+      }
+    }
+    
     // store the new object, this increments refcount
     objectLocation = object;
 
     // set the viz manager on this new object
     object->SetVizManager(_robot->GetContext()->GetVizManager());
     
-    PRINT_CH_INFO("BlockWorld", "BlockWorld.AddNewObject",
+    PRINT_CH_INFO("BlockWorld", "BlockWorld.AddLocatedObject",
                   "Adding new %s%s object and ID=%d ActID=%d FacID=0x%x at (%.1f, %.1f, %.1f), in frame %s.",
                   object->IsActive() ? "active " : "",
                   EnumToString(object->GetType()),

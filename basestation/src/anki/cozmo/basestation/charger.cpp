@@ -60,8 +60,8 @@ namespace Anki {
 
       // PreActionPose, initialized to be with respect to charger
       Pose3d preActionPose(0, Z_AXIS_3D(),
-                           Point3f{-PreAscentDistance, 0.f, 0.f},
-                           &GetPose());
+                           {0.f, 0.f, -(PreAscentDistance + SlopeLength + PlatformWidth)},
+                           &_marker->GetPose());
       
       if(preActionPose.GetWithRespectTo(_marker->GetPose(), preActionPose) == false) {
         PRINT_NAMED_ERROR("Charger.PreActionPoseError", "Could not get preActionPose w.r.t. front Charger marker");

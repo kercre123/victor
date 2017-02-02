@@ -267,7 +267,7 @@ namespace Anki {
       PoseState GetPoseState() const { return _poseState; }
       void SetPoseState(PoseState newState) { _poseState = newState; }
       bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }
-      bool IsPoseStateUnknown() const { assert(false); return true; } // removing soon
+      bool IsPoseStateUnknown() const { return _poseState == PoseState::Invalid || _poseState == PoseState::Unknown; } // removing soon
       inline bool HasValidPose() const;
 
       static const char* PoseStateToString(const PoseState& state);

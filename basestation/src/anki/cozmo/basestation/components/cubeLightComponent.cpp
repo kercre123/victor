@@ -16,14 +16,14 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -31,6 +31,10 @@
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/timer.h"
+
 #include "util/fileUtils/fileUtils.h"
 
 #define DEBUG_TEST_ALL_ANIM_TRIGGERS 0
@@ -547,12 +551,7 @@ bool CubeLightComponent::BlendAnimWithCurLights(const ObjectID& objectID,
                                                 const LightAnim& anim,
                                                 LightAnim& blendedAnim)
 {
-  BlockWorldFilter filter;
-  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
-  filter.AddAllowedID(objectID);
-  ActiveObject* activeObject = dynamic_cast<ActiveObject*>(_robot.GetBlockWorld().FindMatchingObject(filter));
-  
+  ActiveObject* activeObject = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
   if(activeObject == nullptr)
   {
     PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.BlendAnimWithCurLights.NullActiveObject",
@@ -600,7 +599,7 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
   
   CubeAnimationTrigger anim = CubeAnimationTrigger::Connected;
   
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
   if(object != nullptr)
   {
     if(object->IsPoseStateKnown())
@@ -638,16 +637,14 @@ u32 CubeLightComponent::GetAnimDuration(const CubeAnimationTrigger& trigger)
 
 void CubeLightComponent::SetTapInteractionObject(const ObjectID& objectID)
 {
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
-  if(object != nullptr)
+  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
+  CubeAnimationTrigger anim = CubeAnimationTrigger::DoubleTappedUnsure;
+  if((object != nullptr) && object->IsPoseStateKnown())
   {
-    CubeAnimationTrigger anim = CubeAnimationTrigger::DoubleTappedUnsure;
-    if(object->IsPoseStateKnown())
-    {
-      anim = CubeAnimationTrigger::DoubleTappedKnown;
-    }
-    PlayLightAnim(objectID, anim);
+    // we know about this cube in this origin
+    anim = CubeAnimationTrigger::DoubleTappedKnown;
   }
+  PlayLightAnim(objectID, anim);
 }
 
 void CubeLightComponent::OnObjectPoseStateWillChange(const ObjectID& objectID,
@@ -737,7 +734,7 @@ void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const O
 {
   if(_sendTransitionMessages)
   {
-    ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(objectID);
+    ObservableObject* obj = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
     if(obj == nullptr)
     {
       PRINT_NAMED_WARNING("CubeLightComponent.SendTransitionMessage.NullObject",
@@ -941,7 +938,7 @@ ActiveObject* CubeLightComponent::GetActiveObjectInAnyFrame(const ObjectID& obje
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
   filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
   filter.AddAllowedID(objectID);
-  ActiveObject* activeObject = dynamic_cast<ActiveObject*>(_robot.GetBlockWorld().FindMatchingObject(filter));
+  ActiveObject* activeObject = dynamic_cast<ActiveObject*>(_robot.GetBlockWorld().FindLocatedMatchingObject(filter));
   
   return activeObject;
 }
@@ -994,22 +991,25 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID,
                                             const Point2f& relativeToPoint,
                                             const u32 rotationPeriod_ms)
 {
-  ActiveObject* activeObject = GetActiveObjectInAnyFrame(objectID);
-  
-  if(activeObject == nullptr)
+  ActiveCube* activeCube = nullptr;
+  if ( makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF )
   {
-    PRINT_CH_INFO("CubeLightComponent",
-                  "CubeLightComponent.SetObjectLights.NullActiveObject",
-                  "Null active object pointer.");
-    return RESULT_FAIL_INVALID_OBJECT;
+    // note this could be a checked_cast
+    activeCube = dynamic_cast<ActiveCube*>( _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID) );
+  }
+  else
+  {
+    // note this could be a checked_cast
+    activeCube = dynamic_cast<ActiveCube*>( _robot.GetBlockWorld().GetLocatedObjectByID(objectID) );
   }
   
-  ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
+  // trying to do relative mode in an object that is not located in the current origin, will fail, since its
+  // pose doesn't mean anything for relative purposes
   if(activeCube == nullptr)
   {
     PRINT_CH_INFO("CubeLightComponent",
                   "CubeLightComponent.SetObjectLights.NullActiveCube",
-                  "Null active cube pointer");
+                  "Null active cube pointer (was it null or not a cube?)");
     return RESULT_FAIL_INVALID_OBJECT;
   }
   
@@ -1017,11 +1017,11 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID,
   // NOTE: if make relative mode is "off", this call doesn't do anything:
   rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs, relativeToPoint, makeRelative);
   
-  activeObject->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
-                        transitionOnPeriod_ms, transitionOffPeriod_ms, 0,
-                        turnOffUnspecifiedLEDs);
+  activeCube->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
+                      transitionOnPeriod_ms, transitionOffPeriod_ms, 0,
+                      turnOffUnspecifiedLEDs);
   
-  return SetLights(activeObject, rotationPeriod_ms);
+  return SetLights(activeCube, rotationPeriod_ms);
 }
 
 
