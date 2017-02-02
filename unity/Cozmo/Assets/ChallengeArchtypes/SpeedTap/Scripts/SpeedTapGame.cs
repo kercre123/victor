@@ -8,10 +8,23 @@ using System.Collections.Generic;
 
 namespace SpeedTap {
 
-  public enum FirstToTap {
-    Cozmo,
-    Player,
-    NoTaps
+  public class SpeedTapPlayerInfo : PlayerInfo {
+    public int CubeID { get; set; }
+    public float LastTapTimeStamp { get; set; }
+    public readonly Color[] PlayerWinColors = new Color[4];
+    public Cozmo.MinigameWidgets.ScoreWidget scoreWidget;
+    public SpeedTapPlayerInfo(PlayerType playerType, string name) : base(playerType, name) {
+      CubeID = -1;
+      LastTapTimeStamp = -1;
+    }
+    public Color PlayerWinColor {
+      get {
+        return PlayerWinColors[0];
+      }
+      set {
+        PlayerWinColors.Fill(value);
+      }
+    }
   }
 
   public class SpeedTapGame : GameBase {
@@ -22,39 +35,12 @@ namespace SpeedTap {
     private const string _kTapDelayMin = "TapDelayMin";
     private const string _kTapDelayMax = "TapDelayMax";
 
-    public FirstToTap FirstTapper {
-      get {
-        // If neither timestamp has been set, no taps
-        if (_LastCozmoTimeStamp == -1 && _LastPlayerTimeStamp == -1) {
-          return FirstToTap.NoTaps;
-        }
-        // If one of the two timestamps hasn't been set, other one counts as first
-        if ((_LastCozmoTimeStamp == -1) || (_LastPlayerTimeStamp == -1)) {
-          if (_LastCozmoTimeStamp != -1) {
-            return FirstToTap.Cozmo;
-          }
-          else if (_LastPlayerTimeStamp != -1) {
-            return FirstToTap.Player;
-          }
-        }
-        // If both have been set, most recent timestamp counts as first
-        if (_LastCozmoTimeStamp < _LastPlayerTimeStamp) {
-          return FirstToTap.Cozmo;
-        }
-        else {
-          return FirstToTap.Player;
-        }
+    public void ResetTapTimestamps() {
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        SpeedTapPlayerInfo player = (SpeedTapPlayerInfo)_PlayerInfo[i];
+        player.LastTapTimeStamp = -1.0f;
       }
     }
-
-    public void ResetTapTimestamps() {
-      _LastCozmoTimeStamp = -1;
-      _LastPlayerTimeStamp = -1;
-    }
-
-    private float _LastPlayerTimeStamp = -1;
-    private float _LastCozmoTimeStamp = -1;
-    public float TapResolutionDelay = 0.0f;
 
     #region Config Values
 
@@ -76,51 +62,14 @@ namespace SpeedTap {
 
     public float CozmoFakeoutChance { get; private set; }
 
+    public float TapResolutionDelay { get; private set; }
+
     #endregion
 
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
 
     public bool RedMatch = false;
-    public int CozmoBlockID = -1;
-    public int PlayerBlockID = -1;
-
-    public readonly Color[] PlayerWinColors = new Color[4];
-    public readonly Color[] CozmoWinColors = new Color[4];
-
-    public LightCube GetCozmoBlock() {
-      LightCube cube = null;
-      if (CurrentRobot != null) {
-        CurrentRobot.LightCubes.TryGetValue(CozmoBlockID, out cube);
-      }
-      return cube;
-    }
-
-    public LightCube GetPlayerBlock() {
-      LightCube cube = null;
-      if (CurrentRobot != null) {
-        CurrentRobot.LightCubes.TryGetValue(PlayerBlockID, out cube);
-      }
-      return cube;
-    }
-
-    public Color PlayerWinColor {
-      get {
-        return PlayerWinColors[0];
-      }
-      set {
-        PlayerWinColors.Fill(value);
-      }
-    }
-
-    public Color CozmoWinColor {
-      get {
-        return CozmoWinColors[0];
-      }
-      set {
-        CozmoWinColors.Fill(value);
-      }
-    }
 
     private List<SpeedTapDifficultyData> _AllDifficultySettings;
     private SpeedTapDifficultyData _CurrentDifficultySettings;
@@ -136,7 +85,7 @@ namespace SpeedTap {
 
     public MusicStateWrapper BetweenRoundsMusic { get { return _BetweenRoundsMusic; } }
 
-    public SpeedTapRulesBase Rules;
+    public DefaultSpeedTapRules Rules;
 
     [SerializeField]
     private GameObject _PlayerTapSlidePrefab;
@@ -146,6 +95,12 @@ namespace SpeedTap {
 
     [SerializeField]
     private GameObject _WaitForCozmoSlidePrefab;
+
+    [SerializeField]
+    private SpeedTapNumPlayerTypeSelectSlide _NumPlayersSelectSlidePrefab;
+    public SpeedTapNumPlayerTypeSelectSlide SpeedTapNumPlayersSelectSlidePrefab {
+      get { return _NumPlayersSelectSlidePrefab; }
+    }
 
     [SerializeField]
     private SpeedTapRoundBeginSlide _SpeedTapRoundBeginSlidePrefab;
@@ -159,6 +114,24 @@ namespace SpeedTap {
 
     public SpeedTapRoundEndSlide SpeedTapRoundEndSlidePrefab {
       get { return _SpeedTapRoundEndSlidePrefab; }
+    }
+#if ANKI_DEV_CHEATS
+    public static bool sWantsSuddenDeathHumanHuman = false;
+    public static bool sWantsSuddenDeathHumanCozmo = false;
+#endif
+    public override PlayerInfo AddPlayer(PlayerType playerType, string playerName) {
+      SpeedTapPlayerInfo info = new SpeedTapPlayerInfo(playerType, playerName);
+      _PlayerInfo.Add(info);
+      // As a special case, Cozmo always grabs the first cube because it was shown first
+      if (playerType == PlayerType.Cozmo && CubeIdsForGame.Count >= 1) {
+        info.CubeID = CubeIdsForGame[0];
+      }
+      return info;
+    }
+    public override void InitializeAllPlayers() {
+      if (_PlayerInfo.Count > 2) {
+        SkillSystem.Instance.LevelingEnabled = false;
+      }
     }
 
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
@@ -181,17 +154,26 @@ namespace SpeedTap {
       MaxTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
       // End config based values
       InitializeMinigameObjects(1);
-
-      // Removes engine holding a delay to saveguard against "phantom taps"
-      RobotEngineManager.Instance.Message.EnableBlockTapFilter = Singleton<Anki.Cozmo.ExternalInterface.EnableBlockTapFilter>.Instance.Initialize(false);
-      RobotEngineManager.Instance.SendMessage();
+#if ANKI_DEV_CHEATS
+      Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("ShowdownCozmoHuman", "SpeedTap",
+                            (string str) => { sWantsSuddenDeathHumanCozmo = !sWantsSuddenDeathHumanCozmo; });
+      Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("ShowdownHumanHuman", "SpeedTap",
+                                  (string str) => { sWantsSuddenDeathHumanHuman = !sWantsSuddenDeathHumanHuman; });
+#endif
     }
 
     // Use this for initialization
     protected void InitializeMinigameObjects(int cubesRequired) {
+      State lastState = null;
+      if (FeatureGate.Instance.IsFeatureEnabled(FeatureType.SpeedTapMultiPlayer)) {
+        lastState = new SpeedTapSelectNumPlayersState();
+      }
+      else {
+        lastState = new SpeedTapCubeSelectionState();
+      }
       InitialCubesState initCubeState = new InitialCubesState(
                                           new SelectDifficultyState(
-                                            new SpeedTapCozmoDriveToCube(true),
+                                            lastState,
                                             DifficultyOptions,
                                             HighestLevelCompleted()
                                           ),
@@ -199,9 +181,7 @@ namespace SpeedTap {
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
-      LightCube.TappedAction += BlockTapped;
       CurrentRobot.OnLightCubeRemoved += LightCubeRemoved;
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
@@ -211,7 +191,7 @@ namespace SpeedTap {
 
     // Set up Difficulty Settings that are not round specific
     protected override void OnDifficultySet(int difficulty) {
-      Rules = GetRules((SpeedTapRuleSet)difficulty);
+      Rules = GetRules(difficulty + 1);
       _CurrentDifficultySettings = null;
       for (int i = 0; i < _AllDifficultySettings.Count; i++) {
         if (_AllDifficultySettings[i].DifficultyID == difficulty) {
@@ -237,41 +217,112 @@ namespace SpeedTap {
     }
 
     protected override void CleanUpOnDestroy() {
-      LightCube.TappedAction -= BlockTapped;
       if (CurrentRobot != null) {
         CurrentRobot.OnLightCubeRemoved -= LightCubeRemoved;
       }
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
 
-      // Adds back in engine holding a delay to saveguard against "phantom taps"
-      RobotEngineManager.Instance.Message.EnableBlockTapFilter = Singleton<Anki.Cozmo.ExternalInterface.EnableBlockTapFilter>.Instance.Initialize(true);
-      RobotEngineManager.Instance.SendMessage();
+      // turn back on the skills leveling system in case MP disabled it.
+      SkillSystem.Instance.LevelingEnabled = true;
+
+      Anki.Debug.DebugConsoleData.Instance.RemoveConsoleData("SpeedTap");
     }
 
-    public void InitialCubesDone() {
-      CozmoBlockID = CubeIdsForGame[0];
-    }
-
-    public void SetPlayerCube(LightCube cube) {
-      PlayerBlockID = cube.ID;
-      CubeIdsForGame.Add(cube);
+    protected override void UpdateScoreboard(bool didPlayerWin) {
+      PlayerInfo winner = GetPlayerMostRoundsWon();
+      int playerCount = GetPlayerCount();
+      for (int i = 0; i < playerCount; ++i) {
+        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
+        playerInfo.scoreWidget.Dim = false;
+        playerInfo.scoreWidget.IsWinner = playerInfo == winner;
+      }
     }
 
     public override void UpdateUI() {
       base.UpdateUI();
       int halfTotalRounds = (TotalRounds + 1) / 2;
-      Cozmo.MinigameWidgets.ScoreWidget cozmoScoreWidget = SharedMinigameView.CozmoScoreboard;
-      cozmoScoreWidget.Score = CozmoScore;
-      cozmoScoreWidget.MaxRounds = halfTotalRounds;
-      cozmoScoreWidget.RoundsWon = CozmoRoundsWon;
 
-      Cozmo.MinigameWidgets.ScoreWidget playerScoreWidget = SharedMinigameView.PlayerScoreboard;
-      playerScoreWidget.Score = PlayerScore;
-      playerScoreWidget.MaxRounds = halfTotalRounds;
-      playerScoreWidget.RoundsWon = PlayerRoundsWon;
+      int roundsPlayedTotal = 0;
+      int numHumans = 0;
+      int playerCount = GetPlayerCount();
+      for (int i = 0; i < playerCount; ++i) {
+        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
+        // Because creation involves an animation, can't create these on player creation
+        if (playerInfo.scoreWidget == null) {
+          if (playerInfo.playerType != PlayerType.Cozmo) {
+            numHumans++;
+          }
+          if (playerInfo.playerType == PlayerType.Cozmo) {
+            playerInfo.scoreWidget = SharedMinigameView.CozmoScoreboard;
+          }
+          else if (numHumans >= 2) {
+            playerInfo.scoreWidget = SharedMinigameView.Player2Scoreboard;
+          }
+          else {
+            playerInfo.scoreWidget = SharedMinigameView.PlayerScoreboard;
+          }
+        }
+        playerInfo.scoreWidget.Score = playerInfo.playerScoreRound;
+        playerInfo.scoreWidget.MaxRounds = halfTotalRounds;
+        playerInfo.scoreWidget.RoundsWon = playerInfo.playerRoundsWon;
+        roundsPlayedTotal += playerInfo.playerRoundsWon;
+      }
+
+
 
       // Display the current round
-      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, CozmoRoundsWon + PlayerRoundsWon + 1);
+      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1);
+    }
+
+    // Will return the player that is not in the sudden death
+    public SpeedTapPlayerInfo WantsSuddenDeath() {
+      SpeedTapPlayerInfo playerOut = null;
+      int playerCount = GetPlayerCount();
+      int playersAtMaxScore = 0;
+
+      // We only care when two players are at the exact same score.
+      // Anything else and the tie will be broken.
+      for (int i = 0; i < playerCount; ++i) {
+        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
+        if (playerInfo.playerScoreRound == MaxScorePerRound) {
+          playersAtMaxScore++;
+        }
+        else {
+          playerOut = playerInfo;
+        }
+      }
+      // We only had one winner, so no one is out. Players are only knocked out if there
+      // is a tie for first.
+      if (playersAtMaxScore <= 1) {
+        playerOut = null;
+      }
+      return playerOut;
+    }
+
+    public override bool IsRoundComplete() {
+      bool complete = false;
+      int playerCount = GetPlayerCount();
+      for (int i = 0; i < playerCount; ++i) {
+        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
+        complete = complete || playerInfo.playerScoreRound >= MaxScorePerRound;
+      }
+      return complete;
+    }
+    public override void EndCurrentRound() {
+      bool playerWon = false;
+      int playerCount = GetPlayerCount();
+      for (int i = 0; i < playerCount; ++i) {
+        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
+        if (playerInfo.playerScoreRound >= MaxScorePerRound) {
+          if (playerInfo.playerType != PlayerType.Cozmo) {
+            playerWon = true;
+          }
+          playerInfo.playerRoundsWon++;
+        }
+      }
+      if (_PlayerInfo.Count < 3) {
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeRoundEnd, _ChallengeData.ChallengeID, CurrentDifficulty, playerWon, HumanScore, CozmoScore, IsHighIntensityRound()));
+      }
+      UpdateUI();
     }
 
     public override void UpdateUIForGameEnd() {
@@ -280,56 +331,19 @@ namespace SpeedTap {
       SharedMinigameView.InfoTitleText = string.Empty;
     }
 
-    /// <summary>
-    /// Sets player's last tapped timestamp based on light cube message.
-    /// Cozmo uses AnimationEvents for maximum accuracy.
-    /// </summary>
-    /// <param name="blockID">Block ID.</param>
-    /// <param name="tappedTimes">Tapped times.</param>
-    /// <param name="timeStamp">Time stamp.</param>
-    private void BlockTapped(int blockID, int tappedTimes, float timeStamp) {
-      if (PlayerBlockID != -1 && PlayerBlockID == blockID) {
-        if (_LastPlayerTimeStamp > timeStamp || _LastPlayerTimeStamp == -1) {
-          _LastPlayerTimeStamp = timeStamp;
+    private void LightCubeRemoved(LightCube cube) {
+      // Invalidate the player/cozmo block id if it was removed
+      int playerCount = GetPlayerCount();
+      for (int i = 0; i < playerCount; ++i) {
+        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
+        if (playerInfo.CubeID == cube.ID) {
+          playerInfo.CubeID = -1;
         }
       }
     }
 
-    /// <summary>
-    /// Sets cozmo's last tapped timestamp based on animation event message
-    /// </summary>
-    /// <param name="animEvent">Animation event.</param>
-    private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
-      if (animEvent.event_id == AnimEvent.TAPPED_BLOCK &&
-          (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
-        _LastCozmoTimeStamp = animEvent.timestamp;
-      }
-    }
-
-    private void LightCubeRemoved(LightCube cube) {
-      // Invalidate the player/cozmo block id if it was removed
-      if (PlayerBlockID == cube.ID) {
-        PlayerBlockID = -1;
-      }
-      if (CozmoBlockID == cube.ID) {
-        CozmoBlockID = -1;
-      }
-
-    }
-
-    private static SpeedTapRulesBase GetRules(SpeedTapRuleSet ruleSet) {
-      switch (ruleSet) {
-      case SpeedTapRuleSet.NoRed:
-        return new NoRedSpeedTapRules();
-      case SpeedTapRuleSet.TwoColor:
-        return new TwoColorSpeedTapRules();
-      case SpeedTapRuleSet.LightCountThreeColor:
-        return new LightCountThreeColorSpeedTapRules();
-      case SpeedTapRuleSet.LightCountMultiColor:
-        return new LightCountMultiColorSpeedTapRules();
-      default:
-        return new NoRedSpeedTapRules();
-      }
+    private static DefaultSpeedTapRules GetRules(int numLights = 1) {
+      return new DefaultSpeedTapRules(numLights);
     }
 
     public void ShowPlayerTapConfirmSlide() {
@@ -371,12 +385,12 @@ namespace SpeedTap {
       quitGameScoreKeyValues.Add("CozmoScore", CozmoScore.ToString());
       quitGameRoundsWonKeyValues.Add("CozmoRoundsWon", CozmoRoundsWon.ToString());
 
-      DAS.Event(DASConstants.Game.kQuitGameScore, PlayerScore.ToString(), quitGameScoreKeyValues);
-      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, PlayerRoundsWon.ToString(), quitGameRoundsWonKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameScore, HumanScore.ToString(), quitGameScoreKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, HumanRoundsWon.ToString(), quitGameRoundsWonKeyValues);
     }
 
     public SpeedTapRoundData GetCurrentRoundData() {
-      return CurrentDifficultySettings.SpeedTapRoundSettings[RoundsPlayed];
+      return CurrentDifficultySettings.SpeedTapRoundSettings[Math.Min(RoundsPlayed, CurrentDifficultySettings.SpeedTapRoundSettings.Count - 1)];
     }
 
     public float GetLightsOffDurationSec() {
@@ -403,15 +417,14 @@ namespace SpeedTap {
     }
 
     public void ClearWinningLightPatterns() {
-      if (PlayerBlockID != -1) {
-        if (CurrentRobot != null) {
-          CurrentRobot.LightCubes[PlayerBlockID].SetLEDsOff();
-        }
-      }
 
-      if (CozmoBlockID != -1) {
-        if (CurrentRobot != null) {
-          CurrentRobot.LightCubes[CozmoBlockID].SetLEDsOff();
+      int playerCount = GetPlayerCount();
+      for (int i = 0; i < playerCount; ++i) {
+        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
+        if (playerInfo.CubeID != -1) {
+          if (CurrentRobot != null) {
+            CurrentRobot.LightCubes[playerInfo.CubeID].SetLEDsOff();
+          }
         }
       }
     }

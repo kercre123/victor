@@ -1,19 +1,16 @@
 ﻿using UnityEngine;
 using Anki.Cozmo;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace SpeedTap {
   public class SpeedTapReactToRoundEnd : State {
 
     private SpeedTapGame _SpeedTapGame;
-    private PointWinner _CurrentWinner;
 
-    // INGO See HandleRoundEndAnimDone below
-    //private bool _RobotAnimationEnded = false;
-    //private bool _BannerAnimationEnded = false;
+    private PlayerInfo _Winner;
 
-    public SpeedTapReactToRoundEnd(PointWinner winner) {
-      _CurrentWinner = winner;
+    public SpeedTapReactToRoundEnd(PlayerInfo winner) {
+      _Winner = winner;
     }
 
     public override void Enter() {
@@ -29,23 +26,22 @@ namespace SpeedTap {
       Sprite winnerPortrait = null;
       string winnerNameLocKey = null;
       int roundsWinnerWon = 0;
-      if (_CurrentWinner == PointWinner.Cozmo) {
+      if (_Winner.playerType == PlayerType.Cozmo) {
         winnerPortrait = _SpeedTapGame.SharedMinigameView.CozmoPortrait;
         winnerNameLocKey = LocalizationKeys.kNameCozmo;
-        roundsWinnerWon = _SpeedTapGame.CozmoRoundsWon;
       }
       else {
         winnerPortrait = _SpeedTapGame.SharedMinigameView.PlayerPortrait;
         winnerNameLocKey = LocalizationKeys.kNamePlayer;
-        roundsWinnerWon = _SpeedTapGame.PlayerRoundsWon;
       }
+      roundsWinnerWon = _Winner.playerRoundsWon;
       int roundsNeeded = _SpeedTapGame.RoundsNeededToWin;
       roundEndSlideScript.Initialize(winnerPortrait, winnerNameLocKey, roundsWinnerWon, roundsNeeded, _SpeedTapGame.RoundsPlayed);
 
       // Play banner animation with score
       string bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore,
-                            _SpeedTapGame.PlayerRoundsWon, _SpeedTapGame.CozmoRoundsWon);
-      _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, HandleBannerAnimationDone,
+                            _SpeedTapGame.HumanRoundsWon, _SpeedTapGame.CozmoRoundsWon);
+      _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, null,
         roundEndSlideScript.BannerAnimationDurationSeconds);
 
       ContextManager.Instance.AppFlash(playChime: true);
@@ -74,7 +70,7 @@ namespace SpeedTap {
 
       AnimationTrigger animEvent = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityRound();
-      if (_CurrentWinner == PointWinner.Player) {
+      if (_Winner.playerType != PlayerType.Cozmo) {
         animEvent = (highIntensity) ?
                   AnimationTrigger.OnSpeedtapRoundPlayerWinHighIntensity : AnimationTrigger.OnSpeedtapRoundPlayerWinLowIntensity;
       }
@@ -86,29 +82,14 @@ namespace SpeedTap {
     }
 
     private void HandleRoundEndAnimDone(bool success) {
-      // ING0 For now move on to the next state as soon as the robot finishes animating to 
-      // avoid "dead space" and don't worry about the banner being on screen.
       MoveToNextState();
-
-      //_RobotAnimationEnded = true;
-      //if (_BannerAnimationEnded) {
-      //MoveToNextState();
-      //}
-    }
-
-    private void HandleBannerAnimationDone() {
-      // INGO See HandleRoundEndAnimDone above ^
-      // _BannerAnimationEnded = true;
-      // if (_RobotAnimationEnded) {
-      // MoveToNextState();
-      // }
     }
 
     private void MoveToNextState() {
       _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
 
       _SpeedTapGame.ClearWinningLightPatterns();
-      _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
+      _StateMachine.SetNextState(new SpeedTapCubeSelectionState());
     }
   }
 }

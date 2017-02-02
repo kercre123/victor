@@ -30,7 +30,7 @@ namespace Anki {
           if (miniGameInstance == null) { return false; }
           int toCheck = 0;
           if (IsPlayer) {
-            toCheck = miniGameInstance.PlayerRoundsWon;
+            toCheck = miniGameInstance.HumanRoundsWon;
           }
           else {
             toCheck = miniGameInstance.CozmoRoundsWon;

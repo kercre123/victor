@@ -19,8 +19,13 @@ namespace SpeedTap {
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _SpeedTapGame.RedMatch = false;
 
-      _SpeedTapGame.SetLEDs(_SpeedTapGame.CozmoBlockID, Color.black);
-      _SpeedTapGame.SetLEDs(_SpeedTapGame.PlayerBlockID, Color.black);
+      int playerCount = _SpeedTapGame.GetPlayerCount();
+      for (int i = 0; i < playerCount; ++i) {
+        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)_SpeedTapGame.GetPlayerByIndex(i);
+        if (playerInfo.CubeID != -1) {
+          _SpeedTapGame.SetLEDs(playerInfo.CubeID, Color.black);
+        }
+      }
 
       _CubeOffStartTimestamp_sec = Time.time;
       _OffDuration_sec = _SpeedTapGame.GetLightsOffDurationSec();
@@ -86,12 +91,11 @@ namespace SpeedTap {
       bool doMatch = UnityEngine.Random.value < _SpeedTapGame.CurrentMatchChance;
       if (doMatch) {
         _SpeedTapGame.CurrentMatchChance = _SpeedTapGame.BaseMatchChance;
-        _StateMachine.SetNextState(new SpeedTapHandCubesMatch());
       }
       else {
         _SpeedTapGame.CurrentMatchChance += _SpeedTapGame.MatchChanceIncrease;
-        _StateMachine.SetNextState(new SpeedTapHandCubesMismatch());
       }
+      _StateMachine.SetNextState(new SpeedTapHandCubesOn(doMatch));
     }
   }
 }

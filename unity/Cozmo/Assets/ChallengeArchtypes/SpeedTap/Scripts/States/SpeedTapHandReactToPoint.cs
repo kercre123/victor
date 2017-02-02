@@ -1,37 +1,28 @@
 using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 using Anki.Cozmo;
 using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
-  public enum PointWinner {
-    Cozmo,
-    Player
-  }
 
   public class SpeedTapHandReactToPoint : State {
 
-    private enum CubeLightState {
-      WinnerCycling,
-      WinnerFlashing,
-      LoserFlashing,
-      None
-    }
-
     private SpeedTapGame _SpeedTapGame;
 
-    private PointWinner _CurrentWinner;
     private bool _WasMistakeMade;
 
-    private LightCube _WinningCube;
+    private SpeedTapPlayerInfo _FirstTapper;
+
+    private List<LightCube> _WinningCubes = new List<LightCube>();
 
     private bool _EndRobotAnimFinished = false;
     private bool _EndCubeAnimFinished = false;
+    private bool _EndStateTriggered = false;
 
     private bool _IsPlayingWinGameAnimation = false;
 
-    public SpeedTapHandReactToPoint(PointWinner winner, bool mistakeMade) {
-      _CurrentWinner = winner;
+    public SpeedTapHandReactToPoint(SpeedTapPlayerInfo firstTapper, bool mistakeMade) {
+      _FirstTapper = firstTapper;
       _WasMistakeMade = mistakeMade;
     }
 
@@ -39,45 +30,100 @@ namespace SpeedTap {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
 
-      _SpeedTapGame.AddPoint(_CurrentWinner == PointWinner.Player);
-      // Count towards player mistake if cozmo wins a point off of the player tapping wrong.
-      if (_WasMistakeMade) {
-        if (_CurrentWinner == PointWinner.Player) {
-          _SpeedTapGame.CozmoMistake();
+      List<PlayerInfo> pointPlayers = new List<PlayerInfo>();
+      if (!_WasMistakeMade) {
+        pointPlayers.Add(_FirstTapper);
+      }
+      else {
+        int playerCount = _SpeedTapGame.GetPlayerCount();
+        for (int i = 0; i < playerCount; ++i) {
+          PlayerInfo playerInfo = _SpeedTapGame.GetPlayerByIndex(i);
+          if (playerInfo != _FirstTapper) {
+            pointPlayers.Add(playerInfo);
+          }
         }
-        else {
-          _SpeedTapGame.PlayerMistake();
+      }
+
+      _SpeedTapGame.AddPoint(pointPlayers);
+      // Debug mode for Sudden Death
+#if ANKI_DEV_CHEATS
+      if (_SpeedTapGame.GetPlayerCount() > 2) {
+        // Always in the order of cozmo,player,player... debug so whatever.
+        if (SpeedTapGame.sWantsSuddenDeathHumanCozmo) {
+          PlayerInfo playerInfo = _SpeedTapGame.GetPlayerByIndex(0);
+          playerInfo.playerScoreRound = _SpeedTapGame.MaxScorePerRound;
+          playerInfo = _SpeedTapGame.GetPlayerByIndex(1);
+          playerInfo.playerScoreRound = _SpeedTapGame.MaxScorePerRound;
+          playerInfo = _SpeedTapGame.GetPlayerByIndex(2);
+          playerInfo.playerScoreRound = 1;
+          SpeedTapGame.sWantsSuddenDeathHumanCozmo = false;
+        }
+        if (SpeedTapGame.sWantsSuddenDeathHumanHuman) {
+          PlayerInfo playerInfo = _SpeedTapGame.GetPlayerByIndex(0);
+          playerInfo.playerScoreRound = 1;
+          playerInfo = _SpeedTapGame.GetPlayerByIndex(1);
+          playerInfo.playerScoreRound = _SpeedTapGame.MaxScorePerRound;
+          playerInfo = _SpeedTapGame.GetPlayerByIndex(2);
+          playerInfo.playerScoreRound = _SpeedTapGame.MaxScorePerRound;
+          SpeedTapGame.sWantsSuddenDeathHumanHuman = false;
+        }
+      }
+#endif
+
+      // Count towards player mistake if cozmo wins a point off of the player tapping wrong.
+      // Don't count mistakes in MP mode, just a daily goals thing.
+      if (_SpeedTapGame.GetPlayerCount() == 2) {
+        if (_WasMistakeMade) {
+          if (_FirstTapper.playerType == PlayerType.Cozmo) {
+            _SpeedTapGame.PlayerMistake();
+          }
+          else {
+            _SpeedTapGame.CozmoMistake();
+          }
         }
       }
       // Depends on points being scored first
       _SpeedTapGame.UpdateUI();
 
       if (_SpeedTapGame.IsRoundComplete()) {
-        GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
+        SpeedTapPlayerInfo wantsSuddenDeathPlayer = _SpeedTapGame.WantsSuddenDeath();
+        // It's just a normal round end with one winner.
+        if (wantsSuddenDeathPlayer == null) {
+          GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
+          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
 
-        _SpeedTapGame.EndCurrentRound();
-        // Hide Current Round in between rounds
-        _SpeedTapGame.SharedMinigameView.InfoTitleText = string.Empty;
+          _SpeedTapGame.EndCurrentRound();
+          // Hide Current Round in between rounds
+          _SpeedTapGame.SharedMinigameView.InfoTitleText = string.Empty;
 
-        if (_SpeedTapGame.IsGameComplete()) {
-          UpdateBlockLights(_CurrentWinner, wasMistakeMade: false);
-          _SpeedTapGame.UpdateUIForGameEnd();
-          PlayReactToGameAnimationAndSendEvent();
+          if (_SpeedTapGame.IsGameComplete()) {
+            UpdateBlockLights(false);
+            _SpeedTapGame.UpdateUIForGameEnd();
+            PlayReactToGameAnimationAndSendEvent();
+          }
+          else {
+            UpdateBlockLights(_WasMistakeMade);
+            _StateMachine.SetNextState(new SpeedTapReactToRoundEnd(_SpeedTapGame.GetPlayerMostPointsWon()));
+          }
         }
+        // two players have one, go into a knockout phase...
         else {
-          UpdateBlockLights(_CurrentWinner, _WasMistakeMade);
-          _StateMachine.SetNextState(new SpeedTapReactToRoundEnd(_CurrentWinner));
+          // Dim out players scoreboard, set them to spectator
+          // If out player is cozmo, play an animation...
+          wantsSuddenDeathPlayer.playerRole = PlayerRole.Spectator;
+          if (wantsSuddenDeathPlayer.scoreWidget != null) {
+            wantsSuddenDeathPlayer.scoreWidget.Dim = true;
+          }
+          // Also probably want a banner animation here...
+          // Other two players need to keep playing though.
+          UpdateBlockLights(_WasMistakeMade);
+          PlayReactToHandAnimation();
         }
       }
       else {
-        UpdateBlockLights(_CurrentWinner, _WasMistakeMade);
+        UpdateBlockLights(_WasMistakeMade);
         PlayReactToHandAnimation();
       }
-    }
-
-    public override void Exit() {
-      base.Exit();
     }
 
     public override void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
@@ -88,32 +134,73 @@ namespace SpeedTap {
       }
     }
 
-    private void UpdateBlockLights(PointWinner winner, bool wasMistakeMade) {
-      LightCube losingBlock;
-      if (winner == PointWinner.Player) {
-        _WinningCube = _SpeedTapGame.GetPlayerBlock();
-        losingBlock = _SpeedTapGame.GetCozmoBlock();
+    public LightCube GetBlockByID(int id) {
+      LightCube cube = null;
+      if (_CurrentRobot != null) {
+        _CurrentRobot.LightCubes.TryGetValue(id, out cube);
+      }
+      return cube;
+    }
+    private void UpdateBlockLights(bool wasMistakeMade) {
+      List<LightCube> losingBlocks = new List<LightCube>();
+
+      int playerCount = _SpeedTapGame.GetPlayerCount();
+      if (!wasMistakeMade) {
+        _WinningCubes.Add(GetBlockByID(_FirstTapper.CubeID));
+        for (int i = 0; i < playerCount; ++i) {
+          SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)_SpeedTapGame.GetPlayerByIndex(i);
+          if (playerInfo != _FirstTapper) {
+            losingBlocks.Add(GetBlockByID(playerInfo.CubeID));
+          }
+        }
       }
       else {
-        _WinningCube = _SpeedTapGame.GetCozmoBlock();
-        losingBlock = _SpeedTapGame.GetPlayerBlock();
+        losingBlocks.Add(GetBlockByID(_FirstTapper.CubeID));
+        for (int i = 0; i < playerCount; ++i) {
+          SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)_SpeedTapGame.GetPlayerByIndex(i);
+          if (playerInfo != _FirstTapper) {
+            _WinningCubes.Add(GetBlockByID(playerInfo.CubeID));
+          }
+        }
       }
 
       if (wasMistakeMade) {
-        _WinningCube.SetLEDsOff();
-        _CurrentRobot.PlayCubeAnimationTrigger(losingBlock, CubeAnimationTrigger.SpeedTapLose, (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+        for (int i = 0; i < _WinningCubes.Count; ++i) {
+          _WinningCubes[i].SetLEDsOff();
+        }
+        for (int i = 0; i < losingBlocks.Count; ++i) {
+          _CurrentRobot.PlayCubeAnimationTrigger(losingBlocks[i], CubeAnimationTrigger.SpeedTapLose,
+                                                  (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+
+        }
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
       }
       else {
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Win);
-        losingBlock.SetLEDsOff();
-        _CurrentRobot.PlayCubeAnimationTrigger(_WinningCube, CubeAnimationTrigger.SpeedTapWin, (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+        for (int i = 0; i < losingBlocks.Count; ++i) {
+          losingBlocks[i].SetLEDsOff();
+        }
+        for (int i = 0; i < _WinningCubes.Count; ++i) {
+          _CurrentRobot.PlayCubeAnimationTrigger(_WinningCubes[i], CubeAnimationTrigger.SpeedTapWin,
+                                          (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+        }
       }
     }
 
+    private bool IsCozmoHandWinner() {
+      bool cozmoWon = true;
+
+      if (_WasMistakeMade && _FirstTapper.playerType == PlayerType.Cozmo) {
+        cozmoWon = false;
+      }
+      else if (!_WasMistakeMade && _FirstTapper.playerType != PlayerType.Cozmo) {
+        cozmoWon = false;
+      }
+      return cozmoWon;
+    }
+
     private void PlayReactToHandAnimation() {
-      AnimationTrigger animationEventToSend = (_CurrentWinner == PointWinner.Player) ?
-              AnimationTrigger.OnSpeedtapHandPlayerWin : AnimationTrigger.OnSpeedtapHandCozmoWin;
+      AnimationTrigger animationEventToSend = IsCozmoHandWinner() ? AnimationTrigger.OnSpeedtapHandCozmoWin : AnimationTrigger.OnSpeedtapHandPlayerWin;
       ListenForAnimationEnd(animationEventToSend, (success) => { _EndRobotAnimFinished = true; HandleHandEndAnimDone(success); });
     }
 
@@ -121,11 +208,11 @@ namespace SpeedTap {
       AnimationTrigger animationEventToSend = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityGame();
       if (DebugMenuManager.Instance.DemoMode) {
-        animationEventToSend = (_CurrentWinner == PointWinner.Player) ?
+        animationEventToSend = !IsCozmoHandWinner() ?
                             AnimationTrigger.DemoSpeedTapCozmoLose : AnimationTrigger.DemoSpeedTapCozmoWin;
       }
       else {
-        if (_CurrentWinner == PointWinner.Player) {
+        if (!IsCozmoHandWinner()) {
           animationEventToSend = (highIntensity) ?
                     AnimationTrigger.OnSpeedtapGamePlayerWinHighIntensity : AnimationTrigger.OnSpeedtapGamePlayerWinLowIntensity;
         }
@@ -143,7 +230,12 @@ namespace SpeedTap {
     }
 
     private void HandleHandEndAnimDone(bool success) {
-      if (_EndCubeAnimFinished && _EndRobotAnimFinished) {
+
+      // If we are flashing loser lights on a cube then immediately transition states when the EndAnim completes
+      // Otherwise only transition states if we have flashed the cube lights the desired number of times
+      if (_EndCubeAnimFinished && _EndRobotAnimFinished && !_EndStateTriggered) {
+        _EndStateTriggered = true;
+        _SpeedTapGame.ClearWinningLightPatterns();
         _StateMachine.SetNextState(new SpeedTapHandCubesOff());
       }
     }

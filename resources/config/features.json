@@ -6,6 +6,10 @@
   {
     "feature": "AndroidConnectionFlow",
     "enabled": true
+  },
+  {
+    "feature": "SpeedTapMultiPlayer",
+    "enabled": true
   }
 ]
 

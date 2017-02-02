@@ -76,7 +76,7 @@ namespace Cozmo.Minigame.CubePounce {
       _GetReadyAnimInProgress = true;
 
       // Determine what round it is
-      int score = Math.Max(_CubePounceGame.CozmoScoreTotal, _CubePounceGame.PlayerScoreTotal);
+      int score = Math.Max(_CubePounceGame.CozmoScore, _CubePounceGame.HumanScore);
       score = Math.Min(_CubePounceGame.MaxScorePerRound - 1, score); // Last score is game point
       GameAudioClient.SetMusicRoundState(score + 1); // Offset for Audio Round State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Tension);

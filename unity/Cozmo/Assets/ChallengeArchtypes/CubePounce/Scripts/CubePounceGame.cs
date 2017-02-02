@@ -49,7 +49,7 @@ namespace Cozmo.Minigame.CubePounce {
 
     public bool AllRoundsCompleted {
       get {
-        int winningScore = Mathf.Max(PlayerRoundsWon, CozmoRoundsWon);
+        int winningScore = Mathf.Max(HumanRoundsWon, CozmoRoundsWon);
         return (2 * winningScore > TotalRounds);
       }
     }
@@ -58,10 +58,6 @@ namespace Cozmo.Minigame.CubePounce {
       GameConfig = minigameConfig as CubePounceConfig;
       TotalRounds = GameConfig.Rounds;
       MaxScorePerRound = GameConfig.MaxScorePerRound;
-      CozmoScore = 0;
-      PlayerScore = 0;
-      PlayerRoundsWon = 0;
-      CozmoRoundsWon = 0;
       _CurrentTarget = null;
       InitializeMinigameObjects(GameConfig.NumCubesRequired());
       LightCube.OnMovedAction += HandleCubeMoved;
@@ -193,7 +189,7 @@ namespace Cozmo.Minigame.CubePounce {
     // Returns whether we just finished a round
     public bool CheckAndUpdateRoundScore() {
       // If we haven't yet hit our max score nothing to see here
-      if (Mathf.Max(CozmoScore, PlayerScore) < GameConfig.MaxScorePerRound) {
+      if (Mathf.Max(CozmoScore, HumanScore) < GameConfig.MaxScorePerRound) {
         return false;
       }
       EndCurrentRound();
@@ -233,7 +229,7 @@ namespace Cozmo.Minigame.CubePounce {
       float diffMagSqr = posDiff.sqrMagnitude;
       float threshMagSqr = GameConfig.CubeMovedThresholdDistance_mm * GameConfig.CubeMovedThresholdDistance_mm;
 
-      return  diffMagSqr > threshMagSqr;
+      return diffMagSqr > threshMagSqr;
     }
 
     public void UpdateScoreboard() {
@@ -244,9 +240,9 @@ namespace Cozmo.Minigame.CubePounce {
       cozmoScoreWidget.RoundsWon = CozmoRoundsWon;
 
       Cozmo.MinigameWidgets.ScoreWidget playerScoreWidget = SharedMinigameView.PlayerScoreboard;
-      playerScoreWidget.Score = PlayerScore;
+      playerScoreWidget.Score = HumanScore;
       playerScoreWidget.MaxRounds = halfTotalRounds;
-      playerScoreWidget.RoundsWon = PlayerRoundsWon;
+      playerScoreWidget.RoundsWon = HumanRoundsWon;
     }
 
     protected override void SendCustomEndGameDasEvents() {
@@ -256,8 +252,8 @@ namespace Cozmo.Minigame.CubePounce {
       quitGameScoreKeyValues.Add("CozmoScore", CozmoScore.ToString());
       quitGameRoundsWonKeyValues.Add("CozmoRoundsWon", CozmoRoundsWon.ToString());
 
-      DAS.Event(DASConstants.Game.kQuitGameScore, PlayerScore.ToString(), quitGameScoreKeyValues);
-      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, PlayerRoundsWon.ToString(), quitGameRoundsWonKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameScore, HumanScore.ToString(), quitGameScoreKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, HumanRoundsWon.ToString(), quitGameRoundsWonKeyValues);
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
@@ -306,10 +302,10 @@ namespace Cozmo.Minigame.CubePounce {
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.UnexpectedMovement);
     }
 
-    protected override void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {
-      base.ShowWinnerState(currentEndState, overrideWinnerText, footerText);
+    protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "") {
+      base.ShowWinnerState(currentEndIndex, overrideWinnerText, footerText);
 
-      if (currentEndState == EndState.PlayerWin) {
+      if (DidHumanWin()) {
         SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
       }
       else {

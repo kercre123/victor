@@ -31,7 +31,7 @@ namespace Anki {
           if (miniGameInstance == null) { return false; }
           int toCheck = 0;
           if (IsPlayer) {
-            toCheck = miniGameInstance.PlayerScoreTotal;
+            toCheck = miniGameInstance.HumanScoreTotal;
           }
           else {
             toCheck = miniGameInstance.CozmoScoreTotal;

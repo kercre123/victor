@@ -50,7 +50,7 @@ public class MinigamePane : MonoBehaviour {
     _PlayerRoundButton.onClick.AddListener(PlayerRoundButtonClicked);
     _SetPlayerRoundsButton.onClick.AddListener(PlayerSetRoundsButtonClicked);
     _SetPlayerScoreButton.onClick.AddListener(PlayerSetScoreButtonClicked);
-	
+
   }
 
   private GameBase GetCurrMinigame() {
@@ -85,7 +85,10 @@ public class MinigamePane : MonoBehaviour {
   private void CozmoRoundButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
-      minigame.CozmoScore = Mathf.Max(minigame.PlayerScore + 1, minigame.CozmoScore);
+      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Cozmo);
+      if (playerInfo != null) {
+        playerInfo.playerScoreRound = Mathf.Max(minigame.HumanScore + 1, minigame.CozmoScore);
+      }
       minigame.EndCurrentRound();
     }
   }
@@ -96,7 +99,10 @@ public class MinigamePane : MonoBehaviour {
   private void PlayerRoundButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
-      minigame.PlayerScore = Mathf.Max(minigame.CozmoScore + 1, minigame.PlayerScore);
+      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Human);
+      if (playerInfo != null) {
+        playerInfo.playerScoreRound = Mathf.Max(minigame.CozmoScore + 1, minigame.HumanScore);
+      }
       minigame.EndCurrentRound();
     }
   }
@@ -105,7 +111,10 @@ public class MinigamePane : MonoBehaviour {
   private void CozmoSetRoundsButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
-      minigame.CozmoRoundsWon = int.Parse(_SetCozmoRoundsField.text);
+      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Human);
+      if (playerInfo != null) {
+        playerInfo.playerRoundsWon = int.Parse(_SetCozmoRoundsField.text);
+      }
       minigame.UpdateUI();
     }
   }
@@ -113,7 +122,10 @@ public class MinigamePane : MonoBehaviour {
   private void PlayerSetRoundsButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
-      minigame.PlayerRoundsWon = int.Parse(_SetPlayerRoundsField.text);
+      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Human);
+      if (playerInfo != null) {
+        playerInfo.playerRoundsWon = int.Parse(_SetPlayerRoundsField.text);
+      }
       minigame.UpdateUI();
     }
   }
@@ -122,7 +134,10 @@ public class MinigamePane : MonoBehaviour {
   private void CozmoSetScoreButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
-      minigame.CozmoScore = int.Parse(_SetCozmoScoreField.text);
+      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Cozmo);
+      if (playerInfo != null) {
+        playerInfo.playerScoreRound = int.Parse(_SetCozmoScoreField.text);
+      }
       minigame.UpdateUI();
     }
   }
@@ -130,7 +145,10 @@ public class MinigamePane : MonoBehaviour {
   private void PlayerSetScoreButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
-      minigame.PlayerScore = int.Parse(_SetPlayerScoreField.text);
+      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Human);
+      if (playerInfo != null) {
+        playerInfo.playerScoreRound = int.Parse(_SetPlayerScoreField.text);
+      }
       minigame.UpdateUI();
     }
   }
