@@ -21,6 +21,9 @@
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iReactToFaceListener.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -32,12 +35,8 @@ namespace Anki {
 namespace Cozmo {
 
 namespace AcknowledgeFaceConsoleVars{
-CONSOLE_VAR(bool, kEnableFaceAcknowledgeReact, "AcknowledgeFaceBehavior", true);
-CONSOLE_VAR(bool, kDebugFaceDist, "AcknowledgementBehaviors", false);
 CONSOLE_VAR(u32, kNumImagesToWaitFor, "AcknowledgementBehaviors", 3);
-CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_mm, "AcknowledgementBehaviors", 300.0f, 0.0f, 1000.0f);
-CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_gap_mm, "AcknowledgementBehaviors", 100.0f, 0.0f, 1000.0f);
-CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 0.0f, 60.0f);
+
 CONSOLE_VAR(f32, kMaxTimeForInitialGreeting_s, "AcknowledgementBehaviors", 60.0f);
 }
 
@@ -48,13 +47,13 @@ BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(Robot& robot, const Json::Value
 {
   SetDefaultName("AcknowledgeFace");
 
-  SubscribeToTriggerTags({
+  SubscribeToTags({
     EngineToGameTag::RobotObservedFace,
   });  
 }
   
   
-Result BehaviorAcknowledgeFace::InitInternalReactionary(Robot& robot)
+Result BehaviorAcknowledgeFace::InitInternal(Robot& robot)
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
   // chance to be processed, in case we see multiple faces in the same tick.
@@ -63,9 +62,11 @@ Result BehaviorAcknowledgeFace::InitInternalReactionary(Robot& robot)
   return Result::RESULT_OK;
 }
 
-void BehaviorAcknowledgeFace::StopInternalReactionary(Robot& robot)
+void BehaviorAcknowledgeFace::StopInternal(Robot& robot)
 {
-  _desiredTargets.clear();
+  for(auto& listener: _faceListeners){
+    listener->ClearDesiredTargets();
+  }
 }
 
 IBehavior::Status BehaviorAcknowledgeFace::UpdateInternal(Robot& robot)
@@ -81,7 +82,7 @@ IBehavior::Status BehaviorAcknowledgeFace::UpdateInternal(Robot& robot)
 
 bool BehaviorAcknowledgeFace::GetBestTarget(const Robot& robot)
 {
-  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   const bool preferName = false;  
   Vision::FaceID_t bestFace = whiteboard.GetBestFaceToTrack( _desiredTargets, preferName );
   
@@ -142,8 +143,11 @@ void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
 void BehaviorAcknowledgeFace::FinishIteration(Robot& robot)
 {
   _desiredTargets.erase( _targetFace );
-  _hasReactedToFace.insert( _targetFace );
-  _lastReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+ 
+  // notify the listeners that a face reaction has completed fully
+  for(auto& listener: _faceListeners){
+    listener->FinishedReactingToFace(robot, _targetFace);
+  }
   
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedFace);
   // move on to the next target, if there is one
@@ -151,138 +155,24 @@ void BehaviorAcknowledgeFace::FinishIteration(Robot& robot)
 }
 
   
-bool BehaviorAcknowledgeFace::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorAcknowledgeFace::IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData) const
 {
-  return kEnableFaceAcknowledgeReact && !robot.IsOnCharger() && !robot.IsOnChargerPlatform();
-}
+  _desiredTargets.clear();
+  auto desiredTargets = preReqData.GetDesiredTargets();
+  for(auto& entry: desiredTargets){
+    _desiredTargets.emplace(entry);
+  }
+  desiredTargets.clear();
   
-
-void BehaviorAcknowledgeFace::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
-{
-
-  if( !IsRunning() && IsRunnable(robot) ) {
-    // will be handled by ShouldRunForEvent
-    return;
-  }
-  
-  switch(event.GetData().GetTag())
-  {
-    case EngineToGameTag::RobotObservedFace:
-      HandleFaceObserved(robot, event.GetData().Get_RobotObservedFace());
-      break;
-      
-
-    default:
-      PRINT_NAMED_ERROR("BehaviorAcknowledgeFace.HandleMessages.InvalidTag",
-                        "Received event with unhandled tag %hhu.",
-                        event.GetData().GetTag());
-      break;
-  }
-} // AlwaysHandle()
-
-bool BehaviorAcknowledgeFace::AddDesiredFace(Vision::FaceID_t faceID)
-{
-  if( IsReactionEnabled() ) {
-    auto res = _desiredTargets.insert(faceID);
-    return res.second;
-  }
-  else {
-    // we aren't allowed to react, so we don't want to react to this face later. Add it to the list of things
-    // we've reacted to, but return false, since we won't react now
-    _hasReactedToFace.insert(faceID);
-    return false;
-  }
-}
-
-void BehaviorAcknowledgeFace::HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg)
-{
-  // NOTE: this might get called twice for the same event (once from Handle and once from ShouldRunForEvent)
-
-  if( msg.faceID < 0 ) {
-    // ignore temporary tracking-only ids
-    return;
-  }
-
-  const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(msg.faceID);
-  if( nullptr == face ) {
-    return;
-  }
-
-  // We always want to react the first time we see a named face
-  const bool newNamedFace = face->HasName() && _hasReactedToFace.find( msg.faceID ) == _hasReactedToFace.end();
-
-  if( newNamedFace ) {
-    bool added = AddDesiredFace( msg.faceID );
-    if(added) {
-      PRINT_NAMED_DEBUG("BehaviorAcknowledgeFace.InitialFaceReaction",
-                        "saw face ID %d (which is named) for the first time, want to react",
-                        msg.faceID);
-    }
-  }
-
-  float currDistance_mm = 0.0f;
-
-  // We also want to react if the face was previously seen far away, but is now seen closer up
-  if( ! ComputeDistanceBetween( robot.GetPose(), face->GetHeadPose(), currDistance_mm ) ) {
-    PRINT_NAMED_ERROR("BehaviorAcknowledgeFace.PoseInWrongFrame",
-                      "We couldnt get the distance from the robot to the face pose that we just saw...");
-    robot.GetPose().Print("Unfiltered", "RobotPose");
-    face->GetHeadPose().Print("Unfiltered", "HeadPose");
-    return;
-  }
-  
-  if( kDebugFaceDist ) {
-    PRINT_CH_INFO("Behaviors", "BehaviorAcknowledgeFace.Debug.FaceDist",
-                  "%d: %fmm",
-                  msg.faceID,
-                  currDistance_mm);
-  }
-
-
-  float closeThresh_mm = kDistanceToConsiderClose_mm;
-  bool lastPoseClose = true; // (default to true so we don't react)
-  
-  auto it = _faceWasClose.find( msg.faceID );
-  if( it != _faceWasClose.end() ) {
-    lastPoseClose = it->second;
-    if( lastPoseClose ) {
-      // apply hysteresis to prevent flipping between close and not close
-      closeThresh_mm += kDistanceToConsiderClose_gap_mm;
-    }
-  }
-
-  const bool currPoseClose = currDistance_mm < closeThresh_mm;
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
-  const bool faceBecameClose = !lastPoseClose && currPoseClose;
-  const bool notOnCooldown = _lastReactionTime_s < 0.0f || _lastReactionTime_s + kFaceReactCooldown_s <= currTime_s;
-  if( faceBecameClose && notOnCooldown && ! newNamedFace ) {
-
-    bool added = AddDesiredFace( msg.faceID );
-    if(added) {
-      PRINT_NAMED_DEBUG("BehaviorAcknowledgeFace.FaceBecomeClose",
-                        "face ID %d became close (currDist = %fmm)",
-                        msg.faceID,
-                        currDistance_mm);
-    }
-  }
-
-  _faceWasClose[ msg.faceID ] = currPoseClose;
-}
-
-bool BehaviorAcknowledgeFace::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
-{
-  if( event.GetTag() != EngineToGameTag::RobotObservedFace ) {
-    PRINT_NAMED_ERROR("BehaviorAcknowledgeFace.ShouldRunForEvent.InvalidTag",
-                      "Received trigger event with unhandled tag %hhu",
-                      event.GetTag());
-    return false;
-  }
-
-  HandleFaceObserved(robot, event.Get_RobotObservedFace());
-
   return !_desiredTargets.empty();
 }
+  
+void BehaviorAcknowledgeFace::AddListener(IReactToFaceListener* listener)
+{
+  _faceListeners.insert(listener);
+}
+
+
 
 } // namespace Cozmo
 } // namespace Anki

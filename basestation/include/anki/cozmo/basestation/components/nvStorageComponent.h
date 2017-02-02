@@ -81,6 +81,8 @@ public:
   bool WipeAll(NVStorageWriteEraseCallback callback = {},
                bool broadcastResultToGame = false);
   
+  bool WipeFactory(NVStorageWriteEraseCallback callback = {});
+  
   // Request data stored on robot under the given tag.
   // Executes specified callback when data is received.
   //
@@ -232,11 +234,12 @@ private:
     {}
     
     // Erase request
-    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageWriteEraseCallback callback, bool broadcastResultToGame)
+    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageWriteEraseCallback callback, bool broadcastResultToGame, u32 eraseSize = 0)
     : op(NVStorage::NVOperation::NVOP_ERASE)
     , tag(tag)
     , writeCallback(callback)
     , broadcastResultToGame(broadcastResultToGame)
+    , eraseSize(eraseSize)
     {}
     
     // WipeAll request
@@ -261,6 +264,7 @@ private:
     NVStorageReadCallback readCallback;
     std::vector<u8>* data;
     bool broadcastResultToGame;
+    u32 eraseSize;
   };
   
   Robot&       _robot;
@@ -323,12 +327,18 @@ private:
   // Whether or not this is a factory entry tag
   bool IsFactoryEntryTag(NVStorage::NVEntryTag tag) const;
   bool IsPotentialFactoryEntryTag(u32 tag) const;
+  bool IsTagInFactoryBlock(u32 tag) const;
   
   // Whether or not this tag is in the special 0xc000xxxx partition
   bool IsSpecialEntryTag(u32 tag) const;
   
   // Given any tag, returns the assumed base tag
   NVStorage::NVEntryTag GetBaseEntryTag(u32 tag) const;
+  
+  bool Erase(NVStorage::NVEntryTag tag,
+             NVStorageWriteEraseCallback callback,
+             bool broadcastResultToGame,
+             u32 eraseSize);
 
   // Queue of write/erase/read requests to be sent to robot
   std::queue<NVStorageRequest> _requestQueue;
@@ -358,6 +368,13 @@ private:
   // Manages the robot data backups
   // The backup manager lives here as it needs to update the backup everytime we write new things to the robot
   RobotDataBackupManager _backupManager;
+  
+  // Whether or not we should be writing headers
+  bool _writingFactory = false;
+  
+  // Only BehaviorFactoryTest should ever call this function since it is special and is writing factory data
+  friend class BehaviorFactoryTest;
+  void EnableWritingFactory(bool enable) { _writingFactory = enable; }
   
 };
 

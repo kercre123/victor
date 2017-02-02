@@ -12,13 +12,15 @@ Supervisor {
   name IS name
   controller "webotsCtrlDevLog"
 
+  # Workaround for suppressing Webots errors due to fields not being used
+  # directly in the proto.
+  %{ dummy = fields.logsDirectory.value }%
+
   children [
     DEF PLAYBACK Display {
         name "playback_display"
         height 24
         width 400
-        windowPosition 0.5 1
-        pixelSize %{=fields.pixelSize.value}%
 
         children [
         DEF SHAPE Shape {

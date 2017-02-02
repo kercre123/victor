@@ -43,6 +43,7 @@ public class SayTextSlide : MonoBehaviour {
   private bool _PlayingSayAnimation = false;
   private bool _TextFieldEmpty = true;
   private bool _NotEnoughSparks = false;
+  private bool _PlayingReactionaryBehavior = false;
 
   private bool _PendingClearField = false;
 
@@ -110,11 +111,10 @@ public class SayTextSlide : MonoBehaviour {
 
   private void SetSayTextReactionaryBehaviors(bool enable) {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToPickup, enable);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToCliff, enable);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToPoke, enable);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToReturnedToTreads, enable);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("say_text_slide", Anki.Cozmo.ReactionTrigger.UnexpectedMovement, enable);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("say_text_slide", Anki.Cozmo.ReactionTrigger.RobotPickedUp, enable);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("say_text_slide", Anki.Cozmo.ReactionTrigger.CliffDetected, enable);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("say_text_slide", Anki.Cozmo.ReactionTrigger.ReturnedToTreads, enable);
     }
   }
 
@@ -197,7 +197,7 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private void SetButtonInteractivity() {
-    if (_TextFieldEmpty || _NotEnoughSparks || _PlayingSayAnimation || _CozmoSaysGame.CurrentRobot.PlayingReactionaryBehavior) {
+    if (_TextFieldEmpty || _NotEnoughSparks || _PlayingSayAnimation || _PlayingReactionaryBehavior) {
       _CostLabel.color = _SayTextButton.TextDisabledColor;
       _SayTextButton.Interactable = false;
     }
@@ -208,6 +208,6 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private void HandleRobotReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
-    SetButtonInteractivity();
+    _PlayingReactionaryBehavior = message.behaviorStarted;
   }
 }

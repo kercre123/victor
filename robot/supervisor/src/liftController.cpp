@@ -1,14 +1,19 @@
 #include "liftController.h"
-#include "pickAndPlaceController.h"
 #include "imuFilter.h"
+#include "messages.h"
+#include "pickAndPlaceController.h"
 #include "proxSensors.h"
-#include <math.h>
+#include "radians.h"
+#include "velocityProfileGenerator.h"
+
 #include "anki/common/constantsAndMacros.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
-#include "messages.h"
-#include "radians.h"
-#include "velocityProfileGenerator.h"
+
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+
+#include <math.h>
 
 #define DEBUG_LIFT_CONTROLLER 0
 
@@ -139,6 +144,14 @@ namespace Anki {
         // Prevents any new heights from being commanded
         bool bracing_ = false;
 
+        // Checking for cube on lift by lowering power and seeing if there's lift movement
+        bool checkForLoadWhenInPosition_ = false;
+        u32  checkingForLoadStartTime_ = 0;
+        f32  checkingForLoadStartAngle_ = 0;
+        void (*checkForLoadCallback_)(bool) = NULL;
+        const u32 CHECKING_FOR_LOAD_TIMEOUT_MS = 500;
+        const f32 CHECKING_FOR_LOAD_ANGLE_DIFF_THRESH = DEG_TO_RAD_F32(1.f);
+        
       } // "private" members
 
       // Returns the angle between the shoulder joint and the wrist joint.
@@ -531,6 +544,8 @@ namespace Anki {
       
       Result Update()
       {
+        u32 currTime = HAL::GetTimeStamp();
+        
         // Update routine for calibration sequence
         CalibrationUpdate();
 
@@ -544,9 +559,9 @@ namespace Anki {
           
           // Auto-enable check
           if (IsMoving()) {
-            enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
+            enableAtTime_ms_ = currTime + REENABLE_TIMEOUT_MS;
             return RESULT_OK;
-          } else if (HAL::GetTimeStamp() >= enableAtTime_ms_) {
+          } else if (currTime >= enableAtTime_ms_) {
             Messages::SendMotorAutoEnabledMsg(MOTOR_LIFT, true);
             Enable();
           } else {
@@ -573,8 +588,29 @@ namespace Anki {
           disengageGripperAtDest_ = false;
         }
 #endif
-
-
+        
+        if (checkingForLoadStartTime_ > 0) {
+          if (currTime > checkingForLoadStartTime_ + CHECKING_FOR_LOAD_TIMEOUT_MS) {
+            AnkiInfo( 418, "LiftController.Update.NoLoadDetected", 305, "", 0);
+            checkForLoadWhenInPosition_ = false;
+            checkingForLoadStartTime_ = 0;
+            if (checkForLoadCallback_) {
+              checkForLoadCallback_(false);
+            }
+          } else if (currentAngle_ < checkingForLoadStartAngle_ - CHECKING_FOR_LOAD_ANGLE_DIFF_THRESH) {
+            AnkiInfo( 419, "LiftController.Update.LoadDetected", 628, "in %d ms", 1, currTime - checkingForLoadStartTime_);
+            checkForLoadWhenInPosition_ = false;
+            checkingForLoadStartTime_ = 0;
+            if (checkForLoadCallback_) {
+              checkForLoadCallback_(true);
+            }
+          } else {
+            // Make sure motor is unpowered while checking for load
+            power_ = 0;
+            HAL::MotorSetPower(MOTOR_LIFT, power_);
+            return RESULT_OK;
+          }
+        }
 
         // Get the current desired lift angle
         if (currDesiredAngle_ != desiredAngle_) {
@@ -610,11 +646,16 @@ namespace Anki {
           if (ABS(power_) > MAX_POWER_IN_POSITION) {
             f32 decay = ANGLE_ERROR_SUM_DECAY_STEP * (angleErrorSum_ > 0 ? 1.f : -1.f);
             angleErrorSum_ -= decay;
+          } else if (checkForLoadWhenInPosition_ && !IsMoving()) {
+            checkingForLoadStartTime_ = currTime;
+            checkingForLoadStartAngle_ = currentAngle_.ToFloat();
+            AnkiInfo( 420, "LiftController.Update.CheckingForLoad", 347, "%d", 1, checkingForLoadStartTime_);
+            power_ = 0;
           }
           
           if (lastInPositionTime_ms_ == 0) {
-            lastInPositionTime_ms_ = HAL::GetTimeStamp();
-          } else if (HAL::GetTimeStamp() - lastInPositionTime_ms_ > IN_POSITION_TIME_MS) {
+            lastInPositionTime_ms_ = currTime;
+          } else if (currTime - lastInPositionTime_ms_ > IN_POSITION_TIME_MS) {
 
             inPosition_ = true;
 #if(DEBUG_LIFT_CONTROLLER)
@@ -661,6 +702,25 @@ namespace Anki {
       void Stop()
       {
         SetAngularVelocity(0);
+      }
+      
+      void SendLiftLoadMessage(bool hasLoad) {
+        RobotInterface::LiftLoad msg;
+        msg.hasLoad = hasLoad;
+        RobotInterface::SendMessage(msg);
+      }
+      
+      void CheckForLoad(void (*callback)(bool))
+      {
+#ifdef SIMULATOR
+        if (callback) {
+          callback(HAL::IsGripperEngaged());
+        }
+#else
+        checkForLoadWhenInPosition_ = true;
+        checkingForLoadStartTime_ = 0;
+        checkForLoadCallback_ = callback;
+#endif
       }
 
     } // namespace LiftController

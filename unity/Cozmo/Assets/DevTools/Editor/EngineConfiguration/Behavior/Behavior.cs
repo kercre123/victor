@@ -8,7 +8,8 @@ namespace Anki.Cozmo {
   public class Behavior {
 
     [JsonProperty("behaviorType")]
-    public BehaviorType BehaviorType;
+    public BehaviorClass BehaviorClass;
+    public ReactionTrigger ReacitonaryBehaviorType;
 
     // Any extra parameters that are valid for specific behaviors
     [JsonIgnore]

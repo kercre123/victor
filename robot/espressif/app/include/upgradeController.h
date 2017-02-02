@@ -24,7 +24,7 @@ namespace Anki {
       extern const u32 VERSION_INFO_MAX_LENGTH;
       
       /// Retreive pointer to firmware version meta data in flash
-      u32* GetVersionInfo();
+      const u32* GetVersionInfo();
       
       /// Retrieves the first character of the firmware build type
       char GetBuildType();

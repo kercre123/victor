@@ -125,7 +125,7 @@ namespace Anki {
     
     void CustomObject::Visualize(const ColorRGBA& color) const
     {
-      ASSERT_NAMED(nullptr != _vizManager, "VizManager was not set for object we want to visualize");
+      DEV_ASSERT(nullptr != _vizManager, "VizManager was not set for object we want to visualize");
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle = _vizManager->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }

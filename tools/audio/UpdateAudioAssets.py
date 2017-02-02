@@ -6,7 +6,9 @@ import argparse
 import json
 import os
 import tempfile
+import logging
 from os import path
+
 
 __scriptDir = path.dirname(path.realpath(__file__))
 __projectRoot = path.join(__scriptDir , '..', '..')
@@ -22,19 +24,19 @@ __externalsDir = path.join(__projectRoot, 'EXTERNALS')
 __wwiseToAppMetadataScript = path.join(__projectRoot, 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WwiseToAppMetadata.py')
 __wwiseIdFileName = 'Wwise_IDs.h'
 __wwiseIdsFilePath = path.join(__externalsDir, 'cozmosoundbanks', 'GeneratedSoundBanks', __wwiseIdFileName)
-__audioMetadataFileName= "audioEventMetadata.csv"
+__audioMetadataFileName= 'audioEventMetadata.csv'
 __audioMetadataFilePath = path.join(__scriptDir, __audioMetadataFileName)
 __audioCladDir = path.join(__projectRoot, 'clad', 'src', 'clad', 'audio')
 __depsFilePath = path.join(__projectRoot, 'DEPS')
 __namespaceList = ['Anki', 'Cozmo', 'Audio']
 
-__errorMsg = "%s DOES NOT EXIST. Find your closest project Nerd!!"
+__errorMsg = '\'{}\' DOES NOT EXIST. Find your closest project Nerd!!'
 
 # Available Command
-__update_command = "update"
-__generate_command = "generate"
-__update_alt_workspace = "update-alt-workspace"
-__generate_maya_cozmo_data = "generate-maya-cozmo-data"
+__update_command = 'update'
+__generate_command = 'generate'
+__update_alt_workspace = 'update-alt-workspace'
+__generate_maya_cozmo_data = 'generate-maya-cozmo-data'
 
 # Parse input
 def __parse_input_args():
@@ -70,18 +72,20 @@ def __parse_input_args():
 # MAIN!
 def main():
 
+    logging.basicConfig(level=logging.INFO)
+
     # Verify Paths
     if path.exists(__wwiseToAppMetadataScript) == False:
-        __abort((__errorMsg % __wwiseToAppMetadataScript))
+        __abort((__errorMsg.format(__wwiseToAppMetadataScript)))
 
     if path.exists(__audioCladDir) == False:
-        __abort((__errorMsg % __audioCladDir))
+        __abort((__errorMsg.format(__audioCladDir)))
 
     if path.exists(__depsFilePath) == False:
-        __abort((__errorMsg % __depsFilePath))
+        __abort((__errorMsg.format(__depsFilePath)))
 
     if path.exists(__externalsDir) == False:
-        __abort((__errorMsg % __externalsDir))
+        __abort((__errorMsg.format(__externalsDir)))
 
     # Parse input
     options = __parse_input_args()
@@ -107,34 +111,34 @@ def __updateSoundbanks(version, mergeMetadataPath):
         with open(__depsFilePath) as deps_file:
             deps_json = json.load(deps_file)
 
-            print "Update Soundbanks Version"
-            svn_key = "svn"
-            repo_names_key = "repo_names"
-            cozmosoundbanks_key = "cozmosoundbanks"
-            version_key = "version"
+            logging.info('Update Soundbanks Version')
+            svn_key = 'svn'
+            repo_names_key = 'repo_names'
+            cozmosoundbanks_key = 'cozmosoundbanks'
+            version_key = 'version'
 
-            abortMsg = "Can not update Soundbank Version!!!!!! Can't Find "
+            abortMsg = 'Can not update Soundbank Version!!!!!! Can\'t Find'
 
             if svn_key not in deps_json:
-                __abort(abortMsg + " Can't Find " + svn_key)
+                __abort('{} {}'.format(abortMsg, svn_key))
 
             if repo_names_key not in deps_json[svn_key]:
-                __abort(abortMsg + repo_names_key)
+                __abort('{} {}'.format(abortMsg, repo_names_key))
 
             if cozmosoundbanks_key not in deps_json[svn_key][repo_names_key]:
-                __abort(abortMsg + cozmosoundbanks_key)
+                __abort('{} {}'.format(abortMsg, cozmosoundbanks_key))
 
             if version_key not in deps_json[svn_key][repo_names_key][cozmosoundbanks_key]:
-                __abort(abortMsg + version_key)
+                __abort('{} {}'.format(abortMsg, version_key))
 
         # Set soundbank version value
         deps_json[svn_key][repo_names_key][cozmosoundbanks_key][version_key] = version
          # Write file
-        with open(__depsFilePath, "w") as deps_file:
+        with open(__depsFilePath, 'w') as deps_file:
             json.dump(deps_json, deps_file, indent=4, sort_keys=True, separators=(',', ': '))
             deps_file.write(os.linesep)
 
-        print("DEPS file has been updated (%s)" % path.realpath(__depsFilePath))
+        logging.info('DEPS file has been updated \'{}\''.format(path.realpath(__depsFilePath)))
 
         # Download Soundbanks
         dependencies.extract_dependencies(__depsFilePath, __externalsDir)
@@ -147,22 +151,21 @@ def __updateSoundbanks(version, mergeMetadataPath):
 
     # Verify wwise id header is available
     if path.exists(__wwiseIdsFilePath) == False:
-        __abort((__errorMsg % __wwiseIdsFilePath))
+        __abort((__errorMsg.format(__wwiseIdsFilePath)))
 
     # Update Audio Metadata.csv
     updateMetadataCmd = [__wwiseToAppMetadataScript, 'metadata', __wwiseIdsFilePath, __audioMetadataFilePath, '-m', previousMetadataFilePath]
-    #print("Running: %s" % ' '.join(updateMetadataCmd))
+    logging.debug("Running: {}".format(' '.join(updateMetadataCmd)))
     subprocess.call(updateMetadataCmd)
-    print("Metadata CSV has been updated and is ready for manual updates, file "
-          "is located at:%s%s" % (os.linesep, path.realpath(__audioMetadataFilePath)))
+    logging.info('Metadata CSV has been updated and is ready for manual updates, file is located at: \'{}\''.format(path.realpath(__audioMetadataFilePath)))
 
 
 def __generateProjectFiles():
     # Update Project Clad files
     generateCladCmd = [__wwiseToAppMetadataScript, 'clad', __wwiseIdsFilePath, __audioMetadataFilePath, __audioCladDir] + __namespaceList
-    #print("Running: %s" % ' '.join(generateCladCmd))
+    logging.debug("Running: {}".format(' '.join(generateCladCmd)))
     subprocess.call(generateCladCmd)
-    print("Project has been updated")
+    logging.info('Project has been updated')
 
 
 def __updateAltWorkspace(soundBankDir, mergeMetaFilePath):
@@ -171,7 +174,7 @@ def __updateAltWorkspace(soundBankDir, mergeMetaFilePath):
 
     # Check if sound bank dir exist
     if path.exists(soundBankDir) == False:
-        print ('Sound Bank directory "' + soundBankDir + '" DOES NOT exist!')
+        logging.info('Sound Bank directory \'{}\' DOES NOT exist!'.format(soundBankDir))
         return
 
     if mergeMetaFilePath == None:
@@ -184,20 +187,20 @@ def __updateAltWorkspace(soundBankDir, mergeMetaFilePath):
             if path.exists(__audioMetadataFilePath):
                 previousMetaPath = __audioMetadataFilePath
             else:
-                # 3rd create a new metadate file
+                # 3rd create a new metadata file
                 previousMetaPath = None
 
     # Generate Metadata.csv
     altWwiseHeaderIdPath = path.join(soundBankDir, __wwiseIdFileName)
     altMetadataPath = path.join(soundBankDir, __audioMetadataFilePath)
     subprocess.call([__wwiseToAppMetadataScript, 'metadata', altWwiseHeaderIdPath, altMetadataPath, '-m', previousMetaPath])
-    print 'Metadata CSV has been updated and is ready for manual updates, file is located at:\n%s' % path.realpath(altMetadataPath)
+    logging.info('Metadata CSV has been updated and is ready for manual updates, file is located at: \'{}\''.format(path.realpath(altMetadataPath)))
 
 
 def __generateMayaCozmoData(outputFilePath, groups):
 
     # Generate tmp metadata.csv by using current WwiseId.h and merging the projects current wwiseId.h events
-    tempMetaFilePath = tempfile.mkstemp(dir="/tmp", prefix="tempAudioEventMetadata-", suffix=".csv")[1]
+    tempMetaFilePath = tempfile.mkstemp(dir='/tmp', prefix='tempAudioEventMetadata-', suffix='.csv')[1]
     tempMetaDataScriptArgs = [__wwiseToAppMetadataScript, 'metadata', __wwiseIdsFilePath, tempMetaFilePath, '-m', __audioMetadataFilePath]
     subprocess.call(tempMetaDataScriptArgs)
 
@@ -211,7 +214,7 @@ def __generateMayaCozmoData(outputFilePath, groups):
 
 
 def __abort(msg):
-    print "Error: " + msg
+    logging.error(msg)
     exit(1)
 
 

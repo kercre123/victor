@@ -7,15 +7,15 @@ namespace Onboarding {
     public override void Start() {
       base.Start();
 
-      BaseModal.BaseViewCloseAnimationFinished += HandleViewClosed;
+      BaseDialog.BaseDialogCloseAnimationFinished += HandleViewClosed;
     }
 
     public override void OnDestroy() {
       base.OnDestroy();
-      BaseModal.BaseViewCloseAnimationFinished -= HandleViewClosed;
+      BaseDialog.BaseDialogCloseAnimationFinished -= HandleViewClosed;
     }
 
-    public void HandleViewClosed(BaseModal view) {
+    public void HandleViewClosed(BaseDialog view) {
       OnboardingManager.Instance.GoToNextStage();
     }
 

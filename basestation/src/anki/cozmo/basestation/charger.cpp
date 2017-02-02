@@ -74,7 +74,7 @@ namespace Anki {
     Charger::Charger(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
     : Charger(GetTypeFromActiveObjectType(activeObjectType))
     {
-      ASSERT_NAMED(GetTypeFromActiveObjectType(activeObjectType) == ObjectType::Charger_Basic, "Charger.InvalidFactoryID");
+      DEV_ASSERT(GetTypeFromActiveObjectType(activeObjectType) == ObjectType::Charger_Basic, "Charger.InvalidFactoryID");
       
       _activeID = activeID;
       _factoryID = factoryID;

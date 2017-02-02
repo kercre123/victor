@@ -51,15 +51,15 @@ bool AnimationFrameInterleaver::SetNextAnimation(StreamingAnimation* animation,
                                                  uint32_t fadeDuration_ms,
                                                  bool abort)
 {
-  ASSERT_NAMED(animation != nullptr,
-               "AnimationFrameInterleaver.SetNextAnimation.StreamingAnimationWeakPtr.Expired");
-  ASSERT_NAMED(!animation->DidStartPlaying(),
-               "AnimationFrameInterleaver.SetNextAnimation.StreamingAnimation.DidStartPlaying");
+  DEV_ASSERT(animation != nullptr,
+             "AnimationFrameInterleaver.SetNextAnimation.StreamingAnimationWeakPtr.Expired");
+  DEV_ASSERT(!animation->DidStartPlaying(),
+             "AnimationFrameInterleaver.SetNextAnimation.StreamingAnimation.DidStartPlaying");
   if (_playbackQueue.size() >= 2) {
     return false;
   }
   
-  ASSERT_NAMED(!_audioInputs.empty(), "AnimationFrameInterleaver.SetNextAnimation.AudioInputs.IsEmpty");
+  DEV_ASSERT(!_audioInputs.empty(), "AnimationFrameInterleaver.SetNextAnimation.AudioInputs.IsEmpty");
   
   // Add to queue
   _playbackQueue.emplace(animation, _audioInputs.front(), fadeDuration_ms, abort);
@@ -92,8 +92,8 @@ AnimationFrameInterleaver::State AnimationFrameInterleaver::Update()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationFrameInterleaver::PopFrameRobotMessages(EngineToRobotMessageList& out_msgList)
 {
-  ASSERT_NAMED(_state != State::BufferingAnimation,
-               "AnimationFrameInterleaver.PopFrameRobotMessages.State.IsBufferingAnimation");
+  DEV_ASSERT(_state != State::BufferingAnimation,
+             "AnimationFrameInterleaver.PopFrameRobotMessages.State.IsBufferingAnimation");
   
   
   // FIXME: Need to tick Audio Mixer but not other stuff
@@ -103,7 +103,7 @@ void AnimationFrameInterleaver::PopFrameRobotMessages(EngineToRobotMessageList& 
   
   // TODO: Insert Animation Mixer to get transition key frame sums
   const auto animInfo = GetCurrentAnimationInfo();
-  ASSERT_NAMED(animInfo != nullptr, "AnimationFrameInterleaver.PopFrameRobotMessages.AnimationInfo.IsNull");
+  DEV_ASSERT(animInfo != nullptr, "AnimationFrameInterleaver.PopFrameRobotMessages.AnimationInfo.IsNull");
   
   // Get Keyframes
   // FIXME: TEMP Keyframe List
@@ -161,16 +161,14 @@ void AnimationFrameInterleaver::CalculateCurrentState()
     {
       // CORRECTION an animation could be put in the queue
       // If we are in this state we should NOT have an Animation Info
-//      ASSERT_NAMED(animInfo == nullptr, "AnimationFrameInterleaver.CalculateCurrentState.NoAnimations.AnimInfo.IsNotNull");
-      
+      // DEV_ASSERT(animInfo == nullptr, "AnimationFrameInterleaver.CalculateCurrentState.NoAnimations.AnimInfo.IsNotNull");
       // Check if there is an animations
       break;
     }
     case State:: BufferingAnimation:
     {
       // If we are in this state we should always have an Animation Info
-      ASSERT_NAMED(animInfo != nullptr, "AnimationFrameInterleaver.CalculateCurrentState.BufferingAnimation.AnimInfo.IsNull");
-      
+      DEV_ASSERT(animInfo != nullptr, "AnimationFrameInterleaver.CalculateCurrentState.BufferingAnimation.AnimInfo.IsNull");
       // FIXME: Do Something here!!!
       break;
     }
@@ -178,7 +176,7 @@ void AnimationFrameInterleaver::CalculateCurrentState()
     case State::PlayingAnimations:
     {
       // If we are in this state we should always have an Animation Info
-      ASSERT_NAMED(animInfo != nullptr, "AnimationFrameInterleaver.CalculateCurrentState.PlayingAnimations.AnimInfo.IsNull");
+      DEV_ASSERT(animInfo != nullptr, "AnimationFrameInterleaver.CalculateCurrentState.PlayingAnimations.AnimInfo.IsNull");
       // Check if still valid
       if (animInfo->animation->IsPlaybackComplete()) {
         // Pop animation
@@ -200,7 +198,8 @@ void AnimationFrameInterleaver::CalculateCurrentState()
     {
       // TODO: Check if we need to transition
       // If we are in this state we should always have an Animation Info
-      ASSERT_NAMED(animInfo != nullptr, "AnimationFrameInterleaver.CalculateCurrentState.TransitioningBetweenAnimations.AnimInfo.IsNull");
+      DEV_ASSERT(animInfo != nullptr,
+                 "AnimationFrameInterleaver.CalculateCurrentState.TransitioningBetweenAnimations.AnimInfo.IsNull");
       break;
     }
   }
@@ -284,5 +283,5 @@ void AnimationFrameInterleaver::CreateAnimationMessages(AnimationPositionState p
 
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

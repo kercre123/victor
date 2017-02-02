@@ -3,13 +3,11 @@ public static class LocalizationKeys {
   #region BehaviorStrings
 
   public const string kBehaviorBringCubeToBeacon = "behavior.BringCubeToBeacon";
-  public const string kBehaviorLookAround = "behavior.LookAround";
   public const string kBehaviorExploreVisitPossibleMarker = "behavior.ExploreVisitPossibleMarker";
   public const string kBehaviorLookInPlaceMemoryMap = "behavior.LookInPlaceMemoryMap";
   public const string kBehaviorExploreLookAroundInPlace = "behavior.ExploreLookAroundInPlace";
   public const string kBehaviorThinkAboutBeacons = "behavior.ThinkAboutBeacons";
   public const string kBehaviorVisitInterestingEdge = "behavior.VisitInterestingEdge";
-  public const string kBehaviorBuildPyramid = "behavior.BuildPyramid";
   public const string kBehaviorKnockOverCubes = "behavior.KnockOverCubes";
   public const string kBehaviorPopAWheelie = "behavior.PopAWheelie";
   public const string kBehaviorPounceOnMotion = "behavior.PounceOnMotion";
@@ -47,24 +45,16 @@ public static class LocalizationKeys {
   public const string kChallengeDetailsCozmoIsStillWakingUpModalTitle = "challengeDetails.cozmoIsStillWakingUpModal.title";
   public const string kChallengeDetailsCozmoIsStillWakingUpModalDescription = "challengeDetails.cozmoIsStillWakingUpModal.description";
   public const string kChallengeDetailsNeedsMoreCubesModalButton = "challengeDetails.needsMoreCubesModal.button";
-  public const string kArtistCozmoTitle = "artistCozmo.title";
-  public const string kArtistCozmoDescription = "artistCozmo.description";
-  public const string kPatternGuess01Title = "patternGuess01.title";
-  public const string kPatternGuess01Description = "patternGuess01.description";
   public const string kCubeSlapTitle = "cubeSlap.title";
   public const string kCubeSlapDescription = "cubeSlap.description";
   public const string kDroneModeTitle = "droneMode.title";
   public const string kDroneModeDescription = "droneMode.description";
   public const string kFaceEnrollmentTitle = "faceEnrollment.title";
   public const string kFaceEnrollmentDescription = "faceEnrollment.description";
-  public const string kSelfieGame01Title = "selfieGame01.title";
-  public const string kSelfieGame01Description = "selfieGame01.description";
   public const string kMemoryMatchGameTitle = "memoryMatchGame.title";
   public const string kMemoryMatchGameDescription = "memoryMatchGame.description";
   public const string kSpeedTapTitle = "speedTap.title";
   public const string kSpeedTapDescription = "speedTap.description";
-  public const string kTreasureHuntGame01Title = "treasureHuntGame01.title";
-  public const string kTreasureHuntGame01Description = "treasureHuntGame01.description";
   public const string kCozmoSaysTitle = "cozmoSays.title";
   public const string kCozmoSaysDescription = "cozmoSays.description";
 
@@ -183,9 +173,6 @@ public static class LocalizationKeys {
 
   #region FaceEnrollmentStrings
 
-  public const string kFaceEnrollmentReenrollmentAlertTitle = "faceEnrollment.reenrollmentAlert.title";
-  public const string kFaceEnrollmentReenrollmentAlertDescription = "faceEnrollment.reenrollmentAlert.description";
-  public const string kFaceEnrollmentReenrollmentAlertConfirmButton = "faceEnrollment.reenrollmentAlert.confirmButton";
   public const string kFaceEnrollmentInstructions = "faceEnrollment.instructions";
   public const string kFaceEnrollmentEnterNamePlaceholderText = "faceEnrollment.enterName.placeholderText";
   public const string kFaceEnrollmentFaceEnrollmentListDescription = "faceEnrollment.faceEnrollmentList.description";
@@ -193,18 +180,20 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton = "faceEnrollment.faceEnrollmentList.deleteConfirmButton";
   public const string kFaceEnrollmentInstructionsTop = "faceEnrollment.instructions.top";
   public const string kFaceEnrollmentInstructionsBottom = "faceEnrollment.instructions.bottom";
-  public const string kFaceEnrollmentUnlockViewDescription = "faceEnrollment.unlockView.description";
   public const string kFaceEnrollmentErrorsNeverSawValidFaceTitle = "faceEnrollment.errors.neverSawValidFace.title";
   public const string kFaceEnrollmentErrorsNeverSawValidFaceDescription = "faceEnrollment.errors.neverSawValidFace.description";
   public const string kFaceEnrollmentErrorsTimeOutTitle = "faceEnrollment.errors.timeOut.title";
   public const string kFaceEnrollmentErrorsTimeOutDescription = "faceEnrollment.errors.timeOut.description";
   public const string kFaceEnrollmentConditionAllChangesSaved = "faceEnrollment.condition.allChangesSaved";
-  public const string kFaceEnrollmentHowToPlayEmptySlot = "faceEnrollment.howToPlay.emptySlot";
-  public const string kFaceEnrollmentHowToPlayEraseIcon = "faceEnrollment.howToPlay.eraseIcon";
-  public const string kFaceEnrollmentHowToPlayExistingPerson = "faceEnrollment.howToPlay.existingPerson";
-  public const string kFaceEnrollmentHowToPlayEditName = "faceEnrollment.howToPlay.editName";
   public const string kFaceEnrollmentFirstTimeCompleteAlertTitle = "faceEnrollment.firstTimeCompleteAlert.title";
   public const string kFaceEnrollmentFirstTimeCompleteAlertDescription = "faceEnrollment.firstTimeCompleteAlert.description";
+  public const string kFaceEnrollmentButtonAddNewPerson = "faceEnrollment.button.addNewPerson";
+  public const string kFaceEnrollmentButtonScanAgain = "faceEnrollment.button.scanAgain";
+  public const string kFaceEnrollmentLabelDayCountSingular = "faceEnrollment.label.dayCount.singular";
+  public const string kFaceEnrollmentLabelDayCountPlural = "faceEnrollment.label.dayCount.plural";
+  public const string kFaceEnrollmentLabelHelpCozmoRecognize = "faceEnrollment.label.HelpCozmoRecognize";
+  public const string kFaceEnrollmentLabelLastScanned = "faceEnrollment.label.lastScanned";
+  public const string kFaceEnrollmentLabelToday = "faceEnrollment.label.today";
 
   #endregion
 
@@ -277,8 +266,6 @@ public static class LocalizationKeys {
   public const string kMinigameLabelCozmoPrep = "minigame.label.cozmoPrep";
   public const string kMinigameLabelGameOver = "minigame.label.gameOver";
   public const string kMinigameTextWaitForCozmo = "minigame.text.waitForCozmo";
-  public const string kDroneModeActionLockedModalTitle = "droneMode.actionLockedModal.title";
-  public const string kDroneModeActionLockedModalDescription = "droneMode.actionLockedModal.description";
   public const string kDroneModeUnknownFaceReticleLabel = "droneMode.unknownFaceReticleLabel";
   public const string kDroneModeChargerReticleLabel = "droneMode.chargerReticleLabel";
   public const string kDroneModeCubeReticleLabel = "droneMode.cubeReticleLabel";
@@ -330,17 +317,6 @@ public static class LocalizationKeys {
   public const string kMinigameLostTrackOfBlockDescription = "minigame.lostTrackOfBlock.description";
   public const string kMinigameTimeoutTitle = "minigame.timeout.title";
   public const string kMinigameTimeoutDescription = "minigame.timeout.description";
-  public const string kVortexTitle = "vortex.title";
-  public const string kVortexDescription = "vortex.description";
-  public const string kVortexSpinButton = "vortex.spinButton";
-  public const string kVortexReplayButton = "vortex.replayButton";
-  public const string kVortexVortexStatus = "vortex.vortexStatus";
-  public const string kVortexVortexWon = "vortex.vortexWon";
-  public const string kPatternGuessButtonGuessCode = "patternGuess.button.guessCode";
-  public const string kPatternGuessButtonPickingCode = "patternGuess.button.pickingCode";
-  public const string kPatternGuessTextGuessesLeft = "patternGuess.text.guessesLeft";
-  public const string kPatternGuessTextHowToPlayShort = "patternGuess.text.howToPlayShort";
-  public const string kPatternGuessTextHowToPlayLong = "patternGuess.text.howToPlayLong";
   public const string kCubePounceInfoPlayerWinPoint = "cubePounce.info.playerWinPoint";
   public const string kCubePounceInfoCozmoWinPoint = "cubePounce.info.cozmoWinPoint";
   public const string kCubePounceInfoSetupText = "cubePounce.info.setupText";
@@ -542,7 +518,6 @@ public static class LocalizationKeys {
   public const string kButtonContinue = "button.continue";
   public const string kButtonOkay = "button.okay";
   public const string kButtonAgain = "button.again";
-  public const string kButtonReady = "button.ready";
   public const string kButtonRefresh = "button.refresh";
   public const string kButtonClose = "button.close";
   public const string kButtonDone = "button.done";
@@ -557,13 +532,13 @@ public static class LocalizationKeys {
   public const string kLabelTotalCount = "label.totalCount";
   public const string kLabelFractionCount = "label.fractionCount";
   public const string kLabelDayCount = "label.dayCount";
+  public const string kLabelWaiting = "label.waiting";
   public const string kRequestGameTitle = "requestGame.title";
   public const string kRequestGameDescription = "requestGame.description";
   public const string kDailyGoalTitle = "dailyGoal.title";
   public const string kDailyGoalFriendBonus = "dailyGoal.FriendBonus";
   public const string kLabelConnect = "label.connect";
   public const string kLabelStart = "label.start";
-  public const string kButtonSave = "button.save";
   public const string kCozmoTabTitle = "cozmoTab.title";
   public const string kCozmoTabSubTitle = "cozmoTab.subTitle";
   public const string kCoreUpgradeDetailsDialogCubesNeeded = "coreUpgradeDetailsDialog.cubesNeeded";
@@ -582,9 +557,6 @@ public static class LocalizationKeys {
   public const string kButtonReplay = "button.replay";
   public const string kLabelTo = "label.to";
   public const string kButtonSkip = "button.skip";
-  public const string kButtonAddPerson = "button.addPerson";
-  public const string kLabelUpdate = "label.update";
-  public const string kButtonUnlock = "button.unlock";
   public const string kSoundcheckDescriptionConfirm = "soundcheck.description.confirm";
   public const string kErrorBadLightTop = "error.badLight.Top";
   public const string kErrorBadLightBottom = "error.badLight.Bottom";
@@ -600,6 +572,7 @@ public static class LocalizationKeys {
   public const string kLabelTermsOfUse = "label.termsOfUse";
   public const string kLabelTotalSparks = "label.totalSparks";
   public const string kLabelTermsInstructions = "label.termsInstructions";
+  public const string kLabelSimpleCount = "label.simpleCount";
 
   #endregion
 
@@ -708,6 +681,20 @@ public static class LocalizationKeys {
   public const string kWifiGethelpDescription2 = "wifi.gethelp.description2";
   public const string kWifiGethelpFooter = "wifi.gethelp.footer";
   public const string kWifiGetHelpLinkText = "wifi.getHelp.linkText";
+  public const string kWifiEnterPassword = "wifi.enterPassword";
+  public const string kWifiPasswordFormat = "wifi.passwordFormat";
+  public const string kWifiSelectNetwork = "wifi.selectNetwork";
+  public const string kWifiLookingForNetworks = "wifi.lookingForNetworks";
+  public const string kWifiCurrentSsid = "wifi.currentSsid";
+  public const string kWifiCurrentStatus = "wifi.currentStatus";
+  public const string kWifiWrongPassword = "wifi.wrongPassword";
+  public const string kWifiEnableWifi = "wifi.enableWifi";
+  public const string kWifiLocationPermission = "wifi.locationPermission";
+  public const string kWifiPleaseLocationPermission = "wifi.pleaseLocationPermission";
+  public const string kWifiEnableLocation = "wifi.enableLocation";
+  public const string kWifiPleaseEnableLocation = "wifi.pleaseEnableLocation";
+  public const string kWifiConnecting = "wifi.connecting";
+  public const string kWifiPasswordRememberStatement = "wifi.passwordRememberStatement";
 
   #endregion
 }

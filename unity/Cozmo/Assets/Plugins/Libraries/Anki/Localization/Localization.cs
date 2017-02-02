@@ -39,6 +39,22 @@ public static class Localization {
     return localized;
   }
 
+  public static string GetAmountName(string localizationKey, int amount) {
+    return (amount == 1) ? GetSingularName(localizationKey) : GetPluralName(localizationKey);
+  }
+
+  public static string GetSingularName(string localizationKey) {
+    return Localization.Get(localizationKey + ".singular");
+  }
+
+  public static string GetPluralName(string localizationKey) {
+    return Localization.Get(localizationKey + ".plural");
+  }
+
+  public static string GetCountLabel(string localizationKey, int amount) {
+    return GetWithArgs(LocalizationKeys.kLabelSimpleCount, GetNumber(amount), GetAmountName(localizationKey, amount));
+  }
+
   public static bool IsSupportedLocale(string locale) {
     return _SupportedLocales.Contains(locale);
   }

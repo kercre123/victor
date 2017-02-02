@@ -127,3 +127,55 @@ void Anki::Cozmo::HAL::DAC::Mute(void) {
 
   EnableAudio(false);
 }
+
+#include <math.h>
+
+static int next_write_index(void) {
+  static int last_index = -1;
+  int index;
+
+  do {
+    index  = DAC0_C2 >> 4;
+  } while (index == last_index);
+  
+  last_index = index;
+  return (index - 1) & 0xF;
+}
+
+void GenerateTestTone(void) {
+  using namespace Anki::Cozmo::HAL;
+   
+  __disable_irq();
+  GPIO_RESET(GPIO_POWEREN, PIN_POWEREN);
+  MCG_C1 |= MCG_C1_IREFS_MASK;
+  
+  // THIS ALL NEEDS TO BE ADJUSTED
+  static const int CPU_OLD_CLOCK = 100000000;
+  static const int CPU_NEW_CLOCK = 32768*2560;
+  static const float FREQ_DILATION = (float)CPU_OLD_CLOCK / (float)CPU_NEW_CLOCK;
+  
+  static const float peak = 0x800;
+  static const int ticks_per_freq = (int)(SAMPLE_RATE * FREQ_DILATION * 20 / 1000); // 40ms
+
+  float freq = (float)(M_PI_2 * 8000.0 / SAMPLE_RATE * FREQ_DILATION);
+
+  DAC::EnableAudio(true);
+  for (int g = 0; g < 8; g++) {   
+    // Silence
+    for (int i = 0; i < ticks_per_freq; i++) {
+      DAC_WRITE[next_write_index()] = (int)peak;
+    }
+
+    // Tone
+    float phase = 0;
+    for (int i = 0; i < ticks_per_freq; i++) {
+      DAC_WRITE[next_write_index()] = (int)(peak * sinf(phase) + peak);
+      phase += freq;
+    }
+
+    // Pitch shift
+    freq /= 2;
+  }
+  
+  NVIC_SystemReset();
+}

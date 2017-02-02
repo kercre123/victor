@@ -1,5 +1,5 @@
 {
-  "behaviorType": "PutDownBlock",
+  "behaviorClass": "PutDownBlock",
   "name": "SparksPutDownBlock",
   "flatScore": 3.0,
   "behaviorGroups": [

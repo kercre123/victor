@@ -17,7 +17,6 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
@@ -46,7 +45,8 @@ void RobotIdleTimeoutComponent::Update(double currentTime_s)
   if(_faceOffTimeout_s > 0.0f && _faceOffTimeout_s <= currentTime_s)
   {
     _faceOffTimeout_s = 0.0f;
-    _robot.GetActionList().QueueActionNow(CreateGoToSleepAnimSequence(_robot));
+    _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
+                                       CreateGoToSleepAnimSequence(_robot));
   }
   
   // If it's time to disconnect

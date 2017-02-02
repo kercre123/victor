@@ -1,5 +1,5 @@
 {
-  "behaviorType": "PickUpCube",
+  "behaviorClass": "PickUpCube",
   "name": "tapInteractionPickUpCube",
   "displayNameKey":"behavior.PickupCube",
   "requireObjectTapped" : true,

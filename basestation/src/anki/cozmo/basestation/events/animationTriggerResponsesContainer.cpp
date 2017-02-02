@@ -50,32 +50,59 @@ namespace Cozmo
     
     return true;
   }
-
-  std::string AnimationTriggerResponsesContainer::GetResponse(Anki::Cozmo::AnimationTrigger ev)
+  
+  template<class AnimTrigger>
+  static std::string GetResponseHelper(const std::unordered_map<std::string, std::string>& eventMap,
+                                       AnimTrigger ev)
   {
-    auto retVal = _eventMap.find(EnumToString(ev));
-    if(retVal == _eventMap.end())
+    auto retVal = eventMap.find(EnumToString(ev));
+    if(retVal == eventMap.end())
     {
       PRINT_NAMED_ERROR("AnimationTriggerResponsesContainer::GetResponse",
                         "Animation requested for unknown response '%s'",
-                        AnimationTriggerToString(ev));
+                        EnumToString(ev));
       return "";
     }
-
+    
     PRINT_CH_INFO("Animations", "GetResponseForAnimationTrigger.Found",
                   "%s -> %s",
-                  AnimationTriggerToString(ev),
+                  EnumToString(ev),
                   retVal->second.c_str());
     
     return retVal->second;
   }
   
-  bool AnimationTriggerResponsesContainer::HasResponse(Anki::Cozmo::AnimationTrigger ev)
+  template<class AnimTrigger>
+  static bool HasResponseHelper(const std::unordered_map<std::string, std::string>& eventMap,
+                                AnimTrigger ev)
   {
-    auto retVal = _eventMap.find(EnumToString(ev));
-    return retVal != _eventMap.end();
+    auto retVal = eventMap.find(EnumToString(ev));
+    return retVal != eventMap.end();
   }
 
+  template<>
+  std::string AnimationTriggerResponsesContainer::GetResponse(Anki::Cozmo::AnimationTrigger ev)
+  {
+    return GetResponseHelper(_eventMap, ev);
+  }
+  
+  template<>
+  std::string AnimationTriggerResponsesContainer::GetResponse(Anki::Cozmo::CubeAnimationTrigger ev)
+  {
+    return GetResponseHelper(_eventMap, ev);
+  }
+  
+  template<>
+  bool AnimationTriggerResponsesContainer::HasResponse(Anki::Cozmo::AnimationTrigger ev)
+  {
+    return HasResponseHelper(_eventMap, ev);
+  }
+  
+  template<>
+  bool AnimationTriggerResponsesContainer::HasResponse(Anki::Cozmo::CubeAnimationTrigger ev)
+  {
+    return HasResponseHelper(_eventMap, ev);
+  }
 
 }
 }

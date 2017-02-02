@@ -20,28 +20,35 @@
 namespace Anki {
 namespace Cozmo {
   
+static std::set<ReactionTrigger> kReactionsToDisable = {
+  ReactionTrigger::CliffDetected,
+  ReactionTrigger::ReturnedToTreads,
+  ReactionTrigger::RobotOnBack,
+  ReactionTrigger::RobotOnFace,
+  ReactionTrigger::RobotOnSide,
+  ReactionTrigger::RobotPickedUp
+};
+  
 BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToMotorCalibration");
-  
-  SubscribeToTriggerTags({
-    EngineToGameTag::MotorCalibration
-  });
   
   SubscribeToTags({
     EngineToGameTag::MotorCalibration
   });
 }
 
-bool BehaviorReactToMotorCalibration::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToMotorCalibration::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
 
-Result BehaviorReactToMotorCalibration::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToMotorCalibration::InitInternal(Robot& robot)
 {
-  PRINT_NAMED_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
+  LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
+ 
+  SmartDisableReactionTrigger(kReactionsToDisable);
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
   StartActing(new WaitAction(robot, _kTimeout_sec), [this, &robot](ActionResult res) {
@@ -54,29 +61,7 @@ Result BehaviorReactToMotorCalibration::InitInternalReactionary(Robot& robot)
 
   return RESULT_OK;
 }
-
-bool BehaviorReactToMotorCalibration::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
-{
-  switch(event.GetTag())
-  {
-    case EngineToGameTag::MotorCalibration:
-    {
-      const MotorCalibration& msg = event.Get_MotorCalibration();
-      if(!IsRunning() && msg.autoStarted && msg.calibStarted)
-      {
-        return true;
-      }
-      break;
-    }
-    default:
-    {
-      PRINT_NAMED_ERROR("BehaviorReactToMotorCalibration.ShouldRunForEvent.BadEventType",
-                        "Calling ShouldRunForEvent with an event we don't care about, this is a bug");
-      break;
-    }
-  }
-  return false;
-}
+  
 
 void BehaviorReactToMotorCalibration::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
@@ -95,7 +80,7 @@ void BehaviorReactToMotorCalibration::HandleWhileRunning(const EngineToGameEvent
       break;
   }
 }
-  
+
   
 }
 }

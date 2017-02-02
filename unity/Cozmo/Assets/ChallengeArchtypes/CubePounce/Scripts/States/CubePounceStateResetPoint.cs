@@ -21,7 +21,6 @@ namespace Cozmo.Minigame.CubePounce {
 
     public override void Enter() {
       base.Enter();
-      _CubePounceGame.StopCycleCube(_CubePounceGame.GetCubeTarget().ID);
       _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPushCubeTowardCozmo);
       _CubePounceGame.SharedMinigameView.HideNarrowInfoTextSlide();
 
@@ -77,7 +76,7 @@ namespace Cozmo.Minigame.CubePounce {
       _GetReadyAnimInProgress = true;
 
       // Determine what round it is
-      int score = Math.Max(_CubePounceGame.CozmoScoreTotal, _CubePounceGame.PlayerScoreTotal);
+      int score = Math.Max(_CubePounceGame.CozmoScore, _CubePounceGame.HumanScore);
       score = Math.Min(_CubePounceGame.MaxScorePerRound - 1, score); // Last score is game point
       GameAudioClient.SetMusicRoundState(score + 1); // Offset for Audio Round State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Tension);

@@ -264,7 +264,7 @@ namespace Cozmo {
         #if(DEBUG_COMMS)
         PRINT_NAMED_INFO("MultiClientComms.Update.TimeoutDevice", "Removing device %d from advertising list. (Last seen: %f, curr time: %f)", it->second.devInfo.id, it->second.lastSeenTime, currTime);
         #endif
-        advertisingDevices_.erase(it++);
+        it = advertisingDevices_.erase(it);
       } else {
         ++it;
       }
@@ -357,7 +357,7 @@ namespace Cozmo {
 
           c.DestroyClients();
           
-          connectedDevices_.erase(it++);
+          it = connectedDevices_.erase(it);
           break;
         }
 

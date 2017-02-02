@@ -25,6 +25,10 @@ namespace Json {
   class Value;
 }
 
+namespace CozmoAnim {
+  struct ProceduralFace;
+}
+
 namespace Anki {
 namespace Cozmo {
   
@@ -67,7 +71,8 @@ public:
   // Reset parameters to their nominal values
   void Reset();
   
-  // Read in available parameters from Json
+  // Read in available parameters from Json and FlatBuffers
+  void SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe);
   void SetFromJson(const Json::Value &jsonRoot);
   
   void SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg);

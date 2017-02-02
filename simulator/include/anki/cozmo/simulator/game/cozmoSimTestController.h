@@ -53,9 +53,12 @@ if (!(x)) { \
 // Start of if block which is entered if condition evaluates to true
 // until timeout seconds past the first time this line is reached
 // at which point it asserts on the condition.
-#define IF_CONDITION_WITH_TIMEOUT_ASSERT(cond, timeout) static double startTime##__LINE__ = GetSupervisor()->getTime(); if (IsTrueBeforeTimeout(cond, #cond, startTime##__LINE__, timeout, __FILE__, __FUNCTION__, __LINE__))
+#define COMBINE1(X,Y) X##Y  // helper macro
+#define COMBINE(X,Y) COMBINE1(X,Y)
   
-#define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double startTime##__LINE__ = GetSupervisor()->getTime(); if(AllTrueBeforeTimeout({__VA_ARGS__}, #__VA_ARGS__, startTime##__LINE__, timeout, __FILE__, __FUNCTION__, __LINE__))
+#define IF_CONDITION_WITH_TIMEOUT_ASSERT(cond, timeout) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); if (IsTrueBeforeTimeout(cond, #cond, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
+  
+#define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); if(AllTrueBeforeTimeout({__VA_ARGS__}, #__VA_ARGS__, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
   
 
   

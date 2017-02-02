@@ -76,7 +76,7 @@ bool GroundPlaneROI::GetVisibleGroundQuad(const Matrix_3x3f& H, s32 imgWidth, s3
     for(Quad::CornerName iCorner : {Quad::BottomLeft, Quad::BottomRight})
     {
       Point3f temp = invH * Point3f(imgQuad[iCorner].x(), imgQuad[iCorner].y(), 1.f);
-      ASSERT_NAMED(temp.z() > 0, "GroundPlaneROI.GetVisibleGroundQuad.BadProjectedZ");
+      DEV_ASSERT(temp.z() > 0, "GroundPlaneROI.GetVisibleGroundQuad.BadProjectedZ");
       const f32 divisor = 1.f / temp.z();
       groundQuad[iCorner].x() = temp.x() * divisor;
       groundQuad[iCorner].y() = temp.y() * divisor;
@@ -126,7 +126,7 @@ bool GroundPlaneROI::GetImageQuad(const Matrix_3x3f& H, s32 imgWidth, s32 imgHei
       iCorner != Quad::CornerName::NumCorners; ++iCorner)
   {
     Point3f temp = H * groundQuad[iCorner];
-    ASSERT_NAMED(temp.z() > 0.f, "Projected ground quad points should have z > 0.");
+    DEV_ASSERT(temp.z() > 0.f, "Projected ground quad points should have z > 0");
     const f32 divisor = 1.f / temp.z();
     imgQuad[iCorner].x() = temp.x() * divisor;
     imgQuad[iCorner].y() = temp.y() * divisor;
@@ -163,8 +163,7 @@ void GroundPlaneROI::GetOverheadImageHelper(const Vision::ImageBase<PixelType>& 
   {
     const Vision::Image& mask = GetOverheadMask();
     
-    ASSERT_NAMED(overheadImg.IsContinuous() && mask.IsContinuous(),
-                 "Overhead image and mask should be continous.");
+    DEV_ASSERT(overheadImg.IsContinuous() && mask.IsContinuous(), "Overhead image and mask should be continuous");
     
     // Zero out masked regions
     PixelType* imgData = overheadImg.GetDataPointer();

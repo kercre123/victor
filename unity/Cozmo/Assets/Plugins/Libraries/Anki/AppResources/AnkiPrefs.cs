@@ -25,7 +25,8 @@ public static class AnkiPrefs {
     SeenJumpPiece,
     HasSelectedCharacter,
     ShownTournamentGen1Vehicles,
-    ShownAddPlayer
+    ShownAddPlayer,
+    AndroidAutoConnectDisabled
   }
 
   public enum PrefType {
@@ -57,6 +58,7 @@ public static class AnkiPrefs {
     RegisterPref(Prefs.HasSelectedCharacter, "CharacterSelected", PrefType.Int);
     RegisterPref(Prefs.ShownTournamentGen1Vehicles, "DidShowTournamentGen1VehicleModal", PrefType.Int);
     RegisterPref(Prefs.ShownAddPlayer, "DidShowAddPlayer", PrefType.Int);
+    RegisterPref(Prefs.AndroidAutoConnectDisabled, "AndroidAutoConnectDISABLED", PrefType.Int);
 
     // verify that every pref was registered
     foreach (Prefs p in System.Enum.GetValues(typeof(Prefs))) {

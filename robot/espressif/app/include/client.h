@@ -47,6 +47,9 @@ bool clientConnected(void);
 /// Retrieve the approximate number of bytes available in the transmit queue
 sint16 clientQueueAvailable(void);
 
+/// Confirm that we have a RT connection with room for `bytes`
+bool clientCanTransmit(int bytes);
+
 /// Gets the count of send attempts that the client has dropped
 uint32 clientDropCount(void);
 

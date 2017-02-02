@@ -16,6 +16,20 @@ enum I2C_FLAGS {
   I2C_FORCE_START = 2,
 };
 
+// Rectangle data for fifo
+struct ScreenRect {
+  // This is the ESP data
+  uint8_t left;
+  uint8_t right;
+  uint8_t top;
+  uint8_t bottom;
+
+  // Internal state
+  unsigned int sent;         // To OLED
+  unsigned int received;     // From espressif
+  unsigned int total;        // Rectangle size
+};
+
 namespace Anki
 {
   namespace Cozmo

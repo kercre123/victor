@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToPickup_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToPickup_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include <vector>
@@ -21,7 +21,7 @@
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorReactToPickup : public IReactionaryBehavior
+class BehaviorReactToPickup : public IBehavior
 {
 private:
   
@@ -30,18 +30,16 @@ private:
   BehaviorReactToPickup(Robot& robot, const Json::Value& config);
   
 public:
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
 
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
-  virtual bool ShouldResumeLastBehavior() const override { return false; }
-  
 protected:
-  
-  virtual Result InitInternalReactionary(Robot& robot) override;
+  virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
-  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
 
+  
   void StartAnim(Robot& robot);
 
 private:

@@ -1,5 +1,5 @@
 {
-  "behaviorType": "PutDownBlock",
+  "behaviorClass": "PutDownBlock",
   "name": "PutDownBlock",
   "flatScore": 0.1,
   "behaviorGroups": [

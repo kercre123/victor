@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_SimpleBehaviorChooser_H__
 
 #include "iBehaviorChooser.h"
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -39,6 +39,7 @@ namespace Cozmo {
 class IBehavior;
 class MoodManager;
 class Robot;
+struct ScoredBehaviorInfo;
 template <typename Type> class AnkiEvent;
  
 // A simple implementation for choosing behaviors based on score only
@@ -74,21 +75,7 @@ public:
   // returns true if the given behavior is enabled, false if disabled
   bool IsBehaviorEnabled(const std::string& name) const;
   
-protected:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  struct BehaviorInfo {
-    BehaviorInfo() : _behaviorPtr(nullptr), _enabled(false) {}
-    BehaviorInfo(IBehavior* const ptr, const bool enabled) : _behaviorPtr(ptr), _enabled(enabled) {}
-  
-    // attributes
-    IBehavior* _behaviorPtr;  // pointer to the behavior in the factory
-    bool       _enabled;      // whether this behavior is enabled within the chooser
-  };
-  
+protected:  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -123,8 +110,8 @@ protected:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  using NameToBehaviorInfoMap = std::map<std::string, BehaviorInfo>;
-  NameToBehaviorInfoMap _nameToBehaviorInfoMap;
+  using NameToScoredBehaviorInfoMap = std::map<std::string, ScoredBehaviorInfo>;
+  NameToScoredBehaviorInfoMap _nameToScoredBehaviorInfoMap;
   
   Util::GraphEvaluator2d  _scoreBonusForCurrentBehavior;
   

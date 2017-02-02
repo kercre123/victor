@@ -42,6 +42,8 @@ public:
   
   virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) = 0;
   virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) = 0;
+  virtual void BroadcastDeferred(const ExternalInterface::MessageEngineToGame& message) = 0;
+  virtual void BroadcastDeferred(ExternalInterface::MessageEngineToGame&& message) = 0;
   
   template<typename T, typename ...Args>
   void BroadcastToGame(Args&& ...args)

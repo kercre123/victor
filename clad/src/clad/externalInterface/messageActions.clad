@@ -4,7 +4,6 @@
 // Copyright: Anki Inc (c) 2016
 
 #include "clad/types/actionTypes.clad"
-#include "clad/types/faceEnrollmentSequences.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/pathMotionProfile.clad"
@@ -77,15 +76,6 @@ message DriveStraight {
    float_32 speed_mmps,  // Speed should be positive
    float_32 dist_mm,     // Use +ve for forward, -ve for backward
    bool shouldPlayAnimation = 1
-}
-
-// EnrollNamedFace
-message EnrollNamedFace {
-   int_32 faceID,        // The ID of the face to enroll (0 for next one we see)
-   int_32 mergeIntoID=0, // The ID of an existing face to merge final enrollment into (0 for none, i.e. use faceID)
-   string name,
-   FaceEnrollmentSequence sequence,
-   bool saveToRobot=1    // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
 }
 
 // FlipBlock
@@ -221,6 +211,13 @@ message PlayAnimation_DEV {
   uint_8  robotId,
   uint_32 numLoops,
   string animationName
+}
+
+// PlayCubeAnimationTrigger
+message PlayCubeAnimationTrigger {
+  uint_8  robotID,
+  uint_32 objectID,
+  CubeAnimationTrigger trigger,
 }
 
 // PopAWheelie
@@ -527,7 +524,6 @@ union RobotActionUnion {
   DisplayProceduralFace     displayProceduralFace,
   DriveOffChargerContacts   driveOffChargerContacts,
   DriveStraight             driveStraight,
-  EnrollNamedFace           enrollNamedFace,
   FacePlant                 facePlant,
   FlipBlock                 flipBlock,
   GotoObject                gotoObject,
@@ -541,6 +537,7 @@ union RobotActionUnion {
   PlaceRelObject            placeRelObject,
   PlayAnimation             playAnimation,
   PlayAnimationTrigger      playAnimationTrigger,
+  PlayCubeAnimationTrigger  playCubeAnimationTrigger,
   PopAWheelie               popAWheelie,
   ReadToolCode              readToolCode,
   RealignWithObject         realignWithObject,

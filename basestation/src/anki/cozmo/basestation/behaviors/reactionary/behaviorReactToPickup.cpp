@@ -4,7 +4,7 @@
  * Author: Lee
  * Created: 08/26/15
  *
- * Description: Behavior for immediately responding being picked up.
+ * Description: Behavior for immediately responding to being picked up.
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -16,10 +16,10 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/petWorld.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
 
@@ -34,24 +34,19 @@ CONSOLE_VAR(f32, kMaxTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 6.0f)
 CONSOLE_VAR(f32, kRepeatAnimMultIncrease, "Behavior.ReactToPickup", 0.33f);
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToPickup");
+}
 
-}
   
-bool BehaviorReactToPickup::ShouldComputationallySwitch(const Robot& robot)
+bool BehaviorReactToPickup::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
-  return robot.GetOffTreadsState() == OffTreadsState::InAir;
-}
-  
-bool BehaviorReactToPickup::IsRunnableInternalReactionary(const Robot& robot) const
-{
-  return robot.GetOffTreadsState() == OffTreadsState::InAir;
+  return true;
 }
   
 
-Result BehaviorReactToPickup::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToPickup::InitInternal(Robot& robot)
 {
   _repeatAnimatingMultiplier = 1;
   
@@ -73,16 +68,19 @@ void BehaviorReactToPickup::StartAnim(Robot& robot)
     robot.SetCarriedObjectAsUnattached(clearCarriedObjects);
   }
   
+  // Don't respond to people or pets during hard spark
+  const BehaviorManager& behaviorMgr = robot.GetBehaviorManager();
+  const bool isHardSpark = behaviorMgr.IsActiveSparkHard();
+  
   // If we're seeing a human or pet face, react to that, otherwise, react to being picked up
   const TimeStamp_t lastImageTimeStamp = robot.GetLastImageTimeStamp();
   const TimeStamp_t kObsFaceTimeWindow_ms = 500;
   const TimeStamp_t obsTimeCutoff = (lastImageTimeStamp > kObsFaceTimeWindow_ms ? lastImageTimeStamp - kObsFaceTimeWindow_ms : 0);
-  
+
   auto faceIDsObserved = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(obsTimeCutoff);
   
-  
   auto const kTracksToLock = Util::EnumToUnderlying(AnimTrackFlag::BODY_TRACK);
-  if(!faceIDsObserved.empty())
+  if(!faceIDsObserved.empty() && !isHardSpark)
   {
     // Get name of first named face, if there is one
     std::string name;
@@ -113,7 +111,7 @@ void BehaviorReactToPickup::StartAnim(Robot& robot)
   else
   {
     auto currentPets = robot.GetPetWorld().GetAllKnownPets();
-    if(!currentPets.empty())
+    if(!currentPets.empty() && !isHardSpark)
     {
       AnimationTrigger animTrigger = AnimationTrigger::PetDetectionShort_Dog;
       if(Vision::PetType::Cat == currentPets.begin()->second.GetType())
@@ -157,8 +155,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
       if (robot.GetCliffDataRaw() < CLIFF_SENSOR_DROP_LEVEL) {
         StartAnim(robot);
       } else {
-        PRINT_NAMED_EVENT("BehaviorReactToPickup.CalibratingHead",
-                          "%d", robot.GetCliffDataRaw());
+        LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d", robot.GetCliffDataRaw());
         StartActing(new CalibrateMotorAction(robot, true, false));
       }
     }
@@ -167,7 +164,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
   return Status::Running;
 }
   
-void BehaviorReactToPickup::StopInternalReactionary(Robot& robot)
+void BehaviorReactToPickup::StopInternal(Robot& robot)
 {
 }
 

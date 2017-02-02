@@ -48,11 +48,11 @@ NavMeshQuadTreeTypes::ENodeContentType ConvertContentType(NavMemoryMapTypes::ECo
     case EContentType::Cliff:                 { nodeContentType = ENodeContentType::Cliff;                 break; }
     case EContentType::InterestingEdge:       { nodeContentType = ENodeContentType::InterestingEdge;       break; }
     case EContentType::NotInterestingEdge:    { nodeContentType = ENodeContentType::NotInterestingEdge;    break; }
-    case EContentType::_Count:                { ASSERT_NAMED(false, "NavMeshQuadTreeTypes.ConvertContentType.InvalidType._Count"); break; }
+    case EContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeTypes.ConvertContentType.InvalidType._Count"); break; }
   }
   
-  ASSERT_NAMED(nodeContentType != ENodeContentType::Invalid,
-               "NavMeshQuadTreeTypes.ConvertContentType.InvalidNodeContentType");
+  DEV_ASSERT(nodeContentType != ENodeContentType::Invalid,
+             "NavMeshQuadTreeTypes.ConvertContentType.InvalidNodeContentType");
   
   return nodeContentType;
 }
@@ -63,7 +63,7 @@ NavMeshQuadTreeTypes::ENodeContentTypePackedType ConvertContentArrayToFlags(cons
   using namespace NavMemoryMapTypes;
   using namespace NavMeshQuadTreeTypes;
   
-  ASSERT_NAMED(IsSequentialArray(array), "NavMeshQuadTreeTypes.ConvertContentArrayToFlags.InvalidArray");
+  DEV_ASSERT(IsSequentialArray(array), "NavMeshQuadTreeTypes.ConvertContentArrayToFlags.InvalidArray");
 
   ENodeContentTypePackedType contentTypeFlags = 0;
   for( const auto& entry : array )
@@ -91,8 +91,8 @@ NavMemoryMapQuadTree::NavMemoryMapQuadTree(VizManager* vizManager)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMemoryMapQuadTree::Merge(const INavMemoryMap* other, const Pose3d& transform)
 {
-  ASSERT_NAMED(other != nullptr, "NavMemoryMapQuadTree.Merge.NullMap");
-  ASSERT_NAMED(dynamic_cast<const NavMemoryMapQuadTree*>(other), "NavMemoryMapQuadTree.Merge.UnsupportedClass");
+  DEV_ASSERT(other != nullptr, "NavMemoryMapQuadTree.Merge.NullMap");
+  DEV_ASSERT(dynamic_cast<const NavMemoryMapQuadTree*>(other), "NavMemoryMapQuadTree.Merge.UnsupportedClass");
   const NavMemoryMapQuadTree* otherMap = static_cast<const NavMemoryMapQuadTree*>(other);
   _navMesh.Merge( otherMap->_navMesh, transform );
 }

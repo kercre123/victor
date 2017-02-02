@@ -43,7 +43,7 @@ TagList = {
     0xC0000001 : "NVEntry_PrePlaypenCentroids",
     0xC0000000 : "NVEntry_IMUAverages"
 }
-Segments = {'f': 0xde000, '1': 0x1c000c, '2':0x1de000}
+Segments = {'f': 0xde000, '1': 0x1c000c, '2':0x1de000, '*':0x0000}
 SegSize = 0x1e000
 
 UNREADABLE = "????????"
@@ -88,7 +88,7 @@ def make_dump_directory(filename):
 parser = argparse.ArgumentParser(description='Extract tags from Espressif NVStorage')
 parser.add_argument('--dump', help='write the tags to disk', action='store_true')
 parser.add_argument('filename', help='the binary datafile')
-parser.add_argument('segment', help='storage segment', nargs='?', choices=['f','1','2'], default='f')
+parser.add_argument('segment', help='storage segment', nargs='?', choices=['f','1','2','*'], default='f')
 args = parser.parse_args()
 
 START = Segments[args.segment]

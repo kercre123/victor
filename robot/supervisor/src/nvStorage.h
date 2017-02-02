@@ -13,10 +13,15 @@
 #define NV_STORAGE_END_ADDRESS   (ESP_INIT_DATA_SECTOR * SECTOR_SIZE)
 #define NV_STORAGE_CHUNK_SIZE    (1024)
 
+#define FACTORY_NV_STORAGE_START_ADDRESS (FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE)
+#define FACTORY_NV_STORAGE_END_ADDRESS   (FIXTURE_STORAGE_SECTOR * SECTOR_SIZE)
+
+
 namespace Anki {
   namespace Cozmo {
     namespace NVStorage {
-      
+
+       
       /** Callback for NV operation completes
        */
       typedef void (*NVOperationCallback)(NVOpResult&);
@@ -38,4 +43,8 @@ namespace Anki {
   }
 }
 
+extern "C" void NVStorage_ReadBirthCertificate(void);
+extern "C" bool hasBirthCertificate(void);
 #endif
+
+

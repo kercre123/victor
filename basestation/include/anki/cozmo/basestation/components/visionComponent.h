@@ -65,13 +65,8 @@ struct DockingErrorSignal;
   class VisionComponent : public Util::noncopyable
   {
   public:
-    
-    enum class RunMode : u8 {
-      Synchronous,
-      Asynchronous
-    };
-    
-    VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context);
+  
+    VisionComponent(Robot& robot, const CozmoContext* context);
     virtual ~VisionComponent();
     
     Result Init(const Json::Value& config);
@@ -79,7 +74,8 @@ struct DockingErrorSignal;
     // SetNextImage does nothing until enabled
     void Enable(bool enable) { _enabled = enable; }
     
-    void SetRunMode(RunMode mode);
+    // Set whether vision system runs synchronously or on its own thread
+    void SetIsSynchronous(bool isSync);
 
     // Calibration must be provided before Update() will run
     void SetCameraCalibration(Vision::CameraCalibration& camCalib);
@@ -274,6 +270,14 @@ struct DockingErrorSignal;
     template<typename T>
     void HandleMessage(const T& msg);
     
+    void SetAndDisableAutoExposure(u16 exposure_ms, f32 gain);
+    void EnableAutoExposure(bool enable) { _enableAutoExposure = enable; }
+    
+    s32 GetMinCameraExposureTime_ms() const;
+    s32 GetMaxCameraExposureTime_ms() const;
+    f32 GetMinCameraGain() const;
+    f32 GetMaxCameraGain() const;
+    
   protected:
     
     bool _isInitialized = false;
@@ -292,8 +296,7 @@ struct DockingErrorSignal;
     bool                      _isCamCalibSet = false;
     bool                      _enabled = false;
     
-    RunMode _runMode = RunMode::Asynchronous;
-    
+    bool   _isSynchronous = false;
     bool   _running = false;
     bool   _paused  = false;
     std::mutex _lock;
@@ -360,6 +363,8 @@ struct DockingErrorSignal;
     // message. This runs on the main thread and should only be used for factory tests.
     // Is run automatically when _doFactoryDotTest=true and sets it back to false when done.
     bool _doFactoryDotTest = false;
+    
+    bool _enableAutoExposure = true;
     
   }; // class VisionComponent
   

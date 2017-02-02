@@ -137,8 +137,7 @@ namespace Anki {
       _targetPose.SetParent(_robot.GetWorldOrigin());
       _initialPose = _robot.GetPose();
       
-      ASSERT_NAMED(_robot.GetPose().GetParent() == _robot.GetWorldOrigin(),
-                   "TurnInPlaceAction.Init.RobotOriginMismatch");
+      DEV_ASSERT(_robot.GetPose().GetParent() == _robot.GetWorldOrigin(), "TurnInPlaceAction.Init.RobotOriginMismatch");
       
       _initialAngle = _initialPose.GetRotation().GetAngleAroundZaxis();
       _currentAngle = _initialAngle;
@@ -462,7 +461,7 @@ namespace Anki {
         // internally. Yes, we could have just double-negated if the caller passed in
         // a negative speed already, but this avoids confusion on caller's side about
         // which signs to use and the documentation says speed should always be positive.
-        ASSERT_NAMED(_speed_mmps >= 0.f, "DriveStraightAction.Constructor.NegativeSpeed");
+        DEV_ASSERT(_speed_mmps >= 0.f, "DriveStraightAction.Constructor.NegativeSpeed");
         _speed_mmps = -_speed_mmps;
       }
       
@@ -661,7 +660,7 @@ namespace Anki {
       switch(preset) {
         case Preset::GROUND_PLANE_VISIBLE: { return DEG_TO_RAD(-15.0f); }
       }
-      ASSERT_NAMED(false, "MoveHeadToAngleAction.NotAPreset");
+      DEV_ASSERT(false, "MoveHeadToAngleAction.NotAPreset");
       return -1.0f;
     }
     
@@ -670,7 +669,7 @@ namespace Anki {
       switch(preset) {
         case Preset::GROUND_PLANE_VISIBLE: { return "GroundPlaneVisible"; }
       }
-      ASSERT_NAMED(false, "MoveHeadToAngleAction.NotAPreset");
+      DEV_ASSERT(false, "MoveHeadToAngleAction.NotAPreset");
       return "ERROR";
     }
     
@@ -1156,20 +1155,13 @@ namespace Anki {
                                        bool headTrackWhenDone)
     : TurnTowardsPoseAction(robot, maxTurnAngle)
     , _facePoseCompoundActionDone(false)
+    , _visuallyVerifyWhenDone(visuallyVerifyWhenDone)
     , _objectID(objectID)
     , _whichCode(whichCode)
     , _headTrackWhenDone(headTrackWhenDone)
     {
-      SetName("TurnTowardsObject");
+      SetName("TurnTowardsObject" + std::to_string(_objectID.GetValue()));
       SetType(RobotActionType::TURN_TOWARDS_OBJECT);
-
-      if(visuallyVerifyWhenDone) {
-        _visuallyVerifyAction = new VisuallyVerifyObjectAction(robot, objectID, whichCode);
-        
-        // Disable completion signals since this is inside another action
-        _visuallyVerifyAction->ShouldEmitCompletionSignal(false);
-        _visuallyVerifyAction->ShouldSuppressTrackLocking(true);
-      }
     }
     
     TurnTowardsObjectAction::~TurnTowardsObjectAction()
@@ -1183,34 +1175,63 @@ namespace Anki {
     void TurnTowardsObjectAction::UseCustomObject(ObservableObject* objectPtr)
     {
       if( _objectID.IsSet() ) {
-        PRINT_NAMED_WARNING("TurnTowardsObjectAction.UseCustomObject.CustomObjectOverwiteId",
+        PRINT_NAMED_WARNING("TurnTowardsObjectAction.UseCustomObject.CustomObjectOverwriteId",
                             "object id was already set to %d, but now setting it to use a custom object ptr",
                             _objectID.GetValue());
         _objectID.UnSet();
       }
+      
       _objectPtr = objectPtr;
+      
+      SetName("TurnTowardsCustomObject" + std::to_string(_objectPtr->GetID().GetValue()));
+      
+      if(!_objectPtr->GetID().IsSet())
+      {
+        PRINT_CH_INFO("Actions", "TurnTowardsObjectAction.UseCustomObject.NoCustomID", "");
+      }
     }
 
     ActionResult TurnTowardsObjectAction::Init()
     {
-
-      if( _objectID.IsSet() ) {
-        _objectPtr = _robot.GetBlockWorld().GetObjectByID(_objectID);
-        if(_objectPtr == nullptr) {
-          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectNotFound",
-                            "Object with ID=%d no longer exists in the world.",
-                            _objectID.GetValue());
+      const bool usingCustomObject = !_objectID.IsSet();
+      
+      if(usingCustomObject)
+      {
+        if(nullptr == _objectPtr)
+        {
+          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NullCustomObject", "");
           return ActionResult::BAD_OBJECT;
         }
+        
+        // A custom object's pose must be in the robot's origin to turn towards it
+        const Pose3d* objectOrigin = &_objectPtr->GetPose().FindOrigin();
+        const Pose3d* robotOrigin  = _robot.GetWorldOrigin();
+        if(objectOrigin != robotOrigin) {
+          PRINT_NAMED_WARNING("TurnTowardsObjectAction.Init.CustomObjectNotInRobotFrame",
+                              "Custom %s object %d in origin:%s vs. robot in origin:%s",
+                              EnumToString(_objectPtr->GetType()),
+                              _objectPtr->GetID().GetValue(),
+                              objectOrigin->GetName().c_str(),
+                              robotOrigin->GetName().c_str());
+          return ActionResult::BAD_POSE;
+        }
+        
+        if(_visuallyVerifyWhenDone)
+        {
+          PRINT_NAMED_WARNING("TurnTowardsObjectAction.Init.CannotVisuallyVerifyCustomObject",
+                              "Disabling visual verification");
+          _visuallyVerifyWhenDone = false;
+        }
       }
-      // NOTE: in the case of a retry, init will be called multiple times, so it is possible that _objectID
-      // was originally set, and then _objectPtr was set the first time init was called, and they are both
-      // valid at this point. This note is just here so no one tries to add an assert against like that (like
-      // I did the first time)
-      if( nullptr == _objectPtr ) {
-        PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.Init.NullObject",
-                      "No valid object ptr or ID");
-        return ActionResult::BAD_OBJECT;
+      else
+      {
+        _objectPtr = _robot.GetBlockWorld().GetObjectByID(_objectID);
+        if(nullptr == _objectPtr) {
+          PRINT_NAMED_WARNING("TurnTowardsObjectAction.Init.ObjectNotFound",
+                              "Object with ID=%d no longer exists in the world.",
+                              _objectID.GetValue());
+          return ActionResult::BAD_OBJECT;
+        }
       }
       
       Pose3d objectPoseWrtRobot;
@@ -1225,10 +1246,13 @@ namespace Anki {
         const Result poseResult = _objectPtr->GetClosestMarkerPose(_robot.GetPose(), true, objectPoseWrtRobot);
         
         if( RESULT_OK != poseResult ) {
+          // This should not occur because we checked above that the object is in the
+          // same coordinate frame as the robot
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoValidPose",
-                            "Could not get a valid closest marker pose of object %d",
-                            _objectID.GetValue());
-          return ActionResult::BAD_OBJECT;
+                            "Could not get a valid closest marker pose of %sobject %d",
+                            usingCustomObject ? "custom " : "",
+                            _objectPtr->GetID().GetValue());
+          return ActionResult::BAD_MARKER;
         }
       } else {
         // Use the closest marker with the specified code:
@@ -1236,43 +1260,39 @@ namespace Anki {
         
         if(markers.empty()) {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoMarkersWithCode",
-                            "Object %d does not have any markers with code %d.",
-                            _objectID.GetValue(), _whichCode);
+                            "%sbject %d does not have any markers with code %d.",
+                            usingCustomObject ? "Custom o" : "O",
+                            _objectPtr->GetID().GetValue(), _whichCode);
           return ActionResult::BAD_MARKER;
         }
         
         Vision::KnownMarker* closestMarker = nullptr;
-        if(markers.size() == 1) {
-          closestMarker = markers.front();
-          if(false == closestMarker->GetPose().GetWithRespectTo(_robot.GetPose(), objectPoseWrtRobot)) {
+        
+        f32 closestDist = std::numeric_limits<f32>::max();
+        Pose3d markerPoseWrtRobot;
+        for(auto marker : markers) {
+          if(false == marker->GetPose().GetWithRespectTo(_robot.GetPose(), markerPoseWrtRobot)) {
             PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.MarkerOriginProblem",
-                              "Could not get pose of marker with code %d of object %d "
-                              "w.r.t. robot pose.", _whichCode, _objectID.GetValue() );
+                              "Could not get pose of marker with code %d of %sobject %d "
+                              "w.r.t. robot pose.", _whichCode,
+                              usingCustomObject ? "custom " : "",
+                              _objectPtr->GetID().GetValue());
             return ActionResult::BAD_POSE;
           }
-        } else {
-          f32 closestDist = std::numeric_limits<f32>::max();
-          Pose3d markerPoseWrtRobot;
-          for(auto marker : markers) {
-            if(false == marker->GetPose().GetWithRespectTo(_robot.GetPose(), markerPoseWrtRobot)) {
-              PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.MarkerOriginProblem",
-                                "Could not get pose of marker with code %d of object %d "
-                                "w.r.t. robot pose.", _whichCode, _objectID.GetValue() );
-              return ActionResult::BAD_POSE;
-            }
-            
-            const f32 currentDist = markerPoseWrtRobot.GetTranslation().Length();
-            if(currentDist < closestDist) {
-              closestDist = currentDist;
-              closestMarker = marker;
-              objectPoseWrtRobot = markerPoseWrtRobot;
-            }
+          
+          const f32 currentDist = markerPoseWrtRobot.GetTranslation().Length();
+          if(currentDist < closestDist) {
+            closestDist = currentDist;
+            closestMarker = marker;
+            objectPoseWrtRobot = markerPoseWrtRobot;
           }
         }
         
         if(closestMarker == nullptr) {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoClosestMarker",
-                            "No closest marker found for object %d.", _objectID.GetValue());
+                            "No closest marker found for %sobject %d.",
+                            usingCustomObject ? "custom " : "",
+                            _objectPtr->GetID().GetValue());
           return ActionResult::BAD_MARKER;
         }
       }
@@ -1310,10 +1330,21 @@ namespace Anki {
             SetMaxPanSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
             SetPanTolerance(_refinedTurnAngleTol_rad);
             
+            PRINT_CH_INFO("Actions", "TurnTowardsObjectAction.CheckIfDone.RefiningTurn",
+                          "Refining turn towards %sobject %d",
+                          _objectID.IsSet() ? "" : "custom ",
+                          _objectPtr->GetID().GetValue());
+            
             return ActionResult::RUNNING;
           }
-          else if(nullptr != _visuallyVerifyAction)
+          else if(_visuallyVerifyWhenDone)
           {
+            _visuallyVerifyAction = new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode);
+            
+            // Disable completion signals since this is inside another action
+            _visuallyVerifyAction->ShouldEmitCompletionSignal(false);
+            _visuallyVerifyAction->ShouldSuppressTrackLocking(true);
+            
             // Go ahead and do a first tick of visual verification's Update, to
             // get it initialized
             ActionResult verificationResult = _visuallyVerifyAction->Update();
@@ -1340,7 +1371,8 @@ namespace Anki {
           // TODO:(bn) hang action here for consistency?
         }
         else {
-          _robot.GetActionList().QueueActionNext(new TrackObjectAction(_robot, _objectID));
+          _robot.GetActionList().QueueAction(QueueActionPosition::NEXT,
+                                             new TrackObjectAction(_robot, _objectID));
         }
       }
       return ActionResult::SUCCESS;
@@ -1833,7 +1865,7 @@ namespace Anki {
               PRINT_NAMED_DEBUG("TurnTowardsFaceAction.CheckIfDone.NoFaceObservedYet",
                                 "Will wait no more than %d frames",
                                 _maxFramesToWait);
-              ASSERT_NAMED(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
+              DEV_ASSERT(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
               SetAction(new WaitForImagesAction(_robot, _maxFramesToWait, VisionMode::DetectingFaces));
               // TODO:(bn) parallel action with an animation here? This will let us span the gap a bit better
               // and buy us more time. Skipping for now
@@ -2005,10 +2037,10 @@ namespace Anki {
       
       auto imageProcLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
       {
-        ASSERT_NAMED(ExternalInterface::MessageEngineToGameTag::RobotProcessedImage == msg.GetData().GetTag(),
-                     "WaitForImagesAction.MessageTypeNotHandled");
+        DEV_ASSERT(ExternalInterface::MessageEngineToGameTag::RobotProcessedImage == msg.GetData().GetTag(),
+                   "WaitForImagesAction.MessageTypeNotHandled");
         const ExternalInterface::RobotProcessedImage& imageMsg = msg.GetData().Get_RobotProcessedImage();
-        if(imageMsg.timestamp > _afterTimeStamp)
+        if (imageMsg.timestamp > _afterTimeStamp)
         {
           if (VisionMode::Count == _visionMode)
           {

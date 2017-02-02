@@ -14,7 +14,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/messageHelpers.h"
@@ -42,12 +42,24 @@
 namespace Anki {
 namespace Cozmo {
 
+  
+namespace{
 static const char* kScoreBonusForCurrentBehaviorKey = "scoreBonusForCurrentBehavior";
 static const char* kBehaviorsInChooserKey = "behaviorGroups";
 static const char* kDisabledGroupsKey     = "disabledGroups";
 static const char* kEnabledGroupsKey      = "enabledGroups";
 static const char* kDisabledBehaviorsKey  = "disabledBehaviors";
 static const char* kEnabledBehaviorsKey   = "enabledBehaviors";
+}
+  
+struct ScoredBehaviorInfo {
+  ScoredBehaviorInfo() : _behaviorPtr(nullptr), _enabled(false) {}
+  ScoredBehaviorInfo(IBehavior* const ptr, const bool enabled) : _behaviorPtr(ptr), _enabled(enabled) {}
+  
+  // attributes
+  IBehavior* _behaviorPtr;  // pointer to the behavior in the factory
+  bool       _enabled;      // whether this behavior is enabled within the chooser
+};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SimpleBehaviorChooser::SimpleBehaviorChooser(Robot& robot, const Json::Value& config)
@@ -69,7 +81,7 @@ Result SimpleBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& 
   ClearBehaviors();
 
   // grab none behavior
-  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorType::NoneBehavior, robot, Json::Value());
+  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorClass::NoneBehavior, robot, Json::Value());
 
   // add behaviors to this chooser
   AddFactoryBehaviorsFromGroupConfig(robot, config[kBehaviorsInChooserKey]);
@@ -105,9 +117,9 @@ Result SimpleBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SimpleBehaviorChooser::SetAllBehaviorsEnabled(bool newVal)
 {
-  for (auto& kv : _nameToBehaviorInfoMap)
+  for (auto& kv : _nameToScoredBehaviorInfoMap)
   {
-    BehaviorInfo& behaviorInfo = kv.second;
+    ScoredBehaviorInfo& behaviorInfo = kv.second;
     behaviorInfo._enabled = newVal;
   }
 }
@@ -123,9 +135,9 @@ void SimpleBehaviorChooser::SetBehaviorGroupEnabled(BehaviorGroup behaviorGroup,
   //                   BehaviorGroupToString(behaviorGroup),
   //                   newVal);
 
-  for (auto& kv : _nameToBehaviorInfoMap)
+  for (auto& kv : _nameToScoredBehaviorInfoMap)
   {
-    BehaviorInfo& behaviorInfo = kv.second;
+    ScoredBehaviorInfo& behaviorInfo = kv.second;
     const bool affected = behaviorInfo._behaviorPtr->MatchesAnyBehaviorGroups(behaviorGroupFlags);
     if ( affected ) {
       behaviorInfo._enabled = newVal;
@@ -136,10 +148,10 @@ void SimpleBehaviorChooser::SetBehaviorGroupEnabled(BehaviorGroup behaviorGroup,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SimpleBehaviorChooser::SetBehaviorEnabled(const std::string& behaviorName, bool newVal)
 {
-  const auto& it = _nameToBehaviorInfoMap.find(behaviorName);
-  if (it != _nameToBehaviorInfoMap.end())
+  const auto& it = _nameToScoredBehaviorInfoMap.find(behaviorName);
+  if (it != _nameToScoredBehaviorInfoMap.end())
   {
-    BehaviorInfo& behaviorInfo = it->second;
+    ScoredBehaviorInfo& behaviorInfo = it->second;
     behaviorInfo._enabled = newVal;
     return true;
   }
@@ -169,7 +181,7 @@ void SimpleBehaviorChooser::ReadEnabledBehaviorsConfiguration(const Json::Value&
 std::vector<std::string> SimpleBehaviorChooser::GetEnabledBehaviorList()
 {
   std::vector<std::string> behaviorList;
-  for(const auto& entry : _nameToBehaviorInfoMap){
+  for(const auto& entry : _nameToScoredBehaviorInfoMap){
     behaviorList.push_back(entry.first);
   }
   return behaviorList;
@@ -194,9 +206,9 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
   
   IBehavior* bestBehavior = nullptr;
   float bestScore = 0.0f;
-  for (const auto& kv : _nameToBehaviorInfoMap)
+  for (const auto& kv : _nameToScoredBehaviorInfoMap)
   {
-    const BehaviorInfo& behaviorInfo = kv.second;
+    const ScoredBehaviorInfo& behaviorInfo = kv.second;
     if (!behaviorInfo._enabled)
     {
       continue;
@@ -303,22 +315,23 @@ void SimpleBehaviorChooser::ClearBehaviors()
   // behaviors should actually be smart pointers, since the factory can be destroyed before choosers
 
   // clear behavior none
-  ASSERT_NAMED((nullptr == _behaviorNone) || (_behaviorNone->IsOwnedByFactory()),
-    "SimpleBehaviorChooser.ClearBehaviors.BadNoneBehavior");
+  DEV_ASSERT((nullptr == _behaviorNone) || (_behaviorNone->IsOwnedByFactory()),
+             "SimpleBehaviorChooser.ClearBehaviors.BadNoneBehavior");
   _behaviorNone = nullptr;
   
   // clear all others
   #if ANKI_DEVELOPER_CODE
   {
-    for( const auto& infoPair : _nameToBehaviorInfoMap )
+    for( const auto& infoPair : _nameToScoredBehaviorInfoMap )
     {
-      ASSERT_NAMED((nullptr != infoPair.second._behaviorPtr) && (infoPair.second._behaviorPtr->IsOwnedByFactory()),
-        "SimpleBehaviorChooser.ClearBehaviors.BehaviorNotOwnedByFactory");
+      DEV_ASSERT((nullptr != infoPair.second._behaviorPtr) && (infoPair.second._behaviorPtr->IsOwnedByFactory()),
+                 "SimpleBehaviorChooser.ClearBehaviors.BehaviorNotOwnedByFactory");
     }
   }
   #endif
-  _nameToBehaviorInfoMap.clear();
+  _nameToScoredBehaviorInfoMap.clear();
 }
+  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SimpleBehaviorChooser::AddFactoryBehaviorsFromGroupConfig(Robot& robot, const Json::Value& groupList)
@@ -331,8 +344,8 @@ void SimpleBehaviorChooser::AddFactoryBehaviorsFromGroupConfig(Robot& robot, con
   {
     const char* groupName = groupNameIt->asCString();
     const BehaviorGroup behaviorGroup = BehaviorGroupFromString(groupName);
-    ASSERT_NAMED(behaviorGroup != BehaviorGroup::Count,
-      "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.BadGroupInConfig");
+    DEV_ASSERT(behaviorGroup != BehaviorGroup::Count,
+               "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.BadGroupInConfig");
     behaviorGroupFlags.SetBitFlag(behaviorGroup, true);
     
     // log
@@ -349,10 +362,10 @@ void SimpleBehaviorChooser::AddFactoryBehaviorsFromGroupConfig(Robot& robot, con
     for( const auto& factoryMapPair : behaviorFactory.GetBehaviorMap() )
     {
       IBehavior* const behaviorToAdd = factoryMapPair.second;
-      ASSERT_NAMED(nullptr != behaviorToAdd,
-        "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.NullBehavior");
-      ASSERT_NAMED(behaviorToAdd->GetName() == factoryMapPair.first,
-        "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.NameInFactoryAndBehaviorNameMismatch");
+      DEV_ASSERT(nullptr != behaviorToAdd,
+                 "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.NullBehavior");
+      DEV_ASSERT(behaviorToAdd->GetName() == factoryMapPair.first,
+                 "SimpleBehaviorChooser.AddFactoryBehaviorsFromGroupConfig.NameInFactoryAndBehaviorNameMismatch");
       
       // check if this behavior has any of the groups defined for this chooser
       const bool shouldAddBehavior = behaviorToAdd->MatchesAnyBehaviorGroups(behaviorGroupFlags);
@@ -364,19 +377,20 @@ void SimpleBehaviorChooser::AddFactoryBehaviorsFromGroupConfig(Robot& robot, con
   }
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result SimpleBehaviorChooser::TryAddBehavior(IBehavior* behavior)
 {
   // try to add by behavior name
   const std::string& behaviorName = behavior->GetName();
   
-  const auto insertResult = _nameToBehaviorInfoMap.insert( std::make_pair(behaviorName, BehaviorInfo(behavior, true)) );
+  const auto insertResult = _nameToScoredBehaviorInfoMap.insert( std::make_pair(behaviorName, ScoredBehaviorInfo(behavior, true)) );
   const bool addedNewEntry = insertResult.second;
   if (!addedNewEntry)
   {
     // if we have an entry in our map under this name, it has to match the pointer in the factory, otherwise
     // who the hell are we pointing to?
-    ASSERT_NAMED( insertResult.first->second._behaviorPtr == behavior,
+    DEV_ASSERT(insertResult.first->second._behaviorPtr == behavior,
       "SimpleBehaviorChooser.TryAddBehavior.DuplicateNameDifferentPointer" );
   }
   else
@@ -397,8 +411,8 @@ bool SimpleBehaviorChooser::IsBehaviorEnabled(const std::string& name) const
   bool enabled = false;
 
   // check in table
-  const auto match = _nameToBehaviorInfoMap.find(name);
-  if ( match != _nameToBehaviorInfoMap.end() )
+  const auto match = _nameToScoredBehaviorInfoMap.find(name);
+  if ( match != _nameToScoredBehaviorInfoMap.end() )
   {
     enabled = match->second._enabled;
   }
@@ -421,7 +435,7 @@ void SimpleBehaviorChooser::SetBehaviorEnabledFromGroupConfig(const Json::Value&
   {
     const char* groupName = groupNameIt->asCString();
     const BehaviorGroup behaviorGroup = BehaviorGroupFromString(groupName);
-    ASSERT_NAMED(behaviorGroup != BehaviorGroup::Count,
+    DEV_ASSERT(behaviorGroup != BehaviorGroup::Count,
       "SimpleBehaviorChooser.SetBehaviorEnabledFromGroupConfig.BadGroupInConfig");
     behaviorGroupFlags.SetBitFlag(behaviorGroup, true);
     
@@ -434,9 +448,9 @@ void SimpleBehaviorChooser::SetBehaviorEnabledFromGroupConfig(const Json::Value&
   if ( behaviorGroupFlags.AreAnyFlagsSet() )
   {
     // iterate our behaviors and set enabled/disabled if they match the group
-    for( auto& mapPair : _nameToBehaviorInfoMap )
+    for( auto& mapPair : _nameToScoredBehaviorInfoMap )
     {
-      BehaviorInfo& behaviorInfo = mapPair.second;
+      ScoredBehaviorInfo& behaviorInfo = mapPair.second;
       const bool affected = behaviorInfo._behaviorPtr->MatchesAnyBehaviorGroups( behaviorGroupFlags );
       if ( affected )
       {
@@ -460,10 +474,10 @@ void SimpleBehaviorChooser::SetBehaviorEnabledFromBehaviorConfig(const Json::Val
     const char* behaviorName = behaviorNameIt->asCString();
     
     // if we have it, change
-    const auto match = _nameToBehaviorInfoMap.find(behaviorName);
-    if ( match != _nameToBehaviorInfoMap.end() )
+    const auto match = _nameToScoredBehaviorInfoMap.find(behaviorName);
+    if ( match != _nameToScoredBehaviorInfoMap.end() )
     {
-      BehaviorInfo& behaviorInfo = match->second;
+      ScoredBehaviorInfo& behaviorInfo = match->second;
       behaviorInfo._enabled = enable;
       
       // log
@@ -477,8 +491,8 @@ void SimpleBehaviorChooser::SetBehaviorEnabledFromBehaviorConfig(const Json::Val
 IBehavior* SimpleBehaviorChooser::FindBehaviorInTableByName(const std::string& name)
 {
   IBehavior* ret = nullptr;
-  const auto& matchIt = _nameToBehaviorInfoMap.find(name);
-  if ( matchIt != _nameToBehaviorInfoMap.end() ) {
+  const auto& matchIt = _nameToScoredBehaviorInfoMap.find(name);
+  if ( matchIt != _nameToScoredBehaviorInfoMap.end() ) {
     ret = matchIt->second._behaviorPtr;
   }
   return ret;

@@ -61,11 +61,11 @@ IFormattedLoggerProvider::IFormattedLoggerProvider()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IFormattedLoggerProvider::SetMinLogLevel(LogLevel logLevel)
 {
-  ASSERT_NAMED(logLevel < _logLevelEnabledFlags.size(), "IFormattedLoggerProvider.SetMinLogLevel.InvalidLogLevel");
-  for( int i=0; i<logLevel; ++i ) {
+  DEV_ASSERT(logLevel < _logLevelEnabledFlags.size(), "IFormattedLoggerProvider.SetMinLogLevel.InvalidLogLevel");
+  for (int i = 0; i < logLevel; ++i) {
     _logLevelEnabledFlags[i] = false;
   }
-  for( int i=logLevel; i<_LOG_LEVEL_COUNT; ++i ) {
+  for (int i = logLevel; i < _LOG_LEVEL_COUNT; ++i) {
     _logLevelEnabledFlags[i] = true;
   }
 }
@@ -73,7 +73,7 @@ void IFormattedLoggerProvider::SetMinLogLevel(LogLevel logLevel)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IFormattedLoggerProvider::SetLogLevelEnabled(LogLevel logLevel, bool enabled)
 {
-  ASSERT_NAMED(logLevel < _logLevelEnabledFlags.size(), "IFormattedLoggerProvider.SetLogLevelEnabled.InvalidLogLevel");
+  DEV_ASSERT(logLevel < _logLevelEnabledFlags.size(), "IFormattedLoggerProvider.SetLogLevelEnabled.InvalidLogLevel");
   _logLevelEnabledFlags[logLevel] = enabled;
 }
 
@@ -85,13 +85,13 @@ void IFormattedLoggerProvider::ParseLogLevelSettings(const Json::Value& config)
     for( const auto& logLevelInfo : config[kLevelListKey] )
     {
       // parse channel name
-      ASSERT_NAMED(logLevelInfo[kLevelNameKey].isString(), "IFormattedLoggerProvider.ParseLogLevelSettings.BadName");
+      DEV_ASSERT(logLevelInfo[kLevelNameKey].isString(), "IFormattedLoggerProvider.ParseLogLevelSettings.BadName");
       const std::string& logLevelName = logLevelInfo[kLevelNameKey].asString();
       LogLevel logLevelVal = GetLogLevelValue(logLevelName);
-      if ( logLevelVal < _LOG_LEVEL_COUNT )
+      if (logLevelVal < _LOG_LEVEL_COUNT)
       {
         // parse value
-        ASSERT_NAMED(logLevelInfo[kLevelEnabledKey].isBool(), "IFormattedLoggerProvider.ParseLogLevelSettings.BadEnableFlag");
+        DEV_ASSERT(logLevelInfo[kLevelEnabledKey].isBool(), "IFormattedLoggerProvider.ParseLogLevelSettings.BadEnableFlag");
         const bool logLevelEnabled = logLevelInfo[kLevelEnabledKey].asBool();
       
         // Register channel
@@ -104,7 +104,7 @@ void IFormattedLoggerProvider::ParseLogLevelSettings(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IFormattedLoggerProvider::IsLogLevelEnabled(LogLevel logLevel) const
 {
-  ASSERT_NAMED(logLevel < _logLevelEnabledFlags.size(), "IFormattedLoggerProvider.IsLogLevelEnabled.InvalidLogLevel");
+  DEV_ASSERT(logLevel < _logLevelEnabledFlags.size(), "IFormattedLoggerProvider.IsLogLevelEnabled.InvalidLogLevel");
   const bool ret = _logLevelEnabledFlags[logLevel];
   return ret;
 }

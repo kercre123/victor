@@ -15,6 +15,8 @@
 #include "clad/types/deviceDataTypes.clad"
 #include "clad/types/engineErrorCodes.clad"
 #include "clad/types/engineState.clad"
+#include "clad/types/faceEnrollmentResult.clad"
+#include "clad/types/facialExpressions.clad"
 #include "clad/types/factoryTestTypes.clad"
 #include "clad/types/featureGateTypes.clad"
 #include "clad/types/firmwareTypes.clad"
@@ -31,7 +33,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/cladPoint.clad"
 #include "clad/types/cladRect.clad"
-#include "clad/types/facialExpressions.clad"
+#include "clad/types/gameStatusFlag.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
@@ -119,6 +121,35 @@ message Bogus {
 }
 */
 
+message CurrentCameraParams {
+  float_32 cameraGain,
+  uint_16  exposure_ms,
+  bool     autoExposureEnabled
+}
+
+// Camera configuration for the Robot (set per-robot at the factory)
+structure CameraConfig {
+  float_32 focalLengthX,
+  float_32 focalLengthY,
+  float_32 centerX,
+  float_32 centerY,
+  float_32 fovX,  // Full FOV in degrees
+  float_32 fovY,  // Full FOV in degrees
+  int_32   minCameraExposureTime_ms,
+  int_32   maxCameraExposureTime_ms,
+  float_32 minCameraGain,
+  float_32 maxCameraGain
+}
+
+// All settings that are static and unique for a given robot
+message PerRobotSettings {
+  uint_32 robotID,
+  uint_32 serialNumberHead,
+  uint_32 serialNumberBody,
+  uint_32 modelNumber,
+  int_32  hwVersion,
+  CameraConfig cameraConfig
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////  ROBOT STATE  ///////////////////////////////////
@@ -350,12 +381,12 @@ message RobotReadToolCode {
   ToolCodeInfo info
 }
 
-// RobotReachedEnrollmentCount
-//  Sent when enrollment count hits zero and enroll ID is set
-//  (Used within Engine, probably not useful to Game)
-message RobotReachedEnrollmentCount {
-    int_32  faceID,
-    uint_8  count
+// RobotEnrolledFace - Broadcast by BehaviorEnrollFace when it completes
+message FaceEnrollmentCompleted
+{
+  FaceEnrollmentResult result,
+  int_32               faceID,
+  string               name
 }
 
 // NOTE: This is separate from deleting an _observed_ face.
@@ -554,7 +585,7 @@ message EngineErrorCodeMessage {
   EngineErrorCode errorCode
 }
 
-// Sent when a cube lights change state in LightsComponent
+// Sent when a cube lights change in CubeLightComponent
 message CubeLightsStateTransition {
   uint_32 objectID,
   uint_32 factoryID,
@@ -624,12 +655,6 @@ message RequestGameStart {
   bool firstRequest
 }
 
-// Special request for face enrollment
-message RequestEnrollFace {
-  bool firstRequest,
-  int_32 face_id
-}
-
 message SparkEnded {
   bool success
 }
@@ -659,13 +684,17 @@ message SdkStatus {
 
 //notify the game that behavior has transitioned
 message BehaviorTransition{
-  string oldBehavior,
-  string newBehavior,
-  BehaviorType oldBehaviorType,
-  BehaviorType newBehaviorType,
-  bool isOldReactionary,
-  bool isNewReactionary,
+  string oldBehaviorName,
+  string newBehaviorName,
+  BehaviorClass oldBehaviorClass,
+  BehaviorClass newBehaviorClass,
   string newBehaviorDisplayKey
+}
+
+
+message ReactionaryBehaviorTransition{
+  ReactionTrigger reactionaryBehaviorTrigger,
+  bool behaviorStarted
 }
 
 //respond with the list of freeplay behavior
@@ -673,10 +702,6 @@ message RespondEnabledBehaviorList{
   string behaviors[uint_8]
 }
 
-message ReactionaryBehaviorTransition{
-  BehaviorType reactionaryBehaviorType,
-  bool behaviorStarted
-}
 
 message BehaviorObjectiveAchieved{
   BehaviorObjective behaviorObjective

@@ -48,6 +48,12 @@ sint16 clientQueueAvailable(void)
   else return 0;
 }
 
+bool clientCanTransmit(int bytes)
+{
+   return ((clientQueueAvailable()>=bytes) &&
+           (xPortGetFreeHeapSize() >= RELIABLE_TRANSPORT_PACKET_ALLOWANCE));
+}
+
 uint32 clientDropCount(void)
 {
   return dropCount;

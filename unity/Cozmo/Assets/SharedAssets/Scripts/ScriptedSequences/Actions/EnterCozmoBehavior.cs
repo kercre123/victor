@@ -8,7 +8,7 @@ namespace ScriptedSequences.Actions {
   public class EnterCozmoBehavior : ScriptedSequenceAction {
 
     [Description("The Behavior State you want Cozmo to be in")]
-    public BehaviorType Behavior;
+    public ExecutableBehaviorType Behavior;
 
     public override ISimpleAsyncToken Act() {
       var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -20,7 +20,7 @@ namespace ScriptedSequences.Actions {
         return token;
       }
 
-      robot.ExecuteBehavior(Behavior);
+      robot.ExecuteBehaviorByExecutableType(Behavior);
       token.Succeed();
       return token;
     }

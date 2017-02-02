@@ -14,11 +14,11 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "1631"
+                "version": "1688"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "110"
+                "version": "111"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
@@ -29,13 +29,13 @@
                 "build_type_id": "Cte_Master",
                 "extension": "tar.gz",
                 "package_name": "Cte",
-                "version": "153"
+                "version": "159"
             },
             "firmware": {
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",
-                "version": "1384"
+                "version": "1549"
             },
             "old_firmware": {
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",

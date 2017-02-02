@@ -171,7 +171,7 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
   const auto expectedSize = msg.Size();
   std::vector<uint8_t> messageData(msg.Size());
   const auto packedSize = msg.Pack(messageData.data(), expectedSize);
-  ASSERT_NAMED(packedSize == expectedSize, "MessageHandler.SendMessage.MessageSizeMismatch");
+  DEV_ASSERT(packedSize == expectedSize, "MessageHandler.SendMessage.MessageSizeMismatch");
   if (packedSize != expectedSize)
   {
     return RESULT_FAIL;

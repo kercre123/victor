@@ -2,8 +2,9 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 FeatureType {
-  Dummy,
-  ObjectTapInteractions
+  ObjectTapInteractions,
+  AndroidConnectionFlow,
+  SpeedTapMultiPlayer,
 }
 
 structure FeatureToggle {

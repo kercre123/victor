@@ -13,33 +13,32 @@
 #ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToReturnedToTreads_H__
 #define __Cozmo_Basestation_Behaviors_BeahviorReactToReturnedToTreads_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToReturnedToTreads : public IReactionaryBehavior
+class BehaviorReactToReturnedToTreads : public IBehavior
 {
 private:
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorReactToReturnedToTreads(Robot& robot, const Json::Value& config);
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
 
 public:
   
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
-  virtual bool ShouldResumeLastBehavior() const override { return false; }
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
   
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
+  
 protected:
-    
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
+  
 
 private:
-  
   void CheckForHighPitch(Robot& robot);
 };
 

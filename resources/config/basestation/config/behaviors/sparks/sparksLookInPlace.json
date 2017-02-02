@@ -1,7 +1,8 @@
 {
-  "behaviorType": "ExploreLookAroundInPlace",
+  "behaviorClass": "ExploreLookAroundInPlace",
   "executableBehaviorType": "LookAroundInPlace",
   "name": "SparkedLookAroundInPlace",
+  "displayNameKey":"behavior.LookInPlaceForCube",
   "flatScore" : 2.0,
   "behaviorGroups": [
       "SparksRollBlock",

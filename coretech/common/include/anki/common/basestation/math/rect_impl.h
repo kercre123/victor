@@ -38,8 +38,8 @@ namespace Anki {
   : cv::Rect_<T>(x,y,width,height)
 #endif
   {
-    ASSERT_NAMED(width  >= T(0), "Rectangle.XYWidthHeightConstructor.NegativeWidth");
-    ASSERT_NAMED(height >= T(0), "Rectangle.XYWidthHeightConstructor.NegativeHeight");
+    DEV_ASSERT(width  >= T(0), "Rectangle.XYWidthHeightConstructor.NegativeWidth");
+    DEV_ASSERT(height >= T(0), "Rectangle.XYWidthHeightConstructor.NegativeHeight");
   }
   
   template<typename T>
@@ -48,8 +48,8 @@ namespace Anki {
   : cv::Rect_<T>(corner1.get_CvPoint_(), corner2.get_CvPoint_())
 #endif
   {
-    ASSERT_NAMED(width  >= T(0), "Rectangle.TwoPointConstructor.NegativeWidth");
-    ASSERT_NAMED(height >= T(0), "Rectangle.TwoPointConstructor.NegativeHeight");
+    DEV_ASSERT(width  >= T(0), "Rectangle.TwoPointConstructor.NegativeWidth");
+    DEV_ASSERT(height >= T(0), "Rectangle.TwoPointConstructor.NegativeHeight");
   }
   
   

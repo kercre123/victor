@@ -1,0 +1,7 @@
+{
+  "behaviorClass": "LiftLoadTest",
+  "executableBehaviorType": "LiftLoadTest",
+  "name": "LiftLoadTest",
+  "behaviorGroups": [
+  ]
+}

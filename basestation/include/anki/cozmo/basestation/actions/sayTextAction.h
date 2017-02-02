@@ -41,10 +41,10 @@ public:
   
   // Customize the text to speech creation by setting the voice style and duration scalar.
   // Note: The duration scalar stretches the duration of the generated TtS audio. When using the unprocessed voice
-  //       you can use a values around 1.0 which is what the TtS generator normal speed. When using CozmoProcessing
+  //       you can use a value around 1.0 which is the TtS generator normal speed. When using CozmoProcessing
   //       it is more common to use a value between 1.8 - 2.3 which gets sped up in the audio engine resulting in a
   //       duration close to the unprocessed voice.
-  //       When using SayTextVoiceStyle::CozmoProcessing adjust processing pitch by seeting value [-1.0, 1.0].
+  //       When using SayTextVoiceStyle::CozmoProcessing adjust processing pitch by setting value [-1.0, 1.0].
   SayTextAction(Robot& robot, const std::string& text,
                 const SayTextVoiceStyle style,
                 const float durationScalar = 1.f,
@@ -57,14 +57,14 @@ public:
   
   virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
   
-  // Use a the animation group tied to a specific GameEvent.
+  // Use an animation group tied to a specific GameEvent.
   // Use AnimationTrigger::Count to use built-in animation (default).
   // The animation group should contain animations that have the special audio keyframe for
   // Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing or Play__Robot_Vo__External_Unprocessed
   void SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTracks = 0);
   
-  // Generate new animation by stiching the animation group animations together until they are equal or greater to the
-  // duration of generated text to speech conent
+  // Generate new animation by stitching the animation group animations together until they are equal or greater to the
+  // duration of generated text to speech content.
   // Note: Animation Trigger must not have Play__Robot_Vo__External_Cozmo_Processing audio event in the
   // animation. The event will be added to the first frame when generating the animation to fit the duration.
   void SetFitToDuration(bool fitToDuration) { _fitToDuration = fitToDuration; }
@@ -115,7 +115,7 @@ private:
       ConfigTrait();
       ConfigTrait(const Json::Value& json);
       
-      float GetDurration(Util::RandomGenerator& randomGen) const;
+      float GetDuration(Util::RandomGenerator& randomGen) const;
     };
     
     std::string name = "";

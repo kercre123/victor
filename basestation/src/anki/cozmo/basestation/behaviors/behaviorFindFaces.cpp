@@ -46,7 +46,7 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   
 }
   
-bool BehaviorFindFaces::IsRunnableInternal(const Robot& robot) const
+bool BehaviorFindFaces::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // we can always search for faces (override base class restrictions)
   return true;

@@ -60,18 +60,16 @@ public abstract class GameBase : MonoBehaviour {
   protected ChallengeData _ChallengeData;
   private ChallengeEndedDialog _ChallengeEndViewInstance;
 
-  // Can add here if we need to display multiplayer scores too.
-  public enum EndState {
-    PlayerWin,
-    CozmoWin,
-    Tie,
-    Quit,
-  }
-  private EndState _EndState;
+  // Sets the winner index from _PlayerInfo, or one of the tie/quit enums
+  protected const int ENDSTATE_NONE = -3;
+  protected const int ENDSTATE_TIE = -2;
+  protected const int ENDSTATE_QUIT = -1;
+  protected int _EndStateIndex = ENDSTATE_NONE;
+
   protected bool _ShowScoreboardOnComplete = true;
   protected bool _ShowEndWinnerSlide = false;
 
-  protected List<Anki.Cozmo.BehaviorType> _DisabledReactionaryBehaviors = new List<BehaviorType>();
+  protected List<Anki.Cozmo.ReactionTrigger> _DisabledReactionaryBehaviors = new List<ReactionTrigger>();
 
   private List<DifficultySelectOptionData> _DifficultyOptions;
 
@@ -94,19 +92,44 @@ public abstract class GameBase : MonoBehaviour {
   [HideInInspector]
   public List<int> CubeIdsForGame;
 
-  private Dictionary<int, CycleData> _CubeCycleTimers;
+  private Dictionary<int, BlinkData> _BlinkCubeTimers;
 
-  private class CycleData {
-    public int cubeID;
-    public float timeElaspedSeconds;
-    public float cycleIntervalSeconds;
-    public Color[] cycleColors;
-    public int colorIndex;
-    public bool cycleSingleColorOnly;
-    public uint singleColor;
+  // List of all players
+  protected List<PlayerInfo> _PlayerInfo = new List<PlayerInfo>();
+
+  public virtual PlayerInfo AddPlayer(PlayerType playerType, string playerName) {
+    PlayerInfo info = new PlayerInfo(playerType, playerName);
+    _PlayerInfo.Add(info);
+    return info;
+  }
+  // Called after all players have been added, in the event special logic
+  // needs to happen.
+  public virtual void InitializeAllPlayers() {
   }
 
-  private Dictionary<int, BlinkData> _BlinkCubeTimers;
+  public virtual void AddDefaultPlayers() {
+    AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
+    AddPlayer(PlayerType.Human, DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+  }
+  public virtual void ClearPlayers() {
+    _PlayerInfo.Clear();
+  }
+
+  public virtual List<PlayerInfo> GetPlayersByType(PlayerType playerType) {
+    return _PlayerInfo.FindAll(x => x.playerType == playerType);
+  }
+  public virtual PlayerInfo GetFirstPlayerByType(PlayerType playerType) {
+    return _PlayerInfo.Find(x => x.playerType == playerType);
+  }
+  public virtual PlayerInfo GetPlayerByIndex(int index) {
+    return index < _PlayerInfo.Count && index >= 0 ? _PlayerInfo[index] : null;
+  }
+  public virtual int GetPlayerCount() {
+    return _PlayerInfo.Count;
+  }
+  public virtual List<PlayerInfo> GetPlayers() {
+    return _PlayerInfo;
+  }
 
   private class BlinkData {
     public int cubeID;
@@ -130,23 +153,23 @@ public abstract class GameBase : MonoBehaviour {
   // called when the game starts to disable reactionary behaviors, then again when the game exits to re-enable them
   private void InitializeReactionaryBehaviorsForGameStart() {
     AddDisabledReactionaryBehaviors();
-    foreach (Anki.Cozmo.BehaviorType reactionaryBehavior in _DisabledReactionaryBehaviors) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, reactionaryBehavior, false);
+    foreach (Anki.Cozmo.ReactionTrigger reactionaryBehavior in _DisabledReactionaryBehaviors) {
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger(_kReactionaryBehaviorOwnerId, reactionaryBehavior, false);
     }
   }
 
   protected virtual void AddDisabledReactionaryBehaviors() {
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCubeMoved);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeObject);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeFace);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToFrustration);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPet);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.CubeMoved);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FacePositionUpdated);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.Frustration);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
   }
 
   private void ResetReactionaryBehaviorsForGameEnd() {
-    foreach (Anki.Cozmo.BehaviorType reactionaryBehavior in _DisabledReactionaryBehaviors) {
+    foreach (Anki.Cozmo.ReactionTrigger reactionaryBehavior in _DisabledReactionaryBehaviors) {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, reactionaryBehavior, true);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger(_kReactionaryBehaviorOwnerId, reactionaryBehavior, true);
       }
     }
   }
@@ -158,7 +181,6 @@ public abstract class GameBase : MonoBehaviour {
 
     _ChallengeData = challengeData;
     _DifficultyOptions = _ChallengeData.DifficultyOptions;
-    _EndState = EndState.CozmoWin;
     _ResultsViewReached = false;
     if (CurrentRobot != null) {
 
@@ -183,13 +205,12 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
 
-    _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
 
     SkillSystem.Instance.StartGame(_ChallengeData);
     // Clear Pending Rewards and Unlocks so ChallengeEndedDialog only displays things earned during this game
     RewardedActionManager.Instance.SendPendingRewardsToInventory();
-
+    AddDefaultPlayers();
   }
 
   private void PlayGetInAnimation() {
@@ -224,29 +245,32 @@ public abstract class GameBase : MonoBehaviour {
     MinigameUIPrefabHolder.LoadSharedMinigameViewPrefab(minigameAssetBundleName, (GameObject viewPrefab) => {
       if (viewPrefab != null) {
         SharedMinigameView prefabScript = viewPrefab.GetComponent<SharedMinigameView>();
-        _SharedMinigameViewInstance = UIManager.OpenModal(prefabScript, newView => {
-          newView.Initialize(_ChallengeData);
-          InitializeMinigameView(newView, _ChallengeData);
-
-          if (OnSharedMinigameViewInitialized != null) {
-            OnSharedMinigameViewInitialized(newView);
-          }
-        });
-
-        bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
-        bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
-
-        if (videoPlayedAlready || noInstructionVideo) {
-          FinishedInstructionalVideo();
-        }
-        else {
-          SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
-        }
+        UIManager.OpenView(prefabScript, HandleSharedMinigameViewCreated);
       }
       else {
-        DAS.Error("GameBase.LoadSharedMinigameView", "Failed to shared minigame view");
+        DAS.Error("GameBase.LoadSharedMinigameView", "Failed to load shared minigame view");
       }
     });
+  }
+
+  private void HandleSharedMinigameViewCreated(BaseView newSharedMinigameView) {
+    _SharedMinigameViewInstance = (SharedMinigameView)newSharedMinigameView;
+    _SharedMinigameViewInstance.Initialize(_ChallengeData);
+    InitializeMinigameView(_SharedMinigameViewInstance, _ChallengeData);
+
+    if (OnSharedMinigameViewInitialized != null) {
+      OnSharedMinigameViewInitialized(_SharedMinigameViewInstance);
+    }
+
+    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
+    bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
+
+    if (videoPlayedAlready || noInstructionVideo) {
+      FinishedInstructionalVideo();
+    }
+    else {
+      _SharedMinigameViewInstance.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
+    }
   }
 
   private void FinishedInstructionalVideo() {
@@ -278,7 +302,6 @@ public abstract class GameBase : MonoBehaviour {
     newView.QuitMiniGameConfirmed += HandleQuitConfirmed;
     ContextManager.Instance.OnAppHoldStart += HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd += HandleAppHoldEnd;
-    PauseManager.Instance.OnPauseDialogOpen += HandlePauseManagerDialogOpened;
   }
 
   private void PrepRobotForGame() {
@@ -358,11 +381,14 @@ public abstract class GameBase : MonoBehaviour {
   #region Update
 
   protected virtual void Update() {
-    UpdateCubeCycleLights();
     UpdateBlinkLights();
     UpdateStateMachine();
     AutoAdvanceCheck();
     TimedIntervalCheck();
+
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      _PlayerInfo[i].UpdateGoal();
+    }
   }
 
   private void TimedIntervalCheck() {
@@ -390,11 +416,11 @@ public abstract class GameBase : MonoBehaviour {
 
   }
 
-  public void PauseStateMachine(State.PauseReason reason, BehaviorType reactionaryBehavior) {
+  public void PauseStateMachine(State.PauseReason reason, ReactionTrigger reactionaryBehavior) {
     _StateMachine.Pause(reason, reactionaryBehavior);
   }
 
-  public void ResumeStateMachine(State.PauseReason reason, BehaviorType reactionaryBehavior) {
+  public void ResumeStateMachine(State.PauseReason reason, ReactionTrigger reactionaryBehavior) {
     _StateMachine.Resume(reason, reactionaryBehavior);
   }
 
@@ -404,19 +430,6 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Scoring
 
-  // Score in the Current Round
-  [HideInInspector]
-  public int CozmoScore;
-
-  [HideInInspector]
-  public int PlayerScore;
-
-  // Number of Rounds Won this Game
-  [HideInInspector]
-  public int PlayerScoreTotal;
-
-  [HideInInspector]
-  public int CozmoScoreTotal;
 
   // Number of Errors made, Error being a player action
   // that causes failure (not cozmo scoring a point)
@@ -436,18 +449,56 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  public int HumanScore {
+    get {
+      PlayerInfo player = GetFirstPlayerByType(PlayerType.Human);
+      if (player == null) {
+        return 0;
+      }
+      return player.playerScoreRound;
+    }
+  }
+  public int CozmoScore {
+    get {
+      PlayerInfo player = GetFirstPlayerByType(PlayerType.Cozmo);
+      if (player == null) {
+        return 0;
+      }
+      return player.playerScoreRound;
+    }
+  }
+
+  public int HumanScoreTotal {
+    get {
+      PlayerInfo player = GetFirstPlayerByType(PlayerType.Human);
+      if (player == null) {
+        return 0;
+      }
+      return player.playerScoreTotal;
+    }
+  }
+  public int CozmoScoreTotal {
+    get {
+      PlayerInfo player = GetFirstPlayerByType(PlayerType.Cozmo);
+      if (player == null) {
+        return 0;
+      }
+      return player.playerScoreTotal;
+    }
+  }
+
   // The accuracy of the player's attempts to score points
   public float PlayerAccuracy {
     get {
       // If the player didn't score any points without cozmo making a mistake
       // then they have 0 % accuracy.
-      if (PlayerScoreTotal - _CozmoMistakeCount <= 0) {
+      if (HumanScoreTotal - _CozmoMistakeCount <= 0) {
         return 0.0f;
       }
       // If the player has scored points intentionally, then their accuracy is
       // equal to their total points scored out of their attempts to score
       // points.
-      float acc = ((float)PlayerScoreTotal / (float)(PlayerScoreTotal + _PlayerMistakeCount));
+      float acc = ((float)HumanScoreTotal / (float)(HumanScoreTotal + _PlayerMistakeCount));
       return acc;
     }
   }
@@ -465,38 +516,72 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void ResetScore() {
-    CozmoScore = 0;
-    PlayerScore = 0;
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      _PlayerInfo[i].playerScoreRound = 0;
+    }
     UpdateUI();
   }
 
-  public virtual void AddPoint(bool playerScored) {
-    if (playerScored) {
-      PlayerScore++;
-      PlayerScoreTotal++;
+  public virtual void AddPoint(bool humanScored) {
+    if (humanScored) {
+      AddPoint(GetFirstPlayerByType(PlayerType.Human));
     }
     else {
-      CozmoScore++;
-      CozmoScoreTotal++;
+      AddPoint(GetFirstPlayerByType(PlayerType.Cozmo));
     }
-    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengePointScored, _ChallengeData.ChallengeID, _CurrentDifficulty, playerScored, PlayerScore, CozmoScore, IsHighIntensityRound()));
+  }
+  public virtual void AddPoint(PlayerInfo player, int points = 1, bool fireEvent = true) {
+    if (player == null) {
+      return;
+    }
+    player.playerScoreRound += points;
+    player.playerScoreTotal += points;
+
+    if (fireEvent) {
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengePointScored, _ChallengeData.ChallengeID,
+                                              _CurrentDifficulty, player.playerType != PlayerType.Cozmo,
+                                              HumanScore, CozmoScore, IsHighIntensityRound()));
+    }
   }
 
-  // Number of Rounds Won this Game
-  [HideInInspector]
-  public int PlayerRoundsWon;
+  public virtual void AddPoint(List<PlayerInfo> playersScored, int points = 1) {
+    // Only care about events in a two player game currently
+    for (int i = 0; i < playersScored.Count; ++i) {
+      AddPoint(playersScored[i], points, _PlayerInfo.Count < 3);
+    }
+  }
 
-  [HideInInspector]
-  public int CozmoRoundsWon;
-
+  public int HumanRoundsWon {
+    get {
+      PlayerInfo player = GetFirstPlayerByType(PlayerType.Human);
+      if (player == null) {
+        return 0;
+      }
+      return player.playerRoundsWon;
+    }
+  }
+  public int CozmoRoundsWon {
+    get {
+      PlayerInfo player = GetFirstPlayerByType(PlayerType.Cozmo);
+      if (player == null) {
+        return 0;
+      }
+      return player.playerRoundsWon;
+    }
+  }
   // Total number of Rounds in this Game
   [HideInInspector]
   public int TotalRounds;
 
+
   // Number of Rounds Played this Game
   public int RoundsPlayed {
     get {
-      return PlayerRoundsWon + CozmoRoundsWon;
+      int currPlayed = 0;
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        currPlayed += _PlayerInfo[i].playerRoundsWon;
+      }
+      return currPlayed;
     }
   }
 
@@ -521,39 +606,57 @@ public abstract class GameBase : MonoBehaviour {
     SharedMinigameView.HideQuitButton();
   }
 
-  public bool IsRoundComplete() {
-    return (CozmoScore >= MaxScorePerRound || PlayerScore >= MaxScorePerRound);
+  public virtual bool IsRoundComplete() {
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      if (_PlayerInfo[i].playerScoreRound >= MaxScorePerRound) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // True if the Round is Close in terms of Points.
   // can be overriden if you have special challenge specific logic for determining this
   public virtual bool IsHighIntensityRound() {
     int oneThirdRoundsTotal = TotalRounds / 3;
-    return (PlayerRoundsWon + CozmoRoundsWon) > oneThirdRoundsTotal;
+    return RoundsPlayed > oneThirdRoundsTotal;
   }
 
   /// <summary>
   /// Ends the current round, whoever has the higher current score wins.
   /// </summary>
-  public void EndCurrentRound() {
+  public virtual void EndCurrentRound() {
     bool playerWon = false;
-    if (PlayerScore > CozmoScore) {
-      PlayerRoundsWon++;
-      playerWon = true;
+    PlayerInfo winningPlayer = null;
+    int winningScore = -1;
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      if (_PlayerInfo[i].playerScoreRound > winningScore) {
+        winningScore = _PlayerInfo[i].playerScoreRound;
+        winningPlayer = _PlayerInfo[i];
+        playerWon = winningPlayer.playerType != PlayerType.Cozmo;
+      }
     }
-    else {
-      CozmoRoundsWon++;
+    if (winningPlayer != null) {
+      winningPlayer.playerRoundsWon++;
     }
-
-    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeRoundEnd, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, PlayerScore, CozmoScore, IsHighIntensityRound()));
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeRoundEnd, _ChallengeData.ChallengeID,
+                                    CurrentDifficulty, playerWon, HumanScore, CozmoScore, IsHighIntensityRound()));
 
     UpdateUI();
   }
 
   // True if someone has enough rounds won to complete the Game.
-  public bool IsGameComplete() {
-    int losingScore = Mathf.Min(PlayerRoundsWon, CozmoRoundsWon);
-    int winningScore = Mathf.Max(PlayerRoundsWon, CozmoRoundsWon);
+  public virtual bool IsGameComplete() {
+    int losingScore = int.MaxValue;
+    int winningScore = 0;
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      if (_PlayerInfo[i].playerRoundsWon >= winningScore) {
+        winningScore = _PlayerInfo[i].playerRoundsWon;
+      }
+      if (_PlayerInfo[i].playerRoundsWon <= losingScore) {
+        losingScore = _PlayerInfo[i].playerRoundsWon;
+      }
+    }
     int roundsLeft = TotalRounds - losingScore - winningScore;
     return (winningScore > losingScore + roundsLeft);
   }
@@ -561,42 +664,96 @@ public abstract class GameBase : MonoBehaviour {
   // True if the Game is Close in terms of Rounds.
   public bool IsHighIntensityGame() {
     int twoThirdsRoundsTotal = TotalRounds / 3 * 2;
-    return (PlayerRoundsWon + CozmoRoundsWon) > twoThirdsRoundsTotal;
+    return RoundsPlayed > twoThirdsRoundsTotal;
   }
 
   protected virtual Dictionary<string, float> GetGameSpecificEventValues() {
     return null;
   }
 
+  public PlayerInfo GetPlayerMostPointsWon() {
+    PlayerInfo ret = null;
+    int mostPoints = 0;
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      if (_PlayerInfo[i].playerScoreRound > mostPoints) {
+        ret = _PlayerInfo[i];
+        mostPoints = _PlayerInfo[i].playerScoreRound;
+      }
+    }
+    return ret;
+  }
+
+  public PlayerInfo GetPlayerMostRoundsWon() {
+    PlayerInfo ret = null;
+    int mostRoundsWon = 0;
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      if (_PlayerInfo[i].playerRoundsWon > mostRoundsWon) {
+        ret = _PlayerInfo[i];
+        mostRoundsWon = _PlayerInfo[i].playerRoundsWon;
+      }
+    }
+    return ret;
+  }
   // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
   public virtual void StartRoundBasedGameEnd() {
     // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
-    bool playerWon = PlayerRoundsWon > CozmoRoundsWon;
-    StartBaseGameEnd(playerWon);
+    int endStateIndex = ENDSTATE_NONE;
+    int mostRoundsWon = 0;
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      if (_PlayerInfo[i].playerRoundsWon > mostRoundsWon) {
+        endStateIndex = i;
+        mostRoundsWon = _PlayerInfo[i].playerRoundsWon;
+      }
+    }
+    StartBaseGameEnd(endStateIndex);
   }
 
-  // now supports ties
-  public virtual void StartBaseGameEnd(EndState endState) {
-    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete,
-                                        _ChallengeData.ChallengeID, _CurrentDifficulty, endState == EndState.PlayerWin,
-                                        PlayerScore, CozmoScore, IsHighIntensityRound(), GetGameSpecificEventValues()));
-
-    if (endState == EndState.PlayerWin) {
-      HandleUnlockRewards();
-      RaiseMiniGameWin();
+  protected bool DidHumanWin() {
+    if (0 <= _EndStateIndex && _EndStateIndex < _PlayerInfo.Count) {
+      return _PlayerInfo[_EndStateIndex].playerType != PlayerType.Cozmo;
     }
+    return false;
+  }
+  public virtual void StartBaseGameEnd(int endStateIndex) {
+
+    _EndStateIndex = endStateIndex;
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete,
+                                                    _ChallengeData.ChallengeID, _CurrentDifficulty, DidHumanWin(),
+                                                    HumanScore, CozmoScore, IsHighIntensityRound(), GetGameSpecificEventValues()));
+
+    if (endStateIndex == ENDSTATE_TIE) {
+      RaiseMiniGameTie();
+    }
+    // either our quit or none error state
+    else if (endStateIndex < 0 || endStateIndex >= _PlayerInfo.Count) {
+      RaiseMiniGameQuit();
+    }
+    // A valid player index
     else {
-      if (endState == EndState.CozmoWin) {
+      PlayerInfo winningPlayer = _PlayerInfo[endStateIndex];
+      // even in MP mode we show the same screens.
+      // the rewards themselves fitler by num_players and rewards screen will pull winner.
+      if (winningPlayer.playerType == PlayerType.Cozmo) {
         RaiseMiniGameLose();
       }
       else {
-        RaiseMiniGameTie();
+        HandleUnlockRewards();
+        RaiseMiniGameWin();
       }
     }
   }
 
   public virtual void StartBaseGameEnd(bool playerWon) {
-    StartBaseGameEnd(playerWon ? EndState.PlayerWin : EndState.CozmoWin);
+    int endStateIndex = ENDSTATE_NONE;
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      if (playerWon && _PlayerInfo[i].playerType != PlayerType.Cozmo) {
+        endStateIndex = i;
+      }
+      else if (!playerWon && _PlayerInfo[i].playerType == PlayerType.Cozmo) {
+        endStateIndex = i;
+      }
+    }
+    StartBaseGameEnd(endStateIndex);
   }
 
   private void HandleUnlockRewards() {
@@ -654,7 +811,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.SetGlobal(DASConstants.Game.kGlobal, null);
     DasTracker.Instance.TrackGameEnded();
     if (_SharedMinigameViewInstance != null) {
-      _SharedMinigameViewInstance.CloseViewImmediately();
+      _SharedMinigameViewInstance.CloseDialogImmediately();
       _SharedMinigameViewInstance = null;
     }
     DAS.Info(this, "Finished GameBase On Destroy");
@@ -673,8 +830,8 @@ public abstract class GameBase : MonoBehaviour {
 
   private void QuitMinigame() {
     try {
-      _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
-      _SharedMinigameViewInstance.CloseView();
+      _SharedMinigameViewInstance.DialogCloseAnimationFinished += QuitMinigameAnimationFinished;
+      _SharedMinigameViewInstance.CloseDialog();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
 
@@ -691,7 +848,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void QuitMinigameAnimationFinished() {
-    _SharedMinigameViewInstance.ViewCloseAnimationFinished -= QuitMinigameAnimationFinished;
+    _SharedMinigameViewInstance.DialogCloseAnimationFinished -= QuitMinigameAnimationFinished;
 
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
@@ -701,8 +858,8 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void CloseMinigame() {
-    _SharedMinigameViewInstance.ViewCloseAnimationFinished += CleanUp;
-    _SharedMinigameViewInstance.CloseView();
+    _SharedMinigameViewInstance.DialogCloseAnimationFinished += CleanUp;
+    _SharedMinigameViewInstance.CloseDialog();
   }
 
   public void CloseMinigameImmediately() {
@@ -713,7 +870,7 @@ public abstract class GameBase : MonoBehaviour {
     }
     _StateMachine.Stop();
     if (_SharedMinigameViewInstance != null) {
-      _SharedMinigameViewInstance.CloseViewImmediately();
+      _SharedMinigameViewInstance.CloseDialogImmediately();
       _SharedMinigameViewInstance = null;
     }
     CleanUp();
@@ -724,19 +881,18 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Debug("GameBase.CleanUp", "cleanup called");
 
     if (_SharedMinigameViewInstance != null) {
-      _SharedMinigameViewInstance.ViewCloseAnimationFinished -= CleanUp;
+      _SharedMinigameViewInstance.DialogCloseAnimationFinished -= CleanUp;
     }
 
     ContextManager.Instance.OnAppHoldStart -= HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd -= HandleAppHoldEnd;
-    PauseManager.Instance.OnPauseDialogOpen -= HandlePauseManagerDialogOpened;
 
     if (ContextManager.Instance.ManagerBusy) {
       ContextManager.Instance.OnAppHoldEnd();
     }
 
     if (CurrentRobot != null) {
-      if (_StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.BehaviorType.NoneBehavior) {
+      if (_StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.ReactionTrigger.NoneTrigger) {
         // clears the action queue before quitting the game.
         CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
       }
@@ -745,7 +901,7 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     if (_InterruptedAlertView != null) {
-      _InterruptedAlertView.CloseViewImmediately();
+      _InterruptedAlertView.CloseDialogImmediately();
     }
 
     // Some CleanUpOnDestroy overrides send a robot animation as well
@@ -793,7 +949,7 @@ public abstract class GameBase : MonoBehaviour {
     // Also fire OnChallengeComplete here for those
     if (!_ChallengeData.IsMinigame) {
       AddToTotalGamesPlayed();
-      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, true, PlayerScore, CozmoScore, IsHighIntensityRound()));
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, true, HumanScore, CozmoScore, IsHighIntensityRound()));
     }
     // If quitting early from a minigame, clear the pending action rewards, they should not be rewarded
     if (!_ResultsViewReached && _ChallengeData.IsMinigame) {
@@ -808,7 +964,6 @@ public abstract class GameBase : MonoBehaviour {
 
   private void RaiseMiniGameWin() {
     _StateMachine.Stop();
-    _EndState = EndState.PlayerWin;
     if (DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.ContainsKey(_ChallengeData.ChallengeID)) {
       DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins[_ChallengeData.ChallengeID]++;
     }
@@ -816,29 +971,27 @@ public abstract class GameBase : MonoBehaviour {
       DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.Add(_ChallengeData.ChallengeID, 1);
     }
     if (_ShowScoreboardOnComplete) {
-      UpdateScoreboard(didPlayerWin: _EndState == EndState.PlayerWin);
+      UpdateScoreboard(didPlayerWin: DidHumanWin());
     }
-    ShowWinnerState(_EndState);
+    ShowWinnerState(_EndStateIndex);
   }
 
   private void RaiseMiniGameLose() {
     _StateMachine.Stop();
-    _EndState = EndState.CozmoWin;
 
     if (_ShowScoreboardOnComplete) {
-      UpdateScoreboard(didPlayerWin: _EndState == EndState.PlayerWin);
+      UpdateScoreboard(didPlayerWin: DidHumanWin());
     }
 
-    ShowWinnerState(_EndState);
+    ShowWinnerState(_EndStateIndex);
   }
 
   private void RaiseMiniGameTie() {
     _StateMachine.Stop();
-    _EndState = EndState.Tie;
-    ShowWinnerState(_EndState);
+    ShowWinnerState(_EndStateIndex);
   }
 
-  private void UpdateScoreboard(bool didPlayerWin) {
+  protected virtual void UpdateScoreboard(bool didPlayerWin) {
     ScoreWidget cozmoScoreboard = _SharedMinigameViewInstance.CozmoScoreboard;
     cozmoScoreboard.Dim = false;
     cozmoScoreboard.IsWinner = !didPlayerWin;
@@ -847,7 +1000,7 @@ public abstract class GameBase : MonoBehaviour {
     playerScoreboard.IsWinner = didPlayerWin;
   }
 
-  protected virtual void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {
+  protected virtual void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "") {
     SoftEndGameRobotReset();
     _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
@@ -857,19 +1010,22 @@ public abstract class GameBase : MonoBehaviour {
     if (overrideWinnerText != null) {
       winnerText = overrideWinnerText;
     }
-    else if (currentEndState == EndState.PlayerWin) {
-      winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName });
-    }
-    else if (currentEndState == EndState.CozmoWin) {
-      winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
-    }
-    else if (currentEndState == EndState.Tie) {
+    else if (currentEndIndex == ENDSTATE_TIE) {
       winnerText = Localization.Get(LocalizationKeys.kMinigameTextTie);
+    }
+    else if (currentEndIndex >= 0) {
+      PlayerInfo player = _PlayerInfo[currentEndIndex];
+      if (player.playerType == PlayerType.Cozmo) {
+        winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+      }
+      else {
+        winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
+      }
     }
 
     if (_ShowEndWinnerSlide) {
       winnerText = winnerText.Replace("\n", " ");
-      SharedMinigameView.ShowWinnerStateSlide(currentEndState == EndState.PlayerWin, winnerText, footerText);
+      SharedMinigameView.ShowWinnerStateSlide(DidHumanWin(), winnerText, footerText);
     }
     else {
       SharedMinigameView.InfoTitleText = winnerText;
@@ -884,10 +1040,10 @@ public abstract class GameBase : MonoBehaviour {
     if (!playerProfile.HighScores.ContainsKey(key)) {
       playerProfile.HighScores[key] = 0;
     }
-    if (playerProfile.HighScores[key] < PlayerScore) {
+    if (playerProfile.HighScores[key] < HumanScore) {
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnNewHighScore,
-        _ChallengeData.ChallengeID, _CurrentDifficulty, _EndState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound(), playerProfile.HighScores[key]));
-      playerProfile.HighScores[key] = PlayerScore;
+        _ChallengeData.ChallengeID, _CurrentDifficulty, DidHumanWin(), HumanScore, CozmoScore, IsHighIntensityRound(), playerProfile.HighScores[key]));
+      playerProfile.HighScores[key] = HumanScore;
       return true;
     }
     return false;
@@ -905,6 +1061,7 @@ public abstract class GameBase : MonoBehaviour {
     _AutoAdvanceTimestamp = -1;
     if (RewardedActionManager.Instance.RewardPending || RewardedActionManager.Instance.NewDifficultyPending) {
       SharedMinigameView.HidePlayerScoreboard();
+      SharedMinigameView.HidePlayer2Scoreboard();
       SharedMinigameView.HideCozmoScoreboard();
       RewardedActionManager.Instance.PendingActionRewards = RewardedActionManager.Instance.ResolveTagRewardCollisions(RewardedActionManager.Instance.PendingActionRewards);
       DASReportPendingActionRewards();
@@ -940,7 +1097,7 @@ public abstract class GameBase : MonoBehaviour {
     // Close minigame UI
     CloseMinigame();
 
-    if (_EndState == EndState.PlayerWin) {
+    if (DidHumanWin()) {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);
       if (OnMiniGameWin != null) {
         OnMiniGameWin();
@@ -952,7 +1109,19 @@ public abstract class GameBase : MonoBehaviour {
         OnMiniGameLose();
       }
     }
-    DAS.Event("game.end.score", PlayerRoundsWon.ToString(), DASUtil.FormatExtraData(CozmoRoundsWon.ToString()));
+
+    DAS.Event("game.numplayers", _PlayerInfo.Count.ToString(), DASUtil.FormatExtraData(_ChallengeData.ChallengeID));
+    int humanRoundsWon = 0;
+    PlayerInfo humanPlayer = GetFirstPlayerByType(PlayerType.Human);
+    if (humanPlayer != null) {
+      humanRoundsWon = humanPlayer.playerRoundsWon;
+    }
+    int robotRoundsWon = 0;
+    PlayerInfo robotPlayer = GetFirstPlayerByType(PlayerType.Cozmo);
+    if (robotPlayer != null) {
+      humanRoundsWon = robotPlayer.playerRoundsWon;
+    }
+    DAS.Event("game.end.score", humanRoundsWon.ToString(), DASUtil.FormatExtraData(robotRoundsWon.ToString()));
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_End);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
@@ -1009,23 +1178,16 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+
   public float GetCycleDurationSeconds(int numRotations, float cycleIntervalSeconds) {
     return (numRotations * cycleIntervalSeconds * 4);
   }
 
   public void StartCycleCube(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
-    StartCycleCubeInternal(cubeID, lightColorsCounterclockwise, cycleIntervalSeconds, false);
+    StartCycleCubeInternal(cubeID, lightColorsCounterclockwise, cycleIntervalSeconds);
   }
 
-  public void StartCycleCubeSingleColor(int cubeID, Color[] lightColors, float cycleIntervalSeconds, Color rotateColor) {
-    StartCycleCubeInternal(cubeID, lightColors, cycleIntervalSeconds, true);
-    if (_CubeCycleTimers.ContainsKey(cubeID)) {
-      _CubeCycleTimers[cubeID].cycleSingleColorOnly = true;
-      _CubeCycleTimers[cubeID].singleColor = rotateColor.ToUInt();
-    }
-  }
-
-  private void StartCycleCubeInternal(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds, bool isSingleColor) {
+  private void StartCycleCubeInternal(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
     // Remove from blink lights if it exists there
     StopBlinkLight(cubeID);
 
@@ -1038,74 +1200,8 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     cube.SetLEDs(lightColorsCounterclockwise);
-    if (isSingleColor) {
-      cube.rotationPeriodMs = 0f;
-    }
-    else {
-      cube.rotationPeriodMs = cycleIntervalSeconds * 1000f;
-    }
 
-    // Set up timing data
-    CycleData data = new CycleData();
-    data.cubeID = cubeID;
-    data.cycleIntervalSeconds = cycleIntervalSeconds;
-    data.timeElaspedSeconds = 0f;
-    data.colorIndex = 0;
-    data.cycleColors = lightColorsCounterclockwise;
-    data.cycleSingleColorOnly = false;
-
-    // Update data
-    if (_CubeCycleTimers.ContainsKey(cubeID)) {
-      _CubeCycleTimers[cubeID] = data;
-    }
-    else {
-      _CubeCycleTimers.Add(cubeID, data);
-    }
-  }
-
-  public void StopCycleCube(int cubeID) {
-    if (_CubeCycleTimers.ContainsKey(cubeID)) {
-      _CubeCycleTimers.Remove(cubeID);
-    }
-  }
-
-  private void UpdateCubeCycleLights() {
-    foreach (KeyValuePair<int, CycleData> kvp in _CubeCycleTimers) {
-      kvp.Value.timeElaspedSeconds += Time.deltaTime;
-
-      if (kvp.Value.timeElaspedSeconds > kvp.Value.cycleIntervalSeconds) {
-        if (kvp.Value.cycleSingleColorOnly) {
-          CycleLightsSingleColor(kvp.Value);
-        }
-        else {
-          // This is now handled engine-side
-          // CycleLightsClockwise(kvp.Value);
-        }
-        kvp.Value.timeElaspedSeconds %= kvp.Value.cycleIntervalSeconds;
-      }
-    }
-  }
-
-  private void CycleLightsSingleColor(CycleData data) {
-    if (CurrentRobot == null) {
-      return;
-    }
-
-    LightCube cube = null;
-    CurrentRobot.LightCubes.TryGetValue(data.cubeID, out cube);
-    if (cube == null) {
-      return;
-    }
-
-    data.colorIndex++;
-    data.colorIndex %= cube.Lights.Length;
-    for (int i = 0; i < cube.Lights.Length; i++) {
-      cube.Lights[i].OnColor = data.cycleColors[i % data.cycleColors.Length].ToUInt();
-      if (i == data.colorIndex) {
-        cube.Lights[i].OnColor = data.singleColor;
-      }
-      cube.Lights[i].OnPeriodMs = LightCube.Light.FOREVER;
-    }
+    cube.rotationPeriodMs = cycleIntervalSeconds * 1000f;
   }
 
   public void BlinkLight(int cubeId, float duration, Color blinkColor, Color originalColor) {
@@ -1113,9 +1209,6 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void BlinkLight(int cubeId, float duration, Color[] blinkColorsCounterclockwise, Color[] originalColors) {
-    // Remove from cycle cubes if it's there
-    StopCycleCube(cubeId);
-
     // Set up timing data
     BlinkData data = new BlinkData();
     data.cubeID = cubeId;
@@ -1172,7 +1265,8 @@ public abstract class GameBase : MonoBehaviour {
     // for all other cubes the game is using make sure to turn their lights off
     foreach (int id in CubeIdsForGame) {
       if (id == cube.ID) {
-        ShowInterruptionQuitGameView(LocalizationKeys.kMinigameLostTrackOfBlockTitle,
+        ShowInterruptionQuitGameView("cube_lost_alert",
+                                     LocalizationKeys.kMinigameLostTrackOfBlockTitle,
                                      LocalizationKeys.kMinigameLostTrackOfBlockDescription);
 
         // Remove this handler in the case multiple lightcubes are removed at the
@@ -1243,21 +1337,21 @@ public abstract class GameBase : MonoBehaviour {
     if (currState != null) {
       currentStateString = currState.GetType().ToString();
     }
-    DAS.Event("robot.interrupt", currentStateString, DASUtil.FormatExtraData(behaviorTransition.reactionaryBehaviorType.ToString()));
+    DAS.Event("robot.interrupt", currentStateString, DASUtil.FormatExtraData(behaviorTransition.reactionaryBehaviorTrigger.ToString()));
 
     if (behaviorTransition.behaviorStarted) {
-      PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorType);
+      PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorTrigger);
     }
     else {
-      ResumeStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorType);
+      ResumeStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorTrigger);
     }
   }
 
   public void ShowDontMoveCozmoAlertView() {
-    ShowInterruptionQuitGameView(LocalizationKeys.kMinigameDontMoveCozmoTitle, LocalizationKeys.kMinigameDontMoveCozmoDescription);
+    ShowInterruptionQuitGameView("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle, LocalizationKeys.kMinigameDontMoveCozmoDescription);
   }
 
-  public void ShowInterruptionQuitGameView(string titleKey, string descriptionKey) {
+  public void ShowInterruptionQuitGameView(string dasAlertName, string titleKey, string descriptionKey) {
     _StateMachine.Stop();
 
     SoftEndGameRobotReset();
@@ -1265,22 +1359,33 @@ public abstract class GameBase : MonoBehaviour {
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.HideQuitButton();
     }
-    // Don't set everything on fire if its already on fire, that's a waste of perfectly good fire
-    if (_InterruptedAlertView == null && PauseManager.Instance.IsAnyDialogOpen == false) {
-      Cozmo.UI.AlertModal alertView = UIManager.OpenModal(Cozmo.UI.AlertModalLoader.Instance.AlertModalPrefab, overrideCloseOnTouchOutside: false);
-      alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonOkay, null);
-      alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
-      alertView.TitleLocKey = titleKey;
-      alertView.DescriptionLocKey = descriptionKey;
-      _InterruptedAlertView = alertView;
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
-    }
+
+    CreateInterruptionQuitGameView(dasAlertName, titleKey, descriptionKey);
   }
 
-  private void HandlePauseManagerDialogOpened() {
-    if (_InterruptedAlertView != null) {
-      _InterruptedAlertView.CloseViewImmediately();
+  private void CreateInterruptionQuitGameView(string dasAlertName, string titleKey, string descriptionKey) {
+    if (_InterruptedAlertView == null) {
+      var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
+                                                    new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
+                                                                             clickCallback: HandleInterruptionQuitGameViewClosed));
+
+      var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
+                                                               LowPriorityModalAction.Queue,
+                                                               HighPriorityModalAction.ForceCloseOthersAndOpen);
+
+      System.Action<AlertModal> interruptedAlertCreated = (alertModal) => {
+        alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleInterruptionQuitGameViewClosed;
+        alertModal.ModalForceClosedAnimationFinished += () => {
+          Debug.LogError(dasAlertName + " force closed");
+          _InterruptedAlertView = null;
+          CreateInterruptionQuitGameView(dasAlertName, titleKey, descriptionKey);
+        };
+        _InterruptedAlertView = alertModal;
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
+      };
+
+      UIManager.OpenAlert(interruptedAlertData, interruptedAlertPriorityData, interruptedAlertCreated,
+                          overrideCloseOnTouchOutside: false);
     }
   }
 

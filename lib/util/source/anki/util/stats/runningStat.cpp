@@ -85,9 +85,9 @@ float RunningStat::StandardDeviation() const
 // Logs collected data
 void RunningStat::LogStats(const char * eventName)
 {
-  #define SEND_STATS(eventNameThird, stat) {                                 \
-  std::string fullEventName (std::string(eventName) + eventNameThird);       \
-  PRINT_NAMED_EVENT(fullEventName.c_str(), "%f", stat);                      \
+  #define SEND_STATS(eventNameThird, stat) {                             \
+    std::string fullEventName (std::string(eventName) + eventNameThird); \
+    LOG_EVENT(fullEventName.c_str(), "%f", stat);                        \
   }
 
   float fData = NumDataValues();
@@ -103,9 +103,9 @@ void RunningStat::LogStats(const char * eventName)
 // Logs collected data
 void RunningStat::LogStats(const char * eventName, const IEntityLoggerComponent * logger)
 {
-  #define SEND_LOGGER_STATS(eventNameThird, stat) {                          \
-  std::string fullEventName (std::string(eventName) + eventNameThird);       \
-  logger->EventF(fullEventName.c_str(), "%f", stat);                         \
+  #define SEND_LOGGER_STATS(eventNameThird, stat) {                      \
+    std::string fullEventName (std::string(eventName) + eventNameThird); \
+    logger->EventF(fullEventName.c_str(), "%f", stat);                   \
   }
 
   float fData = NumDataValues();

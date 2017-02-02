@@ -410,7 +410,7 @@ class ParseData:
                         else: # If ID is already in table
                             if i.name != self.nameTable[i.nameId]: # But not a match
                                 if shouldBeComplete:
-                                    raise LogPPError("Expecting complete but found conflicting name ID in file \"{}\"".format(fpn))
+                                    raise LogPPError("Expecting complete but found conflicting name ID {} in file \"{}\"".format((i.name, i.nameId), fpn))
                                 else:
                                     i.nameId = None # So need new ID
                     elif shouldBeComplete:

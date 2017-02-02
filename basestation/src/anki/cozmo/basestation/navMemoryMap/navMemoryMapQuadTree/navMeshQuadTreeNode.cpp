@@ -39,7 +39,7 @@ NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float sideLength
 , _quadrant(quadrant)
 , _content(ENodeContentType::Invalid)
 {
-  ASSERT_NAMED(_quadrant <= EQuadrant::Root, "NavMeshQuadTreeNode.Constructor.InvalidQuadrant");
+  DEV_ASSERT(_quadrant <= EQuadrant::Root, "NavMeshQuadTreeNode.Constructor.InvalidQuadrant");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -418,8 +418,8 @@ bool NavMeshQuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, NavMeshQuadTreeProcessor& processor)
 {
-  ASSERT_NAMED(!NEAR_ZERO(direction.x()) || !NEAR_ZERO(direction.y()),
-               "NavMeshQuadTreeNode.UpgradeRootLevel.InvalidDirection");
+  DEV_ASSERT(!NEAR_ZERO(direction.x()) || !NEAR_ZERO(direction.y()),
+             "NavMeshQuadTreeNode.UpgradeRootLevel.InvalidDirection");
   
   // reached expansion limit
   if ( _level == std::numeric_limits<uint8_t>::max() || _level >= maxRootLevel) {
@@ -523,8 +523,8 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeNode::Subdivide(NavMeshQuadTreeProcessor& processor)
 {
-  ASSERT_NAMED(CanSubdivide() && !IsSubdivided(), "NavMeshQuadTreeNode.Subdivide.InvalidSubdivide");
-  ASSERT_NAMED(_level > 0, "NavMeshQuadTreeNode.Subdivide.InvalidLevel");
+  DEV_ASSERT(CanSubdivide() && !IsSubdivided(), "NavMeshQuadTreeNode.Subdivide.InvalidSubdivide");
+  DEV_ASSERT(_level > 0, "NavMeshQuadTreeNode.Subdivide.InvalidLevel");
   
   const float halfLen    = _sideLen * 0.50f;
   const float quarterLen = halfLen * 0.50f;
@@ -548,7 +548,7 @@ void NavMeshQuadTreeNode::Subdivide(NavMeshQuadTreeProcessor& processor)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeNode::Merge(const NodeContent& newContent, NavMeshQuadTreeProcessor& processor)
 {
-  ASSERT_NAMED(IsSubdivided(), "NavMeshQuadTreeNode.Merge.InvalidState");
+  DEV_ASSERT(IsSubdivided(), "NavMeshQuadTreeNode.Merge.InvalidState");
 
   // since we are going to destroy the children, notify the processor of all the descendants about to be destroyed
   ClearDescendants(processor);
@@ -669,7 +669,7 @@ bool NavMeshQuadTreeNode::CanOverrideSelfAndChildrenWithContent(ENodeContentType
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeNode::TryAutoMerge(NavMeshQuadTreeProcessor& processor)
 {
-  ASSERT_NAMED(IsSubdivided(), "NavMeshQuadTreeNode.TryAutoMerge.NotSubdivided");
+  DEV_ASSERT(IsSubdivided(), "NavMeshQuadTreeNode.TryAutoMerge.NotSubdivided");
 
   // check if all children classified the same content
   ENodeContentType childType = _childrenPtr[0]->GetContentType();
@@ -810,8 +810,8 @@ const NavMeshQuadTreeNode::MoveInfo* NavMeshQuadTreeNode::GetDestination(EQuadra
     }
   };
   
-  ASSERT_NAMED(from <= EQuadrant::Root, "NavMeshQuadTreeNode.GetDestination.InvalidQuadrant");
-  ASSERT_NAMED(direction <= EDirection::West, "NavMeshQuadTreeNode.GetDestination.InvalidDirection");
+  DEV_ASSERT(from <= EQuadrant::Root, "NavMeshQuadTreeNode.GetDestination.InvalidQuadrant");
+  DEV_ASSERT(direction <= EDirection::West, "NavMeshQuadTreeNode.GetDestination.InvalidDirection");
   
   // root can't move, for any other, apply the table
   const size_t fromIdx = std::underlying_type<EQuadrant>::type( from );
@@ -869,12 +869,12 @@ void NavMeshQuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDir
       break;
       case EDirection::Invalid:
       {
-        ASSERT_NAMED(false, "NavMeshQuadTreeNode.AddSmallDescendants.InvalidDirection");
+        DEV_ASSERT(false, "NavMeshQuadTreeNode.AddSmallDescendants.InvalidDirection");
       }
     }
     
-    ASSERT_NAMED(firstChild != EQuadrant::Invalid, "NavMeshQuadTreeNode.AddSmallDescendants.InvalidFirstChild");
-    ASSERT_NAMED(secondChild != EQuadrant::Invalid, "NavMeshQuadTreeNode.AddSmallDescendants.InvalidSecondChild");
+    DEV_ASSERT(firstChild != EQuadrant::Invalid, "NavMeshQuadTreeNode.AddSmallDescendants.InvalidFirstChild");
+    DEV_ASSERT(secondChild != EQuadrant::Invalid, "NavMeshQuadTreeNode.AddSmallDescendants.InvalidSecondChild");
     
     _childrenPtr[(std::underlying_type<EQuadrant>::type)firstChild ]->AddSmallestDescendants(direction, iterationDirection, descendants);
     _childrenPtr[(std::underlying_type<EQuadrant>::type)secondChild]->AddSmallestDescendants(direction, iterationDirection, descendants);
@@ -894,9 +894,9 @@ const NavMeshQuadTreeNode* NavMeshQuadTreeNode::FindSingleNeighbor(EDirection di
     if ( moveInfo->sharesParent )
     {
       // if so, it's a sibling
-      ASSERT_NAMED(_parent, "NavMeshQuadTreeNode.FindSingleNeighbor.InvalidParent");
+      DEV_ASSERT(_parent, "NavMeshQuadTreeNode.FindSingleNeighbor.InvalidParent");
       neighbor = _parent->GetChild( moveInfo->neighborQuadrant );
-      ASSERT_NAMED(neighbor, "NavMeshQuadTreeNode.FindSingleNeighbor.InvalidNeighbor");
+      DEV_ASSERT(neighbor, "NavMeshQuadTreeNode.FindSingleNeighbor.InvalidNeighbor");
     }
     else
     {

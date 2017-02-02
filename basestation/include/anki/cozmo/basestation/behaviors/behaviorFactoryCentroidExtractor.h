@@ -20,7 +20,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorFactoryCentroidExtractor_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorFactoryCentroidExtractor_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 
@@ -39,7 +39,7 @@ namespace Cozmo {
     
     virtual ~BehaviorFactoryCentroidExtractor() { }
     
-    virtual bool IsRunnableInternal(const Robot& robot) const override;
+    virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
     virtual bool CarryingObjectHandledInternally() const override {return true;}
     
   private:

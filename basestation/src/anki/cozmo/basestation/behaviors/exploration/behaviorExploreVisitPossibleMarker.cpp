@@ -14,9 +14,9 @@
  **/
 #include "behaviorExploreVisitPossibleMarker.h"
 
-//#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -53,10 +53,10 @@ BehaviorExploreVisitPossibleMarker::~BehaviorExploreVisitPossibleMarker()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const Robot& robot) const
+bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // check whiteboard for known markers
-  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard& whiteboard = preReqData.GetRobot().GetAIComponent().GetWhiteboard();
   whiteboard.GetPossibleObjectsWRTOrigin(_possibleObjects);
 
   const bool canRun = !_possibleObjects.empty(); // TODO: consider distance limit
@@ -74,8 +74,8 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
   for( const auto& possibleObject : _possibleObjects )
   {
     // all possible objects have to be in robot's origin, otherwise whiteboard lied to us
-    ASSERT_NAMED( (&possibleObject.pose.FindOrigin()) == (&robot.GetPose().FindOrigin()),
-      "BehaviorExploreVisitPossibleMarker.InitInternal.InvalidOrigin" );
+    DEV_ASSERT((&possibleObject.pose.FindOrigin()) == (&robot.GetPose().FindOrigin()),
+               "BehaviorExploreVisitPossibleMarker.InitInternal.InvalidOrigin" );
   
     // pick closest marker to us
     const Vec3f& dirToPossibleObject = possibleObject.pose.GetTranslation() - robot.GetPose().GetTranslation();
@@ -120,8 +120,8 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
                                                               const Pose3d& possibleCubePose)
 {
   // trust that the whiteboard will never return information that is not valid in the current origin
-  ASSERT_NAMED(&robot.GetPose().FindOrigin() == &possibleCubePose.FindOrigin(),
-    "BehaviorExploreVisitPossibleMarker.WhiteboardPossibleMarkersDirty");
+  DEV_ASSERT(&robot.GetPose().FindOrigin() == &possibleCubePose.FindOrigin(),
+             "BehaviorExploreVisitPossibleMarker.WhiteboardPossibleMarkersDirty");
 
   // TODO if we are closer than max, limit max to that. I dont want to simply face the cube in that case because
   // we may have seen the marker from afar from a different position, and something is blocking it now. Ideally
@@ -250,7 +250,7 @@ void BehaviorExploreVisitPossibleMarker::MarkPossiblePoseAsEmpty(Robot& robot, O
   PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.ClearPose",
                    "robot looked at pose, so clear it");
 
-  robot.GetBehaviorManager().GetWhiteboard().FinishedSearchForPossibleCubeAtPose(objectType, pose);
+  robot.GetAIComponent().GetWhiteboard().FinishedSearchForPossibleCubeAtPose(objectType, pose);
 }
 
 

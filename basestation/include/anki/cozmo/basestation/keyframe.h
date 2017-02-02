@@ -25,6 +25,17 @@
 #include "util/random/randomGenerator.h"
 #include "json/json-forwards.h"
 
+namespace CozmoAnim {
+  struct HeadAngle;
+  struct LiftHeight;
+  struct RobotAudio;
+  struct FaceAnimation;
+  struct ProceduralFace;
+  struct Event;
+  struct BackpackLights;
+  struct BodyMotion;
+}
+
 namespace Anki {
 namespace Cozmo {
   
@@ -60,8 +71,8 @@ namespace Cozmo {
     // is playing in
     void SetTriggerTime(TimeStamp_t triggerTime_ms) { _triggerTime_ms = triggerTime_ms; }
     
-    // Set all members from Json. Calls virtual SetMembersFromJson() method so subclasses can specify how to
-    // populate their members. Second argument is used to print nicer debug strings if something goes wrong
+    // Set all members from Json or FlatBuffers. Calls virtual SetMembersFromJson() method so subclasses can specify
+    // how to populate their members. Second argument is used to print nicer debug strings if something goes wrong
     Result DefineFromJson(const Json::Value &json, const std::string& animNameDebug = "");
     
     // Fill some kind of message for streaming and return it. Return nullptr
@@ -87,13 +98,15 @@ namespace Cozmo {
     //void SetIsValid(bool isValid) { _isValid = isValid; }
     
     Util::RandomGenerator& GetRNG() const;
-    
+
+    // The trigger time is protected instead of private so derived classes can access it.
+    TimeStamp_t   _triggerTime_ms = 0;
+
   private:
     
     // A random number generator for all keyframes to share (for adding variability)
     static Util::RandomGenerator sRNG;
 
-    TimeStamp_t   _triggerTime_ms = 0;
     TimeStamp_t   _currentTime_ms = 0;
     
   }; // class IKeyFrame
@@ -109,9 +122,10 @@ namespace Cozmo {
   {
   public:
     HeadAngleKeyFrame() { }
-    
     HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration_ms);
     
+    Result DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug);
+
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
     static const std::string& GetClassName() {
@@ -121,6 +135,7 @@ namespace Cozmo {
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug = "");
     
   private:
     TimeStamp_t _durationTime_ms;
@@ -140,6 +155,8 @@ namespace Cozmo {
     LiftHeightKeyFrame() { }
     LiftHeightKeyFrame(u8 height_mm, u8 heightVariability_mm, TimeStamp_t duration_ms);
     
+    Result DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug);
+
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
     static const std::string& GetClassName() {
@@ -149,6 +166,7 @@ namespace Cozmo {
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug = "");
     
   private:
     TimeStamp_t _durationTime_ms;
@@ -180,6 +198,7 @@ namespace Cozmo {
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    // The DeviceAudioKeyFrame keyframes are NOT supported by FlatBuffers (yet)
     
   private:
     std::string _audioName;
@@ -211,6 +230,8 @@ namespace Cozmo {
     RobotAudioKeyFrame() { }
     RobotAudioKeyFrame( AudioRef&& audioRef, TimeStamp_t triggerTime_ms);
     
+    Result DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug);
+
     // NOTE: Always returns nullptr for RobotAudioKeyframe!
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; };
     
@@ -223,6 +244,7 @@ namespace Cozmo {
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug = "");
     
   private:
     
@@ -238,7 +260,7 @@ namespace Cozmo {
   // is requested, it looks up the actual RLE-compressed image matching the
   // reference in the KeyFrame and fills the streamed message with it.
   
-  // Depercated
+  // Deprecated
   class FaceImageKeyFrame : public IKeyFrame
   {
   public:
@@ -253,6 +275,7 @@ namespace Cozmo {
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    // The FaceImageKeyFrame keyframes are NOT supported by FlatBuffers (yet)
     
   private:
     u32 _imageID;
@@ -278,6 +301,10 @@ namespace Cozmo {
     , _isSingleFrame(isSingleFrame)
     { }
     
+    Result DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug);
+
+    Result Process(const std::string& animNameDebug);
+
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
     static const std::string& GetClassName() {
@@ -292,6 +319,7 @@ namespace Cozmo {
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug = "");
     
   private:
     std::string  _animName;
@@ -308,6 +336,8 @@ namespace Cozmo {
   public:
     ProceduralFaceKeyFrame() { }
     ProceduralFaceKeyFrame(const ProceduralFace& face, TimeStamp_t triggerTime_ms = 0);
+
+    Result DefineFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug);
     
     // Always returns nullptr. Use GetInterpolatedFace() to get the face stored in this
     // keyframe.
@@ -332,6 +362,7 @@ namespace Cozmo {
 
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug = "");
     
   private:
     ProceduralFace  _procFace;
@@ -361,6 +392,8 @@ namespace Cozmo {
   {
   public:
     EventKeyFrame() { }
+
+    Result DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug);
     
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
@@ -371,6 +404,7 @@ namespace Cozmo {
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug = "");
     
   private:
     
@@ -384,6 +418,8 @@ namespace Cozmo {
   {
   public:
     BackpackLightsKeyFrame() { }
+
+    Result DefineFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug);
     
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
@@ -398,6 +434,7 @@ namespace Cozmo {
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug = "");
     
   private:
     
@@ -415,6 +452,14 @@ namespace Cozmo {
     BodyMotionKeyFrame();
     BodyMotionKeyFrame(s16 speed, s16 curvatureRadius_mm, s32 duration_ms);
     
+    Result DefineFromFlatBuf(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug);
+
+    void CheckRotationSpeed(const std::string& animNameDebug);
+    void CheckStraightSpeed(const std::string& animNameDebug);
+    void CheckTurnSpeed(const std::string& animNameDebug);
+
+    Result ProcessRadiusString(const std::string& radiusStr, const std::string& animNameDebug);
+
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
     static const std::string& GetClassName() {
@@ -429,6 +474,7 @@ namespace Cozmo {
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug = "");
     
   private:
     

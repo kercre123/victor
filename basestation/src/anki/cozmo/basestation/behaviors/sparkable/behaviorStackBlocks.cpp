@@ -18,8 +18,10 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -31,12 +33,9 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
 CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
 CONSOLE_VAR(s32, kBSB_MaxNumPickupRetries, "Behavior.StackBlocks", 2);
-//CONSOLE_VAR(f32, kBSB_SamePreactionPoseDistThresh_mm, "Behavior.StackBlocks", 30.f);
-//CONSOLE_VAR(f32, kBSB_SamePreactionPoseAngleThresh_deg, "Behavior.StackBlocks", 45.f);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
 static const float kWaitForValidTimeout_s = 0.4f;
@@ -45,9 +44,9 @@ static const float kTimeObjectInvalidAfterStackFailure_sec = 3.0f;
 
   
 BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _blockworldFilterForBottom( new BlockWorldFilter )
-  , _robot(robot)
+: IBehavior(robot, config)
+, _blockworldFilterForBottom( new BlockWorldFilter )
+, _robot(robot)
 {
   SetDefaultName("StackBlocks");
   
@@ -64,8 +63,9 @@ BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config
   });
 }
 
-bool BehaviorStackBlocks::IsRunnableInternal(const Robot& robot) const
+bool BehaviorStackBlocks::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
   // don't change blocks while we're running
   if( !IsRunning() ) {
     UpdateTargetBlocks(robot);
@@ -76,7 +76,7 @@ bool BehaviorStackBlocks::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorStackBlocks::InitInternal(Robot& robot)
 {
-  if(robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+  if(robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
     UpdateTargetBlocks(robot);
   }
@@ -117,13 +117,13 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
   }
 
   if( ! _targetBlockTop.IsSet() ) {
-    const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
     const AIWhiteboard::ObjectUseIntention intention =
       _stackInAnyOrientation ?
       AIWhiteboard::ObjectUseIntention::PickUpAnyObject :
       AIWhiteboard::ObjectUseIntention::PickUpObjectWithAxisCheck;
     _targetBlockTop = whiteboard.GetBestObjectForAction(intention);
-    _topBlockSetFromTapIntent = _robot.GetBehaviorManager().GetWhiteboard().HasTapIntent();
+    _topBlockSetFromTapIntent = _robot.GetAIComponent().GetWhiteboard().HasTapIntent();
   }
 
   if( lastTopID.IsSet() && ! _targetBlockTop.IsSet() ) {
@@ -173,7 +173,7 @@ bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
 
 bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) const
 {
-  const bool hasFailedRecently = _robot.GetBehaviorManager().GetWhiteboard().
+  const bool hasFailedRecently = _robot.GetAIComponent().GetWhiteboard().
   DidFailToUse(obj->GetID(),
                AIWhiteboard::ObjectUseAction::StackOnObject,
                kTimeObjectInvalidAfterStackFailure_sec,
@@ -191,12 +191,12 @@ bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) con
   // the double tapped block should be the bottom block
   if(ret &&
      !_topBlockSetFromTapIntent &&
-     _robot.GetBehaviorManager().GetWhiteboard().HasTapIntent())
+     _robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
     using Intent = AIWhiteboard::ObjectUseIntention;
     Intent intent = _stackInAnyOrientation ? Intent::PickUpAnyObject : Intent::PickUpObjectWithAxisCheck;
     
-    const ObjectID id = _robot.GetBehaviorManager().GetWhiteboard().GetBestObjectForAction(intent);
+    const ObjectID id = _robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(intent);
     ret = (id == obj->GetID());
   }
   
@@ -237,7 +237,7 @@ bool BehaviorStackBlocks::AreBlocksStillValid(const Robot& robot)
     }
 
 
-    const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
     const AIWhiteboard::ObjectUseIntention intention =
       _stackInAnyOrientation ?
         AIWhiteboard::ObjectUseIntention::PickUpAnyObject :
@@ -316,7 +316,8 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   if( ! AreBlocksStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
     UpdateTargetBlocks(robot);
-    if( IsRunnable(robot, true) ) {
+    BehaviorPreReqNone preReqData;
+    if( IsRunnableScored(preReqData) ) {
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Picking.RestartWithNewBlocks",
                        "had to change blocks, re-starting behavior");
@@ -352,7 +353,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   {
     animTrigger = AnimationTrigger::Count;
     
-    const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
     const AIWhiteboard::ObjectUseIntention intention =
       _stackInAnyOrientation ?
         AIWhiteboard::ObjectUseIntention::PickUpAnyObject :
@@ -413,11 +414,16 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
                   // mark the block as inaccessible if we've retried the appropriate number of times
                   const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockTop);
                   if(failedObject){
-                    robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject,
+                    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
                                                                               AIWhiteboard::ObjectUseAction::PickUpObject);
                   }
-                  
-                  TransitionToWaitForBlocksToBeValid(robot);
+                 
+                  // Play failure animation
+                  if (msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksRetry), &BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid);
+                  } else {
+                    TransitionToWaitForBlocksToBeValid(robot);
+                  }
                 }
               });
     
@@ -431,7 +437,8 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
   if( ! AreBlocksStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
     UpdateTargetBlocks(robot);
-    if( IsRunnable(robot, true) ) {
+    BehaviorPreReqNone preReqData;
+    if( IsRunnableScored(preReqData) ) {
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Stacking.RestartWithNewBlocks.",
                        "had to change blocks, re-starting behavior");
@@ -468,7 +475,7 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                     // mark the block as failed to stack on
                     const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockBottom);
                     if(failedObject){
-                      robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject,
+                      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
                                                                                 AIWhiteboard::ObjectUseAction::StackOnObject);
                     }
                     

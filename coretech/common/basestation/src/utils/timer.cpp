@@ -16,6 +16,9 @@
  **/
 
 #include "anki/common/basestation/utils/timer.h"
+#include "util/math/math.h"
+#include "util/math/numericCast.h"
+
 //#include "basestation/utils/parameters.h"
 
 //#ifndef LINUX
@@ -114,10 +117,10 @@ BaseStationTimer::~BaseStationTimer()
 void BaseStationTimer::UpdateTime(BaseStationTime_t currTime)
 {
   elapsedTimeInNanoSeconds_ = currTime - currentTimeInNanoSeconds_;
-  elapsedTimeInSeconds_ = NANOS_TO_SEC(elapsedTimeInNanoSeconds_);
+  elapsedTimeInSeconds_ = Util::NanoSecToSec(elapsedTimeInNanoSeconds_);
 
   currentTimeInNanoSeconds_ = currTime;
-  currentTimeInSeconds_ = NANOS_TO_SEC(currTime);
+  currentTimeInSeconds_ = Util::NanoSecToSec(currTime);
   
   //printf("Updating basestation time to %llu\n", currentTimeInNanoSeconds_);
   tickCount_ += 1;
@@ -128,6 +131,11 @@ void BaseStationTimer::UpdateTime(BaseStationTime_t currTime)
 double BaseStationTimer::GetCurrentTimeInSeconds() const
 {
   return currentTimeInSeconds_;
+}
+
+float BaseStationTimer::GetCurrentTimeInSeconds_f() const
+{
+  return Util::numeric_cast<float>( GetCurrentTimeInSeconds() );
 }
 
 BaseStationTime_t BaseStationTimer::GetCurrentTimeInNanoSeconds() const

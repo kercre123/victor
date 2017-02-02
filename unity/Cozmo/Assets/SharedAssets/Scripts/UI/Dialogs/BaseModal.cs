@@ -1,59 +1,21 @@
 ﻿using UnityEngine;
-using System.Collections;
-using DG.Tweening;
-using Cozmo.UI;
-using Anki.UI;
 
 namespace Cozmo {
   namespace UI {
-    public class BaseModal : MonoBehaviour {
-      private enum ViewState {
-        Initialized,
-        IsOpening,
-        Open,
-        IsClosing,
-        Closed
-      }
-
+    public class BaseModal : BaseDialog {
       // Static events
-      public delegate void BaseViewHandler(BaseModal view);
+      public delegate void BaseModalHandler(BaseModal modal);
 
-      public static event BaseViewHandler BaseViewOpened;
-      public static event BaseViewHandler BaseViewOpenAnimationFinished;
-      public static event BaseViewHandler BaseViewClosed;
-      public static event BaseViewHandler BaseViewCloseAnimationFinished;
+      public static event BaseModalHandler BaseModalOpened;
+      public static event BaseModalHandler BaseModalOpenAnimationFinished;
+      public static event BaseModalHandler BaseModalClosed;
+      public static event BaseModalHandler BaseModalCloseAnimationFinished;
 
-      // Instance events
-      public delegate void SimpleBaseViewHandler();
+      public event SimpleBaseDialogHandler ModalClosedWithCloseButtonOrOutside;
+      public event SimpleBaseDialogHandler ModalClosedWithCloseButtonOrOutsideAnimationFinished;
 
-      public event SimpleBaseViewHandler ViewOpened;
-      public event SimpleBaseViewHandler ViewOpenAnimationFinished;
-      public event SimpleBaseViewHandler ViewClosed;
-      public event SimpleBaseViewHandler ViewCloseAnimationFinished;
-
-      public event SimpleBaseViewHandler ViewClosedByUser;
-      public event SimpleBaseViewHandler ViewClosedByUserAnimationFinished;
-
-      [SerializeField]
-      private string _DASEventViewName = "";
-
-      private ViewState _CurrentViewState = ViewState.Initialized;
-
-      protected bool IsClosed {
-        get { return _CurrentViewState == ViewState.IsClosing || _CurrentViewState == ViewState.Closed; }
-      }
-
-      public string DASEventViewName {
-        get { return _DASEventViewName; }
-        set { _DASEventViewName = value; }
-      }
-
-      [SerializeField]
-      private DASUtil.ViewType _DASEventViewType = DASUtil.ViewType.View;
-
-      public DASUtil.ViewType DASEventViewType {
-        get { return _DASEventViewType; }
-      }
+      public event SimpleBaseDialogHandler ModalForceClosed;
+      public event SimpleBaseDialogHandler ModalForceClosedAnimationFinished;
 
       /// <summary>
       /// If true, creates a full screen button behind all the elements of this
@@ -63,43 +25,17 @@ namespace Cozmo {
       private bool _CloseDialogOnTapOutside;
 
       [SerializeField]
-      protected Cozmo.UI.CozmoButton _OptionalCloseDialogButton;
+      protected CozmoButton _OptionalCloseDialogButton;
 
-      [SerializeField]
-      private int _LayerPriority = 0;
-
-      public int LayerPriority {
-        get { return _LayerPriority; }
-      }
+      public ModalPriorityData PriorityData { get; private set; }
 
       public bool DimBackground = false;
 
-      private Sequence _TransitionAnimation;
+      protected bool _UserClosedModal = false;
+      protected bool _ModalForceClosed = false;
 
-      // The UI event that should play when this view opens
-      [SerializeField]
-      private Anki.Cozmo.Audio.AudioEventParameter _OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
-
-      public Anki.Cozmo.Audio.AudioEventParameter OpenAudioEvent {
-        get { return _OpenAudioEvent; }
-        set { _OpenAudioEvent = value; }
-      }
-
-      void OnDestroy() {
-        if (_CurrentViewState != ViewState.Closed) {
-          if (_CurrentViewState != ViewState.IsClosing) {
-            RaiseViewClosed(this);
-          }
-
-          BaseViewCleanUpInternal();
-        }
-      }
-
-      private bool _UserClosedView = false;
-
-      #region Overriden Methods
-
-      public void Initialize(bool? overrideCloseOnTapOutside = null) {
+      public void Initialize(ModalPriorityData priorityData, bool? overrideCloseOnTapOutside) {
+        PriorityData = priorityData;
         bool shouldCloseOnTapOutside = overrideCloseOnTapOutside.HasValue ?
           overrideCloseOnTapOutside.Value : _CloseDialogOnTapOutside;
         if (shouldCloseOnTapOutside) {
@@ -108,35 +44,15 @@ namespace Cozmo {
 
         SetupCloseButton();
 
-        CheckDASEventName();
-
-        // TODO: In the future, separate the initialize and open dialog steps 
-        // for ease of use
-        _CurrentViewState = ViewState.Initialized;
-
-        // TODO: This should be raised after open animation finished
-        // and raise initialize event here instead?
-        RaiseViewOpened(this);
-
-        PlayOpenSound();
-
-        PlayOpenAnimations();
+        base.Initialize();
       }
 
-      protected virtual void CleanUp() {
-
+      public void ForceCloseModal() {
+        if (!IsClosed) {
+          _ModalForceClosed = true;
+          CloseDialog();
+        }
       }
-
-      protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
-      }
-
-      // TODO: Make virtual function play from a set of default animations based on a serialized enum?
-      // plus the pivot point and direction (top, bottom, left, right)
-      // TODO: Make protected functions that return default tweeners you can add to the sequence?
-      protected virtual void ConstructCloseAnimation(Sequence closeAnimation) {
-      }
-
-      #endregion
 
       private void CreateFullScreenCloseCollider() {
         GameObject fullScreenButton = UIManager.CreateUIElement(UIManager.Instance.TouchCatcherPrefab,
@@ -146,162 +62,118 @@ namespace Cozmo {
         fullScreenButton.transform.SetAsFirstSibling();
         Cozmo.UI.TouchCatcher fullScreenCollider = fullScreenButton.GetComponent<Cozmo.UI.TouchCatcher>();
         fullScreenCollider.OnTouch += (HandleUserClose);
-        fullScreenCollider.Initialize("close_view_by_touch_outside_button", DASEventViewName);
+        fullScreenCollider.Initialize("close_view_by_touch_outside_button", DASEventDialogName);
       }
 
       private void SetupCloseButton() {
         if (_OptionalCloseDialogButton != null) {
-          _OptionalCloseDialogButton.Initialize(HandleUserClose, "default_close_view_button", DASEventViewName);
-        }
-      }
-
-      private void CheckDASEventName() {
-        if (string.IsNullOrEmpty(_DASEventViewName)) {
-          DAS.Error(this, string.Format("View is missing a _DASEventViewName! Please check the prefab. name={0}", gameObject.name));
-          _DASEventViewName = gameObject.name;
+          _OptionalCloseDialogButton.Initialize(HandleUserClose, "default_close_view_button", DASEventDialogName);
         }
       }
 
       protected virtual void HandleUserClose() {
-        _UserClosedView = true;
-        CloseView();
+        _UserClosedModal = true;
+        CloseDialog();
       }
 
-      protected virtual void Update() {
-#if (UNITY_ANDROID && !UNITY_EDITOR)
-        // Android Back button.
-        if (_OptionalCloseDialogButton != null) {
-          if (Input.GetKeyDown(KeyCode.Escape)) {
-            HandleUserClose();
-          }
-        }
-#endif
-      }
-
-      public void CloseView() {
-        // if we are already closing the view don't make multiple calls
-        // to the callback and don't try to play the close animation again
-        if (_CurrentViewState != ViewState.IsClosing
-            && _CurrentViewState != ViewState.Closed) {
-          PlayCloseAnimations();
-          RaiseViewClosed(this);
+      protected override void RaiseDialogOpened() {
+        base.RaiseDialogOpened();
+        if (BaseModalOpened != null) {
+          BaseModalOpened(this);
         }
       }
 
-      public void CloseViewImmediately() {
-        if (_CurrentViewState != ViewState.Closed) {
-          if (_CurrentViewState != ViewState.IsClosing) {
-            RaiseViewClosed(this);
-          }
-
-          BaseViewCleanUpInternal();
-          Destroy(gameObject);
+      protected override void RaiseDialogOpenAnimationFinished() {
+        base.RaiseDialogOpenAnimationFinished();
+        if (BaseModalOpenAnimationFinished != null) {
+          BaseModalOpenAnimationFinished(this);
         }
       }
 
-      // Play a sound when the view is shown (on calling Initialize)
-      private void PlayOpenSound() {
-        if (!OpenAudioEvent.IsInvalid()) {
-          Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(OpenAudioEvent);
+      protected override void RaiseDialogClosed() {
+        base.RaiseDialogClosed();
+        if (_UserClosedModal && ModalClosedWithCloseButtonOrOutside != null) {
+          ModalClosedWithCloseButtonOrOutside();
+        }
+        if (_ModalForceClosed && ModalForceClosed != null) {
+          ModalForceClosed();
+        }
+        if (BaseModalClosed != null) {
+          BaseModalClosed(this);
         }
       }
 
-      private void PlayOpenAnimations() {
-        if (_CurrentViewState == ViewState.Initialized) {
-          _CurrentViewState = ViewState.IsOpening;
-          UIManager.DisableTouchEvents();
-
-          // Play some animations
-          if (_TransitionAnimation != null) {
-            _TransitionAnimation.Kill();
-          }
-          _TransitionAnimation = DOTween.Sequence();
-          ConstructOpenAnimation(_TransitionAnimation);
-          _TransitionAnimation.AppendCallback(OnOpenAnimationsFinished);
+      protected override void RaiseDialogCloseAnimationFinished() {
+        base.RaiseDialogCloseAnimationFinished();
+        if (_UserClosedModal && ModalClosedWithCloseButtonOrOutsideAnimationFinished != null) {
+          ModalClosedWithCloseButtonOrOutsideAnimationFinished();
+        }
+        if (_ModalForceClosed && ModalForceClosedAnimationFinished != null) {
+          ModalForceClosedAnimationFinished();
+        }
+        if (BaseModalCloseAnimationFinished != null) {
+          BaseModalCloseAnimationFinished(this);
         }
       }
+    }
 
-      private void OnOpenAnimationsFinished() {
-        _CurrentViewState = ViewState.Open;
-        UIManager.EnableTouchEvents();
+    [System.Serializable]
+    public class ModalPriorityData {
+      [SerializeField]
+      private ModalPriorityLayer _PriorityLayer = ModalPriorityLayer.VeryLow;
 
-        // Raise event
-        RaiseViewOpenAnimationFinished(this);
+      [SerializeField]
+      private uint _PriorityOffset = 0;
+
+      public uint Priority { get { return (uint)_PriorityLayer + _PriorityOffset; } }
+
+      [SerializeField]
+      private LowPriorityModalAction _LowPriorityAction = LowPriorityModalAction.Queue;
+      public LowPriorityModalAction LowPriorityAction { get { return _LowPriorityAction; } }
+
+      [SerializeField]
+      private HighPriorityModalAction _HighPriorityAction = HighPriorityModalAction.Stack;
+      public HighPriorityModalAction HighPriorityAction { get { return _HighPriorityAction; } }
+
+      public ModalPriorityData() {
+        _PriorityLayer = ModalPriorityLayer.VeryLow;
+        _PriorityOffset = 0;
+        _LowPriorityAction = LowPriorityModalAction.CancelSelf;
+        _HighPriorityAction = HighPriorityModalAction.Stack;
       }
 
-      private void PlayCloseAnimations() {
-        _CurrentViewState = ViewState.IsClosing;
-        UIManager.DisableTouchEvents();
-
-        // Play some animations
-        if (_TransitionAnimation != null) {
-          _TransitionAnimation.Kill();
-        }
-        _TransitionAnimation = DOTween.Sequence();
-        ConstructCloseAnimation(_TransitionAnimation);
-        _TransitionAnimation.AppendCallback(OnCloseAnimationsFinished);
+      public ModalPriorityData(ModalPriorityLayer priorityLayer, uint priorityOffset,
+                               LowPriorityModalAction lowPriorityAction, HighPriorityModalAction highPriorityAction) {
+        _PriorityLayer = priorityLayer;
+        _PriorityOffset = priorityOffset;
+        _LowPriorityAction = lowPriorityAction;
+        _HighPriorityAction = highPriorityAction;
       }
 
-      private void OnCloseAnimationsFinished() {
-        if (_CurrentViewState != ViewState.Closed) {
-          BaseViewCleanUpInternal();
-          Destroy(gameObject);
-        }
+      public static ModalPriorityData CreateSlightlyHigherData(ModalPriorityData basePriorityData) {
+        return new ModalPriorityData(basePriorityData._PriorityLayer,
+                                     basePriorityData._PriorityOffset + 1,
+                                     basePriorityData._LowPriorityAction,
+                                     basePriorityData._HighPriorityAction);
       }
+    }
 
-      private void BaseViewCleanUpInternal() {
-        _CurrentViewState = ViewState.Closed;
-        if (UIManager.Instance != null) {
-          UIManager.EnableTouchEvents();
-        }
-        if (_TransitionAnimation != null) {
-          _TransitionAnimation.Kill();
-        }
-        CleanUp();
-        RaiseViewCloseAnimationFinished(this);
-      }
+    public enum ModalPriorityLayer {
+      VeryHigh = 4000,
+      High = 3000,
+      Low = 2000,
+      VeryLow = 1000
+    }
 
-      private static void RaiseViewOpened(BaseModal view) {
-        if (BaseViewOpened != null) {
-          BaseViewOpened(view);
-        }
-        if (view.ViewOpened != null) {
-          view.ViewOpened();
-        }
-      }
+    public enum LowPriorityModalAction {
+      Queue,
+      CancelSelf
+    }
 
-      private static void RaiseViewOpenAnimationFinished(BaseModal view) {
-        if (BaseViewOpenAnimationFinished != null) {
-          BaseViewOpenAnimationFinished(view);
-        }
-        if (view.ViewOpenAnimationFinished != null) {
-          view.ViewOpenAnimationFinished();
-        }
-      }
-
-      private static void RaiseViewClosed(BaseModal view) {
-        if (BaseViewClosed != null) {
-          BaseViewClosed(view);
-        }
-        if (view.ViewClosed != null) {
-          view.ViewClosed();
-        }
-        if (view._UserClosedView && view.ViewClosedByUser != null) {
-          view.ViewClosedByUser();
-        }
-      }
-
-      private static void RaiseViewCloseAnimationFinished(BaseModal view) {
-        if (BaseViewCloseAnimationFinished != null) {
-          BaseViewCloseAnimationFinished(view);
-        }
-        if (view.ViewCloseAnimationFinished != null) {
-          view.ViewCloseAnimationFinished();
-        }
-        if (view._UserClosedView && view.ViewClosedByUserAnimationFinished != null) {
-          view.ViewClosedByUserAnimationFinished();
-        }
-      }
+    public enum HighPriorityModalAction {
+      Queue,
+      Stack,
+      ForceCloseOthersAndOpen
     }
   }
 }

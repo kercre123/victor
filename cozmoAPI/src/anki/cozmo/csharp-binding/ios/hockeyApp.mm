@@ -69,7 +69,8 @@ BOOL gWaitingForCrashUpload = NO;
                             sourceApplication:sourceApplication   
                                    annotation:annotation];
   if (handled) {
-    PRINT_NAMED_EVENT("HockeyApp.ios.handleOpenURL", "URL:%s sourceApp:%s", url.absoluteString.UTF8String, sourceApplication.UTF8String);
+    LOG_EVENT("HockeyApp.ios.handleOpenURL", "URL:%s sourceApp:%s",
+              url.absoluteString.UTF8String, sourceApplication.UTF8String);
   }
   return handled;
 }
@@ -84,13 +85,13 @@ BOOL gWaitingForCrashUpload = NO;
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
   BOOL disableReporting = [defaults boolForKey:@"ReportingDisabled"];
   if (disableReporting) {
-    PRINT_NAMED_EVENT("HockeyApp.ios.opt_out", "");
+    LOG_EVENT("HockeyApp.ios.opt_out", "");
     return;
   }
 
   NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
   if(!hockeyAppId || hockeyAppId.length == 0) {
-    PRINT_NAMED_EVENT("HockeyApp.ios.disabled", "");
+    LOG_EVENT("HockeyApp.ios.disabled", "");
     return;
   }
   PRINT_NAMED_INFO("HockeyApp.ios.checkin", "%s", hockeyAppId.UTF8String);

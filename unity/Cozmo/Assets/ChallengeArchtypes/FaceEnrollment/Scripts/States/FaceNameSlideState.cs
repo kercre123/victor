@@ -1,10 +1,7 @@
-﻿using UnityEngine;
-using System.Collections;
-namespace FaceEnrollment {
+﻿namespace FaceEnrollment {
   public class FaceNameSlideState : State {
 
     private EnterNameSlide _EnterNameSlideInstance;
-
     private FaceEnrollmentGame _FaceEnrollmentGame;
     private string _PreFilledName = "";
     private System.Action<string> _OnNameEntered;
@@ -14,7 +11,7 @@ namespace FaceEnrollment {
       _OnNameEntered = onNameEntered;
     }
 
-    public override void Pause(State.PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+    public override void Pause(State.PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
       // don't quit from reactionary behaviors.
     }
 
@@ -31,9 +28,16 @@ namespace FaceEnrollment {
         _EnterNameSlideInstance.SetNameInputField(_PreFilledName);
       }
 
-      _FaceEnrollmentGame.SharedMinigameView.ShowBackButton(() => {
-        _StateMachine.SetNextState(new FaceSlideState());
-      });
+      if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
+        _FaceEnrollmentGame.SharedMinigameView.ShowQuitButton();
+      }
+      else {
+        _FaceEnrollmentGame.SharedMinigameView.ShowBackButton(() => {
+          _StateMachine.SetNextState(new FaceSlideState());
+        });
+      }
+
+
     }
 
     public override void Exit() {

@@ -184,6 +184,9 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
     JsonValue: 0.4
   - ObjectPath: 
@@ -279,7 +282,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.5294118, g: 0.5294118, b: 0.5294118, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -369,9 +372,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _UnlocksContainer: {fileID: 22401556}
   _UnlocksTilePrefab: {fileID: 11487174, guid: 8ab911dc7ee844400aacb3da9b5028f6, type: 2}
-  _CoreUpgradeDetailsViewPrefab: {fileID: 11454172, guid: 004aa32e5f8004fffa7f51c3a4061e75,
+  _CoreUpgradeDetailsModalPrefab: {fileID: 11454172, guid: 004aa32e5f8004fffa7f51c3a4061e75,
     type: 2}
   _CoreUpgradeAnimatedIconPrefab: {fileID: 11439878, guid: e509e98c549f24912ba50af026f7847f,
+    type: 2}
+  _ComingSoonAlertPrefab: {fileID: 11425878, guid: a10d0b3424331432da08b6c328ec83da,
     type: 2}
 --- !u!222 &22267732
 CanvasRenderer:
@@ -596,7 +601,7 @@ Prefab:
       objectReference: {fileID: 11487174, guid: 8ab911dc7ee844400aacb3da9b5028f6,
         type: 2}
     - target: {fileID: 0}
-      propertyPath: _CoreUpgradeDetailsViewPrefab
+      propertyPath: _CoreUpgradeDetailsModalPrefab
       value: 
       objectReference: {fileID: 11454172, guid: 004aa32e5f8004fffa7f51c3a4061e75,
         type: 2}

@@ -1,5 +1,5 @@
 {
-  "behaviorType": "PopAWheelie",
+  "behaviorClass": "PopAWheelie",
   "name": "tapInteractionPopAWheelie",
   "displayNameKey":"behavior.PopAWheelie",
   "requireObjectTapped" : true,

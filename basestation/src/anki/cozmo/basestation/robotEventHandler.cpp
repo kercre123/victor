@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -27,7 +27,6 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveOffChargerContactsAction.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/actions/enrollNamedFaceAction.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/setFaceAction.h"
@@ -89,6 +88,19 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimation& msg)
 {
   return new PlayAnimationAction(robot, msg.animationName, msg.numLoops);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helper function that is friended by TriggerCubeAnimationAction so we can call its private constructor
+IActionRunner* GetPlayCubeAnimationHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
+{
+  return new TriggerCubeAnimationAction(robot, msg.objectID, msg.trigger);
+}
+  
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
+{
+  return GetPlayCubeAnimationHelper(robot, msg);
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -700,16 +712,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetHeadAng
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::EnrollNamedFace& enrollNamedFace)
-{
-  EnrollNamedFaceAction* enrollAction = new EnrollNamedFaceAction(robot, enrollNamedFace.faceID, enrollNamedFace.name, enrollNamedFace.mergeIntoID);
-  enrollAction->SetSequenceType(enrollNamedFace.sequence);
-  enrollAction->EnableSaveToRobot(enrollNamedFace.saveToRobot);
-  return enrollAction;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Version for SayText message
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& sayText)
@@ -998,7 +1000,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(displayProceduralFace,    DisplayProceduralFace,    0),
       DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),
       DEFINE_HANDLER(driveStraight,            DriveStraight,            0),
-      DEFINE_HANDLER(enrollNamedFace,          EnrollNamedFace,          0),
       DEFINE_HANDLER(facePlant,                FacePlant,                0),
       DEFINE_HANDLER(flipBlock,                FlipBlock,                0),
       DEFINE_HANDLER(gotoObject,               GotoObject,               0),
@@ -1012,6 +1013,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(placeRelObject,           PlaceRelObject,           1),
       DEFINE_HANDLER(playAnimation,            PlayAnimation,            0),
       DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
+      DEFINE_HANDLER(playCubeAnimationTrigger, PlayCubeAnimationTrigger, 0),
       DEFINE_HANDLER(popAWheelie,              PopAWheelie,              1),
       DEFINE_HANDLER(readToolCode,             ReadToolCode,             0),
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
@@ -1081,6 +1083,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::StreamObjectAccel>();
       
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
@@ -1129,28 +1132,8 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   // Now we fill out our Action and possibly update number of retries:
   IActionRunner* newAction = handlerIter->second.first(*robot, msg);
   const u8 numRetries = handlerIter->second.second;
-  
-  const bool didSetTag = newAction->SetTag(GetNextGameActionTag());
-      
-  // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  if(!didSetTag || robot->GetIgnoreExternalActions())
-  {
-    if (robot->GetIgnoreExternalActions()) {
-      PRINT_NAMED_INFO("RobotEventHandler.HandleActionEvents.ExternalActionsDisabled",
-                       "Ignoring %s GameToEngineEvent message for action type %s while external actions are disabled",
-                       ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()),
-                       EnumToString(newAction->GetType()));
-    } else
-    {
-      PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.FailedToSetTag",
-                        "Failed to set tag. deleting action %s (%hhu)",
-                        MessageGameToEngineTagToString(msg.GetTag()), msg.GetTag());
-    }
+  newAction->SetTag(GetNextGameActionTag());
 
-    newAction->PrepForCompletion();
-    Util::SafeDelete(newAction);
-    return;
-  }
   
   // Everything's ok and we have an action, so queue it
   robot->GetActionList().QueueAction(QueueActionPosition::NOW, newAction, numRetries);
@@ -1178,31 +1161,10 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
   }
   
   IActionRunner* action = handlerIter->second(*robot, msg.action);
-  
-  const bool didSetTag = action->SetTag(msg.idTag);
-  
-  // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  if(!didSetTag || robot->GetIgnoreExternalActions())
-  {
-    if(robot->GetIgnoreExternalActions())
-    {
-      PRINT_NAMED_INFO("RobotEventHandler.HandleQueueSingleAction.IgnoringExternalActions",
-                       "Ignoring QueueSingleAction message while external actions are disabled");
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueSingleAction.FailedToSetTag",
-                        "Failed to set tag. deleting action %s (%hhu)",
-                        RobotActionUnionTagToString(msg.action.GetTag()), msg.action.GetTag());
-    }
-    action->PrepForCompletion();
-    Util::SafeDelete(action);
-  }
-  else
-  {
-    // Put the action in the given position of the specified queue
-    robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
-  }
+  action->SetTag(msg.idTag);
+
+  // Put the action in the given position of the specified queue
+  robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1247,29 +1209,10 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
     
   } // for each action/actionType
   
-  // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  const bool didSetTag = compoundAction->SetTag(msg.idTag);
-  
-  if(!didSetTag || robot->GetIgnoreExternalActions())
-  {
-    if(robot->GetIgnoreExternalActions())
-    {
-      PRINT_NAMED_INFO("RobotEventHandler.QueueCompoundAction",
-                       "Ignoring QueueCompoundAction message while external actions are disabled");
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction", "Failure to set action tag deleting action");
-    }
-    
-    compoundAction->PrepForCompletion();
-    Util::SafeDelete(compoundAction);
-  }
-  else
-  {
-    // Put the action in the given position of the specified queue
-    robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
-  }
+  compoundAction->SetTag(msg.idTag);
+
+  // Put the action in the given position of the specified queue
+  robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
 }
 
   
@@ -1665,11 +1608,31 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
     robot->GetActionList().Cancel();
     robot->GetAnimationStreamer().SetIdleAnimation(AnimationTrigger::Count);
     robot->GetMoveComponent().StopAllMotors();
-    robot->GetLightsComponent().TurnOffBackpackLights();
-    robot->GetLightsComponent().StopLoopingBackpackLights();
+    robot->GetBodyLightComponent().TurnOffBackpackLights();
+    robot->GetBodyLightComponent().StopLoopingBackpackLights();
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.StreamObjectAccel.InvalidRobotID", "Failed to find robot.");
+  }
+  else
+  {
+    ActiveObject* obj = robot->GetBlockWorld().GetActiveObjectByID(msg.objectID);
+    if (obj != nullptr) {
+      PRINT_NAMED_INFO("RobotEventHandler.StreamObjectAccel", "ObjectID %d (activeID %d), enable %d", msg.objectID, obj->GetActiveID(), msg.enable);
+      robot->SendMessage(RobotInterface::EngineToRobot(StreamObjectAccel(obj->GetActiveID(), msg.enable)));
+    }
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)

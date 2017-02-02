@@ -36,7 +36,11 @@ void GameMessagePort::PushToGameMessage(const uint8_t* buffer, size_t size)
     if (_toGameBufferFull || (_toGameSize + size) > _toGameCapacity) {
       if (!_toGameBufferFull) {
         _toGameBufferFull = true;
-        ASSERT_NAMED(!_isCritical, "GameMessagePort.PushToGameMessage.send_buffer_full");
+        if (_isCritical) {
+          PRINT_NAMED_ERROR("GameMessagePort.PushToGameMessage.send_buffer_full", "No room for size %zd", size);
+        } else {
+          PRINT_NAMED_WARNING("GameMessagePort.PushToGameMessage.send_buffer_full", "No room for size %zd", size);
+        }
       }
       return;
     }
@@ -49,9 +53,9 @@ void GameMessagePort::PushToGameMessage(const uint8_t* buffer, size_t size)
 size_t GameMessagePort::PullToGameMessages(uint8_t* buffer, size_t bufferSize)
 {
   // deal with catastrophes
-  ASSERT_NAMED(bufferSize == _toGameCapacity, "GameMessagePort.MismatchedOutboundBuffer");
+  DEV_ASSERT(bufferSize == _toGameCapacity, "GameMessagePort.MismatchedOutboundBuffer");
   if (_toGameSize > bufferSize) {
-    ASSERT_NAMED(false, "GameMessagePort.PullToGameMessages.buffer_too_large_to_send");
+    PRINT_NAMED_ERROR("GameMessagePort.PullToGameMessages.buffer_too_large_to_send", "No room for size %zd", _toGameSize);
     _toGameSize = 0;
     return 0;
   }

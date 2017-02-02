@@ -127,41 +127,9 @@ namespace Anki {
         u16 sentIMUDataMsgs_ = 0;
 #endif
 
-
-        // ====== Event detection vars ======
-        enum IMUEvent {
-          FALLING = 0,
-          UPSIDE_DOWN,
-          LEFTSIDE_DOWN,
-          RIGHTSIDE_DOWN,
-          FRONTSIDE_DOWN,
-          BACKSIDE_DOWN,
-          NUM_IMU_EVENTS
-        };
-
-        // Stores whether or not IMU conditions for an event are met this cycle
-        bool eventStateRaw_[NUM_IMU_EVENTS];
-
-        // Stores whether or not IMU and timing conditions for an event are met.
-        // This is the true indicator of whether or not an event has occured.
-        bool eventState_[NUM_IMU_EVENTS];
-
-        // Used to store time that event was first activated or deactivated
-        u32 eventTime_[NUM_IMU_EVENTS] = {0};
-
-        // The amount of time required for eventStateRaw to be true for eventState to be true
-        const u32 eventActivationTime_ms_[NUM_IMU_EVENTS] = {150, 2000, 500, 500, 500};
-
-        // The amount of time required for eventStateRaw to be false for eventState to be false
-        const u32 eventDeactivationTime_ms_[NUM_IMU_EVENTS] = {200, 500, 500, 500, 500};
-
-        // Callback functions associated with event activation and deactivation
-        typedef void (*eventCallbackFn)(void);
-        eventCallbackFn eventActivationCallbacks[NUM_IMU_EVENTS] = {0};
-        eventCallbackFn eventDeactivationCallbacks[NUM_IMU_EVENTS] = {0};
-
         // Falling
-        const f32 FALLING_THRESH_MMPS2_SQRD = 40000000;
+        bool falling_ = false;
+        bool bracingEnabled_ = true;
 
         // N-side down
         const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
@@ -172,10 +140,8 @@ namespace Anki {
 
 
 
-
-
       // Implementation of Madgwick's IMU and AHRS algorithms.
-      // See: http://www.x-io.co.uk/node/8#open_source_ahrs_and_imu_algorithms
+      // See: http://x-io.co.uk/open-source-imu-and-ahrs-algorithms/
 
       //---------------------------------------------------------------------------------------------------
       // Definitions
@@ -285,26 +251,25 @@ namespace Anki {
 
 
 
-
-
-      // ==== Event callback functions ===
-      
       void BraceForImpact()
       {
-        LiftController::Brace();
-        HeadController::Brace();
+        if (bracingEnabled_) {
+          LiftController::Brace();
+          HeadController::Brace();
+        }
       }
       
       void UnbraceAfterImpact()
       {
-        LiftController::Unbrace();
-        HeadController::Unbrace();
-        
-        LiftController::StartCalibrationRoutine(true);
-        HeadController::StartCalibrationRoutine(true);
+        if (bracingEnabled_) {
+          LiftController::Unbrace();
+          HeadController::Unbrace();
+          
+          LiftController::StartCalibrationRoutine(true);
+          HeadController::StartCalibrationRoutine(true);
+        }
       }
 
-      //===== End of event callbacks ====
       void ResetPickupVars() {
         pickedUp_ = 0;
         cliffValWhileNotMoving_ = 0;
@@ -330,13 +295,7 @@ namespace Anki {
       void EnableBraceWhenFalling(bool enable)
       {
         AnkiInfo( 187, "IMUFilter.EnableBraceWhenFalling", 347, "%d", 1, enable);
-        if (enable) {
-          eventActivationCallbacks[FALLING] = BraceForImpact;
-          eventDeactivationCallbacks[FALLING] = UnbraceAfterImpact;
-        } else {
-          eventActivationCallbacks[FALLING] = 0;
-          eventDeactivationCallbacks[FALLING] = 0;
-        }
+        bracingEnabled_ = enable;
       }
       
       Result Init()
@@ -450,26 +409,57 @@ namespace Anki {
 
       void DetectFalling()
       {
-        const f32 STOPPED_TUMBLING_THRESH = 50.f;
-        if (!IsFalling()) {
-          eventStateRaw_[FALLING] = accelMagnitudeSqrd_ < FALLING_THRESH_MMPS2_SQRD;
-        } else {
+        // Fall detection accelerometer thresholds:
+        const f32 FALLING_THRESH_LOW_MMPS2_SQRD = 6000 * 6000; // If accMag falls below this, fallStarted is triggered...
+        const f32 FALLING_THRESH_HIGH_MMPS2_SQRD = 9000 * 9000; // ...and not untriggered until it rises above this.
+        const f32 STOPPED_TUMBLING_THRESH = 50.f; // accelerometer value corresponding to "no longer tumbling on the ground after a fall"
+
+        // Fall detection timing:
+        const TimeStamp_t now = HAL::GetTimeStamp();
+        const TimeStamp_t fallDetectionTimeout_ms = 150; // fallStarted flag must be set for this long in order for 'bracing' to occur.
+        static TimeStamp_t fallStartedTime = 0;
+        
+        // "Bracing manuever" timing
+        const TimeStamp_t bracingTime_ms = 250; // this much time (minimum) is allowed for the bracing maneuver to complete.
+        static TimeStamp_t braceStartedTime = 0;
+        
+        // Indicates that falling is detected by accelerometer,
+        //  but not necessarily for long enough to trigger falling_ flag
+        static bool fallStarted = false;
+        
+        if (falling_) {
+          // Wait for robot to stop moving and bracing to complete, then unbrace.
           // Check for high-freq activity on x-axis (this could easily be any other axis since the threshold is so small)
           // to determine when the robot is definitely no longer moving.
-          eventStateRaw_[FALLING] = accelMagnitudeSqrd_ < FALLING_THRESH_MMPS2_SQRD ||
-                                    accel_robot_frame_high_pass[0] > STOPPED_TUMBLING_THRESH;
+          if ((accelMagnitudeSqrd_ > FALLING_THRESH_HIGH_MMPS2_SQRD) &&
+              (accel_robot_frame_high_pass[0] < STOPPED_TUMBLING_THRESH) &&
+              (now - braceStartedTime > bracingTime_ms))
+          {
+            fallStarted = false;
+            falling_ = false;
+            UnbraceAfterImpact();
+          }
+        }
+        else { // 'falling_' flag not set
+          if (fallStarted) {
+            // If fallStarted has been set for long enough, set the global falling flag and brace.
+            if (now - fallStartedTime > fallDetectionTimeout_ms) {
+              falling_ = true;
+              braceStartedTime = now;
+              BraceForImpact();
+            } else {
+              // only clear the flag if aMag rises above the higher threshold.
+              fallStarted = (accelMagnitudeSqrd_ < FALLING_THRESH_HIGH_MMPS2_SQRD) && ProxSensors::IsCliffDetected();
+            }
+          } else { // not fallStarted
+            if ((accelMagnitudeSqrd_ < FALLING_THRESH_LOW_MMPS2_SQRD) && ProxSensors::IsCliffDetected()) {
+              fallStarted = true;
+              fallStartedTime = now;
+            }
+          }
         }
       }
-
-      void DetectNsideDown()
-      {
-        eventStateRaw_[UPSIDE_DOWN] = accel_robot_frame_filt[2] < -NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[LEFTSIDE_DOWN] = accel_robot_frame_filt[1] < -NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[RIGHTSIDE_DOWN] = accel_robot_frame_filt[1] > NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[FRONTSIDE_DOWN] = accel_robot_frame_filt[0] < -NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[BACKSIDE_DOWN] = accel_robot_frame_filt[0] > NSIDE_DOWN_THRESH_MMPS2;
-      }
-
+      
       // Conservative check for unintended acceleration that are
       // valid even while the motors are moving.
       bool CheckPickupWhileMoving() {
@@ -609,7 +599,7 @@ namespace Anki {
             if (CheckPickupWhileMoving() || cliffBasedPickupDetect || gyroZBasedMotionDetect) {
               if (++potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOVING) {
                 SetPickupDetect(true);
-                AnkiInfo( 418, "IMUFilter.PickupDetected", 629, "accX %f, accY %f, accZ %f, cliff %d, gyroZ %d", 5,
+                AnkiInfo( 421, "IMUFilter.PickupDetected", 629, "accX %f, accY %f, accZ %f, cliff %d, gyroZ %d", 5,
                          accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2], cliffBasedPickupDetect, gyroZBasedMotionDetect);
               }
             } else {
@@ -621,70 +611,6 @@ namespace Anki {
         }
       }
 
-      void UpdateEventDetection()
-      {
-        // Call detect functions and update raw event state
-        DetectPoke();
-        DetectFalling();
-        DetectNsideDown();
-
-
-        // Now update event state according to (de)activation time
-        u32 currTime = HAL::GetTimeStamp();
-        for (int e = FALLING; e < NUM_IMU_EVENTS; ++e) {
-
-#if(DEBUG_IMU_FILTER)
-          //PERIODIC_PRINT(40,"IMUFilter event %d: state %d, rawState %d, eventTime %d, currTime %d\n",
-          //               e, eventState_[e], eventStateRaw_[e], eventTime_[e], currTime);
-#endif
-
-          if (!eventState_[e]) {
-            if (eventStateRaw_[e]) {
-              // If eventTime wasn't initialized yet or time was reset via syncTime
-              if (eventTime_[e] == 0 || eventTime_[e] > currTime) {
-                // Raw event state conditions met for the first time
-                eventTime_[e] = currTime;
-              } else if (currTime - eventTime_[e] > eventActivationTime_ms_[e]) {
-                // Event activated
-                eventState_[e] = true;
-
-                // Call activation function
-                if (eventActivationCallbacks[e]) {
-#if(DEBUG_IMU_FILTER)
-                  AnkiDebug( 333, "IMUFilter.EventActivationCallback", 583, "callback %d", 1, e);
-#endif
-                  eventActivationCallbacks[e]();
-                }
-              }
-            } else {
-              eventTime_[e] = 0;
-            }
-
-          } else {
-
-            if (!eventStateRaw_[e]){
-              // If eventTime wasn't initialized yet or time was reset via syncTime
-              if (eventTime_[e] == 0 || eventTime_[e] > currTime) {
-                eventTime_[e] = currTime;
-              } else if (currTime - eventTime_[e] > eventDeactivationTime_ms_[e]) {
-                // Event deactivated
-                eventState_[e] = false;
-
-                // Call deactivation function
-                if (eventDeactivationCallbacks[e]) {
-#if(DEBUG_IMU_FILTER)
-                  AnkiDebug( 334, "IMUFilter.EventDeactivationCallback", 583, "callback %d", 1, e);
-#endif
-                  eventDeactivationCallbacks[e]();
-                }
-              }
-            } else {
-              eventTime_[e] = 0;
-            }
-          }
-        }
-
-      }
 
       // Update the last time motion was detected
       bool DetectMotion()
@@ -950,8 +876,9 @@ namespace Anki {
         //      when the robot drives up ramp (or the side of a platform) and
         //      clearing pose history.
         DetectPickup();
-
-        UpdateEventDetection();
+        
+        DetectPoke();
+        DetectFalling();
         
         UpdateCameraMotion();
 
@@ -997,6 +924,14 @@ namespace Anki {
             isRecording_ = false;
             imuRawDataMsg_.order = 2;  // 2 == last msg of sequence
           }
+          
+          imuRawDataMsg_.a[0] = (int16_t) imu_data_.acc_x; // mm/s^2
+          imuRawDataMsg_.a[1] = (int16_t) imu_data_.acc_y;
+          imuRawDataMsg_.a[2] = (int16_t) imu_data_.acc_z;
+          imuRawDataMsg_.g[0] = (int16_t) 1000.f * imu_data_.rate_x; // millirad/sec
+          imuRawDataMsg_.g[1] = (int16_t) 1000.f * imu_data_.rate_y;
+          imuRawDataMsg_.g[2] = (int16_t) 1000.f * imu_data_.rate_z;
+          
           RobotInterface::SendMessage(imuRawDataMsg_);
           imuRawDataMsg_.order = 1;    // 1 == intermediate msg of sequence
 #endif
@@ -1037,12 +972,12 @@ namespace Anki {
 
       bool IsPickedUp()
       {
-        return pickedUp_ || IsFalling();
+        return pickedUp_ || falling_;
       }
 
       bool IsFalling()
       {
-        return eventState_[FALLING];
+        return falling_;
       }
 
       bool IsBiasFilterComplete()

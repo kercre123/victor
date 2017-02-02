@@ -25,6 +25,7 @@ from configure_engine import BUILD_TOOLS_ROOT, print_header, print_status
 from configure_engine import ArgumentParser, generate_gyp, configure
 
 sys.path.insert(0, BUILD_TOOLS_ROOT)
+import ankibuild.android
 import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.unity
@@ -76,6 +77,16 @@ def find_unity_app_path():
         sys.exit("[ERROR] Could not find Unity.app match project version %s" % project_ver)
 
     return unity_app_path
+
+def copy_unity_classes(destination_dir, configuration):
+    jar_target = os.path.join(destination_dir, 'unity-classes.jar')
+    jar_config = "Development" if configuration.lower() == "debug" else "Release"
+    jar_source = os.path.join(find_unity_app_path(), '..', 'PlaybackEngines', 'AndroidPlayer', \
+                              'Variations', 'mono', jar_config, 'Classes', 'classes.jar')
+
+    ankibuild.util.File.rm(jar_target)
+    ankibuild.util.File.cp(jar_source, jar_target)
+
 
 def get_android_device():
     process = subprocess.Popen("adb devices -l", shell=True, stdout=subprocess.PIPE)
@@ -244,7 +255,14 @@ def parse_game_arguments():
             required=False,
             default=EXTERNALS_ROOT,
             metavar='path',
-            help='Use this flag to specify external dependency location.')
+            help='Use this flag to specify a non defaul external dependency location.')
+
+    parser.add_argument(
+            '--use-cte',
+            required=False,
+            default=None,
+            metavar='path',
+            help='Use this flag to specify a non default location for Coretech Eternal(absolute path).')
 
     parser.add_argument(
             '-l', '--logcat',
@@ -270,6 +288,22 @@ class GamePlatformConfiguration(object):
         if options.verbose:
             print_status('Initializing paths for platform {0}...'.format(platform))
 
+        global CTE_ROOT
+        if options.use_external is not None:
+            global EXTERNALS_ROOT
+            if os.path.exists(options.use_external):
+                EXTERNALS_ROOT = options.use_external
+                CTE_ROOT = os.path.join(EXTERNALS_ROOT, 'coretech_external')
+            else:
+                print("Warning invalid path given for EXTERNAL using default!")
+
+        if options.use_cte is not None:
+            if os.path.exists(options.use_cte):
+                CTE_ROOT = options.use_cte
+            else:
+                print("Warning invalid path given for CTE using default!")
+        else:
+            options.use_cte = CTE_ROOT
         self.platform = platform
         self.options = options
 
@@ -306,12 +340,11 @@ class GamePlatformConfiguration(object):
             self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
 
         if platform == 'android':
+            ankibuild.android.setup_android_ndk_and_sdk()
             if os.environ.get("ANDROID_NDK_ROOT"):
                 self.android_ndk_root = os.environ.get("ANDROID_NDK_ROOT")
-            elif os.environ.get("ANDROID_NDK"):
-                self.android_ndk_root = os.environ.get("ANDROID_NDK")
             else:
-                sys.exit("Cannot find android ndk. Remember to set the environment variable ANDROID_NDK_ROOT")
+                sys.exit("Cannot find ANDROID_NDK_ROOT env var, script should have installed it. Perhaps internet is not available?")
 
             self.android_opencv_target = os.path.join(CTE_ROOT, 'build', 'opencv-android',
                                                       'OpenCV-android-sdk', 'sdk', 'native', 'libs')
@@ -327,6 +360,7 @@ class GamePlatformConfiguration(object):
                     tmp_pp = os.path.join(CERT_ROOT, self.options.provision_profile + '.mobileprovision')
                     self.provision_profile_uuid = subprocess.check_output(
                             '{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True).strip()
+                    self.cert_type = subprocess.check_output('{0}/mpParse -f {1}'.format(CERT_ROOT, tmp_pp), shell=True).strip()
                     if self.options.codesign_force_dev:
                         self.codesign_identity = "iPhone Developer"
                     else:
@@ -335,14 +369,16 @@ class GamePlatformConfiguration(object):
                 else:
                     self.provision_profile_uuid = None
                     self.codesign_identity = "iPhone Developer"
+                    self.cert_type = "debug"
                 if self.options.use_keychain is not None:
                     self.other_cs_flags = '--keychain ' + self.options.use_keychain
                 else:
                     self.other_cs_flags = None
-            except TypeError or AttributeError:
+            except TypeError or AttributeError or subprocess.CalledProcessError:
                 self.provision_profile_uuid = None
                 self.codesign_identity = "iPhone Developer"
                 self.other_cs_flags = None
+                self.cert_type = "debug"
 
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
             #there should be a 1-to-1 with self.symlink_list for _symlink
@@ -387,8 +423,6 @@ class GamePlatformConfiguration(object):
             relative_gyp_project = os.path.relpath(self.gyp_project_path, self.platform_output_dir)
             workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
             workspace.add_project(relative_gyp_project)
-        else:
-            self.call_engine('generate')
         # END ENGINE GENERATE
 
         #FEATURES BUILD FLAGS
@@ -453,8 +487,16 @@ class GamePlatformConfiguration(object):
 
             if self.other_cs_flags is not None:
                 xcconfig += ['OTHER_CODE_SIGN_FLAGS="{0}"'.format(self.other_cs_flags)]
+            if self.cert_type == 'universal':
+                xcconfig += ['DEVELOPMENT_TEAM=V9998YVMU5'] # Enterprise
+            else:
+                xcconfig += ['DEVELOPMENT_TEAM=BEJF9NAYCL'] # DEV, STORE, etc
             if self.provision_profile_uuid is not None:
                 xcconfig += ['PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid)]
+	    if self.options.provision_profile is not None:
+		xcconfig += ['PROVISIONING_PROFILE_SPECIFIER= {0}'.format(self.options.provision_profile.replace ("_", " "))]
+            else:
+		xcconfig += ['PROVISIONING_PROFILE_SPECIFIER=Cozmo']
             xcconfig += ['CODE_SIGN_IDENTITY="{0}"'.format(self.codesign_identity)]
             xcconfig += ['']
 
@@ -559,7 +601,9 @@ class GamePlatformConfiguration(object):
             args += ['--verbose']
         if self.options.do_not_check_dependencies:
             args += ['--do-not-check-dependencies']
+        print_status( "\nBeginning to {0} engine".format(command))
         ankibuild.util.File.execute(args)
+        print_status("Finished {0} step of engine\n".format(command))
 
     def move_ndk(self):
         #this must be more dynamic. But I'm not sure how to do this at the moment.
@@ -578,9 +622,16 @@ class GamePlatformConfiguration(object):
                     sys.exit("Cannot locate {0}".format(original))
 
     def build_java(self, command):
+        # copy unity jars
+        unity_jar_dir = os.path.join(GAME_ROOT, 'project', 'android', 'cozmojava', 'lib')
+        copy_unity_classes(unity_jar_dir, self.options.configuration)
+
         buck_args = ['buck', 'build', ':cozmojava']
         ankibuild.util.File.execute(buck_args)
-        built_lib_path = os.path.join(GAME_ROOT, 'buck-out', 'gen', 'cozmojava.aar')
+        built_lib_path = subprocess.Popen( \
+            'buck targets --show-output :cozmojava | awk \'{print $2;}\'', \
+            stdout=subprocess.PIPE, shell=True).communicate()[0].strip()
+
         if not os.path.exists(self.android_unity_plugin_dir):
             os.makedirs(self.android_unity_plugin_dir)
         ankibuild.util.File.cp(built_lib_path, self.android_unity_plugin_dir)
@@ -589,7 +640,7 @@ class GamePlatformConfiguration(object):
         print_status('Stripping library symbols (if necessary)...')
         args = [os.path.join(self.gyp_dir, 'android-strip-libs.py')]
         args += ["--ndk-toolchain", os.path.join(self.android_ndk_root, 'toolchains',
-                                                 'arm-linux-androideabi-4.8', 'prebuilt', 'darwin-x86_64')]
+                                                 'arm-linux-androideabi-4.9', 'prebuilt', 'darwin-x86_64')]
         args += ["--source-libs-dir", self.android_prestrip_lib_dir]
         args += ["--target-libs-dir", self.android_lib_dir]
         ankibuild.util.File.execute(args)
@@ -656,7 +707,7 @@ class GamePlatformConfiguration(object):
         elif self.platform == 'android':
             device = get_android_device()
             if len(device) > 0:
-                activity = "com.anki.cozmo/com.unity3d.player.UnityPlayerActivity"
+                activity = "com.anki.cozmo/com.anki.cozmo.CozmoActivity"
                 cmd = "adb -s {0} shell am start -n {1}".format(device, activity)
                 subprocess.call(cmd, shell=True)
             else:

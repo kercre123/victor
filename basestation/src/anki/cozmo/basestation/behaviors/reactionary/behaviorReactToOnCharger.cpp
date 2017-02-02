@@ -29,16 +29,15 @@ using namespace ExternalInterface;
 namespace {
 static const char* kTimeTilSleepAnimationKey = "timeTilSleepAnimation_s";
 static const char* kTimeTilDisconnectionKey = "timeTilDisconnection_s";
-const float kDisableReactionForInitialTime_sec = 20.f;
 }
 
 BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
-  , _dontRunUntilTime_sec(-1.f)
+: IBehavior(robot, config)
+, _onChargerCanceled(false)
 {
   SetDefaultName("ReactToOnCharger");
-  // These are the tags that should trigger this behavior to be switched to immediately
-  SubscribeToTriggerTags({
+
+  SubscribeToTags({
     EngineToGameTag::ChargerEvent,
   });
   
@@ -57,32 +56,13 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
   }
 }
   
-bool BehaviorReactToOnCharger::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToOnCharger::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
-  // assumes it's not possible to be OnCharger without being OnChargerPlatform
-  //ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
-  //             "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
-  
-  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if(_dontRunUntilTime_sec < 0){
-    _dontRunUntilTime_sec =  currentTime_sec + kDisableReactionForInitialTime_sec;
-  }
-  
-  return _isOnCharger;
+  return true;
 }
 
-Result BehaviorReactToOnCharger::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 {
-  // This is a hack - in order to have Cozmo drive off the charger if he accidentally roles back
-  // onto the contacts because he saw an edge this reaction needs to start to cancel the cliff
-  // detection reaction, and then return complete on the first update so that the DriveOffChargerBehavior can run
-  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if(_dontRunUntilTime_sec > currentTime_sec){
-    _isOnCharger = false;
-    return Result::RESULT_OK;
-  }
-  
-  robot.GetBehaviorManager().SetReactionaryBehaviorsEnabled(false);
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>();
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
   
@@ -91,32 +71,22 @@ Result BehaviorReactToOnCharger::InitInternalReactionary(Robot& robot)
   return Result::RESULT_OK;
 }
   
-void BehaviorReactToOnCharger::StopInternalReactionary(Robot& robot)
+void BehaviorReactToOnCharger::StopInternal(Robot& robot)
 {
   robot.GetAnimationStreamer().PopIdleAnimation();
-  robot.GetBehaviorManager().SetReactionaryBehaviorsEnabled(true);
 }
   
 IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)
 {
-  if( _isOnCharger )
+  if( _onChargerCanceled )
   {
-    return Status::Running;
+    _onChargerCanceled = false;
+    return Status::Complete;
   }
   
-  return Status::Complete;
+  return Status::Running;
 }
-
-bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
-{
-  if(event.GetTag() == MessageEngineToGameTag::ChargerEvent && event.Get_ChargerEvent().onCharger)
-  {
-    _isOnCharger = true;
-    return _isOnCharger;
-  }
   
-  return false;
-}
   
 void BehaviorReactToOnCharger::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
 {
@@ -124,7 +94,7 @@ void BehaviorReactToOnCharger::HandleWhileRunning(const GameToEngineEvent& event
   {
     case GameToEngineTag::CancelIdleTimeout:
     {
-      _isOnCharger = false;
+      _onChargerCanceled = true;
       break;
     }
     default:

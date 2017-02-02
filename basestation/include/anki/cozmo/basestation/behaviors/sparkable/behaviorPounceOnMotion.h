@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPounceOnMotion_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPounceOnMotion_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -28,7 +28,7 @@ private:
   BehaviorPounceOnMotion(Robot& robot, const Json::Value& config);
   
 public:
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 

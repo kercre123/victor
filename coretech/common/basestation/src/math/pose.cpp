@@ -391,11 +391,9 @@ namespace Anki {
                                       Vec3f& Tdiff,
                                       Radians& angleDiff) const
   {
-    ASSERT_NAMED(distThreshold.AllGTE( 0.f ),
-                 "Pose3d.IsSameAs_WithAmbiguity.NegativeDistThreshold");
+    DEV_ASSERT(distThreshold.AllGTE( 0.f ), "Pose3d.IsSameAs_WithAmbiguity.NegativeDistThreshold");
     
-    ASSERT_NAMED(angleThreshold.ToFloat() >= 0.f,
-                 "Pose3d.IsSameAs_WithAmbiguity.NegativeAngleThreshold");
+    DEV_ASSERT(angleThreshold.ToFloat() >= 0.f, "Pose3d.IsSameAs_WithAmbiguity.NegativeAngleThreshold");
     
     Pose3d P_other;
     
@@ -502,9 +500,9 @@ namespace Anki {
     // _even if we have a large angle threshold_. Instead, we choose to just
     // directly compare the translations, followed by comparing the rotations.
     
-    ASSERT_NAMED(P_other.GetParent() == this->GetParent() ||
-                 (this->IsOrigin() && P_other.GetParent() == this),
-                 "Pose3d.IsSameAs.BadParents");
+    DEV_ASSERT(P_other.GetParent() == this->GetParent() ||
+               (this->IsOrigin() && P_other.GetParent() == this),
+               "Pose3d.IsSameAs.BadParents");
     
     Tdiff = P_other.GetTranslation() - this->GetTranslation();
     

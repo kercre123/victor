@@ -411,6 +411,13 @@ namespace Anki {
       void SendEndRobotUpdate();
       void SendSaveImages(ImageSendMode mode, std::string path = "");
       void SendSaveState(bool enabled, std::string path = "");
+
+      
+      // ============= ActiveObjectInfo ===========
+      void SendObjectConnectionState(u32 activeID, ObjectType type, bool connected);
+      void SendObjectMovingState(u32 activeID, bool moving);
+      void SendObjectUpAxisState(u32 activeID, UpAxis upAxis);
+      void SendObjectAccelState(u32 activeID, const ActiveAccel& accel);
       
     protected:
       

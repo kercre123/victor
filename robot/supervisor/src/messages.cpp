@@ -40,6 +40,7 @@
 #include "anki/cozmo/robot/logging.h"
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
+extern void GenerateTestTone(void);
 
 namespace Anki {
   namespace Cozmo {
@@ -410,13 +411,14 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( 104, "Messages.Process_dockWithObject.Recvd", 353, "action %d, speed %f, acccel %f, decel %f, manualSpeed %d", 5,
-              msg.action, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
+        AnkiInfo( 422, "Messages.Process_dockWithObject.Recvd", 630, "action %d, dockMethod %d, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 7,
+                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
 
         DockingController::SetDockingMethod(msg.dockingMethod);
 
         // Currently passing in default values for rel_x, rel_y, and rel_angle
         PickAndPlaceController::DockToBlock(msg.action,
+                                            msg.doLiftLoadCheck,
                                             msg.speed_mmps,
                                             msg.accel_mmps2,
                                             msg.decel_mmps2,
@@ -566,8 +568,13 @@ namespace Anki {
                                                     msg.driveDuration_ms,
                                                     msg.backupDist_mm);
       }
-      
-      
+
+      void Process_generateTestTone(const RobotInterface::GenerateTestTone& msg) {
+        #ifdef TARGET_K02
+        GenerateTestTone();
+        #endif
+      }
+
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {
@@ -657,6 +664,11 @@ namespace Anki {
         }
       }
 #endif
+      
+      void Process_checkLiftLoad(const RobotInterface::CheckLiftLoad& msg)
+      {
+        LiftController::CheckForLoad();
+      }
 
       void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)
       {
@@ -916,6 +928,12 @@ namespace Anki {
         rotationPeriod_ = msg.rotationPeriod_frames;
         cubIDSet_ = true;
       }
+      
+      void Process_streamObjectAccel(const StreamObjectAccel& msg)
+      {
+        HAL::StreamObjectAccel(msg.objectID, msg.enable);
+      }
+      
       void Process_setCubeLights(const CubeLights& msg)
       {
         if(!cubIDSet_)
@@ -935,6 +953,10 @@ namespace Anki {
         // nothing to do here
       }
        */
+      void Process_sendDTMCommand(const RobotInterface::SendDTMCommand&)
+      {
+        // nothing to do here
+      }
       void Process_setBodyRadioMode(const SetBodyRadioMode&)
       {
         // nothing to do here

@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "ReactToRobotOnSide",
+  "name": "reactToRobotOnSide",
+  "displayNameKey":"behavior.ReactToOnSide",
+  "disableByDefault": false
+}

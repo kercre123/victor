@@ -175,7 +175,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _EnableSDKButton: {fileID: 0}
-  _SDKViewPrefab: {fileID: 11468710, guid: 9864527536aa14573a92ea45cac05dbf, type: 2}
+  _SDKModalPrefab: {fileID: 11468710, guid: 9864527536aa14573a92ea45cac05dbf, type: 2}
 --- !u!114 &11454530
 MonoBehaviour:
   m_ObjectHideFlags: 1

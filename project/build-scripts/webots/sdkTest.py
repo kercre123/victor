@@ -320,10 +320,9 @@ def run_webots(output, wbt_file_path, world_file_name, show_graphics, log_file_n
   stop_webots()
 
   run_command = [
-    '/Applications/Webots/webots',
+    '/Applications/Webots.app/webots',
     '--stdout',
     '--stderr',
-    '--disable-modules-download',
     '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
     get_subpath("simulator/worlds", world_file_name)
@@ -393,7 +392,7 @@ def wait_until(condition_fn, timeout, period=0.25):
   return False
 
 def is_webots_running():
-  process = subprocess.Popen("ps -ax | grep [/]Applications/Webots/webots.app", shell=True, stdout=subprocess.PIPE)
+  process = subprocess.Popen("ps -ax | grep [/]Applications/Webots.app/webots", shell=True, stdout=subprocess.PIPE)
   result = process.communicate()[0]
   if len(result) > 0:
     return True
@@ -743,7 +742,7 @@ def main(args):
   parser.add_argument('--sdkScriptLocation',
                       dest='sdk_root',
                       action='store',
-                      default=os.path.join(COZMO_ENGINE_ROOT, 'tools', 'sdk_devonly'),
+                      default=os.path.join(COZMO_ENGINE_ROOT, 'tools', 'sdk_devonly', 'test_scripts'),
                       type=str,
                       help='Location of where to look for the sdk scripts which will be ran.')
 

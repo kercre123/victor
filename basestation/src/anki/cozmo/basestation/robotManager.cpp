@@ -10,7 +10,8 @@
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
 #include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
@@ -41,9 +42,12 @@ namespace Anki {
     RobotManager::RobotManager(const CozmoContext* context)
     : _context(context)
     , _robotEventHandler(context)
+    , _backpackLightAnimations(context->GetDataLoader()->GetBackpackLightAnimations())
     , _cannedAnimations(context->GetDataLoader()->GetCannedAnimations())
+    , _cubeLightAnimations(context->GetDataLoader()->GetCubeLightAnimations())
     , _animationGroups(context->GetDataLoader()->GetAnimationGroups())
     , _animationTriggerResponses(context->GetDataLoader()->GetAnimationTriggerResponses())
+    , _cubeAnimationTriggerResponses(context->GetDataLoader()->GetCubeAnimationTriggerResponses())
     , _firmwareUpdater(new FirmwareUpdater(context))
     , _robotMessageHandler(new RobotInterface::MessageHandler())
     , _fwVersion(0)
@@ -73,7 +77,9 @@ namespace Anki {
     
     RobotManager::~RobotManager()
     {
-      ASSERT_NAMED_EVENT(_robots.empty(), "robotmanager_robot_leak", "RobotManager::~RobotManager. Not all the robots have been destroyed. This is a memory leak");
+      DEV_ASSERT_MSG(_robots.empty(),
+                     "robotmanager_robot_leak",
+                     "RobotManager::~RobotManager. Not all the robots have been destroyed. This is a memory leak");
     }
     
     void RobotManager::Init(const Json::Value& config)
@@ -104,7 +110,7 @@ namespace Anki {
         }
       }
       
-      PRINT_NAMED_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
+      LOG_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
 
       _firmwareUpdater->LoadHeader(FirmwareType::Current, std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
     }
@@ -326,6 +332,14 @@ namespace Anki {
     std::string RobotManager::GetAnimationForTrigger( AnimationTrigger ev )
     {
       return _animationTriggerResponses->GetResponse(ev);
+    }
+    bool RobotManager::HasCubeAnimationForTrigger( CubeAnimationTrigger ev )
+    {
+      return _cubeAnimationTriggerResponses->HasResponse(ev);
+    }
+    std::string RobotManager::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
+    {
+      return _cubeAnimationTriggerResponses->GetResponse(ev);
     }
 
     void RobotManager::ParseFirmwareHeader(const Json::Value& header)

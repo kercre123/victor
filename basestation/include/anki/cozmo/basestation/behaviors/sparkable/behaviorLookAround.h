@@ -15,7 +15,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "util/math/math.h"
 
 #include <vector>
@@ -42,7 +42,7 @@ public:
 
   virtual ~BehaviorLookAround() override;
   
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 

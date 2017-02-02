@@ -192,6 +192,8 @@
         std::string full_path = data_platform->pathToResource(Anki::Util::Data::Scope::Cache, Anki::Cozmo::USBTunnelServer::TempAnimFileName);
         std::string content = [postStr UTF8String];
         Anki::Util::FileUtils::WriteFile(full_path, content);
+        NSString* msgString = @(full_path.c_str());
+        PRINT_NAMED_INFO("USBTunnelServer.doAnimUpdate","Wrote file: %s",[msgString UTF8String]);
         
         // Since we're on our own thread make sure to call ThreadSafe Version.
         Anki::Cozmo::ExternalInterface::MessageGameToEngine read_msg;
@@ -220,8 +222,8 @@
   {
     bool is_enabled = [path containsString:@"true"];
     Anki::Cozmo::ExternalInterface::MessageGameToEngine reaction_enable_msg;
-    Anki::Cozmo::ExternalInterface::EnableReactionaryBehaviors reaction_enable_content(is_enabled);
-    reaction_enable_msg.Set_EnableReactionaryBehaviors(std::move(reaction_enable_content));
+    Anki::Cozmo::ExternalInterface::EnableAllReactionTriggers reaction_enable_content("sdk",is_enabled);
+    reaction_enable_msg.Set_EnableAllReactionTriggers(std::move(reaction_enable_content));
     external_interface->BroadcastDeferred(std::move(reaction_enable_msg));
     return YES;
   }
@@ -290,8 +292,14 @@ namespace Anki {
       CozmoUSBTunnelHTTPServer* _httpServer = nil;
     };
     
-    const std::string USBTunnelServer::TempAnimFileName(AnimationTransfer::kCacheAnimFileName);
-    const std::string USBTunnelServer::FaceAnimsDir(AnimationTransfer::kCacheFaceAnimsDir);
+    // This was recently changed to use 'AnimationTransfer' (see PR 2020 for COZMO-5362), but that
+    // did NOT seem to be working properly, so I'm reverting that change in this short-term solution
+    // for previewing animation on the robot/device (the long-term solution is to use the SDK for
+    // those previews) (nishkar, 12/29/2016).
+    //const std::string USBTunnelServer::TempAnimFileName(AnimationTransfer::kCacheAnimFileName);
+    //const std::string USBTunnelServer::FaceAnimsDir(AnimationTransfer::kCacheFaceAnimsDir);
+    const std::string USBTunnelServer::TempAnimFileName("TestAnim.json");
+    const std::string USBTunnelServer::FaceAnimsDir(Anki::Util::FileUtils::FullFilePath({"assets", "faceAnimations"}));
     
     USBTunnelServer::USBTunnelServer(Anki::Cozmo::IExternalInterface* externalInterface, Anki::Util::Data::DataPlatform* dataPlatform) : _impl(new USBTunnelServerImpl{})
     {

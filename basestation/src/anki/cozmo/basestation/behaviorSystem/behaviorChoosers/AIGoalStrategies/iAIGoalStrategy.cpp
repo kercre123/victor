@@ -11,8 +11,8 @@
  **/
 #include "iAIGoalStrategy.h"
 
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -68,7 +68,7 @@ IAIGoalStrategy::IAIGoalStrategy(const Json::Value& config)
     _startMoodScorer.reset( new MoodScorer() );
     const Json::Value& moodScorerConfig = config[kStartMoodScorerConfigKey];
     const bool moodScoreJsonOk = _startMoodScorer->ReadFromJson(moodScorerConfig);
-    ASSERT_NAMED_EVENT(moodScoreJsonOk,
+    DEV_ASSERT_MSG(moodScoreJsonOk,
       "IAIGoalStrategy.MoodScorerConfig",
       "Json config for %s in this strategy is not valid.",
       kStartMoodScorerConfigKey);
@@ -76,7 +76,7 @@ IAIGoalStrategy::IAIGoalStrategy(const Json::Value& config)
   else
   {
     // value is not set, make sure there's no mood scorer data set, this would mean they forgot to set the required score
-    ASSERT_NAMED_EVENT(config[kStartMoodScorerConfigKey].isNull(),
+    DEV_ASSERT_MSG(config[kStartMoodScorerConfigKey].isNull(),
       "IAIGoalStrategy.MoodScorerConfig",
       "Strategy does not specify requiredMinStartMoodScore, but does have %s (which would be ignored)",
       kStartMoodScorerConfigKey);
@@ -129,7 +129,7 @@ bool IAIGoalStrategy::WantsToStart(const Robot& robot, float lastTimeGoalRanSec,
   if ( FLT_GT(_requiredRecentOnTreadsEvent_secs, 0.0f) )
   {
     // check if we recorded an event
-    const float lastEventSecs = robot.GetBehaviorManager().GetWhiteboard().GetTimeAtWhichRobotReturnedToTreadsSecs();
+    const float lastEventSecs = robot.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotReturnedToTreadsSecs();
     const bool everFiredEvent = FLT_GT(lastEventSecs, 0.0f);
     if ( !everFiredEvent ) {
       // no event, do not start, since it's required

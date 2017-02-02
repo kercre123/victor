@@ -1,0 +1,12 @@
+{
+  "behaviorClass": "RespondToRenameFace",
+  "name": "RespondToRenameFace",
+  "displayNameKey":"behavior.RespondToRenameFace",
+  "behaviorGroups": [
+    "MeetCozmo_Socialize"
+  ],
+
+  "flatScore": 3.0,
+  
+  "animationTrigger": "MeetCozmoRenameFaceSayName"
+}

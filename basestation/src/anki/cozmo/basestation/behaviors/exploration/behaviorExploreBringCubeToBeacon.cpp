@@ -11,16 +11,17 @@
  **/
 #include "behaviorExploreBringCubeToBeacon.h"
 
-#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "anki/common/basestation/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -72,7 +73,7 @@ struct LocationCalculator {
   LocationCalculator(const ObservableObject* pickedUpObject, const Vec3f& beaconCenter, const Rotation3d& directionality, float beaconRadius, const Robot& robot)
   : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius*beaconRadius), robotRef(robot), renderAsFirstFind(true)
   {
-    ASSERT_NAMED( nullptr != object, "BehaviorExploreBringCubeToBeacon.LocationCalculator.NullObjectWillCrash" );
+    DEV_ASSERT(nullptr != object, "BehaviorExploreBringCubeToBeacon.LocationCalculator.NullObjectWillCrash");
   }
   
   const ObservableObject* object;
@@ -93,7 +94,7 @@ struct LocationCalculator {
 float LocationCalculator::GetLocationOffset() const
 {
   const float cubeLen = object->GetSize().x();
-  ASSERT_NAMED( FLT_NEAR(object->GetSize().x(), object->GetSize().y()) , "LocationCalculator.GetLocationOffset");
+  DEV_ASSERT(FLT_NEAR(object->GetSize().x(), object->GetSize().y()) , "LocationCalculator.GetLocationOffset");
   return cubeLen + kBebctb_PaddingBetweenCubes_mm;
 }
 
@@ -122,7 +123,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
   }
   
   // calculate if candidate pose is close to a previous failure
-  const bool isLocationFailureInWhiteboard = robotRef.GetBehaviorManager().GetWhiteboard().DidFailToUse(-1,
+  const bool isLocationFailureInWhiteboard = robotRef.GetAIComponent().GetWhiteboard().DidFailToUse(-1,
     AIWhiteboard::ObjectUseAction::PlaceObjectAt,
     kRecentFailure_sec,
     outPose, kLocationFailureDist_mm, kLocationFailureRot_rad);
@@ -175,10 +176,10 @@ BehaviorExploreBringCubeToBeacon::~BehaviorExploreBringCubeToBeacon()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) const
+bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   _candidateObjects.clear();
-  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard& whiteboard = preReqData.GetRobot().GetAIComponent().GetWhiteboard();
   
   // check that we have an active beacon
   const AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
@@ -207,7 +208,8 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) co
     // so that we don't go into a loop on pick up
     for( const AIWhiteboard::ObjectInfo& objectInfo : cubesOutOfBeacons )
     {
-      const ObservableObject* objPtr = robot.GetBlockWorld().GetObjectByID( objectInfo.id, objectInfo.family );
+      const ObservableObject* objPtr = preReqData.GetRobot().GetBlockWorld().
+                                        GetObjectByID( objectInfo.id, objectInfo.family );
       if ( nullptr != objPtr )
       {
         const Pose3d& currentPose = objPtr->GetPose();
@@ -240,8 +242,8 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
   {
     // we are carrying an object
     // assert what we expect from IsRunnable cache
-    ASSERT_NAMED( _candidateObjects.size() == 1 && _candidateObjects[0].id == robot.GetCarryingObject(),
-      "BehaviorExploreBringCubeToBeacon.InitInternal.CarryingObjectNotCached" );
+    DEV_ASSERT(_candidateObjects.size() == 1 && _candidateObjects[0].id == robot.GetCarryingObject(),
+               "BehaviorExploreBringCubeToBeacon.InitInternal.CarryingObjectNotCached" );
     
     // select it and pretend we just picked it up
     _selectedObjectID = _candidateObjects[0].id;
@@ -258,7 +260,7 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
   // the beacon as not valid anymore
   bool shouldBeActing = true;
   if ( !IsActing() ) {
-    const AIBeacon* activeBeacon = robot.GetBehaviorManager().GetWhiteboard().GetActiveBeacon();
+    const AIBeacon* activeBeacon = robot.GetAIComponent().GetWhiteboard().GetActiveBeacon();
     const float lastBeaconFailure = activeBeacon->GetLastTimeFailedToFindLocation();
     const float curTime = Util::numeric_cast<float>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
     const bool beaconFlaggedFail = FLT_NEAR(curTime, lastBeaconFailure);
@@ -374,7 +376,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
       if ( pickUpFinalFail ) {
         const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID );
         if ( failedObject ) {
-          robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+          robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
         }
         
         // rsam: considering this, but pickUp action would already fire emotion events
@@ -405,7 +407,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
       PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.Done").c_str(), "Successfully stacked cube");
       
       // emotions
-      const bool allCubesInBeacons = robot.GetBehaviorManager().GetWhiteboard().AreAllCubesInBeacons();
+      const bool allCubesInBeacons = robot.GetAIComponent().GetWhiteboard().AreAllCubesInBeacons();
       if ( allCubesInBeacons )
       {
         // fire emotion event, Cozmo is happy he brought the last cube to the beacon
@@ -452,7 +454,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     if ( stackOnCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( bottomCubeID );
       if (failedObject) {
-        robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::StackOnObject);
+        robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::StackOnObject);
       }
       
       // rsam: considering this, but placeOn action would already fire emotion events
@@ -480,7 +482,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
       PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.Done").c_str(), "Successfully placed cube");
       
       // emotions
-      const bool allCubesInBeacons = robot.GetBehaviorManager().GetWhiteboard().AreAllCubesInBeacons();
+      const bool allCubesInBeacons = robot.GetAIComponent().GetWhiteboard().AreAllCubesInBeacons();
       if ( allCubesInBeacons )
       {
         // fire emotion event, Cozmo is happy he brought the last cube to the beacon
@@ -527,7 +529,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
     if ( placeAtCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID );
       if (failedObject) {
-        robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PlaceObjectAt, pose);
+        robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PlaceObjectAt, pose);
       }
 
       // rsam: considering this, but placeAt action would already fire emotion events
@@ -560,10 +562,10 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
     }
     
     // grab the selected beacon (there should be one)
-    AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
     AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
-    if ( nullptr == selectedBeacon ) {
-      ASSERT_NAMED( nullptr!= selectedBeacon, "BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NullBeacon");
+    if (nullptr == selectedBeacon) {
+      DEV_ASSERT(nullptr!= selectedBeacon, "BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NullBeacon");
       return;
     }
     
@@ -641,7 +643,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
   // additional threshold so that we don't stack on top of a cube in the border. This prevents stacking on
   // a cube close to the border, which would cause the stacked cube to be out of the beacon
   const float kPrecisionOffset_mm = 10.0f; // this is just to account for errors when readjusting cube positions
-  const float inwardThreshold_mm = object->GetSize().x() + kPrecisionOffset_mm;
+  const float inwardThreshold_mm = object->GetDimInParentFrame<'X'>() + kPrecisionOffset_mm;
   
   filter.SetFilterFcn([object,beacon,&robot,inwardThreshold_mm,this](const ObservableObject* blockPtr)
   {
@@ -651,7 +653,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
     }
     
     // if we don't want to stack on this cube, skip
-    const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
     const Pose3d& currentPose = blockPtr->GetPose();
     const bool recentFail = whiteboard.DidFailToUse(blockPtr->GetID(),
       AIWhiteboard::ObjectUseAction::StackOnObject,
@@ -664,8 +666,8 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
       return false;
     }
     
-    ASSERT_NAMED( FLT_NEAR(object->GetSize().x(), object->GetSize().y()) ,
-                 "BehaviorExploreBringCubeToBeacon.FindFreeCubeToStackOn.AssumedXYEqual");
+    DEV_ASSERT(FLT_NEAR(object->GetSize().x(), object->GetSize().y()) ,
+               "BehaviorExploreBringCubeToBeacon.FindFreeCubeToStackOn.AssumedXYEqual");
     
     // check it this cube is in beacon, but also if it's actually closer than
     const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose(), inwardThreshold_mm);
@@ -712,8 +714,8 @@ bool CalculateDirectionalityAverage(AIWhiteboard::ObjectInfoList& objectsInBeaco
       // normalize to to range [-45deg,45deg], to align either axis
       const double closest90Angle = std::round(upAngle/M_PI_2) * M_PI_2;
       upAngle = upAngle - closest90Angle;
-      ASSERT_NAMED( upAngle <=  M_PI_4, "FindFreePoseInBeacon.OutOfRange.Positive" );
-      ASSERT_NAMED( upAngle >= -M_PI_4, "FindFreePoseInBeacon.OutOfRange.Negative" );
+      DEV_ASSERT(upAngle <=  M_PI_4, "FindFreePoseInBeacon.OutOfRange.Positive");
+      DEV_ASSERT(upAngle >= -M_PI_4, "FindFreePoseInBeacon.OutOfRange.Negative");
 
       // add angle to
       avgAngle += upAngle;
@@ -788,7 +790,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
   
   // compute directionality when there are cubes inside the beacon
   AIWhiteboard::ObjectInfoList objectsInBeacon;
-  const bool hasObjectsInBeacon = robot.GetBehaviorManager().GetWhiteboard().FindCubesInBeacon(beacon, objectsInBeacon);
+  const bool hasObjectsInBeacon = robot.GetAIComponent().GetWhiteboard().FindCubesInBeacon(beacon, objectsInBeacon);
   if ( hasObjectsInBeacon )
   {
     const BlockWorld& world = robot.GetBlockWorld();

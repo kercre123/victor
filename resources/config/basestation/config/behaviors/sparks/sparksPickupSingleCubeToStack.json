@@ -1,5 +1,5 @@
 {
-  "behaviorType": "PickUpCube",
+  "behaviorClass": "PickUpCube",
   "name": "sparksPickupSingleCubeToStack",
   "displayNameKey":"behavior.PickupCube",
   "requiredUnlockId": "PickupCube",

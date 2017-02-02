@@ -1,0 +1,87 @@
+
+namespace CozmoAnim;
+
+table LiftHeight {
+  triggerTime_ms:float;
+  durationTime_ms:float;
+  height_mm:float;
+  heightVariability_mm:int;
+}
+
+table ProceduralFace {
+  triggerTime_ms:float;
+  durationTime_ms:float;
+  faceAngle:float;
+  faceCenterX:float;
+  faceCenterY:float;
+  faceScaleX:float;
+  faceScaleY:float;
+  leftEye:[float];
+  rightEye:[float];
+}
+
+table HeadAngle {
+  triggerTime_ms:float;
+  durationTime_ms:float;
+  angle_deg:float;
+  angleVariability_deg:int;
+}
+
+table RobotAudio {
+  triggerTime_ms:float;
+  audioName:[string];
+  audioEventId:[long];
+  volume:float = 1.0;
+  probability:float = 1.0;
+  hasAlts:bool = true;
+}
+
+table BackpackLights {
+  triggerTime_ms:float;
+  durationTime_ms:float;
+  Left:[float];
+  Right:[float];
+  Front:[float];
+  Middle:[float];
+  Back:[float];
+}
+
+table FaceAnimation {
+  triggerTime_ms:float;
+  animName:string;
+}
+
+table Event {
+  triggerTime_ms:float;
+  event_id:string;
+}
+
+table BodyMotion {
+  triggerTime_ms:float;
+  durationTime_ms:float;
+  radius_mm:string;
+  speed:float;
+}
+
+table Keyframes {
+  LiftHeightKeyFrame:[LiftHeight];
+  ProceduralFaceKeyFrame:[ProceduralFace];
+  HeadAngleKeyFrame:[HeadAngle];
+  RobotAudioKeyFrame:[RobotAudio];
+  BackpackLightsKeyFrame:[BackpackLights];
+  FaceAnimationKeyFrame:[FaceAnimation];
+  EventKeyFrame:[Event];
+  BodyMotionKeyFrame:[BodyMotion];
+}
+
+table AnimClip {
+  Name:string;
+  keyframes:Keyframes;
+}
+
+table AnimClips {
+  clips:[AnimClip];
+}
+
+root_type AnimClips;
+

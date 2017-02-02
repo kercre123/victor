@@ -26,7 +26,7 @@ namespace Audio {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHandler )
 {
-  ASSERT_NAMED(nullptr != messageHandler, "AudioEngineClient.SetMessageHandler.MessageHandlerNull");
+  DEV_ASSERT(nullptr != messageHandler, "AudioEngineClient.SetMessageHandler.MessageHandlerNull");
   // Subscribe to Audio Messages
   _messageHandler = messageHandler;
   auto callback = [this]( const AnkiEvent<MessageAudioClient>& event ) {

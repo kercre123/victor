@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_GameRequest_BehaviorGameRequest_H__
 #define __Cozmo_Basestation_Behaviors_GameRequest_BehaviorGameRequest_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "clad/types/behaviorTypes.h"
@@ -38,7 +38,7 @@ public:
   IBehaviorRequestGame(Robot& robot, const Json::Value& config);
 
   // final to ensure subclass does not skip. If you need to override in subclass I suggest another internal one
-  virtual bool IsRunnableInternal(const Robot& robot) const final override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const final override;
   
   virtual Result InitInternal(Robot& robot) final override;
   virtual Status UpdateInternal(Robot& robot) final override;

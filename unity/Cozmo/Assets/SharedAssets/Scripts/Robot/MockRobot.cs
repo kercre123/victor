@@ -257,8 +257,29 @@ public class MockRobot : IRobot {
     _Callbacks.Clear();
   }
 
-  public void EnrollNamedFace(int faceID, int mergeIntoID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    QueueCallback(0.5f, callback);
+  private int _FaceIDAssignment = 1;
+
+  public void SetFaceToEnroll(int existingID, string name, bool saveToRobot = true, bool sayName = true, bool useMusic = true) {
+    MessageEngineToGame messageEngineToGame = new MessageEngineToGame();
+    FaceEnrollmentCompleted faceEnrollmentCompletedMessage = new FaceEnrollmentCompleted();
+    if (existingID != 0) {
+      faceEnrollmentCompletedMessage.faceID = existingID;
+    }
+    else {
+      faceEnrollmentCompletedMessage.faceID = _FaceIDAssignment;
+      _FaceIDAssignment++;
+    }
+
+    faceEnrollmentCompletedMessage.name = name;
+    faceEnrollmentCompletedMessage.result = FaceEnrollmentResult.Success;
+
+    messageEngineToGame.FaceEnrollmentCompleted = faceEnrollmentCompletedMessage;
+
+    RobotEngineManager.Instance.MockCallback(messageEngineToGame, 2.0f);
+  }
+
+  public void CancelFaceEnrollment() {
+    // Do nothing
   }
 
   public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false) {
@@ -553,7 +574,7 @@ public class MockRobot : IRobot {
     RobotEngineManager.Instance.MockCallback(message, 0.5f);
   }
 
-  public void ExecuteBehavior(Anki.Cozmo.BehaviorType type) {
+  public void ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType type) {
     // Do nothing
   }
 
@@ -875,7 +896,9 @@ public class MockRobot : IRobot {
     get; set;
   }
 
-  public BehaviorType CurrentBehaviorType { get; set; }
+  public BehaviorClass CurrentBehaviorClass { get; set; }
+  public ReactionTrigger CurrentReactionTrigger { get; set; }
+
 
   public string CurrentBehaviorName { get; set; }
 
@@ -956,11 +979,11 @@ public class MockRobot : IRobot {
 
   }
 
-  public void EnableReactionaryBehaviors(bool enable) {
+  public void EnableAllReactionTriggers(bool enable) {
 
   }
 
-  public void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable) {
+  public void RequestEnableReactionTrigger(string id, Anki.Cozmo.ReactionTrigger behaviorType, bool enable) {
 
   }
 
@@ -1026,5 +1049,8 @@ public class MockRobot : IRobot {
   public List<PetFace> PetFaces { get; private set; }
 
   public void SetNightVision(bool enable) {
+  }
+
+  public void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
   }
 }

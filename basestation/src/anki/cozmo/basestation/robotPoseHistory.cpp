@@ -387,7 +387,7 @@ namespace Anki {
         // is just going from p0 to p1.
         Pose3d p1_wrt_p0_parent;
         const bool inSameOrigin = p1.GetPose().GetWithRespectTo(*p0_it->second.GetPose().GetParent(), pTransform);
-        ASSERT_NAMED(inSameOrigin, "RobotPoseHistory.ComputePoseAt.FailedGetWRT1");
+        DEV_ASSERT(inSameOrigin, "RobotPoseHistory.ComputePoseAt.FailedGetWRT1");
         pTransform *= p0_it->second.GetPose().GetInverse();
       }
       else
@@ -407,9 +407,9 @@ namespace Anki {
             // We expect the beginning (pMid0) and end (pMid1) of this part of history
             // to have the same frame ID and origin.
             --pMid1; // (temporarily) move back to last pose in same frame as pMid0
-            ASSERT_NAMED(pMid0->second.GetFrameId() == pMid1->second.GetFrameId(),
+            DEV_ASSERT(pMid0->second.GetFrameId() == pMid1->second.GetFrameId(),
                          "RobotPoseHistory.ComputePoseAt.MismatchedIntermediateFrameIDs");
-            ASSERT_NAMED(&pMid0->second.GetPose().FindOrigin() == &pMid1->second.GetPose().FindOrigin(),
+            DEV_ASSERT(&pMid0->second.GetPose().FindOrigin() == &pMid1->second.GetPose().FindOrigin(),
                          "RobotPoseHistory.ComputePoseAt.MismatchedIntermediateOrigins");
 
             // Get pMid0 and pMid1 w.r.t. the same parent and store in the intermediate
@@ -417,7 +417,7 @@ namespace Anki {
             // from pMid0 to pMid1
             Pose3d pMidTransform;
             const bool inSameOrigin = pMid1->second.GetPose().GetWithRespectTo(*pMid0->second.GetPose().GetParent(), pMidTransform);
-            ASSERT_NAMED(inSameOrigin, "RobotPoseHistory.ComputePoseAt.FailedGetWRT1");
+            DEV_ASSERT(inSameOrigin, "RobotPoseHistory.ComputePoseAt.FailedGetWRT2");
             
             // pMidTransform = pMid1 * pMid0^(-1)
             pMidTransform *= pMid0->second.GetPose().GetInverse();

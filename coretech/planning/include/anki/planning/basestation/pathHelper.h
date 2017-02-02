@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_PathHelper_H__
 
 #include "anki/common/basestation/math/pose.h"
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include <vector>
 
 namespace Anki{

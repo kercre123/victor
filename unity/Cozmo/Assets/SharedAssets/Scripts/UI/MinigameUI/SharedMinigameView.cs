@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class SharedMinigameView : BaseModal {
+    public class SharedMinigameView : BaseView {
 
       public enum ContentLayer {
         Bottom,
@@ -186,6 +186,7 @@ namespace Cozmo {
 
       private ScoreWidget _CozmoScoreWidgetInstance;
       private ScoreWidget _PlayerScoreWidgetInstance;
+      private ScoreWidget _Player2ScoreWidgetInstance;
 
       [SerializeField]
       private float _ScoreEnterAnimationXOffset = 600f;
@@ -195,6 +196,10 @@ namespace Cozmo {
 
       [SerializeField]
       private RectTransform _PlayerScoreContainer;
+
+      // TODO: if we have a lot of MP games, we probably just want a list of containers
+      [SerializeField]
+      private RectTransform _Player2ScoreContainer;
 
       [SerializeField]
       private Sprite _CozmoPortraitSprite;
@@ -442,7 +447,7 @@ namespace Cozmo {
       }
 
       private string ComposeDasViewName(string slideName) {
-        return string.Format("{0}_{1}", DASEventViewName,
+        return string.Format("{0}_{1}", DASEventDialogName,
           string.IsNullOrEmpty(slideName) ? "no_slide" : slideName);
       }
 
@@ -604,6 +609,20 @@ namespace Cozmo {
       public void HidePlayerScoreboard() {
         HideWidget(_PlayerScoreWidgetInstance);
         _PlayerScoreWidgetInstance = null;
+      }
+
+      public ScoreWidget Player2Scoreboard {
+        get {
+          if (_Player2ScoreWidgetInstance == null) {
+            _Player2ScoreWidgetInstance = CreateScoreWidget(_Player2ScoreContainer, _ScoreEnterAnimationXOffset,
+                                                           _PlayerPortraitSprite, true);
+          }
+          return _Player2ScoreWidgetInstance;
+        }
+      }
+      public void HidePlayer2Scoreboard() {
+        HideWidget(_Player2ScoreWidgetInstance);
+        _Player2ScoreWidgetInstance = null;
       }
 
       private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
@@ -808,6 +827,7 @@ namespace Cozmo {
         InfoTitleText = null;
         HideGameStateSlide();
         HidePlayerScoreboard();
+        HidePlayer2Scoreboard();
         HideCozmoScoreboard();
         HideShelf();
         HideContinueButton();
@@ -821,6 +841,7 @@ namespace Cozmo {
         InfoTitleText = null;
         HideGameStateSlide();
         HidePlayerScoreboard();
+        HidePlayer2Scoreboard();
         HideCozmoScoreboard();
         return ShowGameStateSlide(slideDasName, prefab, _WideGameSlideContainer, endInTweenCallback);
       }

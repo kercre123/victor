@@ -77,7 +77,7 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
   
   const auto it =_ttsWaveDataMap.emplace(opId, TtsBundle());
   if (!it.second) {
-    PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAysnc", "OperationId %d already in cache", opId);
+    PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "OperationId %d already in cache", opId);
     return kInvalidOperationId;
   }
   // Set inital state
@@ -101,7 +101,7 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
       
       // Check if audio was generated for Text to Speech
       if (nullptr == audioData) {
-        PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAysnc", "No Audio data was created");
+        PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "No Audio data was created");
         bundle->state = AudioCreationState::None;
         return;
       }
@@ -141,8 +141,8 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
                 "OperationId: %u",
                 operationId);
   
-  ASSERT_NAMED(AudioCreationState::Ready == ttsBundle->state,
-               "TextToSpeechComponent.PrepareAudioEngine.ttsBundle.state.NotReady");
+  DEV_ASSERT(AudioCreationState::Ready == ttsBundle->state,
+             "TextToSpeechComponent.PrepareAudioEngine.ttsBundle.state.NotReady");
   
   if (nullptr == ttsBundle->waveData) {
     PRINT_NAMED_ERROR("TextToSpeechComponent.PrepareAudioEngine", "WaveDataPtr.IsNull");
@@ -150,9 +150,9 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
   }
   
   using namespace Audio;
-  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.PrepareAudioEngine.NullAudioController");
+  DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.PrepareAudioEngine.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.PrepareAudioEngine.NullAudioControllerPluginInterface");
+  DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.PrepareAudioEngine.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
   if (pluginInterface->WavePortalHasAudioDataInfo()) {
@@ -177,9 +177,9 @@ void TextToSpeechComponent::CleanupAudioEngine(const OperationId operationId)
                 "TextToSpeechComponent.CleanupAudioEngine", "");
   
   using namespace Audio;
-  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.CleanupAudioEngine.NullAudioController");
+  DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.CleanupAudioEngine.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.CleanupAudioEngine.NullAudioControllerPluginInterface");
+  DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.CleanupAudioEngine.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
   if (pluginInterface->WavePortalHasAudioDataInfo()) {
@@ -251,7 +251,8 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   }
   
   // Add Duration Stretch feature to voice
-  feat_set_float(_voice->features, "duration_stretch", durationScalar);
+  // If durationScalar is too small, the flite code crashes; so we clamp it here
+  feat_set_float(_voice->features, "duration_stretch", std::max(durationScalar, 0.05f));
   // Generate wave data
   cst_wave* waveData = flite_text_to_wave(text.c_str(), _voice);
   

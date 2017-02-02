@@ -437,7 +437,7 @@ MonoBehaviour:
   _LastCozmoLabel: {fileID: 11447960}
   _DeviceIdLabel: {fileID: 11437952}
   _AppVerLabel: {fileID: 11496856}
-  _WifiInstructionsViewPrefab: {fileID: 11483990, guid: a1b31871efbb945608143b5ebf5b66e8,
+  _WifiInstructionsModalPrefab: {fileID: 11483990, guid: a1b31871efbb945608143b5ebf5b66e8,
     type: 2}
   _WifiAnimationsPrefab: {fileID: 173596, guid: 612167f23913141adb46a0934b398698,
     type: 2}

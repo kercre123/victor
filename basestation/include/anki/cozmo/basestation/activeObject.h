@@ -102,9 +102,6 @@ namespace Cozmo {
     
     void RecomputeGamma();
     
-    // Temp: Doing white balancing in engine for now, but this should really be in the body
-    void DoWhiteBalancing();
-    
   }; // class ActiveObject
   
 

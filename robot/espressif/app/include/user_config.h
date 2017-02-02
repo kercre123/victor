@@ -57,7 +57,7 @@ extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_si
 #define DHCP_MARKER_BLOCK_SZ  ((255 - (2*AP_MAX_CONNECTIONS)) / (AP_MAX_CONNECTIONS))
 
 #define WIFI_PSK_LEN (12)
-extern char wifiPsk[WIFI_PSK_LEN];
+extern char wifiPsk[WIFI_PSK_LEN+1];
 #define MAC_ADDR_BYTES (6)
 
 struct connection_record{

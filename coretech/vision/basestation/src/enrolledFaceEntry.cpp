@@ -268,9 +268,9 @@ void EnrolledFaceEntry::Serialize(std::vector<u8>& buffer) const
   buffer.resize(buffer.size() + expectedNumBytes);
   const size_t numBytes = message.Pack(&(buffer[buffer.size()-expectedNumBytes]), expectedNumBytes);
   
-  ASSERT_NAMED_EVENT(numBytes == expectedNumBytes,
-                     "EnrolledFaceEntry.Serialize.WrongPackedSize",
-                     "Packed %zu, Expected %zu", numBytes, expectedNumBytes);
+  DEV_ASSERT_MSG(numBytes == expectedNumBytes,
+                 "EnrolledFaceEntry.Serialize.WrongPackedSize",
+                 "Packed %zu, Expected %zu", numBytes, expectedNumBytes);
   
   PRINT_CH_DEBUG("FaceRecognizer", "EnrolledFaceEntry.Serialize.Success",
                  "Serialized entry for '%s', ID=%d. Added %zu bytes to buffer (total length now %zu)",
@@ -543,9 +543,9 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(const EnrolledFaceEntry& other
     
     for(auto albumEntry : entriesRemoved)
     {
-      ASSERT_NAMED_EVENT(_albumEntrySeenTimes.find(albumEntry) == _albumEntrySeenTimes.end(),
-                         "EnrolledFaceEntry.MergeWithEntriesHelper.EntryKeptAndInRemovedList",
-                         "AlbumEntry:%d", albumEntry);
+      DEV_ASSERT_MSG(_albumEntrySeenTimes.find(albumEntry) == _albumEntrySeenTimes.end(),
+                     "EnrolledFaceEntry.MergeWithEntriesHelper.EntryKeptAndInRemovedList",
+                     "AlbumEntry:%d", albumEntry);
     }
   }
   

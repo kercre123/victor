@@ -26,7 +26,6 @@
 // on the basestation.
 #define SEND_PICKUP_VERIFICATION_SNAPSHOTS 0
 
-
 namespace Anki {
   namespace Cozmo {
     namespace PickAndPlaceController {
@@ -67,6 +66,10 @@ namespace Anki {
         Mode mode_ = IDLE;
 
         DockAction action_ = DA_PICKUP_LOW;
+        
+        // Whether or not to check for load on lift after docking.
+        // Only relevant for pickup actions.
+        bool doLiftLoadCheck_;
 
         Embedded::Point2f ptStamp_;
         Radians angleStamp_;
@@ -227,6 +230,10 @@ namespace Anki {
           }
           case DA_PICKUP_HIGH:
           case DA_PICKUP_LOW:
+            if (doLiftLoadCheck_) {
+              // Only do CheckForLoad() for pickup actions. Fall through.
+              LiftController::CheckForLoad();
+            }
           case DA_PLACE_HIGH:
           case DA_PLACE_LOW:
           case DA_FACE_PLANT:
@@ -866,6 +873,7 @@ namespace Anki {
       }
 
       void DockToBlock(const DockAction action,
+                       const bool doLiftLoadCheck,
                        const f32 speed_mmps,
                        const f32 accel_mmps2,
                        const f32 decel_mmps2,
@@ -880,7 +888,8 @@ namespace Anki {
 #endif
 
         action_ = action;
-
+        doLiftLoadCheck_ = doLiftLoadCheck;
+        
         dockSpeed_mmps_ = speed_mmps;
         dockAccel_mmps2_ = accel_mmps2;
         dockDecel_mmps2_ = decel_mmps2;

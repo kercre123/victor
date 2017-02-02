@@ -7,12 +7,14 @@
 #ifdef TARGET_ESPRESSIF
   extern "C" {
     #include "mem.h"
+    #include "client.h"
   }
   #define FIXTURE_DATA_NUM_ENTRIES (16)
   #define FIXTURE_DATA_ADDRESS_MASK (FIXTURE_DATA_NUM_ENTRIES - 1)
   #define FIXTURE_DATA_READ_SIZE (1024)
   #include "anki/cozmo/robot/esp.h"
-#include "anki/cozmo/transport/reliableTransport.h"
+  #include "anki/cozmo/transport/reliableTransport.h"
+  #include "clad/types/birthCertificate.h"
 #else 
   #include <cstdlib>
   #include "../sim_hal/sim_nvStorage.h"
@@ -53,12 +55,23 @@ struct CommandState
 static CommandState* state;
 
 
+#ifdef TARGET_ESPRESSIF
+ #define PacketBufferHasRoom() clientCanTransmit(MAX_READ_SIZE)
+ #define PlatformGetFixtureData(self) EspressifGetFixtureData(self)
+ #define PlatformGetFactoryData(self) EspressifGetFactoryData(self)
+#elif defined(SIMULATOR)
+ #define PacketBufferHasRoom() true
+ #define PlatformGetFixtureData(self) Complete((self), NV_NOT_FOUND); //no support in Simulator
+ #define PlatformGetFactoryData(self) SimulatorGetFactoryData(self)
+#else  
+ #error No factory nvstorage read defined for this build TARGET_ESPRESSIF
+#endif
+  
+
 static inline bool isReadBlocked()
 {
   if (!HAL::RadioIsConnected()) return false;
-#ifdef TARGET_ESPRESSIF
-  else if (xPortGetFreeHeapSize() < RELIABLE_TRANSPORT_PACKET_ALLOWANCE) return true;
-#endif
+  else if (!PacketBufferHasRoom() ) return true;
   else if ((int)HAL::RadioQueueAvailable() < ((int)sizeof(Anki::Cozmo::NVStorage::NVOpResult) + 10))
   {
 #if DEBUG_NVS > 1
@@ -163,13 +176,9 @@ struct FactoryNVEntryHeader {
 //Each entry is followed by a footer word which is set to 0 when valid
 typedef u32 FactoryNVEntryFooter;
 
-#define FOOTER(header) (((u32*)(header))[(header->size/sizeof(u32)) - 1])
+#define FOOTER(header) (((u32*)(header))[(header->size/sizeof(u32)) - 1]) //make sure size is validated before using this
 
 #define MAX_ENTRY_SIZE (sizeof(FactoryNVEntryHeader) + MAX_READ_SIZE + sizeof(FactoryNVEntryFooter))
-  
-
-
-  
 
 static inline void EspressifGetFactoryData(CommandState* self)
 {
@@ -194,6 +203,7 @@ static inline void EspressifGetFactoryData(CommandState* self)
     do
     {
       rslt = HAL::FlashRead(self->index, readBuffer, sizeof(readBuffer));
+      db_printf("NV Read: ind %x\trst: %x\ttag=%x\tsize=%x\tsucc=%x\t\r\n", state->index, rslt, header->tag, header->size, header->successor);
       if (retries++ > MAX_FLASH_OP_RETRIES)
       {
         Complete(self, rslt);
@@ -225,6 +235,7 @@ static inline void EspressifGetFactoryData(CommandState* self)
       msg.blob_length = header->size - sizeof(FactoryNVEntryHeader) - sizeof(FactoryNVEntryFooter);
       memcpy(msg.blob, readBuffer + (sizeof(FactoryNVEntryHeader)/sizeof(u32)), msg.blob_length);
       self->callback(msg);
+      db_printf("Callback done\r\n");
       self->loopCount = 0;
       if (self->cmd.length == 1)
       { // If we were only reading one, we're done
@@ -232,6 +243,7 @@ static inline void EspressifGetFactoryData(CommandState* self)
         {
           free(state);
           state = NULL;
+          db_printf("Freed\r\n");
         }
       }
       else
@@ -248,9 +260,53 @@ static inline void EspressifGetFactoryData(CommandState* self)
 }
 #endif
 
-#ifdef SIMULATOR
-static inline void SimulatorGetCameraCalibEntry(CommandState* self)
+
+#if FACTORY_BIRTH_CERTIFICATE_CHECK_ENABLED
+#define INVALID_BIRTH_SECOND (0x81)
+
+static bool hasValidBirthCertificate;
+extern "C" void NVStorage_ReadBirthCertificate(void) {
+
+  struct BirthCertificateEnvelope {
+    struct FactoryNVEntryHeader magicHeader;
+    u32 factoryMagic;
+    FactoryNVEntryFooter magicFooter;
+    struct FactoryNVEntryHeader certificateHeader;
+    BirthCertificate certificate;
+    FactoryNVEntryFooter certificateFooter;
+  } bcEnvelope;
+  if (spi_flash_read((FACTORY_NV_STORAGE_SECTOR*SECTOR_SIZE), reinterpret_cast<u32*>(&bcEnvelope), sizeof(bcEnvelope)) == SPI_FLASH_RESULT_OK) {
+    if (bcEnvelope.magicHeader.tag == NVEntry_VersionMagic &&
+        bcEnvelope.factoryMagic >= NVConst_VERSION_MAGIC &&
+        bcEnvelope.certificateHeader.tag == NVEntry_BirthCertificate &&
+        bcEnvelope.certificate.second != INVALID_BIRTH_SECOND &&
+        bcEnvelope.certificateHeader.successor == 0xFFFFffff)
+    {
+      hasValidBirthCertificate = true;  //ALL GOOD
+    }
+  }
+  else {
+    hasValidBirthCertificate = false;
+  }
+}
+
+extern "C" bool hasBirthCertificate(void)
 {
+  return hasValidBirthCertificate;
+}
+#else
+extern "C" bool hasBirthCertificate(void) { return true;  }  //failure not allowed
+#endif
+
+#ifdef SIMULATOR
+static inline void SimulatorGetFactoryData(CommandState* self)
+{
+  if (self->cmd.address != NVEntry_CameraCalib)
+  {
+    Complete(self, NV_NOT_FOUND); // CameraCalib is only type supported
+    return;
+  }
+  
   // Store camera calibration in nvStorage
   const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
   if(headCamInfo == NULL) {
@@ -302,12 +358,11 @@ static inline Result Erase(CommandState* self)
       self->retries = 0;
     }
     // Ensure erase starts on a sector boundary
-    else if ((self->cmd.address & SECTOR_MASK) != 0) Complete(self, NV_BAD_ARGS);
+    else if ((self->cmd.address & SECTOR_MASK) != 0) { Complete(self, NV_BAD_ARGS); }
     // Ensure erase is a whole number of sectors
-    else if ((self->cmd.length  & SECTOR_MASK) != 0) Complete(self, NV_BAD_ARGS);
-    // Ensure in allowed region
-    else if (self->cmd.address < NV_STORAGE_START_ADDRESS) Complete(self, NV_BAD_ARGS);
-    else if ((self->cmd.address + self->cmd.length) > NV_STORAGE_END_ADDRESS) Complete(self, NV_BAD_ARGS);
+    else if ((self->cmd.length  & SECTOR_MASK) != 0) { Complete(self, NV_BAD_ARGS); }
+    // Ensure all data is in allowed region
+    else if (! HAL::FlashWriteOkay(self->cmd.address, self->cmd.length) ) { Complete(self, NV_BAD_ARGS); }
     else
     {
       self->index = 0;
@@ -356,7 +411,8 @@ static inline Result Write(CommandState* self)
   }
   return RESULT_OK;
 }
-
+  
+  
 static inline Result Read(CommandState* self)
 {
   if (isReadBlocked()) return RESULT_OK;
@@ -365,24 +421,14 @@ static inline Result Read(CommandState* self)
   
   if (self->cmd.address & NVConst_FACTORY_DATA_BIT)
   {
-#if defined(TARGET_ESPRESSIF)  
     if ((self->cmd.address & NVConst_FIXTURE_DATA_BIT) == NVConst_FIXTURE_DATA_BIT)
     {
-      EspressifGetFixtureData(self);
+      PlatformGetFixtureData(self);
     }
     else // Factory data
     {
-      EspressifGetFactoryData(self);
+      PlatformGetFactoryData(self);
     }
-#elif defined(SIMULATOR)
-    if (self->cmd.address == NVEntry_CameraCalib)
-    {
-      SimulatorGetCameraCalibEntry(self);
-    }
-    else Complete(self, NV_NOT_FOUND); // Simulator never finds other factory data 
-#else
-    #error No factory nvstorage read defined for this build TARGET_ESPRESSIF
-#endif
   }
   else // Done with special cases
   {
@@ -454,13 +500,13 @@ Result Update()
 {
   if (state != NULL) 
   {
-    db_printf("NV Update: addr %x\tlen %d\top %x\tind %x\tret: %x\r\n", state->cmd.address, state->cmd.length, state->cmd.operation, state->index, state->retries);
     if (state->loopCount++ > MAX_LOOPS)
     {
       Complete(state, NV_LOOP);
     }
     else
     {
+      db_printf("NV Update: addr %x\tlen %u\top %x\tind %x\tret: %x\r\n", state->cmd.address, state->cmd.length, state->cmd.operation, state->index, state->loopCount);
       switch (state->cmd.operation)
       {
         case NVOP_READ:

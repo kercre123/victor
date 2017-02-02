@@ -157,6 +157,7 @@
 		D6DD471E9F344635DE53A2FC /* Bulk_Generics_17.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2C55C4525175AB918541276 /* Bulk_Generics_17.cpp */; };
 		D860ACF82B3464CF57ADFF0D /* UnityAppController+UnityInterface.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1B551AAF42AE0E6A719E2CDF /* UnityAppController+UnityInterface.mm */; };
 		D947CCEE681433936E1FE609 /* Il2CppInvokerTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0A4EE89A6BAF578930CF5988 /* Il2CppInvokerTable.cpp */; };
+		DA4CFCA31E3954CB00D56793 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = DA4CFCA21E3954CB00D56793 /* Settings.bundle */; };
 		DB69BDC882CA17962DF3C327 /* UnityAdsUnityWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = DE853B150001873BCA2B52A4 /* UnityAdsUnityWrapper.mm */; };
 		DCF9F6AD5A278885DED8F3D8 /* Bulk_Generics_10.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E9C1032951130D9DB2974A7 /* Bulk_Generics_10.cpp */; };
 		DD37D7B33548878A51FF4F9B /* Bulk_Assembly-CSharp_4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 128C338A16E7AD2B170E7F06 /* Bulk_Assembly-CSharp_4.cpp */; };
@@ -395,6 +396,7 @@
 		D553E3C3AE3E9F95BAEFE9A7 /* LaunchScreen-iPhonePortrait.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LaunchScreen-iPhonePortrait.png"; path = "UnityBuild/LaunchScreen-iPhonePortrait.png"; sourceTree = "<group>"; };
 		D76119896990C817E42B1E38 /* PLCrashReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PLCrashReporter.h; path = UnityBuild/Classes/PLCrashReporter.h; sourceTree = "<group>"; };
 		DA379A57EB615B22B0880E66 /* libiPhone-lib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libiPhone-lib.a"; path = "UnityBuild/Libraries/libiPhone-lib.a"; sourceTree = "<group>"; };
+		DA4CFCA21E3954CB00D56793 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		DC814581D953FDA1AB4D78E8 /* ObjCRuntime.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = ObjCRuntime.mm; path = UnityBuild/Classes/Unity/ObjCRuntime.mm; sourceTree = "<group>"; };
 		DE853B150001873BCA2B52A4 /* UnityAdsUnityWrapper.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = UnityAdsUnityWrapper.mm; path = UnityBuild/Classes/UnityAds/UnityAdsUnityWrapper.mm; sourceTree = "<group>"; };
 		DEEFAC7EF2342596541B73D3 /* iAD_Scripting.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = iAD_Scripting.mm; path = UnityBuild/Classes/UI/iAD_Scripting.mm; sourceTree = "<group>"; };
@@ -639,6 +641,7 @@
 				F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */,
+				DA4CFCA21E3954CB00D56793 /* Settings.bundle */,
 			);
 			name = Config;
 			sourceTree = "<group>";
@@ -858,6 +861,7 @@
 				TargetAttributes = {
 					1D6058900D05DD3D006BFB54 = {
 						DevelopmentTeam = BEJF9NAYCL;
+						ProvisioningStyle = Manual;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -897,6 +901,7 @@
 				17E2C07577A687C86B439BF7 /* LaunchScreen-iPhoneLandscape.png in Resources */,
 				8D061DB0D685A1DA6CA66039 /* LaunchScreen-iPhonePortrait.png in Resources */,
 				D688A0149C5A80EFB1884568 /* LaunchScreen-iPhone.xib in Resources */,
+				DA4CFCA31E3954CB00D56793 /* Settings.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -960,7 +965,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nset -x\n\nif test -z \"$ANKI_BUILD_REPO_ROOT\"\nthen\necho \"No ANKI_BUILD_REPO_ROOT set; expected ios.xcconfig to exist.\" >&2\nexit 1\nfi\n\ncd \"${ANKI_BUILD_REPO_ROOT}\"\nCONFIG=$(echo ${CONFIGURATION} | tr '[:upper:]' '[:lower:]')\n\n./project/build-scripts/copyResources.py \\\n--destination build/ios/unity-ios/\"${CONFIG}\"-iphoneos/Data/Raw/ \\\n--copyMethod rsync \\\n--platform ios \\\n--buildToolsPath tools/build/ \\\n--externalAssetsPath EXTERNALS/cozmo-assets/ \\\n--animationGroupsPath lib/anki/products-cozmo-assets/animationGroupMaps/ \\\n--dailyGoalsPath lib/anki/products-cozmo-assets/DailyGoals/ \\\n--rewardedActionsPath lib/anki/products-cozmo-assets/RewardedActions/ \\\n--engineResourcesPath resources/config/ \\\n--pocketSphinxPath EXTERNALS/coretech_external/pocketsphinx/pocketsphinx/model/en-us \\\n--soundBanksPath EXTERNALS/cozmosoundbanks/GeneratedSoundBanks \\\n--unityAssetsPath unity/Cozmo/Assets/StreamingAssets/\n";
+			shellScript = "set -e\nset -x\n\nif test -z \"$ANKI_BUILD_REPO_ROOT\"\nthen\necho \"No ANKI_BUILD_REPO_ROOT set; expected ios.xcconfig to exist.\" >&2\nexit 1\nfi\n\ncd \"${ANKI_BUILD_REPO_ROOT}\"\nCONFIG=$(echo ${CONFIGURATION} | tr '[:upper:]' '[:lower:]')\n\n./project/build-scripts/copyResources.py \\\n--destination build/ios/unity-ios/\"${CONFIG}\"-iphoneos/Data/Raw/ \\\n--copyMethod rsync \\\n--platform ios \\\n--buildToolsPath tools/build/ \\\n--externalAssetsPath EXTERNALS/cozmo-assets/ \\\n--animationGroupsPath lib/anki/products-cozmo-assets/animationGroupMaps/ \\\n--cubeAnimationGroupPath lib/anki/products-cozmo-assets/cubeAnimationGroupMaps/ \\\n--dailyGoalsPath lib/anki/products-cozmo-assets/DailyGoals/ \\\n--rewardedActionsPath lib/anki/products-cozmo-assets/RewardedActions/ \\\n--engineResourcesPath resources/config/ \\\n--pocketSphinxPath EXTERNALS/coretech_external/pocketsphinx/pocketsphinx/model/en-us \\\n--soundBanksPath EXTERNALS/cozmosoundbanks/GeneratedSoundBanks \\\n--unityAssetsPath unity/Cozmo/Assets/StreamingAssets/\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1115,7 +1120,7 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				ENABLE_BITCODE = NO;
@@ -1158,7 +1163,6 @@
 					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
 				);
 				PRODUCT_NAME = cozmo;
-				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1179,7 +1183,7 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_BITCODE = NO;
@@ -1219,7 +1223,6 @@
 					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
 				);
 				PRODUCT_NAME = cozmo;
-				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1233,7 +1236,7 @@
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "";
 				ENABLE_BITCODE = NO;
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_ENABLE_CPP_RTTI = NO;
@@ -1260,7 +1263,7 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_BITCODE = NO;
@@ -1298,7 +1301,6 @@
 					"-weak-lSystem",
 				);
 				PRODUCT_NAME = cozmo;
-				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1312,7 +1314,7 @@
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_BITCODE = NO;
 				GCC_C_LANGUAGE_STANDARD = c99;
@@ -1335,7 +1337,7 @@
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "";
 				ENABLE_BITCODE = NO;
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_ENABLE_CPP_RTTI = NO;

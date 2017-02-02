@@ -13,22 +13,21 @@
 
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
 
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 
 #include "clad/types/unlockTypes.h"
 
@@ -40,8 +39,6 @@ const int kMaxSearchCount = 1;
 const int kCubeSizeBuffer_mm = 12;
 const float kDriveBackDistance_mm = 40.f;
 const float kDriveBackSpeed_mm_s = 10.f;
-  
-static const char * kCustomLightLockName = "BuildPyramidBaseSetByIDLock";
 
 RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
 {
@@ -53,28 +50,21 @@ RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::Ro
   
 // Single Block
 static const constexpr uint kSingleTimeOn = 500;
-static const constexpr uint kSingleTimeOff = kSingleTimeOn;
-static const constexpr uint kSingleTransitionOn = kSingleTimeOn;
-static const constexpr uint kSingleTransitionOff = kSingleTransitionOn;
 
 // Base Formed rotation
 static const constexpr uint kBaseFormedTimeOn = kSingleTimeOn;
-static const constexpr uint kBaseFormedTimeOff = 3*kBaseFormedTimeOn;
-static const constexpr uint kBaseFormedTransitionOn = kBaseFormedTimeOn;
-static const constexpr uint kBaseFormedTransitionOff = kBaseFormedTransitionOn;
-  
 
 // Full Pyramid rotation
 static const constexpr uint kFullPyramidTimeOn = kSingleTimeOn/16;
-static const constexpr uint kFullPyramidTimeOff = 3 * kFullPyramidTimeOn;
-static const constexpr uint kFullPyramidTransitionOn = kSingleTimeOn/32;
-static const constexpr uint kFullPyramidTransitionOff = kFullPyramidTransitionOn;
   
 // Pyramid flourish consts
-static const constexpr float kWaitForPyramidShutdown_sec = 10000;
-static const constexpr uint kPyramidFlourishTimeOn = static_cast<uint>(2* kWaitForPyramidShutdown_sec);
-static const constexpr uint kPyramidFlourishTimeOff = kPyramidFlourishTimeOn; //to be sadfe
-static const constexpr uint kPyramidFlourishShutoff_sec = 4*kFullPyramidTimeOn; //to be sadfe
+static const constexpr uint kPyramidFlourishShutoff_sec = 4*kFullPyramidTimeOn; //to be safe
+
+static const std::vector<CubeAnimationTrigger> pyramidAnims = {CubeAnimationTrigger::PyramidBaseBottom,
+                                                               CubeAnimationTrigger::PyramidSingle,
+                                                               CubeAnimationTrigger::PyramidBaseTop,
+                                                               CubeAnimationTrigger::PyramidFlourish,
+                                                               CubeAnimationTrigger::PyramidDenouement};
 
 }
   
@@ -99,8 +89,9 @@ BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(Robot& robot, const Json::Val
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramidBase::IsRunnableInternal(const Robot& robot) const
+bool BehaviorBuildPyramidBase::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
   UpdatePyramidTargets(robot);
 
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && !_topBlockID.IsSet();
@@ -362,13 +353,16 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
   
   // Construct a list of valid Placement poses next to the block
   f32 nearestDistanceSQ = FLT_MAX;
-  f32 blockSize = object->GetSize().y() + kCubeSizeBuffer_mm;
+  const Point3f blockSize = object->GetSizeInParentFrame();
+  const f32 blockXSize = blockSize.x() + kCubeSizeBuffer_mm;
+  const f32 blockYSize = blockSize.y() + kCubeSizeBuffer_mm;
+  
   using Offsets =  std::pair<float,float>;
   std::vector<Offsets> offsetList;
-  offsetList.emplace_back(blockSize, 0);
-  offsetList.emplace_back(0, blockSize);
-  offsetList.emplace_back(0, -blockSize);
-  offsetList.emplace_back(-blockSize, 0);
+  offsetList.emplace_back(blockXSize, 0);
+  offsetList.emplace_back(0, blockYSize);
+  offsetList.emplace_back(0, -blockYSize);
+  offsetList.emplace_back(-blockXSize, 0);
   
   // assign default values, just in case
   _baseBlockOffsetX = offsetList[0].first;
@@ -376,11 +370,10 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
 
   for(const auto& entry: offsetList){
     if(CheckBaseBlockPoseIsFree(entry.first, entry.second)){
-      Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter();
-      Pose3d potentialPose = Pose3d(0, Z_AXIS_3D(), {entry.first,
-                                                     entry.second,
-                                                     -object->GetSize().z()},
-                                    &zRotatedPose);
+      Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter(0.f);
+      Pose3d potentialPose(0, Z_AXIS_3D(),
+                           {entry.first, entry.second, -blockSize.z()},
+                           &zRotatedPose);
       f32 newDistSquared;
       ComputeDistanceSQBetween(_robot.GetPose(), potentialPose, newDistSquared);
       
@@ -405,26 +398,19 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
     return false;
   }
   
-  
   BlockWorldFilter filter;
   filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
   filter.SetIgnoreIDs({_staticBlockID});
   
   // get the size of the placing object
-  const float xSize = placingObject->GetSize().x();
-  const float ySize = placingObject->GetSize().y();
-  const float zSize = placingObject->GetSize().z();
-
-  Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter();
-  Pose3d placePose = Pose3d(0, Z_AXIS_3D(), {xSize,
-                                             ySize,
-                                             0},
-                                &zRotatedPose);
+  const Point3f rotatedSize = placingObject->GetSizeInParentFrame();
   
-  ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(
-                                            placePose.GetWithRespectToOrigin(),
-                                            {xSize, ySize, zSize}, filter);
-  return closestObject == nullptr;
+  const Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter(0.f);
+  const Pose3d placePose(0, Z_AXIS_3D(), {rotatedSize.x(), rotatedSize.y(), 0}, &zRotatedPose);
+  
+  ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(placePose.GetWithRespectToOrigin(),
+                                                                               rotatedSize, filter);
+  return (closestObject == nullptr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -481,9 +467,9 @@ void BehaviorBuildPyramidBase::HandleWhileRunning(const EngineToGameEvent& event
   switch(event.GetData().GetTag()){
     case ExternalInterface::MessageEngineToGameTag::RobotDelocalized:
     {
-      SmartRemoveCustomLightPattern(_staticBlockID);
-      SmartRemoveCustomLightPattern(_baseBlockID);
-      SmartRemoveCustomLightPattern(_topBlockID);
+      SmartRemoveCustomLightPattern(_staticBlockID, pyramidAnims);
+      SmartRemoveCustomLightPattern(_baseBlockID, pyramidAnims);
+      SmartRemoveCustomLightPattern(_topBlockID, pyramidAnims);
       break;
     }
     default:
@@ -507,104 +493,75 @@ void BehaviorBuildPyramidBase::SetState_internal(State state, const std::string&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::SetPickupInitialBlockLights()
 {
-  SmartSetCustomLightPattern(_staticBlockID, GetSingleStaticBlockLights());
-  SmartSetCustomLightPattern(_baseBlockID, GetBaseFormedTopLights());
+  SmartSetCustomLightPattern(_staticBlockID, CubeAnimationTrigger::PyramidSingle);
+  SmartSetCustomLightPattern(_baseBlockID, CubeAnimationTrigger::PyramidPickup);
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::SetPyramidBaseLightsByID(Robot& robot, const ObjectID& staticID, const ObjectID& baseID)
 {
-  robot.GetLightsComponent().SetCustomLightPattern(baseID,
-                              GetBaseFormedBaseLights(robot, staticID, baseID), kCustomLightLockName);
-  robot.GetLightsComponent().SetCustomLightPattern(staticID,
-                              GetBaseFormedStaticLights(robot, staticID, baseID), kCustomLightLockName);
+  robot.GetCubeLightComponent().PlayLightAnim(baseID,
+                                              CubeAnimationTrigger::PyramidBaseBottom,
+                                              nullptr, true,
+                                              GetBaseFormedBaseLightsModifier(robot, staticID, baseID));
+  robot.GetCubeLightComponent().PlayLightAnim(staticID,
+                                              CubeAnimationTrigger::PyramidBaseBottom,
+                                              nullptr, true,
+                                              GetBaseFormedStaticLightsModifier(robot, staticID, baseID));
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::SetPyramidBaseLights()
 {
-  SmartRemoveCustomLightPattern(_staticBlockID);
-  SmartRemoveCustomLightPattern(_baseBlockID);
-  SmartRemoveCustomLightPattern(_topBlockID);
+  SmartRemoveCustomLightPattern(_staticBlockID, pyramidAnims);
+  SmartRemoveCustomLightPattern(_baseBlockID, pyramidAnims);
+  SmartRemoveCustomLightPattern(_topBlockID, pyramidAnims);
   
-  SmartSetCustomLightPattern(_baseBlockID, GetBaseFormedBaseLights(_robot, _staticBlockID, _baseBlockID));
-  SmartSetCustomLightPattern(_staticBlockID, GetBaseFormedStaticLights(_robot, _staticBlockID, _baseBlockID));
-  SmartSetCustomLightPattern(_topBlockID, GetBaseFormedTopLights());
+  SmartSetCustomLightPattern(_baseBlockID,
+                             CubeAnimationTrigger::PyramidBaseBottom,
+                             GetBaseFormedBaseLightsModifier(_robot, _staticBlockID, _baseBlockID));
+  SmartSetCustomLightPattern(_staticBlockID,
+                             CubeAnimationTrigger::PyramidBaseBottom,
+                             GetBaseFormedStaticLightsModifier(_robot, _staticBlockID, _baseBlockID));
+  SmartSetCustomLightPattern(_topBlockID,
+                             CubeAnimationTrigger::PyramidBaseTop);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::SetFullPyramidLights()
 {
-  SmartRemoveCustomLightPattern(_staticBlockID);
-  SmartRemoveCustomLightPattern(_baseBlockID);
-  SmartRemoveCustomLightPattern(_topBlockID);
+  SmartRemoveCustomLightPattern(_staticBlockID, pyramidAnims);
+  SmartRemoveCustomLightPattern(_baseBlockID, pyramidAnims);
+  SmartRemoveCustomLightPattern(_topBlockID, pyramidAnims);
   
-  SmartSetCustomLightPattern(_staticBlockID, GetFlourishPyramidLights(_robot));
-  SmartSetCustomLightPattern(_baseBlockID, GetFlourishPyramidLights(_robot));
-  SmartSetCustomLightPattern(_topBlockID, GetFlourishPyramidLights(_robot));
+  SmartSetCustomLightPattern(_staticBlockID, CubeAnimationTrigger::PyramidFlourish);
+  SmartSetCustomLightPattern(_baseBlockID, CubeAnimationTrigger::PyramidFlourish);
+  SmartSetCustomLightPattern(_topBlockID, CubeAnimationTrigger::PyramidFlourish);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::SetPyramidFlourishLights()
 {
-  SmartRemoveCustomLightPattern(_staticBlockID);
-  SmartRemoveCustomLightPattern(_baseBlockID);
-  SmartRemoveCustomLightPattern(_topBlockID);
+  SmartRemoveCustomLightPattern(_staticBlockID, pyramidAnims);
+  SmartRemoveCustomLightPattern(_baseBlockID, pyramidAnims);
+  SmartRemoveCustomLightPattern(_topBlockID, pyramidAnims);
   
-  SmartSetCustomLightPattern(_staticBlockID, GetDenouementStaticLights());
-  SmartSetCustomLightPattern(_baseBlockID, GetDenouementBaseLights());
-  SmartSetCustomLightPattern(_topBlockID, GetDenouementTopLights());
+  SmartSetCustomLightPattern(_staticBlockID, CubeAnimationTrigger::PyramidDenouement);
+  SmartSetCustomLightPattern(_baseBlockID, CubeAnimationTrigger::PyramidDenouement);
+  SmartSetCustomLightPattern(_topBlockID, CubeAnimationTrigger::PyramidDenouement, GetDenouementTopLightsModifier());
   
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetSingleStaticBlockLights()
+ObjectLights BehaviorBuildPyramidBase::GetBaseFormedBaseLightsModifier(Robot& robot,
+                                                                       const ObjectID& staticID,
+                                                                       const ObjectID& baseID)
 {
-  static const ObjectLights kSingleStaticBlockLights = {
-    //clock of marker, marker, counter clock marker, across
-    .onColors               = {{NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{kSingleTimeOn,kSingleTimeOn,kSingleTimeOn,kSingleTimeOn}},
-    .offPeriod_ms           = {{kSingleTimeOff,kSingleTimeOff,kSingleTimeOff,kSingleTimeOff}},
-    .transitionOnPeriod_ms  = {{kSingleTransitionOn,kSingleTransitionOn, kSingleTransitionOn,kSingleTransitionOn}},
-    .transitionOffPeriod_ms = {{kSingleTransitionOff,kSingleTransitionOff,kSingleTransitionOff, kSingleTransitionOn}},
-    .offset                 = {{0,kSingleTimeOn,2*kSingleTimeOn,3*kSingleTimeOn}},
-    .rotationPeriod_ms      = 0,
-    .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE,
-    .relativePoint          = {0,0}
-  };
-  
-  return kSingleStaticBlockLights;
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetBaseFormedLights()
-{
-  static const ObjectLights kBaseFormedLights= {
-    //clock of marker, marker, counter clock marker, across
-    .onColors               = {{NamedColors::GREEN, NamedColors::BLACK, NamedColors::GREEN, NamedColors::GREEN}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{kBaseFormedTimeOn,0,kBaseFormedTimeOn,kBaseFormedTimeOn}},
-    .offPeriod_ms           = {{kBaseFormedTimeOff,0,kBaseFormedTimeOff,kBaseFormedTimeOff}},
-    .transitionOnPeriod_ms  = {{kBaseFormedTransitionOn,kBaseFormedTransitionOn, kBaseFormedTransitionOn,kBaseFormedTransitionOn}},
-    .transitionOffPeriod_ms = {{kBaseFormedTransitionOff,kBaseFormedTransitionOff,kBaseFormedTransitionOff, kBaseFormedTransitionOn}},
-    .offset                 = {{kBaseFormedTimeOn,0,kBaseFormedTimeOn*5,0}},
-    .rotationPeriod_ms      = 0,
-    .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE,
-    .relativePoint          = {0,0}
-  };
-  return kBaseFormedLights;
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectLights BehaviorBuildPyramidBase::GetBaseFormedBaseLights(Robot& robot, const ObjectID& staticID, const ObjectID& baseID)
-{
-  ObjectLights baseBlockLights = GetBaseFormedLights();
+  ObjectLights baseBlockLights;
+  baseBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
 
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
   const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
@@ -625,9 +582,12 @@ ObjectLights BehaviorBuildPyramidBase::GetBaseFormedBaseLights(Robot& robot, con
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectLights BehaviorBuildPyramidBase::GetBaseFormedStaticLights(Robot& robot, const ObjectID& staticID, const ObjectID& baseID)
+ObjectLights BehaviorBuildPyramidBase::GetBaseFormedStaticLightsModifier(Robot& robot,
+                                                                         const ObjectID& staticID,
+                                                                         const ObjectID& baseID)
 {
-  ObjectLights staticBlockLights = GetBaseFormedLights();
+  ObjectLights staticBlockLights;
+  staticBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
 
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
   const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
@@ -644,83 +604,16 @@ ObjectLights BehaviorBuildPyramidBase::GetBaseFormedStaticLights(Robot& robot, c
   
   return staticBlockLights;
 }
-  
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetBaseFormedTopLights()
-{
-  static ObjectLights kFullTopLights= {
-    //clock of marker, marker, counter clock marker, across
-    .onColors               = {{NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{kFullPyramidTimeOn,kFullPyramidTimeOn,kFullPyramidTimeOn,kFullPyramidTimeOn}},
-    .offPeriod_ms           = {{0,0,0,0}},
-    .transitionOnPeriod_ms  = {{0, 0, 0, 0}},
-    .transitionOffPeriod_ms = {{0, 0, 0, 0}},
-    .offset                 = {{0, 0, 0, 0}},
-    .rotationPeriod_ms      = 0,
-    .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE,
-    .relativePoint          = {0,0}
-  };
-  
-  return kFullTopLights;
-}
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetFlourishPyramidLights(Robot& robot)
+ObjectLights BehaviorBuildPyramidBase::GetDenouementTopLightsModifier() const
 {
-  static ColorRGBA lightGreen =ColorRGBA(0.f, 0.5f, 0.f);
-  static ObjectLights kFullBaseLights= {
-    //clock of marker, marker, counter clock marker, across
-    .onColors               = {{NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN}},
-    .offColors              = {{lightGreen, lightGreen, lightGreen, lightGreen}},
-    .onPeriod_ms            = {{kFullPyramidTimeOn,kFullPyramidTimeOn,kFullPyramidTimeOn,kFullPyramidTimeOn}},
-    .offPeriod_ms           = {{kFullPyramidTimeOff,kFullPyramidTimeOff,kFullPyramidTimeOff,kFullPyramidTimeOff}},
-    .transitionOnPeriod_ms  = {{kFullPyramidTransitionOn, kFullPyramidTransitionOn, kFullPyramidTransitionOn, kFullPyramidTransitionOn}},
-    .transitionOffPeriod_ms = {{kFullPyramidTransitionOff, kFullPyramidTransitionOff, kFullPyramidTransitionOff, kFullPyramidTransitionOff}},
-    .offset                 = {{0, kFullPyramidTimeOn, kFullPyramidTimeOn*2, kFullPyramidTimeOn*3}},
-    .rotationPeriod_ms      = 0,
-    .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
-    .relativePoint          = {0,0}
-  };
-  
-  return kFullBaseLights;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetDenouementBaseLights() const
-{
-  static ObjectLights kFlourishBaseLights= {
-    //clock of marker, marker, counter clock marker, across
-    .onColors               = {{NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN, NamedColors::GREEN}},
-    .offColors              = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
-    .onPeriod_ms            = {{kPyramidFlourishShutoff_sec*4,kPyramidFlourishShutoff_sec*5,kPyramidFlourishShutoff_sec*6,kPyramidFlourishShutoff_sec*7}},
-    .offPeriod_ms           = {{kPyramidFlourishTimeOff,kPyramidFlourishTimeOff,kPyramidFlourishTimeOff,kPyramidFlourishTimeOff}},
-    .transitionOnPeriod_ms  = {{0, 0, 0, 0}},
-    .transitionOffPeriod_ms = {{0, 0, 0, 0}},
-    .offset                 = {{0, 0, 0, 0}},
-    .rotationPeriod_ms      = 0,
-    .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE,
-    .relativePoint          = {0, 0}
-  };
-  
-
-  return kFlourishBaseLights;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetDenouementStaticLights() const
-{
-  return GetDenouementBaseLights();
-}
- 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObjectLights& BehaviorBuildPyramidBase::GetDenouementTopLights() const
-{
-  static ObjectLights kFlourishTopLights= GetDenouementBaseLights();
-  kFlourishTopLights.onPeriod_ms = {{kPyramidFlourishShutoff_sec, kPyramidFlourishShutoff_sec*2, kPyramidFlourishShutoff_sec*3, kPyramidFlourishShutoff_sec*4}};
+  ObjectLights kFlourishTopLights;
+  kFlourishTopLights.onPeriod_ms = {{kPyramidFlourishShutoff_sec,
+                                     kPyramidFlourishShutoff_sec*2,
+                                     kPyramidFlourishShutoff_sec*3,
+                                     kPyramidFlourishShutoff_sec*4}};
   
   return kFlourishTopLights;
 

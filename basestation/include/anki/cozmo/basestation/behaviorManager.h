@@ -43,13 +43,12 @@ namespace Cozmo {
   
 // Forward declaration
 class BehaviorFactory;
-class AIWhiteboard;
 class AIGoalEvaluator;
 class IBehavior;
+class IReactionTriggerStrategy;
 class IBehaviorChooser;
-class IReactionaryBehavior;
 class Robot;
-class WorkoutComponent;
+struct BehaviorRunningAndResumeInfo;
 
 template<typename TYPE> class AnkiEvent;
 
@@ -60,7 +59,7 @@ namespace ExternalInterface {
 class BehaviorManagerMessageUnion;
 }
 
-static const f32 kIgnoreDefaultHeandAndLiftState = FLT_MAX;
+static const f32 kIgnoreDefaultHeadAndLiftState = FLT_MAX;
   
 class BehaviorManager
 {
@@ -75,9 +74,11 @@ public:
 
   // initialize this behavior manager from the given Json config
   Result InitConfiguration(const Json::Value& config);
+  Result InitReactionTriggerMap(const Json::Value& config);
   
   // create a behavior from the given config and add to the factory. Can fail if the configuration is not valid
   Result CreateBehaviorFromConfiguration(const Json::Value& behaviorConfig);
+
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Games
@@ -86,11 +87,16 @@ public:
   // get if the given flags are available, you can check for all or if any is set
   inline bool AreAllGameFlagsAvailable(BehaviorGameFlag gameFlag) const;
   inline bool IsAnyGameFlagAvailable(BehaviorGameFlag gameFlag) const;
-  UnlockId GetActiveSpark() const { return _activeSpark; };
-  UnlockId GetRequestedSpark() const { return _lastRequestedSpark; };
-  bool IsActiveSparkSoft() const  { return (_activeSpark != UnlockId::Count) && _isSoftSpark;}
-  bool IsRequestedSparkSoft() const  { return (_lastRequestedSpark != UnlockId::Count) && _isRequestedSparkSoft;}
-
+  
+  UnlockId GetActiveSpark() const { return _activeSpark; }
+  UnlockId GetRequestedSpark() const { return _lastRequestedSpark; }
+  
+  bool IsActiveSparkSoft() const { return (_activeSpark != UnlockId::Count) && _isSoftSpark; }
+  bool IsActiveSparkHard() const { return (_activeSpark != UnlockId::Count) && !_isSoftSpark; }
+  
+  bool IsRequestedSparkSoft() const { return (_lastRequestedSpark != UnlockId::Count) && _isRequestedSparkSoft; }
+  bool IsRequestedSparkHard() const { return (_lastRequestedSpark != UnlockId::Count) && !_isRequestedSparkSoft; }
+  
   // sets which games are available by setting the mask/flag combination
   void SetAvailableGame(BehaviorGameFlag availableGames) { _availableGames = Util::EnumToUnderlying(availableGames); }
   
@@ -105,7 +111,7 @@ public:
   // (if there is one) and the IBehaviors it contains
   void SetBehaviorChooser(IBehaviorChooser* newChooser);
   
-  // returns last time we changerd behavior chooser
+  // returns last time we changed behavior chooser
   float GetLastBehaviorChooserSwitchTime() const { return _lastChooserSwitchTime; }
 
   // Stops the current behavior and switches to null. The next time Update is called, the behavior chooser
@@ -113,34 +119,28 @@ public:
   // when it is needed (e.g. sparks). `stoppedByWhom` is a string for debugging so we know why this was stopped
   void RequestCurrentBehaviorEndImmediately(const std::string& stoppedByWhom);
   
-  // Returns nullptr if there is no current behavior
-  const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
-
+  // returns nullptr if there is no current behavior
+  const IBehavior* GetCurrentBehavior() const;
   const IBehaviorChooser* GetBehaviorChooser() const { return _currentChooserPtr; }
-    
+  bool CurrentBehaviorTriggeredAsReaction() const;
+  ReactionTrigger GetCurrentReactionTrigger() const;
+
+  
   const BehaviorFactory& GetBehaviorFactory() const { assert(_behaviorFactory); return *_behaviorFactory; }
         BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
   
   // Enable and disable reactionary behaviors
-  void RequestEnableReactionaryBehavior(const std::string& requesterID, BehaviorType behavior, bool enable);
-  
-  // accessors: whiteboard
-  const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
-        AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
-  
-  const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }
-        WorkoutComponent& GetWorkoutComponent()       { assert(_workoutComponent); return *_workoutComponent; }
+  void RequestEnableReactionTrigger(const std::string& requesterID, ReactionTrigger trigger, bool enable);
+  void RequestEnableReactionTrigger(const std::string& requesterID, const std::set<ReactionTrigger>& triggers, bool enable);
 
   // accessors: audioController
   Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
   
   void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
   
-  void SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCurrent = false);
+  void EnableAllReactionTriggers(const std::string& requesterID, bool isEnabled, bool stopCurrent = false);
   void RequestCurrentBehaviorEndOnNextActionComplete();
   
-  // Returns first reactionary behavior with given type or nullptr if none found
-  IReactionaryBehavior* GetReactionaryBehaviorByType(BehaviorType behaviorType);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Freeplay - specific
@@ -181,7 +181,7 @@ public:
   // Handles switching behavior chooser, goal, and updating whiteboard for object tap interactions
   void HandleObjectTapInteraction(const ObjectID& objectID);
   
-  // Leave object interaction state resets the goal and clears the tap intented object in the whiteboard
+  // Leave object interaction state resets the goal and clears the tap-intended object in the whiteboard
   void LeaveObjectTapInteraction();
   
   const ObjectID& GetLastTappedObject() const { return _lastDoubleTappedObject; }
@@ -191,46 +191,36 @@ public:
   void RequestEnableTapInteraction(const std::string& requesterID, bool enable);
   
 private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+  
   // switches to a given behavior (stopping the current behavior if necessary). Returns true if it switched
-  bool SwitchToBehavior(IBehavior* nextBehavior);
-
-  // same as SwitchToBehavior but also handles special reactionary logic
-  void SwitchToReactionaryBehavior(IReactionaryBehavior* nextBehavior);
+  bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehavior* nextBehavior);
+  bool SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo);
+  
+  
+  std::set<IBehavior*> GetBehaviorsForReactionTrigger(ReactionTrigger trigger);
   
   // checks the chooser and switches to a new behavior if neccesary
-  void ChooseNextBehaviorAndSwitch();
+  void ChooseNextScoredBehaviorAndSwitch();
   
   // try to resume back to the previous behavior (after interruptions). This method does not guarantee resuming
   // to a previous one. If there was no behavior to resume to, it will set null behavior as current.
   void TryToResumeBehavior();
 
   // stop the current behavior if it is non-null and running (i.e. Init was called)
-  void StopCurrentBehavior();
+  void StopAndNullifyCurrentBehavior();
   
   //Allow reactionary behaviors to request a switch without a message
-  void CheckForComputationalSwitch();
+  void CheckReactionTriggerStrategies();
 
-  void SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior);
-  
-  void AddReactionaryBehavior(IReactionaryBehavior* behavior);
+  void SendDasTransitionMessage(const BehaviorRunningAndResumeInfo& oldBehaviorInfo,
+                                const BehaviorRunningAndResumeInfo& newBehaviorInfo);
   
   // Allow unity to set head angles and lift heights to preserve after reactionary behaviors
   void SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32 liftHeight);
-  bool AreDefaultHeandAndLiftStateSet() { return _defaultHeadAngle != kIgnoreDefaultHeandAndLiftState;}
-
-  // check if there is a matching reactionary behavior which wants to run for the given event, and switch to
-  // it if so
-  template<typename EventType>
-  void ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event);
+  bool AreDefaultHeadAndLiftStateSet() { return _defaultHeadAngle != kIgnoreDefaultHeadAndLiftState;}
   
   // update the tapped object should its pose change
   void UpdateTappedObject();
@@ -247,7 +237,7 @@ private:
     
   Robot& _robot;
   
-  // Set by unity to preserve the heand and lift angle after reactionary behaviors
+  // Set by unity to preserve the head and lift angle after reactionary behaviors
   f32 _defaultHeadAngle;
   f32 _defaultLiftHeight;
   
@@ -255,18 +245,8 @@ private:
   // current running behavior
   // - - - - - - - - - - - - - - -
   
-  bool _runningReactionaryBehavior = false;
-  
-  // behavior currently running and responsible for controlling the robot
-  IBehavior* _currentBehavior  = nullptr;
-  
-  // this is the behavior to go back to after a reactionary behavior is completed
-  IBehavior* _behaviorToResume = nullptr;
+  std::unique_ptr<BehaviorRunningAndResumeInfo> _runningAndResumeInfo;
 
-  // Once we are done with reactionary behaviors, should we try to go back to _behaviorToResume? If any
-  // reactionary behavior we run says "no", this will get set to false, otherwise it will stay true
-  bool _shouldResumeBehaviorAfterReaction = true;
-  
   // current behavior chooser (weak_ptr pointing to one of the others)
   IBehaviorChooser* _currentChooserPtr = nullptr;
   
@@ -288,8 +268,8 @@ private:
   IBehaviorChooser* _meetCozmoChooser = nullptr;
   
   // list of behaviors that fire automatically as reactions to events
-  std::vector<IReactionaryBehavior*> _reactionaryBehaviors;
-  bool                               _reactionsEnabled = true;
+  using mapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
+  std::vector<mapEntry> _reactionTriggerMap;
   
   // time at which last chooser was selected
   float _lastChooserSwitchTime;
@@ -305,8 +285,9 @@ private:
   using BehaviorGameFlagMask = std::underlying_type<BehaviorGameFlag>::type;
   BehaviorGameFlagMask _availableGames = Util::EnumToUnderlying( BehaviorGameFlag::NoGame );
   
-  // current active spark (this does guarantee that behaviors will kick in, only that Cozmo is in a Sparked state)
+  // current active spark (this does not guarantee that behaviors will kick in, only that Cozmo is in a Sparked state)
   UnlockId _activeSpark = UnlockId::Count;
+  
   // Identifies if the spark is a "soft spark" - played when upgrade is unlocked and has some different playback features than normal sparks
   bool _isSoftSpark = false;
   
@@ -317,13 +298,7 @@ private:
   
   // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
   std::unique_ptr<Audio::BehaviorAudioClient> _audioClient;
-  
-  // whiteboard for behaviors to share information, or to store information only useful to behaviors
-  std::unique_ptr<AIWhiteboard> _whiteboard;
-
-  // component for tracking cozmo's work-outs
-  std::unique_ptr< WorkoutComponent > _workoutComponent;
-    
+      
   // For storing event handlers
   std::vector<Signal::SmartHandle> _eventHandlers;
   

@@ -24,6 +24,8 @@ public class SkillSystem {
   private ChallengeData _CurrChallengeData;
   private int _ChallengeIndex;
 
+  public bool LevelingEnabled { get; set; }
+
   public enum SkillOverrideLevel {
     None,
     Min,
@@ -185,6 +187,12 @@ public class SkillSystem {
   }
 
   public void HandleGameEvent(GameEventWrapper cozEvent) {
+    // During profileless games with multiple players
+    // or Memory Match solo mode don't count that
+    // as being better at cozmo so don't level up.
+    if (!LevelingEnabled) {
+      return;
+    }
     GameSkillData currSkillData = GetSkillDataForGame();
     if (currSkillData != null) {
       bool playerWin = false;
@@ -293,6 +301,7 @@ public class SkillSystem {
     _ChallengeIndex = -1;
     _CurrChallengeData = null;
     SetCozmoHighestLevelsReached(null, 0);
+    LevelingEnabled = true;
   }
 
   private void HandleRobotConnected(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {

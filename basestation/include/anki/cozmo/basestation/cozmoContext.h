@@ -48,6 +48,8 @@ class IExternalInterface;
 class RobotDataLoader;
 class RobotManager;
 class VizManager;
+
+class ThreadIDInternal;
   
 enum class SdkStatusType : uint8_t;
   
@@ -92,6 +94,14 @@ public:
   bool  IsInSdkMode() const;
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
   
+  void SetRandomSeed(uint32_t seed);
+
+  // Tell the context that this is the main thread
+  void SetMainThread();
+
+  // Returns true if the current thread is the "main" one. Requires SetMainThread to have been called
+  bool IsMainThread() const;
+  
 private:
   // This is passed in and held onto, but not owned by the context (yet.
   // It really should be, and that refactoring will have to happen soon).
@@ -109,6 +119,9 @@ private:
   std::unique_ptr<Util::TransferQueueMgr>         _transferQueueMgr;
   std::unique_ptr<Util::DasTransferTask>          _dasTransferTask;
   std::unique_ptr<Util::GameLogTransferTask>      _gameLogTransferTask;
+
+  // for holding the thread id (and avoiding needed to include the .h here)
+  std::unique_ptr<ThreadIDInternal> _threadIdHolder;
 };
   
 

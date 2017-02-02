@@ -4,6 +4,7 @@
 #define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
 static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
+static uint32_t* const HW_VERSION = (uint32_t*)0x001F044;
 
 #define BODY_VER (*((s32*) 0x1F010))  // Between -1 (unprogrammed) and BODY_VERS
 #define BODY_ESN (*((u32*) 0x1F014))
@@ -54,6 +55,10 @@ enum e_nrf_gpio {
   PIN_LED3            = 10,
   PIN_LED4            = 11,
 
+  // Backpack button
+  PIN_BUTTON_SENSE    = 8,
+  PIN_BUTTON_DRIVE    = 10,
+
   // Charging
   PIN_CHARGE_EN       = 20,
   PIN_nCHGOK          = 2,
@@ -67,7 +72,7 @@ enum e_nrf_gpio {
   // IR drop sensor
   PIN_CLIFF_SENSE     = 26,
   PIN_IR_DROP         = 21,
-  PIN_IR_FORWARD      = 22,   // TODO
+  PIN_IR_FORWARD      = 22,
 
   // Spine
   PIN_TX_HEAD         = 12,

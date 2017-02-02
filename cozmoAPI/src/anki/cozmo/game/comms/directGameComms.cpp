@@ -24,7 +24,7 @@ DirectGameComms::DirectGameComms(GameMessagePort* messagePort, ISocketComms::Dev
 , _messagePort(messagePort)
 , _hostId(hostId)
 {
-  ASSERT_NAMED(messagePort != nullptr, "DirectGameComms.NullMessagePipe");
+  DEV_ASSERT(messagePort != nullptr, "DirectGameComms.NullMessagePipe");
 }
 
 bool DirectGameComms::Init(UiConnectionType connectionType, const Json::Value& config)

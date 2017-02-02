@@ -40,6 +40,35 @@ namespace Anki {
     Result ActionList::QueueAction(QueueActionPosition inPosition,
                                    IActionRunner* action, u8 numRetries)
     {
+      if(action == nullptr)
+      {
+        PRINT_NAMED_ERROR("ActionList.QueueAction.NullAction", "Can't queue null action");
+        return RESULT_FAIL;
+      }
+      
+      // If we are ignoring external actions and this is an external action or
+      // if this action has a bad tag then delete it
+      if((action->GetRobot().GetIgnoreExternalActions() &&
+          IsExternalAction(action)) ||
+         action->GetState() == ActionResult::BAD_TAG)
+      {
+        if (action->GetRobot().GetIgnoreExternalActions())
+        {
+          PRINT_NAMED_INFO("ActionQueue.QueueAction.ExternalActionsDisabled",
+                           "Ignoring %s action while external actions are disabled",
+                           EnumToString(action->GetType()));
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("ActionQueue.QueueAction.ActionHasBadTag",
+                            "Failed to set tag, deleting action %s",
+                            EnumToString(action->GetType()));
+        }
+      
+        _queues[0].DeleteAction(action);
+        return RESULT_OK;
+      }
+    
       Result result = RESULT_OK;
       switch(inPosition)
       {
@@ -238,8 +267,8 @@ namespace Anki {
         return -1;
       }
 
-      // Find an empty slot
-      SlotHandle currentSlot = 0;
+      // Find an empty slot starting at 1 since all other queue positions will queue into slot 0
+      SlotHandle currentSlot = 1;
       while(_queues.find(currentSlot) != _queues.end()) {
         ++currentSlot;
       }
@@ -309,6 +338,19 @@ namespace Anki {
       }
     }
     
+    bool ActionList::IsExternalAction(const IActionRunner* action)
+    {
+      if(action != nullptr)
+      {
+        const u32 tag = action->GetTag();
+        return (tag >= ActionConstants::FIRST_GAME_TAG &&
+                tag <= ActionConstants::LAST_GAME_TAG) ||
+               (tag >= ActionConstants::FIRST_SDK_TAG &&
+                tag <= ActionConstants::LAST_SDK_TAG);
+      }
+      return false;
+    }
+    
 
 #pragma mark ---- ActionQueue ----
     
@@ -338,7 +380,7 @@ namespace Anki {
       DeleteAction(_currentAction);
       
       for (auto listIter = _queue.begin(); listIter != _queue.end(); ) {
-        ASSERT_NAMED(*listIter != nullptr, "ActionQueue.Clear.NullAction");
+        DEV_ASSERT(*listIter != nullptr, "ActionQueue.Clear.NullAction");
         DeleteActionIter(listIter);
       }
       
@@ -361,7 +403,7 @@ namespace Anki {
       
       for(auto iter = _queue.begin(); iter != _queue.end();)
       {
-        ASSERT_NAMED(*iter != nullptr, "ActionQueue.CancelType.NullAction");
+        DEV_ASSERT(*iter != nullptr, "ActionQueue.CancelType.NullAction");
         
         if(withType == RobotActionType::UNKNOWN || (*iter)->GetType() == withType) {
           // If this doesn't actually delete the action then it must have already been deleted so
@@ -394,7 +436,7 @@ namespace Anki {
       
       for(auto iter = _queue.begin(); iter != _queue.end();)
       {
-        ASSERT_NAMED(*iter != nullptr, "ActionQueue.CancelTag.NullAction");
+        DEV_ASSERT(*iter != nullptr, "ActionQueue.CancelTag.NullAction");
         
         if((*iter)->GetTag() == idTag) {
           if(found == true) {
@@ -544,7 +586,7 @@ namespace Anki {
         
         const CozmoContext* cozmoContext = _currentAction->GetRobot().GetContext();
         VizManager* vizManager = cozmoContext->GetVizManager();
-        ASSERT_NAMED(nullptr != vizManager, "Expecting a non-null VizManager");
+        DEV_ASSERT(nullptr != vizManager, "Expecting a non-null VizManager");
         
         const ActionResult actionResult = _currentAction->Update();
         const bool isRunning = (actionResult == ActionResult::RUNNING);
@@ -603,7 +645,7 @@ namespace Anki {
       {
         if(iter != _queue.end())
         {
-          ASSERT_NAMED((*iter) == action, "ActionQueue.DeleteAction.IterAndActionNotTheSame");
+          DEV_ASSERT((*iter) == action, "ActionQueue.DeleteAction.IterAndActionNotTheSame");
         }
       
         // If the action isn't currently being deleted meaning it was successfully inserted into the set
@@ -619,19 +661,7 @@ namespace Anki {
              action->GetEmitCompletionSignal() &&
              action->GetState() != ActionResult::INTERRUPTED)
           {
-            std::vector<ActionResult> subActionResults;
-            action->GetRobot().GetActionList().GetActionWatcher().GetSubActionResults(action->GetTag(),
-                                                                                      subActionResults);
-            
-            ActionCompletedUnion acu;
-            action->GetCompletionUnion(acu);
-            
-            rca = ExternalInterface::RobotCompletedAction(action->GetRobot().GetID(),
-                                                          action->GetTag(),
-                                                          action->GetType(),
-                                                          action->GetState(),
-                                                          subActionResults,
-                                                          acu);
+            action->GetRobotCompletedActionMessage(rca);
             
             externalInterface = action->GetRobot().GetExternalInterface();
           }

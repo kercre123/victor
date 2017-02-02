@@ -8,6 +8,7 @@
 #include "MK02F12810.h"
 
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/buildTypes.h"
 
 #include "uart.h"
 

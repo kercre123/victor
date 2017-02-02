@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorVisitInterestingEdge_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorVisitInterestingEdge_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
 
 #include "anki/common/basestation/math/pose.h"
@@ -49,7 +49,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // true if currently there are edges that Cozmo would like to visit
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false;}
   
 protected:
@@ -58,7 +58,7 @@ protected:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result InitInternal(Robot& robot) override;  
+  virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
   // update internal: to handle discarding more goals while running

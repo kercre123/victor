@@ -100,6 +100,9 @@ namespace Cozmo.UI {
 
     #region Particle Update Settings
 
+    [SerializeField]
+    private Transform _VfxParent;
+
     // Tron Line settings
     [SerializeField]
     private int _TronBurstLow = 3;
@@ -203,12 +206,27 @@ namespace Cozmo.UI {
     private Transform _OpenBox;
 
     private Tweener _ShakeRotationTweener;
+    private Tweener ShakeRotationTweener {
+      set {
+        if (_ShakeRotationTweener != null) {
+          _ShakeRotationTweener.Kill();
+        }
+        _ShakeRotationTweener = value;
+      }
+    }
     private Tweener _ShakePositionTweener;
+    private Tweener ShakePositionTweener {
+      set {
+        if (_ShakePositionTweener != null) {
+          _ShakePositionTweener.Kill();
+        }
+        _ShakePositionTweener = value;
+      }
+    }
     private Sequence _BoxSequence;
     private Sequence _RewardSequence;
-
-    [SerializeField]
-    private CanvasGroup _AlphaController;
+    private Sequence _OnboardingRewardSequence;
+    private Sequence _ClosingRewardSequence;
 
     #region Onboarding
     [SerializeField]
@@ -231,7 +249,6 @@ namespace Cozmo.UI {
     private void Awake() {
       _OnboardingRewardStart.gameObject.SetActive(false);
       _ContinueButtonInstance.gameObject.SetActive(false);
-      PauseManager.Instance.OnPauseDialogOpen += CloseView;
       _OpenBox.gameObject.SetActive(false);
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
       _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, _ReadyChestBurst);
@@ -261,7 +278,7 @@ namespace Cozmo.UI {
 
     private TronLight CreateTronLight() {
       TronLight light = GameObject.Instantiate<GameObject>(_TronLightPrefab).GetComponent<TronLight>();
-      light.transform.SetParent(_AlphaController.transform, false);
+      light.transform.SetParent(_VfxParent, false);
       light.OnLifeSpanEnd += HandleTronLightEnd;
       light.Initialize();
       return light;
@@ -286,10 +303,10 @@ namespace Cozmo.UI {
     // Handle each tap
     private void HandleButtonTap() {
       if (!_BoxOpened) {
+        StopTweens();
         if (_currentBoxCharge >= 1.0f) {
           _BoxOpened = true;
 
-          StopTweens();
           _LootBox.gameObject.SetActive(false);
           _OpenBox.gameObject.SetActive(true);
           _currentBoxCharge = 0.0f;
@@ -299,20 +316,18 @@ namespace Cozmo.UI {
         else {
           _currentBoxCharge += _ChargePerTap;
           _recentTapCharge = 1.0f;
-          StopTweens();
 
           float currShake = Mathf.Lerp(_ShakeRotationMinAngle, _ShakeRotationMaxAngle, _currentBoxCharge);
-          _ShakeRotationTweener = _LootBox.DOShakeRotation(_ShakeDuration, new Vector3(0, 0, currShake), _ShakeRotationVibrato, _ShakeRotationRandomness);
+          ShakeRotationTweener = _LootBox.DOShakeRotation(_ShakeDuration, new Vector3(0, 0, currShake), _ShakeRotationVibrato, _ShakeRotationRandomness);
           currShake = Mathf.Lerp(_ShakePositionMin, _ShakePositionMax, _currentBoxCharge);
-          _ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, currShake, _ShakePositionVibrato, _ShakePositionRandomness);
+          ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, currShake, _ShakePositionVibrato, _ShakePositionRandomness);
           Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_TapSoundEvent);
 
         }
       }
     }
 
-    protected override void Update() {
-      base.Update();
+    protected void Update() {
 
       // Handle Recent Tap Decay
       if (_recentTapCharge > 0.0f) {
@@ -471,7 +486,7 @@ namespace Cozmo.UI {
       }
 
       rewardSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionVariance + _RewardExplosionStayDuration, () => {
-        CloseView();
+        PlayClosingRewardTweenAnimation();
       });
       rewardSequence.Play();
       _RewardSequence = rewardSequence;
@@ -506,6 +521,7 @@ namespace Cozmo.UI {
       }
 
       rewardSequence.Play();
+      _OnboardingRewardSequence = rewardSequence;
 
       int numBits = 0;
       if (LootBoxRewards.ContainsKey(RewardedActionManager.Instance.CoinID)) {
@@ -519,14 +535,13 @@ namespace Cozmo.UI {
 
       _ContinueButtonInstance.gameObject.SetActive(true);
       _ContinueButtonInstance.Initialize(HandleOnboardingRewardsContinueButton, "onboarding.button.loot", "Onboarding");
-
     }
 
     private void HandleOnboardingRewardsContinueButton() {
       _OnboardingRewardStart.gameObject.SetActive(false);
       _ContinueButtonInstance.gameObject.SetActive(false);
       ContextManager.Instance.CozmoHoldFreeplayEnd();
-      CloseView();
+      PlayClosingRewardTweenAnimation();
     }
 
     private void TronLineBurst(int count) {
@@ -547,28 +562,27 @@ namespace Cozmo.UI {
     }
 
     private void SendTransformsToFinalTarget(Sequence currSequence, List<Transform> transList, Transform target) {
-      Sequence rewardSequence = currSequence;
       for (int i = 0; i < transList.Count; i++) {
         Transform currentReward = transList[i];
         float rewardStartVariance = UnityEngine.Random.Range(0, _RewardExplosionFinalVariance);
-        rewardSequence.Insert(rewardStartVariance, currentReward.DOScale(0.0f, _RewardExplosionFinalDuration).SetEase(Ease.InBack));
-        rewardSequence.Insert(rewardStartVariance, currentReward.DOMove(target.position, _RewardExplosionFinalDuration).SetEase(Ease.InBack));
-      }
+        currSequence.Insert(rewardStartVariance, currentReward.DOScale(0.2f, _RewardExplosionFinalDuration).SetEase(Ease.InBack));
+        currSequence.Insert(rewardStartVariance, currentReward.DOMove(target.position, _RewardExplosionFinalDuration).SetEase(Ease.InBack));
 
+        Image currentImage = currentReward.GetComponent<Image>();
+        float fadeDuration = _RewardExplosionFinalDuration * 0.5f;
+        currSequence.Insert(rewardStartVariance + (1 - fadeDuration),
+                            currentImage.DOFade(0f, fadeDuration).SetEase(Ease.OutQuad));
+      }
     }
 
     protected override void CleanUp() {
-      if (_RewardSequence != null) {
-        _RewardSequence.Kill();
-      }
-      PauseManager.Instance.OnPauseDialogOpen -= CloseView;
+      StopTweens();
       ChestRewardManager.Instance.ApplyChestRewards();
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();
       _TronPool.ReturnAllObjectsToPool();
       _TronPool.DestroyPool();
       StopCoroutine(InitializeBox());
-      StopTweens();
     }
 
     private void StopTweens() {
@@ -580,6 +594,15 @@ namespace Cozmo.UI {
       }
       if (_BoxSequence != null) {
         _BoxSequence.Kill();
+      }
+      if (_RewardSequence != null) {
+        _RewardSequence.Kill();
+      }
+      if (_OnboardingRewardSequence != null) {
+        _OnboardingRewardSequence.Kill();
+      }
+      if (_ClosingRewardSequence != null) {
+        _ClosingRewardSequence.Kill();
       }
     }
 
@@ -610,8 +633,8 @@ namespace Cozmo.UI {
     private void HandleBoxFinished() {
       UIManager.EnableTouchEvents();
       _LootButton.onClick.AddListener(HandleButtonTap);
-      _ShakeRotationTweener = _LootBox.DOShakeRotation(_ShakeDuration, new Vector3(0, 0, _ShakeRotationMaxAngle), _ShakeRotationVibrato, _ShakeRotationRandomness);
-      _ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, _ShakePositionMax, _ShakePositionVibrato, _ShakePositionRandomness);
+      ShakeRotationTweener = _LootBox.DOShakeRotation(_ShakeDuration, new Vector3(0, 0, _ShakeRotationMaxAngle), _ShakeRotationVibrato, _ShakeRotationRandomness);
+      ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, _ShakePositionMax, _ShakePositionVibrato, _ShakePositionRandomness);
       TronLineBurst(_ReadyChestBurst);
       _LootText.gameObject.SetActive(true);
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
@@ -620,11 +643,18 @@ namespace Cozmo.UI {
       }
     }
 
-    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+    private void PlayClosingRewardTweenAnimation() {
+      _ClosingRewardSequence = DOTween.Sequence();
       if (_AlphaController != null) {
-        closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
+        _ClosingRewardSequence.Join(_AlphaController.DOFade(0, 0.25f));
       }
-      AnimateRewardsToTarget(closeAnimation);
+      AnimateRewardsToTarget(_ClosingRewardSequence);
+      _ClosingRewardSequence.AppendCallback(CloseDialog);
+    }
+
+    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+      StopCoroutine(InitializeBox());
+      StopTweens();
     }
   }
 }

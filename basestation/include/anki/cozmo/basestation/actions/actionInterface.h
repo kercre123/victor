@@ -42,6 +42,10 @@ namespace Anki {
     // Forward Declarations:
     class Robot;
     
+    namespace ExternalInterface {
+      struct RobotCompletedAction;
+    }
+    
     // Parent container for running actions, which can hold simple actions as
     // well as "compound" ones, defined elsewhere.
     class IActionRunner
@@ -120,6 +124,8 @@ namespace Anki {
       // subclasses that are composed of other actions may want to make use of
       // the completion info of their constituent actions.
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const { completionUnion = _completionUnion; }
+
+      void GetRobotCompletedActionMessage(ExternalInterface::RobotCompletedAction& msg);
 
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }

@@ -59,8 +59,9 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
     roundState = _sparkedEnums[_round];
   }
   else {
-    ASSERT_NAMED_EVENT(_round < _sparkedEnums.size(),
-                       "BehaviorAudioClient.SetBehaviorStateLevel.InvalidRound", "round: %d", round);
+    DEV_ASSERT_MSG(_round < _sparkedEnums.size(),
+                   "BehaviorAudioClient.SetBehaviorStateLevel.InvalidRound",
+                   "round: %d", round);
   }
   
   // Update audio engine

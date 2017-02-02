@@ -18,12 +18,12 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
@@ -58,8 +58,8 @@ namespace Cozmo {
   
   
 BehaviorKnockOverCubes::BehaviorKnockOverCubes(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _numRetries(0)
+: IBehavior(robot, config)
+, _numRetries(0)
 {
   SetDefaultName("KnockOverCubes");
   LoadConfig(config);
@@ -83,9 +83,9 @@ void BehaviorKnockOverCubes::LoadConfig(const Json::Value& config)
   
 }
 
-bool BehaviorKnockOverCubes::IsRunnableInternal(const Robot& robot) const
+bool BehaviorKnockOverCubes::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
-  UpdateTargetStack(robot);
+  UpdateTargetStack(preReqData.GetRobot());
   if(auto tallestStack = _currentTallestStack.lock()){
     return tallestStack->GetStackHeight() >= _minStackHeight;
   }
@@ -242,8 +242,8 @@ bool BehaviorKnockOverCubes::InitializeMemberVars()
 {
   if(auto tallestStack = _currentTallestStack.lock()){
   // clear for success state check
-    SmartDisableReactionaryBehavior(BehaviorType::ReactToCubeMoved);
-    SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
+    SmartDisableReactionTrigger(ReactionTrigger::CubeMoved);
+    SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
     _objectsFlipped.clear();
     _numRetries = 0;
     _bottomBlockID = tallestStack->GetBottomBlockID();

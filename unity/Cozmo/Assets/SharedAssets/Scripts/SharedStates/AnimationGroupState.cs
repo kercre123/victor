@@ -18,7 +18,7 @@ public class AnimationGroupState : State {
     _CurrentRobot.SendAnimationTrigger(_AnimationTrigger, HandleAnimationDone);
   }
 
-  public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+  public override void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
     // Do nothing
   }
 

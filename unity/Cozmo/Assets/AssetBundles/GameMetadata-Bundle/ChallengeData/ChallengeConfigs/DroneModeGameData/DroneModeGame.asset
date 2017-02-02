@@ -30,8 +30,8 @@ MonoBehaviour:
   InstructionVideoPath: 
   DifficultyOptions: []
   GetInAnimTrigger:
-    _EnumValueAsString: DroneModeGetIn
-    _EnumValue: 48
+    _EnumValueAsString: CozmoSaysGetIn
+    _EnumValue: 13
   GetOutAnimTrigger:
     _EnumValueAsString: DroneModeGetOut
-    _EnumValue: 49
+    _EnumValue: 60

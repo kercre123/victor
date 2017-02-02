@@ -16,8 +16,9 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -102,14 +103,14 @@ BehaviorVisitInterestingEdge::BorderRegionScore::BorderRegionScore(const BorderR
 , idxClosestSegmentInRegion(idx)
 , distanceSQ(dSQ)
 {
-  ASSERT_NAMED(borderRegionPtr, "BorderRegionScore.NUllRegion");
-  ASSERT_NAMED(idxClosestSegmentInRegion<borderRegionPtr->segments.size(), "BorderRegionScore.InvalidIndex");
+  DEV_ASSERT(borderRegionPtr, "BorderRegionScore.NullRegion");
+  DEV_ASSERT(idxClosestSegmentInRegion<borderRegionPtr->segments.size(), "BorderRegionScore.InvalidIndex");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const NavMemoryMapTypes::BorderSegment& BehaviorVisitInterestingEdge::BorderRegionScore::GetSegment() const
 {
-  ASSERT_NAMED(IsValid(), "BorderRegionScore.InvalidRegion"); // can't call if invalid!
+  DEV_ASSERT(IsValid(), "BorderRegionScore.InvalidRegion"); // can't call if invalid!
   return borderRegionPtr->segments[idxClosestSegmentInRegion];
 }
 
@@ -137,10 +138,12 @@ BehaviorVisitInterestingEdge::~BehaviorVisitInterestingEdge()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorVisitInterestingEdge::IsRunnableInternal(const Robot& robot) const
+bool BehaviorVisitInterestingEdge::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   ANKI_CPU_PROFILE("BehaviorVisitInterestingEdge::IsRunnableInternal"); // we are doing some processing now, keep an eye
 
+  const Robot& robot = preReqData.GetRobot();
+  
   // clear debug render from previous runs
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
   
@@ -212,10 +215,11 @@ bool BehaviorVisitInterestingEdge::IsRunnableInternal(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
 {
-  ASSERT_NAMED(_cache.IsSet(), "BehaviorVisitInterestingEdge.InitInternal.CantTrustCache"); // this is the sauce, it's required
-
+  // this is the sauce, it's required
+  DEV_ASSERT(_cache.IsSet(), "BehaviorVisitInterestingEdge.InitInternal.CantTrustCache");
+  
   // make sure we are not updating borders while running the behavior (useless)
-  robot.GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
+  robot.GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
 
   // reset operating state to pick the starting one
   _operatingState = EOperatingState::Invalid;
@@ -230,7 +234,7 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
 void BehaviorVisitInterestingEdge::StopInternal(Robot& robot)
 {
   // remove our request to disable the analysis process
-  robot.GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
+  robot.GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
 
   // clear debug render
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
@@ -303,7 +307,7 @@ IActionRunner* BehaviorVisitInterestingEdge::CreateLowLiftAndLowHeadActions(Robo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVisitInterestingEdge::StartWaitingForEdges(Robot& robot)
 {
-  ASSERT_NAMED(!IsWaitingForImages(), "BehaviorVisitInterestingEdge.StartWaitingForEdges.AlreadyWaiting");
+  DEV_ASSERT(!IsWaitingForImages(), "BehaviorVisitInterestingEdge.StartWaitingForEdges.AlreadyWaiting");
 
   // clear the borders in front of us, so that we can get new ones
   robot.GetBlockWorld().FlagGroundPlaneROIInterestingEdgesAsUncertain();
@@ -327,7 +331,8 @@ void BehaviorVisitInterestingEdge::StartWaitingForEdges(Robot& robot)
       auto actionCompleteLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
       {
         using namespace ExternalInterface;
-        ASSERT_NAMED(MessageEngineToGameTag::RobotCompletedAction == msg.GetData().GetTag(), "actionCompleteLambda.InvalidTag");
+        DEV_ASSERT(MessageEngineToGameTag::RobotCompletedAction == msg.GetData().GetTag(),
+                   "actionCompleteLambda.InvalidTag");
         if ( _waitForImagesActionTag == msg.GetData().Get_RobotCompletedAction().idTag )
         {
           // our action finished, stop waiting for it and unsubscribe
@@ -396,12 +401,12 @@ float dist_Point_to_SegmentSQ( const Point3f& p, const Point3f& s0, const Point3
 void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionScoreVector& validGoals) const
 {
   // can't be running while picking the best goal, since we are not analyzing regions anymore
-  ASSERT_NAMED(!IsRunning(), "BehaviorVisitInterestingEdge.PickBestGoal.CantTrustAnalysisWhileRunning");
+  DEV_ASSERT(!IsRunning(), "BehaviorVisitInterestingEdge.PickBestGoal.CantTrustAnalysisWhileRunning");
   
   validGoals.clear();
 
   // ask the information analyzer about the regions it has detected (should have been this frame)
-  const INavMemoryMap::BorderRegionVector& interestingRegions = robot.GetAIInformationAnalyzer().GetDetectedInterestingRegions();
+  const INavMemoryMap::BorderRegionVector& interestingRegions = robot.GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
   
   // process them and see if we can pick one
   if ( !interestingRegions.empty() )
@@ -470,7 +475,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
 bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Robot& robot, const Vec3f& goalPosition) const
 {
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-  ASSERT_NAMED(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
+  DEV_ASSERT(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
   
   const Vec3f& fromRobot = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
   const Vec3f& toGoal    = goalPosition; // assumed wrt origin
@@ -516,7 +521,8 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(const Robot& robot, con
       const uint16_t offsetIndex = (rayIndex+1) / 2; // rayIndex(0) = offset(0), rayIndex(1,2) = offset(1), rayIndex(3,4) = offset(2), ...
       const float offsetSign = ((rayIndex%2) == 0) ? 1.0f : -1.0f; // change sign every rayIndex
       const float rotationOffset_deg = (offsetIndex * _configParams.vantagePointAngleOffsetPerTry_deg) * offsetSign;
-      ASSERT_NAMED((rayIndex==0) || !FLT_NEAR(rotationOffset_deg, 0.0f), "BehaviorVisitInterestingEdge.GenerateVantagePoints.BadRayOffset");
+      DEV_ASSERT((rayIndex==0) || !FLT_NEAR(rotationOffset_deg, 0.0f),
+                 "BehaviorVisitInterestingEdge.GenerateVantagePoints.BadRayOffset");
       
       Vec3f normalFromLookAtTowardsVantage = goal.GetSegment().normal;
       // rotate by the offset of this try
@@ -608,7 +614,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(const Robot& robot, con
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robot, uint8_t attemptsDone)
 {
-  ASSERT_NAMED( _operatingState == EOperatingState::Invalid || _operatingState == EOperatingState::MovingToVantagePoint,
+  DEV_ASSERT(_operatingState == EOperatingState::Invalid || _operatingState == EOperatingState::MovingToVantagePoint,
    "BehaviorVisitInterestingEdge.TransitionToS1_MoveToVantagePoint.StateShouldNotBeSetOrShouldBeRetry" );
 
   // change operating state
@@ -618,7 +624,7 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robo
   
   // there have to be vantage points. If it's impossible to generate vantage points from the memory map,
   // we should change those borders/quads to "not visitable" to prevent failing multiple times
-  ASSERT_NAMED(!_cache._vantagePoints.empty(),
+  DEV_ASSERT(!_cache._vantagePoints.empty(),
     "BehaviorVisitInterestingEdge.TransitionToS1_MoveToVantagePoint.NoVantagePoints");
   
   // create compound action to force lift to be on low dock (just in case) and then move
@@ -676,7 +682,7 @@ void BehaviorVisitInterestingEdge::TransitionToS2_GatherAccurateEdge(Robot& robo
   PRINT_CH_INFO("Behaviors", (GetName() + ".S2").c_str(), "At vantage point, trying to grab more accurate borders");
   
   // start squint loop
-  ASSERT_NAMED(!IsPlayingSquintLoop(), "BehaviorVisitInterestingEdge.TransitionToS2_GatherAccurateEdge.AlreadySquintLooping");
+  DEV_ASSERT(!IsPlayingSquintLoop(), "BehaviorVisitInterestingEdge.TransitionToS2_GatherAccurateEdge.AlreadySquintLooping");
   IAction* squintLoopAnimAction = new TriggerLiftSafeAnimationAction(robot,_configParams.squintLoopAnimTrigger, 0); // loop forever
   robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, squintLoopAnimAction);
   _squintLoopAnimActionTag = squintLoopAnimAction->GetTag();
@@ -688,8 +694,8 @@ void BehaviorVisitInterestingEdge::TransitionToS2_GatherAccurateEdge(Robot& robo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(Robot& robot)
 {
-  ASSERT_NAMED( _operatingState == EOperatingState::GatheringAccurateEdge,
-    "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.InvalidState" );
+  DEV_ASSERT(_operatingState == EOperatingState::GatheringAccurateEdge,
+             "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.InvalidState");
 
   // change operating state
   _operatingState = EOperatingState::Observing;
@@ -697,8 +703,8 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(Robot& robot)
 
   // we know the distance to the closest border, so we can get as close as we want before playing the anim
   const float robotLen = (ROBOT_BOUNDING_X_FRONT + ROBOT_BOUNDING_X_LIFT);
-  const float lastEdgeDistance_mm = robot.GetBehaviorManager().GetWhiteboard().GetLastEdgeClosestDistance();
-  ASSERT_NAMED(!std::isnan(lastEdgeDistance_mm), "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.NaNEdgeDist");
+  const float lastEdgeDistance_mm = robot.GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
+  DEV_ASSERT(!std::isnan(lastEdgeDistance_mm), "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.NaNEdgeDist");
   const float distanceToMoveForward_mm = lastEdgeDistance_mm - robotLen - _configParams.observationDistanceFromBorder_mm;
   
   PRINT_CH_INFO("Behaviors", (GetName() + ".S3").c_str(), "Observing edges from close distance (moving closer %.2fmm)", distanceToMoveForward_mm);
@@ -772,7 +778,8 @@ void BehaviorVisitInterestingEdge::FlagVisitedQuadAsNotInteresting(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVisitInterestingEdge::FlagQuadAroundGoalAsNotInteresting(Robot& robot, const Vec3f& goalPoint, const Vec3f& goalNormal, float halfQuadSideSize_mm)
 {
-  ASSERT_NAMED( FLT_NEAR(goalNormal.z(), 0.0f), "BehaviorVisitInterestingEdge.FlagQuadAroundGoalAsNotInteresting.MemoryMapIs2DAtTheMoment");
+  DEV_ASSERT(FLT_NEAR(goalNormal.z(), 0.0f),
+             "BehaviorVisitInterestingEdge.FlagQuadAroundGoalAsNotInteresting.MemoryMapIs2DAtTheMoment");
   const Vec3f rightNormal{goalNormal.y(), -goalNormal.x(), goalNormal.z()}; // 2d perpendicular to the right
   const Vec3f forwardDir = goalNormal  * halfQuadSideSize_mm;
   const Vec3f rightDir   = rightNormal * halfQuadSideSize_mm;
@@ -815,7 +822,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
   _waitForImagesActionTag = ActionConstants::INVALID_TAG;
   
   // check distance to closest detected edge
-  const float lastEdgeDistance_mm = robot.GetBehaviorManager().GetWhiteboard().GetLastEdgeClosestDistance();
+  const float lastEdgeDistance_mm = robot.GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
   const bool detectedEdges = !std::isnan(lastEdgeDistance_mm);
   if ( detectedEdges )
   {
@@ -1005,19 +1012,19 @@ void BehaviorVisitInterestingEdge::LoadConfig(const Json::Value& config)
   _configParams.borderApproachSpeed_mmps = ParseFloat(config, "borderApproachSpeed_mmps", debugName);
   
   // validate
-  ASSERT_NAMED( _configParams.observeEdgeAnimTrigger != AnimationTrigger::Count,
+  DEV_ASSERT(_configParams.observeEdgeAnimTrigger != AnimationTrigger::Count,
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidObserveEdgeAnimTrigger");
-  ASSERT_NAMED( _configParams.edgesNotFoundAnimTrigger != AnimationTrigger::Count,
+  DEV_ASSERT(_configParams.edgesNotFoundAnimTrigger != AnimationTrigger::Count,
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidEdgesNotFoundAnimTrigger");
-  ASSERT_NAMED( _configParams.squintStartAnimTrigger != AnimationTrigger::Count,
+  DEV_ASSERT(_configParams.squintStartAnimTrigger != AnimationTrigger::Count,
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidSquintStart");
-  ASSERT_NAMED( _configParams.squintLoopAnimTrigger != AnimationTrigger::Count,
+  DEV_ASSERT(_configParams.squintLoopAnimTrigger != AnimationTrigger::Count,
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidSquintLoop");
-  ASSERT_NAMED( _configParams.squintEndAnimTrigger != AnimationTrigger::Count,
+  DEV_ASSERT(_configParams.squintEndAnimTrigger != AnimationTrigger::Count,
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidSquintEnd");
-  ASSERT_NAMED( FLT_LE(_configParams.distanceFromLookAtPointMin_mm,_configParams.distanceFromLookAtPointMax_mm),
+  DEV_ASSERT(FLT_LE(_configParams.distanceFromLookAtPointMin_mm,_configParams.distanceFromLookAtPointMax_mm),
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidDistanceFromGoalRange");
-  ASSERT_NAMED( (_configParams.vantagePointAngleOffsetTries == 0) || FLT_GT(_configParams.vantagePointAngleOffsetPerTry_deg,0.0f),
+  DEV_ASSERT((_configParams.vantagePointAngleOffsetTries == 0) || FLT_GT(_configParams.vantagePointAngleOffsetPerTry_deg,0.0f),
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidOffsetConfiguration");
 }
 

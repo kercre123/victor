@@ -23,8 +23,8 @@
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/utilities_shared.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/bridge.h"
@@ -189,7 +189,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   , _trackPoseChanges(false)
   , _blockConfigurationManager(new BlockConfigurations::BlockConfigurationManager(*robot))
   {
-    ASSERT_NAMED(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
+    DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
     
     // TODO: Create each known block / matpiece from a configuration/definitions file
     
@@ -682,9 +682,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             const ObjectFamily family  = object->GetFamily();
             const ObjectType   objType = object->GetType();
             
-            ASSERT_NAMED(family == objectsByFamily.first, "BlockWorld.UpdateObjectOrigin.FamilyMisMatch");
-            ASSERT_NAMED(objType == objectsByType.first,  "BlockWorld.UpdateObjectOrigin.TypeMisMatch");
-            ASSERT_NAMED(objectID == object->GetID(),     "BlockWorld.UpdateObjectOrigin.IdMisMatch");
+            DEV_ASSERT(family == objectsByFamily.first, "BlockWorld.UpdateObjectOrigin.FamilyMismatch");
+            DEV_ASSERT(objType == objectsByType.first,  "BlockWorld.UpdateObjectOrigin.TypeMismatch");
+            DEV_ASSERT(objectID == object->GetID(),     "BlockWorld.UpdateObjectOrigin.IdMismatch");
             
             PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.ObjectFound",
                           "Updating ObjectID %d from origin %s(%p) to %s(%p)",
@@ -756,10 +756,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // Special case: don't use the pose w.r.t. the origin b/c carried objects' parent
         // is the lift. The robot is already in the new frame by the time this called,
         // so we don't need to adjust anything
-        ASSERT_NAMED(_robot->GetWorldOrigin() == newOrigin,
-                     "BlockWorld.UpdateObjectOrigins.RobotNotInNewOrigin");
-        ASSERT_NAMED(&oldObject->GetPose().FindOrigin() == newOrigin,
-                     "BlockWorld.UpdateObjectOrigins.OldCarriedObjectNotInNewOrigin");
+        DEV_ASSERT(_robot->GetWorldOrigin() == newOrigin, "BlockWorld.UpdateObjectOrigins.RobotNotInNewOrigin");
+        DEV_ASSERT(&oldObject->GetPose().FindOrigin() == newOrigin,
+                   "BlockWorld.UpdateObjectOrigins.OldCarriedObjectNotInNewOrigin");
         newPose = oldObject->GetPose();
       }
       else if(false == oldObject->GetPose().GetWithRespectTo(*newOrigin, newPose))
@@ -870,9 +869,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       // oldOrigin is the pointer/id of the map we were just building, and it's going away. It's the current map
       // newOrigin is the pointer/id of the map that is staying, it's the one we rejiggered to, and we haven't changed in a while
-      ASSERT_NAMED( _navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
-      ASSERT_NAMED( _navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
-      ASSERT_NAMED( oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
+      DEV_ASSERT(_navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(),
+                 "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
+      DEV_ASSERT(_navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(),
+                 "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
+      DEV_ASSERT(oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
 
       // before we merge the object information from the memory maps, apply rejiggering also to their
       // reported poses
@@ -905,7 +906,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // continue the merge as we were going to do, so at least we don't lose the information we were just collecting
       Pose3d oldWrtNew;
       const bool success = oldOrigin->GetWithRespectTo(*newOrigin, oldWrtNew);
-      ASSERT_NAMED(success, "BlockWorld.UpdateObjectOrigins.BadOldWrtNull");
+      DEV_ASSERT(success, "BlockWorld.UpdateObjectOrigins.BadOldWrtNull");
       newMap->Merge(oldMap, oldWrtNew);
       
       // switch back to what is becoming the new map
@@ -996,8 +997,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   const INavMemoryMap* BlockWorld::GetNavMemoryMap() const
   {
     // current map (if any) must match current robot origin
-    ASSERT_NAMED( (_currentNavMemoryMapOrigin == nullptr) || (_robot->GetWorldOrigin() == _currentNavMemoryMapOrigin),
-                 "BlockWorld.GetNavMemoryMap.BadOrigin");
+    DEV_ASSERT((_currentNavMemoryMapOrigin == nullptr) || (_robot->GetWorldOrigin() == _currentNavMemoryMapOrigin),
+               "BlockWorld.GetNavMemoryMap.BadOrigin");
     
     const INavMemoryMap* curMap = nullptr;
     if ( nullptr != _currentNavMemoryMapOrigin ) {
@@ -1005,7 +1006,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       if ( matchPair != _navMemoryMaps.end() ) {
         curMap = matchPair->second.get();
       } else {
-        ASSERT_NAMED(false, "BlockWorld.GetNavMemoryMap.MissingMap");
+        DEV_ASSERT(false, "BlockWorld.GetNavMemoryMap.MissingMap");
       }
     }
     return curMap;
@@ -1020,7 +1021,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       if ( matchPair != _navMemoryMaps.end() ) {
         curMap = matchPair->second.get();
       } else {
-        ASSERT_NAMED(false, "BlockWorld.GetNavMemoryMap.MissingMap");
+        DEV_ASSERT(false, "BlockWorld.GetNavMemoryMap.MissingMap");
       }
     }
     return curMap;
@@ -1032,7 +1033,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     ANKI_CPU_PROFILE("BlockWorld::UpdateRobotPoseInMemoryMap");
     
     // grab current robot pose
-    ASSERT_NAMED(_robot->GetWorldOrigin() == _currentNavMemoryMapOrigin, "BlockWorld.OnRobotPoseChanged.InvalidWorldOrigin");
+    DEV_ASSERT(_robot->GetWorldOrigin() == _currentNavMemoryMapOrigin, "BlockWorld.OnRobotPoseChanged.InvalidWorldOrigin");
     const Pose3d& robotPose = _robot->GetPose();
     const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToOrigin();
     
@@ -1047,7 +1048,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     if ( addAgain )
     {
       INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-      ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.UpdateRobotPoseInMemoryMap.NoMemoryMap");
+      DEV_ASSERT(currentNavMemoryMap, "BlockWorld.UpdateRobotPoseInMemoryMap.NoMemoryMap");
       // cliff quad: clear or cliff
       {
         // TODO configure this size somethere else
@@ -1083,7 +1084,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
       // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
       // robot component, like a VisualInformationProcessingComponent
-      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(robotQuad);
+      _robot->GetAIComponent().GetWhiteboard().ProcessClearQuad(robotQuad);
 
       // update las reported pose
       _navMapReportedRobotPose = robotPoseWrtOrigin;
@@ -1100,7 +1101,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // ask memory map to clear
     INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-    ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.FlagQuadAsNotInterestingEdges.NullMap");
+    DEV_ASSERT(currentNavMemoryMap, "BlockWorld.FlagGroundPlaneROIInterestingEdgesAsUncertain.NullMap");
     const INavMemoryMap::EContentType typeInteresting = INavMemoryMap::EContentType::InterestingEdge;
     const INavMemoryMap::EContentType typeUnknown = INavMemoryMap::EContentType::Unknown;
     currentNavMemoryMap->ReplaceContent(groundPlaneWrtRobot, typeInteresting, typeUnknown);
@@ -1110,7 +1111,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   void BlockWorld::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
   {
     INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-    ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.FlagQuadAsNotInterestingEdges.NullMap");
+    DEV_ASSERT(currentNavMemoryMap, "BlockWorld.FlagQuadAsNotInterestingEdges.NullMap");
     currentNavMemoryMap->AddQuad(quadWRTOrigin, INavMemoryMap::EContentType::NotInterestingEdge);
   }
   
@@ -1123,7 +1124,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // "there was something here, but we are not sure what it was", which can be good to re-explore the area
   
     INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-    ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.FlagInterestingEdgesAsUseless.NullMap");
+    DEV_ASSERT(currentNavMemoryMap, "BlockWorld.FlagInterestingEdgesAsUseless.NullMap");
     const INavMemoryMap::EContentType newType = INavMemoryMap::EContentType::Unknown;
     currentNavMemoryMap->ReplaceContent(INavMemoryMap::EContentType::InterestingEdge, newType);
   }
@@ -1140,8 +1141,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const bool isZombie = IsZombiePoseOrigin( iter->first );
       if ( isZombie ) {
         // PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
-        PRINT_NAMED_EVENT("blockworld.memory_map.deleting_zombie_map",
-                          "%s", iter->first->GetName().c_str() );
+        LOG_EVENT("blockworld.memory_map.deleting_zombie_map", "%s", iter->first->GetName().c_str() );
         iter = _navMemoryMaps.erase(iter);
         
         // also remove the reported poses in this origin for every object (fixes a leak, and better tracks where objects are)
@@ -1152,8 +1152,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         }
       } else {
         //PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
-        PRINT_NAMED_EVENT("blockworld.memory_map.keeping_alive_map",
-                          "%s", iter->first->GetName().c_str() );
+        LOG_EVENT("blockworld.memory_map.keeping_alive_map", "%s", iter->first->GetName().c_str() );
         ++iter;
       }
     }
@@ -1163,7 +1162,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // if the origin is null, we would never merge the map, which could leak if a new one was created
     // do not support this by not creating one at all if the origin is null
-    ASSERT_NAMED(nullptr != worldOriginPtr, "BlockWorld.CreateLocalizedMemoryMap.NullOrigin");
+    DEV_ASSERT(nullptr != worldOriginPtr, "BlockWorld.CreateLocalizedMemoryMap.NullOrigin");
     if ( nullptr != worldOriginPtr )
     {
       // create a new memory map in the given origin
@@ -1414,8 +1413,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                                                                      objSeen->GetSameAngleTolerance(),
                                                                      filter);
         if (nullptr != matchingObject) {
-          ASSERT_NAMED(&matchingObject->GetPose().FindOrigin() == currFrame,
-                       "BlockWorld.AddAndUpdateObjects.MatchedPassiveObjectInOtherCoordinateFrame");
+          DEV_ASSERT(&matchingObject->GetPose().FindOrigin() == currFrame,
+                     "BlockWorld.AddAndUpdateObjects.MatchedPassiveObjectInOtherCoordinateFrame");
           matchingObjects[currFrame] = matchingObject;
         }
         
@@ -1507,8 +1506,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       
       // ObservedObject should be set by now and should be in the current frame
       assert(observedObject != nullptr); // this REALLY shouldn't happen
-      ASSERT_NAMED(&observedObject->GetPose().FindOrigin() == currFrame,
-                   "BlockWorld.AddAndUpdateObjects.ObservedObjectNotInCurrentFrame");
+      DEV_ASSERT(&observedObject->GetPose().FindOrigin() == currFrame,
+                 "BlockWorld.AddAndUpdateObjects.ObservedObjectNotInCurrentFrame");
       
       // Add all observed markers of this object as occluders, once it has been
       // identified (it's possible we're seeing an existing object behind its
@@ -1524,7 +1523,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
       
       const ObjectID obsID = observedObject->GetID();
-      ASSERT_NAMED(obsID.IsSet(), "BlockWorld.AddAndUpdateObjects.IDnotSet");
+      DEV_ASSERT(obsID.IsSet(), "BlockWorld.AddAndUpdateObjects.IDnotSet");
       
       
       // Safe to remove this? Haven't seen this warning being printed...
@@ -1564,7 +1563,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::UpdatePoseOfStackedObjects()
   {
-    ASSERT_NAMED(_trackPoseChanges, "BlockWorld.UpdatePoseOfStackedObjects.CanRunOnlyWhileTrackingPoseChanges");
+    DEV_ASSERT(_trackPoseChanges, "BlockWorld.UpdatePoseOfStackedObjects.CanRunOnlyWhileTrackingPoseChanges");
     
     // iterate all changed objects updating any objects we think are on top of them
     auto changedObjectIt = _objectPoseChangeList.begin();
@@ -1765,7 +1764,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Now that the occlusion maps are complete, check each unobserved object's
     // visibility in each camera
     const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
-    ASSERT_NAMED(camera.IsCalibrated(), "BlockWorld.CheckForUnobservedObjects.CameraNotCalibrated");
+    DEV_ASSERT(camera.IsCalibrated(), "BlockWorld.CheckForUnobservedObjects.CameraNotCalibrated");
     for(ObservableObject* unobservedObject : unobservedObjects) {
       
       // Remove objects that should have been visible based on their last known
@@ -2010,7 +2009,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToOrigin() );
     
       INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-      ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.OnRobotPoseChanged.NoMemoryMap");
+      DEV_ASSERT(currentNavMemoryMap, "BlockWorld.OnRobotPoseChanged.NoMemoryMap");
       currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
     }
     else if ( kAddUnrecognizedMarkerlessObjectsToMemMap )
@@ -2120,11 +2119,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // default filter function which rules out objects with unknown pose state
     filter.AddFilterFcn([minHeight, maxHeight, padding, &rectangles](const ObservableObject* object)
     {
-      const Point3f rotatedSize( object->GetPose().GetRotation() * object->GetSize() );
+      const f32 zSize = object->GetDimInParentFrame<'Z'>();
       const f32 objectCenter = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
         
-      const f32 objectTop = objectCenter + (0.5f * rotatedSize.z());
-      const f32 objectBottom = objectCenter - (0.5f * rotatedSize.z());
+      const f32 objectTop    = objectCenter + (0.5f * zSize);
+      const f32 objectBottom = objectCenter - (0.5f * zSize);
         
       const bool bothAbove = (objectTop >= maxHeight) && (objectBottom >= maxHeight);
       const bool bothBelow = (objectTop <= minHeight) && (objectBottom <= minHeight);
@@ -2180,14 +2179,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         
         // ObservedObjects are w.r.t. the arbitrary historical origin of the camera
         // that observed them.  Hook them up to the current robot origin now:
-        ASSERT_NAMED(object->GetPose().GetParent() != nullptr &&
-                        object->GetPose().GetParent()->IsOrigin(),
-                     "BlockWorld.UpdateRobotPose.InvalidParentPose");
+        DEV_ASSERT(object->GetPose().GetParent() != nullptr && object->GetPose().GetParent()->IsOrigin(),
+                   "BlockWorld.UpdateRobotPose.InvalidParentPose");
         
         object->SetPoseParent(_robot->GetWorldOrigin());
         
         MatPiece* mat = dynamic_cast<MatPiece*>(object);
-        ASSERT_NAMED(mat != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatPiece");
+        DEV_ASSERT(mat != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatPiece");
         
         // Does this mat pose make sense? I.e., is the top surface flat enough
         // that we could drive on it?
@@ -2272,7 +2270,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             // though it is not _on_ that mat.  Remain localized to that mat
             // and update any others it is also seeing
             matToLocalizeTo = dynamic_cast<MatPiece*>(overlappingMatsSeen[0]);
-            ASSERT_NAMED(matToLocalizeTo != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatLocalization");
+            DEV_ASSERT(matToLocalizeTo != nullptr, "BlockWorld.UpdateRobotPose.InvalidMatLocalization");
           }
           
           
@@ -2292,7 +2290,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
               PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers",
                                 "We saw a mat piece but it is returning no observed markers for "
                                 "the current timestamp.");
-              ASSERT_NAMED(false, "BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers");
+              DEV_ASSERT(false, "BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers");
             }
             
             Pose3d markerWrtRobot;
@@ -2302,13 +2300,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                 PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMismatch",
                                   "Could not get the pose of an observed marker w.r.t. the robot that "
                                   "supposedly observed it.");
-                ASSERT_NAMED(false, "BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMismatch");
+                DEV_ASSERT(false, "BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMismatch");
               }
               
               const f32 markerDistSq = markerWrtRobot.GetTranslation().LengthSq();
               if (closestMat == nullptr || markerDistSq < minDistSq) {
                 closestMat = dynamic_cast<MatPiece*>(mat);
-                ASSERT_NAMED(closestMat != nullptr, "BlockWorld.UpdateRobotPose.InvalidClosestMat");
+                DEV_ASSERT(closestMat != nullptr, "BlockWorld.UpdateRobotPose.InvalidClosestMat");
                 minDistSq = markerDistSq;
               }
             } // for each observed marker
@@ -2386,7 +2384,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             // update its pose (we can't both update the mat's pose and use it
             // to update the robot's pose at the same time!)
             existingMatPiece.reset( dynamic_cast<MatPiece*>(existingObjects.front()) );
-            ASSERT_NAMED(existingMatPiece != nullptr, "BlockWorld.UpdateRobotPose.InvalidExistingMatPiece");
+            DEV_ASSERT(existingMatPiece != nullptr, "BlockWorld.UpdateRobotPose.InvalidExistingMatPiece");
             
             PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
                                     "Robot %d localizing to existing %s mat with ID=%d.",
@@ -2562,9 +2560,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                                        const TimeStamp_t atTimestamp)
   {
     // Sanity checks for robot's origin
-    ASSERT_NAMED(_robot->GetPose().GetParent() == _robot->GetWorldOrigin(),
+    DEV_ASSERT(_robot->GetPose().GetParent() == _robot->GetWorldOrigin(),
                  "BlockWorld.UpdateObjectPoses.RobotParentShouldBeOrigin");
-    ASSERT_NAMED(&_robot->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
+    DEV_ASSERT(&_robot->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
                  "BlockWorld.UpdateObjectPoses.BadRobotOrigin");
     
     const ObservableObjectLibrary& objectLibrary = _objectLibrary[inFamily];
@@ -2842,7 +2840,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           {
             obj->SetFactoryID(factoryID);
             obj->SetActiveID(activeID);
-            ASSERT_NAMED(obj->GetID() == idPrev, "Matching objects in different frames don't have same ObjectId");
+            DEV_ASSERT(obj->GetID() == idPrev, "Matching objects in different frames don't have same ObjectId");
             idPrev = obj->GetID();
           }
         }
@@ -2897,7 +2895,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   void BlockWorld::OnObjectPoseWillChange(const ObjectID& objectID, ObjectFamily family,
     const Pose3d& newPose, PoseState newPoseState)
   {
-    ASSERT_NAMED(objectID.IsSet(), "BlockWorld.OnObjectPoseWillChange.InvalidObjectID");
+    DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseWillChange.InvalidObjectID");
 
     // find the object
     const ObservableObject* object = GetObjectByID(objectID, family);
@@ -2937,7 +2935,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
       // be smaller than the threshold to not report
-      ASSERT_NAMED(kObjectPositionChangeToReport_mm < object->GetSize().z()*0.5f, "OnObjectPoseWillChange.ChangeThresholdTooBig");
+      DEV_ASSERT(kObjectPositionChangeToReport_mm < object->GetDimInParentFrame<'Z'>()*0.5f,
+                 "OnObjectPoseWillChange.ChangeThresholdTooBig");
       const float distThreshold = kObjectPositionChangeToReport_mm;
       const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
 
@@ -3004,11 +3003,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       {
         INavMemoryMap* memoryMap = matchPair->second.get();
         
-        // TODO turn into helper, see Robot.cpp's IsTooHigh
-        const Point3f rotatedSizeWrtRobot(objWrtRobot.GetRotation() * object.GetSize());
-        const f32 bottomOfObjectWrtRobot = objWrtRobot.GetTranslation().z() - (0.5f* std::abs(rotatedSizeWrtRobot.z()));
-        const float zFloatingThreshold = std::abs(rotatedSizeWrtRobot.z()*0.5f);
-        const bool isFloating = FLT_GT(std::abs(bottomOfObjectWrtRobot), zFloatingThreshold);
+        const bool isFloating = object.IsPoseTooHigh(objWrtRobot, 1.f, STACKED_HEIGHT_TOL_MM, 0.f);
         if ( isFloating )
         {
           // store in as a reported pose, but set as not in map (the pose value is not relevant)
@@ -3046,7 +3041,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     else
     {
       // if the map was removed (for zombies), we shouldn't be asking to add an object to it
-      ASSERT_NAMED(matchPair == _navMemoryMaps.end(), "BlockWorld.AddObjectReportToMemMap.NoMapForOrigin");
+      DEV_ASSERT(matchPair == _navMemoryMaps.end(), "BlockWorld.AddObjectReportToMemMap.NoMapForOrigin");
     }
   }
   
@@ -3079,7 +3074,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         if ( info.isInMap )
         {
           // pose should be correct if it's in map (could be from an old origin if it's not in map)
-          ASSERT_NAMED(infosForOriginIt->second.pose.GetParent() == origin, "BlockWorld.RemoveObjectReportFromMemMap.PoseNotFlattenedOut");
+          DEV_ASSERT(infosForOriginIt->second.pose.GetParent() == origin,
+                     "BlockWorld.RemoveObjectReportFromMemMap.PoseNotFlattenedOut");
           
           // find the memory map for the given origin
           auto matchPair = _navMemoryMaps.find(origin);
@@ -3095,7 +3091,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           else
           {
             // if the map was removed (for zombies), we shouldn't be asking to remove an object from it
-            ASSERT_NAMED(matchPair == _navMemoryMaps.end(), "BlockWorld.RemoveObjectReportFromMemMap.NoMapForOrigin");
+            DEV_ASSERT(matchPair == _navMemoryMaps.end(), "BlockWorld.RemoveObjectReportFromMemMap.NoMapForOrigin");
           }
         
           // flag as not in map anymore
@@ -3151,7 +3147,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         if ( matchInCurOrigin->second.isInMap ) {
           // bring over the pose if it's in map (otherwise we don't care about the pose)
           // when we bring it, flatten out to the relocalized origin
-          ASSERT_NAMED(relocalizedOrigin == &matchInCurOrigin->second.pose.FindOrigin(), "BlockWorld.UpdateObjectsReportedInMepMap.PoseDidNotHookGranpa");
+          DEV_ASSERT(relocalizedOrigin == &matchInCurOrigin->second.pose.FindOrigin(),
+                     "BlockWorld.UpdateObjectsReportedInMepMap.PoseDidNotHookGranpa");
           poseInfoByOriginForObj[relocalizedOrigin].pose = matchInCurOrigin->second.pose.GetWithRespectToOrigin();
         }
         // also, erase the current origin from the reported poses of this object, since we will never use it after this
@@ -3171,8 +3168,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   void BlockWorld::ClearRobotToMarkersInMemMap(const ObservableObject* object)
   {
     // the newPose should be directly in the robot's origin
-    ASSERT_NAMED(object->GetPose().GetParent() == _robot->GetWorldOrigin(),
-                "BlockWorld.ClearRobotToMarkersInMemMap.ObservedObjectParentNotRobotOrigin");
+    DEV_ASSERT(object->GetPose().GetParent() == _robot->GetWorldOrigin(),
+               "BlockWorld.ClearRobotToMarkersInMemMap.ObservedObjectParentNotRobotOrigin");
 
     INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
     
@@ -3190,10 +3187,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   
     for ( const auto& observedMarkerIt : observedMarkers )
     {
-      // An observerd marker. Assign the marker's bottom corners as the top corners for the ground quad
+      // An observed marker. Assign the marker's bottom corners as the top corners for the ground quad
       // The names of the corners (cornerTL and cornerTR) are those of the ground quad: TopLeft and TopRight
-      ASSERT_NAMED(&observedMarkerIt->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
-                   "BlockWorld.ClearVisionFromRobotToMarkers.MarkerOriginShouldBeRobotOrigin");
+      DEV_ASSERT(&observedMarkerIt->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
+                 "BlockWorld.ClearVisionFromRobotToMarkers.MarkerOriginShouldBeRobotOrigin");
       
       const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
       Point3f cornerTL = markerCorners[Quad::BottomLeft];
@@ -3210,7 +3207,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
       // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
       // robot component, like a VisualInformationProcessingComponent
-      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
+      _robot->GetAIComponent().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
     }
   }
   
@@ -3218,7 +3215,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   bool BlockWorld::IsZombiePoseOrigin(const Pose3d* origin) const
   {
     // really, pass in an origin
-    ASSERT_NAMED(nullptr != origin && origin->IsOrigin(), "BlockWorld.IsZombiePoseOrigin.NotAnOrigin");
+    DEV_ASSERT(nullptr != origin && origin->IsOrigin(), "BlockWorld.IsZombiePoseOrigin.NotAnOrigin");
   
     // current world is not a zombie
     const bool isCurrent = (origin == _robot->GetWorldOrigin());
@@ -3263,7 +3260,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         ret = AddVisionOverheadEdges(frameInfo);
       } else {
         // we expect lack of borders to be reported as !isBorder chains
-        ASSERT_NAMED(false, "ProcessVisionOverheadEdges.ValidPlaneWithNoChains");
+        DEV_ASSERT(false, "ProcessVisionOverheadEdges.ValidPlaneWithNoChains");
       }
     } else {
       // ground plane was invalid (atm we don't use this). It's probably only useful if we are debug-rendering
@@ -3336,8 +3333,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
     
     // check conditions to add edges
-    ASSERT_NAMED(!frameInfo.chains.empty(), "AddVisionOverheadEdges.NoEdges");
-    ASSERT_NAMED(frameInfo.groundPlaneValid, "AddVisionOverheadEdges.InvalidGroundPlane");
+    DEV_ASSERT(!frameInfo.chains.empty(), "AddVisionOverheadEdges.NoEdges");
+    DEV_ASSERT(frameInfo.groundPlaneValid, "AddVisionOverheadEdges.InvalidGroundPlane");
     
     // we are only processing edges for the memory map, so if there's no map, don't do anything
     INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
@@ -3446,7 +3443,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", groundPlaneWRTOrigin, kDebugRenderOverheadEdgesZ_mm, NamedColors::BLACK, false);
       }
 
-      ASSERT_NAMED(chain.points.size() > 2,"AddVisionOverheadEdges.ChainWithTooLittlePoints");
+      DEV_ASSERT(chain.points.size() > 2,"AddVisionOverheadEdges.ChainWithTooLittlePoints");
       
       // when we are processing a non-edge chain, points can be discarded. Variables to track segments
       bool hasValidSegmentStart = false;
@@ -3660,7 +3657,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
               // we have a valid and long segment add clear from camera to segment
               Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
               bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
-              ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
+              DEV_ASSERT(success, "AddVisionOverheadEdges.FailedQuadClamp");
               if ( success ) {
                 visionQuadsClear.emplace_back(clearQuad);
               }
@@ -3693,13 +3690,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
               // need to create a new segment, and there was not a valid one previously
               // this should be impossible, since we would have become either start or end
               // of a segment, and shouldCreateNewSegment would have been false
-              ASSERT_NAMED(false, "AddVisionOverheadEdges.NewSegmentCouldNotFindPreviousEnd");
+              DEV_ASSERT(false, "AddVisionOverheadEdges.NewSegmentCouldNotFindPreviousEnd");
             }
           }
           else
           {
             // we don't want to start a new segment, either we are the last point or we are not a valid point
-            ASSERT_NAMED(!isValidPoint || isLastPoint, "AddVisionOverheadEdges.ValidPointNotStartingSegment");
+            DEV_ASSERT(!isValidPoint || isLastPoint, "AddVisionOverheadEdges.ValidPointNotStartingSegment");
             hasValidSegmentStart = false;
             hasValidSegmentEnd   = false;
           }
@@ -3836,7 +3833,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
       // robot component, like a VisualInformationProcessingComponent
       // Note: we always consider quad here since whiteboard does not need the triangle optiomization
-      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(potentialClearQuad2D);
+      _robot->GetAIComponent().GetWhiteboard().ProcessClearQuad(potentialClearQuad2D);
     }
     
     // send border segments to memory map
@@ -3883,7 +3880,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // notify the whiteboard we just processed edge information from a frame
     const float closestPointDist_mm = std::isnan(closestPointDist_mm2) ?
       std::numeric_limits<float>::quiet_NaN() : sqrt(closestPointDist_mm2);
-    _robot->GetBehaviorManager().GetWhiteboard().SetLastEdgeInformation(frameInfo.timestamp, closestPointDist_mm);
+    _robot->GetAIComponent().GetWhiteboard().SetLastEdgeInformation(frameInfo.timestamp, closestPointDist_mm);
     
     return RESULT_OK;
   }
@@ -4464,16 +4461,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Find the point at the top middle of the object on bottom
     // (or if !onTop, the bottom middle of the object on top)
-    const Vec3f& objSize = referenceObject.GetSize();
-    const Vec3f& zCoordRotation = refWrtOrigin.GetRotation().GetRotationMatrix().GetRow(2);
-    const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * objSize.x());
-    const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * objSize.y());
-    const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * objSize.z());
-    
-    const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
-                                                  std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
+    const f32 zSize = referenceObject.GetDimInParentFrame<'Z'>(refWrtOrigin);
     const f32 topOfObjectOnBottom = (refWrtOrigin.GetTranslation().z() +
-                                    (onTop ? 0.5f : -0.5f) * maxRotatedAxis_zValue);
+                                    (onTop ? 0.5f : -0.5f) * zSize);
     
     BlockWorldFilter filter(filterIn);
     filter.AddIgnoreID(referenceObject.GetID());
@@ -4481,8 +4471,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       [&topOfObjectOnBottom, &refWrtOrigin, &refProjectedQuad, &zTolerance, &onTop](const ObservableObject* candidateObject) -> bool
       {
         // This should never happen: objects in blockworld should always have parents (and not be origins themselves)
-        ASSERT_NAMED(nullptr != refWrtOrigin.GetParent(),
-                     "BlockWorld.FindObjectOnTopOfUnderneathHelper.NullParent");
+        DEV_ASSERT(nullptr != refWrtOrigin.GetParent(), "BlockWorld.FindObjectOnTopOfUnderneathHelper.NullParent");
         
         Pose3d candidateWrtOrigin;
         const bool inSameFrame = candidateObject->GetPose().GetWithRespectTo(*refWrtOrigin.GetParent(), candidateWrtOrigin);
@@ -4506,7 +4495,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         candidateProjectedTranslation.z() = candidateCurrentZ;
         candidateWrtOrigin.SetTranslation(candidateProjectedTranslation);
 
-
         if(!projectedQuadsIntersect)
         {
           return false;
@@ -4514,16 +4502,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         
         // Find the point at bottom middle of the object we're checking to be on top
         // (or if !onTop, the top middle of object we're checking to be underneath)
-        const Vec3f& objSize = candidateObject->GetSize();
-        const Vec3f& zCoordRotation = candidateWrtOrigin.GetRotation().GetRotationMatrix().GetRow(2);
-        const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * objSize.x());
-        const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * objSize.y());
-        const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * objSize.z());
-        
-        const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
-                                                      std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
+        const f32 zSize = candidateObject->GetDimInParentFrame<'Z'>(candidateWrtOrigin);
         const f32 bottomOfCandidateObject = (candidateWrtOrigin.GetTranslation().z() +
-                                            (onTop ? -0.5f : 0.5f) * maxRotatedAxis_zValue);
+                                            (onTop ? -0.5f : 0.5f) * zSize);
         
         // If the top of the bottom object and the bottom the candidate top object are
         // close enough together, return this as the object on top
@@ -4920,9 +4901,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // Note: we're using shared_ptr to store the objects, so erasing from
         //       the container will delete it if nothing else is referring to it
         const size_t numDeleted = _existingObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
-        ASSERT_NAMED_EVENT(numDeleted != 0, "BlockWorld.DeleteObject.NoObjectsDeleted",
-                           "Origin %p Type %s ID %u",
-                           origin, EnumToString(withType), object->GetID().GetValue());
+        DEV_ASSERT_MSG(numDeleted != 0,
+                       "BlockWorld.DeleteObject.NoObjectsDeleted",
+                       "Origin %p Type %s ID %u",
+                       origin, EnumToString(withType), object->GetID().GetValue());
       }
     }
     

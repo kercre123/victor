@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorRollBlock_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -35,7 +35,7 @@ protected:
   virtual void   StopInternal(Robot& robot) override;
   virtual void   StopInternalFromDoubleTap(Robot& robot) override;
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
   
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { UpdateTargetBlock(robot); }

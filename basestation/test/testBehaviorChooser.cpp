@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -26,7 +26,7 @@ using namespace Anki::Cozmo;
 
 static const char* kTestBehavior1Json =
 "{"
-"   \"behaviorType\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"NoneBehavior\","
 "   \"name\" : \"Test1\","
 "   \"behaviorGroups\" : ["
 "     \"MiniGame\","
@@ -36,7 +36,7 @@ static const char* kTestBehavior1Json =
 
 static const char* kTestBehavior2Json =
 "{"
-"   \"behaviorType\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"NoneBehavior\","
 "   \"name\" : \"Test2\","
 "   \"behaviorGroups\" : ["
 "     \"RequestMemoryMatch\","
@@ -46,7 +46,7 @@ static const char* kTestBehavior2Json =
 
 static const char* kTestBehavior3Json =
 "{"
-"   \"behaviorType\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"NoneBehavior\","
 "   \"name\" : \"Test3\","
 "   \"behaviorGroups\" : ["
 "     \"RequestCubePounce\","

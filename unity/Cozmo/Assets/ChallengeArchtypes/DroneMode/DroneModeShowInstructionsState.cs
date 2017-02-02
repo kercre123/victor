@@ -37,7 +37,7 @@ namespace Cozmo {
           _StateMachine.SetNextState(driveState);
         }
 
-        public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+        public override void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
           // Don't show the "don't move cozmo" ui
 
           // DisableInput();

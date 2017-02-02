@@ -77,8 +77,8 @@ ImagingPipeline::ImagingPipeline()
 static void InterpCurveHelper(const std::vector<u8>& x, const std::vector<u8>& y,
                               std::array<u8,256>& curve)
 {
-  ASSERT_NAMED(!x.empty() && !y.empty(), "ImagingPipeline.InterpCurveHelper.EmptyXorY");
-  ASSERT_NAMED(x.size() == y.size(), "ImagingPipeline.InterpCurveHelper.MismatchedSizes");
+  DEV_ASSERT(!x.empty() && !y.empty(), "ImagingPipeline.InterpCurveHelper.EmptyXorY");
+  DEV_ASSERT(x.size() == y.size(), "ImagingPipeline.InterpCurveHelper.MismatchedSizes");
   
   auto xNext = x.begin();
   auto yNext = y.begin();

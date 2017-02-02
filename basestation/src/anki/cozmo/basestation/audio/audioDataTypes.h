@@ -49,7 +49,7 @@ struct AudioFrameData {
   
   void CopySamples( const AudioSample* source, size_t sourceSize )
   {
-    ASSERT_NAMED( sourceSize <= sampleCount, "AudioFrameData.CopySamples.InvalidSourceSize");
+    DEV_ASSERT( sourceSize <= sampleCount, "AudioFrameData.CopySamples.InvalidSourceSize");
     memcpy( samples, source, sourceSize * sizeof(AudioSample) );
     // Pad the end of the frame with zeros
     if ( sourceSize < sampleCount) {

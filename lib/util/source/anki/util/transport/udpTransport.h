@@ -47,9 +47,12 @@ public:
   virtual void Update() override;
   virtual void Print() const override;
 
+  void ResetSocket();
+
   void    SetSocketImpl(IUDPSocket* udpSocketImpl, bool ownsSocketImpl = false);
 
   bool    IsConnected() const { return (_socketId >= 0); }
+  int     GetSocketId() const { return _socketId; }
   int     GetPort() const { return _port; }
   void    SetPort(int inPort) { assert(!IsConnected()); _port = inPort; }
 
@@ -124,6 +127,7 @@ private:
   int             _socketId;
   int             _port;
   bool            _ownsSocketImpl;
+  bool            _reset;
 };
 
 } // end namespace Util

@@ -24,6 +24,10 @@
 #include <list>
 #include <queue>
 
+namespace CozmoAnim {
+  struct AnimClip;
+}
+
 namespace Anki {
 namespace Cozmo {
 
@@ -41,6 +45,7 @@ public:
   Animation(const std::string& name = "");
 
   // For reading canned animations from files
+  Result DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip);
   Result DefineFromJson(const std::string& name, const Json::Value& json);
 
   // For defining animations at runtime (e.g. live animation)

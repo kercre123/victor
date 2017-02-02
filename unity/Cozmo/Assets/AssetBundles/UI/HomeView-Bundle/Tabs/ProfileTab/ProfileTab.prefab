@@ -868,7 +868,7 @@ MonoBehaviour:
   _DailyGoalsCompletedCount: {fileID: 11467648}
   _StreaksCountValueLabel: {fileID: 11417764}
   _EditNameButton: {fileID: 11425086}
-  _ProfileEditNameViewPrefab: {fileID: 11429988, guid: 19fdc2f4957464941bbc07c9fbda3c60,
+  _ProfileEditNameModalPrefab: {fileID: 11429988, guid: 19fdc2f4957464941bbc07c9fbda3c60,
     type: 2}
 --- !u!114 &11454748
 MonoBehaviour:

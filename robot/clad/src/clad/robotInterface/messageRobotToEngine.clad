@@ -28,6 +28,11 @@ message SyncTimeAck
 {
 }
 
+message BackpackButton
+{
+  bool depressed
+}
+
 message RobotPoked
 {
   uint_32 robotID
@@ -60,6 +65,11 @@ message ManufacturingID
 { // See definitions in syscon/hal/hardware.h
   uint_32 esn,
   int_32  hw_version,
+}
+
+message LiftLoad
+{
+  bool hasLoad
 }
 
 /// *************** Overall message pipe ******************************* ///
@@ -112,6 +122,8 @@ union RobotToEngine {
   ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD7,
   MotorAutoEnabled           motorAutoEnabled       = 0xD8,
   RobotErrorReport           robotError             = 0xD9,
+  LiftLoad                   liftLoad               = 0xDA,
+  BackpackButton             backpackButton         = 0xDB,
 
   ManufacturingID            mfgId                  = 0xED,
   FirmwareVersion            firmwareVersion        = 0xEE,
@@ -123,6 +135,7 @@ union RobotToEngine {
   ImageChunk                 image                  = 0xF2,
   ObjectDiscovered           activeObjectDiscovered = 0xF3,
   ImageImuData               imageGyro              = 0xF4,
+  ObjectAccel                objectAccel            = 0xF5,
 }
 
 

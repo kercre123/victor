@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorLookInPlaceMemoryMap_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorLookInPlaceMemoryMap_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 #include "anki/common/basestation/math/pose.h"
@@ -55,7 +55,7 @@ public:
   
   // This behavior is runnable if when we check the memory map around the current robot position, there are still
   // undiscovered areas
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false;}
   
 protected:
@@ -190,9 +190,9 @@ private:
 bool BehaviorLookInPlaceMemoryMap::NeedsChecking(int16_t index) const
 {
   // index should be valid
-  ASSERT_NAMED(index>=0 && index<_sectors.size(), "BehaviorLookInPlaceMemoryMap.NeedsChecking.InvalidIndex");
+  DEV_ASSERT(index>=0 && index<_sectors.size(), "BehaviorLookInPlaceMemoryMap.NeedsChecking.InvalidIndex");
   // visited indices should not be queried again
-  ASSERT_NAMED(_sectors[index] != SectorStatus::Visited, "BehaviorLookInPlaceMemoryMap.NeedsChecking.AlreadyVisitedSector");
+  DEV_ASSERT(_sectors[index] != SectorStatus::Visited, "BehaviorLookInPlaceMemoryMap.NeedsChecking.AlreadyVisitedSector");
   // check status
   const bool ret = (_sectors[index] == SectorStatus::NeedsChecking);
   return ret;
@@ -202,11 +202,11 @@ bool BehaviorLookInPlaceMemoryMap::NeedsChecking(int16_t index) const
 bool BehaviorLookInPlaceMemoryMap::NeedsVisit(int16_t index) const
 {
   // index should be valid
-  ASSERT_NAMED(index>=0 && index<_sectors.size(), "BehaviorLookInPlaceMemoryMap.NeedsVisit.InvalidIndex");
+  DEV_ASSERT(index>=0 && index<_sectors.size(), "BehaviorLookInPlaceMemoryMap.NeedsVisit.InvalidIndex");
   // indices that need raycast should not be queried yet
-  ASSERT_NAMED(_sectors[index] != SectorStatus::NeedsChecking, "BehaviorLookInPlaceMemoryMap.NeedsVisit.SectorNeedsChecking");
+  DEV_ASSERT(_sectors[index] != SectorStatus::NeedsChecking, "BehaviorLookInPlaceMemoryMap.NeedsVisit.SectorNeedsChecking");
   // visited indices should not be queried again
-  ASSERT_NAMED(_sectors[index] != SectorStatus::Visited, "BehaviorLookInPlaceMemoryMap.NeedsVisit.AlreadyVisitedSector");
+  DEV_ASSERT(_sectors[index] != SectorStatus::Visited, "BehaviorLookInPlaceMemoryMap.NeedsVisit.AlreadyVisitedSector");
   // check status
   const bool ret = (_sectors[index] == SectorStatus::Yes_NeedToVisit);
   return ret;

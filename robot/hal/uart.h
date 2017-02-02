@@ -9,7 +9,7 @@
 
 static const uint32_t debug_baud_rate = 3000000;
 
-#ifdef ENABLE_FCC_TEST
+#ifdef FCC_TEST
 static const int UART_CORE_CLOCK = 32768*2560;
 #else
 static const int UART_CORE_CLOCK = CORE_CLOCK;

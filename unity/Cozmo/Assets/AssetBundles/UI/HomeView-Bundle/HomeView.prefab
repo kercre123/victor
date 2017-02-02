@@ -3544,15 +3544,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61dd6714bbc6c41c6acf385e054d5de1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: home_view
-  _DASEventViewType: 0
-  _CloseDialogOnTapOutside: 0
-  _OptionalCloseDialogButton: {fileID: 0}
-  _LayerPriority: 0
-  DimBackground: 0
+  _DASEventDialogName: home_view
+  _DASEventDialogType: 0
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
+  _BadLightAlertPrefab: {fileID: 11497196, guid: c0f4aad8d980c4533bc2aa6874374a65,
+    type: 2}
   _CozmoTabPrefab: {fileID: 11439446, guid: f0483806736fc4eea837be77327845c6, type: 2}
   _PlayTabPrefab: {fileID: 11407746, guid: 937a732b630ed4fa4bcfc2599fa4b53a, type: 2}
   _ProfileTabPrefab: {fileID: 11439446, guid: 3b0f016aa99134a7e8bea0e9b1135956, type: 2}
@@ -3616,7 +3614,10 @@ MonoBehaviour:
   _TopBarOpenEase: 27
   _TopBarCloseEase: 26
   _HelpButton: {fileID: 11489932}
-  _HelpViewPrefab: {fileID: 11489240, guid: e8253b38997414ae39d897571e6d7ed8, type: 2}
+  _HelpTipsModalPrefab: {fileID: 11489240, guid: e8253b38997414ae39d897571e6d7ed8,
+    type: 2}
+  _CubeHelpModalPrefab: {fileID: 11489240, guid: bbf4f5e51da9f4783b86a0fff9369348,
+    type: 2}
 --- !u!114 &11474796
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4430,7 +4431,7 @@ ParticleSystem:
         rgba: 4294967295
       maxColor:
         serializedVersion: 2
-        rgba: 4278255453
+        rgba: 4281656235
       minMaxState: 0
     startSize:
       scalar: 1
@@ -8176,7 +8177,7 @@ Prefab:
       value: -400
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _DASEventViewName
+      propertyPath: _DASEventDialogName
       value: home_view
       objectReference: {fileID: 0}
     - target: {fileID: 0}

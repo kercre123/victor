@@ -30,7 +30,7 @@ bool DevLogReaderRaw::FillLogData(std::ifstream& fileHandle, LogData& logData_ou
   
   // Verify the size makes sense
   bool sizeMakesSense = (sizeInBytes > metaDataSize) && (sizeInBytes <= kLargestReasonableDataSize);
-  ASSERT_NAMED(sizeMakesSense, "DevLogReaderRaw.FillLogData.InvalidSize");
+  DEV_ASSERT(sizeMakesSense, "DevLogReaderRaw.FillLogData.InvalidSize");
   if (!sizeMakesSense)
   {
     // This indicates there's some problem with the data, so bail on this file

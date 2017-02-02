@@ -34,7 +34,6 @@ _GIT_BRANCH_NAME=nextclad
 _GIT_USERNAME="anki-smartling"
 _GIT_EMAIL="anki-smartling@anki.com"
 _SDK_WEBOTS_SCRIPT=${_TOPLEVEL_COZMO}/project/build-scripts/webots/sdkTest.py
-_SDK_SCRIPT_LOCATION=${_TOPLEVEL_COZMO}/${_COZMO_REPO_DIR}/examples
 
 # clone cozmo-python-sdk
 if [ -d $_COZMO_REPO_DIR ]; then
@@ -46,6 +45,7 @@ if [ -d $_COZMO_REPO_DIR ]; then
         $GIT branch | grep -v '* master' | xargs git branch -D
     fi
     $GIT checkout $_GIT_BRANCH_NAME
+    $GIT pull origin $_GIT_BRANCH_NAME
     popd
 else
     $GIT clone $_GIT_COZMO_SDK_URI
@@ -54,13 +54,16 @@ else
     popd
 fi
 
-# install latest clad and SDK with pip
+
+# build the latest clad and SDK
 pushd $_TOPLEVEL_COZMO/tools/sdk/cozmoclad
 make copy-clad
 make dist
-$PIP install --ignore-installed $_TOPLEVEL_COZMO/$_COZMO_REPO_DIR
-$PIP install --ignore-installed $_TOPLEVEL_COZMO/tools/sdk/cozmoclad/dist/*.whl
 popd
+
+#install the pulled down repo and clad
+$PIP install -e ./$_COZMO_REPO_DIR
+$PIP install --ignore-installed $_TOPLEVEL_COZMO/tools/sdk/cozmoclad/dist/*.whl
 
 NUM_RUNS_PARAM=""
 if [[ ${NUM_RUNS:-} ]];then
@@ -70,5 +73,5 @@ SDK_TIMEOUT_PARAM=""
 if [[ ${SDK_TIMEOUT:-} ]];then
   SDK_TIMEOUT_PARAM="--timeout $SDK_TIMEOUT"
 fi
-$PYTHON $_SDK_WEBOTS_SCRIPT --sdkScriptLocation ${_SDK_SCRIPT_LOCATION} $SDK_TIMEOUT_PARAM $NUM_RUNS_PARAM
+$PYTHON $_SDK_WEBOTS_SCRIPT $SDK_TIMEOUT_PARAM $NUM_RUNS_PARAM
 exit $?

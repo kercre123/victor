@@ -1,5 +1,5 @@
 /**
- * File: netTimeStamp
+ * File: util/transport/netTimeStamp.cpp
  *
  * Author: Mark Wesley
  * Created: 01/06/16
@@ -13,44 +13,37 @@
 
 #include "util/transport/netTimeStamp.h"
 #include "util/logging/logging.h"
-#include <assert.h>
 #include <chrono>
 
 
 namespace Anki {
 namespace Util {
-  
 
   using NetTimeStampClock = std::chrono::steady_clock;
-
   
-  const NetTimeStampClock::time_point& GetEpochStartTime()
-  {
-    static NetTimeStampClock::time_point sEpochStartTime = NetTimeStampClock::now();
-    return sEpochStartTime;
-  }
-  
-  
-  NetTimeStamp GetCurrentNetTimeStamp() // Milliseconds since kEpochStartTime (i.e. since
+  NetTimeStamp GetCurrentNetTimeStamp() // Milliseconds since 1st timestamp
   {
     using namespace std::chrono;
 
-    const NetTimeStampClock::time_point now = NetTimeStampClock::now();
+    // Initialized *first* time function is called
+    static const NetTimeStampClock::time_point sEpochStartTime = NetTimeStampClock::now();
 
-    const microseconds numMicroSecondsSinceStart = duration_cast<microseconds>(now - GetEpochStartTime());
+    // Initialized *each* time function is called
+    const NetTimeStampClock::time_point now = NetTimeStampClock::now();
+    
+    // Calculate difference between time points
+    const microseconds numMicroSecondsSinceStart = duration_cast<microseconds>(now - sEpochStartTime);
     const NetTimeStamp numMilliSecondsSinceStart = 0.001 * numMicroSecondsSinceStart.count();
     
-    if (numMilliSecondsSinceStart < 0.0)
-    {
-      PRINT_NAMED_ERROR("NetTimeStamp.NegativeTimeStamp", "Unexpected Timestamp = %f", numMilliSecondsSinceStart);
-    }
+    DEV_ASSERT_MSG(numMilliSecondsSinceStart >= 0.0, "NetTimeStamp.NegativeTimeStamp",
+                   "Unexpected Timestamp = %f", numMilliSecondsSinceStart);
     
     return numMilliSecondsSinceStart;
   }
 
-  
-  static NetTimeStamp kFirstTimeStamp = GetCurrentNetTimeStamp(); // force GetEpochStartTime() to initialize in main app static init to ensure threadsafety)
-
+  // Force sEpochStartTime to initialize in main app static init to ensure thread safety
+  static NetTimeStamp kFirstTimeStamp = GetCurrentNetTimeStamp();
+ 
 
 } // end namespace Util
 } // end namespace Anki

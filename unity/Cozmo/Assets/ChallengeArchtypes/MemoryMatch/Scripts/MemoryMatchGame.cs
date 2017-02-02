@@ -92,11 +92,11 @@ namespace MemoryMatch {
     protected override void AddDisabledReactionaryBehaviors() {
       base.AddDisabledReactionaryBehaviors();
 
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToCliff);
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToPickup);
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToReturnedToTreads);
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToUnexpectedMovement);
-      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToCubeMoved);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.CliffDetected);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.RobotPickedUp);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.ReturnedToTreads);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.UnexpectedMovement);
+      _DisabledReactionaryBehaviors.Add(ReactionTrigger.CubeMoved);
     }
 
     // Use this for initialization
@@ -132,7 +132,7 @@ namespace MemoryMatch {
         SequenceGrown = true;
         _CurrentSequenceLength = _CurrentSequenceLength >= MaxSequenceLength ? MaxSequenceLength : _CurrentSequenceLength + 1;
         // Set the length as our score to make High Scores easier
-        PlayerScore = _CurrentSequenceLength;
+        GetFirstPlayerByType(PlayerType.Human).playerScoreRound = _CurrentSequenceLength;
       }
       return _CurrentSequenceLength;
     }
@@ -250,7 +250,7 @@ namespace MemoryMatch {
       return audioEvent;
     }
 
-    protected override void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {
+    protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "") {
       if (IsSoloMode()) {
         if (SaveHighScore()) {
           overrideWinnerText = Localization.Get(LocalizationKeys.kMemoryMatchGameSoloNewHighScore);
@@ -259,7 +259,7 @@ namespace MemoryMatch {
           overrideWinnerText = Localization.Get(LocalizationKeys.kMemoryMatchGameSoloGameOver);
         }
       }
-      base.ShowWinnerState(currentEndState, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count));
+      base.ShowWinnerState(currentEndIndex, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count));
 
       // Set Final Music State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Fanfare);
@@ -271,27 +271,33 @@ namespace MemoryMatch {
 
       Anki.Cozmo.AnimationTrigger trigger = Anki.Cozmo.AnimationTrigger.Count;
       if (CurrentDifficulty == (int)MemoryMatchMode.SOLO) {
-        PlayerRoundsWon = 1;
-        CozmoRoundsWon = 0;
+        PlayerInfo player = GetFirstPlayerByType(PlayerType.Human);
+        if (player != null) {
+          player.playerRoundsWon = 1;
+        }
         StartBaseGameEnd(true);
         trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchSoloGameOver;
       }
       else if (CurrentDifficulty == (int)MemoryMatchMode.VS) {
         // compare who wins...
         if (_CurrLivesHuman > _CurrLivesCozmo) {
-          PlayerRoundsWon = 1;
-          CozmoRoundsWon = 0;
+          PlayerInfo player = GetFirstPlayerByType(PlayerType.Human);
+          if (player != null) {
+            player.playerRoundsWon = 1;
+          }
           StartBaseGameEnd(true);
           trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPlayerWinGame;
         }
         else if (_CurrLivesHuman < _CurrLivesCozmo) {
-          PlayerRoundsWon = 0;
-          CozmoRoundsWon = 1;
+          PlayerInfo player = GetFirstPlayerByType(PlayerType.Cozmo);
+          if (player != null) {
+            player.playerRoundsWon = 1;
+          }
           StartBaseGameEnd(false);
           trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoWinGame;
         }
         else {
-          StartBaseGameEnd(EndState.Tie);
+          StartBaseGameEnd(ENDSTATE_TIE);
           trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPlayerWinGame;
         }
       }
@@ -300,11 +306,11 @@ namespace MemoryMatch {
       }
     }
 
-    public override void StartBaseGameEnd(EndState endState) {
-      base.StartBaseGameEnd(endState);
+    public override void StartBaseGameEnd(int endStateIndex) {
+      base.StartBaseGameEnd(endStateIndex);
       if (CurrentDifficulty == (int)MemoryMatchMode.VS) {
         // So the skills system can ignore solo mode. Can be changed if events are classes or more filters
-        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnMemoryMatchVsComplete, _ChallengeData.ChallengeID, CurrentDifficulty, endState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound()));
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnMemoryMatchVsComplete, _ChallengeData.ChallengeID, CurrentDifficulty, DidHumanWin(), HumanScore, CozmoScore, IsHighIntensityRound()));
       }
     }
     // event values to add on game completion
@@ -403,12 +409,4 @@ namespace MemoryMatch {
     public Anki.Cozmo.Audio.AudioEventParameter soundName;
     public Color cubeColor;
   }
-
-  public enum PlayerType {
-    None,
-    Human,
-    Cozmo
-  }
-
-
 }

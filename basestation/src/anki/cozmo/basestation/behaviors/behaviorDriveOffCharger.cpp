@@ -12,17 +12,17 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
-
 
 
 namespace Anki {
@@ -33,18 +33,18 @@ static const float kInitialDriveAccel = 40.0f;
 
 static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 
-static const std::set<BehaviorType> kBehaviorsToDisable = {BehaviorType::ReactToCliff,
-                                                           BehaviorType::ReactToUnexpectedMovement,
-                                                           BehaviorType::ReactToOnCharger,
-                                                           BehaviorType::AcknowledgeObject,
-                                                           BehaviorType::AcknowledgeFace,
-                                                           BehaviorType::ReactToCubeMoved};
+static const std::set<ReactionTrigger> kBehaviorsToDisable = {ReactionTrigger::CliffDetected,
+                                                           ReactionTrigger::UnexpectedMovement,
+                                                           ReactionTrigger::PlacedOnCharger,
+                                                           ReactionTrigger::ObjectPositionUpdated,
+                                                           ReactionTrigger::FacePositionUpdated,
+                                                           ReactionTrigger::CubeMoved};
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _internalScore(0.0f)
+: IBehavior(robot, config)
+, _internalScore(0.0f)
 {
   SetDefaultName("DriveOffCharger");
   float extraDist_mm = config.get(kExtraDriveDistKey, 0.0f).asFloat();
@@ -62,7 +62,7 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveOffCharger::IsRunnableInternal(const Robot& robot) const
+bool BehaviorDriveOffCharger::IsRunnableInternal(const BehaviorPreReqRobot& preReqData ) const
 {
   // assumes it's not possible to be OnCharger without being OnChargerPlatform
   //ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
@@ -72,7 +72,7 @@ bool BehaviorDriveOffCharger::IsRunnableInternal(const Robot& robot) const
   // rsam: the reason why I changed from platform to onCharger is that because Cozmo can run onto the platform
   // accidentaly while driving around in freeplay. This was causing him to sprint forward for no apparent reason
   // since this behavior has high priority
-  const bool onCharger = robot.IsOnCharger();
+  const bool onCharger = preReqData.GetRobot().IsOnCharger();
   return onCharger;
 }
 
@@ -83,7 +83,7 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
   _timesResumed = 0;
   
   //Disable Cliff Reaction during behavior
-  SmartDisableReactionaryBehavior(kBehaviorsToDisable);
+  SmartDisableReactionTrigger(kBehaviorsToDisable);
 
   return Result::RESULT_OK;
 }
@@ -151,7 +151,7 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
   
     // store in whiteboard our success
     const float curTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
-    robot.GetBehaviorManager().GetWhiteboard().GotOffChargerAtTime( curTime );
+    robot.GetAIComponent().GetWhiteboard().GotOffChargerAtTime( curTime );
     _internalScore = 0.0f;
 
     return Status::Complete;

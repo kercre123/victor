@@ -18,7 +18,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
 
-#include "anki/cozmo/basestation/behaviors/reactionary/behaviorPoseBasedAcknowledgementInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 #include "anki/vision/basestation/faceIdTypes.h"
 
@@ -36,33 +36,30 @@ namespace ExternalInterface {
 }
   
   
-class BehaviorAcknowledgeFace : public IReactionaryBehavior
+class BehaviorAcknowledgeFace : public IBehavior
 {
 private:
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
-  using super = IReactionaryBehavior;
+  using super = IBehavior;
 
 public:
-  virtual bool ShouldResumeLastBehavior() const override { return true; }
   virtual bool CarryingObjectHandledInternally() const override {return false;}
+
+  virtual void AddListener(IReactToFaceListener* listener) override;
+
   
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorAcknowledgeFace(Robot& robot, const Json::Value& config);
 
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
 
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData ) const override;
 
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   
 private:
-
-  void HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg);
-
   void BeginIteration(Robot& robot);
   void FinishIteration(Robot& robot);
 
@@ -70,29 +67,20 @@ private:
   // to, false otherwise
   bool GetBestTarget(const Robot& robot);
 
-  // helper to add a face as something we want to react to (or not, if we are disabled). Returns true if it
-  // added anything
-  bool AddDesiredFace(Vision::FaceID_t faceID);
-  
   // current target
   Vision::FaceID_t _targetFace = Vision::UnknownFaceID;
 
   // everything we want to react to before we stop (to handle multiple faces in the same frame)
-  std::set< Vision::FaceID_t > _desiredTargets;
+  mutable std::set< Vision::FaceID_t > _desiredTargets;
   
   bool _shouldStart = false;
-
-  // face IDs (enrolled only) which we have done an initial reaction to
-  std::set< Vision::FaceID_t > _hasReactedToFace;
-
-  // true if we saw the face close last time, false otherwise (applies hysteresis internally)
-  std::map< Vision::FaceID_t, bool > _faceWasClose;
-
-  float _lastReactionTime_s = -1.0f;
 
   // whether or not the robot has played it's "big initial greeting" animation, which should only happen once
   // per session
   bool _hasPlayedInitialGreeting = false;
+  
+  
+  std::set<IReactToFaceListener*> _faceListeners;
   
 }; // class BehaviorAcknowledgeFace
 

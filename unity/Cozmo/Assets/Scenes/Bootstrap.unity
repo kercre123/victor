@@ -277,7 +277,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -299,6 +299,7 @@ MonoBehaviour:
   m_Text: 
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!222 &735345287
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1035,6 +1036,14 @@ Prefab:
       propertyPath: _BootLocEnStrings
       value: 
       objectReference: {fileID: 4900000, guid: 967e8e94df4794813b7db5b5076f5380, type: 3}
+    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
+      propertyPath: _AndroidPermissionPrefab
+      value: 
+      objectReference: {fileID: 155414, guid: 75db25c32349545d1b369bdf95d35477, type: 2}
+    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
+      propertyPath: _LoadingCanvas
+      value: 
+      objectReference: {fileID: 1852183772}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 96563fa7c044a44afa01f530712be672, type: 2}
   m_IsPrefabParent: 0

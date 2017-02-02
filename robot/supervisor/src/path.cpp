@@ -178,41 +178,38 @@ namespace Anki
       switch(type_) {
         case PST_LINE:
         {
-          const PathSegmentDef::s_line& seg = def_.line;
-          AnkiInfo( 257, "Path.Print.Line", 538, "(%f, %f) to (%f, %f), speed/accel/decel = (%f, %f, %f)", 7,
-                 seg.startPt_x,
-                 seg.startPt_y,
-                 seg.endPt_x,
-                 seg.endPt_y,
-                 GetTargetSpeed(),
-                 GetAccel(),
-                 GetDecel());
+          AnkiInfo(257, "Path.Print.Line", 538, "(%f, %f) to (%f, %f), speed/accel/decel = (%f, %f, %f)", 7,
+                   def_.line.startPt_x,
+                   def_.line.startPt_y,
+                   def_.line.endPt_x,
+                   def_.line.endPt_y,
+                   GetTargetSpeed(),
+                   GetAccel(),
+                   GetDecel());
           break;
         }
         case PST_ARC:
         {
-          const PathSegmentDef::s_arc& seg = def_.arc;
-            AnkiInfo( 258, "Path.Print.Arc", 539, "centerPt (%f, %f), radius %f, startAng %f, sweep %f, speed/accel/decel = (%f, %f, %f)", 8,
-                 seg.centerPt_x,
-                 seg.centerPt_y,
-                 seg.radius,
-                 seg.startRad,
-                 seg.sweepRad,
-                 GetTargetSpeed(),
-                 GetAccel(),
-                 GetDecel());
+          AnkiInfo(258, "Path.Print.Arc", 539, "centerPt (%f, %f), radius %f, startAng %f, sweep %f, speed/accel/decel = (%f, %f, %f)", 8,
+                   def_.arc.centerPt_x,
+                   def_.arc.centerPt_y,
+                   def_.arc.radius,
+                   def_.arc.startRad,
+                   def_.arc.sweepRad,
+                   GetTargetSpeed(),
+                   GetAccel(),
+                   GetDecel());
           break;
         }
         case PST_POINT_TURN:
         {
-          const PathSegmentDef::s_turn& seg = def_.turn;
-            AnkiInfo( 259, "Path.Print.Turn", 540, "x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)", 6,
-                 seg.x,
-                 seg.y,
-                 seg.targetAngle,
-                 GetTargetSpeed(),
-                 GetAccel(),
-                 GetDecel());
+          AnkiInfo(259, "Path.Print.Turn", 540, "x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)", 6,
+                   def_.turn.x,
+                   def_.turn.y,
+                   def_.turn.targetAngle,
+                   GetTargetSpeed(),
+                   GetAccel(),
+                   GetDecel());
           break;
         }
         default:

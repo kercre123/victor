@@ -22,6 +22,7 @@
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
 #include <vector>
+#include <map>
 
 namespace Anki {
 namespace Cozmo {
@@ -35,9 +36,11 @@ struct CozmoBotVizParams
   webots::Field* headAngle = nullptr;
 };
 
-enum class VizTextLabelType
+// Note: The values of these labels are used to determine the line number
+//       at which the corresponding text is displayed in the window.
+enum class VizTextLabelType : unsigned int
 {
-  TEXT_LABEL_POSE,
+  TEXT_LABEL_POSE = 0,
   TEXT_LABEL_HEAD_LIFT,
   TEXT_LABEL_PITCH,
   TEXT_LABEL_ACCEL,
@@ -71,8 +74,8 @@ private:
     const f32 rot_axis_x, const f32 rot_axis_y, const f32 rot_axis_z, const f32 rot_rad,
     const f32 headAngle, const f32 liftAngle);
 
-  void DrawText(VizTextLabelType labelID, u32 color, const char* text);
-  void DrawText(VizTextLabelType labelID, const char* text);
+  void DrawText(webots::Display* disp, u32 lineNum, u32 color, const char* text);
+  void DrawText(webots::Display* disp, u32 lineNum, const char* text);
   void ProcessVizSetRobotMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizSetLabelMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizDockingErrorSignalMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -85,6 +88,10 @@ private:
   void ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessCameraInfo(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessObjectConnectionState(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessObjectMovingState(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessObjectUpAxisState(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessObjectAccelState(const AnkiEvent<VizInterface::MessageViz>& msg);
   
   bool IsMoodDisplayEnabled() const;
   void ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -106,6 +113,9 @@ private:
   using EmotionBuffer = Util::CircularBuffer<float>;
   using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
   
+  using CubeAccelBuffer = Util::CircularBuffer<float>;
+
+  
   struct BehaviorScoreEntry
   {
     explicit BehaviorScoreEntry(float inValue = 0.0f, uint32_t numEntriesSinceReal = 0) :_value(inValue), _numEntriesSinceReal(numEntriesSinceReal) { }
@@ -123,25 +133,31 @@ private:
     _eventMgr.SubscribeForever(static_cast<uint32_t>(tagType), messageHandler);
   }
 
-  webots::Supervisor& vizSupervisor;
+  webots::Supervisor& _vizSupervisor;
 
   // For displaying misc debug data
-  webots::Display* disp;
+  webots::Display* _disp;
 
   // For displaying docking data
-  webots::Display* dockDisp;
+  webots::Display* _dockDisp;
   
   // For displaying mood data
-  webots::Display* moodDisp;
+  webots::Display* _moodDisp;
   
   // For displaying behavior selection data
-  webots::Display* behaviorDisp;
+  webots::Display* _behaviorDisp;
 
   // For displaying images
-  webots::Display* camDisp;
+  webots::Display* _camDisp;
+  
+  // For displaying active object data
+  webots::Display* _activeObjectDisp;
+  
+  // For displaying accelerometer data from one cube
+  webots::Display* _cubeAccelDisp;
 
   // Image reference for display in camDisp
-  webots::ImageRef* camImg = nullptr;
+  webots::ImageRef* _camImg = nullptr;
 
   // Cozmo bots for visualization
 
@@ -174,6 +190,17 @@ private:
   EmotionEventBuffer      _emotionEventBuffer;
   BehaviorScoreBufferMap  _behaviorScoreBuffers;
   BehaviorEventBuffer     _behaviorEventBuffer;
+  std::array<CubeAccelBuffer,3> _cubeAccelBuffers;
+  
+  struct ActiveObjectInfo
+  {
+    bool connected;
+    bool moving;
+    UpAxis upAxis;
+  };
+  std::map<u32, ActiveObjectInfo> _activeObjectInfoMap;
+  
+  void UpdateActiveObjectInfoText(u32 activeID);
 };
 
 } // end namespace Cozmo

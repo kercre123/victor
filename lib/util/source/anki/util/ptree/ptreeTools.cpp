@@ -462,9 +462,9 @@ void FastPreprocess(ptree& tree)
   ExtensionMap extensions;
   std::vector<ExtensionId*> openIds;
 
-  #if ANKI_DEVELOPER_CODE
+  #if DEV_ASSERT_ENABLED
   {
-    ASSERT_NAMED(IsValidTreeForProcess(tree), "Can't process given tree. Check previous log for info");
+    DEV_ASSERT(IsValidTreeForProcess(tree), "Can't process given tree. Check previous log for info");
   }
   #endif
 
@@ -473,7 +473,7 @@ void FastPreprocess(ptree& tree)
   
   #if ANKI_DEVELOPER_CODE
   {
-    // gurantee no open ids
+    // guarantee no open ids
     if ( !openIds.empty() )
     {
       PRINT_NAMED_ERROR("PtreeTools.FastPreprocess", "Not all open ids were resolved, this is a programmer error.");
@@ -663,7 +663,7 @@ ptree DeepMerge_Deprecated(const ptree & first, const ptree & second)
           else
             s = child.first;
           
-          //cout << "puting data - " << s << " : " << child.second.data() << "\n";
+          //cout << "putting data - " << s << " : " << child.second.data() << "\n";
           // Put into combined property tree
           ptMerged.put( s, child.second.data() );
 

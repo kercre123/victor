@@ -40,10 +40,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d5cac5e2982e4ca594c4343eaba9198, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TimeTilFaceOff_s: 20
-  TimeTilDisconnect_s: 40
-  _FilterSmoothingWeight: 0.99
-  _LowBatteryVoltageValue: 3.75
+  ListeningForBatteryLevel: 0
+  _LowBatteryAlertPrefab: {fileID: 11497196, guid: 585c3cec3fa734ad99af4d59195a2742,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

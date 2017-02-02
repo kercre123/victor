@@ -136,6 +136,9 @@ public class DasTracker {
   }
 
   public void TrackSearchForCozmoFailed() {
+    if (_ConnectFlowStartUtcTime.Equals(new DateTime())) {
+      return;
+    }
     var dataDict = GetDataDictionary("$data", _ConnectSessionIsFirstTime ? "1" : "0");
     uint secondsInFlow = Convert.ToUInt32((DateTime.UtcNow - _ConnectFlowStartUtcTime).TotalSeconds);
 

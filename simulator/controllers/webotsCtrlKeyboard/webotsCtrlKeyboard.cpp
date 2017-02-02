@@ -25,6 +25,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/behaviorChooserType.h"
@@ -43,8 +44,10 @@
 #include <webots/Display.hpp>
 #include <webots/GPS.hpp>
 #include <webots/ImageRef.hpp>
+#include <webots/Keyboard.hpp>
 
-
+#define LOG_CHANNEL "Keyboard"
+#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 // CAUTION: If enabled, you can mess up stuff stored on the robot's flash.
 #define ENABLE_NVSTORAGE_WRITE 0
@@ -235,44 +238,15 @@ namespace Anki {
       printf("HandleEngineErrorCode: %s\n", EnumToString(msg.errorCode));
     }
 
-    void WebotsKeyboardController::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg)
+    void WebotsKeyboardController::HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg)
     {
-      switch(msg.actionType)
+      if(FaceEnrollmentResult::Success == msg.result)
       {
-        case RobotActionType::ENROLL_NAMED_FACE:
-        {
-          auto & completionInfo = msg.completionInfo.Get_faceEnrollmentCompleted();
-          if(msg.result == ActionResult::SUCCESS)
-          {
-            if(completionInfo.neverSawValidFace == true)
-            {
-              printf("ERROR: EnrollNamedFace returned success with neverSawValidFace=true!");
-            }
-            
-            printf("RobotEnrolledFace: Added '%s' with ID=%d\n",
-                   completionInfo.name.c_str(), completionInfo.faceID);
-            
-//            using namespace ExternalInterface;
-//            SayText sayText;
-//            sayText.text = completionInfo.name;
-//            //sayText.playEvent = AnimationTrigger::OnLearnedPlayerName;
-//            sayText.style = SayTextStyle::Name_Normal;
-//            
-//            SendMessage(MessageGameToEngine(std::move(sayText)));
-          } else if(completionInfo.neverSawValidFace) {
-            printf("RobotEnrolledFace FAILED because it never saw a valid face. Saw '%s' ID=%d instead\n",
-                   completionInfo.name.c_str(), completionInfo.faceID);
-          } else {
-            printf("RobotEnrolledFace FAILED\n");
-          }
-          break;
-        } // ENROLL_NAMED_FACE
-          
-        default:
-          // Just ignore other action types
-          break;
-          
-      } // switch(actionType)
+        printf("FaceEnrollmentCompleted: Added '%s' with ID=%d\n",
+               msg.name.c_str(), msg.faceID);
+      } else {
+        printf("FaceEnrollment FAILED with result = '%s'\n", EnumToString(msg.result));
+      }
       
     } // HandleRobotCompletedAction()
     
@@ -284,7 +258,7 @@ namespace Anki {
       root_ = GetSupervisor()->getSelf();
 
       // enable keyboard
-      GetSupervisor()->keyboardEnable(GetStepTimeMS());
+      GetSupervisor()->getKeyboard()->enable(GetStepTimeMS());
     }
   
     void WebotsKeyboardController::WaitOnKeyboardToConnect()
@@ -302,20 +276,18 @@ namespace Anki {
         }
       }
 
-      PRINT_CH_INFO("Keyboard", "WebotsKeyboardController.WaitForStart",
-                    "Press Shift+Enter to start the engine");
+      LOG_INFO("WebotsKeyboardController.WaitForStart", "Press Shift+Enter to start the engine");
       
       const int EnterKey = 4; // tested experimentally... who knows if this will work on other platforms
-      const int ShiftEnterKey = EnterKey | webots::Supervisor::KEYBOARD_SHIFT;
+      const int ShiftEnterKey = EnterKey | webots::Keyboard::SHIFT;
 
       bool start = false;
       while( !start && !_shouldQuit ) {
         int key = -1;
-        while((key = GetSupervisor()->keyboardGetKey()) != 0 && !_shouldQuit) {
+        while((key = GetSupervisor()->getKeyboard()->getKey()) >= 0 && !_shouldQuit) {
           if(!start && key == ShiftEnterKey) {
             start = true;
-            PRINT_CH_INFO("Keyboard", "WebotsKeyboardController.StartEngine",
-                          "Starting our engines....");
+            LOG_INFO("WebotsKeyboardController.StartEngine", "Starting our engines....");
           }
         }
         // manually step simulation
@@ -331,7 +303,7 @@ namespace Anki {
       
       auto doAutoBlockpoolField = root_->getField("doAutoBlockpool");
       if (doAutoBlockpoolField) {
-        PRINT_CH_INFO("Keyboard", "WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
+        LOG_INFO("WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
         EnableAutoBlockpool(doAutoBlockpoolField->getSFBool());
       }
       
@@ -384,11 +356,11 @@ namespace Anki {
         printf("              Reset 'owner' face:  Alt+Shift+f\n");
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
-        printf("        Force-add specifed robot:  Shift+r\n");
+        printf("       Force-add specified robot:  Shift+r\n");
         printf("                 Select behavior:  Shift+c\n");
         printf("         Select behavior chooser:  h\n");
         printf("       Select spark (unlockName):  Shift+h\n");
-        printf("         exit spark (unlockName):  Alt+h\n");
+        printf("         Exit spark (unlockName):  Alt+h\n");
         printf("            Set emotion to value:  m\n");
         printf("     Rainbow pattern on backpack:  l\n");        
         printf("      Search side to side action:  Shift+l\n");
@@ -397,11 +369,16 @@ namespace Anki {
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Alt+Shift+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
-        printf("       unlock progression unlock:  n\n");
-        printf("         lock progression unlock:  Shift+n\n");
+        printf("       Unlock progression unlock:  n\n");
+        printf("         Lock progression unlock:  Shift+n\n");
         printf("    Respond 'no' to game request:  Alt+n\n");
         printf("             Flip selected block:  y\n");
+        printf("                Set robot volume:  v\n");
+        printf("      Toggle vision while moving:  V\n");
         printf("       Realign with block action:  _\n");
+        printf("Toggle accel from streamObjectID: |\n");
+        printf("               Toggle headlights: ,\n");
+        printf("             Pronounce sayString: \" <double-quote>\n");
         printf("        Quit keyboard controller:  Alt+Shift+x\n");
         printf("                      Print help:  ?,/\n");
         printf("\n");
@@ -430,15 +407,15 @@ namespace Anki {
         
         static bool keyboardRestart = false;
         if (keyboardRestart) {
-          GetSupervisor()->keyboardDisable();
-          GetSupervisor()->keyboardEnable(BS_TIME_STEP);
+          GetSupervisor()->getKeyboard()->disable();
+          GetSupervisor()->getKeyboard()->enable(BS_TIME_STEP);
           keyboardRestart = false;
         }
         
         // Get all keys pressed this tic
         std::set<int> keysPressed;
         int key;
-        while((key = GetSupervisor()->keyboardGetKey()) != 0) {
+        while((key = GetSupervisor()->getKeyboard()->getKey()) >= 0) {
           keysPressed.insert(key);
         }
         
@@ -451,12 +428,12 @@ namespace Anki {
         for(auto key : keysPressed)
         {
           // Extract modifier key(s)
-          const int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
-          const bool shiftKeyPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
-          const bool altKeyPressed = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+          const int modifier_key = key & ~webots::Keyboard::KEY;
+          const bool shiftKeyPressed = modifier_key & webots::Keyboard::SHIFT;
+          const bool altKeyPressed = modifier_key & webots::Keyboard::ALT;
           
           // Set key to its modifier-less self
-          key &= webots::Supervisor::KEYBOARD_KEY;
+          key &= webots::Keyboard::KEY;
           
           lastKeyPressTime_ = GetSupervisor()->getTime();
           
@@ -646,25 +623,25 @@ namespace Anki {
             // Check for (mostly) single key commands
             switch (key)
             {
-              case webots::Robot::KEYBOARD_UP:
+              case webots::Keyboard::UP:
               {
                 ++throttleDir;
                 break;
               }
                 
-              case webots::Robot::KEYBOARD_DOWN:
+              case webots::Keyboard::DOWN:
               {
                 --throttleDir;
                 break;
               }
                 
-              case webots::Robot::KEYBOARD_LEFT:
+              case webots::Keyboard::LEFT:
               {
                 --steeringDir;
                 break;
               }
                 
-              case webots::Robot::KEYBOARD_RIGHT:
+              case webots::Keyboard::RIGHT:
               {
                 ++steeringDir;
                 break;
@@ -691,13 +668,13 @@ namespace Anki {
                 break;
               }
                 
-              case webots::Supervisor::KEYBOARD_PAGEUP:
+              case webots::Keyboard::PAGEUP:
               {
                 SendMoveHeadToAngle(MAX_HEAD_ANGLE, 20, 2);
                 break;
               }
                 
-              case webots::Supervisor::KEYBOARD_PAGEDOWN:
+              case webots::Keyboard::PAGEDOWN:
               {
                 SendMoveHeadToAngle(MIN_HEAD_ANGLE, 20, 2);
                 break;
@@ -1143,6 +1120,17 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)'|':
+              {
+                static bool enableAccelStreaming = true;
+                u32 streamObjectID = root_->getField("streamObjectID")->getSFInt32();
+                printf("%s streaming of accel data from object %d\n", enableAccelStreaming ? "Enable" : "Disable", streamObjectID);
+                ExternalInterface::StreamObjectAccel msg(streamObjectID, enableAccelStreaming);
+                SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
+                enableAccelStreaming = !enableAccelStreaming;
+                break;
+              }
+                
               case (s32)'C':
               {
                 if(shiftKeyPressed) {
@@ -1167,7 +1155,7 @@ namespace Anki {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
 
                     
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableReactionaryBehaviors(false)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableAllReactionTriggers("webots",false)));
                     SendSetRobotVolume(1.f);
                   }
                   
@@ -1175,6 +1163,9 @@ namespace Anki {
                                 ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
 
                   printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
+                  if (behaviorName == "LiftLoadTest") {
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsRunnable()));
+                  }
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                 ExternalInterface::ExecuteBehaviorByName(behaviorName)));
                 }
@@ -1199,7 +1190,7 @@ namespace Anki {
                     break;
                   }
 
-                  if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ) {
+                  if( shiftKeyPressed ) {
                     webots::Field* unlockNameField = root_->getField("unlockName");
                     if (unlockNameField == nullptr) {
                       printf("ERROR: No unlockNameField field found in WebotsKeyboardController.proto\n");
@@ -1284,8 +1275,8 @@ namespace Anki {
                   }
                   else
                   {
-                    PRINT_CH_INFO("Keyboard", "SendNVStorageEraseEntry.Disabled",
-                                  "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                    LOG_INFO("SendNVStorageEraseEntry.Disabled",
+                             "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
                   }
                 }
                 // Shift + M: Stores random data to tag
@@ -1313,8 +1304,8 @@ namespace Anki {
                   }
                   else
                   {
-                    PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.Disabled",
-                                  "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                    LOG_INFO("SendNVStorageWriteEntry.Disabled",
+                             "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
                   }
                   
                   break;
@@ -1551,7 +1542,8 @@ namespace Anki {
                   msgWrapper.Set_VisionWhileMoving(msg);
                   SendMessage(msgWrapper);
                 } else {
-                  f32 robotVolume = root_->getField("robotVolume")->getSFFloat();
+                  const f32 robotVolume = root_->getField("robotVolume")->getSFFloat();
+                  printf("Set robot volume to %f\n", robotVolume);
                   SendSetRobotVolume(robotVolume);
                 }
                 break;
@@ -1765,7 +1757,7 @@ namespace Anki {
                 
               case (s32)'`':
               {
-                PRINT_CH_INFO("Keyboard", "KeyboardCtrl.ProcessKeyStroke", "Updating viz origin");
+                LOG_INFO("KeyboardCtrl.ProcessKeyStroke", "Updating viz origin");
                 CycleVizOrigin();
                 break;
               }
@@ -1785,8 +1777,7 @@ namespace Anki {
                       continue;
                     }
                     
-                    PRINT_CH_INFO("Keyboard", "BlockSelected", "factoryID 0x%x, connect %d",
-                                  msg.factoryId, msg.selected);
+                    LOG_INFO("BlockSelected", "factoryID 0x%x, connect %d", msg.factoryId, msg.selected);
                     ExternalInterface::MessageGameToEngine msgWrapper;
                     msgWrapper.Set_BlockSelectedMessage(msg);
                     SendMessage(msgWrapper);
@@ -1802,7 +1793,7 @@ namespace Anki {
                 msg.robotID = 1;
                 msg.enable = enable;
                 
-                PRINT_CH_INFO("Keyboard", "SendAvailableObjects", "enable: %d", enable);
+                LOG_INFO("SendAvailableObjects", "enable: %d", enable);
                 ExternalInterface::MessageGameToEngine msgWrapper;
                 msgWrapper.Set_SendAvailableObjects(msg);
                 SendMessage(msgWrapper);
@@ -1835,7 +1826,7 @@ namespace Anki {
               case (s32)'&':
               {
                 if(altKeyPressed) {
-                  PRINT_CH_INFO("Keyboard", "SendNVStorageReadEntry", "NVEntry_CameraCalib");
+                  LOG_INFO("SendNVStorageReadEntry", "NVEntry_CameraCalib");
                   ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                 } else {
@@ -1848,9 +1839,9 @@ namespace Anki {
                       f32 focalLength_y = root_->getField("focalLength_y")->getSFFloat();
                       f32 center_x = root_->getField("imageCenter_x")->getSFFloat();
                       f32 center_y = root_->getField("imageCenter_y")->getSFFloat();
-                      PRINT_CH_INFO("Keyboard", "SendCameraCalibrationraseEntry",
-                                    "fx: %f, fy: %f, cx: %f, cy: %f",
-                                    focalLength_x, focalLength_y, center_x, center_y);
+                      LOG_INFO("SendCameraCalibrationEraseEntry",
+                               "fx: %f, fy: %f, cx: %f, cy: %f",
+                               focalLength_x, focalLength_y, center_x, center_y);
 
                       // Method 1
                       //SendCameraCalibration(focalLength_x, focalLength_y, center_x, center_y);
@@ -1865,14 +1856,14 @@ namespace Anki {
                                               calibVec.data(), calibVec.size(),
                                               0, 1);
                     } else {
-                      PRINT_CH_INFO("Keyboard", "SendNVStorageEraseEntry", "NVEntry_CameraCalib");
+                      LOG_INFO("SendNVStorageEraseEntry", "NVEntry_CameraCalib");
                       SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                     }
                     writeNotErase = !writeNotErase;
                     
                   } else {
-                    PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.CameraCalibration.Disabled",
-                                  "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                    LOG_INFO("SendNVStorageWriteEntry.CameraCalibration.Disabled",
+                             "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
                   }
                   
                 }
@@ -1884,7 +1875,7 @@ namespace Anki {
                 
                 // NVStorage multiWrite / multiRead test
                 if(altKeyPressed) {
-                  PRINT_CH_INFO("Keyboard", "SendNVStorageReadEntry", "Putting image in %s", EnumToString(tag));
+                  LOG_INFO("SendNVStorageReadEntry", "Putting image in %s", EnumToString(tag));
                   ClearReceivedNVStorageData(tag);
                   SendNVStorageReadEntry(tag);
                 } else {
@@ -1899,16 +1890,16 @@ namespace Anki {
                         std::vector<u8> d(30000);
                         size_t numBytes = fread(d.data(), 1, d.size(), fp);
                         d.resize(numBytes);
-                        PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.ReadInputImage",
-                                      "Tag: %s, read %zu bytes", EnumToString(tag), numBytes);
+                        LOG_INFO("SendNVStorageWriteEntry.ReadInputImage",
+                                 "Tag: %s, read %zu bytes", EnumToString(tag), numBytes);
                         
                         ExternalInterface::NVStorageWriteEntry temp;
                         size_t MAX_BLOB_SIZE = temp.data.size();
                         u8 numTotalBlobs = static_cast<u8>(ceilf(static_cast<f32>(numBytes) / MAX_BLOB_SIZE));
                         
-                        PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.Sending",
-                                      "Tag: %s, NumBlobs %d, maxBlobSize %zu",
-                                      EnumToString(tag), numTotalBlobs, MAX_BLOB_SIZE);
+                        LOG_INFO("SendNVStorageWriteEntry.Sending",
+                                 "Tag: %s, NumBlobs %d, maxBlobSize %zu",
+                                 EnumToString(tag), numTotalBlobs, MAX_BLOB_SIZE);
 
                         for (int i=0; i<numTotalBlobs; ++i) {
                           SendNVStorageWriteEntry(tag,
@@ -1919,15 +1910,14 @@ namespace Anki {
                         printf("%s open failed\n", inFile);
                       }
                     } else {
-                      
-                      PRINT_CH_INFO("Keyboard", "SendNVStorageEraseEntry", "%s", EnumToString(tag));
+                      LOG_INFO("SendNVStorageEraseEntry", "%s", EnumToString(tag));
                       SendNVStorageEraseEntry(tag);
                     }
                     writeNotErase = !writeNotErase;
                   } else {
-                    PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.Disabled",
-                                  "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this! (Tag: %s)",
-                                  EnumToString(tag));
+                    LOG_INFO("SendNVStorageWriteEntry.Disabled",
+                             "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this! (Tag: %s)",
+                             EnumToString(tag));
                   }
                   
                 }
@@ -1935,7 +1925,7 @@ namespace Anki {
               }
               case (s32)')':
               {
-                PRINT_CH_INFO("Keyboard", "RetrievingAllMfgTestData", "...");
+                LOG_INFO("RetrievingAllMfgTestData", "...");
                 
                 // Get all Mfg test images and results
                 if(altKeyPressed) {
@@ -1970,7 +1960,7 @@ namespace Anki {
                 msg.leftEye.resize(static_cast<size_t>(Param::NumParameters),  0);
                 msg.rightEye.resize(static_cast<size_t>(Param::NumParameters), 0);
                 
-                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   // Reset to base face
                   msg.leftEye[static_cast<s32>(Param::EyeCenterX)]  = 32;
                   msg.leftEye[static_cast<s32>(Param::EyeCenterY)]  = 32;
@@ -2173,9 +2163,7 @@ namespace Anki {
                 
               case (s32)'F':
               {
-                const bool shiftPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
-                const bool altPressed   = modifier_key & webots::Supervisor::KEYBOARD_ALT;
-                if (shiftPressed && !altPressed) {
+                if (shiftKeyPressed && !altKeyPressed) {
                   // SHIFT+F: Associate name with current face
                   webots::Field* userNameField = root_->getField("userName");
                   webots::Field* enrollToIDField = root_->getField("enrollToID");
@@ -2206,29 +2194,28 @@ namespace Anki {
                         break;
                       }
 
+                      using namespace ExternalInterface;
+                      
+                      // Set face enrollment settings
                       bool saveFaceToRobot = saveFaceField->getSFBool();
                       
-                      printf("Enrolling face ID %d with name '%s'\n", GetLastObservedFaceID(), userName.c_str());
-                      ExternalInterface::EnrollNamedFace enrollNamedFace;
-                      enrollNamedFace.faceID      = 0; //GetLastObservedFaceID();
-                      enrollNamedFace.mergeIntoID = enrollToID;
-                      enrollNamedFace.name        = userName;
-                      enrollNamedFace.sequence    = FaceEnrollmentSequence::Simple;
-                      enrollNamedFace.saveToRobot = saveFaceToRobot;
-                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(enrollNamedFace)));
-                    } else {
-                      // No user name, enable enrollment
-                      ExternalInterface::SetFaceEnrollmentPose setEnrollmentPose;
-                      setEnrollmentPose.pose = Vision::FaceEnrollmentPose::LookingStraight;
-                      printf("Enabling enrollment of next face\n");
-                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(setEnrollmentPose)));
+                      const bool sayName = true;
+                      const bool useMusic = false;
+                      const s32 observedID = Vision::UnknownFaceID; // GetLastObservedFaceID();
+                      printf("Enrolling face ID %d with name '%s'\n", observedID, userName.c_str());
+                      SetFaceToEnroll setFaceToEnroll(userName, observedID, enrollToID, saveFaceToRobot, sayName, useMusic);
+                      SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
+                      
+                      // Enable selection chooser and specify EnrollFace now that settings are sent
+                      SendMessage(MessageGameToEngine(ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                      SendMessage(MessageGameToEngine(ExecuteBehaviorByName("EnrollFace")));
                     }
                     
                   } else {
                     printf("No 'userName' field\n");
                   }
                   
-                } else if(altPressed && !shiftPressed) {
+                } else if(altKeyPressed && !shiftKeyPressed) {
                   // ALT+F: Turn to face the pose of the last observed face:
                   printf("Turning to last face\n");
                   ExternalInterface::TurnTowardsLastFacePose turnTowardsPose; // construct w/ defaults for speed
@@ -2237,7 +2224,7 @@ namespace Anki {
                   turnTowardsPose.robotID = 1;
                   turnTowardsPose.sayName = true;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
-                } else if(altPressed && shiftPressed) {
+                } else if(altKeyPressed && shiftKeyPressed) {
                   // SHIFT+ALT+F: Erase current face
                   using namespace ExternalInterface;
                   SendMessage(MessageGameToEngine(EraseEnrolledFaceByID(GetLastObservedFaceID())));
@@ -2260,7 +2247,7 @@ namespace Anki {
 
               case (s32)'N':
               {
-                if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                if( altKeyPressed ) {
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DenyGameStart()));
                 }
                 else {
@@ -2277,7 +2264,7 @@ namespace Anki {
                   }
 
                   UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
-                  bool val = ! ( modifier_key & webots::Supervisor::KEYBOARD_SHIFT );
+                  bool val = !shiftKeyPressed;
                   SendMessage( ExternalInterface::MessageGameToEngine(
                                  ExternalInterface::RequestSetUnlock(unlock, val)));
 
@@ -2301,10 +2288,11 @@ namespace Anki {
                 // Toggle enabling of reactionary behaviors
                 static bool enable = false;
                 printf("Enable reactionary behaviors: %d\n", enable);
-                ExternalInterface::EnableReactionaryBehaviors m;
+                ExternalInterface::EnableAllReactionTriggers m;
                 m.enabled = enable;
+                m.enableID = "webots";
                 ExternalInterface::MessageGameToEngine message;
-                message.Set_EnableReactionaryBehaviors(m);
+                message.Set_EnableAllReactionTriggers(m);
                 SendMessage(message);
                 
                 enable = !enable;
@@ -2340,14 +2328,11 @@ namespace Anki {
               
               case (s32)'Y':
               {
-                bool alt = modifier_key & webots::Supervisor::KEYBOARD_ALT;
-                bool shift = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
-                
-                if(alt && shift)
+                if(altKeyPressed && shiftKeyPressed)
                 {
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RestoreRobotFromBackup()));
                 }
-                else if(alt)
+                else if(altKeyPressed)
                 {
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WipeRobotGameData()));
                 }
@@ -2368,9 +2353,33 @@ namespace Anki {
                 ExternalInterface::SetCameraSettings settings;
                 settings.exposure_ms = root_->getField("exposure_ms")->getSFFloat();
                 settings.gain = root_->getField("gain")->getSFFloat();
+                settings.enableAutoExposure = root_->getField("enableAutoExposure")->getSFBool();
                 ExternalInterface::MessageGameToEngine message;
                 message.Set_SetCameraSettings(settings);
                 SendMessage(message);
+                break;
+              }
+              
+              case (s32)'-':
+              {
+                if(altKeyPressed)
+                {
+                  ExternalInterface::PlayCubeAnim s;
+                  s.trigger = CubeAnimationTrigger::WakeUp;
+                  s.objectID = 1;
+                  ExternalInterface::MessageGameToEngine m;
+                  m.Set_PlayCubeAnim(s);
+                  SendMessage(m);
+                }
+                else
+                {
+                  ExternalInterface::PlayCubeAnim s;
+                  s.trigger = CubeAnimationTrigger::Flash;
+                  s.objectID = 1;
+                  ExternalInterface::MessageGameToEngine m;
+                  m.Set_PlayCubeAnim(s);
+                  SendMessage(m);
+                }
                 break;
               }
             
@@ -2544,7 +2553,7 @@ namespace Anki {
         
         const std::vector<u8>* recvdData = GetReceivedNVStorageData(msg.tag);
         if (recvdData == nullptr) {
-          PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.Read.NoDataReceived", "Tag: %s", EnumToString(msg.tag));
+          LOG_INFO("HandleNVStorageOpResult.Read.NoDataReceived", "Tag: %s", EnumToString(msg.tag));
           return;
         }
         
@@ -2553,8 +2562,8 @@ namespace Anki {
           {
             IMUInfo info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.IMUInfo.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.IMUInfo.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2567,8 +2576,8 @@ namespace Anki {
           {
             CameraCalibration calib;
             if (recvdData->size() != MakeWordAligned(calib.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CamCalibration.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(calib.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.CamCalibration.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(calib.Size()), recvdData->size());
               break;
             }
             calib.Unpack(recvdData->data(), calib.Size());
@@ -2581,8 +2590,8 @@ namespace Anki {
           {
             CalibMetaInfo info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CalibMetaInfo.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.CalibMetaInfo.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2595,8 +2604,8 @@ namespace Anki {
           {
             ToolCodeInfo info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.ToolCodeInfo.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.ToolCodeInfo.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2609,8 +2618,8 @@ namespace Anki {
           {
             PoseData info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CalibPose.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.CalibPose.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2623,8 +2632,8 @@ namespace Anki {
           {
             PoseData info;
             if (recvdData->size() != MakeWordAligned(info.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
             info.Unpack(recvdData->data(), info.Size());
@@ -2638,8 +2647,8 @@ namespace Anki {
           {
             FactoryTestResultEntry result;
             if (recvdData->size() != MakeWordAligned(result.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.PlaypenTestResults.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.PlaypenTestResults.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
               break;
             }
             result.Unpack(recvdData->data(), result.Size());
@@ -2652,8 +2661,8 @@ namespace Anki {
           {
             BirthCertificate result;
             if (recvdData->size() != MakeWordAligned(result.Size())) {
-              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.BirthCertificate.UnexpectedSize",
-                            "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
+              LOG_INFO("HandleNVStorageOpResult.BirthCertificate.UnexpectedSize",
+                       "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
               break;
             }
             result.Unpack(recvdData->data(), result.Size());
@@ -2683,7 +2692,7 @@ namespace Anki {
           }
           case NVStorage::NVEntryTag::NVEntry_IMUAverages:
           {
-            PRINT_CH_INFO("Keyboard", "IMUAveragesData", "size: %lu", recvdData->size());
+            LOG_INFO("IMUAveragesData", "size: %lu", recvdData->size());
             PrintBytesHex((char*)(recvdData->data()), (int)recvdData->size());
             
             break;

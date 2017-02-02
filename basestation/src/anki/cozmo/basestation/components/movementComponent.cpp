@@ -14,7 +14,9 @@
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -61,6 +63,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveLift>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StopAllMotors>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestEnableReactionTrigger>();
   
   // Engine to game
   helper.SubscribeEngineToGame<MessageEngineToGameTag::ChargerEvent>();
@@ -217,12 +220,8 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
 
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
-    
-    const IReactionaryBehavior* behavior = _robot.GetBehaviorManager().GetReactionaryBehaviorByType(BehaviorType::ReactToUnexpectedMovement);
-    
-    const bool isBehaviorEnabled = (behavior != nullptr && behavior->IsReactionEnabled());
                                     
-    if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && isBehaviorEnabled)
+    if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && _isReactToUnexpectedMovementEnabled)
     {
       // Add obstacle based on when this started and how robot was trying to turn
       // TODO: Broadcast sufficient information to blockworld and do it there?
@@ -542,6 +541,15 @@ void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
     UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);
   }
 }
+
+template<>
+void MovementComponent::HandleMessage(const ExternalInterface::RequestEnableReactionTrigger& msg)
+{
+  if(msg.trigger == ReactionTrigger::UnexpectedMovement){
+    _isReactToUnexpectedMovementEnabled = msg.enable;
+  }
+}
+  
   
 // =========== Motor commands ============
 
@@ -593,6 +601,38 @@ Result MovementComponent::StopAllMotors()
   }
   
   return _robot.SendRobotMessage<RobotInterface::StopAllMotors>();
+}
+
+Result MovementComponent::StopHead()
+{
+  // If we are direct driving then make sure to unlock tracks and set flags appropriately
+  if(IsDirectDriving())
+  {
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingHead,   (u8)AnimTrackFlag::HEAD_TRACK, kDrivingHeadStr,   kDrivingHeadStr);
+  }
+  return _robot.SendRobotMessage<RobotInterface::MoveHead>(RobotInterface::MoveHead(0.f));
+}
+  
+Result MovementComponent::StopLift()
+{
+  // If we are direct driving then make sure to unlock tracks and set flags appropriately
+  if(IsDirectDriving())
+  {
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingLift,   (u8)AnimTrackFlag::LIFT_TRACK, kDrivingLiftStr,   kDrivingLiftStr);
+  }
+  return _robot.SendRobotMessage<RobotInterface::MoveLift>(RobotInterface::MoveLift(0.f));
+}
+  
+Result MovementComponent::StopBody()
+{
+  // If we are direct driving then make sure to unlock tracks and set flags appropriately
+  if(IsDirectDriving())
+  {
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr, kDrivingWheelsStr);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr, kDrivingArcStr);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr, kDrivingTurnStr);
+  }
+  return _robot.SendRobotMessage<RobotInterface::DriveWheels>(RobotInterface::DriveWheels(0.f,0.f,0.f,0.f));
 }
   
 int MovementComponent::GetFlagIndex(uint8_t flag) const

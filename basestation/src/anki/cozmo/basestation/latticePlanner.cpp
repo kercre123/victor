@@ -1000,10 +1000,10 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
                 planIdx);
 
   if(offsetFromPlan >= PLAN_ERROR_FOR_REPLAN) {
-    PRINT_NAMED_EVENT("LatticePlanner.GetCompletePath.RobotPositionError",
-                      "%04d %f",
-                      planIdx,
-                      offsetFromPlan);
+    LOG_EVENT("LatticePlanner.GetCompletePath.RobotPositionError",
+              "%04d %f",
+              planIdx,
+              offsetFromPlan);
     _totalPlan.Clear();
     _internalComputeStatus = EPlannerStatus::Error;
     return false;

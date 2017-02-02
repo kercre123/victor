@@ -1,5 +1,5 @@
 {
-  "behaviorType": "PounceOnMotion",
+  "behaviorClass": "PounceOnMotion",
   "name": "Hiking_PounceOnMotion",
   "displayNameKey":"behavior.PounceOnMotion",
   "requiredUnlockId": "PounceOnMotionAction",

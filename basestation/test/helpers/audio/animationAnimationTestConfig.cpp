@@ -29,7 +29,7 @@ using namespace Anki::Cozmo::Audio;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAnimationTestConfig::Insert( TestAudioEvent&& audioEvent )
 {
-  ASSERT_NAMED(!_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsTrue");
+  DEV_ASSERT(!_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsTrue");
   _events.emplace_back( audioEvent );
 }
 
@@ -93,7 +93,7 @@ std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTest
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAnimationTestConfig::LoadAudioKeyFrames( Anki::Cozmo::Animation& outAnimation )
 {
-  ASSERT_NAMED(_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsFalse");
+  DEV_ASSERT(_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsFalse");
   for ( auto& anEvent : _events ) {
     outAnimation.AddKeyFrameToBack( RobotAudioKeyFrame( anEvent.event, anEvent.startTime_ms ) );
   }
@@ -103,7 +103,7 @@ void AnimationAnimationTestConfig::LoadAudioKeyFrames( Anki::Cozmo::Animation& o
 void AnimationAnimationTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAudioTestBuffer& outBuffer )
 {
   // Imitate how Wwise write event audio to buffer. ( This is the perfect condition )
-  ASSERT_NAMED(_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsFalse");
+  DEV_ASSERT(_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsFalse");
   if ( _events.empty() ) {
     return;
   }

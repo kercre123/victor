@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -43,7 +43,7 @@ static const char* kMaxTimeBeforeTimeoutSecKey = "Timeout_Sec";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("OnboardingShowCubes");
   
@@ -61,7 +61,7 @@ BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json:
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnboardingShowCube::IsRunnableInternal(const Robot& robot) const
+bool BehaviorOnboardingShowCube::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   // behavior will be killed by unity, the only thing that can start it...
   return true;
@@ -73,7 +73,6 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::OnboardingDriveStart,
     AnimationTrigger::OnboardingDriveLoop,
     AnimationTrigger::OnboardingDriveEnd});
-  _lightsNeedReEnable = false;
   EnableSpecificReactionaryBehavior(robot,false);
   // Some reactionary behaviors don't trigger resume like cliff react followed by "react to on back"
   // So just handle init doesn't always reset to "inactive"
@@ -92,10 +91,7 @@ void BehaviorOnboardingShowCube::StopInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   EnableSpecificReactionaryBehavior(robot, true);
-  if( _lightsNeedReEnable )
-  {
-    robot.GetLightsComponent().SetEnableComponent(true);
-  }
+  robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Onboarding);
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }
 
@@ -107,14 +103,14 @@ void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, co
     const ExternalInterface::ReactionaryBehaviorTransition& msg = event.GetData().Get_ReactionaryBehaviorTransition();
     if( msg.behaviorStarted &&  _state != State::ErrorCozmo && _state != State::Inactive && _state != State::ErrorFinal)
     {
-      switch (msg.reactionaryBehaviorType)
+      switch (msg.reactionaryBehaviorTrigger)
       {
-        case BehaviorType::ReactToCliff:
-        case BehaviorType::ReactToPickup:
-        case BehaviorType::ReactToRobotOnSide:
-        case BehaviorType::ReactToRobotOnBack:
-        case BehaviorType::ReactToRobotOnFace:
-        case BehaviorType::ReactToUnexpectedMovement:
+        case ReactionTrigger::CliffDetected:
+        case ReactionTrigger::RobotPickedUp:
+        case ReactionTrigger::RobotOnSide:
+        case ReactionTrigger::RobotOnBack:
+        case ReactionTrigger::RobotOnFace:
+        case ReactionTrigger::UnexpectedMovement:
         {
           TransitionToErrorState(State::ErrorCozmo,robot);
           break;
@@ -136,6 +132,9 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const EngineToGameEvent& eve
       HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
       break;
     }
+    case MessageEngineToGameTag::ReactionaryBehaviorTransition:
+      // Handled by AlwaysHandle, but don't want error printing...
+    break;
     default: {
       PRINT_NAMED_ERROR("BehaviorOnboardingShowCube.HandleWhileRunning.InvalidEvent", "");
       break;
@@ -293,11 +292,8 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(Robot& robot)
   
 void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
 {
-  // Because only actions set lights and onboarding is a behavior, we want the illusion of him thinking about the lights
-  // so just manually set up to green
-  _lightsNeedReEnable = true;
-  robot.GetLightsComponent().SetEnableComponent(false);
-  robot.GetLightsComponent().SetObjectLights(_targetBlock, robot.GetLightsComponent().GetLightsForState(LightsComponent::CubeLightsState::Interacting));
+  // Manually set lights to Interacting (green) lights
+  robot.GetCubeLightComponent().PlayLightAnim(_targetBlock, CubeAnimationTrigger::Onboarding);
   
   DriveToPickupObjectAction* driveAndPickupAction = new DriveToPickupObjectAction(robot, _targetBlock);
   driveAndPickupAction->SetPostDockLiftMovingAnimation(AnimationTrigger::OnboardingSoundOnlyLiftEffortPickup);
@@ -326,7 +322,17 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
                 }
                 else
                 {
-                  SET_STATE(ErrorFinal,robot);
+                  // Play failure animation
+                  if (msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING)
+                  {
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingCubeDockFail));
+                  }
+                  // During an interrupt behavior is cancelled only for a max_num_retries do we assume that the
+                  // pickup is just not working for some other reason than them messing with the robot.
+                  if( msg.result == ActionResult::REACHED_MAX_NUM_RETRIES )
+                  {
+                    SET_STATE(ErrorFinal,robot);
+                  }
                 }
               });
 }
@@ -352,8 +358,7 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
   StartActing(action,
               [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
               {
-                _lightsNeedReEnable = false;
-                robot.GetLightsComponent().SetEnableComponent(true);
+                robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Onboarding);
                 SET_STATE(WaitForFinalContinue,robot);
               });
 }
@@ -419,11 +424,11 @@ bool BehaviorOnboardingShowCube::IsSequenceComplete()
 void BehaviorOnboardingShowCube::EnableSpecificReactionaryBehavior(Robot& robot, bool enable)
 {
   BehaviorManager& mgr = robot.GetBehaviorManager();
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::AcknowledgeFace, enable);
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::AcknowledgeObject, enable);
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToCubeMoved, enable);
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToFrustration, enable);
-  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToPet, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::FacePositionUpdated, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::ObjectPositionUpdated, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::CubeMoved, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::Frustration, enable);
+  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::PetInitialDetection, enable);
 }
 
   

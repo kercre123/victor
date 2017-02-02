@@ -90,7 +90,7 @@ private:
   // To clear objects to be acknowledged when sparked
   BehaviorAcknowledgeObject* _behaviorAcknowledgeObject = nullptr;
   
-  // Re-set each time spark is activated
+  // Reset each time spark is activated
   float _timeChooserStarted;
   int _currentObjectiveCompletedCount;
 
@@ -98,7 +98,7 @@ private:
   float _minTimeSecs;
   float _maxTimeSecs;
   // Setting numberOfRepetitions to 0 will cause the spark to always play until its max time
-  // and then play the success animaiton.  This allows non-time dependent sparks
+  // and then play the success animation.  This allows non-time dependent sparks
   int _numberOfRepetitions;
   BehaviorObjective _objectiveToListenFor;
   AnimationTrigger _softSparkUpgradeTrigger;

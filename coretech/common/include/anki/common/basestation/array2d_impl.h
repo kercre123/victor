@@ -355,9 +355,9 @@ namespace Anki
     s32 nrows = this->GetNumRows();
     s32 ncols = this->GetNumCols();
 
-    ASSERT_NAMED(result.GetNumRows() == this->GetNumRows() &&
-                 result.GetNumCols() == this->GetNumCols(),
-                 "Array2d.ApplyScalarFunctionOneArg.ResultArraySizeMismatch");
+    DEV_ASSERT(result.GetNumRows() == this->GetNumRows() &&
+               result.GetNumCols() == this->GetNumCols(),
+               "Array2d.ApplyScalarFunctionOneArg.ResultArraySizeMismatch");
     
     if (this->IsContinuous() && result.IsContinuous() ) {
       ncols *= nrows;
@@ -385,13 +385,13 @@ namespace Anki
     s32 nrows = this->GetNumRows();
     s32 ncols = this->GetNumCols();
 
-    ASSERT_NAMED(otherArray.GetNumRows() == this->GetNumRows() &&
-                 otherArray.GetNumCols() == this->GetNumCols(),
-                 "Array2d.ApplyScalarFunction.OtherArraySizeMismatch");
+    DEV_ASSERT(otherArray.GetNumRows() == this->GetNumRows() &&
+               otherArray.GetNumCols() == this->GetNumCols(),
+               "Array2d.ApplyScalarFunction.OtherArraySizeMismatch");
     
-    ASSERT_NAMED(result.GetNumRows() == this->GetNumRows() &&
-                 result.GetNumCols() == this->GetNumCols(),
-                 "Array2d.ApplyScalarFunctionTwoArg.ResultArraySizeMismatch");
+    DEV_ASSERT(result.GetNumRows() == this->GetNumRows() &&
+               result.GetNumCols() == this->GetNumCols(),
+               "Array2d.ApplyScalarFunctionTwoArg.ResultArraySizeMismatch");
 
     if (this->IsContinuous() && otherArray.IsContinuous() && result.IsContinuous() ) {
       ncols *= nrows;

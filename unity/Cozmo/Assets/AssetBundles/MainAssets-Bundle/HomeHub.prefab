@@ -52,11 +52,11 @@ MonoBehaviour:
       _EnumValueAsString: home_view_prefabs
       _EnumValue: 8
     _AssetDataName: HomeView
-  _ChallengeDetailsPrefabData:
+  _ChallengeDetailsModalPrefabData:
     _AssetBundle:
       _EnumValueAsString: home_view_prefabs
       _EnumValue: 8
-    _AssetDataName: ChallengeDetailsDialog
+    _AssetDataName: ChallengeDetailsModal
   _ChallengeDataList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -98,7 +98,7 @@ Prefab:
       value: home_view_prefabs
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _ChallengeDetailsPrefabData._AssetBundle._EnumValueAsString
+      propertyPath: _ChallengeDetailsModalPrefabData._AssetBundle._EnumValueAsString
       value: home_view_prefabs
       objectReference: {fileID: 0}
     - target: {fileID: 0}
@@ -110,12 +110,12 @@ Prefab:
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _ChallengeDetailsPrefabData._AssetBundle._EnumValue
+      propertyPath: _ChallengeDetailsModalPrefabData._AssetBundle._EnumValue
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _ChallengeDetailsPrefabData._AssetDataName
-      value: ChallengeDetailsDialog
+      propertyPath: _ChallengeDetailsModalPrefabData._AssetDataName
+      value: ChallengeDetailsModal
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _HomeViewPrefabData._AssetDataName

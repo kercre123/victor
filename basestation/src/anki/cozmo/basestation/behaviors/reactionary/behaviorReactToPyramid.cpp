@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPyramid.h"
 
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 
@@ -26,16 +27,16 @@ const constexpr float kTimeBetweenReactions_s = 100.f;
 }
   
 BehaviorReactToPyramid::BehaviorReactToPyramid(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 , _nextValidReactionTime_s(0)
 {
   SetDefaultName("ReactToPyramid");
 }
   
-bool BehaviorReactToPyramid::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   using namespace BlockConfigurations;
-  auto allPyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+  auto allPyramids = preReqData.GetRobot().GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   if(allPyramids.size() > 0){
     TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if(currentTime > _nextValidReactionTime_s){
@@ -46,7 +47,7 @@ bool BehaviorReactToPyramid::IsRunnableInternalReactionary(const Robot& robot) c
   return false;
 }
 
-Result BehaviorReactToPyramid::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToPyramid::InitInternal(Robot& robot)
 {
   _nextValidReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeStamp() + kTimeBetweenReactions_s;
   return Result::RESULT_OK;

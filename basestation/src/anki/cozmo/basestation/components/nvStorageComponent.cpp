@@ -92,6 +92,7 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
                                                           {NVEntryTag::NVEntry_CliffValOnGround,   0},
                                                           {NVEntryTag::NVEntry_PlaypenTestResults, 0},
                                                           {NVEntryTag::NVEntry_FactoryLock,        0},
+                                                          {NVEntryTag::NVEntry_VersionMagic,       0},
                                                           
                                                           // Multi-blob manufacturing entires start here
                                                           {NVEntryTag::NVEntry_CalibImage1,        0},
@@ -160,9 +161,9 @@ void NVStorageComponent::InitSizeTable() {
     auto nextIt = currIt;
     nextIt++;
     if (nextIt != _maxSizeTable.end()) {
-      ASSERT_NAMED_EVENT(IsValidEntryTag(currIt->first),
-                         "NVStorageComponent.InitSizeTable.InvalidTag", "0x%x",
-                         currIt->first);
+      DEV_ASSERT_MSG(IsValidEntryTag(currIt->first),
+                     "NVStorageComponent.InitSizeTable.InvalidTag", "0x%x",
+                     currIt->first);
       
       currIt->second = static_cast<u32>(nextIt->first) - static_cast<u32>(currIt->first);
       PRINT_CH_INFO("NVStorage", "NVStorageComponent.InitSizeTable",
@@ -174,6 +175,11 @@ void NVStorageComponent::InitSizeTable() {
       PRINT_NAMED_ERROR("NVStorageComponent.InitSizeTable.TooLargeTagFound", "0x%x", currIt->first);
     }
   }
+  
+  // Manually add max factory tag sizes
+  _maxSizeTable[NVEntryTag::NVEntry_FactoryBaseTag] = static_cast<u32>(NVEntryTag::NVEntry_FactoryBaseTagWithBCOffset) - static_cast<u32>(NVEntryTag::NVEntry_FactoryBaseTag);
+  _maxSizeTable[NVEntryTag::NVEntry_FactoryBaseTagWithBCOffset] = static_cast<u32>(NVConst::NVConst_FACTORY_BLOCK_SIZE) - _maxSizeTable[NVEntryTag::NVEntry_FactoryBaseTag];
+  
   
   // Compute lengths for factory entries
   for (auto it = _maxFactoryEntrySizeTable.begin(); it != _maxFactoryEntrySizeTable.end(); ) {
@@ -217,7 +223,7 @@ bool NVStorageComponent::IsValidEntryTag(NVEntryTag tag) const {
                               (tag != NVEntryTag::NVEntry_NEXT_SLOT) &&
                               (_maxSizeTable.find(tag) != _maxSizeTable.end());
   
-  return isValidNonFactoryTag || IsFactoryEntryTag(tag);
+  return isValidNonFactoryTag || IsFactoryEntryTag(tag) || IsTagInFactoryBlock(t);
 }
  
 bool NVStorageComponent::IsFactoryEntryTag(NVEntryTag tag) const
@@ -229,7 +235,12 @@ bool NVStorageComponent::IsPotentialFactoryEntryTag(u32 tag) const
 {
   return (tag & static_cast<u32>(NVConst::NVConst_FACTORY_DATA_BIT)) > 0;
 }
-  
+
+bool NVStorageComponent::IsTagInFactoryBlock(u32 tag) const {
+  const u32 diff = tag - static_cast<u32>(NVEntryTag::NVEntry_FactoryBaseTag);
+  return tag >= static_cast<u32>(NVEntryTag::NVEntry_FactoryBaseTag) &&
+         diff < static_cast<u32>(NVConst::NVConst_FACTORY_BLOCK_SIZE);
+}
   
 bool NVStorageComponent::IsSpecialEntryTag(u32 tag) const
 {
@@ -304,7 +315,7 @@ bool NVStorageComponent::Write(NVEntryTag tag,
     validArgs = false;
   }
   
-  if (IsFactoryEntryTag(tag)) {
+  if (IsFactoryEntryTag(tag) && !_writingFactory) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.FactoryTagNotAllowed",
                         "Tag: %s (0x%x)", EnumToString(tag), tag);
     validArgs = false;
@@ -321,12 +332,18 @@ bool NVStorageComponent::Write(NVEntryTag tag,
   
   // Sanity check on size
   u32 allowedSize = GetMaxSizeForEntryTag(tag);
-  if ((size > (allowedSize - _kEntryHeaderSize)) || size <= 0) {
+  // If we aren't writing to the factory block then subtract the size of the header
+  if(!_writingFactory)
+  {
+    allowedSize -= _kEntryHeaderSize;
+  }
+  if ((size > allowedSize) || size <= 0) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.InvalidSize",
                         "Tag: %s, %zu bytes (limit %d bytes)",
-                        EnumToString(tag), size, allowedSize - _kEntryHeaderSize);
+                        EnumToString(tag), size, allowedSize);
     validArgs = false;
   }
+  
 
   // Fail immediately if invalid args found
   if (!validArgs) {
@@ -353,11 +370,13 @@ bool NVStorageComponent::Write(NVEntryTag tag,
     return true;
   }
 
-  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.PrecedingWriteWithErase",
-                 "Tag: %s", EnumToString(tag));
-  
-  _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
-
+  if(!_writingFactory)
+  {
+    PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.PrecedingWriteWithErase",
+                   "Tag: %s", EnumToString(tag));
+    
+    _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
+  }
   
   // Queue write request
   _requestQueue.emplace(tag, callback, new std::vector<u8>(data,data+size), broadcastResultToGame);
@@ -369,10 +388,18 @@ bool NVStorageComponent::Write(NVEntryTag tag,
   
   return true;
 }
-  
+
 bool NVStorageComponent::Erase(NVEntryTag tag,
                                NVStorageWriteEraseCallback callback,
                                bool broadcastResultToGame)
+{
+  return Erase(tag, callback, broadcastResultToGame, 0);
+}
+  
+bool NVStorageComponent::Erase(NVEntryTag tag,
+                               NVStorageWriteEraseCallback callback,
+                               bool broadcastResultToGame,
+                               u32 eraseSize)
 {
   bool validArgs = true;
   
@@ -383,7 +410,7 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
     validArgs = false;
   }
   
-  if (IsFactoryEntryTag(tag)) {
+  if (IsFactoryEntryTag(tag) && !_writingFactory) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.FactoryTagNotAllowed",
                         "Tag: %s (0x%x)", EnumToString(tag), tag);
     validArgs = false;
@@ -414,7 +441,7 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
     return true;
   }
   
-  _requestQueue.emplace(tag, callback, broadcastResultToGame);
+  _requestQueue.emplace(tag, callback, broadcastResultToGame, eraseSize);
   
   PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Erase.Queued",
                  "%s", EnumToString(tag));
@@ -445,6 +472,20 @@ bool NVStorageComponent::WipeAll(NVStorageWriteEraseCallback callback,
   PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WipeAll.Queued", "");
   
   return true;
+}
+
+bool NVStorageComponent::WipeFactory(NVStorageWriteEraseCallback callback)
+{
+  if(_writingFactory)
+  {
+    return Erase(NVEntryTag::NVEntry_FactoryBaseTag,
+                 callback,
+                 false,
+                 static_cast<u32>(NVConst::NVConst_FACTORY_BLOCK_SIZE));
+  }
+  PRINT_NAMED_ERROR("NVStorageComponent.WipeFactory.NotAllowed",
+                    "Must be allowed to write to factory addresses");
+  return false;
 }
   
 bool NVStorageComponent::Read(NVEntryTag tag,
@@ -508,7 +549,8 @@ void NVStorageComponent::ProcessRequest()
       _writeDataObject.sendIndex = 0;      
       _writeDataObject.sending   = true;
       
-      ASSERT_NAMED_EVENT(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending1", "0x%x", _writeDataAckInfo.tag);
+      DEV_ASSERT_MSG(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending1",
+                     "0x%x", _writeDataAckInfo.tag);
       
       // Set associated ack info
       _writeDataAckInfo.tag                   = req.tag;
@@ -523,7 +565,7 @@ void NVStorageComponent::ProcessRequest()
 
       PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.ProcessRequest.SendingWrite",
                      "StartTag: 0x%x (%s), timeoutTime: %d, currTime: %d",
-                     entryTag, EnumToString(req.tag), _writeDataAckInfo.timeoutTimeStamp, _robot.GetLastMsgTimestamp() );
+                     entryTag, EnumToString(req.tag), _writeDataAckInfo.timeoutTimeStamp, _robot.GetLastMsgTimestamp());
       
       SetState(NVSCState::SENDING_WRITE_DATA);
       
@@ -531,7 +573,8 @@ void NVStorageComponent::ProcessRequest()
     }
     case NVOperation::NVOP_ERASE:
     {
-      ASSERT_NAMED_EVENT(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending2", "0x%x", _writeDataAckInfo.tag);
+      DEV_ASSERT_MSG(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending2",
+                     "0x%x", _writeDataAckInfo.tag);
 
       _writeDataObject.sending = false;
       
@@ -543,10 +586,11 @@ void NVStorageComponent::ProcessRequest()
       _writeDataAckInfo.pending               = true;
       
       // Start constructing erase message
-      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.ProcessRequest.SendingErase", "%s (Tag: 0x%x)", EnumToString(req.tag), entryTag );
       _lastCommandSent.operation = NVOperation::NVOP_ERASE;
       _lastCommandSent.address = entryTag;
-      _lastCommandSent.length = GetMaxSizeForEntryTag(req.tag);
+      // If an eraseSize was not specified get the size from the _maxSize table
+      _lastCommandSent.length = req.eraseSize > 0 ? req.eraseSize : GetMaxSizeForEntryTag(req.tag);
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.ProcessRequest.SendingErase", "%s (Tag: 0x%x) size: %u", EnumToString(req.tag), entryTag, _lastCommandSent.length );
       _robot.SendMessage(RobotInterface::EngineToRobot(NVCommand(_lastCommandSent)));
       
       // Let the backup manager know this tag and data have been queued to be written
@@ -580,7 +624,8 @@ void NVStorageComponent::ProcessRequest()
     case NVOperation::NVOP_READ:
     {
       
-      ASSERT_NAMED_EVENT(!_recvDataInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedReadPending", "0x%x", _recvDataInfo.tag);
+      DEV_ASSERT_MSG(!_recvDataInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedReadPending",
+                     "0x%x", _recvDataInfo.tag);
       
       // If factory tag, request entire range
       _lastCommandSent.address   = entryTag;
@@ -670,11 +715,11 @@ void NVStorageComponent::Update()
         // Send the next blob of data to send for this multi-blob message
         u32 bytesLeftToSend = static_cast<u32>(sendData->data->size()) - sendData->sendIndex;
         u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
-        ASSERT_NAMED(bytesToSend > 0, "NVStorageComponent.Update.ExpectedPositiveNumBytesToSend");
+        DEV_ASSERT(bytesToSend > 0, "NVStorageComponent.Update.ExpectedPositiveNumBytesToSend");
         
         // If this is the first blob, prepend header
         _lastCommandSent.blob.clear();
-        if (sendData->sendIndex == 0) {
+        if (sendData->sendIndex == 0 && !_writingFactory) {
 
           NVStorageHeader header;
           header.dataSize = static_cast<u32>(sendData->data->size());
@@ -708,6 +753,7 @@ void NVStorageComponent::Update()
         _lastCommandSent.length = static_cast<u32>(_lastCommandSent.blob.size());
         _robot.SendMessage(RobotInterface::EngineToRobot(NVCommand(_lastCommandSent)));
         _writeDataAckInfo.pending = true;
+        _writeDataAckInfo.timeoutTimeStamp = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
         _numSendAttempts = 0;
 
         // Sent last blob?
@@ -1072,8 +1118,8 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
   
 void NVStorageComponent::BroadcastNVStorageOpResult(NVEntryTag tag, NVResult res, NVOperation op, u8 index, const u8* data, u32 data_length)
 {
-  ASSERT_NAMED_EVENT(data_length <= _kMaxNvStorageBlobSize,
-                     "NVStorageComponent.BroadcastNVStorageOpResult.DataLengthTooLarge", "%u", data_length);
+  DEV_ASSERT_MSG(data_length <= _kMaxNvStorageBlobSize,
+                 "NVStorageComponent.BroadcastNVStorageOpResult.DataLengthTooLarge", "%u", data_length);
   
   ExternalInterface::NVStorageOpResult msg;
   msg.tag = tag;

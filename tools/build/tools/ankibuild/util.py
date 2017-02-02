@@ -216,8 +216,8 @@ class File(object):
                 for file in os.listdir(dir):
                     if file != '.DS_Store':
                         fullpath = os.path.join(dir, file)
-                        if os.path.isdir(path):
-                            dirs.append(path)
+                        if os.path.isdir(fullpath):
+                            dirs.append(fullpath)
                         else:
                             # normal file, so don't remove
                             print('"{0}" still exists, so not removing "{1}"'.format(fullpath, path))

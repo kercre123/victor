@@ -1,0 +1,9 @@
+{
+  "behaviorClass": "EnrollFace",
+  "name": "EnrollFace",
+  "behaviorGroups": [
+    "MeetCozmo_Socialize"
+  ],
+
+  "flatScore": 2.0
+}

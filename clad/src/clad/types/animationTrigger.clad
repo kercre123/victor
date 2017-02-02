@@ -54,6 +54,8 @@ enum int_32 AnimationTrigger
   CubePounceWinHand,
   CubePounceWinRound,
   CubePounceWinSession,
+  DemoSpeedTapCozmoWin,
+  DemoSpeedTapCozmoLose,
   DriveEndAngry,
   DriveEndDefault,
   DriveEndLaunch,
@@ -309,6 +311,7 @@ enum int_32 AnimationTrigger
   Surprise,
   TurtleRoll,  
   UnitTestAnim,
+  WaitOnSideLoop,
   WorkoutPickupRealign,
   WorkoutPickupRetry,
   WorkoutPostLift_highEnergy,
@@ -335,6 +338,34 @@ enum int_32 AnimationTrigger
   Count, // Keep count at end.
 }
 
+enum int_32 CubeAnimationTrigger
+{
+  // Please keep alphabetical
+
+  Carrying,
+  Connected,
+  CubePouncePlayerLose,
+  CubePouncePlayerWin,
+  DoubleTappedKnown,
+  DoubleTappedUnsure,
+  DrivingTo,
+  Flash,
+  Interacting,
+  Onboarding,
+  PyramidBaseBottom,
+  PyramidBaseTop,
+  PyramidDenouement,
+  PyramidFlourish,
+  PyramidPickup,
+  PyramidSingle,
+  Sleep,
+  SpeedTapWin,
+  SpeedTapLose,
+  Visible,
+  WakeUp,
+
+  Count
+}
 
 } // end namespace Cozmo
 } // end namespace Anki

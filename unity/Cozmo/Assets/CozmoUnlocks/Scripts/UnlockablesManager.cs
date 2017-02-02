@@ -23,7 +23,7 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   public Action<UnlockId> OnSparkStarted;
-  public Action<CoreUpgradeDetailsDialog> OnSparkComplete;
+  public Action<CoreUpgradeDetailsModal> OnSparkComplete;
   public Action<UnlockId> OnUnlockComplete;
 
   public bool UnlocksLoaded { get { return _UnlocksLoaded; } }
@@ -288,8 +288,10 @@ public class UnlockablesManager : MonoBehaviour {
   private void HandleUnlockDefaultsSet(Anki.Cozmo.ExternalInterface.UnlockedDefaults message) {
     // This is a new robot, init our "default" unlocks
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Clear();
-    for (int i = 0; i < message.defaultUnlocks.Length; ++i) {
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Add(message.defaultUnlocks[i]);
+    if (!DebugMenuManager.Instance.DemoMode) {
+      for (int i = 0; i < message.defaultUnlocks.Length; ++i) {
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Add(message.defaultUnlocks[i]);
+      }
     }
   }
 
@@ -303,9 +305,10 @@ public class UnlockablesManager : MonoBehaviour {
     _UnlockablesState[resultMessage.unlockID] = resultMessage.unlocked;
     if (resultMessage.unlocked) {
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, resultMessage.unlockID));
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Add(resultMessage.unlockID);
       // During demo mode, because this was from a debug event and all come at once, do not soft spark
       if (!DebugMenuManager.Instance.DemoMode) {
+        // Demo mode doesn't want the arrows since it wants the appearance of everything already being unlocked.
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Add(resultMessage.unlockID);
         // Trigger soft spark in the engine if the unlock was an action
         if (unlockData.UnlockableType == UnlockableType.Action) {
           RobotEngineManager.Instance.Message.BehaviorManagerMessage =

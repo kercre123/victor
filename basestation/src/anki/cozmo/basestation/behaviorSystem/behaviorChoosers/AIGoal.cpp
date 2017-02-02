@@ -20,8 +20,9 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategies/iAIGoalStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -92,18 +93,23 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
   if ( JsonTools::GetValueOptional(config, "driveEndAnimTrigger", animTriggerStr) ) {
     _driveEndAnimTrigger = animTriggerStr.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerStr.c_str());
   }
-  // check that triggers are all or nothing
-  const bool hasAnyDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) ||
+
+  #if (DEV_ASSERT_ENABLED)
+  {
+    // check that triggers are all or nothing
+    const bool hasAnyDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) ||
                                  (_driveLoopAnimTrigger  != AnimationTrigger::Count) ||
                                  (_driveEndAnimTrigger   != AnimationTrigger::Count);
-  const bool hasAllDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) &&
+    const bool hasAllDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) &&
                                  (_driveLoopAnimTrigger  != AnimationTrigger::Count) &&
                                  (_driveEndAnimTrigger   != AnimationTrigger::Count);
-  ASSERT_NAMED(hasAllDrivingAnim || !hasAnyDrivingAnim, "AIGoal.Init.InvalidDrivingAnimTriggers_AllOrNothing");
+    DEV_ASSERT(hasAllDrivingAnim || !hasAnyDrivingAnim, "AIGoal.Init.InvalidDrivingAnimTriggers_AllOrNothing");
+  }
+  #endif
   
   // information analyzer process
   std::string inanProcessStr;
-  JsonTools::GetValueOptional(config, "infoAnalyzerProccess", inanProcessStr);
+  JsonTools::GetValueOptional(config, "infoAnalyzerProcess", inanProcessStr);
   _infoAnalysisProcess = inanProcessStr.empty() ?
     AIInformationAnalysis::EProcess::Invalid :
     AIInformationAnalysis::EProcessFromString(inanProcessStr.c_str());
@@ -153,7 +159,7 @@ void AIGoal::Enter(Robot& robot)
   
   // request analyzer process
   if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
-    robot.GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetName());
+    robot.GetAIComponent().GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetName());
   }
   
   // notify the persistant update function that the goal was entered
@@ -180,7 +186,7 @@ void AIGoal::Exit(Robot& robot)
   
   // (un)request analyzer process
   if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
-    robot.GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetName());
+    robot.GetAIComponent().GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetName());
   }
 
   // notify the persistant update function that the goal is exiting
@@ -189,14 +195,19 @@ void AIGoal::Exit(Robot& robot)
   }
   
   // log event to das
-  Util::sEventF("robot.freeplay_goal_ended", {{DDATA, TO_DDATA_STR(static_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs))}}, "%s", _name.c_str());
+  const int nSecs = static_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs);
+  Util::sEventF("robot.freeplay_goal_ended",
+                {{DDATA, std::to_string(nSecs).c_str()}},
+                "%s", _name.c_str());
   
   // If the goal requires a tapped object make sure to unset the tapped object when the goal exits
   if(_requireObjectTapped)
   {
-    robot.GetLightsComponent().ClearAllTapInteractionObjects();
+    // Don't know which light animation was being played so stop both
+    robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedKnown);
+    robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedUnsure);
     
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior("ObjectTapInteraction", BehaviorType::ReactToCubeMoved, true);
+    robot.GetBehaviorManager().RequestEnableReactionTrigger("ObjectTapInteraction", ReactionTrigger::CubeMoved, true);
     
     robot.GetBehaviorManager().LeaveObjectTapInteraction();
   }

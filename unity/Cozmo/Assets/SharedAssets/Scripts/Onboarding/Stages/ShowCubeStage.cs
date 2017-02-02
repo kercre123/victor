@@ -33,7 +33,7 @@ namespace Onboarding {
     private int _CubesFoundTimes = 0;
     private float _StartTime;
     private OnboardingStateEnum _State = OnboardingStateEnum.Inactive;
-    private BehaviorType _CurrBehavior = BehaviorType.NoneBehavior;
+    private BehaviorClass _CurrBehavior = BehaviorClass.NoneBehavior;
 
     private void Awake() {
       _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
@@ -57,7 +57,7 @@ namespace Onboarding {
         RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("OnboardingShowCube");
         // In this behavior we allow some interuptions, but ReactToPet can interrupt from those reactions. Repress it here, instead of the C++ behavior
         // so it will be off throughout the whole thing.
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("onboardingUnity", BehaviorType.ReactToPet, false);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("onboardingUnity", ReactionTrigger.PetInitialDetection, false);
       }
       // So there is no UI pop just start us at the right stage.
       // Next tick engine will set up at this state too.
@@ -72,15 +72,16 @@ namespace Onboarding {
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("NoneBehavior");
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("onboardingUnity", BehaviorType.ReactToPet, true);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("onboardingUnity", ReactionTrigger.PetInitialDetection, true);
       }
     }
 
     private void HandleBehaviorTransition(BehaviorTransition msg) {
-      _CurrBehavior = msg.newBehaviorType;
+      _CurrBehavior = msg.newBehaviorClass;
+
       if (_State == OnboardingStateEnum.ErrorCozmo) {
         // We're returning to this behavior.
-        _ContinueButtonInstance.Interactable = msg.newBehaviorType == BehaviorType.OnboardingShowCube;
+        _ContinueButtonInstance.Interactable = _CurrBehavior == BehaviorClass.OnboardingShowCube;
       }
     }
 
@@ -89,7 +90,7 @@ namespace Onboarding {
       // let them continue with just the UI instead of waiting for the engine behavior to send back confirmation
       // since reactions are preventing the behavior from even running consistently.
       if (_State == OnboardingStateEnum.ErrorFinal &&
-          _CurrBehavior != BehaviorType.OnboardingShowCube) {
+        _CurrBehavior != BehaviorClass.OnboardingShowCube) {
         OnboardingManager.Instance.GoToNextStage();
       }
       else {
@@ -194,6 +195,7 @@ namespace Onboarding {
           _ShowCozmoCubesLabel.text = "";
           _ShowShelfTextLabel.text = "";
           _ContinueButtonInstance.gameObject.SetActive(true);
+          _ContinueButtonInstance.Interactable = true;
           _CozmoMovedErrorTransform.gameObject.SetActive(false);
           _CozmoCubeRightSideUpTransform.gameObject.SetActive(false);
           _CozmoImageTransform.gameObject.SetActive(false);

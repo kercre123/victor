@@ -21,6 +21,7 @@
 #include "util/dispatchQueue/iTaskHandle.h"
 #include <unordered_map>
 #include <vector>
+#include <mutex>
 
 #define HijackAudioPlugInDebugLogs 0
 
@@ -57,7 +58,7 @@ public:
   
   static const char* kAudioLogChannelName;
 
-  // Note: Transfer's callback context ownership to Audio Controller
+  // Note: Transfers ownership of callback context to Audio Controller
   AudioEngine::AudioPlayingId PostAudioEvent( const std::string& eventName,
                                               AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
                                               AudioEngine::AudioCallbackContext* callbackContext = nullptr );
@@ -157,8 +158,11 @@ private:
   bool _isInitialized = false;
   
   using CallbackContextMap = std::unordered_map< AudioEngine::AudioPlayingId, AudioEngine::AudioCallbackContext* >;
-  CallbackContextMap _eventCallbackContexts;
-  
+  CallbackContextMap _callbackContextMap;
+
+  // Guard access to callbackContextMap
+  std::mutex _callbackContextMutex;
+
   std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;
   
   MusicConductor* _musicConductor = nullptr;
@@ -170,7 +174,7 @@ private:
   // Setup WavePortal plug-in
   void SetupWavePortalPlugIn();
   
-  // Clean up call back messages
+  // Clean up callback messages
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
   void ClearGarbageCollector();
 

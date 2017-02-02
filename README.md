@@ -1,10 +1,11 @@
-# cozmo-game
+# cozmo-one
 
-Cozmo Unity gameplay code. 
+Cozmo Robot, Engine, and Unity UI/Game code. 
 
-If you are contributing to the Unity/C# codebase, please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wiki/Unity-Coding-Guidelines).
+If you are contributing to the Unity/C# codebase, please read [Unity C# Coding Guidelines](https://github.com/anki/cozmo-one/wiki/Eng---Unity-C%23-Coding-Guidelines)
+and follow [Unity Best Practices](https://github.com/anki/cozmo-one/wiki/Eng-Unity-Best-Practices).
 
-# Building cozmo-game
+# Building cozmo-one
 
 ### Brew
 
@@ -12,6 +13,27 @@ First install [brew](http://brew.sh/). Then use brew to install the following de
 
     brew install cmake
     brew install python3
+
+### Android NDK
+
+The android SDK is required to build for Android. (You may find you need it even if you're not building for Android when you run configure.py below.)
+
+    brew install android-sdk
+
+You'll also need to extract the [android-ndk from Dropbox](https://www.dropbox.com/s/a46vfzl429fv1wc/android-ndk-r10e.tgz?dl=0) to /usr/local/opt
+
+Add the following to your .bash_profile in your home directory. Create it if it doesn't already exist.
+
+    export ANDROID_ROOT=/usr/local/opt/android-sdk
+	export ANDROID_HOME=/usr/local/opt/android-sdk
+	export NDK_ROOT=/usr/local/opt/android-ndk-r10e
+	export ANDROID_NDK_ROOT=/usr/local/opt/android-ndk-r10e
+
+Then run
+ 
+    source ~/.bash_profile
+	
+to create the new environment variables.
 
 ### Unity
 
@@ -23,7 +45,7 @@ Right now we use one scene and load assets by code. The main scene is located he
 
 ### Xcode
 
-We are using XCode Version 7.2 (7C68). Install from the OS X App Store. Make sure you open XCode at least once after installing / updating because it may ask for accepting terms of service before permitting us to run it from build scripts.
+We are using XCode Version 8.1. Install from the OS X App Store. Make sure you open XCode at least once after installing / updating because it may ask for accepting terms of service before permitting us to run it from build scripts.
 
 ### Build Script
 
@@ -36,13 +58,29 @@ Build everything from the cozmo-game folder.
     cd <path-to-cozmo-repository>
     ./configure.py build
 
-### Webots
+### [Webots](https://www.cyberbotics.com/overview)
 
-Webots is used for our robotics simulation environment. It is also used to run the engine on desktop/Mac when we connect to a physical robot.
+Webots is what we use for simulation and visualization. It is also used to run the engine on desktop/Mac when we connect to a physical robot.
 
-We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/webots-8.2.1.dmg). You will need to get a license from IT.
+We are currently using [version 8.5.3](https://www.cyberbotics.com/archive/mac/webots-8.5.3.dmg). You will need to get a license from IT.
 
-The Webots worlds can be found in /lib/anki/cozmo-engine/simulator/worlds
+Webots runs concurrent processes for each active simulation object via "controllers". Cozmo simulations consist of the following controllers which can be found in /simulator/controllers. In order to debug with breakpoints you'll need to first attach to the appropriate process.
+
+ * webotsCtrlGameEngine - Engine
+ 
+ * webotsCtrlRobot - Robot
+ 
+ * webotsCtrlLightCube - LightCube
+
+ * webotsCtrlViz - Visualization overlays and display windows
+ 
+ * webotsCtrlKeyboard - Keyboard interface for communicating with engine in place of the Unity app. Useful for quick headless (i.e. no Unity UI/Game) development.
+ 
+ * webotsCtrlDevLog - For visualizing logs recorded from an application run. (Only used in devLogViz.wbt)
+ 
+ * webotsCtrlBuildServerTest - For Webots-based tests (that are executed on the build server with every PR)
+
+The Webots worlds can be found in /simulator/worlds
 
 Useful worlds:
 
@@ -53,6 +91,8 @@ Useful worlds:
  * PatternPlay.wbt - Simulated environment for a virtual robot. Useful for using Unity to run simulated games. You can create your own versions of this ideal for the game you are testing.
 
  * remoteAnimationWorld.wbt - Used by the animation tool to see your animation on a simulated robot.
+ 
+ * devLogViz.wbt - For visualizing logs recorded from an application run. Useful for debugging issues reported by QA.
 
 # Optional Info
 

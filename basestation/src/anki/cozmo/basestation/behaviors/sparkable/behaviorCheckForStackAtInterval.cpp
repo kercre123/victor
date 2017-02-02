@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorCheckForStackAtInterval.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -47,12 +48,12 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(Robot& robot, c
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCheckForStackAtInterval::IsRunnableInternal(const Robot& robot) const
+bool BehaviorCheckForStackAtInterval::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currTime > _nextCheckTime_s)
   {
-    UpdateTargetBlocks(robot);
+    UpdateTargetBlocks(preReqData.GetRobot());
     const bool hasBlocks = !_knownBlockIDs.empty();
     return hasBlocks;
   }
@@ -98,11 +99,18 @@ void BehaviorCheckForStackAtInterval::TransitionToSetup(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCheckForStackAtInterval::TransitionToFacingBlock(Robot& robot)
 {
-  const ObjectID& objectIDToLookAt = GetKnownObjectID(_knownBlockIndex);
-  IActionRunner* action = new TurnTowardsObjectAction(robot, objectIDToLookAt, M_PI);
-  
-  // check above even if turn action fails
-  StartActing(action, &BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock);
+  const ObservableObject* obj = GetKnownObject(robot, _knownBlockIndex);
+  if(nullptr != obj)
+  {
+    IActionRunner* action = new TurnTowardsObjectAction(robot, obj->GetID(), M_PI);
+    
+    // check above even if turn action fails
+    StartActing(action, &BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock);
+  }
+  else
+  {
+    TransitionToCheckingAboveBlock(robot);
+  }
 }
 
   
@@ -116,7 +124,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(Robot& robo
     ghostPose.SetTranslation({
       ghostPose.GetTranslation().x(),
       ghostPose.GetTranslation().y(),
-      ghostPose.GetTranslation().z() + obj->GetSize().z()});
+      ghostPose.GetTranslation().z() + obj->GetDimInParentFrame<'Z'>(ghostPose)});
     
     robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
     

@@ -103,13 +103,16 @@ namespace Radio {
   void prepare();
   void resume();
   void rotate(int frames);
-
+  void sendTestPacket(void);
+  
   void setPropLightsID(unsigned int slot, uint8_t rotationPeriod);
   void setPropLights(const Anki::Cozmo::LightState *state);
   void assignProp(unsigned int slot, uint32_t accessory);
   void setLightGamma(uint8_t gamma);
   void setWifiChannel(int8_t wifiChannel);
   void enableDiscovery(bool enable);
+  
+  void enableAccelStreaming(unsigned int slot, bool enable);
 }
 
 #endif

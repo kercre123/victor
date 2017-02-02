@@ -39,12 +39,12 @@ uint32_t AnimationMessageBuffer::CalculateNumberOfBytesToSend(Robot& robot)
   s32 totalNumBytesPlayed = robot.GetNumAnimationBytesPlayed();
   
   bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
-  ASSERT_NAMED_EVENT((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow,
-                     "AnimationStreamer.UpdateAmountToSend.BytesPlayedExceedsStreamed",
-                     "totalNumBytesStreamed: %d, totalNumBytesPlayed: %d, overflow: %s",
-                     totalNumBytesStreamed,
-                     totalNumBytesPlayed,
-                     (overflow ? "Yes" : "No"));
+  DEV_ASSERT_MSG((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow,
+                 "AnimationStreamer.UpdateAmountToSend.BytesPlayedExceedsStreamed",
+                 "totalNumBytesStreamed: %d, totalNumBytesPlayed: %d, overflow: %s",
+                 totalNumBytesStreamed,
+                 totalNumBytesPlayed,
+                 (overflow ? "Yes" : "No"));
   
   s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
   if (overflow) {
@@ -239,5 +239,5 @@ bool AnimationMessageBuffer::SendMessages(Robot& robot, uint32_t maxByteCount)
 
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

@@ -21,7 +21,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/charger.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -128,7 +128,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDockAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _dockObjectID.GetValue());
-        _robot.GetLightsComponent().UnSetInteractionObject(_dockObjectID);
+        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Interacting, _dockObjectID);
       }
       
       // Stop squinting
@@ -140,16 +140,16 @@ namespace Anki {
       }
 
       if(GetState() != ActionResult::NOT_STARTED) {
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("dockAction",
-                                                                     BehaviorType::AcknowledgeObject,
-                                                                     true);
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger("dockAction",
+                                                                 ReactionTrigger::ObjectPositionUpdated,
+                                                                 true);
       }
 
       
       Util::SafeDelete(_faceAndVerifyAction);
       
-      for (auto& b : _behaviorsToSuppress) {
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), b, true);
+      for (auto& b : _reactionTriggersToSuppress) {
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), b, true);
       }
     }
 
@@ -174,7 +174,10 @@ namespace Anki {
     void IDockAction::SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad)
     {
       if(FLT_LT(offsetX_mm, -kMaxNegativeXPlacementOffset)) {
-        ASSERT_NAMED_EVENT(false, "IDockAction.SetPlacementOffset.InvalidOffset", "x offset %f cannot be negative (through block)", offsetX_mm);
+        DEV_ASSERT_MSG(false,
+                       "IDockAction.SetPlacementOffset.InvalidOffset",
+                       "x offset %f cannot be negative (through block)",
+                       offsetX_mm);
         // for release set offset to 0 so that Cozmo doesn't look stupid plowing through a block
         offsetX_mm = 0;
       }
@@ -486,6 +489,14 @@ namespace Anki {
       _liftMovingSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
       
       
+      _liftLoadState = LiftLoadState::UNKNOWN;
+      auto liftLoadLambda = [this](const AnkiEvent<RobotToEngine>& event)
+      {
+        _liftLoadState = event.GetData().Get_liftLoad().hasLoad ? LiftLoadState::HAS_LOAD : LiftLoadState::HAS_NO_LOAD;;
+      };
+      _liftLoadSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::liftLoad, liftLoadLambda);
+      
+      
       if (_doNearPredockPoseCheck) {
         PRINT_CH_INFO("Actions", "IDockAction.Init.BeginDockingFromPreActionPose",
                       "Robot is within (%.1fmm,%.1fmm) of the nearest pre-action pose, "
@@ -542,8 +553,8 @@ namespace Anki {
 
       SetupTurnAndVerifyAction(dockObject);
       
-      for (auto& b : _behaviorsToSuppress) {
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), b, false);
+      for (auto& b : _reactionTriggersToSuppress) {
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), b, false);
       }
       
       if(!_lightsSet)
@@ -551,7 +562,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDockAction.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _dockObjectID.GetValue());
-        _robot.GetLightsComponent().SetInteractionObject(_dockObjectID);
+        _robot.GetCubeLightComponent().PlayLightAnim(_dockObjectID, CubeAnimationTrigger::Interacting);
         _lightsSet = true;
       }
       
@@ -580,8 +591,8 @@ namespace Anki {
 
         // disable the reactionary behavior for objects, since we are about to interact with one
         // TODO:(bn) should some dock actions not do this? E.g. align with offset that doesn't touch the cube?
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("dockAction",
-                                                                     BehaviorType::AcknowledgeObject,
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger("dockAction",
+                                                                     ReactionTrigger::ObjectPositionUpdated,
                                                                      false);
         
         return ActionResult::SUCCESS;
@@ -620,7 +631,8 @@ namespace Anki {
                                      _placementOffsetAngle_rad,
                                      _useManualSpeed,
                                      _numDockingRetries,
-                                     _dockingMethod) == RESULT_OK)
+                                     _dockingMethod,
+                                     _doLiftLoadCheck) == RESULT_OK)
             {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!
@@ -702,14 +714,17 @@ namespace Anki {
       if(_checkForObjectOnTopOf)
       {
         Pose3d pose = dockObject->GetPose().GetWithRespectToOrigin();
-        const Point3f rotatedSize = dockObject->GetPose().GetRotation() * dockObject->GetSize();
-        pose.SetTranslation({pose.GetTranslation().x(),
-                             pose.GetTranslation().y(),
-                             pose.GetTranslation().z() + rotatedSize.z()});
-        
+        const Point3f rotatedSize = dockObject->GetSizeInParentFrame(pose);
+        pose.SetTranslation({
+          pose.GetTranslation().x(),
+          pose.GetTranslation().y(),
+          pose.GetTranslation().z() + rotatedSize.z()
+        });
+          
         VisuallyVerifyNoObjectAtPoseAction* verifyNoObjectOnTopOfAction = new VisuallyVerifyNoObjectAtPoseAction(_robot,
                                                                                                                  pose,
                                                                                                                  rotatedSize * 0.5f);
+
         verifyNoObjectOnTopOfAction->AddIgnoreID(dockObject->GetID());
         
         // Disable the visual verification from issuing a completion signal
@@ -858,9 +873,9 @@ namespace Anki {
     : IDockAction(robot, objectID, "FacePlant", RobotActionType::FACE_PLANT, useManualSpeed)
     {
       SetShouldCheckForObjectOnTopOf(false);
-      SetShouldSuppressReactionaryBehavior(BehaviorType::ReactToCubeMoved);
-      SetShouldSuppressReactionaryBehavior(BehaviorType::ReactToUnexpectedMovement);
-      SetShouldSuppressReactionaryBehavior(BehaviorType::ReactToCliff);
+      SetShouldSuppressReactionaryBehavior(ReactionTrigger::CubeMoved);
+      SetShouldSuppressReactionaryBehavior(ReactionTrigger::UnexpectedMovement);
+      SetShouldSuppressReactionaryBehavior(ReactionTrigger::CliffDetected);
     }
     
     void FacePlantAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -1093,6 +1108,8 @@ namespace Anki {
     {
       _dockingMethod = (DockingMethod)kPickupDockingMethod;
       SetPostDockLiftMovingAnimation(AnimationTrigger::SoundOnlyLiftEffortPickup);
+      
+      _doLiftLoadCheck = true; // Do lift load check by default
     }
     
     PickupObjectAction::~PickupObjectAction()
@@ -1175,6 +1192,77 @@ namespace Anki {
     ActionResult PickupObjectAction::Verify()
     {
       ActionResult result = ActionResult::ABORT;
+      const TimeStamp_t currentTime = _robot.GetLastMsgTimestamp();
+      bool checkObjectMotion = false;
+      
+      if (_firstVerifyCallTime == 0) {
+        _firstVerifyCallTime = currentTime;
+      }
+
+      if (_robot.GetLastPickOrPlaceSucceeded()) {
+      
+        // Determine whether or not we should do a SearchForNearbyObject instead of TurnTowardsPose
+        // depending on if the liftLoad test resulted in HAS_NO_LOAD since this could be due to sticky lift.
+        if (_doLiftLoadCheck) {
+          if (_liftLoadState == LiftLoadState::UNKNOWN) {
+            // If liftLoad message hasn't come back yet, wait a little longer
+            if (_liftLoadWaitTime_ms == 0) {
+              _liftLoadWaitTime_ms = currentTime + kLiftLoadTimeout_ms;
+            } else if (currentTime > _liftLoadWaitTime_ms) {
+              // If LiftLoadCheck times out for some reason -- lift probably just couldn't get into
+              // position fast enough -- then just proceed to motion check.
+              PRINT_NAMED_WARNING("PickupObjectAction.Verify.LiftLoadTimeout", "");
+              checkObjectMotion = true;
+            }
+            return ActionResult::RUNNING;
+          } else if (_liftLoadState == LiftLoadState::HAS_NO_LOAD) {
+            checkObjectMotion = true;
+          }
+        } else {
+          // If not doing liftLoadCheck, at least do motion check
+          checkObjectMotion = true;
+        }
+        
+        // If the liftLoadCheck failed then look at lastMoved time.
+        // Assuming that the robot stopping coincides closely with the first call to Verify().
+        // If the cube is moving too long after the first call to Verify() the cube is probably in someone's hand.
+        // If it hasn't moved at all for some period before the first call to Verify() the cube probably
+        // wasn't in the lift during pickup.
+        if (checkObjectMotion) {
+          BlockWorld& blockWorld = _robot.GetBlockWorld();
+          ActiveObject* obj = blockWorld.GetActiveObjectByID(_dockObjectID);
+          if (nullptr == obj) {
+            PRINT_NAMED_WARNING("PickupObjectAction.Verify.nullObject", "ObjectID %d", _dockObjectID.GetValue());
+            return ActionResult::BAD_OBJECT;
+          }
+          
+          // Only do this motion check if connected
+          if (obj->GetActiveID() >= 0) {
+            TimeStamp_t lastMovingTime;
+            
+            // Check that object is not moving for longer than expected following the first call to Verify().
+            // If it's moving for too long it's probably being handled by someone.
+            if (obj->IsMoving(&lastMovingTime)) {
+              if (currentTime > _firstVerifyCallTime + kMaxObjectStillMovingAfterRobotStopTime_ms) {
+                _robot.SetCarriedObjectAsUnattached(true);
+                LOG_EVENT("PickupObjectAction.Verify.ObjectStillMoving", "");
+                return ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING;
+              }
+              return ActionResult::RUNNING;
+            }
+            
+            // Check that the object has moved at all in certain time window before we started calling Verify().
+            // If it hasn't moved at all we probably missed.
+            else if (_firstVerifyCallTime > lastMovingTime + (_dockAction == DockAction::DA_PICKUP_LOW ? kMaxObjectHasntMovedBeforeRobotStopTime_ms : kMaxObjectHasntMovedBeforeRobotStopTimeForHighPickup_ms)) {
+              _robot.SetCarriedObjectAsUnattached(true);
+              LOG_EVENT("PickupObjectAction.Verify.ObjectDidntMoveAsExpected", "lastMovedTime %d, firstTime: %d", lastMovingTime, _firstVerifyCallTime);
+              return ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING;
+            }
+          }
+        }
+        
+      } // if (_robot.GetLastPickOrPlaceSucceeded())
+      
       
       if(_verifyAction == nullptr)
       {
@@ -1321,8 +1409,8 @@ namespace Anki {
     {
       // COZMO-3434 manually request to enable AckObject
       if(GetState() != ActionResult::NOT_STARTED) {
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("PlaceObjectOnGroundAction",
-                                                                     BehaviorType::AcknowledgeObject,
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger("PlaceObjectOnGroundAction",
+                                                                     ReactionTrigger::ObjectPositionUpdated,
                                                                      true);
       }
     
@@ -1378,8 +1466,8 @@ namespace Anki {
          ActionResult::RUNNING == result)
       {
         // disable the reactionary behavior for objects, since we are placing one
-        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("PlaceObjectOnGroundAction",
-                                                                     BehaviorType::AcknowledgeObject,
+        _robot.GetBehaviorManager().RequestEnableReactionTrigger("PlaceObjectOnGroundAction",
+                                                                     ReactionTrigger::ObjectPositionUpdated,
                                                                      false);
       }
       
@@ -1700,10 +1788,12 @@ namespace Anki {
       }
       
       Pose3d dockObjectWRTRobot;
-      dockObject->GetZRotatedPointAboveObjectCenter()
-                .GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
-      const float robotObjRelRotation_rad =
-                    dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
+      const Pose3d topPose = dockObject->GetZRotatedPointAboveObjectCenter(0.5f);
+      const bool success = topPose.GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
+      
+      DEV_ASSERT(success, "PlaceRelObjectAction.Verify.GetWrtRobotPoseFailed");
+      
+      const float robotObjRelRotation_rad = dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       // consts for comparing relative robot/block alignment
       const float kRotationTolerence_rad = DEG_TO_RAD(15.f);
@@ -1732,7 +1822,8 @@ namespace Anki {
         yAbsolutePlacementOffset_mm = -_relOffsetY_mm;
       }else{
         PRINT_NAMED_WARNING("PlaceRelObjectAction.CalculatePlacementOffset.InvalidOrientation",
-                          "Robot and block are not within alignment threshold - rotation:%f threshold:%f", RAD_TO_DEG(robotObjRelRotation_rad), kRotationTolerence_rad);
+                            "Robot and block are not within alignment threshold - rotation:%f threshold:%f",
+                            RAD_TO_DEG(robotObjRelRotation_rad), kRotationTolerence_rad);
         return ActionResult::DID_NOT_REACH_PREACTION_POSE;
       }
       

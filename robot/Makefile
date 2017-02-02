@@ -7,9 +7,11 @@
 ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
 ANKI_LOG_SRC_DIRS=supervisor/src hal espressif/app sim_hal/ syscon/hal
+ANKI_LOG_ST_ERR_MSG='Anki log pre-preprocessing incomplete. Run `make dev` to process macros. If you see this on the build server, you need to merge locally, run `make dev` and push again.'
 
 UV4=C:/Keil_v5/UV4/UV4.exe
 PY=python3
+ON_ERR=tools/on_error.bash
 
 GENERATED_DIR=generated
 BUILD_DIR=build
@@ -104,7 +106,7 @@ vesp:
 # Code generation and preprocessing
 
 $(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
-	$(PY) $(ANKI_LOG_PP) --string-table --output $@ $(ANKI_LOG_SRC_DIRS)
+	$(ON_ERR) $(ANKI_LOG_ST_ERR_MSG) $(PY) $(ANKI_LOG_PP) --string-table --output $@ $(ANKI_LOG_SRC_DIRS)
 
 AnkiLog: $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
 	$(PY) $(ANKI_LOG_PP) --preprocessor $(ANKI_LOG_SRC_DIRS)
@@ -140,6 +142,30 @@ espBuild: esp AnkiLog
 	@echo "#Espressif firmware build with build type:"
 	@cat $(BUILD_TYPE_HEADER)
 	@echo "############################################"
+
+esp_factory: python dev esp
+  ifneq ($(BUILD_TYPE),FACTORY)
+		@echo "must call with BUILD_TYPE=FACTORY"
+  else
+		make -C espressif clean
+		cd espressif_bootloader; ./build.sh; cd ..
+		make esp -C clad -j4
+		make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_factory.ld FACTORY_FIRMWARE=1
+		test `wc -c ./espressif/bin/upgrade/user1.2048.new.3.bin | awk '{print $$1}'` -le 294912 # Make sure the firmware fits in segment
+		cp ./espressif/bin/upgrade/user1.2048.new.3.bin $(BUILD_DIR)/esp.factory.bin
+		python3 ./tools/sign.py --prepend_size_word --rtip $(BUILD_DIR)/robot.axf --body  $(BUILD_DIR)/syscon.axf $(BUILD_DIR)/factory.safe
+		cp espressif/app/esp.map $(BUILD_DIR)/esp.factory.map
+		cp ./espressif/bin/upgrade/user1.2048.new.3.S $(BUILD_DIR)/esp.factory.S
+		@echo "############################################"
+		@echo "#Espressif firmware build with build type:"
+		@cat $(BUILD_TYPE_HEADER)
+		@echo "############################################"
+		make -C espressif clean
+  endif
+
+factory_upgrade: esp_factory $(RELEASE_DIR)
+	cd espressif_factory_upgrade; python3 build.py
+	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi espressif_factory_upgrade/firmware/upgrader-image.bin --rtip ./build/robot_boot_update/robot_boot_update.axf --body ./build/syscon.axf ./release/factory_upgrade.safe
 
 $(OTA_FILE): Makefile $(RELEASE_DIR) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) -t $(BUILD_TYPE_HEADER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@

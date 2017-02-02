@@ -46,6 +46,7 @@ ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActi
           type,
           ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
 , _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
+, _originalEyeDartDist(-1.f)
 {
 
 }
@@ -58,11 +59,33 @@ ITrackAction::~ITrackAction()
     _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
   }
 
-  // Make sure to restore original eye dart distance
-  _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+  if(_originalEyeDartDist >= 0.f) {
+    // Make sure to restore original eye dart distance
+    _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+  }
   
   // Make sure we abort any sound actions we triggered
   _robot.GetActionList().Cancel(_soundAnimTag);
+  
+  if(HasStarted())
+  {
+    // Make sure we don't leave the head/body moving
+    switch(_mode)
+    {
+      case Mode::HeadAndBody:
+        _robot.GetMoveComponent().StopBody();
+        _robot.GetMoveComponent().StopHead();
+        break;
+        
+      case Mode::BodyOnly:
+        _robot.GetMoveComponent().StopBody();
+        break;
+        
+      case Mode::HeadOnly:
+        _robot.GetMoveComponent().StopHead();
+        break;
+    }
+  }
 }
 
 // TODO:(bn) if we implemented a parallel compound action function like "Stop on first action complete"
@@ -468,8 +491,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
   assert(nullptr != matchingObject);
   
-  ASSERT_NAMED(PoseState::Unknown != matchingObject->GetPoseState(),
-               "Object's pose state should not be Unknkown");
+  DEV_ASSERT(PoseState::Unknown != matchingObject->GetPoseState(), "Object's pose state should not be Unknown");
   
   _lastTrackToPose = matchingObject->GetPose();
   
@@ -523,7 +545,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     return false;
   }
   
-  ASSERT_NAMED(minDistSq > 0.f, "Distance to closest marker should be > 0.");
+  DEV_ASSERT(minDistSq > 0.f, "Distance to closest marker should be > 0");
   
   absTiltAngle = std::atan(zDist/std::sqrt(minDistSq));
   absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
@@ -629,7 +651,7 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   const f32 xyDistSq = xDist*xDist + yDist*yDist;
   if (xyDistSq <= 0.f)
   {
-    ASSERT_NAMED(false, "TrackFaceAction.GetAngles.ZeroDistance");
+    DEV_ASSERT(false, "TrackFaceAction.GetAngles.ZeroDistance");
     return false;
   }
   

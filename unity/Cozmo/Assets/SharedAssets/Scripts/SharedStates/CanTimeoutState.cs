@@ -27,7 +27,7 @@ public class CanTimeoutState : State {
     base.Update();
     if (Time.time - _StartTime > _Duration) {
       if (_StateMachine != null) {
-        _StateMachine.GetGame().ShowInterruptionQuitGameView(LocalizationKeys.kMinigameTimeoutTitle,
+        _StateMachine.GetGame().ShowInterruptionQuitGameView("game_timeout_alert", LocalizationKeys.kMinigameTimeoutTitle,
             LocalizationKeys.kMinigameTimeoutDescription);
       }
     }

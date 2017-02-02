@@ -161,16 +161,19 @@ namespace Cozmo {
           int timesPlayedDroneMode = 0;
           DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(_DroneModeGame.ChallengeID, out timesPlayedDroneMode);
           if (timesPlayedDroneMode <= 0) {
-            _DroneModeControlsSlide.OpenHowToPlayView(showCloseButton: false, playAnimations: true);
+            _DroneModeControlsSlide.OpenHowToPlayModal(showCloseButton: false, playAnimations: true);
           }
+          _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.DroneModeGetIn, SetUpRobotAnimations);
+        }
 
+        private void SetUpRobotAnimations(bool getInSuccess) {
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
           _RobotAnimator.OnTurboTransitionAnimationStarted += HandleTurboTransitionAnimationFinished;
           _RobotAnimator.OnTurboTransitionAnimationFinished += HandleTurboTransitionAnimationFinished;
 
           _CurrentRobot.EnableDroneMode(true);
           _CurrentRobot.SetEnableFreeplayLightStates(true);
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToPickup, false);
+          _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.RobotPickedUp, false);
         }
 
         public override void Exit() {
@@ -182,7 +185,7 @@ namespace Cozmo {
             _CurrentRobot.EnableDroneMode(false);
             _CurrentRobot.SetEnableFreeplayLightStates(false);
             _CurrentRobot.SetNightVision(false);
-            _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToPickup, true);
+            _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.RobotPickedUp, true);
           }
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
@@ -197,28 +200,35 @@ namespace Cozmo {
 
         public override void Update() {
           if (!IsPerformingAction) {
-            // Send drive wheels / drive head messages if needed
-            SendDriveRobotMessages();
-            if (_IsPlayingTurboTransitionAnimation) {
-              SetHeadSliderToCurrentPosition();
-            }
+            // Wait until the initial get in animation is done before accepting input
+            if (_RobotAnimator != null) {
+              // Send drive wheels / drive head messages if needed
+              SendDriveRobotMessages();
+              if (_IsPlayingTurboTransitionAnimation) {
+                SetHeadSliderToCurrentPosition();
+              }
 
-            _DroneModeControlsSlide.TiltText.text = TiltDrivingDebugText + HeadDrivingDebugText;
-            _DroneModeControlsSlide.DebugText.text = _RobotAnimator.ToString();
+              _DroneModeControlsSlide.TiltText.text = TiltDrivingDebugText + HeadDrivingDebugText;
+
+              _DroneModeControlsSlide.DebugText.text = _RobotAnimator.ToString();
+            }
+            else {
+              SetSlidersToCurrentPosition();
+            }
           }
           else {
             SetSlidersToCurrentPosition();
           }
         }
 
-        public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+        public override void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
           // Triggered by all reactionary behaviors. However, there is a special version of cliff events in engine. 
           // Also, these behaviors are only enabled when the player is not doing anything to Cozmo:
           //    Anki.Cozmo.BehaviorType.AcknowledgeFace
           //    Anki.Cozmo.BehaviorType.AcknowledgeObject
           //    Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement
 
-          if (reactionaryBehavior == Anki.Cozmo.BehaviorType.ReactToOnCharger) {
+          if (reactionaryBehavior == Anki.Cozmo.ReactionTrigger.PlacedOnCharger) {
             _CurrentRobot.DriveWheels(0f, 0f);
             _RobotAnimator.AllowIdleAnimation(false);
           }
@@ -232,11 +242,11 @@ namespace Cozmo {
           SetSlidersToCurrentPosition();
         }
 
-        public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+        public override void Resume(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
           // Set sliders to new state since reactionary behaviors can change head and lift height
           SetSlidersToCurrentPosition();
 
-          if (reactionaryBehavior == Anki.Cozmo.BehaviorType.ReactToOnCharger) {
+          if (reactionaryBehavior == Anki.Cozmo.ReactionTrigger.PlacedOnCharger) {
             _RobotAnimator.AllowIdleAnimation(true);
           }
 
@@ -474,7 +484,7 @@ namespace Cozmo {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.PickupObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandleActionFinished);
+            _CurrentRobot.PickupObject(targetObject as ObservableObject, checkForObjectOnTop: false, callback: HandlePickupActionFinished);
             DisableInput();
             IsPerformingAction = true;
           }
@@ -554,8 +564,15 @@ namespace Cozmo {
 
         private void HandleActionFinished(bool success) {
           _CurrentRobot.CancelCallback(HandleActionFinished);
-          EnableInput();
+          if (!_StateMachine.IsPaused) {
+            EnableInput();
+          }
           IsPerformingAction = false;
+        }
+
+        private void HandlePickupActionFinished(bool success) {
+          _DroneModeControlsSlide.HandlePickupActionResult(success);
+          HandleActionFinished(success);
         }
 
         #endregion
@@ -577,9 +594,9 @@ namespace Cozmo {
         }
 
         private void EnableIdleReactionaryBehaviors(bool enable) {
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
+          _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, enable);
+          _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, enable);
+          _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.UnexpectedMovement, enable);
         }
       }
     }

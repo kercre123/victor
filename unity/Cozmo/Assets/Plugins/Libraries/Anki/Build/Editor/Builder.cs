@@ -204,6 +204,8 @@ namespace Anki {
         FileUtil.DeleteFileOrDirectory(assetFolder + "/assets/.svn");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/animationGroupMaps",
                                                    assetFolder + "/assets/animationGroupMaps");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/cubeAnimationGroupMaps",
+                                                   assetFolder + "/assets/cubeAnimationGroupMaps");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/DailyGoals",
                                                    assetFolder + "/assets/DailyGoals");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/RewardedActions",

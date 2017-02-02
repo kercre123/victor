@@ -48,6 +48,7 @@ namespace {
   
   webots::Receiver* receiver_;
   webots::Emitter*  emitter_;
+  webots::Emitter*  discoveryEmitter_;
   
   webots::Accelerometer* accel_;
   
@@ -77,7 +78,7 @@ namespace {
   BlockState state_ = NORMAL;
   
   webots::LED* led_[NUM_CUBE_LEDS];
-  webots::Node* betterLed_[NUM_CUBE_LEDS];
+  webots::Field* ledColorField_ = nullptr;
 
   LightState ledParams_[NUM_CUBE_LEDS];
   TimeStamp_t ledPhases_[NUM_CUBE_LEDS];
@@ -86,6 +87,8 @@ namespace {
   
   bool wasMoving_;
   double wasLastMovingTime_sec_;
+  
+  bool streamAccel_ = false;
   
   // Lookup table for which four LEDs are in the back, left, front, and right positions,
   // given the current up axis.
@@ -141,7 +144,11 @@ inline void SetLED_helper(u32 index, u32 rgbaColor) {
   double green = (rgbaColor & 0x0000ff00) >> 8;  // second byte
   double blue = (rgbaColor & 0x000000ff);  // third byte
   double betterColor[3] = {red, green, blue};
-  betterLed_[index]->getField("betterColor")->setSFVec3f(betterColor);
+  if (ledColorField_) {
+    ledColorField_->setMFVec3f(index, betterColor);
+    //const double *p = ledColorField_->getMFVec3f(index);
+    //PRINT_NAMED_WARNING("SetLED", "Cube %d, LED %d, Color %f %f %f (%0llx)", blockID_, index, p[0], p[1], p[2], (u64)p);
+  }
 }
 
 // ========== Callbacks for messages from robot =========
@@ -186,11 +193,17 @@ void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
   state_ = (isBeingCarried ? BEING_CARRIED : NORMAL);
 }
 
+void Process_streamObjectAccel(const StreamObjectAccel& msg)
+{
+  streamAccel_ = msg.enable;
+}
+  
 // Stubs to make linking work until we clean up how simulated cubes work.
 void Process_moved(const ObjectMoved& msg) {}
 void Process_stopped(const ObjectStoppedMoving& msg) {}
 void Process_tapped(const ObjectTapped& msg) {}
 void Process_upAxisChanged(const ObjectUpAxisChanged& msg) {}
+void Process_accel(const ObjectAccel& msg) {}
   
 void ProcessBadTag_LightCubeMessage(BlockMessages::LightCubeMessage::Tag badTag)
 {
@@ -294,10 +307,10 @@ Result Init()
     sprintf(led_name, "led%d", i);
     led_[i] = active_object_controller.getLED(led_name);
     assert(led_[i] != nullptr);
-
-    betterLed_[i] = active_object_controller.getFromDef(led_name);
-    assert(betterLed_[i] != nullptr);
   }
+  
+  // Field for monitoring color from webots tests
+  ledColorField_ = selfNode->getField("ledColors");
   
   // Get radio receiver
   receiver_ = active_object_controller.getReceiver("receiver");
@@ -309,6 +322,11 @@ Result Init()
   emitter_ = active_object_controller.getEmitter("emitter");
   assert(emitter_ != nullptr);
   emitter_->setChannel(factoryID_);
+  
+  // Get radio emitter for discovery
+  discoveryEmitter_ = active_object_controller.getEmitter("discoveryEmitter");
+  assert(discoveryEmitter_ != nullptr);
+  discoveryEmitter_->setChannel(OBJECT_DISCOVERY_CHANNEL);
   
   // Get accelerometer
   accel_ = active_object_controller.getAccelerometer("accel");
@@ -573,12 +591,21 @@ Result Update() {
       msg.tag = BlockMessages::LightCubeMessage::Tag_discovered;
       msg.discovered.factory_id = factoryID_;
       msg.discovered.device_type = activeObjectType_;
-      emitter_->setChannel(OBJECT_DISCOVERY_CHANNEL);
-      emitter_->send(msg.GetBuffer(), msg.Size());
-      emitter_->setChannel(factoryID_);
+      discoveryEmitter_->send(msg.GetBuffer(), msg.Size());
       discoveredSendCtr = 0;
     }
     
+    // Send accel data
+    if (streamAccel_) {
+      BlockMessages::LightCubeMessage msg;
+      msg.tag = BlockMessages::LightCubeMessage::Tag_accel;
+      msg.accel.objectID = blockID_;
+      f32 scaleFactor = 32.f/9.81f;  // 32 on physical blocks ~= 1g
+      msg.accel.accel.x = accelVals[0] * scaleFactor;
+      msg.accel.accel.y = accelVals[1] * scaleFactor;
+      msg.accel.accel.z = accelVals[2] * scaleFactor;
+      emitter_->send(msg.GetBuffer(), msg.Size());
+    }
     
     // Run FSM
     switch(state_)

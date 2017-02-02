@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "util/helpers/templateHelpers.h"
@@ -29,7 +29,6 @@ namespace Cozmo {
 
 namespace{
 using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
-static const char * kCustomLightLockName = "BuildPyramidSetByIDLock";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -47,7 +46,7 @@ void BuildPyramidPersistentUpdate::Init(Robot& robot)
   auto handlerCallback = [&robot](const EngineToGameEvent& event) {
     robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
               UnlockId::BuildPyramid, Util::EnumToUnderlying(BehaviorBuildPyramidBase::MusicState::SearchingForCube));
-    robot.GetLightsComponent().ClearAllCustomPatterns();
+    robot.GetCubeLightComponent().StopAllAnims();
   };
   
   if(robot.HasExternalInterface()){
@@ -139,7 +138,7 @@ void BuildPyramidPersistentUpdate::RequestUpdateMusicLightState(Robot& robot, Be
     {
       robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
                 UnlockId::BuildPyramid, Util::EnumToUnderlying(MusicState::SearchingForCube));
-      robot.GetLightsComponent().ClearAllCustomPatterns();
+      robot.GetCubeLightComponent().StopAllAnims();
       break;
     }
     case MusicState::InitialCubeCarry:
@@ -161,19 +160,10 @@ void BuildPyramidPersistentUpdate::RequestUpdateMusicLightState(Robot& robot, Be
     }
     case MusicState::TopBlockCarry:
     {
-      // To pick up the cube with a base in place means the full pyramid behavior is running,
-      // remove all locks so that the running behavior has full control of the lights
-      const auto& pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-      if(pyramidBases.size() > 0){
-        const auto& base = pyramidBases[0];
-        robot.GetLightsComponent().ClearCustomLightPattern(base->GetBaseBlockID(), kCustomLightLockName);
-        robot.GetLightsComponent().ClearCustomLightPattern(base->GetStaticBlockID(), kCustomLightLockName);
-      }
       break;
     }
     case MusicState::PyramidCompleteFlourish:
     {
-      
       break;
     }
   }

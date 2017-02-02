@@ -53,6 +53,8 @@ class CopyResources(object):
                         action='store', default=None, help='where external assets are unpackaged at')
     parser.add_argument('--animationGroupsPath', dest='animationGroupPath', required=True,
                         action='store', default=None, help='where animation groups are located')
+    parser.add_argument('--cubeAnimationGroupPath', dest='cubeAnimationGroupPath', required=True,
+                        action='store', default=None, help='where cube animation groups are located')
     parser.add_argument('--dailyGoalsPath', dest='dailyGoalsPath', required=True,
                         action='store', default=None, help='Where daily goals data is located')
     parser.add_argument('--rewardedActionsPath', dest='rewardedActionsPath', required=True,
@@ -154,6 +156,14 @@ class CopyResources(object):
     if not ankibuild.util.File.cptree(self.options.animationGroupPath, animationGroupPath):
       self.log.error("error copying {0} to {1}".format (self.options.animationGroupPath, animationGroupPath))
       return False
+      
+    # cube animation groups
+    cubeAnimationGroupPath = os.path.join(cozmoResourcesPath, 'assets/cubeAnimationGroupMaps')
+    if os.path.isdir(cubeAnimationGroupPath):
+      ankibuild.util.File.rm_rf(cubeAnimationGroupPath)
+    if not ankibuild.util.File.cptree(self.options.cubeAnimationGroupPath, cubeAnimationGroupPath):
+      self.log.error("error copying {0} to {1}".format (self.options.cubeAnimationGroupPath, cubeAnimationGroupPath))
+      return False
 
     # daily goals
     dailyGoalsPath = os.path.join(cozmoResourcesPath, 'assets/DailyGoals')
@@ -225,6 +235,12 @@ class CopyResources(object):
     animationGroupPath = os.path.join(cozmoResourcesPath, 'assets/animationGroupMaps')
     args = baseargs[:]
     args += [self.options.animationGroupPath, animationGroupPath]
+    ankibuild.util.File.execute(args)
+    
+    # cube animation groups
+    cubeAnimationGroupPath = os.path.join(cozmoResourcesPath, 'assets/cubeAnimationGroupMaps')
+    args = baseargs[:]
+    args += [self.options.cubeAnimationGroupPath, cubeAnimationGroupPath]
     ankibuild.util.File.execute(args)
 
     # daily goals

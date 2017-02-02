@@ -1,22 +1,30 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/robotDataLoader.h"
-#include "anki/cozmo/basestation/robotManager.h"
+
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/util/transferQueue/dasTransferTask.h"
 #include "anki/cozmo/basestation/util/transferQueue/gameLogTransferTask.h"
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "util/random/randomGenerator.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "util/cpuProfiler/cpuThreadId.h"
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
-
+#include "util/random/randomGenerator.h"
 
 namespace Anki {
 namespace Cozmo {
+
+class ThreadIDInternal : private Util::noncopyable
+{
+public:
+  Util::CpuThreadId _id = Util::kCpuThreadIdInvalid;
+};
+
   
 CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface)
   : _externalInterface(externalInterface)
@@ -32,7 +40,9 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _dasTransferTask(new Anki::Util::DasTransferTask())
   #endif
   , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
+  , _threadIdHolder(new ThreadIDInternal)
 {
+
   // Only set up the audio server if we have a real dataPlatform
   if (nullptr != dataPlatform)
   {
@@ -42,6 +52,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   _dasTransferTask->Init(_transferQueueMgr.get());
   #endif
   _gameLogTransferTask->Init(_transferQueueMgr.get());
+  
 }
   
 
@@ -72,6 +83,21 @@ void CozmoContext::SetSdkStatus(SdkStatusType statusType, std::string&& statusTe
   {
     _externalInterface->SetSdkStatus(statusType, std::move(statusText));
   }
+}
+
+void CozmoContext::SetRandomSeed(uint32_t seed)
+{
+  _random->SetSeed("CozmoContext", seed);
+}
+
+void CozmoContext::SetMainThread()
+{
+  _threadIdHolder->_id = Util::GetCurrentThreadId();
+}
+
+bool CozmoContext::IsMainThread() const
+{
+  return Util::AreCpuThreadIdsEqual( _threadIdHolder->_id, Util::GetCurrentThreadId() );
 }
 
   

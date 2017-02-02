@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/game/comms/gameComms.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
-#include "anki/types.h"
+#include "anki/common/types.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -117,6 +117,7 @@ protected:
   virtual void HandleFactoryTestResultEntry(FactoryTestResultEntry const& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
   virtual void HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg){};
+  virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg) {};
   
   virtual void HandleBehaviorTransition(ExternalInterface::BehaviorTransition const& msg){};
   virtual void HandleEnabledBehaviorList(ExternalInterface::RespondEnabledBehaviorList const& msg){};
@@ -361,8 +362,10 @@ protected:
 
   const Vision::FaceID_t GetLastObservedFaceID() const;
   
-  BehaviorType GetBehaviorType(const std::string& behaviorName) const;
+  BehaviorClass GetBehaviorClass(const std::string& behaviorName) const;
+  ReactionTrigger GetReactionTrigger(const std::string& triggerName) const;
 
+  
   // NVStorage
   const std::vector<u8>* GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const;
   void ClearReceivedNVStorageData(NVStorage::NVEntryTag tag);
@@ -396,22 +399,31 @@ protected:
   // @return     The node with the definition name.
   //
   webots::Node* GetNodeByDefName(const std::string& defName) const;
-
-
+  
+  ///
+  // @brief      Packages the pose of a webots node into a Pose3d object
+  // @param[in]  node  Node to get the pose for
+  // @return     The pose of the webots node; translation units are in millimeters.
+  //
+  const Pose3d GetPose3dOfNode(webots::Node* node) const;
+  
+  ///
+  // @brief      Sets the pose of a webots node from a Pose3d object
+  // @param[in]  node  Node whose pose to change
+  // @param[in]  The new pose to use; translation units are in millimeters.
+  //
+  void SetNodePose(webots::Node* node, const Pose3d& newPose);
+  
   ///
   // @brief      Determines if x seconds passed since the first time this function was called.
   //             Useful in the CST test controllers where the same code block in each state can be
   //             called many times repeatedly as UpdateInternal is called on every tick and waiting
   //             by blocking the thread is not an option as the time will not advance if the thread
   //             is blocked.
-  // @param      waitTimer  Requires that there is a variable that persists outside the function
-  //                        scope to keep track of the first time the function was called (the time
-  //                        the timer started). Needs to be a negative number to start with. Will be
-  //                        returned to a negative number after function returns true.
   // @param[in]  xSeconds   Number of seconds to wait for.
   // @return     True if has x seconds passed since the first call of the function, False otherwise.
   //
-  const bool HasXSecondsPassedYet(double& waitTimer, double xSeconds);
+  const bool HasXSecondsPassedYet(double xSeconds);
 
   ///
   // @brief      Apply a force to a node at the node origin in webots.
@@ -448,18 +460,12 @@ private:
   void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
   void HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg);
   void HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg);
+  void HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg);
   void HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg);
   void HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
-
-  ///
-  // @brief      Packages the pose of a webots node into a Pose3d object
-  // @param[in]  node  Node to get the pose for
-  // @return     The pose of the webots node; translation units are in millimeters.
-  //
-  const Pose3d GetPose3dOfNode(webots::Node* node);
 
   ///
   // @brief      Iterates through _lightCubes and returns the first light cube with the given ID
@@ -513,6 +519,11 @@ private:
   bool _isBlockPoolInitialized;
   
   float _engineLoadedRatio = 0.0f;
+  
+  double _waitTimer = -1.0;
+  
+  // Seed used to start engine
+  uint32_t _randomSeed = 0;
   
 }; // class UiGameController
   

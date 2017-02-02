@@ -47,7 +47,6 @@ private:
   TestState _testState = TestState::Init;
   s32 _result = 0;
 
-  double _waitTimer = -1;
   int _framesOn = 0;
   int _framesOff = 0;
   bool _onFramesMatched = false;
@@ -146,10 +145,17 @@ s32 CST_LEDColor::UpdateSimInternal()
 
     case TestState::VerifyLEDColors:
     {
-      const double* kLed0Color = GetNodeByDefName("cube.led0")->getField("betterColor")->getSFVec3f();  // Back
-      const double* kLed1Color = GetNodeByDefName("cube.led1")->getField("betterColor")->getSFVec3f();  // Left
-      const double* kLed2Color = GetNodeByDefName("cube.led2")->getField("betterColor")->getSFVec3f();  // Front
-      const double* kLed3Color = GetNodeByDefName("cube.led3")->getField("betterColor")->getSFVec3f();  // Right
+      const webots::Field* colorField = GetNodeByDefName("cube")->getField("ledColors");
+      const double kLed0Color[3] = {colorField->getMFVec3f(0)[0], colorField->getMFVec3f(0)[1], colorField->getMFVec3f(0)[2]};  // Back
+      const double kLed1Color[3] = {colorField->getMFVec3f(1)[0], colorField->getMFVec3f(1)[1], colorField->getMFVec3f(1)[2]};  // Left
+      const double kLed2Color[3] = {colorField->getMFVec3f(2)[0], colorField->getMFVec3f(2)[1], colorField->getMFVec3f(2)[2]};  // Front
+      const double kLed3Color[3] = {colorField->getMFVec3f(3)[0], colorField->getMFVec3f(3)[1], colorField->getMFVec3f(3)[2]};  // Right
+      
+//      PRINT_NAMED_INFO("colorField", "%0llx", (u64)colorField);
+//      PRINT_NAMED_INFO("VerifyColors0", "%f %f %f", kLed0Color[0], kLed0Color[1], kLed0Color[2]);
+//      PRINT_NAMED_INFO("VerifyColors1", "%f %f %f", kLed1Color[0], kLed1Color[1], kLed1Color[2]);
+//      PRINT_NAMED_INFO("VerifyColors2", "%f %f %f", kLed2Color[0], kLed2Color[1], kLed2Color[2]);
+//      PRINT_NAMED_INFO("VerifyColors3", "%f %f %f", kLed3Color[0], kLed3Color[1], kLed3Color[2]);
 
       // We only check if there are any color in each channel at all because there are some post-
       // processing that happens inside engine with the color information sent from game like white
@@ -199,7 +205,7 @@ s32 CST_LEDColor::UpdateSimInternal()
 
     case TestState::WaitForMessageToTransmit:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(_waitTimer, 1), 2) {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1), 2) {
         _testState = TestState::VerifyLEDAnimation;
       }
       break;
@@ -210,16 +216,17 @@ s32 CST_LEDColor::UpdateSimInternal()
       // Considered correct if there are correct number of frames in the on period, and the correct
       // number of frames in the off period, back-to-back.
 
-      const double* kLed0Color = GetNodeByDefName("cube.led0")->getField("betterColor")->getSFVec3f();  // Back
-      const double* kLed1Color = GetNodeByDefName("cube.led1")->getField("betterColor")->getSFVec3f();  // Left
-      const double* kLed2Color = GetNodeByDefName("cube.led2")->getField("betterColor")->getSFVec3f();  // Front
-      const double* kLed3Color = GetNodeByDefName("cube.led3")->getField("betterColor")->getSFVec3f();  // Right
+      const webots::Field* colorField = GetNodeByDefName("cube")->getField("ledColors");
+      const double kLed0Color[3] = {colorField->getMFVec3f(0)[0], colorField->getMFVec3f(0)[1], colorField->getMFVec3f(0)[2]};  // Back
+      const double kLed1Color[3] = {colorField->getMFVec3f(1)[0], colorField->getMFVec3f(1)[1], colorField->getMFVec3f(1)[2]};  // Left
+      const double kLed2Color[3] = {colorField->getMFVec3f(2)[0], colorField->getMFVec3f(2)[1], colorField->getMFVec3f(2)[2]};  // Front
+      const double kLed3Color[3] = {colorField->getMFVec3f(3)[0], colorField->getMFVec3f(3)[1], colorField->getMFVec3f(3)[2]};  // Right
 
-      ASSERT_NAMED_EVENT(EqualityCStyleArray(kLed0Color, kLed1Color, 3) &&
-                         EqualityCStyleArray(kLed1Color, kLed2Color, 3) &&
-                         EqualityCStyleArray(kLed2Color, kLed3Color, 3),
-                         "CST_LEDColor.VerifyLEDAnimation",
-                         "All the LEDs should have the same color at this stage.");
+      DEV_ASSERT_MSG(EqualityCStyleArray(kLed0Color, kLed1Color, 3) &&
+                     EqualityCStyleArray(kLed1Color, kLed2Color, 3) &&
+                     EqualityCStyleArray(kLed2Color, kLed3Color, 3),
+                     "CST_LEDColor.VerifyLEDAnimation",
+                     "All the LEDs should have the same color at this stage.");
 
       if (kOnPeriod_ms % BS_TIME_STEP != 0 || kOffPeriod_ms % BS_TIME_STEP != 0) {
         PRINT_NAMED_WARNING("CST_LEDColor.VerifyLEDAnimation",

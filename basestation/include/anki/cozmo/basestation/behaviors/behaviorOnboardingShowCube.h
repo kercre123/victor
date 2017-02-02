@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorOnboardingShowCube_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorOnboardingShowCube_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "clad/externalInterface/messageEngineToGame.h" // OnboardingStateEnum are in here.
 #include "anki/common/basestation/objectIDs.h"
 
@@ -37,7 +37,7 @@ protected:
 
 public:
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 protected:
@@ -62,7 +62,6 @@ private:
   State _state = State::Inactive;
   uint8_t     _numErrors = 0;
   uint8_t     _timesPickedUpCube = 0;
-  bool        _lightsNeedReEnable = false;
   ObjectID    _targetBlock;
   
   void EnableSpecificReactionaryBehavior(Robot& robot, bool enable);

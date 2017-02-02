@@ -11,17 +11,18 @@
  *
  **/
 
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
-
+#include "util/random/randomGenerator.h"
 
 namespace Anki {
 namespace Cozmo {
     
-AnimationGroupContainer::AnimationGroupContainer()
+AnimationGroupContainer::AnimationGroupContainer(Util::RandomGenerator& rng)
+: _rng(rng)
 {
 }
     
@@ -31,7 +32,7 @@ Result AnimationGroupContainer::AddAnimationGroup(const std::string& name)
       
   auto retVal = _animationGroups.find(name);
   if(retVal == _animationGroups.end()) {
-    _animationGroups.emplace(name,AnimationGroup(name));
+    _animationGroups.emplace(name,AnimationGroup(_rng, name));
   }
       
   return lastResult;

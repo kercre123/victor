@@ -22,6 +22,7 @@
 
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/colorRGBA.h"
 
 namespace Anki
 {
@@ -83,6 +84,12 @@ namespace Anki
     
     // Get an angle back in Radians, possibly stored in degrees in the Json
     bool GetAngleOptional(const Json::Value& jsonRoot, const std::string& key, Radians& angle, bool storedInDegrees);
+    
+    // Get an array of ColorRGBA as u32 by name
+    template<size_t N>
+    bool GetColorValuesToArrayOptional(const Json::Value& jsonRoot,
+                                       const std::string& key,
+                                       std::array<u32, N>& arr);
     
     // Dump the json to the selected output (pretty-printed). The depth argument limits
     // the depth of the tree that is printed. It is 0 by default, which
@@ -154,6 +161,35 @@ namespace Anki
       }
       
       return retVal;
+    }
+    
+    template<size_t N>
+    bool GetColorValuesToArrayOptional(const Json::Value& jsonRoot,
+                                       const std::string& key,
+                                       std::array<u32, N>& arr)
+    {
+      if(jsonRoot.isMember(key))
+      {
+        const Json::Value& values = jsonRoot[key];
+        
+        if(arr.size() != values.size())
+        {
+          PRINT_NAMED_ERROR("JsonTools.GetColorValuesToArrayOptional.DiffSizes",
+                            "The json array and destination array are different sizes");
+          return false;
+        }
+        
+        for(u8 i = 0; i < (int)arr.size(); ++i)
+        {
+          ColorRGBA color(values[i][0].asFloat(),
+                          values[i][1].asFloat(),
+                          values[i][2].asFloat(),
+                          values[i][3].asFloat());
+          arr[i] = color.AsRGBA();
+        }
+        return true;
+      }
+      return false;
     }
     
     

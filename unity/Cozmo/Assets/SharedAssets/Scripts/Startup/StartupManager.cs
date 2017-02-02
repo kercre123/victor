@@ -58,6 +58,13 @@ public class StartupManager : MonoBehaviour {
   [SerializeField]
   private string[] _StartupDebugPrefabNames;
 
+  [SerializeField]
+  private GameObject _LoadingCanvas;
+
+  [SerializeField]
+  private GameObject _AndroidPermissionPrefab;
+  private GameObject _AndroidPermissionInstance;
+
   // These don't go through the normal loc system because it isn't loaded yet but is in the same format.
   // Add more when we have more than just EN-us, or just change the format to include multiple languages.
   [SerializeField]
@@ -87,6 +94,28 @@ public class StartupManager : MonoBehaviour {
 #endif
 
     Screen.orientation = ScreenOrientation.LandscapeLeft;
+
+    #if UNITY_ANDROID && !UNITY_EDITOR
+    bool needPermission = false;
+    using (var permissionUtil = new AndroidJavaClass("com.anki.util.PermissionUtil")) {
+      System.Func<bool> permissionChecker =
+        () => permissionUtil.CallStatic<bool>("hasPermission", AndroidPermissionBlocker.kPermission);
+      needPermission = !permissionChecker();
+
+      if (needPermission) {
+        _AndroidPermissionInstance = GameObject.Instantiate(_AndroidPermissionPrefab);
+        _AndroidPermissionInstance.GetComponent<AndroidPermissionBlocker>().SetStartupManager(this);
+        _AndroidPermissionInstance.transform.SetParent(_LoadingCanvas.transform, false);
+
+        do {
+          yield return null;
+        } while (!permissionChecker());
+
+        // if we got here, we finally got permission
+        GameObject.Destroy(_AndroidPermissionInstance);
+      }
+    }
+    #endif
 
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
@@ -434,7 +463,7 @@ public class StartupManager : MonoBehaviour {
     }
   }
 
-  private string GetBootString(string key, params object[] args) {
+  public string GetBootString(string key, params object[] args) {
     string stringOut = "";
     if (_BootStrings == null && _BootLocEnStrings != null) {
       _BootStrings = JSONObject.Create(_BootLocEnStrings.text);

@@ -28,7 +28,7 @@ static constexpr char KAnimationControllerLogChannel[] = "AnimationController";
 
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki
 
 #endif /* __Basestation_Animations_AnimationControllerTypes_H__ */

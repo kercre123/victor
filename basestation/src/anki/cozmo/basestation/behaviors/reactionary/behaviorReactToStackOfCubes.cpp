@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToStackOfCubes.h"
 
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 
@@ -26,16 +27,16 @@ const constexpr float kTimeBetweenReactions_s = 100.f;
 }
   
 BehaviorReactToStackOfCubes::BehaviorReactToStackOfCubes(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("ReactToStackOfCubes");
   
 }
   
-bool BehaviorReactToStackOfCubes::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToStackOfCubes::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   using namespace BlockConfigurations;
-  auto allPyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
+  auto allPyramids = preReqData.GetRobot().GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
   if(allPyramids.size() > 0){
     TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if(currentTime > _nextValidReactionTime_s){
@@ -46,7 +47,7 @@ bool BehaviorReactToStackOfCubes::IsRunnableInternalReactionary(const Robot& rob
   return false;
 }
 
-Result BehaviorReactToStackOfCubes::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToStackOfCubes::InitInternal(Robot& robot)
 {
   _nextValidReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeStamp() + kTimeBetweenReactions_s;
   return Result::RESULT_OK;

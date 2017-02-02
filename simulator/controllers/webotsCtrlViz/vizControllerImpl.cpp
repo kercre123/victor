@@ -32,10 +32,11 @@ namespace Cozmo {
 
 static const size_t kEmotionBuffersCapacity  = 300; // num ticks of emotion score values to store
 static const size_t kBehaviorBuffersCapacity = 300; // num ticks of behavior score values to store
+static const size_t kCubeAccelBuffersCapacity = 300; // num ticks of cube accel values to store
   
   
 VizControllerImpl::VizControllerImpl(webots::Supervisor& vs)
-  : vizSupervisor(vs)
+  : _vizSupervisor(vs)
 {
   for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
   {
@@ -43,6 +44,10 @@ VizControllerImpl::VizControllerImpl(webots::Supervisor& vs)
   }
   _emotionEventBuffer.Reset(kEmotionBuffersCapacity);
   _behaviorEventBuffer.Reset(kBehaviorBuffersCapacity);
+  
+  for (int i = 0; i < 3; ++i) {
+    _cubeAccelBuffers[i].Reset(kCubeAccelBuffersCapacity);
+  }
 }
   
 
@@ -86,19 +91,37 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessSaveImages, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraInfo,
     std::bind(&VizControllerImpl::ProcessCameraInfo, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::ObjectConnectionState,
+    std::bind(&VizControllerImpl::ProcessObjectConnectionState, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::ObjectMovingState,
+    std::bind(&VizControllerImpl::ProcessObjectMovingState, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::ObjectUpAxisState,
+    std::bind(&VizControllerImpl::ProcessObjectUpAxisState, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::ObjectAccelState,
+    std::bind(&VizControllerImpl::ProcessObjectAccelState, this, std::placeholders::_1));
+  
 
   // Get display devices
-  disp = vizSupervisor.getDisplay("cozmo_viz_display");
-  dockDisp = vizSupervisor.getDisplay("cozmo_docking_display");
-  moodDisp = vizSupervisor.getDisplay("cozmo_mood_display");
-  behaviorDisp = vizSupervisor.getDisplay("cozmo_behavior_display");
-  camDisp = vizSupervisor.getDisplay("cozmo_cam_viz_display");
+  _disp = _vizSupervisor.getDisplay("cozmo_viz_display");
+  _dockDisp = _vizSupervisor.getDisplay("cozmo_docking_display");
+  _moodDisp = _vizSupervisor.getDisplay("cozmo_mood_display");
+  _behaviorDisp = _vizSupervisor.getDisplay("cozmo_behavior_display");
+  _camDisp = _vizSupervisor.getDisplay("cozmo_cam_viz_display");
+  _activeObjectDisp = _vizSupervisor.getDisplay("cozmo_active_object_display");
+  _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
 
+  _disp->setFont("Lucida Console", 8, true);
+  _moodDisp->setFont("Lucida Console", 8, true);
+  _activeObjectDisp->setFont("Lucida Console", 8, true);
+
+  DrawText(_activeObjectDisp, 0, (u32)Anki::NamedColors::WHITE, "Slot | Moving | UpAxis");
+  
+  
   // === Look for CozmoBot in scene tree ===
 
   // Get world root node
-  webots::Node* root = vizSupervisor.getRoot();
+  webots::Node* root = _vizSupervisor.getRoot();
 
   // Look for controller-less CozmoBot in children.
   // These will be used as visualization robots.
@@ -108,12 +131,8 @@ void VizControllerImpl::Init()
     webots::Node* nd = rootChildren->getMFNode(n);
 
     // Get the node name
-    std::string nodeName = "";
-    webots::Field* nameField = nd->getField("name");
-    if (nameField) {
-      nodeName = nameField->getSFString();
-    }
-
+    std::string nodeName = nd->getTypeName();
+    
     // Get the vizMode status
     bool vizMode = false;
     webots::Field* vizModeField = nd->getField("vizMode");
@@ -123,8 +142,9 @@ void VizControllerImpl::Init()
 
     //printf(" Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"\n",
     //       n, nodeName.c_str(), nd->getTypeName().c_str(), controllerName.c_str());
-
-    if (nd->getTypeName().find("Supervisor") != std::string::npos &&
+    int nodeType = nd->getType();
+    
+    if (nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
       nodeName.find("CozmoBot") != std::string::npos &&
       vizMode) {
 
@@ -259,15 +279,20 @@ static inline void SetColorHelper(webots::Display* disp, u32 ankiColor)
   }
 }
   
-void VizControllerImpl::DrawText(VizTextLabelType labelID, u32 color, const char* text)
+void VizControllerImpl::DrawText(webots::Display* disp, u32 lineNum, u32 color, const char* text)
 {
+  if (disp == nullptr) {
+    PRINT_NAMED_WARNING("VizControllerImpl.DrawText.NullDisplay", "");
+    return;
+  }
+  
   const int baseXOffset = 8;
   const int baseYOffset = 8;
   const int yLabelStep = 10;  // Line spacing in pixels. Characters are 8x8 pixels in size.
 
-  // Clear line specified by labelID
+  // Clear line specified by lineNum
   SetColorHelper(disp, NamedColors::BLACK);
-  disp->fillRectangle(0, baseYOffset + yLabelStep * (uint32_t)labelID, disp->getWidth(), 8);
+  disp->fillRectangle(0, baseYOffset + yLabelStep * lineNum, disp->getWidth(), yLabelStep);
 
   // Draw text
   SetColorHelper(disp, color);
@@ -276,20 +301,20 @@ void VizControllerImpl::DrawText(VizTextLabelType labelID, u32 color, const char
   if(str.empty()) {
     str = " "; // Avoid webots warnings for empty text
   }
-  disp->drawText(str, baseXOffset, baseYOffset + yLabelStep * (uint32_t)labelID);
+  disp->drawText(str, baseXOffset, baseYOffset + yLabelStep * lineNum);
 }
 
-void VizControllerImpl::DrawText(VizTextLabelType labelID, const char* text)
+void VizControllerImpl::DrawText(webots::Display* disp, u32 lineNum, const char* text)
 {
-  DrawText(labelID, 0xffffff, text);
+  DrawText(disp, lineNum, 0xffffff, text);
 }
-
+  
 void VizControllerImpl::ProcessVizSetLabelMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_SetLabel();
   if (payload.text.size() > 0){
-    VizTextLabelType labelID = (VizTextLabelType)((uint32_t)VizTextLabelType::NUM_TEXT_LABELS + payload.labelID);
-    DrawText(labelID, payload.colorID, payload.text[0].c_str());
+    u32 lineNum = ((uint32_t)VizTextLabelType::NUM_TEXT_LABELS + payload.labelID);
+    DrawText(_disp, lineNum, payload.colorID, payload.text[0].c_str());
   }
 }
 
@@ -310,20 +335,20 @@ void VizControllerImpl::ProcessVizDockingErrorSignalMessage(const AnkiEvent<VizI
   char text[111];
   sprintf(text, "ErrSig x:%.1f y:%.1f z:%.1f a:%.2f\n",
           payload.x_dist, payload.y_dist, payload.z_dist, payload.angle);
-  DrawText(VizTextLabelType::TEXT_LABEL_DOCK_ERROR_SIGNAL, text);
-  camDisp->setColor(0xff0000);
-  camDisp->drawText(text, 0, 0);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_DOCK_ERROR_SIGNAL, text);
+  _camDisp->setColor(0xff0000);
+  _camDisp->drawText(text, 0, 0);
 
 
   // Clear the space
-  dockDisp->setColor(0x0);
-  dockDisp->fillRectangle(baseXOffset, baseYOffset, rectW, rectH);
+  _dockDisp->setColor(0x0);
+  _dockDisp->fillRectangle(baseXOffset, baseYOffset, rectW, rectH);
 
-  dockDisp->setColor(0xffffff);
-  dockDisp->drawRectangle(baseXOffset, baseYOffset, rectW, rectH);
+  _dockDisp->setColor(0xffffff);
+  _dockDisp->drawRectangle(baseXOffset, baseYOffset, rectW, rectH);
 
   // Draw robot position
-  dockDisp->drawOval((int)(baseXOffset + 0.5f*rectW), baseYOffset + rectH, 3, 3);
+  _dockDisp->drawOval((int)(baseXOffset + 0.5f*rectW), baseYOffset + rectH, 3, 3);
 
 
   // Get pixel coordinates of block face center where
@@ -342,8 +367,8 @@ void VizControllerImpl::ProcessVizDockingErrorSignalMessage(const AnkiEvent<VizI
   // Draw line representing the block face
   int dx = (int)(halfBlockFaceLength * cosf(payload.angle));
   int dy = (int)(-halfBlockFaceLength * sinf(payload.angle));
-  dockDisp->drawLine(blockFaceCenterX + dx, blockFaceCenterY + dy, blockFaceCenterX - dx, blockFaceCenterY - dy);
-  dockDisp->drawOval(blockFaceCenterX, blockFaceCenterY, 2, 2);
+  _dockDisp->drawLine(blockFaceCenterX + dx, blockFaceCenterY + dy, blockFaceCenterX - dx, blockFaceCenterY - dy);
+  _dockDisp->drawOval(blockFaceCenterX, blockFaceCenterY, 2, 2);
 
 }
 
@@ -351,44 +376,44 @@ void VizControllerImpl::ProcessVizVisionMarkerMessage(const AnkiEvent<VizInterfa
 {
   const auto& payload = msg.GetData().Get_VisionMarker();
   if(payload.verified) {
-    camDisp->setColor(0xff0000);
+    _camDisp->setColor(0xff0000);
   } else {
-    camDisp->setColor(0x0000ff);
+    _camDisp->setColor(0x0000ff);
   }
-  camDisp->drawLine(payload.topLeft_x, payload.topLeft_y, payload.bottomLeft_x, payload.bottomLeft_y);
-  camDisp->drawLine(payload.bottomLeft_x, payload.bottomLeft_y, payload.bottomRight_x, payload.bottomRight_y);
-  camDisp->drawLine(payload.bottomRight_x, payload.bottomRight_y, payload.topRight_x, payload.topRight_y);
-  camDisp->drawLine(payload.topRight_x, payload.topRight_y, payload.topLeft_x, payload.topLeft_y);
+  _camDisp->drawLine(payload.topLeft_x, payload.topLeft_y, payload.bottomLeft_x, payload.bottomLeft_y);
+  _camDisp->drawLine(payload.bottomLeft_x, payload.bottomLeft_y, payload.bottomRight_x, payload.bottomRight_y);
+  _camDisp->drawLine(payload.bottomRight_x, payload.bottomRight_y, payload.topRight_x, payload.topRight_y);
+  _camDisp->drawLine(payload.topRight_x, payload.topRight_y, payload.topLeft_x, payload.topLeft_y);
 }
 
 void VizControllerImpl::ProcessVizCameraQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_CameraQuad();
 
-  SetColorHelper(camDisp, payload.color);
-  camDisp->drawLine((int)payload.xUpperLeft, (int)payload.yUpperLeft, (int)payload.xLowerLeft, (int)payload.yLowerLeft);
-  camDisp->drawLine((int)payload.xLowerLeft, (int)payload.yLowerLeft, (int)payload.xLowerRight, (int)payload.yLowerRight);
-  camDisp->drawLine((int)payload.xLowerRight, (int)payload.yLowerRight, (int)payload.xUpperRight, (int)payload.yUpperRight);
+  SetColorHelper(_camDisp, payload.color);
+  _camDisp->drawLine((int)payload.xUpperLeft, (int)payload.yUpperLeft, (int)payload.xLowerLeft, (int)payload.yLowerLeft);
+  _camDisp->drawLine((int)payload.xLowerLeft, (int)payload.yLowerLeft, (int)payload.xLowerRight, (int)payload.yLowerRight);
+  _camDisp->drawLine((int)payload.xLowerRight, (int)payload.yLowerRight, (int)payload.xUpperRight, (int)payload.yUpperRight);
   
   if(payload.topColor != payload.color)
   {
-    SetColorHelper(camDisp, payload.topColor);
+    SetColorHelper(_camDisp, payload.topColor);
   }
-  camDisp->drawLine((int)payload.xUpperRight, (int)payload.yUpperRight, (int)payload.xUpperLeft, (int)payload.yUpperLeft);
+  _camDisp->drawLine((int)payload.xUpperRight, (int)payload.yUpperRight, (int)payload.xUpperLeft, (int)payload.yUpperLeft);
 }
 
 void VizControllerImpl::ProcessVizCameraLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_CameraLine();
-  SetColorHelper(camDisp, payload.color);
-  camDisp->drawLine((int)payload.xStart, (int)payload.yStart, (int)payload.xEnd, (int)payload.yEnd);
+  SetColorHelper(_camDisp, payload.color);
+  _camDisp->drawLine((int)payload.xStart, (int)payload.yStart, (int)payload.xEnd, (int)payload.yEnd);
 }
 
 void VizControllerImpl::ProcessVizCameraOvalMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_CameraOval();
-  SetColorHelper(camDisp, payload.color);
-  camDisp->drawOval((int)std::round(payload.xCen), (int)std::round(payload.yCen),
+  SetColorHelper(_camDisp, payload.color);
+  _camDisp->drawOval((int)std::round(payload.xCen), (int)std::round(payload.yCen),
     (int)std::round(payload.xRad), (int)std::round(payload.yRad));
 }
 
@@ -397,12 +422,12 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
   const auto& payload = msg.GetData().Get_CameraText();
   if (payload.text.size() > 0){
     // Drop shadow
-    SetColorHelper(camDisp, NamedColors::BLACK);
-    camDisp->drawText(payload.text[0], (int)payload.x+1, (int)payload.y+1);
+    SetColorHelper(_camDisp, NamedColors::BLACK);
+    _camDisp->drawText(payload.text[0], (int)payload.x+1, (int)payload.y+1);
     
     // Actual text
-    SetColorHelper(camDisp, payload.color);
-    camDisp->drawText(payload.text[0], (int)payload.x, (int)payload.y);
+    SetColorHelper(_camDisp, payload.color);
+    _camDisp->drawText(payload.text[0], (int)payload.x, (int)payload.y);
   }
 }
 
@@ -422,11 +447,11 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
       if(_saveVizImage)
       {
         // Save previous image with any viz overlaid before we delete it
-        webots::ImageRef* copyImg = camDisp->imageCopy(0, 0, camDisp->getWidth(), camDisp->getHeight());
+        webots::ImageRef* copyImg = _camDisp->imageCopy(0, 0, _camDisp->getWidth(), _camDisp->getHeight());
         std::stringstream vizFilename;
         vizFilename << "viz_images_" << _curImageTimestamp << "_" << (_saveCtr-1) << ".png";
-        camDisp->imageSave(copyImg, Util::FileUtils::FullFilePath({_savedImagesFolder, vizFilename.str()}));
-        camDisp->imageDelete(copyImg);
+        _camDisp->imageSave(copyImg, Util::FileUtils::FullFilePath({_savedImagesFolder, vizFilename.str()}));
+        _camDisp->imageDelete(copyImg);
         _saveVizImage = false;
       }
       
@@ -446,11 +471,11 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
     }
     
     // Delete existing image if there is one
-    if (camImg != nullptr) {
-      camDisp->imageDelete(camImg);
+    if (_camImg != nullptr) {
+      _camDisp->imageDelete(_camImg);
     }
     
-    // This apparently has to happen _after_ we do the camDisp->imageSave() call above. I HAVE NO IDEA WHY. (?!?!)
+    // This apparently has to happen _after_ we do the _camDisp->imageSave() call above. I HAVE NO IDEA WHY. (?!?!)
     // (Otherwise, the channels seem to cycle and we get rainbow effects in Webots while saving is on, even though
     // the saved images are fine.)
     Vision::ImageRGB img;
@@ -467,10 +492,10 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
     
     //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
 
-    camImg = camDisp->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
-    camDisp->imagePaste(camImg, 0, 0);
-    SetColorHelper(camDisp, NamedColors::RED);
-    camDisp->drawText(std::to_string(payload.frameTimeStamp), 1, camDisp->getHeight()-9); // display timestamp at lower left
+    _camImg = _camDisp->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
+    _camDisp->imagePaste(_camImg, 0, 0);
+    SetColorHelper(_camDisp, NamedColors::RED);
+    _camDisp->drawText(std::to_string(payload.frameTimeStamp), 1, _camDisp->getHeight()-9); // display timestamp at lower left
     _curImageTimestamp = payload.frameTimeStamp;
     
     DisplayCameraInfo();
@@ -490,20 +515,20 @@ void VizControllerImpl::DisplayCameraInfo()
   // Print values
   char text[24];
   snprintf(text, sizeof(text), "Exp:%u Gain:%.3f\n", _exposure, _gain);
-  camDisp->setColor(0xff0000);
-  camDisp->drawText(text, camDisp->getWidth()-144, camDisp->getHeight()-9); //display exposure in bottom right
+  _camDisp->setColor(0xff0000);
+  _camDisp->drawText(text, _camDisp->getWidth()-144, _camDisp->getHeight()-9); //display exposure in bottom right
 }
 
 
 void VizControllerImpl::ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_TrackerQuad();
-  camDisp->setColor(0x0000ff);
-  camDisp->drawLine((int)payload.topLeft_x, (int)payload.topLeft_y, (int)payload.topRight_x, (int)payload.topRight_y);
-  camDisp->setColor(0x00ff00);
-  camDisp->drawLine((int)payload.topRight_x, (int)payload.topRight_y, (int)payload.bottomRight_x, (int)payload.bottomRight_y);
-  camDisp->drawLine((int)payload.bottomRight_x, (int)payload.bottomRight_y, (int)payload.bottomLeft_x, (int)payload.bottomLeft_y);
-  camDisp->drawLine((int)payload.bottomLeft_x, (int)payload.bottomLeft_y, (int)payload.topLeft_x, (int)payload.topLeft_y);
+  _camDisp->setColor(0x0000ff);
+  _camDisp->drawLine((int)payload.topLeft_x, (int)payload.topLeft_y, (int)payload.topRight_x, (int)payload.topRight_y);
+  _camDisp->setColor(0x00ff00);
+  _camDisp->drawLine((int)payload.topRight_x, (int)payload.topRight_y, (int)payload.bottomRight_x, (int)payload.bottomRight_y);
+  _camDisp->drawLine((int)payload.bottomRight_x, (int)payload.bottomRight_y, (int)payload.bottomLeft_x, (int)payload.bottomLeft_y);
+  _camDisp->drawLine((int)payload.bottomLeft_x, (int)payload.bottomLeft_y, (int)payload.topLeft_x, (int)payload.topLeft_y);
 }
 
 void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -515,61 +540,61 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.pose.x,
     payload.state.pose.y,
     RAD_TO_DEG(payload.state.pose.angle));
-  DrawText(VizTextLabelType::TEXT_LABEL_POSE, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_POSE, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Head: %5.1f deg, Lift: %4.1f mm",
     RAD_TO_DEG(payload.state.headAngle),
     payload.state.liftHeight);
-  DrawText(VizTextLabelType::TEXT_LABEL_HEAD_LIFT, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_HEAD_LIFT, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Pitch: %4.1f deg (IMUHead: %4.1f deg)",
     RAD_TO_DEG(payload.state.pose.pitch_angle),
     RAD_TO_DEG(payload.state.pose.pitch_angle + payload.state.headAngle));
-  DrawText(VizTextLabelType::TEXT_LABEL_PITCH, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_PITCH, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "Acc:  %6.0f %6.0f %6.0f mm/s2",
           payload.state.accel.x,
           payload.state.accel.y,
           payload.state.accel.z);
-  DrawText(VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "Gyro: %6.1f %6.1f %6.1f deg/s",
     RAD_TO_DEG(payload.state.gyro.x),
     RAD_TO_DEG(payload.state.gyro.y),
     RAD_TO_DEG(payload.state.gyro.z));
-  DrawText(VizTextLabelType::TEXT_LABEL_GYRO, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_GYRO, Anki::NamedColors::GREEN, txt);
 
   bool cliffDetected = payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED;
   sprintf(txt, "Cliff: %4u %s",
           payload.state.cliffDataRaw,
           cliffDetected ? "CLIFF DETECTED" : "");
-          DrawText(VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
+          DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "Speed L: %4d  R: %4d mm/s",
     (int)payload.state.lwheel_speed_mmps,
     (int)payload.state.rwheel_speed_mmps);
-  DrawText(VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Batt: %2.1f V  AnimTracksLocked: %c%c%c",
     payload.state.batteryVoltage,
           !(payload.enabledAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
           !(payload.enabledAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
           !(payload.enabledAnimTracks & (u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ');
-  DrawText(VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Video: %d Hz   Proc: %d Hz",
     payload.videoFrameRateHz, payload.imageProcFrameRateHz);
-  DrawText(VizTextLabelType::TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "AnimBytesFree[AF]: %d[%d]", payload.numAnimBytesFree, payload.numAnimAudioFramesFree);
-  DrawText(VizTextLabelType::TEXT_LABEL_ANIM_BUFFER, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM_BUFFER, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Status: %5s %5s %7s %7s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK ? "CARRY" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING ? "PAP" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALLING" : "");
-  DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
 
   char animLabel[16] = {0};
   if(payload.animTag == 255) {
@@ -583,14 +608,14 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
           payload.state.status & (uint32_t)RobotStatusFlag::IS_CHARGING ? "CHARGING" :
           (payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : ""));
   
-  DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "        %7s %7s %6s %6s",
     payload.state.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS ? "" : "LIFTING",
     payload.state.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS ? "" : "HEADING",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_BODY_ACC_MODE ? "" : "(BODY)");
-  DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
   
   // Save state to file
   if(_saveState)
@@ -630,7 +655,7 @@ static const int kTextOffsetY  = -3;
 bool VizControllerImpl::IsMoodDisplayEnabled() const
 {
   // maybe check settings or pixel size too?
-  return ((behaviorDisp != nullptr) && (_emotionBuffers[0].capacity() > 0));
+  return ((_behaviorDisp != nullptr) && (_emotionBuffers[0].capacity() > 0));
 }
 
 
@@ -644,8 +669,8 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
   const VizInterface::RobotMood& robotMood = msg.GetData().Get_RobotMood();
   assert(robotMood.emotion.size() == (size_t)EmotionType::Count);
   
-  const int windowWidth  = moodDisp->getWidth();
-  const int windowHeight = moodDisp->getHeight();
+  const int windowWidth  = _moodDisp->getWidth();
+  const int windowHeight = _moodDisp->getHeight();
 
   // Calculate y coordinate range and scaling for graph points
   
@@ -659,14 +684,14 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
   
   // Clear Window
   
-  moodDisp->setColor(0x000000);
-  moodDisp->fillRectangle(0, 0, windowWidth, windowHeight);
+  _moodDisp->setColor(0x000000);
+  _moodDisp->fillRectangle(0, 0, windowWidth, windowHeight);
   
   // Draw Graph Axis labels
-  
-  moodDisp->setColor(0xffffff);
-  moodDisp->drawText("1.0",  0, yValueFor1 + kTextOffsetY);
-  moodDisp->drawText("-1.0", 0, yValueForNeg1 + kTextOffsetY);
+
+  _moodDisp->setColor(0xffffff);
+  _moodDisp->drawText("1.0",  0, yValueFor1 + kTextOffsetY);
+  _moodDisp->drawText("-1.0", 0, yValueForNeg1 + kTextOffsetY);
   
   // Sort emotion indices based on the most recent value, sorting from largest to smallest value
   // so that we can draw in order (important for label positioning on right as we prvent labels drawing on top of each other)
@@ -696,7 +721,7 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
   {
     int eventY = kTopTextY;
     
-    moodDisp->setColor(0xffffff);
+    _moodDisp->setColor(0xffffff);
     float xValF = 0.0f;
     
     for (size_t j=0; j < _emotionEventBuffer.size(); ++j)
@@ -709,8 +734,8 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
         
         for (const std::string& eventText : eventsThisTick)
         {
-          moodDisp->drawLine(xVal, eventY, xVal, eventY + 30);
-          moodDisp->drawText(eventText, xVal, eventY + kTextOffsetY);
+          _moodDisp->drawLine(xVal, eventY, xVal, eventY + 30);
+          _moodDisp->drawText(eventText, xVal, eventY + kTextOffsetY);
           
           eventY += kTextSpacingY;
           if (eventY > kBottomTextY)
@@ -734,7 +759,7 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
     const float latestValue = robotMood.emotion[eT];
     emotionBuffer.push_back(latestValue);
   
-    moodDisp->setColor( ColorRGBA::CreateFromColorIndex(eT).As0RGB() );
+    _moodDisp->setColor( ColorRGBA::CreateFromColorIndex(eT).As0RGB() );
     
     float xValF = 0.0f;
     int lastX = 0;
@@ -750,7 +775,7 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
       
       if (j > 0)
       {
-        moodDisp->drawLine(lastX, lastY, xVal, yVal);
+        _moodDisp->drawLine(lastX, lastY, xVal, yVal);
       }
       
       xValF += xStep;
@@ -769,7 +794,7 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
     char valueString[32];
     snprintf(valueString, sizeof(valueString), "%1.2f: ", latestValue);
     std::string text = std::string(valueString) + EmotionTypeToString(emotionType);
-    moodDisp->drawText(text, textX, textY + kTextOffsetY);
+    _moodDisp->drawText(text, textX, textY + kTextOffsetY);
   }
 }
 
@@ -780,7 +805,7 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
 bool VizControllerImpl::IsBehaviorDisplayEnabled() const
 {
   // maybe check settings or pixel size too?
-  return ((behaviorDisp != nullptr) && (_behaviorEventBuffer.capacity() > 0));
+  return ((_behaviorDisp != nullptr) && (_behaviorEventBuffer.capacity() > 0));
 }
 
   
@@ -921,8 +946,8 @@ void VizControllerImpl::DrawBehaviorDisplay()
   
   // Draw everything
   
-  const int windowWidth  = behaviorDisp->getWidth();
-  const int windowHeight = behaviorDisp->getHeight();
+  const int windowWidth  = _behaviorDisp->getWidth();
+  const int windowHeight = _behaviorDisp->getHeight();
   
   // Calculate y coordinate range and scaling for graph points
   
@@ -932,14 +957,14 @@ void VizControllerImpl::DrawBehaviorDisplay()
   
   // Clear Window
   
-  behaviorDisp->setColor(0x000000);
-  behaviorDisp->fillRectangle(0, 0, windowWidth, windowHeight);
+  _behaviorDisp->setColor(0x000000);
+  _behaviorDisp->fillRectangle(0, 0, windowWidth, windowHeight);
   
   // Draw Graph Axis labels
   
-  behaviorDisp->setColor(0xffffff);
-  behaviorDisp->drawText("1.0", 0, yValueFor1 + kTextOffsetY);
-  behaviorDisp->drawText("0.0", 0, yValueFor0 + kTextOffsetY);
+  _behaviorDisp->setColor(0xffffff);
+  _behaviorDisp->drawText("1.0", 0, yValueFor1 + kTextOffsetY);
+  _behaviorDisp->drawText("0.0", 0, yValueFor0 + kTextOffsetY);
   
   if (activeScoreBuffers.empty() || (activeScoreBuffers[0]._scoreBuffer->capacity() == 0))
   {
@@ -962,7 +987,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
   {
     int eventY = kTopTextY;
     
-    behaviorDisp->setColor(0xffffff);
+    _behaviorDisp->setColor(0xffffff);
     float xValF = 0.0f;
 
     size_t bufferSize = std::min( maxBufferValues, _behaviorEventBuffer.size());
@@ -976,8 +1001,8 @@ void VizControllerImpl::DrawBehaviorDisplay()
         
         for (const std::string& eventText : eventsThisTick)
         {
-          behaviorDisp->drawLine(xVal, eventY, xVal, eventY + 30);
-          behaviorDisp->drawText(eventText, xVal, eventY + kTextOffsetY);
+          _behaviorDisp->drawLine(xVal, eventY, xVal, eventY + 30);
+          _behaviorDisp->drawText(eventText, xVal, eventY + kTextOffsetY);
           
           eventY += kTextSpacingY;
           if (eventY > kBottomTextY)
@@ -1017,7 +1042,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
     const uint32_t numEntriesSinceRealValue = scoreBuffer.back()._numEntriesSinceReal;
     const bool drawAllValues = (numEntriesSinceRealValue <= minTicksSinceRealValue);
     
-    behaviorDisp->setColor(namedScoreBuffer._color);
+    _behaviorDisp->setColor(namedScoreBuffer._color);
     
     const size_t numValues = scoreBuffer.size();
     const size_t numValuesToDraw = drawAllValues ? numValues :
@@ -1044,8 +1069,8 @@ void VizControllerImpl::DrawBehaviorDisplay()
       if (j > 0)
       {
         const bool isReusingValue = (scoreEntry._numEntriesSinceReal > 0);
-        behaviorDisp->setAlpha( isReusingValue ? 0.25 : 1.0 );
-        behaviorDisp->drawLine(lastX, lastY, xVal, yVal);
+        _behaviorDisp->setAlpha( isReusingValue ? 0.25 : 1.0 );
+        _behaviorDisp->drawLine(lastX, lastY, xVal, yVal);
       }
       
       xValF += xStep;
@@ -1053,7 +1078,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
       lastY = yVal;
     }
     
-    behaviorDisp->setAlpha(1.0);
+    _behaviorDisp->setAlpha(1.0);
     
     // Only draw labels for most recently scored behaviors where we're drawing all values
     if (drawAllValues)
@@ -1071,12 +1096,135 @@ void VizControllerImpl::DrawBehaviorDisplay()
       snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back()._value);
       std::string text = std::string(valueString) + namedScoreBuffer._name;
       
-      behaviorDisp->drawText(text, textX, textY + kTextOffsetY);
+      _behaviorDisp->drawText(text, textX, textY + kTextOffsetY);
     }
   }
 }
 
+// ========== Cube display ==========
   
+void VizControllerImpl::UpdateActiveObjectInfoText(u32 activeID)
+{
+  auto it = _activeObjectInfoMap.find(activeID);
+  if (it != _activeObjectInfoMap.end()) {
+    u32 color = it->second.connected ? Anki::NamedColors::GREEN : Anki::NamedColors::RED;
+    
+    char text[64];
+    sprintf(text, " %d       %s      %s",
+            it->first,
+            it->second.moving ? "X" : " ",
+            EnumToString(it->second.upAxis));
+
+    DrawText(_activeObjectDisp, it->first + 1, color, text);
+  }
+}
+  
+void VizControllerImpl::ProcessObjectConnectionState(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const VizInterface::ObjectConnectionState& m = msg.GetData().Get_ObjectConnectionState();
+  _activeObjectInfoMap[m.activeID].connected = m.connected;
+  UpdateActiveObjectInfoText(m.activeID);
+}
+
+void VizControllerImpl::ProcessObjectMovingState(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const VizInterface::ObjectMovingState& m = msg.GetData().Get_ObjectMovingState();
+  _activeObjectInfoMap[m.activeID].moving = m.moving;
+  UpdateActiveObjectInfoText(m.activeID);
+}
+
+void VizControllerImpl::ProcessObjectUpAxisState(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const VizInterface::ObjectUpAxisState& m = msg.GetData().Get_ObjectUpAxisState();
+  _activeObjectInfoMap[m.activeID].upAxis = m.upAxis;
+  UpdateActiveObjectInfoText(m.activeID);
+}
+  
+void VizControllerImpl::ProcessObjectAccelState(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const VizInterface::ObjectAccelState& payload = msg.GetData().Get_ObjectAccelState();
+  const ActiveAccel& acc = payload.accel;
+  
+  const int windowWidth  = _cubeAccelDisp->getWidth();
+  const int windowHeight = _cubeAccelDisp->getHeight();
+  
+  // Calculate y coordinate range and scaling for graph points
+  
+  const int   labelOffsetX  = 80; // Minimum indentation from right for the catagory label (e.g. "<val> <Axis>")
+  const float xStep         = float(windowWidth-labelOffsetX) / _cubeAccelBuffers[0].capacity();
+  
+  const int   yValueFor1    = 20;
+  const int   yValueForNeg1 = windowHeight - yValueFor1;
+  const float yValueFor0    = float(yValueForNeg1 + yValueFor1) * 0.5f;
+  const float yScalar       = (float(yValueFor1) - yValueFor0) / 64.f;  // 32 ~= 1g
+  
+  // Clear Window
+  
+  _cubeAccelDisp->setColor(0x000000);
+  _cubeAccelDisp->fillRectangle(0, 0, windowWidth, windowHeight);
+  
+  // Draw Graph Axis labels
+  _cubeAccelDisp->setColor(0xffffff);
+  _cubeAccelDisp->drawText("Cube accel", 0, 5);
+  _cubeAccelDisp->drawText("2g",  0, yValueFor1 + kTextOffsetY);
+  _cubeAccelDisp->drawText("-2g", 0, yValueForNeg1 + kTextOffsetY);
+  
+  // Calculate line spacing and top/bottom range
+  const int kTopTextY    = (kTextSpacingY/2);
+  const int kBottomTextY = windowHeight - (kTextSpacingY/2);
+  
+  int lastTextY = kTopTextY - kTextSpacingY;
+  
+  _cubeAccelBuffers[0].push_back( acc.x );
+  _cubeAccelBuffers[1].push_back( acc.y );
+  _cubeAccelBuffers[2].push_back( acc.z );
+  
+  // Draw each accel graph
+  for (int i=0; i < _cubeAccelBuffers.size(); ++i)
+  {
+    _cubeAccelDisp->setColor( ColorRGBA::CreateFromColorIndex(i).As0RGB() );
+    
+    float xValF = 0.0f;
+    int lastX = 0;
+    int lastY = 0;
+    
+    // Draw a line graph connecting all of the sample points
+    
+    for (size_t j=0; j < _cubeAccelBuffers[i].size(); ++j)
+    {
+      const float accValue = _cubeAccelBuffers[i][j];
+      const int xVal = (int)(xValF);
+      const int yVal = (int)(yValueFor0 + (yScalar * accValue));
+      
+      if (j > 0)
+      {
+        _cubeAccelDisp->drawLine(lastX, lastY, xVal, yVal);
+      }
+      
+      xValF += xStep;
+      lastX = xVal;
+      lastY = yVal;
+    }
+    
+    // Draw the label, ideally next to the last sample, but above maxTextY (so there's room for the rest of the labels)
+    // and at least 1 line down from the last category, clamped to the top/bottom range
+    
+    const int textX = MIN(lastX, windowWidth-labelOffsetX);
+    const int maxTextY = kBottomTextY - (kTextSpacingY * int(_cubeAccelBuffers.size()-(i+1)));
+    const int textY = CLIP(MAX(MIN(lastY, maxTextY), lastTextY+kTextSpacingY), kTopTextY, kBottomTextY);
+    lastTextY = textY;
+    
+    char valueString[32];
+    snprintf(valueString, sizeof(valueString), "%7.1f: ", _cubeAccelBuffers[i].back());
+    std::string text = std::string(valueString) + (i==0 ? "X" : (i==1 ? "Y" : "Z"));
+    _cubeAccelDisp->drawText(text, textX, textY + kTextOffsetY);
+  }
+
+  
+  
+  
+  
+}
 // ========== Start/End of Robot Updates ==========
   
 

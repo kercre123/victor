@@ -26,17 +26,17 @@ IMPLEMENT_ENUM_INCREMENT_OPERATORS(ConfigurationType);
 
 
 // One global instance, created at static initialization on app launch
-static Anki::Util::StringToEnumMapper<ConfigurationType> gStringToAnimationTriggerMapper;
+static Anki::Util::StringToEnumMapper<ConfigurationType> gStringToBlockConfigurationMapper;
 
 // Unlike other Enums to string, this will assert on fails by default
 ConfigurationType BlockConfigurationFromString(const char* inString, bool assertOnInvalidEnum )
 {
-  return gStringToAnimationTriggerMapper.GetTypeFromString(inString,assertOnInvalidEnum);
+  return gStringToBlockConfigurationMapper.GetTypeFromString(inString,assertOnInvalidEnum);
 }
 
 bool IsBlockConfiguration(const char* inString)
 {
-  return gStringToAnimationTriggerMapper.HasType(inString);
+  return gStringToBlockConfigurationMapper.HasType(inString);
 }
   
 const char* EnumToString(const ConfigurationType t)
@@ -49,8 +49,8 @@ const char* EnumToString(const ConfigurationType t)
     case ConfigurationType::Pyramid:
       return "Pyramid";
     case ConfigurationType::Count:
-      ASSERT_NAMED_EVENT(false, "BlockConfigTypeHelpers.EnumToSTring.InvalidString",
-                         "Attempted to convert unknown value %d to string", t);
+      DEV_ASSERT_MSG(false, "BlockConfigTypeHelpers.EnumToString.InvalidString",
+                     "Attempted to convert unknown value %d to string", t);
       return nullptr;
   }
 }

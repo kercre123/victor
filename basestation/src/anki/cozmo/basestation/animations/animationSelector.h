@@ -78,7 +78,7 @@ private:
 };
   
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki
 
 

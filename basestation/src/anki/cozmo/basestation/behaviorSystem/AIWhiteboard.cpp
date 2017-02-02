@@ -14,8 +14,6 @@
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -69,7 +67,7 @@ const char* ObjectUseActionToString(AIWhiteboard::ObjectUseAction action)
   };
 
   // should never get here, assert if it does (programmer error specifying action enum class)
-  ASSERT_NAMED(false, "AIWhiteboard.ObjectUseActionToString.InvalidAction");
+  DEV_ASSERT(false, "AIWhiteboard.ObjectUseActionToString.InvalidAction");
   return "UNDEFINED_ERROR";
 }
 
@@ -86,7 +84,7 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectUseAction action)
   };
 
   // should never get here, assert if it does (programmer error specifying action enum class)
-  ASSERT_NAMED(false, "AIWhiteboard.GetObjectFailureListMaxSize.InvalidAction");
+  DEV_ASSERT(false, "AIWhiteboard.GetObjectFailureListMaxSize.InvalidAction");
   return 0;
 }
 
@@ -308,7 +306,8 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
   {
     // all beacons should be in this world
     for ( const auto& beacon : _beacons ) {
-      ASSERT_NAMED(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(), "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
+      DEV_ASSERT(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+                 "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
     }
   }
   #endif
@@ -380,9 +379,10 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
     for ( const auto& beaconIt : _beacons ) {
       beaconIsValid = beaconIsValid || (beacon == &beaconIt);
     }
-    ASSERT_NAMED(beaconIsValid, "AIWhiteboard.FindCubesInBeacon.NotABeacon");
-    ASSERT_NAMED(beacon, "AIWhiteboard.FindCubesInBeacon.NullBeacon");
-    ASSERT_NAMED(&beacon->GetPose().FindOrigin() == _robot.GetWorldOrigin(), "AIWhiteboard.FindCubesInBeacon.BeaconNotInOrigin");
+    DEV_ASSERT(beaconIsValid, "AIWhiteboard.FindCubesInBeacon.NotABeacon");
+    DEV_ASSERT(beacon, "AIWhiteboard.FindCubesInBeacon.NullBeacon");
+    DEV_ASSERT(&beacon->GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+               "AIWhiteboard.FindCubesInBeacon.BeaconNotInOrigin");
   }
   #endif
   
@@ -418,7 +418,8 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
   {
     // all beacons should be in this world
     for ( const auto& beacon : _beacons ) {
-      ASSERT_NAMED(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(), "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
+      DEV_ASSERT(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+                 "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
     }
   }
   #endif
@@ -471,7 +472,7 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
 void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseAction action)
 {
   // PlaceObjectAt should provide location
-  ASSERT_NAMED(action != ObjectUseAction::PlaceObjectAt, "AIWhiteboard.SetFailedToUse.PlaceObjectAtRequiresLocation");
+  DEV_ASSERT(action != ObjectUseAction::PlaceObjectAt, "AIWhiteboard.SetFailedToUse.PlaceObjectAtRequiresLocation");
 
   // use object current pose
   const Pose3d& objectPose = object.GetPose();
@@ -487,12 +488,12 @@ void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseActio
   
   // check if we need to remove an entry because we have reached the maximum
   const size_t maxItemsInList = GetObjectFailureListMaxSize(action);
-  ASSERT_NAMED(maxItemsInList>0, "AIWhiteboard.SetFailedToUse.MaxIs0");
+  DEV_ASSERT(maxItemsInList > 0, "AIWhiteboard.SetFailedToUse.MaxIs0");
   if ( failureListForObj.size() >= maxItemsInList )
   {
     // can't have an empty list or a list bigger than the max (so it has to be equal to the max)
-    ASSERT_NAMED(!failureListForObj.empty(), "AIWhiteboard.SetFailedToUse.EmptyListReachedMax");
-    ASSERT_NAMED(failureListForObj.size() == maxItemsInList, "AIWhiteboard.SetFailedToUse.ListBeyondMax");
+    DEV_ASSERT(!failureListForObj.empty(), "AIWhiteboard.SetFailedToUse.EmptyListReachedMax");
+    DEV_ASSERT(failureListForObj.size() == maxItemsInList, "AIWhiteboard.SetFailedToUse.ListBeyondMax");
     
     // print the one we are removing
     PRINT_CH_INFO("AIWhiteboard", "SetFailedToUse",
@@ -689,7 +690,7 @@ const AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(Obje
 
   // should never get here, assert if it does (programmer error specifying action enum class)
   {
-    ASSERT_NAMED(false, "AIWhiteboard.GetFailureMap.InvalidAction");
+    DEV_ASSERT(false, "AIWhiteboard.GetObjectFailureTable.InvalidAction");
     static ObjectFailureTable empty;
     return empty;
   }
@@ -707,7 +708,7 @@ AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(ObjectUseA
 
   // should never get here, assert if it does (programmer error specifying action enum class)
   {
-    ASSERT_NAMED(false, "AIWhiteboard.GetFailureMap.InvalidAction");
+    DEV_ASSERT(false, "AIWhiteboard.GetObjectFailureTable.InvalidAction");
     static ObjectFailureTable empty;
     return empty;
   }
@@ -948,7 +949,8 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedObject& m
   // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
   // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
   // decision then
-  ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "AIWhiteboard.HandleMessage.RobotObservedObject.UnexpectedRobotID");
+  DEV_ASSERT(_robot.GetID() == possibleObject.robotID,
+             "AIWhiteboard.HandleMessage.RobotObservedObject.UnexpectedRobotID");
   
   Pose3d obsPose( msg.pose, _robot.GetPoseOriginList() );
   
@@ -968,7 +970,8 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
   // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
   // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
   // decision then
-  ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "AIWhiteboard.HandleMessage.RobotObservedPossibleObject.UnexpectedRobotID");
+  DEV_ASSERT(_robot.GetID() == possibleObject.robotID,
+             "AIWhiteboard.HandleMessage.RobotObservedPossibleObject.UnexpectedRobotID");
   
   Pose3d obsPose( msg.possibleObject.pose, _robot.GetPoseOriginList() );
   
@@ -1090,7 +1093,7 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
   if ( _possibleObjects.size() >= kBW_MaxPossibleObjects )
   {
     // we reached the limit, remove oldest entry
-    ASSERT_NAMED(!_possibleObjects.empty(), "AIWhiteboard.HandleMessage.ReachedLimitEmpty");
+    DEV_ASSERT(!_possibleObjects.empty(), "AIWhiteboard.HandleMessage.ReachedLimitEmpty");
     _possibleObjects.pop_front();
     // PRINT_NAMED_INFO("AIWhiteboard.HandleMessage.BeyondObjectLimit", "Reached limit of pending objects, removing oldest one");
   }
@@ -1195,8 +1198,8 @@ void AIWhiteboard::UpdateBeaconRender()
     for( const auto& beacon : _beacons )
     {
       // currently we don't support beacons from older origins (rsam: I will soon)
-      ASSERT_NAMED( (&beacon.GetPose().FindOrigin()) == _robot.GetWorldOrigin(),
-      "AIWhiteboard.UpdateBeaconRender.BeaconFromOldOrigin");
+      DEV_ASSERT(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+                 "AIWhiteboard.UpdateBeaconRender.BeaconFromOldOrigin");
       
       // note that since we don't know what timeout behaviors use, we can only say that it ever failed
       ColorRGBA color = NEAR_ZERO(beacon.GetLastTimeFailedToFindLocation()) ? NamedColors::DARKGREEN : NamedColors::ORANGE;

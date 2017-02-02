@@ -508,6 +508,7 @@ namespace Cozmo {
       bool                       _facePoseCompoundActionDone = false;
       
       VisuallyVerifyObjectAction*_visuallyVerifyAction = nullptr;
+      bool                       _visuallyVerifyWhenDone = false;
       bool                       _refinedTurnTowardsDone = false;
       
       ObjectID                   _objectID;
@@ -661,17 +662,20 @@ namespace Cozmo {
     class WaitForLambdaAction : public IAction
     {
     public:
-      WaitForLambdaAction(Robot& robot, std::function<bool(Robot&)> lambda)
+      WaitForLambdaAction(Robot& robot, std::function<bool(Robot&)> lambda,
+                          f32 timeout_sec = std::numeric_limits<f32>::max())
         : IAction(robot,
                   "WaitForLambda",
                   RobotActionType::WAIT_FOR_LAMBDA,
                   (u8)AnimTrackFlag::NO_TRACKS)
         , _lambda(lambda)
+        , _timeout_sec(timeout_sec)
         {
         }
+      
       virtual ~WaitForLambdaAction() { }
 
-      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
+      virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
       
     protected:
       
@@ -688,7 +692,7 @@ namespace Cozmo {
     private:
       
       std::function<bool(Robot&)> _lambda;
-
+      f32 _timeout_sec;
     };
     
     

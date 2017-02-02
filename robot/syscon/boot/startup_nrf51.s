@@ -36,7 +36,7 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     Reset_Handler
                 DCD     NMI_Handler
                 DCD     HardFault_Handler
-                DCD     4                         ; Syscon version - 0 = pre-Pilot, 1 = Pilot, 3 = "First 1000" Prod, 4 = Full Prod
+                DCD     4                         ; Syscon version - 0 = pre-Pilot, 1 = Pilot, 3 = "First 1000" Prod, 4 = Full Prod, 5 = 1.5 EP2
                 DCD     0                         ; Body ESN
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
@@ -53,6 +53,9 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
 
 __Vectors_End	
 __Vectors_Size  EQU     __Vectors_End - __Vectors
+    
+                EXPORT  HW_VERSION
+HW_VERSION      DCD     0x01050000
 
                 AREA    |.text|, CODE, READONLY
 

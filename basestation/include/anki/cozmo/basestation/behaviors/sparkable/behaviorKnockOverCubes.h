@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorKnockOverCubes_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/stackConfigurationContainer.h"
 #include "clad/types/animationTrigger.h"
@@ -37,7 +37,7 @@ protected:
   virtual Result ResumeInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;

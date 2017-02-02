@@ -25,7 +25,7 @@
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -182,5 +182,5 @@ void EngineAnimationController::HandleMessage(const ExternalInterface::PlayAnima
 
   
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

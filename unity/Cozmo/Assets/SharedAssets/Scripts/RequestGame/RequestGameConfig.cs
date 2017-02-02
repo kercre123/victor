@@ -29,13 +29,13 @@ public class RequestGameConfig : ScriptableObject {
     _TimesRejected++;
   }
 
-  public float GetCurrentScore(bool isChallengeDailyGoal = false) {
+  public float GetCurrentScore(bool isChallengeDailyGoal, bool isDebugRequest) {
     // NEVER return the same game twice in a row.
     if (WasSelectedPrevious) {
       return 0.0f;
     }
     // Always reject games that are on cooldown
-    if (_StartTimeWait > 0) {
+    if (_StartTimeWait > 0 && !isDebugRequest) {
       // Stacking penalty timer, increase the time every rejection
       // This is a pretty strict linear relationship, the current design. The main goal being if
       // you've rejected multiple times players probably don't care so shouldn't get high enough to matter

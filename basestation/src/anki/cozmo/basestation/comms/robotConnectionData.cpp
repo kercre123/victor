@@ -25,7 +25,7 @@ bool RobotConnectionData::HasMessages()
 RobotConnectionMessageData RobotConnectionData::PopNextMessage()
 {
   std::lock_guard<std::mutex> lockGuard(_messageMutex);
-  ASSERT_NAMED(!_arrivedMessages.empty(), "RobotConnectionData.PopNextMessage.NoMessages");
+  DEV_ASSERT(!_arrivedMessages.empty(), "RobotConnectionData.PopNextMessage.NoMessages");
   if (_arrivedMessages.empty())
   {
     return RobotConnectionMessageData();
@@ -67,7 +67,7 @@ void RobotConnectionData::PushArrivedMessage(const uint8_t* buffer, uint32_t num
 void RobotConnectionData::ReceiveData(const uint8_t* buffer, unsigned int size, const Util::TransportAddress& sourceAddress)
 {
   const bool isConnectionRequest = INetTransportDataReceiver::OnConnectRequest == buffer;
-  ASSERT_NAMED(!isConnectionRequest, "RobotConnectionManager.ReceiveData.ConnectionRequest.NotHandled");
+  DEV_ASSERT(!isConnectionRequest, "RobotConnectionManager.ReceiveData.ConnectionRequest.NotHandled");
   if (isConnectionRequest)
   {
     // We don't accept requests for connection!

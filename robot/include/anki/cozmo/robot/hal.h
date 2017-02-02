@@ -269,6 +269,13 @@ namespace Anki
        */
       NVStorage::NVResult FlashErase(u32 address);
 
+      /** Verifies that write or erase is allowed
+       * @param address The address to write or erase.
+       * @param length  The length in bytes to write or erase
+       * @return true on allowed, false on disallowed.
+       */
+      bool FlashWriteOkay(const u32 address, const u32 length);
+      
       /** Initalize flash controller
        */
       void FlashInit();
@@ -529,6 +536,9 @@ namespace Anki
       
       // Set the color and flashing of each LED on a block separately
       Result SetBlockLight(const u32 activeID, const u16* colors);
+      
+      // Stream accelerometer data from object at activeID
+      Result StreamObjectAccel(const u32 activeID, const bool enable);
       
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT

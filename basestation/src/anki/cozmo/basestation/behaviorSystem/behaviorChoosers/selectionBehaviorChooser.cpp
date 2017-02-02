@@ -13,15 +13,15 @@
 #include "selectionBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorNone.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/templateHelpers.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -38,18 +38,13 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
                                          this, std::placeholders::_1)));
     
     _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
-                               ExternalInterface::MessageGameToEngineTag::ExecuteBehavior,
-                               std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
-                                         this, std::placeholders::_1)));
-    
-    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
                                ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByExecutableType,
                                std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
                                          this, std::placeholders::_1)));
   }
   
   // Setup None Behavior now since it's always the fallback
-  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorType::NoneBehavior, robot, config);
+  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorClass::NoneBehavior, robot, config);
   Result addResult = TryAddBehavior(_behaviorNone);
   if (Result::RESULT_OK != addResult)
   {
@@ -59,9 +54,11 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
   
 IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
+
   auto runnable = [&robot](const IBehavior* behavior)
   {
-    return (nullptr != behavior && (behavior->IsRunning() || behavior->IsRunnable(robot)));
+    BehaviorPreReqRobot preReqData(robot);
+    return (nullptr != behavior && (behavior->IsRunning() || behavior->IsRunnable(preReqData)));
   };
   
   if (runnable(_selectedBehavior))
@@ -95,23 +92,6 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
                             msg.behaviorName.c_str());
       }
 
-      break;
-    }
-    
-    case ExternalInterface::MessageGameToEngineTag::ExecuteBehavior:
-    {
-      const ExternalInterface::ExecuteBehavior& msg = event.GetData().Get_ExecuteBehavior();
-      selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByType( msg.behaviorType );
-      
-      if( selectedBehavior != nullptr ) {
-        PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehaviorByType.SelectBehavior",
-                         "selecting behavior name '%s'", EnumToString(msg.behaviorType) );
-      } else {
-        PRINT_NAMED_WARNING("SelectionBehaviorChooser.HandleExecuteBehaviorByType.UnknownBehavior",
-                            "Unknown behavior %s",
-                            EnumToString(msg.behaviorType));
-      }
-      
       break;
     }
       
@@ -148,7 +128,7 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
   _selectedBehavior = selectedBehavior;
 }
   
-IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorType newType)
+IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorClass newType)
 {
   Json::Value nullConfig;
   BehaviorFactory& behaviorFactory = _robot.GetBehaviorFactory();
@@ -190,9 +170,9 @@ void SelectionBehaviorChooser::SetProcessEnabled(const IBehavior* behavior, bool
     if ( process != AIInformationAnalysis::EProcess::Invalid )
     {
       if( newValue ) {
-        _robot.GetAIInformationAnalyzer().AddEnableRequest(process, GetName());
+        _robot.GetAIComponent().GetAIInformationAnalyzer().AddEnableRequest(process, GetName());
       } else {
-        _robot.GetAIInformationAnalyzer().RemoveEnableRequest(process, GetName());
+        _robot.GetAIComponent().GetAIInformationAnalyzer().RemoveEnableRequest(process, GetName());
       }
     }
   }

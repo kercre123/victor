@@ -32,7 +32,8 @@ Locale GetCurrentLocaleAndroid(void *jniEnv)
 
   JClassHandle localeClassHandle{env->FindClass("java/util/Locale"), env};
   if (localeClassHandle == nullptr) {
-    ASSERT_NAMED(false, "GetCurrentLocaleAndroid.Init.ClassNotFound");
+    PRINT_NAMED_ERROR("GetCurrentLocaleAndroid.Init.ClassNotFound", 
+      "Unable to find java.util.Locale");
     return Locale::kDefaultLocale;
   }
 
@@ -48,7 +49,8 @@ Locale GetCurrentLocaleAndroid(void *jniEnv)
 
   JObjectHandle localeObjHandle{env->CallStaticObjectMethod(localeClassHandle.get(), getDefaultMethodID, NULL), env};
   if (localeObjHandle == nullptr) {
-    ASSERT_NAMED(false, "GetCurrentLocaleAndroid.Init.ObjectNotFound");
+    PRINT_NAMED_ERROR("GetCurrentLocaleAndroid.Init.ObjectNotFound", 
+      "Unable to find current locale");
     return Locale::kDefaultLocale;
   }
 

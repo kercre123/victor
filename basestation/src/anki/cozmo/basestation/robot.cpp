@@ -18,20 +18,20 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/activeCube.h"
-#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/animations/engineAnimationController.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -119,7 +119,7 @@ CONSOLE_VAR(bool, kDoProgressiveThresholdAdjustOnSuspiciousCliff, "Robot", true)
 // timeToConsiderOfftreads is tuned based on the fact that we have to wait half a second from the time the cliff sensor detects
 // ground to when the robot state message updates to the fact that it is no longer picked up
 static const float kRobotTimeToConsiderOfftreads_ms = 250.0f;
-static const float kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 5.0f;
+static const float kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 3.0f;
 
 // Laying flat angles
 static const float kPitchAngleOntreads_rads = DEG_TO_RAD(0);
@@ -185,7 +185,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _faceWorld(new FaceWorld(*this))
   , _petWorld(new PetWorld(*this))
   , _behaviorMgr(new BehaviorManager(*this))
-  , _aiInformationAnalyzer(new AIInformationAnalyzer())
   , _audioClient(new Audio::RobotAudioClient(this))
   , _animationStreamer(_context, *_audioClient)
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
@@ -194,11 +193,13 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 #endif
   , _actionList(new ActionList())
   , _movementComponent(new MovementComponent(*this))
-  , _visionComponent( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
+  , _visionComponent( new VisionComponent(*this, _context))
   , _nvStorageComponent(new NVStorageComponent(*this, _context))
+  , _aiComponent(new AIComponent(*this))
   , _textToSpeechComponent(new TextToSpeechComponent(_context))
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
-  , _lightsComponent( new LightsComponent( *this ) )
+  , _cubeLightComponent(new CubeLightComponent(*this, _context))
+  , _bodyLightComponent(new BodyLightComponent(*this, _context))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
@@ -284,6 +285,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   LoadBehaviors();
 
   _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotBehaviorConfig());
+  _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
   
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
@@ -314,6 +316,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // Read all neccessary data off the robot and back it up
   // Potentially duplicates some reads like FaceAlbumData
   _nvStorageComponent->GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
+
+  // initialize AI
+  _aiComponent->Init();
+      
 } // Constructor: Robot
     
 Robot::~Robot()
@@ -324,8 +330,9 @@ Robot::~Robot()
   // to actions shutting down
   _behaviorMgr.reset();
   
-  // Destroy our actionList before things like the path planner, since actions often rely on those
-  // things existing
+  // Destroy our actionList before things like the path planner, since actions often rely on those.
+  // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
+  _actionList->Clear();
   _actionList.reset();
       
   // destroy vision component first because its thread might be using things from Robot. This fixes a crash
@@ -367,13 +374,13 @@ void Robot::SetOnCharger(bool onCharger)
       }
     }
           
-    PRINT_NAMED_EVENT("robot.on_charger", "");
+    LOG_EVENT("robot.on_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
         
   }
   else if (!onCharger && _isOnCharger)
   {
-    PRINT_NAMED_EVENT("robot.off_charger", "");
+    LOG_EVENT("robot.off_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
   }
       
@@ -398,20 +405,22 @@ ObjectID Robot::AddUnconnectedCharger()
   GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
   
   ObservableObject* obj = nullptr;
-  for(auto object : matchingObjects)
+  for (auto object : matchingObjects)
   {
-    if(obj != nullptr)
+    if (obj != nullptr)
     {
-      ASSERT_NAMED(object->GetID() == obj->GetID(), "Matching charger ids not equal");
+      DEV_ASSERT(object->GetID() == obj->GetID(), "Matching charger ids not equal");
     }
     obj = object;
   }
+  
   ObjectID objID;
   s32 activeId = -1;
-  if(obj != nullptr)
+  if (obj != nullptr)
   {
     activeId = obj->GetActiveID();
   }
+  
   // Copying existing object's activeId and objectId if an existing object was found
   objID = GetBlockWorld().AddActiveObject(activeId, 0, ActiveObjectType::OBJECT_CHARGER, obj);
   
@@ -424,10 +433,10 @@ void Robot::IncrementSuspiciousCliffCount()
 {
   if (_cliffDetectThreshold > kCliffSensorMinDetectionThresh) {
     ++_suspiciousCliffCnt;
-    PRINT_NAMED_EVENT("IncrementSuspiciousCliffCount.Count", "%d", _suspiciousCliffCnt);
+    LOG_EVENT("IncrementSuspiciousCliffCount.Count", "%d", _suspiciousCliffCnt);
     if (_suspiciousCliffCnt >= kCliffSensorSuspiciousCliffCount) {
       _cliffDetectThreshold = MAX(_cliffDetectThreshold - kCliffSensorDetectionThreshStep, kCliffSensorMinDetectionThresh);
-      PRINT_NAMED_EVENT("IncrementSuspiciousCliffCount.NewThreshold", "%d", _cliffDetectThreshold);
+      LOG_EVENT("IncrementSuspiciousCliffCount.NewThreshold", "%d", _cliffDetectThreshold);
       SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(_cliffDetectThreshold);
       _suspiciousCliffCnt = 0;
     }
@@ -628,7 +637,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     // Falling seems worthy of a DAS event
     if (_awaitingConfirmationTreadState == OffTreadsState::Falling) {
       _fallingStartedTime_ms = GetLastMsgTimestamp();
-      PRINT_NAMED_EVENT("Robot.CheckAndUpdateTreadsState.FallingStarted",
+      LOG_EVENT("Robot.CheckAndUpdateTreadsState.FallingStarted",
                         "t=%dms",
                         _fallingStartedTime_ms);
       
@@ -638,7 +647,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     } else if (_offTreadsState == OffTreadsState::Falling) {
       // This is not an exact measurement of fall time since it includes some detection delays on the robot side
       // It may also include kRobotTimeToConsiderOfftreads_ms depending on how the robot lands
-      PRINT_NAMED_EVENT("Robot.CheckAndUpdateTreadsState.FallingStopped",
+      LOG_EVENT("Robot.CheckAndUpdateTreadsState.FallingStopped",
                         "t=%dms, duration=%dms",
                         GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
       _fallingStartedTime_ms = 0;
@@ -657,7 +666,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         _visionComponent->Pause(false);
       }
       
-      ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
+      DEV_ASSERT(!IsLocalized(), "Robot should be delocalized when first put back down!");
       
       // If we are not localized and there is nothing else left in the world that
       // we could localize to, then go ahead and mark us as localized (via
@@ -713,7 +722,7 @@ void Robot::Delocalize(bool isCarryingObject)
   _suspiciousCliffCnt = 0;
   if (_cliffDetectThreshold != CLIFF_SENSOR_DROP_LEVEL) {
     _cliffDetectThreshold = CLIFF_SENSOR_DROP_LEVEL;
-    PRINT_NAMED_EVENT("Robot.Delocalize.RestoringCliffDetectThreshold", "%d", _cliffDetectThreshold);
+    LOG_EVENT("Robot.Delocalize.RestoringCliffDetectThreshold", "%d", _cliffDetectThreshold);
     SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(_cliffDetectThreshold);
   }
   
@@ -741,8 +750,8 @@ void Robot::Delocalize(bool isCarryingObject)
   _worldOrigin->SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(originID));
   
   // Log delocalization, new origin name, and num origins to DAS
-  PRINT_NAMED_EVENT("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
-                    GetID(), _worldOrigin->GetName().c_str(), _poseOriginList->GetSize());
+  LOG_EVENT("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
+            GetID(), _worldOrigin->GetName().c_str(), _poseOriginList->GetSize());
   
   _pose.SetRotation(0, Z_AXIS_3D());
   _pose.SetTranslation({0.f, 0.f, 0.f});
@@ -821,7 +830,7 @@ void Robot::Delocalize(bool isCarryingObject)
   _blockWorld->DeselectCurrentObject();
       
   // notify behavior whiteboard
-  _behaviorMgr->GetWhiteboard().OnRobotDelocalized();
+  _aiComponent->OnRobotDelocalized();
   
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
@@ -869,7 +878,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   _isLocalized = true;
   
   // notify behavior whiteboard
-  _behaviorMgr->GetWhiteboard().OnRobotRelocalized();
+  _aiComponent->OnRobotRelocalized();
   
   // Update VizText
   GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
@@ -927,12 +936,12 @@ void Robot::DetectGyroDrift(const RobotState& msg)
       
       // ...check if there was a sufficient change in heading angle or pitch. Otherwise, reset detector.
       const f32 headingAngleChange = std::fabsf((_driftCheckStartAngle_rad - GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
-      const f32 angleChangeThresh = kDriftCheckMaxAngleChangeRate_rad_per_sec * MILLIS_TO_SEC(kDriftCheckPeriod_ms);
+      const f32 angleChangeThresh = kDriftCheckMaxAngleChangeRate_rad_per_sec * Util::MilliSecToSec(kDriftCheckPeriod_ms);
       
       if (headingAngleChange > angleChangeThresh) {
         // Report drift detected just one time during a session
         Util::sWarningF("robot.detect_gyro_drift.drift_detected",
-                        {{DDATA, TO_DDATA_STR(RAD_TO_DEG(headingAngleChange))}},
+                        {{DDATA, std::to_string(RAD_TO_DEG(headingAngleChange)).c_str()}},
                         "mean: %f, min: %f, max: %f",
                         RAD_TO_DEG(_driftCheckCumSumGyroZ_rad_per_sec / _driftCheckNumReadings),
                         RAD_TO_DEG(_driftCheckMinGyroZ_rad_per_sec),
@@ -1049,7 +1058,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   }
   else
   {
-    ASSERT_NAMED(msg.pose_frame_id <= GetPoseFrameID(), "Robot.UpdateFullRobotState.FrameFromFuture");
+    DEV_ASSERT(msg.pose_frame_id <= GetPoseFrameID(), "Robot.UpdateFullRobotState.FrameFromFuture");
     const bool frameIsCurrent = msg.pose_frame_id == GetPoseFrameID();
     
     Pose3d newPose;
@@ -1057,7 +1066,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     if(IsOnRamp()) {
           
       // Sanity check:
-      ASSERT_NAMED(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
+      DEV_ASSERT(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
           
       // Don't update pose history while on a ramp.
       // Instead, just compute how far the robot thinks it has gone (in the plane)
@@ -1458,9 +1467,9 @@ Result Robot::Update()
   _progressionUnlockComponent->Update();
   
   _tapFilterComponent->Update();
-  
-  // information analyzer should run before behaviors so that they can feed off its findings
-  _aiInformationAnalyzer->Update(*this);
+
+  // Update AI component before behaviors so that behaviors can use the latest information
+  _aiComponent->Update();
       
   const char* behaviorChooserName = "";
   std::string behaviorDebugStr("<disabled>");
@@ -1645,7 +1654,7 @@ Result Robot::Update()
           if( (!collisionsAcceptable) && (nullptr != _longPathPlanner) ) {
             const float startPoseAngle = GetPose().GetRotationAngle<'Z'>().ToFloat();
             const bool __attribute__((unused)) obstaclesLoaded = _longPathPlanner->PreloadObstacles();
-            ASSERT_NAMED(obstaclesLoaded, "Lattice planner didnt preload obstacles.");
+            DEV_ASSERT(obstaclesLoaded, "Lattice planner didn't preload obstacles.");
             if( !_longPathPlanner->CheckIsPathSafe(newPath, startPoseAngle) ) {
               // bad path. try with the fallback planner if possible
               if( nullptr != _fallbackPathPlanner ) {
@@ -1824,7 +1833,8 @@ Result Robot::Update()
     _lastDebugStringHash = curr_hash;
   }
 
-  _lightsComponent->Update();
+  _cubeLightComponent->Update();
+  _bodyLightComponent->Update();
 
 
   if( kDebugPossibleBlockInteraction ) {
@@ -1994,7 +2004,7 @@ void Robot::SetLiftAngle(const f32& angle)
       
   Robot::ComputeLiftPose(_currentLiftAngle, _liftPose);
 
-  ASSERT_NAMED(_liftPose.GetParent() == &_liftBasePose, "Robot.SetLiftAngle.InvalidPose");
+  DEV_ASSERT(_liftPose.GetParent() == &_liftBasePose, "Robot.SetLiftAngle.InvalidPose");
 }
     
 Radians Robot::GetPitchAngle() const
@@ -2293,6 +2303,7 @@ void Robot::LoadEmotionEvents()
 
 void Robot::LoadBehaviors()
 {
+  // Load Scored Behaviors
   const auto& behaviorData = _context->GetDataLoader()->GetBehaviorJsons();
   for( const auto& fileJsonPair : behaviorData )
   {
@@ -2303,12 +2314,12 @@ void Robot::LoadBehaviors()
       // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
       const Result ret = _behaviorMgr->CreateBehaviorFromConfiguration(behaviorJson);
       if ( ret != RESULT_OK ) {
-        PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed", "Failed to create behavior from '%s'", filename.c_str());
+        PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed", "Failed to create scored behavior from '%s'", filename.c_str());
       }
     }
     else
     {
-      PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", filename.c_str());
+      PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read scored behavior file '%s'", filename.c_str());
     }
     // don't print anything if we read an empty json
   }
@@ -2470,10 +2481,10 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   // rooted to this world origin will get updated to be w.r.t. the new origin.
   if(_worldOrigin != &existingObject->GetPose().FindOrigin())
   {
-    PRINT_NAMED_EVENT("Robot.LocalizeToObject.RejiggeringOrigins",
-                      "Robot %d's current origin is %s, about to localize to origin %s.",
-                      GetID(), _worldOrigin->GetName().c_str(),
-                      existingObject->GetPose().FindOrigin().GetName().c_str());
+    LOG_EVENT("Robot.LocalizeToObject.RejiggeringOrigins",
+              "Robot %d's current origin is %s, about to localize to origin %s.",
+              GetID(), _worldOrigin->GetName().c_str(),
+              existingObject->GetPose().FindOrigin().GetName().c_str());
     
     // Store the current origin we are about to change so that we can
     // find objects that are using it below
@@ -2955,7 +2966,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const f32 placementOffsetAngle_rad,
                              const bool useManualSpeed,
                              const u8 numRetries,
-                             const DockingMethod dockingMethod)
+                             const DockingMethod dockingMethod,
+                             const bool doLiftLoadCheck)
 {
   return DockWithObject(objectID,
                         speed_mmps,
@@ -2968,7 +2980,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                         placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
                         useManualSpeed,
                         numRetries,
-                        dockingMethod);
+                        dockingMethod,
+                        doLiftLoadCheck);
 }
     
 Result Robot::DockWithObject(const ObjectID objectID,
@@ -2986,7 +2999,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const f32 placementOffsetAngle_rad,
                              const bool useManualSpeed,
                              const u8 numRetries,
-                             const DockingMethod dockingMethod)
+                             const DockingMethod dockingMethod,
+                             const bool doLiftLoadCheck)
 {
   ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(objectID));
   if(object == nullptr) {
@@ -2995,7 +3009,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
     return RESULT_FAIL;
   }
       
-  ASSERT_NAMED(marker != nullptr, "Robot.DockWithObject.InvalidMarker");
+  DEV_ASSERT(marker != nullptr, "Robot.DockWithObject.InvalidMarker");
       
   // Need to store these so that when we receive notice from the physical
   // robot that it has picked up an object we can transition the docking
@@ -3028,7 +3042,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                                                                       dockAction,
                                                                       useManualSpeed,
                                                                       numRetries,
-                                                                      dockingMethod);
+                                                                      dockingMethod,
+                                                                      doLiftLoadCheck);
   if(sendResult == RESULT_OK) {
         
     // When we are "docking" with a ramp or crossing a bridge, we
@@ -3131,6 +3146,15 @@ void Robot::UnSetCarryingObjects(bool topOnly)
   if (!topOnly) {
     // Tell the robot it's not carrying anything
     if (_carryingObjectID.IsSet()) {
+      
+      // Since the PoseState of an object on the lift is Known, make it Unknown.
+      // here when it's detached from the lift so that Cozmo doesn't try to localize to it.
+      ObservableObject* carriedObject = _blockWorld->GetObjectByID(_carryingObjectID);
+      if (nullptr != carriedObject) {
+        PRINT_NAMED_INFO("Robot.UnSetCarryingObjects.SettingUnknownPoseState", "");
+        GetObjectPoseConfirmer().MarkObjectUnknown(carriedObject);
+      }
+      
       SendSetCarryState(CarryState::CARRY_NONE);
     }
 
@@ -3369,21 +3393,6 @@ bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& 
 
   return true;
 }
-  
-// Helper for the following functions to reason about the object's height (mid or top)
-// relative to specified threshold
-inline static bool IsTooHigh(const ObservableObject& object, const Pose3d& poseWrtRobot,
-                             float heightMultiplier, float heightTol, bool useTop)
-{
-  const Point3f rotatedSize( poseWrtRobot.GetRotation() * object.GetSize() );
-  const float rotatedHeight = std::abs( rotatedSize.z() );
-  float z = poseWrtRobot.GetTranslation().z();
-  if(useTop) {
-    z += rotatedHeight*0.5f;
-  }
-  const bool isTooHigh = z > (heightMultiplier * rotatedHeight + heightTol);
-  return isTooHigh;
-}
     
 bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
 {
@@ -3397,7 +3406,7 @@ bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
   }
             
   // check if it's too high to stack on
-  if ( IsTooHigh(objectToStackOn, relPos, 1.f, STACKED_HEIGHT_TOL_MM, true) ) {
+  if ( objectToStackOn.IsPoseTooHigh(relPos, 1.f, STACKED_HEIGHT_TOL_MM, 0.5f) ) {
     return false;
   }
     
@@ -3413,7 +3422,7 @@ bool Robot::CanPickUpObject(const ObservableObject& objectToPickUp) const
   }
       
   // check if it's too high to pick up
-  if ( IsTooHigh(objectToPickUp, relPos, 2.f, STACKED_HEIGHT_TOL_MM, true) ) {
+  if ( objectToPickUp.IsPoseTooHigh(relPos, 2.f, STACKED_HEIGHT_TOL_MM, 0.5f) ) {
     return false;
   }
     
@@ -3429,7 +3438,7 @@ bool Robot::CanPickUpObjectFromGround(const ObservableObject& objectToPickUp) co
   }
       
   // check if it's too high to pick up
-  if ( IsTooHigh(objectToPickUp, relPos, 0.5f, ON_GROUND_HEIGHT_TOL_MM, false) ) {
+  if ( objectToPickUp.IsPoseTooHigh(relPos, 0.5f, ON_GROUND_HEIGHT_TOL_MM, 0.f) ) {
     return false;
   }
     
@@ -3507,8 +3516,8 @@ Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
   }
   
   // Sanity check: if we grab the origin the index we just got, it should be the one we searched for
-  ASSERT_NAMED(GetPoseOriginList().GetOriginByID(originID) == origin,
-               "Robot.SendAbsLocalizationUpdate.OriginIndexLookupFailed");
+  DEV_ASSERT(GetPoseOriginList().GetOriginByID(originID) == origin,
+             "Robot.SendAbsLocalizationUpdate.OriginIndexLookupFailed");
   
   return SendMessage(RobotInterface::EngineToRobot(
                        RobotInterface::AbsoluteLocalizationUpdate(
@@ -3553,7 +3562,7 @@ bool Robot::HasExternalInterface() const
 
 IExternalInterface* Robot::GetExternalInterface()
 {
-  ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
+  DEV_ASSERT(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
   return _context->GetExternalInterface();
 }
 
@@ -3563,6 +3572,8 @@ Util::Data::DataPlatform* Robot::GetContextDataPlatform()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Message handlers subscribed to in RobotToEngineImplMessaging::InitRobotMessageComponent
+  
 template<>
 void Robot::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
 {
@@ -3570,7 +3581,34 @@ void Robot::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
   SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(!msg.isStarted)));
 }
   
+template<>
+void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
+{
+  const VisionComponent& visionComponent = GetVisionComponent();
+  const Vision::CameraCalibration& cameraCalibration = visionComponent.GetCameraCalibration();
+  
+  ExternalInterface::CameraConfig cameraConfig(cameraCalibration.GetFocalLength_x(),
+                                               cameraCalibration.GetFocalLength_y(),
+                                               cameraCalibration.GetCenter_x(),
+                                               cameraCalibration.GetCenter_y(),
+                                               cameraCalibration.ComputeHorizontalFOV().getDegrees(),
+                                               cameraCalibration.ComputeVerticalFOV().getDegrees(),
+                                               visionComponent.GetMinCameraExposureTime_ms(),
+                                               visionComponent.GetMaxCameraExposureTime_ms(),
+                                               visionComponent.GetMinCameraGain(),
+                                               visionComponent.GetMaxCameraGain());
+  
+  ExternalInterface::PerRobotSettings robotSettings(GetID(),
+                                                    GetHeadSerialNumber(),
+                                                    GetBodySerialNumber(),
+                                                    _modelNumber,
+                                                    _hwVersion,
+                                                    std::move(cameraConfig));
+  
+  Broadcast( ExternalInterface::MessageEngineToGame(std::move(robotSettings)) );
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimeStamp_t Robot::GetLastImageTimeStamp() const {
   return GetVisionComponent().GetLastProcessedImageTimeStamp();
 }
@@ -3642,7 +3680,8 @@ Pose3d Robot::GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
       
   Pose3d liftPoseWrtCam;
   bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
-  ASSERT_NAMED(result == true, "Lift and camera poses should be in same pose tree");
+  
+  DEV_ASSERT(result, "Lift and camera poses should be in same pose tree");
       
   return liftPoseWrtCam;
 }
@@ -3823,10 +3862,10 @@ bool Robot::UpdateCurrPoseFromHistory()
   
 Result Robot::ConnectToObjects(const FactoryIDArray& factory_ids)
 {
-  ASSERT_NAMED_EVENT(factory_ids.size() == _objectsToConnectTo.size(),
-                     "Robot.ConnectToObjects.InvalidArrayLength",
-                     "%zu slots requested. Max %zu",
-                     factory_ids.size(), _objectsToConnectTo.size());
+  DEV_ASSERT_MSG(factory_ids.size() == _objectsToConnectTo.size(),
+                 "Robot.ConnectToObjects.InvalidArrayLength",
+                 "%zu slots requested. Max %zu",
+                 factory_ids.size(), _objectsToConnectTo.size());
       
   std::stringstream strs;
   for (auto it = factory_ids.begin(); it != factory_ids.end(); ++it)
@@ -3973,8 +4012,9 @@ void Robot::ConnectToRequestedObjects()
 
   // Iterate over the connected objects and the new factory IDs to see what we need to send in the
   // message for every slot.
-  ASSERT_NAMED(_objectsToConnectTo.size() == _connectedObjects.size(),
-               "Robot.ConnectToRequestedObjects.InvalidArraySize");
+  DEV_ASSERT(_objectsToConnectTo.size() == _connectedObjects.size(),
+             "Robot.ConnectToRequestedObjects.InvalidArraySize");
+  
   for (int i = 0; i < _objectsToConnectTo.size(); ++i) {
         
     ObjectToConnectToInfo& newObjectToConnectTo = _objectsToConnectTo[i];
@@ -4282,7 +4322,7 @@ RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
 {
   if (!_context->GetRobotManager())
   {
-    ASSERT_NAMED(false, "Robot.GetRobotMessageHandler.nullptr");
+    DEV_ASSERT(false, "Robot.GetRobotMessageHandler.nullptr");
     return nullptr;
   }
         

@@ -20,6 +20,15 @@
 #include <stdint.h>
 #include <list>
 
+namespace CozmoAnim {
+  struct HeadAngle;
+  struct LiftHeight;
+  struct RobotAudio;
+  struct FaceAnimation;
+  struct ProceduralFace;
+  struct Event;
+  struct BodyMotion;
+}
 
 namespace Anki {
 namespace Cozmo {
@@ -49,8 +58,22 @@ public:
 
   Result AddKeyFrameToBack(const FRAME_TYPE& keyFrame);
 
-  // Define from json. Second argument is used to print nicer debug strings if something goes wrong
+  // Define from JSON. Second argument is used to print nicer debug strings if something goes wrong.
   Result AddKeyFrameToBack(const Json::Value& jsonRoot, const std::string& animNameDebug = "");
+
+  // Define from FlatBuffers. Second argument is used to print nicer debug strings if something goes wrong.
+  // TODO: Reduce some code duplication in this method (COZMO-8766). Rather than have all the different types
+  //       for the different FlatBuffers-generated classes, can we use a single AddFlatBufKeyFrameToBack()
+  //       method that has the type of the FlatBuffers class as an additional template argument?
+  Result AddKeyFrameToBack(const CozmoAnim::LiftHeight* liftKeyframe, const std::string& animNameDebug = "");
+  Result AddKeyFrameToBack(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug = "");
+  Result AddKeyFrameToBack(const CozmoAnim::HeadAngle* headKeyframe, const std::string& animNameDebug = "");
+  Result AddKeyFrameToBack(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug = "");
+  Result AddKeyFrameToBack(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug = "");
+  Result AddKeyFrameToBack(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug = "");
+  Result AddKeyFrameToBack(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug = "");
+
+  Result AddNewKeyFrameToBack(const FRAME_TYPE& newKeyFrame);
   
   Result AddKeyFrameByTime(const FRAME_TYPE& keyFrame);
 
@@ -177,7 +200,7 @@ void Track<FRAME_TYPE>::MoveToEnd()
 template<typename FRAME_TYPE>
 const FRAME_TYPE* Track<FRAME_TYPE>::GetNextKeyFrame() const
 {
-  ASSERT_NAMED(_frameIter != _frames.end(), "Frame iterator should not be at end.");
+  DEV_ASSERT(_frameIter != _frames.end(), "Frame iterator should not be at end");
   
   auto nextIter = _frameIter;
   ++nextIter;
@@ -360,6 +383,82 @@ RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(Tim
   return msg;
 }
 
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::LiftHeight* liftKeyframe, const std::string& animNameDebug)
+{
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromFlatBuf(liftKeyframe, animNameDebug);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
+
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug)
+{
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromFlatBuf(procFaceKeyframe, animNameDebug);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
+
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::HeadAngle* headKeyframe, const std::string& animNameDebug)
+{
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromFlatBuf(headKeyframe, animNameDebug);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
+
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
+{
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromFlatBuf(audioKeyframe, animNameDebug);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
+
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
+{
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromFlatBuf(faceAnimKeyframe, animNameDebug);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
+
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
+{
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromFlatBuf(eventKeyframe, animNameDebug);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
+
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug)
+{
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromFlatBuf(bodyKeyframe, animNameDebug);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
 
 template<typename FRAME_TYPE>
 Result Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonRoot, const std::string& animNameDebug)
@@ -369,8 +468,13 @@ Result Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonRoot, const s
   if(RESULT_OK != lastResult) {
     return lastResult;
   }
-  
-  lastResult = AddKeyFrameToBack(newKeyFrame);
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
+
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddNewKeyFrameToBack(const FRAME_TYPE& newKeyFrame)
+{
+  Result lastResult = AddKeyFrameToBack(newKeyFrame);
   if(RESULT_OK != lastResult) {
     return lastResult;
   }

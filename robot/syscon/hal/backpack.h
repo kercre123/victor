@@ -24,6 +24,7 @@ enum DefaultBackpackPattern {
 namespace Backpack {
   void init();
   void manage();
+  void trigger();
   
   void setLayer(BackpackLayer);
 
@@ -38,6 +39,7 @@ namespace Backpack {
   void setLights(BackpackLayer, const LightState* lights);
   void setLightsMiddle(BackpackLayer, const LightState* lights);
   void setLightsTurnSignals(BackpackLayer, const LightState* lights);
+  void testLight(int channel);
 }
 
 #endif /* LIGHTS_H */

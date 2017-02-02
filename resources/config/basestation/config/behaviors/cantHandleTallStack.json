@@ -1,5 +1,5 @@
 {
-  "behaviorType": "CantHandleTallStack",
+  "behaviorClass": "CantHandleTallStack",
   "name": "cantHandleTallStack",
   "flatScore": 20,
   "behaviorGroups": [

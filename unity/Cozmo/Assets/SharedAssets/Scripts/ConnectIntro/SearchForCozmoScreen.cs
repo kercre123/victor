@@ -16,16 +16,21 @@ public class SearchForCozmoScreen : MonoBehaviour {
   }
 
   private void Start() {
-    Invoke("CheckForConnection", ConnectionFlow.ConnectionFlowDelay);
+    Invoke("CheckForConnection", ConnectionFlowController.ConnectionFlowDelay);
   }
 
   private void CheckForConnection() {
+    if (_PingStatus == null) {
+      // we weren't given a ping object, which means another component will
+      // be tasked with determining when we're connected
+      return;
+    }
     _PingCheckAttempts++;
     if (_PingStatus.GetPingStatus() || _PingCheckAttempts >= _AttemptsBeforeShowingFailScreen) {
       ShowScreenComplete();
     }
     else {
-      Invoke("CheckForConnection", ConnectionFlow.ConnectionFlowDelay);
+      Invoke("CheckForConnection", ConnectionFlowController.ConnectionFlowDelay);
     }
   }
 

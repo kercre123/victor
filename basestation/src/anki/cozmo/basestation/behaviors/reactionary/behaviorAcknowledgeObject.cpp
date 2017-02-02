@@ -20,8 +20,11 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iReactToObjectListener.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -29,39 +32,42 @@
 #include "clad/robotInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 
+
 #include <limits>
 
 namespace Anki {
 namespace Cozmo {
 
 namespace {
-  CONSOLE_VAR(bool, kEnableObjectAcknowledgement, "BehaviorAcknowledgeObject", true);
-  CONSOLE_VAR(bool, kVizPossibleStackCube, "BehaviorAcknowledgeObject", false);
-  CONSOLE_VAR(f32,  kBackupDistance_mm,    "BehaviorAcknowledgeObject", 25.f);
-  CONSOLE_VAR(f32,  kBackupSpeed_mmps,     "BehaviorAcknowledgeObject", 100.f);
-  
-  static const char * const kLogChannelName = "Behaviors";
+CONSOLE_VAR(bool, kVizPossibleStackCube, "BehaviorAcknowledgeObject", false);
+CONSOLE_VAR(f32,  kBackupDistance_mm,    "BehaviorAcknowledgeObject", 25.f);
+CONSOLE_VAR(f32,  kBackupSpeed_mmps,     "BehaviorAcknowledgeObject", 100.f);
+
+static const char * const kLogChannelName = "Behaviors";
+
+static const char * const kReactionAnimGroupKey   = "ReactionAnimGroup";
+static const char * const kMaxTurnAngleKey        = "MaxTurnAngle_deg";
+static const char * const kPanToleranceKey        = "PanTolerance_deg";
+static const char * const kTiltToleranceKey       = "TiltTolerance_deg";
+static const char * const kNumImagesToWaitForKey  = "NumImagesToWaitFor";
 }
 
 BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config)
-: IBehaviorPoseBasedAcknowledgement(robot, config)
+: IBehavior(robot, config)
 , _ghostStackedObject(new ActiveCube(ObservableObject::InvalidActiveID,
                                      ObservableObject::InvalidFactoryID,
                                      ActiveObjectType::OBJECT_CUBE1))
 , _shouldCheckBelowTarget(true)
 {
   SetDefaultName("AcknowledgeObject");
+  LoadConfig(config);
 
   // give the ghost object and ID so we can visualize it
   _ghostStackedObject->SetVizManager(robot.GetContext()->GetVizManager());
-  
-  SubscribeToTriggerTags({
-    EngineToGameTag::RobotObservedObject,
-  });
 }
-
   
-Result BehaviorAcknowledgeObject::InitInternalReactionary(Robot& robot)
+  
+Result BehaviorAcknowledgeObject::InitInternal(Robot& robot)
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
   // chance to be processed, in case we see multiple objects in the same tick.
@@ -88,19 +94,47 @@ IBehavior::Status BehaviorAcknowledgeObject::UpdateInternal(Robot& robot)
 
   return super::UpdateInternal(robot);
 }
+  
 
+void BehaviorAcknowledgeObject::LoadConfig(const Json::Value& config)
+{
+  using namespace JsonTools;
+  
+  JsonTools::GetValueOptional(config,kReactionAnimGroupKey,_params.reactionAnimTrigger);
+  
+  if(GetAngleOptional(config, kMaxTurnAngleKey, _params.maxTurnAngle_rad, true)) {
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetMaxTurnAngle",
+                      "%.1fdeg", _params.maxTurnAngle_rad.getDegrees());
+  }
+  
+  if(GetAngleOptional(config, kPanToleranceKey, _params.panTolerance_rad, true)) {
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPanTolerance",
+                      "%.1fdeg", _params.panTolerance_rad.getDegrees());
+  }
+  
+  if(GetAngleOptional(config, kTiltToleranceKey, _params.tiltTolerance_rad, true)) {
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetTiltTolerance",
+                      "%.1fdeg", _params.tiltTolerance_rad.getDegrees());
+  }
+  
+  if(GetValueOptional(config, kNumImagesToWaitForKey, _params.numImagesToWaitFor)) {
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetNumImagesToWaitFor",
+                      "%d", _params.numImagesToWaitFor);
+  }
+} // LoadConfig()
+  
+  
 void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
 {
-  _currTarget.UnSet();  
-  s32 bestTarget = 0;
-  Pose3d poseWrtRobot;
-  if( GetBestTarget(robot, bestTarget, poseWrtRobot) ) {
-    _currTarget = bestTarget;
-    ASSERT_NAMED(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
-  }
-  else {
+  _currTarget.UnSet();
+  if(_targets.size() <= 0) {
     return;
   }
+  
+  _currTarget = *_targets.begin();
+  DEV_ASSERT(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
+  Pose3d poseWrtRobot;
+  robot.GetBlockWorld().GetObjectByID(_currTarget)->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot);
   
   // Only bother checking below the robot if the object is significantly above the robot
   _shouldCheckBelowTarget = poseWrtRobot.GetTranslation().z() > ROBOT_BOUNDING_Z * 0.5f;
@@ -161,7 +195,7 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
     return;
   }
 
-  const float zSize = obj->GetSize().z();
+  const float zSize = obj->GetDimInParentFrame<'Z'>();
   
   const float offsetAboveTarget = zSize;
   const float offsetBelowTarget = -zSize;
@@ -306,8 +340,13 @@ void BehaviorAcknowledgeObject::LookAtGhostBlock(Robot& robot, bool backupFirst,
 
 void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
 {
+  // notify about the id being done and decide what to do next
   // inform parent class that we completed a reaction
-  RobotReactedToId(robot, _currTarget.GetValue());
+  for(auto listener: _objectListeners){
+    listener->ReactedToID(robot, _currTarget.GetValue());
+  }
+  
+  _targets.erase(_currTarget.GetValue());
   
   auto callback = [this,&robot]()
   {
@@ -318,7 +357,7 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
   
   // NOTE: this is not really sufficient logic, because we could fail to turn towards
   // a remaining target object and then leave the head not facing this object. COZMO-7108
-  if(HasDesiredReactionTargets(robot))
+  if(!_targets.empty())
   {
     // Have other targets to react to, don't turn towards this target. Just run the callback.
     callback();
@@ -331,104 +370,31 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
   }
 }
  
-void BehaviorAcknowledgeObject::StopInternalAcknowledgement(Robot& robot)
+void BehaviorAcknowledgeObject::StopInternal(Robot& robot)
 {
   // if we get interrupted for any reason, kill the queue. We don't want to back up a bunch of stuff in here,
   // this is meant to handle seeing new objects while we are running
+  for(auto listener: _objectListeners){
+    listener->ClearDesiredTargets(robot);
+  }
+  
   _currTarget.UnSet();
   _shouldStart = false;
 }
 
-bool BehaviorAcknowledgeObject::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorAcknowledgeObject::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const
 {
-  const bool ret = kEnableObjectAcknowledgement &&
-    !robot.IsCarryingObject() &&
-    !robot.IsPickingOrPlacing() &&
-    !robot.IsOnCharger() &&
-    !robot.IsOnChargerPlatform();
-  return ret;
+  _targets = preReqData.GetTargets();
+  
+  return !_targets.empty();
 }
 
-void BehaviorAcknowledgeObject::AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorAcknowledgeObject::AddListener(IReactToObjectListener* listener)
 {
-  switch(event.GetData().GetTag())
-  {
-    case EngineToGameTag::RobotObservedObject: {
-      // only update target blocks if we are running
-      HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
-      break;
-    }
-      
-    case EngineToGameTag::RobotDelocalized:
-    {
-      // this is passed through from the parent class - it's valid to be receiving this
-      // we just currently don't use it for anything.  Case exists so we don't print errors.
-      break;
-    }
-
-    default:
-      PRINT_NAMED_ERROR("BehaviorAcknowledgeObject.HandleWhileNotRunning.InvalidTag",
-                        "Received event with unhandled tag %hhu.",
-                        event.GetData().GetTag());
-      break;
-  }
-} // AlwaysHandleInternal()
-
-void BehaviorAcknowledgeObject::HandleObjectObserved(const Robot& robot,
-                                                     const ExternalInterface::RobotObservedObject& msg)
-{
-  // NOTE: this may get called twice (once from ShouldConsiderObservedObjectHelper and once from
-  // AlwaysHandleInternal)
-
-  if( !IsRunnableInternalReactionary(robot) ) {
-    // this let's us react as soon as e.g. we come off the charger
-    return;
-  }
-  
-  // Object must be in one of the families this behavior cares about
-  const bool hasValidFamily = _objectFamilies.count(msg.objectFamily) > 0;
-  if(!hasValidFamily) {
-    return;
-  }
-
-  // check if we want to react based on pose and cooldown, and also update position data even if we don't
-  // react
-  Pose3d obsPose( msg.pose, robot.GetPoseOriginList() );
-
-  // ignore cubes we are carrying or docking to (don't react to them)
-  if(msg.objectID == robot.GetCarryingObject() ||
-     msg.objectID == robot.GetDockObject())
-  {
-    const bool considerReaction = false;
-    HandleNewObservation(msg.objectID, obsPose, msg.timestamp, considerReaction);
-  }
-  else {
-    HandleNewObservation(msg.objectID, obsPose, msg.timestamp);
-  }
+  _objectListeners.insert(listener);
 }
 
-bool BehaviorAcknowledgeObject::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event,
-                                                  const Robot& robot)
-{
-  if( event.GetTag() != EngineToGameTag::RobotObservedObject ) {
-    PRINT_NAMED_ERROR("BehaviorAcknowledgeObject.ShouldRunForEvent.InvalidTag",
-                      "Received trigger event with unhandled tag %hhu",
-                      event.GetTag());
-    return false;
-  }
-
-  const ExternalInterface::RobotObservedObject& msg = event.Get_RobotObservedObject();
   
-  // NOTE: this may get called twice for this message, that should be OK. Call it here to ensure it is done
-  // before returning
-  HandleObjectObserved(robot, msg);
-
-  // this will be set in begin iteration
-  _currTarget.UnSet();
-  const bool ret = HasDesiredReactionTargets(robot);
-  return ret;
-} // ShouldRunForEvent()
-
 
 } // namespace Cozmo
 } // namespace Anki

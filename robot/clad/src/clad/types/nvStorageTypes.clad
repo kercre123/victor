@@ -15,6 +15,9 @@ namespace NVStorage {
 
     NVConst_FACTORY_DATA_BIT = 0x80000000,  // aka playpen tags
     NVConst_FIXTURE_DATA_BIT = 0xC0000000,  // aka pre-playpen tags
+    NVConst_VERSION_MAGIC    = 0x00000015,  // Written by version 1.5 or greater
+    NVConst_FACTORY_BLOCK_SIZE = 0x1e000, // Size of factory block in bytes
+    NVConst_SIZE_OF_VERSION_AND_BC = 0x30,
   }
 
   enum uint_32 NVEntryTag
@@ -62,6 +65,7 @@ namespace NVStorage {
     NVEntry_CliffValOnGround   = 0x80000008,
     NVEntry_PlaypenTestResults = 0x80000010,
     NVEntry_FactoryLock        = 0x80000011, // If present, locks out most robot functions.
+    NVEntry_VersionMagic       = 0x80000012,
 
     // Multi-blob manufacturing entires start here
     NVEntry_CalibImage1 = 0x80010000,
@@ -80,6 +84,15 @@ namespace NVStorage {
     NVEntry_PrePlaypenResults   = 0xC0000000,
     NVEntry_PrePlaypenCentroids = 0xC0000001,
     NVEntry_IMUAverages         = 0xC0000004,
+
+    // Don't read from these tags
+
+    // VersionMagic and birth certificate
+    NVEntry_FactoryBaseTag = 0xDE000,
+
+    // Factory base tag + word aligned size of packed version magic (20 bytes) +
+    // word aligned size of packed birth certificate (28 bytes)
+    NVEntry_FactoryBaseTagWithBCOffset = 0xDE030, // Rest of playpen data
   }
 
   // Nominally 0 is success > 0 is conditional success and < 0 is error

@@ -86,56 +86,58 @@ RobotAudioAnimationOnRobot::AnimationState RobotAudioAnimationOnRobot::Update( T
       if ( !_audioBuffer->IsWaitingForReset() ) {
         BeginBufferingAudioOnRobotMode();  // Set state to LoadingStream
       }
-    }
       break;
+    }
       
     case AnimationState::LoadingStream:
     {
       UpdateLoadingStream( startTime_ms, streamingTime_ms );
-    }
       break;
+    }
       
     case AnimationState::LoadingStreamFrames:
     {
       UpdateLoadingStreamFrames( startTime_ms, streamingTime_ms );
-    }
       break;
+    }
       
     case AnimationState::AudioFramesReady:
     {
       UpdateAudioFramesReady( startTime_ms, streamingTime_ms );
-    }
       break;
+    }
       
     case AnimationState::AnimationAbort:
     {
       // If in animation mode wait for buffer to be ready before completing
       // If you hit this assert it is safe to comment out, please just let me know - Jordan R.
-      ASSERT_NAMED( GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationAbort,
+      DEV_ASSERT( GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationAbort,
                     "Don't expect to get update calls after abort has been called.");
       SetAnimationState( AnimationState::AnimationCompleted );
-    }
       break;
+    }
       
     case AnimationState::AnimationCompleted:
+    {
       // Animation is done playing, do nothing
       break;
+    }
       
     case AnimationState::AnimationError:
     {
       // Should not end up in this state
-      ASSERT_NAMED( GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationError,
-                    "Should never fall into Error state!" );
-    }
+      DEV_ASSERT(GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationError,
+                 "Should never fall into Error state!");
       break;
+    }
       
     case AnimationState::AnimationStateCount:
     {
       // Should not end up in this state
-      ASSERT_NAMED( GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationStateCount,
-                    "Should never fall into AnimationStateCount state!" );
-    }
+      DEV_ASSERT(GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationStateCount,
+                 "Should never fall into AnimationStateCount state!");
       break;
+    }
   }
   
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
@@ -175,8 +177,8 @@ void RobotAudioAnimationOnRobot::UpdateLoadingStream( TimeStamp_t startTime_ms, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioAnimationOnRobot::UpdateLoadingStreamFrames( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
 {
-  ASSERT_NAMED( HasCurrentBufferStream(),
-                "RobotAudioAnimationOnRobot.UpdateLoadingStreamFrames._currentBufferStream.IsNull" );
+  DEV_ASSERT(HasCurrentBufferStream(),
+             "RobotAudioAnimationOnRobot.UpdateLoadingStreamFrames._currentBufferStream.IsNull" );
   if ( _currentBufferStream->HasAudioFrame() ) {
     // Has audio frames
     SetAnimationState( AnimationState::AudioFramesReady );
@@ -318,11 +320,11 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
     const AudioFrameData* audioFrame = _currentBufferStream->PopRobotAudioFrame();
     if (nullptr != audioFrame)
     {
-      // TEMP: Convert audio frame into correct robot output, this will done in the Mixing Console at some point
+      // TEMP: Convert audio frame into correct robot output, this will be done in the Mixing Console at some point
       // Create Audio Frame
       AnimKeyFrame::AudioSample keyFrame;
-      ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= keyFrame.Size(),
-                   "Block size must be less or equal to audioSameple size");
+      DEV_ASSERT(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= keyFrame.Size(),
+                 "Block size must be less or equal to audioSample size");
       // Convert audio format to robot format
       for ( size_t idx = 0; idx < audioFrame->sampleCount; ++idx ) {
         keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] );

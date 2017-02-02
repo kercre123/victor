@@ -21,9 +21,6 @@
   "behavior.BringCubeToBeacon": {
     "translation": "Cozmo is collecting his Cubes"
   },
-  "behavior.LookAround": {
-    "translation": "Cozmo is exploring his surroundings"
-  },
   "behavior.ExploreVisitPossibleMarker": {
     "translation": "Cozmo is exploring his surroundings"
   },
@@ -39,9 +36,6 @@
   "behavior.VisitInterestingEdge": {
     "translation": "Cozmo is exploring his surroundings"
   },
-  "behavior.BuildPyramid": {
-    "translation": ""
-  },
   "behavior.KnockOverCubes": {
     "translation": "Cozmo is knocking over a stack of Cubes"
   },
@@ -50,6 +44,9 @@
   },
   "behavior.PounceOnMotion": {
     "translation": "Cozmo wants to pounce on your finger"
+  },
+  "behavior.FistBump": {
+    "translation": "Cozmo wants to fist bump"
   },
   "behavior.RollBlock": {
     "translation": "Cozmo is rolling a Cube"
@@ -116,5 +113,8 @@
   },
   "behavior.LookForFaceAndCube": {
     "translation": " "
-  }
+  },
+  "behavior.LookInPlaceForCube": {
+    "translation": "Cozmo is looking for a cube"
+  }    
 }

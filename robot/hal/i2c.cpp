@@ -5,6 +5,7 @@
 // For HAL use only - see i2c.h for instructions, imu.cpp and camera.cpp for examples 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
+#include "anki/cozmo/robot/buildTypes.h"
 #include "hal/portable.h"
 #include "hal/i2c.h"
 #include "hal/imu.h"
@@ -43,25 +44,11 @@ enum I2C_Control {
   I2C_CTRL_RST  = I2C_C1_RSTA_MASK
 };
 
-// Rectangle data for fifo
-struct ScreenRect {
-  // This is the ESP data
-  uint8_t left;
-  uint8_t right;
-  uint8_t top;
-  uint8_t bottom;
-
-  // Internal state
-  unsigned int sent;         // To OLED
-  unsigned int received;     // From espressif
-  unsigned int total;        // Rectangle size
-};
-
 // NOTE: THESE MUST BE POWERS OF TWO FOR PERFORMANCE REASONS
 // DISPLAY WORD QUEUE CAN BE SHRANK ONCE THE ESPRESSIF FLOW
 // CONTROL HAS BEEN IMPLEMENTED (should be 128 byte)
 static const int DISPLAY_WORD_QUEUE = 1 << 8;
-static const int RECTANGLE_QUEUE = 4;
+static const int RECTANGLE_QUEUE = 8;
 
 static uint8_t displayFifo[DISPLAY_WORD_QUEUE];
 static ScreenRect rectFifo[RECTANGLE_QUEUE];
@@ -79,7 +66,9 @@ static ScreenRect* activeOutputRect;
 static ScreenRect* activeInputRect;
 
 // Random state values
+#ifndef FCC_TEST
 static unsigned int _irqsleft = 0; // int for performance
+#endif
 static I2C_State _currentState;
 static unsigned int _stateCounter;
 static bool _readIMU;
@@ -188,8 +177,10 @@ bool Anki::Cozmo::HAL::I2C::GetWatermark(void) {
 }
 
 void Anki::Cozmo::HAL::I2C::Enable(void) { 
+  #ifndef FCC_TEST
   // Kick off the IRQ Handler again
   _irqsleft = MAX_IRQS;
+  #endif
   
   // Can we safely transition out of a rectangle (idle)
   // Note: this only happens on drop boundaries for CPU conservation
@@ -284,9 +275,11 @@ void Anki::Cozmo::HAL::I2C::FeedFace(bool rect, const uint8_t *face_bytes) {
 }
 
 void I2C0_IRQHandler(void) {
+  #ifndef FCC_TEST
   if (0 == --_irqsleft) {
     DisableIRQ(I2C0_IRQn);
   }
+  #endif
   
   I2C0_S = I2C_S_IICIF_MASK;
 

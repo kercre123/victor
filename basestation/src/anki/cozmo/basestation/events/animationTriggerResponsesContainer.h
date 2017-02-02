@@ -33,10 +33,14 @@ namespace Cozmo {
   public:
     bool        Load(const Anki::Util::Data::DataPlatform* data, std::string path);
     
-    std::string GetResponse(Anki::Cozmo::AnimationTrigger ev);
-    bool        HasResponse(Anki::Cozmo::AnimationTrigger ev);
+    template<class AnimTrigger>
+    std::string GetResponse(AnimTrigger ev);
+    
+    template<class AnimTrigger>
+    bool HasResponse(AnimTrigger ev);
     
   private:
+    
     std::unordered_map<std::string, std::string> _eventMap;
     
   }; // class AnimationTriggerResponsesContainer

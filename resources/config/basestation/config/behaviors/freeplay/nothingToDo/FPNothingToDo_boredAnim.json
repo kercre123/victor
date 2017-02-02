@@ -7,7 +7,7 @@
 {
   "name": "NothingToDo_BoredAnim",
 
-  "behaviorType": "PlayAnim",
+  "behaviorClass": "PlayAnim",
   "displayNameKey":"behavior.Bored",
   "flatScore": 1.0,
   "behaviorGroups": [

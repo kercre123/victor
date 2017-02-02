@@ -20,8 +20,8 @@ public class ProfileTab : MonoBehaviour {
   private Cozmo.UI.CozmoButton _EditNameButton;
 
   [SerializeField]
-  private Cozmo.UI.BaseModal _ProfileEditNameViewPrefab;
-  private Cozmo.UI.BaseModal _ProfileEditNameViewInstance;
+  private Cozmo.UI.BaseModal _ProfileEditNameModalPrefab;
+  private Cozmo.UI.BaseModal _ProfileEditNameModalInstance;
 
   // Use this for initialization
   private void Awake() {
@@ -62,22 +62,30 @@ public class ProfileTab : MonoBehaviour {
   }
 
   private void HandleEditNameButton() {
-    _ProfileEditNameViewInstance = UIManager.OpenModal(_ProfileEditNameViewPrefab);
-    _ProfileEditNameViewInstance.GetComponent<EnterNameSlide>().SetNameInputField(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
-    _ProfileEditNameViewInstance.GetComponent<EnterNameSlide>().RegisterInputFocus();
-    _ProfileEditNameViewInstance.GetComponent<EnterNameSlide>().OnNameEntered += HandleProfileEditNameDone;
+    System.Action<BaseModal> profileEditModalCreated = (newEditNameModal) => {
+      _ProfileEditNameModalInstance = newEditNameModal;
+
+      EnterNameSlide enterNameSlideScript = _ProfileEditNameModalInstance.GetComponent<EnterNameSlide>();
+      enterNameSlideScript.SetNameInputField(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      enterNameSlideScript.RegisterInputFocus();
+      enterNameSlideScript.OnNameEntered += HandleProfileEditNameDone;
+    };
+    ModalPriorityData profileEditNameData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                                  LowPriorityModalAction.CancelSelf,
+                                                                  HighPriorityModalAction.Stack);
+    UIManager.OpenModal(_ProfileEditNameModalPrefab, profileEditNameData, profileEditModalCreated);
   }
 
   private void HandleProfileEditNameDone(string newName) {
     _PlayerName.text = newName;
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName = newName;
     DataPersistence.DataPersistenceManager.Instance.Save();
-    UIManager.CloseModal(_ProfileEditNameViewInstance);
+    UIManager.CloseModal(_ProfileEditNameModalInstance);
   }
 
   private void OnDestroy() {
-    if (_ProfileEditNameViewInstance != null) {
-      UIManager.CloseModal(_ProfileEditNameViewInstance);
+    if (_ProfileEditNameModalInstance != null) {
+      UIManager.CloseModal(_ProfileEditNameModalInstance);
     }
   }
 

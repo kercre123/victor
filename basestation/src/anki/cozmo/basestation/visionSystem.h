@@ -260,6 +260,8 @@ namespace Cozmo {
                                Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
                                s32 numEnrollments = -1);
     
+    void SetFaceRecognitionIsSynchronous(bool isSynchronous);
+    
     Result LoadFaceAlbum(const std::string& albumName, std::list<Vision::LoadedKnownFace>& loadedFaces);
     
     Result SaveFaceAlbum(const std::string& albumName);
@@ -306,6 +308,16 @@ namespace Cozmo {
 
     Result CheckImageQuality(const Vision::Image& inputImage,
                              const std::vector<Anki::Rectangle<s32>>& detectionRects);
+    
+    bool IsExposureValid(s32 exposure) const;
+    
+    bool IsGainValid(f32 gain) const;
+    
+    s32 GetMinCameraExposureTime_ms() const { return _minCameraExposureTime_ms; }
+    s32 GetMaxCameraExposureTime_ms() const { return _maxCameraExposureTime_ms; }
+    
+    f32 GetMinCameraGain() const { return _minCameraGain; }
+    f32 GetMaxCameraGain() const { return _maxCameraGain; }
     
   protected:
   

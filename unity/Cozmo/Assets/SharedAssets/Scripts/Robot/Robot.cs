@@ -286,7 +286,8 @@ public class Robot : IRobot {
 
   public string CurrentBehaviorString { get; set; }
 
-  public BehaviorType CurrentBehaviorType { get; set; }
+  public BehaviorClass CurrentBehaviorClass { get; set; }
+  public ReactionTrigger CurrentReactionTrigger { get; set; }
 
   public string CurrentBehaviorName { get; set; }
 
@@ -398,7 +399,6 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehaviorTransition);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
 
     ObservableObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
@@ -430,7 +430,6 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehaviorTransition);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
 
     ActiveObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
@@ -457,13 +456,9 @@ public class Robot : IRobot {
   }
 
   private void HandleBehaviorTransition(Anki.Cozmo.ExternalInterface.BehaviorTransition message) {
-    CurrentBehaviorType = message.newBehaviorType;
-    CurrentBehaviorName = message.newBehavior;
+    CurrentBehaviorClass = message.newBehaviorClass;
+    CurrentBehaviorName = message.newBehaviorName;
     CurrentBehaviorDisplayNameKey = message.newBehaviorDisplayKey;
-  }
-
-  private void HandleReactionaryBehaviorTransition(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
-    PlayingReactionaryBehavior = message.behaviorStarted;
   }
 
   private void HandleDebugAnimationString(Anki.Cozmo.ExternalInterface.DebugAnimationString message) {
@@ -544,10 +539,6 @@ public class Robot : IRobot {
     RobotStartIdle();
     SetNightVision(false);
 
-    foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
-      kvp.Value.SetLEDs(Color.black);
-    }
-
     SetBackpackLEDs(Color.black.ToUInt());
     SetAllBackpackLEDs();
 
@@ -615,7 +606,8 @@ public class Robot : IRobot {
     LiftHeight = float.MaxValue;
     BatteryVoltage = float.MaxValue;
     _LastProcessedVisionFrameEngineTimestamp = 0;
-    CurrentBehaviorType = BehaviorType.NoneBehavior;
+    CurrentBehaviorClass = BehaviorClass.NoneBehavior;
+    CurrentReactionTrigger = ReactionTrigger.NoneTrigger;
     // usually this is unique
     CurrentBehaviorName = "NoneBehavior";
     CurrentBehaviorDisplayNameKey = "";
@@ -1268,12 +1260,18 @@ public class Robot : IRobot {
     _RobotCallbacks.Clear();
   }
 
-  public void EnrollNamedFace(int faceID, int mergeIntoID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SetFaceToEnroll(int existingID, string name, bool saveToRobot = true, bool sayName = true, bool useMusic = true) {
 
-    DAS.Debug(this, "Sending EnrollNamedFace for ID=" + faceID
-    + " with name=" + PrivacyGuard.HidePersonallyIdentifiableInfo(name)
-    + " to be merged into ID=" + mergeIntoID);
-    SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, mergeIntoID, name, seq, saveToRobot), callback, queueActionPosition);
+    DAS.Debug(this, "Sending SetFaceToEnroll for name=" + PrivacyGuard.HidePersonallyIdentifiableInfo(name)
+    + " to be saved as existing ID=" + existingID);
+
+    RobotEngineManager.Instance.Message.SetFaceToEnroll = Singleton<SetFaceToEnroll>.Instance.Initialize(name, 0, existingID, saveToRobot, sayName, useMusic);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void CancelFaceEnrollment() {
+    RobotEngineManager.Instance.Message.CancelFaceEnrollment = Singleton<CancelFaceEnrollment>.Instance;
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false) {
@@ -1831,15 +1829,26 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void ExecuteBehavior(BehaviorType type) {
+  public void ExecuteBehaviorByExecutableType(ExecutableBehaviorType type) {
     DAS.Debug(this, "Execute Behavior " + type);
 
-    RobotEngineManager.Instance.Message.ExecuteBehavior = Singleton<ExecuteBehavior>.Instance.Initialize(type);
+    if (type == ExecutableBehaviorType.LiftLoadTest) {
+      RobotEngineManager.Instance.Message.SetLiftLoadTestAsRunnable = Singleton<SetLiftLoadTestAsRunnable>.Instance;
+      RobotEngineManager.Instance.SendMessage();
+    }
+
+    RobotEngineManager.Instance.Message.ExecuteBehaviorByExecutableType =
+             Singleton<ExecuteBehaviorByExecutableType>.Instance.Initialize(type);
     RobotEngineManager.Instance.SendMessage();
   }
 
   public void ExecuteBehaviorByName(string behaviorName) {
     DAS.Debug(this, "Execute Behavior By Name" + behaviorName);
+
+    if (behaviorName == "LiftLoadTest") {
+      RobotEngineManager.Instance.Message.SetLiftLoadTestAsRunnable = Singleton<SetLiftLoadTestAsRunnable>.Instance;
+      RobotEngineManager.Instance.SendMessage();
+    }
 
     RobotEngineManager.Instance.Message.ExecuteBehaviorByName = Singleton<ExecuteBehaviorByName>.Instance.Initialize(behaviorName);
     RobotEngineManager.Instance.SendMessage();
@@ -1851,7 +1860,7 @@ public class Robot : IRobot {
     }
     else {
       ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-      ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.NoneBehavior);
     }
   }
 
@@ -2043,13 +2052,13 @@ public class Robot : IRobot {
   }
 
 
-  public void EnableReactionaryBehaviors(bool enable) {
-    RobotEngineManager.Instance.Message.EnableReactionaryBehaviors = Singleton<EnableReactionaryBehaviors>.Instance.Initialize(enable);
+  public void EnableAllReactionTriggers(bool enable) {
+    RobotEngineManager.Instance.Message.EnableAllReactionTriggers = Singleton<EnableAllReactionTriggers>.Instance.Initialize("unity", enable);
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable) {
-    RobotEngineManager.Instance.Message.RequestEnableReactionaryBehavior = Singleton<RequestEnableReactionaryBehavior>.Instance.Initialize(id, behaviorType, enable);
+  public void RequestEnableReactionTrigger(string id, Anki.Cozmo.ReactionTrigger behaviorType, bool enable) {
+    RobotEngineManager.Instance.Message.RequestEnableReactionTrigger = Singleton<RequestEnableReactionTrigger>.Instance.Initialize(id, behaviorType, enable);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -2129,5 +2138,9 @@ public class Robot : IRobot {
   public void SetNightVision(bool enable) {
     RobotEngineManager.Instance.Message.SetHeadlight = Singleton<SetHeadlight>.Instance.Initialize(enable);
     RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
+    SendQueueSingleAction(Singleton<PlayCubeAnimationTrigger>.Instance.Initialize(ID, obj, trigger), callback, QueueActionPosition.IN_PARALLEL);
   }
 }

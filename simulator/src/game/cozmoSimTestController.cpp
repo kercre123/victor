@@ -41,21 +41,21 @@ namespace Anki {
   void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
   {
     // by default we don't want pick these reactions, you can override this function if you tests needs them
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
                                                          "CozmoSimTestController",
-                                                         BehaviorType::ReactToPickup,
+                                                         ReactionTrigger::RobotPickedUp,
                                                          false)));
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
                                                          "CozmoSimTestController",
-                                                         BehaviorType::ReactToCubeMoved,
+                                                         ReactionTrigger::CubeMoved,
                                                          false)));
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
                                                          "CozmoSimTestController",
-                                                         BehaviorType::AcknowledgeObject,
+                                                         ReactionTrigger::ObjectPositionUpdated,
                                                          false)));
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
                                                          "CozmoSimTestController",
-                                                         BehaviorType::ReactToReturnedToTreads,
+                                                         ReactionTrigger::ReturnedToTreads,
                                                          false)));
 
   }
@@ -70,7 +70,7 @@ namespace Anki {
     {
       if (GetSupervisor()->getTime() - start_time > timeout) {
         if (!cond) {
-          PRINT_STREAM_WARNING("CONDITION_WITH_TIMEOUT_ASSERT", "(" << condAsString << ") still false after " << timeout << " seconds. (" << file << "." << func << "." << line << ")");
+          PRINT_STREAM_WARNING("CONDITION_WITH_TIMEOUT_ASSERT", "(" << condAsString << ") still false after " << timeout << " seconds. (" << file << "." << func << "." << line << " started at: " << start_time << ")");
           _result = 255;
           
           StopMovie();
@@ -112,7 +112,7 @@ namespace Anki {
             }
           }
           
-          PRINT_STREAM_WARNING("ALL_CONDITIONS_WITH_TIMEOUT_ASSERT", "Conditions: {" << conditionsAsString << "}. Which still false after " << timeout << " seconds: " << failedConditions << "(" << file << "." << func << "." << line << ")");
+          PRINT_STREAM_WARNING("ALL_CONDITIONS_WITH_TIMEOUT_ASSERT", "Conditions: {" << conditionsAsString << "}. Which still false after " << timeout << " seconds: " << failedConditions << "(" << file << "." << func << "." << line << " started at: " << start_time << ")");
           _result = 255;
           
           StopMovie();
@@ -144,6 +144,10 @@ namespace Anki {
           std::stringstream ss;
           ss << kScreenShotsPath << _screenshotID << "_" << timeString << "_" << _screenshotNum << ".png";
           GetSupervisor()->exportImage(ss.str(), 80);
+          
+          PRINT_NAMED_INFO("CozmoSimTestController.UpdateInternal.TookScreenshot",
+                           "ID:%s Num:%d Time:%s",
+                           _screenshotID.c_str(), _screenshotNum, timeString);
           
           _screenshotNum++;
           _timeOfLastScreenshot = simTime;
@@ -179,7 +183,7 @@ namespace Anki {
       time(&t);
       std::stringstream ss;
       ss << kBuildDirectory << name << ".mp4";
-      GetSupervisor()->startMovie(ss.str(), 854, 480, 0, 90, speed, false);
+      GetSupervisor()->movieStartRecording(ss.str(), 854, 480, 0, 90, speed, false);
       _isRecording =  GetSupervisor()->getMovieStatus() == webots::Supervisor::MOVIE_RECORDING;
       PRINT_NAMED_INFO("Is Movie Recording?","_isRecording:%d", _isRecording);
     }
@@ -190,12 +194,16 @@ namespace Anki {
     {
       if(_isRecording && GetSupervisor()->getMovieStatus() == GetSupervisor()->MOVIE_RECORDING)
       {
-        GetSupervisor()->stopMovie();
+        GetSupervisor()->movieStopRecording();
         PRINT_NAMED_INFO("CozmoSimTestController.StopMovie", "Movie Stop Command issued");
         
-        while(GetSupervisor()->getMovieStatus() == webots::Supervisor::MOVIE_SAVING){
+        while(GetSupervisor()->movieIsReady()){
         }
-        PRINT_NAMED_INFO("CozmoSimTestController.StopMovie", "Movie stopped with status: %d", GetSupervisor()->getMovieStatus());
+
+        if(GetSupervisor()->movieFailed()){
+          PRINT_NAMED_ERROR("CozmoSimTestController.StopMovie", "Movie failed to save properly");
+        }
+        
         _isRecording = false;
       }
     }
@@ -216,6 +224,9 @@ namespace Anki {
       
       _screenshotInterval = interval;
       _screenshotID = screenshotID;
+      
+      PRINT_NAMED_INFO("CozmoSimTestController.TakeScreenshotsAtInterval.SettingInterval",
+                       "Interval:%f Path:%s", _screenshotInterval, kScreenShotsPath.c_str());
     }
 
     

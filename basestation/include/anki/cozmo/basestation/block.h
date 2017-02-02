@@ -224,8 +224,8 @@ namespace Anki {
       {
         // The sizes specified by the block definitions should
         // agree with this being a cube (all dimensions the same)
-        ASSERT_NAMED(_size.x() == _size.y(), "Block_Cube1x1.Constructor.InvalidXY");
-        ASSERT_NAMED(_size.y() == _size.z(), "Block_Cube1x1.Constructor.InvalidYZ");
+        DEV_ASSERT(_size.x() == _size.y(), "Block_Cube1x1.Constructor.InvalidXY");
+        DEV_ASSERT(_size.y() == _size.z(), "Block_Cube1x1.Constructor.InvalidYZ");
       }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;

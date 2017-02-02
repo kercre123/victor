@@ -182,9 +182,11 @@ namespace Vision {
     // NOTE: using camel case here because event and timer names are already
     //       being specified in camel case
     const std::string fullPrefix(kDasEventNamePrefix + _eventName + "." + name);
-    Util::sEventF((fullPrefix + ".OverallTime_" + units).c_str(), {{DDATA, TO_DDATA_STR(timer.count)}},
+    Util::sEventF((fullPrefix + ".OverallTime_" + units).c_str(),
+                  {{DDATA, std::to_string(timer.count).c_str()}},
                   "%lld", timer.totalTime.count());
-    Util::sEventF((fullPrefix + ".RecentTime_" + units).c_str(), {{DDATA, TO_DDATA_STR(countSinceLastDasLog)}},
+    Util::sEventF((fullPrefix + ".RecentTime_" + units).c_str(),
+                  {{DDATA, std::to_string(countSinceLastDasLog).c_str()}},
                   "%lld", timeSinceLastDasLog);
     
     timer.totalTimeAtLastDasLog = timer.totalTime;

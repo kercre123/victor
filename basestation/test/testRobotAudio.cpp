@@ -16,7 +16,7 @@
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/animation/animation.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -165,14 +165,14 @@ const RobotAudioTest::AnimationRunLoopFunc generalUsesLoopFunc = []( RobotAudioA
     PRINT_NAMED_INFO( "RobotAudioTest.AnimationRunLoopFunc.generalUsesLoopFunc",
                       "Begining of Stream - FrameDrift_ms: %d", out_frameDrift_ms );
     
-    ASSERT_NAMED(out_frameDrift_ms >= 0, "generalUsesLoopFunc.out_frameDrift_ms < 0");
+    DEV_ASSERT(out_frameDrift_ms >= 0, "generalUsesLoopFunc.out_frameDrift_ms < 0");
   }
   
   
   // Always call update
   RobotAudioAnimation::AnimationState state = audioAnimation.Update( 0 , frameEndTime_ms );
   
-  // We are pre-populating audio data for test, not getting data in realtime form Wwise
+  // We are pre-populating audio data for test, not getting data in realtime from Wwise
   EXPECT_EQ( RobotAudioAnimation::AnimationState::AudioFramesReady, state);
   
   // Pop frame

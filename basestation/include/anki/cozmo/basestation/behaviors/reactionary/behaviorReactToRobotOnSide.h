@@ -13,12 +13,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnSide_H__
 #define __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnSide_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToRobotOnSide : public IReactionaryBehavior
+class BehaviorReactToRobotOnSide : public IBehavior
 {
 private:
   
@@ -27,16 +27,15 @@ private:
   BehaviorReactToRobotOnSide(Robot& robot, const Json::Value& config);
   
 public:
-  
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
-  virtual bool ShouldResumeLastBehavior() const override { return false; }
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
-  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool ShouldRunWhileOffTreads() const override { return true;}  
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
+
   
 protected:
     
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
 
 private:
 
@@ -44,6 +43,8 @@ private:
   void AskToBeRighted(Robot& robot);
   //Ensures no other behaviors run while Cozmo is still on his side
   void HoldingLoop(Robot& robot);
+
+  float _timeToPerformBoredAnim_s = -1.0f;
   
 };
 

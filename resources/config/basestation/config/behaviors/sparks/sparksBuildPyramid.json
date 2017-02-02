@@ -1,5 +1,5 @@
 {
-  "behaviorType": "BuildPyramid",
+  "behaviorClass": "BuildPyramid",
   "name": "sparksBuildPyramid",
   "requiredUnlockId": "BuildPyramid",
   "behaviorGroups": [

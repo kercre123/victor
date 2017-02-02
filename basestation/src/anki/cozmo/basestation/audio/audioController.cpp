@@ -61,9 +61,10 @@ using namespace AudioEngine;
   
 const char* AudioController::kAudioLogChannelName = "Audio";
 
-// Resolve audio asset file path
-static bool ResolvePathToAudioFile( const std::string&, const char*, char*, const size_t );
 #if USE_AUDIO_ENGINE
+  // Resolve audio asset file path
+  static bool ResolvePathToAudioFile( const std::string&, const char*, char*, const size_t );
+
   // Setup Ak Logging callback
   static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlayingId, AudioGameObject );
 #endif
@@ -81,7 +82,7 @@ AudioController::AudioController( const CozmoContext* context )
 
 #if USE_AUDIO_ENGINE
   {
-    ASSERT_NAMED(nullptr != context, "AudioController.AudioController.CozmocContex.IsNull");
+    DEV_ASSERT(nullptr != context, "AudioController.AudioController.CozmocContex.IsNull");
     
     const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
@@ -105,17 +106,20 @@ AudioController::AudioController( const CozmoContext* context )
                                     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     
     // Add Assets Zips to list.
-
 #ifdef ANDROID
     // Add to the APK file and OBB file (if it exists) to the list of valid zip files where the audio assets can be
     {
       auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
       JNIEnv* env = envWrapper->GetEnv();
       JNI_CHECK(env);
-
+      
       // Get a handle to the activity instance
       Util::JClassHandle contextClass{env->FindClass("android/content/ContextWrapper"), env};
       Util::JObjectHandle activity{Util::JNIUtils::getCurrentActivity(env), env};
+
+      // Link Java VM
+      config.javaVm = Util::JNIUtils::GetJvm();
+      config.javaActivity = env->NewLocalRef(activity.get());
 
       // Get a handle to the object representing the OBB folder
       jmethodID obbDirMethodID = env->GetMethodID(contextClass.get(), "getObbDir", "()Ljava/io/File;");
@@ -156,8 +160,8 @@ AudioController::AudioController( const CozmoContext* context )
 
       std::string apkPath = Util::JNIUtils::getStringFromObjectMethod(env, contextClass.get(), activity.get(), "getPackageCodePath", "()Ljava/lang/String;");
       std::string apkZipPath = apkPath + "?" + "assets/cozmo_resources/sound/AudioAssets.zip";
-      config.pathToZipFiles.push_back(std::move(apkZipPath));
       PRINT_CH_INFO(kAudioLogChannelName, "AudioController.AudioController", "APK file: %s", apkZipPath.c_str());
+      config.pathToZipFiles.push_back(std::move(apkZipPath));
     }
 #else
     // iOS & Mac Platfroms
@@ -191,7 +195,7 @@ AudioController::AudioController( const CozmoContext* context )
     _audioEngine->SetLogOutput( AudioEngine::ErrorLevel::All, &AudioEngineLogCallback );
     
     // If we're using the audio engine, assert that it was successfully initialized.
-    ASSERT_NAMED(_isInitialized, "AudioController.Initialize Audio Engine fail");
+    DEV_ASSERT(_isInitialized, "AudioController.Initialize Audio Engine fail");
   }
 #endif // USE_AUDIO_ENGINE
   
@@ -258,7 +262,8 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( const std::string& 
                                               {
                                                 MoveCallbackContextToGarbageCollector( thisContext );
                                               } );
-      _eventCallbackContexts.emplace( playingId, callbackContext );
+      std::lock_guard<std::mutex> lock(_callbackContextMutex);
+      _callbackContextMap.emplace( playingId, callbackContext );
     }
     else if ( kInvalidAudioPlayingId == playingId &&
              nullptr != callbackContext ) {
@@ -300,7 +305,8 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( AudioEngine::AudioE
       {
         MoveCallbackContextToGarbageCollector( thisContext );
       } );
-      _eventCallbackContexts.emplace( playingId, callbackContext );
+      std::lock_guard<std::mutex> lock(_callbackContextMutex);
+      _callbackContextMap.emplace( playingId, callbackContext );
     }
     else if ( kInvalidAudioPlayingId == playingId &&
               nullptr != callbackContext ) {
@@ -450,10 +456,10 @@ RobotAudioBuffer* AudioController::RegisterRobotAudioBuffer( AudioEngine::AudioG
   _gameObjectPluginIdMap.emplace( gameObjectId, pluginId );
   
   if ( !it.second ) {
-    // If buffer already exist
+    // If buffer already exists
     delete buffer;
     PRINT_NAMED_ERROR( "AudioController.RegisterRobotAudioBuffer",
-                       "Robot buffer already exist! PluginId: %d GameObject: %u",
+                       "Robot buffer already exists! PluginId: %d GameObject: %u",
                        pluginId, static_cast<uint32_t>( gameObjectId ) );
   }
   
@@ -681,25 +687,26 @@ void AudioController:: SetupWavePortalPlugIn()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext )
 {
-  ASSERT_NAMED( nullptr != callbackContext, "AudioController.MoveCallbackContextToGarbageCollector Callback Context is \
-                NULL");
+  DEV_ASSERT(nullptr != callbackContext, "AudioController.MoveCallbackContextToGarbageCollector.CallbackContextIsNull");
   
   // FIXME: Is there a better way of doing this?
   ClearGarbageCollector();
   
   // Move context from EventCallbackMap to CallbackGarbageCollector
-  const auto it = _eventCallbackContexts.find( callbackContext->GetPlayId() );
-  if ( it != _eventCallbackContexts.end() ) {
-    ASSERT_NAMED( it->second == callbackContext, "AudioController.MoveCallbackContextToGarbageCollector PlayId dose \
-                  NOT match Callback Context" );
+  std::lock_guard<std::mutex> lock(_callbackContextMutex);
+  const auto it = _callbackContextMap.find( callbackContext->GetPlayId() );
+  if ( it != _callbackContextMap.end() ) {
+    DEV_ASSERT(it->second == callbackContext,
+               "AudioController.MoveCallbackContextToGarbageCollector.PlayIdDoesNotMatchCallbackContext");
     // Move to GarbageCollector
     it->second->ClearCallbacks();
     _callbackGarbageCollector.emplace_back( it->second );
-    _eventCallbackContexts.erase( it );
+    _callbackContextMap.erase( it );
   }
   else {
-    ASSERT_NAMED( it != _eventCallbackContexts.end(), ( "AudioController.MoveCallbackContextToGarbageCollector Can NOT \
-                  find PlayId: " + std::to_string( callbackContext->GetPlayId() )).c_str() );
+    DEV_ASSERT(it != _callbackContextMap.end(),
+               ("AudioController.MoveCallbackContextToGarbageCollector.CanNotFindPlayId: "
+                + std::to_string(callbackContext->GetPlayId() )).c_str());
   }
 }
 
@@ -712,6 +719,7 @@ void AudioController::ClearGarbageCollector()
   _callbackGarbageCollector.clear();
 }
 
+#if USE_AUDIO_ENGINE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ResolvePathToAudioFile( const std::string& dataPlatformResourcePath,
                              const char* inName,
@@ -734,7 +742,6 @@ bool ResolvePathToAudioFile( const std::string& dataPlatformResourcePath,
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#if USE_AUDIO_ENGINE
 // Setup Ak Logging callback
 void AudioEngineLogCallback( uint32_t akErrorCode,
                             const char* errorMessage,
@@ -763,8 +770,8 @@ void AudioEngineLogCallback( uint32_t akErrorCode,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if HijackAudioPlugInDebugLogs
 
-double ConvertToMiliSec(unsigned long long int miliSeconds) {
-  return (double)miliSeconds / 1000000.0;
+double ConvertToMilliSec(unsigned long long int milliSeconds) {
+  return (double)milliSeconds / 1000000.0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -779,7 +786,7 @@ void AudioController::PrintPlugInLog() {
         postTime = aLog.TimeInNanoSec;
         PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
                             "----------------------------------------------\n \
-                            Post Event %s - time: %f ms", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+                            Post Event %s - time: %f ms", aLog.Msg.c_str(), ConvertToMilliSec( aLog.TimeInNanoSec ));
       }
         break;
         
@@ -791,26 +798,26 @@ void AudioController::PrintPlugInLog() {
         PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
                             "Create PlugIn %s - time: %f ms\n - Post -> Create time delta = %f ms\n",
                             aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ),
-                            ConvertToMiliSec( createTime - postTime ));
+                            ConvertToMilliSec( createTime - postTime ));
       }
         break;
         
       case LogEnumType::Update:
       {
         PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
-                            "Update %s - time: %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+                            "Update %s - time: %f ms\n", aLog.Msg.c_str(), ConvertToMilliSec( aLog.TimeInNanoSec ));
         
         
         if ( isFirstUpdateLog ) {
           PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
                               "- Post -> Update time delta = %f ms\n - Create -> Update time delta = %f ms\n",
-                              ConvertToMiliSec( aLog.TimeInNanoSec - postTime ),
-                              ConvertToMiliSec( aLog.TimeInNanoSec - createTime ));
+                              ConvertToMilliSec( aLog.TimeInNanoSec - postTime ),
+                              ConvertToMilliSec( aLog.TimeInNanoSec - createTime ));
         }
         else {
           PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
                               "- Previous Update -> Update time delta = %f ms\n",
-                              ConvertToMiliSec( aLog.TimeInNanoSec - updateTime ));
+                              ConvertToMilliSec( aLog.TimeInNanoSec - updateTime ));
           
         }
         
@@ -824,7 +831,7 @@ void AudioController::PrintPlugInLog() {
         PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
                             "Destroy Plugin %s - time: %f ms\n ----------------------------------------------",
                             aLog.Msg.c_str(),
-                            ConvertToMiliSec( aLog.TimeInNanoSec ));
+                            ConvertToMilliSec( aLog.TimeInNanoSec ));
       }
         break;
         

@@ -122,6 +122,7 @@ protected:
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
   Anki::Cozmo::DasToSdkHandler                              _dasToSdkHandler;
   bool                                                      _isGamePaused = false;
+  bool                                                      _hasRunFirstUpdate = false;
 
   virtual Result InitInternal();
   

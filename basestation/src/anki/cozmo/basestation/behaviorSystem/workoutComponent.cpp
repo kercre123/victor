@@ -118,6 +118,9 @@ Result WorkoutComponent::InitConfiguration(const Json::Value& config)
     _workouts.emplace_back( std::move( workout ) );
   }
 
+  PRINT_CH_INFO("Behaviors", "WorkoutComponent.Init",
+                "Loaded %zu workouts", _workouts.size());
+  
   if( _workouts.empty() ) {
     return RESULT_FAIL;
   }
@@ -130,7 +133,7 @@ Result WorkoutComponent::InitConfiguration(const Json::Value& config)
 const WorkoutConfig& WorkoutComponent::GetCurrentWorkout() const
 {
   // there should always be a workout
-  ASSERT_NAMED(_currWorkout != _workouts.end(), "WorkoutComponent.GetCurrentWorkout.NoWorkout");
+  DEV_ASSERT(_currWorkout != _workouts.end(), "WorkoutComponent.GetCurrentWorkout.NoWorkout");
   return *_currWorkout;
 }
 

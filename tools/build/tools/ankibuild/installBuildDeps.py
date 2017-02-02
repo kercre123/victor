@@ -142,10 +142,8 @@ class DependencyInstaller(object):
       else:
         self.addEnvVariable("ANDROID_ROOT", path.join(self.OPT, 'android-sdk'))
         self.addEnvVariable("ANDROID_HOME", path.join(self.OPT, 'android-sdk'))
-    if 'android-ndk-r10e' in homebrew_deps:
-      #There can be a different if block if we move beyond r10e
-      self.addEnvVariable("NDK_ROOT", path.join(self.OPT, 'android-ndk-r10e'))
-      self.addEnvVariable("ANDROID_NDK_ROOT", path.join(self.OPT, 'android-ndk-r10e'))
+    
+    #Android-ndk is being handle by android.py.  TODO: Merge the use of two files. 
 
     if not self.getHomebrew():
       return False

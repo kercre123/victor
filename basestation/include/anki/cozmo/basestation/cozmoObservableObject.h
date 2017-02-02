@@ -126,10 +126,10 @@ namespace Cozmo {
   {
     // This indicates programmer error: InitPose should only be called once on
     // an object and never once SetPose has been called
-    ASSERT_NAMED_EVENT(!_poseHasBeenSet,
-                       "ObservableObject.InitPose.PoseAlreadySet",
-                       "%s Object %d",
-                       EnumToString(GetType()), GetID().GetValue());
+    DEV_ASSERT_MSG(!_poseHasBeenSet,
+                   "ObservableObject.InitPose.PoseAlreadySet",
+                   "%s Object %d",
+                   EnumToString(GetType()), GetID().GetValue());
     
     SetPose(pose, -1.f, poseState);
     _poseHasBeenSet = true;

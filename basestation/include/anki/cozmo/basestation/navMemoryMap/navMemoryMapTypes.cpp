@@ -18,7 +18,7 @@ namespace NavMemoryMapTypes {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ExpectsAdditionalData(EContentType type)
 {
-  ASSERT_NAMED(type != EContentType::_Count, "NavMemoryMapTypes.ExpectsAdditionalData.UsingControlTypeIsNotAllowed");
+  DEV_ASSERT(type != EContentType::_Count, "NavMemoryMapTypes.ExpectsAdditionalData.UsingControlTypeIsNotAllowed");
   
   // using switch to force at compilation type to decide on new types
   switch(type)

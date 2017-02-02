@@ -9,7 +9,7 @@ namespace Cozmo.Settings {
     private CozmoButton _EnableSDKButton;
 
     [SerializeField]
-    private SDKView _SDKViewPrefab;
+    private SDKModal _SDKModalPrefab;
 
     private AlertModal _ActivateSDKModal = null;
 
@@ -36,30 +36,42 @@ namespace Cozmo.Settings {
           // If this is the first time enabling the SDK, display a confirmation modal
           // with EULA and only EnableSDK on confirmation.
           // Create alert view with Icon
-          AlertModal alertView = UIManager.OpenModal(AlertModalLoader.Instance.NoTextAlertModalPrefab, overrideCloseOnTouchOutside: true);
-          // Hook up callbacks
-          alertView.SetCloseButtonEnabled(false);
-          alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, EnableSDK);
-          alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleCloseSDKPopup);
-          alertView.TitleLocKey = LocalizationKeys.kSettingsSdkPanelActivateSDKalertText;
-          _ActivateSDKModal = alertView;
+          var enableSDKButtonData = new AlertModalButtonData("confirm_button", LocalizationKeys.kButtonYes, EnableSDK);
+          var cancelSDKButtonData = new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonNo, HandleCloseSDKPopup);
+
+          var confirmEnableSDKAlert = new AlertModalData("confirm_enable_sdk_alert",
+                                                         LocalizationKeys.kSettingsSdkPanelActivateSDKalertText,
+                                                         primaryButtonData: enableSDKButtonData,
+                                                         secondaryButtonData: cancelSDKButtonData);
+
+          var confirmEnableSDKPriority = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                               LowPriorityModalAction.CancelSelf,
+                                                               HighPriorityModalAction.Stack);
+
+          System.Action<AlertModal> confirmEnableSDKCreated = (alertView) => {
+            _ActivateSDKModal = alertView;
+          };
+
+          UIManager.OpenAlert(confirmEnableSDKAlert, confirmEnableSDKPriority, confirmEnableSDKCreated,
+                              overrideCloseOnTouchOutside: true);
         }
       }
-
     }
 
     private void EnableSDK() {
-
       DataPersistenceManager.Instance.IsSDKEnabled = true;
       DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated = true;
       DataPersistenceManager.Instance.Save();
-      UIManager.OpenModal(_SDKViewPrefab);
 
+      var sdkModalPriorityData = new UI.ModalPriorityData(ModalPriorityLayer.VeryHigh, 0,
+                                                          LowPriorityModalAction.Queue,
+                                                          HighPriorityModalAction.ForceCloseOthersAndOpen);
+      UIManager.OpenModal(_SDKModalPrefab, sdkModalPriorityData, null);
     }
 
     private void HandleCloseSDKPopup() {
       if (_ActivateSDKModal != null) {
-        _ActivateSDKModal.CloseView();
+        _ActivateSDKModal.CloseDialog();
       }
     }
 

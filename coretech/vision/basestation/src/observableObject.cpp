@@ -393,35 +393,22 @@ namespace Vision {
     return isFlat;
   }
   
-  Pose3d ObservableObject::GetZRotatedPointAboveObjectCenter() const
+  Pose3d ObservableObject::GetZRotatedPointAboveObjectCenter(f32 heightFraction) const
   {
     // calculate the z translation of the top marker using the current object
     // center and half the size of the object along the current rotated parent axis
     const Pose3d poseWRTOrigin = _pose.GetWithRespectToOrigin();
     float zAxisTrans = poseWRTOrigin.GetTranslation().z();
-    const RotationMatrix3d Rmat = poseWRTOrigin.GetRotationMatrix();
-    AxisName axis = Rmat.GetRotatedParentAxis<'Z'>();
-    switch(axis){
-      case AxisName::X_POS:
-      case AxisName::X_NEG:
-        zAxisTrans += GetSize().x()/2;
-        break;
-      case AxisName::Y_POS:
-      case AxisName::Y_NEG:
-        zAxisTrans += GetSize().y()/2;
-        break;
-      case AxisName::Z_POS:
-      case AxisName::Z_NEG:
-        zAxisTrans += GetSize().z()/2;
-        break;
-    }
+    
+    const f32 zSize = GetDimInParentFrame<'Z'>(poseWRTOrigin);
+    zAxisTrans += (heightFraction * zSize);
     
     return Pose3d(poseWRTOrigin.GetRotation().GetAngleAroundZaxis(),
-                                         Z_AXIS_3D(),
-                                         {_pose.GetTranslation().x(),
-                                          _pose.GetTranslation().y(),
-                                          zAxisTrans},
-                                         &poseWRTOrigin.FindOrigin());
+                  Z_AXIS_3D(),
+                  {_pose.GetTranslation().x(),
+                    _pose.GetTranslation().y(),
+                    zAxisTrans},
+                  &poseWRTOrigin.FindOrigin());
   }
 
 
@@ -440,31 +427,14 @@ namespace Vision {
       return false;
     }
     
-    f32 blockHeight = 0;
-    const RotationMatrix3d Rmat = GetPose().GetWithRespectToOrigin().GetRotationMatrix();
-    AxisName axis = Rmat.GetRotatedParentAxis<'Z'>();
-    switch(axis){
-      case AxisName::X_POS:
-      case AxisName::X_NEG:
-        blockHeight = GetSize().x();
-        break;
-      case AxisName::Y_POS:
-      case AxisName::Y_NEG:
-        blockHeight = GetSize().y();
-        break;
-      case AxisName::Z_POS:
-      case AxisName::Z_NEG:
-        blockHeight = GetSize().z();
-        break;
-    }
-    
     const Pose3d& pose = GetPose().GetWithRespectToOrigin();
+    const f32 blockHeight = GetDimInParentFrame<'Z'>(pose);
     return std::abs(height - (pose.GetTranslation().z() - blockHeight/2)) < tolerence;
   }
 
   void ObservableObject::SetObservationTimes(const ObservableObject* otherObject)
   {
-    ASSERT_NAMED(nullptr != otherObject, "ObservableObject.SetObservationTimes.NullOtherObject");
+    DEV_ASSERT(nullptr != otherObject, "ObservableObject.SetObservationTimes.NullOtherObject");
     
     _lastObservedTime = std::max(_lastObservedTime, otherObject->_lastObservedTime);
     
@@ -499,6 +469,17 @@ namespace Vision {
     }
     
     return result;
+  }
+  
+  // Helper for the following functions to reason about the object's height (mid or top)
+  // relative to specified threshold
+  bool ObservableObject::IsPoseTooHigh(const Pose3d& poseWrtRobot, float heightMultiplier,
+                                       float heightTol, float offsetFraction) const
+  {
+    const float rotatedHeight = GetDimInParentFrame<'Z'>(poseWrtRobot);
+    const float z = poseWrtRobot.GetTranslation().z() + (rotatedHeight*offsetFraction);
+    const bool isTooHigh = FLT_GT(z, (heightMultiplier * rotatedHeight + heightTol));
+    return isTooHigh;
   }
   
 } // namespace Vision

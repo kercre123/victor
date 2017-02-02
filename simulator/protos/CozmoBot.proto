@@ -291,23 +291,6 @@ Supervisor {
 						fieldOfView IS fieldOfView
 						near 0.005
 						antiAliasing TRUE
-						
-						%{ if fields.vizMode.value or fields.hideCameraDisplay.value then }%
-              pixelSize 0
-						%{ else }%
-              %{ if fields.cameraWidth.value == 640 then }%
-                pixelSize 0.5
-              %{ elseif fields.cameraWidth.value == 400 then }%
-                pixelSize 1
-              %{ elseif fields.cameraWidth.value == 320 then }%
-                pixelSize 1
-              %{ elseif fields.cameraWidth.value == 160 then }%
-                pixelSize 2
-              %{ elseif fields.cameraWidth.value == 80 then }%
-                pixelSize 4
-              %{ end }%      
-						%{ end }%
-
 				  }
 				  Gyro {
 				  	name "gyro"
@@ -345,8 +328,6 @@ Supervisor {
 								  name           "face_display"
 								  width          128
 								  height         64
-								  windowPosition 0 0
-								  pixelSize      1.0
 								  children [
 								    Shape {
 								      appearance Appearance {

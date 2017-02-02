@@ -35,8 +35,8 @@ public:
 
 private:
   struct BehaviorStateChange {
-    std::string oldBehavior = "";
-    std::string newBehavior = "";
+    std::string oldBehaviorName = "";
+    std::string newBehaviorName = "";
     float elapsedTime = 0.f;
   };
   
@@ -103,8 +103,8 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
       if(totalElapsed > kFreeplayLengthSeconds){
         //Final state
         BehaviorStateChange change;
-        change.newBehavior = "END";
-        change.oldBehavior = _stateChangeList.back().newBehavior;
+        change.newBehaviorName = "END";
+        change.oldBehaviorName = _stateChangeList.back().newBehaviorName;
         change.elapsedTime = totalElapsed;
         _stateChangeList.push_back(change);
         
@@ -140,20 +140,20 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
           fullTime = elapsedTime;
           
           //time per behavior increment
-          timeMapIter = timeMap.find(prev->newBehavior);
+          timeMapIter = timeMap.find(prev->newBehaviorName);
           
           if(timeMapIter != timeMap.end()){
             timeMapIter->second += timeDiff;
           }else{
-            timeMap.insert(std::make_pair(prev->newBehavior, timeDiff));
+            timeMap.insert(std::make_pair(prev->newBehaviorName, timeDiff));
           }
           
           //count encountered increment
-          countMapIter = countMap.find(prev->newBehavior);
+          countMapIter = countMap.find(prev->newBehaviorName);
           if(countMapIter != countMap.end()){
             countMapIter->second += 1;
           }else{
-            countMap.insert(std::make_pair(prev->newBehavior, 1));
+            countMap.insert(std::make_pair(prev->newBehaviorName, 1));
           }
           
         }
@@ -195,8 +195,8 @@ void CST_BehaviorTracker::HandleBehaviorTransition(const ExternalInterface::Beha
   time_t currentTime;
   time(&currentTime);
   BehaviorStateChange change;
-  change.newBehavior = msg.newBehavior;
-  change.oldBehavior = msg.oldBehavior;
+  change.newBehaviorName = msg.newBehaviorName;
+  change.oldBehaviorName = msg.oldBehaviorName;
   change.elapsedTime = difftime(currentTime, _startTime);
   
   _stateChangeList.push_back(change);

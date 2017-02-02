@@ -20,7 +20,9 @@ namespace Anki {
       
       int GetParam();
       
-      void SetMode(const RobotInterface::FactoryTestMode mode, const int param=0);
+      void SetMode(const RobotInterface::FactoryTestMode mode,
+                   const uint32_t timeout = 0,  //0 means keep existing timeout
+                   const int param=0);
       
       /// Process test state update messages
       void Process_TestState(const RobotInterface::TestState& state);

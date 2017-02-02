@@ -15,6 +15,8 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -32,8 +34,8 @@ static const char* kMaxFaceAgeKey = "maxFaceAge_ms";
 static const char* kRequiredGameFlagsKey = "requiredGameFlags";
 
 IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _blockworldFilter( new BlockWorldFilter )
+: IBehavior(robot, config)
+, _blockworldFilter( new BlockWorldFilter )
 {
   if( config.isNull() ) {
     PRINT_NAMED_ERROR("IBehaviorRequestGame.Config.Error",
@@ -68,7 +70,7 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
   else
   {
     JsonTools::PrintJsonError(config, "IBehaviorRequestGame.NoGameFlag");
-    ASSERT_NAMED(!requiredGameFlagsJson.isNull(), "IBehaviorRequestGame.NoGameFlag");
+    DEV_ASSERT(!requiredGameFlagsJson.isNull(), "IBehaviorRequestGame.NoGameFlag");
   }
   
   SubscribeToTags({{
@@ -81,8 +83,10 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
   });
 }
 
-bool IBehaviorRequestGame::IsRunnableInternal(const Robot& robot) const
+bool IBehaviorRequestGame::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
+  
   const bool isGameAvailable = robot.GetBehaviorManager().IsAnyGameFlagAvailable(_requiredGameFlags);
   if ( !isGameAvailable )
   {
@@ -142,7 +146,7 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
   // check to make sure we haven't failed to interact with the block recently
-  const auto& whiteboard = robotPtr->GetBehaviorManager().GetWhiteboard();
+  const auto& whiteboard = robotPtr->GetAIComponent().GetWhiteboard();
   const bool recentlyFailed = whiteboard.DidFailToUse(obj->GetID(),
                                                       {{AIWhiteboard::ObjectUseAction::PickUpObject,
                                                         AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}},

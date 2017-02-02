@@ -16,13 +16,15 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyObjectPositionUpdated.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -38,6 +40,13 @@ static const char* kBehaviorObjectiveConfigKey       = "behaviorObjective";
 static const char* ksoftSparkUpgradeTriggerConfigKey = "softSparkTrigger";
 static const char* kSparksSuccessTriggerKey          = "sparksSuccessTrigger";
 static const char* kSparksFailTriggerKey             = "sparksFailTrigger";
+  
+static std::set<ReactionTrigger> kReactionsToDisable{
+  ReactionTrigger::FacePositionUpdated,
+  ReactionTrigger::CubeMoved,
+  ReactionTrigger::Frustration,
+  ReactionTrigger::PetInitialDetection
+};
 
 }
 
@@ -60,7 +69,7 @@ SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& co
   IBehavior* acknowledgeObjectBehavior = robot.GetBehaviorFactory().FindBehaviorByName("AcknowledgeObject");
   assert(dynamic_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior));
   _behaviorAcknowledgeObject = static_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior);
-  ASSERT_NAMED( nullptr != _behaviorAcknowledgeObject, "SparksBehaviorChooser.BehaviorAcknowledgeObjectNotFound" );
+  DEV_ASSERT(nullptr != _behaviorAcknowledgeObject, "SparksBehaviorChooser.BehaviorAcknowledgeObjectNotFound");
   
   // Listen for behavior objective achieved messages for spark repetitions counter
   if(robot.HasExternalInterface()) {
@@ -104,20 +113,23 @@ Result SparksBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& 
   }
   
   //Create an arbitrary animation behavior
-  _behaviorPlayAnimation = dynamic_cast<BehaviorPlayArbitraryAnim*>(robot.GetBehaviorFactory().CreateBehavior(BehaviorType::PlayArbitraryAnim, robot, Json::Value()));
-  ASSERT_NAMED(_behaviorPlayAnimation, "SparksBehaviorChooser.Behavior pointer not set");
+  _behaviorPlayAnimation = dynamic_cast<BehaviorPlayArbitraryAnim*>(
+                               robot.GetBehaviorFactory().CreateBehavior(
+                                  BehaviorClass::PlayArbitraryAnim, robot, Json::Value()));
+  DEV_ASSERT(_behaviorPlayAnimation, "SparksBehaviorChooser.Behavior pointer not set");
   
   _minTimeSecs = JsonTools::ParseFloat(config, kMinTimeConfigKey, "Failed to parse min time");
   _maxTimeSecs = JsonTools::ParseFloat(config, kMaxTimeConfigKey, "Failed to parse max time");
-  _numberOfRepetitions =  JsonTools::ParseUint8(config, kNumberOfRepetitionsConfigKey, "Failed to parse number of repetitions");
+  _numberOfRepetitions =  JsonTools::ParseUint8(config, kNumberOfRepetitionsConfigKey,
+                                                "Failed to parse number of repetitions");
   
   _objectiveToListenFor = BehaviorObjectiveFromString(config.get(kBehaviorObjectiveConfigKey, EnumToString(BehaviorObjective::Unknown)).asCString());
     
   //Ensures that these values have to be set in behavior_config for all sparks
-  ASSERT_NAMED(FLT_GE(_minTimeSecs, 0.f) && FLT_GE(_maxTimeSecs, 0.f)
-               && _numberOfRepetitions >= 0 && _softSparkUpgradeTrigger != AnimationTrigger::Count
-               && _objectiveToListenFor != BehaviorObjective::Count,
-               "SparksBehaviorChooser.ReloadFromConfig: At least one parameter not set");
+  DEV_ASSERT(FLT_GE(_minTimeSecs, 0.f) && FLT_GE(_maxTimeSecs, 0.f)
+             && _numberOfRepetitions >= 0 && _softSparkUpgradeTrigger != AnimationTrigger::Count
+             && _objectiveToListenFor != BehaviorObjective::Count,
+             "SparksBehaviorChooser.ReloadFromConfig: At least one parameter not set");
   
   return RESULT_OK;
 }
@@ -151,21 +163,13 @@ void SparksBehaviorChooser::OnSelected()
                                                                AnimationTrigger::SparkDrivingLoop,
                                                                AnimationTrigger::SparkDrivingStop});
     _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-    _robot.GetLightsComponent().StartLoopingBackpackLights(kLoopingSparkLights);
+    _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights);
 
     _idleAnimationsSet = true;
   }
   
-  // Have Cozmo look up after seeing objects for the first time while sparked in case the user is trying to help
-  if(_behaviorAcknowledgeObject != nullptr){
-    _behaviorAcknowledgeObject->ResetReactionData();
-  }
-  
   // Turn off reactionary behaviors that could interrupt the spark
-  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
-  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, false);
-  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToFrustration, false);
-  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToPet, false);
+  mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, false);
 
 }
   
@@ -177,15 +181,10 @@ void SparksBehaviorChooser::OnDeselected()
     ResetLightsAndAnimations();
   }
   
-  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
-  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
-  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToFrustration, true);
-  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToPet, true);
-  
+  mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, true);
+
   // clear any custom light events set during the spark
-  _robot.GetLightsComponent().ClearAllCustomPatterns();
-
-
+  _robot.GetCubeLightComponent().StopAllAnims();
 }
   
 void SparksBehaviorChooser::ResetLightsAndAnimations()
@@ -195,7 +194,7 @@ void SparksBehaviorChooser::ResetLightsAndAnimations()
   _robot.GetAnimationStreamer().PopIdleAnimation();
   _idleAnimationsSet = false;
   
-  _robot.GetLightsComponent().StopLoopingBackpackLights();
+  _robot.GetBodyLightComponent().StopLoopingBackpackLights();
 }
 
   
@@ -224,11 +223,13 @@ void SparksBehaviorChooser::HandleMessage(const ExternalInterface::RobotObserved
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result SparksBehaviorChooser::Update(Robot& robot)
 {
+  const bool isCurrentBehaviorReactionary = _robot.GetBehaviorManager().CurrentBehaviorTriggeredAsReaction();
+  
   // If the intro is interrupted, just continue as normal when reaction is over
   if((_state == ChooserState::ChooserSelected ||
      _state == ChooserState::PlayingSparksIntro)){
-    auto currentBehavior = _robot.GetBehaviorManager().GetCurrentBehavior();
-    if(currentBehavior != nullptr && currentBehavior->IsReactionary()){
+    
+    if(isCurrentBehaviorReactionary){
       _state = ChooserState::UsingSimpleBehaviorChooser;
     }
   }
@@ -240,8 +241,7 @@ Result SparksBehaviorChooser::Update(Robot& robot)
   
   // If we've timed out during a reactionary behavior, skip the outro and kill the lights
   if(_state == ChooserState::WaitingForCurrentBehaviorToStop){
-    auto currentBehavior = _robot.GetBehaviorManager().GetCurrentBehavior();
-    if(currentBehavior != nullptr && currentBehavior->IsReactionary()){
+    if(isCurrentBehaviorReactionary){
       CompleteSparkLogic();
       ResetLightsAndAnimations();
       _state = ChooserState::EndSparkWhenReactionEnds;
@@ -389,7 +389,7 @@ void SparksBehaviorChooser::CompleteSparkLogic()
       // / collecting data on failures). Only broadcast for hard sparks for now
       if( ! mngr.IsActiveSparkSoft() ) {
         Anki::Util::sEvent("meta.upgrade_replay_fail_cubes_observed",
-                           {{DDATA, TO_DDATA_STR( _observedObjectsSinceStarted.size() )}},
+                           {{DDATA, std::to_string( _observedObjectsSinceStarted.size()).c_str()}},
                            UnlockIdToString(mngr.GetActiveSpark()));
       }
     }

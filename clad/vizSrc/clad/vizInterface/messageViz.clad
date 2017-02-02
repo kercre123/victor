@@ -8,6 +8,7 @@
 #include "clad/types/objectTypes.clad"
 #include "clad/types/vizTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
+#include "clad/types/activeObjectTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -338,6 +339,31 @@ message SaveState
 {
   bool   enabled,
   string path
+}
+
+message ObjectConnectionState
+{
+  uint_32    activeID,
+  ObjectType objectType,
+  bool       connected,
+}
+
+message ObjectMovingState
+{
+  uint_32 activeID,
+  bool    moving,
+}
+
+message ObjectUpAxisState
+{
+  uint_32 activeID,
+  UpAxis  upAxis,
+}
+
+message ObjectAccelState
+{
+  uint_32     activeID,
+  ActiveAccel accel,
 }
 
 // an explicit auto-union that includes all messages in this file

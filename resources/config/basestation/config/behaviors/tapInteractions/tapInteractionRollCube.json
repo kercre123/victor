@@ -1,5 +1,5 @@
 {
-  "behaviorType": "RollBlock",
+  "behaviorClass": "RollBlock",
   "name": "tapInteractionRollCube",
   "displayNameKey":"behavior.RollBlock",
   "requireObjectTapped" : true,

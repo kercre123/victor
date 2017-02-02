@@ -17,7 +17,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/moodSystem/emotionAffector.h"
 #include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
@@ -52,7 +52,7 @@ void TickMoodManager(MoodManager& moodManager, uint32_t numTicks, float tickTime
   {
     gCurrentTime += tickTimeStep;
     moodManager.Update(gCurrentTime);
-    BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
+    BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   }
 }
 
@@ -392,7 +392,7 @@ TEST(MoodManager, DecayResetFromAwards)
 
 static const char* kTestBehavior1Json =
 "{"
-"   \"behaviorType\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"NoneBehavior\","
 "   \"name\" : \"TestHappy\","
 "   \"repetitionPenalty\" :"
 "   {"
@@ -413,7 +413,7 @@ static const char* kTestBehavior1Json =
 
 static const char* kTestBehavior2Json =
 "{"
-"   \"behaviorType\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"NoneBehavior\","
 "   \"name\" : \"TestCalm\","
 "   \"repetitionPenalty\" :"
 "   {"
@@ -469,7 +469,7 @@ TEST(MoodManager, BehaviorScoring)
   testBehaviorReqCalm->ClearEmotionScorers();
   testBehaviorReqCalm->AddEmotionScorer( EmotionScorer(EmotionType::Calm,  Anki::Util::GraphEvaluator2d({{-1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}}), false));
 
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
   float score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
   float score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
@@ -567,7 +567,7 @@ TEST(MoodManager, BehaviorScoring)
   
   gCurrentTime += 1.0;
 
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   testBehaviorReqCalm->Stop();
   
   score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
@@ -578,7 +578,7 @@ TEST(MoodManager, BehaviorScoring)
   // 4) happy happened 2.0 seconds ago, calm 1.0 seconds agos
   
   gCurrentTime += 1.0;
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
   score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
   score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
@@ -588,7 +588,7 @@ TEST(MoodManager, BehaviorScoring)
   // 5) happy happened 3.0 seconds ago, calm 2.0 seconds agos
   
   gCurrentTime += 1.0;
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
   score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
   score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
@@ -598,7 +598,7 @@ TEST(MoodManager, BehaviorScoring)
   // 5) happy happened 4.0 seconds ago, calm 3.0 seconds agos
   
   gCurrentTime += 1.0;
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
   score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
   score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
@@ -608,7 +608,7 @@ TEST(MoodManager, BehaviorScoring)
   // 5) happy happened 5.0 seconds ago, calm 4.0 seconds agos
   
   gCurrentTime += 1.0;
-  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
+  BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
   
   score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
   score2 = testBehaviorReqCalm->EvaluateScore(testRobot);

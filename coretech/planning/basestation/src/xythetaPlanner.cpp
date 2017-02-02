@@ -332,8 +332,8 @@ bool xythetaPlannerImpl::InitializeHeuristic()
   // this goes backwards because we want to remove some elements without copying the vector
   for(int i = static_cast<int>(_goalStateIDs.size())-1; i>=0; --i)
   {
-    ASSERT_NAMED(_goalStateIDs[i].first == _goals_c[i].first,
-                 "Goals are expected to have matching ids, although not necessariliy be sorted by them");
+    // Goals are expected to have matching ids, although not necessarily be sorted by them
+    DEV_ASSERT(_goalStateIDs[i].first == _goals_c[i].first, "xythetaPlannerImpl.InitializeHeuristic.IdMismatch");
     
     const auto& goalIDPair = _goalStateIDs[i];
     Cost costOutsideHeurMap = 0.0f;

@@ -28,7 +28,6 @@ private:
   bool _observedLightCube = false;
   int _lightCubeId = -1;
   bool _driveToPoseSucceeded = false;
-  double _waitTimer = -1;
 
   // Motion profile for test
   const f32 defaultPathSpeed_mmps = 60;
@@ -98,7 +97,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
 
     case TestState::WaitOneSecond:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(_waitTimer, 1), 2){
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1), 2){
         _testState = TestState::ExecuteStraightPath;
       }
       break;
@@ -119,7 +118,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
     {
       // The time to wait is a somewhat arbitrary choice. It allows the robot to execute some part
       // of the original path but still leave enough room to introduce the obstacle.
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(_waitTimer, 1.8), 3){
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1.8), 3){
         // Put the cube in the way of the robot path.
         SetLightCubePose(_lightCubeId, kCubeObstructingPose);
         _driveToPoseSucceeded = false;  // reset var just before we check for it in the next stage just in case

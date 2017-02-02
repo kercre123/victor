@@ -102,6 +102,9 @@ public:
   void RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms=0);
   
   Result StopAllMotors();
+  Result StopHead();
+  Result StopLift();
+  Result StopBody();
   
   // Tracking is handled by actions now, but we will continue to maintain the
   // state of what is being tracked in this class.
@@ -141,6 +144,7 @@ private:
   bool _isHeadMoving;
   bool _isLiftMoving;
   bool _areWheelsMoving;
+  bool _isReactToUnexpectedMovementEnabled = true;
   
   std::list<Signal::SmartHandle> _eventHandles;
   

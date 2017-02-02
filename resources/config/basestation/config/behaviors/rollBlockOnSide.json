@@ -1,5 +1,5 @@
 {
-  "behaviorType": "RollBlock",
+  "behaviorClass": "RollBlock",
   "name": "RollBlockOnSide",
   "displayNameKey":"behavior.RollBlock",
   "requiredUnlockId": "RollCube",

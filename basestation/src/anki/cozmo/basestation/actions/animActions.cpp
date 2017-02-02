@@ -16,9 +16,10 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -367,6 +368,62 @@ namespace Anki {
     ActionResult DeviceAudioAction::CheckIfDone()
     {
       return _isCompleted ? ActionResult::SUCCESS : ActionResult::RUNNING;
+    }
+    
+    
+    
+    TriggerCubeAnimationAction::TriggerCubeAnimationAction(Robot& robot,
+                                                           const ObjectID& objectID,
+                                                           const CubeAnimationTrigger& trigger)
+    : IAction(robot,
+              "TriggerCubeAnimation_" + std::string(EnumToString(trigger)),
+              RobotActionType::PLAY_CUBE_ANIMATION,
+              (u8)AnimTrackFlag::NO_TRACKS)
+    , _objectID(objectID)
+    , _trigger(trigger)
+    {
+    
+    }
+    
+    TriggerCubeAnimationAction::~TriggerCubeAnimationAction()
+    {
+      // If the action has started and the light animation has not ended stop the animation
+      if(HasStarted() && !_animEnded)
+      {
+        GetRobot().GetCubeLightComponent().StopLightAnim(_trigger);
+      }
+    }
+    
+    ActionResult TriggerCubeAnimationAction::Init()
+    {
+      // If the animation corresponding to the trigger has no duration we can't play it from an
+      // action because then the action would never complete
+      if(GetRobot().GetCubeLightComponent().GetAnimDuration(_trigger) == 0)
+      {
+        PRINT_NAMED_WARNING("TriggerCubeAnimationAction.AnimPlaysForever",
+                            "AnimTrigger %s plays forever refusing to play in an action",
+                            EnumToString(_trigger));
+        _animEnded = true;
+        return ActionResult::ABORT;
+      }
+    
+      // Use a private function of CubeLightComponent in order to play on the user/game layer instead of
+      // the engine layer
+      const bool animPlayed = GetRobot().GetCubeLightComponent().PlayLightAnimFromAction(_objectID,
+                                                                                            _trigger,
+                                                                                            [this](){_animEnded = true;},
+                                                                                            GetTag());
+      if(!animPlayed)
+      {
+        _animEnded = true;
+        return ActionResult::ABORT;
+      }
+      return ActionResult::SUCCESS;
+    }
+    
+    ActionResult TriggerCubeAnimationAction::CheckIfDone()
+    {
+      return (_animEnded ? ActionResult::SUCCESS : ActionResult::RUNNING);
     }
   }
 }

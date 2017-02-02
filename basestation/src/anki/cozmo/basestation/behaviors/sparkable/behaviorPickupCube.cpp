@@ -12,9 +12,6 @@
 
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickupCube.h"
 
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
@@ -22,10 +19,14 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigTypeHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
-#include "anki/cozmo/basestation/blockWorld/blockConfigTypeHelpers.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
 
@@ -38,9 +39,9 @@ static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
 static const float kSecondsBetweenBlockWorldChecks = 0.5f;
   
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _lastBlockWorldCheck_s(0)
-  , _shouldPutCubeBackDown(true)
+: IBehavior(robot, config)
+, _lastBlockWorldCheck_s(0)
+, _shouldPutCubeBackDown(true)
 {
   SetDefaultName("BehaviorPickUpCube");
 
@@ -104,8 +105,9 @@ void BehaviorPickUpCube::StopInternalFromDoubleTap(Robot& robot)
   
 }
 
-bool BehaviorPickUpCube::IsRunnableInternal(const Robot& robot) const
+bool BehaviorPickUpCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
   // check even if we haven't seen a block so that we can pickup blocks we know of
   // that are outside FOV
   TimeStamp_t currentTime_s = robot.GetLastMsgTimestamp()/1000;
@@ -135,7 +137,7 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
 {
   _targetBlockID.UnSet();
   
-  const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
   const AIWhiteboard::ObjectUseIntention intent = AIWhiteboard::ObjectUseIntention::PickUpAnyObject;
   const BlockWorldFilter* defaultFilter = whiteboard.GetDefaultFilterForAction( intent );
   
@@ -184,7 +186,7 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
   CompoundActionSequential* action = new CompoundActionSequential(robot);
   
   // Don't visually verify when using a tap intent object since it could be far away or obscured
-  const bool shouldVisuallyVerify = !robot.GetBehaviorManager().GetWhiteboard().HasTapIntent();
+  const bool shouldVisuallyVerify = !robot.GetAIComponent().GetWhiteboard().HasTapIntent();
   action->AddAction(new TurnTowardsObjectAction(robot, _targetBlockID, Radians(M_PI_F), shouldVisuallyVerify));
   if(!_shouldStreamline){
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
@@ -204,7 +206,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
   DEBUG_SET_STATE(PickingUpCube);
   DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(robot, _targetBlockID, false, 0, false,0, true);
   
-  const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
 
   RetryWrapperAction::RetryCallback retryCallback =
     [this, pickupAction, &whiteboard](const ExternalInterface::RobotCompletedAction& completion,
@@ -252,6 +254,11 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
               [this,&robot](ActionResult res) {
                 if(ActionResult::SUCCESS != res) {
                   FailedToPickupObject(robot);
+                  
+                  // Play failure animation
+                  if (res == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || res == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockRealign));
+                  }
                 } else {
                   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess),
                               &BehaviorPickUpCube::TransitionToDriveWithCube);
@@ -284,7 +291,7 @@ void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
   // If this behavior uses a tapped object then prevent ReactToDoubleTap from interrupting
   if(RequiresObjectTapped())
   {
-    robot.GetBehaviorManager().GetWhiteboard().SetSuppressReactToDoubleTap(true);
+    robot.GetAIComponent().GetWhiteboard().SetSuppressReactToDoubleTap(true);
   }
 
   CompoundActionSequential* action = new CompoundActionSequential(robot);
@@ -329,7 +336,7 @@ void BehaviorPickUpCube::FailedToPickupObject(Robot& robot)
   // mark this as failed to pickup so that we don't retry
   const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
   if(failedObject){
-    robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
   }
   _targetBlockID.UnSet();
   

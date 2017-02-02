@@ -87,5 +87,12 @@ message ObjectPowerLevel
   uint_8  batteryLevel
 }
 
+message ObjectAccel
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+  ActiveAccel accel,
+}
+
 } // Cozmo
 } // Anki

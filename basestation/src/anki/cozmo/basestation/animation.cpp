@@ -19,6 +19,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "cozmo_anim_generated.h"
 //#include <cassert>
 
 #define DEBUG_ANIMATIONS 0
@@ -37,6 +38,161 @@ Animation::Animation(const std::string& name)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip)
+{
+  /*
+  TODO: Does this method and the FlatBuffers schema file need to support
+        "DeviceAudioKeyFrame" and/or "FaceImageKeyFrame" (COZMO-8766) ?
+
+  TODO: Update the processing of BackpackLights keyframes to NOT use an
+        intermediate JSON data structure (Json::Value) for those keyframes. The
+        corresponding track AddKeyFrameToBack() method should be overloaded to take
+        in a CozmoAnim::BackpackLights keyframe and process accordingly (COZMO-8766).
+
+  TODO: Reduce some code duplication in this method (COZMO-8766). Can we
+        add a template helper function that uses the class type of the
+        FlatBuffers-generated class as the template argument?
+  */
+
+  _name = name;
+
+  // Clear whatever is in the existing animation
+  Clear();
+
+  auto keyframes = animClip->keyframes();
+
+  auto liftData = keyframes->LiftHeightKeyFrame();
+  for (int lftIdx=0; lftIdx < liftData->size(); lftIdx++) {
+    const CozmoAnim::LiftHeight* liftKeyframe = liftData->Get(lftIdx);
+    Result addResult = _liftTrack.AddKeyFrameToBack(liftKeyframe, name);
+    if(addResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
+                        "Adding LiftHeight frame %d failed.", lftIdx);
+      return addResult;
+    }
+  }
+
+  auto procFaceData = keyframes->ProceduralFaceKeyFrame();
+  for (int pfIdx=0; pfIdx < procFaceData->size(); pfIdx++) {
+    const CozmoAnim::ProceduralFace* procFaceKeyframe = procFaceData->Get(pfIdx);
+    Result addResult = _proceduralFaceTrack.AddKeyFrameToBack(procFaceKeyframe, name);
+    if(addResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
+                        "Adding ProceduralFace frame %d failed.", pfIdx);
+      return addResult;
+    }
+  }
+
+  auto headData = keyframes->HeadAngleKeyFrame();
+  for (int headIdx=0; headIdx < headData->size(); headIdx++) {
+    const CozmoAnim::HeadAngle* headKeyframe = headData->Get(headIdx);
+    Result addResult = _headTrack.AddKeyFrameToBack(headKeyframe, name);
+    if(addResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
+                        "Adding HeadAngle frame %d failed.", headIdx);
+      return addResult;
+    }
+  }
+
+  auto audioData = keyframes->RobotAudioKeyFrame();
+  for (int audioIdx=0; audioIdx < audioData->size(); audioIdx++) {
+    const CozmoAnim::RobotAudio* audioKeyframe = audioData->Get(audioIdx);
+    Result addResult = _robotAudioTrack.AddKeyFrameToBack(audioKeyframe, name);
+    if(addResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
+                        "Adding RobotAudio frame %d failed.", audioIdx);
+      return addResult;
+    }
+  }
+
+  auto backpackData = keyframes->BackpackLightsKeyFrame();
+  for (int bpIdx=0; bpIdx < backpackData->size(); bpIdx++) {
+
+    // TODO: Update the processing of these keyframes to NOT use an intermediate
+    //       JSON data structure (Json::Value) for them. The corresponding track
+    //       AddKeyFrameToBack() method should be overloaded to take in a
+    //       CozmoAnim::BackpackLights keyframe and process accordingly (COZMO-8766).
+
+    auto backpackKeyframe = backpackData->Get(bpIdx);
+    Json::Value jsonFrame;
+    jsonFrame[kNameKey] = std::string("BackpackLightsKeyFrame");
+    jsonFrame["triggerTime_ms"] = backpackKeyframe->triggerTime_ms();
+    jsonFrame["durationTime_ms"] = backpackKeyframe->durationTime_ms();
+    jsonFrame["Left"] = Json::Value(Json::arrayValue);
+    auto leftData = backpackKeyframe->Left();
+    for (int idx=0; idx < leftData->size(); idx++) {
+      auto leftVal = leftData->Get(idx);
+      jsonFrame["Left"].append(leftVal);
+    }
+    jsonFrame["Right"] = Json::Value(Json::arrayValue);
+    auto rightData = backpackKeyframe->Right();
+    for (int idx=0; idx < rightData->size(); idx++) {
+      auto rightVal = rightData->Get(idx);
+      jsonFrame["Right"].append(rightVal);
+    }
+    jsonFrame["Front"] = Json::Value(Json::arrayValue);
+    auto frontData = backpackKeyframe->Front();
+    for (int idx=0; idx < frontData->size(); idx++) {
+      auto frontVal = frontData->Get(idx);
+      jsonFrame["Front"].append(frontVal);
+    }
+    jsonFrame["Middle"] = Json::Value(Json::arrayValue);
+    auto middleData = backpackKeyframe->Middle();
+    for (int idx=0; idx < middleData->size(); idx++) {
+      auto middleVal = middleData->Get(idx);
+      jsonFrame["Middle"].append(middleVal);
+    }
+    jsonFrame["Back"] = Json::Value(Json::arrayValue);
+    auto backData = backpackKeyframe->Back();
+    for (int idx=0; idx < backData->size(); idx++) {
+      auto backVal = backData->Get(idx);
+      jsonFrame["Back"].append(backVal);
+    }
+    Result addResult = _backpackLightsTrack.AddKeyFrameToBack(jsonFrame, name);
+    if(addResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
+                        "Adding BackpackLights frame %d failed.", bpIdx);
+      return addResult;
+    }
+  }
+
+  auto faceAnimData = keyframes->FaceAnimationKeyFrame();
+  for (int faIdx=0; faIdx < faceAnimData->size(); faIdx++) {
+    const CozmoAnim::FaceAnimation* faceAnimKeyframe = faceAnimData->Get(faIdx);
+    Result addResult = _faceAnimTrack.AddKeyFrameToBack(faceAnimKeyframe, name);
+    if(addResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
+                        "Adding FaceAnimation frame %d failed.", faIdx);
+      return addResult;
+    }
+  }
+
+  auto eventData = keyframes->EventKeyFrame();
+  for (int eIdx=0; eIdx < eventData->size(); eIdx++) {
+    const CozmoAnim::Event* eventKeyframe = eventData->Get(eIdx);
+    Result addResult = _eventTrack.AddKeyFrameToBack(eventKeyframe, name);
+    if(addResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
+                        "Adding Event frame %d failed.", eIdx);
+      return addResult;
+    }
+  }
+
+  auto bodyData = keyframes->BodyMotionKeyFrame();
+  for (int bdyIdx=0; bdyIdx < bodyData->size(); bdyIdx++) {
+    const CozmoAnim::BodyMotion* bodyKeyframe = bodyData->Get(bdyIdx);
+    Result addResult = _bodyPosTrack.AddKeyFrameToBack(bodyKeyframe, name);
+    if(addResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
+                        "Adding BodyMotion frame %d failed.", bdyIdx);
+      return addResult;
+    }
+  }
+
+  return RESULT_OK;
+}
+
+
 Result Animation::DefineFromJson(const std::string& name, const Json::Value &jsonRoot)
 {
   _name = name;
@@ -66,7 +222,6 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
     }
     
     const std::string& frameName = jsonFrameName.asString();
-    
     
     Result addResult = RESULT_FAIL;
     

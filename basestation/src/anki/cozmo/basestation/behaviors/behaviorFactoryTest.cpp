@@ -29,7 +29,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -46,13 +46,16 @@
 
 #include "util/console/consoleInterface.h"
 
+#include <iomanip>
+
+// If you are running from webots only set this to one
+#define RUNNING_FROM_WEBOTS 0
+
 #define DEBUG_FACTORY_TEST_BEHAVIOR 1
 
-#define END_TEST_IN_HANDLER(ERRCODE) EndTest(robot, ERRCODE); return RESULT_OK;
+#define ENABLE_FACTORY_TEST 0
 
-// This define comments out code that depends on messages that don't exist outside of factory branch.
-// This skips a variety of version checks so it should never be used on the line!
-#define IS_FACTORY_BRANCH 0
+#define END_TEST_IN_HANDLER(ERRCODE) EndTest(robot, ERRCODE); return RESULT_OK;
 
 namespace Anki {
 namespace Cozmo {
@@ -94,12 +97,13 @@ namespace Cozmo {
   // Whether or not to check that battery voltage stays above minimum throughtout test
   CONSOLE_VAR(bool,  kBFT_CheckBattVoltage,       "BehaviorFactoryTest",  true);
   
+  // Whether or not to pack the queued nvStorage writes
+  CONSOLE_VAR(bool,  kBFT_PackWrites,             "BehaviorFactoryTest",  true);
   
   ////////////////////////////
   // Static consts
   ////////////////////////////
   
-  static Pose3d _cliffDetectPose;
   static Pose3d _camCalibPose;
   static Pose3d _prePickupPose;
   static Pose3d _expectedLightCubePose;
@@ -119,8 +123,8 @@ namespace Cozmo {
   static constexpr f32 _kCalibrationTimeout_sec = 4.f;
   static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 15;
   static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
-  static constexpr f32 _kExpectedCubePoseDistThresh_mm = 40;
-  static constexpr f32 _kExpectedCubePoseHeightThresh_mm = 15;
+  static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;
+  static constexpr f32 _kExpectedCubePoseHeightThresh_mm = 10;
   static constexpr f32 _kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
   static constexpr u32 _kNumPickupRetries = 1;
   static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
@@ -131,17 +135,10 @@ namespace Cozmo {
   static constexpr u16 _kMaxCliffValueOverDrop = 300;
   static constexpr u16 _kMinCliffValueOnGround = 800;
   
-  // Checks for these firmware versions if non-zero
-  static constexpr u32 _kMaxWifiVersion = 0x857b1ff;
-  static constexpr u32 _kMaxRtipVersion = 0x857b1ff;
-
-  static constexpr u32 _kMinWifiVersion = 0x857b163;
-  static constexpr u32 _kMinRtipVersion = 0x857b163;
-  
-#if IS_FACTORY_BRANCH
+  // Check for these firmware versions if kBFT_CheckFWVersion is true
+  // TODO: Update these once we have a good build
   static constexpr u32 _kMinBodyHWVersion = 3;
-#endif
-  
+  static const std::string _kFWVersion = "F1.5.1";
   
   // If no change in behavior state for this long then trigger failure
   static constexpr f32 _kWatchdogTimeout = 20;
@@ -155,6 +152,11 @@ namespace Cozmo {
   });
 
   static const Rectangle<s32> firstCalibImageROI(55, 0, 210, 90);
+  
+  static constexpr u16 _kExposure_ms = 3;
+  static constexpr f32 _kGain = 2.f;
+  
+  static constexpr int _kBackupFromCliffDist_mm = 70;
   
   BehaviorFactoryTest::BehaviorFactoryTest(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -186,14 +188,14 @@ namespace Cozmo {
     
     // Subscribe to EngineToGame messages
     SubscribeToTags({{
-      EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
       EngineToGameTag::RobotDeletedObject,
       EngineToGameTag::ObjectMoved,
       EngineToGameTag::CameraCalibration,
       EngineToGameTag::RobotStopped,
       EngineToGameTag::RobotOffTreadsStateChanged,
-      EngineToGameTag::MotorCalibration
+      EngineToGameTag::MotorCalibration,
+      EngineToGameTag::RobotConnectionResponse
     }});
 
     
@@ -215,17 +217,24 @@ namespace Cozmo {
     doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryTestParam, &BehaviorFactoryTest::HandleFactoryTestParameter);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered, &BehaviorFactoryTest::HandleActiveObjectDiscovered);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::pickAndPlaceResult, &BehaviorFactoryTest::HandlePickAndPlaceResult);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::firmwareVersion, &BehaviorFactoryTest::HandleFirmwareVersion);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryFirmwareVersion, &BehaviorFactoryTest::HandleFactoryFirmwareVersion);
     
-#if IS_FACTORY_BRANCH
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::bodyVersion, &BehaviorFactoryTest::HandleBodyVersion);
-#endif
-
+    _stateTransitionTimestamps.resize(_testResultEntry.timestamps.size());
+    
+    // If we are running from webots we need to disable block pool immediately since we will have
+    // already connected to a robot. The factory app is able to disable block pool before connecting
+    if(ENABLE_FACTORY_TEST && RUNNING_FROM_WEBOTS)
+    {
+      // Disable block pool from auto connecting
+      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::BlockPoolEnabledMessage>(0, false);
+    }
   }
   
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorFactoryTest::IsRunnableInternal(const Robot& robot) const
+  bool BehaviorFactoryTest::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
   {
     return _testResult == FactoryTestResultCode::UNKNOWN;
   }
@@ -237,7 +246,6 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     
     _testResult = FactoryTestResultCode::UNKNOWN;
-    _actionCallbackMap.clear();
     _holdUntilTime = -1;
     _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
     _queuedWrites.clear();
@@ -253,10 +261,9 @@ namespace Cozmo {
     _robotAngleAfterBackup = 0;
     
     // Set known poses
-    _cliffDetectPose = Pose3d(0, Z_AXIS_3D(), {50, 0, 0}, &robot.GetPose().FindOrigin());
-    _camCalibPose = Pose3d(0, Z_AXIS_3D(), {0, 0, 0}, &robot.GetPose().FindOrigin());
+    _camCalibPose = Pose3d(0, Z_AXIS_3D(), {-50, 0, 0}, &robot.GetPose().FindOrigin()); // Relative to cliff
     _prePickupPose = Pose3d( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 100, 0}, &robot.GetPose().FindOrigin());
-    _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-50, 250, 0}, &robot.GetPose().FindOrigin());
+    _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-90, 250, 22}, &robot.GetPose().FindOrigin());
     _expectedChargerPose = Pose3d(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin());
 
     _numPlacementAttempts = 0;
@@ -267,7 +274,7 @@ namespace Cozmo {
     if(!robot.IsPhysical())
     {
       _activeObjectDiscovered = true;
-      _gotBodyVersion = true;
+      _gotHWVersion = true;
     }
     
     // Setup logging to device
@@ -293,24 +300,21 @@ namespace Cozmo {
     robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(driveAnimsMsg));
     
     // Disable reactionary behaviors
-    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("lock", false);
     
     // Only enable vision modes we actually need
     // NOTE: we do not (yet) restore vision modes afterwards!
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
     robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
     
-#if IS_FACTORY_BRANCH
-    // Set robot body to accessory mode
-    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetBodyRadioMode(RobotInterface::BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE)));
+    // Set and disable auto exposure
+    robot.GetVisionComponent().SetAndDisableAutoExposure(_kExposure_ms, _kGain);
     
-    // Set head device lock so that video will stream down
-    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadDeviceLock(true)));
+    // Disable block pool from auto connecting
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::BlockPoolEnabledMessage>(0, false);
     
-    // Request body firmware version
-    robot.SendMessage(RobotInterface::EngineToRobot(GetBodyVersion()));
-    _bodyVersionSentTime_sec = currentTime_sec;
-#endif
+    // Enable writing factory data
+    robot.GetNVStorageComponent().EnableWritingFactory(true);
     
     _stateTransitionTimestamps.resize(_testResultEntry.timestamps.size());
     SetCurrState(FactoryTestState::GetPrevTestResults);
@@ -346,12 +350,12 @@ namespace Cozmo {
     
     if (res == FactoryTestResultCode::SUCCESS) {
       PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestPASSED", "");
-      robot.GetLightsComponent().SetBackpackLights(passLights);
+      robot.GetBodyLightComponent().SetBackpackLights(passLights);
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestFAILED",
                           "%s (code %d, state %s)",
                           EnumToString(res), static_cast<u8>(res), GetDebugStateName().c_str());
-      robot.GetLightsComponent().SetBackpackLights(failLights);
+      robot.GetBodyLightComponent().SetBackpackLights(failLights);
     }
     
   };
@@ -398,7 +402,8 @@ namespace Cozmo {
         {NVStorage::NVEntryTag::NVEntry_CalibMetaInfo,      FactoryTestResultCode::CALIB_META_INFO_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CameraCalib,        FactoryTestResultCode::CAMERA_CALIB_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CalibPose,          FactoryTestResultCode::CALIB_POSE_WRITE_FAILED},
-        {NVStorage::NVEntryTag::NVEntry_ObservedCubePose,   FactoryTestResultCode::CUBE_POSE_WRITE_FAILED}
+        {NVStorage::NVEntryTag::NVEntry_ObservedCubePose,   FactoryTestResultCode::CUBE_POSE_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, FactoryTestResultCode::TEST_RESULT_WRITE_FAILED},
       };
       
       FactoryTestResultCode resCode = FactoryTestResultCode::NVSTORAGE_WRITE_FAILED;
@@ -431,28 +436,179 @@ namespace Cozmo {
     }
   }
   
-  bool BehaviorFactoryTest::SendQueuedWrites(Robot& robot) {
-    
-    // Send queued writes to robot
-    for (auto const& entry : _queuedWrites) {
-      if (!robot.GetNVStorageComponent().Write(entry._tag, &(entry._data), entry._callback)) {
+  bool BehaviorFactoryTest::SendQueuedWrites(Robot& robot)
+  {
+    if(kBFT_PackWrites)
+    {
+      std::vector<u8> packedData;
+      PackWrites(_queuedWrites, packedData);
+      _queuedWrites.clear();
+
+      if(!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FactoryBaseTagWithBCOffset,
+                                              packedData.data(), packedData.size(),
+                                              [this, &robot](NVStorage::NVResult res) {
+                                                const NVStorage::NVEntryTag tag = NVStorage::NVEntryTag::NVEntry_FactoryBaseTagWithBCOffset;
+                                                if (res != NVStorage::NVResult::NV_OKAY) {
+                                                  PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteToRobot.Failed", "Tag: %s[0x%x]", EnumToString(tag), static_cast<u32>(tag));
+                                                  
+                                                  if (kBFT_WriteToNVStorageAtEnd) {
+                                                    _writeFailureCode = FactoryTestResultCode::NVSTORAGE_WRITE_FAILED;
+                                                  } else {
+                                                    EndTest(robot, FactoryTestResultCode::NVSTORAGE_WRITE_FAILED);
+                                                  }
+                                                  
+                                                } else {
+                                                  PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToRobot.Success", "Tag: %s[0x%x]", EnumToString(tag), static_cast<u32>(tag));
+                                                }
+                                              }))
+      {
         return false;
       }
+    }
+    else
+    {
+      // Send queued writes to robot
+      for (auto const& entry : _queuedWrites) {
+        if (!robot.GetNVStorageComponent().Write(entry._tag, &(entry._data), entry._callback)) {
+          _queuedWrites.clear();
+          return false;
+        }
+      }
+      _queuedWrites.clear();
     }
     return true;
   }
 
+  void BehaviorFactoryTest::PackWrites(const std::list<WriteEntry>& writes,
+                                       std::vector<u8>& packedData)
+  {
+    // Helper to print the packed data
+    auto print = [this](const WriteEntry& e){
+      if(DEBUG_FACTORY_TEST_BEHAVIOR)
+      {
+        std::vector<u8> packedData;
+        // Size of the entire entry, size + tag + successor + data + footer
+        const u32 size = 4 + 4 + 4 + static_cast<u32>(e._data.size()) + 4;
+        const u32 alignedSize = static_cast<u32>(_robot.GetNVStorageComponent().MakeWordAligned(size));
+        for(int i = 0; i < sizeof(u32); ++i)
+        {
+          packedData.push_back(static_cast<u32>(alignedSize) >> i*8 & 0xFF);
+        }
+        
+        // Tag
+        for(int i = 0; i < sizeof(e._tag); ++i)
+        {
+          packedData.push_back(static_cast<u32>(e._tag) >> i*8 & 0xFF);
+        }
+        
+        // Successor (should be 0xFFFFffff)
+        for(int i = 0; i < sizeof(u32); ++i)
+        {
+          packedData.push_back(0xFF);
+        }
+        
+        // Data
+        packedData.insert(packedData.end(), e._data.begin(), e._data.end());
+        
+        // Footer (should be 0)
+        for(int i = 0; i < sizeof(u32); ++i)
+        {
+          packedData.push_back(0);
+        }
+        
+        // Padding
+        for(int i = 0; i < sizeof(u8)*(alignedSize-size); ++i)
+        {
+          packedData.push_back(0);
+        }
+      
+        std::stringstream ss;
+        ss << std::hex << std::setfill('0');
+        for(auto i : packedData)
+        {
+          ss << std::setw(2) << static_cast<u32>(i);
+        }
+        PRINT_NAMED_DEBUG("BehaviorFactoryTest.PrintPackedData","%s", ss.str().c_str());
+      }
+    };
+  
+  
+    packedData.clear();
+    
+    // First we need to break entries with data size > 1024 into multiple entries with sequential tags
+    std::list<WriteEntry> fixedWrites;
+    for(const auto& entry : writes)
+    {
+      u32 size = static_cast<u32>(entry._data.size());
+      u32 dataCount = 0;
+      u32 tagCount = 0;
+      if(size > 1024)
+      {
+        while(size > 1024)
+        {
+          NVStorage::NVEntryTag tag = static_cast<NVStorage::NVEntryTag>(static_cast<u32>(entry._tag) + tagCount);
+          WriteEntry e(tag,
+                       entry._data.data() + dataCount*1024,
+                       1024, nullptr);
+          fixedWrites.push_back(e);
+          print(e);
+          size -= 1024;
+          dataCount++;
+          tagCount++;
+        }
+      }
+      
+      NVStorage::NVEntryTag tag = static_cast<NVStorage::NVEntryTag>(static_cast<u32>(entry._tag) + tagCount);
+      WriteEntry e(tag,
+                   entry._data.data() + dataCount*1024,
+                   size, entry._callback);
+      fixedWrites.push_back(e);
+      print(e);
+    }
+    
+    // Once all the entries are <= 1024 bytes in size pack them into the old nvStorage factory format
+    // [size, tag, successor, data(+ padding), footer]
+    for(const auto& entry : fixedWrites)
+    {
+      // Size of the entire entry, size + tag + successor + data + footer
+      const u32 size = 4 + 4 + 4 + static_cast<u32>(entry._data.size()) + 4;
+      const u32 alignedSize = static_cast<u32>(_robot.GetNVStorageComponent().MakeWordAligned(size));
+      for(int i = 0; i < sizeof(u32); ++i)
+      {
+        packedData.push_back(static_cast<u32>(alignedSize) >> i*8 & 0xFF);
+      }
+      
+      // Tag
+      for(int i = 0; i < sizeof(entry._tag); ++i)
+      {
+        packedData.push_back(static_cast<u32>(entry._tag) >> i*8 & 0xFF);
+      }
+      
+      // Successor (should be 0xFFFFffff)
+      for(int i = 0; i < sizeof(u32); ++i)
+      {
+        packedData.push_back(0xFF);
+      }
+      
+      // Data
+      packedData.insert(packedData.end(), entry._data.begin(), entry._data.end());
+      
+      // Padding
+      for(int i = 0; i < sizeof(u8)*(alignedSize-size); ++i)
+      {
+        packedData.push_back(0);
+      }
+      
+      // Footer (should be 0)
+      for(int i = 0; i < sizeof(u32); ++i)
+      {
+        packedData.push_back(0);
+      }
+    }
+  }
   
   void BehaviorFactoryTest::EndTest(Robot& robot, FactoryTestResultCode resCode)
   {
-#if IS_FACTORY_BRANCH
-    // Check body hw version
-    if (kBFT_CheckFWVersion && !_gotBodyVersion)
-    {
-      resCode = FactoryTestResultCode::NO_BODY_VERSION_MESSAGE;
-    }
-#endif
-  
     // Send test result out and make this behavior stop running
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
     
@@ -472,7 +628,7 @@ namespace Cozmo {
       // ==========================================================
       //         0          |         0        | Do nothing (No writes on failure)
       //         0          |         1        | Write everything
-      //         1          |         0        | Overwrite test result and erase birth certificate
+      //         1          |         0        | Erase everything
       //         1          |         1        | Do nothing
       bool previouslyPassed = _hasBirthCertificate;
       bool currentlyPassed = _testResult == FactoryTestResultCode::SUCCESS;
@@ -482,19 +638,37 @@ namespace Cozmo {
       PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.PassFailStatus",
                        "prevPassed: %d, currPassed: %d", previouslyPassed, currentlyPassed);
       
-      
-      // Sending all queued writes to robot
-      _writeFailureCode = FactoryTestResultCode::UNKNOWN;
-      if (writeTestData && !SendQueuedWrites(robot)) {
-        _testResult = FactoryTestResultCode::NVSTORAGE_SEND_FAILED;
-      }
-      
       // Fill out result
       _testResultEntry.result = _testResult;
       _testResultEntry.engineSHA1 = 0;   // TODO
       _testResultEntry.utcTime = time(0);
       _testResultEntry.stationID = _stationID;
       std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + _testResultEntry.timestamps.size(), _testResultEntry.timestamps.begin());
+      
+      u8 buf[_testResultEntry.Size()];
+      const size_t numBytes = _testResultEntry.Pack(buf, sizeof(buf));
+      QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes);
+      
+      // Sending all queued writes to robot
+      _writeFailureCode = FactoryTestResultCode::UNKNOWN;
+      if (writeTestData && !SendQueuedWrites(robot))
+      {
+        _testResult = FactoryTestResultCode::NVSTORAGE_SEND_FAILED;
+      }
+      else if(_eraseBirthCertificate)
+      {
+        auto callback = [this](NVStorage::NVResult res){
+          if(res != NVStorage::NVResult::NV_OKAY)
+          {
+            _testResult = FactoryTestResultCode::NVSTORAGE_ERASE_FAILED;
+          }
+        };
+      
+        if(!robot.GetNVStorageComponent().WipeFactory(callback))
+        {
+          _testResult = FactoryTestResultCode::NVSTORAGE_SEND_FAILED;
+        }
+      }
       
       SetCurrState(FactoryTestState::WaitingForWritesToRobot);
       
@@ -509,6 +683,13 @@ namespace Cozmo {
   IBehavior::Status BehaviorFactoryTest::UpdateInternal(Robot& robot)
   {
     #define END_TEST(ERRCODE) EndTest(robot, ERRCODE); return Status::Running;
+    
+    if(!ENABLE_FACTORY_TEST)
+    {
+      PRINT_NAMED_ERROR("BehaviorFactoryTest.UpdateInternal.NotEnabled",
+                        "Factory test is not enabled");
+      return Status::Complete;
+    }
 
     const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
@@ -535,17 +716,6 @@ namespace Cozmo {
       }
       
     }
-    
-#if IS_FACTORY_BRANCH
-    // Keep resending the getBodyVersion request every kBodyVersionTimeout_sec until we get a response
-    if(!_gotBodyVersion && currentTime_sec - _bodyVersionSentTime_sec > kBodyVersionTimeout_sec)
-    {
-      PRINT_NAMED_INFO("BehaviorFactoryTest.ResendGetBodyVersion", "Resending getBodyVersion message");
-      // Request body firmware version
-      robot.SendMessage(RobotInterface::EngineToRobot(GetBodyVersion()));
-      _bodyVersionSentTime_sec = currentTime_sec;
-    }
-#endif
     
     // If robot just picked up block then record robot angle
     if (_blockPickedUpReceived) {
@@ -600,20 +770,20 @@ namespace Cozmo {
           break;
         }
         
-        // Check robot fw version
-        if (kBFT_CheckFWVersion && robot.IsPhysical()) {
-          const RobotInterface::FWVersionInfo& fwInfo = robot.GetRobotToEngineImplMessaging().GetFWVersionInfo();
-          
-          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.RobotFW",
-                           "Wifi: 0x%x, RTIP: 0x%x, Body: 0x%x",
-                           fwInfo.wifiVersion, fwInfo.rtipVersion, fwInfo.bodyVersion);
-          
-          if (((fwInfo.wifiVersion < _kMinWifiVersion) || (fwInfo.wifiVersion > _kMaxWifiVersion)) ||
-              ((fwInfo.rtipVersion < _kMinRtipVersion) || (fwInfo.rtipVersion > _kMaxRtipVersion))) {
-            END_TEST(FactoryTestResultCode::WRONG_FIRMWARE_VERSION);
-          }
+        if(_hasWrongFirmware)
+        {
+          PRINT_NAMED_ERROR("BehaviorFactoryTest.HandleFirmwareVersion.WrongVersion",
+                            "Expected %s FACTORY got %s %s",
+                            _kFWVersion.c_str(), _fwVersion.c_str(), _fwBuildType.c_str());
+          END_TEST(FactoryTestResultCode::WRONG_FIRMWARE_VERSION);
         }
         
+        // Subscribe and request manufacturing information from the robot
+        RobotInterface::MessageHandler *messageHandler = robot.GetContext()->GetRobotManager()->GetMsgHandler();
+        _signalHandles.push_back(messageHandler->Subscribe(robot.GetID(),
+                                                           RobotInterface::RobotToEngineTag::mfgId,
+                                                           std::bind(&BehaviorFactoryTest::HandleMfgID, this, std::placeholders::_1)));
+        robot.SendMessage(RobotInterface::EngineToRobot{RobotInterface::GetManufacturingInfo{}});
         
         // Too much stuff is changing now.
         // Maybe put this back later.
@@ -666,6 +836,13 @@ namespace Cozmo {
           break;
         }
         
+        // Check that we received body version
+        if(!_gotHWVersion)
+        {
+          END_TEST(FactoryTestResultCode::NO_BODY_VERSION_MESSAGE);
+          break;
+        }
+        
         // Set fake calibration if not already set so that we can actually run
         // calibration from images.
         if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
@@ -691,11 +868,11 @@ namespace Cozmo {
           new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY),
           new MoveHeadToAngleAction(robot, DEG_TO_RAD(2.f)),
         });
-        StartActing(robot, headAndLiftAction,
-                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+        StartActing(headAndLiftAction,
+                    [this,&robot](ActionResult result){
                       if (result != ActionResult::SUCCESS) {
                         EndTest(robot, FactoryTestResultCode::INIT_LIFT_OR_HEAD_FAILED);
-                        return false;
+                        return;
                       }
                       
                       // Capture initial robot orientation and check if it changes over some period of time
@@ -708,19 +885,16 @@ namespace Cozmo {
                       // Play sound
                       if (kBFT_PlaySound) {
                         PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
-                        StartActing(robot, soundAction,
-                                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                        StartActing(soundAction,
+                                    [this,&robot](ActionResult result){
                                       if (result != ActionResult::SUCCESS) {
                                         EndTest(robot, FactoryTestResultCode::PLAY_SOUND_FAILED);
-                                        return false;
                                       }
-                                      return true;
                                     });
                       }
                       
                       
                       SetCurrState(FactoryTestState::ChargerAndIMUCheck);
-                      return true;
                     });
         
         break;
@@ -781,10 +955,9 @@ namespace Cozmo {
           CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction, liftAction});
           compoundAction->ShouldEmitCompletionSignal(true);
           
-          StartActing(robot, compoundAction,
-                      [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+          StartActing(compoundAction,
+                      [this,&robot](ActionResult result){
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.f;
-                        return true;
                       });
           SetCurrState(FactoryTestState::DriveToSlot);
         }
@@ -833,24 +1006,21 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::BATTERY_TOO_LOW);
         }
         
-        // Set pose to expected
-        // TODO: Create a function that's shared by LocalizeToObject and LocalizeToMat that does this?
-        robot.SetNewPose(_cliffDetectPose);
+        // Force the robot to delocalize to reset pose
+        robot.Delocalize(false);
         
-        f32 distToCamCalibPose = _camCalibPose.GetTranslation().x() - robot.GetPose().GetTranslation().x();
-        DriveStraightAction* action = new DriveStraightAction(robot, distToCamCalibPose, 100);
+        DriveStraightAction* action = new DriveStraightAction(robot, -_kBackupFromCliffDist_mm, 100);
         action->SetAccel(1000);
         action->SetDecel(1000);
         
         // Go to camera calibration pose
-        StartActing(robot, action,
-                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+        StartActing(action,
+                    [this,&robot](ActionResult result){
                       if (result != ActionResult::SUCCESS) {
                         EndTest(robot, FactoryTestResultCode::GOTO_CALIB_POSE_ACTION_FAILED);
                       } else {
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
                       }
-                      return true;
                     });
         SetCurrState(FactoryTestState::GotoCalibrationPose);
         break;
@@ -876,6 +1046,9 @@ namespace Cozmo {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOnGroundTooLow", "Val: %d", robot.GetCliffDataRaw());
           END_TEST(FactoryTestResultCode::CLIFF_VALUE_TOO_LOW);
         }
+        
+        // Update _camCalibPose parent since we delocalized since it was set
+        _camCalibPose.SetParent(&robot.GetPose().FindOrigin());
         
         // Check that robot is in correct pose
         if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
@@ -920,7 +1093,7 @@ namespace Cozmo {
             ptAction->SetMaxPanSpeed(_motionProfile.pointTurnSpeed_rad_per_sec);
             ptAction->SetPanAccel(_motionProfile.pointTurnAccel_rad_per_sec2);
             ptAction->SetMoveEyes(false);
-            StartActing(robot, ptAction);
+            StartActing(ptAction);
             ++_camCalibPoseIndex;
           } else {
             robot.GetVisionComponent().StoreNextImageForCameraCalibration();
@@ -932,9 +1105,12 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - COMPUTE CAMERA CALIBRATION - - - - - - - - - - - - - - -
       case FactoryTestState::ComputeCameraCalibration:
       {
+        // Update _expectedLightCubePose parent since we delocalized since it was set
+        _expectedLightCubePose.SetParent(&robot.GetPose().FindOrigin());
         // Turn towards block
         TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, _expectedLightCubePose, M_PI_2_F);
-        StartActing(robot, turnAction);
+        StartActing(turnAction);
+
         
         // Start calibration computation
         PRINT_NAMED_INFO("BehaviorFactoryTest.Update.StartingCalibration",
@@ -1056,8 +1232,9 @@ namespace Cozmo {
           ReadToolCodeAction* toolCodeAction = new ReadToolCodeAction(robot, false);
           
           // Read lift tool code
-          StartActing(robot, toolCodeAction,
-                      [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+          StartActing(toolCodeAction,
+                      [this,&robot](const ExternalInterface::RobotCompletedAction& rca){
+                        const ActionResult& result = rca.result;
                         
                         // Save tool code images to robot (whether it succeeded to read code or not)
                         std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetToolCodeImageJpegData();
@@ -1086,17 +1263,17 @@ namespace Cozmo {
                         
                         if (tooManyToolCodeImages) {
                           EndTest(robot, FactoryTestResultCode::TOO_MANY_TOOL_CODE_IMAGES);
-                          return false;
+                          return;
                         }
                         
                         
                         // Check result of tool code read
                         if (result != ActionResult::SUCCESS) {
                           EndTest(robot, FactoryTestResultCode::READ_TOOL_CODE_FAILED);
-                          return false;
+                          return;
                         }
                         
-                        const ToolCodeInfo &info = completionInfo.Get_readToolCodeCompleted().info;
+                        const ToolCodeInfo &info = rca.completionInfo.Get_readToolCodeCompleted().info;
                         PRINT_NAMED_INFO("BehaviorFactoryTest.RecvdToolCodeInfo.Info",
                                          "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
                                          EnumToString(info.code),
@@ -1124,10 +1301,7 @@ namespace Cozmo {
                         
                         if (distL_x > pixelDistThresh_x || distL_y > pixelDistThresh_y || distR_x > pixelDistThresh_x || distR_y > pixelDistThresh_y) {
                           EndTest(robot, FactoryTestResultCode::TOOL_CODE_POSITIONS_OOR);
-                          return false;
                         }
-                        
-                        return true;
                       });
       
           SetCurrState(FactoryTestState::ReadLiftToolCode);
@@ -1191,8 +1365,8 @@ namespace Cozmo {
         TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, blockPose, M_PI_2_F);
         CompoundActionSequential* compoundAction = new CompoundActionSequential(robot, {driveAction, turnAction});
         
-        StartActing(robot, compoundAction,
-                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+        StartActing(compoundAction,
+                    [this,&robot](ActionResult result){
 //                      // NOTE: This result check should be ok, but in sim the action often doesn't result in
 //                      // the robot being exactly where it's supposed to be so the action itself sometimes fails.
 //                      // When robot path following is improved (particularly in sim) this physical check can be removed.
@@ -1211,7 +1385,7 @@ namespace Cozmo {
 //                      } else {
 //                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
 //                      }
-                      return true;
+                      return;
                     });
         
         SetCurrState(FactoryTestState::GotoPickupPose);
@@ -1278,6 +1452,9 @@ namespace Cozmo {
                               _expectedLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
                               Tdiff.x(), Tdiff.y(), Tdiff.z(),
                               angleDiff.getDegrees());
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpectedZ", "%f %f",
+                              oObject->GetPose().GetTranslation().z(),
+                              (0.5f*oObject->GetSize().z()));
           END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
         
@@ -1297,7 +1474,7 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED);
         }
         
-        auto pickupCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+        auto pickupCallback = [this,&robot](ActionResult result){
           if (result == ActionResult::SUCCESS && robot.GetCarryingObject() == _blockObjectID) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.pickupCallback.Success", "");
           } else if (_attemptCounter <= _kNumPickupRetries) {
@@ -1307,15 +1484,14 @@ namespace Cozmo {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.pickupCallback.Failed", "");
             EndTest(robot, FactoryTestResultCode::PICKUP_FAILED);
           }
-          return true;
         };
        
         // Pickup block
         PRINT_NAMED_INFO("BehaviorFactory.Update.PickingUp", "Attempt %d", _attemptCounter);
         ++_attemptCounter;
         PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectID);
-        StartActing(robot,
-                    action,
+        action->SetShouldCheckForObjectOnTopOf(false);
+        StartActing(action,
                     pickupCallback);
         SetCurrState(FactoryTestState::PickingUpBlock);
         break;
@@ -1334,7 +1510,7 @@ namespace Cozmo {
         }
         
         
-        auto placementCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+        auto placementCallback = [this,&robot](ActionResult result){
           if (result == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.placementCallback.Success", "");
           } else {
@@ -1349,13 +1525,11 @@ namespace Cozmo {
               EndTest(robot, FactoryTestResultCode::PLACEMENT_FAILED);
             }
           }
-          return true;
         };
         
         // Put block down
         PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction(robot);
-        StartActing(robot,
-                    action,
+        StartActing(action,
                     placementCallback);
         ++_numPlacementAttempts;
         SetCurrState(FactoryTestState::PlacingBlock);
@@ -1367,7 +1541,7 @@ namespace Cozmo {
       {
         // Play animation that backs up 3 times. If there's a sticky wheel hopefully this cause some turns.
         auto action = new PlayAnimationAction(robot, "anim_triple_backup");
-        StartActing(robot, action);
+        StartActing(action);
         
         SetCurrState(FactoryTestState::BackAndForth);
         break;
@@ -1417,67 +1591,61 @@ namespace Cozmo {
         _factoryTestLogger.Append(_testResultEntry);
         
         
-        if (kBFT_EnableNVStorageWrites && _writeTestResult) {
-          u8 buf[_testResultEntry.Size()];
-          size_t numBytes = _testResultEntry.Pack(buf, sizeof(buf));
+        if (kBFT_EnableNVStorageWrites &&
+            _writeTestResult &&
+            _testResult == FactoryTestResultCode::SUCCESS)
+        {
+          // If test passed, write birth certificate
+          time_t nowTime = time(0);
+          struct tm* tmStruct = gmtime(&nowTime);
           
-          // Store test result to robot flash
-          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
-                                              [this,&robot](NVStorage::NVResult res){
+          BirthCertificate bc;
+          bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
+          bc.month  = static_cast<u8>(tmStruct->tm_mon + 1); // Months start at zero
+          bc.day    = static_cast<u8>(tmStruct->tm_mday);
+          bc.hour   = static_cast<u8>(tmStruct->tm_hour);
+          bc.minute = static_cast<u8>(tmStruct->tm_min);
+          bc.second = static_cast<u8>(tmStruct->tm_sec);
+          
+          u8 bcBuf[bc.Size()];
+          size_t bcNumBytes = bc.Pack(bcBuf, sizeof(bcBuf));
+          WriteEntry writeEntryBC(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes, nullptr);
+          
+          // Write birth certificate to log on device
+          _factoryTestLogger.Append(bc);
+          
+          u32 vmNumBytes = sizeof(NVStorage::NVConst::NVConst_VERSION_MAGIC);
+          u8 vmBuf[vmNumBytes];
+          for(int i = vmNumBytes-1; i >= 0; --i)
+          {
+            vmBuf[i] = (static_cast<u32>(NVStorage::NVConst::NVConst_VERSION_MAGIC) >> i*8 & 0xFF);
+          }
+          WriteEntry writeEntryVM(NVStorage::NVEntryTag::NVEntry_VersionMagic, vmBuf, vmNumBytes, nullptr);
+          
+          // Pack version magic and birth certificate into one blob of data and write it to FactoryBaseTag
+          std::vector<u8> packedBC;
+          PackWrites({writeEntryVM, writeEntryBC}, packedBC);
+          
+          DEV_ASSERT(packedBC.size() == static_cast<u32>(NVStorage::NVConst::NVConst_SIZE_OF_VERSION_AND_BC),
+                     "BehaviorFactoryTest.PackedVMAndBCUnexpectedSize");
+          
+          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FactoryBaseTag,
+                                              packedBC.data(), packedBC.size(),
+                                              [this,&robot](NVStorage::NVResult res) {
                                                 if (res != NVStorage::NVResult::NV_OKAY) {
-                                                  PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
-                                                                      "WriteResult: %s (Original test result: %s)",
-                                                                      EnumToString(res), EnumToString(_testResult));
-                                                  _testResult = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
-                                                }
-                                                
-                                                
-                                                
-                                                // If test passed, write birth certificate
-                                                if (_testResult == FactoryTestResultCode::SUCCESS) {
-                                                  time_t nowTime = time(0);
-                                                  struct tm* tmStruct = gmtime(&nowTime);
-                                                  
-                                                  BirthCertificate bc;
-                                                  bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
-                                                  bc.month  = static_cast<u8>(tmStruct->tm_mon + 1); // Months start at zero
-                                                  bc.day    = static_cast<u8>(tmStruct->tm_mday);
-                                                  bc.hour   = static_cast<u8>(tmStruct->tm_hour);
-                                                  bc.minute = static_cast<u8>(tmStruct->tm_min);
-                                                  bc.second = static_cast<u8>(tmStruct->tm_sec);
-                                                  
-                                                  u8 bcBuf[bc.Size()];
-                                                  size_t bcNumBytes = bc.Pack(bcBuf, sizeof(bcBuf));
-                                                  
-                                                  // Write birth certificate to log on device
-                                                  _factoryTestLogger.Append(bc);
-                                                  
-                                                  robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes,
-                                                                                      [this,&robot](NVStorage::NVResult res) {
-                                                                                        if (res != NVStorage::NVResult::NV_OKAY) {
-                                                                                          PRINT_NAMED_WARNING("BehaviorFactoryTest.BCWriteFail","");
-                                                                                          _testResult = FactoryTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
-                                                                                        } else {
-                                                                                          PRINT_NAMED_INFO("BehaviorFactoryTest.BCWriteSuccess","");
-                                                                                        }
-                                                                                        SendTestResultToGame(robot, _testResult);
-                                                                                      });
-                                                } else if (_eraseBirthCertificate) {
-                                                  PRINT_NAMED_INFO("BehaviorFactoryTest.BCErase","");
-                                                  robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_BirthCertificate,
-                                                                                      [this,&robot](NVStorage::NVResult res){
-                                                                                        // We're only erasing the BC upon failure anyway so don't bother changing the result code
-                                                                                        SendTestResultToGame(robot, _testResult);
-                                                                                      });
+                                                  PRINT_NAMED_WARNING("BehaviorFactoryTest.BCWriteFail","");
+                                                  _testResult = FactoryTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
                                                 } else {
-                                                  SendTestResultToGame(robot, _testResult);
+                                                  PRINT_NAMED_INFO("BehaviorFactoryTest.BCWriteSuccess","");
                                                 }
+                                                SendTestResultToGame(robot, _testResult);
                                               });
-          
-          
-        } else {
-          SendTestResultToGame(robot, _testResult);
         }
+        else
+        {
+            SendTestResultToGame(robot, _testResult);
+        }
+
         
         return Status::Complete;
         
@@ -1502,12 +1670,6 @@ namespace Cozmo {
       _factoryTestLogger.CloseLog();
     }
     
-    // Cancel all actions
-    for (const auto& tag : _actionCallbackMap) {
-      robot.GetActionList().Cancel(tag.first);
-    }
-    _actionCallbackMap.clear();
-    
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
       EndTest(robot, FactoryTestResultCode::TEST_CANCELLED);
     }
@@ -1518,10 +1680,6 @@ namespace Cozmo {
   {
     switch(event.GetData().GetTag())
     {
-      case EngineToGameTag::RobotCompletedAction:
-        _lastHandlerResult = HandleActionCompleted(robot, event.GetData().Get_RobotCompletedAction());
-        break;
-        
       case EngineToGameTag::RobotObservedObject:
         _lastHandlerResult = HandleObservedObject(robot,
                                                   event.GetData().Get_RobotObservedObject());
@@ -1558,6 +1716,53 @@ namespace Cozmo {
         break;
     }
   }
+  
+  void BehaviorFactoryTest::HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+  {
+    const auto& payload = message.GetData().Get_mfgId();
+    _gotHWVersion = true;
+    if(kBFT_CheckFWVersion && payload.hw_version < _kMinBodyHWVersion)
+    {
+      PRINT_NAMED_ERROR("BehaviorFactoryTest.HandleMfgID.WrongVersion",
+                        "Expected %u got %u", _kMinBodyHWVersion, payload.hw_version);
+      EndTest(_robot, FactoryTestResultCode::WRONG_BODY_HW_VERSION);
+    }
+  }
+  
+  void BehaviorFactoryTest::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+  {
+    if(kBFT_CheckFWVersion)
+    {
+      const auto& fwData = message.GetData().Get_firmwareVersion().json;
+      std::string jsonString{fwData.begin(), fwData.end()};
+      Json::Reader reader;
+      Json::Value headerData;
+      if(!reader.parse(jsonString, headerData))
+      {
+        EndTest(_robot, FactoryTestResultCode::PARSE_HEADER_FAILED);
+        return;
+      }
+      
+      _fwVersion = headerData["version"].asString();
+      _fwBuildType = headerData["build"].asString();
+      
+      if(_fwVersion != _kFWVersion ||
+         _fwBuildType != "FACTORY")
+      {
+        // This message is handled before the behavior starts so we need to set a flag
+        _hasWrongFirmware = true;
+      }
+    }
+  }
+  
+  void BehaviorFactoryTest::HandleFactoryFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+  {
+    if(ENABLE_FACTORY_TEST)
+    {
+      // Only 1.0 factory firmware has this message
+      SendTestResultToGame(_robot, FactoryTestResultCode::ONE_POINT_ZERO_FIRMWARE);
+    }
+  }
     
   
   
@@ -1576,9 +1781,6 @@ namespace Cozmo {
     _stateTransitionTimestamps[static_cast<u32>(s)] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
     UpdateStateName();
-
-    //BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR, "BehaviorFactoryTest.SetState",
-     //                      "set state to '%s'", GetStateName().c_str());
   }
 
   void BehaviorFactoryTest::UpdateStateName()
@@ -1594,37 +1796,6 @@ namespace Cozmo {
 
     //SetStateName(name);
   }
-
-
-  
-  
-  Result BehaviorFactoryTest::HandleActionCompleted(Robot& robot,
-                                                  const ExternalInterface::RobotCompletedAction &msg)
-  {
-    Result lastResult = RESULT_OK;
-    
-    if(!IsRunning()) {
-      // Ignore action completion messages while not running
-      return lastResult;
-    }
-    
-    if (_actionCallbackMap.count(msg.idTag) == 0) {
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR, "BehaviorFactoryTest.HandleActionCompleted.OtherAction",
-                             "finished action id=%d type=%s but don't care",
-                             msg.idTag, EnumToString(msg.actionType));
-      return lastResult;
-    }
-    
-    if (_actionCallbackMap.count(msg.idTag) != 0) {
-      if (_actionCallbackMap[msg.idTag]) {
-        _actionCallbackMap[msg.idTag](msg.result, msg.completionInfo);
-      }
-      _actionCallbackMap.erase(msg.idTag);
-    }
-    
-    return lastResult;
-  } // HandleActionCompleted()
-
 
 
   Result BehaviorFactoryTest::HandleObservedObject(Robot& robot,
@@ -1666,6 +1837,7 @@ namespace Cozmo {
         } else {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedBlock", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
           END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
+          return RESULT_OK;
         }
         break;
         
@@ -1710,23 +1882,6 @@ namespace Cozmo {
     
     _stationID = payload.param;
   }
-  
-  void BehaviorFactoryTest::HandleBodyVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-  {
-#if IS_FACTORY_BRANCH
-    _gotBodyVersion = true;
-    
-    const RobotInterface::BodyVersion& payload = message.GetData().Get_bodyVersion();
-    
-    PRINT_NAMED_INFO("BehaviorFactoryTest.HandleBodyVersion.Recvd",
-                     "hwVersion: %d", payload.hw_version);
-    
-    if (kBFT_CheckFWVersion && payload.hw_version < _kMinBodyHWVersion) {
-      EndTest(_robot, FactoryTestResultCode::WRONG_BODY_HW_VERSION);
-    }
-#endif
-  }
-
   
   Result BehaviorFactoryTest::HandleCameraCalibration(Robot &robot, const CameraCalibration &calibMsg)
   {
@@ -1792,7 +1947,6 @@ namespace Cozmo {
     
     // Save computed camera pose when robot was on charger
     // NOTE: If this fails a lot on the line, demote this to a non-error.
-    //       It's not as accurate as what we'll get from the Robot Test Fixture (pre-playpen) anyway.
     Pose3d calibPose;
     Result writePoseResult = robot.GetVisionComponent().GetCalibrationPoseToRobot(0, calibPose);
     if (writePoseResult != RESULT_OK) {
@@ -1894,23 +2048,6 @@ namespace Cozmo {
     const PickAndPlaceResult payload = msg.GetData().Get_pickAndPlaceResult();
     _blockPickedUpReceived = (payload.didSucceed && payload.blockStatus == BlockStatus::BLOCK_PICKED_UP);
   }
-  
-  void BehaviorFactoryTest::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback, u32 actionCallbackTag)
-  {
-    if (actionCallbackTag == static_cast<u32>(ActionConstants::INVALID_TAG)) {
-      actionCallbackTag = action->GetTag();
-    }
-    
-    assert(_actionCallbackMap.count(actionCallbackTag) == 0);
-    
-    if (robot.GetActionList().QueueActionNow(action) == RESULT_OK) {
-      _actionCallbackMap[actionCallbackTag] = callback;
-    } else {
-      PRINT_NAMED_WARNING("BehaviorFactory.StartActing.QueueActionFailed", "Action type %s", EnumToString(action->GetType()));
-      EndTest(robot, FactoryTestResultCode::QUEUE_ACTION_FAILED);
-    }
-  }
-
   
   PoseData BehaviorFactoryTest::ConvertToPoseData(const Pose3d& p)
   {

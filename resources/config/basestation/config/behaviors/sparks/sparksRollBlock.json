@@ -1,5 +1,5 @@
 {
-  "behaviorType": "RollBlock",
+  "behaviorClass": "RollBlock",
   "executableBehaviorType": "RollBlock",
   "name": "sparksRollBlock",
   "displayNameKey":"behavior.RollBlock",

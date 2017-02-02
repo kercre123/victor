@@ -134,6 +134,11 @@ namespace Anki {
       {
         return simNVStorage.Erase(address);
       }
+
+      bool FlashWriteOkay(u32 address, u32 length)
+      {
+        return simNVStorage.IsRequestInRange(address, length);
+      }
       
     }
   }

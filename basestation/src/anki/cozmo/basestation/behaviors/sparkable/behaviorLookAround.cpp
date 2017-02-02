@@ -48,8 +48,8 @@ static const char* const kShouldHandlePossibleKey = "shouldHandlePossibleObject"
 using namespace ExternalInterface;
 
 BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _moveAreaCenter(robot.GetPose())
+: IBehavior(robot, config)
+, _moveAreaCenter(robot.GetPose())
 {
   SetDefaultName("LookAround");
 
@@ -68,7 +68,7 @@ BehaviorLookAround::~BehaviorLookAround()
 {
 }
   
-bool BehaviorLookAround::IsRunnableInternal(const Robot& robot) const
+bool BehaviorLookAround::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
@@ -140,6 +140,7 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robo
   }
 
 }
+
 Result BehaviorLookAround::ResumeInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
@@ -157,7 +158,7 @@ Result BehaviorLookAround::InitInternal(Robot& robot)
   // Update explorable area center to current robot pose
   ResetSafeRegion(robot);
   
-  return ResumeInternal(robot);
+  return Result::RESULT_OK;//ResumeInternal(robot);
 }
   
 void BehaviorLookAround::TransitionToWaitForOtherActions(Robot& robot)

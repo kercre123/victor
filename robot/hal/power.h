@@ -5,8 +5,8 @@ namespace Anki {
   namespace Cozmo {
     namespace HAL {
       namespace Power {
-        void enableEspressif(void);
-        void disableEspressif(void);
+        void enableExternal(void);
+        void disableExternal(void);
       }
     }
   }

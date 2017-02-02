@@ -13,7 +13,6 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -35,33 +34,34 @@ using namespace ExternalInterface;
 static const float kCliffBackupDist_mm = 60.0f;
 static const float kCliffBackupSpeed_mmps = 100.0f;
 
-static const std::set<BehaviorType> kBehaviorsToDisable = {BehaviorType::ReactToUnexpectedMovement,
-                                                           BehaviorType::AcknowledgeObject,
-                                                           BehaviorType::AcknowledgeFace,
-                                                           BehaviorType::ReactToCubeMoved};
+static const std::set<ReactionTrigger> kBehaviorsToDisable = {ReactionTrigger::UnexpectedMovement,
+                                                           ReactionTrigger::ObjectPositionUpdated,
+                                                           ReactionTrigger::FacePositionUpdated,
+                                                           ReactionTrigger::CubeMoved};
   
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)
-: IReactionaryBehavior(robot, config)
+: IBehavior(robot, config)
+, _shouldStopDueToCharger(false)
 {
   SetDefaultName("ReactToCliff");
 
-  // These are the tags that should trigger this behavior to be switched to immediately
-  SubscribeToTriggerTags({{
+  SubscribeToTags({{
     EngineToGameTag::CliffEvent,
-    EngineToGameTag::RobotStopped
+    EngineToGameTag::RobotStopped,
+    EngineToGameTag::ChargerEvent
   }});
 }
 
-bool BehaviorReactToCliff::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorReactToCliff::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
 
-Result BehaviorReactToCliff::InitInternalReactionary(Robot& robot)
+Result BehaviorReactToCliff::InitInternal(Robot& robot)
 {
   robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
   
-  SmartDisableReactionaryBehavior(kBehaviorsToDisable);
+  SmartDisableReactionTrigger(kBehaviorsToDisable);
   
   switch( _state ) {
     case State::PlayingStopReaction:
@@ -108,7 +108,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
   DEBUG_SET_STATE(PlayingStopReaction);
 
   if(_quitReaction) {
-    //SendFinishedReactToCliffMessage(robot);
+    SendFinishedReactToCliffMessage(robot);
     return;
   }
   
@@ -160,31 +160,43 @@ void BehaviorReactToCliff::SendFinishedReactToCliffMessage(Robot& robot) {
   robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
 }
 
-void BehaviorReactToCliff::StopInternalReactionary(Robot& robot)
+void BehaviorReactToCliff::StopInternal(Robot& robot)
 {
   _state = State::PlayingStopReaction;
 }
 
-bool BehaviorReactToCliff::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
+  
+IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot)
+{
+  if(_shouldStopDueToCharger){
+    _shouldStopDueToCharger = false;
+    return Status::Complete;
+  }
+  return base::UpdateInternal(robot);
+}
+
+
+void BehaviorReactToCliff::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
 {  
-  switch( event.GetTag() ) {
+  switch( event.GetData().GetTag() ) {
     case EngineToGameTag::CliffEvent: {
-      if( !IsRunning() && event.Get_CliffEvent().detected && !_quitReaction) {
+      if(event.GetData().Get_CliffEvent().detected && !_quitReaction) {
         PRINT_NAMED_WARNING("BehaviorReactToCliff.CliffWithoutStop",
                             "Got a cliff event but stop isn't running, skipping straight to cliff react (bad latency?)");
         // this should only happen if latency gets bad because otherwise we should stay in the stop reaction
         _state = State::PlayingCliffReaction;
-        return true;
       }
       break;
     }
 
     case EngineToGameTag::RobotStopped: {
       _quitReaction = false;
-      if( !IsRunning() ) {
-        _state = State::PlayingStopReaction;
-        return true;
-      }
+      _state = State::PlayingStopReaction;
+      break;
+    }
+    case EngineToGameTag::ChargerEvent:
+    {
+      // This is fine, we don't care about this event when we're not running
       break;
     }
 
@@ -194,9 +206,7 @@ bool BehaviorReactToCliff::ShouldRunForEvent(const ExternalInterface::MessageEng
       break;
 
   }
-
-  return false;
-} 
+}
 
 void BehaviorReactToCliff::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
@@ -208,11 +218,20 @@ void BehaviorReactToCliff::HandleWhileRunning(const EngineToGameEvent& event, Ro
       }
       break;
     }
-
+    case EngineToGameTag::ChargerEvent:
+    {
+      // This isn't a real cliff, cozmo should stop reacting and let the drive off
+      // charger action be selected
+      if(event.GetData().Get_ChargerEvent().onCharger){
+        _shouldStopDueToCharger = true;
+      }
+      break;
+    }
     default:
       break;
   }
 }
+
 
 } // namespace Cozmo
 } // namespace Anki

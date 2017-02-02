@@ -110,15 +110,6 @@ namespace Anki
         SOURCE_SETUP(GPIO_CAM_D6, SOURCE_CAM_D6, SourceGPIO);
         SOURCE_SETUP(GPIO_CAM_D7, SOURCE_CAM_D7, SourceGPIO);
 
-        // Drive PWDN and RESET to safe defaults
-        GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-        GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-        SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
-
-        GPIO_RESET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
-        GPIO_OUT(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
-        SOURCE_SETUP(GPIO_CAM_RESET_N, SOURCE_CAM_RESET_N, SourceGPIO);
-
         // Set up HSYNC to trigger DMA start on rising edge
         SOURCE_SETUP(GPIO_CAM_HSYNC, SOURCE_CAM_HSYNC, SourceGPIO | SourceDMARise);
 
@@ -146,12 +137,6 @@ namespace Anki
       // Set up camera
       static void InitCam()
       {
-        // Power-up/reset the camera
-        MicroWait(50);
-        GPIO_RESET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-        MicroWait(50);
-        GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
-
         I2C::ReadReg(CAMERA_ADDR, 0xF0);
         I2C::ReadReg(CAMERA_ADDR, 0xF1);
         uint8_t id = I2C::ReadReg(CAMERA_ADDR, 0xFB);

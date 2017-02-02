@@ -93,10 +93,10 @@ namespace Cozmo.Minigame.DroneMode {
 
     [SerializeField]
     private CozmoButton _HowToPlayButton;
-    private DroneModeHowToPlayView _HowToPlayViewInstance;
 
     [SerializeField]
-    private DroneModeHowToPlayView _HowToPlayViewPrefab;
+    private DroneModeHowToPlayModal _HowToPlayModalPrefab;
+    private DroneModeHowToPlayModal _HowToPlayModalInstance;
 
     [SerializeField]
     private CozmoToggleButton _NightVisionButton;
@@ -251,9 +251,9 @@ namespace Cozmo.Minigame.DroneMode {
       _SpeedThrottle.onValueChanged.RemoveListener(HandleSpeedThrottleValueChanged);
       _HeadTiltSlider.onValueChanged.RemoveListener(HandleHeadSliderValueChanged);
       _LiftSlider.onValueChanged.RemoveListener(HandleLiftSliderValueChanged);
-      if (_HowToPlayViewInstance != null) {
-        _HowToPlayViewInstance.ViewClosed -= HandleHowToPlayViewClosed;
-        _HowToPlayViewInstance.CloseViewImmediately();
+      if (_HowToPlayModalInstance != null) {
+        _HowToPlayModalInstance.DialogClosed -= HandleHowToPlayModalClosed;
+        _HowToPlayModalInstance.CloseDialogImmediately();
       }
 
       _CameraFeed.OnCurrentFocusChanged -= HandleCurrentFocusedObjectChanged;
@@ -267,10 +267,16 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void EnableInput() {
-      EnableHeadSlider();
+      // COZMO-7257: Preventing internal unity crash by not triggering transitions when not needed
+      if (!_LiftSlider.interactable) {
+        _LiftSlider.interactable = true;
+      }
+      if (!_SpeedThrottle.interactable) {
+        _SpeedThrottle.interactable = true;
+      }
+
       _NightVisionButton.Interactable = true;
-      _LiftSlider.interactable = true;
-      _SpeedThrottle.interactable = true;
+      EnableHeadSlider();
       UpdateContextualButtons();
 
       _UpdateContextMenuBasedOnCurrentFocus = true;
@@ -278,10 +284,17 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void DisableInput() {
-      DisableHeadSlider();
+      // COZMO-7257: Preventing internal unity crash by not triggering transitions when not needed
+      if (_LiftSlider.interactable) {
+        _LiftSlider.interactable = false;
+      }
+      if (_SpeedThrottle.interactable) {
+        _SpeedThrottle.interactable = false;
+      }
+
       _NightVisionButton.Interactable = false;
-      _LiftSlider.interactable = false;
-      _SpeedThrottle.interactable = false;
+      DisableHeadSlider();
+
       foreach (DroneModeActionButton button in _ContextualButtons) {
         button.Interactable = false;
       }
@@ -303,25 +316,27 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void HandleHowToPlayClicked() {
-      if (UIManager.Instance.NumberOfOpenDialogues() == 0) {
-        OpenHowToPlayView(showCloseButton: true, playAnimations: false);
-      }
+      OpenHowToPlayModal(showCloseButton: true, playAnimations: false);
     }
 
-    public void OpenHowToPlayView(bool showCloseButton, bool playAnimations) {
-      if (_HowToPlayViewInstance == null) {
-        _HowToPlayViewInstance = UIManager.OpenModal<DroneModeHowToPlayView>(_HowToPlayViewPrefab);
-        _HowToPlayViewInstance.Initialize(showCloseButton, playAnimations);
+    public void OpenHowToPlayModal(bool showCloseButton, bool playAnimations) {
+      _HowToPlayButton.Interactable = false;
+
+      System.Action<BaseModal> howToPlayModalCreatedCallback = (howToPlayModal) => {
+        _HowToPlayButton.Interactable = true;
+        _HowToPlayModalInstance = (DroneModeHowToPlayModal)howToPlayModal;
+        _HowToPlayModalInstance.Initialize(showCloseButton, playAnimations);
         if (showCloseButton) {
-          _HowToPlayViewInstance.ViewClosed += HandleHowToPlayViewClosed;
+          _HowToPlayModalInstance.DialogClosed += HandleHowToPlayModalClosed;
           _HowToPlayButton.gameObject.SetActive(false);
         }
 
         _SpeedThrottle.SetToRest();
-      }
+      };
+      UIManager.OpenModal(_HowToPlayModalPrefab, new ModalPriorityData(), howToPlayModalCreatedCallback);
     }
 
-    private void HandleHowToPlayViewClosed() {
+    private void HandleHowToPlayModalClosed() {
       _HowToPlayButton.gameObject.SetActive(true);
     }
 
@@ -395,8 +410,21 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void HandleRobotCarryingObjectSet(ObservableObject newObjectInLift) {
       bool isCubeInLift = (newObjectInLift != null && (newObjectInLift is LightCube));
-      if (_IsCubeInLift != isCubeInLift) {
+
+      // Only update on carry state if going from carrying to not carrying.
+      // Can only go from not carrying to carrying based on the result of the pickup action
+      // which is handled by HandlePickupActionResult()
+      if (_IsCubeInLift && !isCubeInLift) {
         _IsCubeInLift = isCubeInLift;
+        UpdateContextMenu();
+      }
+    }
+
+    // Updates context menus based on result of pickup action
+    // which can only take it from a non-carrying to a carrying state.
+    public void HandlePickupActionResult(bool success) {
+      if (!_IsCubeInLift && success) {
+        _IsCubeInLift = true;
         UpdateContextMenu();
       }
     }
@@ -449,16 +477,11 @@ namespace Cozmo.Minigame.DroneMode {
       bool currentObjectIsCube = (_CurrentlyFocusedObject is LightCube);
       bool currentObjectIsFace = (_CurrentlyFocusedObject is Face);
       foreach (DroneModeActionButton button in _ContextualButtons) {
-        if (button.IsUnlocked) {
-          if (button.NeedsCubeSeen) {
-            button.Interactable = currentObjectIsCube;
-          }
-          else if (button.NeedsFaceSeen) {
-            button.Interactable = currentObjectIsFace;
-          }
-          else {
-            button.Interactable = true;
-          }
+        if (button.NeedsCubeSeen) {
+          button.Interactable = currentObjectIsCube;
+        }
+        else if (button.NeedsFaceSeen) {
+          button.Interactable = currentObjectIsFace;
         }
         else {
           button.Interactable = true;

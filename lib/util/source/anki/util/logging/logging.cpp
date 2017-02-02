@@ -22,10 +22,13 @@
 #include "util/logging/iLoggerProvider.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/iEventProvider.h"
+#include "util/helpers/AnkiDefines.h"
+
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <signal.h>
 
 namespace Anki{
 namespace Util {
@@ -69,7 +72,7 @@ using KVV = std::vector<std::pair<const char*, const char*>>;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void LogError(const char* eventName, const KVV& keyValues, const char* string)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -84,12 +87,13 @@ void LogError(const char* eventName, const KVV& keyValues, const char* string)
   // append string to tick count
   finalLogStr << string;
   gLoggerProvider->PrintLogE(eventName, keyValues, finalLogStr.str().c_str());
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void LogWarning(const char* eventName, const KVV& keyValues, const char* string)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -109,7 +113,7 @@ void LogWarning(const char* eventName, const KVV& keyValues, const char* string)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void LogChanneledInfo(const char* channel, const char* eventName, const KVV& keyValues, const char* string)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -129,7 +133,7 @@ void LogChanneledInfo(const char* channel, const char* eventName, const KVV& key
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void LogChannelDebug(const char* channel, const char* eventName, const KVV& keyValues, const char* string)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -152,7 +156,7 @@ void LogChannelDebug(const char* channel, const char* eventName, const KVV& keyV
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sEventF(const char* eventName, const KVV& keyValues, const char* format, ...)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
   // event is BI event, and the data is specifically formatted to be read on the backend.
@@ -168,7 +172,7 @@ void sEventF(const char* eventName, const KVV& keyValues, const char* format, ..
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sEventV(const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
   // event is BI event, and the data is specifically formatted to be read on the backend.
@@ -181,7 +185,7 @@ void sEventV(const char* eventName, const KVV& keyValues, const char* format, va
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sEvent(const char* eventName, const KVV& keyValues, const char* eventValue)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
   gLoggerProvider->PrintEvent(eventName, keyValues, eventValue);
@@ -190,7 +194,7 @@ void sEvent(const char* eventName, const KVV& keyValues, const char* eventValue)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sErrorF(const char* eventName, const KVV& keyValues, const char* format, ...)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -208,7 +212,7 @@ void sErrorF(const char* eventName, const KVV& keyValues, const char* format, ..
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sErrorV(const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -223,7 +227,7 @@ void sErrorV(const char* eventName, const KVV& keyValues, const char* format, va
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sError(const char* eventName, const KVV& keyValues, const char* eventValue)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -234,7 +238,7 @@ void sError(const char* eventName, const KVV& keyValues, const char* eventValue)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sWarningF(const char* eventName, const KVV& keyValues, const char* format, ...)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -252,7 +256,7 @@ void sWarningF(const char* eventName, const KVV& keyValues, const char* format, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sWarningV(const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -267,7 +271,7 @@ void sWarningV(const char* eventName, const KVV& keyValues, const char* format, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sWarning(const char* eventName, const KVV& keyValues, const char* eventValue)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
 
@@ -288,7 +292,7 @@ void sChanneledInfoF(const char* channelName, const char* eventName, const KVV& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sChanneledInfoV(const char* channelName, const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
   
@@ -303,7 +307,7 @@ void sChanneledInfoV(const char* channelName, const char* eventName, const KVV& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sChanneledInfo(const char* channelName, const char* eventName, const KVV& keyValues, const char* eventValue)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
   
@@ -314,7 +318,7 @@ void sChanneledInfo(const char* channelName, const char* eventName, const KVV& k
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sChanneledDebugF(const char* channelName, const char* eventName, const KVV& keyValues, const char* format, ...)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
   
@@ -332,7 +336,7 @@ void sChanneledDebugF(const char* channelName, const char* eventName, const KVV&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sChanneledDebugV(const char* channelName, const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
   
@@ -347,7 +351,7 @@ void sChanneledDebugV(const char* channelName, const char* eventName, const KVV&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sChanneledDebug(const char* channelName, const char* eventName, const KVV& keyValues, const char* eventValue)
 {
-  if (gLoggerProvider == nullptr) {
+  if (nullptr == gLoggerProvider) {
     return;
   }
   
@@ -356,12 +360,69 @@ void sChanneledDebug(const char* channelName, const char* eventName, const KVV& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sLogFlush()
+{
+  if (nullptr == gLoggerProvider) {
+    return;
+  }
+  gLoggerProvider->Flush();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 void sSetGlobal(const char* key, const char* value)
 {
-  if (gEventProvider == nullptr) {
+  if (nullptr == gEventProvider) {
     return;
   }
   gEventProvider->SetGlobal(key, value);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+void sDebugBreak()
+{
+  
+#if ANKI_DEVELOPER_CODE
+  
+#if defined(ANKI_PLATFORM_IOS)
+  
+  // iOS device - break to supervisor process
+  // This works on a debug build, but causes an access exception (EXC_BAD_ACCESS)
+  // in a release build.
+  asm volatile ("svc #0");
+  
+#elif defined(ANKI_PLATFORM_OSX)
+  
+  // MacOS X - break to supervisor process
+  // This works for debug or release, but causes SIGTRAP if there is no supervisor.
+  // http://stackoverflow.com/questions/37299/xcode-equivalent-of-asm-int-3-debugbreak-halt
+  // asm volatile ("int $3");
+  
+  // Interrupt thread with no-op signal.  This causes debugger breakpoint inside pthread_kill.
+  pthread_kill(pthread_self(), SIGCONT);
+  
+#else
+  
+  // Android, Windows, linux TBD
+  // Send no-op signal to cause debugger break
+  pthread_kill(pthread_self(), SIGCONT);
+  
+#endif // TARGET_OS
+  
+#endif // ANKI_DEVELOPER_CODE
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+void sAbort()
+{
+  LogError("Util.Logging.Abort", {}, "Application abort");
+  
+  // Add breakpoint here to inspect application state */
+  abort();
+  
 }
 
 } // namespace Util

@@ -2,6 +2,7 @@
 
 import os
 import errno
+import inspect
 import subprocess
 import sys
 import argparse
@@ -322,10 +323,9 @@ def run_webots(output, wbt_file_path, show_graphics, log_file_name):
   stop_webots()
 
   run_command = [
-    '/Applications/Webots/webots',
+    '/Applications/Webots.app/webots',
     '--stdout',
     '--stderr',
-    '--disable-modules-download',
     '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
     get_subpath("simulator/worlds", GENERATED_WORLD_FILE_NAME)
@@ -359,7 +359,7 @@ def wait_until(condition_fn, timeout, period=0.25):
   return False
 
 def is_webots_running():
-  process = subprocess.Popen("ps -ax | grep [/]Applications/Webots/webots.app", shell=True, stdout=subprocess.PIPE)
+  process = subprocess.Popen("ps -ax | grep [/]Applications/Webots.app/webots", shell=True, stdout=subprocess.PIPE)
   result = process.communicate()[0]
   if len(result) > 0:
     return True
@@ -370,10 +370,12 @@ def is_webots_not_running():
 
 # sleep for some time, then kill webots if needed
 def stop_webots():
+  currFile = inspect.getfile(inspect.currentframe())
+
   # kill all webots processes
   ps   = subprocess.Popen(('ps', 'Aux'), stdout=subprocess.PIPE)
   grep = subprocess.Popen(('grep', '[w]ebots'), stdin=ps.stdout, stdout=subprocess.PIPE)
-  grep_minus_this_process = subprocess.Popen(('grep', '-v', '.py'), stdin=grep.stdout, stdout=subprocess.PIPE)
+  grep_minus_this_process = subprocess.Popen(('grep', '-v', currFile), stdin=grep.stdout, stdout=subprocess.PIPE)
   awk  = subprocess.Popen(('awk', '{print $2}'), stdin=grep_minus_this_process.stdout, stdout=subprocess.PIPE)
   kill = subprocess.Popen(('xargs', 'kill', '-9'), stdin=awk.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   out, err = kill.communicate()

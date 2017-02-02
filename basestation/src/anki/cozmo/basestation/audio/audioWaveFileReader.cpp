@@ -121,10 +121,9 @@ bool AudioWaveFileReader::LoadWaveFile( const std::string& filePath, const std::
     standardDataIdx += ConvertPCMDataStream( header, sourceBuffer, bytesRead, samplesPerChannel, standardDataPointer );
   }
   
-  ASSERT_NAMED(standardDataIdx == standardData->bufferSize, ("Didn't store samples correctly - SampleCount " +
-                                                             std::to_string(standardDataIdx) +
-                                                             " | TotalSamples "
-                                                             + std::to_string(standardDataIdx)).c_str());
+  DEV_ASSERT(standardDataIdx == standardData->bufferSize,
+             ("Didn't store samples correctly - SampleCount " + std::to_string(standardDataIdx) +
+              " | TotalSamples " + std::to_string(standardDataIdx)).c_str());
   
   _cachedWaveData[ key ] = standardData;
   
@@ -172,8 +171,8 @@ size_t AudioWaveFileReader::ConvertPCMDataStream( WaveHeader& waveHeader,
                                                   float* out_standardBuffer )
 {
   // Convert wave data into standard format, float 32-bit  normalize into range [-1.0, 1.0]
-  ASSERT_NAMED(waveHeader.bitsPerSample == 16, "Only read signed 16-bit .wav files");
-  ASSERT_NAMED(waveHeader.numberOfChannels == 1, "Only read single channel .wav files");
+  DEV_ASSERT(waveHeader.bitsPerSample == 16, "Only read signed 16-bit .wav files");
+  DEV_ASSERT(waveHeader.numberOfChannels == 1, "Only read single channel .wav files");
   
   uint bytesPerSample  = waveHeader.bitsPerSample / 8;
   const size_t sampleCount = sourceBuffSize / bytesPerSample;

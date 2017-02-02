@@ -16,12 +16,15 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 
 namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPlayArbitraryAnim::BehaviorPlayArbitraryAnim(Robot& robot, const Json::Value& config)
   : BehaviorPlayAnimSequence(robot, config, false)
   , _animationAlreadySet(false)
@@ -29,22 +32,27 @@ BehaviorPlayArbitraryAnim::BehaviorPlayArbitraryAnim(Robot& robot, const Json::V
   SetDefaultName("PlayArbitraryAnim");
   _numLoops = -1;
 }
-    
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPlayArbitraryAnim::~BehaviorPlayArbitraryAnim()
 {  
 }
   
-bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const Robot& robot) const
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
-  const bool retVal = _numLoops >= 0 && BaseClass::IsRunnableInternal(robot);
+  BehaviorPreReqNone noPreReqs;
+  const bool retVal = _numLoops >= 0 && BaseClass::IsRunnableInternal(noPreReqs);
   return retVal;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlayArbitraryAnim::SetAnimationTrigger(AnimationTrigger trigger, int numLoops)
 {
-  ASSERT_NAMED_EVENT(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTrigger",
-                     "Animation set twice before being played");
+  DEV_ASSERT_MSG(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTrigger",
+                 "Animation set twice before being played");
   
   // clear current triggers and add new one
   _animTriggers.clear();
@@ -57,12 +65,12 @@ void BehaviorPlayArbitraryAnim::SetAnimationTrigger(AnimationTrigger trigger, in
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlayArbitraryAnim::SetAnimationTriggers(std::vector<AnimationTrigger>& triggers, int sequenceLoopCount)
 {
-  ASSERT_NAMED_EVENT(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTrigger",
-                     "Animation set twice before being played");
+  DEV_ASSERT_MSG(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTriggers",
+                 "Animation set twice before being played");
 
   // clear current triggers and add new ones
   _animTriggers.clear();
-  for( AnimationTrigger trigger : triggers ) {
+  for (AnimationTrigger trigger : triggers) {
     _animTriggers.emplace_back(trigger);
   }
   
@@ -70,12 +78,16 @@ void BehaviorPlayArbitraryAnim::SetAnimationTriggers(std::vector<AnimationTrigge
   _animationAlreadySet = true;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPlayArbitraryAnim::InitInternal(Robot& robot)
 {
   _animationAlreadySet = false;
   return BaseClass::InitInternal(robot);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPlayArbitraryAnim::ResumeInternal(Robot& robot)
 {
   return RESULT_OK;

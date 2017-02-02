@@ -286,6 +286,12 @@ def parse_engine_arguments():
         default=EXTERNALS_ROOT,
         metavar='path',
         help='Use this flag to specify external dependency location.')
+    parser.add_argument(
+        '--use-cte',
+        required=False,
+        default=None,
+        metavar='path',
+        help='Use this flag to specify a non default location for Coretech Eternal.')
 
     return parser.parse_args()
 
@@ -295,7 +301,7 @@ def parse_engine_arguments():
 #################################
 
 def install_dependencies(options):
-    options.deps = ['ninja', 'python3', 'android-ndk-r10e', 'android-sdk', 'buck']
+    options.deps = ['ninja', 'python3', 'android-sdk', 'buck']
     if options.deps:
         print_status('Checking dependencies...')
         installer = ankibuild.installBuildDeps.DependencyInstaller(options)
@@ -338,7 +344,7 @@ def generate_gyp(path, command, platform, options, dep_location):
     if not options.do_not_check_dependencies:
         extract_dependencies(dep_location, EXTERNALS_ROOT)
 
-    arguments += ['--coretechExternal', CTE_ROOT]
+    arguments += ['--coretechExternal', options.use_cte]
     arguments += ['--with-clad', CLAD_ROOT]
     if os.environ.get("EXTERNALS_DIR"):
         arguments += ['--externals', os.environ.get("EXTERNALS_DIR")]
@@ -360,6 +366,23 @@ class EnginePlatformConfiguration(object):
     def __init__(self, platform, options):
         if options.verbose:
             print_status('Initializing paths for platform {0}...'.format(platform))
+
+        global CTE_ROOT
+        if options.use_external is not None:
+            global EXTERNALS_ROOT
+            if os.path.exists(options.use_external):
+                EXTERNALS_ROOT = options.use_external
+                CTE_ROOT = os.path.join(EXTERNALS_ROOT, 'coretech_external')
+            else:
+                print("Warning invalid path given for EXTERNAL using default!")
+
+        if options.use_cte is not None:
+            if os.path.exists(options.use_cte):
+                CTE_ROOT = options.use_cte
+            else:
+                print("Warning invalid path given for CTE using default!")
+        else:
+            options.use_cte = CTE_ROOT
 
         self.platform = platform
         self.options = options

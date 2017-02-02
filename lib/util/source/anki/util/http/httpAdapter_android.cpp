@@ -35,7 +35,8 @@ HttpAdapter::HttpAdapter()
   if (nullptr != env) {
     JClassHandle httpClass{env->FindClass("com/anki/util/http/HttpAdapter"), env};
     if (httpClass == nullptr) {
-      ASSERT_NAMED(false, "HttpAdapter_Android.Init.ClassNotFound");
+      PRINT_NAMED_ERROR("HttpAdapter_Android.Init.ClassNotFound", 
+        "Unable to find com.anki.util.http.HttpAdapter");
       return;
     }
 
@@ -48,7 +49,8 @@ HttpAdapter::HttpAdapter()
     _javaObject = env->NewGlobalRef(_javaObject);
     env->DeleteLocalRef(oldObject);
     if (_javaObject == nullptr) {
-      ASSERT_NAMED(false, "HttpAdapter_Android.Init.ClassGlobalRef");
+      PRINT_NAMED_ERROR("HttpAdapter_Android.Init.ClassGlobalRef", 
+        "Unable to initialize global reference");
       return;
     }
 
@@ -57,7 +59,8 @@ HttpAdapter::HttpAdapter()
       env->GetMethodID(httpClass.get(), "startRequest",
         "(JLjava/lang/String;[Ljava/lang/String;[Ljava/lang/String;[BILjava/lang/String;I)V");
     if (_startRequestMethodID == nullptr) {
-      ASSERT_NAMED(false, "HttpAdapter_Android.Init.StartRequestMethodNotFound");
+      PRINT_NAMED_ERROR("HttpAdapter_Android.Init.StartRequestMethodNotFound", 
+        "Unable to find startRequest method");
       return;
     }
   }
@@ -84,7 +87,8 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
   JNIEnv* env = envWrapper->GetEnv();
   JNI_CHECK(env);
   if (_javaObject == nullptr || _startRequestMethodID == nullptr) {
-    ASSERT_NAMED(false, "HttpAdapter_Android.StartRequest.not_initialized");
+    PRINT_NAMED_ERROR("HttpAdapter_Android.StartRequest.not_initialized",
+      "Unable to initialize startRequest");
     return;
   }
 

@@ -75,12 +75,6 @@
   "minigame.text.waitForCozmo": {
     "translation": "Cozmo is getting ready..."
   },
-  "droneMode.actionLockedModal.title": {
-    "translation": "Action Locked"
-  },
-  "droneMode.actionLockedModal.description": {
-    "translation": "Unlock {0} Upgrade to use!"
-  },
   "droneMode.unknownFaceReticleLabel": {
     "translation": "Human"
   },
@@ -217,7 +211,7 @@
     "translation": "Tap your Cube to begin the next round."
   },
   "minigame.dontMoveCozmo.title": {
-    "translation": "Cozmo has moved!"
+    "translation": "Cozmo Has Moved!"
   },
   "minigame.dontMoveCozmo.description": {
     "translation": "Cozmo has moved and can't continue the game."
@@ -229,43 +223,10 @@
     "translation": "Cozmo lost track of his Cube and can't continue the game."
   },
   "minigame.timeout.title": {
-    "translation": "The Game has Ended"
+    "translation": "The Game Has Ended"
   },
   "minigame.timeout.description": {
     "translation": "Cozmo is tired of waiting, and wants to do other things."
-  },
-  "vortex.title": {
-    "translation": "Vortex"
-  },
-  "vortex.description": {
-    "translation": "Vortex Description"
-  },
-  "vortex.spinButton": {
-    "translation": "Spin"
-  },
-  "vortex.replayButton": {
-    "translation": "Replay"
-  },
-  "vortex.vortexStatus": {
-    "translation": "Round: {0:D}"
-  },
-  "vortex.vortexWon": {
-    "translation": "{0} Won"
-  },
-  "patternGuess.button.guessCode": {
-    "translation": "GUESS CODE"
-  },
-  "patternGuess.button.pickingCode": {
-    "translation": "PICKING CODE..."
-  },
-  "patternGuess.text.guessesLeft": {
-    "translation": "Guesses Left: {0}"
-  },
-  "patternGuess.text.howToPlayShort": {
-    "translation": "Tap Cube: Change color.\n        'Guess Code' will be green when the Cubes are lined up.\n\n        BACKPACK LIGHTS: \n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
-  },
-  "patternGuess.text.howToPlayLong": {
-    "translation": "Guess Cozmo's Code before you run out of guesses!\n        The Code is a number of Cubes of different colors, arranged horizontally in a line in front of Cozmo.\n        1. Cozmo will pick a code.\n        2. Tap a Cube to change the Cube's color.\n        3. Arrange the Cubes in a line in front of Cozmo.\n        4. Tap 'Guess Code' when you're ready to guess.\n        5. Cozmo will display lights on his back to let you know correctness:\n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
   },
   "cubePounce.info.playerWinPoint": {
     "translation": "You were too fast for Cozmo!"

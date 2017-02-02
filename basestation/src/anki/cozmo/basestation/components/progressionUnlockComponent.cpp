@@ -340,8 +340,8 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
                                                   padded.insert(padded.end(), 0);
                                                 }
                                                 
-                                                ASSERT_NAMED(unlockedIds.Size() == padded.size(),
-                                                             "unlockIds and padded not equal in size");
+                                                DEV_ASSERT(unlockedIds.Size() == padded.size(),
+                                                           "unlockIds and padded not equal in size");
                                                 
                                                 size = unlockedIds.Size();
                                                 data = padded.data();
@@ -381,7 +381,7 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
 template<>
 void ProgressionUnlockComponent::HandleMessage(const ExternalInterface::RequestSetUnlock& msg)
 {
-  PRINT_NAMED_EVENT("meta.unlock.engineHandle","%s %d",EnumToString(msg.unlockID), msg.unlocked);
+  LOG_EVENT("meta.unlock.engineHandle","%s %d",EnumToString(msg.unlockID), msg.unlocked);
   if(msg.unlockID <= UnlockId::Invalid ||
      msg.unlockID >= UnlockId::Count)
   {

@@ -1,6 +1,7 @@
 {
-  "behaviorType": "CubeLiftWorkout",
+  "behaviorClass": "CubeLiftWorkout",
   "name": "sparksCubeLiftWorkout",
+  "displayNameKey":"behavior.Workout",
   "requiredUnlockId": "Workout",
   "behaviorGroups": [
     "SparksWorkout"

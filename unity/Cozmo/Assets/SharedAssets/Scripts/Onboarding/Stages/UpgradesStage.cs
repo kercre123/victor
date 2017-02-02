@@ -14,8 +14,7 @@ namespace Onboarding {
     [SerializeField]
     private CozmoButton _ContinueButtonInstance;
 
-
-    private BaseModal _UpgradeDetailsView = null;
+    private CoreUpgradeDetailsModal _UpgradeDetailsModal = null;
 
     private float _StartTime;
 
@@ -28,9 +27,9 @@ namespace Onboarding {
 
       _SoftSparkInstructions.SetActive(false);
 
-      BaseModal.BaseViewOpened += HandleViewOpened;
       GameEventManager.Instance.OnGameEvent += HandleGameEvent;
-      BaseModal.BaseViewClosed += HandleViewClosed;
+      BaseModal.BaseModalOpened += HandleModalOpened;
+      BaseModal.BaseModalClosed += HandleModalClosed;
       // Highlight region is set by CozmoUnlocksPanel before this phase starts
       OnboardingManager.Instance.ShowOutlineRegion(true, true);
       _StartTime = Time.time;
@@ -39,22 +38,24 @@ namespace Onboarding {
 
     public override void OnDestroy() {
       base.OnDestroy();
-      BaseModal.BaseViewOpened -= HandleViewOpened;
       GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
-      BaseModal.BaseViewClosed -= HandleViewClosed;
+      BaseModal.BaseModalOpened -= HandleModalOpened;
+      BaseModal.BaseModalClosed -= HandleModalClosed;
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
     }
 
-    private void HandleViewOpened(BaseModal view) {
-      if (view is CoreUpgradeDetailsDialog) {
-        _UpgradeDetailsView = view;
-        _OverviewInstructions.SetActive(false);
+    private void HandleModalOpened(BaseModal modal) {
+      if (modal is CoreUpgradeDetailsModal) {
+        _UpgradeDetailsModal = (CoreUpgradeDetailsModal)modal;
+        if (_OverviewInstructions != null) {
+          _OverviewInstructions.SetActive(false);
+        }
       }
     }
     // QA could get here if they didn't clear their robot save, but cleared their app save.
     // so onboarding needs to get cleaned up properly.
-    private void HandleViewClosed(BaseModal view) {
-      if (view is CoreUpgradeDetailsDialog) {
+    private void HandleModalClosed(BaseModal modal) {
+      if (modal is CoreUpgradeDetailsModal) {
         ShowSoftSparkInfo();
       }
     }
@@ -62,8 +63,8 @@ namespace Onboarding {
     public override void SkipPressed() {
       // Since onboarding hides the close button really the only way to get out
       // Under the unlocks view, closing happens sooner though, so this is just for debug and sparks
-      if (_UpgradeDetailsView) {
-        _UpgradeDetailsView.CloseView();
+      if (_UpgradeDetailsModal) {
+        _UpgradeDetailsModal.CloseDialog();
       }
       GoToNextState();
     }
@@ -79,7 +80,9 @@ namespace Onboarding {
     }
 
     private void ShowSoftSparkInfo() {
-      _SoftSparkInstructions.SetActive(true);
+      if (_SoftSparkInstructions != null) {
+        _SoftSparkInstructions.SetActive(true);
+      }
     }
 
     private void HandleSoftSparkContinueButtonTapped() {

@@ -39,7 +39,10 @@
       { "channel": "NVStorage",       "enabled": false },
       { "channel": "Animations",      "enabled": false }, // Print every animation that is triggered
       { "channel": "Planner",         "enabled": false },
-      { "channel": "LightsComponent", "enabled": false }
+      { "channel": "CubeLightComponent", "enabled": false },
+      { "channel": "BodyLightComponent", "enabled": false },
+      { "channel": "ReactionTriggers","enabled": false },
+      { "channel": "Loading",         "enabled": false }
     ],
     "levels":
     [
@@ -80,7 +83,9 @@
       { "channel": "BlockPool",       "enabled": false },
       { "channel": "NVStorage",       "enabled": false },
       { "channel": "Animations",      "enabled": false },
-      { "channel": "LightsComponent", "enabled": false }
+      { "channel": "CubeLightComponent", "enabled": false },
+      { "channel": "BodyLightComponent", "enabled": false },
+      { "channel": "ReactionTriggers","enabled": false }
     ],
     "levels":
     [
@@ -121,7 +126,9 @@
       { "channel": "BlockPool",       "enabled": false },
       { "channel": "NVStorage",       "enabled": false },
       { "channel": "Animations",      "enabled": false },
-      { "channel": "LightsComponent", "enabled": false }
+      { "channel": "CubeLightComponent", "enabled": false },
+      { "channel": "BodyLightComponent", "enabled": false },
+      { "channel": "ReactionTriggers","enabled": false }
     ],
     "levels":
     [

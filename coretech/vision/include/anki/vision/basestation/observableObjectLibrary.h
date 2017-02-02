@@ -33,12 +33,16 @@ namespace Anki {
       
       //using ObsObjectType = ObsObjectType;
       
-      ObservableObjectLibrary(){};
+      ObservableObjectLibrary() {};
+      ~ObservableObjectLibrary();
       
       u32 GetNumObjects() const;
       
-      // Add an object to the known list. Note that this permits addition of
-      // objects at run time.
+      // Add an object to the list of known objects.
+      // Note that this permits addition of new objects at run time.
+      // ObservableObjectLibrary takes ownership of known objects.
+      // Known objects will be destroyed when replaced by objects of the same type.
+      // Known objects will be destroyed when ObservableObjectLibrary is destroyed.
       void AddObject(const ObsObjectType* object);
       
       // Groups markers referring to the same type, and clusters them into
@@ -52,15 +56,15 @@ namespace Anki {
                                       std::multimap<f32, ObsObjectType*>& objectsSeen,
                                       const CameraID_t seenOnlyBy = ANY_CAMERA) const;
       
-      // Return a pointer to a vector of pointers to known objects with at
-      // least one of the specified markers or codes on it. If  there is no
+      // Return a pointer to a set of pointers to known objects with at
+      // least one of the specified markers or codes on it. If there is no
       // object with that marker/code, a NULL pointer is returned.
       std::set<const ObsObjectType*> const& GetObjectsWithMarker(const Marker& marker) const;
       std::set<const ObsObjectType*> const& GetObjectsWithCode(const Marker::Code& code) const;
       
       using const_iterator = typename std::list<const ObsObjectType*>::const_iterator;
-      const_iterator begin() const {return _knownObjects.begin();}
-      const_iterator end() const {return _knownObjects.end();}
+      const_iterator begin() const { return _knownObjects.begin(); }
+      const_iterator end() const { return _knownObjects.end(); }
       
     protected:
       
@@ -71,15 +75,14 @@ namespace Anki {
       // Store a list of pointers to all objects that have at least one marker
       // with that code.  You can then use the objects' GetMarkersWithCode()
       // method to get the list of markers on each object.
-      //std::map<Marker::Code, std::vector<const ObsObjectType*> > _objectsWithCode;
-      std::map<Marker::Code, std::set<const ObsObjectType*> > _objectsWithCode;
+      std::map<Marker::Code, std::set<const ObsObjectType*>> _objectsWithCode;
       
       // A PoseCluster is a pairing of a single pose and all the marker matches
       // that imply that pose
       class PoseCluster
       {
       public:
-        using MatchList = std::list<std::pair<const ObservedMarker*, KnownMarker> >;
+        using MatchList = std::list<std::pair<const ObservedMarker*, KnownMarker>>;
         
         PoseCluster(const PoseMatchPair& match);
         

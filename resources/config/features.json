@@ -1,10 +1,14 @@
 [
   {
-    "feature": "dummy",
-    "enabled": false
+    "feature": "ObjectTapInteractions",
+    "enabled": true
   },
   {
-    "feature": "ObjectTapInteractions",
+    "feature": "AndroidConnectionFlow",
+    "enabled": true
+  },
+  {
+    "feature": "SpeedTapMultiPlayer",
     "enabled": true
   }
 ]

@@ -41,13 +41,15 @@ namespace Anki {
           Util::SafeDeleteArray(audioBuffer);
         }
         
-        // Allocate nessary memory for audio buffer
+        // Allocate necessary memory for audio buffer
         bool CreateDataBuffer(const size_t size)
         {
-          ASSERT_NAMED( audioBuffer == nullptr,
-                        "StandardWaveDataContainer.CreateDataBuffer.AudioBufferNotNull - \
-                        Can NOT allocate memory, Audio Buffer is not NULL" );
-          ASSERT_NAMED( size > 0, "StandardWaveDataContainer.CreateDataBuffer.SizeNotZero - Must set buffer size" );
+          DEV_ASSERT_MSG(audioBuffer == nullptr,
+                         "StandardWaveDataContainer.CreateDataBuffer.AudioBufferNotNull",
+                         "Can NOT allocate memory, Audio Buffer is not NULL");
+          DEV_ASSERT_MSG(size > 0,
+                         "StandardWaveDataContainer.CreateDataBuffer.SizeNotZero",
+                         "Must set buffer size");
           
           audioBuffer = new (std::nothrow) float[size];
           if ( audioBuffer == nullptr ) {

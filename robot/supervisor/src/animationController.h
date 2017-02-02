@@ -93,7 +93,7 @@ namespace Anki {
       void ResumeAndRestoreBuffer();
       
     } // namespace AnimationController
-  } // namespcae Cozmo
+  } // namespace Cozmo
 } // namespace Anki
 
 #endif // COZMO_ANIMATION_CONTROLLER_H_

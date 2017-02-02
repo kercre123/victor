@@ -29,6 +29,11 @@ void SaveToFileLoggerProvider::Log(ILoggerProvider::LogLevel logLevel, const std
 {
   _fileLogger->Write(message);
 }
-
+  
+void SaveToFileLoggerProvider::Flush()
+{
+  _fileLogger->Flush();
+}
+  
 } // end namespace Util
 } // end namespace Anki

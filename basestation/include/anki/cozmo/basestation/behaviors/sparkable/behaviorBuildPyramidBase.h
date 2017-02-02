@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorBuildPyramidBase_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -40,6 +40,8 @@ protected:
 
   
 public:
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  
   // Match music Rounds to enum values - starts at 1 to match rounds set up
   // in the current audio sound banks
   enum class MusicState{
@@ -50,7 +52,6 @@ public:
     PyramidCompleteFlourish
   };
   
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
   
@@ -86,9 +87,15 @@ protected:
   void TransitionToSearchingWithCallback(Robot& robot,  const ObjectID& objectID,  void(T::*callback)(Robot&));
   
   /// Light functions
-  static void SetPyramidBaseLightsByID(Robot& robot, const ObjectID& staticID, const ObjectID& baseID);
-  static ObjectLights GetBaseFormedBaseLights(Robot& robot, const ObjectID& staticID, const ObjectID& baseID);
-  static ObjectLights GetBaseFormedStaticLights(Robot& robot, const ObjectID& staticID, const ObjectID& baseID);
+  static void SetPyramidBaseLightsByID(Robot& robot,
+                                       const ObjectID& staticID,
+                                       const ObjectID& baseID);
+  static ObjectLights GetBaseFormedBaseLightsModifier(Robot& robot,
+                                                      const ObjectID& staticID,
+                                                      const ObjectID& baseID);
+  static ObjectLights GetBaseFormedStaticLightsModifier(Robot& robot,
+                                                        const ObjectID& staticID,
+                                                        const ObjectID& baseID);
   
   void SetPickupInitialBlockLights();
   void SetPyramidBaseLights();
@@ -96,16 +103,7 @@ protected:
   void SetPyramidFlourishLights();
   bool AreAllBlockIDsUnique() const;
   
-  static const ObjectLights& GetSingleStaticBlockLights();
-  static const ObjectLights& GetBaseFormedLights();
-  static const ObjectLights& GetBaseFormedTopLights();
-
-  
-  static const ObjectLights& GetFlourishPyramidLights(Robot& robot);
-  
-  const ObjectLights& GetDenouementBaseLights() const;
-  const ObjectLights& GetDenouementStaticLights() const;
-  const ObjectLights& GetDenouementTopLights() const;
+  ObjectLights GetDenouementTopLightsModifier() const;
   
   /// Attributes
   mutable ObjectID _staticBlockID;

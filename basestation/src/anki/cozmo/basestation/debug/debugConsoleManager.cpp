@@ -124,7 +124,7 @@ namespace Cozmo {
       messageSize += varObject.Size();
       if( messageSize >= kMaxFlushSize)
       {
-        ASSERT_NAMED(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
+        DEV_ASSERT(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "DebugConsoleManager.VarDatabaseOverMaxSize");
         FlushBuffer(dataVals,_externalInterface);
         messageSize = 0;
       }
@@ -142,7 +142,7 @@ namespace Cozmo {
       messageSize += varObject.Size();
       if( messageSize >= kMaxFlushSize)
       {
-        ASSERT_NAMED(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
+        DEV_ASSERT(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "DebugConsoleManager.FuncDatabaseOverMaxSize");
         FlushBuffer(dataVals,_externalInterface);
         messageSize = 0;
       }

@@ -13,12 +13,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnBack_H__
 #define __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnBack_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToRobotOnBack : public IReactionaryBehavior
+class BehaviorReactToRobotOnBack : public IBehavior
 {
 private:
   
@@ -27,19 +27,17 @@ private:
   BehaviorReactToRobotOnBack(Robot& robot, const Json::Value& config);
   
 public:
-  
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   // don't know where the robot will land, so don't resume
   // TODO:(bn) should this depend on how long the robot was "in the air"?
-  virtual bool ShouldResumeLastBehavior() const override { return false; }
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
-  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
 
-  
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
+
 protected:
   
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
 
 private:
 

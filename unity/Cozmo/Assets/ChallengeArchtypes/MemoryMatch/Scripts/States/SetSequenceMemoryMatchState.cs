@@ -57,9 +57,7 @@ namespace MemoryMatch {
       // wait for on/off time
       float cycleTime = _GameInstance.Config.CountDownTimeSec - _GameInstance.Config.HoldLightsAfterCountDownTimeSec;
       yield return new WaitForSeconds(cycleTime);
-      foreach (int cubeId in _GameInstance.CubeIdsForGame) {
-        _GameInstance.StopCycleCube(cubeId);
-      }
+
       _GameInstance.SetCubeLightsDefaultOn();
       yield return new WaitForSeconds(_GameInstance.Config.HoldLightsAfterCountDownTimeSec);
       HandleCountDownDone();
@@ -132,7 +130,9 @@ namespace MemoryMatch {
     }
 
     public LightCube GetCurrentTarget() {
-      if (_CurrentRobot != null && _CurrentRobot.LightCubes.ContainsKey(_CurrentSequence[_CurrentSequenceIndex])) {
+      if (_CurrentRobot != null &&
+          _CurrentSequenceIndex >= 0 && _CurrentSequenceIndex < _CurrentSequence.Count &&
+          _CurrentRobot.LightCubes.ContainsKey(_CurrentSequence[_CurrentSequenceIndex])) {
         return _CurrentRobot.LightCubes[_CurrentSequence[_CurrentSequenceIndex]];
       }
       return null;

@@ -23,7 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
-
+#define LOG_CHANNEL "Keyboard"
+#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace Anki {
   namespace Cozmo {
@@ -126,6 +127,11 @@ namespace Anki {
     void UiGameController::HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg)
     {
       HandleLoadedKnownFace(msg);
+    }
+    
+    void UiGameController::HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg)
+    {
+      HandleFaceEnrollmentCompleted(msg);
     }
     
     void UiGameController::HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg)
@@ -289,7 +295,7 @@ namespace Anki {
 
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
     {
-      PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
+      LOG_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
 
       HandleAnimationAvailable(msg);
     }
@@ -347,7 +353,7 @@ namespace Anki {
     
     void UiGameController::HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg)
     {
-      PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s", msg.oldBehavior.c_str(), msg.newBehavior.c_str());
+      PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s", msg.oldBehaviorName.c_str(), msg.newBehaviorName.c_str());
       
       HandleBehaviorTransition(msg);
     }
@@ -419,7 +425,7 @@ namespace Anki {
       _root = _supervisor.getSelf();
       
       // Set deviceID
-      // TODO: Get rid of this. The UI should not be assigning it's own ID.
+      // TODO: Get rid of this. The UI should not be assigning its own ID.
       int deviceID = 1;
       webots::Field* deviceIDField = _root->getField("deviceID");
       if (deviceIDField) {
@@ -433,6 +439,12 @@ namespace Anki {
         engineIP = engineIPField->getSFString();
       }
       
+      // Get random seed
+      webots::Field* randomSeedField = _root->getField("randomSeed");
+      if (randomSeedField) {
+        _randomSeed = randomSeedField->getSFInt32();
+      }
+        
       // Startup comms with engine
       if (!_gameComms) {
         PRINT_NAMED_INFO("UiGameController.Init",
@@ -538,6 +550,9 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGameTag::EngineLoadingDataStatus:
             HandleEngineLoadingStatusBase(message.Get_EngineLoadingDataStatus());
             break;
+          case ExternalInterface::MessageEngineToGameTag::FaceEnrollmentCompleted:
+            HandleFaceEnrollmentCompleted(message.Get_FaceEnrollmentCompleted());
+            break;
           default:
             // ignore
             break;
@@ -627,7 +642,7 @@ namespace Anki {
             
             PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.");
             // TODO: don't hardcode ID here
-            _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(ExternalInterface::StartEngine{}));
+            _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(ExternalInterface::StartEngine(_randomSeed)));
             
             _uiState = UI_WAITING_FOR_ENGINE_LOAD;
           }
@@ -664,7 +679,7 @@ namespace Anki {
           if ((_supervisor.getTime() - startTime) > TIME_UNTIL_READY_SEC) {
             
             // Initialize the block pool to detect cubes automatically. Ideally we would put this in
-            // InitIniternal but it is called before engine can receive messages
+            // InitInternal but it is called before engine can receive messages
             if (_doAutoBlockPool && !_isBlockPoolInitialized) {
               SendEnableBlockPool(0, true);
               _isBlockPoolInitialized = true;
@@ -695,16 +710,13 @@ namespace Anki {
           webots::Node* nd = rootChildren->getMFNode(n);
           
           // Get the node name
-          std::string nodeName = "";
-          webots::Field* nameField = nd->getField("name");
-          if (nameField) {
-            nodeName = nameField->getSFString();
-          }
+          std::string nodeName = nd->getTypeName();
           
           //PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses", " Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"",
           //       n, nodeName.c_str(), nd->getTypeName().c_str(), controllerName.c_str());
+          int nodeType = nd->getType();
           
-          if (nd->getTypeName().find("Supervisor") != std::string::npos &&
+          if (nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
               nodeName.find("CozmoBot") != std::string::npos) {
 
             PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
@@ -761,8 +773,7 @@ namespace Anki {
     void UiGameController::CycleVizOrigin()
     {
       auto UpdateVizOriginToRobotAndLog = [this]() {
-        PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
-        "Aligning viz to match robot's pose.");
+        LOG_INFO("UiGameController.UpdateVizOrigin", "Aligning viz to match robot's pose.");
         UpdateVizOriginToRobot();
       };
 
@@ -778,9 +789,9 @@ namespace Anki {
         if (_lightCubeOriginIter != _lightCubes.end()) {
           // If we haven't iterated through all the observed light cubes yet, localize to the newly
           // iterated light cube.
-          PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
-                        "Aligning viz to match next known LightCube to object %d",
-                        _robotStateMsg.localizedToObjectID);
+          LOG_INFO("UiGameController.UpdateVizOrigin",
+                   "Aligning viz to match next known LightCube to object %d",
+                   _robotStateMsg.localizedToObjectID);
           
           correctionPose = GetPose3dOfNode(*_lightCubeOriginIter)  * _objectIDToPoseMap[_robotStateMsg.localizedToObjectID].GetInverse();
           UpdateVizOrigin(correctionPose);
@@ -955,6 +966,7 @@ namespace Anki {
     void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution)
     {
       ExternalInterface::SetRobotImageSendMode m;
+      m.robotID = 1;
       m.mode = mode;
       m.resolution = resolution;
       ExternalInterface::MessageGameToEngine message;
@@ -1351,10 +1363,10 @@ namespace Anki {
     }
 
     
-    BehaviorType UiGameController::GetBehaviorType(const std::string& behaviorName) const
+    BehaviorClass UiGameController::GetBehaviorClass(const std::string& behaviorName) const
     {
-      const BehaviorType behaviorType = BehaviorTypeFromString(behaviorName);
-      return (behaviorType != BehaviorType::Count) ? behaviorType : BehaviorType::NoneBehavior;
+      const BehaviorClass behaviorClass = BehaviorClassFromString(behaviorName);
+      return (behaviorClass != BehaviorClass::Count) ? behaviorClass : BehaviorClass::NoneBehavior;
     }
     
     void UiGameController::SendAbortPath()
@@ -1951,14 +1963,12 @@ namespace Anki {
       // TODO: Implement!
     }
     
-    void UiGameController::SetLightCubePose(int lightCubeId, const Pose3d& newPose)
+    void UiGameController::SetNodePose(webots::Node* node, const Pose3d& newPose)
     {
-      webots::Node* lightCube = GetLightCubeById(lightCubeId);
-
-      webots::Field* rotField = lightCube->getField("rotation");
+      webots::Field* rotField = node->getField("rotation");
       assert(rotField != nullptr);
       
-      webots::Field* transField = lightCube->getField("translation");
+      webots::Field* transField = node->getField("translation");
       assert(transField != nullptr);
       
       const RotationVector3d& Rvec = newPose.GetRotationVector();
@@ -1974,6 +1984,15 @@ namespace Anki {
         MM_TO_M(newPose.GetTranslation().z())
       };
       transField->setSFVec3f(translation);
+    }
+    
+    void UiGameController::SetLightCubePose(int lightCubeId, const Pose3d& newPose)
+    {
+      webots::Node* lightCube = GetLightCubeById(lightCubeId);
+
+      assert(lightCube != nullptr);
+      
+      SetNodePose(lightCube, newPose);
     }
   
     const Pose3d UiGameController::GetLightCubePoseActual(int lightCubeId)
@@ -1995,7 +2014,7 @@ namespace Anki {
       return _robotNode->getField("animationTestName")->getSFString();
     }
 
-    const Pose3d UiGameController::GetPose3dOfNode(webots::Node* node)
+    const Pose3d UiGameController::GetPose3dOfNode(webots::Node* node) const
     {
       const double* transActual = node->getPosition();
       const double* orientationActual = node->getOrientation();
@@ -2043,8 +2062,8 @@ namespace Anki {
         }
       }
 
-      ASSERT_NAMED_EVENT(false, "UiGameController.GetLightCubeById",
-        "Can't find the light cube with id %d in the world", lightCubeId);
+      DEV_ASSERT_MSG(false, "UiGameController.GetLightCubeById",
+                     "Can't find the light cube with id %d in the world", lightCubeId);
       return nullptr;
     }
 
@@ -2053,15 +2072,15 @@ namespace Anki {
       return _supervisor.getTime();
     }
 
-    const bool UiGameController::HasXSecondsPassedYet(double& waitTimer, double xSeconds)
+    const bool UiGameController::HasXSecondsPassedYet(double xSeconds)
     {
-      if (waitTimer < 0){
-        waitTimer = GetSupervisorTime();
+      if (_waitTimer < 0){
+        _waitTimer = GetSupervisorTime();
       }
 
-      if (GetSupervisorTime() > waitTimer + xSeconds){
+      if (GetSupervisorTime() > _waitTimer + xSeconds){
         // reset waitTimer so it can be reused next time.
-        waitTimer = -1;
+        _waitTimer = -1;
         return true;
       } else {
         return false;

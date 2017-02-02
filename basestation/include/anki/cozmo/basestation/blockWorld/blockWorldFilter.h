@@ -229,18 +229,18 @@ namespace Cozmo {
         return ConsiderHelper(_ignoreOrigins, _allowedOrigins, objectOrigin);
         
       case BlockWorldFilter::OriginMode::InAnyFrame:
-        ASSERT_NAMED(_ignoreOrigins.empty() && _allowedOrigins.empty(),
-                     "BlockWorldFilter.ConsiderOrigin.IgnoringCustomOriginSets");
+        DEV_ASSERT(_ignoreOrigins.empty() && _allowedOrigins.empty(),
+                   "BlockWorldFilter.ConsiderOrigin.IgnoringCustomOriginSets");
         return true;
         
       case BlockWorldFilter::OriginMode::InRobotFrame:
-        ASSERT_NAMED(_ignoreOrigins.empty() && _allowedOrigins.empty(),
-                     "BlockWorldFilter.ConsiderOrigin.IgnoringCustomOriginSets");
+        DEV_ASSERT(_ignoreOrigins.empty() && _allowedOrigins.empty(),
+                   "BlockWorldFilter.ConsiderOrigin.IgnoringCustomOriginSets");
         return objectOrigin == robotOrigin;
         
       case BlockWorldFilter::OriginMode::NotInRobotFrame:
-        ASSERT_NAMED(_ignoreOrigins.empty() && _allowedOrigins.empty(),
-                     "BlockWorldFilter.ConsiderOrigin.IgnoringCustomOriginSets");
+        DEV_ASSERT(_ignoreOrigins.empty() && _allowedOrigins.empty(),
+                   "BlockWorldFilter.ConsiderOrigin.IgnoringCustomOriginSets");
         return objectOrigin != robotOrigin;
     }
   }
@@ -255,7 +255,7 @@ namespace Cozmo {
   
   inline bool BlockWorldFilter::ConsiderObject(const ObservableObject* object) const
   {
-    ASSERT_NAMED(nullptr != object, "BlockWorldFilter.ConsiderObject.NullObject");
+    DEV_ASSERT(nullptr != object, "BlockWorldFilter.ConsiderObject.NullObject");
     
     const bool considerObj = ConsiderHelper(_ignoreIDs, _allowedIDs, object->GetID());
     if(considerObj)
@@ -274,18 +274,18 @@ namespace Cozmo {
   }
   
   inline bool BlockWorldFilter::PoseStateNotUnknownFilter(const ObservableObject* object) {
-    ASSERT_NAMED(nullptr != object, "BlockWorldFilter.PoseStateNotUnknownFilter.NullObject");
+    DEV_ASSERT(nullptr != object, "BlockWorldFilter.PoseStateNotUnknownFilter.NullObject");
     return !object->IsPoseStateUnknown();
   }
   
   inline bool BlockWorldFilter::PoseStateKnownFilter(const ObservableObject* object)
   {
-    ASSERT_NAMED(nullptr != object, "BlockWorldFilter.PoseStateKnownFilter.NullObject");
+    DEV_ASSERT(nullptr != object, "BlockWorldFilter.PoseStateKnownFilter.NullObject");
     return object->IsPoseStateKnown();
   }
   
   inline bool BlockWorldFilter::ActiveObjectsFilter(const ObservableObject* object) {
-    ASSERT_NAMED(nullptr != object, "BlockWorldFilter.ActiveObjectsFilter.NullObject");
+    DEV_ASSERT(nullptr != object, "BlockWorldFilter.ActiveObjectsFilter.NullObject");
     return object->IsActive();
   }
   

@@ -31,7 +31,7 @@ public:
 
   virtual ~BehaviorFindFaces() override {}
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
     
 protected:
   

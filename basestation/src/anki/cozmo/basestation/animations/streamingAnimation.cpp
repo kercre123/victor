@@ -32,8 +32,8 @@ namespace Cozmo {
 namespace RobotAnimation {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StreamingAnimation::StreamingAnimation(const Animation& origalAnimation)
-: Anki::Cozmo::Animation(origalAnimation)
+StreamingAnimation::StreamingAnimation(const Animation& originalAnimation)
+: Anki::Cozmo::Animation(originalAnimation)
 {
   // Get Animation Info
   _lastKeyframeTime_ms = GetLastKeyFrameTime_ms();
@@ -110,7 +110,7 @@ void AddKeyframeNonNullToList(const IKeyFrame* keyframe, KeyframeList& out_keyfr
 void StreamingAnimation::TickPlayhead(KeyframeList& out_keyframeList, const Audio::AudioFrameData*& out_audioFrame)
 {
   // Don't advance past next frame
-  ASSERT_NAMED(CanPlayNextFrame(), "StreamingAnimation.TickPlayhead.NextFrameIsNotReady");
+  DEV_ASSERT(CanPlayNextFrame(), "StreamingAnimation.TickPlayhead.NextFrameIsNotReady");
   
   //////////////////////////////
   // Audio
@@ -260,7 +260,7 @@ void StreamingAnimation::GenerateAudioEventList(Util::RandomGenerator& randomGen
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
 {
-  ASSERT_NAMED(audioClient != nullptr, "StreamingAnimation.GenerateAudioData.audioClient.IsNull");
+  DEV_ASSERT(audioClient != nullptr, "StreamingAnimation.GenerateAudioData.audioClient.IsNull");
   
   if (_animationAudioEvents.empty()) {
     // No events to buffer
@@ -271,7 +271,7 @@ void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
   // Get GameObjected and audio buffer from pool
   _audioClient = audioClient;
   const bool success = _audioClient->GetGameObjectAndAudioBufferFromPool(_gameObj, _audioBuffer);
-  ASSERT_NAMED(success, "StreamingAnimation.GenerateAudioData.GetGameObjectAndAudioBufferFromPool.NoBufferInPool");
+  DEV_ASSERT(success, "StreamingAnimation.GenerateAudioData.GetGameObjectAndAudioBufferFromPool.NoBufferInPool");
   
   _state = BufferState::WaitBuffering;
   
@@ -371,18 +371,17 @@ void StreamingAnimation::HandleCozmoEventCallback(AnimationEvent* animationEvent
     {
       PRINT_NAMED_WARNING("StreamingAnimation.HandleCozmoEventCallback", "Error: %s",
                           callbackInfo.GetDescription().c_str());
-
       IncrementCompletedEventCount();
       animationEvent->state = AnimationEvent::AnimationEventState::Error;
-    }
       break;
+    }
       
     case AudioEngine::AudioCallbackType::Complete:
     {
       IncrementCompletedEventCount();
       animationEvent->state = AnimationEvent::AnimationEventState::Completed;
-    }
       break;
+    }
       
     default:
       break;
@@ -392,10 +391,8 @@ void StreamingAnimation::HandleCozmoEventCallback(AnimationEvent* animationEvent
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StreamingAnimation::CopyAudioBuffer()
 {
-  ASSERT_NAMED(_audioClient != nullptr, "StreamingAnimation.Update._audioClient.IsNull");
-  ASSERT_NAMED(_audioBuffer != nullptr, "StreamingAnimation.Update._audioBuffer.IsNull");
-  
-  using namespace Audio;
+  DEV_ASSERT(_audioClient != nullptr, "StreamingAnimation.Update._audioClient.IsNull");
+  DEV_ASSERT(_audioBuffer != nullptr, "StreamingAnimation.Update._audioBuffer.IsNull");
   
   // Add Silence audio frames to while there is no Current Buffer Stream
   AddAudioSilenceFrames();
@@ -419,7 +416,7 @@ void StreamingAnimation::AddAudioSilenceFrames()
     
     
     // Check Initial case
-    if (kInvalidAudioSreamOffsetTime ==_audioStreamOffsetTime_ms
+    if (kInvalidAudioStreamOffsetTime ==_audioStreamOffsetTime_ms
         && nextStream != nullptr) {
       // Calculate the time (relative to the time when Audio Engine creates stream) stream offset
       _audioStreamOffsetTime_ms = nextStream->GetCreatedTime_ms() - nextEvent->time_ms;
@@ -433,7 +430,7 @@ void StreamingAnimation::AddAudioSilenceFrames()
       
       // This implies that we will not buffer any silence until we get the first audio stream. This method expects there
       // there is 1+ audio events.
-      if ((kInvalidAudioSreamOffsetTime != _audioStreamOffsetTime_ms) && (nextStream != nullptr)) {
+      if ((kInvalidAudioStreamOffsetTime != _audioStreamOffsetTime_ms) && (nextStream != nullptr)) {
         
         const uint32_t streamRelevantTime_ms = floor(nextStream->GetCreatedTime_ms() - _audioStreamOffsetTime_ms);
         // Note: Intentionally set this only if less then frameTime, will sync with event time
@@ -546,5 +543,5 @@ bool StreamingAnimation::IsAnimationDone() const
 }
 
 } // namespace RobotAnimation
-} // namespcae Cozmo
+} // namespace Cozmo
 } // namespace Anki

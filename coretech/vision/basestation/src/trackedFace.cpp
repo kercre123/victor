@@ -63,7 +63,7 @@ namespace Vision {
     if(!GetEyeCenters(leftEye, rightEye))
     {
       // No eyes set: Use fake eye centers
-      ASSERT_NAMED(_rect.Area() > 0, "Invalid face rectangle");
+      DEV_ASSERT(_rect.Area() > 0, "Invalid face rectangle");
       Point2f leftEye(GetRect().GetXmid() - .25f*GetRect().GetWidth(),
                       GetRect().GetYmid() - .125f*GetRect().GetHeight());
       Point2f rightEye(GetRect().GetXmid() + .25f*GetRect().GetWidth(),
@@ -77,7 +77,7 @@ namespace Vision {
       intraEyeDistance = GetIntraEyeDistance();
     }
     
-    ASSERT_NAMED(!NEAR_ZERO(intraEyeDistance), "IntraEyeDistance is near zero");
+    DEV_ASSERT(!NEAR_ZERO(intraEyeDistance), "IntraEyeDistance is near zero");
       
     // Get unit vector along camera ray from the point between the eyes in the image
     Point2f eyeMidPoint(leftEye);
@@ -85,7 +85,7 @@ namespace Vision {
     eyeMidPoint *= 0.5f;
     
     Point3f ray(eyeMidPoint.x(), eyeMidPoint.y(), 1.f);
-    ASSERT_NAMED(camera.IsCalibrated(), "Camera should be calibrated");
+    DEV_ASSERT(camera.IsCalibrated(), "Camera should be calibrated");
     ray = camera.GetCalibration()->GetInvCalibrationMatrix() * ray;
     ray.MakeUnitLength();
     
@@ -122,7 +122,7 @@ namespace Vision {
   void TrackedFace::SetExpressionValue(FacialExpression whichExpression, f32 newValue)
   {
     const u32 expressionIndex = (u32)whichExpression;
-    ASSERT_NAMED(expressionIndex < (u32)FacialExpression::Count, "TrackedFace.SetExpressionValue.BadExpression");
+    DEV_ASSERT(expressionIndex < (u32)FacialExpression::Count, "TrackedFace.SetExpressionValue.BadExpression");
     _expression[expressionIndex] = newValue;
   }
   

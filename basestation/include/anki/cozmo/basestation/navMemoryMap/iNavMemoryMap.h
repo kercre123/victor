@@ -55,45 +55,45 @@ public:
 
   // add a quad with the specified content type and empty additional content
   inline void AddQuad(const Quad2f& quad, EContentType type) {
-    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(type), "INavMemoryMap.AddQuad.ExpectedAdditionalData");
+    DEV_ASSERT(!NavMemoryMapTypes::ExpectsAdditionalData(type), "INavMemoryMap.AddQuad.ExpectedAdditionalData");
     AddQuadInternal(quad, type);
   }
   // add a quad with the specified additional content. Such content specifies the associated EContentType
   inline void AddQuad(const Quad2f& quad, const INavMemoryMapQuadData& content) {
-    ASSERT_NAMED(NavMemoryMapTypes::ExpectsAdditionalData(content.type), "INavMemoryMap.AddQuad.NotExpectedAdditionalData");
+    DEV_ASSERT(NavMemoryMapTypes::ExpectsAdditionalData(content.type), "INavMemoryMap.AddQuad.NotExpectedAdditionalData");
     AddQuadInternal(quad, content);
   }
   
   // add a line with the specified content type and empty additional content
   inline void AddLine(const Point2f& from, const Point2f& to, EContentType type) {
-    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(type), "INavMemoryMap.AddLine.ExpectedAdditionalData");
+    DEV_ASSERT(!NavMemoryMapTypes::ExpectsAdditionalData(type), "INavMemoryMap.AddLine.ExpectedAdditionalData");
     AddLineInternal(from, to, type);
   }
   // add a line with the specified additional content. Such content specifies the associated EContentType
   inline void AddLine(const Point2f& from, const Point2f& to, const INavMemoryMapQuadData& content) {
-    ASSERT_NAMED(NavMemoryMapTypes::ExpectsAdditionalData(content.type), "INavMemoryMap.AddLine.NotExpectedAdditionalData");
+    DEV_ASSERT(NavMemoryMapTypes::ExpectsAdditionalData(content.type), "INavMemoryMap.AddLine.NotExpectedAdditionalData");
     AddLineInternal(from, to, content);
   }
 
   // add a triangle with the specified content type and empty additional content
   inline void AddTriangle(const Triangle2f& tri, EContentType type) {
-    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(type), "INavMemoryMap.AddTriangle.ExpectedAdditionalData");
+    DEV_ASSERT(!NavMemoryMapTypes::ExpectsAdditionalData(type), "INavMemoryMap.AddTriangle.ExpectedAdditionalData");
     AddTriangleInternal(tri, type);
   }
   // add a triangle with the specified additional content. Such content specifies the associated EContentType
   inline void AddTriangle(const Triangle2f& tri, const INavMemoryMapQuadData& content) {
-    ASSERT_NAMED(NavMemoryMapTypes::ExpectsAdditionalData(content.type), "INavMemoryMap.AddTriangle.NotExpectedAdditionalData");
+    DEV_ASSERT(NavMemoryMapTypes::ExpectsAdditionalData(content.type), "INavMemoryMap.AddTriangle.NotExpectedAdditionalData");
     AddTriangleInternal(tri, content);
   }
 
   // add a point with the specified content type and empty additional content
   inline void AddPoint(const Point2f& point, EContentType type) {
-    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(type), "INavMemoryMap.AddPoint.ExpectedAdditionalData");
+    DEV_ASSERT(!NavMemoryMapTypes::ExpectsAdditionalData(type), "INavMemoryMap.AddPoint.ExpectedAdditionalData");
     AddPointInternal(point, type);
   }
   // add a point with the specified additional content. Such content specifies the associated EContentType
   inline void AddPoint(const Point2f& point, const INavMemoryMapQuadData& content) {
-    ASSERT_NAMED(NavMemoryMapTypes::ExpectsAdditionalData(content.type), "INavMemoryMap.AddPoint.NotExpectedAdditionalData");
+    DEV_ASSERT(NavMemoryMapTypes::ExpectsAdditionalData(content.type), "INavMemoryMap.AddPoint.NotExpectedAdditionalData");
     AddPointInternal(point, content);
   }
   
@@ -108,19 +108,19 @@ public:
   // fills content regions of filledType that have borders with fillingType(s), converting the filledType region
   // into withThisType content
   void FillBorder(EContentType typeToReplace, const NavMemoryMapTypes::FullContentArray& neighborsToFillFrom, EContentType newTypeSet) {
-    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.FillBorder.CantFillExtraInfo");
+    DEV_ASSERT(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.FillBorder.CantFillExtraInfo");
     FillBorderInternal(typeToReplace, neighborsToFillFrom, newTypeSet);
   }
 
   // replaces the given content type with the given new type, within the given quad
   void ReplaceContent(const Quad2f& quad, EContentType typeToReplace, EContentType newTypeSet) {
-    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.ReplaceContent.CantFillExtraInfo");
+    DEV_ASSERT(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.ReplaceContent.CantFillExtraInfo");
     ReplaceContentInternal(quad, typeToReplace, newTypeSet);
   }
   
   // replaces the given content type with the given new type
   void ReplaceContent(EContentType typeToReplace, EContentType newTypeSet) {
-    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.ReplaceContent.CantFillExtraInfo");
+    DEV_ASSERT(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.ReplaceContent.CantFillExtraInfo");
     ReplaceContentInternal(typeToReplace, newTypeSet);
   }
   

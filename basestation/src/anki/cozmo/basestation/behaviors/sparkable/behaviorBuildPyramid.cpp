@@ -12,13 +12,14 @@
 
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
 
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -54,8 +55,9 @@ BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& conf
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
+bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
+  const Robot& robot = preReqData.GetRobot();
   UpdatePyramidTargets(robot);
   
   bool allSetAndUsable = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
@@ -72,7 +74,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
                    AIWhiteboard::ObjectUseAction::PickUpObject,
                    AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}};
     
-    const bool hasStaticFailed = robot.GetBehaviorManager().GetWhiteboard().
+    const bool hasStaticFailed = robot.GetAIComponent().GetWhiteboard().
                  DidFailToUse(_staticBlockID,
                               failToUseReasons,
                               kTimeObjectInvalidAfterAnyFailure_sec,
@@ -80,7 +82,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
                               DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
                               DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
     
-    const bool hasBaseFailed = robot.GetBehaviorManager().GetWhiteboard().
+    const bool hasBaseFailed = robot.GetAIComponent().GetWhiteboard().
     DidFailToUse(_baseBlockID,
                  failToUseReasons,
                  kTimeObjectInvalidAfterAnyFailure_sec,
@@ -88,7 +90,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
                  DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
                  DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
     
-    const bool hasTopFailed = robot.GetBehaviorManager().GetWhiteboard().
+    const bool hasTopFailed = robot.GetAIComponent().GetWhiteboard().
     DidFailToUse(_topBlockID,
                  failToUseReasons,
                  kTimeObjectInvalidAfterAnyFailure_sec,
@@ -175,7 +177,7 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 {
   SET_STATE(PlacingTopBlock);
   UpdateAudioState(std::underlying_type<MusicState>::type(MusicState::TopBlockCarry));
-  SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
+  SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
   
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
   const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
@@ -200,9 +202,9 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
         return;
       }
       
-      const Pose3d& idealTopMarkerPose = staticBlock->GetZRotatedPointAboveObjectCenter();
+      const Pose3d& idealUnrotatedPose = staticBlock->GetZRotatedPointAboveObjectCenter(0.f);
       Pose3d idealPlacementWRTUnrotatedStatic;
-      if(!idealTopPlacementWRTWorld.GetWithRespectTo(idealTopMarkerPose, idealPlacementWRTUnrotatedStatic)){
+      if(!idealTopPlacementWRTWorld.GetWithRespectTo(idealUnrotatedPose, idealPlacementWRTUnrotatedStatic)){
         return;
       }
       

@@ -1,8 +1,0 @@
-{
-  "behaviorType": "ReactToUnexpectedMovement",
-  "displayNameKey":"behavior.ReactToUnexpectedMovement",
-  "behaviorGroups": [
-    "Reactionary"
-  ],
-  "disableByDefault": false
-}

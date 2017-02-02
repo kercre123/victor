@@ -8,7 +8,7 @@
 {
   "name": "Hiking_VisitInterestingEdge",
 
-  "behaviorType": "VisitInterestingEdge",
+  "behaviorClass": "VisitInterestingEdge",
   "displayNameKey":"behavior.VisitInterestingEdge",
   "flatScore": 1.25,
   "behaviorGroups": [

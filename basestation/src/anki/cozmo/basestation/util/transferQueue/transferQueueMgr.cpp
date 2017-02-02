@@ -54,7 +54,7 @@ namespace Anki {
 
     void TransferQueueMgr::StartDataTransfer()
     {
-      ASSERT_NAMED(_numRequests == 0, "TransferQueueMgr.StartDataTransfer.InvalidRequestCount");
+      DEV_ASSERT(_numRequests == 0, "TransferQueueMgr.StartDataTransfer.InvalidRequestCount");
       std::unique_lock<std::mutex> lock{_mutex};
       _numRequests = 0;
 

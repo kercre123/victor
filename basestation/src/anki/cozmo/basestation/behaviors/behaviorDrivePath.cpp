@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/actions/drivePathAction.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/planning/shared/path.h"
 #include "anki/planning/basestation/pathHelper.h"
 
@@ -27,10 +28,10 @@ BehaviorDrivePath::BehaviorDrivePath(Robot& robot, const Json::Value& config)
   SetDefaultName("DrivePath");
 }
 
-bool BehaviorDrivePath::IsRunnableInternal(const Robot& robot) const
+bool BehaviorDrivePath::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   //Possibly add other limits later
-  return robot.GetEnabledAnimationTracks() & (u8)AnimTrackFlag::BODY_TRACK;
+  return preReqData.GetRobot().GetEnabledAnimationTracks() & (u8)AnimTrackFlag::BODY_TRACK;
 }
 
 float BehaviorDrivePath::EvaluateScoreInternal(const Robot& robot) const

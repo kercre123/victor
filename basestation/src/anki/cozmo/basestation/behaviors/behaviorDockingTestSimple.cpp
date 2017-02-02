@@ -28,7 +28,7 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -42,6 +42,18 @@
 #define DEBUG_DOCKING_TEST_BEHAVIOR 1
 
 #define END_TEST_IN_HANDLER(RESULT, NAME) EndAttempt(robot, RESULT, NAME); return;
+
+namespace{
+// This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
+// All args following the first are passed directly to the chosen print macro
+#define BEHAVIOR_VERBOSE_PRINT(_BEHAVIORDEF, ...) do { \
+if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
+else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
+} while(0) \
+
+}
+
+
 
 namespace Anki {
   namespace Cozmo {
@@ -125,14 +137,14 @@ namespace Anki {
       }
     }
     
-    bool BehaviorDockingTestSimple::IsRunnableInternal(const Robot& robot) const
+    bool BehaviorDockingTestSimple::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
     {
       return _currentState == State::Init;
     }
     
     Result BehaviorDockingTestSimple::InitInternal(Robot& robot)
     {
-      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
+      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("Docking test simple",false);
       
       _currentState = State::Init;
       _numFails = 0;
@@ -222,7 +234,7 @@ namespace Anki {
           }
           
           // Turn off backpack lights in case we needed to be manually reset
-          robot.GetLightsComponent().SetBackpackLights(failLights);
+          robot.GetBodyLightComponent().SetBackpackLights(failLights);
           
           _blockObjectIDPickup.UnSet();
           
@@ -726,7 +738,7 @@ namespace Anki {
     
     void BehaviorDockingTestSimple::StopInternal(Robot& robot)
     {
-      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(true);
+      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("Docking test simple",true);
       
       // Cancel all actions
       for (const auto& tag : _actionCallbackMap) {
@@ -756,11 +768,11 @@ namespace Anki {
     {
       if(_yellForHelp)
       {
-        robot.GetLightsComponent().SetBackpackLights(failLights);
+        robot.GetBodyLightComponent().SetBackpackLights(failLights);
       }
       else if(_yellForCompletion)
       {
-        robot.GetLightsComponent().SetBackpackLights(passLights);
+        robot.GetBodyLightComponent().SetBackpackLights(passLights);
       }
       SetCurrState(s);
     }
@@ -1001,7 +1013,7 @@ namespace Anki {
     {
       assert(_actionCallbackMap.count(action->GetTag()) == 0);
       
-      if (robot.GetActionList().QueueActionNow(action) == RESULT_OK) {
+      if (robot.GetActionList().QueueAction(QueueActionPosition::NOW, action) == RESULT_OK) {
         _actionCallbackMap[action->GetTag()] = callback;
       } else {
         PRINT_NAMED_WARNING("BehaviorDockingTest.StartActing.QueueActionFailed", "Action type %s", EnumToString(action->GetType()));

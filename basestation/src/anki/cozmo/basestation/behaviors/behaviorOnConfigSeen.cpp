@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigTypeHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
@@ -64,7 +65,7 @@ void BehaviorOnConfigSeen::ReadJson(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnConfigSeen::IsRunnableInternal(const Robot& robot) const
+bool BehaviorOnConfigSeen::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // if this is the first update in a long time consider that the config was already known
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -74,7 +75,8 @@ bool BehaviorOnConfigSeen::IsRunnableInternal(const Robot& robot) const
   bool newConfigSeen = false;
   
   for(auto& mapEntry: _configurationCountMap){
-    const auto& configs = robot.GetBlockWorld().GetBlockConfigurationManager().GetCacheByType(mapEntry.first);
+    const auto& configs = preReqData.GetRobot().GetBlockWorld().
+                           GetBlockConfigurationManager().GetCacheByType(mapEntry.first);
     if(configs.ConfigurationCount() > mapEntry.second){
       newConfigSeen = true;
     }

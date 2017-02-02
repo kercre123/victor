@@ -1,5 +1,5 @@
 /**
- * File: animActions.cpp
+ * File: sayTextAction.cpp
  *
  * Author: Andrew Stein
  * Date:   8/29/2014
@@ -12,10 +12,10 @@
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroup.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -81,7 +81,7 @@ bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
   for (auto intentJsonIt = json.begin(); intentJsonIt != json.end(); ++intentJsonIt) {
     const std::string& name = intentJsonIt.key().asString();
     const auto intentEnumIt = sayTextIntentMap.find( name );
-    ASSERT_NAMED(intentEnumIt != sayTextIntentMap.end(), "SayTextAction.LoadMetadata.CanNotFindSayTextIntent");
+    DEV_ASSERT(intentEnumIt != sayTextIntentMap.end(), "SayTextAction.LoadMetadata.CanNotFindSayTextIntent");
     if (intentEnumIt != sayTextIntentMap.end()) {
       // Store Intent into STATIC var
       const SayTextIntentConfig config(name, *intentJsonIt, voiceStyleMap);
@@ -142,11 +142,11 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
     
     // Get Duration val
     const SayTextIntentConfig::ConfigTrait& durationTrait = config.FindDurationTraitTextLength(Util::numeric_cast<uint>(text.length()));
-    _durationScalar = durationTrait.GetDurration( robot.GetRNG() );
+    _durationScalar = durationTrait.GetDuration( robot.GetRNG() );
     
     // Get Pitch val
     const SayTextIntentConfig::ConfigTrait& pitchTrait = config.FindPitchTraitTextLength(Util::numeric_cast<uint>(text.length()));
-    _voicePitch = pitchTrait.GetDurration( robot.GetRNG() );
+    _voicePitch = pitchTrait.GetDuration( robot.GetRNG() );
   }
   else {
     PRINT_NAMED_ERROR("SayTextAction.CanNotFind.SayTextIntentConfig", "%s", EnumToString(intent));
@@ -217,7 +217,7 @@ ActionResult SayTextAction::Init()
       }
       
       if (duration_ms * 0.001f > _timeout_sec) {
-        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareAudioEngine.DurrationTooLong", "Duration: %f", duration_ms);
+        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareAudioEngine.DurationTooLong", "Duration: %f", duration_ms);
       }
       
       const bool useBuiltInAnim = (AnimationTrigger::Count == _animationTrigger);
@@ -264,13 +264,14 @@ ActionResult SayTextAction::Init()
         { SayTextVoiceStyle::CozmoProcessing_Name, SwitchState::Cozmo_Voice_Processing::Name },
         { SayTextVoiceStyle::CozmoProcessing_Sentence, SwitchState::Cozmo_Voice_Processing::Sentence }
       };
-      ASSERT_NAMED(processingStateMap.size() == Util::numeric_cast<uint32_t>(SayTextVoiceStyle::Count), "SayTextAction.Init.processingStateMap.InvalidSize");
+      DEV_ASSERT(processingStateMap.size() == Util::numeric_cast<uint32_t>(SayTextVoiceStyle::Count),
+                 "SayTextAction.Init.processingStateMap.InvalidSize");
       
       const auto it = processingStateMap.find(_style);
-      ASSERT_NAMED(it != processingStateMap.end(), "SayTextAction.Init.processingStateMap.StyleNotFound");
+      DEV_ASSERT(it != processingStateMap.end(), "SayTextAction.Init.processingStateMap.StyleNotFound");
       const SwitchState::GenericSwitch processingState = static_cast<const SwitchState::GenericSwitch>( it->second );
       // Set voice Pitch
-      // FIXME: This is a temp fix, we are asuming the TtS animatoin is using the CozmoBus_1 or Cozmo_OnDevice game object.
+      // FIXME: This is a temp fix, we are asuming the TtS animation is using the CozmoBus_1 or Cozmo_OnDevice game object.
       // We need to add the ability to set rtpc in animations so they are posted with the animation audio events.
       GameObjectType gameObj = (_robot.GetRobotAudioClient()->GetOutputSource() == RobotAudioClient::RobotAudioOutputSource::PlayOnRobot) ?
       GameObjectType::CozmoBus_1 : GameObjectType::Cozmo_OnDevice;
@@ -304,7 +305,7 @@ ActionResult SayTextAction::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::CheckIfDone()
 {
-  ASSERT_NAMED(_isAudioReady, "SayTextAction.CheckIfDone.TextToSpeechNotReady");
+  DEV_ASSERT(_isAudioReady, "SayTextAction.CheckIfDone.TextToSpeechNotReady");
   
   if (DEBUG_SAYTEXT_ACTION) {
     PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.CheckIfDone.UpdatingAnimation", "");
@@ -396,7 +397,7 @@ SayTextAction::SayTextIntentConfig::SayTextIntentConfig(const std::string& inten
   const auto styleKey = json.get("style", Json::Value::null);
   if (!styleKey.isNull()) {
     const auto it = styleMap.find(styleKey.asString());
-    ASSERT_NAMED(it != styleMap.end(), "SayTextAction.LoadMetadata.IntentStyleNotFound");
+    DEV_ASSERT(it != styleMap.end(), "SayTextAction.LoadMetadata.IntentStyleNotFound");
     if (it != styleMap.end()) {
       style = it->second;
     }
@@ -418,9 +419,9 @@ SayTextAction::SayTextIntentConfig::SayTextIntentConfig(const std::string& inten
     }
   }
   
-  ASSERT_NAMED(!name.empty(), "SayTextAction.LoadMetadata.Intent.name.IsEmpty");
-  ASSERT_NAMED(!durationTraitJson.empty(), "SayTextAction.LoadMetadata.Intent.durationTraits.IsEmpty");
-  ASSERT_NAMED(!pitchTraitJson.empty(), "SayTextAction.LoadMetadata.Intent.pitchTraits.IsEmpty");
+  DEV_ASSERT(!name.empty(), "SayTextAction.LoadMetadata.Intent.name.IsEmpty");
+  DEV_ASSERT(!durationTraitJson.empty(), "SayTextAction.LoadMetadata.Intent.durationTraits.IsEmpty");
+  DEV_ASSERT(!pitchTraitJson.empty(), "SayTextAction.LoadMetadata.Intent.pitchTraits.IsEmpty");
 } // SayTextIntentConfig()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -459,7 +460,7 @@ SayTextAction::SayTextIntentConfig::ConfigTrait::ConfigTrait(const Json::Value& 
   rangeStepSize = json.get("stepSize", Json::Value(0.f)).asFloat(); // If No step size use Range Min and don't randomize
 } // ConfigTrait()
   
-float SayTextAction::SayTextIntentConfig::ConfigTrait::GetDurration(Util::RandomGenerator& randomGen) const
+float SayTextAction::SayTextIntentConfig::ConfigTrait::GetDuration(Util::RandomGenerator& randomGen) const
 {
   // TODO: Move this into Random Util class
   float resultVal;

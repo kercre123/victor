@@ -7,6 +7,9 @@
 #include "uart.h"
 #include "timer.h"
 
+#include "portable.h"
+#include "../hal/hardware.h"
+
 enum TRANSFER_MODE {
   TRANSMIT_UNKNOWN,
   TRANSMIT_RECEIVE,
@@ -35,15 +38,15 @@ void Anki::Cozmo::HAL::UART::init(void) {
   UART0_BDH = 0;
 
   UART0_C1 = 0; // 8 bit, 1 bit stop no parity (single wire)
-  UART0_S2 |= UART_S2_RXINV_MASK;
-  UART0_C3 = UART_C3_TXINV_MASK;
+  UART0_S2 |= UART_S2_RXINV_MASK; // Invert RX - blame the level converter
+  UART0_C3 = UART_C3_TXINV_MASK;  // Invert TX - that means idle is 'low'
   UART0_C4 = UART_C4_BRFA(BAUD_BRFA(spine_baud_rate));
 
   UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(2) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(2) ;
   UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
 
-  PORTD_PCR6 = PORT_PCR_MUX(3);
-  PORTD_PCR7 = PORT_PCR_MUX(3);
+  SOURCE_SETUP(GPIO_BODY_UART_RX, SOURCE_BODY_UART_RX, SourceAlt3);
+  SOURCE_SETUP(GPIO_BODY_UART_TX, SOURCE_BODY_UART_TX, SourceAlt3 | SourcePullDown);
 }
 
 void Anki::Cozmo::HAL::UART::shutdown(void) {

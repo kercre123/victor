@@ -294,6 +294,56 @@ inline constexpr double RadToDeg(double rad) {
   return rad * 57.295779513082322865;
 }
   
+// Time conversions
+inline constexpr float NanoSecToSec(float nanoSec) {
+  return nanoSec / 1000000000.0f;
+}
+  
+inline constexpr double NanoSecToSec(double nanoSec) {
+  return nanoSec / 1000000000.0;
+}
+
+inline constexpr double NanoSecToSec(unsigned long long int nanoSec) {
+  return (double)nanoSec / 1000000000.0;
+}
+  
+inline constexpr float SecToNanoSec(float sec) {
+  return sec * 1000000000.0f;
+}
+
+inline constexpr double SecToNanoSec(double sec) {
+  return sec * 1000000000.0;
+}
+  
+inline constexpr double SecToNanoSec(unsigned long long int sec) {
+  return sec * 1000000000.0;
+}
+  
+inline constexpr float MilliSecToSec(float milliSec) {
+  return milliSec / 1000.0f;
+}
+
+inline constexpr double MilliSecToSec(double milliSec) {
+  return milliSec / 1000.0;
+}
+  
+inline constexpr double MilliSecToSec(unsigned long long int milliSec) {
+  return (double)milliSec / 1000.0;
+}
+
+inline constexpr float SecToMilliSec(float sec) {
+  return sec * 1000.0f;
+}
+
+inline constexpr double SecToMilliSec(double sec) {
+  return sec * 1000.0;
+}
+  
+inline constexpr double SecToMilliSec(unsigned long long int sec) {
+  return sec * 1000.0;
+}
+  
+  
 // Basic clamp impl. For faster one use fmax/fmin approach
 template<class T>
 inline ANKI_NON_DEVELOPER_CONSTEXPR T Clamp(const T& val, const T& min, const T& max)

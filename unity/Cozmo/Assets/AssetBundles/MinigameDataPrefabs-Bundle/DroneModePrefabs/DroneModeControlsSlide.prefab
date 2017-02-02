@@ -1379,7 +1379,7 @@ MonoBehaviour:
   _QuitDroneModeButton: {fileID: 11499584}
   _QuitDroneModeButtonImage: {fileID: 0}
   _HowToPlayButton: {fileID: 0}
-  _HowToPlayViewPrefab: {fileID: 11483486, guid: f8f7c76789ada49b3a0e8635e05fce20,
+  _HowToPlayModalPrefab: {fileID: 11483486, guid: f8f7c76789ada49b3a0e8635e05fce20,
     type: 2}
   _NightVisionButton: {fileID: 11445464}
   _NightVisionOnSound:

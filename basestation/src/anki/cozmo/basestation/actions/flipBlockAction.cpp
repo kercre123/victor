@@ -67,38 +67,47 @@ DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot,
 {
   SetName("DriveToAndFlipBlock");
   SetProxyTag(_flipBlockAction->GetTag());
-  GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, &robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+  
+  DriveToObjectAction* driveToObjectAction = GetDriveToObjectAction();
+  if(driveToObjectAction != nullptr)
   {
-    
-    // Check to see if the robot is close enough to the preActionPose to prevent tiny re-alignments
-    if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
-      bool withinThreshold = WithinPreActionThreshold(robot, possiblePoses, _minAlignThreshold_mm);
-      alreadyInPosition = withinThreshold;
-      _flipBlockAction->SetShouldCheckPreActionPose(!withinThreshold);
-    }
-    
-    return GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
-  });
-
+    driveToObjectAction->SetGetPossiblePosesFunc([this, &robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+    {
+      
+      // Check to see if the robot is close enough to the preActionPose to prevent tiny re-alignments
+      if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
+        bool withinThreshold = WithinPreActionThreshold(robot, possiblePoses, _minAlignThreshold_mm);
+        alreadyInPosition = withinThreshold;
+        _flipBlockAction->SetShouldCheckPreActionPose(!withinThreshold);
+      }
+      
+      return GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
+    });
+  }
+  
   AddAction(_flipBlockAction);
   SetProxyTag(_flipBlockAction->GetTag()); // Use flip action's completion info
 }
 
 void DriveAndFlipBlockAction::ShouldDriveToClosestPreActionPose(bool tf)
 {
-  GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, tf](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+  DriveToObjectAction* driveToObjectAction = GetDriveToObjectAction();
+  if(driveToObjectAction != nullptr)
   {
-    
-    // Check to see if the robot is close enough to the preActionPose to prevent tiny re-alignments
-    if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
-      bool withinThreshold = WithinPreActionThreshold(_robot, possiblePoses, _minAlignThreshold_mm);
-      alreadyInPosition = withinThreshold;
-      _flipBlockAction->SetShouldCheckPreActionPose(!withinThreshold);
-    }
-    
-    
-    return GetPossiblePoses(_robot, object, possiblePoses, alreadyInPosition, tf);
-  });
+    driveToObjectAction->SetGetPossiblePosesFunc([this, tf](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+    {
+      
+      // Check to see if the robot is close enough to the preActionPose to prevent tiny re-alignments
+      if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
+        bool withinThreshold = WithinPreActionThreshold(_robot, possiblePoses, _minAlignThreshold_mm);
+        alreadyInPosition = withinThreshold;
+        _flipBlockAction->SetShouldCheckPreActionPose(!withinThreshold);
+      }
+      
+      
+      return GetPossiblePoses(_robot, object, possiblePoses, alreadyInPosition, tf);
+    });
+  }
 }
 
 ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
@@ -256,8 +265,8 @@ FlipBlockAction::~FlipBlockAction()
     _robot.GetActionList().Cancel(_flipTag);
   }
   
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, true);
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), ReactionTrigger::UnexpectedMovement, true);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), ReactionTrigger::CubeMoved, true);
 }
 
 void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
@@ -304,8 +313,8 @@ ActionResult FlipBlockAction::Init()
   _compoundAction.ShouldSuppressTrackLocking(true);
   
   // Ensure that the robot doesn't react to slowing down when it hits the blocks
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, false);
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, false);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), ReactionTrigger::UnexpectedMovement, false);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), ReactionTrigger::CubeMoved, false);
   
   // Drive through the block
   DriveStraightAction* drive = new DriveStraightAction(_robot, p.GetTranslation().Length() + kDrivingDist_mm, kDrivingSpeed_mmps);

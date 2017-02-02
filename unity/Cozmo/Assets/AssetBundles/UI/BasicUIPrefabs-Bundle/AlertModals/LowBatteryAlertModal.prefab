@@ -117,6 +117,9 @@ MonoBehaviour:
   Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
     JsonValue: 0.4
   - ObjectPath: 
@@ -155,6 +158,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
   ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
     JsonValue: 0.0196078438
@@ -251,9 +257,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
-  - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:a
-    JsonValue: 1.0
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
@@ -300,15 +303,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5be1f790cb104445592ef389f9bc14a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: no_text_alert_view
-  _DASEventViewType: 2
-  _CloseDialogOnTapOutside: 1
-  _OptionalCloseDialogButton: {fileID: 0}
-  _LayerPriority: 100
-  DimBackground: 1
+  _DASEventDialogName: no_text_alert_view
+  _DASEventDialogType: 2
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
+  _CloseDialogOnTapOutside: 1
+  _OptionalCloseDialogButton: {fileID: 0}
+  _ModalPriorityData:
+    _PriorityLayer: 1000
+    _PriorityOffset: 0
+    _LowPriorityAction: 1
+    _HighPriorityAction: 0
+  DimBackground: 1
   _AlertTitleText: {fileID: 0}
   _AlertMessageText: {fileID: 0}
   _PrimaryButton: {fileID: 0}

@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 4; -*-
 package com.anki.hockeyappandroid;
 
 import android.app.Activity;
@@ -32,6 +33,7 @@ public class NativeCrashManager {
 
     private static NativeCrashManager sInstance;
 
+    private final NativeCrashManagerListener mListener;
     private final Activity mActivity;
     private final Handler mHandler;
     private final String mDumpsDir;
@@ -55,9 +57,10 @@ public class NativeCrashManager {
     public static NativeCrashManager getInstance(final Activity activity,
                                                  final String appRun,
                                                  final String identifier,
-                                                 final String user) {
+                                                 final String user,
+                                                 final NativeCrashManagerListener listener) {
         if (sInstance == null) {
-            sInstance = new NativeCrashManager(activity, appRun, identifier, user);
+            sInstance = new NativeCrashManager(activity, appRun, identifier, user, listener);
         }
         return sInstance;
     }
@@ -77,7 +80,9 @@ public class NativeCrashManager {
     private NativeCrashManager(final Activity activity,
                                final String appRun,
                                final String identifier,
-                               final String user) {
+                               final String user,
+                               final NativeCrashManagerListener listener) {
+        mListener = listener;
         mActivity = activity;
         mAppRun = appRun;
         mIdentifier = identifier;
@@ -243,6 +248,11 @@ public class NativeCrashManager {
                                      + "/crashes/upload");
 
                     final MultipartEntity entity = new MultipartEntity();
+
+                    if (mListener != null) {
+                        final String appRunID = dumpFilename.split("\\.(?=[^\\.]+$)")[0];
+                        mListener.onUploadCrash(appRunID);
+                    }
 
                     final File dumpFile = new File(mDumpsDir, dumpFilename);
                     entity.addPart("attachment0", new FileBody(dumpFile));

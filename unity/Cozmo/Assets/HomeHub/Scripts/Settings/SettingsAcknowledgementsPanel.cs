@@ -8,7 +8,7 @@ namespace Cozmo.Settings {
     [SerializeField]
     private CozmoButton _AcknowledgementsLinkButton;
 
-    private ScrollingTextView _AcknowledgementsDialogInstance;
+    private ScrollingTextModal _AcknowledgementsModalInstance;
 
     [SerializeField]
     private string _AcknowledgementsTextFileName;
@@ -16,7 +16,7 @@ namespace Cozmo.Settings {
     [SerializeField]
     private CozmoButton _PrivacyPolicyLinkButton;
 
-    private ScrollingTextView _PrivacyPolicyDialogInstance;
+    private ScrollingTextModal _PrivacyPolicyModalInstance;
 
     [SerializeField]
     private string _PrivacyPolicyTextFileName;
@@ -24,10 +24,14 @@ namespace Cozmo.Settings {
     [SerializeField]
     private CozmoButton _TermsOfUseButton;
 
-    private ScrollingTextView _TermsOfUseDialogInstance;
+    private ScrollingTextModal _TermsOfUseModalInstance;
 
     [SerializeField]
     private string _TermsOfUseTextFileName;
+
+    private ModalPriorityData _SettingsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                                                 LowPriorityModalAction.CancelSelf,
+                                                                                 HighPriorityModalAction.Stack);
 
     private void Awake() {
       string dasEventViewName = "settings_acknowledgements_panel";
@@ -37,42 +41,53 @@ namespace Cozmo.Settings {
     }
 
     private void OnDestroy() {
-      if (_AcknowledgementsDialogInstance != null) {
-        _AcknowledgementsDialogInstance.CloseViewImmediately();
+      if (_AcknowledgementsModalInstance != null) {
+        _AcknowledgementsModalInstance.CloseDialogImmediately();
       }
-      if (_PrivacyPolicyDialogInstance != null) {
-        _PrivacyPolicyDialogInstance.CloseViewImmediately();
+      if (_PrivacyPolicyModalInstance != null) {
+        _PrivacyPolicyModalInstance.CloseDialogImmediately();
       }
-      if (_TermsOfUseDialogInstance != null) {
-        _TermsOfUseDialogInstance.CloseViewImmediately();
+      if (_TermsOfUseModalInstance != null) {
+        _TermsOfUseModalInstance.CloseDialogImmediately();
       }
     }
 
 
     private void HandleAcknowledgementsLinkButtonTapped() {
-      if (_AcknowledgementsDialogInstance == null) {
-        _AcknowledgementsDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextViewPrefab,
-                                                             (ScrollingTextView view) => { view.DASEventViewName = "acknowledgements_view"; });
-        _AcknowledgementsDialogInstance.Initialize(Localization.Get(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle),
-                                                   Localization.ReadLocalizedTextFromFile(_AcknowledgementsTextFileName));
+      if (_AcknowledgementsModalInstance == null) {
+        System.Action<BaseModal> acknowledgementsModalCreated = (modal) => {
+          _AcknowledgementsModalInstance = (ScrollingTextModal)modal;
+          _AcknowledgementsModalInstance.DASEventDialogName = "acknowledgements_view";
+          _AcknowledgementsModalInstance.Initialize(Localization.Get(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle),
+                                                    Localization.ReadLocalizedTextFromFile(_AcknowledgementsTextFileName));
+        };
+
+        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab, _SettingsModalPriorityData, acknowledgementsModalCreated);
       }
     }
 
     private void HandlePrivacyPolicyLinkButtonTapped() {
-      if (_PrivacyPolicyDialogInstance == null) {
-        _PrivacyPolicyDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextViewPrefab,
-                                                           (ScrollingTextView view) => { view.DASEventViewName = "privacyPolicy_view"; });
-        _PrivacyPolicyDialogInstance.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle),
-                                                Localization.ReadLocalizedTextFromFile(_PrivacyPolicyTextFileName));
+      if (_PrivacyPolicyModalInstance == null) {
+        System.Action<BaseModal> privacyPolicyCreated = (modal) => {
+          _PrivacyPolicyModalInstance = (ScrollingTextModal)modal;
+          _PrivacyPolicyModalInstance.DASEventDialogName = "privacyPolicy_view";
+          _PrivacyPolicyModalInstance.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle),
+                                                 Localization.ReadLocalizedTextFromFile(_PrivacyPolicyTextFileName));
+        };
+
+        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab, _SettingsModalPriorityData, privacyPolicyCreated);
       }
     }
 
     private void HandleTermsOfUseLinkButtonTapped() {
-      if (_TermsOfUseDialogInstance == null) {
-        _TermsOfUseDialogInstance = UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextViewPrefab,
-                                                       (ScrollingTextView view) => { view.DASEventViewName = "termsOfUse_view"; });
-        _TermsOfUseDialogInstance.Initialize(Localization.Get(LocalizationKeys.kLabelTermsOfUse),
-                                             Localization.ReadLocalizedTextFromFile(_TermsOfUseTextFileName));
+      if (_TermsOfUseModalInstance == null) {
+        System.Action<BaseModal> termsOfUseCreated = (modal) => {
+          _TermsOfUseModalInstance = (ScrollingTextModal)modal;
+          _TermsOfUseModalInstance.DASEventDialogName = "termsOfUse_view";
+          _TermsOfUseModalInstance.Initialize(Localization.Get(LocalizationKeys.kLabelTermsOfUse),
+                                              Localization.ReadLocalizedTextFromFile(_TermsOfUseTextFileName));
+        };
+        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab, _SettingsModalPriorityData, termsOfUseCreated);
       }
     }
   }

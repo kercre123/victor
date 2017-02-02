@@ -18,7 +18,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/components/lightsComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
@@ -99,7 +99,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DrivingTo, _objectID);
       }
       _compoundAction.PrepForCompletion();
     }
@@ -141,12 +141,12 @@ namespace Anki {
       if(preActionPoseOutput.actionResult == ActionResult::SUCCESS){
         if(preActionPoseOutput.preActionPoses.size() > 0){
           const bool closestIndexValid = preActionPoseOutput.closestIndex < preActionPoseOutput.preActionPoses.size();
-          ASSERT_NAMED_EVENT(closestIndexValid,
-                              "DriveToObjectAction.GetClosestPreDockPose.ClosestIndexOutOfRange",
-                             "AttemptedToAccess closest index %zu when preactionPoses has a size %zu",
-                              preActionPoseOutput.closestIndex, preActionPoseOutput.preActionPoses.size());
+          DEV_ASSERT_MSG(closestIndexValid,
+                         "DriveToObjectAction.GetClosestPreDockPose.ClosestIndexOutOfRange",
+                         "Attempted to access closest index %zu when preactionPoses has a size %zu",
+                         preActionPoseOutput.closestIndex, preActionPoseOutput.preActionPoses.size());
           // ensure we don't crash in release
-          if(closestIndexValid){
+          if (closestIndexValid){
             closestPose = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetPose();
           }
           return closestIndexValid;
@@ -334,7 +334,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetLightsComponent().SetInteractionObject(_objectID);
+        _robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
         _lightsSet = true;
       }
       
@@ -471,7 +471,7 @@ namespace Anki {
           // Create a temporary object of the same type at the desired pose so we
           // can get placement poses at that position
           ActionableObject* tempObject = dynamic_cast<ActionableObject*>(object->CloneType());
-          ASSERT_NAMED(tempObject != nullptr, "DriveToPlaceCarriedObjectAction.Init.DynamicCastFail");
+          DEV_ASSERT(tempObject != nullptr, "DriveToPlaceCarriedObjectAction.Init.DynamicCastFail");
           
           tempObject->InitPose(_placementPose, PoseState::Unknown);
           
@@ -827,13 +827,12 @@ namespace Anki {
           // clear abort timing, since we got a path
           _timeToAbortPlanning = -1.0f;
           
-          static int ctr = 0;
-          if(ctr++ % 10 == 0) {
+          if(_debugPrintCtr++ % 10 == 0) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
                              "[%d] Waiting for robot to complete its path traversal (%d), "
                              "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.",
                              GetTag(),
-                             ctr,
+                             _debugPrintCtr,
                              _robot.GetCurrentPathSegment(),
                              _robot.GetLastSentPathID(),
                              _robot.GetLastRecvdPathID());
@@ -1018,6 +1017,9 @@ namespace Anki {
         innerAction->AddAction(_driveToObjectAction, false);
 
         auto waitLambda = [this](Robot& robot) {
+          // Keep the cube lights set while the waitForLambda action is running
+          robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+        
           // if this lambda gets called, that means the drive to must have succeeded.
           if( _dockAction ) {
             PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.DriveToSuccess",
@@ -1084,6 +1086,9 @@ namespace Anki {
       // TODO:(bn) this could be done much more elegantly as part of CompoundActionSequential
       {
         auto lambdaToWaitFor = [this](Robot& robot) {
+          // Keep the cube lights set while the waitForLambda action is running
+          _robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
+          
           if( _preDockCallback ) {
             _preDockCallback(robot);
           }
@@ -1226,11 +1231,19 @@ namespace Anki {
 
     Result IDriveToInteractWithObject::UpdateDerived()
     {
+      // The only way the driveToObjectAction can be null is if it wasn't newed in the constructor
+      if(_driveToObjectAction == nullptr)
+      {
+        PRINT_NAMED_ERROR("IDriveToInteractWithObject.UpdateDerived.NullAction",
+                          "_driveToObjectAction is null, returning failure");
+        return RESULT_FAIL;
+      }
+      
       if(!_lightsSet) {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetLightsComponent().SetInteractionObject(_objectID);
+        _robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
         _lightsSet = true;
       }
       return RESULT_OK;
@@ -1242,7 +1255,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DrivingTo, _objectID);
         _lightsSet = false;
       }
     }
@@ -1401,9 +1414,9 @@ namespace Anki {
                 using PoseIter = std::vector<Pose3d>::iterator;
 
                 for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); ){
-                  const Pose3d& idealTopMarker = object->GetZRotatedPointAboveObjectCenter();
+                  const Pose3d& idealCenterPose = object->GetZRotatedPointAboveObjectCenter(0.f);
                   Pose3d preDocWRTBlock;
-                  fullIter->GetWithRespectTo(idealTopMarker, preDocWRTBlock);
+                  fullIter->GetWithRespectTo(idealCenterPose, preDocWRTBlock);
                   const float poseX = preDocWRTBlock.GetTranslation().x();
                   const float poseY = preDocWRTBlock.GetTranslation().y();
                   const float minIllegalOffset = 1.f;
@@ -1592,7 +1605,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      ASSERT_NAMED(_rollAction != nullptr, "DriveToRollObjectAction.actionIsNull");
+      DEV_ASSERT(_rollAction != nullptr, "DriveToRollObjectAction.actionIsNull");
       _rollAction->EnableDeepRoll(enable);
       return RESULT_OK;
     }
@@ -1688,8 +1701,10 @@ namespace Anki {
     {
       // Get DriveToObjectAction
       DriveToObjectAction* driveAction = GetDriveToObjectAction();
-      ASSERT_NAMED(driveAction != nullptr, "DriveToAndMountChargerAction.DriveToObjectSubActionNotFound");
-      driveAction->DoPositionCheckOnPathCompletion(false);
+      if(driveAction != nullptr)
+      {
+        driveAction->DoPositionCheckOnPathCompletion(false);
+      }
       
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
       SetProxyTag(action->GetTag());

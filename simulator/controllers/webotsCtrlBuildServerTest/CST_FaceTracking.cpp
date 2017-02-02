@@ -38,8 +38,6 @@ private:
   bool _faceIsObserved = false;
   webots::Node* _face = nullptr;
 
-  double _waitTimer = -1;
-
   void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg) override;
 };
 
@@ -50,7 +48,7 @@ CST_FaceTracking::CST_FaceTracking() {}
 s32 CST_FaceTracking::UpdateSimInternal()
 {
   auto ZeroVelocityAfterXSeconds = [this](webots::Node* node, double xSeconds, TestState nextState){
-    IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(_waitTimer, xSeconds), xSeconds + 1){
+    IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(xSeconds), xSeconds + 1){
       node->setVelocity((double[]){0, 0, 0, 0, 0, 0});
       _testState = nextState;
     }
@@ -72,7 +70,7 @@ s32 CST_FaceTracking::UpdateSimInternal()
 
     case TestState::WaitToObserveFace:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(_waitTimer, 1) &&
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1) &&
                                        _faceIsObserved &&
                                        NEAR(GetRobotHeadAngle_rad(), headLookupAngle_rad, headAngleTolerance_rad),
                                        5) {
@@ -91,12 +89,16 @@ s32 CST_FaceTracking::UpdateSimInternal()
 
     case TestState::VerifyTranslationThenTranslateFaceIn3d:
     {
-      // (663, 259, 393) is the appx. position of the face after translating for 0.5 seconds.
-      const Vec3f expectedFaceTranslation(663, 259, 393);
+      // Somewhere between (670, 250, 385) and (703, 261, 393) is the appx. position
+      // of the face after translating for 0.5 seconds.
+      // Average position is ~ (686, 255, 389)
+      
+      const Vec3f expectedFaceTranslation(686, 255, 389);
+      const f32 margin = 20;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(
-          NEAR(_facePose.GetTranslation().x(), expectedFaceTranslation.x(), 1) &&
-          NEAR(_facePose.GetTranslation().y(), expectedFaceTranslation.y(), 1) &&
-          NEAR(_facePose.GetTranslation().z(), expectedFaceTranslation.z(), 1),
+          NEAR(_facePose.GetTranslation().x(), expectedFaceTranslation.x(), margin) &&
+          NEAR(_facePose.GetTranslation().y(), expectedFaceTranslation.y(), margin) &&
+          NEAR(_facePose.GetTranslation().z(), expectedFaceTranslation.z(), margin),
           2) {
         // Moving at an faster but arbitrary speed
         _face->setVelocity((double[]){-1.5, -1.5, -1.1, 0, 0, 0});
@@ -116,11 +118,12 @@ s32 CST_FaceTracking::UpdateSimInternal()
     case TestState::Exit:
     {
       // (332, -102, 136) is the appx. position of the face after translating for 0.15 seconds.
-      const Vec3f expectedFaceTranslation(332, -102, 136);
+      const Vec3f expectedFaceTranslation(347, -102, 138);
+      const f32 margin = 10.f;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(
-          NEAR(_facePose.GetTranslation().x(), expectedFaceTranslation.x(), 1) &&
-          NEAR(_facePose.GetTranslation().y(), expectedFaceTranslation.y(), 1) &&
-          NEAR(_facePose.GetTranslation().z(), expectedFaceTranslation.z(), 1),
+          NEAR(_facePose.GetTranslation().x(), expectedFaceTranslation.x(), margin) &&
+          NEAR(_facePose.GetTranslation().y(), expectedFaceTranslation.y(), margin) &&
+          NEAR(_facePose.GetTranslation().z(), expectedFaceTranslation.z(), margin),
           2) {
         CST_EXIT();
       }

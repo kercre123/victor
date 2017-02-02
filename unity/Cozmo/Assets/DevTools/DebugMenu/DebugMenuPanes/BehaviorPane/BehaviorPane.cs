@@ -40,9 +40,9 @@ public class BehaviorPane : MonoBehaviour {
       _ChooserDropdown.options.Add(optionData);
     }
 
-    for (int i = 0; i < (int)Anki.Cozmo.BehaviorType.Count; ++i) {
+    for (int i = 0; i < (int)Anki.Cozmo.BehaviorClass.Count; ++i) {
       Dropdown.OptionData optionData = new Dropdown.OptionData();
-      optionData.text = ((Anki.Cozmo.BehaviorType)i).ToString();
+      optionData.text = ((Anki.Cozmo.BehaviorClass)i).ToString();
       _BehaviorDropdown.options.Add(optionData);
     }
   }
@@ -67,8 +67,8 @@ public class BehaviorPane : MonoBehaviour {
 
   private void OnBehaviorButton() {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      Anki.Cozmo.BehaviorType behaviorType = (Anki.Cozmo.BehaviorType)System.Enum.Parse(typeof(Anki.Cozmo.BehaviorType), _BehaviorDropdown.options[_BehaviorDropdown.value].text);
-      RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(behaviorType);
+      Anki.Cozmo.ExecutableBehaviorType behaviorType = (Anki.Cozmo.ExecutableBehaviorType)System.Enum.Parse(typeof(Anki.Cozmo.ExecutableBehaviorType), _BehaviorDropdown.options[_BehaviorDropdown.value].text);
+      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByExecutableType(behaviorType);
     }
   }
 

@@ -130,14 +130,14 @@ bool DevLogReader::UpdateForCurrentTime(uint32_t time_ms)
 bool DevLogReader::ExtractAndCallback(uint32_t time_ms)
 {
   // If it's now time to deal with the data we've already been holding on to, do so.
-  // (if CheckTimeAndCallback returns false we know it isnt time yet for the data, so return early)
+  // (if CheckTimeAndCallback returns false we know it isn't time yet for the data, so return early)
   if (_currentLogData.IsValid() && !CheckTimeAndCallback(time_ms))
   {
     return false;
   }
   
   // We expect the current log data to be empty at this point
-  ASSERT_NAMED(!_currentLogData.IsValid(), "DevLogReader.ExtractAndCallback.StaleExtractedData");
+  DEV_ASSERT(!_currentLogData.IsValid(), "DevLogReader.ExtractAndCallback.StaleExtractedData");
   
   // Use the subclass implementation to fill out the next log data
   if (!FillLogData(_currentLogFileHandle, _currentLogData))

@@ -14,8 +14,9 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -91,7 +92,7 @@ static_assert(NavMemoryMapTypes::IsSequentialArray(typesToBlockDriving),
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
-  : IBehavior(robot, config)
+: IBehavior(robot, config)
 {
   SetDefaultName("InteractWithFaces");
 }
@@ -129,10 +130,10 @@ IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInteractWithFaces::IsRunnableInternal(const Robot& robot) const
+bool BehaviorInteractWithFaces::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   _targetFace = Vision::UnknownFaceID;
-  SelectFaceToTrack(robot);
+  SelectFaceToTrack(preReqData.GetRobot());
 
   return _targetFace != Vision::UnknownFaceID;
 }
@@ -145,12 +146,12 @@ void BehaviorInteractWithFaces::StopInternal(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInteractWithFaces::CanDriveIdealDistanceFoward(const Robot& robot)
+bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward(const Robot& robot)
 {
   if( kDoMemoryMapCheckForDriveForward ) {
 
     const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-    ASSERT_NAMED(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceFoward.NeedMemoryMap");
+    DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
 
     const Vec3f& fromRobot = robot.GetPose().GetTranslation();
 
@@ -253,7 +254,7 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(Robot& robot)
   DEBUG_SET_STATE(DrivingForward);
   
   // check if we should do the long or short distance
-  const bool doLongDrive = CanDriveIdealDistanceFoward(robot);
+  const bool doLongDrive = CanDriveIdealDistanceForward(robot);
   const float distToDrive_mm = doLongDrive ? kDriveForwardIdealDist_mm : kDriveForwardMinDist_mm;
 
   // drive straight while keeping the head tracking the (players) face
@@ -323,7 +324,7 @@ void BehaviorInteractWithFaces::SelectFaceToTrack(const Robot& robot) const
   std::set< FaceID_t > faces = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(_lastImageTimestampWhileRunning,
                                                                                  considerTrackingOnlyFaces);
 
-  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   const bool preferName = true;
   _targetFace = whiteboard.GetBestFaceToTrack(faces, preferName);
 }

@@ -3,6 +3,7 @@
 
 #include "anki/cozmo/robot/spineData.h"
 #include "MK02F12810.h"
+#include "anki/cozmo/robot/buildTypes.h"
 
 #include "spi.h"
 #include "uart.h"

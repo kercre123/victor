@@ -52,13 +52,25 @@ public class BehaviorEditor : EditorWindow {
     return null;
   }
 
-  private static string FindCppFile(BehaviorType behaviorType) {
+  private static string FindScoredCppFile(BehaviorClass behaviorType) {
     string fileName = "behavior" + behaviorType.ToString() + ".cpp";
 
     return FindFile(fileName, sBehaviorCppDirectory);
   }
 
-  private static string FindHFile(BehaviorType behaviorType) {
+  private static string FindReactionaryCppFile(ReactionTrigger behaviorType) {
+    string fileName = "behavior" + behaviorType.ToString() + ".cpp";
+
+    return FindFile(fileName, sBehaviorCppDirectory);
+  }
+    
+  private static string FindScoredHFile(BehaviorClass behaviorType) {
+    string fileName = "behavior" + behaviorType.ToString() + ".h";
+
+    return FindFile(fileName, sBehaviorHDirectory);
+  }
+
+  private static string FindReactionaryHFile(ReactionTrigger behaviorType) {
     string fileName = "behavior" + behaviorType.ToString() + ".h";
 
     return FindFile(fileName, sBehaviorHDirectory);
@@ -90,9 +102,9 @@ public class BehaviorEditor : EditorWindow {
     return string.Empty;
   }
 
-  private static void TryFindCustomParameters(Dictionary<string, object> customParams, BehaviorType behaviorType) {
+  private static void TryFindCustomParameters(Dictionary<string, object> customParams, BehaviorClass behaviorType) {
 
-    string cppFile = FindCppFile(behaviorType);
+    string cppFile = FindScoredCppFile(behaviorType);
 
     Dictionary<string, object> newParams = new Dictionary<string, object>();
 
@@ -108,7 +120,7 @@ public class BehaviorEditor : EditorWindow {
     cppFiles.Add(cppFile);
 
 
-    var header = FindHFile(behaviorType);
+    var header = FindScoredHFile(behaviorType);
 
     string[] lines;
     Match match;   
@@ -267,7 +279,7 @@ public class BehaviorEditor : EditorWindow {
     if (GUILayout.Button("New Behavior", EditorDrawingUtility.ToolbarButtonStyle)) {
       if (CheckDiscardUnsavedBehavior()) {
         _CurrentBehavior = new Behavior();
-        TryFindCustomParameters(_CurrentBehavior.CustomParams, _CurrentBehavior.BehaviorType);
+        //TryFindCustomParameters(_CurrentBehavior.CustomParams, _CurrentBehavior.BehaviorType);
 
         GUI.FocusControl("EditNameField");
         _CurrentBehaviorFile = null;
@@ -331,12 +343,30 @@ public class BehaviorEditor : EditorWindow {
   public Behavior DrawBehavior(Behavior entry) {
     EditorGUILayout.BeginVertical();
 
-    var lastBehaviorType = entry.BehaviorType;
+    /**var lastBehaviorType;
+    switch (entry.BehaviorCategory) {
+      case BehaviorCategory.NoneCategory:
+      case BehaviorCategory.Count:
+      {
+        lastBehaviorType = BehaviorClass.NoneBehavior;
+        break;
+      }
+      case BehaviorCategory.Scored:
+      {
+        lastBehaviorType = entry.BehaviorClass;
+        break;
+      }
+      case BehaviorCategory.Reactionary:
+      {
+        lastBehaviorType = entry.ReacitonaryBehaviorType;
+        break;
+      }
+    }
     entry.BehaviorType = (BehaviorType)EditorGUILayout.EnumPopup("Behavior Type", entry.BehaviorType);
 
     if (entry.BehaviorType != lastBehaviorType) {
       TryFindCustomParameters(entry.CustomParams, entry.BehaviorType);
-    }
+    }**/
 
     entry.Name = EditorGUILayout.TextField("Name", entry.Name ?? string.Empty);
 
@@ -346,7 +376,7 @@ public class BehaviorEditor : EditorWindow {
 
     entry.RepetitionPenalty = EditorGUILayout.CurveField("Repetition Penalty", entry.RepetitionPenalty);
 
-    EditorDrawingUtility.DrawList("Behavior Groups", entry.BehaviorGroups, bg => (BehaviorGroup)EditorGUILayout.EnumPopup(bg), () => BehaviorGroup.Reactionary);
+    EditorDrawingUtility.DrawList("Behavior Groups", entry.BehaviorGroups, bg => (BehaviorGroup)EditorGUILayout.EnumPopup(bg), () => (BehaviorGroup)0);
 
     EditorGUILayout.EndVertical();
     return entry;

@@ -34,8 +34,8 @@ namespace JsonTools
 float ParseFloat(const Json::Value& config, const char* key, const std::string& debugName) {
   const auto & val = config[key];
   if (!val.isNumeric()) {
-    const std::string& eventName = debugName + ".ParseFloat.NotValidFloat";
-    ASSERT_NAMED_EVENT(val.isNumeric(), eventName.c_str(), "%s", key);
+    const std::string eventName = debugName + ".ParseFloat.NotValidFloat";
+    DEV_ASSERT_MSG(val.isNumeric(), eventName.c_str(), "%s", key);
   }
   return val.asFloat();
 }
@@ -44,8 +44,8 @@ float ParseFloat(const Json::Value& config, const char* key, const std::string& 
 uint8_t ParseUint8(const Json::Value& config, const char* key, const std::string& debugName) {
   const auto & val = config[key];
   if (!val.isNumeric()) {
-    const std::string& eventName = debugName + ".ParseUint8.NotValidUint8";
-    ASSERT_NAMED_EVENT(val.isNumeric(), eventName.c_str(), "%s", key);
+    const std::string eventName = debugName + ".ParseUint8.NotValidUint8";
+    DEV_ASSERT_MSG(val.isNumeric(), eventName.c_str(), "%s", key);
   }
   return Anki::Util::numeric_cast<uint8_t>(val.asInt());
 }
@@ -54,8 +54,8 @@ uint8_t ParseUint8(const Json::Value& config, const char* key, const std::string
 bool ParseBool(const Json::Value& config, const char* key, const std::string& debugName) {
   const auto & val = config[key];
   if (!val.isBool()) {
-    const std::string& eventName = debugName + ".ParseBool.NotValidBool";
-    ASSERT_NAMED_EVENT(val.isBool(), eventName.c_str(), "%s", key);
+    const std::string eventName = debugName + ".ParseBool.NotValidBool";
+    DEV_ASSERT_MSG(val.isBool(), eventName.c_str(), "%s", key);
   }
   return val.asBool();
 };
@@ -64,8 +64,8 @@ bool ParseBool(const Json::Value& config, const char* key, const std::string& de
 std::string ParseString(const Json::Value& config, const char* key, const std::string& debugName) {
   const auto & val = config[key];
   if (!val.isString()) {
-    const std::string& eventName = debugName + ".ParseString.NotValidString";
-    ASSERT_NAMED_EVENT(val.isString(), eventName.c_str(), "%s", key);
+    const std::string eventName = debugName + ".ParseString.NotValidString";
+    DEV_ASSERT_MSG(val.isString(), eventName.c_str(), "%s", key);
   }
   return val.asString();
 };

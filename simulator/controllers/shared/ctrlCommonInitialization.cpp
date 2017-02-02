@@ -156,7 +156,7 @@ AutoGlobalLogger(new Util::PrintfLoggerProvider(), dataPlatform, loadLoggerFilte
 {
   // assert in case the logger created (passed to base constructor) is not a printfLogger, since we
   // do a static_cast instead of dynamic_cast in shipping for performance.
-  ASSERT_NAMED(dynamic_cast<Util::PrintfLoggerProvider*>(_provider), "DefaultAutoGlobalLogger.DefaultLoggerIsNotPrintf" );
+  DEV_ASSERT(dynamic_cast<Util::PrintfLoggerProvider*>(_provider), "DefaultAutoGlobalLogger.DefaultLoggerIsNotPrintf");
   Util::PrintfLoggerProvider* provider = static_cast<Util::PrintfLoggerProvider*>(_provider);
   provider->SetMinToStderrLevel(Util::ILoggerProvider::LOG_LEVEL_WARN);
 }

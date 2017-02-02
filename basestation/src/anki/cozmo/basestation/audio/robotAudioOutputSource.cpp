@@ -28,13 +28,13 @@ namespace Audio {
 RobotAudioOutputSource::RobotAudioOutputSource( const AudioMixingConsole& mixingConsole )
 : AudioMixerOutputSource( mixingConsole )
 {
-  ASSERT_NAMED( _mixingConsole.GetFrameSize() == static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ), "RobotAudioOutputSource.AudioFrameSampleSizeNotEqual");
+  DEV_ASSERT(_mixingConsole.GetFrameSize() == static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ), "RobotAudioOutputSource.AudioFrameSampleSizeNotEqual");
 }
 
 // Final mix, apply output processing and provide data to destination
 void RobotAudioOutputSource::ProcessTick( const MixingConsoleBuffer& audioFrame )
 {
-  ASSERT_NAMED(_robotAudioFrameMsg == nullptr, "RobotAudioOutputSource.ProcessTick._robotAudioFrameMsg.NotNull");
+  DEV_ASSERT(_robotAudioFrameMsg == nullptr, "RobotAudioOutputSource.ProcessTick._robotAudioFrameMsg.NotNull");
   if ( audioFrame == nullptr || _mute ) {
     // Nothing to proces
 //    if ( _robotAudioFrameMsg != nullptr ) {

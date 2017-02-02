@@ -9,6 +9,7 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/rec_protocol.h"
 #include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/buildTypes.h"
 #include "hal/hardware.h"
 
 #include "uart.h"
@@ -21,6 +22,7 @@
 #include "watchdog.h"
 #include "i2c.h"
 #include "imu.h"
+#include "fcc.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
@@ -112,11 +114,13 @@ int main (void)
   using namespace Anki::Cozmo::HAL;
 
   // Force recovery mode if watchdog count gets too high
+  #ifndef FCC_TEST  // THIS IS NOT THE FINAL
   if (RCM_SRS0 & RCM_SRS0_WDOG_MASK) {
     if (WDOG_RSTCNT > MAXIMUM_RESET_COUNT) {
       Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
     }
   }
+  #endif
 
   // Enable reset filtering
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
@@ -126,24 +130,32 @@ int main (void)
   SOURCE_SETUP(GPIO_BODY_UART_TX, SOURCE_BODY_UART_TX, SourceGPIO | SourcePullDown);
   
   Watchdog::init();
-  Power::enableEspressif();
-
-  // Kick the watchdog after the espressif comes up
+  Power::enableExternal();
   Watchdog::kickAll();
 
+  #ifndef FACTORY
   // Check the bootloader patch is applied - if not, apply it now
   UpdateBootloader();
-  
-  UART::DebugInit();
-  #ifndef ENABLE_FCC_TEST
-  SPI::Init();
   #endif
+
+  UART::DebugInit();
   DAC::Init();
 
   // Sequential I2C bus initalization (Non-interrupt based)
   I2C::Init();
   IMU::Init();
   OLED::Init();
+
+  #ifdef FCC_TEST
+  HALInit();
+  I2C::Enable();
+
+  FCC::start();
+  for(;;) {
+    UART::Transmit();
+    FCC::mainDTMExecution();
+  }
+  #else
   CameraInit();
 
   Anki::Cozmo::Robot::Init();
@@ -177,4 +189,5 @@ int main (void)
       NVIC_SystemReset();
     }
   }
+  #endif
 }

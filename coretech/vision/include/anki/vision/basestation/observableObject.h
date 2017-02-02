@@ -161,12 +161,6 @@ namespace Anki {
       const ObjectID&    GetID()     const;
       const Pose3d&      GetPose()   const;
       const ColorRGBA&   GetColor()  const;
-      // Useful for doing calculations relative to the object which are agnostic
-      // of the object's x/y rotation.  Relative to _pose it has:
-      // - The same x/y translation relative to the origin
-      // - A Z-translation moved from the object's center up by the axis aligned with origin z's size
-      // - x/y rotation of 0 and z rotation equal to _poses's rotation relative to origin
-      Pose3d GetZRotatedPointAboveObjectCenter() const;
       
       //virtual float GetMinDim() const = 0;
       
@@ -211,6 +205,29 @@ namespace Anki {
       
       // Return the dimensions of the object's bounding cube in its canonical pose
       virtual const Point3f& GetSize() const = 0;
+      
+      // Return the size of the object along the axes of the input pose's
+      // _parent_ coordinate frame. Useful for reasoning about the size of a
+      // rotated object in the world frame, as opposed to its canonically-oriented
+      // size as GetSize() above does. Note that atPose is assumed to put the object
+      // in a roughly axis-aligned orientation (resting "flat").
+      template<char AXIS>
+      f32 GetDimInParentFrame(const Pose3d& atPose) const;
+      template<char AXIS>
+      f32 GetDimInParentFrame() const; // use object's current pose w.r.t. origin
+      
+      // Same as above, but does all three axes together
+      Point3f GetSizeInParentFrame(const Pose3d& atPose) const;
+      Point3f GetSizeInParentFrame() const; // use object's current pose w.r.t. origin
+      
+      // Useful for doing calculations relative to the object which are agnostic
+      // of the object's x/y rotation.  Relative to _pose it has:
+      // - The same x/y translation relative to the origin
+      // - A Z-translation moved from the object's center up along the origin's z axis. The
+      //   amount moved up is the given fraction of the object's height in the origin's z axis.
+      //   (So 0 = object center, 0.5 = top of object (common case), -0.5 = btm of object)
+      // - x/y rotation of 0 and z rotation equal to _poses's rotation relative to origin
+      Pose3d GetZRotatedPointAboveObjectCenter(f32 heightFraction) const;
       
       /*
       // Return the bounding cube dimensions in the specified pose (i.e., apply the
@@ -257,6 +274,15 @@ namespace Anki {
       //Check if the bottom of an object is resting at a certain height within a tolerence
       bool IsRestingAtHeight(float height, float tolerence) const;
       
+      // Helper to check whether a pose is too high above an object:
+      // True if pose.z is more than heightTol above (object.z + (heightMultiplier*object.height)),
+      // where the object.height is its height relative to the pose's parent frame.
+      // If offsetFraction != 0, then (pose.z + object.height*offsetFraction) is used.
+      // This is useful for comparing the top or bottom of the object (by using
+      // offsetFraction=0.5 or -0.5, respectively).
+      bool IsPoseTooHigh(const Pose3d& poseWrtRobot, float heightMultiplier,
+                         float heightTol, float offsetFraction) const;
+      
     protected:
       
       // Canonical corners are properties of each derived class and define the
@@ -278,6 +304,10 @@ namespace Anki {
       
       // For subclasses can get a modifiable pose reference
       Pose3d& GetNonConstPose() { return _pose; }
+      
+      // Helper for GetDimInParentFraem / GetSizeInParentFrame
+      template<char AXIS>
+      f32 GetDimInParentFrame(const RotationMatrix3d& Rmat) const;
       
     private:
       // Force setting of pose through SetPose() to keep pose name updated
@@ -384,6 +414,53 @@ namespace Anki {
       GetObservedMarkers(observedMarkers, GetLastObservedTime());
     }
     
+    inline Point3f ObservableObject::GetSizeInParentFrame(const Pose3d& atPose) const
+    {
+      const RotationMatrix3d& Rmat = atPose.GetRotation().GetRotationMatrix();
+      Point3f rotatedSize(GetDimInParentFrame<'X'>(Rmat),
+                          GetDimInParentFrame<'Y'>(Rmat),
+                          GetDimInParentFrame<'Z'>(Rmat));
+      return rotatedSize;
+    }
+    
+    inline Point3f ObservableObject::GetSizeInParentFrame() const
+    {
+      return GetSizeInParentFrame(GetPose().GetWithRespectToOrigin());
+    }
+    
+    template<char AXIS>
+    f32 ObservableObject::GetDimInParentFrame(const RotationMatrix3d& Rmat) const
+    {
+      const AxisName axis = Rmat.GetRotatedParentAxis<AXIS>();
+      switch(axis)
+      {
+        case AxisName::X_POS:
+        case AxisName::X_NEG:
+          return GetSize().x();
+          
+        case AxisName::Y_POS:
+        case AxisName::Y_NEG:
+          return GetSize().y();
+          
+        case AxisName::Z_POS:
+        case AxisName::Z_NEG:
+          return GetSize().z();
+      }
+    }
+    
+    template<char AXIS>
+    inline f32 ObservableObject::GetDimInParentFrame(const Pose3d& atPose) const
+    {
+      const RotationMatrix3d& Rmat = atPose.GetRotation().GetRotationMatrix();
+      const f32 dim = GetDimInParentFrame<AXIS>(Rmat);
+      return dim;
+    }
+    
+    template<char AXIS>
+    inline f32 ObservableObject::GetDimInParentFrame() const
+    {
+      return GetDimInParentFrame<AXIS>(GetPose().GetWithRespectToOrigin());
+    }
     
   } // namespace Vision
 } // namespace Anki

@@ -49,17 +49,21 @@ public class FactoryIntroManager : MonoBehaviour {
 
   private PingStatus _PingStatusComponent;
   private bool _IsSim = false;
+  private bool _resultSet = false;
+  private bool _WipeAll = false;
 
   void Start() {
     _PingStatusComponent = GetComponent<PingStatus>();
 
+    _resultSet = false;
+
     SetStatusText("Not Connected");
 
-    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToClient;
     RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
-    
+
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.FactoryTestResultEntry>(HandleFactoryResult);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RestoreRobotStatus>(HandleRestoreStatus);
 
     _RestartButton.gameObject.SetActive(false);
 
@@ -68,12 +72,14 @@ public class FactoryIntroManager : MonoBehaviour {
     _StartButton.onClick.AddListener(HandleStartButtonClick);
 
     _InProgressSpinner.gameObject.SetActive(false);
-
-    RobotEngineManager.Instance.Connect(kEngineIP);
   }
 
   private void HandleSetSimType(bool isSim) {
     _IsSim = isSim;
+  }
+
+  private void HandleWipeAll(bool wipeAll) {
+    _WipeAll = wipeAll;
   }
 
   private void HandleStartButtonClick() {
@@ -81,40 +87,53 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(true);
     _InProgressSpinner.gameObject.SetActive(true);
 
+    RobotEngineManager.Instance.SetDebugConsoleVar("SkipFirmwareAutoUpdate", "1");
+    RobotEngineManager.Instance.Message.BlockPoolEnabledMessage = new BlockPoolEnabledMessage();
+    RobotEngineManager.Instance.Message.BlockPoolEnabledMessage.discoveryTimeSecs = 0;
+    RobotEngineManager.Instance.Message.BlockPoolEnabledMessage.enabled = false;
+    RobotEngineManager.Instance.SendMessage();
+
     SetStatusText("Connecting To Robot");
-    RobotEngineManager.Instance.ConnectToRobot(kRobotID, _IsSim ? kRobotSimIP : kRobotIP, _IsSim);
-  }
-
-  private void HandleConnectedToClient(string connectionIdentifier) {
-    RobotEngineManager.Instance.StartEngine();
-
+    RobotEngineManager.Instance.ConnectToRobot(kRobotID, kRobotIP);
   }
 
   private void HandleRobotConnected(RobotConnectionResponse message) {
-    SetStatusText("Connected To Robot");
+    if(message.result != Anki.Cozmo.RobotConnectionResult.ConnectionFailure) {
+      SetStatusText("Connected To Robot");
 
-    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1).ToString());
-    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", PlayerPrefs.GetInt("CheckPreviousResult", 0).ToString());
-    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", PlayerPrefs.GetInt("WipeNVStorageAtStart", 0).ToString());
-    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", PlayerPrefs.GetInt("SkipBlockPickup", 0).ToString());
-    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_ConnectToRobotOnly", PlayerPrefs.GetInt("ConnectToRobotOnly", 0).ToString());
-    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_DisconnectAtEnd", "1");
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1).ToString());
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", PlayerPrefs.GetInt("CheckPreviousResult", 0).ToString());
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_ConnectToRobotOnly", PlayerPrefs.GetInt("ConnectToRobotOnly", 0).ToString());
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_DisconnectAtEnd", "1");
 
-    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
+      Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
 
-    // Send the volume message
-    bool soundEnabled = PlayerPrefs.GetInt("EnableRobotSound", 1) == 1;
-    RobotEngineManager.Instance.Message.SetRobotVolume = new SetRobotVolume();
-    RobotEngineManager.Instance.Message.SetRobotVolume.volume = soundEnabled ? 1.0f : 0;
-    RobotEngineManager.Instance.SendMessage();
+      // Send the volume message
+      bool soundEnabled = PlayerPrefs.GetInt("EnableRobotSound", 1) == 1;
+      RobotEngineManager.Instance.Message.SetRobotVolume = new SetRobotVolume();
+      RobotEngineManager.Instance.Message.SetRobotVolume.volume = soundEnabled ? 1.0f : 0;
+      RobotEngineManager.Instance.SendMessage();
 
+      if(_WipeAll) {
+        SetStatusText("Wiping Game Data");
+        RobotEngineManager.Instance.CurrentRobot.WipeRobotGameData();
+      } else {
+        RunFactoryTest();
+      }
+
+      _RestartButton.gameObject.SetActive(true);
+    }
+    else {
+      SetStatusText("Connection Failed");
+    }
+  }
+
+  private void RunFactoryTest() {
     // runs the factory test.
     RobotEngineManager.Instance.CurrentRobot.EnableReactionaryBehaviors(false);
     RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FactoryTest);
-
-    _RestartButton.gameObject.SetActive(true);
   }
 
   private void HandleOptionsButtonClick() {
@@ -124,27 +143,16 @@ public class FactoryIntroManager : MonoBehaviour {
     _FactoryOptionsPanelInstance = GameObject.Instantiate(_FactoryOptionsPanelPrefab).GetComponent<FactoryOptionsPanel>();
     _FactoryOptionsPanelInstance.transform.SetParent(_Canvas.transform, false);
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
-    _FactoryOptionsPanelInstance.OnOTAStarted += HandleOTAStarted;
-    _FactoryOptionsPanelInstance.OnOTAFinished += HandleOTAFinished;
+    _FactoryOptionsPanelInstance.OnWipeAll += HandleWipeAll;
 
-    _FactoryOptionsPanelInstance.Initialize(_IsSim, _Canvas, _PingStatusComponent);
-  }
-
-  private void HandleOTAStarted() {
-    RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToClient;
-    RobotEngineManager.Instance.DisconnectedFromClient -= HandleDisconnectedFromClient;
-
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
-  }
-
-  private void HandleOTAFinished() {
-    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToClient;
-    RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
-    
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
+    _FactoryOptionsPanelInstance.Initialize(_IsSim, _Canvas, _PingStatusComponent, _WipeAll);
   }
 
   private void SetStatusText(string txt) {
+    if(_resultSet) {
+      return;
+    }
+
     if (_StatusText != null) {
       _StatusText.text = txt;
     }
@@ -185,21 +193,35 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(false);
     _StartButton.gameObject.SetActive(true);
     _InProgressSpinner.gameObject.SetActive(false);
+    _resultSet = false;
 
     RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: -1.0f, disconnectTime_s: 0.0f);
 
     if (!RobotEngineManager.Instance.IsConnectedToEngine) {
       RobotEngineManager.Instance.Connect(kEngineIP);
-    } 
+    }
   }
 
   private void HandleFactoryResult(Anki.Cozmo.FactoryTestResultEntry result) {
     SetStatusText("Result Code: " + (int)result.result + " (" + result.result + ")");
+    _resultSet = true;
     if (result.result == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
       TestPassed();
     }
     else {
       TestFailed();
+    }
+  }
+
+  private void HandleRestoreStatus(Anki.Cozmo.ExternalInterface.RestoreRobotStatus status) {
+    if (status.isWipe) {
+      if (status.success) {
+        SetStatusText("Wipe Complete");
+        RunFactoryTest();
+      }
+      else {
+        SetStatusText("Wipe Failed");
+      }
     }
   }
 

@@ -8,7 +8,7 @@
 {
   "name": "Hiking_FirstLookIntro",
 
-  "behaviorType": "PlayAnim",
+  "behaviorClass": "PlayAnim",
   "flatScore": 9.0,
   "behaviorGroups": [
     "FP_Hiking"

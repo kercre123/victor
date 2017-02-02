@@ -172,6 +172,9 @@ namespace Anki.Debug {
         }
       }
     }
+    public void RemoveConsoleData(string categoryName) {
+      _DataByCategory.Remove(categoryName);
+    }
     public void UnityConsoleDataUpdated(string varName) {
       if (DebugConsoleVarUpdated != null) {
         DebugConsoleVarUpdated(varName);

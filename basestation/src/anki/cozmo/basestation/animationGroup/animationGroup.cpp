@@ -13,9 +13,9 @@
  *
  **/
 
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroup.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -29,8 +29,9 @@ namespace Cozmo {
     
 static const char* kAnimationsKeyName = "Animations";
     
-AnimationGroup::AnimationGroup(const std::string& name)
-  : _name(name)
+AnimationGroup::AnimationGroup(Util::RandomGenerator& rng, const std::string& name)
+: _rng(rng)
+, _name(name)
 {
       
 }
@@ -86,9 +87,13 @@ bool AnimationGroup::IsEmpty() const
 }
     
 const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager,
-                                                    AnimationGroupContainer& animationGroupContainer, float headAngleRad) const
+                                                    AnimationGroupContainer& animationGroupContainer,
+                                                    float headAngleRad) const
 {
-  return GetAnimationName(moodManager.GetSimpleMood(), moodManager.GetLastUpdateTime(), animationGroupContainer,headAngleRad);
+  return GetAnimationName(moodManager.GetSimpleMood(),
+                          moodManager.GetLastUpdateTime(),
+                          animationGroupContainer,
+                          headAngleRad);
 }
   
 const std::string& AnimationGroup::GetFirstAnimationName() const
@@ -113,8 +118,6 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
   PRINT_NAMED_DEBUG("AnimationGroup.GetAnimation", "getting animation from group '%s', simple mood = '%s'",
                     _name.c_str(),
                     SimpleMoodTypeToString(mood));
-      
-  Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
       
   float totalWeight = 0.0f;
   bool anyAnimationsMatchingMood = false;
@@ -183,7 +186,7 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
     }
   }
       
-  float weightedSelection = Util::numeric_cast<float>(rng.RandDbl(totalWeight));
+  float weightedSelection = Util::numeric_cast<float>(_rng.RandDbl(totalWeight));
       
   const AnimationGroupEntry* lastEntry = nullptr;
       

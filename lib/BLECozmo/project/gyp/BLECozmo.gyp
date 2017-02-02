@@ -1,3 +1,4 @@
+
 {
   'variables': {
 
@@ -61,7 +62,7 @@
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
-          '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
+          '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
           '-fpic',
           '-ffunction-sections',
           '-funwind-tables',
@@ -75,14 +76,14 @@
           '-mthumb',
           '-fomit-frame-pointer',
           '-fno-strict-aliasing',
-          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/libcxx/include',
-          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/../llvm-libc++abi/libcxxabi/include',
-          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/../../android/support/include',
+          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/include',
+          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++abi/include',
+          '-I<(ndk_root)/sources/android/support/include',
           '-I<(ndk_root)/platforms/android-18/arch-arm/usr/include',
         ],
         'linker_flags': [
             '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
-            '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
+            '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
             '-no-canonical-prefixes',
             '-target armv7-none-linux-androideabi',
             '-Wl,--fix-cortex-a8',
@@ -210,7 +211,7 @@
             ],
             'ldflags': [
               '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
-              '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
+              '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
               '-no-canonical-prefixes',
               '-target armv7-none-linux-androideabi',
               '-Wl,--fix-cortex-a8',

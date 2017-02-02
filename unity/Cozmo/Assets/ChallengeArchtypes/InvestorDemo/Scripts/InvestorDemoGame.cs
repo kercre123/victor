@@ -33,13 +33,14 @@ namespace InvestorDemo {
     }
 
     protected void InitializeMinigameObjects() {
-      _GamePanel = UIManager.OpenModal(_GamePanelPrefab);
+      UIManager.OpenModal(_GamePanelPrefab, new Cozmo.UI.ModalPriorityData(),
+                          (newModal) => { _GamePanel = (InvestorDemoPanel)newModal; });
 
       CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
 
       if (_DemoConfig.UseSequence) {
         CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-        CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+        CurrentRobot.ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.NoneBehavior);
 
         // Waiting until the investor demo buttons are registered to ObjectTagRegistry before starting
         // the sequence.

@@ -335,10 +335,12 @@ public static class LocalizationEditorUtility {
         // Check C# code, prefabs, assets.
         // Check configs for game
         // Check Config code from engine...
-        if (StringContainedInDir(VariableNameFromLocalizationKey(locKey.Key), "Assets/", "*.cs", "LocalizationKeys.cs") ||
+        if (locKey.Key.Contains(".plural") || locKey.Key.Contains(".singular") ||
+            StringContainedInDir(VariableNameFromLocalizationKey(locKey.Key), "Assets/", "*.cs", "LocalizationKeys.cs") ||
             StringContainedInDir(locKey.Key, "Assets/", new string[] { ".prefab", ".asset" }) ||
             StringContainedInDir(locKey.Key, Application.dataPath + "/../../../lib/anki/products-cozmo-assets/", "*.json") ||
-            StringContainedInDir(locKey.Key, Application.dataPath + "/../../../resources/config/basestation/config", "*.json")) {
+            StringContainedInDir(locKey.Key, Application.dataPath + "/../../../resources/config/basestation/config", "*.json")
+            ) {
           // orring for fast out
           keyFound = true;
         }
@@ -355,5 +357,87 @@ public static class LocalizationEditorUtility {
         File.WriteAllText(kLocalizationFolder + fileName + ".json", JsonConvert.SerializeObject(localizationDictFile.Value, Formatting.Indented));
       }
     }
+  }
+
+  private static List<string> AddFilesContainingStringInDir(ref List<string> filesContainingStr, string str, string dir, string searchPattern, string exclude = null) {
+    foreach (var path in Directory.GetFiles(dir, searchPattern, SearchOption.AllDirectories)) {
+      if (exclude != null && path.Contains(exclude)) {
+        continue;
+      }
+      if (File.ReadAllText(path).Contains(str)) {
+        string[] splitPath = path.Split(new char[] { '/' });
+        filesContainingStr.Add(splitPath[splitPath.Length - 1]);
+      }
+    }
+    return filesContainingStr;
+  }
+  // Can't search with multiple file extensions
+  private static List<string> AddFilesContainingStringInDir(ref List<string> filesContainingStr, string str, string dir, string[] searchPatterns) {
+    foreach (var path in Directory.GetFiles(dir, "*", SearchOption.AllDirectories)) {
+      for (int i = 0; i < searchPatterns.Length; ++i) {
+        if (path.Contains(searchPatterns[i])) {
+          if (File.ReadAllText(path).Contains(str)) {
+            string[] splitPath = path.Split(new char[] { '/' });
+            filesContainingStr.Add(splitPath[splitPath.Length - 1]);
+          }
+          break; // move on to next path
+        }
+      }
+    }
+    return filesContainingStr;
+  }
+
+  private const string kLocKeyReferenceReportFilePath = "LocKeyReferenceReport.csv";
+
+  [MenuItem("Cozmo/Localization/Report Loc Key References")]
+  private static void ReportLocKeyReferences() {
+    List<LocKeyReference> locKeyReferences = new List<LocKeyReference>();
+
+    foreach (var localizationDictFile in _LocalizationDictionaries) {
+      string fileName = localizationDictFile.Key;
+      // Special case file that adds plural etc
+      if (fileName == "ItemStrings") {
+        continue;
+      }
+
+      // Walk through keys to find incidence
+      Dictionary<string, LocalizationDictionaryEntry> keysDict = localizationDictFile.Value.Translations;
+      foreach (var locKey in keysDict) {
+        List<string> pathsContainingKey = new List<string>();
+        AddFilesContainingStringInDir(ref pathsContainingKey, VariableNameFromLocalizationKey(locKey.Key), "Assets/", "*.cs", "LocalizationKeys.cs");
+        AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, "Assets/", new string[] { ".prefab", ".asset" });
+        AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, Application.dataPath + "/../../../lib/anki/products-cozmo-assets/", "*.json");
+        AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, Application.dataPath + "/../../../resources/config/basestation/config", "*.json");
+
+        LocKeyReference reference = new LocKeyReference();
+        reference.Key = locKey.Key;
+        reference.Value = locKey.Value.Translation;
+        reference.FilesThatReference = pathsContainingKey;
+        locKeyReferences.Add(reference);
+      }
+    }
+
+    locKeyReferences.Sort((x, y) => {
+      return x.FilesThatReference.Count.CompareTo(y.FilesThatReference.Count);
+    });
+
+    string fileContents = "Loc Value,Loc Key,Files\n";
+    foreach (var reference in locKeyReferences) {
+      fileContents += "\"" + reference.Value.Replace("\n", " ").Replace("\"", "") + "\"," + reference.Key + ",";
+      fileContents += reference.FilesThatReference[0] + "\n";
+      for (int i = 1; i < reference.FilesThatReference.Count; i++) {
+        fileContents += ",," + reference.FilesThatReference[i] + "\n";
+      }
+    }
+
+    // Write the to a file
+    File.WriteAllText(kLocKeyReferenceReportFilePath, fileContents);
+    Debug.Log("Report written to " + kLocKeyReferenceReportFilePath);
+  }
+
+  private struct LocKeyReference {
+    public string Key;
+    public string Value;
+    public List<string> FilesThatReference;
   }
 }

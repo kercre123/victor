@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/animationGroup/animationGroup.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "util/logging/logging.h"
+#include "util/random/randomGenerator.h"
 #include "json/json.h"
 #include <assert.h>
 
@@ -145,6 +146,8 @@ static const char* kTwoAnimationsHappySadMoodsJson =
 "  ]"
 "}";
 
+static const uint32_t kRandomSeed = 123;
+static Anki::Util::RandomGenerator gRNG(kRandomSeed);
 
 AnimationGroup DeserializeAnimationGroupFromJson(const char* jsonString) {
   Json::Value data;
@@ -153,7 +156,7 @@ AnimationGroup DeserializeAnimationGroupFromJson(const char* jsonString) {
 
   EXPECT_TRUE(success);
   
-  AnimationGroup animGroup;
+  AnimationGroup animGroup(gRNG);
   
   auto result = animGroup.DefineFromJson("Win", data, nullptr);
   
@@ -193,7 +196,7 @@ TEST(AnimationGroup, DeserializeAnimationGroup)
 
 TEST(AnimationGroupContainer, AnimationGroupContainerDeserialization)
 {
-  AnimationGroupContainer container;
+  AnimationGroupContainer container(gRNG);
   DeserializeAnimationGroupContainerFromJson(container, "a", kNoAnimationJson);
   
   EXPECT_EQ(1, container.GetAnimationGroupNames().size());
@@ -243,7 +246,7 @@ TEST(AnimationGroupContainer, AnimationGroupContainerDeserialization)
 
 TEST(AnimationGroup, GetOneAnimationName)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodJson);
@@ -255,7 +258,7 @@ TEST(AnimationGroup, GetOneAnimationName)
 
 TEST(AnimationGroup, GetDefaultAnimationName)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -269,7 +272,7 @@ TEST(AnimationGroup, GetDefaultAnimationName)
 
 TEST(AnimationGroup, GetAnimationNameBeforeCooldownSingle)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -292,7 +295,7 @@ TEST(AnimationGroup, GetAnimationNameBeforeCooldownSingle)
 
 TEST(AnimationGroup, GetAnimationNameBeforeCooldownMultiple)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -325,7 +328,7 @@ TEST(AnimationGroup, GetAnimationNameBeforeCooldownMultiple)
 
 TEST(AnimationGroup, GetAnimationNameOnCooldown)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -347,7 +350,7 @@ TEST(AnimationGroup, GetAnimationNameOnCooldown)
 
 TEST(AnimationGroup, GetAnimationNameAfterCooldown)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -369,7 +372,7 @@ TEST(AnimationGroup, GetAnimationNameAfterCooldown)
 
 TEST(AnimationGroup, GetDefaultAnimationNameUnweighted)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -383,7 +386,7 @@ TEST(AnimationGroup, GetDefaultAnimationNameUnweighted)
 
 TEST(AnimationGroup, GetOneHappyAnimationName)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -397,7 +400,7 @@ TEST(AnimationGroup, GetOneHappyAnimationName)
 
 TEST(AnimationGroup, GetNoAnimationName)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kNoAnimationJson);
@@ -409,7 +412,7 @@ TEST(AnimationGroup, GetNoAnimationName)
 
 TEST(AnimationGroup, GetNoDefaultAnimationName)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationHappyMoodJson);
@@ -436,7 +439,7 @@ void TestTwoAnimations100Times(const char* json, const MoodManager& moodManager,
 
 TEST(AnimationGroup, GetEitherAnimationNameOfTwo)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
@@ -449,7 +452,7 @@ TEST(AnimationGroup, GetEitherAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetEitherDefaultAnimationNameOfTwo)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -463,7 +466,7 @@ TEST(AnimationGroup, GetEitherDefaultAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetNeitherAnimationNameOfTwo)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
@@ -476,7 +479,7 @@ TEST(AnimationGroup, GetNeitherAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetFirstAnimationNameOfTwo)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
@@ -490,7 +493,7 @@ TEST(AnimationGroup, GetFirstAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetSecondAnimationNameOfTwo)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
@@ -502,7 +505,7 @@ TEST(AnimationGroup, GetSecondAnimationNameOfTwo)
 
 TEST(AnimationGroup, GetDefaultAnimationNameOfTwo)
 {
-  AnimationGroupContainer groupContainer;
+  AnimationGroupContainer groupContainer(gRNG);
   MoodManager moodManager;
   
   moodManager.SetEmotion(EmotionType::Happy, -0.5);

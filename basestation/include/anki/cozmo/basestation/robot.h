@@ -81,7 +81,7 @@ enum class ERobotDriveToPoseStatus {
 namespace Cozmo {
   
 // Forward declarations:
-class AIInformationAnalyzer;
+class AIComponent;
 class ActionList;
 class BehaviorFactory;
 class BehaviorManager;
@@ -93,7 +93,6 @@ class DrivingAnimationHandler;
 class FaceWorld;
 class IExternalInterface;
 class IPathPlanner;
-class LightsComponent;
 class MatPiece;
 class MoodManager;
 class MovementComponent;
@@ -105,6 +104,13 @@ class ProgressionUnlockComponent;
 class RobotIdleTimeoutComponent;
 class RobotPoseHistory;
 class RobotPoseStamp;
+class IExternalInterface;
+struct RobotState;
+class ActiveCube;
+class SpeedChooser;
+class DrivingAnimationHandler;
+class CubeLightComponent;
+class BodyLightComponent;
 class RobotToEngineImplMessaging;
 class SpeedChooser;
 class TextToSpeechComponent;
@@ -126,10 +132,6 @@ class RobotToEngine;
 enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
-
-namespace ExternalInterface {
-class MessageEngineToGame;
-}
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
@@ -213,8 +215,23 @@ public:
     return *_movementComponent;
   }
  
-  inline LightsComponent&       GetLightsComponent()       { assert(_lightsComponent); return *_lightsComponent; }
-  inline const LightsComponent& GetLightsComponent() const { assert(_lightsComponent); return *_lightsComponent; }
+  inline CubeLightComponent& GetCubeLightComponent() {
+    assert(_cubeLightComponent);
+    return *_cubeLightComponent;
+  }
+  inline const CubeLightComponent& GetCubeLightComponent() const {
+    assert(_cubeLightComponent);
+    return *_cubeLightComponent;
+  }
+  
+  inline BodyLightComponent& GetBodyLightComponent() {
+    assert(_bodyLightComponent);
+    return *_bodyLightComponent;
+  }
+  inline const BodyLightComponent& GetBodyLightComponent() const {
+    assert(_bodyLightComponent);
+    return *_bodyLightComponent;
+  }
 
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
@@ -225,14 +242,6 @@ public:
   const BehaviorFactory& GetBehaviorFactory() const;
   BehaviorFactory&       GetBehaviorFactory();
   
-  inline const AIInformationAnalyzer& GetAIInformationAnalyzer() const {
-    assert(_aiInformationAnalyzer);
-    return *_aiInformationAnalyzer;
-  }
-  inline AIInformationAnalyzer& GetAIInformationAnalyzer() {
-    assert(_aiInformationAnalyzer);
-    return *_aiInformationAnalyzer;
-  }
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -250,6 +259,15 @@ public:
   inline NVStorageComponent& GetNVStorageComponent() {
     assert(_nvStorageComponent);
     return *_nvStorageComponent;
+  }
+
+  inline const AIComponent& GetAIComponent() const {
+    assert(_aiComponent);
+    return *_aiComponent;
+  }
+  inline AIComponent& GetAIComponent() {
+    assert(_aiComponent);
+    return *_aiComponent;
   }
   
   const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
@@ -500,7 +518,8 @@ public:
                         const f32 placementOffsetAngle_rad = 0,
                         const bool useManualSpeed = false,
                         const u8 numRetries = 2,
-                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING);
+                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING,
+                        const bool doLiftLoadCheck = false);
   
   // Same as above but without specifying image location for marker
   Result DockWithObject(const ObjectID objectID,
@@ -515,7 +534,8 @@ public:
                         const f32 placementOffsetAngle_rad = 0,
                         const bool useManualSpeed = false,
                         const u8 numRetries = 2,
-                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING);
+                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING,
+                        const bool doLiftLoadCheck = false);
     
   // Transitions the object that robot was docking with to the one that it
   // is carrying, and puts it in the robot's pose chain, attached to the
@@ -717,7 +737,7 @@ public:
   bool UpdateCurrPoseFromHistory();
 
   Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const;
-      
+
   // =========  Block messages  ============
 
   // Assign which objects the robot should connect to.
@@ -781,7 +801,7 @@ public:
   Util::Stats::RecentStatsAccumulator& GetRecentImageStats() { return _imageStats; }
   void SetTimeSinceLastImage(double timeSinceLastImage) { _timeSinceLastImage_s = 0.0; }
   double GetCurrentImageDelay() const { return std::max(_lastImageLatencyTime_s, _timeSinceLastImage_s); }
-  
+
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
@@ -846,7 +866,6 @@ protected:
   std::unique_ptr<PetWorld>              _petWorld;
  
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
-  std::unique_ptr<AIInformationAnalyzer> _aiInformationAnalyzer;
   
   ///////// Audio /////////
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;
@@ -865,16 +884,15 @@ protected:
   ///////// NEW Animation /////////
   std::unique_ptr<RobotAnimation::EngineAnimationController>  _animationController;
   
-  // Note that we want _actionList as a pointer instead of unique_ptr. This is because unique_ptrs are
-  // set to nullptr before being deleted, while regular pointers are not. Actions sometimes interact with
-  // the ActionList upon destruction, and we don't want to cause a crash because the pointer has already been nulled.
   std::unique_ptr<ActionList>            _actionList;
   std::unique_ptr<MovementComponent>     _movementComponent;
   std::unique_ptr<VisionComponent>       _visionComponent;
   std::unique_ptr<NVStorageComponent>    _nvStorageComponent;
+  std::unique_ptr<AIComponent>           _aiComponent;
   std::unique_ptr<TextToSpeechComponent> _textToSpeechComponent;
   std::unique_ptr<ObjectPoseConfirmer>   _objectPoseConfirmerPtr;
-  std::unique_ptr<LightsComponent>       _lightsComponent;
+  std::unique_ptr<CubeLightComponent>    _cubeLightComponent;
+  std::unique_ptr<BodyLightComponent>    _bodyLightComponent;
   
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
@@ -1283,8 +1301,8 @@ inline bool Robot::HasMovedSinceBeingLocalized() const {
   
 inline bool Robot::IsLocalized() const {
   
-  ASSERT_NAMED(_isLocalized || (!_isLocalized && !_localizedToID.IsSet()),
-               "Robot can't think it is localized and have localizedToID set!");
+  DEV_ASSERT(_isLocalized || (!_isLocalized && !_localizedToID.IsSet()),
+             "Robot can't think it is localized and have localizedToID set!");
   
   return _isLocalized;
 }

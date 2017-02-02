@@ -7,6 +7,7 @@
 #include "messages.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#include "anki/cozmo/robot/buildTypes.h"
 
 #include "hardware.h"
 
@@ -19,6 +20,7 @@
 #include "head.h"
 #include "tasks.h"
 #include "ota.h"
+#include "dtm.h"
 
 static const int MaxContactTime     = 30 * 60 * (1000 / 20);  // (30min) 20ms per count
 static const int MaxChargedTime     = MaxContactTime * 8; // 4 hours
@@ -47,8 +49,15 @@ static const u32 CLIFF_SENSOR_BLEED = 0;
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
 
-static Fixed vBat;
-static Fixed vExt;
+Fixed vBat;
+Fixed vExt;
+int resultLedOn;
+int resultLedOff;
+int g_powerOffTime = (4<<23);   // 4 seconds from power-on
+#ifdef FACTORY
+bool g_turnPowerOff = true;
+#endif
+
 static bool isCharging = false;
 static bool disableCharge = true;
 static int ContactTime = 0;
@@ -166,6 +175,20 @@ void Battery::init()
   startADCsample(ANALOG_CLIFF_SENSE);
 }
 
+void Battery::hookButton(bool button_pressed) {
+  static int button_count = 0;
+
+  if (button_pressed) {
+    // 4 seconds (thanks to backpack divider)
+    if (++button_count >= 200) {
+      Battery::powerOff();
+      NVIC_SystemReset();
+    }
+  } else {
+    button_count = 0;
+  }
+}
+
 void Battery::setOperatingMode(Anki::Cozmo::BodyRadioMode mode) {
   current_operating_mode = mode;
 }
@@ -173,6 +196,14 @@ void Battery::setOperatingMode(Anki::Cozmo::BodyRadioMode mode) {
 void Battery::updateOperatingMode() { 
   using namespace Anki::Cozmo;
 
+  #ifdef FACTORY
+  if (g_turnPowerOff && GetCounter() > g_powerOffTime)
+  {
+    Battery::powerOff();
+    g_turnPowerOff = false;
+  }
+  #endif
+  
   if (active_operating_mode == current_operating_mode) {
     return ;
   }
@@ -187,6 +218,13 @@ void Battery::updateOperatingMode() {
     case BODY_ACCESSORY_OPERATING_MODE:
       Backpack::detachTimer();
       Radio::shutdown();
+      break ;
+
+    case BODY_DTM_OPERATING_MODE:
+      #ifdef FACTORY
+      Head::enableFixtureComms(true);
+      #endif
+      DTM::stop();
       break ;
 
     case BODY_IDLE_OPERATING_MODE:
@@ -233,15 +271,39 @@ void Battery::updateOperatingMode() {
 
       Battery::powerOff();
       break ;
+    
+    default:
     case BODY_IDLE_OPERATING_MODE:
       // Turn off encoders
       nrf_gpio_pin_set(PIN_VDDs_EN);
       Motors::disable(true);
       Head::enterLowPowerMode();
+      #ifdef FACTORY
+      g_turnPowerOff = true;
+      #else
       Battery::powerOff();
+      #endif
 
       break ;
-    
+
+    #ifdef FACTORY
+    case BODY_DTM_OPERATING_MODE:
+      Backpack::clearLights(BPL_USER);
+      Backpack::setLayer(BPL_USER);
+
+      Motors::disable(true);
+      Battery::powerOn();
+      Backpack::useTimer();
+      DTM::start();
+
+      g_turnPowerOff = false;
+
+      #ifdef FACTORY
+      Head::enableFixtureComms(false);
+      #endif
+      break ;
+    #endif
+
     case BODY_OTA_MODE:
       // NOTE: DMA Devices (RADIO, SPI) and SD MUST be disabled
       // for this to work properly.  Do not reenable IRQs from
@@ -306,7 +368,7 @@ void Battery::updateOperatingMode() {
 
       Backpack::useTimer();
       break ;
-  }
+   }
 
   active_operating_mode = current_operating_mode;
 }
@@ -442,9 +504,6 @@ void Battery::manage()
   using namespace Battery;
   static const int LOW_BAT_TIME = CYCLES_MS(60*1000); // 1 minute
 
-  static int resultLedOn;
-  static int resultLedOff;
-
   if (!NRF_ADC->EVENTS_END) {
     return ;
   }
@@ -481,6 +540,9 @@ void Battery::manage()
         // Are our power pins shorted?
         static int ground_short = 0;
         
+        #ifdef FACTORY
+        if (*FIXTURE_HOOK != 0xDEADFACE)
+        #endif
         if (NRF_ADC->RESULT < 0x30) {
           if (++ground_short > 30) {
             Battery::powerOff();

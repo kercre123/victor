@@ -15,7 +15,6 @@
 
   <project>
     <PathAndName>.\syscon\ota_bin.uvprojx</PathAndName>
-    <NodeIsExpanded>1</NodeIsExpanded>
   </project>
 
   <project>

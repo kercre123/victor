@@ -24,7 +24,7 @@ namespace Audio {
 AudioEngineClientConnection::AudioEngineClientConnection( AudioEngineMessageHandler* messageHandler ) :
   _messageHandler( messageHandler )
 {
-  ASSERT_NAMED( nullptr != messageHandler, "Message Handler is NULL!" );
+  DEV_ASSERT(nullptr != messageHandler, "Message Handler is NULL!");
   
   // Subscribe to Connection Side Messages
   auto callback = std::bind(&AudioEngineClientConnection::HandleEvents, this, std::placeholders::_1);

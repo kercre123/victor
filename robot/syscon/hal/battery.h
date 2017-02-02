@@ -19,6 +19,7 @@ namespace Battery {
 
   void setOperatingMode(Anki::Cozmo::BodyRadioMode mode);
   void updateOperatingMode();
+  void hookButton(bool button_pressed);
 
   // Update the state of the battery
   void manage(void);

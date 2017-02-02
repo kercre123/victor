@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorDriveOffCharger_H__
 
 #include "anki/common/basestation/math/pose.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -29,7 +29,7 @@ protected:
 
 public:
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 protected:

@@ -20,13 +20,13 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/pathMotionProfileHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -344,17 +344,29 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                   // mark the block as unable to pickup
                   const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(targetBlockID);
                   if(failedObject){
-                    robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+                    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
                   }
                   
                   // couldn't pick up this block. If we have another, try that. Otherwise, fail
                   if( SwitchRobotsBlock(robot) ) {
-                    TransitionToPickingUpBlock(robot);
+                    
+                    // Play failure animation
+                    if (resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
+                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail), &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
+                    } else {
+                      TransitionToPickingUpBlock(robot);
+                    }
                   }
                   else {
                     // if its an abort failure, do nothing, which will cause the behavior to stop
                     PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
                                      "failed to pick up block with no retry, so ending the behavior");
+                    
+                    // Play failure animation
+                    if (resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
+                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail));
+                    }
+
                   }
                 }
               } );
@@ -529,7 +541,7 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
   // Don't interrupt the request process for a cube move
-  SmartDisableReactionaryBehavior(BehaviorType::ReactToCubeMoved);
+  SmartDisableReactionTrigger(ReactionTrigger::CubeMoved);
 
   // always turn back to the face after the animation in case the animation moves the head
   StartActing(new CompoundActionSequential(robot, {
@@ -601,9 +613,9 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 {
   Pose3d facePose;
   
-  if( HasFace(robot) ) {
+  if (HasFace(robot)) {
     TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(facePose);
-    ASSERT_NAMED( lastObservedFaceTime > 0, "BehaviorRequestGameSimple.HasFaceWithoutPose" );
+    DEV_ASSERT(lastObservedFaceTime > 0, "BehaviorRequestGameSimple.HasFaceWithoutPose");
   }
   else {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoFace",

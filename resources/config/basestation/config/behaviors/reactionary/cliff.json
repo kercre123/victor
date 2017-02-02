@@ -1,8 +1,0 @@
-{
-  "behaviorType": "ReactToCliff",
-  "displayNameKey":"behavior.ReactToCliff",
-  "behaviorGroups": [
-    "Reactionary"
-  ],
-  "disableByDefault": false
-}

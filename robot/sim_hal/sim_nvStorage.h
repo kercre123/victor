@@ -16,7 +16,8 @@
 #error This file (sim_nvStorage.h) should not be used without SIMULATOR defined.
 #endif
 
-#include "anki/common/types.h"
+#include "anki/types.h"
+#include "anki/cozmo/robot/hal.h"
 #include "clad/types/nvStorage.h"
 #include <array>
 
@@ -25,6 +26,7 @@ namespace Anki {
   namespace Cozmo {
     class SimNVStorage
     {
+       friend bool HAL::FlashWriteOkay(u32 address, u32 length);
     public:
       SimNVStorage();
       ~SimNVStorage();

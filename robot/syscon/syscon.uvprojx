@@ -80,9 +80,9 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>0</RunUserProg2>
+            <RunUserProg2>1</RunUserProg2>
             <UserProg1Name>python ..\tools\boot_header.py ..\build\syscon.axf</UserProg1Name>
-            <UserProg2Name></UserProg2Name>
+            <UserProg2Name>fromelf --bin ..\build\syscon.axf --output ..\binaries\syscon.bin</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopA1X>0</nStopA1X>
@@ -334,7 +334,7 @@
               <MiscControls>--gnu</MiscControls>
               <Define>NRF51,COZMO_ROBOT,SOFTDEVICE_PRESENT,BLE_STACK_SUPPORT_REQD</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/toolchain;./components/drivers_nrf/hal;./components/device;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/ble_dtm;./components/ble/common;./components/drivers_nrf/hal;./components/libraries/util;./components/libraries/timer;../generated/clad/robot;../generated;../include;../../crypto;./hal;./cubes;.;..\generated</IncludePath>
+              <IncludePath>./components/toolchain;./components/drivers_nrf/hal;./components/device;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/common;./components/drivers_nrf/hal;./components/libraries/util;./components/libraries/timer;../generated/clad/robot;../generated;../include;../../crypto;./hal;./cubes;.;..\generated</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -452,6 +452,11 @@
               <FileType>2</FileType>
               <FilePath>.\hal\ota_binary.s</FilePath>
             </File>
+            <File>
+              <FileName>tests.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\tests.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -491,6 +496,16 @@
               <FileName>conn_params.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\hal\conn_params.c</FilePath>
+            </File>
+            <File>
+              <FileName>dtm.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\dtm.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ble_dtm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\hal\ble_dtm.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -72,7 +72,7 @@ public:
   AudioCreationState GetOperationState(const OperationId operationId) const;
   
   // Set up Audio Engine to play text's audio data
-  // out_durration_ms provides approximate durration of event before proccessing in audio engine
+  // out_duration_ms provides approximate duration of event before processing in audio engine
   // Return false if the audio has NOT been created or is not yet ready, out_duration_ms will NOT be valid.
   // NOTE: If this method is able to pass speech audio data ownership to plugin it will call ClearOperationData()
   // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more

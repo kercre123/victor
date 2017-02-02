@@ -1,5 +1,5 @@
 {
-  "behaviorType": "CheckForStackAtInterval",
+  "behaviorClass": "CheckForStackAtInterval",
   "name": "sparksCheckForStackAtInterval",
   "displayNameKey":"behavior.CheckForStackAtInterval",
   "behaviorGroups": [

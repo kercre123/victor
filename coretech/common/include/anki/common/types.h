@@ -4,10 +4,9 @@
 * Author: Andrew Stein (andrew)
 * Created: 10/7/2013
 *
-* Information on last revision to this file:
-*    $LastChangedDate$
-*    $LastChangedBy$
-*    $LastChangedRevision$
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*       !!!!!!!!!!!!!!   CORETECH COMMON TYPES     !!!!!!!!!!!!!
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 *
 * Description:
 *
@@ -43,20 +42,11 @@ typedef uint32_t HistPoseKey;
 
 typedef u32 UserDeviceID_t;
 typedef u32 RobotID_t;
-//typedef u16 BlockID_t;
 
 typedef u32 CameraID_t;
 
 const CameraID_t ANY_CAMERA = UINT_MAX;
 
-//const ObjectID ANY_OBJECT = u16_MAX;
-
-// move time related functionality to a separate file (use chrono)
-#define NSEC_PER_SEC	1000000000	/* nanoseconds per second */
-#define NANOS_TO_SEC(nanos) ((nanos) / 1000000000.0f)
-#define SEC_TO_NANOS(sec) ((sec) * 1000000000.0f)
-#define MILLIS_TO_SEC(millis) ((millis)/1000.0)
-#define SEC_TO_MILLIS(sec) ((sec)*1000.0)
 typedef unsigned long long int BaseStationTime_t;
 
 // If we're using c++, Result is in a namespace. In c, it's not.
@@ -78,14 +68,6 @@ namespace Anki
   
   typedef u32 PoseOriginID_t;
 
-#ifdef __cplusplus
-} // namespace Anki
-#endif
-
-// If we're using c++, Result is in a namespace. In c, it's not.
-#ifdef __cplusplus
-namespace Anki {
-#endif
   // Return values:
   // TODO: add toString!!!
   typedef enum {

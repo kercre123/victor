@@ -1,15 +1,16 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/buildTypes.h"
+
 #include "battery.h"
 #include "motors.h"
 #include "head.h"
-#include "radio.h"
+#include "cubes.h"
 #include "timer.h"
 #include "lights.h"
-#include "rtos.h"
 #include "backpack.h"
-#include "anki/cozmo/robot/spineData.h"
 
 #include "hardware.h"
 #include "tests.h"
@@ -29,9 +30,19 @@ extern int g_powerOffTime;
 extern bool g_turnPowerOff;
 extern Fixed vBat, vExt;
 
-static void TestMotors(void* discard) {
+static bool runMotorTest = false;
+
+void TestFixtures::manage() {
+  static const int LOW_BAT_TIME = CYCLES_MS(500);
+  static int dirChangeTime = 0;
   static int direction = 1;
+
+  int ticks = dirChangeTime - GetCounter();
+
+  if (!runMotorTest || ticks >= 0) return ;
   
+  dirChangeTime = GetCounter() + LOW_BAT_TIME;
+
   for (int i = 0; i < 2; i++)
     Motors::setPower(i, 0x7800 * direction);
   for (int i = 2; i < 4; i++)
@@ -84,9 +95,10 @@ extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
 // Tests dispatched by fixture
-// These generally disrupt correct RTOS/robot operation and leave things in a variety of bad states
+// These generally disrupt correct robot operation and leave things in a variety of bad states
 void TestFixtures::dispatch(uint8_t test, uint8_t param)
 {
+  #ifdef FACTORY
   // Test modes from 0..127 are routed up to Espressif
   if (test < 128) {
     RobotInterface::EnterFactoryTestMode msg;
@@ -103,7 +115,10 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     // This hack keeps the battery on for N more seconds (see main.cpp)
     // It operates as a kind of watchdog - if you stop calling it the robot will turn off
     case TEST_POWERON:
-      if (param == 0xA5)
+      if (param == 0x55) {
+        g_powerOffTime = GetCounter() + (4<<23); // 4 seconds from now
+        g_turnPowerOff = true;    // Enable power-down
+      } else if (param == 0xA5)
         g_turnPowerOff = false;   // Last until battery dies
       else if (param == 0x5A)
         Battery::powerOff();      // Kill battery immediately
@@ -125,15 +140,16 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     
     case TEST_MOTORSLAM:
     {
+      Battery::setOperatingMode(BODY_ACCESSORY_OPERATING_MODE);
       motorOverride = true;
-      RTOS::schedule(TestMotors, CYCLES_MS(500.0f));
+      runMotorTest = true;
       break;    // Reply "OK"
     }
     
     case TEST_PLAYTONE:
     {
       RobotInterface::GenerateTestTone msg;
-      RobotInterface::SendMessage(msg);     
+      RobotInterface::SendMessage(msg);
       break;    // Reply "OK"
     }
     
@@ -146,20 +162,21 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     
     case TEST_RUNMOTOR:
     {
+      Battery::setOperatingMode(BODY_ACCESSORY_OPERATING_MODE);
+
       motorOverride = true;
       for (int i = 0; i < 4; i++)
         Motors::setPower(i, 0);
       int motor = param & 3;              // Motor number in LSBs
       int power = ((s8)param & ~3) << 8;  // Motor direction/power in MSBs (-124..124 for MAX power)
-      Motors::disable(false);
       Motors::setPower(motor, power);
       break;    // Reply "OK"
     }
-    
+
     case TEST_GETMOTOR:
       SendDown(16, (u8*)g_dataToHead.positions);  // All 4 motor positions
       return;   // Already replied
-    
+
     case TEST_DROP:
     {
       int data[2] = {resultLedOn, resultLedOff};
@@ -170,7 +187,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     // param[4] = IR forward, param[0:3] = 0 (no backpack), 1-12 (backpack LED)
     case TEST_LIGHT:
       Backpack::testLight(param & 0xF);
-      Battery::setHeadlight(param & 0x10); 
+      Lights::setHeadlight(param & 0x10); 
       break;    // Reply "OK"
     
     case TEST_ADC:
@@ -183,49 +200,5 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
   
   // By default, send down an "OK" message
   SendDown(0, NULL);
-}
-
-#if defined(DO_LIGHTS_TESTING)
-static void TestLights(void* data) {	
-  static const LightState colors[] = {
-    { 0x0000, 0xFFFF, 0x40, 0x40, 0x40, 0x40 },
-    { 0x0000, 0x001F, 0x40, 0x40, 0x40, 0x40 },
-    { 0x0000, 0x03E0, 0x40, 0x40, 0x40, 0x40 },
-    { 0x0000, 0x7C00, 0x40, 0x40, 0x40, 0x40 }
-  };
-
-  static int index = 0;
-
-  for (int i = 0; i < TOTAL_LIGHTS; i++) {
-    Lights::update(i, &colors[index]);
-  }
-
-  index = (index + 1) % 4;
-}
-#endif
-
-#if defined(DO_ENCODER_TESTING)
-static void TestEncoders(void* userdata) {
-  uint32_t data[4];
-	
-	Motors::getRawValues(data);
-	for (int i = 0; i < 4; i++) {
-		LightState colors = { data[i], data[i] };
-		Lights::update(i, &colors);
-	}
-}
-#endif
-
-void TestFixtures::run() {
-#if defined(DO_ENCODER_TESTING)
-  RTOS::schedule(TestEncoders, CYCLES_MS(5.0f));
-#endif
-
-#if defined(DO_MOTOR_TESTING)
-  RTOS::schedule(TestMotors, CYCLES_MS(1000.0f));
-#endif
-
-#if defined(DO_LIGHTS_TESTING)
-  RTOS::schedule(TestLights, CYCLES_MS(5000.0f));
-#endif
+  #endif
 }

@@ -26,6 +26,8 @@ namespace Motors {
   
   // Set the (unitless) power for a specified motor in the range [-798, 798].
   void setPower(u8 motorID, s16 power);
+  
+  // Returns speed in tics per second
   Fixed getSpeed(u8 motorID);
   
   // Updates the PWM values for the timers in a safe manner

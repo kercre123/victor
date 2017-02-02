@@ -362,14 +362,14 @@ namespace Anki {
     void VizManager::EraseRobot(const u32 robotID)
     {
       const int viztype = (int)VizObjectType::VIZ_OBJECT_ROBOT;
-      ASSERT_NAMED(robotID < _VizObjectMaxID[viztype], "VizManager.EraseRobot.InvalidID");
+      DEV_ASSERT(robotID < _VizObjectMaxID[viztype], "VizManager.EraseRobot.InvalidID");
       EraseVizObject(VizObjectBaseID[viztype] + robotID);
     }
     
     void VizManager::EraseCuboid(const u32 blockID)
     {
       const int viztype = (int)VizObjectType::VIZ_OBJECT_CUBOID;
-      ASSERT_NAMED(blockID < _VizObjectMaxID[viztype], "VizManager.EraseCuboid.InvalidID");
+      DEV_ASSERT(blockID < _VizObjectMaxID[viztype], "VizManager.EraseCuboid.InvalidID");
       EraseVizObject(VizObjectBaseID[viztype] + blockID);
     }
 
@@ -381,7 +381,7 @@ namespace Anki {
     void VizManager::ErasePreDockPose(const u32 preDockPoseID)
     {
       const int viztype = (int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE;
-      ASSERT_NAMED(preDockPoseID < _VizObjectMaxID[viztype], "VizManager.ErasePreDockPose.InvalidID");
+      DEV_ASSERT(preDockPoseID < _VizObjectMaxID[viztype], "VizManager.ErasePreDockPose.InvalidID");
       EraseVizObject(VizObjectBaseID[viztype] + preDockPoseID);
     }
 
@@ -651,7 +651,7 @@ namespace Anki {
         size_t quadsPerMessage = maxBufferForQuads / sizeof(SimpleQuadVector::value_type);
         size_t remainingQuads = quads.size();
         
-        ASSERT_NAMED(quadsPerMessage>0, "VizManager.DrawQuadVector.InvalidQuadsPerMessage");
+        DEV_ASSERT(quadsPerMessage>0, "VizManager.DrawQuadVector.InvalidQuadsPerMessage");
         
         // sadly we can't create one message and send it several times, because MessageViz doesn't support it (it needs
         // to embed the tag) for receiving end processing, and we can't initialize messages with a range of vectors, so
@@ -799,6 +799,30 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::SaveState(enabled, path)));
     }
     
+    void VizManager::SendObjectConnectionState(u32 activeID, ObjectType type, bool connected)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendObjectConnectionState");
+      SendMessage(VizInterface::MessageViz(VizInterface::ObjectConnectionState(activeID, type, connected)));
+    }
+    
+    void VizManager::SendObjectMovingState(u32 activeID, bool moving)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendObjectMovingState");
+      SendMessage(VizInterface::MessageViz(VizInterface::ObjectMovingState(activeID, moving)));
+    }
+    
+    void VizManager::SendObjectUpAxisState(u32 activeID, UpAxis upAxis)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendObjectUpAxisState");
+      SendMessage(VizInterface::MessageViz(VizInterface::ObjectUpAxisState(activeID, upAxis)));
+    }
+    
+    void VizManager::SendObjectAccelState(u32 activeID, const ActiveAccel& accel)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendObjectAccelState");
+      SendMessage(VizInterface::MessageViz(VizInterface::ObjectAccelState(activeID, accel)));
+    }
+
   
     /*
     void VizManager::SendGreyImage(const RobotID_t robotID,

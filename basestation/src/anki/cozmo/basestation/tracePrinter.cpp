@@ -101,7 +101,7 @@ void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& m
     KVV keyValuePairs;
     if (trace.value.size() == 1)
     {
-      tmpdata = TO_DDATA_STR(trace.value[0]);
+      tmpdata = std::to_string(trace.value[0]);
       KVV::value_type kvp(DDATA, tmpdata.c_str());
       keyValuePairs.push_back(kvp);
     }
@@ -144,7 +144,7 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
   ANKI_CPU_PROFILE("TracePrinter::HandleCrashReport");
   const RobotInterface::CrashReport& report = message.GetData().Get_crashReport();
   if (report.errorCode || report.dump.size()) {
-    PRINT_NAMED_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %s, %x", CrashSourceToString(report.which), report.errorCode);
+    LOG_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %s, %x", CrashSourceToString(report.which), report.errorCode);
     if (DevLoggingSystem::GetInstance() != NULL) {
       
       const std::string fileExt = ".log"; // Only .log files are archived and transmitted
@@ -174,7 +174,7 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
       std::copy(reportDataBegin, reportDataBegin + dumpSize, crashData.data());
       
       if(Util::FileUtils::WriteFile(dumpFilepath, crashData)) {
-        PRINT_NAMED_EVENT("RobotFirmware.CrashReport.Written", "Firmware crash report written to \"%s\"", dumpFileName.c_str());
+        LOG_EVENT("RobotFirmware.CrashReport.Written", "Firmware crash report written to \"%s\"", dumpFileName.c_str());
       }
       else {
         PRINT_NAMED_ERROR("RobotFirmware.CrashReport.FailedToWrite", "Couldn't write report to file \"%s\"", dumpFileName.c_str());
@@ -189,7 +189,8 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
     }
     else
     {
-      Util::sErrorF("RobotFirmware.CrashReport.code", {{DDATA, TO_DDATA_STR(report.errorCode)}},
+      Util::sErrorF("RobotFirmware.CrashReport.code",
+                    {{DDATA, std::to_string(report.errorCode).c_str()}},
                     "errorCode = %d", report.errorCode);
     }
   }

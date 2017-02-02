@@ -9,6 +9,7 @@ enum class TestState {
   TapCube,
   CheckForTappedMessage,
   CheckForStoppedMessage,
+  Wait1Sec,
   MoveCube,
   CheckForMovedMessage,
   CheckForStoppedMessage1,
@@ -55,7 +56,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
 
     case TestState::TapCube:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected > 0, 5) {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 1, 5) {
         _wasTapped = false;
         _wasStopped = false;
         _wasMoved = false;
@@ -70,13 +71,21 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasTapped, 5) {
         _testState = TestState::CheckForStoppedMessage;
       }
-
       break;
     }
 
     case TestState::CheckForStoppedMessage:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasStopped, 5) {
+        _testState = TestState::Wait1Sec;
+      }
+      break;
+    }
+      
+    case TestState::Wait1Sec:
+    {
+      // To prevent double tap detect (and therefore move suppression) with the next lifting of the cube
+      if (HasXSecondsPassedYet(1.0)) {
         _testState = TestState::MoveCube;
       }
       break;
@@ -87,7 +96,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
       _wasTapped = false;
       _wasStopped = false;
       _wasMoved = false;
-      UiGameController::SendApplyForce("cube", 0, 0, 6);
+      UiGameController::SendApplyForce("cube", 6, 0, 0);
       _testState = TestState::CheckForMovedMessage;
       break;
     }

@@ -131,12 +131,6 @@ namespace Anki {
           break;
         }
         
-        case RobotActionType::ENROLL_NAMED_FACE:
-        {
-          _completionUnion.Set_faceEnrollmentCompleted(FaceEnrollmentCompleted());
-          break;
-        }
-        
         // These actions don't set completion unions
         case RobotActionType::ASCEND_OR_DESCEND_RAMP:
         case RobotActionType::CALIBRATE_MOTORS:
@@ -156,6 +150,7 @@ namespace Anki {
         case RobotActionType::MOVE_HEAD_TO_ANGLE:
         case RobotActionType::MOVE_LIFT_TO_HEIGHT:
         case RobotActionType::PAN_AND_TILT:
+        case RobotActionType::PLAY_CUBE_ANIMATION:
         case RobotActionType::SAY_TEXT:
         case RobotActionType::SEARCH_FOR_NEARBY_OBJECT:
         case RobotActionType::TRACK_MOTION:
@@ -456,6 +451,22 @@ namespace Anki {
                       _name.c_str(), GetTag());
         _state = ActionResult::CANCELLED;
       }
+    }
+    
+    void IActionRunner::GetRobotCompletedActionMessage(ExternalInterface::RobotCompletedAction& msg)
+    {
+      std::vector<ActionResult> subActionResults;
+      _robot.GetActionList().GetActionWatcher().GetSubActionResults(GetTag(), subActionResults);
+      
+      ActionCompletedUnion acu;
+      GetCompletionUnion(acu);
+      
+      msg = ExternalInterface::RobotCompletedAction(_robot.GetID(),
+                                                    GetTag(),
+                                                    GetType(),
+                                                    GetState(),
+                                                    subActionResults,
+                                                    acu);
     }
     
 #pragma mark ---- IAction ----

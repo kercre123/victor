@@ -122,6 +122,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectAccel,                    &RobotToEngineImplMessaging::HandleObjectAccel);
   
   
   // lambda wrapper to call internal handler
@@ -213,6 +214,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
     using namespace ExternalInterface;
     auto helper = MakeAnkiEventUtil(*robot->GetExternalInterface(), *robot, GetSignalHandles());
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDroneMode>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestRobotSettings>();
   }
 }
 
@@ -225,11 +227,11 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   
   if (payload.calibStarted) {
     Util::sEventF("HandleMotorCalibration.Start",
-                  {{DDATA, TO_DDATA_STR(payload.autoStarted)}},
+                  {{DDATA, std::to_string(payload.autoStarted).c_str()}},
                   "%s", EnumToString(payload.motorID));
   } else {
     Util::sEventF("HandleMotorCalibration.Complete",
-                  {{DDATA, TO_DDATA_STR(payload.autoStarted)}},
+                  {{DDATA, std::to_string(payload.autoStarted).c_str()}},
                   "%s", EnumToString(payload.motorID));
   }
   
@@ -259,9 +261,9 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
   if (!payload.enabled) {
     // Burnout protection triggered.
     // Someobody is probably messing with the lift
-    PRINT_NAMED_EVENT("HandleMotorAutoEnabled.MotorDisabled", "%s", EnumToString(payload.motorID));
+    LOG_EVENT("HandleMotorAutoEnabled.MotorDisabled", "%s", EnumToString(payload.motorID));
   } else {
-    PRINT_NAMED_EVENT("HandleMotorAutoEnabled.MotorEnabled", "%s", EnumToString(payload.motorID));
+    LOG_EVENT("HandleMotorAutoEnabled.MotorEnabled", "%s", EnumToString(payload.motorID));
   }
 
   // This probably applies here as it does in HandleMotorCalibration.
@@ -321,13 +323,12 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
   Json::Value headerData;
   if(!reader.parse(jsonString, headerData))
   {
-    PRINT_NAMED_ERROR("RobotToEngineImpleMessaging.HandleFirmwareVersion.ParseJson",
-                      "Failed to parse header data from robot: %s", jsonString.c_str());
     return;
   }
   
   // simulated robot will have special tag in json
   const bool robotIsPhysical = headerData["sim"].isNull();
+  
   PRINT_NAMED_INFO("RobotIsPhysical", "%d", robotIsPhysical);
   robot->SetPhysicalRobot(robotIsPhysical);
   
@@ -449,7 +450,7 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
   //const DockingStatus& payload = message.GetData().Get_dockingStatus();
   
   // Log event to help us track whether backup or "Hanns Manuever" is being used
-  PRINT_NAMED_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
+  LOG_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
 }
 
 void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -505,11 +506,11 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
   // than the max slot we're supposed to have as ActiveID. Extra checking here is necessary since the number is unsigned
   // and we do allow a negative ActiveID when calling AddActiveObject elsewhere, for adding the charger.
   if(payload.objectID >= Util::numeric_cast<uint32_t>(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS)) {
-    ASSERT_NAMED(false, "Robot.HandleActiveObjectConnectionState.InvalidActiveID");
+    DEV_ASSERT(false, "Robot.HandleActiveObjectConnectionState.InvalidActiveID");
     return;
   }
   
-  
+  ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
   if (payload.connected) {
     // log event to das
     Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "0x%x,%s", payload.factoryID, EnumToString(payload.device_type));
@@ -535,7 +536,6 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
         }
       }
       
-      ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
       robot->HandleConnectedToObject(payload.objectID, payload.factoryID, objType);
     }
   } else {
@@ -565,17 +565,22 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
         } else {
           // We expect all objects with the same active ID (across coordinate frames) to have the same
           // object ID
-          ASSERT_NAMED_EVENT(objID == obj->GetID(), "Robot.HandleActiveObjectConnectionState.MismatchedIDs",
-                             "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p)",
-                             objID.GetValue(), payload.objectID, payload.factoryID,
-                             payload.device_type, &obj->GetPose().FindOrigin());
+          DEV_ASSERT_MSG(objID == obj->GetID(),
+                         "Robot.HandleActiveObjectConnectionState.MismatchedIDs",
+                         "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p)",
+                         objID.GetValue(), payload.objectID, payload.factoryID,
+                         payload.device_type, &obj->GetPose().FindOrigin());
         }
         
         // When disconnecting from an object make sure to set the factoryIDs of all matching objects in all frames
         // to zero in case we see this disconnected object in the world
-        // Also update activeIDs so we don't try to localize to it
+        // Also update activeIDs so we don't try to localize to it.
+        // Also reset moving state if it's moving.
         obj->SetFactoryID(0);
         obj->SetActiveID(-1);
+        if (obj->IsMoving()) {
+          obj->SetIsMoving(false, robot->GetLastMsgTimestamp());
+        }
         
         if( !obj->IsPoseStateUnknown() ) {
           robot->GetBlockWorld().ClearObject(objID);
@@ -589,9 +594,11 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
       } // for(auto obj : matchingObjects)
     }
     
-    ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
     robot->HandleDisconnectedFromObject(payload.objectID, payload.factoryID, objType);
   }
+  
+  // Viz info
+  robot->GetContext()->GetVizManager()->SendObjectConnectionState(payload.objectID, objType, payload.connected);
   
   PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Recvd",
                    "FactoryID 0x%x, connected %d",
@@ -634,6 +641,8 @@ template<> inline bool GetIsMoving<ObjectStoppedMoving>() { return false; }
 template<class PayloadType>
 static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
 {
+  auto activeID = payload.objectID;
+  
   const std::string eventPrefix = GetEventPrefix<PayloadType>();
   
 # define MAKE_EVENT_NAME(__str__) (eventPrefix + __str__).c_str()
@@ -666,13 +675,13 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     return;
   }
   
-  ASSERT_NAMED(firstObject->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
+  DEV_ASSERT(firstObject->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
   
   PRINT_NAMED_INFO(MAKE_EVENT_NAME("ObjectMovedOrStopped"),
-                   "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f",
+                   "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f, time: %d ms",
                    firstObject->GetID().GetValue(), firstObject->GetActiveID(),
                    EnumToString(firstObject->GetType()), GetAxisString(payload),
-                   GetXAccelVal(payload), GetYAccelVal(payload), GetZAccelVal(payload) );
+                   GetXAccelVal(payload), GetYAccelVal(payload), GetZAccelVal(payload), payload.timestamp );
   
   const bool shouldIgnoreMovement = robot->GetBlockTapFilter().ShouldIgnoreMovementDueToDoubleTap(firstObject->GetID());
   if(shouldIgnoreMovement && GetIsMoving<PayloadType>())
@@ -698,11 +707,13 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   //
   const bool isDockingObject = (firstObject->GetID() == robot->GetDockObject());
   const bool isCarryingObject = robot->IsCarryingObject(firstObject->GetID());
+  
+  // Update the ID to be the blockworld ID before broadcasting
+  payload.objectID = firstObject->GetID();
+  payload.robotID = robot->GetID();
+  
   if(!isDockingObject && !isCarryingObject)
   {
-    // Update the ID to be the blockworld ID before broadcasting
-    payload.objectID = firstObject->GetID();
-    payload.robotID = robot->GetID();
     robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
   }
 
@@ -712,6 +723,12 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   // the movement, in case we want to easily remove the checks above but keep this one.
   if(isCarryingObject)
   {
+    // If carried object is moving, don't ignore stopped messages.
+    if (!GetIsMoving<PayloadType>() && firstObject->IsMoving()) {
+      const_cast<ObservableObject*>(firstObject)->SetIsMoving(false, payload.timestamp);
+      robot->GetContext()->GetVizManager()->SendObjectMovingState(activeID, firstObject->IsMoving());
+    }
+    
     // TODO: Consider _not_ ignoring carried object movement if the robot is _not_ moving
     //       (This doesn't "just work" with an IsMoving check because of timing not matching.)
     // if( robot->GetMoveComponent().IsMoving() )
@@ -731,6 +748,22 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
                           object->GetID().GetValue(),
                           object->GetPose().FindOrigin().GetName().c_str());
     }
+    
+    // We expect carried objects to move, so don't mark them as dirty/inaccurate.
+    // Their pose state should remain accurate/known because they are attached to
+    // the lift. I'm leaving this a separate check from the decision about broadcasting
+    // the movement, in case we want to easily remove the checks above but keep this one.
+    if(isCarryingObject)
+    {
+      // If carried object is moving, don't ignore stopped messages.
+      if (GetIsMoving<PayloadType>() || !object->IsMoving()) {
+        // TODO: Consider _not_ ignoring carried object movement if the robot is _not_ moving
+        //       (This doesn't "just work" with an IsMoving check because of timing not matching.)
+        // if( robot->GetMoveComponent().IsMoving() )
+        continue;
+      }
+    }
+    
     
     if(GetIsMoving<PayloadType>() && object->IsPoseStateKnown())
     {
@@ -755,7 +788,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
         // Note we are still "localized" by odometry, however.
         if(robot->GetLocalizedTo() == object->GetID())
         {
-          ASSERT_NAMED(robot->IsLocalized(), MAKE_EVENT_NAME("BadIsLocalizedCheck"));
+          DEV_ASSERT(robot->IsLocalized(), MAKE_EVENT_NAME("BadIsLocalizedCheck"));
           PRINT_NAMED_INFO(MAKE_EVENT_NAME("UnsetLocalizedToID"),
                            "Unsetting %s %d, which moved/stopped, as robot %d's localization object.",
                            ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
@@ -778,6 +811,9 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     
     // Set moving state of object (in any frame)
     object->SetIsMoving(GetIsMoving<PayloadType>(), payload.timestamp);
+    
+    // Viz update
+    robot->GetContext()->GetVizManager()->SendObjectMovingState(activeID, object->IsMoving());
     
   } // for(ObservableObject* object : matchingObjects)
                            
@@ -842,6 +878,9 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
                    object->GetID().GetValue(),
                    EnumToString(payload.upAxis));
   
+  // Viz update
+  robot->GetContext()->GetVizManager()->SendObjectUpAxisState(payload.objectID, payload.upAxis);
+  
   // Update the ID to be the blockworld ID before broadcasting
   payload.objectID = object->GetID();
   payload.robotID = robot->GetID();
@@ -870,7 +909,7 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
   Util::sEventF("RobotImplMessaging.HandleRobotStopped",
-                {{DDATA, TO_DDATA_STR(robot->GetCliffRunningVar())}},
+                {{DDATA, std::to_string(robot->GetCliffRunningVar()).c_str()}},
                 "%d", payload.reason);
   
   robot->EvaluateCliffSuspiciousnessWhenStopped();
@@ -894,7 +933,7 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
   
   if(robot->GetIsCliffReactionDisabled()){
     IActionRunner* action = new TriggerLiftSafeAnimationAction(*robot, AnimationTrigger::DroneModeCliffEvent);
-    robot->GetActionList().QueueActionNow(action);
+    robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
   }else{
     PRINT_NAMED_WARNING("Robot.HandlePotentialCliffEvent", "Got potential cliff message but not in drone mode");
     robot->GetMoveComponent().StopAllMotors();
@@ -1121,13 +1160,13 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
   }
   
   _imuLogFileStream
+  << static_cast<int>(payload.timestamp) << " "
   << payload.a.data()[0] << " "
   << payload.a.data()[1] << " "
   << payload.a.data()[2] << " "
   << payload.g.data()[0] << " "
   << payload.g.data()[1] << " "
-  << payload.g.data()[2] << " "
-  << static_cast<int>(payload.timestamp) << "\n";
+  << payload.g.data()[2] << "\n";
   
   // Close file when last chunk received
   if (payload.order == 2) {
@@ -1236,5 +1275,19 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   }
 
 }
+  
+void RobotToEngineImplMessaging::HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  ANKI_CPU_PROFILE("Robot::HandleObjectAccel");
+  
+  const auto& payload = message.GetData().Get_objectAccel();
+  const auto activeID = payload.objectID;
+  const auto& acc = payload.accel;
+  
+  //PRINT_NAMED_DEBUG("RobotToEngine.ObjectAccel.Values", "%f %f %f", acc.x, acc.y, acc.z);
+  
+  robot->GetContext()->GetVizManager()->SendObjectAccelState(activeID, acc);
+}
+  
 } // end namespace Cozmo
 } // end namespace Anki

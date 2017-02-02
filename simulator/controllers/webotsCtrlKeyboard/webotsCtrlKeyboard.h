@@ -42,7 +42,7 @@ protected:
   virtual void HandleRobotObservedPet(ExternalInterface::RobotObservedPet const& msg) override;
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg) override;
   virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg) override;
-  virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
+  virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg) override;
   virtual void HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg) override;
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) override;
   virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg) override;

@@ -50,6 +50,8 @@ namespace Vision {
     
     void EnableDisplay(bool enabled);
     
+    void SetRecognitionIsSynchronous(bool isSynchronous);
+    
     void SetFaceEnrollmentMode(FaceEnrollmentPose pose,
                                FaceID_t forFaceID = UnknownFaceID,
 															 s32 numEnrollments = -1);

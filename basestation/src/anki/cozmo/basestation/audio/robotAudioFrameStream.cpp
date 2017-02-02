@@ -41,7 +41,7 @@ RobotAudioFrameStream::~RobotAudioFrameStream()
 void RobotAudioFrameStream::PushRobotAudioFrame( AudioFrameData* audioFrame )
 {
   std::lock_guard<std::mutex> lock( _lock );
-  ASSERT_NAMED( !_isComplete, "Do NOT add key frames after the stream is set to isComplete" );
+  DEV_ASSERT(!_isComplete, "Do NOT add key frames after the stream is set to isComplete");
   _audioFrameQueue.push( audioFrame );
 }
 
@@ -49,7 +49,7 @@ void RobotAudioFrameStream::PushRobotAudioFrame( AudioFrameData* audioFrame )
 const AudioFrameData* RobotAudioFrameStream::PopRobotAudioFrame()
 {
   std::lock_guard<std::mutex> lock( _lock );
-  ASSERT_NAMED( !_audioFrameQueue.empty(), "Do Not call this methods if Key Frame Queue is empty" );
+  DEV_ASSERT(!_audioFrameQueue.empty(), "Do Not call this methods if Key Frame Queue is empty");
   AudioFrameData* audioFrame = nullptr;
   if (!_audioFrameQueue.empty())
   {

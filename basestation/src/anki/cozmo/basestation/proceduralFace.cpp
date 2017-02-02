@@ -14,6 +14,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/templateHelpers.h"
+#include "cozmo_anim_generated.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -75,7 +76,39 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
     SetParameter(eye, static_cast<ProceduralFace::Parameter>(i),eyeArray[i]);
   }
 }
-  
+
+void ProceduralFace::SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe)
+{
+  std::vector<Value> eyeParams;
+
+  auto leftEyeData = procFaceKeyframe->leftEye();
+  for (int leIdx=0; leIdx < leftEyeData->size(); leIdx++) {
+    auto leftEyeVal = leftEyeData->Get(leIdx);
+    eyeParams.push_back(leftEyeVal);
+  }
+  SetEyeArrayHelper(WhichEye::Left, eyeParams);
+
+  eyeParams.clear();
+
+  auto rightEyeData = procFaceKeyframe->rightEye();
+  for (int reIdx=0; reIdx < rightEyeData->size(); reIdx++) {
+    auto rightEyeVal = rightEyeData->Get(reIdx);
+    eyeParams.push_back(rightEyeVal);
+  }
+  SetEyeArrayHelper(WhichEye::Right, eyeParams);
+ 
+  f32 jsonFaceAngle = procFaceKeyframe->faceAngle();
+  SetFaceAngle(jsonFaceAngle);
+ 
+  f32 fbFaceCenterX = procFaceKeyframe->faceCenterX();
+  f32 fbFaceCenterY = procFaceKeyframe->faceCenterY();
+  SetFacePosition({fbFaceCenterX, fbFaceCenterY});
+ 
+  f32 fbFaceScaleX = procFaceKeyframe->faceScaleX();
+  f32 fbFaceScaleY = procFaceKeyframe->faceScaleY();
+  SetFaceScale({fbFaceScaleX, fbFaceScaleY});
+}
+
 void ProceduralFace::SetFromJson(const Json::Value &jsonRoot)
 {
   std::vector<Value> eyeParams;
@@ -136,6 +169,15 @@ void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
     SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
   }
   
+  DEV_ASSERT_MSG(FLT_GT(GetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeScaleY), 0.f),
+                 "ProceduralFace.LookAt.NegativeLeftEyeScaleY",
+                 "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
+                 yShift, yscaleLR, yscaleUD, ymax);
+  DEV_ASSERT_MSG(FLT_GT(GetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY), 0.f),
+                 "ProceduralFace.LookAt.NegativeRightEyeScaleY",
+                 "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
+                 yShift, yscaleLR, yscaleUD, ymax);
+  
   //SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
   
   // If looking down (positive y), push eyes together (IOD=interocular distance)
@@ -147,7 +189,7 @@ void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
   SetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeCenterX,  reduceIOD);
   SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeCenterX, -reduceIOD);
   
-  //PRINT_NAMED_DEBUG("ProceduraFaceParams.LookAt",
+  //PRINT_NAMED_DEBUG("ProceduralFace.LookAt",
   //                  "shift=(%.1f,%.1f), up/down scale=%.3f, left/right scale=%.3f), reduceIOD=%.3f",
   //                  xShift, yShift, yscaleUD, yscaleLR, reduceIOD);
 }

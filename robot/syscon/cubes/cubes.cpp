@@ -6,6 +6,7 @@
 #include "nrf_gpio.h"
 
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/buildTypes.h"
 
 #include "protocol.h"
 #include "hardware.h"
@@ -79,6 +80,9 @@ static unsigned int   lastSlot = MAX_ACCESSORIES;
 static bool           handshakeReceived = false;
 static int            handshakeSlot = 0;
 
+// Which slot should accelerometer data be streaming for
+static int streamAccelSlot = -1;
+
 #ifdef CUBE_HOP
 static int8_t         _wifiChannel;
 #endif
@@ -113,6 +117,7 @@ void Radio::advertise(void) {
   wasTapped = false;
   handshakeReceived = false;
   sendDiscovery = true;
+  streamAccelSlot = -1;
 
   // ==== Configure Radio
   NRF_RADIO->POWER = 1;
@@ -192,7 +197,7 @@ static void Radio::resume() {
 
   if (tx_queued) {
     // Dequeue fifo
-    radio_mainstate = UESB_STATE_PTX;    
+    radio_mainstate = UESB_STATE_PTX;
     NRF_RADIO->TASKS_TXEN  = 1;
   } else {
     radio_mainstate = UESB_STATE_PRX;
@@ -551,7 +556,22 @@ static void transmitHandshake(void) {
   target->messages_sent++;
 }
 
-static void Radio::prepare(void) {
+void Radio::sendTestPacket(void) {
+  const AdvertisePacket test_packet = {
+    0x0D0B3D09,
+    0xFF03,     // I'm a cube 3
+    0x0000,     // Don't patch me, I have them all!
+    0x06,       // I'm a pilot/production cube
+    0xFF
+  };
+
+  radio_stop();
+  tx_queued = true;
+  configure_rf((void*)&test_packet, ADVERTISE_ADDRESS, ADV_CHANNEL, sizeof(test_packet));
+  Radio::resume();
+}
+
+void Radio::prepare(void) {
   // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
     currentAccessory = 0;
@@ -650,6 +670,18 @@ extern "C" void RTC0_IRQHandler(void) {
     NRF_RTC0->CC[RESUME_COMPARE] += SCHEDULE_PERIOD;
 
     Radio::resume();
+  }
+}
+
+
+void Radio::enableAccelStreaming(unsigned int slot, bool enable)
+{
+  if (enable) {
+    if (slot < MAX_ACCESSORIES) {
+      streamAccelSlot = slot;
+    }
+  } else if (streamAccelSlot == slot) {
+    streamAccelSlot = -1;
   }
 }
 
@@ -836,6 +868,18 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
     m.robotID = 0;
     RobotInterface::SendMessage(m);
     target->isMoving = false;
+  }
+  
+  
+  // Stream accelerometer data
+  if (streamAccelSlot == id) {
+    ObjectAccel m;
+    m.timestamp = g_dataToHead.timestamp;
+    m.objectID = id;
+    m.accel.x = -az;   // Flipped for the same reason idxToUpAxis is flipped
+    m.accel.y = -ax;
+    m.accel.z = ay;
+    RobotInterface::SendMessage(m);
   }
 }
 

@@ -18,7 +18,6 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -105,7 +104,7 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   _lastMotionTime = -1000.f;
 }
 
-bool BehaviorPounceOnMotion::IsRunnableInternal(const Robot& robot) const
+bool BehaviorPounceOnMotion::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
@@ -608,7 +607,7 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(Robot& robot, void(T::*c
     });
   });
   
-  // re-set count
+  // reset count
   _motionObservedNoPounceCount = 0;
 }
   

@@ -70,6 +70,7 @@ public:
   void HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleDefaultCameraParams(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleObjectPowerLevel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   
   double GetLastImageReceivedTime() const { return _lastImageRecvTime; }
   

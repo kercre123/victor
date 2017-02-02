@@ -3,6 +3,8 @@
 #include "user_interface.h"
 #include "anki/cozmo/robot/flash_map.h"
 #include "driver/factoryData.h"
+#include "anki/cozmo/robot/buildTypes.h"
+
 
 #define RANDOM_DATA_OFFSET FACTORY_DATA_SIZE
 #define MAX_RANDOM_DATA (8*sizeof(uint32_t))
@@ -15,6 +17,10 @@ unsigned int COZMO_BUILD_DATE = 0;
 static uint32_t factoryData[FACTORY_DATA_SIZE/sizeof(uint32_t)];
 static uint32_t factoryFirmwareVersion;
 
+
+extern void NVStorage_ReadBirthCertificate(void); 
+
+
 void ICACHE_FLASH_ATTR factoryDataInit(void)
 {
   if (spi_flash_read(FACTORY_SECTOR * SECTOR_SIZE, factoryData, FACTORY_DATA_SIZE) != SPI_FLASH_RESULT_OK)
@@ -26,6 +32,10 @@ void ICACHE_FLASH_ATTR factoryDataInit(void)
     spi_flash_read(FACTORY_SECTOR * SECTOR_SIZE + RANDOM_DATA_OFFSET + 16, factoryData, 4);
   }
   spi_flash_read((FACTORY_WIFI_FW_SECTOR * SECTOR_SIZE) + 0x4A0, &factoryFirmwareVersion, sizeof(uint32_t));
+  
+#if FACTORY_BIRTH_CERTIFICATE_CHECK_ENABLED
+  NVStorage_ReadBirthCertificate();
+#endif  
 }
 
 uint32_t ICACHE_FLASH_ATTR getSerialNumber(void)

@@ -48,7 +48,31 @@ namespace Cozmo {
       // Conditions that must be met in order for this to progress when its event is fired.
       public List<GoalCondition> ProgConditions = new List<GoalCondition>();
 
+      // WARNING, since this is private, GenCondtions aren't serielized and thus aren't trustworthy if the JsonConstructor was called.
       private List<GoalCondition> GenConditions = new List<GoalCondition>();
+
+      private bool _IsInitted = false;
+
+      public void Init() {
+        if (!_IsInitted) {
+          _IsInitted = true;
+
+          // a few reasons for this nastiness that is COZMO-7851
+          // 1. We didn't save Gen Conditions so that turns out to be null if read back in and connecting to another cozmo.
+          // because of this ValidateUnlockIdGenCondition doesn't work properly so if we connect to another cozmo on the same day
+          // the goal doesn't automatically complete.
+          // 2. It's likely we always want an unlock gen condition if we set up an unlock condition.
+          // 3. Not really a better place to do this since the JSONConstructors stomps everything.
+          if (GenConditions == null && ProgConditions != null && ProgConditions.Count > 0 && ProgConditions[0] is UnlockIDCondition) {
+            UnlockIDCondition unlockCond = (UnlockIDCondition)ProgConditions[0];
+            GenConditions = new List<GoalCondition>();
+            CurrentUnlockCondition genCondUnlock = new CurrentUnlockCondition();
+            genCondUnlock.Unlocked = unlockCond.Unlocked;
+            genCondUnlock.State = UnlockableState.Available;
+            GenConditions.Add(genCondUnlock);
+          }
+        }
+      }
 
       // Generate a daily goal from parameters
       [JsonConstructor]
@@ -159,6 +183,7 @@ namespace Cozmo {
       }
 
       public void CheckAndResolveInvalidGenConditions() {
+        Init();
         // Force a daily goal complete if its gen conditions are not met but it is still
         // in your daily goal list. This should only turn up if something goes weird with unlocks.
         // Don't force complete if we haven't progressed to that point.
