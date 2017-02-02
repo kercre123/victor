@@ -9,7 +9,7 @@
 #include "uart.h"
 #include "watchdog.h"
 #include "anki/cozmo/robot/hal.h"
-
+#include "anki/cozmo/robot/buildTypes.h"
 #include "anki/cozmo/robot/spineData.h"
 
 #include "hal/portable.h"
@@ -332,8 +332,9 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void)
   int righttread = g_dataToHead.positions[0] >> 10;
 
   // Duty cycle correction - transmit one packet per 7
+  #define DUTY_CYCLE_EN 0
   static u8 toggle = 0;
-  if (toggle == 6) {
+  if (toggle == 6 || (DUTY_CYCLE_EN < 1)) {
     configureTest(current_mode, 1);
     toggle = 0;
   } else {
