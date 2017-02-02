@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define FCC_VERSION "c85"   // This must match fixture version, to help the factory keep in sync
+#define FCC_VERSION "c86"   // This must match fixture version, to help the factory keep in sync
 
 #include "fcc.h"
 #include "i2c.h"
