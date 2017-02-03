@@ -26,7 +26,6 @@
 #include <fstream>
 
 #if ANKI_DEV_CHEATS
-#include "anki/cozmo/basestation/debug/cladLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "util/fileUtils/fileUtils.h"
@@ -103,7 +102,6 @@ int main(int argc, char **argv)
   
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger"), "mac");
-  Util::IFormattedLoggerProvider* unityLoggerProvider = new CLADLoggerProvider();
 #endif
 
   // - create and set logger
@@ -111,7 +109,6 @@ int main(int argc, char **argv)
   Anki::Util::MultiFormattedLoggerProvider loggerProvider({
     printfLoggerProvider
 #if ANKI_DEV_CHEATS
-    ,unityLoggerProvider
     , new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
             Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
@@ -145,10 +142,6 @@ int main(int argc, char **argv)
     
     // also parse additional info for providers
     printfLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
-#if ANKI_DEV_CHEATS
-    unityLoggerProvider->SetFilter(filterPtr);
-    unityLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
-#endif
   }
   else
   {
