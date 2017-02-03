@@ -105,8 +105,8 @@ void CubePOST(void)
   // Cubes blink 16 LEDs + 1 LED per type (1, 2, or 3) - chargers blink 11 LEDs
   int on = 0, blinks = 0, sample = 0, peak = 0, current = 0, avgpeak = 0;
   #if CUBE_TEST_DEBUG > 0
-  #define HISTORY_LEN 3000
-  static s32 sample_history[HISTORY_LEN];
+  #define HISTORY_LEN 30000
+  static s8 sample_history[HISTORY_LEN];
   memset( &sample_history, 0, sizeof(sample_history) );
   int imax=0, imin=9999, absdiffmax=0;
   #endif
@@ -131,7 +131,7 @@ void CubePOST(void)
     #if CUBE_TEST_DEBUG > 0
     #define ABS(x)  ( (x)>=0 ? (x) : -(x) )
     if( sample < HISTORY_LEN )
-      sample_history[sample] = current;// > 32000 ? 32001 : current < -32000 ? -32001 : current;
+      sample_history[sample] = current > 99 ? 111 : current < -99 ? -111 : current;
     if( current > imax ) //save current maximum for entire sampling procedure
       imax = current;
     if( current < imin ) //save current minimum
@@ -183,8 +183,8 @@ void CubePOST(void)
   #if CUBE_TEST_DEBUG > 0
   ConsolePrintf("debug: imax=%d,imin=%d,absdiffmax=%d\r\n", imax, imin, absdiffmax);
   ConsolePrintf("sample_history(%d):\r\n", sample);
-  for( int x=0; x<sample; x++ )
-    ConsolePrintf("%i,", sample_history[x]);
+  for( int x=0; x < (sample > HISTORY_LEN ? HISTORY_LEN : sample) ; x++ )
+      ConsolePrintf("%i,", sample_history[x]);
   ConsolePrintf("\r\n");
   #endif
   
