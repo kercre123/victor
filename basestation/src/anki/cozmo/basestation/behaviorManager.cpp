@@ -100,7 +100,7 @@ struct BehaviorRunningAndResumeInfo{
     _currentReactionType = trigger;
   }
   
-  ReactionTrigger GetCurrentReactionTrigger(){ return _currentReactionType;}
+  ReactionTrigger GetCurrentReactionTrigger() const{ return _currentReactionType;}
   
 private:
   // only one behavior should be active at a time
@@ -313,19 +313,19 @@ Result BehaviorManager::CreateBehaviorFromConfiguration(const Json::Value& behav
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const IBehavior* BehaviorManager::GetCurrentBehavior() const{
-  return _runningAndResumeInfo->GetCurrentBehavior();
+  return GetRunningAndResumeInfo().GetCurrentBehavior();
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BehaviorManager::CurrentBehaviorTriggeredAsReaction() const
 {
-  return _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
+  return GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTrigger BehaviorManager::GetCurrentReactionTrigger() const
 {
-  return _runningAndResumeInfo->GetCurrentReactionTrigger();
+  return GetRunningAndResumeInfo().GetCurrentReactionTrigger();
 }
   
 
@@ -353,7 +353,7 @@ void BehaviorManager::SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo)
 {
-  BehaviorRunningAndResumeInfo oldInfo = *_runningAndResumeInfo;
+  BehaviorRunningAndResumeInfo oldInfo = GetRunningAndResumeInfo();
   IBehavior* nextBehavior = nextBehaviorInfo.GetCurrentBehavior();
 
   StopAndNullifyCurrentBehavior();
@@ -376,8 +376,8 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBeh
            VizInterface::NewBehaviorSelected( nextBehavior->GetName() )));
   }
   
-  *_runningAndResumeInfo = nextBehaviorInfo;
-  SendDasTransitionMessage(oldInfo, *_runningAndResumeInfo);
+  SetRunningAndResumeInfo(nextBehaviorInfo);
+  SendDasTransitionMessage(oldInfo, GetRunningAndResumeInfo());
   
   return initSuccess;
 }
@@ -430,14 +430,14 @@ bool BehaviorManager::SwitchToReactionTrigger(IReactionTriggerStrategy& triggerS
   if(triggerStrategy.ShouldResumeLastBehavior()){
     // if this is the first reactionary behavior, set the current scored behavior as
     // the behavior to resume
-    if(nullptr == _runningAndResumeInfo->GetBehaviorToResume() &&
-       nullptr != _runningAndResumeInfo->GetCurrentBehavior()){
-      newBehaviorInfo.SetBehaviorToResume(_runningAndResumeInfo->GetCurrentBehavior());
+    if(nullptr == GetRunningAndResumeInfo().GetBehaviorToResume() &&
+       nullptr != GetRunningAndResumeInfo().GetCurrentBehavior()){
+      newBehaviorInfo.SetBehaviorToResume(GetRunningAndResumeInfo().GetCurrentBehavior());
     }
     
     // if this is after the first reaction, pass the behavior to resume along
-    if(nullptr != _runningAndResumeInfo->GetBehaviorToResume()){
-      newBehaviorInfo.SetBehaviorToResume(_runningAndResumeInfo->GetBehaviorToResume());
+    if(nullptr != GetRunningAndResumeInfo().GetBehaviorToResume()){
+      newBehaviorInfo.SetBehaviorToResume(GetRunningAndResumeInfo().GetBehaviorToResume());
     }
   }
   
@@ -462,21 +462,21 @@ std::set<IBehavior*> BehaviorManager::GetBehaviorsForReactionTrigger(ReactionTri
 void BehaviorManager::ChooseNextScoredBehaviorAndSwitch()
 {
   // we can't call ChooseNextBehaviorAndSwitch while there's a behavior to resume pending. Call TryToResumeBehavior instead
-  DEV_ASSERT(_runningAndResumeInfo->GetBehaviorToResume() == nullptr,
+  DEV_ASSERT(GetRunningAndResumeInfo().GetBehaviorToResume() == nullptr,
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CalledWithResumeBehaviorPending");
 
   // shouldn't call ChooseNextBehaviorAndSwitch after a reactionary. Call TryToResumeBehavior instead
-  DEV_ASSERT(_runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger,
+  DEV_ASSERT(GetRunningAndResumeInfo().GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger,
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CantSelectAfterReactionary");
 
   // the current behavior has to be running. Otherwise current should be nullptr
-  DEV_ASSERT(_runningAndResumeInfo->GetCurrentBehavior() == nullptr ||
-             _runningAndResumeInfo->GetCurrentBehavior()->IsRunning(),
+  DEV_ASSERT(GetRunningAndResumeInfo().GetCurrentBehavior() == nullptr ||
+             GetRunningAndResumeInfo().GetCurrentBehavior()->IsRunning(),
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CurrentBehaviorIsNotRunning");
  
   // ask the current chooser for the next behavior
-  IBehavior* nextBehavior = _currentChooserPtr->ChooseNextBehavior(_robot, _runningAndResumeInfo->GetCurrentBehavior());
-  if(nextBehavior != _runningAndResumeInfo->GetCurrentBehavior()){
+  IBehavior* nextBehavior = _currentChooserPtr->ChooseNextBehavior(_robot, GetRunningAndResumeInfo().GetCurrentBehavior());
+  if(nextBehavior != GetRunningAndResumeInfo().GetCurrentBehavior()){
     BehaviorRunningAndResumeInfo scoredInfo;
     scoredInfo.SetCurrentBehavior(nextBehavior);
     SwitchToBehaviorBase(scoredInfo);
@@ -500,25 +500,16 @@ void BehaviorManager::TryToResumeBehavior()
     _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
                                        new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
   }
-  
-  // reset features disabled during reactions and update the game
-  _robot.GetExternalInterface()->BroadcastToGame<
-                                   ExternalInterface::ReactionaryBehaviorTransition>(
-                                    _runningAndResumeInfo->GetCurrentReactionTrigger(), false);
-  _robot.GetMoveComponent().IgnoreDirectDriveMessages(false);
-  _robot.SetIgnoreExternalActions(false);
-  
-  
     
-  if ( _runningAndResumeInfo->GetBehaviorToResume() != nullptr)
+  if ( GetRunningAndResumeInfo().GetBehaviorToResume() != nullptr)
   {
     StopAndNullifyCurrentBehavior();
     ReactionTrigger resumingFromTrigger = ReactionTrigger::NoneTrigger;
-    if(nullptr != _runningAndResumeInfo->GetCurrentBehavior()){
-      resumingFromTrigger = _runningAndResumeInfo->GetCurrentReactionTrigger();
+    if(nullptr != GetRunningAndResumeInfo().GetCurrentBehavior()){
+      resumingFromTrigger = GetRunningAndResumeInfo().GetCurrentReactionTrigger();
     }
     
-    IBehavior* behaviorToResume = _runningAndResumeInfo->GetBehaviorToResume();
+    IBehavior* behaviorToResume = GetRunningAndResumeInfo().GetBehaviorToResume();
     const Result resumeResult =  behaviorToResume->Init();//behaviorToResume->Resume(resumingFromType);
     if( resumeResult == RESULT_OK )
     {
@@ -527,8 +518,8 @@ void BehaviorManager::TryToResumeBehavior()
       // the behavior can resume, set as current again
       BehaviorRunningAndResumeInfo newBehaviorInfo;
       newBehaviorInfo.SetCurrentBehavior(behaviorToResume);
-      SendDasTransitionMessage(*_runningAndResumeInfo, newBehaviorInfo);
-      *_runningAndResumeInfo = newBehaviorInfo;
+      SendDasTransitionMessage(GetRunningAndResumeInfo(), newBehaviorInfo);
+      SetRunningAndResumeInfo(newBehaviorInfo);
       // Successfully resumed the previous behavior, return here
       return;
     }
@@ -540,14 +531,31 @@ void BehaviorManager::TryToResumeBehavior()
   }
   
   // we didn't resume, clear the resume behavior because we won't want to resume it after the next behavior
-  _runningAndResumeInfo->SetBehaviorToResume(nullptr);
+  GetRunningAndResumeInfo().SetBehaviorToResume(nullptr);
   
   // we did not resume, clear current behavior
   BehaviorRunningAndResumeInfo nullInfo;
   SwitchToBehaviorBase( nullInfo );
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo& newInfo)
+{
+  // Switching to or from a reaction - update properties
+  if(newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger &&
+     _runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger)
+  {
+    UpdateRobotPropertiesForReaction(true);
+  }else if(newInfo.GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger &&
+    _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
+  {
+    UpdateRobotPropertiesForReaction(false);
+  }
+  
+  *_runningAndResumeInfo = newInfo;
+}
+  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RequestEnableReactionTrigger(const std::string& requesterID, ReactionTrigger trigger, bool enable)
@@ -604,7 +612,7 @@ Result BehaviorManager::Update(Robot& robot)
   
 
   const bool currentBehaviorIsReactionary =
-                (_runningAndResumeInfo->GetCurrentReactionTrigger() !=
+                (GetRunningAndResumeInfo().GetCurrentReactionTrigger() !=
                  ReactionTrigger::NoneTrigger);
   if(!currentBehaviorIsReactionary)
   {
@@ -614,7 +622,7 @@ Result BehaviorManager::Update(Robot& robot)
   // Allow reactionary behaviors to request a switch without a message
   CheckReactionTriggerStrategies();
   
-  IBehavior* activeBehavior = _runningAndResumeInfo->GetCurrentBehavior();
+  IBehavior* activeBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
   if (activeBehavior !=  nullptr) {
     
     // We have a current behavior, update it.
@@ -688,7 +696,7 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
     SwitchToBehaviorBase(nullInfo);
   }
   
-  _runningAndResumeInfo->SetBehaviorToResume(nullptr);
+  GetRunningAndResumeInfo().SetBehaviorToResume(nullptr);
   
   // ensure sparks are reset when the chooser changes
   _activeSpark = UnlockId::Count;
@@ -733,13 +741,13 @@ void BehaviorManager::RequestCurrentBehaviorEndImmediately(const std::string& st
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::StopAndNullifyCurrentBehavior()
 {
-  IBehavior* currentBehavior = _runningAndResumeInfo->GetCurrentBehavior();
+  IBehavior* currentBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
   
   if ( nullptr != currentBehavior && currentBehavior->IsRunning() ) {
     currentBehavior->Stop();
   }
   
-  _runningAndResumeInfo->SetCurrentBehavior(nullptr);
+  GetRunningAndResumeInfo().SetCurrentBehavior(nullptr);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -753,7 +761,7 @@ void BehaviorManager::CheckReactionTriggerStrategies()
     
     
     const bool shouldCheckStrategy = !rBehavior->IsRunning() || strategy.CanInterruptSelf();
-    const bool canInterruptBehavior =  (_runningAndResumeInfo->GetCurrentReactionTrigger()
+    const bool canInterruptBehavior =  (GetRunningAndResumeInfo().GetCurrentReactionTrigger()
                                            == ReactionTrigger::NoneTrigger) ||
                                        strategy.CanTriggerWhileTriggeredBehaviorRunning();
 
@@ -762,7 +770,6 @@ void BehaviorManager::CheckReactionTriggerStrategies()
        strategy.IsReactionEnabled() &&
        strategy.ShouldTriggerBehavior(_robot, rBehavior)){
         
-        _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(strategy.GetReactionTrigger(), true);
         _robot.AbortAll();
         
         if(_robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&
@@ -772,12 +779,6 @@ void BehaviorManager::CheckReactionTriggerStrategies()
                               "Some tracks are locked, unlocking them");
           _robot.GetMoveComponent().CompletelyUnlockAllTracks();
         }
-        
-        // During reactions prevent DirectDrive messages and external action queueing messages
-        // from doing anything
-        _robot.GetMoveComponent().IgnoreDirectDriveMessages(true);
-        _robot.SetIgnoreExternalActions(true);
-      
       
         const bool successfulSwitch = SwitchToReactionTrigger(strategy, rBehavior);
    
@@ -800,6 +801,20 @@ void BehaviorManager::CheckReactionTriggerStrategies()
         hasAlreadySwitchedThisTick = true;
     }
   }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::UpdateRobotPropertiesForReaction(bool enablingReaction)
+{
+  // During reactions prevent DirectDrive messages and external action queueing messages
+  // from doing anything
+  _robot.GetExternalInterface()->BroadcastToGame<
+                                   ExternalInterface::ReactionaryBehaviorTransition>(
+                                    GetRunningAndResumeInfo().GetCurrentReactionTrigger(), enablingReaction);
+  _robot.GetMoveComponent().IgnoreDirectDriveMessages(enablingReaction);
+  _robot.SetIgnoreExternalActions(enablingReaction);
+  
 }
 
 
@@ -926,7 +941,7 @@ void BehaviorManager::EnableAllReactionTriggers(const std::string& requesterID, 
     _robot.GetBehaviorManager().RequestEnableReactionTrigger(requesterID, type, isEnabled);
   }
   
-  const bool activeBehaviorIsReactionary = _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
+  const bool activeBehaviorIsReactionary = GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
   if(stopCurrent && !isEnabled && activeBehaviorIsReactionary)
   {
     PRINT_CH_INFO("ReactionTriggers",
@@ -940,8 +955,8 @@ void BehaviorManager::EnableAllReactionTriggers(const std::string& requesterID, 
   
 void BehaviorManager::RequestCurrentBehaviorEndOnNextActionComplete()
 {
-  if(nullptr != _runningAndResumeInfo->GetCurrentBehavior()){
-    _runningAndResumeInfo->GetCurrentBehavior()->StopOnNextActionComplete();
+  if(nullptr != GetRunningAndResumeInfo().GetCurrentBehavior()){
+    GetRunningAndResumeInfo().GetCurrentBehavior()->StopOnNextActionComplete();
   }
 }
 
@@ -965,9 +980,9 @@ void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
   }
   
   // We can only interrupt the react to double tap reactionary behavior
-  const bool activeBehaviorIsReactionary = _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
+  const bool activeBehaviorIsReactionary = GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
   if(activeBehaviorIsReactionary &&
-      _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected)
+      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected)
   {
     PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.InReaction",
                   "Currently in reaction not switching to double tap");
@@ -1046,7 +1061,7 @@ void BehaviorManager::UpdateTappedObject()
   // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running) then give up and
   // leave object tap interaction
   if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent() &&
-     _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected &&
+     GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected &&
      _tapInteractionDisabledIDs.empty())
   {
     const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_currDoubleTappedObject);
@@ -1102,10 +1117,10 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
   // Otherwise we are already in the ObjectTapInteraction goal
   else
   {
-    bool currentBehaviorIsNoneBehavior = _runningAndResumeInfo->GetCurrentBehavior() == nullptr ||
-             _runningAndResumeInfo->GetCurrentBehavior()->GetClass() == BehaviorClass::NoneBehavior;
+    bool currentBehaviorIsNoneBehavior = GetRunningAndResumeInfo().GetCurrentBehavior() == nullptr ||
+             GetRunningAndResumeInfo().GetCurrentBehavior()->GetClass() == BehaviorClass::NoneBehavior;
     
-    IBehavior* activeBehavior = _runningAndResumeInfo->GetCurrentBehavior();
+    IBehavior* activeBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
     // The current behavior of the goal is not NoneBehavior
     if(nullptr != activeBehavior && !currentBehaviorIsNoneBehavior)
     {
@@ -1122,12 +1137,12 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
         
         // If the current behavior is a reactionary behavior (ReactToDoubleTap) then
         // make sure to update _runningReactionaryBehavior and try to resume the last behavior
-        if(_runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
+        if(GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
         {
           // The only possible reactionary behavior that can be interrupted with a double tap is
           // ReactToDouble
 
-          DEV_ASSERT(_runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::DoubleTapDetected,
+          DEV_ASSERT(GetRunningAndResumeInfo().GetCurrentReactionTrigger() == ReactionTrigger::DoubleTapDetected,
                      "Current reactionary behavior should only be ReactToDoubleTap");
 
           TryToResumeBehavior();
@@ -1179,14 +1194,14 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
             BehaviorRunningAndResumeInfo reactionaryInfo;
             reactionaryInfo.SetCurrentBehavior(reactToDoubleTap);
             reactToDoubleTap->Init();
-            *_runningAndResumeInfo = reactionaryInfo;
+            SetRunningAndResumeInfo(reactionaryInfo);
             return;
           }
         }
         
         // This will cause the current tapInteraction behavior to end and a new one to be picked
         BehaviorRunningAndResumeInfo nullInfo;
-        *_runningAndResumeInfo = nullInfo;
+        SetRunningAndResumeInfo(nullInfo);
         return;
       }
     }

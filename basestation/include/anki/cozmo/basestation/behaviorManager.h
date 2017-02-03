@@ -64,7 +64,6 @@ static const f32 kIgnoreDefaultHeadAndLiftState = FLT_MAX;
 class BehaviorManager
 {
 public:
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -199,7 +198,6 @@ private:
   bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehavior* nextBehavior);
   bool SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo);
   
-  
   std::set<IBehavior*> GetBehaviorsForReactionTrigger(ReactionTrigger trigger);
   
   // checks the chooser and switches to a new behavior if neccesary
@@ -212,8 +210,12 @@ private:
   // stop the current behavior if it is non-null and running (i.e. Init was called)
   void StopAndNullifyCurrentBehavior();
   
-  //Allow reactionary behaviors to request a switch without a message
+  // Allow reactionary behaviors to request a switch without a message
   void CheckReactionTriggerStrategies();
+  
+  // Centeralized function for robot properties that are toggled between reactions
+  // and normal robot opperation
+  void UpdateRobotPropertiesForReaction(bool enablingReaction);
 
   void SendDasTransitionMessage(const BehaviorRunningAndResumeInfo& oldBehaviorInfo,
                                 const BehaviorRunningAndResumeInfo& newBehaviorInfo);
@@ -227,6 +229,11 @@ private:
   
   // update current behavior with the new tapped object
   void UpdateBehaviorWithObjectTapInteraction();
+  
+  // Functions which mediate direct access to running/resume info so that the robot
+  // can respond appropriately to switching between reactions/resumes
+  BehaviorRunningAndResumeInfo& GetRunningAndResumeInfo() const {assert(_runningAndResumeInfo); return *_runningAndResumeInfo;}
+  void SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo& newInfo);
 
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -245,6 +252,7 @@ private:
   // current running behavior
   // - - - - - - - - - - - - - - -
   
+  // PLEASE DO NOT ACCESS OR ASSIGN TO DIRECTLY - use functions above
   std::unique_ptr<BehaviorRunningAndResumeInfo> _runningAndResumeInfo;
 
   // current behavior chooser (weak_ptr pointing to one of the others)
