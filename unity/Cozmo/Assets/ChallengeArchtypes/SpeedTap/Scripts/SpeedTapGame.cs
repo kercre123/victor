@@ -64,6 +64,8 @@ namespace SpeedTap {
 
     public float TapResolutionDelay { get; private set; }
 
+    public Color Player2Tint { get; private set; }
+
     #endregion
 
     private Vector3 _CozmoPos;
@@ -148,6 +150,7 @@ namespace SpeedTap {
       MaxIdleInterval_percent = speedTapConfig.MaxIdleInterval_percent;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
       TapResolutionDelay = speedTapConfig.TapResolutionDelay;
+      Player2Tint = speedTapConfig.Player2Tint;
 
       CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
       MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
@@ -260,7 +263,7 @@ namespace SpeedTap {
           }
           else if (numHumans >= 2) {
             playerInfo.scoreWidget = SharedMinigameView.Player2Scoreboard;
-            playerInfo.scoreWidget.PortraitColor = Color.magenta;
+            playerInfo.scoreWidget.PortraitColor = Player2Tint;
           }
           else {
             playerInfo.scoreWidget = SharedMinigameView.PlayerScoreboard;

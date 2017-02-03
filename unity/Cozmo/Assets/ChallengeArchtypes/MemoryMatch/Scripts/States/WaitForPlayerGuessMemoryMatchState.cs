@@ -136,6 +136,8 @@ namespace MemoryMatch {
 
       _GameInstance.BlinkLight(id, MemoryMatchGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(id));
 
+      // Cancel previous action so we can update to a new one
+      _CurrentRobot.CancelAction(RobotActionType.TURN_TOWARDS_OBJECT);
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
       _CurrentRobot.TurnTowardsObject(cube, false, MemoryMatchGame.kTurnSpeed_rps, MemoryMatchGame.kTurnAccel_rps2,
                                       null, QueueActionPosition.IN_PARALLEL);
