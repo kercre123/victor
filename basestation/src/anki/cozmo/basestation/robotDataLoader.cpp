@@ -189,16 +189,14 @@ void RobotDataLoader::CollectAnimFiles()
   
   // cube light animations
   {
-    TimestampMap timestamps;
-    WalkAnimationDir("config/basestation/lights/cubeLights", timestamps, [this] (const std::string& filename) {
+    WalkAnimationDir("config/basestation/lights/cubeLights", _cubeLightAnimFileTimestamps, [this] (const std::string& filename) {
       _jsonFiles[FileType::CubeLightAnimation].push_back(filename);
     });
   }
   
   // backpack light animations
   {
-    TimestampMap timestamps;
-    WalkAnimationDir("config/basestation/lights/backpackLights", timestamps, [this] (const std::string& filename) {
+    WalkAnimationDir("config/basestation/lights/backpackLights", _backpackLightAnimFileTimestamps, [this] (const std::string& filename) {
       _jsonFiles[FileType::BackpackLightAnimation].push_back(filename);
     });
   }
@@ -238,21 +236,22 @@ void RobotDataLoader::LoadAnimationsInternal()
   MyDispatchWorker myWorker(loadFileFunc);
 
   const auto& fileList = _jsonFiles[FileType::Animation];
-  const auto size = fileList.size();
+  unsigned long size = fileList.size();
   for (int i = 0; i < size; i++) {
     myWorker.PushJob(fileList[i]);
     //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
   }
-  _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
-  myWorker.Process();
   
 #if ANKI_DEV_CHEATS
   std::string test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
   if (Util::FileUtils::FileExists(test_anim)) {
-    LoadAnimationFile(test_anim);
-    PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationsInternal", "Loaded %s", test_anim.c_str());
+    myWorker.PushJob(test_anim);
+    size += 1;
   }
 #endif
+
+  _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
+  myWorker.Process();
 
   ProceduralFace::EnableClippingWarning(true);
 
@@ -422,11 +421,18 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
     if (success && !animDefs.empty()) {
       std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
       _cannedAnimations->DefineFromJson(animDefs, animationId);
-      if(path.find(animationId) == std::string::npos) {
-        PRINT_NAMED_WARNING("RobotDataLoader.LoadAnimationFile.AnimationNameMismatch",
-                            "Animation name '%s' does not match seem to match "
-                            "filename '%s'", animationId.c_str(), path.c_str());
-      }
+
+      // TODO: This warning is useful, but it causes a crash when we use the current mechanism for
+      //       animators to preview their work in Maya on the robot. We plan on changing that
+      //       preview-on-robot to use the SDK, so this warning should be tested and potentially
+      //       enabled after that. See COZMO-9251 for some related info (nishkar, 2/2/2017).
+      //
+      //if(path.find(animationId) == std::string::npos) {
+      //  PRINT_NAMED_WARNING("RobotDataLoader.LoadAnimationFile.AnimationNameMismatch",
+      //                      "Animation name '%s' does not seem to match filename '%s'",
+      //                      animationId.c_str(), path.c_str());
+      //}
+
     }
   }
   AddToLoadingRatio(_perAnimationLoadingRatio);
