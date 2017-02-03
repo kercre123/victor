@@ -369,6 +369,7 @@ enum int_32 CubeAnimationTrigger
   SpeedTapLose,
   Visible,
   WakeUp,
+  Workout,
 
   Count
 }

@@ -99,6 +99,9 @@ void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
 {
   // restore previous idle
   robot.GetAnimationStreamer().PopIdleAnimation();
+  
+  // Ensure the cube workout lights are not set
+  robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Workout, _targetBlockID);
 }
 
 IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(Robot& robot)
@@ -149,6 +152,9 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
 
   static const u8 kNumRetries = 2;
   RetryWrapperAction* action = new RetryWrapperAction(robot, driveToBlockAction, retryCallback, kNumRetries);
+
+  // Set the cube lights to the workout lights
+  robot.GetCubeLightComponent().PlayLightAnim(_targetBlockID, CubeAnimationTrigger::Workout);
 
   StartActing(action, [this,&robot](const ExternalInterface::RobotCompletedAction& completion) {
       ActionResult res = completion.result;
@@ -285,6 +291,9 @@ void BehaviorCubeLiftWorkout::TransitionToPuttingDown(Robot& robot)
 
 void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(Robot& robot)
 {
+  // Stop the workout cube lights as soon as we think we have put the cube down
+  robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Workout, _targetBlockID);
+
   // if we still think we are carrying the object, see if we can find it
   if( robot.IsCarryingObject() ) {
 

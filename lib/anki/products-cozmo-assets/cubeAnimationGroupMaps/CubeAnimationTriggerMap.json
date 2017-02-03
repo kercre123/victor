@@ -83,6 +83,10 @@
         {
             "CladEvent": "WakeUp",
             "AnimName": "wakeUp"
+        },
+        {
+            "CladEvent": "Workout",
+            "AnimName": "workout"
         }
     ]
 }
