@@ -28,7 +28,7 @@ public:
   virtual bool ShouldResumeLastBehavior() const override { return false;}
 
   virtual bool CanTriggerWhileTriggeredBehaviorRunning() const override { return false; }
-  virtual void BehaviorThatStartegyWillTrigger(IBehavior* behavior) override;
+  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;
   virtual void AnimationComplete() override;
   
 private:

@@ -215,7 +215,7 @@ protected:
   virtual Result ResumeInternal(Robot& robot);
   bool IsResuming() { return _isResuming;}
 
-  // To keep passing through data generic, if robot is not overriden
+  // To keep passing through data generic, if robot is not overridden
   // check the NoPreReqs IsRunnableInternal
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData ) const
                  { BehaviorPreReqNone noPreReqs;  return IsRunnableInternal(noPreReqs);}

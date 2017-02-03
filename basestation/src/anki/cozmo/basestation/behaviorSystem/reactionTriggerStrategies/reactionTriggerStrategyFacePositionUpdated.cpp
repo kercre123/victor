@@ -173,7 +173,7 @@ void ReactionTriggerStrategyFacePositionUpdated::AlwaysHandlePoseBasedInternal(c
   }
 }
 
-void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStartegyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
 {
   behavior->AddListener(this);
 }

@@ -38,7 +38,7 @@ public:
 
   
 protected:
-  virtual void BehaviorThatStartegyWillTrigger(IBehavior* behavior) override;
+  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;
   
 private:
   Robot& _robot;

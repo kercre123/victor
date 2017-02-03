@@ -43,7 +43,7 @@ public:
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
 protected:
-  // Default configuration parameters which can be overriden by JSON config
+  // Default configuration parameters which can be overridden by JSON config
   struct AcknowledgeConfigParams {
     AnimationTrigger reactionAnimTrigger   = AnimationTrigger::Count;
     Radians     maxTurnAngle_rad           = DEG_TO_RAD_F32(45.f);

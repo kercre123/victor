@@ -117,7 +117,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::AlwaysHandlePoseBasedInternal
   
 }
 
-void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStartegyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
 {
   behavior->AddListener(this);
   _classTriggerMapsTo = behavior->GetClass();

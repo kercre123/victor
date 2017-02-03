@@ -942,7 +942,7 @@ void IBehavior::StopWithoutImmediateRepetitionPenalty()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
+// EvaluateScoreInternal is virtual and can optionally be overridden by subclasses
 float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 {
   float score = _flatScore;
@@ -954,10 +954,10 @@ float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
+// EvaluateScoreInternal is virtual and can optionally be overridden by subclasses
 float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 {
-  // unless specifically overriden it should mimic the non-running score
+  // unless specifically overridden it should mimic the non-running score
   const float nonRunningScore = EvaluateScoreInternal(robot);
   return nonRunningScore;
 }

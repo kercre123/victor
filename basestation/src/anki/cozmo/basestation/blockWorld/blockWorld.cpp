@@ -2946,7 +2946,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const bool isUsableAndFarFromPrev = !isNewUnknown &&
       ( !info.isInMap || (!newPose.IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
       
-      // if new one is Unknown or far, we want to remove the old one, since it's being cleared or overriden
+      // if new one is Unknown or far, we want to remove the old one, since it's being cleared or overridden
       const bool removeOld = ( isNewUnknown || isUsableAndFarFromPrev );
       if ( removeOld ) {
         RemoveObjectReportFromMemMap(*object, curOrigin);

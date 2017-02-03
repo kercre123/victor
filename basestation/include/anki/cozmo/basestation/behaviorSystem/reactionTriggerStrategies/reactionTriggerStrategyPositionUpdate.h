@@ -36,7 +36,7 @@ public:
   void ResetReactionData();
     
 protected:
-  // Default configuration parameters which can be overriden by JSON config
+  // Default configuration parameters which can be overridden by JSON config
   struct StrategyParams {
     Radians     samePoseAngleThreshold_rad = DEG_TO_RAD_F32(45.f);
     TimeStamp_t coolDownDuration_ms        = 600000; // time since last seen (in same pose) before re-reaction

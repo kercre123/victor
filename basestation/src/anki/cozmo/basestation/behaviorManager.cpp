@@ -290,7 +290,7 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
                          "Strategy %s maps to behavior %s",
                          strategy->GetName().c_str(), behavior->GetName().c_str());
 
-        strategy->BehaviorThatStartegyWillTrigger(behavior);
+        strategy->BehaviorThatStrategyWillTrigger(behavior);
         _reactionTriggerMap.push_back(
             std::make_pair(std::unique_ptr<IReactionTriggerStrategy>(strategy), behavior));
       }

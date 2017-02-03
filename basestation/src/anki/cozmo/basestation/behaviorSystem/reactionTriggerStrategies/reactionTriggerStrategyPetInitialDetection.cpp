@@ -123,7 +123,7 @@ bool ReactionTriggerStrategyPetInitialDetection::RecentlyReacted() const
 }
   
   
-void ReactionTriggerStrategyPetInitialDetection::BehaviorThatStartegyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyPetInitialDetection::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
 {
   behavior->AddListener(this);
 }

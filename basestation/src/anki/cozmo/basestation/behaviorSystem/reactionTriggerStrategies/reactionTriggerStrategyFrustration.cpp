@@ -65,7 +65,7 @@ bool ReactionTriggerStrategyFrustration::ShouldTriggerBehavior(const Robot& robo
   return false;
 }
 
-void ReactionTriggerStrategyFrustration::BehaviorThatStartegyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyFrustration::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
 {
   behavior->AddListener(this);
 }

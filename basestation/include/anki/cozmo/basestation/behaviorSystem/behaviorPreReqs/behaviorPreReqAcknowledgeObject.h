@@ -4,7 +4,7 @@
  * Author: Kevin M. Karol
  * Created: 12/09/16
  *
- * Description: Defines pre requisites that can be passed into
+ * Description: Defines prerequisites that can be passed into
  * AcknowledgeObject behavior's isRunnable()
  *
  * Copyright: Anki, Inc. 2016
