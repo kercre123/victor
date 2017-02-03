@@ -1,26 +1,27 @@
 {
   "RewardedActions": [
     {
-      "Id": 38,
+      "Id": 42,
       "RewardEvent": {
-        "Value": "OnNewHighScore"
+        "Value": "OnChallengeComplete"
       },
-      "Tag": "HighScore",
+      "Tag": "",
       "EventConditions": [
         {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 3,
+          "compareType": "GREATER_INCLUSIVE",
           "Label": {
-            "text": "Challenge ID Condition",
+            "text": "Number Of Players Condition",
             "image": null,
             "tooltip": ""
           }
         },
         {
-          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 1,
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
-            "text": "Challenge Difficulty Condition",
+            "text": "Challenge ID Condition",
             "image": null,
             "tooltip": ""
           }
@@ -28,136 +29,8 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 20,
-        "DescriptionKey": "reward.description.MemoryMatch.HighScore.Solo"
-      }
-    },
-    {
-      "Id": 27,
-      "RewardEvent": {
-        "Value": "OnFreeplayBehaviorSuccess"
-      },
-      "Tag": "",
-      "EventConditions": [
-        {
-          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "PoppedWheelie",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 2,
-        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.PopWheelie"
-      }
-    },
-    {
-      "Id": 28,
-      "RewardEvent": {
-        "Value": "OnFreeplayBehaviorSuccess"
-      },
-      "Tag": "",
-      "EventConditions": [
-        {
-          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "PouncedAndCaught",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 1,
-        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.Pounce"
-      }
-    },
-    {
-      "Id": 29,
-      "RewardEvent": {
-        "Value": "OnFreeplayBehaviorSuccess"
-      },
-      "Tag": "",
-      "EventConditions": [
-        {
-          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "PoppedWheelie",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 3,
-        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.PopWheelie"
-      }
-    },
-    {
-      "Id": 30,
-      "RewardEvent": {
-        "Value": "OnFreeplayBehaviorSuccess"
-      },
-      "Tag": "",
-      "EventConditions": [
-        {
-          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "BuiltPyramid",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 5,
-        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.Pyramid"
-      }
-    },
-    {
-      "Id": 31,
-      "RewardEvent": {
-        "Value": "OnFreeplayBehaviorSuccess"
-      },
-      "Tag": "",
-      "EventConditions": [
-        {
-          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "StackedBlock",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 3,
-        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.Stack"
-      }
-    },
-    {
-      "Id": 21,
-      "RewardEvent": {
-        "Value": "OnUnlockableSparked"
-      },
-      "Tag": "NONE",
-      "EventConditions": [],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 5,
-        "DescriptionKey": "reward.description.Freeplay.Spark"
+        "Amount": 10,
+        "DescriptionKey": "reward.description.QuickTap.PlayMP"
       }
     },
     {
@@ -182,6 +55,16 @@
           "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
             "image": null,
             "tooltip": ""
           }
@@ -259,6 +142,16 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "Reward": {
@@ -297,6 +190,16 @@
           "Difficulty": 2,
           "Label": {
             "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
             "image": null,
             "tooltip": ""
           }
@@ -341,6 +244,16 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "Reward": {
@@ -382,6 +295,16 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "Reward": {
@@ -402,6 +325,16 @@
           "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
             "image": null,
             "tooltip": ""
           }
@@ -445,6 +378,16 @@
           "compareType": "EQUAL",
           "Label": {
             "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
             "image": null,
             "tooltip": ""
           }
@@ -536,6 +479,16 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "Reward": {
@@ -566,6 +519,16 @@
           "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
             "image": null,
             "tooltip": ""
           }
@@ -1013,6 +976,166 @@
       }
     },
     {
+      "Id": 38,
+      "RewardEvent": {
+        "Value": "OnNewHighScore"
+      },
+      "Tag": "HighScore",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 20,
+        "DescriptionKey": "reward.description.MemoryMatch.HighScore.Solo"
+      }
+    },
+    {
+      "Id": 27,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "PoppedWheelie",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 2,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.PopWheelie"
+      }
+    },
+    {
+      "Id": 28,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "PouncedAndCaught",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 1,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.Pounce"
+      }
+    },
+    {
+      "Id": 29,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "PoppedWheelie",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 3,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.PopWheelie"
+      }
+    },
+    {
+      "Id": 30,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "BuiltPyramid",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.Pyramid"
+      }
+    },
+    {
+      "Id": 31,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "StackedBlock",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 3,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.Stack"
+      }
+    },
+    {
+      "Id": 21,
+      "RewardEvent": {
+        "Value": "OnUnlockableSparked"
+      },
+      "Tag": "NONE",
+      "EventConditions": [],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.Freeplay.Spark"
+      }
+    },
+    {
       "Id": 16,
       "RewardEvent": {
         "Value": "OnChallengeRoundEnd"
@@ -1047,6 +1170,16 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "Reward": {
@@ -1078,6 +1211,16 @@
           "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
+          "NumPlayers": 2,
+          "compareType": "LESS_INCLUSIVE",
+          "Label": {
+            "text": "Number Of Players Condition",
             "image": null,
             "tooltip": ""
           }

@@ -317,24 +317,6 @@ namespace SpeedTap {
       return base.IsRoundComplete() && !IsOvertime();
     }
 
-    public override void EndCurrentRound() {
-      bool playerWon = false;
-      int playerCount = GetPlayerCount();
-      for (int i = 0; i < playerCount; ++i) {
-        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        if (playerInfo.playerScoreRound >= MaxScorePerRound) {
-          if (playerInfo.playerType != PlayerType.Cozmo) {
-            playerWon = true;
-          }
-          playerInfo.playerRoundsWon++;
-        }
-      }
-      if (_PlayerInfo.Count < 3) {
-        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeRoundEnd, _ChallengeData.ChallengeID, CurrentDifficulty, playerWon, HumanScore, CozmoScore, IsHighIntensityRound()));
-      }
-      UpdateUI();
-    }
-
     public override void UpdateUIForGameEnd() {
       base.UpdateUIForGameEnd();
       // Hide Current Round at end
