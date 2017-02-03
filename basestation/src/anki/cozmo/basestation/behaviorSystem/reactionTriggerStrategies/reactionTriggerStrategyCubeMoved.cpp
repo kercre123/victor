@@ -95,11 +95,12 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehavior(const Robot& robot,
     
     if(object.ObjectOutsideIgnoreArea(robot)
        && ((object.ObjectHasMovedLongEnough(robot)) || object.ObjectUpAxisHasChanged(robot))
-       && !isVisible
-       ){
+       && !isVisible)
+    {
       object.ResetObject();
       BehaviorPreReqAcknowledgeObject preReqData(object.GetObjectID());
-      return behavior->IsRunnable(preReqData);
+      
+      return behavior->IsRunnable(preReqData, behavior->IsRunning() );
     }
   }
   return false;

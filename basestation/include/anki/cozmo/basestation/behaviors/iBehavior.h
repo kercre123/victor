@@ -133,7 +133,7 @@ public:
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   template<typename T>
-  bool IsRunnable(const T& preReqData) const;
+  bool IsRunnable(const T& preReqData, bool allowWhileRunning = false) const;
 
   
   const std::string& GetName() const { return _name; }
@@ -393,7 +393,7 @@ private:
   double _startedRunningTime_s;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
-  bool IsRunnableBase(const Robot& robot) const;
+  bool IsRunnableBase(const Robot& robot, bool allowWhileRunning) const;
   
   bool ReadFromJson(const Json::Value& config);
   
@@ -553,9 +553,9 @@ private:
   
 
 template<typename T>
-bool IBehavior::IsRunnable(const T& preReqData) const
+bool IBehavior::IsRunnable(const T& preReqData, bool allowWhileRunning) const
 {
-  if(IsRunnableBase(_robot)){
+  if(IsRunnableBase(_robot, allowWhileRunning)){
     return IsRunnableInternal(preReqData);
   }
   

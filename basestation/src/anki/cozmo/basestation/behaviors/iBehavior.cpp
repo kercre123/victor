@@ -419,12 +419,12 @@ void IBehavior::StopOnNextActionComplete()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::IsRunnableBase(const Robot& robot) const
+bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
 {
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
-  // DEV_ASSERT(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
-  if (IsRunning()) {
-    //PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetName().c_str());
+  DEV_ASSERT(allowWhileRunning || !IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
+  if (!allowWhileRunning && IsRunning()) {
+    PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetName().c_str());
     return true;
   }
   
