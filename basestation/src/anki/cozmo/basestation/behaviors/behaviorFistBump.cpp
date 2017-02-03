@@ -25,7 +25,6 @@ namespace Cozmo {
   static const char* kMaxTimeToLookForFaceKey       = "maxTimeToLookForFace_s";
   static const char* kAbortIfNoFaceFoundKey         = "abortIfNoFaceFound";
   static const char* kDoHesitatingInitialRequestKey = "doHesitatingInitialRequest";
-  static const char* kWaitTimeoutKey                = "waitForBumpTimeout_s";
   
   // Constants
   static constexpr f32 kLiftAngleBumpThresh_radps   = DEG_TO_RAD(0.5f);
@@ -50,7 +49,6 @@ BehaviorFistBump::BehaviorFistBump(Robot& robot, const Json::Value& config)
   , _abortIfNoFaceFound(true)
   , _doHesitatingInitialRequest(false)
   , _waitStartTime_s(0.f)
-  , _waitTimeout_s(3.f)
   , _fistBumpRequestCnt(0)
   , _liftWaitingAngle_rad(0.f)
 {
@@ -70,12 +68,6 @@ BehaviorFistBump::BehaviorFistBump(Robot& robot, const Json::Value& config)
   if (!abortIfNoFaceFoundJson.isNull()) {
     _abortIfNoFaceFound = abortIfNoFaceFoundJson.asBool();
   }
-  
-  const Json::Value& waitTimeoutSecJson = config[kWaitTimeoutKey];
-  if (!waitTimeoutSecJson.isNull()) {
-    _waitTimeout_s = waitTimeoutSecJson.asFloat();
-  }
-
 }
 
 bool BehaviorFistBump::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
@@ -130,10 +122,6 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
     case State::WaitingForMotorsToSettle:
     case State::WaitingForBump:
     {
-      // Time to play idle anim?
-      if (!IsActing()) {
-        StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpIdle));
-      }
       break;
     }
     default:
@@ -197,6 +185,10 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
       _waitStartTime_s = now;
       robot.GetMoveComponent().EnableLiftPower(false);
       robot.GetMoveComponent().EnableHeadPower(false);
+      
+      // Play idle anim
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpIdle));
+      
       _state = State::WaitingForMotorsToSettle;
       break;
     }
@@ -222,9 +214,8 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
         _state = State::Complete;
       }
       
-      // Check for wait timeout and retry request if necessary
-      if (now >= _waitStartTime_s + _waitTimeout_s) {
-        StopActing();  // Stop idle anim
+      // When idle anim is complete, retry or fail
+      if (!IsActing()) {
         robot.GetMoveComponent().EnableLiftPower(true);
         robot.GetMoveComponent().EnableHeadPower(true);
         if (++_fistBumpRequestCnt < kMaxNumAttempts) {

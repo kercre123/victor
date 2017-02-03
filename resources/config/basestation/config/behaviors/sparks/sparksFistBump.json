@@ -10,6 +10,5 @@
 
   "maxTimeToLookForFace_s": 5.0,
   "abortIfNoFaceFound": false,
-  "doHesitatingInitialRequest": true,
-  "waitForBumpTimeout_s": 3.0
+  "doHesitatingInitialRequest": true
 }

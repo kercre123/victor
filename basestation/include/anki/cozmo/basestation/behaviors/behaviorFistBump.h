@@ -60,9 +60,8 @@ private:
   // Whether or not to do
   bool _doHesitatingInitialRequest;
   
-  // Wait for bump timeouts vars
+  // Wait for bump vars
   f32 _waitStartTime_s;
-  f32 _waitTimeout_s;
   int _fistBumpRequestCnt;
   
   // Recorded position of lift for bump detection
