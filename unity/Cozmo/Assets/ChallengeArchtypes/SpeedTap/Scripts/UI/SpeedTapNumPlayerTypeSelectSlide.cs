@@ -35,8 +35,8 @@ namespace SpeedTap {
 
       _HumanVHumanVCozmoBtn.onClick.AddListener(() => {
         game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
-        game.AddPlayer(PlayerType.Human, DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
-        game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kNamePlayer));
+        game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer1));
+        game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer2));
         StartGame();
       });
 

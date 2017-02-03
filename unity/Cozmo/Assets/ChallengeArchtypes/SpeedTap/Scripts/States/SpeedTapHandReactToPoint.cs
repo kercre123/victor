@@ -86,38 +86,21 @@ namespace SpeedTap {
       _SpeedTapGame.UpdateUI();
 
       if (_SpeedTapGame.IsRoundComplete()) {
-        SpeedTapPlayerInfo wantsSuddenDeathPlayer = _SpeedTapGame.WantsSuddenDeath();
-        // It's just a normal round end with one winner.
-        if (wantsSuddenDeathPlayer == null) {
-          GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
-          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
+        GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
 
-          _SpeedTapGame.EndCurrentRound();
-          // Hide Current Round in between rounds
-          _SpeedTapGame.SharedMinigameView.InfoTitleText = string.Empty;
+        _SpeedTapGame.EndCurrentRound();
+        // Hide Current Round in between rounds
+        _SpeedTapGame.SharedMinigameView.InfoTitleText = string.Empty;
 
-          if (_SpeedTapGame.IsGameComplete()) {
-            UpdateBlockLights(false);
-            _SpeedTapGame.UpdateUIForGameEnd();
-            PlayReactToGameAnimationAndSendEvent();
-          }
-          else {
-            UpdateBlockLights(_WasMistakeMade);
-            _StateMachine.SetNextState(new SpeedTapReactToRoundEnd(_SpeedTapGame.GetPlayerMostPointsWon()));
-          }
+        if (_SpeedTapGame.IsGameComplete()) {
+          UpdateBlockLights(false);
+          _SpeedTapGame.UpdateUIForGameEnd();
+          PlayReactToGameAnimationAndSendEvent();
         }
-        // two players have one, go into a knockout phase...
         else {
-          // Dim out players scoreboard, set them to spectator
-          // If out player is cozmo, play an animation...
-          wantsSuddenDeathPlayer.playerRole = PlayerRole.Spectator;
-          if (wantsSuddenDeathPlayer.scoreWidget != null) {
-            wantsSuddenDeathPlayer.scoreWidget.Dim = true;
-          }
-          // Also probably want a banner animation here...
-          // Other two players need to keep playing though.
           UpdateBlockLights(_WasMistakeMade);
-          PlayReactToHandAnimation();
+          _StateMachine.SetNextState(new SpeedTapReactToRoundEnd(_SpeedTapGame.GetPlayerMostPointsWon()));
         }
       }
       else {

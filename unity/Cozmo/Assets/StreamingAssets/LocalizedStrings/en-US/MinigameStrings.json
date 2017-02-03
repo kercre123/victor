@@ -210,6 +210,15 @@
   "speedTap.tapBlockForRound": {
     "translation": "Tap your Cube to begin the next round."
   },
+  "speedTap.multiplayer.overTime": {
+    "translation": "Overtime!"
+  },
+  "speedTap.multiplayer.player1": {
+    "translation": "Player1"
+  },
+  "speedTap.multiplayer.player2": {
+    "translation": "Player2"
+  },
   "minigame.dontMoveCozmo.title": {
     "translation": "Cozmo Has Moved!"
   },
@@ -311,6 +320,9 @@
   },
   "speedTap.text.roundScore": {
     "translation": "Player: {0} - Cozmo: {1}"
+  },
+  "speedTap.text.roundScoreMP": {
+    "translation": "{2}: {3} - {4}: {5} - {0}: {1}"
   },
   "cozmoSays.instructions.label": {
     "translation": "Type a word or phrase and hear Cozmo say it"

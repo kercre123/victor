@@ -80,9 +80,9 @@ namespace Cozmo {
         ResetTween(_CaratTween);
       }
 
-      public void SetWidgetText(string widgetTextKey) {
-        _ShelfText.gameObject.SetActive(widgetTextKey != string.Empty);
-        _ShelfText.text = Localization.Get(widgetTextKey);
+      public void SetWidgetText(string widgetText) {
+        _ShelfText.gameObject.SetActive(widgetText != string.Empty);
+        _ShelfText.text = widgetText;
       }
 
       public void GrowShelfBackground() {

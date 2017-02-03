@@ -237,6 +237,10 @@ namespace SpeedTap {
       }
     }
 
+    protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "", bool showWinnerTextInShelf = false) {
+      base.ShowWinnerState(currentEndIndex, overrideWinnerText, footerText, GetPlayerCount() > 2);
+    }
+
     public override void UpdateUI() {
       base.UpdateUI();
       int halfTotalRounds = (TotalRounds + 1) / 2;
@@ -256,6 +260,7 @@ namespace SpeedTap {
           }
           else if (numHumans >= 2) {
             playerInfo.scoreWidget = SharedMinigameView.Player2Scoreboard;
+            playerInfo.scoreWidget.PortraitColor = Color.magenta;
           }
           else {
             playerInfo.scoreWidget = SharedMinigameView.PlayerScoreboard;
@@ -266,47 +271,52 @@ namespace SpeedTap {
         playerInfo.scoreWidget.RoundsWon = playerInfo.playerRoundsWon;
         roundsPlayedTotal += playerInfo.playerRoundsWon;
       }
-
-
-
-      // Display the current round
-      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1);
-    }
-
-    // Will return the player that is not in the sudden death
-    public SpeedTapPlayerInfo WantsSuddenDeath() {
-      SpeedTapPlayerInfo playerOut = null;
-      int playerCount = GetPlayerCount();
-      int playersAtMaxScore = 0;
-
-      // We only care when two players are at the exact same score.
-      // Anything else and the tie will be broken.
-      for (int i = 0; i < playerCount; ++i) {
-        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        if (playerInfo.playerScoreRound == MaxScorePerRound) {
-          playersAtMaxScore++;
+      if (GetPlayerCount() > 2) {
+        // Display the current round
+        if (IsOvertime()) {
+          SharedMinigameView.ShelfWidget.SetWidgetText(Localization.Get(LocalizationKeys.kSpeedTapMultiplayerOverTime));
         }
         else {
-          playerOut = playerInfo;
+          SharedMinigameView.ShelfWidget.SetWidgetText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1));
         }
       }
-      // We only had one winner, so no one is out. Players are only knocked out if there
-      // is a tie for first.
-      if (playersAtMaxScore <= 1) {
-        playerOut = null;
+      else {
+        SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1);
       }
-      return playerOut;
+    }
+
+    private List<PlayerInfo> GetPlayersMostPointsWon() {
+      List<PlayerInfo> maxScorers = new List<PlayerInfo>();
+      int mostPoints = 0;
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        if (_PlayerInfo[i].playerScoreRound > mostPoints) {
+          maxScorers.Clear();
+          maxScorers.Add(_PlayerInfo[i]);
+          mostPoints = _PlayerInfo[i].playerScoreRound;
+        }
+        else if (_PlayerInfo[i].playerScoreRound == mostPoints) {
+          maxScorers.Add(_PlayerInfo[i]);
+        }
+      }
+      return maxScorers;
+    }
+
+    private bool IsOvertime() {
+      if (base.IsRoundComplete()) {
+        List<PlayerInfo> maxScorers = GetPlayersMostPointsWon();
+        // If multiple people have a high score, we need to keep playing until there is only one winner.
+        if (maxScorers.Count > 1) {
+          return true;
+        }
+      }
+      return false;
     }
 
     public override bool IsRoundComplete() {
-      bool complete = false;
-      int playerCount = GetPlayerCount();
-      for (int i = 0; i < playerCount; ++i) {
-        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        complete = complete || playerInfo.playerScoreRound >= MaxScorePerRound;
-      }
-      return complete;
+      // Some extra logic to account for overtime when multiple people have top score.
+      return base.IsRoundComplete() && !IsOvertime();
     }
+
     public override void EndCurrentRound() {
       bool playerWon = false;
       int playerCount = GetPlayerCount();

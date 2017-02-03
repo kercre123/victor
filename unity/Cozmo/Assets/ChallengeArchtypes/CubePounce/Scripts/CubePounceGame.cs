@@ -302,8 +302,8 @@ namespace Cozmo.Minigame.CubePounce {
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.UnexpectedMovement);
     }
 
-    protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "") {
-      base.ShowWinnerState(currentEndIndex, overrideWinnerText, footerText);
+    protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "", bool showWinnerTextInShelf = false) {
+      base.ShowWinnerState(currentEndIndex, overrideWinnerText, footerText, showWinnerTextInShelf);
 
       if (DidHumanWin()) {
         SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);

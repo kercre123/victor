@@ -68,6 +68,15 @@ namespace Cozmo {
         }
       }
 
+      public Color PortraitColor {
+        set {
+          _PortraitImage.color = value;
+        }
+        get {
+          return _PortraitImage.color;
+        }
+      }
+
       public int Score {
         set {
           _ScoreContainer.SetActive(true);

@@ -1000,7 +1000,7 @@ public abstract class GameBase : MonoBehaviour {
     playerScoreboard.IsWinner = didPlayerWin;
   }
 
-  protected virtual void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "") {
+  protected virtual void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "", bool showWinnerTextInShelf = false) {
     SoftEndGameRobotReset();
     _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
@@ -1028,7 +1028,12 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView.ShowWinnerStateSlide(DidHumanWin(), winnerText, footerText);
     }
     else {
-      SharedMinigameView.InfoTitleText = winnerText;
+      if (showWinnerTextInShelf) {
+        SharedMinigameView.ShelfWidget.SetWidgetText(winnerText);
+      }
+      else {
+        SharedMinigameView.InfoTitleText = winnerText;
+      }
     }
     _AutoAdvanceTimestamp = Time.time;
   }

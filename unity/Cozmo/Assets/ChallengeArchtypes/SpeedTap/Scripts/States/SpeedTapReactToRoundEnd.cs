@@ -24,23 +24,35 @@ namespace SpeedTap {
 
       // Show current winner
       Sprite winnerPortrait = null;
-      string winnerNameLocKey = null;
-      int roundsWinnerWon = 0;
+      string winnerName = _Winner.name;
+      int roundsWinnerWon = _Winner.playerRoundsWon;
+      Color winnerColor = ((SpeedTapPlayerInfo)_Winner).scoreWidget.PortraitColor;
       if (_Winner.playerType == PlayerType.Cozmo) {
         winnerPortrait = _SpeedTapGame.SharedMinigameView.CozmoPortrait;
-        winnerNameLocKey = LocalizationKeys.kNameCozmo;
       }
       else {
         winnerPortrait = _SpeedTapGame.SharedMinigameView.PlayerPortrait;
-        winnerNameLocKey = LocalizationKeys.kNamePlayer;
+        // In SinglePlayer we want it just to say "player" not the profile name because of how it was before.
+        if (_SpeedTapGame.GetPlayerCount() < 3) {
+          winnerName = Localization.Get(LocalizationKeys.kNamePlayer);
+        }
       }
-      roundsWinnerWon = _Winner.playerRoundsWon;
       int roundsNeeded = _SpeedTapGame.RoundsNeededToWin;
-      roundEndSlideScript.Initialize(winnerPortrait, winnerNameLocKey, roundsWinnerWon, roundsNeeded, _SpeedTapGame.RoundsPlayed);
+      roundEndSlideScript.Initialize(winnerPortrait, winnerName, roundsWinnerWon, roundsNeeded, _SpeedTapGame.RoundsPlayed, winnerColor);
 
       // Play banner animation with score
       string bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore,
                             _SpeedTapGame.HumanRoundsWon, _SpeedTapGame.CozmoRoundsWon);
+      if (_SpeedTapGame.GetPlayerCount() > 2) {
+        List<object> fillArgs = new List<object>();
+        int playerCount = _SpeedTapGame.GetPlayerCount();
+        for (int i = 0; i < playerCount; ++i) {
+          PlayerInfo playerInfo = _SpeedTapGame.GetPlayerByIndex(i);
+          fillArgs.Add(playerInfo.name);
+          fillArgs.Add(playerInfo.playerRoundsWon);
+        }
+        bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScoreMP, fillArgs.ToArray());
+      }
       _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, null,
         roundEndSlideScript.BannerAnimationDurationSeconds);
 

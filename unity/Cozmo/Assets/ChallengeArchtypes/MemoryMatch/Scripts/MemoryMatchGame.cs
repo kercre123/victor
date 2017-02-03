@@ -250,7 +250,7 @@ namespace MemoryMatch {
       return audioEvent;
     }
 
-    protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "") {
+    protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "", bool showWinnerTextInShelf = false) {
       if (IsSoloMode()) {
         if (SaveHighScore()) {
           overrideWinnerText = Localization.Get(LocalizationKeys.kMemoryMatchGameSoloNewHighScore);
@@ -259,7 +259,7 @@ namespace MemoryMatch {
           overrideWinnerText = Localization.Get(LocalizationKeys.kMemoryMatchGameSoloGameOver);
         }
       }
-      base.ShowWinnerState(currentEndIndex, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count));
+      base.ShowWinnerState(currentEndIndex, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count), showWinnerTextInShelf);
 
       // Set Final Music State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Fanfare);
