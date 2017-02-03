@@ -19,6 +19,7 @@ _payload="{
               ]
             }"
 
+    echo "create-audio-assets-pr.sh message and exit payload: {$_payload}"
     curl -X POST --data-urlencode "payload=$_payload" $SLACK_TOKEN_URL
 
     exit $3
@@ -37,6 +38,7 @@ _payload="{
               ]
             }"
 
+    echo "create-audio-assets-pr.sh message payload: {$_payload}"
     curl -X POST --data-urlencode "payload=$_payload" $SLACK_TOKEN_URL
 }
 
