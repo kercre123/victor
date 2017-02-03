@@ -688,6 +688,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\random.c</FilePath>
             </File>
+            <File>
+              <FileName>psk.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\psk.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1340,6 +1345,11 @@
               <FileName>random.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\random.c</FilePath>
+            </File>
+            <File>
+              <FileName>psk.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\psk.c</FilePath>
             </File>
           </Files>
         </Group>

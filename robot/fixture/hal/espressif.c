@@ -494,7 +494,7 @@ void ProgramEspressif(int serial)
 
       generateCozmoPassword((char*)data+DATALEN, STRLEN);
       SlowPrintf("Load SERIAL data: ");
-      for (int i = 0; i < sizeof(data); i++)
+      for (int i = 0; i < (sizeof(data)/sizeof(u32)); i++)
         SlowPrintf("%08x,", data[i]);
       SlowPrintf("\n");
       ESPFlashLoad(0x1000, sizeof(data), (uint8_t*)&data, false);
