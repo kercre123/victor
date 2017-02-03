@@ -492,7 +492,7 @@ void ProgramEspressif(int serial)
       for (int i = 2; i < DATALEN; i++)
         data[i] = GetRandom();
 
-      generateCozmoPassword((char*)data+DATALEN, STRLEN);
+      generateCozmoPassword((char*)&data[DATALEN], STRLEN);
       SlowPrintf("Load SERIAL data: ");
       for (int i = 0; i < (sizeof(data)/sizeof(u32)); i++)
         SlowPrintf("%08x,", data[i]);
