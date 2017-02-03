@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define FCC_VERSION "c86"   // This must match fixture version, to help the factory keep in sync
+#define FCC_VERSION "b86.202"   // This must match fixture version, to help the factory keep in sync
 
 #include "fcc.h"
 #include "i2c.h"
@@ -333,15 +333,30 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void)
 
   // Duty cycle correction - transmit one packet per 7
   #define DUTY_CYCLE_EN 0
-  static u8 toggle = 0;
-  if (toggle == 6 || (DUTY_CYCLE_EN < 1)) {
-    configureTest(current_mode, 1);
-    toggle = 0;
-  } else {
-    configureTest(0, 0);    // Listen the rest of the time
-    toggle++;
+  {
+    static u8 toggle = 0;
+    static int previous_mode = -1;
+    bool is_carrier_test = DTM_MODE[current_mode].command == LE_TRANSMITTER_TEST && DTM_MODE[current_mode].length == CARRIER_TEST;
+    
+    if( (DUTY_CYCLE_EN < 1) && is_carrier_test ) {
+      //limit sending of mode commands in carrier mode - causes interruption in carrier wave
+      if( ++toggle >= 200 || previous_mode != current_mode ) {
+        configureTest(current_mode, 1); //send cmd on mode change, but also periodically to correct PLL drift
+        toggle = 0;
+      }
+    } else {
+      if( (DUTY_CYCLE_EN < 1) || toggle >= 6 || previous_mode != current_mode ) {
+        configureTest(current_mode, 1);
+        toggle = 0;
+      } else {
+        configureTest(0, 0);    // Listen the rest of the time
+        toggle++;
+      }
+    }
+    
+    previous_mode = current_mode;
   }
-
+  
   // If we sent a wifi command, no time for running tests - just return
   if (sendWifiCommand((current_mode < WIFI_MODE) ? 0 : current_mode-(WIFI_MODE-1)))  // Wifi test modes start at 10
     return;
