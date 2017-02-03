@@ -133,7 +133,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "BlockStacked",
+          "Behavior": "StackedBlock",
           "Label": {
             "text": "Freeplay Behavior Condition",
             "image": null,

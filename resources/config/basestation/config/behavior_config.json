@@ -198,6 +198,27 @@
         },
         "persistentComponentID" : "pyramidSparkUpdate"
       },
+      {
+        "name" : "SparksFistBump",
+        "requireSpark":"FistBump",
+        "priority": 0, // lower is better
+        "behaviorChooser" :
+        {
+          "type" : "sparks",
+          "minTimeSecs": 0,
+          "maxTimeSecs": 30,
+          "numberOfRepetitions": 1,
+          "behaviorObjective": "FistBumped",
+          "softSparkTrigger": "SoftSparkUpgradeLift",
+          "sparksSuccessTrigger": "", // don't play any animation
+          // these are the behaviors that are allowed in this behavior chooser
+          "behaviorGroups" : [ "SparksFistBump" ]
+        },
+        "goalStrategy":
+        {
+          "type" : "Spark"
+        }
+      },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Freeplay goals:
       // FP_Hiking          - when Cozmo is exploring its surroundings on his own

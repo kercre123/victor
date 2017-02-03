@@ -164,8 +164,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                 {
                   case ActionResultCategory::SUCCESS:
                   {
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
-                    BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie), &BehaviorPopAWheelie::FinishSuccess);
                     break;
                   }
                   case ActionResultCategory::RETRY:
@@ -255,5 +254,10 @@ void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
   }
 }
 
+void BehaviorPopAWheelie::FinishSuccess()
+{
+  BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
+}
+  
 }
 }

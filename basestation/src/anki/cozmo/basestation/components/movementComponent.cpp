@@ -561,9 +561,14 @@ Result MovementComponent::CalibrateMotors(bool head, bool lift)
 
 Result MovementComponent::EnableLiftPower(bool enable)
 {
-  return _robot.SendRobotMessage<RobotInterface::EnableLiftPower>(enable);
+  return _robot.SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_LIFT, enable);
 }
 
+Result MovementComponent::EnableHeadPower(bool enable)
+{
+  return _robot.SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_HEAD, enable);
+}
+  
 // Sends a message to the robot to move the lift to the specified height
 Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 max_speed_rad_per_sec,

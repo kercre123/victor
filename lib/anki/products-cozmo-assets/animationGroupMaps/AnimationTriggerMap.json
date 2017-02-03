@@ -269,6 +269,30 @@
       "AnimName": "ag_reacttocliff_turtlerollfail_01"
     },
     {
+      "CladEvent": "FistBumpIdle",
+      "AnimName": "ag_fistbump_idle"
+    },
+    {
+      "CladEvent": "FistBumpRequestLong",
+      "AnimName": "ag_fistbump_requestlong"
+    },
+    {
+      "CladEvent": "FistBumpRequestOnce",
+      "AnimName": "ag_fistbump_requestonce"
+    },
+    {
+      "CladEvent": "FistBumpRequestRetry",
+      "AnimName": "ag_fistbump_requesttwice"
+    },
+    {
+      "CladEvent": "FistBumpSuccess",
+      "AnimName": "ag_fistbump_success"
+    },
+    {
+      "CladEvent": "FistBumpLeftHanging",
+      "AnimName": "ag_fistbump_fail"
+    },
+    {
       "CladEvent": "FlipDownFromBack",
       "AnimName": "FlipDownFromBack"
     },

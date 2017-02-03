@@ -1,0 +1,15 @@
+{
+  "behaviorClass": "FistBump",
+  "name": "sparksFistBump",
+  "displayNameKey":"behavior.PickupCube",
+  "requiredUnlockId": "FistBump",
+  "behaviorGroups": [
+    "SparksFistBump"
+  ],
+  "flatScore": 5.0,
+
+  "maxTimeToLookForFace_s": 5.0,
+  "abortIfNoFaceFound": false,
+  "doHesitatingInitialRequest": true,
+  "waitForBumpTimeout_s": 3.0
+}

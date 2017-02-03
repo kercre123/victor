@@ -1,0 +1,12 @@
+{
+  "behaviorClass": "FistBump",
+  "executableBehaviorType": "FistBump",
+  "name": "FistBump",
+  "displayNameKey": "behavior.FistBump",
+  "requiredUnlockId": "FistBump",
+
+  "maxTimeToLookForFace_s": 3.0,
+  "abortIfNoFaceFound": true,
+  "doHesitatingInitialRequest": false,
+  "waitForBumpTimeout_s": 3.0
+}

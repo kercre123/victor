@@ -327,6 +327,11 @@ void BehaviorCubeLiftWorkout::EndIteration(Robot& robot)
   }
 
   BehaviorObjectiveAchieved(BehaviorObjective::PerformedWorkout);
+  
+  BehaviorObjective additionalObjective = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout().GetAdditionalBehaviorObjectiveOnComplete();
+  if (additionalObjective != BehaviorObjective::Count) {
+    BehaviorObjectiveAchieved(additionalObjective);
+  }
 
   robot.GetAIComponent().GetWorkoutComponent().CompleteCurrentWorkout();
 }

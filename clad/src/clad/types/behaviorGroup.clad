@@ -33,6 +33,7 @@ enum uint_8 BehaviorGroup {
     SparksKnockOverCubes,
     SparksBuildPyramid,
     SparksWorkout,
+    SparksFistBump,
 
     MeetCozmo_Socialize,
 

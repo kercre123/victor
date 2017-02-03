@@ -5,6 +5,43 @@
       "behaviorName": "AcknowledgeFace"
     },
     {
+      "reactionTrigger": "FistBump",
+      "behaviorName": "FistBump",
+      "behaviorObjectiveTriggerParams": [
+        {
+          // The behavior objective that can trigger a fist bump
+          "behaviorObjective": "StackedBlock",
+                                         
+          // Amount of time that must have passed since the last time a fist bump
+          // was completed before this trigger can cause another fist bump.
+          "triggerCooldownTime_s": 180.0,
+                                         
+          // Likelihood of the trigger causing fist bump once cooldown time has expired
+          "triggerProbability": 0.2
+        },
+        {
+          "behaviorObjective": "BuiltPyramid",
+          "triggerCooldownTime_s": 180.0,
+          "triggerProbability": 0.5
+        },
+        {
+          "behaviorObjective": "InteractedWithFace",
+          "triggerCooldownTime_s": 300.0,
+          "triggerProbability": 0.2
+        },
+        {
+          "behaviorObjective": "PerformedStrongWorkout",
+          "triggerCooldownTime_s": 180.0,
+          "triggerProbability": 0.5
+        },
+        {
+          "behaviorObjective": "PoppedWheelie",
+          "triggerCooldownTime_s": 180.0,
+          "triggerProbability": 0.2
+        }
+      ]
+    },
+    {
       "reactionTrigger": "ObjectPositionUpdated",
       "behaviorName": "AcknowledgeObject"
     },

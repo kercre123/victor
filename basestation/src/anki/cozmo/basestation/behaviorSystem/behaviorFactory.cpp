@@ -31,6 +31,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFistBump.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
@@ -162,6 +163,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::FindFaces:
     {
       newBehavior = new BehaviorFindFaces(robot, config);
+      break;
+    }
+    case BehaviorClass::FistBump:
+    {
+      newBehavior = new BehaviorFistBump(robot, config);
       break;
     }
     case BehaviorClass::RequestGameSimple:
