@@ -18,9 +18,13 @@
 #include "navMeshQuadTreeTypes.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/triangle.h"
+
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -78,6 +82,7 @@ public:
   };
   using QuadSegmentArray = SegmentLineEquation[4];
   using TriangleSegmentArray = SegmentLineEquation[3];
+  using QuadInfoVector = std::vector<ExternalInterface::MemoryMapQuadInfo>;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
@@ -183,6 +188,13 @@ public:
   
   // adds the necessary quads to the given vector to be rendered
   void AddQuadsToDraw(VizManager::SimpleQuadVector& quadVector) const;
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Send
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // adds the necessary quad infos to the given vector to be sent
+  void AddQuadsToSend(QuadInfoVector& quadInfoVector) const;
   
 private:
 

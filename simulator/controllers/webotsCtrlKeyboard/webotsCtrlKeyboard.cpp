@@ -379,6 +379,7 @@ namespace Anki {
         printf("Toggle accel from streamObjectID: |\n");
         printf("               Toggle headlights: ,\n");
         printf("             Pronounce sayString: \" <double-quote>\n");
+        printf("                 Set console var: ]\n");
         printf("        Quit keyboard controller:  Alt+Shift+x\n");
         printf("                      Print help:  ?,/\n");
         printf("\n");

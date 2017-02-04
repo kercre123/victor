@@ -1758,6 +1758,9 @@ Result Robot::Update()
   
   // Connect to objects requested via ConnectToObjects
   ConnectToRequestedObjects();
+  
+  // Send nav memory map data
+  _blockWorld->BroadcastNavMemoryMap();
       
   /////////// Update visualization ////////////
       

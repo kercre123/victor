@@ -11,6 +11,7 @@
 #include "navMemoryMapQuadTree.h"
 
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "anki/common/basestation/math/pose.h"
@@ -83,8 +84,8 @@ NavMeshQuadTreeTypes::ENodeContentTypePackedType ConvertContentArrayToFlags(cons
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // NavMemoryMapQuadTree
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMemoryMapQuadTree::NavMemoryMapQuadTree(VizManager* vizManager)
-: _navMesh(vizManager)
+NavMemoryMapQuadTree::NavMemoryMapQuadTree(VizManager* vizManager, Robot* robot)
+: _navMesh(vizManager, robot)
 {
 }
 
@@ -229,6 +230,12 @@ void NavMemoryMapQuadTree::Draw(size_t mapIdxHint) const
 void NavMemoryMapQuadTree::ClearDraw() const
 {
   _navMesh.ClearDraw();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::Broadcast(uint32_t originID) const
+{
+  _navMesh.Broadcast(originID);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

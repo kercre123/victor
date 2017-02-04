@@ -31,7 +31,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  NavMemoryMapQuadTree(VizManager* vizManager);
+  NavMemoryMapQuadTree(VizManager* vizManager, Robot* robot);
   virtual ~NavMemoryMapQuadTree() {}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -81,6 +81,9 @@ public:
   // Draw/stop drawing the memory map
   virtual void Draw(size_t mapIdxHint) const override;
   virtual void ClearDraw() const override;
+  
+  // Broadcast the memory map
+  virtual void Broadcast(uint32_t originID) const override;
   
 protected:
 
