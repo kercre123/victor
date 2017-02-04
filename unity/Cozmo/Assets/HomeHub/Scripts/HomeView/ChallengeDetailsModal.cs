@@ -192,9 +192,11 @@ public class ChallengeDetailsModal : BaseModal {
                                                LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalTitle,
                                                LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalDescription,
                                                new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
-                                               dialogCloseAnimationFinishedCallback: HandleEdgeCaseAlertClosed);
+                                               dialogCloseAnimationFinishedCallback: HandleEdgeCaseAlertClosed,
+                                               timeoutSec: 10.0f);
 
     UIManager.OpenAlert(cozmoNotReadyData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
+    this.CloseDialog();
   }
 
   private void OpenCozmoNotOnTreadsAlert() {
