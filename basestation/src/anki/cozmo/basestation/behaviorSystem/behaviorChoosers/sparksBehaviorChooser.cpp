@@ -173,13 +173,13 @@ void SparksBehaviorChooser::OnSelected()
 
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::OnDeselected()
 {
   BehaviorManager& mngr = _robot.GetBehaviorManager();
 
-  if(_idleAnimationsSet){
-    ResetLightsAndAnimations();
-  }
+  ResetLightsAndAnimations();
   
   mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, true);
 
@@ -187,14 +187,18 @@ void SparksBehaviorChooser::OnDeselected()
   _robot.GetCubeLightComponent().StopAllAnims();
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::ResetLightsAndAnimations()
 {
-  // Revert to driving anims
-  _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-  _robot.GetAnimationStreamer().PopIdleAnimation();
-  _idleAnimationsSet = false;
+  if(_idleAnimationsSet){
+    // Revert to driving anims
+    _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    _robot.GetAnimationStreamer().PopIdleAnimation();
+    _robot.GetBodyLightComponent().StopLoopingBackpackLights();
+    _idleAnimationsSet = false;
+  }
   
-  _robot.GetBodyLightComponent().StopLoopingBackpackLights();
 }
 
   
@@ -354,6 +358,8 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
   return bestBehavior;
 }
  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::CompleteSparkLogic()
 {
   BehaviorManager& mngr = _robot.GetBehaviorManager();
@@ -422,7 +428,8 @@ void SparksBehaviorChooser::CompleteSparkLogic()
   }
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::CheckIfSparkShouldEnd()
 {
   BehaviorManager& mngr = _robot.GetBehaviorManager();
@@ -441,6 +448,7 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd()
   if(_state == ChooserState::UsingSimpleBehaviorChooser
      && (minTimeAndRepetitions || maxTimeout || gameRequestedSparkEnd))
   {
+    ResetLightsAndAnimations();
     mngr.RequestCurrentBehaviorEndOnNextActionComplete();
     _state = ChooserState::WaitingForCurrentBehaviorToStop;
   }else{
