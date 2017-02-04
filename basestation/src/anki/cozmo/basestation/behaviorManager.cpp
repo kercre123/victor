@@ -200,7 +200,18 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     #endif
     
   }
-    
+  
+  // Populate our list of tapInteraction behaviors which should exist in the factory as
+  // InitConfiguration() is called after all behaviors have been loaded
+  const auto& behaviorMap = GetBehaviorFactory().GetBehaviorMap();
+  for(const auto& pair : behaviorMap)
+  {
+    if(pair.second->IsBehaviorGroup(BehaviorGroup::ObjectTapInteraction))
+    {
+      _tapInteractionBehaviors.push_back(pair.second);
+    }
+  }
+  
   if (_robot.HasExternalInterface())
   {
     IExternalInterface* externalInterface = _robot.GetExternalInterface();
@@ -1057,17 +1068,46 @@ void BehaviorManager::RequestEnableTapInteraction(const std::string& requesterID
 
 void BehaviorManager::UpdateTappedObject()
 {
-  // If the tapped objects pose becomes unknown and we aren't currently in ReactToDoubleTap
-  // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running) then give up and
-  // leave object tap interaction
+  // If we have a tap intent and are not currently in ReactToDoubleTap
   if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent() &&
      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected &&
      _tapInteractionDisabledIDs.empty())
   {
+    // If the tapped objects pose becomes unknown then give up and leave object tap interaction
+    // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running)
     const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_currDoubleTappedObject);
     if(object != nullptr && object->IsPoseStateUnknown())
     {
       LeaveObjectTapInteraction();
+    }
+    // Otherwise if there is no behavior currently running but we have a tap interaction
+    // (One of the tap behaviors probably just ended because it realized it couldn't use the tapped object)
+    else if(_runningAndResumeInfo->GetCurrentBehavior() == nullptr)
+    {
+      bool canAnyTapBehaviorUseObject = false;
+      
+      // For each tapInteraction behavior check if its ObjectUseIntention(s) can still use the tapped object
+      const ObjectID& tappedObject = GetCurrTappedObject();
+      for(const auto& behavior : _tapInteractionBehaviors)
+      {
+        const auto& intentions = behavior->GetBehaviorObjectUseIntentions();
+        for(const auto& intent : intentions)
+        {
+          if(_robot.GetAIComponent().GetWhiteboard().IsObjectValidForAction(intent, tappedObject))
+          {
+            canAnyTapBehaviorUseObject = true;
+            break;
+          }
+        }
+      }
+      
+      // If no tap interation behavior can currently use the tapped object then leave object tap interaction
+      if(!canAnyTapBehaviorUseObject)
+      {
+        PRINT_CH_INFO("Behaviors", "BehaviorManager.UpdateTappedObject.NoDoubleTapBehaviorCanUseObject",
+                      "Tapped object is no longer valid for any double tap behavior, leaving tap interaction");
+        LeaveObjectTapInteraction();
+      }
     }
   }
 }

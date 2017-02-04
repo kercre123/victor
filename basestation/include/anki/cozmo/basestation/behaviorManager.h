@@ -30,6 +30,7 @@
 #include "json/json-forwards.h"
 
 #include <assert.h>
+#include <list>
 #include <memory>
 #include <random>
 #include <string>
@@ -322,6 +323,9 @@ private:
 
   // set of things which have disabled tap interaction
   std::multiset<std::string> _tapInteractionDisabledIDs;
+  
+  // List of all behaviors belonging to the tap interaction behavior group
+  std::list<IBehavior*> _tapInteractionBehaviors;
   
 }; // class BehaviorManager
 
