@@ -53,6 +53,14 @@ namespace SpeedTap {
       });
     }
 
+    // Unlike Difficulty MP just requires playing a game, not beating it...
+    public bool IsMPModeUnlocked() {
+      DataPersistence.PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+      // Scores are per mode
+      string key = _Game.ChallengeID + _Game.CurrentDifficulty;
+      return playerProfile.HighScores.ContainsKey(key);
+    }
+
     private void StartGame() {
       _Game.InitializeAllPlayers();
       if (_Callback != null) {

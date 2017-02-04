@@ -329,5 +329,17 @@
   },
   "sayCozmo.button.say": {
     "translation": "Say"
-  }
+  },
+  "speedTapGame.label.x2": {
+    "translation": "x2"
+  },
+  "speedTapGame.label.vs": {
+    "translation": "VS"
+  },
+  "speedTapGame.mode.HvC": {
+    "translation": "Human vs Cozmo"
+  },
+  "speedTapGame.mode.HvHvC": {
+    "translation": "Human vs Human vs Cozmo"
+  },
 }
