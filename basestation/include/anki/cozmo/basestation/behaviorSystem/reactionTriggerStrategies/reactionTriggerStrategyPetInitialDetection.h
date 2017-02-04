@@ -21,7 +21,7 @@
 namespace Anki {
 namespace Cozmo {
 
-class ReactionTriggerStrategyPetInitialDetection : public IReactionTriggerStrategy, public IReactToPetListener{
+class ReactionTriggerStrategyPetInitialDetection : public IReactionTriggerStrategy, public IReactToPetListener {
 public:
   ReactionTriggerStrategyPetInitialDetection(Robot& robot, const Json::Value& config);
 
@@ -32,9 +32,8 @@ public:
   virtual void EnabledStateChanged(bool enabled) override
                  {UpdateReactedTo(_robot);}
   
-  // functions from IReactToPetListener
-  virtual void RefreshReactedToIDs() override;
-  virtual void UpdateLastReactionTime() override;
+  // Implementation of IReactToPetListener
+  virtual void BehaviorDidReact(const std::set<Vision::FaceID_t> & targets) override;
 
   
 protected:

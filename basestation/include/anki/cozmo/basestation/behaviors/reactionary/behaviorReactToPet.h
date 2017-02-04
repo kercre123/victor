@@ -51,8 +51,9 @@ private:
   
   static constexpr float NEVER = -1.0f;
   
-  // Everything we want to react to before we stop (to handle multiple targets in the same frame)
-  std::set<Vision::FaceID_t> _targets;
+  // Everything we want to react to before we stop (to handle multiple targets in the same frame).
+  // This member must be mutable to retain state from const method IsRunnableInternal().
+  mutable std::set<Vision::FaceID_t> _targets;
   
   // Current target
   Vision::FaceID_t _target = Vision::UnknownFaceID;

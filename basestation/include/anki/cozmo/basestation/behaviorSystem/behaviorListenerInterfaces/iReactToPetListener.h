@@ -12,14 +12,16 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToPetListener_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToPetListener_H__
 
+#include "anki/vision/basestation/faceIdTypes.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class IReactToPetListener{
+class IReactToPetListener {
 public:
-  virtual void RefreshReactedToIDs() = 0;
-  virtual void UpdateLastReactionTime() = 0;
+  
+  // Notify listener when reaction ends
+  virtual void BehaviorDidReact(const std::set<Vision::FaceID_t>& targets) = 0;
   
 };
 

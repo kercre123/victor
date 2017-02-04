@@ -21,6 +21,9 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
+#define LOG_DEBUG(...) PRINT_CH_DEBUG("ReactionTriggers", ##__VA_ARGS__)
+#define LOG_INFO(...) PRINT_CH_INFO("ReactionTriggers", ##__VA_ARGS__)
+
 namespace{
 static const char* kTriggerStrategyName = "Trigger Strategy Pet detected";
   
@@ -56,9 +59,7 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehavior(const Rob
   // Keep track of petIDs observed during cooldown.  This prevents Cozmo from
   // suddenly reacting to a "known" pet when cooldown expires.
   if (RecentlyReacted()) {
-    PRINT_CH_INFO("ReactionTriggers",
-                  "ReactStratPetInitialDetect.ShouldSwitch.RecentlyReacted",
-                  "Recently reacted to a pet");
+    LOG_INFO("ReactStratPetInitialDetect.ShouldSwitch.RecentlyReacted", "Recently reacted to a pet");
     UpdateReactedTo(robot);
     return false;
   }
@@ -70,45 +71,37 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehavior(const Rob
   for (const auto & it : pets) {
     const auto petID = it.first;
     if (_reactedTo.find(petID) != _reactedTo.end()) {
-      PRINT_CH_INFO("ReactionTriggers",
-                    "ReactStratPetInitialDetect.ShouldSwitch.AlreadyReacted",
-                    "Already reacted to petID %d", petID);
+      LOG_DEBUG("ReactStratPetInitialDetect.ShouldSwitch.AlreadyReacted", "Already reacted to petID %d", petID);
       continue;
     }
     const auto & pet = it.second;
     const auto numTimesObserved = pet.GetNumTimesObserved();
     if (numTimesObserved < kReactToPetNumTimesObserved) {
-      PRINT_CH_INFO("ReactionTriggers",
-                    "ReactStratPetInitialDetect.ShouldSwitch.NumTimesObserved",
-                    "PetID %d does not meet observation threshold (%d < %d)",
-                  petID, numTimesObserved, kReactToPetNumTimesObserved);
+      LOG_DEBUG("ReactStratPetInitialDetect.ShouldSwitch.NumTimesObserved",
+                "PetID %d does not meet observation threshold (%d < %d)",
+                petID, numTimesObserved, kReactToPetNumTimesObserved);
       continue;
     }
     _targets.insert(petID);
   }
   
-  
+  if (_targets.empty()) {
+    return false;
+  }
+
   if (!kReactToPetEnable) {
-    PRINT_CH_INFO("ReactionTriggers",
-                  "ReactStratPetInitialDetect.IsRunnable.ReactionDisabled",
-                  "Reaction is disabled");
+    LOG_DEBUG("ReactStratPetInitialDetect.IsRunnable.ReactionDisabled", "Reaction is disabled");
     return false;
   }
   
-  if(!_targets.empty()){
-    if (robot.IsOnCharger() || robot.IsOnChargerPlatform()) {
-      PRINT_CH_INFO("ReactionTriggers",
-                    "ReactStratPetInitialDetect.IsRunnable.RobotOnCharger",
-                    "Robot is on charger");
-      return false;
-    }
-    
-    BehaviorPreReqAcknowledgePet acknowledgePetPreReqs(_targets);
-    // If we found a good target, behavior should become active.
-    return behavior->IsRunnable(acknowledgePetPreReqs);
+  if (robot.IsOnCharger() || robot.IsOnChargerPlatform()) {
+    LOG_DEBUG("ReactStratPetInitialDetect.IsRunnable.RobotOnCharger", "Robot is on charger");
+    return false;
   }
   
-  return false;
+  // If we found a good target, behavior should become active.
+  BehaviorPreReqAcknowledgePet acknowledgePetPreReqs(_targets);
+  return behavior->IsRunnable(acknowledgePetPreReqs);
 }
   
 
@@ -129,17 +122,21 @@ void ReactionTriggerStrategyPetInitialDetection::BehaviorThatStrategyWillTrigger
 }
 
 
-void ReactionTriggerStrategyPetInitialDetection::RefreshReactedToIDs()
+  void ReactionTriggerStrategyPetInitialDetection::BehaviorDidReact(const std::set<Vision::FaceID_t> & targets)
 {
+  //
+  // Remember all petIDs at end of iteration to prevent triggering twice for the same petID.
+  // Note that if pet moves out of frame, then back into frame, it may be assigned a new petID.
+  // This means the behavior may trigger again for the same pet, but only if we lose track of the pet.
+  //
+  LOG_DEBUG("ReactStratPetInitialDetect.BehaviorDidReact", "Reacted to %zu targets", targets.size());
+
   InitReactedTo(_robot);
-}
-
-
-void ReactionTriggerStrategyPetInitialDetection::UpdateLastReactionTime()
-{
+  _reactedTo.insert(targets.begin(), targets.end());
   _lastReactionTime_s = GetCurrentTimeInSeconds();
-}
+  _targets.clear();
 
+}
 
 //
 // Called to update list of petIDs that we should not trigger reaction.

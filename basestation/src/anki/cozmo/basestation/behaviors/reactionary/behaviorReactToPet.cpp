@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iReactToPetListener.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgePet.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/petWorld.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -70,7 +71,14 @@ bool BehaviorReactToPet::IsRunnableInternal(const BehaviorPreReqAcknowledgePet& 
     return true;
   }
   
-  PRINT_TRACE("ReactToPet.IsRunnable.Runnable", "Behavior is runnable");
+  // Retain list of targets that triggered behavior
+  _targets = preReqData.GetTargets();
+
+  // Trigger should always provide targets
+  DEV_ASSERT(_targets.size() > 0, "BehaviorReactToPet.IsRunnable.NoTargets");
+  
+  PRINT_TRACE("ReactToPet.IsRunnable.Runnable", "Behavior is runnable with %z targets", _targets.size());
+  
   return true;
 }
   
@@ -119,16 +127,22 @@ IBehavior::Status BehaviorReactToPet::UpdateInternal(Robot& robot)
 
 //
 // Called when behavior becomes inactive.
+// This can happen if behavior is preempted during iteration.
 //
 void BehaviorReactToPet::StopInternal(Robot& robot)
 {
   PRINT_TRACE("ReactToPet.Stop", "Stop behavior");
+  
+  // Notify listeners
+  for (auto * listener: _petListeners) {
+    listener->BehaviorDidReact(_targets);
+  }
+  
+  // Update target state
   _endReactionTime_s = NEVER;
   _target = UnknownFaceID;
+  _targets.clear();
   
-  for(auto listener: _petListeners){
-    listener->UpdateLastReactionTime();
-  }
 }
   
 //
@@ -158,22 +172,25 @@ AnimationTrigger BehaviorReactToPet::GetAnimationTrigger(Vision::PetType petType
 //
 void BehaviorReactToPet::BeginIteration(Robot& robot)
 {
-  if (_targets.empty()) {
-    PRINT_DEBUG("ReactToPet.BeginIteration.NoTargets", "No targets");
-    _target = Vision::UnknownFaceID;
-    return;
+  // Trigger should always provide targets
+  DEV_ASSERT(!_targets.empty(), "BehaviorReactToPet.BeginIteration.NoTargets");
+  
+  _target = Vision::UnknownFaceID;
+  
+  // React to the first valid target.  Don't worry about choosing "best".
+  const auto & petWorld = robot.GetPetWorld();
+  const Vision::TrackedPet * pet = nullptr;
+  
+  for (auto petID : _targets) {
+    pet = petWorld.GetPetByID(petID);
+    if (nullptr != pet) {
+      _target = petID;
+      break;
+    }
   }
   
-  // React to the first target.  Don't worry about choosing "best".
-  _target = *(_targets.begin());
-    
-  const auto & petWorld = robot.GetPetWorld();
-  const auto * pet = petWorld.GetPetByID(_target);
-  if (pet == nullptr) {
-    // Pet has disappeared? Try with next pet.
-    PRINT_DEBUG("ReactToPet.BeginIteration.MissingTarget", "Can't find target ID %d", _target);
-    _targets.erase(_targets.begin());
-    BeginIteration(robot);
+  if (_target == Vision::UnknownFaceID) {
+    PRINT_NAMED_ERROR("ReactToPet.BeginIteration.NoValidTarget", "No valid target");
     return;
   }
   
@@ -228,7 +245,7 @@ void BehaviorReactToPet::BeginIteration(Robot& robot)
 }
 
 //
-// Called to ReactToPet.Update to end reaction cycle.
+// Called by ReactToPet.Update() to end reaction cycle.
 // Could also be called by tracking action if action reaches end.
 //
 void BehaviorReactToPet::EndIteration(Robot& robot)
@@ -237,22 +254,15 @@ void BehaviorReactToPet::EndIteration(Robot& robot)
   
   PRINT_INFO("ReactToPet.EndIteration", "End iteration for petID %d at t=%f", _target, currTime_s);
   
-  //
-  // Remember all petIDs at end of iteration to prevent triggering twice for the same petID.
-  // Note that if pet moves out of frame, then back into frame, it may be assigned a new petID.
-  // This means the behavior may trigger again for the same pet, but only if we lose track of the pet.
-  //
-  for(auto listener: _petListeners){
-    listener->RefreshReactedToIDs();
+  // Notify listeners
+  for (auto * listener: _petListeners) {
+    listener->BehaviorDidReact(_targets);
   }
   
   // Update target state
   _targets.clear();
   _target = UnknownFaceID;
   _endReactionTime_s = NEVER;
-  for(auto listener: _petListeners){
-    listener->UpdateLastReactionTime();
-  }
 
   // Do we need a behavior objective?
   // BehaviorObjectiveAchieved(BehaviorObjective::ReactedToPet);
