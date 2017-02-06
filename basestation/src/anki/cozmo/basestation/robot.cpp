@@ -1031,6 +1031,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
   _isBodyInAccessoryMode = IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE);
 
+  // Save the entire flag for sending to game
+  _lastStatusFlags = msg.status;
+  
   // If robot is not in accessary mode for some reason, send message to force it.
   // This shouldn't ever happen!
   if (!_isBodyInAccessoryMode && ++_setBodyModeTicDelay >= 16) {  // Triggers ~960ms (16 x 60ms engine tic) after syncTimeAck.
@@ -4285,25 +4288,17 @@ ExternalInterface::RobotState Robot::GetRobotState()
   msg.accel = GetHeadAccelData();
   msg.gyro = GetHeadGyroData();
   
-  msg.status = 0;
-  if(GetMoveComponent().IsMoving()) { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
-  if(IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
-  if(_offTreadsState != OffTreadsState::OnTreads) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
-  if(_offTreadsState == OffTreadsState::Falling)  { msg.status |= (uint32_t)RobotStatusFlag::IS_FALLING; }
+  msg.status = _lastStatusFlags;
   if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
   if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
-  if( IsOnCharger() )      { msg.status |= (uint32_t)RobotStatusFlag::IS_ON_CHARGER; }
   if(IsCarryingObject())   {
     msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
     msg.carryingObjectID = GetCarryingObject();
     msg.carryingObjectOnTopID = GetCarryingObjectOnTop();
   } else {
     msg.carryingObjectID = -1;
+    msg.carryingObjectOnTopID = -1;
   }
-  if(!GetActionList().IsEmpty()) {
-    msg.status |= (uint32_t)RobotStatusFlag::IS_PATHING;
-  }
-  if(_chargerOOS) { msg.status |= (uint32_t)RobotStatusFlag::IS_CHARGER_OOS; }
   
   msg.gameStatus = 0;
   if (IsLocalized() && _offTreadsState == OffTreadsState::OnTreads) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
@@ -4311,9 +4306,7 @@ ExternalInterface::RobotState Robot::GetRobotState()
   msg.headTrackingObjectID = GetMoveComponent().GetTrackToObject();
       
   msg.localizedToObjectID = GetLocalizedTo();
-      
-  // TODO: Add proximity sensor data to state message
-      
+
   msg.batteryVoltage = GetBatteryVoltage();
       
   msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();

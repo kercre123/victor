@@ -1005,6 +1005,8 @@ protected:
   u16              _cliffDetectThreshold;
   u32              _cliffStartTimestamp = 0;
   
+  u32              _lastStatusFlags       = 0;
+  
   // Increments count of suspicious cliff. (i.e. Cliff was detected but data looks like maybe it's not real.)
   void IncrementSuspiciousCliffCount();
   
