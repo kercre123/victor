@@ -522,13 +522,13 @@ message JsonDasLogAllSentMessage {
 
 message VerifyDebugConsoleFuncMessage {
   string funcName,
-  string statusMessage,
+  string[uint_16] statusMessage,
   bool success
 }
 
 message VerifyDebugConsoleVarMessage {
   string varName,
-  string statusMessage,
+  string[uint_16] statusMessage,
   ConsoleVarUnion varValue,
   bool success
 }
