@@ -238,18 +238,22 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
       
   // Initializes _pose, _poseOrigins, and _worldOrigin:
   Delocalize(false);
-      
+  
+  // The call to Delocalize() will increment frameID, but we want it to be
+  // initialzied to 0, to match the physical robot's initialization
+  // It will also add to history so clear it
+  // It will also flag that a localization update is needed when it increments the frameID so set the flag
+  // to false
+  _frameId = 0;
+  _poseHistory->Clear();
+  _needToSendLocalizationUpdate = false;
+  
   // Delocalize will mark isLocalized as false, but we are going to consider
   // the robot localized (by odometry alone) to start, until he gets picked up.
   _isLocalized = true;
   SetLocalizedTo(nullptr);
 
   _robotToEngineImplMessaging->InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID, this);
-  
-  
-  // The call to Delocalize() will increment frameID, but we want it to be
-  // initialzied to 0, to match the physical robot's initialization
-  _frameId = 0;
       
   _lastDebugStringHash = 0;
       
@@ -746,8 +750,11 @@ void Robot::Delocalize(bool isCarryingObject)
   // Create a new pose frame so that we can't get pose history entries with the same pose
   // frame that have different origins (Not 100% sure this is totally necessary but seems
   // like the cleaner / safer thing to do.)
-  AddVisionOnlyPoseToHistory(GetLastMsgTimestamp(), _pose, GetHeadAngle(), GetLiftAngle());
-  AddRawOdomPoseToHistory(GetLastMsgTimestamp(),GetPoseFrameID(), _pose, GetHeadAngle(), GetLiftAngle(), GetCliffDataRaw(), isCarryingObject);
+  Result res = SetNewPose(_pose);
+  if(res != RESULT_OK)
+  {
+    PRINT_NAMED_WARNING("Robot.Delocalize.SetNewPose", "Failed to set new pose");
+  }
   
   if(_timeSynced)
   {
@@ -1013,6 +1020,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
   _isBodyInAccessoryMode = IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE);
 
+  // Save the entire flag for sending to game
+  _lastStatusFlags = msg.status;
+  
   // If robot is not in accessary mode for some reason, send message to force it.
   // This shouldn't ever happen!
   if (!_isBodyInAccessoryMode && ++_setBodyModeTicDelay >= 16) {  // Triggers ~960ms (16 x 60ms engine tic) after syncTimeAck.
@@ -1891,10 +1901,9 @@ static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
 } // IsValidHeadAngle()
 
     
-void Robot::SetNewPose(const Pose3d& newPose)
+Result Robot::SetNewPose(const Pose3d& newPose)
 {
   SetPose(newPose.GetWithRespectToOrigin());
-  ++_frameId;
   
   // Note: using last message timestamp instead of newest timestamp in history
   //  because it's possible we did not put the last-received state message into
@@ -1902,15 +1911,7 @@ void Robot::SetNewPose(const Pose3d& newPose)
   //  can get.
   const TimeStamp_t timeStamp = GetLastMsgTimestamp();
   
-  Result addResult = AddRawOdomPoseToHistory(timeStamp, _frameId, _pose, GetHeadAngle(), GetLiftAngle(), GetCliffDataRaw(), IsCarryingObject());
-  if(RESULT_OK != addResult)
-  {
-    PRINT_NAMED_ERROR("Robot.SetNewPose.AddRawOdomPoseFailed",
-                      "t=%d FrameID=%d", timeStamp, _frameId);
-    return;
-  }
-    
-  SendAbsLocalizationUpdate(_pose, timeStamp, _frameId);
+  return AddVisionOnlyPoseToHistory(timeStamp, _pose, GetHeadAngle(), GetLiftAngle());
 }
     
 void Robot::SetPose(const Pose3d &newPose)
@@ -2813,90 +2814,83 @@ Result Robot::ExecutePath(const Planning::Path& path, const bool useManualSpeed)
     
 Result Robot::SetOnRamp(bool t)
 {
-// Unsupported, remove in new PR
-//  ANKI_CPU_PROFILE("Robot::SetOnRamp");
-//  
-//  if(t == _onRamp) {
-//    // Nothing to do
-//    return RESULT_OK;
-//  }
-//      
-//  // We are either transition onto or off of a ramp
-//      
-//  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetLocatedObjectByID(_rampID, ObjectFamily::Ramp));
-//  if(ramp == nullptr) {
-//    PRINT_NAMED_WARNING("Robot.SetOnRamp.NoRampWithID",
-//                        "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world",
-//                        _ID, _rampID.GetValue());
-//    return RESULT_FAIL;
-//  }
-//      
-//  assert(_rampDirection == Ramp::ASCENDING || _rampDirection == Ramp::DESCENDING);
-//      
-//  const bool transitioningOnto = (t == true);
-//      
-//  if(transitioningOnto) {
-//    // Record start (x,y) position coming from robot so basestation can
-//    // compute actual (x,y,z) position from upcoming odometry updates
-//    // coming from robot (which do not take slope of ramp into account)
-//    _rampStartPosition = {_pose.GetTranslation().x(), _pose.GetTranslation().y()};
-//    _rampStartHeight   = _pose.GetTranslation().z();
-//        
-//    PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOntoRamp",
-//                     "Robot %d transitioning onto ramp %d, using start (%.1f,%.1f,%.1f)",
-//                     _ID, ramp->GetID().GetValue(), _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
-//        
-//  } else {
-//    // Just do an absolute pose update, setting the robot's position to
-//    // where we "know" he should be when he finishes ascending or
-//    // descending the ramp
-//    switch(_rampDirection)
-//    {
-//      case Ramp::ASCENDING:
-//        SetPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
-//        break;
-//            
-//      case Ramp::DESCENDING:
-//        SetPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
-//        break;
-//            
-//      default:
-//        PRINT_NAMED_WARNING("Robot.SetOnRamp.UnexpectedRampDirection",
-//                            "When transitioning on/off ramp, expecting the ramp direction to be either "
-//                            "ASCENDING or DESCENDING, not %d.", _rampDirection);
-//        return RESULT_FAIL;
-//    }
-//        
-//    _rampDirection = Ramp::UNKNOWN;
-//        
-//    const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
-//        
-//    PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOffRamp",
-//                     "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
-//                     _ID, ramp->GetID().GetValue(),
-//                     _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
-//                     _pose.GetRotationAngle<'Z'>().getDegrees(),
-//                     timeStamp);
-//        
-//    // We are creating a new pose frame at the top of the ramp
-//    //IncrementPoseFrameID();
-//    ++_frameId;
-//    Result lastResult = SendAbsLocalizationUpdate(_pose,
-//                                                  timeStamp,
-//                                                  _frameId);
-//    if(lastResult != RESULT_OK) {
-//      PRINT_NAMED_WARNING("Robot.SetOnRamp.SendAbsLocUpdateFailed",
-//                          "Robot %d failed to send absolute localization update.", _ID);
-//      return lastResult;
-//    }
-//
-//  } // if/else transitioning onto ramp
-//      
-//  _onRamp = t;
-//      
-//  return RESULT_OK;
-  return RESULT_FAIL;
-}
+  ANKI_CPU_PROFILE("Robot::SetOnRamp");
+  
+  if(t == _onRamp) {
+    // Nothing to do
+    return RESULT_OK;
+  }
+      
+  // We are either transition onto or off of a ramp
+      
+  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetObjectByID(_rampID, ObjectFamily::Ramp));
+  if(ramp == nullptr) {
+    PRINT_NAMED_WARNING("Robot.SetOnRamp.NoRampWithID",
+                        "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world",
+                        _ID, _rampID.GetValue());
+    return RESULT_FAIL;
+  }
+      
+  assert(_rampDirection == Ramp::ASCENDING || _rampDirection == Ramp::DESCENDING);
+      
+  const bool transitioningOnto = (t == true);
+      
+  if(transitioningOnto) {
+    // Record start (x,y) position coming from robot so basestation can
+    // compute actual (x,y,z) position from upcoming odometry updates
+    // coming from robot (which do not take slope of ramp into account)
+    _rampStartPosition = {_pose.GetTranslation().x(), _pose.GetTranslation().y()};
+    _rampStartHeight   = _pose.GetTranslation().z();
+        
+    PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOntoRamp",
+                     "Robot %d transitioning onto ramp %d, using start (%.1f,%.1f,%.1f)",
+                     _ID, ramp->GetID().GetValue(), _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
+        
+  } else {
+    Result res;
+    // Just do an absolute pose update, setting the robot's position to
+    // where we "know" he should be when he finishes ascending or
+    // descending the ramp
+    switch(_rampDirection)
+    {
+      case Ramp::ASCENDING:
+        res = SetNewPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
+        break;
+            
+      case Ramp::DESCENDING:
+        res = SetNewPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
+        break;
+            
+      default:
+        PRINT_NAMED_WARNING("Robot.SetOnRamp.UnexpectedRampDirection",
+                            "When transitioning on/off ramp, expecting the ramp direction to be either "
+                            "ASCENDING or DESCENDING, not %d.", _rampDirection);
+        return RESULT_FAIL;
+    }
+    
+    if(res != RESULT_OK) {
+      PRINT_NAMED_WARNING("Robot.SetOnRamp.SetNewPose",
+                          "Robot %d failed to set new pose", _ID);
+      return res;
+    }
+        
+    _rampDirection = Ramp::UNKNOWN;
+        
+    const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
+        
+    PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOffRamp",
+                     "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
+                     _ID, ramp->GetID().GetValue(),
+                     _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
+                     _pose.GetRotationAngle<'Z'>().getDegrees(),
+                     timeStamp);
+  } // if/else transitioning onto ramp
+      
+  _onRamp = t;
+      
+  return RESULT_OK;
+      
+} // SetOnPose()
     
     
 Result Robot::SetPoseOnCharger()
@@ -2913,7 +2907,12 @@ Result Robot::SetPoseOnCharger()
       
   // Just do an absolute pose update, setting the robot's position to
   // where we "know" he should be when he finishes ascending the charger.
-  SetPose(charger->GetRobotDockedPose().GetWithRespectToOrigin());
+  Result lastResult = SetNewPose(charger->GetRobotDockedPose().GetWithRespectToOrigin());
+  if(lastResult != RESULT_OK) {
+    PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.SetNewPose",
+                        "Robot %d failed to set new pose", _ID);
+    return lastResult;
+  }
 
   const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
     
@@ -2923,18 +2922,6 @@ Result Robot::SetPoseOnCharger()
                    _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
                    _pose.GetRotationAngle<'Z'>().getDegrees(),
                    timeStamp);
-      
-  // We are creating a new pose frame at the top of the ramp
-  //IncrementPoseFrameID();
-  ++_frameId;
-  Result lastResult = SendAbsLocalizationUpdate(_pose,
-                                                timeStamp,
-                                                _frameId);
-  if(lastResult != RESULT_OK) {
-    PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.SendAbsLocUpdateFailed",
-                        "Robot %d failed to send absolute localization update.", _ID);
-    return lastResult;
-  }
       
   return RESULT_OK;
       
@@ -3723,8 +3710,10 @@ Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                          const f32 lift_angle)
 {      
   // We have a new ("ground truth") key frame. Increment the pose frame!
-  //IncrementPoseFrameID();
   ++_frameId;
+  
+  // Set needToSendLocalizationUpdate to true so we send an update on the next tick
+  _needToSendLocalizationUpdate = true;
   
   // vision poses do not care about whether you are carrying an object. This field has no meaning here, so we
   // set to false always
@@ -4231,25 +4220,17 @@ ExternalInterface::RobotState Robot::GetRobotState()
   msg.accel = GetHeadAccelData();
   msg.gyro = GetHeadGyroData();
   
-  msg.status = 0;
-  if(GetMoveComponent().IsMoving()) { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
-  if(IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
-  if(_offTreadsState != OffTreadsState::OnTreads) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
-  if(_offTreadsState == OffTreadsState::Falling)  { msg.status |= (uint32_t)RobotStatusFlag::IS_FALLING; }
+  msg.status = _lastStatusFlags;
   if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
   if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
-  if( IsOnCharger() )      { msg.status |= (uint32_t)RobotStatusFlag::IS_ON_CHARGER; }
   if(IsCarryingObject())   {
     msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
     msg.carryingObjectID = GetCarryingObject();
     msg.carryingObjectOnTopID = GetCarryingObjectOnTop();
   } else {
     msg.carryingObjectID = -1;
+    msg.carryingObjectOnTopID = -1;
   }
-  if(!GetActionList().IsEmpty()) {
-    msg.status |= (uint32_t)RobotStatusFlag::IS_PATHING;
-  }
-  if(_chargerOOS) { msg.status |= (uint32_t)RobotStatusFlag::IS_CHARGER_OOS; }
   
   msg.gameStatus = 0;
   if (IsLocalized() && _offTreadsState == OffTreadsState::OnTreads) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
@@ -4257,9 +4238,7 @@ ExternalInterface::RobotState Robot::GetRobotState()
   msg.headTrackingObjectID = GetMoveComponent().GetTrackToObject();
       
   msg.localizedToObjectID = GetLocalizedTo();
-      
-  // TODO: Add proximity sensor data to state message
-      
+
   msg.batteryVoltage = GetBatteryVoltage();
       
   msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();

@@ -10,5 +10,6 @@
 
   "maxTimeToLookForFace_s": 5.0,
   "abortIfNoFaceFound": false,
-  "doHesitatingInitialRequest": true
+  "longRequestCooldownTime_s": 180,
+  "longRequestProbability": 0.2
 }

@@ -397,11 +397,9 @@ void IBehavior::Stop()
   for(const auto& entry: _lockingNameToTracksMap){
     _robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
   }
+  
+  
   _lockingNameToTracksMap.clear();
-  
-  // Clear any light patterns which were set on cubes
-  _robot.GetCubeLightComponent().StopAllAnims();
-  
   _customLightObjects.clear();
   
   DEV_ASSERT(_disabledReactionTriggers.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
@@ -864,6 +862,7 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
   {
     const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
     
+
     _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedKnown);
     _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedUnsure);
     

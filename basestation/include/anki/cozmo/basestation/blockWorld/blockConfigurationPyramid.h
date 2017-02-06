@@ -50,7 +50,9 @@ class PyramidBaseConfigurationContainer;
 class PyramidBase: public BlockConfiguration{
   protected:
     // The BlockConfigurationManager builds all configurations
-    PyramidBase(const ObjectID& staticBlockID, const ObjectID& baseBlockID);
+    // base vs static is decided by pyramid base so that:
+    // baseBlockID < staticBlockID
+    PyramidBase(const ObjectID& baseBlock1, const ObjectID& baseBlock2);
   
   public:
     // Allows pyramid to use GetAllBlockIDsOrdered() function
@@ -107,7 +109,7 @@ class Pyramid: public BlockConfiguration{
     friend PyramidConfigurationContainer;
     friend PyramidBaseConfigurationContainer;
     Pyramid(const PyramidBase& base, const ObjectID& topBlockID);
-    Pyramid(const ObjectID& staticBlockID, const ObjectID& baseBlockID,
+    Pyramid(const ObjectID& baseBlock1, const ObjectID& baseBlock2,
                                            const ObjectID& topBlockID);
  
   public:

@@ -189,8 +189,15 @@
           "behaviorObjective": "BuiltPyramid",
           "softSparkTrigger": "SoftSparkUpgradeLift",
           "sparksSuccessTrigger": "", // don't play any animation
+          "simpleChooserDelegate":
+          {
+            "type":"pyramid",
+            "behaviorGroups" : [ "SetupBuildPyramid", "BuildPyramid" ]
+          },
           // these are the behaviors that are allowed in this behavior chooser
-          "behaviorGroups" : [ "SparksBuildPyramid" ]
+          // no behavior groups are set here since this chooser delegates to the pyramid
+          // chooser for simple behavior purposes
+          "behaviorGroups" : [ ]
         },
         "goalStrategy":
         {

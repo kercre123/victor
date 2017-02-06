@@ -24,13 +24,15 @@ namespace Cozmo {
   // Json parameter keys
   static const char* kMaxTimeToLookForFaceKey       = "maxTimeToLookForFace_s";
   static const char* kAbortIfNoFaceFoundKey         = "abortIfNoFaceFound";
-  static const char* kDoHesitatingInitialRequestKey = "doHesitatingInitialRequest";
+  static const char* kLongRequestCooldownTimeKey    = "longRequestCooldownTime_s";
+  static const char* kLongRequestProbabilityKey     = "longRequestProbability";
   
   // Constants
   static constexpr f32 kLiftAngleBumpThresh_radps   = DEG_TO_RAD(0.5f);
   static constexpr f32 kGyroYBumpThresh_radps       = DEG_TO_RAD(12.f);
   static constexpr u32 kMaxNumAttempts              = 2;
   static constexpr f32 kMaxTimeForMotorSettling_s   = 0.5f; // For DAS warning only
+  static constexpr f32 kMaxPickedupDurationBeforeExit_s = 1.f;
   
   // Looking for face parameters
   static const std::vector<f32> kLookForFaceAngleChanges_rad = {DEG_TO_RAD(-15), DEG_TO_RAD(30)};
@@ -45,28 +47,26 @@ BehaviorFistBump::BehaviorFistBump(Robot& robot, const Json::Value& config)
   , _startLookingForFaceTime_s(0.f)
   , _nextGazeChangeTime_s(0.f)
   , _nextGazeChangeIndex(0)
-  , _maxTimeToLookForFace_s(3.f)
+  , _maxTimeToLookForFace_s(0.f)
   , _abortIfNoFaceFound(true)
-  , _doHesitatingInitialRequest(false)
+  , _longRequestCooldownTime_s(0.f)
+  , _longRequestProbability(0.f)
+  , _lastLongRequestPlayTime_s(0.f)
   , _waitStartTime_s(0.f)
   , _fistBumpRequestCnt(0)
   , _liftWaitingAngle_rad(0.f)
+  , _lastTimeOffTreads_s(0.f)
 {
   SetDefaultName("FistBump");
   
-  const Json::Value& maxTimeToLookForFaceJson = config[kMaxTimeToLookForFaceKey];
-  if (!maxTimeToLookForFaceJson.isNull()) {
-    _maxTimeToLookForFace_s = maxTimeToLookForFaceJson.asFloat();
-  }
+  JsonTools::GetValueOptional(config, kMaxTimeToLookForFaceKey,    _maxTimeToLookForFace_s);
+  JsonTools::GetValueOptional(config, kAbortIfNoFaceFoundKey,      _abortIfNoFaceFound);
   
-  const Json::Value& doHesitatingInitialRequestJson = config[kDoHesitatingInitialRequestKey];
-  if (!doHesitatingInitialRequestJson.isNull()) {
-    _doHesitatingInitialRequest = doHesitatingInitialRequestJson.asBool();
-  }
-
-  const Json::Value& abortIfNoFaceFoundJson = config[kAbortIfNoFaceFoundKey];
-  if (!abortIfNoFaceFoundJson.isNull()) {
-    _abortIfNoFaceFound = abortIfNoFaceFoundJson.asBool();
+  bool longRequestCooldownDefined    = JsonTools::GetValueOptional(config, kLongRequestCooldownTimeKey, _longRequestCooldownTime_s);
+  bool longRequestProbabilityDefined = JsonTools::GetValueOptional(config, kLongRequestProbabilityKey,  _longRequestProbability);
+  
+  if (longRequestCooldownDefined != longRequestProbabilityDefined) {
+    PRINT_NAMED_ERROR("BehaviorFistBump.longRequestProbOrCooldownUndefined", "Either both Cooldown and probability must be defined or neither defined");
   }
 }
 
@@ -108,6 +108,7 @@ Result BehaviorFistBump::InitInternal(Robot& robot)
   _startLookingForFaceTime_s = 0.f;
   _nextGazeChangeTime_s = 0.f;
   _nextGazeChangeIndex = 0;
+  _lastTimeOffTreads_s = 0.f;
   
   _state = State::RequestInitialFistBump;
 
@@ -116,6 +117,20 @@ Result BehaviorFistBump::InitInternal(Robot& robot)
   
 IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
 {
+  f32 now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  // Check if should exit because of pickup
+  if (robot.GetOffTreadsState() != OffTreadsState::OnTreads) {
+    if (_lastTimeOffTreads_s == 0) {
+      _lastTimeOffTreads_s = now;
+    } else if (now > _lastTimeOffTreads_s + kMaxPickedupDurationBeforeExit_s) {
+      return Status::Complete;
+    }
+  } else {
+    _lastTimeOffTreads_s = 0;
+  }
+  
+  
   // If no action currently running, return Running, unless the state is
   // WaitingForMotorsToSettle or WaitingForBump in which case we loop the idle animation.
   switch(_state) {
@@ -132,8 +147,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
     }
   }
   
-  f32 now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
+
   switch(_state) {
     case State::LookingForFace:
     {
@@ -172,8 +186,10 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
     }
     case State::RequestInitialFistBump:
     {
-      if (_doHesitatingInitialRequest) {
+      if (((_lastLongRequestPlayTime_s == 0) || (now > _lastLongRequestPlayTime_s + _longRequestCooldownTime_s)) &&
+          (GetRNG().RandDblInRange(0.0, 1.0) < _longRequestProbability) ) {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestLong));
+        _lastLongRequestPlayTime_s = now;
       } else {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestOnce));
       }

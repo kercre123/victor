@@ -192,7 +192,7 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       CurrentRobot.SetEnableFreeplayLightStates(false);
 
-      if ((CurrentRobot.RobotStatus & RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
+      if (CurrentRobot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
         CurrentRobot.PlaceObjectOnGroundHere((success) => {
           PlayGetInAnimation();
         });
@@ -309,7 +309,7 @@ public abstract class GameBase : MonoBehaviour {
     if (currentRobot == null) {
       return;
     }
-    if (currentRobot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING) {
+    if (currentRobot.Status(RobotStatusFlag.IS_PICKING_OR_PLACING)) {
       StartCoroutine(WaitForPickingUpOrPlacingFinish(currentRobot, Time.time));
     }
     else {
@@ -320,7 +320,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private IEnumerator WaitForPickingUpOrPlacingFinish(IRobot robot, float startTimestamp) {
-    while (robot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING
+    while (robot.Status(RobotStatusFlag.IS_PICKING_OR_PLACING)
            && (Time.time - startTimestamp) < kWaitForPickupOrPlaceTimeout_sec) {
       yield return new WaitForEndOfFrame();
     }
@@ -329,7 +329,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void CheckForCarryingBlock(IRobot robot) {
-    if (robot.RobotStatus == RobotStatusFlag.IS_CARRYING_BLOCK) {
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
       robot.PlaceObjectOnGroundHere(FinishPlaceObjectOnGround);
     }
     else {

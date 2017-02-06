@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_SparksBehaviorChooser_H__
-#define __Cozmo_Basestation_SparksBehaviorChooser_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SparksBehaviorChooser_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SparksBehaviorChooser_H__
 
 #include "anki/common/basestation/objectIDs.h"
 #include "clad/types/behaviorObjectives.h"
@@ -115,6 +115,14 @@ private:
 
   // Track when we saw cubes to determine if we saw them during the spark
   std::set< ObjectID > _observedObjectsSinceStarted;
+  
+  // A behavior chooser that can be set by a spark to delegate selection
+  // to once the intro has finished as part of the sparksChooser
+  std::unique_ptr<IBehaviorChooser> _simpleBehaviorChooserDelegate;
+  
+  IBehavior* SelectNextSparkInternalBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
+  
+  
   
 };
    

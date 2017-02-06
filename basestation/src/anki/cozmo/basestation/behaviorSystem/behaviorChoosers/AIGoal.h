@@ -9,13 +9,12 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#ifndef __Cozmo_Basestation_BehaviorSystem_AIGoal_H__
-#define __Cozmo_Basestation_BehaviorSystem_AIGoal_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_AIGoal_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_AIGoal_H__
 
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalPersistentUpdates/iGoalPersistentUpdate.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/unlockTypes.h"
 #include "json/json-forwards.h"
@@ -103,19 +102,12 @@ private:
   // returns true if driving animation triggers have been defined for this goal
   bool HasDrivingAnimTriggers() const { return _driveStartAnimTrigger != AnimationTrigger::Count; } // checking one is checking all
 
-  // sets the PersistentUpdateFunctionClass based on the string passed in
-  IGoalPersistentUpdate* PersistentUpdateComponentFactory(const std::string& updateFuncID);
-  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // behavior chooser associated to this goal
   std::unique_ptr<IBehaviorChooser> _behaviorChooserPtr;
-  
-  // a function that can contain logic that spans behaviors
-  // and requires update ticks
-  IGoalPersistentUpdate* _persistentUpdateComponent;
   
   // strategy to run this goal
   std::unique_ptr<IAIGoalStrategy> _strategy;

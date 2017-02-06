@@ -12,11 +12,14 @@
 #include "behaviorChooserFactory.h"
 
 // behavior choosers
-#include "behaviorChoosers/AIGoalEvaluator.h"
-#include "behaviorChoosers/selectionBehaviorChooser.h"
-#include "behaviorChoosers/simpleBehaviorChooser.h"
-#include "behaviorChoosers/socializeBehaviorChooser.h"
-#include "behaviorChoosers/sparksBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalEvaluator.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/BuildPyramidBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/selectionBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/socializeBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/sparksBehaviorChooser.h"
+
+
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -39,7 +42,7 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   const Json::Value& type = config["type"];
   std::string typeStr = type.isNull() ? "(type_not_found)" : type.asString();
   std::transform(typeStr.begin(), typeStr.end(), typeStr.begin(), ::tolower);
-
+  
   // should this be more sophisticated than string compare?
   if ( typeStr == "simple" )
   {
@@ -56,6 +59,9 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   }
   else if ( typeStr == "socialize") {
     newChooser = new FPSocializeBehaviorChooser(robot, config);
+  }
+  else if ( typeStr == "pyramid"){
+    newChooser = new BuildPyramidBehaviorChooser(robot, config);
   }
   else
   {
