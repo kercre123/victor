@@ -54,6 +54,22 @@ static const ObjectLights kCubeLightsOff = {
   .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
   .relativePoint          = {0,0}
 };
+  
+  
+bool ObjectLights::operator==(const ObjectLights& other) const
+{
+  return this->onColors        == other.onColors &&
+  this->offColors              == other.offColors &&
+  this->onPeriod_ms            == other.onPeriod_ms &&
+  this->offPeriod_ms           == other.offPeriod_ms &&
+  this->transitionOnPeriod_ms  == other.transitionOnPeriod_ms &&
+  this->transitionOffPeriod_ms == other.transitionOffPeriod_ms &&
+  this->offset                 == other.offset &&
+  this->rotationPeriod_ms      == other.rotationPeriod_ms &&
+  this->makeRelative           == other.makeRelative &&
+  this->relativePoint          == other.relativePoint;
+}
+  
 
 CubeLightComponent::CubeLightComponent(Robot& robot, const CozmoContext* context)
 : _robot(robot)

@@ -663,6 +663,8 @@ public static class LocalizationKeys {
   public const string kSparksSparkConfirmQuitDescription = "sparks.Spark.ConfirmQuit.Description";
   public const string kSparksNotEnoughSparksTitle = "sparks.NotEnoughSparks.Title";
   public const string kSparksNotEnoughSparksDesc = "sparks.NotEnoughSparks.Desc";
+  public const string kSparksCubesNeedUprightTitle = "sparks.CubesNeedUpright.Title";
+  public const string kSparksCubesNeedUprightDesc = "sparks.CubesNeedUpright.Desc";
 
   #endregion
 

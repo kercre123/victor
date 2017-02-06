@@ -114,6 +114,12 @@
   "behavior.LookForFaceAndCube": {
     "translation": " "
   },
+  "behavior.BuildPyramid": {
+    "translation": "Cozmo is building a pyramid"
+  },
+  "behavior.PrepareCubes":{
+    "translation": "Cozmo is preparing his cubes"
+  }, 
   "behavior.LookInPlaceForCube": {
     "translation": "Cozmo is looking for a cube"
   }    

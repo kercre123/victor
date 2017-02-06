@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_SelectionBehaviorChooser_H__
-#define __Cozmo_Basestation_SelectionBehaviorChooser_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 #include "clad/types/behaviorTypes.h"

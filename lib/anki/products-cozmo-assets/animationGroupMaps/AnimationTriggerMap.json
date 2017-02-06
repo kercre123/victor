@@ -29,12 +29,44 @@
       "AnimName": "blockReact"
     },
     {
+      "CladEvent": "BuildPyramidFirstBlockOnSide",
+      "AnimName": "ag_pyramid_reacttocube_frustrated_low"
+    },
+    {
+      "CladEvent": "BuildPyramidFirstBlockUpright",
+      "AnimName": "ag_pyramid_reacttocube_happy_low"
+    },
+    {
+      "CladEvent": "BuildPyramidLookForFace",
+      "AnimName": "ag_pyramid_lookforface"
+    },
+    {
       "CladEvent": "BuildPyramidReactToBase",
       "AnimName": "ag_pyramid_rt2blocks"
     },
     {
+      "CladEvent": "BuildPyramidSecondBlockOnSide",
+      "AnimName": "ag_pyramid_reacttocube_frustrated_mid"
+    },
+    {
+      "CladEvent": "BuildPyramidSecondBlockUpright",
+      "AnimName": "ag_pyramid_reacttocube_happy_mid"
+    },
+    {
       "CladEvent": "BuildPyramidSuccess",
       "AnimName": "ag_pyramid_success"
+    },
+    {
+      "CladEvent": "BuildPyramidThankUser",
+      "AnimName": "ag_pyramid_thankyou"
+    },
+    {
+      "CladEvent": "BuildPyramidThirdBlockOnSide",
+      "AnimName": "ag_pyramid_reacttocube_frustrated_high"
+    },
+    {
+      "CladEvent": "BuildPyramidThirdBlockUpright",
+      "AnimName": "ag_pyramid_reacttocube_happy_high"
     },
     {
       "CladEvent": "CantHandleTallStack",

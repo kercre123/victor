@@ -29,7 +29,6 @@ enum class AnimationTrigger;
 class BehaviorBuildPyramid : public BehaviorBuildPyramidBase
 {
 protected:
-  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorBuildPyramid(Robot& robot, const Json::Value& config);
@@ -38,15 +37,16 @@ public:
   
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
-
+  
 protected:
   
   virtual Result InitInternal(Robot& robot) override;
   void StopInternal(Robot& robot) override;
   
   template<typename T>
-  void TransitionToSearchingWithCallback(Robot& robot,  const ObjectID& objectID,  void(T::*callback)(Robot&));
-  
+  void TransitionToSearchingWithCallback(Robot& robot,
+                                         const ObjectID& objectID,
+                                         void(T::*callback)(Robot&));
   
 private:
   typedef std::vector<const ObservableObject*> BlockList;
@@ -54,12 +54,10 @@ private:
   void TransitionToDrivingToTopBlock(Robot& robot);
   void TransitionToPlacingTopBlock(Robot& robot);
   void TransitionToReactingToPyramid(Robot& robot);
-  
+    
   ObjectID GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const;
   
-  int _searchingForNearbyBaseCount;
   int _searchingForTopBlockCount;
-  
   
 }; //class BehaviorBuildPyramid
 

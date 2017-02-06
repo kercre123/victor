@@ -23,7 +23,7 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   public Action<UnlockId> OnSparkStarted;
-  public Action<CoreUpgradeDetailsModal> OnSparkComplete;
+  public Action<Cozmo.Upgrades.CoreUpgradeDetailsModal> OnSparkComplete;
   public Action<UnlockId> OnUnlockComplete;
 
   public bool UnlocksLoaded { get { return _UnlocksLoaded; } }

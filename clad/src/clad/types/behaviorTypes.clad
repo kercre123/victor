@@ -53,6 +53,8 @@ enum uint_8 BehaviorClass {
   PopAWheelie,
   PounceOnMotion,
   PutDownBlock,
+  PyramidThankYou,
+  RespondPossiblyRoll,
   RespondToRenameFace,
   RequestGameSimple,
   RollBlock,

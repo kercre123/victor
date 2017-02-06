@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_SimpleBehaviorChooser_H__
-#define __Cozmo_Basestation_SimpleBehaviorChooser_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SimpleBehaviorChooser_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SimpleBehaviorChooser_H__
 
 #include "iBehaviorChooser.h"
 #include "anki/common/types.h"
@@ -94,6 +94,9 @@ protected:
   void SetBehaviorEnabledFromBehaviorConfig(const Json::Value& behaviorList, bool enable);  // behavior name list
   
   // internally change which behaviors can be selected
+  // Note that enabling/disabling groups is order dependent since single behaviors
+  // can map to multiple groups.  Therefore, in most cases, if switching between groups
+  // the disables should come first followed by the re-enables.
   void SetAllBehaviorsEnabled(bool newVal = true);
   void SetBehaviorGroupEnabled(BehaviorGroup behaviorGroup, bool newVal = true);
   bool SetBehaviorEnabled(const std::string& behaviorName, bool newVal = true);

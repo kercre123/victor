@@ -550,6 +550,7 @@ GameObject:
   - 224: {fileID: 22434626}
   - 114: {fileID: 11454172}
   - 225: {fileID: 22516724}
+  - 114: {fileID: 11477270}
   m_Layer: 5
   m_Name: CoreUpgradeDetailsModal
   m_TagString: Untagged
@@ -933,7 +934,7 @@ MonoBehaviour:
     JsonValue: 0.5882353
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: CoreUpgradeDetailsModal:_OptionalCloseDialogButton
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_OptionalCloseDialogButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11417062
@@ -1117,7 +1118,7 @@ MonoBehaviour:
     JsonValue: '"Paragraph Text"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: CoreUpgradeDetailsModal:_UnlockableDescriptionLabel
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_UnlockableDescriptionLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11434118
@@ -1177,7 +1178,7 @@ MonoBehaviour:
     JsonValue: '"Use 3 Bits to Unlock"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: CoreUpgradeDetailsModal:_LockedPromptDescription
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_LockedPromptDescription
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
@@ -1279,7 +1280,7 @@ MonoBehaviour:
     JsonValue: '"Available:"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: CoreUpgradeDetailsModal:_ButtonPromptTitle
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_ButtonPromptTitle
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11454172
@@ -1492,7 +1493,7 @@ MonoBehaviour:
     JsonValue: '"Use 3 Bits to Unlock"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: CoreUpgradeDetailsModal:_ButtonPromptDescription
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_ButtonPromptDescription
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
@@ -1621,7 +1622,7 @@ MonoBehaviour:
     JsonValue: '"Available:"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: CoreUpgradeDetailsModal:_LockedPromptTitle
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_LockedPromptTitle
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11472824
@@ -1663,7 +1664,7 @@ MonoBehaviour:
     JsonValue: '"Knock Over Stacks"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: CoreUpgradeDetailsModal:_UnlockableNameLabel
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_UnlockableNameLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11474646
@@ -1687,9 +1688,23 @@ MonoBehaviour:
     JsonValue: 3
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
-    FieldName: CoreUpgradeDetailsModal:_UnlockUpgradeButton
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_UnlockUpgradeButton
     ReferencePath: 
   ModifiedGlobalReferences: []
+--- !u!114 &11477270
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 168466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33f1f53d364ba4d87bee9209afa840c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _PyramidCubeUprightModalPrefab: {fileID: 11467916, guid: e06d83da220314dcd9810feb64ebd598,
+    type: 2}
+  _ReopenModalCooldown_sec: 10
 --- !u!114 &11477634
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1903,10 +1918,10 @@ MonoBehaviour:
     JsonValue: 1.0
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
-    FieldName: CoreUpgradeDetailsModal:_RequestTrickButton
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_RequestTrickButton
     ReferencePath: 
   - ObjectPath: ../../../../
-    FieldName: CoreUpgradeDetailsModal:_RequestTrickButtonLabel
+    FieldName: Cozmo.Upgrades.CoreUpgradeDetailsModal:_RequestTrickButtonLabel
     ReferencePath: ButtonText
   ModifiedGlobalReferences:
   - ObjectPath: ButtonBackground

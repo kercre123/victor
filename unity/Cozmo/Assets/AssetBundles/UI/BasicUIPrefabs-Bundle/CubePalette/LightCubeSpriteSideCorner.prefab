@@ -312,11 +312,11 @@ MonoBehaviour:
   - {fileID: 11482884}
   _CubeIcon: {fileID: 11407124}
   _AlphaController: {fileID: 22597192}
-  _LightCubeOneSprite: {fileID: 21300000, guid: b200233ed9cd44736bd4ddc3fd50347e,
+  _LightCubeOneSprite: {fileID: 21300000, guid: 02e344db11784457c8b12e37e9351a8d,
     type: 3}
   _LightCubeTwoSprite: {fileID: 21300000, guid: 45cc95ad23a96460d97bde66b25a81f7,
     type: 3}
-  _LightCubeThreeSprite: {fileID: 21300000, guid: 2f9164e7a6ea442bb919e3bcbae064bd,
+  _LightCubeThreeSprite: {fileID: 21300000, guid: 4ebb3ddac6f2540549f344850e665d50,
     type: 3}
 --- !u!222 &22230970
 CanvasRenderer:

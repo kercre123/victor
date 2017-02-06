@@ -227,5 +227,11 @@
   },
   "sparks.NotEnoughSparks.Desc": {
     "translation": "Earn more by completing Daily Goals"
+  },
+  "sparks.CubesNeedUpright.Title":{
+    "translation": "Make Sure Cubes are Upright"
+  },
+  "sparks.CubesNeedUpright.Desc": {
+    "translation": "When the cubes are upright with their lights up, Cozmo can build more quickly."
   }
 }

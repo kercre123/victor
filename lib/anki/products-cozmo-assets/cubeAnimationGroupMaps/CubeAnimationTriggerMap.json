@@ -49,12 +49,12 @@
             "AnimName": "pyramidBaseTop"
         },
         {
-            "CladEvent": "PyramidDenouement",
-            "AnimName": "pyramidDenouement"
-        },
-        {
             "CladEvent": "PyramidFlourish",
             "AnimName": "pyramidFlourish"
+        },
+        {
+            "CladEvent": "PyramidOnSide",
+            "AnimName": "pyramidOnSide"
         },
         {
             "CladEvent": "PyramidPickup",

@@ -5,16 +5,17 @@
   "flatScore" : 0.0, // score is modified by behavior
   "extraDistanceToDrive_mm": 60.0,
   "behaviorGroups": [
+    "BuildPyramid",
     "FP_Socialize",
     "FP_PlayWithHumans",
     "FP_PlayAlone",
     "FP_PutDownDispatch",
     "FP_NothingToDo",
+    "SetupBuildPyramid",
     "SparksRollBlock",
     "SparksPopAWheelie",
     "SparksPounceOnMotion",
     "SparksKnockOverCubes",
-    "SparksBuildPyramid",
     "SparksStackBlock",
     "SparksPickUpCube",
     "MeetCozmo_Socialize"

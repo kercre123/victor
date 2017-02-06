@@ -1,10 +1,12 @@
+// NOTE: This behavior is directly tied into the BuildPyramidBehaviorChooser by name
+// if you attempt to copy this file and run the behaviorChooser in a different context
+// your new parameters will not be used.
 {
   "behaviorClass": "BuildPyramidBase",
   "name": "sparksBuildPyramidBase",
   "requiredUnlockId": "BuildPyramid",
+  "displayNameKey":"behavior.BuildPyramid",
   "behaviorGroups": [
-    "SparksBuildPyramid"
-  ],
-  "flatScore": 7.0
+  ]
 
 }

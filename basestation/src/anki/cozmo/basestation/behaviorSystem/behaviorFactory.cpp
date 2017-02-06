@@ -39,6 +39,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
+#include "anki/cozmo/basestation/behaviors/behaviorRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondToRenameFace.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
@@ -68,6 +69,7 @@
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickupCube.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPopAWheelie.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPounceOnMotion.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPyramidThankYou.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorStackBlocks.h"
 
@@ -310,9 +312,19 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
       newBehavior = new BehaviorLiftLoadTest(robot, config);
       break;
     }
+    case BehaviorClass::RespondPossiblyRoll:
+    {
+      newBehavior = new BehaviorRespondPossiblyRoll(robot, config);
+      break;
+    }
     case BehaviorClass::RespondToRenameFace:
     {
       newBehavior = new BehaviorRespondToRenameFace(robot, config);
+      break;
+    }
+    case BehaviorClass::PyramidThankYou:
+    {
+      newBehavior = new BehaviorPyramidThankYou(robot, config);
       break;
     }
       
