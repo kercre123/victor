@@ -480,23 +480,38 @@ void ProgramEspressif(int serial)
         throw ERROR_HEAD_RADIO_ERASE;
     
   #ifndef FCC
-    // Set serial number, model number, random data in Espressif
-    if (!setserial) {
-      const int DATALEN = 2+16;
-      const int STRLEN = 20;
-      u32 data[DATALEN+STRLEN/sizeof(u32)];
-      data[0] = serial; // Serial
-      data[1] = 0;      // Model
+    // Set serial number, model number, random data & wifi password in Espressif
+    if (!setserial)
+    {
+      const int SERIALLEN = 2;
+      const int RANDLEN = 16;
+      const int PWDLEN = 20;
+      struct {
+        u32   serial[SERIALLEN];
+        u32   rand[RANDLEN];
+        char  pwd[PWDLEN];
+      } data;
+      
+      //enforce packed struct for proper flash placements
+      assert( sizeof(data) == (SERIALLEN+RANDLEN)*sizeof(u32) + PWDLEN );
+      
+      //Set serial/model
+      data.serial[0] = serial;  // Serial
+      data.serial[1] = 0;       // Model
       
       // Add 64 bytes of random gibberish, at Daniel's request
-      for (int i = 2; i < DATALEN; i++)
-        data[i] = GetRandom();
-
-      generateCozmoPassword((char*)&data[DATALEN], STRLEN);
+      for( int i=0; i < RANDLEN; i++ )
+        data.rand[i] = GetRandom();
+      
+      //Generate WiFi pass
+      generateCozmoPassword( data.pwd, PWDLEN);
+      
       SlowPrintf("Load SERIAL data: ");
       for (int i = 0; i < (sizeof(data)/sizeof(u32)); i++)
-        SlowPrintf("%08x,", data[i]);
+        SlowPrintf("%08x,", ((u32*)&data)[i] );
       SlowPrintf("\n");
+      SlowPrintf("Pwd: %s\n", data.pwd );
+      
       ESPFlashLoad(0x1000, sizeof(data), (uint8_t*)&data, false);
       setserial = true;
     }
