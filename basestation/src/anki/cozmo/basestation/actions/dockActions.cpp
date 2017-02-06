@@ -364,6 +364,16 @@ namespace Anki {
         }
       }
       
+      // If closestIndex was never changed
+      if(closestIndex == preActionPoses.size())
+      {
+        PRINT_NAMED_WARNING("IDockAction.GetPreActionPose.NoClosestPose",
+                            "Could not find a closest preAction pose for object %d",
+                            dockObject->GetID().GetValue());
+        output.actionResult = ActionResult::BAD_POSE;
+        return;
+      }
+      
       PRINT_CH_INFO("Actions", "IsCloseEnoughToPreActionPose.ClosestPoint",
                     "Closest point (%f, %f) robot (%f, %f) dist = %f",
                     preActionPoses[closestIndex].GetPose().GetTranslation().x(),
