@@ -133,10 +133,6 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
     bottomBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
                                    {
-                                     if(blockPtr->IsPoseStateUnknown()){
-                                       return false;
-                                     }
-                                     
                                      if(!blockPtr->IsRestingAtHeight(0, kOnGroundTolerenceStackBlockOnly)){
                                        return false;
                                      }

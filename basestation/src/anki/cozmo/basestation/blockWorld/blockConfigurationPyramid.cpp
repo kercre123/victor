@@ -305,10 +305,6 @@ std::vector<const PyramidBase*> Pyramid::BuildAllPyramidBasesForBlock(const Robo
     bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
     bottomBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
                                    {
-                                     if(blockPtr->IsPoseStateUnknown()){
-                                       return false;
-                                     }
-                                     
                                      if(!blockPtr->IsRestingAtHeight(0, kOnGroundTolerencePyramidOnly)){
                                        return false;
                                      }

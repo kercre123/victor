@@ -733,16 +733,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                                     topMarkerOrientation.ToFloat(),
                                     observedObject->IsActive());
     
-    if( observedObject->IsPoseStateUnknown() )
-    {
-      // clear the object ID, since it isn't reliable until the existence is confirmed
-      observation.objectID = -1;
-      _robot->Broadcast(MessageEngineToGame(RobotObservedPossibleObject(std::move(observation))));
-    }
-    else
-    {
-      _robot->Broadcast(MessageEngineToGame(std::move(observation)));
-    }
+    _robot->Broadcast(MessageEngineToGame(std::move(observation)));
     
     return RESULT_OK;
     
@@ -1426,6 +1417,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         if ( !isConfirmingObservation ) {
           PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
             "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+          
+          // TODO should we broadcast RobotObservedPossibleObject here?
           continue;
         }
 
@@ -1791,50 +1784,33 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                   &object->GetPose().FindOrigin() == _robot->GetWorldOrigin() &&
                   object->GetFamily() != ObjectFamily::Charger)
           {
-            if(object->IsPoseStateUnknown())
-            {
-              // If this object is still unknown and was last seen too long ago,
-              // just delete it, but only if this is a non-active object or radio
-              // connection has not been established yet
-              if (!object->IsActive() || object->GetActiveID() < 0) {
-                PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.DeleteObject",
-                              "Deleting %s object %d with unknown pose state.",
-                              ObjectTypeToString(object->GetType()),
-                              object->GetID().GetValue());
+            if(object->IsActive() &&
+               ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
+               object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS) {
+              
+              // If this is an active object and identification has timed out
+              // delete it if radio connection has not been established yet.
+              // Otherwise, retry identification.
+              if (object->GetActiveID() < 0) {
+                PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut",
+                              "Deleting unobserved %s active object %d that has "
+                              "not completed identification in %dms",
+                              EnumToString(object->GetType()),
+                              object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
+                
                 objectIter = DeleteLocatedObjectAt(objectIter, objectsByType.first, objectFamily.first);
                 objectDeleted = true;
-              }
-            }
-            else // pose state NOT unknown
-            {
-              if(object->IsActive() &&
-                 ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
-                 object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS) {
-                
-                // If this is an active object and identification has timed out
-                // delete it if radio connection has not been established yet.
-                // Otherwise, retry identification.
-                if (object->GetActiveID() < 0) {
-                  PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut",
-                                "Deleting unobserved %s active object %d that has "
-                                "not completed identification in %dms",
-                                EnumToString(object->GetType()),
-                                object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
-                  
-                  objectIter = DeleteLocatedObjectAt(objectIter, objectsByType.first, objectFamily.first);
-                  objectDeleted = true;
-                } else {
-                  // Don't delete objects that are still in radio communication. Retrigger Identify?
-                  //PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
-                  //object->Identify();
-                }
-                
               } else {
-                // Otherwise, add it to the list for further checks below to see if
-                // we "should" have seen the object
-                if(_unidentifiedActiveObjects.count(object->GetID()) == 0) {
-                  unobservedObjects.push_back(object);
-                }
+                // Don't delete objects that are still in radio communication. Retrigger Identify?
+                //PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
+                //object->Identify();
+              }
+              
+            } else {
+              // Otherwise, add it to the list for further checks below to see if
+              // we "should" have seen the object
+              if(_unidentifiedActiveObjects.count(object->GetID()) == 0) {
+                unobservedObjects.push_back(object);
               }
             }
           }
@@ -1877,7 +1853,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       {
         _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobservedObject);
       }
-      else if(shouldBeVisible || unobservedObject->IsPoseStateUnknown())
+      else if(shouldBeVisible)
       {
         // Make sure there are no currently-observed, (just-)identified objects
         // with the same active ID present. (If there are, we'll reassign IDs
@@ -4780,8 +4756,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
       if(object != nullptr &&
          object->HasPreActionPoses() &&
-         !_robot->IsCarryingObject(object->GetID()) &&
-         !object->IsPoseStateUnknown())
+         !_robot->IsCarryingObject(object->GetID()))
       {
         //PRINT_INFO("currID: %d", block.first);
         if (currSelectedObjectFound) {
@@ -4813,8 +4788,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         const ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
         if(object != nullptr &&
            object->HasPreActionPoses() &&
-           !_robot->IsCarryingObject(object->GetID()) &&
-           !object->IsPoseStateUnknown())
+           !_robot->IsCarryingObject(object->GetID()))
         {
           firstObject = obj->GetID();
           break;

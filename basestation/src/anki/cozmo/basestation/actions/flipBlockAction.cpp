@@ -283,12 +283,6 @@ ActionResult FlipBlockAction::Init()
     return ActionResult::BAD_OBJECT;
   }
   
-  if(object->IsPoseStateUnknown())
-  {
-    PRINT_NAMED_WARNING("FlipBlockAction.Init.UnknownPose", "Object %d pose state is unknown", _objectID.GetValue());
-    return ActionResult::BAD_OBJECT;
-  }
-  
   const IDockAction::PreActionPoseInput preActionPoseInput(object,
                                                            PreActionPose::FLIPPING,
                                                            _shouldCheckPreActionPose,

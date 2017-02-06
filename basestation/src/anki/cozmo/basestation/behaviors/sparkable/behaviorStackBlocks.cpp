@@ -166,8 +166,7 @@ bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
   const bool upAxisOk = ! isRollingUnlocked ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
   
-  return (obj->GetFamily() == ObjectFamily::LightCube &&
-          !obj->IsPoseStateUnknown() &&
+  return (obj->GetFamily() == ObjectFamily::LightCube &&          
           (upAxisOk || _stackInAnyOrientation));
 }
 

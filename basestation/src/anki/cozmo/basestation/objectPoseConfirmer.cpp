@@ -519,13 +519,11 @@ Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objec
 //  DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
 //             "ObjectPoseConfirmer.AddObjectRelativeObservation.NoPreviousObservationsForObjectToUpdate");
 
-  if(!observedObject->IsPoseStateUnknown())
-  {
-    const PoseState newPoseState = PoseState::Dirty; // do not inherit the pose state from the observed object
-    SetPoseHelper(objectToUpdate, newPose, -1.f, newPoseState, "AddObjectRelativeObservation");
-    _poseConfirmations[objectID].lastPoseUpdatedTime = observedObject->GetLastObservedTime();
-  }
-  
+  DEV_ASSERT(observedObject->HasValidPose(), "ObjectPoseConfirmer.AddObjectRelativeObservation.ReferenceNotValid");
+
+  const PoseState newPoseState = PoseState::Dirty; // do not inherit the pose state from the observed object
+  SetPoseHelper(objectToUpdate, newPose, -1.f, newPoseState, "AddObjectRelativeObservation");
+  _poseConfirmations[objectID].lastPoseUpdatedTime = observedObject->GetLastObservedTime();
   _poseConfirmations[objectID].referencePose = newPose;
   
   return RESULT_OK;

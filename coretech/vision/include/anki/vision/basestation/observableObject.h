@@ -266,8 +266,7 @@ namespace Anki {
 
       PoseState GetPoseState() const { return _poseState; } // TODO Remove in favor of concepts
       void SetPoseState(PoseState newState) { _poseState = newState; }
-      bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }
-      bool IsPoseStateUnknown() const { return _poseState == PoseState::Invalid; } // removing soon
+      bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }      
       
       // in general clients should not need to check for this, but it's public for unit tests and asserts
       inline bool HasValidPose() const;
