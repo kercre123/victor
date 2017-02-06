@@ -1294,19 +1294,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DASEventDialogName: core_upgrade_details_view
-  _DASEventDialogType: 0
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
+  _AlphaController: {fileID: 22516724}
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
-  _ModalPriorityData:
-    _PriorityLayer: 2000
-    _PriorityOffset: 0
-    _LowPriorityAction: 1
-    _HighPriorityAction: 1
   DimBackground: 0
-  _AlphaController: {fileID: 22516724}
   _ContentContainer: {fileID: 166184}
   _UnlockableNameLabel: {fileID: 0}
   _UnlockableDescriptionLabel: {fileID: 0}
@@ -2677,7 +2671,7 @@ RectTransform:
   m_GameObject: {fileID: 138566}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22447400}
