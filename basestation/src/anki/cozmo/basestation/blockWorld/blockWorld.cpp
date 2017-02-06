@@ -2649,8 +2649,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectPoseWillChange(const ObjectID& objectID, ObjectFamily family, // TODO: remove family unused
-    const Pose3d& newPose, PoseState newPoseState)
+  void BlockWorld::OnObjectPoseWillChange(const ObjectID& objectID, const Pose3d& newPose, PoseState newPoseState)
   {
     DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseWillChange.InvalidObjectID");
 
@@ -2699,12 +2698,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
       // found a previous entry, compare old
       const PoseInMapInfo& info = matchIt->second;
-      const bool isNewUnknown = ( newPoseState == PoseState::Unknown );
-      const bool isUsableAndFarFromPrev = !isNewUnknown &&
+      const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
+      const bool isUsableAndFarFromPrev = isNewPoseValid &&
       ( !info.isInMap || (!newPose.IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
       
-      // if new one is Unknown or far, we want to remove the old one, since it's being cleared or overridden
-      const bool removeOld = ( isNewUnknown || isUsableAndFarFromPrev );
+      // if new one is Invalid or far, we want to remove the old one, since it's being cleared or overridden
+      const bool removeOld = ( !isNewPoseValid || isUsableAndFarFromPrev );
       if ( removeOld ) {
         RemoveObjectReportFromMemMap(*object, curOrigin);
       }
@@ -2717,9 +2716,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
     else
     {
-      // if new one is notUnknown, we want to add the new one
-      const bool isUnknown = ( newPoseState == PoseState::Unknown );
-      const bool addNew = !isUnknown;
+      // if new one is valid, we want to add the new one
+      const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
+      const bool addNew = isNewPoseValid;
       if ( addNew ) {
         AddObjectReportToMemMap(*object, newPose);
       }
@@ -4682,6 +4681,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                      origin, EnumToString(withType), object->GetID().GetValue());
 
       // TODO we need to revise Deleted vs InstanceDeleted (old Unknown)
+      // VIP ^ Deleted used to mean including not connected. This should probably broadcast set to Unknown instead
       // broadcast if there was a deletion
       _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
                                                                                                      withID)));
@@ -4859,7 +4859,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // Draw dirty objects in a special color
         object->Visualize(NamedColors::DIRTY_OBJECT);
       }
-      else if(object->GetPoseState() == PoseState::Unknown) {
+      else if(object->GetPoseState() == PoseState::Invalid) {
         // Draw unknown objects in a special color
         object->Visualize(NamedColors::UNKNOWN_OBJECT);
       }

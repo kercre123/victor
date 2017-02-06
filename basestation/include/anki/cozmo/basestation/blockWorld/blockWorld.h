@@ -98,8 +98,7 @@ namespace Anki
       void AddLocatedObject(const std::shared_ptr<ObservableObject>& object);
       
       // notify the blockWorld that someone is about to change the pose of an object
-      void OnObjectPoseWillChange(const ObjectID& objectID, ObjectFamily family,
-        const Pose3d& newPose, PoseState newPoseState);
+      void OnObjectPoseWillChange(const ObjectID& objectID, const Pose3d& newPose, PoseState newPoseState);
       
       // notify the blockWorld that someone (poseConfirmer) has visually verified the given object at their current pose
       void OnObjectVisuallyVerified(const ObservableObject* object);

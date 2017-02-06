@@ -313,13 +313,14 @@ namespace Anki {
                             _robot.GetID(), _objectID.GetValue());
         result = ActionResult::BAD_OBJECT;
       }
-      else if(PoseState::Unknown == object->GetPoseState() && !_objectCanBeUnknown)
-      {
-        PRINT_NAMED_INFO("DriveToObjectAction.CheckPreconditions.ObjectPoseStateUnknown",
-                         "Robot %d cannot plan a path to ActionableObject %d, whose pose state is Unknown.",
-                         _robot.GetID(), _objectID.GetValue());
-        result = ActionResult::BAD_OBJECT;
-      }
+// This is not possible anymore. Should this be a LastPose/Unreliable case? (I knew where it was, but I don't know now)
+//      else if(PoseState::Unknown == object->GetPoseState() && !_objectCanBeUnknown)
+//      {
+//        PRINT_NAMED_INFO("DriveToObjectAction.CheckPreconditions.ObjectPoseStateUnknown",
+//                         "Robot %d cannot plan a path to ActionableObject %d, whose pose state is Unknown.",
+//                         _robot.GetID(), _objectID.GetValue());
+//        result = ActionResult::BAD_OBJECT;
+//      }
       else
       {
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
@@ -473,7 +474,7 @@ namespace Anki {
           ActionableObject* tempObject = dynamic_cast<ActionableObject*>(object->CloneType());
           DEV_ASSERT(tempObject != nullptr, "DriveToPlaceCarriedObjectAction.Init.DynamicCastFail");
           
-          tempObject->InitPose(_placementPose, PoseState::Unknown);
+          tempObject->InitPose(_placementPose, PoseState::Known);
           
           // Call parent class's init helper
           result = DriveToObjectAction::InitHelper(tempObject);

@@ -88,12 +88,8 @@ public:
   // and it will be cleared from BlockWorld.
   // Fails if this object wasn't previously added.
   Result MarkObjectUnobserved(ObservableObject* object);
-  
-  // Immediately marks the object's pose state as Unknown -- but does NOT notify BlockWorld.
-  // TODO: We probably want to call this in a lot of places instead of BlockWorld::ClearObject()
-  //   but for now, just let ClearObject call this directly.
-  Result MarkObjectUnknown(ObservableObject* object) const;
-  
+
+  // TODO change to SetX, where X is a posestate
   void SetPoseState(ObservableObject* object, PoseState newState) const;
   
   // Remove all last pose and num observation information for all object IDs,

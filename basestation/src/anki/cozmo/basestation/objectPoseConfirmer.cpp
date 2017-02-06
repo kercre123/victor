@@ -137,12 +137,20 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
                    EnumToString(newPoseState));
   }
   
+  DEV_ASSERT(object->HasValidPose() || ObservableObject::IsValidPoseState(newPoseState),
+             "ObjectPoseConfirmer.SetPoseHelper.BothPoseStatesAreInvalid");
+  
+  // TODO these notifications should probably be post-change, rather than pre-change
   // Notify about the change we are about to make from old to new:
-  _robot.GetBlockWorld().OnObjectPoseWillChange(object->GetID(), object->GetFamily(), newPose, newPoseState);
+  _robot.GetBlockWorld().OnObjectPoseWillChange(object->GetID(), newPose, newPoseState);
   _robot.GetCubeLightComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newPoseState);
   
-  // if state changed from unknown to known or dirty
-  if (object->IsPoseStateUnknown() && newPoseState != PoseState::Unknown) {
+  // if state changed from Invalid to anything, fire an event object detected/seen
+  if (!object->HasValidPose())
+  {
+    // should not set from invalid to invalid
+    DEV_ASSERT(ObservableObject::IsValidPoseState(newPoseState), "ObjectPoseConfirmer.SetPoseHelper.InvalidNewPose");
+    // event
     Util::sEventF("robot.object_seen",
                   {{DDATA, std::to_string(distance).c_str()}},
                   "%s",
@@ -152,38 +160,23 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   // copy objectID since we can destroy the object
   const ObjectID objectID = object->GetID();
   
-  if(newPoseState == PoseState::Unknown)
-  {
-    MarkObjectUnknown(object);
-    
-    
-    // // TODO: ClearObject also calls MarkObjectUnknown(). Necessary to call twice? (COZMO-7128)
-    // _robot.GetBlockWorld().ClearObject(object);
-    _robot.GetBlockWorld().DeleteLocatedObjectByIDInCurOrigin(object->GetID());
-    object = nullptr; // do not use anymore, since it's deleted
-  }
-  else
+  // if setting an invalid pose, we want to destroy the located copy of this object in its origin
+  const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
+  if( isNewPoseValid )
   {
     object->SetPose(newPose, distance, newPoseState);
   }
-  
-  _robot.GetBlockWorld().NotifyBlockConfigurationManagerObjectPoseChanged(objectID);
-}
-
-// TODO if this destroys the object, receive a reference to the pointer so that it gets nulled out, to
-// detect when we are using it afterwards
-Result ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject* object) const
-{
-  if( !object->IsPoseStateUnknown() )
+  else
   {
-    SetPoseState(object, PoseState::Unknown);
-    
-    // Notify listeners if object is going fron !Unknown to Unknown
+    // Notify listeners if object is becoming Unknown
     using namespace ExternalInterface;
-    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), object->GetID().GetValue())));
+    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), objectID.GetValue())));
+    
+    _robot.GetBlockWorld().DeleteLocatedObjectByIDInCurOrigin(object->GetID());
+    object = nullptr; // do not use anymore, since it's deleted
   }
   
-  return RESULT_OK;
+  _robot.GetBlockWorld().NotifyBlockConfigurationManagerObjectPoseChanged(objectID);
 }
 
 void ObjectPoseConfirmer::SetPoseState(ObservableObject* object, PoseState newState) const
@@ -629,7 +622,7 @@ Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject* object)
                     "ObjectID:%d unobserved %d times, marking Unknown",
                     objectID.GetValue(), poseConf.numTimesUnobserved);
       
-      SetPoseHelper(object, object->GetPose(), -1.f, PoseState::Unknown, "MarkObjectUnknown");
+      SetPoseHelper(object, object->GetPose(), -1.f, PoseState::Invalid, "MarkObjectUnobserved");
     }
   }
   

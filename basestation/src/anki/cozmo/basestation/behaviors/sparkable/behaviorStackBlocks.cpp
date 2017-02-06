@@ -532,10 +532,10 @@ void BehaviorStackBlocks::ResetBehavior(const Robot& robot)
 
 void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObject* obj) const
 {
+  // this should be helper so that it can be reused
   const char* poseStateStr = "";
   switch(obj->GetPoseState()) {
     case PoseState::Known: poseStateStr = "known"; break;
-    case PoseState::Unknown: poseStateStr = "unknown"; break;
     case PoseState::Dirty: poseStateStr = "dirty"; break;
     case PoseState::Invalid: poseStateStr = "invalid"; break;
   }

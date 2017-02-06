@@ -205,7 +205,7 @@ namespace Anki {
       bool                       _hasMotionProfile = false;
       
       // Whether or not it is ok to drive to an object with an unknown pose
-      bool                       _objectCanBeUnknown = false;
+      bool                       _objectCanBeUnknown = false; // TODO This is not possible currently, since there is no instance/Pose
       
     private:
       GetPossiblePosesFunc _getPossiblePosesFunc;

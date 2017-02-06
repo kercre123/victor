@@ -188,7 +188,7 @@ namespace Vision {
         ObsObjectType* newObject = libObject->CloneType();
         const f32 observedDistSq = poseCluster.GetPose().GetTranslation().LengthSq();
         Pose3d newPose = poseCluster.GetPose().GetWithRespectToOrigin();
-        newObject->InitPose(newPose, PoseState::Unknown);
+        newObject->InitPose(newPose, PoseState::Invalid);
         
         // Set the markers in the object corresponding to those from the pose
         // cluster from which it was computed as "observed"

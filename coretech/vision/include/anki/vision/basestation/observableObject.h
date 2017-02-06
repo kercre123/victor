@@ -264,13 +264,14 @@ namespace Anki {
       // X and Y axes.
       bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(10)) const;
 
-      PoseState GetPoseState() const { return _poseState; }
+      PoseState GetPoseState() const { return _poseState; } // TODO Remove in favor of concepts
       void SetPoseState(PoseState newState) { _poseState = newState; }
       bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }
-      bool IsPoseStateUnknown() const { return _poseState == PoseState::Invalid || _poseState == PoseState::Unknown; } // removing soon
+      bool IsPoseStateUnknown() const { return _poseState == PoseState::Invalid; } // removing soon
       
       // in general clients should not need to check for this, but it's public for unit tests and asserts
       inline bool HasValidPose() const;
+      inline static bool IsValidPoseState(PoseState poseState);
 
       static const char* PoseStateToString(const PoseState& state);
       
@@ -415,7 +416,11 @@ namespace Anki {
     
     inline bool ObservableObject::HasValidPose() const {
       return _poseState != PoseState::Invalid;
-	}
+    }
+    
+    inline bool ObservableObject::IsValidPoseState(PoseState poseState) {
+      return poseState != PoseState::Invalid;
+    }
 	
     inline Point3f ObservableObject::GetSizeInParentFrame(const Pose3d& atPose) const
     {

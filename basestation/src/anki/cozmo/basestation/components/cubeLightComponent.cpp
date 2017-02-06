@@ -656,19 +656,13 @@ void CubeLightComponent::OnObjectPoseStateWillChange(const ObjectID& objectID,
     return;
   }
   
-  // Known -> Dirty | Dirty -> Unknown | Known -> Unknown change to Connected state
-  // Works based on the ordering of the PoseState enum
-  static_assert(PoseState::Known < PoseState::Dirty &&
-                PoseState::Dirty < PoseState::Unknown,
-                "PoseState enum in unexpected order");
-  
-  if(oldPoseState < newPoseState)
+  if(newPoseState != PoseState::Known)
   {
     PlayLightAnim(objectID, CubeAnimationTrigger::Connected, AnimLayerEnum::State);
   }
-  // If going to Known change to Visible
-  else if(newPoseState == PoseState::Known)
+  else
   {
+    // If going to Known change to Visible
     PlayLightAnim(objectID, CubeAnimationTrigger::Visible, AnimLayerEnum::State);
   }
 }

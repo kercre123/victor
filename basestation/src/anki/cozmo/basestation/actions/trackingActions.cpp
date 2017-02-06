@@ -491,8 +491,6 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
   assert(nullptr != matchingObject);
   
-  DEV_ASSERT(PoseState::Unknown != matchingObject->GetPoseState(), "Object's pose state should not be Unknown");
-  
   _lastTrackToPose = matchingObject->GetPose();
   
   // Find the observed marker closest to the robot and use that as the one we
