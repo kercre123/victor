@@ -237,18 +237,22 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
       
   // Initializes _pose, _poseOrigins, and _worldOrigin:
   Delocalize(false);
-      
+  
+  // The call to Delocalize() will increment frameID, but we want it to be
+  // initialzied to 0, to match the physical robot's initialization
+  // It will also add to history so clear it
+  // It will also flag that a localization update is needed when it increments the frameID so set the flag
+  // to false
+  _frameId = 0;
+  _poseHistory->Clear();
+  _needToSendLocalizationUpdate = false;
+  
   // Delocalize will mark isLocalized as false, but we are going to consider
   // the robot localized (by odometry alone) to start, until he gets picked up.
   _isLocalized = true;
   SetLocalizedTo(nullptr);
 
   _robotToEngineImplMessaging->InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID, this);
-  
-  
-  // The call to Delocalize() will increment frameID, but we want it to be
-  // initialzied to 0, to match the physical robot's initialization
-  _frameId = 0;
       
   _lastDebugStringHash = 0;
       
@@ -764,8 +768,11 @@ void Robot::Delocalize(bool isCarryingObject)
   // Create a new pose frame so that we can't get pose history entries with the same pose
   // frame that have different origins (Not 100% sure this is totally necessary but seems
   // like the cleaner / safer thing to do.)
-  AddVisionOnlyPoseToHistory(GetLastMsgTimestamp(), _pose, GetHeadAngle(), GetLiftAngle());
-  AddRawOdomPoseToHistory(GetLastMsgTimestamp(),GetPoseFrameID(), _pose, GetHeadAngle(), GetLiftAngle(), GetCliffDataRaw(), isCarryingObject);
+  Result res = SetNewPose(_pose);
+  if(res != RESULT_OK)
+  {
+    PRINT_NAMED_WARNING("Robot.Delocalize.SetNewPose", "Failed to set new pose");
+  }
   
   if(_timeSynced)
   {
@@ -1911,10 +1918,9 @@ static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
 } // IsValidHeadAngle()
 
     
-void Robot::SetNewPose(const Pose3d& newPose)
+Result Robot::SetNewPose(const Pose3d& newPose)
 {
   SetPose(newPose.GetWithRespectToOrigin());
-  ++_frameId;
   
   // Note: using last message timestamp instead of newest timestamp in history
   //  because it's possible we did not put the last-received state message into
@@ -1922,15 +1928,7 @@ void Robot::SetNewPose(const Pose3d& newPose)
   //  can get.
   const TimeStamp_t timeStamp = GetLastMsgTimestamp();
   
-  Result addResult = AddRawOdomPoseToHistory(timeStamp, _frameId, _pose, GetHeadAngle(), GetLiftAngle(), GetCliffDataRaw(), IsCarryingObject());
-  if(RESULT_OK != addResult)
-  {
-    PRINT_NAMED_ERROR("Robot.SetNewPose.AddRawOdomPoseFailed",
-                      "t=%d FrameID=%d", timeStamp, _frameId);
-    return;
-  }
-    
-  SendAbsLocalizationUpdate(_pose, timeStamp, _frameId);
+  return AddVisionOnlyPoseToHistory(timeStamp, _pose, GetHeadAngle(), GetLiftAngle());
 }
     
 void Robot::SetPose(const Pose3d &newPose)
@@ -2866,17 +2864,18 @@ Result Robot::SetOnRamp(bool t)
                      _ID, ramp->GetID().GetValue(), _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
         
   } else {
+    Result res;
     // Just do an absolute pose update, setting the robot's position to
     // where we "know" he should be when he finishes ascending or
     // descending the ramp
     switch(_rampDirection)
     {
       case Ramp::ASCENDING:
-        SetPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
+        res = SetNewPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
         break;
             
       case Ramp::DESCENDING:
-        SetPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
+        res = SetNewPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
         break;
             
       default:
@@ -2884,6 +2883,12 @@ Result Robot::SetOnRamp(bool t)
                             "When transitioning on/off ramp, expecting the ramp direction to be either "
                             "ASCENDING or DESCENDING, not %d.", _rampDirection);
         return RESULT_FAIL;
+    }
+    
+    if(res != RESULT_OK) {
+      PRINT_NAMED_WARNING("Robot.SetOnRamp.SetNewPose",
+                          "Robot %d failed to set new pose", _ID);
+      return res;
     }
         
     _rampDirection = Ramp::UNKNOWN;
@@ -2896,19 +2901,6 @@ Result Robot::SetOnRamp(bool t)
                      _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
                      _pose.GetRotationAngle<'Z'>().getDegrees(),
                      timeStamp);
-        
-    // We are creating a new pose frame at the top of the ramp
-    //IncrementPoseFrameID();
-    ++_frameId;
-    Result lastResult = SendAbsLocalizationUpdate(_pose,
-                                                  timeStamp,
-                                                  _frameId);
-    if(lastResult != RESULT_OK) {
-      PRINT_NAMED_WARNING("Robot.SetOnRamp.SendAbsLocUpdateFailed",
-                          "Robot %d failed to send absolute localization update.", _ID);
-      return lastResult;
-    }
-
   } // if/else transitioning onto ramp
       
   _onRamp = t;
@@ -2932,7 +2924,12 @@ Result Robot::SetPoseOnCharger()
       
   // Just do an absolute pose update, setting the robot's position to
   // where we "know" he should be when he finishes ascending the charger.
-  SetPose(charger->GetDockedPose().GetWithRespectToOrigin());
+  Result lastResult = SetNewPose(charger->GetDockedPose().GetWithRespectToOrigin());
+  if(lastResult != RESULT_OK) {
+    PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.SetNewPose",
+                        "Robot %d failed to set new pose", _ID);
+    return lastResult;
+  }
 
   const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
     
@@ -2942,18 +2939,6 @@ Result Robot::SetPoseOnCharger()
                    _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
                    _pose.GetRotationAngle<'Z'>().getDegrees(),
                    timeStamp);
-      
-  // We are creating a new pose frame at the top of the ramp
-  //IncrementPoseFrameID();
-  ++_frameId;
-  Result lastResult = SendAbsLocalizationUpdate(_pose,
-                                                timeStamp,
-                                                _frameId);
-  if(lastResult != RESULT_OK) {
-    PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.SendAbsLocUpdateFailed",
-                        "Robot %d failed to send absolute localization update.", _ID);
-    return lastResult;
-  }
       
   return RESULT_OK;
       
@@ -3780,8 +3765,10 @@ Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                          const f32 lift_angle)
 {      
   // We have a new ("ground truth") key frame. Increment the pose frame!
-  //IncrementPoseFrameID();
   ++_frameId;
+  
+  // Set needToSendLocalizationUpdate to true so we send an update on the next tick
+  _needToSendLocalizationUpdate = true;
   
   // vision poses do not care about whether you are carrying an object. This field has no meaning here, so we
   // set to false always

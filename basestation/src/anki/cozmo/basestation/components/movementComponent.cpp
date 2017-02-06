@@ -301,7 +301,12 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
         // to the physical robot.
         Pose3d newPose(poseStamp.GetPose());
         newPose.SetRotation(_robot.GetPose().GetRotation());
-        _robot.SetNewPose(newPose);
+        Result res = _robot.SetNewPose(newPose);
+        if(res != RESULT_OK)
+        {
+          PRINT_NAMED_WARNING("MovementComponent.CheckForUnexpectedMovement.SetNewPose",
+                              "Failed to set new pose");
+        }
         
         // Create obstacle relative to robot at its new pose
         obstaclePoseWrtRobot.SetParent(&_robot.GetPose());
