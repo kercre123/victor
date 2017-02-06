@@ -1358,6 +1358,8 @@ namespace Anki {
             }
           }
           
+          // rsam/andrew. We don't think this code should be necessary anymore if the observation code
+          // already checks this
           if(objectInOriginalPose != nullptr)
           {
             // Must not actually be carrying the object I thought I was!

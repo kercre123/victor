@@ -3130,18 +3130,11 @@ void Robot::UnSetCarryingObjects(bool topOnly)
     }
   }
 
+  // this method should not affect the objects pose or pose state; just clear the IDs
+
   if (!topOnly) {
     // Tell the robot it's not carrying anything
     if (_carryingObjectID.IsSet()) {
-      
-      // Since the PoseState of an object on the lift is Known, make it Unknown.
-      // here when it's detached from the lift so that Cozmo doesn't try to localize to it.
-      ObservableObject* carriedObject = _blockWorld->GetLocatedObjectByID(_carryingObjectID);
-      if (nullptr != carriedObject) {
-        PRINT_NAMED_INFO("Robot.UnSetCarryingObjects.SettingUnknownPoseState", "");
-        GetObjectPoseConfirmer().MarkObjectUnknown(carriedObject);
-      }
-      
       SendSetCarryState(CarryState::CARRY_NONE);
     }
 
@@ -3282,7 +3275,7 @@ Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
     return RESULT_FAIL;
   }
   
-  // Initially just mark the pose as Dirty. Iff clearObject=true, then the ClearObject
+  // Initially just mark the pose as Dirty. Iff deleteLocatedObjects=true, then the ClearObject
   // call at the end will mark as Unknown. This is necessary because there are some
   // unfortunate ordering dependencies with how we set the pose, set the pose state, and
   // unset the carrying objects below. It's safer to do all of that, and _then_
@@ -3307,36 +3300,6 @@ Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
   UnSetCarryingObjects(); 
   _carryingMarker = nullptr;
       
-  if(_carryingObjectOnTopID.IsSet()) {
-    ObservableObject* objectOnTop = _blockWorld->GetLocatedObjectByID(_carryingObjectOnTopID);
-    if(objectOnTop == nullptr)
-    {
-      // This really should not happen.  How can a object being carried get deleted?
-      PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached",
-                        "Object on top of carrying object with ID=%d no longer exists.",
-                        _carryingObjectOnTopID.GetValue());
-      return RESULT_FAIL;
-    }
-        
-    Pose3d placedPoseOnTop;
-    if(objectOnTop->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPoseOnTop) == false) {
-      PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
-                        "Could not get carrying object's pose relative to robot's origin.");
-      return RESULT_FAIL;
-    }
-    
-    Result poseResult = GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, placedPoseOnTop, object);
-    if(RESULT_OK != poseResult)
-    {
-      // TODO: warn / error
-      return poseResult;
-    }
-
-    _carryingObjectOnTopID.UnSet();
-    PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached", "Updated object %d on top of carried object.",
-                     objectOnTop->GetID().GetValue());
-  }
-  
   if(deleteLocatedObjects)
   {
     for(auto const& objectID : carriedObjectIDs)
@@ -3361,8 +3324,7 @@ bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& 
   }
 
   // check that the object is ready to place on top of
-  if( !object.HasValidPose() ||
-      !object.IsRestingFlat() ||
+  if( !object.IsRestingFlat() ||
       (IsCarryingObject() && GetCarryingObject() == object.GetID()) ) {
     return false;
   }

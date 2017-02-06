@@ -489,6 +489,7 @@ public:
   
   EncodedImage& GetEncodedImage() { return _encodedImage; }
   
+  // TODO Define better API for (un)setting carried objects: they are confused easily with SetCarriedObjectAsUnattached
   void SetCarryingObject(ObjectID carryObjectID);
   void UnSetCarryingObjects(bool topOnly = false);
   
@@ -1206,10 +1207,6 @@ protected:
   Result SendFlashObjectIDs();
   void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
   
-  // Adds an unconnected charger object
-  ObjectID AddUnconnectedCharger();
-    
-    
 }; // class Robot
 
 //

@@ -1,9 +1,9 @@
-#VRML_SIM V8.2.1 utf8
+#VRML_SIM V8.5 utf8
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation 0.936375 -0.141518 -0.321207 0.879592
-  position -0.295211 -1.40146 1.73763
+  orientation 0.98597775 0.074088211 0.14952862 0.93129112
+  position 0.37128545 -1.2966504 1.3145671
 }
 Can {
   translation -0.05473 0.136394 0.312
@@ -44,7 +44,7 @@ RectangleArena {
 }
 Laptop {
   translation 0.165 0.277999 0.249823
-  rotation -0.184984 -0.696207 -0.693597 -2.77384
+  rotation -0.18498399 -0.69620698 -0.69359698 -2.77384
 }
 LightCube {
   translation -0.081448 -0.141559 0.271993
@@ -69,6 +69,5 @@ WebotsKeyboardController {
   filterLogs TRUE
 }
 CozmoVizDisplay {
-  behaviorSelectionViz TRUE
   filterLogs TRUE
 }

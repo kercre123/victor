@@ -90,6 +90,9 @@ private:
   // fake object to try to look at to check for possible stacks
   std::unique_ptr<ObservableObject> _ghostStackedObject;
 
+  // if true, the pose of the ghost object will be preserved when testing for visibility
+  bool _shouldRestoreGhostPose = false;
+
   bool _shouldStart = false;
   
   bool _shouldCheckBelowTarget;

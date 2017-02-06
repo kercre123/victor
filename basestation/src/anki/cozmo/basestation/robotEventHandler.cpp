@@ -1585,7 +1585,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
   else
   {
     if(msg.objectID < 0) {
-      robot->UnSetCarryingObjects();
+      robot->SetCarriedObjectAsUnattached();
     } else {
       robot->SetCarryingObject(msg.objectID);
     }

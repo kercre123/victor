@@ -519,10 +519,12 @@ Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objec
   
   DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddObjectRelativeObservation.UnSetObjectID");
   
-  // the object to update should have an entry in poseConfirmations, otherwise how did it become an
-  // object that can be grabbed to add a relative observation?
-  DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
-             "ObjectPoseConfirmer.AddObjectRelativeObservation.NoPreviousObservationsForObjectToUpdate");
+// This fails for ghost objects. Hopefully in the future those are handled differently, not through poseConfirmation,
+// since they are actually not real
+//  // the object to update should have an entry in poseConfirmations, otherwise how did it become an
+//  // object that can be grabbed to add a relative observation?
+//  DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
+//             "ObjectPoseConfirmer.AddObjectRelativeObservation.NoPreviousObservationsForObjectToUpdate");
 
   if(!observedObject->IsPoseStateUnknown())
   {

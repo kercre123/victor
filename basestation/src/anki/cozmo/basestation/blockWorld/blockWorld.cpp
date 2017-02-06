@@ -1470,6 +1470,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           
           if(origin == currFrame)
           {
+            // handle special case of seeing the object that we are carrying. Alternatively all this code could
+            // be in potential objects to localize to or in addObservation, but here it seems to detect early
+            // what's going on
             if (objectFound->GetID() == _robot->GetCarryingObject())
             {
               if (_robot->GetLiftHeight() >= LIFT_HEIGHT_HIGHDOCK &&
@@ -1483,7 +1486,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                                     EnumToString(objSeen->GetType()),
                                     objSeen->GetID().GetValue(),
                                     _robot->GetLiftHeight());
-                break;
+                continue;
               }
               else
               {
@@ -1493,6 +1496,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                               "Thought we were carrying object %d but seeing it in non-carry pose",
                               _robot->GetCarryingObject().GetValue());
                 _robot->UnSetCarryObject(objectFound->GetID());
+                
+                // We also need to purposely set as dirty, so that we don't try to localize to it. Most likely
+                // we should have got a "moved" message if we dropped the cube, but in case we missed the message
+                // reason here that the object is no longer in a known pose.
+                _robot->GetObjectPoseConfirmer().SetPoseState(objectFound, PoseState::Dirty);
               }
             }
           }

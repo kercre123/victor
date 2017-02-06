@@ -82,7 +82,7 @@ ReactionTriggerStrategyCubeMoved::ReactionTriggerStrategyCubeMoved(Robot& robot,
 bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
 {
   for(auto& object: _reactionObjects){
-    const ObservableObject* cube = robot.GetBlockWorld().GetConnectedActiveObjectByID(object.GetObjectID());
+    const ObservableObject* cube = robot.GetBlockWorld().GetLocatedObjectByID(object.GetObjectID());
     if(cube == nullptr){
       continue;
     }

@@ -237,7 +237,8 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   
   if( payload.motorID == MotorID::MOTOR_LIFT && payload.calibStarted && robot->IsCarryingObject() ) {
     // if this was a lift calibration, we are no longer holding a cube
-    robot->UnSetCarryObject( robot->GetCarryingObject() );
+    const bool deleteObjects = true; // we have no idea what happened to the cube, so remove completely from the origin
+    robot->SetCarriedObjectAsUnattached(deleteObjects);
   }
   
   if (payload.motorID == MotorID::MOTOR_HEAD) {
@@ -269,7 +270,8 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
   // This probably applies here as it does in HandleMotorCalibration.
   // Seems reasonable to expect whatever object the robot may have been carrying to no longer be there.
   if( payload.motorID == MotorID::MOTOR_LIFT && !payload.enabled && robot->IsCarryingObject() ) {
-    robot->UnSetCarryObject( robot->GetCarryingObject() );
+    const bool deleteObjects = true; // we have no idea what happened to the cube, so remove completely from the origin
+    robot->SetCarriedObjectAsUnattached(deleteObjects);
   }
     
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorAutoEnabled(payload)));

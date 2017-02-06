@@ -268,6 +268,8 @@ namespace Anki {
       void SetPoseState(PoseState newState) { _poseState = newState; }
       bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }
       bool IsPoseStateUnknown() const { return _poseState == PoseState::Invalid || _poseState == PoseState::Unknown; } // removing soon
+      
+      // in general clients should not need to check for this, but it's public for unit tests and asserts
       inline bool HasValidPose() const;
 
       static const char* PoseStateToString(const PoseState& state);

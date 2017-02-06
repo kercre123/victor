@@ -231,7 +231,6 @@ void AIWhiteboard::Init()
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotMarkedObjectPoseUnknown>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
   }
   else {
@@ -988,32 +987,6 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
   }
 
   ConsiderNewPossibleObject(possibleObject.objectType, obsPose);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void AIWhiteboard::HandleMessage(const ExternalInterface::RobotMarkedObjectPoseUnknown& msg)
-{
-  const ObservableObject* obj = _robot.GetBlockWorld().GetConnectedActiveObjectByID(msg.objectID);
-  if( nullptr == obj ) {
-    PRINT_NAMED_WARNING("AIWhiteboard.HandleMessage.RobotMarkedObjectPoseUnknown.NoBlock",
-                        "couldnt get object with id %d",
-                        msg.objectID);
-    return;
-  }
-
-  PRINT_CH_INFO("AIWhiteboard", "MarkedUnknown",
-                    "marked %d unknown, adding to possible objects",
-                    msg.objectID);
-
-  if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-    PRINT_CH_INFO("AIWhiteboard", "PoseMarkedUnknown", "considering old pose from object %d as possible object",
-                      msg.objectID);
-  }
-  
-  // its position has become Unknown. We probably were at the location where we expected this object to be,
-  // and it's no there. So we don't want to keep its markers anymore
-  RemovePossibleObjectsMatching(obj->GetType(), obj->GetPose());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
