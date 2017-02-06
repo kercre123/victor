@@ -377,6 +377,9 @@ void Robot::SetOnCharger(bool onCharger)
                           newObjID.GetValue());
       }
     }
+    
+    // if we are on the charger, we must also be on the charger platform.
+    SetOnChargerPlatform(true);
           
     LOG_EVENT("robot.on_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
@@ -394,6 +397,19 @@ void Robot::SetOnCharger(bool onCharger)
   }
       
   _isOnCharger = onCharger;
+}
+
+void Robot::SetOnChargerPlatform(bool onPlatform)
+{
+  const bool shouldBroadcast = _isOnChargerPlatform != onPlatform;
+  _isOnChargerPlatform = onPlatform;
+  
+  if( shouldBroadcast ) {
+    Broadcast(
+      ExternalInterface::MessageEngineToGame(
+        ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
+      );
+  }
 }
     
 ObjectID Robot::AddUnconnectedCharger()
@@ -693,10 +709,9 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     }
 
     // if the robot was on the charging platform and its state changes it's not on the platform anymore
-    if(_isOnChargerPlatform && _offTreadsState != OffTreadsState::OnTreads)
+    if(_offTreadsState != OffTreadsState::OnTreads)
     {
-      _isOnChargerPlatform = false;
-      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
+      SetOnChargerPlatform(false);
     }
     
     return true;
@@ -1447,24 +1462,25 @@ Result Robot::Update()
   // update the memory map based on the current's robot pose
   _blockWorld->UpdateRobotPoseInMemoryMap();
   
-  
-  
-  // Update ChargerPlatform - this has to happen before the behaviors which might need this information
-  ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-  if( nullptr != charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
-  {
-    // This state is useful for knowing not to play a cliff react when just driving off the charger.
-    bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
-    if( isOnChargerPlatform != _isOnChargerPlatform)
+  // Check if we have driven off the charger platform - this has to happen before the behaviors which might
+  // need this information. This state is useful for knowing not to play a cliff react when just driving off
+  // the charger.
+
+  if( _isOnChargerPlatform && _offTreadsState == OffTreadsState::OnTreads ) {  
+    ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
+    if( nullptr != charger && !charger->IsPoseStateUnknown() )
     {
-      _isOnChargerPlatform = isOnChargerPlatform;
-      Broadcast(
-         ExternalInterface::MessageEngineToGame(
-           ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
-                );
+      const bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
+      if( !isOnChargerPlatform )
+      {
+        SetOnChargerPlatform(false);
+      }
+    }
+    else {
+      // if we can't connect / talk to the charger, consider the robot to be off the platform
+      SetOnChargerPlatform(false);
     }
   }
-  
       
   ///////// Update the behavior manager ///////////
       
@@ -1825,11 +1841,12 @@ Result Robot::Update()
   // So we can have an arbitrary number of data here that is likely to change want just hash it all
   // together if anything changes without spamming
   snprintf(buffer, sizeof(buffer),
-           "%c%c%c%c %2dHz %s%s ",
+           "%c%c%c%c%c %2dHz %s%s ",
            GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
            IsCarryingObject() ? 'C' : ' ',
+           IsOnChargerPlatform() ? 'P' : ' ',
            // SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
