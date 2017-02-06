@@ -6,6 +6,5 @@
   "requiredUnlockId": "FistBump",
 
   "maxTimeToLookForFace_s": 3.0,
-  "abortIfNoFaceFound": true,
-  "doHesitatingInitialRequest": false
+  "abortIfNoFaceFound": true
 }
