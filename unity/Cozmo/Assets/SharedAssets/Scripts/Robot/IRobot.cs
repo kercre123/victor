@@ -293,9 +293,9 @@ public interface IRobot : IDisposable {
 
   void SetRobotCarryingObject(int objectID = -1);
 
-  void ClearAllBlocks();
-
-  void ClearAllObjects();
+//  void ClearAllBlocks();
+//
+//  void ClearAllObjects();
 
   void VisionWhileMoving(bool enable);
 

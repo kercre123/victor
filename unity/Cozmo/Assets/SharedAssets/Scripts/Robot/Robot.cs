@@ -385,7 +385,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.AddCallback<ObjectMoved>(HandleActiveObjectMoved);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ObjectStates>(HandleObjectStatesUpdate);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.LocatedObjectStates>(HandleLocatedObjectStatesUpdate);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ConnectedObjectStates>(HandleConnectedObjectStatesUpdate);
     RobotEngineManager.Instance.AddCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
     RobotEngineManager.Instance.AddCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
@@ -417,7 +418,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.RemoveCallback<ObjectMoved>(HandleActiveObjectMoved);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ObjectStates>(HandleObjectStatesUpdate);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.LocatedObjectStates>(HandleLocatedObjectStatesUpdate);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ConnectedObjectStates>(HandleConnectedObjectStatesUpdate);
     RobotEngineManager.Instance.RemoveCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
     RobotEngineManager.Instance.RemoveCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
@@ -919,11 +921,11 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleObjectStatesUpdate(Anki.Cozmo.ExternalInterface.ObjectStates message) {
-    ObjectState[] objectStates = message.objects;
-    if (objectStates != null) {
-      for (int i = 0; i < objectStates.Length; ++i) {
-        ObjectState obj = objectStates[i];
+  private void HandleLocatedObjectStatesUpdate(G2U.LocatedObjectStates message) {
+    LocatedObjectState[] locObjectStates = message.objects;
+    if (locObjectStates != null) {
+      for (int i = 0; i < locObjectStates.Length; ++i) {
+        LocatedObjectState obj = locObjectStates[i];
 
         ObservableObject knownObj = null;
         if (KnownObjects.TryGetValue((int)obj.objectID, out knownObj)) {
@@ -936,6 +938,10 @@ public class Robot : IRobot {
         }
       }
     }
+  }
+
+  private void HandleConnectedObjectStatesUpdate(G2U.ConnectedObjectStates message) {
+    // Do we care about this in Unity?
   }
 
   private void HandleSeeObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
@@ -1722,21 +1728,22 @@ public class Robot : IRobot {
     SetHeadAngle();
   }
 
-  public void ClearAllBlocks() {
-    DAS.Debug(this, "Clear All Blocks");
-    RobotEngineManager.Instance.Message.ClearAllBlocks = Singleton<ClearAllBlocks>.Instance.Initialize(ID);
-    RobotEngineManager.Instance.SendMessage();
-    Reset(null);
-
-    SetLiftHeight(0f);
-    SetHeadAngle();
-  }
-
-  public void ClearAllObjects() {
-    RobotEngineManager.Instance.Message.ClearAllObjects = Singleton<ClearAllObjects>.Instance.Initialize(ID);
-    RobotEngineManager.Instance.SendMessage();
-    Reset(null);
-  }
+// rsam: meaning has changed. Probably no need to support now
+//  public void ClearAllBlocks() {
+//    DAS.Debug(this, "Clear All Blocks");
+//    RobotEngineManager.Instance.Message.ClearAllBlocks = Singleton<ClearAllBlocks>.Instance.Initialize(ID);
+//    RobotEngineManager.Instance.SendMessage();
+//    Reset(null);
+//
+//    SetLiftHeight(0f);
+//    SetHeadAngle();
+//  }
+//
+//  public void ClearAllObjects() {
+//    RobotEngineManager.Instance.Message.ClearAllObjects = Singleton<ClearAllObjects>.Instance.Initialize(ID);
+//    RobotEngineManager.Instance.SendMessage();
+//    Reset(null);
+//  }
 
   public void VisionWhileMoving(bool enable) {
     RobotEngineManager.Instance.Message.VisionWhileMoving = Singleton<VisionWhileMoving>.Instance.Initialize(System.Convert.ToByte(enable));
