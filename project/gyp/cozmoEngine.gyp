@@ -1359,6 +1359,7 @@
       ],
       'dependencies': [
         '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):audioUtil',
         '<(ce-cti_gyp_path):ctiCommon',
         '<(ce-cti_gyp_path):ctiMessaging',
         '<(ce-cti_gyp_path):ctiPlanning',

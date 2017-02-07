@@ -154,6 +154,7 @@ def main(scriptArgs):
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['source/anki/util' ], ['project/gyp/util.lst'])
+  generator.processFolder(['source/anki/audioUtil' ], ['project/gyp/audioUtil.lst'])
   generator.processFolder(['source/anki/utilUnitTest'], ['project/gyp/utilUnitTest.lst'])
   generator.processFolder(['source/anki/networkApp'], ['project/gyp/networkApp.lst'])
 
@@ -174,6 +175,7 @@ def main(scriptArgs):
             'jsoncpp_library_type': 'static_library',
             'kazmath_library_type': 'static_library',
             'util_library_type': 'static_library',
+            'audioutil_library_type': 'static_library',
             'OS': 'mac',
             'output_location': projectRoot+'/project/gyp-mac',
             'gyp_location': gypPath,
@@ -208,6 +210,7 @@ def main(scriptArgs):
             'jsoncpp_library_type': 'static_library',
             'kazmath_library_type': 'static_library',
             'util_library_type': 'static_library',
+            'audioutil_library_type': 'static_library',
             'OS': 'ios',
             'output_location': 'gyp-ios', 
             'gyp_location': gypPath,
@@ -239,6 +242,7 @@ def main(scriptArgs):
             'jsoncpp_library_type': 'static_library',
             'kazmath_library_type': 'static_library',
             'util_library_type': 'static_library',
+            'audioutil_library_type': 'static_library',
             'os_posix': 1,
             'GYP_CROSSCOMPILE': 1,
             'output_location': 'gyp-linux', 
@@ -305,6 +309,7 @@ def main(scriptArgs):
             'jsoncpp_library_type': 'static_library',
             'kazmath_library_type': 'static_library',
             'util_library_type': 'static_library',
+            'audioutil_library_type': 'static_library',
             'os_posix': 1,
             'GYP_CROSSCOMPILE': 1,
             'output_location': 'gyp-android', 
@@ -351,6 +356,7 @@ def main(scriptArgs):
                                 jsoncpp_library_type=static_library
                                 kazmath_library_type=static_library
                                 util_library_type=static_library
+                                audioutil_library_type=static_library
                                 os_posix=1
                                 OS=cmake
                                 output_location={0}
