@@ -324,11 +324,17 @@
   "speedTap.text.roundScoreMP": {
     "translation": "{2}: {3} - {4}: {5} - {0}: {1}"
   },
-  "cozmoSays.instructions.label": {
-    "translation": "Type a word or phrase and hear Cozmo say it"
+  "speedTap.text.MP.score.player": {
+    "translation": "{0} Score"
   },
-  "sayCozmo.button.say": {
-    "translation": "Say"
+  "speedTap.text.MP.bestOf": {
+    "translation": "<b>Winner:</b> First to 2 rounds"
+  },
+  "speedTap.title.MP.Locked": {
+    "translation": "Locked!"
+  },
+  "speedTap.text.MP.Locked": {
+    "translation": "To unlock 3 player mode, play Human vs Cozmo once on this difficulty."
   },
   "speedTapGame.label.x2": {
     "translation": "x2"
@@ -342,4 +348,10 @@
   "speedTapGame.mode.HvHvC": {
     "translation": "Human vs Human vs Cozmo"
   },
+  "cozmoSays.instructions.label": {
+    "translation": "Type a word or phrase and hear Cozmo say it"
+  },
+  "sayCozmo.button.say": {
+    "translation": "Say"
+  }
 }

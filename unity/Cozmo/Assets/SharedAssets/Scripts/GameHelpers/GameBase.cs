@@ -1115,7 +1115,6 @@ public abstract class GameBase : MonoBehaviour {
       }
     }
 
-    DAS.Event("game.numplayers", _PlayerInfo.Count.ToString(), DASUtil.FormatExtraData(_ChallengeData.ChallengeID));
     int humanRoundsWon = 0;
     PlayerInfo humanPlayer = GetFirstPlayerByType(PlayerType.Human);
     if (humanPlayer != null) {
@@ -1127,6 +1126,13 @@ public abstract class GameBase : MonoBehaviour {
       humanRoundsWon = robotPlayer.playerRoundsWon;
     }
     DAS.Event("game.end.score", humanRoundsWon.ToString(), DASUtil.FormatExtraData(robotRoundsWon.ToString()));
+
+    if (GetPlayerCount() > 2) {
+      PlayerInfo info = GetPlayerMostRoundsWon();
+      int playerIndex = _PlayerInfo.IndexOf(info);
+      DAS.Event("game.end.MP.winnertype", info.playerType.ToString(), DASUtil.FormatExtraData(playerIndex.ToString()));
+      DAS.Event("game.end.MP.roundsTotal", TotalRounds.ToString());
+    }
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_End);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);

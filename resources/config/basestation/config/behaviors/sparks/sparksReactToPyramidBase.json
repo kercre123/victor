@@ -3,7 +3,7 @@
   "name": "sparksPyramidOnConfigSeen",
   "requiredUnlockId": "BuildPyramid",
   "behaviorGroups": [
-     "SparksBuildPyramid"
+     "BuildPyramid"
   ],
   "flatScore": 5.0,
   "configTriggers":[

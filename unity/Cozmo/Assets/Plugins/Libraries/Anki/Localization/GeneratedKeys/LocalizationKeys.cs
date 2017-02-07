@@ -34,6 +34,7 @@ public static class LocalizationKeys {
   public const string kBehaviorWorkout = "behavior.Workout";
   public const string kBehaviorCheckForStackAtInterval = "behavior.CheckForStackAtInterval";
   public const string kBehaviorLookForFaceAndCube = "behavior.LookForFaceAndCube";
+  public const string kBehaviorLookInPlaceForCube = "behavior.LookInPlaceForCube";
 
   #endregion
 
@@ -350,6 +351,14 @@ public static class LocalizationKeys {
   public const string kSpeedTapTextDisplayWinnerSubtitle = "speedTap.text.displayWinnerSubtitle";
   public const string kSpeedTapTextRoundScore = "speedTap.text.roundScore";
   public const string kSpeedTapTextRoundScoreMP = "speedTap.text.roundScoreMP";
+  public const string kSpeedTapTextMPScorePlayer = "speedTap.text.MP.score.player";
+  public const string kSpeedTapTextMPBestOf = "speedTap.text.MP.bestOf";
+  public const string kSpeedTapTitleMPLocked = "speedTap.title.MP.Locked";
+  public const string kSpeedTapTextMPLocked = "speedTap.text.MP.Locked";
+  public const string kSpeedTapGameLabelX2 = "speedTapGame.label.x2";
+  public const string kSpeedTapGameLabelVs = "speedTapGame.label.vs";
+  public const string kSpeedTapGameModeHvC = "speedTapGame.mode.HvC";
+  public const string kSpeedTapGameModeHvHvC = "speedTapGame.mode.HvHvC";
   public const string kCozmoSaysInstructionsLabel = "cozmoSays.instructions.label";
   public const string kSayCozmoButtonSay = "sayCozmo.button.say";
 
@@ -436,6 +445,7 @@ public static class LocalizationKeys {
   public const string kRewardDescriptionQuickTapAccuracy100 = "reward.description.QuickTap.Accuracy.100";
   public const string kRewardDescriptionQuickTapShutoutSingleRound = "reward.description.QuickTap.Shutout.SingleRound";
   public const string kRewardDescriptionQuickTapTieBreakerOneRound = "reward.description.QuickTap.TieBreaker.OneRound";
+  public const string kRewardDescriptionQuickTapPlayMP = "reward.description.QuickTap.PlayMP";
   public const string kRewardDescriptionKeepawayPlayed = "reward.description.Keepaway.Played";
   public const string kRewardDescriptionKeepawayWon = "reward.description.Keepaway.Won";
   public const string kRewardDescriptionKeepawayShutout = "reward.description.Keepaway.Shutout";

@@ -94,7 +94,7 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehavior(const Rob
     return false;
   }
   
-  if (robot.IsOnCharger() || robot.IsOnChargerPlatform()) {
+  if (robot.IsOnChargerPlatform()) {
     LOG_DEBUG("ReactStratPetInitialDetect.IsRunnable.RobotOnCharger", "Robot is on charger");
     return false;
   }

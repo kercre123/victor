@@ -493,7 +493,6 @@ public class ConnectionFlowController : MonoBehaviour {
 
     // explicitly enable charger behavior since it should be off by default in engine.
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("default_disabled", Anki.Cozmo.ReactionTrigger.PlacedOnCharger, true);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, true);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, true);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, true);

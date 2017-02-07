@@ -81,9 +81,11 @@ ReactionTriggerStrategyCubeMoved::ReactionTriggerStrategyCubeMoved(Robot& robot,
   
 bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
 {
-  for(auto& object: _reactionObjects){
-    const ObservableObject* cube = robot.GetBlockWorld().GetLocatedObjectByID(object.GetObjectID());
+  auto objIter = _reactionObjects.begin();
+  while(objIter != _reactionObjects.end()){
+    const ObservableObject* cube = robot.GetBlockWorld().GetLocatedObjectByID(objIter->GetObjectID());
     if(cube == nullptr){
+      objIter = _reactionObjects.erase(objIter);
       continue;
     }
     
@@ -94,15 +96,17 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehavior(const Robot& robot,
                                          kMinImageSizePix,
                                          false);
     
-    if(object.ObjectOutsideIgnoreArea(robot)
-       && ((object.ObjectHasMovedLongEnough(robot)) || object.ObjectUpAxisHasChanged(robot))
+    if(objIter->ObjectOutsideIgnoreArea(robot)
+       && ((objIter->ObjectHasMovedLongEnough(robot)) || objIter->ObjectUpAxisHasChanged(robot))
        && !isVisible)
     {
-      object.ResetObject();
-      BehaviorPreReqAcknowledgeObject preReqData(object.GetObjectID());
+      objIter->ResetObject();
+      BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID());
       
       return behavior->IsRunnable(preReqData, behavior->IsRunning() );
     }
+    
+    objIter++;
   }
   return false;
 }

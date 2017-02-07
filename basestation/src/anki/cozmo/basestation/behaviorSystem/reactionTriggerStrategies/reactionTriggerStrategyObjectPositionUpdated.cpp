@@ -48,7 +48,6 @@ bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehavior(const R
   const bool robotInValidState = kEnableObjectAcknowledgement &&
                                   !robot.IsCarryingObject() &&
                                   !robot.IsPickingOrPlacing() &&
-                                  !robot.IsOnCharger() &&
                                   !robot.IsOnChargerPlatform();
   
   if(robotInValidState && HasDesiredReactionTargets(robot)){
