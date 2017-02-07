@@ -397,79 +397,91 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
     PoseConfirmation& poseConf = iter->second;
     ObservableObject* unconfirmedObjectPtr = poseConf.unconfirmedObject.get();
     
-    // Confirmed and unconfirmed have to be mutually exclusive. If we bring an object from a different origin
-    // during rejigeering, it should release at that point the unconfirmed instance (not the reference pose or
-    // the count, but the instance itself)
-    DEV_ASSERT( (nullptr == confirmedMatch) != (nullptr == unconfirmedObjectPtr),
-                "ObjectPoseConfirmer.AddVisualObservation.ConfirmedAndUnconfirmedPointers" );
-  
-    // Check if the new observation is (roughly) in the same pose as the last one.
-    const Point3f distThreshold  = observation->GetSameDistanceTolerance();
-    const Radians angleThreshold = observation->GetSameAngleTolerance();
-    const bool poseIsSame = newPose.IsSameAs(poseConf.referencePose, distThreshold, angleThreshold);
-    
-    if(poseIsSame)
+    // When we unobserve something we have an entry in PoseConfirmation, but we don't have confirmed (deleted)
+    // or unconfirmed (was confirmed). In that case we need to treat the PoseConfirmation entry as if it
+    // was the first one
+    if ( (nullptr == confirmedMatch) && (nullptr == unconfirmedObjectPtr) )
     {
-      ++poseConf.numTimesObserved;
+      // reset the observations to 1 in the current observation pose. This also grabs the observation
+      // as the unconfirmed pointer
+      poseConf = PoseConfirmation(observation, 1, 0);
+    }
+    else
+    {
+      // Confirmed and unconfirmed have to be mutually exclusive. If we bring an object from a different origin
+      // during rejigeering, it should release at that point the unconfirmed instance (not the reference pose or
+      // the count, but the instance itself)
+      DEV_ASSERT( (nullptr == confirmedMatch) != (nullptr == unconfirmedObjectPtr),
+                  "ObjectPoseConfirmer.AddVisualObservation.ConfirmedAndUnconfirmedPointers" );
+    
+      // Check if the new observation is (roughly) in the same pose as the last one.
+      const Point3f distThreshold  = observation->GetSameDistanceTolerance();
+      const Radians angleThreshold = observation->GetSameAngleTolerance();
+      const bool poseIsSame = newPose.IsSameAs(poseConf.referencePose, distThreshold, angleThreshold);
       
-      const bool confirmingObjectAtObservedPose = poseConf.numTimesObserved >= kMinTimesToObserveObject;
-      if(confirmingObjectAtObservedPose)
+      if(poseIsSame)
       {
-        const bool isCurrentlyUnconfirmed = (nullptr != unconfirmedObjectPtr);
-        if( isCurrentlyUnconfirmed )
-        {
-          // udpate pose in unconfirmed instance before passing onto world
-          UpdatePoseInInstance(unconfirmedObjectPtr, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
+        ++poseConf.numTimesObserved;
         
-          // This is first confirmation, we have to give blockWorld ownership of the unconfirmed object
-          _robot.GetBlockWorld().AddLocatedObject(poseConf.unconfirmedObject);
-          poseConf.unconfirmedObject.reset(); // give up ownership of the pointer (the pointer is still valid)
+        const bool confirmingObjectAtObservedPose = poseConf.numTimesObserved >= kMinTimesToObserveObject;
+        if(confirmingObjectAtObservedPose)
+        {
+          const bool isCurrentlyUnconfirmed = (nullptr != unconfirmedObjectPtr);
+          if( isCurrentlyUnconfirmed )
+          {
+            // udpate pose in unconfirmed instance before passing onto world
+            UpdatePoseInInstance(unconfirmedObjectPtr, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
           
-          // flip pointers now that it is confirmed
-          confirmedMatch = unconfirmedObjectPtr;
-          unconfirmedObjectPtr = nullptr;
+            // This is first confirmation, we have to give blockWorld ownership of the unconfirmed object
+            _robot.GetBlockWorld().AddLocatedObject(poseConf.unconfirmedObject);
+            poseConf.unconfirmedObject.reset(); // give up ownership of the pointer (the pointer is still valid)
+            
+            // flip pointers now that it is confirmed
+            confirmedMatch = unconfirmedObjectPtr;
+            unconfirmedObjectPtr = nullptr;
+          }
+          else
+          {
+            // We need to update the pose because we have proof that it's in a different location. Even if the
+            // new location's PoseState is less accurate that the one we have at the moment, we need to update it.
+            // KnownIssue: we do not store unconfirmed poses for objects that are already confirmed. However we do not
+            // update their pose until they become confirmed. This means that only the last pose and pose state
+            // are actually considered. In a scenario where we have: Known, Known, Dirty, Dirty observations, where we
+            // need 4 observations to confirm, the last one (Dirty) is the one that we would set here. Note this is not
+            // a problem before the first confirmation, since the Unconfirmed pointer updates continuously before
+            // confirmation, and stores the most accurate. Search below (in this function) for KnownIssueLostAccuracy
+            UpdatePoseInInstance(confirmedMatch, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
+          }
+          
+          // notify blockworld that we can confirm we have seen this object at its current pose. This allows blockworld
+          // to reason about the markers seen this frame
+          _robot.GetBlockWorld().OnObjectVisuallyVerified(confirmedMatch);
         }
         else
         {
-          // We need to update the pose because we have proof that it's in a different location. Even if the
-          // new location's PoseState is less accurate that the one we have at the moment, we need to update it.
-          // KnownIssue: we do not store unconfirmed poses for objects that are already confirmed. However we do not
-          // update their pose until they become confirmed. This means that only the last pose and pose state
-          // are actually considered. In a scenario where we have: Known, Known, Dirty, Dirty observations, where we
-          // need 4 observations to confirm, the last one (Dirty) is the one that we would set here. Note this is not
-          // a problem before the first confirmation, since the Unconfirmed pointer updates continuously before
-          // confirmation, and stores the most accurate. Search below (in this function) for KnownIssueLostAccuracy
-          UpdatePoseInInstance(confirmedMatch, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
+          // Update unconfirmed object's pose if it exists (if the object is already confirmed, then it doesn't)
+          if ( unconfirmedObjectPtr ) {
+            UpdatePoseInInstance(unconfirmedObjectPtr, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
+          }
+          // else KnownIssueLostAccuracy
         }
-        
-        // notify blockworld that we can confirm we have seen this object at its current pose. This allows blockworld
-        // to reason about the markers seen this frame
-        _robot.GetBlockWorld().OnObjectVisuallyVerified(confirmedMatch);
       }
       else
       {
-        // Update unconfirmed object's pose if it exists (if the object is already confirmed, then it doesn't)
+        // Seeing in different pose, reset counter
+        poseConf.numTimesObserved = 1;
+        poseConf.referencePose = newPose;
+        
+        // Update unconfirmed object's pose if we have one
         if ( unconfirmedObjectPtr ) {
           UpdatePoseInInstance(unconfirmedObjectPtr, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
         }
         // else KnownIssueLostAccuracy
       }
-    }
-    else
-    {
-      // Seeing in different pose, reset counter
-      poseConf.numTimesObserved = 1;
-      poseConf.referencePose = newPose;
       
-      // Update unconfirmed object's pose if we have one
-      if ( unconfirmedObjectPtr ) {
-        UpdatePoseInInstance(unconfirmedObjectPtr, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
-      }
-      // else KnownIssueLostAccuracy
+      // These get set regardless of whether pose is same
+      poseConf.numTimesUnobserved = 0;
     }
-    
-    // These get set regardless of whether pose is same
-    poseConf.numTimesUnobserved = 0;
   }
   
   // return whether the object is confirmed (could return true only if the observation contributed to it, but at the
