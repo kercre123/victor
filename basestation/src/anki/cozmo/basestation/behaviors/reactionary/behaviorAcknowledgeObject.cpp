@@ -133,8 +133,28 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
   
   _currTarget = *_targets.begin();
   DEV_ASSERT(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
+
+  const ObservableObject* targetObj = robot.GetBlockWorld().GetObjectByID(_currTarget);
+
+  if( nullptr == targetObj ) {
+    // could happen if the cube "disappears" somehow between this behavior getting triggered and the time this
+    // function is called
+    PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.BeginIteration.NullObject",
+                        "Object id %d is a target, but can't get it from blockworld",
+                        _currTarget.GetValue());
+    _targets.erase(_currTarget.GetValue());
+    _currTarget.UnSet();
+    
+    // let it try again with another target, if there is one
+    if( !_targets.empty() ) {
+      BeginIteration(robot);
+    }
+    
+    return;
+  }
+  
   Pose3d poseWrtRobot;
-  robot.GetBlockWorld().GetObjectByID(_currTarget)->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot);
+  targetObj->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot);
   
   // Only bother checking below the robot if the object is significantly above the robot
   _shouldCheckBelowTarget = poseWrtRobot.GetTranslation().z() > ROBOT_BOUNDING_Z * 0.5f;
