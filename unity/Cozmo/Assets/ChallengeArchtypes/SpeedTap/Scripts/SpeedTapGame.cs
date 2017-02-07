@@ -64,7 +64,7 @@ namespace SpeedTap {
 
     public float TapResolutionDelay { get; private set; }
 
-    public Color Player2Tint { get; private set; }
+    private SpeedTapGameConfig _GameConfig;
 
     #endregion
 
@@ -150,7 +150,7 @@ namespace SpeedTap {
       MaxIdleInterval_percent = speedTapConfig.MaxIdleInterval_percent;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
       TapResolutionDelay = speedTapConfig.TapResolutionDelay;
-      Player2Tint = speedTapConfig.Player2Tint;
+      _GameConfig = speedTapConfig;
 
       CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
       MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
@@ -263,10 +263,15 @@ namespace SpeedTap {
           }
           else if (numHumans >= 2) {
             playerInfo.scoreWidget = SharedMinigameView.Player2Scoreboard;
-            playerInfo.scoreWidget.PortraitColor = Player2Tint;
+            playerInfo.scoreWidget.PortraitColor = _GameConfig.Player2Tint;
+            playerInfo.scoreWidget.SetNameLabelText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextMPScorePlayer, playerInfo.name));
           }
           else {
             playerInfo.scoreWidget = SharedMinigameView.PlayerScoreboard;
+            if (playerCount >= 3) {
+              playerInfo.scoreWidget.PortraitColor = _GameConfig.Player1Tint;
+              playerInfo.scoreWidget.SetNameLabelText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextMPScorePlayer, playerInfo.name));
+            }
           }
         }
         playerInfo.scoreWidget.Score = playerInfo.playerScoreRound;
@@ -341,8 +346,11 @@ namespace SpeedTap {
       return new DefaultSpeedTapRules(numLights);
     }
 
-    public void ShowPlayerTapConfirmSlide() {
-      SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapConfirmSlide");
+    public void ShowPlayerTapConfirmSlide(int playerIndex) {
+      SpeedTapPlayerTapConfirmSlide slide = SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapConfirmSlide").GetComponent<SpeedTapPlayerTapConfirmSlide>();
+      if (slide != null) {
+        slide.Init(_PlayerInfo.Count, playerIndex);
+      }
     }
 
     public void ShowPlayerTapNewRoundSlide() {

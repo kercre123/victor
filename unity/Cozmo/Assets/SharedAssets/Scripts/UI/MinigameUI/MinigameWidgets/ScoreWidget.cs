@@ -110,6 +110,11 @@ namespace Cozmo {
         }
       }
 
+      // For multiplayer, we want to set the name directly
+      public void SetNameLabelText(string lblText) {
+        _ScoreNameLabel.text = lblText;
+      }
+
       public bool Dim {
         set {
           _PortraitImage.color = value ? Color.gray : Color.white;

@@ -66,7 +66,7 @@ namespace SpeedTap {
           _SpeedTapGame.ShowWaitForCozmoSlide();
         }
         else if (playerInfo.CubeID == -1) {
-          _SpeedTapGame.ShowPlayerTapConfirmSlide();
+          _SpeedTapGame.ShowPlayerTapConfirmSlide(_PlayerIndexSelecting);
         }
         else {
           _SpeedTapGame.ShowPlayerTapNewRoundSlide();

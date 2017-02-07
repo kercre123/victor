@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using System.Collections;
-using Anki.UI;
+using Cozmo.UI;
 
 namespace SpeedTap {
   public class SpeedTapNumPlayerTypeSelectSlide : MonoBehaviour {
@@ -14,10 +14,7 @@ namespace SpeedTap {
     private Button _HumanVHumanVCozmoBtn;
 
     [SerializeField]
-    private Button _CozmoVAutomationBtn;
-
-    [SerializeField]
-    private Button _HumanVHumanBtn;
+    private GameObject _LockOverlay;
 
     private UnityAction _Callback = null;
 
@@ -27,30 +24,26 @@ namespace SpeedTap {
       _Callback = callback;
       _Game = game;
       game.ClearPlayers(); // Clears the defaults
-      _HumanVCozmoBtn.onClick.AddListener(() => {
-        game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
-        game.AddPlayer(PlayerType.Human, DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
-        StartGame();
-      });
+      _HumanVCozmoBtn.onClick.AddListener(Handle2PlayerClicked);
 
-      _HumanVHumanVCozmoBtn.onClick.AddListener(() => {
-        game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
-        game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer1));
-        game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer2));
-        StartGame();
-      });
+      _HumanVHumanVCozmoBtn.onClick.AddListener(HandleMPClicked);
 
-      _CozmoVAutomationBtn.onClick.AddListener(() => {
-        game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
-        game.AddPlayer(PlayerType.Automation, "Automation");
-        StartGame();
-      });
+      if (_LockOverlay != null) {
+        _LockOverlay.SetActive(!IsMPModeUnlocked());
+      }
 
-      _HumanVHumanBtn.onClick.AddListener(() => {
-        game.AddPlayer(PlayerType.Human, "DebugHuman1");
-        game.AddPlayer(PlayerType.Human, "DebugHuman2");
-        StartGame();
-      });
+      Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("StartAutomation", "SpeedTap",
+                                  (string str) => {
+                                    _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
+                                    _Game.AddPlayer(PlayerType.Automation, "Automation");
+                                    StartGame();
+                                  });
+    }
+
+    public void OnDestroy() {
+      DAS.Event("game.numplayers", _Game.GetPlayerCount().ToString(), DASUtil.FormatExtraData(_Game.CurrentDifficulty.ToString()));
+
+      Anki.Debug.DebugConsoleData.Instance.RemoveConsoleData("StartAutomation", "SpeedTap");
     }
 
     // Unlike Difficulty MP just requires playing a game, not beating it...
@@ -59,6 +52,30 @@ namespace SpeedTap {
       // Scores are per mode
       string key = _Game.ChallengeID + _Game.CurrentDifficulty;
       return playerProfile.HighScores.ContainsKey(key);
+    }
+
+    private void Handle2PlayerClicked() {
+      _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
+      _Game.AddPlayer(PlayerType.Human, DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      StartGame();
+    }
+
+    private void HandleMPClicked() {
+      if (IsMPModeUnlocked()) {
+        _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
+        _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer1));
+        _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer2));
+        StartGame();
+      }
+      else {
+        // Throw up the warning
+        AlertModalData lockedData = new AlertModalData("speedtap_mp_locked_alert",
+                                                       LocalizationKeys.kSpeedTapTitleMPLocked,
+                                                       LocalizationKeys.kSpeedTapTextMPLocked,
+                                                       new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+        ModalPriorityData lockedPriority = new ModalPriorityData(ModalPriorityLayer.Low, 0, LowPriorityModalAction.Queue, HighPriorityModalAction.Queue);
+        UIManager.OpenAlert(lockedData, lockedPriority);
+      }
     }
 
     private void StartGame() {

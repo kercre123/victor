@@ -12,10 +12,15 @@ public class UnlockDebugPane : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Dropdown _UnlockSelection;
 
+  [SerializeField]
+  private UnityEngine.UI.Button _UnlockDifficultiesButton;
+
   private void Start() {
     _LockButton.onClick.AddListener(OnHandleLockButtonClicked);
     _UnlockButton.onClick.AddListener(OnHandleUnlockButtonClicked);
     PopulateOptions();
+
+    _UnlockDifficultiesButton.onClick.AddListener(OnHandleUnlockDifficultiesButtonClicked);
   }
 
   private void PopulateOptions() {
@@ -39,4 +44,20 @@ public class UnlockDebugPane : MonoBehaviour {
   private void OnHandleUnlockButtonClicked() {
     UnlockablesManager.Instance.TrySetUnlocked(GetSelectedUnlockId(), true);
   }
+
+  // Difficulties are unlocked in the app not the robot, so not related to real unlock manager
+  // but most people logically look for the unlock of any feature here.
+  private void OnHandleUnlockDifficultiesButtonClicked() {
+    DataPersistence.PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    // Set the high scores because in MPspeedtap it checks for "completions" not wins...
+    ChallengeData[] challengeList = ChallengeDataList.Instance.ChallengeData;
+    for (int i = 0; i < challengeList.Length; ++i) {
+      int numDifficulties = challengeList[i].DifficultyOptions.Count;
+      playerProfile.GameDifficulty[challengeList[i].ChallengeID] = numDifficulties;
+      for (int j = 0; j < numDifficulties; ++j) {
+        playerProfile.HighScores[challengeList[i].ChallengeID + j] = 1;
+      }
+    }
+  }
+
 }
