@@ -30,15 +30,8 @@ namespace SpeedTap {
         HandleFoundCube(_ForceRaiseLift);
       }
       else {
-        LightCube cube;
-        if (_CurrentRobot.LightCubes.TryGetValue(_BlockID, out cube)) {
-          DAS.Debug("HandleSearchForCubeEnd", "IsVisible " + cube.IsInFieldOfView);
-          HandleFoundCube(_ForceRaiseLift);
-        }
-        else {
-          // unable to find cube - bail out
-          CompletePlayerGoal(ERROR_LOSTCUBE);
-        }
+        // unable to find cube - bail out
+        CompletePlayerGoal(ERROR_LOSTCUBE);
       }
     }
 
