@@ -143,8 +143,10 @@ namespace Cozmo.Upgrades {
       }
       _LockedTiles.Clear();
 
-      for (int i = 0; i < _UnlocksContainer.transform.childCount; ++i) {
-        Destroy(_UnlocksContainer.transform.GetChild(i).gameObject);
+      if (_UnlocksContainer != null) {
+        for (int i = 0; i < _UnlocksContainer.transform.childCount; ++i) {
+          Destroy(_UnlocksContainer.transform.GetChild(i).gameObject);
+        }
       }
     }
 
@@ -166,11 +168,7 @@ namespace Cozmo.Upgrades {
       UIManager.OpenModal(_CoreUpgradeDetailsModalPrefab, _CoreUpgradeDetailsModalPriorityData, detailsModalCreatedCallback);
 
       _LockedTiles.Clear();
-      if (_UnlocksContainer != null) {
-        for (int i = 0; i < _UnlocksContainer.transform.childCount; ++i) {
-          Destroy(_UnlocksContainer.transform.GetChild(i).gameObject);
-        }
-      }
+
     }
 
     private void HandleTappedLocked(UnlockableInfo unlockInfo) {
