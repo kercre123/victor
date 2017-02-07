@@ -593,6 +593,11 @@
               <FileType>1</FileType>
               <FilePath>.\app\crc16.c</FilePath>
             </File>
+            <File>
+              <FileName>debugTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\debugTest.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1250,6 +1255,11 @@
               <FileName>crc16.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\app\crc16.c</FilePath>
+            </File>
+            <File>
+              <FileName>debugTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\debugTest.c</FilePath>
             </File>
           </Files>
         </Group>

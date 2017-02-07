@@ -15,4 +15,8 @@ typedef struct {
 //globals located in app.c
 extern app_reset_dat_t g_app_reset;
 
+//debugTest.c
+extern TestFunction* GetDebugTestFunctions(void);
+extern bool DebugTestDetectDevice(void);
+
 #endif

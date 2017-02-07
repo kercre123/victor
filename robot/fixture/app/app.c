@@ -54,16 +54,6 @@ void WriteFactoryBlockErrorCode(error_t errorCode)
 {
 }
 
-// Not even sure why..
-TestFunction* GetDebugTestFunctions()
-{
-  static TestFunction m_debugFunctions[] = 
-  {
-    NULL
-  };
-  return m_debugFunctions;
-}
-
 // This generates a unique ID per cycle of the test fixture
 // This was meant to help the "big data" team see if the fixture was ever run but the log was lost (gaps in sequences)
 int GetSequence(void)
@@ -227,6 +217,8 @@ bool DetectDevice(void)
     case FIXTURE_FINISH3_TEST:
     case FIXTURE_FINISH_TEST:
       return FinishDetect();
+    case FIXTURE_DEBUG:
+      return DebugTestDetectDevice();
   }
 
   // If we don't know what kind of device to look for, it's not there!
@@ -239,13 +231,14 @@ void WaitForDeviceOff(bool error)
   // In debug mode, keep device powered up so we can continue talking to it
   if (g_fixtureType == FIXTURE_DEBUG)
   {
-    while (g_isDevicePresent)
+    //while (g_isDevicePresent)
     {
       // Note: We used to send DMC_ACK commands continuously here to prevent auto-power-off
       ConsoleUpdate();
       DisplayUpdate();
     }
     // ENBAT off
+    DisableVEXT();
     DisableBAT();
 
   // In normal mode, just debounce the connection
