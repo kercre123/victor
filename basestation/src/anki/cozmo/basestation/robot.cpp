@@ -1451,7 +1451,7 @@ Result Robot::Update()
 
   if( _isOnChargerPlatform && _offTreadsState == OffTreadsState::OnTreads ) {  
     ObservableObject* charger = GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
-    if( nullptr != charger && !charger->IsPoseStateUnknown() )
+    if( nullptr != charger )
     {
       const bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
       if( !isOnChargerPlatform )
@@ -2840,7 +2840,7 @@ Result Robot::SetOnRamp(bool t)
       
   // We are either transition onto or off of a ramp
       
-  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetObjectByID(_rampID, ObjectFamily::Ramp));
+  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetLocatedObjectByID(_rampID, ObjectFamily::Ramp));
   if(ramp == nullptr) {
     PRINT_NAMED_WARNING("Robot.SetOnRamp.NoRampWithID",
                         "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world",

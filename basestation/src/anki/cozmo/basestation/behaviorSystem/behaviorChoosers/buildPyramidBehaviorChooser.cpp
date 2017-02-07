@@ -11,6 +11,7 @@
  **/
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/buildPyramidBehaviorChooser.h"
 
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
@@ -330,8 +331,8 @@ void BuildPyramidBehaviorChooser::CheckBlockWorldCubeOrientations(Robot& robot)
     return false;
   });
   
-  robot.GetBlockWorld().FindMatchingObjects(knownDisconnectedBlockFilter,
-                                            knownDisconnectedBlocks);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(knownDisconnectedBlockFilter,
+                                                   knownDisconnectedBlocks);
   
   // we only want to update orientations from block world if the pose state is known
   // because the pose is only updated through observation, so if we've received
@@ -370,7 +371,13 @@ void BuildPyramidBehaviorChooser::UpdateStateTrackerForUnrecognizedID(const Obje
   blockInAnyFrameFilter.SetAllowedIDs({objID});
   blockInAnyFrameFilter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
   blockInAnyFrameFilter.SetFilterFcn(nullptr);
-  const ObservableObject* block = _robot.GetBlockWorld().FindMatchingObject(blockInAnyFrameFilter);
+  const ObservableObject* block = _robot.GetBlockWorld().FindLocatedMatchingObject(blockInAnyFrameFilter);
+  
+  if ( block == nullptr ) {
+    // if there are no located instances, try with the connected ones
+    block = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objID);
+  }
+  
   
   DEV_ASSERT(block != nullptr,
              "BuildPyramidBehaviorChooser.UpdateStateTracker.NoBlocksWithID");
@@ -605,9 +612,7 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
       // Set acknowledged positevely if response was a positive response
       const ObjectID& target = _behaviorRespondPossiblyRoll->GetTargetID();
       PyramidCubePropertiesTracker* tracker = nullptr;
-      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(target);
       if(GetCubePropertiesTrackerByID(target, tracker) &&
-         object != nullptr &&
          !hadToRoll &&
          tracker->GetCurrentUpAxis() == UpAxis::ZPositive){
         tracker->SetHasAcknowledgedPositively(true);
@@ -622,8 +627,8 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
   BehaviorPreReqNone kNoPreReqs;
   
   for(auto& entry: _pyramidCubePropertiesTrackers){
-    ObservableObject* object = robot.GetBlockWorld().GetObjectByID(entry.second.GetObjectID());
-    if(object != nullptr && !object->IsPoseStateUnknown()){
+    ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(entry.second.GetObjectID());
+    if(object != nullptr){
       if(entry.second.GetCurrentUpAxis() != UpAxis::ZPositive){
         bestBehavior = _behaviorRespondPossiblyRoll;
         _behaviorRespondPossiblyRoll->SetTarget(entry.second.GetObjectID());
@@ -1043,8 +1048,8 @@ ObjectLights BuildPyramidBehaviorChooser::GetBaseFormedBaseLightsModifier(Robot&
   ObjectLights baseBlockLights;
   baseBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
   
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(staticID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(baseID);
   if(staticBlock == nullptr || baseBlock == nullptr){
     return baseBlockLights;
   }
@@ -1070,8 +1075,8 @@ ObjectLights BuildPyramidBehaviorChooser::GetBaseFormedStaticLightsModifier(Robo
   ObjectLights staticBlockLights;
   staticBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
   
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(staticID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(baseID);
   if(staticBlock == nullptr || baseBlock == nullptr){
     return staticBlockLights;
   }

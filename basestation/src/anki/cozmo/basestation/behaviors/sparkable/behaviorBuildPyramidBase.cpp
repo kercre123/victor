@@ -525,7 +525,7 @@ void BehaviorBuildPyramidBase::ClearInvalidBlockIDs(const Robot& robot) const
   BlockList allBlocks;
   BlockWorldFilter allBlocksFilter;
   allBlocksFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  robot.GetBlockWorld().FindMatchingObjects(allBlocksFilter, allBlocks);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(allBlocksFilter, allBlocks);
   
   bool baseIsValid = false;
   bool staticIsValid = false;

@@ -58,8 +58,8 @@ bool BehaviorPyramidThankYou::IsRunnableInternal(const BehaviorPreReqAcknowledge
   // Check to see if there's a block with a location we can turn to to say thanks
   if(preReqData.GetTargets().size() >= 1){
     _targetID = *preReqData.GetTargets().begin();
-    const ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(_targetID);
-    if(obj != nullptr && !obj->IsPoseStateUnknown()){
+    const ObservableObject* obj = _robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+    if(obj != nullptr){
       return true;
     }
   }

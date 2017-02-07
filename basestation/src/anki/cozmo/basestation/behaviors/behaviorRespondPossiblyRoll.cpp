@@ -115,7 +115,7 @@ void BehaviorRespondPossiblyRoll::RollIfNecessary(Robot& robot)
 {
   _responseSuccessfull = true;
 
-  ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_targetID);
+  ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if (nullptr != object &&
       object->IsPoseStateKnown() &&
       object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
