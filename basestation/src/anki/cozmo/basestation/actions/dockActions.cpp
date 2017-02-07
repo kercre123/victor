@@ -1343,7 +1343,7 @@ namespace Anki {
             if(object->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, // dock obj orig pose is w.r.t. robot
                                                         carryObject->GetRotationAmbiguities(),
                                                         carryObject->GetSameDistanceTolerance()*0.5f,
-                                                        carryObject->GetSameAngleTolerance(), true,
+                                                        carryObject->GetSameAngleTolerance(),
                                                         Tdiff, angleDiff))
             {
               PRINT_CH_INFO("Actions", "PickupObjectAction.Verify.ObjectInOrigPose",

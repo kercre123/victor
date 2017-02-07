@@ -624,11 +624,11 @@ GTEST_TEST(TestPose, IsSameWithAmbiguity)
   
   // the only difference between P1 and P2 at this point should be Tform_amb
   
-  std::vector<RotationMatrix3d> ambiguities = {
+  RotationAmbiguities ambiguities(true, {
     RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
     RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
     RotationMatrix3d({0,0,1,  1,0,0,  0,1,0})
-  };
+  });
   
   // The IsSameAs_WithAmbiguity function should see these two poses as the same,
   // though it is our job to factor out the reference pose from each, by post-
@@ -640,12 +640,12 @@ GTEST_TEST(TestPose, IsSameWithAmbiguity)
   
   EXPECT_TRUE( P1_mod.IsSameAs_WithAmbiguity(P2_mod,
                                              ambiguities, 5.f,
-                                             5*M_PI/180.f, true) );
+                                             5*M_PI/180.f) );
   
   // The symmetric test should also pass
   EXPECT_TRUE( P2_mod.IsSameAs_WithAmbiguity(P1_mod,
                                              ambiguities, 5.f,
-                                             5*M_PI/180.f, true) );
+                                             5*M_PI/180.f) );
   
 }
 
