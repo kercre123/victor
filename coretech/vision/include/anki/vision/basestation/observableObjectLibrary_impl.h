@@ -386,17 +386,17 @@ namespace Vision {
   bool ObservableObjectLibrary<ObsObjectType>::PoseCluster::TryToAddMatch(const PoseMatchPair& match,
                                                            const float distThreshold,
                                                            const Radians angleThreshold,
-                                                           const std::vector<RotationMatrix3d>& R_ambiguities)
+                                                           const RotationAmbiguities& R_ambiguities)
   {
     bool wasAdded = false;
     const Pose3d& P_other = match.first;
 
-    if(R_ambiguities.empty()) {
-      wasAdded = _pose.IsSameAs(P_other, distThreshold, angleThreshold);
+    if(R_ambiguities.HasAmbiguities()) {
+      wasAdded = _pose.IsSameAs_WithAmbiguity(P_other, R_ambiguities,
+                                              distThreshold, angleThreshold);
     }
     else {
-      wasAdded = _pose.IsSameAs_WithAmbiguity(P_other, R_ambiguities,
-                                              distThreshold, angleThreshold, true);
+      wasAdded = _pose.IsSameAs(P_other, distThreshold, angleThreshold);
     } // if/else the ambiguities list is empty
     
     // Note that we check to see if a pose stemming from this match's
@@ -428,7 +428,7 @@ namespace Vision {
       Pose3d P_diff = _pose.GetInverse();
       P_diff *= P_other;
       
-      if(not R_ambiguities.empty()) {
+      if(R_ambiguities.HasAmbiguities()) {
         Pose3d newPose(_matches.back().second.GetPose());
         newPose.PreComposeWith(P_diff);
         
@@ -500,13 +500,14 @@ namespace Vision {
   
   template<class ObsObjectType>
   void ObservableObjectLibrary<ObsObjectType>::ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
-                                                   const ObsObjectType*         libObject,
-                                                   const float distThreshold, const Radians angleThreshold,
-                                                   std::vector<PoseCluster>& poseClusters) const
+                                                                  const ObsObjectType*              libObject,
+                                                                  const float                       distThreshold,
+                                                                  const Radians                     angleThreshold,
+                                                                  std::vector<PoseCluster>&         poseClusters) const
   {
     std::vector<bool> assigned(possiblePoses.size(), false);
     
-    const std::vector<RotationMatrix3d>& R_amb = libObject->GetRotationAmbiguities();
+    const RotationAmbiguities& R_amb = libObject->GetRotationAmbiguities();
     
     for(size_t i_pose=0; i_pose<possiblePoses.size(); ++i_pose)
     {

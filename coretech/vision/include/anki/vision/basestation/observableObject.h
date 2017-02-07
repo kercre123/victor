@@ -246,7 +246,7 @@ namespace Anki {
       // Return the same angle tolerance for matching. Default is 45 degrees.
       virtual Radians GetSameAngleTolerance() const { return DEG_TO_RAD(45); }
       
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
+      virtual RotationAmbiguities const& GetRotationAmbiguities() const;
       
       virtual void GetCorners(std::vector<Point3f>& corners) const;
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const;

@@ -5,6 +5,7 @@
     'utilunittest_source_file_name': 'utilUnitTest.lst',
     'jsoncpp_source_file_name': 'jsoncpp.lst',
     'kazmath_source_file_name': 'kazmath.lst',
+    'audioutil_source_file_name': 'audioUtil.lst',
     'folly_source_file_name': 'folly.lst',
     'networkApp_source_file_name': 'networkApp.lst',
 
@@ -509,6 +510,36 @@
         ],
       },
       'type': '<(jsoncpp_library_type)',
+    },
+
+    {
+      'target_name': 'audioUtil',
+      'sources': [ '<!@(cat <(audioutil_source_file_name))' ],
+      'include_dirs': [
+        '../../source/anki/audioUtil',
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../source/anki/audioUtil',
+        ],
+      },
+      'type': '<(audioutil_library_type)',
+      'conditions': [
+        ['OS!="mac"',               {'sources/': [['exclude', '_osx\\.']]}],
+        ['OS!="ios"',               {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
+        ['OS!="ios" and OS!="mac"', {'sources/': [['exclude', '_iososx\\.|_osxios\\.']]}],
+        ['OS!="android"',           {'sources/': [['exclude', '_android\\.']]}],
+        ['OS!="linux"',             {'sources/': [['exclude', '_linux\\.']]}],
+        ['OS=="ios" or OS=="mac"',
+          {
+            'libraries': [
+              '$(SDKROOT)/System/Library/Frameworks/CoreFoundation.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework'
+            ],
+          }
+        ],
+        ['OS=="ios"', { 'libraries': [ '$(SDKROOT)/System/Library/Frameworks/AVFoundation.framework' ] } ],
+      ],
     },
 
     {

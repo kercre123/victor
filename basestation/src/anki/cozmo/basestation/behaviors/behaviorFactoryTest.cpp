@@ -148,7 +148,7 @@ namespace Cozmo {
   
   // Rotation ambiguities for observed blocks.
   // We only care that the block is upright.
-  const std::vector<RotationMatrix3d> _kBlockRotationAmbiguities({
+  const RotationAmbiguities _kBlockRotationAmbiguities(true, {
     RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
     RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
   });
@@ -1441,7 +1441,6 @@ namespace Cozmo {
                                                        _kBlockRotationAmbiguities,
                                                        _kExpectedCubePoseDistThresh_mm,
                                                        _kExpectedCubePoseAngleThresh_rad,
-                                                       true,
                                                        Tdiff, angleDiff) ||
             (std::fabsf(oObject->GetPose().GetTranslation().z() - (0.5f*oObject->GetSize().z())) > _kExpectedCubePoseHeightThresh_mm) ) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",

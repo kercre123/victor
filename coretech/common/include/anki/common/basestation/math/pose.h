@@ -308,16 +308,14 @@ namespace Anki {
     // True will be returned so long as the difference from P_other is
     // one of the given rotations.
     bool IsSameAs_WithAmbiguity(const Pose3d& P_other,
-                                const std::vector<RotationMatrix3d>& R_ambiguities,
+                                const RotationAmbiguities& R_ambiguities,
                                 const Point3f&   distThreshold,
-                                const Radians&   angleThreshold,
-                                const bool       useAbsRotation) const;
+                                const Radians&   angleThreshold) const;
     
     bool IsSameAs_WithAmbiguity(const Pose3d& P_other,
-                                const std::vector<RotationMatrix3d>& R_ambiguities,
+                                const RotationAmbiguities& R_ambiguities,
                                 const Point3f&   distThreshold,
                                 const Radians&   angleThreshold,
-                                const bool       useAbsRotation,
                                 Vec3f&           Tdiff,
                                 Radians&         angleDiff) const;
     
@@ -563,15 +561,14 @@ namespace Anki {
   }
   
   inline bool Pose3d::IsSameAs_WithAmbiguity(const Pose3d& P_other,
-                                             const std::vector<RotationMatrix3d>& R_ambiguities,
+                                             const RotationAmbiguities& R_ambiguities,
                                              const Point3f&   distThreshold,
-                                             const Radians&   angleThreshold,
-                                             const bool       useAbsRotation) const
+                                             const Radians&   angleThreshold) const
   {
     Vec3f Tdiff;
     Radians angleDiff;
     return IsSameAs_WithAmbiguity(P_other, R_ambiguities, distThreshold,
-                                  angleThreshold, useAbsRotation, Tdiff, angleDiff);
+                                  angleThreshold, Tdiff, angleDiff);
   }
   
   template<typename T>

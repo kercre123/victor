@@ -275,6 +275,7 @@ def main(scriptArgs):
                                   kazmath_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
+                                  audioutil_library_type=static_library
                                   worldviz_library_type=static_library
                                   das_library_type=static_library
                                   arch_group={0}
@@ -329,6 +330,7 @@ def main(scriptArgs):
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
+                                audioutil_library_type=static_library
                                 worldviz_library_type=static_library
                                 das_library_type=static_library
                                 arch_group={0}
@@ -378,6 +380,7 @@ def main(scriptArgs):
                                   kazmath_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
+                                  audioutil_library_type=static_library
                                   worldviz_library_type=static_library
                                   das_library_type=static_library
                                   arch_group={0}
@@ -452,6 +455,7 @@ def main(scriptArgs):
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
+                                audioutil_library_type=static_library
                                 worldviz_library_type=static_library
                                 das_library_type=shared_library
                                 os_posix=1
@@ -519,6 +523,7 @@ def main(scriptArgs):
                                   kazmath_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
+                                  audioutil_library_type=static_library
                                   worldviz_library_type=static_library
                                   das_library_type=static_library
                                   arch_group={0}

@@ -115,6 +115,7 @@
 		83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574E0E63025400468741 /* libiconv.2.dylib */; };
 		840D146DB5E8DF800E7FA9E0 /* Bulk_Generics_9.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 64B958AC6BD87F99753A4E26 /* Bulk_Generics_9.cpp */; };
 		85065E851BF1904400DBAF35 /* libAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85065E841BF1904400DBAF35 /* libAudioEngine.a */; };
+		85C99FC81E3AF0FA00EA82E0 /* libaudioUtil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85C99FC71E3AF0FA00EA82E0 /* libaudioUtil.a */; };
 		85DD01461CD2A17300F2EAD5 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */; };
 		85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DEB8FE1C652A3C00202214 /* libDAS.a */; };
 		85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */ = {isa = PBXBuildFile; fileRef = 85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */; };
@@ -336,6 +337,7 @@
 		8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_4.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_4.cpp; sourceTree = "<group>"; };
 		85065E841BF1904400DBAF35 /* libAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libAudioEngine.a; path = "../../lib/audio/gyp/build/Debug-iphoneos/libAudioEngine.a"; sourceTree = "<group>"; };
 		852C0B6C1C6965730003DCFD /* DASConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = DASConfig.json; sourceTree = "<group>"; };
+		85C99FC71E3AF0FA00EA82E0 /* libaudioUtil.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libaudioUtil.a; path = "../../lib/util/project/gyp/build/Debug-iphoneos/libaudioUtil.a"; sourceTree = "<group>"; };
 		85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libBLECozmo.a; path = "../../lib/BLECozmo/project/gyp/build/Debug-iphoneos/libBLECozmo.a"; sourceTree = "<group>"; };
 		85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		85DEB8FE1C652A3C00202214 /* libDAS.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDAS.a; path = "../../tools/das-client/gyp/build/Debug-iphoneos/libDAS.a"; sourceTree = "<group>"; };
@@ -433,6 +435,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85C99FC81E3AF0FA00EA82E0 /* libaudioUtil.a in Frameworks */,
 				85DD01461CD2A17300F2EAD5 /* CoreBluetooth.framework in Frameworks */,
 				6F54323B1C8928C4006D3724 /* QuickLook.framework in Frameworks */,
 				6F5432391C8928AF006D3724 /* MobileCoreServices.framework in Frameworks */,
@@ -583,6 +586,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				85C99FC71E3AF0FA00EA82E0 /* libaudioUtil.a */,
 				85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */,
 				85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */,
 				6F54323A1C8928C4006D3724 /* QuickLook.framework */,
