@@ -41,8 +41,8 @@ void BackpackLightAnimationContainer::AddBackpackLightStateValues(const std::str
   BackpackLights values;
   
   bool res = true;
-  res &= JsonTools::GetColorValuesToArrayOptional(data, "onColors",  values.onColors);
-  res &= JsonTools::GetColorValuesToArrayOptional(data, "offColors", values.offColors);
+  res &= JsonTools::GetColorValuesToArrayOptional(data, "onColors",  values.onColors, true);
+  res &= JsonTools::GetColorValuesToArrayOptional(data, "offColors", values.offColors, true);
   res &= JsonTools::GetArrayOptional(data, "onPeriod_ms",            values.onPeriod_ms);
   res &= JsonTools::GetArrayOptional(data, "offPeriod_ms",           values.offPeriod_ms);
   res &= JsonTools::GetArrayOptional(data, "transitionOnPeriod_ms",  values.transitionOnPeriod_ms);
