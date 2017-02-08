@@ -67,8 +67,6 @@ namespace Anki {
       
       void ResetBehavior(Robot& robot);
       
-      void FinishSuccess();
-      
       virtual void UpdateTargetBlock(const Robot& robot) const;
     };
     

@@ -38,8 +38,11 @@ private:
   void LoadJson(const Json::Value& config);
   
   struct BehaviorObjectiveTriggerParams {
-    float cooldownTime_s;      // Amount of time that must have expired since the last time fist bump completed before this can trigger it again
+    float cooldownTime_s;      // Amount of time that must have expired since the last time fist bump completed before this can trigger it again.
+                               // NB: This cooldown is slightly different from the one in IBehavior in that it is specified on a per-trigger basis.
     float triggerProbability;  // Probability (0,1) of fist bump executing when objective is achieved and cooldown time has expired
+    float triggerExpiration_s; // Amount of time since the trigger is set to true that it should automatically become false.
+                               // Note: Playing the fist bump too long after the objective that it's triggered off of is achieved is confusing.
   };
   
   std::unordered_map<BehaviorObjective, BehaviorObjectiveTriggerParams> _triggerParamsMap;
@@ -47,12 +50,8 @@ private:
   // Whether or not fist bump should play
   bool _shouldTrigger;
   
-  // The last time _shouldTrigger was set to true
-  float _shouldTriggerSetTime_sec;
-  
-  // Amount of time since _shouldTrigger is set to true that it should automatically become false.
-  // Playing the fist bump too long after the objective that it's triggered off of is achieved makes it confusing.
-  float _shouldTriggerTimeout_sec;
+  // Expiration time of trigger
+  float _shouldTriggerExpirationTime_sec;
   
   // The last time that the fist bump objective was achieved
   float _lastFistBumpCompleteTime_sec;

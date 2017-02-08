@@ -50,12 +50,16 @@ struct AudioCaptureSystemData
                       const AudioStreamPacketDescription * __nullable inPacketDescs)
   {
     std::lock_guard<std::mutex> lock(_dataMutex);
-    if(_recording && _dataCallback)
+    if(_recording)
     {
-      const auto* const dataStart = static_cast<AudioSample*>(inBuffer->mAudioData);
-      _dataCallback(dataStart, inNumberPackets);
+      if (_dataCallback)
+      {
+        const auto* const dataStart = static_cast<AudioSample*>(inBuffer->mAudioData);
+        _dataCallback(dataStart, inNumberPackets);
+      }
+      
+      AudioQueueEnqueueBuffer(_queue, inBuffer, 0, NULL);
     }
-    AudioQueueEnqueueBuffer(_queue, inBuffer, 0, NULL);
   }
 };
   

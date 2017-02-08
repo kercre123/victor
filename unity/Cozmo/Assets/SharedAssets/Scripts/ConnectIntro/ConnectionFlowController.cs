@@ -134,10 +134,13 @@ public class ConnectionFlowController : MonoBehaviour {
   public void StartConnectionFlow() {
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
       _CurrentRobotIP = RobotEngineManager.kSimRobotIP;
-      ConnectionFlowDelay = 0.25f;
+      ConnectionFlowDelay = 0.1f;
     }
     else {
       _CurrentRobotIP = RobotEngineManager.kRobotIP;
+    }
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseFastConnectivityFlow) {
+      ConnectionFlowDelay = 0.1f;
     }
     InitConnectionFlow();
   }
@@ -220,7 +223,15 @@ public class ConnectionFlowController : MonoBehaviour {
       DAS.Info("ConnectionFlow.ShowAndroid", "OnComplete: " + success);
       GameObject.Destroy(_AndroidConnectionFlowInstance);
       _AndroidConnectionFlowInstance = null;
-      HandleSearchForCozmoScreenDone(success);
+
+      // create background if it doesn't exist yet, then signal we're done
+      Action doneAction = () => HandleSearchForCozmoScreenDone(success);
+      if (_ConnectionFlowBackgroundModalInstance == null) {
+        CreateConnectionFlowBackgroundWithCallback(doneAction);
+      }
+      else {
+        doneAction();
+      }
     };
     // - if the old flow is requested, start it
     androidFlowInstance.OnCancelFlow += () => {

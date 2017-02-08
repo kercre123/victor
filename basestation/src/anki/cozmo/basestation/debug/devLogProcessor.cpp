@@ -83,6 +83,15 @@ uint32_t DevLogProcessor::GetFinalTime_ms() const
   return finalTime;
 }
 
+uint32_t DevLogProcessor::GetNextPrintTime_ms() const
+{
+  if( _printReader ) {
+    return _printReader->GetNextMessageTimeDelta_ms();
+  }
+  else {
+    return 0;
+  }
+}
 
 void DevLogProcessor::SetVizMessageCallback(DevLogReader::DataCallback callback)
 {

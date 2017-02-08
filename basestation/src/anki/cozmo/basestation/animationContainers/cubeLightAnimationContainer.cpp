@@ -17,20 +17,39 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace {
+// Pattern Keys
+static const char* kOnColorsKey            = "onColors";
+static const char* kOffColorsKey           = "offColors";
+static const char* kOnPeriodKey            = "onPeriod_ms";
+static const char* kOffPeriodKey           = "offPeriod_ms";
+static const char* kTransitionOnPeriodKey  = "transitionOnPeriod_ms";
+static const char* kTransitionOffPeriodKey = "transitionOffPeriod_ms";
+static const char* kOffsetKey              = "offset";
+static const char* kRotationPeriodKey      = "rotationPeriod_ms";
+
+// Sequence Keys
+static const char* kDurationKey            = "duration_ms";
+static const char* kPatternKey             = "pattern";
+static const char* kCanBeOverriddenKey     = "canBeOverridden";
+static const char* kPatternDebugNameKey    = "patternDebugName";
+
+}
 
 bool CubeLightAnimationContainer::ParseJsonToPattern(const Json::Value& json, LightPattern& pattern)
 {
   ObjectLights values;
   
   bool res = true;
-  res &= JsonTools::GetColorValuesToArrayOptional(json, "onColors",  values.onColors);
-  res &= JsonTools::GetColorValuesToArrayOptional(json, "offColors", values.offColors);
-  res &= JsonTools::GetArrayOptional(json, "onPeriod_ms",            values.onPeriod_ms);
-  res &= JsonTools::GetArrayOptional(json, "offPeriod_ms",           values.offPeriod_ms);
-  res &= JsonTools::GetArrayOptional(json, "transitionOnPeriod_ms",  values.transitionOnPeriod_ms);
-  res &= JsonTools::GetArrayOptional(json, "transitionOffPeriod_ms", values.transitionOffPeriod_ms);
-  res &= JsonTools::GetArrayOptional(json, "offset",                 values.offset);
-  res &= json.isMember("rotationPeriod_ms");
+  res &= JsonTools::GetColorValuesToArrayOptional(json, kOnColorsKey,  values.onColors);
+  res &= JsonTools::GetColorValuesToArrayOptional(json, kOffColorsKey, values.offColors);
+  res &= JsonTools::GetArrayOptional(json, kOnPeriodKey,               values.onPeriod_ms);
+  res &= JsonTools::GetArrayOptional(json, kOffPeriodKey,              values.offPeriod_ms);
+  res &= JsonTools::GetArrayOptional(json, kTransitionOnPeriodKey,     values.transitionOnPeriod_ms);
+  res &= JsonTools::GetArrayOptional(json, kTransitionOffPeriodKey,    values.transitionOffPeriod_ms);
+  res &= JsonTools::GetArrayOptional(json, kOffsetKey,                 values.offset);
+  res &= json.isMember(kRotationPeriodKey);
   
   // If any of the member fields are missing from the pattern definition return false
   if(!res)
@@ -38,7 +57,7 @@ bool CubeLightAnimationContainer::ParseJsonToPattern(const Json::Value& json, Li
     return false;
   }
   
-  values.rotationPeriod_ms = json["rotationPeriod_ms"].asUInt();
+  values.rotationPeriod_ms = json[kRotationPeriodKey].asUInt();
   values.makeRelative      = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   values.relativePoint     = {0,0};
   
@@ -73,16 +92,36 @@ CubeAnimation* CubeLightAnimationContainer::GetAnimation(const std::string& name
   return GetAnimationHelper(name);
 }
 
-Result CubeLightAnimationContainer::DefineFromJson(const Json::Value& jsonRoot, std::string& animationName)
+Result CubeLightAnimationContainer::DefineFromJson(const Json::Value& jsonRoot)
 {
+  
+  const Json::Value::Members animationNames = jsonRoot.getMemberNames();
+  
+  if(animationNames.empty()){
+    PRINT_NAMED_ERROR("CubeLightAnimationContainer.DefineFromJson.EmptyFile",
+                      "Found no animations in JSON");
+    return RESULT_FAIL;
+  }else if(animationNames.size() != 1){
+    PRINT_NAMED_WARNING("CubeLightAnimationContainer.DefineFromJson.TooManyAnims",
+                        "Expecting only one animation per json file, found %lu. "
+                        "Will use first: %s",
+                        (unsigned long)animationNames.size(), animationNames[0].c_str());
+  }
+  
+  const std::string& animationName = animationNames[0];
+  const Json::Value& patternContainer = jsonRoot[animationName];
+  
+  
   std::list<LightPattern> anim;
-  for(const auto& member : jsonRoot.getMemberNames())
-  {
+
+  const s32 numPatterns = patternContainer.size();
+  
+  for(s32 patternNum = 0; patternNum < numPatterns; ++patternNum){
     LightPattern pattern;
-    const auto& jsonMember = jsonRoot[member];
+    const auto& lightPattern = patternContainer[patternNum];
     
-    if(!jsonMember.isMember("pattern") ||
-       !jsonMember.isMember("duration_ms"))
+    if(!lightPattern.isMember(kPatternKey) ||
+       !lightPattern.isMember(kDurationKey))
     {
       PRINT_NAMED_ERROR("CubeLightAnimationContainer.ParseJsonToAnim.InvalidJson",
                         "Missing member field in %s json file",
@@ -90,7 +129,7 @@ Result CubeLightAnimationContainer::DefineFromJson(const Json::Value& jsonRoot, 
       return RESULT_FAIL;
     }
     
-    const bool res = ParseJsonToPattern(jsonMember["pattern"], pattern);
+    const bool res = ParseJsonToPattern(lightPattern[kPatternKey], pattern);
     if(!res)
     {
       PRINT_NAMED_ERROR("CubeLightAnimationContainer.ParseJsonToAnim.InvalidPattern",
@@ -99,14 +138,20 @@ Result CubeLightAnimationContainer::DefineFromJson(const Json::Value& jsonRoot, 
       return RESULT_FAIL;
     }
     
-    pattern.duration_ms = jsonMember["duration_ms"].asUInt();
+    pattern.duration_ms = lightPattern[kDurationKey].asUInt();
     
-    if(jsonMember.isMember("canBeOverridden"))
+    if(lightPattern.isMember(kCanBeOverriddenKey))
     {
-      pattern.canBeOverridden = jsonMember["canBeOverridden"].asBool();
+      pattern.canBeOverridden = lightPattern[kCanBeOverriddenKey].asBool();
     }
     
-    pattern.name = member;
+    // Pattern name debug if defined, otherwise animation name and pattern idx
+    if(lightPattern.isMember(kPatternDebugNameKey)){
+      pattern.name = lightPattern[kPatternDebugNameKey].asString();
+    }else{
+      pattern.name = animationName + std::to_string(patternNum);;
+    }
+    
     anim.push_back(std::move(pattern));
   }
   _animations[animationName] = anim;

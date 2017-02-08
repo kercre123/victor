@@ -672,9 +672,9 @@ bool IBehavior::StopActing(bool allowCallback)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved)
+void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame)
 {
-  if(_robot.HasExternalInterface()){
+  if(broadcastToGame && _robot.HasExternalInterface()){
     _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
   }
   PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetName().c_str(), EnumToString(objectiveAchieved));

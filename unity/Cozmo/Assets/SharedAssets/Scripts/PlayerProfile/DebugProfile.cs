@@ -12,6 +12,7 @@ namespace DataPersistence {
     public Dictionary<string, List<FakeTouch>> FakeTouchRecordings;
     public bool NoFreeplayOnStart;
     public bool ShowDroneModeDebugInfo;
+    public bool UseFastConnectivityFlow;
 
     public DebugProfile() {
       LatencyDisplayEnabled = false;
@@ -21,16 +22,25 @@ namespace DataPersistence {
       ShowDroneModeDebugInfo = false;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
+      DebugConsoleData.Instance.AddConsoleVar("UseFastConnectivityFlow", "QA", this);
+
       DebugConsoleData.Instance.DebugConsoleVarUpdated += HandleDebugConsoleVarUpdated;
+
     }
 
     private void HandleDebugConsoleVarUpdated(string varName) {
-      if (varName == "NoFreeplayOnStart") {
+      switch (varName) {
+      case "NoFreeplayOnStart":
         DataPersistence.DataPersistenceManager.Instance.Save();
         if (RobotEngineManager.Instance != null && RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(!NoFreeplayOnStart);
         }
+        break;
+      case "UseFastConnectivityFlow":
+        DataPersistence.DataPersistenceManager.Instance.Save();
+        break;
       }
+
     }
   }
 }

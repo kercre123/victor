@@ -1123,6 +1123,29 @@
       }
     },
     {
+      "Id": 43,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "FistBumpSuccess",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 1,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.FistBump"
+      }
+    },
+    {
       "Id": 21,
       "RewardEvent": {
         "Value": "OnUnlockableSparked"

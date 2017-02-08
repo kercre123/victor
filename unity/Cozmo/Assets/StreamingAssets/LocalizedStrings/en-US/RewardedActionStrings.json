@@ -36,6 +36,9 @@
   "reward.description.Freeplay.CompleteBehavior.PopWheelie": {
     "translation": "completing the 'Pop a Wheelie' behavior successfully"
   },
+  "reward.description.Freeplay.CompleteBehavior.FistBump": {
+    "translation": "completing the 'Fist Bump' behavior successfully"
+  },
   "reward.description.MemoryMatch.Played.Solo": {
     "translation": "Played a game of Memory Match in Solo mode"
   },

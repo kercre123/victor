@@ -149,11 +149,15 @@ namespace SpeedTap {
 
       if (wasMistakeMade) {
         for (int i = 0; i < _WinningCubes.Count; ++i) {
-          _WinningCubes[i].SetLEDsOff();
+          if (_WinningCubes[i] != null) {
+            _WinningCubes[i].SetLEDsOff();
+          }
         }
         for (int i = 0; i < losingBlocks.Count; ++i) {
-          _CurrentRobot.PlayCubeAnimationTrigger(losingBlocks[i], CubeAnimationTrigger.SpeedTapLose,
-                                                  (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+          if (losingBlocks[i] != null) {
+            _CurrentRobot.PlayCubeAnimationTrigger(losingBlocks[i], CubeAnimationTrigger.SpeedTapLose,
+                                                    (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+          }
 
         }
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);

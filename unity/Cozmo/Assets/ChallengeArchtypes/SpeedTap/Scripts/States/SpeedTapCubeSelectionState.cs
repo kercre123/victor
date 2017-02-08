@@ -107,6 +107,7 @@ namespace SpeedTap {
         else {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Cube_Cozmo_Tap);
           _SpeedTapGame.SetLEDs(player.CubeID, CubePalette.Instance.ReadyColor.lightColor);
+          SelectCubeForNextPlayer();
         }
       }
 
@@ -135,8 +136,8 @@ namespace SpeedTap {
         if (player.playerType != PlayerType.Cozmo) {
           _SpeedTapGame.SetLEDs(player.CubeID, CubePalette.Instance.ReadyColor.lightColor);
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Cube_Cozmo_Tap);
+          SelectCubeForNextPlayer();
         }
-        SelectCubeForNextPlayer();
       }
     }
 

@@ -28,7 +28,7 @@ private:
 public:
 
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
   
 protected:
   
@@ -39,11 +39,15 @@ protected:
 private:
   
   enum class State {
+    PutdownObject,
+    LookForFace,
     LookingForFace,
     RequestInitialFistBump,
     RequestingFistBump,
     WaitingForMotorsToSettle,
     WaitingForBump,
+    CompleteSuccess,
+    CompleteFail,
     Complete
   };
   
@@ -65,12 +69,17 @@ private:
   // Wait for bump vars
   f32 _waitStartTime_s;
   int _fistBumpRequestCnt;
+  f32 _waitingAccelX_mmps2;
   
   // Recorded position of lift for bump detection
   f32 _liftWaitingAngle_rad;
   
   // Abort when picked up for long enough
   f32 _lastTimeOffTreads_s;
+  
+  // Whether or not to report success or fail in addition to the always
+  // report FistBumpComplete
+  bool _reportSuccessOrFail;
   
 }; // class BehaviorFistBump
   

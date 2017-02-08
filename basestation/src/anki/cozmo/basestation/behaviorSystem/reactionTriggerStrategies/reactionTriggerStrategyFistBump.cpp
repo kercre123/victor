@@ -34,13 +34,13 @@ static const char* kReactionConfigKey     = "behaviorObjectiveTriggerParams";
 static const char* kBehaviorObjectiveKey  = "behaviorObjective";
 static const char* kCooldownTime_sKey     = "triggerCooldownTime_s";
 static const char* kTriggerProbabilityKey = "triggerProbability";
+static const char* kTriggerExpirationKey  = "triggerExpiration_s";
 }
   
 ReactionTriggerStrategyFistBump::ReactionTriggerStrategyFistBump(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
   , _shouldTrigger(false)
-  , _shouldTriggerSetTime_sec(0)
-  , _shouldTriggerTimeout_sec(3.0)
+  , _shouldTriggerExpirationTime_sec(0)
   , _lastFistBumpCompleteTime_sec(0)
 {
   LoadJson(config);
@@ -85,13 +85,21 @@ void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
         continue;
       }
       
+      // Get trigger expiration
+      float triggerExpiration_s = params.get(kTriggerExpirationKey, 0.f).asFloat();
+      if (triggerExpiration_s <= 0.f) {
+        PRINT_NAMED_WARNING("ReactionTriggerStrategyFistBump.LoadJson.UnspecifiedTriggerExpirationTime", "%s", objectiveStr.c_str());
+        continue;
+      }
+      
       // Add to trigger map
       PRINT_NAMED_INFO("ReactionTriggerStrategyFistBump.LoadJson.AddingTrigger",
-                       "%s: cooldownTime_s %f, triggerProb %f",
-                       objectiveStr.c_str(), cooldownTime_s, triggerProbability);
+                       "%s: cooldownTime_s %f, triggerProb %f, triggerExpiration_s %f",
+                       objectiveStr.c_str(), cooldownTime_s, triggerProbability, triggerExpiration_s);
       _triggerParamsMap[objective] = {
         .cooldownTime_s = cooldownTime_s,
         .triggerProbability = triggerProbability,
+        .triggerExpiration_s = triggerExpiration_s
       };
  
     }
@@ -113,8 +121,7 @@ bool ReactionTriggerStrategyFistBump::ShouldTriggerBehavior(const Robot& robot, 
     
     // Has FistBump not triggered for a while since shouldTrigger became true?
     // Then reset shouldTrigger since FistBump shouldn't play too long after the thing that triggers it.
-    // TODO: Should _shouldTriggerTimeout_sec be custom per BehaviorObjectiveAchieved?
-    else if (now - _shouldTriggerSetTime_sec > _shouldTriggerTimeout_sec) {
+    else if (now > _shouldTriggerExpirationTime_sec) {
       LOG_EVENT("robot.trigger_fist_bump_expired", "");
       _shouldTrigger = false;
     }
@@ -144,7 +151,7 @@ void ReactionTriggerStrategyFistBump::AlwaysHandleInternal(const EngineToGameEve
         // Debug override for testing fist bump
         if (kAlwaysTrigger) {
           _shouldTrigger = true;
-          _shouldTriggerSetTime_sec = now;
+          _shouldTriggerExpirationTime_sec = now + paramIt->second.triggerExpiration_s;
           break;
         }
         
@@ -155,11 +162,11 @@ void ReactionTriggerStrategyFistBump::AlwaysHandleInternal(const EngineToGameEve
           if (GetRNG().RandDbl(1.f) < paramIt->second.triggerProbability) {
             LOG_EVENT("robot.trigger_fist_bump_response", "%s", EnumToString(paramIt->first));
             _shouldTrigger = true;
-            _shouldTriggerSetTime_sec = now;
+            _shouldTriggerExpirationTime_sec = now + paramIt->second.triggerExpiration_s;
           }
         }
         
-      } else if (objective == BehaviorObjective::FistBumped) {
+      } else if (objective == BehaviorObjective::FistBumpSuccess || objective == BehaviorObjective::FistBumpLeftHanging) {
         _shouldTrigger = false;
         _lastFistBumpCompleteTime_sec = now;
       }

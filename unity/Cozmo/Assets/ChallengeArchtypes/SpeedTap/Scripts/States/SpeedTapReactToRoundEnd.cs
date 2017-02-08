@@ -9,6 +9,9 @@ namespace SpeedTap {
 
     private PlayerInfo _Winner;
 
+    private bool _BannerAnimDone = false;
+    private bool _RobotAnimDone = false;
+
     public SpeedTapReactToRoundEnd(PlayerInfo winner) {
       _Winner = winner;
     }
@@ -52,9 +55,16 @@ namespace SpeedTap {
           fillArgs.Add(playerInfo.playerRoundsWon);
         }
         bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScoreMP, fillArgs.ToArray());
+        _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, HandleBannerAnimDone,
+                _SpeedTapGame.MPTimeBetweenRoundsSec);
       }
-      _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, null,
-        roundEndSlideScript.BannerAnimationDurationSeconds);
+      else {
+        // we want single player to go fast, so don't care if the banner is done or not
+        _BannerAnimDone = true;
+        _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, null,
+                        roundEndSlideScript.BannerAnimationDurationSeconds);
+      }
+
 
       ContextManager.Instance.AppFlash(playChime: true);
       // Play cozmo animation
@@ -94,14 +104,22 @@ namespace SpeedTap {
     }
 
     private void HandleRoundEndAnimDone(bool success) {
+      _RobotAnimDone = true;
+      MoveToNextState();
+    }
+
+    private void HandleBannerAnimDone() {
+      _BannerAnimDone = true;
       MoveToNextState();
     }
 
     private void MoveToNextState() {
-      _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
+      if (_BannerAnimDone && _RobotAnimDone) {
+        _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
 
-      _SpeedTapGame.ClearWinningLightPatterns();
-      _StateMachine.SetNextState(new SpeedTapCubeSelectionState());
+        _SpeedTapGame.ClearWinningLightPatterns();
+        _StateMachine.SetNextState(new SpeedTapCubeSelectionState());
+      }
     }
   }
 }

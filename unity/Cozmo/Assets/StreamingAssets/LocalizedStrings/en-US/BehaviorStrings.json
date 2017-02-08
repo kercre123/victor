@@ -117,10 +117,13 @@
   "behavior.BuildPyramid": {
     "translation": "Cozmo is building a pyramid"
   },
-  "behavior.PrepareCubes":{
+  "behavior.PrepareCubes": {
     "translation": "Cozmo is preparing his cubes"
-  }, 
+  },
   "behavior.LookInPlaceForCube": {
     "translation": "Cozmo is looking for a cube"
-  }    
+  },
+  "button.clearThisSlot": {
+    "translation": "Clear This Slot"
+  }
 }

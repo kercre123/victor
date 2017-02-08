@@ -897,7 +897,7 @@ GameObject:
   - 222: {fileID: 22209262}
   - 114: {fileID: 11414268}
   m_Layer: 5
-  m_Name: CubeSelect
+  m_Name: CubeIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1062,6 +1062,23 @@ GameObject:
   - 114: {fileID: 11468866}
   m_Layer: 5
   m_Name: TurboArrow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &196978
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22493638}
+  - 222: {fileID: 22257648}
+  - 114: {fileID: 11477486}
+  m_Layer: 5
+  m_Name: CubeSelect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1286,7 +1303,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: e6ee128dd9994419697a19ea678aed38, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f5660f6512d3e43caacf574fd15366db, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -2122,6 +2139,33 @@ MonoBehaviour:
     JsonValue: '"#droneMode.text.cozmoInteractionChoice"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
+--- !u!114 &11477486
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 196978}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_Sprite: {fileID: 21300000, guid: 4add5deb562da41b99b9045fad6cdaf7, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
 --- !u!114 &11478480
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2497,6 +2541,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 188514}
+--- !u!222 &22257648
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 196978}
 --- !u!222 &22261384
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -2734,7 +2784,7 @@ RectTransform:
   - {fileID: 22408552}
   - {fileID: 22455570}
   - {fileID: 22482814}
-  - {fileID: 22419756}
+  - {fileID: 22493638}
   - {fileID: 22474462}
   - {fileID: 22421276}
   m_Father: {fileID: 22440262}
@@ -2817,12 +2867,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22410930}
-  m_RootOrder: 6
+  m_Father: {fileID: 22493638}
+  m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 577, y: 65}
-  m_SizeDelta: {x: 456, y: 450}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 175, y: 175}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22419758
 RectTransform:
@@ -3721,6 +3771,25 @@ RectTransform:
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 9.9998665, y: -218.85712}
   m_SizeDelta: {x: 245, y: 248}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22493638
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 196978}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 22419756}
+  m_Father: {fileID: 22410930}
+  m_RootOrder: 6
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 577, y: 65}
+  m_SizeDelta: {x: 456, y: 450}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22494336
 RectTransform:

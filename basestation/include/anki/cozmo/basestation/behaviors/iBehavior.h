@@ -327,7 +327,7 @@ protected:
   
   // Behaviors should call this function when they reach their completion state
   // in order to log das events and notify goal strategies if they listen for the message
-  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved);
+  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true);
   
   // Allows the behavior to disable and enable reaction triggers without having to worry about re-enabling them
   // these triggers will be automatically re-enabled when the behavior stops
