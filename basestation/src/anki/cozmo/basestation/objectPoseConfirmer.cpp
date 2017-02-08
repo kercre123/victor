@@ -199,6 +199,13 @@ ObjectPoseConfirmer::PoseConfirmation::PoseConfirmation(const Pose3d& initPose,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ObjectPoseConfirmer::PoseConfirmation::IsReferencePoseConfirmed() const
+{
+  const bool confirmed = (numTimesObserved >= kMinTimesToObserveObject);
+  return confirmed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectPoseConfirmer::IsObjectConfirmedAtObservedPose(const std::shared_ptr<ObservableObject>& objSeen,
                                        const ObservableObject*& objectToCopyIDFrom ) const
 {
@@ -214,11 +221,15 @@ bool ObjectPoseConfirmer::IsObjectConfirmedAtObservedPose(const std::shared_ptr<
     const auto& pairIterator = _poseConfirmations.find(objectID);
     if ( pairIterator != _poseConfirmations.end() )
     {
-      // we have an entry, we can compare poses
+      // we have an entry, first check if the reference pose has been confirmed
       const PoseConfirmation& poseConf = pairIterator->second;
-      const Point3f distThreshold  = objSeen->GetSameDistanceTolerance();
-      const Radians angleThreshold = objSeen->GetSameAngleTolerance();
-      poseIsSameAsReference = objSeen->GetPose().IsSameAs(poseConf.referencePose, distThreshold, angleThreshold);
+      if ( poseConf.IsReferencePoseConfirmed() )
+      {
+        // ok, reference is confirmed, is it the one we are asking about?
+        const Point3f distThreshold  = objSeen->GetSameDistanceTolerance();
+        const Radians angleThreshold = objSeen->GetSameAngleTolerance();
+        poseIsSameAsReference = objSeen->GetPose().IsSameAs(poseConf.referencePose, distThreshold, angleThreshold);
+      }
     }
   }
   
@@ -417,9 +428,9 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
       
       if(poseIsSame)
       {
-        ++poseConf.numTimesObserved;
+        ++poseConf.numTimesObserved; // this can cause IsReferencePoseConfirmed to become true
         
-        const bool confirmingObjectAtObservedPose = poseConf.numTimesObserved >= kMinTimesToObserveObject;
+        const bool confirmingObjectAtObservedPose = poseConf.IsReferencePoseConfirmed();
         if(confirmingObjectAtObservedPose)
         {
           const bool isCurrentlyUnconfirmed = (nullptr != unconfirmedObjectPtr);

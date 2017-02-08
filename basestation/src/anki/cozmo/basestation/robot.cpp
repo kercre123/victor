@@ -1857,7 +1857,7 @@ Result Robot::Update()
     std::vector<ObservableObject*> matchingObjects;
     GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects); // note this doesn't retrieve unknowns anymore
     for( const auto obj : matchingObjects ) {
-        const ObservableObject* topObj = GetBlockWorld().FindObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
+        const ObservableObject* topObj = GetBlockWorld().FindLocatedObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
         Pose3d relPose;
         bool gotRelPose = obj->GetPose().GetWithRespectTo(GetPose(), relPose);
 
@@ -3203,7 +3203,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
   // mark it as being carried too
   // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
 
-  ObservableObject* objectOnTop = _blockWorld->FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+  ObservableObject* objectOnTop = _blockWorld->FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
   if(objectOnTop != nullptr)
   {
     Pose3d onTopPoseWrtCarriedPose;
@@ -3339,7 +3339,7 @@ bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& 
   }
 
   // check if it has something on top
-  const ObservableObject* objectOnTop = GetBlockWorld().FindObjectOnTopOf(object, STACKED_HEIGHT_TOL_MM);
+  const ObservableObject* objectOnTop = GetBlockWorld().FindLocatedObjectOnTopOf(object, STACKED_HEIGHT_TOL_MM);
   if ( nullptr != objectOnTop ) {
     return false;
   }

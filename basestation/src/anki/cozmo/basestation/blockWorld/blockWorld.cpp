@@ -1654,7 +1654,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // find the object that is currently on top of the old position
         
         // TODO COZMO-5591
-        // change FindObjectOnTopOf to FindObjectsOnTopOf and return a vector. Potentially we could have more
+        // change FindLocatedObjectOnTopOf to FindObjectsOnTopOf and return a vector. Potentially we could have more
         // than object directly on top of us, or a moved object could have ended up on top of our old pose, which
         // would then trump the object that used to be our old top. This could be solved by returning all
         // current objects on top of our old pose, and then discarding those that have changed their poses, allowing
@@ -1668,7 +1668,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         filter.AddIgnoreID(changedObjectPtr->GetID());
 
         // find object
-        ObservableObject* objectOnTopOfOldPose = FindObjectOnTopOf(*myOldCopy, STACKED_HEIGHT_TOL_MM, filter);
+        ObservableObject* objectOnTopOfOldPose = FindLocatedObjectOnTopOf(*myOldCopy, STACKED_HEIGHT_TOL_MM, filter);
         if ( objectOnTopOfOldPose )
         {
           // we found an object currently on top of our old pose
@@ -3820,7 +3820,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         ObservableObject* objectOnTop = object;
         BOUNDED_WHILE(20, objectOnTop != nullptr) {
           _robot->GetObjectPoseConfirmer().SetPoseState(objectOnTop, PoseState::Dirty);
-          objectOnTop = FindObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
+          objectOnTop = FindLocatedObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
         }
       };
       
@@ -4049,7 +4049,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       _selectedObject.UnSet();
     }
 
-    ObservableObject* objectOnTop = FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+    ObservableObject* objectOnTop = FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
     if(objectOnTop != nullptr)
     {
       ClearLocatedObjectHelper(objectOnTop);
@@ -4090,7 +4090,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       [&topOfObjectOnBottom, &refWrtOrigin, &refProjectedQuad, &zTolerance, &onTop](const ObservableObject* candidateObject) -> bool
       {
         // This should never happen: objects in blockworld should always have parents (and not be origins themselves)
-        DEV_ASSERT(nullptr != refWrtOrigin.GetParent(), "BlockWorld.FindObjectOnTopOfUnderneathHelper.NullParent");
+        DEV_ASSERT(nullptr != refWrtOrigin.GetParent(), "BlockWorld.FindLocatedObjectOnTopOfUnderneathHelper.NullParent");
         
         Pose3d candidateWrtOrigin;
         const bool inSameFrame = candidateObject->GetPose().GetWithRespectTo(*refWrtOrigin.GetParent(), candidateWrtOrigin);

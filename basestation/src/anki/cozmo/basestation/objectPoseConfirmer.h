@@ -102,6 +102,9 @@ protected:
     s32    numTimesUnobserved = 0;
     TimeStamp_t    lastPoseUpdatedTime = 0;
     
+    // returns true if the reference pose is confirmed (by comparing observation number)
+    bool IsReferencePoseConfirmed() const;
+    
     // pointer to the object while it's not confirmed. Once it is confirmed in a pose, its ownership is passed
     // onto the blockworld, and this pointer is set to nullptr.
     std::shared_ptr<ObservableObject> unconfirmedObject;

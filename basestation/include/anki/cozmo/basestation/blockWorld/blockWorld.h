@@ -252,19 +252,19 @@ namespace Anki
       // Find an object on top of the given object, using a given height tolerance
       // between the top of the given object on bottom and the bottom of existing
       // candidate objects on top. Returns nullptr if no object is found.
-      inline const ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                       f32 zTolerance,
-                                                       const BlockWorldFilter& filter = BlockWorldFilter()) const;
-      inline       ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                       f32 zTolerance,
-                                                       const BlockWorldFilter& filter = BlockWorldFilter());
-      // Similar to FindObjectOnTopOf, but in reverse: find object directly underneath given object
-      inline const ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
-                                                          f32 zTolerance,
-                                                          const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
-      inline       ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
-                                                          f32 zTolerance,
-                                                          const BlockWorldFilter& filterIn = BlockWorldFilter());
+      inline const ObservableObject* FindLocatedObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                              f32 zTolerance,
+                                                              const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      inline       ObservableObject* FindLocatedObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                              f32 zTolerance,
+                                                              const BlockWorldFilter& filter = BlockWorldFilter());
+      // Similar to FindLocatedObjectOnTopOf, but in reverse: find object directly underneath given object
+      inline const ObservableObject* FindLocatedObjectUnderneath(const ObservableObject& objectOnTop,
+                                                                 f32 zTolerance,
+                                                                 const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
+      inline       ObservableObject* FindLocatedObjectUnderneath(const ObservableObject& objectOnTop,
+                                                                 f32 zTolerance,
+                                                                 const BlockWorldFilter& filterIn = BlockWorldFilter());
       
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -788,23 +788,23 @@ namespace Anki
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                          f32 zTolerance,
-                                                          const BlockWorldFilter& filter) const
+    const ObservableObject* BlockWorld::FindLocatedObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                                 f32 zTolerance,
+                                                                 const BlockWorldFilter& filter) const
     {
       return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns const
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                    f32 zTolerance,
-                                                    const BlockWorldFilter& filter)
+    ObservableObject* BlockWorld::FindLocatedObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                           f32 zTolerance,
+                                                           const BlockWorldFilter& filter)
     {
       return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns non-const
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
+    const ObservableObject* BlockWorld::FindLocatedObjectUnderneath(const ObservableObject& objectOnTop,
                                                              f32 zTolerance,
                                                              const BlockWorldFilter& filter) const
     {
@@ -812,7 +812,7 @@ namespace Anki
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
+    ObservableObject* BlockWorld::FindLocatedObjectUnderneath(const ObservableObject& objectOnTop,
                                                        f32 zTolerance,
                                                        const BlockWorldFilter& filter)
     {

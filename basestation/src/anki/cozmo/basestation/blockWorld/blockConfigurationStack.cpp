@@ -158,9 +158,9 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     // blocks above
     auto currentBlock = object;
     auto nextBlock = currentBlock;
-    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindObjectOnTopOf(*currentBlock,
-                                                                           BlockWorld::kOnCubeStackHeightTolerence,
-                                                                           blocksOnlyFilter))){
+    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindLocatedObjectOnTopOf(*currentBlock,
+                                                                                 BlockWorld::kOnCubeStackHeightTolerence,
+                                                                                 blocksOnlyFilter))){
       blocksOnTopOfObject.push_back(nextBlock);
       currentBlock = nextBlock;
     }
@@ -168,9 +168,9 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     // blocks below
     currentBlock = object;
     nextBlock = currentBlock;
-    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindObjectUnderneath(*currentBlock,
-                                                                              BlockWorld::kOnCubeStackHeightTolerence,
-                                                                              blocksOnlyFilter))){
+    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindLocatedObjectUnderneath(*currentBlock,
+                                                                                    BlockWorld::kOnCubeStackHeightTolerence,
+                                                                                    blocksOnlyFilter))){
       blocksBelowObject.push_back(nextBlock);
       currentBlock = nextBlock;
     }

@@ -868,11 +868,11 @@ TEST(BlockWorld, CubeStacks)
     lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, lastResult);
 
-    ObservableObject* foundObject1 = blockWorld.FindObjectOnTopOf(*object1, 2*STACKED_HEIGHT_TOL_MM);
+    ObservableObject* foundObject1 = blockWorld.FindLocatedObjectOnTopOf(*object1, 2*STACKED_HEIGHT_TOL_MM);
     ASSERT_EQ(nullptr, foundObject1);
     ASSERT_NE(object2, foundObject1);
 
-    ObservableObject* foundObject2 = blockWorld.FindObjectOnTopOf(*object2, 2*STACKED_HEIGHT_TOL_MM);
+    ObservableObject* foundObject2 = blockWorld.FindLocatedObjectOnTopOf(*object2, 2*STACKED_HEIGHT_TOL_MM);
 
     ASSERT_EQ(nullptr, foundObject2);
     ASSERT_NE(object1, foundObject2);
@@ -904,11 +904,11 @@ TEST(BlockWorld, CubeStacks)
               lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, topPose, object1);
               ASSERT_EQ(RESULT_OK, lastResult);
               
-              ObservableObject* foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+              ObservableObject* foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
               ASSERT_NE(nullptr, foundObject);
               ASSERT_EQ(object2, foundObject);
               
-              foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+              foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
               ASSERT_NE(nullptr, foundObject);
               ASSERT_EQ(object1, foundObject);
             }
@@ -920,10 +920,10 @@ TEST(BlockWorld, CubeStacks)
               lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, nextToPose, object1);
               ASSERT_EQ(RESULT_OK, lastResult);
               
-              ObservableObject* foundObject = blockWorld.FindObjectOnTopOf(*object3, STACKED_HEIGHT_TOL_MM);
+              ObservableObject* foundObject = blockWorld.FindLocatedObjectOnTopOf(*object3, STACKED_HEIGHT_TOL_MM);
               ASSERT_EQ(nullptr, foundObject);
               
-              foundObject = blockWorld.FindObjectUnderneath(*object3, STACKED_HEIGHT_TOL_MM);
+              foundObject = blockWorld.FindLocatedObjectUnderneath(*object3, STACKED_HEIGHT_TOL_MM);
               ASSERT_EQ(nullptr, foundObject);
             }
           }
@@ -942,20 +942,20 @@ TEST(BlockWorld, CubeStacks)
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, tooHighPose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
-  ObservableObject* foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+  ObservableObject* foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
-  foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
 
   // Two objects in roughly the same place should also fail
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, bottomPose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
-  foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
-  foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
   
@@ -965,10 +965,10 @@ TEST(BlockWorld, CubeStacks)
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, notAbovePose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
-  foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
-  foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
 } // BlockWorld.CubeStacks

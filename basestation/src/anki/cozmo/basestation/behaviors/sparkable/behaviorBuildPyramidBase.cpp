@@ -444,7 +444,7 @@ ObjectID BehaviorBuildPyramidBase::GetBestBaseBlock(const Robot& robot, const Bl
   // If there's a stacked block it looks good to remove that and place it as the base
   // of the new pyramid
   for(auto& block: availableBlocks){
-    const ObservableObject* onTop = robot.GetBlockWorld().FindObjectOnTopOf(*block, BlockWorld::kOnCubeStackHeightTolerence);
+    const ObservableObject* onTop = robot.GetBlockWorld().FindLocatedObjectOnTopOf(*block, BlockWorld::kOnCubeStackHeightTolerence);
     if(onTop != nullptr){
       return onTop->GetID();
     }
@@ -470,7 +470,7 @@ ObjectID BehaviorBuildPyramidBase::GetBestStaticBlock(const Robot& robot, const 
   // Static blocks shouldn't have any blocks on top of them and should be on the ground
   BlockList validStaticBlocks;
   for(auto& block: availableBlocks){
-    const ObservableObject* onTop = robot.GetBlockWorld().FindObjectOnTopOf(*block, BlockWorld::kOnCubeStackHeightTolerence);
+    const ObservableObject* onTop = robot.GetBlockWorld().FindLocatedObjectOnTopOf(*block, BlockWorld::kOnCubeStackHeightTolerence);
 
     if(onTop == nullptr &&
        block->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerence)){

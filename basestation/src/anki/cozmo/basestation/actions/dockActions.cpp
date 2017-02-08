@@ -1638,7 +1638,7 @@ namespace Anki {
               *objectStackIter = object->GetID().GetValue();
               ++objectStackIter;
               ++info.numObjects;
-              object = _robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
+              object = _robot.GetBlockWorld().FindLocatedObjectOnTopOf(*object, 15.f);
             }
             
           }
