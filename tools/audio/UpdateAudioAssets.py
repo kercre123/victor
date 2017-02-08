@@ -28,7 +28,7 @@ __audioMetadataFileName= 'audioEventMetadata.csv'
 __audioMetadataFilePath = path.join(__scriptDir, __audioMetadataFileName)
 __audioCladDir = path.join(__projectRoot, 'clad', 'src', 'clad', 'audio')
 __depsFilePath = path.join(__projectRoot, 'DEPS')
-__namespaceList = ['Anki', 'Cozmo', 'Audio']
+__namespaceList = ['Anki', 'AudioMetaData']
 
 __errorMsg = '\'{}\' DOES NOT EXIST. Find your closest project Nerd!!'
 

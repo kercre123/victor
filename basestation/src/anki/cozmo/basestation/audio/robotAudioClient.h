@@ -32,8 +32,8 @@ namespace Cozmo {
 class Robot;
 class Animation;
   
-namespace Audio {
-class AudioController;
+namespace Audio {  
+class CozmoAudioController;
 class RobotAudioBuffer;
   
 class RobotAudioClient : public AudioEngineClient {
@@ -57,20 +57,20 @@ public:
   ~RobotAudioClient();
     
   // Audio buffer for the corresponding Game Object
-  virtual RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject );
+  virtual RobotAudioBuffer* GetRobotAudiobuffer( AudioMetaData::GameObjectType gameObject );
 
   // Post Cozmo specific Audio events
   using CozmoPlayId = uint32_t;
   static constexpr CozmoPlayId kInvalidCozmoPlayId = 0;
   
   using CozmoEventCallbackFunc = std::function<void( const AudioEngine::AudioCallbackInfo& callbackInfo )>;
-  CozmoPlayId PostCozmoEvent( GameEvent::GenericEvent event,
-                              GameObjectType GameObjId = GameObjectType::Invalid,
+  CozmoPlayId PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event,
+                              AudioMetaData::GameObjectType GameObjId = AudioMetaData::GameObjectType::Invalid,
                               CozmoEventCallbackFunc callbackFunc = nullptr ) const;
   
-  bool SetCozmoEventParameter( CozmoPlayId playId, GameParameter::ParameterType parameter, float value ) const;
+  bool SetCozmoEventParameter( CozmoPlayId playId, AudioMetaData::GameParameter::ParameterType parameter, float value ) const;
   
-  void StopCozmoEvent(GameObjectType gameObjId);
+  void StopCozmoEvent( AudioMetaData::GameObjectType gameObjId );
   
   // Process all events in Audio Engine
   void ProcessEvents() const;
@@ -125,10 +125,10 @@ public:
   // Set gameObj & audio buffer out_vars for current output source
   // Return false if buffer is not available
   // Remove gameObj/buffer from pool
-  bool GetGameObjectAndAudioBufferFromPool(GameObjectType& out_gameObj, RobotAudioBuffer*& out_buffer);
+  bool GetGameObjectAndAudioBufferFromPool( AudioMetaData::GameObjectType& out_gameObj, RobotAudioBuffer*& out_buffer );
 
   // Add gameObj/buffer back into pool
-  void ReturnGameObjectToPool(GameObjectType gameObject);
+  void ReturnGameObjectToPool( AudioMetaData::GameObjectType gameObject );
   
   Util::Dispatch::Queue* GetAudioQueue() const { return _dispatchQueue; }
 
@@ -142,16 +142,16 @@ private:
   
   using PluginId_t = uint32_t;
   struct RobotBusConfiguration {
-    GameObjectType  gameObject;
+    AudioMetaData::GameObjectType  gameObject;
     PluginId_t      pluginId;
-    Bus::BusType    bus;
+    AudioMetaData::Bus::BusType    bus;
   };
   
   // Handle to parent Robot
   Robot* _robot = nullptr;
   
   // Provides robot audio buffer
-  AudioController* _audioController = nullptr;
+  CozmoAudioController* _audioController = nullptr;
   
   // Animation Audio Event queue
   Util::Dispatch::Queue* _dispatchQueue = nullptr;
@@ -163,14 +163,14 @@ private:
   RobotAudioOutputSource _outputSource = RobotAudioOutputSource::None;
   
   // Store Bus configurations
-  std::unordered_map<GameObjectType, RobotBusConfiguration, Util::EnumHasher> _busConfigurationMap;
+  std::unordered_map<AudioMetaData::GameObjectType, RobotBusConfiguration, Util::EnumHasher> _busConfigurationMap;
   
   // Keep track of available Game Objects with Audio Buffers
-  std::queue<GameObjectType> _robotBufferGameObjectPool;
+  std::queue<AudioMetaData::GameObjectType> _robotBufferGameObjectPool;
   
   // Create Audio Buffer for the corresponding Game Object
-  RobotAudioBuffer* RegisterRobotAudioBuffer( GameObjectType gameObject, PluginId_t pluginId, Bus::BusType bus );
-  void UnregisterRobotAudioBuffer( GameObjectType gameObject, PluginId_t pluginId, Bus::BusType bus );
+  RobotAudioBuffer* RegisterRobotAudioBuffer( AudioMetaData::GameObjectType gameObject, PluginId_t pluginId, AudioMetaData::Bus::BusType bus );
+  void UnregisterRobotAudioBuffer( AudioMetaData::GameObjectType gameObject, PluginId_t pluginId, AudioMetaData::Bus::BusType bus );
   
   // Keep current robot volume
   float _robotVolume = 0.0f;

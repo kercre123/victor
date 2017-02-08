@@ -2,7 +2,8 @@
 using UnityEditor;
 using System.Linq;
 using System.Collections.Generic;
-using Anki.Cozmo.Audio.GameEvent;
+using Anki.AudioMetaData;
+using Anki.AudioMetaData.GameEvent;
 using System;
 
 namespace Anki.Cozmo.Audio {
@@ -12,13 +13,13 @@ namespace Anki.Cozmo.Audio {
 
     private static readonly Dictionary<EventGroupType, Type> _EventTypeDictionary =
       new Dictionary<EventGroupType, Type> {
-        { EventGroupType.Dev_Robot, typeof(GameEvent.Dev_Robot) },
-        { EventGroupType.GenericEvent, typeof(GameEvent.GenericEvent) },
-        { EventGroupType.Music, typeof(GameEvent.Music) },
-        { EventGroupType.Robot_Sfx, typeof(GameEvent.Robot_Sfx) },
-        { EventGroupType.Robot_Vo, typeof(GameEvent.Robot_Vo) },
-        { EventGroupType.Sfx, typeof(GameEvent.Sfx) },
-        { EventGroupType.Ui, typeof(GameEvent.Ui) },
+        { EventGroupType.Dev_Robot, typeof(Dev_Robot) },
+        { EventGroupType.GenericEvent, typeof(GenericEvent) },
+        { EventGroupType.Music, typeof(Music) },
+        { EventGroupType.Robot_Sfx, typeof(Robot_Sfx) },
+        { EventGroupType.Robot_Vo, typeof(Robot_Vo) },
+        { EventGroupType.Sfx, typeof(Sfx) },
+        { EventGroupType.Ui, typeof(Ui) },
       };
 
     private struct EventTypeOption {
@@ -59,11 +60,11 @@ namespace Anki.Cozmo.Audio {
         var values = Enum.GetValues(type).Cast<Enum>().Select(x => (int)(uint)(object)x).ToArray();
         position.y += position.height;
 
-        int intEnumValue = EditorGUI.IntPopup(position, (int)(uint)Enum.Parse(typeof(GameEvent.GenericEvent), eventProp.stringValue), options, values);
-        eventProp.stringValue = ((GameEvent.GenericEvent)intEnumValue).ToString();
+        int intEnumValue = EditorGUI.IntPopup(position, (int)(uint)Enum.Parse(typeof(GenericEvent), eventProp.stringValue), options, values);
+        eventProp.stringValue = ((GenericEvent)intEnumValue).ToString();
       } else {
-        int intEnumValue = EditorGUI.IntPopup(position, (int)(uint)GameEvent.GenericEvent.Invalid, new string[] {}, new int[] {});
-        eventProp.stringValue = ((GameEvent.GenericEvent)intEnumValue).ToString();
+        int intEnumValue = EditorGUI.IntPopup(position, (int)(uint)GenericEvent.Invalid, new string[] {}, new int[] {});
+        eventProp.stringValue = ((GenericEvent)intEnumValue).ToString();
       }
 
       EditorGUI.EndProperty();

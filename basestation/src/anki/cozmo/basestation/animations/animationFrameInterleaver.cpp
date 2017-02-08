@@ -111,7 +111,7 @@ void AnimationFrameInterleaver::PopFrameRobotMessages(EngineToRobotMessageList& 
   
   
   // Produce animation keyframes & audio frame
-  const Audio::AudioFrameData* audioFrame = nullptr;
+  const AudioEngine::AudioFrameData* audioFrame = nullptr;
   animInfo->animation->TickPlayhead(currentAnimFrameList, audioFrame);
 
   // Prepare Animation Audio

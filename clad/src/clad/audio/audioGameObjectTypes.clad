@@ -1,7 +1,6 @@
 
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioMetaData {
 
 
 enum uint_32 GameObjectType
@@ -22,6 +21,5 @@ enum uint_32 GameObjectType
 
 }
 
-}
-}
-}
+} // AudioMetaData
+} // Anki

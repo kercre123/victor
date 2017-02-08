@@ -34,7 +34,7 @@ namespace Audio {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnDevice::RobotAudioAnimationOnDevice( Animation* anAnimation,
                                                           RobotAudioClient* audioClient,
-                                                          GameObjectType gameObject,
+                                                          AudioMetaData::GameObjectType gameObject,
                                                           Util::RandomGenerator* randomGenerator )
 : Anki::Cozmo::Audio::RobotAudioAnimation( gameObject, randomGenerator )
 {
@@ -149,8 +149,8 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                             // Set event's volume RTPC
                             if (RobotAudioClient::kInvalidCozmoPlayId != playId) {
                               _audioClient->SetCozmoEventParameter( playId,
-                                                                   GameParameter::ParameterType::Event_Volume,
-                                                                   animationEvent->volume );
+                                                                    AudioMetaData::GameParameter::ParameterType::Event_Volume,
+                                                                    animationEvent->volume );
                             }
                             
                             // Processes event NOW, minimize playback sync latency

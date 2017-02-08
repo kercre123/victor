@@ -1,8 +1,7 @@
 // Available Game States in project
 
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioMetaData {
 namespace GameState {
 
 enum uint_32 External_Name
@@ -74,6 +73,5 @@ enum uint_32 StateGroupType
 }
 
 } // GameState
-} // Audio
-} // Cozmo
+} // AudioMetaData
 } // Anki

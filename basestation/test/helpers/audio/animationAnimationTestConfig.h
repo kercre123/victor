@@ -37,10 +37,10 @@ public:
   // Define an Audio Event
   struct TestAudioEvent {
     
-    Anki::Cozmo::Audio::GameEvent::GenericEvent event = Anki::Cozmo::Audio::GameEvent::GenericEvent::Invalid;
+    Anki::AudioMetaData::GameEvent::GenericEvent event = Anki::AudioMetaData::GameEvent::GenericEvent::Invalid;
     uint32_t startTime_ms = 0;
     uint32_t duration_ms = 0;
-    TestAudioEvent( Anki::Cozmo::Audio::GameEvent::GenericEvent event, uint32_t startTime_ms, uint32_t duration_ms )
+    TestAudioEvent( Anki::AudioMetaData::GameEvent::GenericEvent event, uint32_t startTime_ms, uint32_t duration_ms )
     : event( event )
     , startTime_ms( startTime_ms )
     , duration_ms( duration_ms )

@@ -23,7 +23,7 @@ public class SparkedMusicStateWrapperDrawer : PropertyDrawer {
   private string [] _SortedOptions;
   private int [] _SortedValues;
   public SparkedMusicStateWrapperDrawer () {
-    var type = typeof(Anki.Cozmo.Audio.SwitchState.Sparked);
+    var type = typeof(Anki.AudioMetaData.SwitchState.Sparked);
     var options = Enum.GetNames (type);
     var values = Enum.GetValues (type).Cast<Enum> ().Select (x => (int)(uint)(object)x).ToArray ();
 

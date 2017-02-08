@@ -25,12 +25,12 @@ AudioMixerInputSource::AudioMixerInputSource( AudioMixingConsole& mixingConsole 
 {
 }
 
-const AudioFrameData* AudioMixerInputSource::PopFrame()
+const AudioEngine::AudioFrameData* AudioMixerInputSource::PopFrame()
 {
   DEV_ASSERT(_state != BufferState::Wait, "AudioMixerInputSource.PopFrame.State.NotWait");
   DEV_ASSERT(_validFrame, "AudioMixerInputSource.PopFrame.ValidFrame.False");
   
-  const AudioFrameData* frame = _nextFrameData;
+  const AudioEngine::AudioFrameData* frame = _nextFrameData;
   ResetInput();
   return frame;
 }

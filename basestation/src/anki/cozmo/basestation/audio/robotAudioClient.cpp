@@ -9,9 +9,10 @@
  * Copyright: Anki, Inc. 2015
  */
 
+
+#include "audioEngine/multiplexer/audioMultiplexer.h"
+#include "anki/cozmo/basestation/audio/cozmoAudioController.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/audio/audioController.h"
-#include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnDevice.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnRobot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -21,7 +22,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/audio/messageAudioClient.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "AudioEngine/audioCallback.h"
+#include "audioEngine/audioCallback.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -35,7 +36,10 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
   
-const char* RobotAudioClient::kRobotAudioLogChannelName = AudioController::kAudioLogChannelName;
+using namespace AudioEngine;
+using namespace AudioMetaData;
+  
+const char* RobotAudioClient::kRobotAudioLogChannelName = CozmoAudioController::kLogChannelName;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioClient::RobotAudioClient( Robot* robot )
@@ -47,11 +51,11 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
   }
   const CozmoContext* context = _robot->GetContext();
   // For Unit Test bale out if there is no Audio Server
-  if ( context->GetAudioServer() == nullptr ) {
+  if ( context->GetAudioMultiplexer() == nullptr ) {
     return;
   }
 
-  _audioController = context->GetAudioServer()->GetAudioController();
+  _audioController = static_cast<CozmoAudioController*>( context->GetAudioMultiplexer()->GetAudioController() );
   
   // Add Listners to Game to Engine events
   auto robotVolumeCallback = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message ) {
@@ -123,7 +127,6 @@ RobotAudioClient::~RobotAudioClient()
       _currentAnimation->AbortAnimation();
       ClearCurrentAnimation();
     }
-    
     UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_1, 1, Bus::BusType::Robot_Bus_1 );
     UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_2, 2, Bus::BusType::Robot_Bus_2 );
     UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_3, 3, Bus::BusType::Robot_Bus_3 );
@@ -132,31 +135,31 @@ RobotAudioClient::~RobotAudioClient()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( GameObjectType gameObject )
+RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( AudioMetaData::GameObjectType gameObject )
 {
   DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.GetRobotAudiobuffer.AudioControllerNull");
-  const AudioEngine::AudioGameObject aGameObject = static_cast<const AudioEngine::AudioGameObject>( gameObject );
+  const AudioGameObject aGameObject = static_cast<const AudioGameObject>( gameObject );
   return _audioController->GetRobotAudioBufferWithGameObject( aGameObject );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event,
-                                                                GameObjectType gameObjId,
+RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event,
+                                                                AudioMetaData::GameObjectType gameObjId,
                                                                 CozmoEventCallbackFunc callbackFunc ) const
 {
-  const auto audioEventId = Util::numeric_cast<AudioEngine::AudioEventId>( event );
-  const auto audioGameObjId = static_cast<AudioEngine::AudioGameObject>( gameObjId );
-  AudioEngine::AudioCallbackContext* audioCallbackContext = nullptr;
+  const auto audioEventId = Util::numeric_cast<AudioEventId>( event );
+  const auto audioGameObjId = static_cast<AudioGameObject>( gameObjId );
+  AudioCallbackContext* audioCallbackContext = nullptr;
   
   if ( callbackFunc != nullptr ) {
-    audioCallbackContext = new AudioEngine::AudioCallbackContext();
+    audioCallbackContext = new AudioCallbackContext();
     // Set callback flags
-    audioCallbackContext->SetCallbackFlags( AudioEngine::AudioCallbackFlag::AllCallbacks );
+    audioCallbackContext->SetCallbackFlags( AudioCallbackFlag::AllCallbacks );
     // Execute callbacks synchronously (on main thread)
     audioCallbackContext->SetExecuteAsync( false );
     // Register callbacks for event
     audioCallbackContext->SetEventCallbackFunc ( [ callbackFunc = std::move(callbackFunc) ]
-    ( const AudioEngine::AudioCallbackContext* thisContext, const AudioEngine::AudioCallbackInfo& callbackInfo )
+    ( const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo )
     {
       callbackFunc( callbackInfo );
     } );
@@ -166,9 +169,8 @@ RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( GameEvent::Gener
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioClient::SetCozmoEventParameter( CozmoPlayId playId, GameParameter::ParameterType parameter, float value ) const
+bool RobotAudioClient::SetCozmoEventParameter( CozmoPlayId playId, AudioMetaData::GameParameter::ParameterType parameter, float value ) const
 {
-  using namespace AudioEngine;
   const AudioParameterId parameterId = Util::numeric_cast<AudioParameterId>( parameter );
   const AudioRTPCValue rtpcVal = Util::numeric_cast<AudioRTPCValue>( value );
   const AudioPlayingId audioPlayId = Util::numeric_cast<AudioPlayingId>( playId );
@@ -176,9 +178,9 @@ bool RobotAudioClient::SetCozmoEventParameter( CozmoPlayId playId, GameParameter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::StopCozmoEvent(GameObjectType gameObjId)
+void RobotAudioClient::StopCozmoEvent(AudioMetaData::GameObjectType gameObjId)
 {
-  const auto audioGameObjId = static_cast<AudioEngine::AudioGameObject>( gameObjId );
+  const auto audioGameObjId = static_cast<AudioGameObject>( gameObjId );
   _audioController->StopAllAudioEvents(audioGameObjId);
   _audioController->ProcessAudioQueue();
 }
@@ -357,7 +359,6 @@ float RobotAudioClient::GetRobotVolume() const
 void RobotAudioClient::SetOutputSource( RobotAudioOutputSource outputSource )
 {
   DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.SetOutputSource.AudioControllerNull");
-  using namespace AudioEngine;
   
   if ( _outputSource == outputSource ) {
     // Do Nothing
@@ -367,7 +368,7 @@ void RobotAudioClient::SetOutputSource( RobotAudioOutputSource outputSource )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioClient::GetGameObjectAndAudioBufferFromPool(GameObjectType& out_gameObj, RobotAudioBuffer*& out_buffer)
+bool RobotAudioClient::GetGameObjectAndAudioBufferFromPool(AudioMetaData::GameObjectType& out_gameObj, RobotAudioBuffer*& out_buffer)
 {
   // Find appropriate game object and buffer for output source
   bool hasBuffer = false;
@@ -416,7 +417,7 @@ bool RobotAudioClient::GetGameObjectAndAudioBufferFromPool(GameObjectType& out_g
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::ReturnGameObjectToPool(GameObjectType gameObject)
+void RobotAudioClient::ReturnGameObjectToPool(AudioMetaData::GameObjectType gameObject)
 {
   switch (gameObject) {
     case GameObjectType::CozmoBus_1:
@@ -456,7 +457,6 @@ void RobotAudioClient::UpdateAiGoalMusicState(const std::string& aiGoalName)
   PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
                 "RobotAudioClient.SetFreeplayMusic",
                 "AiGoalName '%s'", aiGoalName.c_str());
-  
   static const std::unordered_map<std::string, SwitchState::Freeplay_Mood> freeplayStateMap
   {
     { "FP_Hiking",          SwitchState::Freeplay_Mood::Hiking },
@@ -477,9 +477,9 @@ void RobotAudioClient::UpdateAiGoalMusicState(const std::string& aiGoalName)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer(GameObjectType gameObject,
+RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer(AudioMetaData::GameObjectType gameObject,
                                                              PluginId_t pluginId,
-                                                             Bus::BusType audioBus)
+                                                             AudioMetaData::Bus::BusType audioBus)
 {
   DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.RegisterRobotAudioBuffer.AudioControllerNull");
   
@@ -496,11 +496,11 @@ RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer(GameObjectType game
   _robotBufferGameObjectPool.push( busConfiguration.gameObject );
   
   // Setup GameObject with Bus
-  AudioEngine::AudioGameObject audioGameObject = static_cast<const AudioEngine::AudioGameObject>( busConfiguration.gameObject );
+  AudioGameObject audioGameObject = static_cast<const AudioGameObject>( busConfiguration.gameObject );
   
   // Set Aux send settings in Audio Engine
-  AudioController::AuxSendList sendList = {
-    AudioEngine::AudioAuxBusValue( static_cast<AudioEngine::AudioAuxBusId>( busConfiguration.bus ), 1.0f )
+  CozmoAudioController::AuxSendList sendList = {
+    AudioAuxBusValue( static_cast<AudioAuxBusId>( busConfiguration.bus ), 1.0f )
   };
   
   // Set Aux send settings in Audio Engine
@@ -512,9 +512,9 @@ RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer(GameObjectType game
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::UnregisterRobotAudioBuffer(GameObjectType gameObject,
+void RobotAudioClient::UnregisterRobotAudioBuffer(AudioMetaData::GameObjectType gameObject,
                                                   PluginId_t pluginId,
-                                                  Bus::BusType audioBus)
+                                                  AudioMetaData::Bus::BusType audioBus)
 {
   DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.UnregisterRobotAudioBuffer.AudioControllerNull");
   
@@ -529,7 +529,7 @@ void RobotAudioClient::UnregisterRobotAudioBuffer(GameObjectType gameObject,
   }
   
   // Destroy buffer
-  AudioEngine::AudioGameObject aGameObject = static_cast<const AudioEngine::AudioGameObject>( gameObject );
+  AudioGameObject aGameObject = static_cast<const AudioGameObject>( gameObject );
   _audioController->UnregisterRobotAudioBuffer( aGameObject, pluginId );
 }
 

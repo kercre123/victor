@@ -15,7 +15,7 @@
 #ifndef __Basestation_Audio_AudioMixingTypes_H__
 #define __Basestation_Audio_AudioMixingTypes_H__
 
-#include "anki/cozmo/basestation/audio/audioDataTypes.h"
+#include "audioEngine/audioTools/audioDataTypes.h"
 #include <functional>
 
 namespace Anki {

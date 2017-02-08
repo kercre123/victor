@@ -243,7 +243,7 @@ public class DebugDisplayPane : MonoBehaviour {
 
   private void HandleLoadWebView() {
     // Turn off music
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Silent);
     // Send EnterSDKMode to engine as we enter this view
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.EnterSDKMode(false);

@@ -22,7 +22,7 @@ RobotAudioTestClient::RobotAudioTestClient()
 {
 }
 
-RobotAudioBuffer* RobotAudioTestClient::GetRobotAudiobuffer( GameObjectType gameObject ) {
+RobotAudioBuffer* RobotAudioTestClient::GetRobotAudiobuffer( AudioMetaData::GameObjectType gameObject ) {
   return &_robotAudioTestBuffer;
 }
 

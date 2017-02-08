@@ -39,7 +39,7 @@ public:
   
   // Method subclass uses to set audio frame data
   // This needs to be called before Update() & PopFrame()
-  void SetNextFrame(const Audio::AudioFrameData* audioFrame);
+  void SetNextFrame(const AudioEngine::AudioFrameData* audioFrame);
   
   
 };

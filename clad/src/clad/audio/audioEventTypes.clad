@@ -1,8 +1,7 @@
 // Available Event in project
 
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioMetaData {
 namespace GameEvent {
 
 enum uint_32 Coz_App
@@ -840,6 +839,5 @@ enum uint_32 Ui
 }
 
 } // GameEvent
-} // Audio
-} // Cozmo
+} // AudioMetaData
 } // Anki

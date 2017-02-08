@@ -679,7 +679,7 @@ public class ConnectionFlowController : MonoBehaviour {
       return;
     }
     _scanLoopPlaying = play;
-    Anki.Cozmo.Audio.GameEvent.Ui evt = _scanLoopPlaying ? Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Scan_Loop : Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Scan_Loop_Stop;
+    Anki.AudioMetaData.GameEvent.Ui evt = _scanLoopPlaying ? Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect_Scan_Loop : Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect_Scan_Loop_Stop;
     Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(evt);
   }
 }

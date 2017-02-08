@@ -83,12 +83,12 @@ namespace Anki {
         private void _SetupStaticDropdowns() {
 
           // Game Objects
-          foreach (Anki.Cozmo.Audio.GameObjectType anEnum in _audioClient.GetGameObjects()) {
+          foreach (Anki.AudioMetaData.GameObjectType anEnum in _audioClient.GetGameObjects()) {
             _GameObjectDropdown.options.Add(new Dropdown.OptionData(anEnum.ToString()));
           }
 
           // Events
-          foreach (Anki.Cozmo.Audio.GameEvent.GenericEvent anEnum in _audioClient.GetEvents()) {
+          foreach (Anki.AudioMetaData.GameEvent.GenericEvent anEnum in _audioClient.GetEvents()) {
             _EventDropdown.options.Add(new Dropdown.OptionData(anEnum.ToString()));
           }
 
@@ -101,11 +101,11 @@ namespace Anki {
           _SwitchStateGroupDropdown.onValueChanged.AddListener(_SetupSwitchStateTypeDropdown);
 
           // RTPC Parameters
-          foreach (GameParameter.ParameterType anEnum in _audioClient.GetParameters()) {
+          foreach (Anki.AudioMetaData.GameParameter.ParameterType anEnum in _audioClient.GetParameters()) {
             _ParameterDropdown.options.Add(new Dropdown.OptionData(anEnum.ToString()));
           }
           _ParameterDropdown.onValueChanged.AddListener( (int value) => {
-            GameParameter.ParameterType parameter = _audioClient.GetParameters()[_ParameterDropdown.value];
+            AudioMetaData.GameParameter.ParameterType parameter = _audioClient.GetParameters()[_ParameterDropdown.value];
             _SetupRTPCSlider(parameter);
           });
         }
@@ -133,12 +133,12 @@ namespace Anki {
           }
         }
 
-        private void _SetupRTPCSlider(GameParameter.ParameterType parameter) {
+        private void _SetupRTPCSlider(Anki.AudioMetaData.GameParameter.ParameterType parameter) {
           // Reset slider to show RTPC meta data
           float min = 0.0f;
           float max = 0.0f;
           float rtpcValue = 0.0f;
-          if (GameParameter.ParameterType.Invalid != parameter) {
+          if (Anki.AudioMetaData.GameParameter.ParameterType.Invalid != parameter) {
             // Set Parameter data
             // TODO Need meta data to set Min, Max & Default
             min = -1.0f;
@@ -163,9 +163,9 @@ namespace Anki {
 
         // Proform Audio Client operations
         private void _PostEvent() {
-          Anki.Cozmo.Audio.GameEvent.GenericEvent selectedEvent = _audioClient.GetEvents()[_EventDropdown.value];
-          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
-          _audioClient.PostEvent(selectedEvent, selectedGameObj, AudioCallbackFlag.EventAll, (CallbackInfo info) => {
+          AudioMetaData.GameEvent.GenericEvent selectedEvent = _audioClient.GetEvents()[_EventDropdown.value];
+          AudioMetaData.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+          _audioClient.PostEvent(selectedEvent, selectedGameObj, AudioEngine.Multiplexer.AudioCallbackFlag.EventAll, (CallbackInfo info) => {
             string log = "Callback Event PlayId: " + info.PlayId + " Type: " + info.CallbackType.ToString();
             _AppendLogEvent(log);
           });
@@ -173,7 +173,7 @@ namespace Anki {
         }
 
         private void _StopAllEvents() {
-          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+          AudioMetaData.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
           _audioClient.StopAllAudioEvents(selectedGameObj);
           _AppendLogEvent("Stop All GameObj GameObj: " + selectedGameObj.ToString());
         }
@@ -193,16 +193,16 @@ namespace Anki {
 
           if (group != null) {
             var state = group.GetStateByIndex(_SwitchStateTypeDropdown.value);
-            Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+            AudioMetaData.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
             _audioClient.PostSwitchState(group.Value, state, selectedGameObj);
             _AppendLogEvent("Post Switch State: " + group.Name + " : " + state.ToString() + " GameObj: " + selectedGameObj.ToString());
           }
         }
 
         private void _PostRTPCParameter() {
-          GameParameter.ParameterType parameterType = _audioClient.GetParameters()[_ParameterDropdown.value];
+          AudioMetaData.GameParameter.ParameterType parameterType = _audioClient.GetParameters()[_ParameterDropdown.value];
           float sliderValue = _RTPCSlider.value;
-          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+          AudioMetaData.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
           _audioClient.PostParameter(parameterType, sliderValue, selectedGameObj);
           _AppendLogEvent("Post RTPC: " + parameterType.ToString() + " : " + sliderValue.ToString() + " GameObj: " + selectedGameObj.ToString());
         }

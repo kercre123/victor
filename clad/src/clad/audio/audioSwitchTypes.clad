@@ -1,8 +1,7 @@
 // Available Game Switch States in project
 
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioMetaData {
 namespace SwitchState {
 
 enum uint_32 Cozmo_Voice_Processing
@@ -95,6 +94,5 @@ enum uint_32 SwitchGroupType
 }
 
 } // SwitchState
-} // Audio
-} // Cozmo
+} // AudioMetaData
 } // Anki

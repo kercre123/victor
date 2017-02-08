@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using Anki.Cozmo.Audio.GameEvent;
 using System;
 using UnityEngine.UI;
 using System.Linq;
@@ -21,11 +20,11 @@ namespace Anki.Cozmo.Audio {
 
     private static readonly Dictionary<string, Type> _EventTypeDictionary =
       new Dictionary<string, Type> {
-      { "Ui", typeof(GameEvent.Ui) },
-      { "Sfx", typeof(GameEvent.Sfx) },
+      { "Ui", typeof(Anki.AudioMetaData.GameEvent.Ui) },
+      { "Sfx", typeof(Anki.AudioMetaData.GameEvent.Sfx) },
       // Leave out VO for now, since we don't have any VO
       //{ "VO", typeof(GameEvent.GenericEvent) },
-      { "Music", typeof(GameState.Music) }
+      { "Music", typeof(Anki.AudioMetaData.GameState.Music) }
     };
       
     private Type _EventType;
@@ -70,16 +69,16 @@ namespace Anki.Cozmo.Audio {
 
       switch(group.text){
       case "Music":
-        GameAudioClient.SetMusicState((Anki.Cozmo.Audio.GameState.Music)value);
+        GameAudioClient.SetMusicState((Anki.AudioMetaData.GameState.Music)value);
         break;
       case "Ui":
-        GameAudioClient.PostUIEvent((Anki.Cozmo.Audio.GameEvent.Ui)value);
+        GameAudioClient.PostUIEvent((Anki.AudioMetaData.GameEvent.Ui)value);
         break;
       case "Sfx":
-        GameAudioClient.PostSFXEvent((Sfx)value);
+        GameAudioClient.PostSFXEvent((Anki.AudioMetaData.GameEvent.Sfx)value);
         break;
       case "Vo":
-        GameAudioClient.PostAnnouncerVOEvent((GenericEvent)value);
+        GameAudioClient.PostAnnouncerVOEvent((Anki.AudioMetaData.GameEvent.GenericEvent)value);
         break;
       }
     }
@@ -89,16 +88,16 @@ namespace Anki.Cozmo.Audio {
 
       switch(group.text){
       case "Music":
-        GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+        GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Silent);
         break;
       case "Ui":
-        UnityAudioClient.Instance.StopAllAudioEvents(GameObjectType.UI);
+        UnityAudioClient.Instance.StopAllAudioEvents(Anki.AudioMetaData.GameObjectType.UI);
         break;
       case "Sfx":
-        UnityAudioClient.Instance.StopAllAudioEvents(GameObjectType.SFX);
+        UnityAudioClient.Instance.StopAllAudioEvents(Anki.AudioMetaData.GameObjectType.SFX);
         break;
       case "Vo":
-        UnityAudioClient.Instance.StopAllAudioEvents(GameObjectType.Default);
+        UnityAudioClient.Instance.StopAllAudioEvents(Anki.AudioMetaData.GameObjectType.Default);
         break;
       }
     }

@@ -228,7 +228,7 @@ TEST_F(RobotAudioTest, TestNoEvents)
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -242,13 +242,13 @@ TEST_F(RobotAudioTest, TestSingleEventAnimation_FirstFrame )
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
   // Currently, RobotAudioTest doesn't let me test an event starting @ 0 ms, ironic.
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
   config.InsertComplete();
   EXPECT_EQ( 1, config.GetAudioEvents().size() );
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -261,13 +261,13 @@ TEST_F(RobotAudioTest, TestSingleEventAnimation_FirstFrame )
 TEST_F(RobotAudioTest, TestSingleEventAnimation )
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 200, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 200, 100) );
   config.InsertComplete();
   EXPECT_EQ( 1, config.GetAudioEvents().size() );
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -280,15 +280,15 @@ TEST_F(RobotAudioTest, TestSingleEventAnimation )
 TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInOrder)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 20) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 10, 40) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 30, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 20) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 10, 40) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 30, 100) );
   config.InsertComplete();
   EXPECT_EQ( 3, config.GetAudioEvents().size() );
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -300,16 +300,16 @@ TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInOrder)
 TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInReverseOrder)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 10, 80) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 30, 40) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 40, 10) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 10, 80) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 30, 40) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 40, 10) );
   config.InsertComplete();
   EXPECT_EQ( 4, config.GetAudioEvents().size() );
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -322,16 +322,16 @@ TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInReverseOrder)
 TEST_F(RobotAudioTest, TestMultipleStreams_SingleEvent)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 200, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 400, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 580, 12) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 200, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 400, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 580, 12) );
   config.InsertComplete();
   EXPECT_EQ( 4, config.GetAudioEvents().size() );
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -343,18 +343,18 @@ TEST_F(RobotAudioTest, TestMultipleStreams_SingleEvent)
 TEST_F(RobotAudioTest, TestMultipleStreams_MultipleEvents)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 4, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 20, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 200, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 400, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 580, 12) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 4, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 20, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 200, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 400, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 580, 12) );
   config.InsertComplete();
   EXPECT_EQ( 6, config.GetAudioEvents().size() );
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -367,14 +367,14 @@ TEST_F(RobotAudioTest, TestMultipleStreams_MultipleEvents)
 TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_SameFrame)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 102, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 102, 100) );
   config.InsertComplete();
   EXPECT_EQ( 2, config.GetAudioEvents().size() );
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -386,14 +386,14 @@ TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_SameFrame)
 TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_NextFrame)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 66) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 67, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 1, 66) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 67, 100) );
   config.InsertComplete();
   EXPECT_EQ( 2, config.GetAudioEvents().size() );
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -408,14 +408,14 @@ TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_NextFrame)
 TEST_F(RobotAudioTest, DISABLED_TestFrameEdgeCase_StartsOnEdge)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 33, 10) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Sfx__Placeholder, 133, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 33, 10) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(AudioMetaData::GameEvent::GenericEvent::Play__Sfx__Placeholder, 133, 100) );
   config.InsertComplete();
   EXPECT_EQ( 2, config.GetAudioEvents().size() );
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( AudioMetaData::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   

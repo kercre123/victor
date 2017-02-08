@@ -11,14 +11,14 @@ namespace Cozmo.Minigame.CubePounce {
       _CozmoWon = cozmoWon;
     }
 
-    private Anki.Cozmo.Audio.GameState.Music _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Invalid;
+    private Anki.AudioMetaData.GameState.Music _nextMusicState = Anki.AudioMetaData.GameState.Music.Invalid;
 
     private Anki.Cozmo.CubeAnimationTrigger _cubeAnim;
 
     public override void Enter() {
       base.Enter();
 
-      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Pounce);
+      GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Minigame__Keep_Away_Pounce);
 
       _CubePounceGame.ResetPounceChance();
 
@@ -40,7 +40,7 @@ namespace Cozmo.Minigame.CubePounce {
         DoRoundEndLogic();
       }
       else {
-        _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds;
+        _nextMusicState = Anki.AudioMetaData.GameState.Music.Minigame__Keep_Away_Between_Rounds;
         if (_CozmoWon) {
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceWinHand, HandleEndHandAnimFinish);
         }
@@ -49,8 +49,8 @@ namespace Cozmo.Minigame.CubePounce {
         }
 
         // play the "score" sound, but skip it when the round is over (because we're playing another sound for that)
-        Anki.Cozmo.Audio.GameEvent.Sfx evt = _CozmoWon ? Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose : Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Win;
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(evt);
+        Anki.AudioMetaData.GameEvent.Sfx evt = _CozmoWon ? Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Lose : Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Win;
+        GameAudioClient.PostSFXEvent(evt);
       }
 
       _CubePounceGame.UpdateScoreboard();
@@ -58,8 +58,8 @@ namespace Cozmo.Minigame.CubePounce {
 
     private void DoRoundEndLogic() {
       if (_CubePounceGame.AllRoundsCompleted) {
-        _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Minigame__Setup;
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
+        _nextMusicState = Anki.AudioMetaData.GameState.Music.Minigame__Setup;
+        GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Game_End);
 
         if (_CubePounceGame.CozmoRoundsWon > _CubePounceGame.HumanRoundsWon) {
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceWinSession, HandleEndGameAnimFinish);
@@ -69,8 +69,8 @@ namespace Cozmo.Minigame.CubePounce {
         }
       }
       else {
-        _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds;
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
+        _nextMusicState = Anki.AudioMetaData.GameState.Music.Minigame__Keep_Away_Between_Rounds;
+        GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Round_End);
 
         if (_CubePounceGame.CozmoScore > _CubePounceGame.HumanScore) {
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceWinRound, HandleEndRoundAnimFinish);
@@ -101,9 +101,9 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Exit() {
       base.Exit();
       // Update next music state
-      if (Anki.Cozmo.Audio.GameState.Music.Invalid != _nextMusicState) {
+      if (Anki.AudioMetaData.GameState.Music.Invalid != _nextMusicState) {
         GameAudioClient.SetMusicState(_nextMusicState);
-        _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Invalid;
+        _nextMusicState = Anki.AudioMetaData.GameState.Music.Invalid;
       }
 
       if (_CurrentRobot != null) {

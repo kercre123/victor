@@ -293,7 +293,7 @@ namespace Cozmo {
                                                       new AlertModalButtonData("confirm_sleep_button",
                                                                                LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
                                                                                HandleConfirmSleepCozmoOnChargerButtonTapped,
-                                                                               Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect)),
+                                                                               Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Disconnect)),
                                                       new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel));
 
         }
@@ -304,7 +304,7 @@ namespace Cozmo {
                                                       new AlertModalButtonData("confirm_sleep_button",
                                                                                LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
                                                                                HandleConfirmSleepCozmoButtonTapped,
-                                                                               Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect)),
+                                                                               Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Disconnect)),
                                                       new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel));
         }
 
@@ -314,7 +314,7 @@ namespace Cozmo {
 
         Action<AlertModal> confirmSleepCreated = (alertModal) => {
           _SleepCozmoConfirmDialog = alertModal;
-          alertModal.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
+          alertModal.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Attention_Device);
         };
 
         UIManager.OpenAlert(confirmSleepCozmoAlert, confirmSleepCozmoPriority, confirmSleepCreated,
@@ -343,7 +343,7 @@ namespace Cozmo {
         Action<AlertModal> goToSleepAlertCreated = (alertModal) => {
           _GoToSleepDialog = alertModal;
           // Set Music State
-          Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
+          Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Sleep);
         };
 
         UIManager.OpenAlert(goToSleepAlertData, goToSleepPriority, goToSleepAlertCreated,

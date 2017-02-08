@@ -25,7 +25,7 @@ namespace Cozmo.Minigame.CubePounce {
 
     [SerializeField]
     protected MusicStateWrapper _BetweenRoundMusic;
-    public Anki.Cozmo.Audio.GameState.Music BetweenRoundMusic { get { return _BetweenRoundMusic.Music; } }
+    public Anki.AudioMetaData.GameState.Music BetweenRoundMusic { get { return _BetweenRoundMusic.Music; } }
 
     // Distance that defines how close a block can be to be pounced on
     [Range(0f,100f)]

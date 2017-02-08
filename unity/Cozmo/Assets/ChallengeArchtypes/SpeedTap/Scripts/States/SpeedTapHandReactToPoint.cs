@@ -75,7 +75,7 @@ namespace SpeedTap {
 
       if (_SpeedTapGame.IsRoundComplete()) {
         GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
+        GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Round_End);
 
         _SpeedTapGame.EndCurrentRound();
         // Hide Current Round in between rounds
@@ -151,10 +151,10 @@ namespace SpeedTap {
           }
 
         }
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
+        GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Lose);
       }
       else {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Win);
+        GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Win);
         for (int i = 0; i < losingBlocks.Count; ++i) {
           losingBlocks[i].SetLEDsOff();
         }
@@ -225,7 +225,7 @@ namespace SpeedTap {
     }
 
     private void HandleEndGameAnimDone(bool success) {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
+      GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Game_End);
       _SpeedTapGame.ClearWinningLightPatterns();
       _SpeedTapGame.StartRoundBasedGameEnd();
       _SpeedTapGame.StartEndMusic();

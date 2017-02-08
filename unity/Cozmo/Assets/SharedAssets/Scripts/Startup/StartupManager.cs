@@ -211,7 +211,7 @@ public class StartupManager : MonoBehaviour {
     }
 
     // As soon as we're done connecting to the engine, start up some music
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Connectivity);
 
     // Ask for device data as early as you can
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);

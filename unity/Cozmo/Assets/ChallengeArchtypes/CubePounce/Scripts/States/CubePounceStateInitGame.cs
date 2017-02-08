@@ -25,7 +25,7 @@ namespace Cozmo.Minigame.CubePounce {
       }
       else {
         // Start the Game
-        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds);
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Minigame__Keep_Away_Between_Rounds);
         _StateMachine.SetNextState(new CubePounceStateResetPoint());
       }
 

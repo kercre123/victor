@@ -27,16 +27,19 @@
 #include <mutex>
 
 
+
+namespace Anki {
+  
 namespace AudioEngine {
 struct AudioCallbackInfo;
+struct AudioFrameData;
 }
-namespace Anki {
+  
 namespace Util {
 class RandomGenerator;
 }
 namespace Cozmo {
 namespace Audio {
-struct AudioFrameData;
 class RobotAudioBuffer;
 class RobotAudioClient;
 class RobotAudioFrameStream;
@@ -80,7 +83,7 @@ public:
   // Return false if there are no audio data frames to tick frame, check state to determine why (either still buffering
   // or complete)
   // Note: Next frame must be ready before ticking
-  void TickPlayhead(KeyframeList& out_keyframeList, const Audio::AudioFrameData*& out_audioFrame);
+  void TickPlayhead(KeyframeList& out_keyframeList, const AudioEngine::AudioFrameData*& out_audioFrame);
   
   // Once started must be ticked with every frame until completed
   bool DidStartPlaying() const { return _playheadTime_ms > 0; }
@@ -124,13 +127,13 @@ private:
     };
     
     AnimationEventId eventId = kInvalidAnimationEventId;
-    Audio::GameEvent::GenericEvent audioEvent = Audio::GameEvent::GenericEvent::Invalid;
+    AudioMetaData::GameEvent::GenericEvent audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid;
     uint32_t time_ms = 0;
     float volume = 1.0f;
     AnimationEventState state = AnimationEventState::None;
     
     
-    AnimationEvent(AnimationEventId eventId, Audio::GameEvent::GenericEvent audioEvent, uint32_t time_ms, float volume = 0.0f)
+    AnimationEvent(AnimationEventId eventId, AudioMetaData::GameEvent::GenericEvent audioEvent, uint32_t time_ms, float volume = 0.0f)
     : eventId(eventId)
     , audioEvent(audioEvent)
     , time_ms(time_ms)
@@ -149,9 +152,9 @@ private:
   bool _hasAltEventAudio = false;
   
   // Playing and buffering audio objects
-  Audio::GameObjectType     _gameObj = Audio::GameObjectType::Invalid;
-  Audio::RobotAudioClient*  _audioClient = nullptr;
-  Audio::RobotAudioBuffer*  _audioBuffer = nullptr;
+  AudioMetaData::GameObjectType _gameObj = AudioMetaData::GameObjectType::Invalid;
+  Audio::RobotAudioClient*      _audioClient = nullptr;
+  Audio::RobotAudioBuffer*      _audioBuffer = nullptr;
   
   // Hold on to the current stream frames are being pulled from
   Audio::RobotAudioFrameStream* _currentBufferStream = nullptr;
@@ -159,8 +162,8 @@ private:
   
   // Add audio frame data to animation
   // NOTE: Takes ownership of frame
-  void PushFrameIntoBuffer(const Audio::AudioFrameData* frame);
-  using AudioFrameList = std::list<const Audio::AudioFrameData*>;
+  void PushFrameIntoBuffer(const AudioEngine::AudioFrameData* frame);
+  using AudioFrameList = std::list<const AudioEngine::AudioFrameData*>;
   AudioFrameList            _audioFrames;
   
   // Buffer & Playback Info

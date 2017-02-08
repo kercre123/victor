@@ -138,7 +138,7 @@ namespace MemoryMatch {
     private void CozmoWinHand() {
       _GameInstance.ShowCenterResult(true, true);
       _GameInstance.AddPoint(false);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Round_End);
       if (_GameInstance.GetLivesRemaining(PlayerType.Human) > 0) {
         _GameInstance.SetCubeLightsGuessRight();
         _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoWinHand, HandleOnCozmoWinAnimationDone);
