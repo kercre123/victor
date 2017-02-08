@@ -28,6 +28,11 @@ struct AudioPlayerData
   std::mutex                            _dataMutex;
 };
   
+AudioPlayer::AudioPlayer()
+: _impl(new AudioPlayerData{})
+{
+}
+  
 AudioPlayer& AudioPlayer::operator=(AudioPlayer&&) = default;
 AudioPlayer::AudioPlayer(AudioPlayer&&) = default;
   
