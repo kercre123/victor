@@ -105,7 +105,8 @@ public class SelectDifficultyState : State {
     }
     _Game.CurrentDifficulty = _SelectedDifficultyData.DifficultyId;
     DAS.Event("game.difficulty", _SelectedDifficultyData.DifficultyId.ToString());
-
+    // COZMO-7873 Spam click protection, we're transitioning out, so don't allow Load to attach itself
+    _DifficultySelectLockState = false;
 
     DataPersistence.PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
     playerProfile.LastPlayedDifficulty[_Game.ChallengeID] = _Game.CurrentDifficulty;

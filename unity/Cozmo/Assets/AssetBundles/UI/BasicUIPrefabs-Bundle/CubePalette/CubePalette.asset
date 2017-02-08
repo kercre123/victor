@@ -33,5 +33,10 @@ MonoBehaviour:
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 1, b: 0, a: 1}
     cycleIntervalSeconds: 0.25
-  _LightCubeSpritePrefab: {fileID: 11498570, guid: 811ec6786e21a4cb7bbb384a7c802f08,
+  _CubeUprightColor:
+    uiSprite: {fileID: 0}
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+  _TopDownLightCubeSpritePrefab: {fileID: 11498570, guid: 811ec6786e21a4cb7bbb384a7c802f08,
+    type: 2}
+  _IsometricLightCubeSpritePrefab: {fileID: 11465378, guid: 52c44a1be5e964e02921d6066c332cba,
     type: 2}

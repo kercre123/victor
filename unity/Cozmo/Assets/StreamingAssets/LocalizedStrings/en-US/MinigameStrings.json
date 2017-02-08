@@ -210,8 +210,17 @@
   "speedTap.tapBlockForRound": {
     "translation": "Tap your Cube to begin the next round."
   },
+  "speedTap.multiplayer.overTime": {
+    "translation": "Overtime!"
+  },
+  "speedTap.multiplayer.player1": {
+    "translation": "Player1"
+  },
+  "speedTap.multiplayer.player2": {
+    "translation": "Player2"
+  },
   "minigame.dontMoveCozmo.title": {
-    "translation": "Cozmo has moved!"
+    "translation": "Cozmo Has Moved!"
   },
   "minigame.dontMoveCozmo.description": {
     "translation": "Cozmo has moved and can't continue the game."
@@ -223,7 +232,7 @@
     "translation": "Cozmo lost track of his Cube and can't continue the game."
   },
   "minigame.timeout.title": {
-    "translation": "The Game has Ended"
+    "translation": "The Game Has Ended"
   },
   "minigame.timeout.description": {
     "translation": "Cozmo is tired of waiting, and wants to do other things."
@@ -311,6 +320,33 @@
   },
   "speedTap.text.roundScore": {
     "translation": "Player: {0} - Cozmo: {1}"
+  },
+  "speedTap.text.roundScoreMP": {
+    "translation": "{2}: {3} - {4}: {5} - {0}: {1}"
+  },
+  "speedTap.text.MP.score.player": {
+    "translation": "{0} Score"
+  },
+  "speedTap.text.MP.bestOf": {
+    "translation": "<b>Winner:</b> First to 2 rounds"
+  },
+  "speedTap.title.MP.Locked": {
+    "translation": "Locked!"
+  },
+  "speedTap.text.MP.Locked": {
+    "translation": "To unlock 3 player mode, play Human vs Cozmo once on this difficulty."
+  },
+  "speedTapGame.label.x2": {
+    "translation": "x2"
+  },
+  "speedTapGame.label.vs": {
+    "translation": "VS"
+  },
+  "speedTapGame.mode.HvC": {
+    "translation": "Human vs Cozmo"
+  },
+  "speedTapGame.mode.HvHvC": {
+    "translation": "Human vs Human vs Cozmo"
   },
   "cozmoSays.instructions.label": {
     "translation": "Type a word or phrase and hear Cozmo say it"

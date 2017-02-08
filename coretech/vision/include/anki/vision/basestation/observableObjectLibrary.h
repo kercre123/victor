@@ -89,7 +89,7 @@ namespace Anki {
         // Returns true if match was added
         bool TryToAddMatch(const PoseMatchPair& match,
                            const float distThreshold, const Radians angleThreshold,
-                           const std::vector<RotationMatrix3d>& R_ambiguities);
+                           const RotationAmbiguities& R_ambiguities);
         
         const Pose3d& GetPose() const { return _pose; }
         const size_t  GetSize() const { return _matches.size(); }

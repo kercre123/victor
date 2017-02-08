@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 // Public singleton just to dump shared data.
@@ -134,7 +134,7 @@ namespace Anki.Debug {
         info = ((System.Type)obj).GetField(varName, bindFlags);
       }
       if (info == null) {
-        DAS.Error("Unity.DebugConsole", "Attempted to add nonexistent var: " + varName);
+        DAS.Error("DebugConsole", "Attempted to add nonexistent var: " + varName);
         return;
       }
 
@@ -171,6 +171,9 @@ namespace Anki.Debug {
           }
         }
       }
+    }
+    public void RemoveConsoleData(string categoryName) {
+      _DataByCategory.Remove(categoryName);
     }
     public void UnityConsoleDataUpdated(string varName) {
       if (DebugConsoleVarUpdated != null) {

@@ -2,14 +2,16 @@
   "behaviorClass": "ExploreLookAroundInPlace",
   "executableBehaviorType": "LookAroundInPlace",
   "name": "SparkedLookAroundInPlace",
+  "displayNameKey":"behavior.LookInPlaceForCube",
   "flatScore" : 2.0,
   "behaviorGroups": [
+      "BuildPyramid",
+      "SetupBuildPyramid",
       "SparksRollBlock",
       "SparksStackBlock",
       "SparksPickUpCube",
       "SparksPopAWheelie",
       "SparksKnockOverCubes",
-      "SparksBuildPyramid",
       "SparksWorkout"
   ],
   "params":

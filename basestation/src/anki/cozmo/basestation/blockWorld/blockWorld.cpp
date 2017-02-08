@@ -84,7 +84,7 @@ namespace Cozmo {
 
 // how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
 CONSOLE_VAR(float, kMemoryMapRenderRate_sec, "BlockWorld.MemoryMap", 0.25f);
-
+  
 // kObjectRotationChangeToReport_deg: if the rotation of an object changes by this much, memory map will be notified
 CONSOLE_VAR(float, kObjectRotationChangeToReport_deg, "BlockWorld.MemoryMap", 10.0f);
 // kObjectPositionChangeToReport_mm: if the position of an object changes by this much, memory map will be notified
@@ -187,6 +187,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   , _currentNavMemoryMapOrigin(nullptr)
   , _isNavMemoryMapRenderEnabled(true)
   , _trackPoseChanges(false)
+  , _memoryMapBroadcastRate_sec(-1.0f)
+  , _nextMemoryMapBroadcastTimeStamp(0)
   , _blockConfigurationManager(new BlockConfigurations::BlockConfigurationManager(*robot))
   {
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
@@ -310,6 +312,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapRenderEnabled>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestObjectStates>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapBroadcastFrequency_sec>();
   }
 
   BlockWorld::~BlockWorld()
@@ -392,7 +395,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     BroadcastObjectStates(msg.connectedObjectsOnly, nullptr);
   };
 
+  template<>
+  void BlockWorld::HandleMessage(const ExternalInterface::SetMemoryMapBroadcastFrequency_sec& msg)
+  {
+    _memoryMapBroadcastRate_sec = msg.frequency;
+    _nextMemoryMapBroadcastTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  };
   
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   
@@ -895,7 +905,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         
         // create empty map since somehow we lost the one we had
         VizManager* vizMgr = _robot->GetContext()->GetVizManager();
-        INavMemoryMap* emptyMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr);
+        INavMemoryMap* emptyMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr, _robot);
         
         // set in the container of maps
         _navMemoryMaps[newOrigin].reset(emptyMemoryMap);
@@ -1167,7 +1177,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       // create a new memory map in the given origin
       VizManager* vizMgr = _robot->GetContext()->GetVizManager();
-      INavMemoryMap* navMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr);
+      INavMemoryMap* navMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr, _robot);
       _navMemoryMaps.emplace( std::make_pair(worldOriginPtr, std::unique_ptr<INavMemoryMap>(navMemoryMap)) );
       _currentNavMemoryMapOrigin = worldOriginPtr;
     }
@@ -1198,6 +1208,33 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           
           size_t indexHint = isCurrent ? 0 : (++lastIndexNonCurrent);
           memMapPair.second->Draw(indexHint);
+        }
+      }
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::BroadcastNavMemoryMap()
+  {
+    if ( _memoryMapBroadcastRate_sec >= 0.0f )
+    {
+      const float currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (FLT_GT(_nextMemoryMapBroadcastTimeStamp, currentTimeInSeconds)) {
+        return;
+      }
+      // Reset the timer but don't accumulate error
+      do {
+        _nextMemoryMapBroadcastTimeStamp += _memoryMapBroadcastRate_sec;
+      } while (FLT_LE(_nextMemoryMapBroadcastTimeStamp, currentTimeInSeconds));
+
+      // Send only the current map
+      const auto& currentOriginMap = _navMemoryMaps.find(_currentNavMemoryMapOrigin);
+      if (currentOriginMap != _navMemoryMaps.end()) {
+        // Look up and send the origin ID also
+        const auto& originList = _robot->GetPoseOriginList();
+        const uint32_t originID = originList.GetOriginID(currentOriginMap->first);
+        if (originID != PoseOriginList::UnknownOriginID) {
+          currentOriginMap->second->Broadcast(originID);
         }
       }
     }
@@ -2946,7 +2983,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const bool isUsableAndFarFromPrev = !isNewUnknown &&
       ( !info.isInMap || (!newPose.IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
       
-      // if new one is Unknown or far, we want to remove the old one, since it's being cleared or overriden
+      // if new one is Unknown or far, we want to remove the old one, since it's being cleared or overridden
       const bool removeOld = ( isNewUnknown || isUsableAndFarFromPrev );
       if ( removeOld ) {
         RemoveObjectReportFromMemMap(*object, curOrigin);

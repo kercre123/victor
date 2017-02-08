@@ -1133,7 +1133,7 @@ namespace Anki {
         AnkiInfo( 90, "TestModeController.MaxPowerTestInit", 305, "", 0);
         ticCnt_ = 0;
 
-        // Disable all controllers so that they can be overriden with HAL power commands
+        // Disable all controllers so that they can be overridden with HAL power commands
         WheelController::Disable();
         LiftController::Disable();
 

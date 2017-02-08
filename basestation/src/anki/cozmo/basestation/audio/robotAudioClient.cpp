@@ -205,10 +205,11 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
 {
   // Check if there is a current animation, if so abort that animation and clean up correctly
   if ( _currentAnimation != nullptr ) {
-    PRINT_NAMED_ERROR( "RobotAudioClient.CreateAudioAnimation",
-                       "CurrentAnimation '%s' state: %s is NOT Null when creating a new animation",
-                       _currentAnimation->GetAnimationName().c_str(),
-                       RobotAudioAnimation::GetStringForAnimationState(_currentAnimation->GetAnimationState()).c_str() );
+    PRINT_CH_INFO( kRobotAudioLogChannelName,
+                   "RobotAudioClient.CreateAudioAnimation",
+                   "CurrentAnimation '%s' state: %s is NOT Null when creating a new animation",
+                   _currentAnimation->GetAnimationName().c_str(),
+                   RobotAudioAnimation::GetStringForAnimationState(_currentAnimation->GetAnimationState()).c_str() );
     _currentAnimation->AbortAnimation();
     ClearCurrentAnimation();
   }

@@ -397,11 +397,9 @@ void IBehavior::Stop()
   for(const auto& entry: _lockingNameToTracksMap){
     _robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
   }
+  
+  
   _lockingNameToTracksMap.clear();
-  
-  // Clear any light patterns which were set on cubes
-  _robot.GetCubeLightComponent().StopAllAnims();
-  
   _customLightObjects.clear();
   
   DEV_ASSERT(_disabledReactionTriggers.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
@@ -419,12 +417,12 @@ void IBehavior::StopOnNextActionComplete()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::IsRunnableBase(const Robot& robot) const
+bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
 {
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
-  // DEV_ASSERT(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
-  if (IsRunning()) {
-    //PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetName().c_str());
+  DEV_ASSERT(allowWhileRunning || !IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
+  if (!allowWhileRunning && IsRunning()) {
+    PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetName().c_str());
     return true;
   }
   
@@ -585,15 +583,16 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   
   if( !IsResuming() && !IsRunning() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotRunning",
-                        "Behavior '%s' can't start acting because it is not running",
-                        GetName().c_str());
+                        "Behavior '%s' can't start %s action because it is not running",
+                        GetName().c_str(), action->GetName().c_str());
     return false;
   }
 
   if( IsActing() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.AlreadyActing",
-                        "Behavior '%s' can't start acting because it is already running an action",
-                        GetName().c_str());
+                        "Behavior '%s' can't start %s action because it is already running an action in state %s",
+                        GetName().c_str(), action->GetName().c_str(),
+                        GetDebugStateName().c_str());
     return false;
   }
 
@@ -674,9 +673,9 @@ bool IBehavior::StopActing(bool allowCallback)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved)
+void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame)
 {
-  if(_robot.HasExternalInterface()){
+  if(broadcastToGame && _robot.HasExternalInterface()){
     _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
   }
   PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetName().c_str(), EnumToString(objectiveAchieved));
@@ -864,6 +863,7 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
   {
     const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
     
+
     _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedKnown);
     _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedUnsure);
     
@@ -942,7 +942,7 @@ void IBehavior::StopWithoutImmediateRepetitionPenalty()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
+// EvaluateScoreInternal is virtual and can optionally be overridden by subclasses
 float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 {
   float score = _flatScore;
@@ -954,10 +954,10 @@ float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
+// EvaluateScoreInternal is virtual and can optionally be overridden by subclasses
 float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 {
-  // unless specifically overriden it should mimic the non-running score
+  // unless specifically overridden it should mimic the non-running score
   const float nonRunningScore = EvaluateScoreInternal(robot);
   return nonRunningScore;
 }

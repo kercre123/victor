@@ -49,13 +49,13 @@ setup(
     url='https://developer.anki.com/cozmo/',
     author='Anki, Inc',
     author_email='cozmosdk@anki.com',
-    license='BSD',
+    license='Apache License, Version 2.0',
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3.5',
     ],
     zip_safe=True,

@@ -17,6 +17,7 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "clad/types/animationTrigger.h"
+#include "clad/types/behaviorObjectives.h"
 #include "json/json.h"
 #include <string>
 #include <vector>
@@ -50,6 +51,8 @@ public:
   unsigned int GetNumStrongLifts(const Robot& robot) const;
   unsigned int GetNumWeakLifts(const Robot& robot) const;
   
+  BehaviorObjective GetAdditionalBehaviorObjectiveOnComplete() const { return _additionalBehaviorObjectiveOnComplete; }
+  
 private:
   
   // number of lifts are defined based on mood, rounded to the nearest int (negative will count as 0)
@@ -61,6 +64,9 @@ private:
 
   // emotion event to trigger when this workout competed
   std::string _emotionEventOnComplete;
+  
+  // additional behavior objective that gets emitted upon completion
+  BehaviorObjective _additionalBehaviorObjectiveOnComplete;
 };
 
 

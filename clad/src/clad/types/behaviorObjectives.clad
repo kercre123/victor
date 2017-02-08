@@ -12,12 +12,17 @@ enum int_32 BehaviorObjective {
   
   AnimationPlayed,
   BlockRolled,
-  BlockStacked,
   BuiltPyramid,
   DroveAsIntended,
+  EnrolledFaceWithName,
+  FistBumpComplete,
+  FistBumpSuccess,
+  FistBumpLeftHanging,
   FoundFace,
   InteractedWithFace,
   KnockedOverBlocks,
+  PerformedWorkout,
+  PerformedStrongWorkout,
   PickedupBlock,
   PoppedWheelie,
   PouncedAndCaught,
@@ -36,7 +41,6 @@ enum int_32 BehaviorObjective {
   ReactedToUnexpectedMovement,
   RequestedGame,
   StackedBlock,
-  PerformedWorkout,
 
   // Count can specify "none" or "unspecified"
   Count, // Keep count at end.

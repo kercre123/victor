@@ -68,6 +68,15 @@ namespace Cozmo {
         }
       }
 
+      public Color PortraitColor {
+        set {
+          _PortraitImage.color = value;
+        }
+        get {
+          return _PortraitImage.color;
+        }
+      }
+
       public int Score {
         set {
           _ScoreContainer.SetActive(true);
@@ -99,6 +108,11 @@ namespace Cozmo {
           }
           _ScoreNameLabel.text = Localization.Get(locKey); ;
         }
+      }
+
+      // For multiplayer, we want to set the name directly
+      public void SetNameLabelText(string lblText) {
+        _ScoreNameLabel.text = lblText;
       }
 
       public bool Dim {

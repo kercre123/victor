@@ -36,6 +36,9 @@
   "reward.description.Freeplay.CompleteBehavior.PopWheelie": {
     "translation": "completing the 'Pop a Wheelie' behavior successfully"
   },
+  "reward.description.Freeplay.CompleteBehavior.FistBump": {
+    "translation": "completing the 'Fist Bump' behavior successfully"
+  },
   "reward.description.MemoryMatch.Played.Solo": {
     "translation": "Played a game of Memory Match in Solo mode"
   },
@@ -95,6 +98,9 @@
   },
   "reward.description.QuickTap.TieBreaker.OneRound": {
     "translation": "Won a round of Quick Tap after being tied 4-4"
+  },
+  "reward.description.QuickTap.PlayMP": {
+    "translation": "Played QuickTap Human vs Human vs Cozmo"
   },
   "reward.description.Keepaway.Played": {
     "translation": "Played a game of Keepaway"

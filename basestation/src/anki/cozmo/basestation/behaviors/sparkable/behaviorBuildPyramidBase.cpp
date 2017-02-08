@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -38,33 +39,13 @@ namespace{
 const int kMaxSearchCount = 1;
 const int kCubeSizeBuffer_mm = 12;
 const float kDriveBackDistance_mm = 40.f;
-const float kDriveBackSpeed_mm_s = 10.f;
+const float kDriveBackSpeed_mm_s = 40.f;
 
 RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
 {
   animTrigger = AnimationTrigger::Count;
   return true;
 };
-  
-// Lights constants
-  
-// Single Block
-static const constexpr uint kSingleTimeOn = 500;
-
-// Base Formed rotation
-static const constexpr uint kBaseFormedTimeOn = kSingleTimeOn;
-
-// Full Pyramid rotation
-static const constexpr uint kFullPyramidTimeOn = kSingleTimeOn/16;
-  
-// Pyramid flourish consts
-static const constexpr uint kPyramidFlourishShutoff_sec = 4*kFullPyramidTimeOn; //to be safe
-
-static const std::vector<CubeAnimationTrigger> pyramidAnims = {CubeAnimationTrigger::PyramidBaseBottom,
-                                                               CubeAnimationTrigger::PyramidSingle,
-                                                               CubeAnimationTrigger::PyramidBaseTop,
-                                                               CubeAnimationTrigger::PyramidFlourish,
-                                                               CubeAnimationTrigger::PyramidDenouement};
 
 }
   
@@ -83,9 +64,6 @@ BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(Robot& robot, const Json::Val
 {
   SetDefaultName("BuildPyramidBase");
   
-  SubscribeToTags({
-    EngineToGameTag::RobotDelocalized
-  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -111,7 +89,6 @@ Result BehaviorBuildPyramidBase::InitInternal(Robot& robot)
   _lastBasesCount = 0;
   _searchingForNearbyBaseBlockCount = 0;
   _searchingForNearbyStaticBlockCount = 0;
-  SetPickupInitialBlockLights();
   if(!robot.IsCarryingObject()){
     TransitionToDrivingToBaseBlock(robot);
   }else{
@@ -141,11 +118,22 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
   }
   
   // if a pyramid base was destroyed, stop the behavior to build the base again
-  if(pyramidBases.empty() &&
-     pyramids.empty() &&
-     _lastBasesCount > 0 &&
-     _behaviorState != State::ReactingToPyramid &&
-     _behaviorState != State::PlacingTopBlock){
+  const bool baseDestroyed = pyramidBases.empty() &&
+                             pyramids.empty() &&
+                             _lastBasesCount > 0;
+  
+  // We don't want to cancel the action if cozmo is in the middle of reacting to
+  // a confirmed pyramid or is commited to placing a block
+  const bool placingOrReacting = robot.GetMoveComponent().IsMoving() ||
+                                  _behaviorState == State::ReactingToPyramid;
+  
+  // we may want to react to the base being destroyed once the movement is over
+  // so don't update this just now
+  if(!placingOrReacting){
+    _lastBasesCount = static_cast<int>(pyramidBases.size());
+  }
+  
+  if(baseDestroyed && !placingOrReacting){
     StopWithoutImmediateRepetitionPenalty();
     return IBehavior::Status::Complete;
   }
@@ -158,7 +146,6 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
     }
   }
   
-  _lastBasesCount = static_cast<int>(pyramidBases.size());
   
   IBehavior::Status ret = IBehavior::UpdateInternal(robot);
   
@@ -190,7 +177,6 @@ void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(Robot& robot)
 void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
 {
   SET_STATE(PlacingBaseBlock);
-  UpdateAudioState(static_cast<int>(MusicState::InitialCubeCarry));
   
   // if a block has moved into the area we want to place the block, update where we are going to place the block
   if(!CheckBaseBlockPoseIsFree(_baseBlockOffsetX, _baseBlockOffsetY)){
@@ -213,7 +199,6 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
               [this, &robot](const ActionResult& result){
                 if(result == ActionResult::SUCCESS)
                 {
-                  SetPyramidBaseLights();
                   TransitionToObservingBase(robot);
                 }else{
                   if(_searchingForNearbyStaticBlockCount < kMaxSearchCount){
@@ -243,6 +228,39 @@ void BehaviorBuildPyramidBase::TransitionToObservingBase(Robot& robot)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorBuildPyramidBase::GetBaseBlockID(ObjectID& id) const
+{
+  if(_baseBlockID.IsSet()){
+    id = _baseBlockID;
+  }
+  
+  return _baseBlockID.IsSet();
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorBuildPyramidBase::GetStaticBlockID(ObjectID& id) const
+{
+  if(_staticBlockID.IsSet()){
+    id = _staticBlockID;
+  }
+  
+  return _staticBlockID.IsSet();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorBuildPyramidBase::GetTopBlockID(ObjectID& id) const
+{
+  if(_topBlockID.IsSet()){
+    id = _topBlockID;
+  }
+  
+  return _topBlockID.IsSet();
+}
+  
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
 void BehaviorBuildPyramidBase::TransitionToSearchingWithCallback(Robot& robot,  const ObjectID& objectID,  void(T::*callback)(Robot&))
 {
@@ -252,11 +270,13 @@ void BehaviorBuildPyramidBase::TransitionToSearchingWithCallback(Robot& robot,  
   compoundAction->AddAction(new SearchForNearbyObjectAction(robot, objectID));
   StartActing(compoundAction, callback);
 }
-
+  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
 {
+  ClearInvalidBlockIDs(robot);
+  
   using namespace BlockConfigurations;
   
   /// Check block config caches for pyramids and bases for fast forwarding
@@ -288,16 +308,10 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
   // set the base blocks for either pyramid base or full pyramid
   if(allBlocks.size() < 2){
     ResetPyramidTargets(robot);
-  }
-  else if(!_baseBlockID.IsSet() ||
-     !_staticBlockID.IsSet()){
-    const Pose3d& robotPose = robot.GetPose().GetWithRespectToOrigin();
+  }else if(!_baseBlockID.IsSet() ||
+           !_staticBlockID.IsSet()){
     
-    if(robot.IsCarryingObject()){
-      _baseBlockID = robot.GetCarryingObject();
-    }else{
-      _baseBlockID = GetNearestBlockToPose(robotPose, allBlocks);
-    }
+    _baseBlockID = GetBestBaseBlock(robot, allBlocks);
     
     const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
     if(nullptr == baseBlock)
@@ -307,11 +321,10 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
       _baseBlockID.UnSet();
       return;
     }
-    
     SafeEraseBlockFromBlockList(_baseBlockID, allBlocks);
-    auto baseBlockPose = baseBlock->GetPose().GetWithRespectToOrigin();
     
-    _staticBlockID = GetNearestBlockToPose(baseBlockPose, allBlocks);
+    
+    _staticBlockID = GetBestStaticBlock(robot, allBlocks);
     const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
     if(nullptr == staticBlock)
     {
@@ -335,7 +348,7 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
     const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
     if(staticBlock){
       auto staticBlockPose = staticBlock->GetPose().GetWithRespectToOrigin();
-      _topBlockID = GetNearestBlockToPose(staticBlockPose, allBlocks);
+      _topBlockID = GetNearestBlockToPose(robot, staticBlockPose, allBlocks);
     }
   }
 }
@@ -420,19 +433,71 @@ void BehaviorBuildPyramidBase::ResetPyramidTargets(const Robot& robot) const
   _baseBlockID.UnSet();
   _topBlockID.UnSet();
 }
-
+  
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID BehaviorBuildPyramidBase::GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const
+ObjectID BehaviorBuildPyramidBase::GetBestBaseBlock(const Robot& robot, const BlockList& availableBlocks) const
+{
+  const Pose3d& robotPose = robot.GetPose().GetWithRespectToOrigin();
+  
+  // If there's a stacked block it looks good to remove that and place it as the base
+  // of the new pyramid
+  for(auto& block: availableBlocks){
+    const ObservableObject* onTop = robot.GetBlockWorld().FindObjectOnTopOf(*block, BlockWorld::kOnCubeStackHeightTolerence);
+    if(onTop != nullptr){
+      return onTop->GetID();
+    }
+  }
+  
+  if(robot.IsCarryingObject()){
+    return robot.GetCarryingObject();
+  }else{
+    return GetNearestBlockToPose(robot, robotPose, availableBlocks);
+  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObjectID BehaviorBuildPyramidBase::GetBestStaticBlock(const Robot& robot, const BlockList& availableBlocks) const
+{
+  const Pose3d& robotPose = robot.GetPose().GetWithRespectToOrigin();
+  
+  if(robot.IsCarryingObject()){
+    return robot.GetCarryingObject();
+  }
+  
+  // Static blocks shouldn't have any blocks on top of them and should be on the ground
+  BlockList validStaticBlocks;
+  for(auto& block: availableBlocks){
+    const ObservableObject* onTop = robot.GetBlockWorld().FindObjectOnTopOf(*block, BlockWorld::kOnCubeStackHeightTolerence);
+
+    if(onTop == nullptr &&
+       block->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerence)){
+      validStaticBlocks.push_back(block);
+    }
+  }
+  
+  if(validStaticBlocks.size() > 0){
+    return GetNearestBlockToPose(robot, robotPose, validStaticBlocks);
+  }else{
+    return GetNearestBlockToPose(robot, robotPose, availableBlocks);
+  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObjectID BehaviorBuildPyramidBase::GetNearestBlockToPose(const Robot& robot, const Pose3d& pose, const BlockList& availableBlocks) const
 {
   f32 shortestDistanceSQ = -1.f;
   f32 currentDistance = -1.f;
   ObjectID nearestObject;
   
   //Find nearest block to pickup
-  for(auto block: allBlocks){
+  for(auto block: availableBlocks){
     auto blockPose = block->GetPose().GetWithRespectToOrigin();
     f32 newDistSquared;
     ComputeDistanceSQBetween(pose, blockPose, newDistSquared);
+
     if(currentDistance < shortestDistanceSQ || shortestDistanceSQ < 0){
       shortestDistanceSQ = currentDistance;
       nearestObject = block->GetID();
@@ -451,6 +516,51 @@ void BehaviorBuildPyramidBase::SafeEraseBlockFromBlockList(const ObjectID& objec
     iter = blockList.erase(iter);
   }
 }
+ 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBuildPyramidBase::ClearInvalidBlockIDs(const Robot& robot) const
+{
+  BlockList allBlocks;
+  BlockWorldFilter allBlocksFilter;
+  allBlocksFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+  robot.GetBlockWorld().FindMatchingObjects(allBlocksFilter, allBlocks);
+  
+  bool baseIsValid = false;
+  bool staticIsValid = false;
+  bool topIsValid = false;
+  
+  for(const auto& entry: allBlocks){
+    if(_baseBlockID.IsSet() &&
+       entry->GetID() == _baseBlockID){
+      baseIsValid = true;
+    }
+    
+    if(_staticBlockID.IsSet() &&
+       entry->GetID() == _staticBlockID){
+      staticIsValid = true;
+    }
+    
+    if(_topBlockID.IsSet() &&
+       entry->GetID() == _topBlockID){
+      topIsValid = true;
+    }
+  }
+  
+  if(_baseBlockID.IsSet() && !baseIsValid){
+    _baseBlockID.UnSet();
+  }
+  
+  if(_staticBlockID.IsSet() && !staticIsValid){
+    _staticBlockID.UnSet();
+  }
+  
+  if(_topBlockID.IsSet() && !topIsValid){
+    _topBlockID.UnSet();
+  }
+  
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBuildPyramidBase::AreAllBlockIDsUnique() const
@@ -462,161 +572,9 @@ bool BehaviorBuildPyramidBase::AreAllBlockIDsUnique() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
-{
-  switch(event.GetData().GetTag()){
-    case ExternalInterface::MessageEngineToGameTag::RobotDelocalized:
-    {
-      SmartRemoveCustomLightPattern(_staticBlockID, pyramidAnims);
-      SmartRemoveCustomLightPattern(_baseBlockID, pyramidAnims);
-      SmartRemoveCustomLightPattern(_topBlockID, pyramidAnims);
-      break;
-    }
-    default:
-    {
-      PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.HandleWhileRunning.UnknownTag",
-                          "Receviede unexpected tag");
-      break;
-    }
-  }
-
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::SetState_internal(State state, const std::string& stateName){
   _behaviorState = state;
   SetDebugStateName(stateName);
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::SetPickupInitialBlockLights()
-{
-  SmartSetCustomLightPattern(_staticBlockID, CubeAnimationTrigger::PyramidSingle);
-  SmartSetCustomLightPattern(_baseBlockID, CubeAnimationTrigger::PyramidPickup);
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::SetPyramidBaseLightsByID(Robot& robot, const ObjectID& staticID, const ObjectID& baseID)
-{
-  robot.GetCubeLightComponent().PlayLightAnim(baseID,
-                                              CubeAnimationTrigger::PyramidBaseBottom,
-                                              nullptr, true,
-                                              GetBaseFormedBaseLightsModifier(robot, staticID, baseID));
-  robot.GetCubeLightComponent().PlayLightAnim(staticID,
-                                              CubeAnimationTrigger::PyramidBaseBottom,
-                                              nullptr, true,
-                                              GetBaseFormedStaticLightsModifier(robot, staticID, baseID));
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::SetPyramidBaseLights()
-{
-  SmartRemoveCustomLightPattern(_staticBlockID, pyramidAnims);
-  SmartRemoveCustomLightPattern(_baseBlockID, pyramidAnims);
-  SmartRemoveCustomLightPattern(_topBlockID, pyramidAnims);
-  
-  SmartSetCustomLightPattern(_baseBlockID,
-                             CubeAnimationTrigger::PyramidBaseBottom,
-                             GetBaseFormedBaseLightsModifier(_robot, _staticBlockID, _baseBlockID));
-  SmartSetCustomLightPattern(_staticBlockID,
-                             CubeAnimationTrigger::PyramidBaseBottom,
-                             GetBaseFormedStaticLightsModifier(_robot, _staticBlockID, _baseBlockID));
-  SmartSetCustomLightPattern(_topBlockID,
-                             CubeAnimationTrigger::PyramidBaseTop);
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::SetFullPyramidLights()
-{
-  SmartRemoveCustomLightPattern(_staticBlockID, pyramidAnims);
-  SmartRemoveCustomLightPattern(_baseBlockID, pyramidAnims);
-  SmartRemoveCustomLightPattern(_topBlockID, pyramidAnims);
-  
-  SmartSetCustomLightPattern(_staticBlockID, CubeAnimationTrigger::PyramidFlourish);
-  SmartSetCustomLightPattern(_baseBlockID, CubeAnimationTrigger::PyramidFlourish);
-  SmartSetCustomLightPattern(_topBlockID, CubeAnimationTrigger::PyramidFlourish);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::SetPyramidFlourishLights()
-{
-  SmartRemoveCustomLightPattern(_staticBlockID, pyramidAnims);
-  SmartRemoveCustomLightPattern(_baseBlockID, pyramidAnims);
-  SmartRemoveCustomLightPattern(_topBlockID, pyramidAnims);
-  
-  SmartSetCustomLightPattern(_staticBlockID, CubeAnimationTrigger::PyramidDenouement);
-  SmartSetCustomLightPattern(_baseBlockID, CubeAnimationTrigger::PyramidDenouement);
-  SmartSetCustomLightPattern(_topBlockID, CubeAnimationTrigger::PyramidDenouement, GetDenouementTopLightsModifier());
-  
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectLights BehaviorBuildPyramidBase::GetBaseFormedBaseLightsModifier(Robot& robot,
-                                                                       const ObjectID& staticID,
-                                                                       const ObjectID& baseID)
-{
-  ObjectLights baseBlockLights;
-  baseBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
-
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
-  if(staticBlock == nullptr || baseBlock == nullptr){
-    return baseBlockLights;
-  }
-  
-  using namespace BlockConfigurations;
-  Pose3d baseMidpoint;
-  PyramidBase::GetBaseInteriorMidpoint(robot, baseBlock, staticBlock, baseMidpoint);
-  
-  baseBlockLights.relativePoint = {baseMidpoint.GetTranslation().x(),
-                                   baseMidpoint.GetTranslation().y()};
-  baseBlockLights.offset = {{kBaseFormedTimeOn*4,0,kBaseFormedTimeOn*2,kBaseFormedTimeOn*3}};
-
-  return baseBlockLights;
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectLights BehaviorBuildPyramidBase::GetBaseFormedStaticLightsModifier(Robot& robot,
-                                                                         const ObjectID& staticID,
-                                                                         const ObjectID& baseID)
-{
-  ObjectLights staticBlockLights;
-  staticBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
-
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
-  if(staticBlock == nullptr || baseBlock == nullptr){
-    return staticBlockLights;
-  }
- 
-  using namespace BlockConfigurations;
-  Pose3d staticMidpoint;
-  PyramidBase::GetBaseInteriorMidpoint(robot, staticBlock, baseBlock, staticMidpoint);
-  
-  staticBlockLights.relativePoint = {staticMidpoint.GetTranslation().x(),
-                                     staticMidpoint.GetTranslation().y()};
-  
-  return staticBlockLights;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectLights BehaviorBuildPyramidBase::GetDenouementTopLightsModifier() const
-{
-  ObjectLights kFlourishTopLights;
-  kFlourishTopLights.onPeriod_ms = {{kPyramidFlourishShutoff_sec,
-                                     kPyramidFlourishShutoff_sec*2,
-                                     kPyramidFlourishShutoff_sec*3,
-                                     kPyramidFlourishShutoff_sec*4}};
-  
-  return kFlourishTopLights;
-
 }
 
 } //namespace Cozmo

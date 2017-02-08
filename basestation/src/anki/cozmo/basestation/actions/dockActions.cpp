@@ -364,6 +364,16 @@ namespace Anki {
         }
       }
       
+      // If closestIndex was never changed
+      if(closestIndex == preActionPoses.size())
+      {
+        PRINT_NAMED_WARNING("IDockAction.GetPreActionPose.NoClosestPose",
+                            "Could not find a closest preAction pose for object %d",
+                            dockObject->GetID().GetValue());
+        output.actionResult = ActionResult::BAD_POSE;
+        return;
+      }
+      
       PRINT_CH_INFO("Actions", "IsCloseEnoughToPreActionPose.ClosestPoint",
                     "Closest point (%f, %f) robot (%f, %f) dist = %f",
                     preActionPoses[closestIndex].GetPose().GetTranslation().x(),
@@ -1333,7 +1343,7 @@ namespace Anki {
             if(object->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, // dock obj orig pose is w.r.t. robot
                                                         carryObject->GetRotationAmbiguities(),
                                                         carryObject->GetSameDistanceTolerance()*0.5f,
-                                                        carryObject->GetSameAngleTolerance(), true,
+                                                        carryObject->GetSameAngleTolerance(),
                                                         Tdiff, angleDiff))
             {
               PRINT_CH_INFO("Actions", "PickupObjectAction.Verify.ObjectInOrigPose",

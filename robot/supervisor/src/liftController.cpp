@@ -376,7 +376,7 @@ namespace Anki {
                                      const f32 accel_rad_per_sec2,
                                      bool useVPG)
       {
-        if (bracing_) {
+        if (!enable_ || bracing_) {
           return;
         }
         

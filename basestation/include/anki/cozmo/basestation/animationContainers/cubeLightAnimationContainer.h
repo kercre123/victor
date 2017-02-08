@@ -30,7 +30,7 @@ public:
   CubeAnimation* GetAnimation(const std::string& name);
   const CubeAnimation* GetAnimation(const std::string& name) const;
   
-  Result DefineFromJson(const Json::Value& jsonRoot, std::string& animationName);
+  Result DefineFromJson(const Json::Value& jsonRoot);
   
 private:
 

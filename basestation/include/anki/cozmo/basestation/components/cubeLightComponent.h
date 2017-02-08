@@ -57,7 +57,12 @@ struct ObjectLights {
   u32 rotationPeriod_ms = 0;
   MakeRelativeMode makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   Point2f relativePoint;
+  
+  bool operator==(const ObjectLights& other) const;
+  bool operator!=(const ObjectLights& other) const { return !(*this == other);}
 };
+  
+
 
 // A single light pattern (multiple light patterns make up an animation)
 struct LightPattern
@@ -69,7 +74,7 @@ struct LightPattern
   ObjectLights lights;
   
   // How long this pattern should be played
-  u32 duration_ms;
+  u32 duration_ms = 0;
   
   // Whether or not this pattern can be overridden by another pattern
   bool canBeOverridden = true;

@@ -10,22 +10,22 @@ public class AndroidNetworkCell : MonoBehaviour {
   [SerializeField]
   private AnkiButton _Button;
 
-  private Color _DefaultColor;
+  [SerializeField]
+  private GameObject _SelectedHighlight;
 
   public void Init(string labelText, UnityEngine.Events.UnityAction buttonAction) {
     _Button.onClick.RemoveAllListeners();
     _Button.Initialize(buttonAction, "select", "android.network");
     _Label.text = labelText;
-    _DefaultColor = _Label.color;
   }
 
   public string text { get { return _Label.text; } }
 
   public void Select() {
-    _Label.color = Color.red;
+    _SelectedHighlight.SetActive(true);
   }
 
   public void Deselect() {
-    _Label.color = _DefaultColor;
+    _SelectedHighlight.SetActive(false);
   }
 }

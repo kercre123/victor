@@ -3,7 +3,8 @@ namespace Cozmo {
 
 enum uint_8 FeatureType {
   ObjectTapInteractions,
-  AndroidConnectionFlow
+  AndroidConnectionFlow,
+  SpeedTapMultiPlayer,
 }
 
 structure FeatureToggle {

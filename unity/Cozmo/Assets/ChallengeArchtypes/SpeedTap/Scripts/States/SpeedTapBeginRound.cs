@@ -7,18 +7,13 @@ namespace SpeedTap {
 
     public override void Enter() {
       base.Enter();
-      // This is here rather than the Handle Light Cube Tap event in Player Confirm
-      // in order to fix an issue where the claim cube sound could be repeatedly triggered
-      // with the state machine paused.
-      // Ben wants to use the same sound for player tap and for Cozmo tap
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Cube_Cozmo_Tap);
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
 
       // Show wide slide
       GameObject roundBeginSlide = _SpeedTapGame.SharedMinigameView.ShowWideGameStateSlide(
                                      _SpeedTapGame.SpeedTapRoundBeginSlidePrefab.gameObject, "speedTap_round_begin_slide");
       SpeedTapRoundBeginSlide roundBeginSlideScript = roundBeginSlide.GetComponent<SpeedTapRoundBeginSlide>();
-      roundBeginSlideScript.SetText(_SpeedTapGame.CurrentRound, _SpeedTapGame.TotalRounds);
+      roundBeginSlideScript.SetText(_SpeedTapGame.CurrentRound, _SpeedTapGame.TotalRounds, _SpeedTapGame.GetPlayerCount());
 
       // Play banner animation
       string bannerText = Localization.Get(LocalizationKeys.kSpeedTapTextGetReady);

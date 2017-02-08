@@ -116,6 +116,7 @@ public class FirstTimeConnectView : BaseView {
   }
 
   private void HandleSoundCheckComplete() {
+    _SoundCheckModalInstance.OnSoundCheckComplete -= HandleSoundCheckComplete;
     _SoundCheckModalInstance.DialogClosed += ShowProfileCreationScreen;
     UIManager.CloseModal(_SoundCheckModalInstance);
   }
@@ -130,7 +131,9 @@ public class FirstTimeConnectView : BaseView {
   }
 
   private void HandleProfileCreationDone() {
-    ShowPlaceCozmoOnCharger();
+    _ProfileCreationModalInstance.DialogCloseAnimationFinished += ShowPlaceCozmoOnCharger;
+    _ProfileCreationModalInstance.DialogClosed -= HandleProfileCreationDone;
+    UIManager.CloseModal(_ProfileCreationModalInstance);
   }
 
   private void ShowPlaceCozmoOnCharger() {
@@ -154,6 +157,7 @@ public class FirstTimeConnectView : BaseView {
 
   private void HandleConnectButton() {
     _PlaceCozmoOnChargerModalInstance.DialogCloseAnimationFinished += StartConnectionFlow;
+    _PlaceCozmoOnChargerModalInstance.OnConnectButton -= HandleConnectButton;
     UIManager.CloseModal(_PlaceCozmoOnChargerModalInstance);
   }
 

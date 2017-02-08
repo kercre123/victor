@@ -57,7 +57,8 @@
         }
       ],
       
-      "emotionEventOnComplete": "StrongWorkoutCompleted"
+      "emotionEventOnComplete":                "StrongWorkoutCompleted",
+      "additionalBehaviorObjectiveOnComplete": "PerformedStrongWorkout"
     },
     {
       "preLiftAnim":    "WorkoutPreLift_mediumEnergy",

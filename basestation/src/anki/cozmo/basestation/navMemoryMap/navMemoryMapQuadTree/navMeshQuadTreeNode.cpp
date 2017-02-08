@@ -1,5 +1,5 @@
 /**
- * File: navMeshQuadTreeNode.h
+ * File: navMeshQuadTreeNode.cpp
  *
  * Author: Raul
  * Date:   12/09/2015
@@ -24,6 +24,40 @@
 
 namespace Anki {
 namespace Cozmo {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helpers
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace
+{
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// convert between our internal node content type and an external content type
+ExternalInterface::ENodeContentTypeEnum ConvertContentType(ENodeContentType contentType )
+{
+  using namespace ExternalInterface;
+  
+  ExternalInterface::ENodeContentTypeEnum externalContentType = ExternalInterface::ENodeContentTypeEnum::Unknown;
+  switch (contentType) {
+    case ENodeContentType::Invalid:               { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
+    case ENodeContentType::Subdivided:            { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this (we only send leaves)
+    case ENodeContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;         break; }
+    case ENodeContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle; break; }
+    case ENodeContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;    break; }
+    case ENodeContentType::ObstacleCube:          { externalContentType = ENodeContentTypeEnum::ObstacleCube;    break; }
+    case ENodeContentType::ObstacleCubeRemoved:   { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
+    case ENodeContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger; break; }
+    case ENodeContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
+    case ENodeContentType::ObstacleUnrecognized:  { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this (unsupported)
+    case ENodeContentType::Cliff:                 { externalContentType = ENodeContentTypeEnum::Cliff;           break; }
+    case ENodeContentType::InterestingEdge:       { externalContentType = ENodeContentTypeEnum::VisionBorder;    break; }
+    case ENodeContentType::NotInterestingEdge:    { externalContentType = ENodeContentTypeEnum::VisionBorder;    break; }
+    case ENodeContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeNode._Count"); break; }
+  }
+  return externalContentType;
+}
+
+} // namespace
 
 static_assert( !std::is_copy_assignable<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
 static_assert( !std::is_copy_constructible<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
@@ -516,6 +550,24 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
     // delegate on each child
     for( const auto& childPtr : _childrenPtr ) {
       childPtr->AddQuadsToDraw(quadVector);
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeNode::AddQuadsToSend(QuadInfoVector& quadInfoVector) const
+{
+  // if we have children, delegate on them, otherwise render ourselves
+  if ( _childrenPtr.empty() )
+  {
+    const auto contentTypeExternal = ConvertContentType(_content.type);
+    quadInfoVector.emplace_back(ExternalInterface::MemoryMapQuadInfo(contentTypeExternal, _level));
+  }
+  else
+  {
+    // delegate on each child
+    for( const auto& childPtr : _childrenPtr ) {
+      childPtr->AddQuadsToSend(quadInfoVector);
     }
   }
 }

@@ -44,6 +44,8 @@ protected:
 private:
   ObjectID _lastObjectReactedTo;
   
+  std::unique_ptr<ObservableObject> _ghostObject;
+  
   bool _objectInCurrentFrame = true;
   
   // Whether or not we are turning towards a ghost object

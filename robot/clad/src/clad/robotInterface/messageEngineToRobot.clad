@@ -21,6 +21,7 @@
 #include "clad/robotInterface/appConnectMessage.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/cameraParams.clad"
+#include "clad/types/motorTypes.clad"
 
 
 namespace Anki {
@@ -309,9 +310,13 @@ message CheckLiftLoad
 {
 }
 
-message EnableLiftPower
+// Enable/Disable power to lift completely.
+// Once disabled, must be re-enabled before motor can be commanded again.
+// Only works for MOTOR_LIFT and MOTOR_HEAD.
+message EnableMotorPower
 {
-  bool enable
+  MotorID motorID,
+  bool    enable
 }
 
 message SetHeadDeviceLock
@@ -469,7 +474,7 @@ union EngineToRobot
   FlashObjectIDs                flashObjectIDs              = 0x4D,
   ObjectBeingCarried            setObjectBeingCarried       = 0x4E,
   CheckLiftLoad                 checkLiftLoad               = 0x4F,
-  EnableLiftPower               enableLiftPower             = 0x50,
+  EnableMotorPower              enableMotorPower            = 0x50,
   SetMotionModelParams          setMotionModelParams        = 0x51,
   EnterSleepMode                enterSleepMode              = 0x52,
   PowerState                    powerState                  = 0x53,

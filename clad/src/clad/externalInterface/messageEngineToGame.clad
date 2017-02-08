@@ -33,6 +33,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/cladPoint.clad"
 #include "clad/types/cladRect.clad"
+#include "clad/types/gameStatusFlag.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
@@ -120,6 +121,35 @@ message Bogus {
 }
 */
 
+message CurrentCameraParams {
+  float_32 cameraGain,
+  uint_16  exposure_ms,
+  bool     autoExposureEnabled
+}
+
+// Camera configuration for the Robot (set per-robot at the factory)
+structure CameraConfig {
+  float_32 focalLengthX,
+  float_32 focalLengthY,
+  float_32 centerX,
+  float_32 centerY,
+  float_32 fovX,  // Full FOV in degrees
+  float_32 fovY,  // Full FOV in degrees
+  int_32   minCameraExposureTime_ms,
+  int_32   maxCameraExposureTime_ms,
+  float_32 minCameraGain,
+  float_32 maxCameraGain
+}
+
+// All settings that are static and unique for a given robot
+message PerRobotSettings {
+  uint_32 robotID,
+  uint_32 serialNumberHead,
+  uint_32 serialNumberBody,
+  uint_32 modelNumber,
+  int_32  hwVersion,
+  CameraConfig cameraConfig
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////  ROBOT STATE  ///////////////////////////////////
@@ -492,13 +522,13 @@ message JsonDasLogAllSentMessage {
 
 message VerifyDebugConsoleFuncMessage {
   string funcName,
-  string statusMessage,
+  string[uint_16] statusMessage,
   bool success
 }
 
 message VerifyDebugConsoleVarMessage {
   string varName,
-  string statusMessage,
+  string[uint_16] statusMessage,
   ConsoleVarUnion varValue,
   bool success
 }
@@ -677,6 +707,11 @@ message BehaviorObjectiveAchieved{
   BehaviorObjective behaviorObjective
 }
 
+// notify game that build pyramid spark prerequisites have been met/not met
+message BuildPyramidPreReqsChanged{
+  bool areCubesUpright
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  Onboarding  ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -695,7 +730,48 @@ enum uint_8 OnboardingStateEnum
 }
 
 message OnboardingState {
-OnboardingStateEnum stateNum
+  OnboardingStateEnum stateNum
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////  MEMORY MAP DATA  ///////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// We are about to send one or several messages with memory map info
+message MemoryMapMessageBegin
+{
+  uint_32  originId,
+  int_32   rootDepth,
+  float_32 rootSize_mm
+}
+
+enum uint_8 ENodeContentTypeEnum
+{
+  Unknown,
+  ClearOfObstacle,
+  ClearOfCliff,
+  ObstacleCube,
+  ObstacleCharger,
+  Cliff,
+  VisionBorder
+}
+
+// Info about an individual quad in the memory map
+structure MemoryMapQuadInfo
+{
+  ENodeContentTypeEnum content,
+  uint_8               depth
+}
+
+// A group of quad infos
+message MemoryMapMessage
+{
+  MemoryMapQuadInfo quadInfos[uint_16]
+}
+
+// We finished sending memory map messages
+message MemoryMapMessageEnd
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////

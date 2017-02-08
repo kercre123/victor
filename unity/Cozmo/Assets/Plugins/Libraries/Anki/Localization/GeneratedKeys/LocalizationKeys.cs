@@ -11,6 +11,7 @@ public static class LocalizationKeys {
   public const string kBehaviorKnockOverCubes = "behavior.KnockOverCubes";
   public const string kBehaviorPopAWheelie = "behavior.PopAWheelie";
   public const string kBehaviorPounceOnMotion = "behavior.PounceOnMotion";
+  public const string kBehaviorFistBump = "behavior.FistBump";
   public const string kBehaviorRollBlock = "behavior.RollBlock";
   public const string kBehaviorStackCube = "behavior.StackCube";
   public const string kBehaviorLookingForFaces = "behavior.LookingForFaces";
@@ -33,6 +34,7 @@ public static class LocalizationKeys {
   public const string kBehaviorWorkout = "behavior.Workout";
   public const string kBehaviorCheckForStackAtInterval = "behavior.CheckForStackAtInterval";
   public const string kBehaviorLookForFaceAndCube = "behavior.LookForFaceAndCube";
+  public const string kBehaviorLookInPlaceForCube = "behavior.LookInPlaceForCube";
 
   #endregion
 
@@ -311,6 +313,9 @@ public static class LocalizationKeys {
   public const string kSpeedTapTapBlock = "speedTap.tapBlock";
   public const string kSpeedTapSeparateBlocks = "speedTap.separateBlocks";
   public const string kSpeedTapTapBlockForRound = "speedTap.tapBlockForRound";
+  public const string kSpeedTapMultiplayerOverTime = "speedTap.multiplayer.overTime";
+  public const string kSpeedTapMultiplayerPlayer1 = "speedTap.multiplayer.player1";
+  public const string kSpeedTapMultiplayerPlayer2 = "speedTap.multiplayer.player2";
   public const string kMinigameDontMoveCozmoTitle = "minigame.dontMoveCozmo.title";
   public const string kMinigameDontMoveCozmoDescription = "minigame.dontMoveCozmo.description";
   public const string kMinigameLostTrackOfBlockTitle = "minigame.lostTrackOfBlock.title";
@@ -345,6 +350,15 @@ public static class LocalizationKeys {
   public const string kSpeedTapTextBestOf = "speedTap.text.bestOf";
   public const string kSpeedTapTextDisplayWinnerSubtitle = "speedTap.text.displayWinnerSubtitle";
   public const string kSpeedTapTextRoundScore = "speedTap.text.roundScore";
+  public const string kSpeedTapTextRoundScoreMP = "speedTap.text.roundScoreMP";
+  public const string kSpeedTapTextMPScorePlayer = "speedTap.text.MP.score.player";
+  public const string kSpeedTapTextMPBestOf = "speedTap.text.MP.bestOf";
+  public const string kSpeedTapTitleMPLocked = "speedTap.title.MP.Locked";
+  public const string kSpeedTapTextMPLocked = "speedTap.text.MP.Locked";
+  public const string kSpeedTapGameLabelX2 = "speedTapGame.label.x2";
+  public const string kSpeedTapGameLabelVs = "speedTapGame.label.vs";
+  public const string kSpeedTapGameModeHvC = "speedTapGame.mode.HvC";
+  public const string kSpeedTapGameModeHvHvC = "speedTapGame.mode.HvHvC";
   public const string kCozmoSaysInstructionsLabel = "cozmoSays.instructions.label";
   public const string kSayCozmoButtonSay = "sayCozmo.button.say";
 
@@ -431,6 +445,7 @@ public static class LocalizationKeys {
   public const string kRewardDescriptionQuickTapAccuracy100 = "reward.description.QuickTap.Accuracy.100";
   public const string kRewardDescriptionQuickTapShutoutSingleRound = "reward.description.QuickTap.Shutout.SingleRound";
   public const string kRewardDescriptionQuickTapTieBreakerOneRound = "reward.description.QuickTap.TieBreaker.OneRound";
+  public const string kRewardDescriptionQuickTapPlayMP = "reward.description.QuickTap.PlayMP";
   public const string kRewardDescriptionKeepawayPlayed = "reward.description.Keepaway.Played";
   public const string kRewardDescriptionKeepawayWon = "reward.description.Keepaway.Won";
   public const string kRewardDescriptionKeepawayShutout = "reward.description.Keepaway.Shutout";
@@ -470,6 +485,7 @@ public static class LocalizationKeys {
   public const string kSettingsSdkPanelSdkUrlLabel = "settings.sdkPanel.sdkUrl.label";
   public const string kSettingsSdkPanelSdkNotConnectedText = "settings.sdkPanel.sdkNotConnected.text";
   public const string kSettingsSdkPanelWrongVersionText = "settings.sdkPanel.wrongVersion.text";
+  public const string kSettingsSdkPanelHideScreenButtonText = "settings.sdkPanel.hideScreenButton.text";
   public const string kSettingsSleepCozmoPanelButtonSleepCozmo = "settings.sleepCozmoPanel.button.sleepCozmo";
   public const string kSettingsSleepCozmoPanelConfirmationModalTitle = "settings.sleepCozmoPanel.confirmationModal.title";
   public const string kSettingsSleepCozmoPanelConfirmModalDescription = "settings.sleepCozmoPanel.confirmModal.description";
@@ -599,6 +615,10 @@ public static class LocalizationKeys {
   public const string kUnlockableBitsRequiredEarnMore = "unlockable.BitsRequired.EarnMore";
   public const string kUnlockableMysteryTitle = "unlockable.Mystery.Title";
   public const string kUnlockableMysteryDescription = "unlockable.Mystery.Description";
+  public const string kUnlockableFistBumpTitle = "unlockable.FistBump.Title";
+  public const string kUnlockableFistBumpDescription = "unlockable.FistBump.Description";
+  public const string kUnlockableFistBumpSparkButtonDescription = "unlockable.FistBump.SparkButtonDescription";
+  public const string kUnlockableFistBumpSparkedStateDescription = "unlockable.FistBump.SparkedStateDescription";
   public const string kUnlockableWorkoutTitle = "unlockable.Workout.Title";
   public const string kUnlockableWorkoutDescription = "unlockable.Workout.Description";
   public const string kUnlockableWorkoutSparkButtonDescription = "unlockable.Workout.SparkButtonDescription";
@@ -653,6 +673,8 @@ public static class LocalizationKeys {
   public const string kSparksSparkConfirmQuitDescription = "sparks.Spark.ConfirmQuit.Description";
   public const string kSparksNotEnoughSparksTitle = "sparks.NotEnoughSparks.Title";
   public const string kSparksNotEnoughSparksDesc = "sparks.NotEnoughSparks.Desc";
+  public const string kSparksCubesNeedUprightTitle = "sparks.CubesNeedUpright.Title";
+  public const string kSparksCubesNeedUprightDesc = "sparks.CubesNeedUpright.Desc";
 
   #endregion
 

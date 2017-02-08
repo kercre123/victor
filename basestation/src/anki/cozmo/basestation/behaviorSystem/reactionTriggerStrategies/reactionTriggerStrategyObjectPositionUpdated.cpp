@@ -48,7 +48,6 @@ bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehavior(const R
   const bool robotInValidState = kEnableObjectAcknowledgement &&
                                   !robot.IsCarryingObject() &&
                                   !robot.IsPickingOrPlacing() &&
-                                  !robot.IsOnCharger() &&
                                   !robot.IsOnChargerPlatform();
   
   if(robotInValidState && HasDesiredReactionTargets(robot)){
@@ -117,7 +116,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::AlwaysHandlePoseBasedInternal
   
 }
 
-void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStartegyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
 {
   behavior->AddListener(this);
   _classTriggerMapsTo = behavior->GetClass();

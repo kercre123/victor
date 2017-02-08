@@ -99,11 +99,18 @@ void BehaviorCheckForStackAtInterval::TransitionToSetup(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCheckForStackAtInterval::TransitionToFacingBlock(Robot& robot)
 {
-  const ObjectID& objectIDToLookAt = GetKnownObjectID(_knownBlockIndex);
-  IActionRunner* action = new TurnTowardsObjectAction(robot, objectIDToLookAt, M_PI);
-  
-  // check above even if turn action fails
-  StartActing(action, &BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock);
+  const ObservableObject* obj = GetKnownObject(robot, _knownBlockIndex);
+  if(nullptr != obj)
+  {
+    IActionRunner* action = new TurnTowardsObjectAction(robot, obj->GetID(), M_PI);
+    
+    // check above even if turn action fails
+    StartActing(action, &BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock);
+  }
+  else
+  {
+    TransitionToCheckingAboveBlock(robot);
+  }
 }
 
   

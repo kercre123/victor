@@ -26,8 +26,6 @@ namespace Cozmo {
     ActiveCube(Type type);
     ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
     
-    virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
-    
     virtual ActiveCube* CloneType() const override {
       return new ActiveCube(this->_type);
     }
@@ -73,7 +71,8 @@ namespace Cozmo {
     // out to actually set the physical block to match
     //void FillMessage(SetBlockLights& msg) const;
 
-
+    // NOTE: No override for GetRotationAmbiguities because ActiveCubes have no ambiguity.
+    //       (They have different markers on all sides.)
     
   protected:
     

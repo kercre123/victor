@@ -57,7 +57,14 @@ namespace Cozmo {
       }
 
       protected override void CleanUp() {
+        CancelInvoke("HandleTimeoutComplete");
+      }
 
+      // This function is referenced by stringname in Invoke
+      private void HandleTimeoutComplete() {
+        if (!IsClosed) {
+          CloseDialog();
+        }
       }
 
       public void InitializeAlertData(AlertModalData initializationData) {
@@ -75,6 +82,10 @@ namespace Cozmo {
 
         if (initializationData.DialogCloseAnimationFinishedCallback != null) {
           this.DialogCloseAnimationFinished += initializationData.DialogCloseAnimationFinishedCallback;
+        }
+
+        if (initializationData.Timeout_Sec > 0.0f) {
+          Invoke("HandleTimeoutComplete", initializationData.Timeout_Sec);
         }
       }
 
@@ -194,6 +205,8 @@ namespace Cozmo {
       public readonly object[] TitleLocArgs;
       public readonly object[] DescLocArgs;
       public readonly object[] PrimaryButtonLocArgs;
+      // < 0 for no timeout
+      public readonly float Timeout_Sec;
 
       public AlertModalData(string dasEventAlertName,
                             string titleLocKey,
@@ -205,7 +218,8 @@ namespace Cozmo {
                             BaseDialog.SimpleBaseDialogHandler dialogCloseAnimationFinishedCallback = null,
                             object[] titleLocArgs = null,
                             object[] descLocArgs = null,
-                            object[] primaryButtonLocArgs = null) {
+                            object[] primaryButtonLocArgs = null,
+                            float timeoutSec = -1.0f) {
         this.DasEventAlertName = dasEventAlertName;
         this.TitleLocKey = titleLocKey;
         this.DescriptionLocKey = descLocKey;
@@ -217,6 +231,7 @@ namespace Cozmo {
         this.TitleLocArgs = titleLocArgs;
         this.DescLocArgs = descLocArgs;
         this.PrimaryButtonLocArgs = primaryButtonLocArgs;
+        this.Timeout_Sec = timeoutSec;
       }
     }
 

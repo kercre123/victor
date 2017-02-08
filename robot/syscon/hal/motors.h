@@ -5,15 +5,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-enum MotorID
-{
-  MOTOR_LEFT_WHEEL,
-  MOTOR_RIGHT_WHEEL,
-  MOTOR_LIFT,
-  MOTOR_HEAD,
-  MOTOR_COUNT
-};
-
 namespace Motors {
   // Initialize the PWM peripheral on the designated pins in the source file.
   void init();

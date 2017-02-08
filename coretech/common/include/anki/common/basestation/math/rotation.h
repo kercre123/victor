@@ -275,6 +275,29 @@ namespace Anki {
                        RotationVector3d &Rvec_out);
 
   
+  // Stores a vector of rotations to consider as ambiguous and thus the same.
+  // useAbsoluteValue=true is a shortcut to reduce the number of rotations stored by ignoring sign when comparing.
+  class RotationAmbiguities
+  {
+  public:
+    
+    // Default constructor: no ambiguities
+    RotationAmbiguities();
+    
+    RotationAmbiguities(bool useAbsoluteValue, std::vector<RotationMatrix3d>&& rotations);
+    
+    // Returns true if the given rotation is within threshold of any ambiguous rotation stored here
+    bool IsRotationSame(const Rotation3d& R, const Radians& angleThreshold) const;
+    
+    bool HasAmbiguities() const { return !_rotations.empty(); }
+    
+  private:
+    
+    std::vector<RotationMatrix3d> _rotations;
+    bool _useAbsoluteValue;
+    
+  }; // class RotationAmbiguities
+  
 #pragma mark --- Inlined / Templated Implementations ---
   
   inline Radians RotationVector3d::GetAngle(void) const {

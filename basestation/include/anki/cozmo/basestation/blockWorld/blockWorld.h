@@ -343,6 +343,9 @@ namespace Anki
       // Visualize the navigation memory information
       void DrawNavMemoryMap() const;
       
+      // Send navigation memory map (e.g. so SDK can get the data)
+      void BroadcastNavMemoryMap();
+      
       //
       // Visualization
       //
@@ -583,6 +586,8 @@ namespace Anki
       
       std::vector<Signal::SmartHandle> _eventHandles;
       
+      float _memoryMapBroadcastRate_sec = -1.0f;      // (Negative means don't send)
+      float _nextMemoryMapBroadcastTimeStamp = 0.0f;  // The next time we should broadcast
       
       TimeStamp_t _currentObservedMarkerTimestamp = 0;
       std::unique_ptr<BlockConfigurations::BlockConfigurationManager> _blockConfigurationManager;

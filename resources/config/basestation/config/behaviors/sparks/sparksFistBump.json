@@ -1,0 +1,13 @@
+{
+  "behaviorClass": "FistBump",
+  "name": "sparksFistBump",
+  "displayNameKey":"behavior.FistBump",
+  "requiredUnlockId": "FistBump",
+  "behaviorGroups": [
+    "SparksFistBump"
+  ],
+  "flatScore": 5.0,
+
+  "maxTimeToLookForFace_s": 5.0,
+  "abortIfNoFaceFound": false
+}

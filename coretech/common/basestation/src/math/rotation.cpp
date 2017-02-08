@@ -919,4 +919,45 @@ namespace Anki {
   } // Rodrigues(Rmat, Rvec)
   
   
+#if 0
+#pragma mark --- RotationAmbiguities ---
+#endif
+  
+  RotationAmbiguities::RotationAmbiguities()
+  : _useAbsoluteValue(false)
+  {
+    
+  }
+  
+  RotationAmbiguities::RotationAmbiguities(bool useAbsoluteValue, std::vector<RotationMatrix3d>&& rotations)
+  : _rotations(std::move(rotations))
+  , _useAbsoluteValue(useAbsoluteValue)
+  {
+    
+  }
+  
+  bool RotationAmbiguities::IsRotationSame(const Rotation3d& R, const Radians& angleThreshold) const
+  {
+    if(!_rotations.empty())
+    {
+      // TODO: Do this directly with quaternions instead of converting to RotationMatrix
+      RotationMatrix3d RdiffMat( R.GetRotationMatrix() );
+      
+      if(_useAbsoluteValue) {
+        // The ambiguities are assumed to be defined up various sign flips
+        RdiffMat.Abs();
+      }
+      
+      // Check to see if the rotational part of the pose difference is
+      // similar enough to one of the rotational ambiguities
+      for(const auto& R_ambiguity : _rotations) {
+        if(RdiffMat.GetAngleDiffFrom(R_ambiguity) < angleThreshold) {
+          return true;
+        }
+      }
+    } // if(!R_ambiguities.empty())
+
+    return false;
+  }
+  
 } // namespace Anki

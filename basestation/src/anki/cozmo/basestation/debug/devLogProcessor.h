@@ -38,15 +38,17 @@ public:
   // Returns whether there is more data in the logs to process
   bool AdvanceTime(uint32_t time_ms);
 
-  // return the total time this log will play for (max of it's internal logs)
-  uint32_t GetLogTime() const;
-
   // return the current playback time
   uint32_t GetCurrPlaybackTime() const;
 
   // return the best estimate of the last time in this log. Note that this is just an estimate, the log may be
   // longer than this
   uint32_t GetFinalTime_ms() const;
+
+  // return the number of milliseconds that the caller should advance to get another print message. Note that
+  // this is a rough, it may undercount and print nothing, or there may be multiple prints within the same
+  // timestamp
+  uint32_t GetNextPrintTime_ms() const;
   
   void SetVizMessageCallback(DevLogReader::DataCallback callback);
   void SetPrintCallback(DevLogReader::DataCallback callback);

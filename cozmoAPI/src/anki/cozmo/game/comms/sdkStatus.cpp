@@ -66,6 +66,9 @@ void SdkStatus::StopRobotDoingAnything()
   // Turn off all Cube Lights
   _externalInterface->Broadcast( GToE(ExternalInterface::EnableLightStates(false, -1)) );
   
+  // Ensure auto-exposure is (re) enabled
+  _externalInterface->Broadcast( GToE(ExternalInterface::SetCameraSettings(true, 0, 0.0f)) );
+  
   // Stop everything else
   _externalInterface->Broadcast( GToE(ExternalInterface::StopRobotForSdk()) );
 }

@@ -47,13 +47,20 @@ namespace Cozmo {
       public CubeCycleColors TapMeColor { get { return _TapMeColor; } }
 
       [SerializeField]
-      private LightCubeSprite _LightCubeSpritePrefab;
-      public LightCubeSprite LightCubeSpritePrefab { get { return _LightCubeSpritePrefab; } }
+      private CubeColor _CubeUprightColor;
+      public CubeColor CubeUprightColor { get { return _CubeUprightColor; } }
+
+      [SerializeField]
+      private LightCubeSprite _TopDownLightCubeSpritePrefab;
+      public LightCubeSprite TopDownLightCubeSpritePrefab { get { return _TopDownLightCubeSpritePrefab; } }
+
+      [SerializeField]
+      private LightCubeSprite _IsometricLightCubeSpritePrefab;
+      public LightCubeSprite IsometricLightCubeSpritePrefab { get { return _IsometricLightCubeSpritePrefab; } }
 
       [System.Serializable]
       public class CubeColor {
-        // TODO: Use generic sprites from mock tray or write a shader instead of
-        // having a sprite for every color in existence
+        // TODO: Remove and only track color to tint sprites
         public Sprite uiSprite;
         public Color lightColor;
       }

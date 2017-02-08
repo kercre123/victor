@@ -285,8 +285,8 @@ public:
   void Delocalize(bool isCarryingObject);
 
   // Updates the pose of the robot.
-  // Sends new pose down to robot.
-  void SetNewPose(const Pose3d& newPose);
+  // Sends new pose down to robot (on next tick).
+  Result SetNewPose(const Pose3d& newPose);
       
   // Get the ID of the object we are localized to
   const ObjectID& GetLocalizedTo() const {return _localizedToID;}
@@ -319,8 +319,12 @@ public:
 
   // True if robot is on charger
   bool   IsOnCharger()         const { return _isOnCharger; }
-  // True if we know we're on a connected charger, but not the contacts
+
+  // True if we think the robot is on a charger. This becomes true only when the robot touches the charger
+  // contacts, and remains true until we think the robot has driven off the charger. It will not become true
+  // based on localization or observing the charger marker, only based on feeling the charger.
   bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
+  
   // True if robot is charging
   bool   IsCharging()          const { return _isCharging; }
   // True if charger is out of spec
@@ -714,7 +718,9 @@ public:
   
   RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
   const RobotPoseHistory* GetPoseHistory() const { return _poseHistory; }
-    
+  
+  // Adds a raw odom pose to history
+  // Only state updates should be calling this, however, it is exposed for unit tests
   Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                  const PoseFrameID_t frameID,
                                  const Pose3d& pose,
@@ -723,6 +729,8 @@ public:
                                  const u16 cliff_data,
                                  const bool isCarryingObject);
   
+  // Increments frameID and adds a vision only pose to history
+  // Sets a flag to send a localization update on the next tick
   Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                     const Pose3d& pose, 
                                     const f32 head_angle,
@@ -1005,6 +1013,8 @@ protected:
   u16              _cliffDetectThreshold;
   u32              _cliffStartTimestamp = 0;
   
+  u32              _lastStatusFlags       = 0;
+  
   // Increments count of suspicious cliff. (i.e. Cliff was detected but data looks like maybe it's not real.)
   void IncrementSuspiciousCliffCount();
   
@@ -1091,6 +1101,7 @@ protected:
   void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
   void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
   void SetOnCharger(bool onCharger);
+  void SetOnChargerPlatform(bool onPlatform);
   void SetIsCharging(bool isCharging)     {_isCharging = isCharging;}
   
   // returns whether the tread state was updated or not

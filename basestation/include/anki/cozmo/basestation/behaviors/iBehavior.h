@@ -133,7 +133,7 @@ public:
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   template<typename T>
-  bool IsRunnable(const T& preReqData) const;
+  bool IsRunnable(const T& preReqData, bool allowWhileRunning = false) const;
 
   
   const std::string& GetName() const { return _name; }
@@ -215,7 +215,7 @@ protected:
   virtual Result ResumeInternal(Robot& robot);
   bool IsResuming() { return _isResuming;}
 
-  // To keep passing through data generic, if robot is not overriden
+  // To keep passing through data generic, if robot is not overridden
   // check the NoPreReqs IsRunnableInternal
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData ) const
                  { BehaviorPreReqNone noPreReqs;  return IsRunnableInternal(noPreReqs);}
@@ -327,7 +327,7 @@ protected:
   
   // Behaviors should call this function when they reach their completion state
   // in order to log das events and notify goal strategies if they listen for the message
-  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved);
+  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true);
   
   // Allows the behavior to disable and enable reaction triggers without having to worry about re-enabling them
   // these triggers will be automatically re-enabled when the behavior stops
@@ -380,20 +380,20 @@ protected:
   virtual void StopInternalFromDoubleTap(Robot& robot) { if(!RequiresObjectTapped()) { StopInternal(robot); } }
   
   inline void SetBehaviorClass(BehaviorClass classID) {if(_behaviorClassID == BehaviorClass::NoneBehavior){ _behaviorClassID = classID;}};
-  
-  
+
   //Allows behaviors to skip certain steps when streamlined
   //Can be set in json (for sparks) or programatically
   bool _shouldStreamline;
+  
+private:
   
   std::vector<::Signal::SmartHandle> _eventHandles;
   Robot& _robot;
   double _lastRunTime_s;
   double _startedRunningTime_s;
   
-private:
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
-  bool IsRunnableBase(const Robot& robot) const;
+  bool IsRunnableBase(const Robot& robot, bool allowWhileRunning) const;
   
   bool ReadFromJson(const Json::Value& config);
   
@@ -553,9 +553,9 @@ private:
   
 
 template<typename T>
-bool IBehavior::IsRunnable(const T& preReqData) const
+bool IBehavior::IsRunnable(const T& preReqData, bool allowWhileRunning) const
 {
-  if(IsRunnableBase(_robot)){
+  if(IsRunnableBase(_robot, allowWhileRunning)){
     return IsRunnableInternal(preReqData);
   }
   

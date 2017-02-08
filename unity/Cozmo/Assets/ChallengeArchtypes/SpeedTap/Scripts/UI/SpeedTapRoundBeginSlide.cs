@@ -12,9 +12,14 @@ namespace SpeedTap {
     [SerializeField]
     private AnkiTextLabel _RoundSubtitleLabel;
 
-    public void SetText(int currentRound, int totalRounds) {
+    public void SetText(int currentRound, int totalRounds, int playerCount) {
       _RoundHeaderLabel.text = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, currentRound);
-      _RoundSubtitleLabel.text = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextBestOf, totalRounds);
+      if (playerCount <= 2) {
+        _RoundSubtitleLabel.text = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextBestOf, totalRounds);
+      }
+      else {
+        _RoundSubtitleLabel.text = Localization.Get(LocalizationKeys.kSpeedTapTextMPBestOf);
+      }
     }
   }
 }

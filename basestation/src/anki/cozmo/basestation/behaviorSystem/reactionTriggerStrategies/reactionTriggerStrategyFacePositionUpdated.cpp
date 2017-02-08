@@ -47,7 +47,7 @@ bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehavior(const Rob
 {
   if(!_desiredTargets.empty()){
     BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(_desiredTargets);
-    const bool robotOffCharger = !robot.IsOnCharger() && !robot.IsOnChargerPlatform();
+    const bool robotOffCharger = !robot.IsOnChargerPlatform();
     return robotOffCharger && kEnableFaceAcknowledgeReact &&
             behavior->IsRunnable(acknowledgeFacePreReqs);
   }
@@ -173,7 +173,7 @@ void ReactionTriggerStrategyFacePositionUpdated::AlwaysHandlePoseBasedInternal(c
   }
 }
 
-void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStartegyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
 {
   behavior->AddListener(this);
 }

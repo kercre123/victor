@@ -486,18 +486,18 @@ namespace Cozmo {
   
   
   
-  std::vector<RotationMatrix3d> const& Block_Cube1x1::GetRotationAmbiguities() const
+  RotationAmbiguities const& Block_Cube1x1::GetRotationAmbiguities() const
   {
-    static const std::vector<RotationMatrix3d> RotationAmbiguities = {
-      RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
-      RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
-      RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
-      RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
-      RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
-      RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
-    };
+    static const RotationAmbiguities kFullyAmbiguous(true, {
+        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
+        RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
+        RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
+        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+    });
     
-    return RotationAmbiguities;
+    return kFullyAmbiguous;
   }
   
 #pragma mark ---  Block_2x1 Implementation ---
@@ -506,14 +506,15 @@ namespace Cozmo {
   
   
   
-  std::vector<RotationMatrix3d> const& Block_2x1::GetRotationAmbiguities() const
+  RotationAmbiguities const& Block_2x1::GetRotationAmbiguities() const
   {
-    static const std::vector<RotationMatrix3d> RotationAmbiguities = {
+    // TODO: We don't have any 2x1 blocks anymore, but these ambiguities probably need revisiting
+    static const RotationAmbiguities kRotationAmbiguities(true, {
       RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
       RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
-    };
+    });
     
-    return RotationAmbiguities;
+    return kRotationAmbiguities;
   }
 
 

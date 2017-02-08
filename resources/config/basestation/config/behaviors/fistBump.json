@@ -1,0 +1,15 @@
+{
+  "behaviorClass": "FistBump",
+  "executableBehaviorType": "FistBump",
+  "name": "FistBump",
+  "displayNameKey": "behavior.FistBump",
+  "requiredUnlockId": "FistBump",
+  "disableByDefault": false,
+
+  "maxTimeToLookForFace_s": 3.0,
+  "abortIfNoFaceFound": true,
+  
+  // Should only be true for the non-sparks fist bump since we only want
+  // freeplay fist bump to reset the cooldown timer in the trigger strategy.
+  "reportSuccessFail": true
+}

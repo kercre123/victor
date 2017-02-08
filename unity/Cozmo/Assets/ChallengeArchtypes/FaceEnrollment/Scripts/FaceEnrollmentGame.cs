@@ -10,6 +10,12 @@ namespace FaceEnrollment {
     }
 
     [SerializeField]
+    private GameObject _FaceEnrollmentMultipleFacesErrorSlidePrefab;
+    public GameObject FaceEnrollmentMultipleFacesErrorSlidePrefab {
+      get { return _FaceEnrollmentMultipleFacesErrorSlidePrefab; }
+    }
+
+    [SerializeField]
     private EnterNameSlide _EnterNameSlidePrefab;
     public EnterNameSlide EnterNameSlidePrefab {
       get { return _EnterNameSlidePrefab; }
@@ -34,6 +40,10 @@ namespace FaceEnrollment {
     [SerializeField]
     private FaceDetailsShelfContent _FaceDetailsShelfContentPrefab;
     private FaceDetailsShelfContent _FaceDetailsShelfContentInstance;
+
+    [SerializeField]
+    private FaceMultipleFacesErrorShelfContent _FaceMultipleFacesErrorShelfContentPrefab;
+    private FaceMultipleFacesErrorShelfContent _FaceMultipleFacesErrorShelfContentInstance;
 
     private long _UpdateThresholdLastSeenSeconds;
     public long UpdateThresholdLastSeenSeconds {
@@ -123,6 +133,12 @@ namespace FaceEnrollment {
       SharedMinigameView.ShowShelf();
       _FaceDetailsShelfContentInstance = SharedMinigameView.ShelfWidget.SetShelfContent(_FaceDetailsShelfContentPrefab).GetComponent<FaceDetailsShelfContent>();
       _FaceDetailsShelfContentInstance.EraseFacePressed += onDeleteCallback;
+    }
+
+    public void ShowMultipleFacesErrorShelf(System.Action tryAgainButtonCallback) {
+      SharedMinigameView.ShowShelf();
+      _FaceMultipleFacesErrorShelfContentInstance = SharedMinigameView.ShelfWidget.SetShelfContent(_FaceMultipleFacesErrorShelfContentPrefab).GetComponent<FaceMultipleFacesErrorShelfContent>();
+      _FaceMultipleFacesErrorShelfContentInstance.OnRetryButton += tryAgainButtonCallback;
     }
 
     public void HandleDetailsViewRequested(int faceID, string nameForFace) {

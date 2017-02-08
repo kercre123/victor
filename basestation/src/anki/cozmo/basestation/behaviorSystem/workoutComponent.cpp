@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
 
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -72,6 +73,14 @@ Result WorkoutConfig::InitConfiguration(const Json::Value& config)
   }
 
   GetValueOptional(config, "emotionEventOnComplete", _emotionEventOnComplete);
+  
+  _additionalBehaviorObjectiveOnComplete = BehaviorObjective::Count;
+  std::string additionalbehaviorObjectiveOnCompleteStr;
+  if (GetValueOptional(config, "additionalBehaviorObjectiveOnComplete", additionalbehaviorObjectiveOnCompleteStr)) {
+    _additionalBehaviorObjectiveOnComplete = BehaviorObjectiveFromString(additionalbehaviorObjectiveOnCompleteStr.c_str());
+  }
+  
+  
   return RESULT_OK;
 }
 

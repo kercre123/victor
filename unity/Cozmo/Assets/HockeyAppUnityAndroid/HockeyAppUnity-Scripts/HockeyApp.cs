@@ -609,7 +609,7 @@ public class HockeyApp : MonoBehaviour {
   protected virtual void HandleException(string logString, string stackTrace) {
 #if (!UNITY_EDITOR)
     // Just print to the log, don't upload in production, thats what Hockeyapp is for.
-    DAS.Warn("unity.exception", logString, DASUtil.FormatExtraData(stackTrace));
+    DAS.Warn("exception", logString, DASUtil.FormatExtraData(stackTrace));
 
     // Stale touch exceptions occur during normal operation.
     // Don't report them as crashes.

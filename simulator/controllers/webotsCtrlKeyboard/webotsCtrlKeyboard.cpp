@@ -361,6 +361,7 @@ namespace Anki {
         printf("         Select behavior chooser:  h\n");
         printf("       Select spark (unlockName):  Shift+h\n");
         printf("         Exit spark (unlockName):  Alt+h\n");
+        printf("         Go to Selection Chooser:  Alt+Shift+h\n");
         printf("            Set emotion to value:  m\n");
         printf("     Rainbow pattern on backpack:  l\n");        
         printf("      Search side to side action:  Shift+l\n");
@@ -379,6 +380,7 @@ namespace Anki {
         printf("Toggle accel from streamObjectID: |\n");
         printf("               Toggle headlights: ,\n");
         printf("             Pronounce sayString: \" <double-quote>\n");
+        printf("                 Set console var: ]\n");
         printf("        Quit keyboard controller:  Alt+Shift+x\n");
         printf("                      Print help:  ?,/\n");
         printf("\n");
@@ -1186,7 +1188,13 @@ namespace Anki {
                 {
 
                   if( shiftKeyPressed && altKeyPressed ) {
-                    printf("ERROR: invalid hotkey\n");
+                    BehaviorChooserType chooser = BehaviorChooserTypeFromString("Selection");
+                    if( chooser == BehaviorChooserType::Count ) {
+                      break;
+                    }
+                    
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                                                       ExternalInterface::ActivateBehaviorChooser(chooser)));
                     break;
                   }
 
@@ -2239,7 +2247,7 @@ namespace Anki {
                 
               case (s32)'J':
               {
-
+              
                 // unused!
 
                 break;

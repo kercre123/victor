@@ -6,6 +6,9 @@ public class FeatureGate {
   private static FeatureGate _sInstance;
 
   private Dictionary<string, bool> _FeatureMap = new Dictionary<string, bool>();
+
+  public Dictionary<string, bool> FeatureMap { get { return _FeatureMap; } }
+
   private bool _ReceivedData = false;
 
   public void Initialize() {

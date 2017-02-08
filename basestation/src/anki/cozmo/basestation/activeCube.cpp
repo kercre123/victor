@@ -26,24 +26,6 @@
 namespace Anki {
   namespace Cozmo {
 
-  
-    std::vector<RotationMatrix3d> const& ActiveCube::GetRotationAmbiguities() const
-    {
-      
-      // TODO: Adjust if/when active blocks aren't fully ambiguous
-      static const std::vector<RotationMatrix3d> RotationAmbiguities; /* = {
-        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
-        RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
-        RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
-        RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
-        RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
-        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
-      };
-                                                                       */
-      
-      return RotationAmbiguities;
-    }
-    
     ActiveCube::ActiveCube(ObjectType type)
     : ObservableObject(ObjectFamily::LightCube, type)
     , Block(ObjectFamily::LightCube, type)

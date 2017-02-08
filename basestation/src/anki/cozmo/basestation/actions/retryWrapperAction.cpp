@@ -129,6 +129,10 @@ namespace Cozmo {
     {
       ActionResult res = _subAction->Update();
       
+      // Update the retryWrapperAction's type to match the subAction's type in case
+      // it is changing at runtime
+      SetType(_subAction->GetType());
+      
       // Only attempt to retry on failure results
       if(res != ActionResult::RUNNING &&
          res != ActionResult::SUCCESS &&

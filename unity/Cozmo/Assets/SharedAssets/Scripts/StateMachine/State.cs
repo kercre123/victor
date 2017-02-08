@@ -12,6 +12,17 @@ public class State {
 
   protected IRobot _CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
+  private bool _IsPauseable = true;
+
+  public bool IsPauseable {
+    get {
+      return _IsPauseable;
+    }
+    protected set {
+      _IsPauseable = value;
+    }
+  }
+
   public void SetStateMachine(StateMachine stateMachine) {
     _StateMachine = stateMachine;
   }

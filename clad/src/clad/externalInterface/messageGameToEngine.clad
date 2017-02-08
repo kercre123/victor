@@ -471,6 +471,10 @@ message SetMemoryMapRenderEnabled {
   bool enabled
 }
 
+message SetMemoryMapBroadcastFrequency_sec {
+  float_32 frequency=-1.0  // If frequency is negative, don't send
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Behavior Commands
 ///////////////////////////////////////////////////////////////////////////////
@@ -1014,6 +1018,10 @@ message SetCameraSettings {
   bool enableAutoExposure,
   uint_16 exposure_ms,
   float_32 gain
+}
+
+// Request robot sends back any per-robot settings
+message RequestRobotSettings {
 }
 
 // explicit autounion - this will force the values given, and then add every other messages in this file

@@ -21,9 +21,10 @@ namespace SpeedTap {
 
     public float BannerAnimationDurationSeconds = 3f;
 
-    public void Initialize(Sprite portraitSprite, string winnerNameLocKey, int roundsWon, int roundsNeeded, int currentRound) {
+    public void Initialize(Sprite portraitSprite, string winnerName, int roundsWon, int roundsNeeded, int currentRound, Color playerColor) {
       _PortraitImage.sprite = portraitSprite;
-      _WinnerNameTextLabel.text = Localization.Get(winnerNameLocKey);
+      _PortraitImage.color = playerColor;
+      _WinnerNameTextLabel.text = winnerName;
       _CurrentRoundTextLabel.text = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextDisplayWinnerSubtitle, currentRound);
       _RoundCountBar.SetMaximumSegments(roundsNeeded);
       _RoundCountBar.SetCurrentNumSegments(roundsWon);

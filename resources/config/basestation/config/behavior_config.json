@@ -64,7 +64,7 @@
         {
          "type" : "sparks",
          "minTimeSecs": 0,
-         "maxTimeSecs": 60,
+         "maxTimeSecs": 80,
          "numberOfRepetitions": 1,
          "behaviorObjective": "StackedBlock",
          "softSparkTrigger": "SoftSparkUpgradeLift",
@@ -84,7 +84,7 @@
         {
          "type" : "sparks",
          "minTimeSecs": 0,
-         "maxTimeSecs": 60,
+         "maxTimeSecs": 30,
          "numberOfRepetitions": 0,
          "behaviorObjective": "PouncedAndCaught",
          "softSparkTrigger": "SoftSparkUpgradeLift",
@@ -189,14 +189,42 @@
           "behaviorObjective": "BuiltPyramid",
           "softSparkTrigger": "SoftSparkUpgradeLift",
           "sparksSuccessTrigger": "", // don't play any animation
+          "simpleChooserDelegate":
+          {
+            "type":"pyramid",
+            "behaviorGroups" : [ "SetupBuildPyramid", "BuildPyramid" ]
+          },
           // these are the behaviors that are allowed in this behavior chooser
-          "behaviorGroups" : [ "SparksBuildPyramid" ]
+          // no behavior groups are set here since this chooser delegates to the pyramid
+          // chooser for simple behavior purposes
+          "behaviorGroups" : [ ]
         },
         "goalStrategy":
         {
           "type" : "Spark"
         },
         "persistentComponentID" : "pyramidSparkUpdate"
+      },
+      {
+        "name" : "SparksFistBump",
+        "requireSpark":"FistBump",
+        "priority": 0, // lower is better
+        "behaviorChooser" :
+        {
+          "type" : "sparks",
+          "minTimeSecs": 0,
+          "maxTimeSecs": 30,
+          "numberOfRepetitions": 1,
+          "behaviorObjective": "FistBumpComplete",
+          "softSparkTrigger": "SoftSparkUpgradeLift",
+          "sparksSuccessTrigger": "", // don't play any animation
+          // these are the behaviors that are allowed in this behavior chooser
+          "behaviorGroups" : [ "SparksFistBump" ]
+        },
+        "goalStrategy":
+        {
+          "type" : "Spark"
+        }
       },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Freeplay goals:

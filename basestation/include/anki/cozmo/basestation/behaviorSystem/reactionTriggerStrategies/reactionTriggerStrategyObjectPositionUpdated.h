@@ -26,7 +26,7 @@ public:
 
   virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   void HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
-  virtual void BehaviorThatStartegyWillTrigger(IBehavior* behavior) override;
+  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;
   
   /// Implementation IReactToObjectListener
   virtual void ReactedToID(Robot& robot, s32 id) override;

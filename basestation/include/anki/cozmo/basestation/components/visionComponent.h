@@ -273,6 +273,11 @@ struct DockingErrorSignal;
     void SetAndDisableAutoExposure(u16 exposure_ms, f32 gain);
     void EnableAutoExposure(bool enable) { _enableAutoExposure = enable; }
     
+    s32 GetMinCameraExposureTime_ms() const;
+    s32 GetMaxCameraExposureTime_ms() const;
+    f32 GetMinCameraGain() const;
+    f32 GetMaxCameraGain() const;
+    
   protected:
     
     bool _isInitialized = false;

@@ -27,6 +27,10 @@ namespace Cozmo {
       [SerializeField]
       protected CozmoButton _OptionalCloseDialogButton;
 
+      [SerializeField]
+      private bool _PreventForceClose = false;
+      public bool PreventForceClose { get { return _PreventForceClose; } }
+
       public ModalPriorityData PriorityData { get; private set; }
 
       public bool DimBackground = false;

@@ -368,8 +368,9 @@ static inline void BackPackLightsYellow(void) {
  
   static inline void EnableLiftPower(bool enable) {
     RobotInterface::EngineToRobot msg;
-    msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
-    msg.enableLiftPower.enable = enable;
+    msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableMotorPower;
+    msg.enableMotorPower.motorID = MOTOR_LIFT;
+    msg.enableMotorPower.enable = enable;
     Anki::Cozmo::RTIP::SendMessage(msg);
   }
 

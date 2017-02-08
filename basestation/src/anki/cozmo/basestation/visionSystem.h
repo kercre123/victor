@@ -313,6 +313,12 @@ namespace Cozmo {
     
     bool IsGainValid(f32 gain) const;
     
+    s32 GetMinCameraExposureTime_ms() const { return _minCameraExposureTime_ms; }
+    s32 GetMaxCameraExposureTime_ms() const { return _maxCameraExposureTime_ms; }
+    
+    f32 GetMinCameraGain() const { return _minCameraGain; }
+    f32 GetMaxCameraGain() const { return _maxCameraGain; }
+    
   protected:
   
     RollingShutterCorrector _rollingShutterCorrector;

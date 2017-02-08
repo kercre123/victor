@@ -126,6 +126,17 @@ bool DevLogReader::UpdateForCurrentTime(uint32_t time_ms)
   return !_files.empty();
 }
 
+uint32_t DevLogReader::GetNextMessageTimeDelta_ms() const
+{
+  if( _currentLogData.IsValid() ) {
+    return _currentLogData._timestamp_ms - _currTime_ms;
+  }
+  else {
+    // Just return 1 ms to force an update so we get more valid data
+    return 1;
+  }
+}
+
 // Returns true if a data message was extracted and callback called (because timestamp was earlier than passed in time)
 bool DevLogReader::ExtractAndCallback(uint32_t time_ms)
 {

@@ -335,7 +335,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ProcessPingResponse(Anki.Cozmo.ExternalInterface.Ping message) {
     if (message.isResponse) {
-      DAS.Warn("Unity.ReceivedResponsePing", "Unity receiving response pings is unsupported");
+      DAS.Warn("ReceivedResponsePing", "Unity receiving response pings is unsupported");
     }
     else {
       Message.Ping = Singleton<Anki.Cozmo.ExternalInterface.Ping>.Instance.Initialize(counter: message.counter, timeSent_ms: message.timeSent_ms, isResponse: true);

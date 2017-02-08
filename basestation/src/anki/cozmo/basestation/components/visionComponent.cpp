@@ -2290,6 +2290,8 @@ namespace Cozmo {
     {
       return;
     }
+    
+    const u16 exposure_ms_u16 = Util::numeric_cast<u16>(exposure_ms);
   
     PRINT_CH_INFO("VisionComponent",
                   "VisionComponent.SetCameraSettings",
@@ -2298,11 +2300,34 @@ namespace Cozmo {
                   gain);
     
     SetCameraParams params(gain,
-                           Util::numeric_cast<u16>(exposure_ms),
+                           exposure_ms_u16,
                            false);
     
     _robot.SendMessage(RobotInterface::EngineToRobot(std::move(params)));
-    _vizManager->SendCameraInfo(exposure_ms, gain);
+    _vizManager->SendCameraInfo(exposure_ms_u16, gain);
+    
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(
+                        ExternalInterface::CurrentCameraParams(gain, exposure_ms_u16, _enableAutoExposure) ));
+  }
+  
+  s32 VisionComponent::GetMinCameraExposureTime_ms() const
+  {
+    return _visionSystem->GetMinCameraExposureTime_ms();
+  }
+  
+  s32 VisionComponent::GetMaxCameraExposureTime_ms() const
+  {
+    return _visionSystem->GetMaxCameraExposureTime_ms();
+  }
+  
+  f32 VisionComponent::GetMinCameraGain() const
+  {
+    return _visionSystem->GetMinCameraGain();
+  }
+  
+  f32 VisionComponent::GetMaxCameraGain() const
+  {
+    return _visionSystem->GetMaxCameraGain();
   }
   
 #pragma mark -

@@ -1,19 +1,19 @@
 ﻿using UnityEngine;
 using Anki.Cozmo;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace SpeedTap {
   public class SpeedTapReactToRoundEnd : State {
 
     private SpeedTapGame _SpeedTapGame;
-    private PointWinner _CurrentWinner;
 
-    // INGO See HandleRoundEndAnimDone below
-    //private bool _RobotAnimationEnded = false;
-    //private bool _BannerAnimationEnded = false;
+    private PlayerInfo _Winner;
 
-    public SpeedTapReactToRoundEnd(PointWinner winner) {
-      _CurrentWinner = winner;
+    private bool _BannerAnimDone = false;
+    private bool _RobotAnimDone = false;
+
+    public SpeedTapReactToRoundEnd(PlayerInfo winner) {
+      _Winner = winner;
     }
 
     public override void Enter() {
@@ -27,26 +27,44 @@ namespace SpeedTap {
 
       // Show current winner
       Sprite winnerPortrait = null;
-      string winnerNameLocKey = null;
-      int roundsWinnerWon = 0;
-      if (_CurrentWinner == PointWinner.Cozmo) {
+      string winnerName = _Winner.name;
+      int roundsWinnerWon = _Winner.playerRoundsWon;
+      Color winnerColor = ((SpeedTapPlayerInfo)_Winner).scoreWidget.PortraitColor;
+      if (_Winner.playerType == PlayerType.Cozmo) {
         winnerPortrait = _SpeedTapGame.SharedMinigameView.CozmoPortrait;
-        winnerNameLocKey = LocalizationKeys.kNameCozmo;
-        roundsWinnerWon = _SpeedTapGame.CozmoRoundsWon;
       }
       else {
         winnerPortrait = _SpeedTapGame.SharedMinigameView.PlayerPortrait;
-        winnerNameLocKey = LocalizationKeys.kNamePlayer;
-        roundsWinnerWon = _SpeedTapGame.PlayerRoundsWon;
+        // In SinglePlayer we want it just to say "player" not the profile name because of how it was before.
+        if (_SpeedTapGame.GetPlayerCount() < 3) {
+          winnerName = Localization.Get(LocalizationKeys.kNamePlayer);
+        }
       }
       int roundsNeeded = _SpeedTapGame.RoundsNeededToWin;
-      roundEndSlideScript.Initialize(winnerPortrait, winnerNameLocKey, roundsWinnerWon, roundsNeeded, _SpeedTapGame.RoundsPlayed);
+      roundEndSlideScript.Initialize(winnerPortrait, winnerName, roundsWinnerWon, roundsNeeded, _SpeedTapGame.RoundsPlayed, winnerColor);
 
       // Play banner animation with score
       string bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore,
-                            _SpeedTapGame.PlayerRoundsWon, _SpeedTapGame.CozmoRoundsWon);
-      _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, HandleBannerAnimationDone,
-        roundEndSlideScript.BannerAnimationDurationSeconds);
+                            _SpeedTapGame.HumanRoundsWon, _SpeedTapGame.CozmoRoundsWon);
+      if (_SpeedTapGame.GetPlayerCount() > 2) {
+        List<object> fillArgs = new List<object>();
+        int playerCount = _SpeedTapGame.GetPlayerCount();
+        for (int i = 0; i < playerCount; ++i) {
+          PlayerInfo playerInfo = _SpeedTapGame.GetPlayerByIndex(i);
+          fillArgs.Add(playerInfo.name);
+          fillArgs.Add(playerInfo.playerRoundsWon);
+        }
+        bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScoreMP, fillArgs.ToArray());
+        _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, HandleBannerAnimDone,
+                _SpeedTapGame.MPTimeBetweenRoundsSec);
+      }
+      else {
+        // we want single player to go fast, so don't care if the banner is done or not
+        _BannerAnimDone = true;
+        _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, null,
+                        roundEndSlideScript.BannerAnimationDurationSeconds);
+      }
+
 
       ContextManager.Instance.AppFlash(playChime: true);
       // Play cozmo animation
@@ -57,8 +75,7 @@ namespace SpeedTap {
       base.Exit();
 
       // re-enable react to pickup during the next round
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, true);
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, true);
+      EnableExtraReactions(true);
     }
 
     public override void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
@@ -66,15 +83,19 @@ namespace SpeedTap {
       // So in those cases don't show the "Cozmo Moved; Quit Game" dialog
       // Do nothing
     }
+    private void EnableExtraReactions(bool enabled) {
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, enabled);
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, enabled);
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.CliffDetected, enabled);
+    }
 
     private void PlayReactToRoundAnimationAndSendEvent() {
       // Don't listen to pickup in case cozmo lifts himself on top of the cube for an animation
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, false);
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, false);
+      EnableExtraReactions(false);
 
       AnimationTrigger animEvent = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityRound();
-      if (_CurrentWinner == PointWinner.Player) {
+      if (_Winner.playerType != PlayerType.Cozmo) {
         animEvent = (highIntensity) ?
                   AnimationTrigger.OnSpeedtapRoundPlayerWinHighIntensity : AnimationTrigger.OnSpeedtapRoundPlayerWinLowIntensity;
       }
@@ -86,29 +107,22 @@ namespace SpeedTap {
     }
 
     private void HandleRoundEndAnimDone(bool success) {
-      // ING0 For now move on to the next state as soon as the robot finishes animating to 
-      // avoid "dead space" and don't worry about the banner being on screen.
+      _RobotAnimDone = true;
       MoveToNextState();
-
-      //_RobotAnimationEnded = true;
-      //if (_BannerAnimationEnded) {
-      //MoveToNextState();
-      //}
     }
 
-    private void HandleBannerAnimationDone() {
-      // INGO See HandleRoundEndAnimDone above ^
-      // _BannerAnimationEnded = true;
-      // if (_RobotAnimationEnded) {
-      // MoveToNextState();
-      // }
+    private void HandleBannerAnimDone() {
+      _BannerAnimDone = true;
+      MoveToNextState();
     }
 
     private void MoveToNextState() {
-      _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
+      if (_BannerAnimDone && _RobotAnimDone) {
+        _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
 
-      _SpeedTapGame.ClearWinningLightPatterns();
-      _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
+        _SpeedTapGame.ClearWinningLightPatterns();
+        _StateMachine.SetNextState(new SpeedTapCubeSelectionState());
+      }
     }
   }
 }

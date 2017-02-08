@@ -22,6 +22,8 @@
 namespace Anki {
 namespace Cozmo {
 
+class Robot;
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class NavMeshQuadTree
 {
@@ -32,7 +34,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  NavMeshQuadTree(VizManager* vizManager);
+  NavMeshQuadTree(VizManager* vizManager, Robot* robot);
   ~NavMeshQuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -49,6 +51,13 @@ public:
   // content, and navmesh has no other way of knowing that it happened
   void ForceRedraw() { _gfxDirty = true; }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Broadcast
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // Broadcast navmesh
+  void Broadcast(uint32_t originID) const;
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -102,6 +111,7 @@ private:
   NavMeshQuadTreeNode _root;
   
   VizManager* _vizManager;
+  Robot*      _robot;
   
 }; // class
   

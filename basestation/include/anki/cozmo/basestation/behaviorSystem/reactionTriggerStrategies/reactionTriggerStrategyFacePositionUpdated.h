@@ -26,7 +26,7 @@ public:
   ReactionTriggerStrategyFacePositionUpdated(Robot& robot, const Json::Value& config);
 
   virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
-  virtual void BehaviorThatStartegyWillTrigger(IBehavior* behavior) override;
+  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;
   
   // Implement IReactToFaceListener
   virtual void FinishedReactingToFace(Robot& robot,Vision::FaceID_t faceID) override;

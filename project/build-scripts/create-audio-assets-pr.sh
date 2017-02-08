@@ -6,24 +6,6 @@
 set -e
 set -u
 
-send_slack_message_and_exit() {
-_payload="{
-              \"channel\": \"$SLACK_CHANNEL\",
-              \"username\": \"buildbot\",
-              \"attachments\": [
-                {
-                  \"text\": \"$1\",
-                  \"fallback\": \"$1\",
-                  \"color\": \"$2\"
-                }
-              ]
-            }"
-
-    curl -X POST --data-urlencode "payload=$_payload" $SLACK_TOKEN_URL
-
-    exit $3
-}
-
 send_slack_message() {
 _payload="{
               \"channel\": \"$SLACK_CHANNEL\",
@@ -37,7 +19,14 @@ _payload="{
               ]
             }"
 
-    curl -X POST --data-urlencode "payload=$_payload" $SLACK_TOKEN_URL
+    echo "$_payload" > tmp$$.json
+    curl -X POST --data-urlencode payload@tmp$$.json $SLACK_TOKEN_URL
+    rm tmp$$.json
+}
+
+send_slack_message_and_exit() {
+    send_slack_message "$1" "$2"
+    exit $3
 }
 
 GIT=`which git`
@@ -65,8 +54,7 @@ svn_rev=$(svn info $_SVN_COZMOSOUNDBANKS_REPO --username $SVN_USERNAME --passwor
 
 exit_status=0
 output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT update $svn_rev) || exit_status=$?
-echo "UpdateAudioAssets.py update output: {$output}"
-
+echo "UpdateAudioAssets.py update output: ${output}"
 if [ $exit_status -ne 0 ]; then
     send_slack_message_and_exit "There was a problem getting r${svn_rev} audio assets.\n${output}" "danger" $exit_status
 else
@@ -74,7 +62,7 @@ else
 fi
 
 output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT generate) || exit_status=$?
-echo "UpdateAudioAssets.py generate output: {$output}"
+echo "UpdateAudioAssets.py generate output: ${output}"
 if [ $exit_status -ne 0 ]; then
     send_slack_message_and_exit "There was a problem generating CLAD files.\n${output}" "danger" $exit_status
 else
