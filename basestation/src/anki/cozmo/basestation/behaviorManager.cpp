@@ -565,11 +565,11 @@ void BehaviorManager::SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo
   if(newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger &&
      _runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger)
   {
-    UpdateRobotPropertiesForReaction(true);
+    UpdateRobotPropertiesForReaction(true, newInfo.GetCurrentReactionTrigger());
   }else if(newInfo.GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger &&
     _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
   {
-    UpdateRobotPropertiesForReaction(false);
+    UpdateRobotPropertiesForReaction(false, _runningAndResumeInfo->GetCurrentReactionTrigger());
   }
   
   *_runningAndResumeInfo = newInfo;
@@ -820,13 +820,13 @@ void BehaviorManager::CheckReactionTriggerStrategies()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::UpdateRobotPropertiesForReaction(bool enablingReaction)
+void BehaviorManager::UpdateRobotPropertiesForReaction(bool enablingReaction, ReactionTrigger triggerSwitching)
 {
   // During reactions prevent DirectDrive messages and external action queueing messages
   // from doing anything
   _robot.GetExternalInterface()->BroadcastToGame<
                                    ExternalInterface::ReactionaryBehaviorTransition>(
-                                    GetRunningAndResumeInfo().GetCurrentReactionTrigger(), enablingReaction);
+                                    triggerSwitching, enablingReaction);
   _robot.GetMoveComponent().IgnoreDirectDriveMessages(enablingReaction);
   _robot.SetIgnoreExternalActions(enablingReaction);
   

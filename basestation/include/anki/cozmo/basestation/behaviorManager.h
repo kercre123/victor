@@ -216,7 +216,7 @@ private:
   
   // Centeralized function for robot properties that are toggled between reactions
   // and normal robot opperation
-  void UpdateRobotPropertiesForReaction(bool enablingReaction);
+  void UpdateRobotPropertiesForReaction(bool enablingReaction, ReactionTrigger triggerSwitching);
 
   void SendDasTransitionMessage(const BehaviorRunningAndResumeInfo& oldBehaviorInfo,
                                 const BehaviorRunningAndResumeInfo& newBehaviorInfo);
