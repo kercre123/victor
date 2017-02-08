@@ -8,6 +8,7 @@
 #include "hal/display.h"
 #include "hal/flash.h"
 #include "hal/monitor.h"
+#include "hal/motorled.h"
 #include "hal/portable.h"
 #include "hal/timers.h"
 #include "hal/testport.h"
@@ -23,37 +24,71 @@
 #include "nvReset.h"
 
 static u32 start_time = 0;
-static int test_cnt;
-static int expired = 0;
+static int test_cnt = 0;
 
 void DebugStart(void)
 {
   start_time = getMicroCounter();
-  test_cnt = 0;
+  ConsolePrintf("Debug Test %d:\r\n", ++test_cnt );
 }
 
-void DebugTestX(void)
+extern void TestLED(int i); //motorTest.c
+static void BackpackLeds(void)
 {
-  ++test_cnt;
-  ConsolePrintf("Debug Test %d...", test_cnt );
-  for(int x=0; x<test_cnt; x++)
-    MicroWait(1000*1000);
-  ConsolePrintf("Done\r\n");
+  //int me = ERROR_OK;
+  for( int i=0; i < LEDCnt(); i++ )
+  {
+    int print_len = ConsolePrintf("led %02d...", i);
+    LEDOn(i);
+    MicroWait(1000*333);
+    LEDOn(255); //all off
+    
+    try {
+      TestLED(i);
+      ConsolePrintf("ok\r\n");
+    } catch(int e) {
+      me = e;
+      ConsolePrintf("FAIL\r\n");
+    }
+  }
+  //if( me != ERROR_OK )
+  //  throw me;
+}
+
+static void BackpackButton(void)
+{
+  ConsolePrintf("Backback Button Voltage = ");
+  start_time = getMicroCounter();
+  u32 tick_time = start_time;
+  int print_len = 0;
+  
+  while( getMicroCounter() - start_time < (1000000 * 10) )
+  {
+    if( getMicroCounter() - tick_time > 100*1000 )
+    {
+      tick_time = getMicroCounter();
+      int btn_mv = BPBtnGetMv();
+      bool on = BPBtnGet();
+      
+      for(int x=0; x < print_len; x++ )
+        ConsolePutChar(0x08); //backspace
+      print_len = ConsolePrintf("%d.%03dV %s", btn_mv/1000, btn_mv%1000, on ? "on" : "off" );
+    }
+  }
+  ConsolePrintf("\r\n");
 }
 
 void DebugEnd(void)
 {
   u32 time = getMicroCounter() - start_time;
   ConsolePrintf("Debug Test Time %d.%03dms\r\n", time/1000, time%1000);
-  expired = 1; //inhibit further device detects
+  start_time = getMicroCounter(); //reset start time for detect delay
 }
 
 bool DebugTestDetectDevice(void)
 {
-  //test debug flow - detect phantom device once after boot delay.
-  if( !expired && getMicroCounter() > (1000*1000*10) )
-    return true;
-  return false;
+  //periodic detect
+  return getMicroCounter() - start_time > (1000*1000*5);
 }
 
 TestFunction* GetDebugTestFunctions()
@@ -61,9 +96,8 @@ TestFunction* GetDebugTestFunctions()
   static TestFunction m_debugFunctions[] = 
   {
     DebugStart,
-    DebugTestX,
-    DebugTestX,
-    DebugTestX,
+    BackpackLeds,
+    BackpackButton,
     DebugEnd,
     NULL
   };
