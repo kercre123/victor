@@ -491,10 +491,9 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
     }
   }
   
-  // return whether the object is confirmed (could return true only if the observation contributed to it, but at the
-  // moment either one is fine, and this is easier to understand)
-  const bool isConfirmed = (nullptr == _poseConfirmations[objectID].unconfirmedObject);
-  return isConfirmed;
+  // ask if this observation confirms the reference pose
+  const bool isConfirmedAtPose = _poseConfirmations[objectID].IsReferencePoseConfirmed();
+  return isConfirmedAtPose;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

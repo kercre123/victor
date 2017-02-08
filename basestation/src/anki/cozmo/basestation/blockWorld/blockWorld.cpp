@@ -1390,10 +1390,17 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // wrt robot based on this observation. However, we could bring other origins with it.
       if ( !isConfirmedAtPose )
       {
+        // even if not confirmed at this pose, it could be confirmed in this origin. AddVisualObservation needs
+        // to receive any confirmed matches in the current origin, but IsObjectConfirmedAtObservedPose no longer
+        // provides separate pointers for this. Note this is an optimization so that AddVisualObservation doesn't
+        // need to do GetLocatedObjectByID itself when it's not necessary, but it seems to complicate logic.
+        // Rethink that API in following iterations of PoseConfirmer
+        ObservableObject* curMatchInOrigin = GetLocatedObjectByID(objSeen->GetID());
+      
         // Add observation
         const bool wasRobotMoving = false; // assume false, otherwise we wouldn't have gotten this far w/ marker?
         const bool isConfirmingObservation = _robot->GetObjectPoseConfirmer().AddVisualObservation(objSeen,
-                                                                                nullptr, // not confirmed
+                                                                                curMatchInOrigin,
                                                                                 wasRobotMoving,
                                                                                 distToObjSeen);
         if ( !isConfirmingObservation ) {
