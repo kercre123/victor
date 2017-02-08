@@ -224,7 +224,7 @@ public class StartupManager : MonoBehaviour {
 
     int startSeed = System.Environment.TickCount;
     UnityEngine.Random.seed = startSeed;
-    DAS.Info("Unity.Random.StartSeed", startSeed.ToString());
+    DAS.Info("Random.StartSeed", startSeed.ToString());
   }
 
   private IEnumerator InitializeAssetBundleManager(AssetBundleManager assetBundleManager) {
