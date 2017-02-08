@@ -48,7 +48,7 @@ public:
   
 private:
   int32_t _stepTime_ms;
-  int32_t _fastForwardFactor = 1;
+  float _fastForwardFactor = 1.0f;
   std::unique_ptr<webots::Supervisor> _supervisor;
   std::unique_ptr<DevLogProcessor>    _devLogProcessor;
   std::unique_ptr<UdpClient>          _vizConnection;
@@ -72,6 +72,7 @@ private:
   void UpdateEndTimeText(uint32_t time_ms);
   void PrintHelp();
   void JumpToMS(uint32_t targetTime_ms, bool dropMessages = false);
+  void JumpByMS(uint32_t targetTime_ms, bool dropMessages = false);
   void SetLogCallbacks();
   void ClearLogCallbacks();
   

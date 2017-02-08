@@ -26,7 +26,7 @@
 #include <webots/Keyboard.hpp>
 
 #include <functional>
-
+#include <cmath>
 
 namespace Anki {
 namespace Cozmo {
@@ -37,7 +37,7 @@ static const char* kSaveImagesFieldName = "saveImages";
 
 static const int kFontWidth = 8;
 static const int kFontHeight = 8;
-static const int kMaxStatusStrLen = 10; // PAUSE 32x
+static const int kMaxStatusStrLen = 13; // PAUSE 128.00x
 static const int kMaxCurrTimeStrLen = 20; // 1234567ms 00:00.000s
 static const int kMaxEndTimeLen = 5; // 00:00
 
@@ -81,7 +81,7 @@ void WebotsDevLogController::UpdateStatusText(bool jumping)
     snprintf(text, kMaxStatusStrLen+1, "JUMPING...");
   }
   else {
-    snprintf(text, kMaxStatusStrLen+1, "%s %2dx",
+    snprintf(text, kMaxStatusStrLen+1, "%s %6.2fx",
              _isPaused ? "PAUSE" : "PLAY ",
              _fastForwardFactor);
   }
@@ -184,7 +184,7 @@ int32_t WebotsDevLogController::Update()
   
   if (_devLogProcessor && ! _isPaused)
   {
-    if (_devLogProcessor->AdvanceTime(_fastForwardFactor * _stepTime_ms))
+    if (_devLogProcessor->AdvanceTime(std::round(_fastForwardFactor * _stepTime_ms)))
     {
       uint32_t currTime = _devLogProcessor->GetCurrPlaybackTime();
       UpdateCurrTimeRender(currTime);
@@ -276,11 +276,13 @@ void WebotsDevLogController::PrintHelp()
   printf("DevLogger keyboard commands help:\n");
   printf("i   : toggle image save state\n");
   printf("l   : Init logging (path specified in field)\n");
-  printf("+   : Slower playback\n");
-  printf("-   : Faster playback\n");
+  printf("-   : Slower playback\n");
+  printf("+   : Faster playback\n");
+  printf("0   : Reset playback speed\n");
   printf("j   : Jump to 'jumpToMS' milliseconds in the log\n");
   printf("J   : Shift+J to jump and skip all messages\n");
-  printf("SPC : play / pause\n");
+  printf("n   : Jump to next print message\n");
+  printf("SPC : Play / pause\n");
 }
   
 void WebotsDevLogController::UpdateKeyboard()
@@ -356,12 +358,33 @@ void WebotsDevLogController::UpdateKeyboard()
         break;
       }
 
+      case (int)'0':
+      case (int)')':
+      {
+        _fastForwardFactor = 1.0f;
+        UpdateStatusText();
+        break;
+      }
+
       case (int)'J':
       {
         const bool dropMessages = modifier_key & webots::Keyboard::SHIFT;
           
         int ms = _selfNode->getField("jumpToMS")->getSFInt32();
         JumpToMS(ms, dropMessages);
+        break;
+      }
+
+      case (int)'n':
+      case (int)'N':
+      {
+        const uint32_t timeToJump = _devLogProcessor->GetNextPrintTime_ms();
+        if( timeToJump == 0 ) {
+          printf("No next print message (end of log?)\n");
+        }
+        else {
+          JumpByMS(timeToJump);
+        }
         break;
       }
 
@@ -413,6 +436,22 @@ void WebotsDevLogController::JumpToMS(uint32_t targetTime_ms, bool dropMessages)
                    "fast forwarding ahead to %d ms (jumping by %d)",
                    targetTime_ms, jump_ms);
 
+  // update time now so we can show the jump carrot
+  uint32_t currTime = _devLogProcessor->GetCurrPlaybackTime();
+  UpdateCurrTimeRender(currTime, targetTime_ms);
+
+  JumpByMS(jump_ms, dropMessages);
+
+  PRINT_NAMED_INFO("WebotsDevLogController.JumpToMS.Complete",
+                   "jump complete");
+}
+  
+void WebotsDevLogController::JumpByMS(uint32_t jump_ms, bool dropMessages)
+{
+  if( ! _devLogProcessor ) {
+    return;
+  }
+
   if( dropMessages ) {
     ClearLogCallbacks();
   }
@@ -428,7 +467,7 @@ void WebotsDevLogController::JumpToMS(uint32_t targetTime_ms, bool dropMessages)
 
     if (_devLogProcessor->AdvanceTime(thisJump) ) {
       uint32_t currTime = _devLogProcessor->GetCurrPlaybackTime();
-      UpdateCurrTimeRender(currTime, targetTime_ms);
+      UpdateCurrTimeRender(currTime);
       const bool jumping = true;
       UpdateStatusText(jumping);
     }
@@ -442,9 +481,6 @@ void WebotsDevLogController::JumpToMS(uint32_t targetTime_ms, bool dropMessages)
 
   const bool jumping = false;
   UpdateStatusText(jumping);
-
-  PRINT_NAMED_INFO("WebotsDevLogController.JumpToMS.Complete",
-                   "jump complete");
 
   if( dropMessages) {
     // restore callbacks
