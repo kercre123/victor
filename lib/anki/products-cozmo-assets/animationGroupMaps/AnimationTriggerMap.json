@@ -305,10 +305,6 @@
       "AnimName": "ag_fistbump_idle"
     },
     {
-      "CladEvent": "FistBumpRequestLong",
-      "AnimName": "ag_fistbump_requestlong"
-    },
-    {
       "CladEvent": "FistBumpRequestOnce",
       "AnimName": "ag_fistbump_requestonce"
     },

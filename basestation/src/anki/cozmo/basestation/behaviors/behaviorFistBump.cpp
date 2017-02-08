@@ -25,8 +25,6 @@ namespace Cozmo {
   // Json parameter keys
   static const char* kMaxTimeToLookForFaceKey       = "maxTimeToLookForFace_s";
   static const char* kAbortIfNoFaceFoundKey         = "abortIfNoFaceFound";
-  static const char* kLongRequestCooldownTimeKey    = "longRequestCooldownTime_s";
-  static const char* kLongRequestProbabilityKey     = "longRequestProbability";
   static const char* kReportSuccessFailKey          = "reportSuccessFail";
   
   // Constants
@@ -52,9 +50,6 @@ BehaviorFistBump::BehaviorFistBump(Robot& robot, const Json::Value& config)
   , _nextGazeChangeIndex(0)
   , _maxTimeToLookForFace_s(0.f)
   , _abortIfNoFaceFound(true)
-  , _longRequestCooldownTime_s(0.f)
-  , _longRequestProbability(0.f)
-  , _lastLongRequestPlayTime_s(0.f)
   , _waitStartTime_s(0.f)
   , _fistBumpRequestCnt(0)
   , _liftWaitingAngle_rad(0.f)
@@ -66,14 +61,6 @@ BehaviorFistBump::BehaviorFistBump(Robot& robot, const Json::Value& config)
   JsonTools::GetValueOptional(config, kMaxTimeToLookForFaceKey,    _maxTimeToLookForFace_s);
   JsonTools::GetValueOptional(config, kAbortIfNoFaceFoundKey,      _abortIfNoFaceFound);
   JsonTools::GetValueOptional(config, kReportSuccessFailKey,       _reportSuccessOrFail);
-  
-  
-  bool longRequestCooldownDefined    = JsonTools::GetValueOptional(config, kLongRequestCooldownTimeKey, _longRequestCooldownTime_s);
-  bool longRequestProbabilityDefined = JsonTools::GetValueOptional(config, kLongRequestProbabilityKey,  _longRequestProbability);
-  
-  if (longRequestCooldownDefined != longRequestProbabilityDefined) {
-    PRINT_NAMED_ERROR("BehaviorFistBump.longRequestProbOrCooldownUndefined", "Either both Cooldown and probability must be defined or neither defined");
-  }
 }
 
 bool BehaviorFistBump::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
@@ -208,13 +195,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
     }
     case State::RequestInitialFistBump:
     {
-      if (((_lastLongRequestPlayTime_s == 0) || (now > _lastLongRequestPlayTime_s + _longRequestCooldownTime_s)) &&
-          (GetRNG().RandDblInRange(0.0, 1.0) < _longRequestProbability) ) {
-        StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestLong));
-        _lastLongRequestPlayTime_s = now;
-      } else {
-        StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestOnce));
-      }
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestOnce));
       _state = State::RequestingFistBump;
       break;
     }

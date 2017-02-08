@@ -9,7 +9,5 @@
   "flatScore": 5.0,
 
   "maxTimeToLookForFace_s": 5.0,
-  "abortIfNoFaceFound": false,
-  "longRequestCooldownTime_s": 180,
-  "longRequestProbability": 0.2
+  "abortIfNoFaceFound": false
 }
