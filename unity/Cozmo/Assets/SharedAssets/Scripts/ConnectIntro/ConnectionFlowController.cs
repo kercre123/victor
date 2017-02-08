@@ -220,7 +220,15 @@ public class ConnectionFlowController : MonoBehaviour {
       DAS.Info("ConnectionFlow.ShowAndroid", "OnComplete: " + success);
       GameObject.Destroy(_AndroidConnectionFlowInstance);
       _AndroidConnectionFlowInstance = null;
-      HandleSearchForCozmoScreenDone(success);
+
+      // create background if it doesn't exist yet, then signal we're done
+      Action doneAction = () => HandleSearchForCozmoScreenDone(success);
+      if (_ConnectionFlowBackgroundModalInstance == null) {
+        CreateConnectionFlowBackgroundWithCallback(doneAction);
+      }
+      else {
+        doneAction();
+      }
     };
     // - if the old flow is requested, start it
     androidFlowInstance.OnCancelFlow += () => {
