@@ -59,12 +59,6 @@ typedef unsigned char FixtureType;
                         "PACKOUT","LIFETEST","RECHARGE","JAM",   "HEAD2",   "SOUND",  "COZ187","", \
                         "DEBUG" }
 
-extern FixtureType g_fixtureType;
-
-extern char g_lotCode[15];
-extern u32 g_time;
-extern u32 g_dateCode;
-
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 u32 GetSerial();
                         

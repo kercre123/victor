@@ -9,6 +9,7 @@
 #include "hal/espressif.h"
 #include "hal/board.h"
 
+#include "app/app.h"
 #include "app/binaries.h"
 #include "app/fixture.h"
 #include "hal/monitor.h"

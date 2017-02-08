@@ -8,7 +8,6 @@
 #include "hal/uart.h"
 #include "hal/console.h"
 #include "hal/cube.h"
-#include "app/fixture.h"
 #include "hal/espressif.h"
 #include "hal/random.h"
 
@@ -18,6 +17,7 @@
 #include <string.h>
 
 #include "app/app.h"
+#include "app/fixture.h"
 #include "app/tests.h"
 #include "nvReset.h"
 
@@ -33,7 +33,6 @@ app_reset_dat_t g_app_reset;
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
 FixtureType g_fixtureType = FIXTURE_NONE;
-FlashParams g_flashParams;
 
 char g_lotCode[15] = {0};
 u32 g_time = 0;
@@ -485,7 +484,7 @@ int main(void)
   
   InitTimers();
   InitUART();
-  FetchParams();
+  FetchParams(); //g_flashParams = flash backup (saved via 'setmode' console cmd)
   InitConsole();
   InitRandom();
  

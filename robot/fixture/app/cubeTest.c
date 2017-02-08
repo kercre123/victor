@@ -8,6 +8,7 @@
 #include "hal/uart.h"
 #include "hal/cube.h"
 #include "hal/monitor.h"
+#include "app/app.h"
 #include "app/fixture.h"
 #include "binaries.h"
 

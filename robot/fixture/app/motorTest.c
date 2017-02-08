@@ -8,6 +8,7 @@
 #include "hal/cube.h"
 #include "hal/monitor.h"
 #include "hal/motorled.h"
+#include "app/app.h"
 #include "app/fixture.h"
 #include "binaries.h"
 

@@ -9,6 +9,7 @@
 #include "hal/cube.h"
 #include "hal/flash.h"
 
+#include "../app/app.h"
 #include "../app/binaries.h"
 #include <string.h>
 
@@ -285,7 +286,6 @@ void ProgramCubeTest(u8* rom, int length)
 }
 
 int GetSequence(void);
-extern FixtureType g_fixtureType;
 
 // This table is used to generate a nRF31-friendly Address for the Electronic Serial Number
 // A minimum of 3 transitions occur in each byte, but never 10101 or 01010

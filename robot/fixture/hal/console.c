@@ -25,10 +25,6 @@
 
 #define BAUD_RATE   1000000
 
-extern BOOL g_isDevicePresent;
-extern FixtureType g_fixtureType;
-extern char* FIXTYPES[];
-
 extern void SetFixtureText(void);
 extern void SetOKText(void);
 extern void SetErrorText(u16 error);

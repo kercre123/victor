@@ -10,6 +10,7 @@
 #include "hal/radio.h"
 #include "hal/flash.h"
 
+#include "app/app.h"
 #include "app/fixture.h"
 #include "app/binaries.h"
 
@@ -24,8 +25,6 @@ using namespace Anki::Cozmo::RobotInterface;
 // Robot is up and running - usually around 48K, rebooting at 32K - what a mess!
 #define BOOTED_CURRENT  40000
 #define PRESENT_CURRENT 1000
-
-extern BOOL g_isDevicePresent;
 
 // Return true if device is detected on contacts
 bool RobotDetect(void)
