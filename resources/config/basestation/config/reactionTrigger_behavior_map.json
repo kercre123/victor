@@ -22,22 +22,26 @@
         {
           "behaviorObjective": "BuiltPyramid",
           "triggerCooldownTime_s": 180.0,
-          "triggerProbability": 0.5
+          "triggerProbability": 0.5,
+          "triggerExpiration_s": 3.0
         },
         {
           "behaviorObjective": "InteractedWithFace",
           "triggerCooldownTime_s": 300.0,
-          "triggerProbability": 0.2
+          "triggerProbability": 0.2,
+          "triggerExpiration_s": 3.0
         },
         {
           "behaviorObjective": "PerformedStrongWorkout",
           "triggerCooldownTime_s": 180.0,
-          "triggerProbability": 0.5
+          "triggerProbability": 0.5,
+          "triggerExpiration_s": 3.0
         },
         {
           "behaviorObjective": "PoppedWheelie",
           "triggerCooldownTime_s": 180.0,
-          "triggerProbability": 0.2
+          "triggerProbability": 0.2,
+          "triggerExpiration_s": 6.0
         }
       ]
     },

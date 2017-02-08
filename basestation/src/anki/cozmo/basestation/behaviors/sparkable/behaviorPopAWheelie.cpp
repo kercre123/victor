@@ -35,6 +35,7 @@ CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
  
 static std::set<ReactionTrigger> kReactionsToDisable = {
   ReactionTrigger::CliffDetected,
+  ReactionTrigger::FistBump,
   ReactionTrigger::RobotPickedUp,
   ReactionTrigger::RobotOnBack,
   ReactionTrigger::CubeMoved,
@@ -163,7 +164,8 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                 {
                   case ActionResultCategory::SUCCESS:
                   {
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie), &BehaviorPopAWheelie::FinishSuccess);
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
+                    BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
                     break;
                   }
                   case ActionResultCategory::RETRY:
@@ -251,11 +253,6 @@ void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
     // count / track the requests to enable and disable like we do with track locking or reactionary behaviors
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
   }
-}
-
-void BehaviorPopAWheelie::FinishSuccess()
-{
-  BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
 }
   
 }

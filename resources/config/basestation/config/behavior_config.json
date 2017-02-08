@@ -215,7 +215,7 @@
           "minTimeSecs": 0,
           "maxTimeSecs": 30,
           "numberOfRepetitions": 1,
-          "behaviorObjective": "FistBumped",
+          "behaviorObjective": "FistBumpComplete",
           "softSparkTrigger": "SoftSparkUpgradeLift",
           "sparksSuccessTrigger": "", // don't play any animation
           // these are the behaviors that are allowed in this behavior chooser
