@@ -35,6 +35,7 @@ namespace FaceEnrollment {
 
     public override void Enter() {
       base.Enter();
+      IsPauseable = false;
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
 

@@ -110,6 +110,13 @@ public class StateMachine {
   }
 
   public void Pause(State.PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
+    if (_CurrState != null) {
+      // don't pause if the current state is not pausable by reactionary behaviors.
+      if (!_CurrState.IsPauseable) {
+        return;
+      }
+    }
+
     if (!_IsPaused) {
       _IsPaused = true;
       if (_CurrState != null) {
