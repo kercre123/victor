@@ -19,7 +19,7 @@ MonoBehaviour:
   - _EnumValueAsString: Workout
     _EnumValue: 29
   AnyPrereqUnlock: 0
-  _ComingSoon: 0
+  _ComingSoon: 1
   _HideInUI: 0
   DescriptionKey: unlockable.BuildPyramid.Description
   TitleKey: unlockable.BuildPyramid.Title
