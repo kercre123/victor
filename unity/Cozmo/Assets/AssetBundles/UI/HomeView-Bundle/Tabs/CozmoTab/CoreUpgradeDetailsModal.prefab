@@ -1301,6 +1301,7 @@ MonoBehaviour:
   _AlphaController: {fileID: 22516724}
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _PreventForceClose: 1
   DimBackground: 0
   _ContentContainer: {fileID: 166184}
   _UnlockableNameLabel: {fileID: 0}

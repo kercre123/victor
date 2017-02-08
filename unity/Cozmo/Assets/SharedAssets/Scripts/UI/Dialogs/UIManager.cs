@@ -202,7 +202,7 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseAllModals() {
-    _Instance.CloseAllModalsInternal(forceClose: false);
+    _Instance.CloseAllModalsInternal(forceCloseByModal: false);
   }
 
   /// <summary>
@@ -290,7 +290,7 @@ public class UIManager : MonoBehaviour {
 
     if (!_IsOpenViewQueued) {
       if (!IsClosingCurrentView) {
-        CloseAllModalsInternal(forceClose: false);
+        CloseAllModalsInternal(forceCloseByModal: false);
         if (_CurrentView != null) {
           _IsOpenViewQueued = true;
           _CurrentView.DialogCloseAnimationFinished += () => {
@@ -410,7 +410,7 @@ public class UIManager : MonoBehaviour {
         else if (priorityData.HighPriorityAction == HighPriorityModalAction.ForceCloseOthersAndOpen) {
           _IsOpenInProgress = true;
           // Close all modals and then open modal now on top of everyone
-          CloseAllModalsInternal(forceClose: true);
+          CloseAllModalsInternal(forceCloseByModal: true);
           CreateModalInternal(modalPrefab, creationSuccessCallback, creationCancelledCallback,
                                  priorityData, overrideBackgroundDim, overrideCloseOnTouchOutside);
           _IsOpenInProgress = false;
@@ -460,13 +460,15 @@ public class UIManager : MonoBehaviour {
     PlaceDimmer();
   }
 
-  private void CloseAllModalsInternal(bool forceClose) {
+  private void CloseAllModalsInternal(bool forceCloseByModal) {
     ClearModalQueue();
     // Close modals down the stack
     for (int i = _OpenModals.Count - 1; i >= 0; i--) {
       if (_OpenModals[i] != null) {
-        if (forceClose) {
-          _OpenModals[i].ForceCloseModal();
+        if (forceCloseByModal) {
+          if (!_OpenModals[i].PreventForceClose) {
+            _OpenModals[i].ForceCloseModal();
+          }
         }
         else {
           _OpenModals[i].CloseDialog();
