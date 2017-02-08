@@ -615,6 +615,74 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   
 # define MAKE_EVENT_NAME(__str__) (eventPrefix + __str__).c_str()
   
+  // find active object by activeID
+  ObservableObject* connectedObj = robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+  if ( nullptr == connectedObj ) {
+    PRINT_NAMED_WARNING(MAKE_EVENT_NAME("UnknownActiveID"),
+                        "Could not find match for active object ID %d", payload.objectID);
+  }
+  else
+  {
+    // Only do this stuff once, since these checks should be the same across all frames. Use connected instance
+    if( connectedObj->GetID() == robot->GetCharger() )
+    {
+      PRINT_NAMED_INFO(MAKE_EVENT_NAME("Charger"), "Charger sending garbage move messages");
+      return;
+    }
+    
+    DEV_ASSERT(connectedObj->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
+    
+    PRINT_NAMED_INFO(MAKE_EVENT_NAME("ObjectMovedOrStopped"),
+                     "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f, time: %d ms",
+                     connectedObj->GetID().GetValue(), connectedObj->GetActiveID(),
+                     EnumToString(connectedObj->GetType()), GetAxisString(payload),
+                     GetXAccelVal(payload), GetYAccelVal(payload), GetZAccelVal(payload), payload.timestamp );
+    
+    const bool shouldIgnoreMovement = robot->GetBlockTapFilter().ShouldIgnoreMovementDueToDoubleTap(connectedObj->GetID());
+    if(shouldIgnoreMovement && GetIsMoving<PayloadType>())
+    {
+      PRINT_NAMED_INFO(MAKE_EVENT_NAME("IgnoringMessage"),
+                       "Waiting for double tap id:%d ignoring movement message",
+                       connectedObj->GetID().GetValue());
+      return;
+    }
+    
+    // Don't notify game about objects being carried that have moved, since we expect
+    // them to move when the robot does.
+    // TODO: Consider broadcasting carried object movement if the robot is _not_ moving
+    //
+    // Don't notify game about moving objects that are being docked with, because
+    // we expect those to move if/when we bump them. But we still mark them as dirty/inaccurate
+    // below because they have in fact moved and we wouldn't want to localize with them.
+    //
+    // TODO: Consider not filtering these out and letting game ignore them somehow
+    //       - Option 1: give game access to dockingID so it can do this same filtering
+    //       - Option 2: add a "wasDocking" flag to the ObjectMoved/Stopped message
+    //       - Option 3: add a new ObjectMovedWhileDocking message
+    //
+    const bool isDockingObject = (connectedObj->GetID() == robot->GetDockObject());
+    const bool isCarryingObject = robot->IsCarryingObject(connectedObj->GetID());
+    
+    // Update the ID to be the blockworld ID before broadcasting
+    payload.objectID = connectedObj->GetID();
+    payload.robotID = robot->GetID();
+    
+    if(!isDockingObject && !isCarryingObject)
+    {
+      robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
+    }
+    
+    // update Moving flag of connected object when it changes
+    const bool wasMoving = connectedObj->IsMoving();
+    const bool isMovingNow = GetIsMoving<PayloadType>();
+    if ( wasMoving != isMovingNow ) {
+      connectedObj->SetIsMoving(GetIsMoving<PayloadType>(), payload.timestamp);
+      robot->GetContext()->GetVizManager()->SendObjectMovingState(activeID, connectedObj->IsMoving());
+    }
+  }
+  
+  // -- Update located instances
+  
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID. We also need to consider all pose states and origin frames.
@@ -626,92 +694,6 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   
   std::vector<ObservableObject *> matchingObjects;
   robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
-  
-  if(matchingObjects.empty())
-  {
-    #if ANKI_DEVELOPER_CODE
-    {
-      // maybe we do not have located instances, there should be a connected one though
-      const bool isConnected = ( nullptr != robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID) );
-      if ( !isConnected ) {
-        PRINT_NAMED_WARNING(MAKE_EVENT_NAME("UnknownActiveID"),
-                            "Could not find match for active object ID %d", payload.objectID);
-      }
-    }
-    #endif
-    
-    // always finish here if no instances found
-    return;
-  }
-  
-  // Only do this stuff once, since these checks should be the same across all frames:
-  const ObservableObject* firstObject = matchingObjects.front();
-  assert(firstObject != nullptr); // FindMatchingObjects should not return nullptrs
-  if( firstObject->GetID() == robot->GetCharger() )
-  {
-    PRINT_NAMED_INFO(MAKE_EVENT_NAME("Charger"), "Charger sending garbage move messages");
-    return;
-  }
-  
-  DEV_ASSERT(firstObject->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
-  
-  PRINT_NAMED_INFO(MAKE_EVENT_NAME("ObjectMovedOrStopped"),
-                   "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f, time: %d ms",
-                   firstObject->GetID().GetValue(), firstObject->GetActiveID(),
-                   EnumToString(firstObject->GetType()), GetAxisString(payload),
-                   GetXAccelVal(payload), GetYAccelVal(payload), GetZAccelVal(payload), payload.timestamp );
-  
-  const bool shouldIgnoreMovement = robot->GetBlockTapFilter().ShouldIgnoreMovementDueToDoubleTap(firstObject->GetID());
-  if(shouldIgnoreMovement && GetIsMoving<PayloadType>())
-  {
-    PRINT_NAMED_INFO(MAKE_EVENT_NAME("IgnoringMessage"),
-                     "Waiting for double tap id:%d ignoring movement message",
-                     firstObject->GetID().GetValue());
-    return;
-  }
-  
-  // Don't notify game about objects being carried that have moved, since we expect
-  // them to move when the robot does.
-  // TODO: Consider broadcasting carried object movement if the robot is _not_ moving
-  //
-  // Don't notify game about moving objects that are being docked with, because
-  // we expect those to move if/when we bump them. But we still mark them as dirty/inaccurate
-  // below because they have in fact moved and we wouldn't want to localize with them.
-  //
-  // TODO: Consider not filtering these out and letting game ignore them somehow
-  //       - Option 1: give game access to dockingID so it can do this same filtering
-  //       - Option 2: add a "wasDocking" flag to the ObjectMoved/Stopped message
-  //       - Option 3: add a new ObjectMovedWhileDocking message
-  //
-  const bool isDockingObject = (firstObject->GetID() == robot->GetDockObject());
-  const bool isCarryingObject = robot->IsCarryingObject(firstObject->GetID());
-  
-  // Update the ID to be the blockworld ID before broadcasting
-  payload.objectID = firstObject->GetID();
-  payload.robotID = robot->GetID();
-  
-  if(!isDockingObject && !isCarryingObject)
-  {
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
-  }
-
-  // We expect carried objects to move, so don't mark them as dirty/inaccurate.
-  // Their pose state should remain accurate/known because they are attached to
-  // the lift. I'm leaving this a separate check from the decision about broadcasting
-  // the movement, in case we want to easily remove the checks above but keep this one.
-  if(isCarryingObject)
-  {
-    // If carried object is moving, don't ignore stopped messages.
-    if (!GetIsMoving<PayloadType>() && firstObject->IsMoving()) {
-      const_cast<ObservableObject*>(firstObject)->SetIsMoving(false, payload.timestamp);
-      robot->GetContext()->GetVizManager()->SendObjectMovingState(activeID, firstObject->IsMoving());
-    }
-    
-    // TODO: Consider _not_ ignoring carried object movement if the robot is _not_ moving
-    //       (This doesn't "just work" with an IsMoving check because of timing not matching.)
-    // if( robot->GetMoveComponent().IsMoving() )
-    return;
-  }
   
   for(ObservableObject* object : matchingObjects)
   {
@@ -731,19 +713,8 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     // Their pose state should remain accurate/known because they are attached to
     // the lift. I'm leaving this a separate check from the decision about broadcasting
     // the movement, in case we want to easily remove the checks above but keep this one.
-    if(isCarryingObject)
-    {
-      // If carried object is moving, don't ignore stopped messages.
-      if (GetIsMoving<PayloadType>() || !object->IsMoving()) {
-        // TODO: Consider _not_ ignoring carried object movement if the robot is _not_ moving
-        //       (This doesn't "just work" with an IsMoving check because of timing not matching.)
-        // if( robot->GetMoveComponent().IsMoving() )
-        continue;
-      }
-    }
-    
-    
-    if(GetIsMoving<PayloadType>() && object->IsPoseStateKnown())
+    const bool isCarryingObject = robot->IsCarryingObject(object->GetID());
+    if(GetIsMoving<PayloadType>() && object->IsPoseStateKnown() && !isCarryingObject)
     {
       // Once an object moves, we can no longer use it for localization because
       // we don't know where it is anymore. Next time we see it, relocalize it
@@ -787,11 +758,13 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       }
     }
     
-    // Set moving state of object (in any frame)
-    object->SetIsMoving(GetIsMoving<PayloadType>(), payload.timestamp);
-    
-    // Viz update
-    robot->GetContext()->GetVizManager()->SendObjectMovingState(activeID, object->IsMoving());
+    const bool wasMoving = object->IsMoving();
+    const bool isMovingNow = GetIsMoving<PayloadType>();
+    if ( wasMoving != isMovingNow )
+    {
+      // Set moving state of object (in any frame)
+      object->SetIsMoving(GetIsMoving<PayloadType>(), payload.timestamp);
+    }
     
   } // for(ObservableObject* object : matchingObjects)
                            
