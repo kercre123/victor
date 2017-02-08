@@ -6,6 +6,7 @@ namespace FaceEnrollment {
   public class FaceEnrollInstructionState : State {
 
     private FaceEnrollmentInstructionsModal _FaceEnrollmentInstructionsModalInstance;
+    private GameObject _FaceEnrollmentMultipleFacesErrorSlideInstance;
 
     private AlertModal _ErrorAlertModal = null;
 
@@ -38,9 +39,20 @@ namespace FaceEnrollment {
       IsPauseable = false;
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
+      CreateInstructionsModal();
+    }
 
-      UIManager.OpenModal(_FaceEnrollmentGame.FaceEnrollmentInstructionsModalPrefab,
-                          new ModalPriorityData(), HandleInstructionsModalCreated);
+    private void CreateInstructionsModal() {
+      _FaceEnrollmentGame.PopulateTitleWidget();
+      UIManager.OpenModal(_FaceEnrollmentGame.FaceEnrollmentInstructionsModalPrefab, new ModalPriorityData(), HandleInstructionsModalCreated);
+    }
+
+    private void DestroyInstructionsModal() {
+      if (_FaceEnrollmentInstructionsModalInstance != null) {
+        _FaceEnrollmentInstructionsModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished -= HandleUserClosedInstructionsModal;
+        _FaceEnrollmentInstructionsModalInstance.ModalForceClosedAnimationFinished -= HandleInstructionsModalForceClosed;
+        _FaceEnrollmentInstructionsModalInstance.CloseDialogImmediately();
+      }
     }
 
     private void HandleInstructionsModalCreated(BaseModal newInstructionsModal) {
@@ -60,11 +72,7 @@ namespace FaceEnrollment {
       // resume minigame music
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_FaceEnrollmentGame.GetDefaultMusicState());
 
-      if (_FaceEnrollmentInstructionsModalInstance != null) {
-        _FaceEnrollmentInstructionsModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished -= HandleUserClosedInstructionsModal;
-        _FaceEnrollmentInstructionsModalInstance.ModalForceClosedAnimationFinished -= HandleInstructionsModalForceClosed;
-        _FaceEnrollmentInstructionsModalInstance.CloseDialogImmediately();
-      }
+      DestroyInstructionsModal();
 
       if (_ErrorAlertModal != null) {
         _ErrorAlertModal.CloseDialogImmediately();
@@ -73,6 +81,9 @@ namespace FaceEnrollment {
       if (_DoneAlertModal != null) {
         _DoneAlertModal.CloseDialogImmediately();
       }
+
+      _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
+      _FaceEnrollmentGame.SharedMinigameView.HideShelf();
 
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
     }
@@ -113,6 +124,19 @@ namespace FaceEnrollment {
     }
 
     private void HandleKnownEnrollmentFailure(FaceEnrollmentCompleted faceEnrollmentCompleted) {
+      if (faceEnrollmentCompleted.result == Anki.Cozmo.FaceEnrollmentResult.SawMultipleFaces) {
+        // multiple faces error is a modal instead of a pop up alert.
+        DestroyInstructionsModal();
+        _FaceEnrollmentGame.SharedMinigameView.HideTitleWidget();
+        _FaceEnrollmentGame.SharedMinigameView.ShowFullScreenGameStateSlide(_FaceEnrollmentGame.FaceEnrollmentMultipleFacesErrorSlidePrefab, "multiple_faces_error");
+        _FaceEnrollmentGame.ShowMultipleFacesErrorShelf(CreateInstructionsModal);
+      }
+      else {
+        PopupErrorAlert(faceEnrollmentCompleted);
+      }
+    }
+
+    private void PopupErrorAlert(FaceEnrollmentCompleted faceEnrollmentCompleted) {
       AlertModalData errorAlertData = null;
 
       switch (faceEnrollmentCompleted.result) {

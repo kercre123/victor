@@ -51,6 +51,8 @@ MonoBehaviour:
   TotalRounds: 0
   _FaceEnrollmentInstructionsModalPrefab: {fileID: 11494650, guid: 608a10a26f4794b2f8cfb371d89d5626,
     type: 2}
+  _FaceEnrollmentMultipleFacesErrorSlidePrefab: {fileID: 151718, guid: 1219693106701403384689d15b2259d9,
+    type: 2}
   _EnterNameSlidePrefab: {fileID: 11431490, guid: e9fb59d52d3f64ef2825d07f7ed56372,
     type: 2}
   _FaceListSlidePrefab: {fileID: 11480272, guid: a3776657ddf994c64a023cff8cb078f7,
@@ -60,6 +62,8 @@ MonoBehaviour:
   _FaceEnrollmentShelfContentPrefab: {fileID: 11467002, guid: 5f416f90633414c598d809cbd7be91a1,
     type: 2}
   _FaceDetailsShelfContentPrefab: {fileID: 11461306, guid: 52befe4c627b04201b7582fe39c8a0f6,
+    type: 2}
+  _FaceMultipleFacesErrorShelfContentPrefab: {fileID: 11440322, guid: f348bc0302e4d48ed86be726b564d568,
     type: 2}
 --- !u!1001 &100100000
 Prefab:

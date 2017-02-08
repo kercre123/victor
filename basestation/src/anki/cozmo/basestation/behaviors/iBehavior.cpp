@@ -583,15 +583,16 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   
   if( !IsResuming() && !IsRunning() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotRunning",
-                        "Behavior '%s' can't start acting because it is not running",
-                        GetName().c_str());
+                        "Behavior '%s' can't start %s action because it is not running",
+                        GetName().c_str(), action->GetName().c_str());
     return false;
   }
 
   if( IsActing() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.AlreadyActing",
-                        "Behavior '%s' can't start acting because it is already running an action",
-                        GetName().c_str());
+                        "Behavior '%s' can't start %s action because it is already running an action in state %s",
+                        GetName().c_str(), action->GetName().c_str(),
+                        GetDebugStateName().c_str());
     return false;
   }
 

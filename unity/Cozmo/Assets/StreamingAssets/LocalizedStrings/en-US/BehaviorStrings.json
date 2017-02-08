@@ -114,6 +114,9 @@
   "behavior.LookForFaceAndCube": {
     "translation": " "
   },
+  "error.TooManyFaces": {
+    "translation": "Make sure Cozmo only sees"
+  },
   "behavior.BuildPyramid": {
     "translation": "Cozmo is building a pyramid"
   },

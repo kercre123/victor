@@ -46,7 +46,7 @@ namespace {
   CONSOLE_VAR(f32,               kEnrollFace_UpdateFacePositionThreshold_mm,      CONSOLE_GROUP, 100.f);
   CONSOLE_VAR(f32,               kEnrollFace_UpdateFaceAngleThreshold_deg,        CONSOLE_GROUP, 45.f);
   
-  // Default timeout for this action (vs. the one inherited from IAction)
+  // Default timeout for overall enrollment (e.g. to be looking for a face or waiting for enrollment to complete)
   CONSOLE_VAR(f32,               kEnrollFace_Timeout_sec,                         CONSOLE_GROUP, 15.f);
   CONSOLE_VAR(f32,               kEnrollFace_TimeoutMax_sec,                      CONSOLE_GROUP, 35.f);
   
@@ -68,8 +68,14 @@ namespace {
   CONSOLE_VAR(f32,               kEnrollFace_MaxTotalBackup_mm,                   CONSOLE_GROUP, 50.f);
   
   CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     CONSOLE_GROUP, 3);
+ 
+  // Number of faces to consider "too many" and forced timeout when seeing that many
+  CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              CONSOLE_GROUP, 1); // > this is "too many"
+  CONSOLE_VAR(s32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      CONSOLE_GROUP, 1.f);
   
   static const char * const kLogChannelName = "FaceRecognizer";
+  static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
+  static const char * const kTooManyFacesTimeoutKey = "tooManyFacesTimeout_sec";
 }
   
 // Transition to a new state and update the debug name for logging/debugging
@@ -94,6 +100,11 @@ BehaviorEnrollFace::BehaviorEnrollFace(Robot &robot, const Json::Value& config)
     GameToEngineTag::CancelFaceEnrollment,
   }});
   
+  // If Cozmo sees more than maxFacesVisible for longer than tooManyFacesTimeout seconds while looking for a face or
+  // enrolling a face, then the behavior transitions to the TimedOut state and then returns the SawMultipleFaces
+  // FaceEnrollmentResult.
+  _maxFacesVisible = config.get(kMaxFacesVisibleKey, kEnrollFace_DefaultMaxFacesVisible).asInt();
+  _tooManyFacesTimeout_sec = config.get(kTooManyFacesTimeoutKey, kEnrollFace_DefaultTooManyFacesTimeout_sec).asFloat();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -179,7 +190,7 @@ Result BehaviorEnrollFace::InitInternal(Robot& robot)
   {
     PRINT_NAMED_WARNING("BehaviorEnrollFace.InitInternal.BadSettings",
                         "Disabling enrollment");
-    DisableEnrollment();
+    DisableEnrollment(robot);
     return settingsResult;
   }
   
@@ -193,7 +204,9 @@ Result BehaviorEnrollFace::InitInternal(Robot& robot)
   
   _startTime_sec       = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _timeout_sec         = kEnrollFace_Timeout_sec; // initial timeout, can change as we run
-  _lastFaceSeenTime_ms = 0;
+  
+  _lastFaceSeenTime_ms            = 0;
+  _startedSeeingMultipleFaces_sec = 0.f;
   
   _lastRelBodyAngle    = 0.f;
   _totalBackup_mm      = 0.f;
@@ -251,8 +264,7 @@ IBehavior::Status BehaviorEnrollFace::UpdateInternal(Robot& robot)
   
   switch(_state)
   {
-    case State::SuccessNoSave:
-    case State::SuccessWithSave:
+    case State::Success:
     case State::NotStarted:
     case State::TimedOut:
     case State::Failed_WrongFace:
@@ -309,7 +321,7 @@ IBehavior::Status BehaviorEnrollFace::UpdateInternal(Robot& robot)
         // observed since the last tick
         UpdateFaceToEnroll(robot);
         
-        // If we haven't seen the person in too long, go back to looking for them
+        // If we haven't seen the person (and only the one person) in too long, go back to looking for them
         if(robot.GetLastImageTimeStamp() - _lastFaceSeenTime_ms > kEnrollFace_TimeoutForReLookForFace_ms)
         {
           _lastFaceSeenTime_ms = 0;
@@ -347,11 +359,15 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
   
   ExternalInterface::FaceEnrollmentCompleted info;
   
+  const bool wasSeeingMultipleFaces = _startedSeeingMultipleFaces_sec > 0.f;
+  const bool observedUnusableFace = _observedUnusableID != Vision::UnknownFaceID && !_observedUnusableName.empty();
+  
   // If observed ID/face are set, then it means we never found a valid, unnamed face to use
   // for enrollment, so return those in the completion message and indicate this in the result.
+  // NOTE: Seeing multiple faces effectively takes precedence here.
   if(_state == State::Failed_WrongFace || (_state == State::TimedOut &&
-                                           _observedUnusableID != Vision::UnknownFaceID &&
-                                           !_observedUnusableName.empty()))
+                                           !wasSeeingMultipleFaces &&
+                                           observedUnusableFace))
   {
     info.faceID = _observedUnusableID;
     info.name   = _observedUnusableName;
@@ -376,19 +392,20 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
     {
       case State::TimedOut:
       {
-        info.result = FaceEnrollmentResult::TimedOut;
+        if(wasSeeingMultipleFaces)
+        {
+          info.result = FaceEnrollmentResult::SawMultipleFaces;
+        }
+        else
+        {
+          info.result = FaceEnrollmentResult::TimedOut;
+        }
         break;
       }
 
       case State::Cancelled:
-        DisableEnrollment();
-        // If we were enrolling a new face (i.e. not re-enrolling), then make sure
-        // we don't end up with an entry if we get cancelled before completing
-        if(Vision::UnknownFaceID == _saveID)
-        {
-          robot.GetVisionComponent().EraseFace(_faceID);
-        }
-        // NOTE: deliberate fall through to the other "incomplete" states
+        info.result = FaceEnrollmentResult::Cancelled;
+        break;
         
       case State::LookingForFace:
       case State::Enrolling:
@@ -397,12 +414,12 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
       case State::SavingToRobot:
       case State::SaveFailed:
         // If we're stopping in any of these states without having timed out
-        // then something else is keeping us from completing
+        // then something else is keeping us from completing and the assumption
+        // is that we'll resume and finish shortly
         info.result = FaceEnrollmentResult::Incomplete;
         break;
         
-      case State::SuccessNoSave:
-      case State::SuccessWithSave:
+      case State::Success:
         info.result = FaceEnrollmentResult::Success;
         break;
       
@@ -424,9 +441,31 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
   // and don't disable face enrollment.
   if(info.result != FaceEnrollmentResult::Incomplete)
   {
-    BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
+    DisableEnrollment(robot);
     
-    DisableEnrollment();
+    // If enrollment did not succeed (but is complete) and we're enrolling a *new* face:
+    // It is possible that the vision system (on its own thread!) actually finished enrolling internally. Therefore we
+    // want to erase any *new* face (not a face that was being re-enrolled) since it will not be communicated out in the
+    // enrollment result as successfully enrolled, and thus would mean the engine's known faces would be out of sync
+    // with the external world. This is largely precautionary.
+    const bool isNewEnrollment = Vision::UnknownFaceID != _faceID && Vision::UnknownFaceID == _saveID;
+    if(info.result != FaceEnrollmentResult::Success && isNewEnrollment)
+    {
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.ErasingNewlyEnrolledFace",
+                    "Erasing new face %d as a precaution because we are about to report failure result: %s",
+                    _faceID, EnumToString(info.result));
+      robot.GetVisionComponent().EraseFace(_faceID);
+    }
+    
+    if(info.faceID != Vision::UnknownFaceID) {
+      // We have to have at least seen a face (even if the wrong one) to achieve "interacting" objective
+      BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
+    }
+    
+    if(info.result == FaceEnrollmentResult::Success)
+    {
+      BehaviorObjectiveAchieved(BehaviorObjective::EnrolledFaceWithName);
+    }
     
     // Log enrollment to DAS, with result type
     Util::sEventF("robot.face_enrollment", {{DDATA, EnumToString(info.result)}}, "%d", info.faceID);
@@ -437,6 +476,7 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
     
     robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(info)));
     
+    // Done (whether success or failure), so reset state for next run
     SET_STATE(NotStarted);
   }
   
@@ -455,9 +495,12 @@ bool BehaviorEnrollFace::IsEnrollmentRequested() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::DisableEnrollment()
+void BehaviorEnrollFace::DisableEnrollment(Robot& robot)
 {
   _settings->name.clear();
+  
+  // Leave "session-only" face enrollment enabled when we finish
+  robot.GetFaceWorld().Enroll(Vision::UnknownFaceID);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -465,7 +508,24 @@ bool BehaviorEnrollFace::HasTimedOut() const
 {
   const f32 currTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasTimedOut = (currTime_sec > _startTime_sec + _timeout_sec);
-  return hasTimedOut;
+  const bool hasSeenTooManyFacesTooLong = (_startedSeeingMultipleFaces_sec > 0.f &&
+                                           (currTime_sec > _startedSeeingMultipleFaces_sec + _tooManyFacesTimeout_sec));
+  
+  if(hasTimedOut)
+  {
+    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HasTimedOut.BehaviorTimedOut",
+                  "TimedOut after %.1fsec in State:%s",
+                  _timeout_sec, GetDebugStateName().c_str());
+  }
+  
+  if(hasSeenTooManyFacesTooLong)
+  {
+    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HasTimedOut.TooManyFacesTooLong",
+                  "Saw > %d faces for longer than %.1fsec in State:%s",
+                  _maxFacesVisible, _tooManyFacesTimeout_sec, GetDebugStateName().c_str());
+  }
+  
+  return hasTimedOut || hasSeenTooManyFacesTooLong;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -602,6 +662,10 @@ void BehaviorEnrollFace::TransitionToEnrolling(Robot& robot)
 void BehaviorEnrollFace::TransitionToScanningInterrupted(Robot& robot)
 {
   SET_STATE(ScanningInterrupted);
+  
+  // Make sure we stop tracking necessary (in case we timed out while tracking)
+  StopActing(false);
+  
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceInterrupt),
               [this]() {
                 SET_STATE(TimedOut);
@@ -685,7 +749,7 @@ void BehaviorEnrollFace::TransitionToSayingName(Robot& robot)
       }
       else
       {
-        SET_STATE(SuccessNoSave);
+        SET_STATE(Success);
       }
     }
   });
@@ -738,14 +802,13 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(Robot& robot)
                             EnumToString(_saveEnrollResult),
                             EnumToString(_saveAlbumResult));
         
-        // if this was a new enrollment, then this person is not going to be
-        // known when we reconnect to the robot, so erase them from memory and
-        // report failure. If this was a re-enrollment, then we'll just silently
-        // fail to remember this particular enrollment data, since that won't
-        // have a big effect on the user.
         if(Vision::UnknownFaceID == _saveID)
         {
-          robot.GetVisionComponent().EraseFace(_faceID);
+          // if this was a new enrollment, then this person is not going to be
+          // known when we reconnect to the robot, so report failure so that we
+          // erase them from memory when the behavior stops. If this was a re-enrollment,
+          // then we'll just silently fail to remember this particular enrollment data,
+          // since that won't have a big effect on the user.
           return false;
         }
         else
@@ -766,7 +829,7 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(Robot& robot)
   
   StartActing(action, [this,&robot](ActionResult actionResult) {
     if (ActionResult::SUCCESS == actionResult) {
-      SET_STATE(SuccessWithSave);
+      SET_STATE(Success);
     } else {
       SET_STATE(SaveFailed);
     }
@@ -934,10 +997,74 @@ void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::UpdateFaceToEnroll(const Robot& robot)
+bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeStamp_t lastImgTime)
 {
+  // Check if we've also seen too many within a recent time window
+  const TimeStamp_t multipleFaceTimeWindow_ms = Util::SecToMilliSec(_tooManyFacesTimeout_sec);
+  const TimeStamp_t recentTime = (lastImgTime > multipleFaceTimeWindow_ms ?
+                                  lastImgTime - multipleFaceTimeWindow_ms :
+                                  0); // Avoid unsigned math rollover
+  
+  auto recentlySeenFaceIDs = faceWorld.GetKnownFaceIDsObservedSince(recentTime);
+  
+  const bool hasRecentlySeenTooManyFaces = recentlySeenFaceIDs.size() > _maxFacesVisible;
+  if(hasRecentlySeenTooManyFaces)
+  {
+    if(_startedSeeingMultipleFaces_sec == 0.f)
+    {
+      // We just started seeing too many faces
+      _startedSeeingMultipleFaces_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
+      // Disable enrollment while seeing too many faces
+      faceWorld.Enroll(Vision::UnknownFaceID);
+      
+      PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.StartedSeeingTooMany",
+                     "Disabling enrollment (if enabled) at t=%.1f", _startedSeeingMultipleFaces_sec);
+    }
+    return true;
+  }
+  else
+  {
+    if(_startedSeeingMultipleFaces_sec > 0.f)
+    {
+      PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.StoppedSeeingTooMany",
+                     "Stopped seeing too many at t=%.1f", _startedSeeingMultipleFaces_sec);
+      
+      // We are not seeing too many faces any more (and haven't recently), so reset this to zero
+      _startedSeeingMultipleFaces_sec = 0.f;
+      
+      if(_faceID != Vision::UnknownFaceID)
+      {
+        // Re-enable enrollment of whatever we were enrolling before we started seeing too many faces
+        faceWorld.Enroll(_faceID);
+        
+        PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.RestartEnrollment",
+                       "Re-enabling enrollment of FaceID:%d", _faceID);
+        
+      }
+    }
+    return false;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::UpdateFaceToEnroll(Robot& robot)
+{
+  FaceWorld& faceWorld = robot.GetFaceWorld();
   const TimeStamp_t lastImgTime = robot.GetLastImageTimeStamp();
-  auto observedFaceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(lastImgTime);
+  
+  const bool tooManyFaces = IsSeeingTooManyFaces(faceWorld, lastImgTime);
+  if(tooManyFaces)
+  {
+    PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.TooManyFaces", "");
+    // Early return here will prevent "lastFaceSeenTime" from being updated, eventually causing us
+    // to transition out of Enrolling state, back to LookingForFace, if necessary. If we are already LookingForFace,
+    // we will time out.
+    return;
+  }
+  
+  // Get faces observed just in the last image
+  auto observedFaceIDs = faceWorld.GetKnownFaceIDsObservedSince(lastImgTime);
   
   const bool enrollmentIDisSet    = (_faceID != Vision::UnknownFaceID);
   const bool sawCurrentEnrollFace = (enrollmentIDisSet && observedFaceIDs.count(_faceID));
@@ -1211,7 +1338,6 @@ void BehaviorEnrollFace::HandleWhileRunning(const GameToEngineEvent& event, Robo
     case GameToEngineTag::CancelFaceEnrollment:
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleCancelFaceEnrollmentMessage", "");
-      DisableEnrollment();
       SET_STATE(Cancelled);
       break;
     }

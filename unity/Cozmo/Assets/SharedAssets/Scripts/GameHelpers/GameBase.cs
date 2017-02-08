@@ -213,6 +213,12 @@ public abstract class GameBase : MonoBehaviour {
     AddDefaultPlayers();
   }
 
+  public void PopulateTitleWidget() {
+    ChallengeTitleWidget titleWidget = _SharedMinigameViewInstance.TitleWidget;
+    titleWidget.Text = Localization.Get(_ChallengeData.ChallengeTitleLocKey);
+    titleWidget.SubtitleText = null;
+  }
+
   private void PlayGetInAnimation() {
     CurrentRobot.SendAnimationTrigger(_ChallengeData.GetInAnimTrigger.Value, callback: (success) => {
       InitializeMinigameDone();
@@ -284,9 +290,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private void InitializeMinigameView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    ChallengeTitleWidget titleWidget = newView.TitleWidget;
-    titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    titleWidget.SubtitleText = null;
+    PopulateTitleWidget();
     newView.ShowQuitButton();
 
     if (data.IsMinigame) {

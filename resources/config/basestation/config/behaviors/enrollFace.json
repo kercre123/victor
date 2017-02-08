@@ -5,5 +5,7 @@
     "MeetCozmo_Socialize"
   ],
 
-  "flatScore": 2.0
+  "flatScore": 2.0,
+  "maxFacesVisible": 1,  // Error state thrown if enrollment is attempted while more than this many faces visible
+  "tooManyFacesTimeout_sec": 1.0 // Set to zero to error immediately upon seeing multiple faces
 }
