@@ -20,7 +20,7 @@ void AllOn()
   {
     static int x = 0;
     LEDOn(x++); 
-    if (x >= 12)
+    if (x >= LEDCnt())
       x = 0;
   }
 }
@@ -43,20 +43,12 @@ bool MotorDetect(void)
   return false;
 }
 
-
-const int LED_COUNT = 12;
 typedef enum { SHORT, RED, GREEN, BLUE, OPEN } VoltRange;
-const VoltRange LED_MAP[LED_COUNT] =
-{ GREEN, BLUE, RED,
-  BLUE, GREEN, RED,
-  BLUE, GREEN, RED,
-  RED,  OPEN,  RED };
 
 // Check which 'voltage range' (0-4) an LED is in
 // 0:SHORT, 1:RED, 2:GREEN, 3:BLUE, 4:OPEN
-VoltRange GetLEDRange(int x)
+VoltRange ledmv2voltrange(int x)
 {
-  x = LEDTest(x);
   if (x < 1200)
     return SHORT;
   if (x < 1800)
@@ -68,16 +60,20 @@ VoltRange GetLEDRange(int x)
   return OPEN;
 }
 
+//separate for extern usage
+void TestLED(int i) {
+  if( ledmv2voltrange(LEDGetHighSideMv(i)) != ledmv2voltrange(LEDGetExpectedMv(i)))
+    throw ERROR_BACKPACK_LED;
+}
+
 // Test LEDs if present - if not wired up, maybe pass anyway?
 void TestLEDs(void)
 {
   // Check the LEDs forward and backward for faults
-  for (int i = 0; i < 12; i++)
-    if (GetLEDRange(i) != LED_MAP[i])
-      throw ERROR_BACKPACK_LED;
-  for (int i = 11; i >= 0; i--)
-    if (GetLEDRange(i) != LED_MAP[i])
-      throw ERROR_BACKPACK_LED;
+  for (int i = 0; i < LEDCnt(); i++)
+    TestLED(i);
+  for (int i = LEDCnt()-1; i >= 0; i--)
+    TestLED(i);
 }
 
 // Test encoder (not motor)
