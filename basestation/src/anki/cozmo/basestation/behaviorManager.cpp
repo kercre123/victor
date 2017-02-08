@@ -257,6 +257,14 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                      break;
                                    }
                                  }
+                                 
+                                 // If we are leaving freeplay, ensure that sparks
+                                 // have been cleared out
+                                 if(chooserType != BehaviorChooserType::Freeplay){
+                                   _activeSpark = UnlockId::Count;
+                                   _lastRequestedSpark = UnlockId::Count;
+                                }
+                                 
                                }));
     
     _eventHandlers.push_back(externalInterface->Subscribe(
@@ -708,10 +716,6 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   }
   
   GetRunningAndResumeInfo().SetBehaviorToResume(nullptr);
-  
-  // ensure sparks are reset when the chooser changes
-  _activeSpark = UnlockId::Count;
-  _lastRequestedSpark = UnlockId::Count;
 
   // channeled log and event
   LOG_EVENT("BehaviorManager.SetBehaviorChooser", "Switching behavior chooser from '%s' to '%s'",
