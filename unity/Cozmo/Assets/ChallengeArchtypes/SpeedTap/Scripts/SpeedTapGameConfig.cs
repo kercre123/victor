@@ -34,6 +34,8 @@ public class SpeedTapGameConfig : MinigameConfigBase {
   public Color Player1Tint;
   public Color Player2Tint;
 
+  public float MPTimeBetweenRoundsSec = 5.0f;
+
   [SerializeField]
   protected MusicStateWrapper _BetweenRoundMusic;
 

@@ -64,6 +64,8 @@ namespace SpeedTap {
 
     public float TapResolutionDelay { get; private set; }
 
+    public float MPTimeBetweenRoundsSec { get { return _GameConfig.MPTimeBetweenRoundsSec; } }
+
     private SpeedTapGameConfig _GameConfig;
 
     #endregion
