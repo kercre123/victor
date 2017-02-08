@@ -1,5 +1,21 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &103350
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22460880}
+  - 114: {fileID: 11491770}
+  m_Layer: 5
+  m_Name: CloseButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &103924
 GameObject:
   m_ObjectHideFlags: 1
@@ -80,6 +96,22 @@ GameObject:
   - 114: {fileID: 11437992}
   m_Layer: 5
   m_Name: ContinueButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &138752
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22419898}
+  - 114: {fileID: 11475212}
+  m_Layer: 5
+  m_Name: QuitMiniGameButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -280,6 +312,18 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11475212
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 138752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cae0516cb45e948d7becdf238325a467, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _QuitButtonInstance: {fileID: 0}
 --- !u!114 &11479882
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -324,6 +368,27 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.ScrollRect+ScrollRectEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
+--- !u!114 &11491770
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 103350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    JsonValue: '"Play__Ui__Click_Back"'
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.MinigameWidgets.QuitMinigameButton:_QuitButtonInstance
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!222 &22203804
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -354,6 +419,25 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 111724}
+--- !u!224 &22419898
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 138752}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 22460880}
+  m_Father: {fileID: 22479092}
+  m_RootOrder: 4
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 139, y: -140}
+  m_SizeDelta: {x: 173, y: 173}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22441300
 RectTransform:
   m_ObjectHideFlags: 1
@@ -370,7 +454,7 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 80}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 740}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22444118
@@ -388,8 +472,26 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -332, y: 541.99976}
+  m_AnchoredPosition: {x: -1215, y: 435}
   m_SizeDelta: {x: 1794, y: 200}
+  m_Pivot: {x: 0, y: 0.5}
+--- !u!224 &22460880
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 103350}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22419898}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22479092
 RectTransform:
@@ -406,6 +508,7 @@ RectTransform:
   - {fileID: 22486400}
   - {fileID: 22444118}
   - {fileID: 22441300}
+  - {fileID: 22419898}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
