@@ -322,8 +322,9 @@ public:
 
   // True if we think the robot is on a charger. This becomes true only when the robot touches the charger
   // contacts, and remains true until we think the robot has driven off the charger. It will not become true
-  // based on localization or observing the charger marker, only based on feeling the charger.
-  bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
+  // based on localization or observing the charger marker, only based on feeling the charger. A robot on the
+  // charger contacts is always on the platform( NOTE: even if it thinks it's in the air or on it's side)
+  bool   IsOnChargerPlatform() const { return _isOnCharger || _isOnChargerPlatform; }
   
   // True if robot is charging
   bool   IsCharging()          const { return _isCharging; }
