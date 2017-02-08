@@ -447,6 +447,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     ActiveObject* matchingObject = nullptr;
     
     // TODO COZMO-7848:  create BlockWorldActiveObjetFilter vs BlockWorldFilter because some of the parameters
+    //                   Or at least assert on filter unused flags
     // in BlockWorldFilter do not apply to connected objects. Eg: IsOnlyConsideringLatestUpdate, OriginMode, etc.
     // Moreover, additional fields could be available like `allowedActiveID`
     BlockWorldFilter filter(filterIn);
@@ -503,9 +504,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       filter.AddAllowedFamily(family);
     }
     
-    // Any pose state
-    filter.SetFilterFcn(nullptr);
-    
     // Find and return match
     ObservableObject* match = FindLocatedObjectHelper(filter, nullptr, true);
     return match;
@@ -517,9 +515,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Find the object with the given ID
     BlockWorldFilter filter;
     filter.AddAllowedID(objectID);
-    
-    filter.SetFilterFcn(nullptr); // Damn this is error prone
-    
+        
     // Find and return among ConnectedObjects
     ActiveObject* object = FindConnectedObjectHelper(filter, nullptr, true);
     return object;
@@ -835,7 +831,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             _locatedObjects[newOrigin][family][objType][objectID] = object;
             
             // Notify pose confirmer
-            //_robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
+            _robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
             
             // Delete from old origin
             objectsByType.second.erase(objectIter);
@@ -881,7 +877,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Look for objects in the old origin
     BlockWorldFilter filterOld;
-    filterOld.SetFilterFcn(nullptr); // Disable known-pose-state check
     filterOld.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
     filterOld.AddAllowedOrigin(oldOrigin);
     
@@ -916,7 +911,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       
       // Look for a matching object in the new origin (should have same family, type, and ID)
       BlockWorldFilter filterNew;
-      filterNew.SetFilterFcn(nullptr);
       filterNew.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
       filterNew.AddAllowedOrigin(newOrigin);
       filterNew.AddAllowedFamily(oldObject->GetFamily());
@@ -934,13 +928,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // CopyWithNewPose needs the correct object ID which normally would be set by AddNewObject
         // Since this is a circular dependency we need to set the ID first outside of AddNewObject
         newObject->CopyID(oldObject);
-
-// This responsibility has been moved to AddLocatedObject
-//        if(newObject->IsActive())
-//        {
-//          newObject->SetActiveID(oldObject->GetActiveID());
-//          newObject->SetFactoryID(oldObject->GetFactoryID());
-//        }
         
         addNewObject = true;
       }
@@ -988,7 +975,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // (the "new" origin) and make sure PoseConfirmer knows about them since we
     // have delocalized since last being in this origin (which clears the PoseConfirmer)
     BlockWorldFilter filterNew;
-    filterOld.SetFilterFcn(nullptr); // Disable known-pose-state check
     filterOld.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
     filterOld.AddAllowedOrigin(newOrigin);
     
@@ -1371,18 +1357,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // First thing that we have to do is ask the PoseConfirmer whether this is a confirmed object,
       // or a visual observation of an object that we want to consider for the future (unconfirmed object).
       // Pass in the object as an observation
-      const ObservableObject* poseConfirmerMatch = nullptr;
-      const ObservableObject* matchInOtherOrigin = nullptr;
-      const bool isConfirmed = _robot->GetObjectPoseConfirmer().IsObjectConfirmedInCurrentOrigin(objSeen,
-                                                                  poseConfirmerMatch,
-                                                                  matchInOtherOrigin);
+      const ObservableObject* poseConfirmationObjectIDMatch = nullptr;
+      const bool isConfirmedAtPose = _robot->GetObjectPoseConfirmer().IsObjectConfirmedAtObservedPose(objSeen,
+                                                                  poseConfirmationObjectIDMatch);
       
       // inherit the ID of a match, or assign a new one depending if there were no matches
       DEV_ASSERT( !objSeen->GetID().IsSet(), "BlockWorld.AddAndUpdateObjects.ObservationAlreadyHasID");
-      if ( nullptr != poseConfirmerMatch ) {
-        objSeen->CopyID( poseConfirmerMatch );
-      } else if ( nullptr != matchInOtherOrigin ) {
-        objSeen->CopyID( matchInOtherOrigin );
+      if ( nullptr != poseConfirmationObjectIDMatch ) {
+        objSeen->CopyID( poseConfirmationObjectIDMatch );
       } else {
         objSeen->SetID();
       }
@@ -1406,7 +1388,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // if the object is not confirmed add this observation to the poseConfirmer. If this observation causes
       // a confirmation, we don't need to localize to it in the current origin because we are setting its pose
       // wrt robot based on this observation. However, we could bring other origins with it.
-      if ( !isConfirmed )
+      if ( !isConfirmedAtPose )
       {
         // Add observation
         const bool wasRobotMoving = false; // assume false, otherwise we wouldn't have gotten this far w/ marker?
@@ -1442,7 +1424,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       BlockWorldFilter filter;
       filter.AddAllowedFamily(objSeen->GetFamily());
       filter.AddAllowedType(objSeen->GetType());
-      filter.SetFilterFcn(nullptr);
       
       if (objSeen->IsActive())
       {
@@ -1453,6 +1434,20 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // active object of each type
         std::vector<ObservableObject*> objectsFound;
         FindLocatedMatchingObjects(filter, objectsFound);
+        
+        // debug whether the object is currently connected
+        {
+          const ActiveObject* conObjMatch = GetConnectedActiveObjectByID( objSeen->GetID() );
+          if(nullptr == conObjMatch)
+          {
+            // We expect to have already heard from all (powered) active objects,
+            // so if we see one we haven't heard from (and therefore added) yet, then
+            // perhaps it isn't on?
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
+                                "Observed active object of type %s but it's not connected. Is the battery plugged in?",
+                                EnumToString(objSeen->GetType()));
+          }
+        }
 
         bool matchedCarryingObject = false;
         for(ObservableObject* objectFound : objectsFound)
@@ -1466,7 +1461,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             // handle special case of seeing the object that we are carrying. Alternatively all this code could
             // be in potential objects to localize to or in addObservation, but here it seems to detect early
             // what's going on
-            if (objectFound->GetID() == _robot->GetCarryingObject())
+            if (_robot->IsCarryingObject(objectFound->GetID()))
             {
               if (_robot->GetLiftHeight() >= LIFT_HEIGHT_HIGHDOCK &&
                   objectFound->IsSameAs(*objSeen))
@@ -1479,7 +1474,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                                     EnumToString(objSeen->GetType()),
                                     objSeen->GetID().GetValue(),
                                     _robot->GetLiftHeight());
-                continue;
+                break; // break out of the current matches for the observation
               }
               else
               {
@@ -1490,10 +1485,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                               _robot->GetCarryingObject().GetValue());
                 _robot->UnSetCarryObject(objectFound->GetID());
                 
-                // We also need to purposely set as dirty, so that we don't try to localize to it. Most likely
-                // we should have got a "moved" message if we dropped the cube, but in case we missed the message
-                // reason here that the object is no longer in a known pose.
-                _robot->GetObjectPoseConfirmer().SetPoseState(objectFound, PoseState::Dirty);
+                // if the observation was used to correct the pose, it should have dettached
+                DEV_ASSERT(objectFound->GetPose().GetParent() != &_robot->GetLiftPose(),
+                           "BlockWorld.ConfirmingObservationDidNotCorrectLift");
+                
+                // moreover, only the confirming observation should have to do this
+                DEV_ASSERT(observationAlreadyUsed, "BlockWorld.NonConfirmingObservationStillCarryingObject");
               }
             }
           }
@@ -2316,7 +2313,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // If no match found, find one of the same type with an invalid activeID and assume that's the one we are
       // connecting to
       BlockWorldFilter filterInAny;
-      filterInAny.SetFilterFcn(nullptr);
       filterInAny.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
       filterInAny.SetAllowedTypes({objType});
       std::vector<ObservableObject*> objectsOfSameType;
@@ -4418,44 +4414,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       return false;
     }
   }
-
-//  void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
-//  {
-//    if(_canDeleteObjects) {
-//      
-//      BlockWorldFilter filter;
-//      filter.AddAllowedFamily(family);
-//      filter.SetFilterFcn(nullptr);
-//      
-//      ModifierFcn clearObjectFcn = [this](ObservableObject* object) { ClearObjectHelper(object); };
-//      
-//      FindObjectHelper(filter, clearObjectFcn, false);
-//      
-//    } else {
-//      PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily.ClearDisabled",
-//                          "Will not clear family %d objects because object deletion is disabled.",
-//                          family);
-//    }
-//  }
-//  
-//  void BlockWorld::ClearObjectsByType(const ObjectType type)
-//  {
-//    if(_canDeleteObjects) {
-//      BlockWorldFilter filter;
-//      filter.AddAllowedType(type);
-//      filter.SetFilterFcn(nullptr);
-//      
-//      ModifierFcn clearObjectFcn = [this](ObservableObject* object) { ClearObjectHelper(object); };
-//      
-//      FindObjectHelper(filter, clearObjectFcn, false);
-//      
-//    } else {
-//      PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType.DeleteDisabled",
-//                          "Will not clear %s objects because object deletion is disabled.",
-//                          ObjectTypeToString(type));
-//
-//    }
-//  } // ClearBlocksByType()
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DeleteAllLocatedObjects()
@@ -4599,10 +4557,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     BlockWorldFilter filter;
     filter.SetAllowedIDs({withID});
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    
-    // Disable default filter so we consider all objects regardless of poseState
-    // TODO this should not be needed after Unknown is removed
-    filter.SetFilterFcn(nullptr);
     
     std::vector<ObservableObject*> objects;
     FindLocatedMatchingObjects(filter, objects);
@@ -4822,7 +4776,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Note: only drawing objects in current coordinate frame!
     BlockWorldFilter filter;
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
-    filter.SetFilterFcn(nullptr);
     ModifierFcn visualizeHelper = [this,&locObject](ObservableObject* object)
     {
       if(object->GetID() == locObject) {

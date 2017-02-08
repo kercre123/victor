@@ -67,18 +67,9 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
                            bool robotWasMoving,
                            f32 obsDistance_mm)
 {
-  // sometimes we don't want to override a previous pose state with a newer one if it's less accurate. Check that here:
-  bool forceUpdate = false;
-
-  if ( nullptr != confirmedMatch ) {
-    const Point3f distThreshold  = object->GetSameDistanceTolerance();
-    const Radians angleThreshold = object->GetSameAngleTolerance();
-    const bool poseIsSame = newPose.IsSameAs(confirmedMatch->GetPose(), distThreshold, angleThreshold);
-    
-    // if we are confirming in a new pose that is far away from the current one, then we can no longer trust
-    // our current pose state. In that case, we always override
-    forceUpdate = poseIsSame;
-  }
+  // if we are updating an object that we are carrying, we always want to update, so that we can correct the
+  // fact that it's not in the lift, it's where the observation happens
+  bool updateDueToObservingCarriedObject = (nullptr != confirmedMatch) && _robot.IsCarryingObject( confirmedMatch->GetID() );
   
   // now calculate what posestate we should set and if that poseState overrides the current one (we still need
   // to calculate which one we are going to set, even if forceUpdate is already true)
@@ -108,7 +99,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   const bool isFarAway  = Util::IsFltGT(obsDistance_mm,  kMaxLocalizationDistance_mm);
   const bool setAsKnown = isRobotOnTreads && !isFarAway && !robotWasMoving && !objectIsMoving;
 
-  const bool updatePose = forceUpdate || setAsKnown || !object->IsPoseStateKnown();
+  const bool updatePose = updateDueToObservingCarriedObject || setAsKnown || !object->IsPoseStateKnown();
   if( updatePose )
   {
     const PoseState newPoseState = (setAsKnown ? PoseState::Known : PoseState::Dirty);
@@ -208,12 +199,38 @@ ObjectPoseConfirmer::PoseConfirmation::PoseConfirmation(const Pose3d& initPose,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectPoseConfirmer::IsObjectConfirmedInCurrentOrigin(const std::shared_ptr<ObservableObject>& objSeen,
-                                                           const ObservableObject*& outMatchInOrigin,
-                                                           const ObservableObject*& outMatchInOtherOrigin) const
+bool ObjectPoseConfirmer::IsObjectConfirmedAtObservedPose(const std::shared_ptr<ObservableObject>& objSeen,
+                                       const ObservableObject*& objectToCopyIDFrom ) const
 {
-  outMatchInOrigin = nullptr;
-  outMatchInOtherOrigin = nullptr;
+  bool poseIsSameAsReference = false;
+  
+  // first, find the ID for that observation
+  FindObjectMatchForObservation(objSeen, objectToCopyIDFrom);
+  
+  // match the pose against the referencePose. Note there are some cases that would not need this (for example passive
+  // objects), but it simplifies the logic checking all with no exceptions
+  if ( nullptr != objectToCopyIDFrom ) {
+    const ObjectID& objectID = objectToCopyIDFrom->GetID();
+    const auto& pairIterator = _poseConfirmations.find(objectID);
+    if ( pairIterator != _poseConfirmations.end() )
+    {
+      // we have an entry, we can compare poses
+      const PoseConfirmation& poseConf = pairIterator->second;
+      const Point3f distThreshold  = objSeen->GetSameDistanceTolerance();
+      const Radians angleThreshold = objSeen->GetSameAngleTolerance();
+      poseIsSameAsReference = objSeen->GetPose().IsSameAs(poseConf.referencePose, distThreshold, angleThreshold);
+    }
+  }
+  
+  // return whether the observed pose and the reference pose are the same
+  return poseIsSameAsReference;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<ObservableObject>& objSeen,
+                                                        const ObservableObject*& objectToCopyIDFrom) const
+{
+  objectToCopyIDFrom = nullptr;
 
   BlockWorldFilter filter;
   filter.AddAllowedFamily(objSeen->GetFamily());
@@ -223,7 +240,6 @@ bool ObjectPoseConfirmer::IsObjectConfirmedInCurrentOrigin(const std::shared_ptr
   if ( objSeen->IsActive() )
   {
     // ask blockworld to find matches by type/family in the current origin, since we assume only one instance per type
-    // filter.AddFilterFcn(&BlockWorldFilter::ActiveObjectsFilter); // Should not be needed because of family/type
     std::vector<ObservableObject*> confirmedMatches;
     _robot.GetBlockWorld().FindLocatedMatchingObjects(filter, confirmedMatches);
     
@@ -233,9 +249,8 @@ bool ObjectPoseConfirmer::IsObjectConfirmedInCurrentOrigin(const std::shared_ptr
     // if there is a match, return that one
     if ( confirmedMatches.size() == 1 )
     {
-      outMatchInOrigin = confirmedMatches.front();
-      outMatchInOtherOrigin = nullptr;
-      return true;
+      objectToCopyIDFrom = confirmedMatches.front();
+      return;
     }
     else
     {
@@ -252,28 +267,21 @@ bool ObjectPoseConfirmer::IsObjectConfirmedInCurrentOrigin(const std::shared_ptr
           if ( matchOk ) {
             DEV_ASSERT(confirmationInfo.unconfirmedObject->GetID() == confirmationInfoPair.first,
                        "ObjectPoseConfirmer.IsObjectConfirmed.KeyNotMatchingID");
-            outMatchInOrigin = confirmationInfo.unconfirmedObject.get();
-            outMatchInOtherOrigin = nullptr;
-            return false;
+            objectToCopyIDFrom = confirmationInfo.unconfirmedObject.get();
+            return;
           }
         }
       }
       
-      // did not find an unconfirmed entry
-      outMatchInOrigin = nullptr;
+      // did not find an unconfirmed entry, search in other frames or in connected
       
-      // search for this object in other frames
       filter.SetOriginMode(BlockWorldFilter::OriginMode::NotInRobotFrame);
-      outMatchInOtherOrigin = _robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-      if ( nullptr == outMatchInOtherOrigin ) {
-        // note originMode means nothing for connected objects. However clear Unknown filter set by default
-        // TODO remove when filter is not default
-        filter.SetFilterFcn(nullptr);
-        outMatchInOtherOrigin = _robot.GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+      objectToCopyIDFrom = _robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+      if ( nullptr == objectToCopyIDFrom ) {
+        objectToCopyIDFrom = _robot.GetBlockWorld().FindConnectedActiveMatchingObject(filter);
       }
       
-      // not confirmed in origin
-      return false;
+      return;
     }
     
   }
@@ -294,10 +302,9 @@ bool ObjectPoseConfirmer::IsObjectConfirmedInCurrentOrigin(const std::shared_ptr
     // depending on whether we found a match
     if ( nullptr != matchingObject )
     {
-      // we did
-      outMatchInOrigin = matchingObject;
-      outMatchInOtherOrigin = nullptr;
-      return true;
+      // found a match
+      objectToCopyIDFrom = matchingObject;
+      return;
     }
     else
     {
@@ -333,21 +340,10 @@ bool ObjectPoseConfirmer::IsObjectConfirmedInCurrentOrigin(const std::shared_ptr
           }
         }
       }
-      
-      if ( nullptr != closestObject )
-      {
-        // found a close match
-        outMatchInOrigin = closestObject;
-        outMatchInOtherOrigin = nullptr;
-        return true;
-      }
-      else
-      {
-        // did not find an unconfirmed entry
-        outMatchInOrigin = nullptr;
-        outMatchInOtherOrigin = nullptr;
-        return false;
-      }
+
+      // copy whatever we found (if anything)
+      objectToCopyIDFrom = closestObject;
+      return;
     }
   }
 }
@@ -479,7 +475,7 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
         // else KnownIssueLostAccuracy
       }
       
-      // These get set regardless of whether pose is same
+      // Set regardless of whether pose is same
       poseConf.numTimesUnobserved = 0;
     }
   }

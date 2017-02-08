@@ -107,6 +107,7 @@ namespace Anki
       // Object Access
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+      // TODO: Could this be converted to a filter?
       // Delete located instances will delete object instances of both active and passive objects. However
       // from connected objects, only the located instances are affected. The unlocated instances, that are stored
       // regardless of pose, are not affected by this. Passive objects don't have connected instances.
@@ -319,10 +320,7 @@ namespace Anki
       // object ID is found and the object is successfully selected.
       bool SelectObject(const ObjectID& objectID);
       void DeselectCurrentObject();
-      
-      void EnableObjectDeletion(bool enable);
-      void EnableObjectAddition(bool enable);
-      
+
       // Find all objects with the given parent and update them to have flatten
       // their objects w.r.t. the origin. Call this when the robot rejiggers
       // origins.
@@ -378,7 +376,7 @@ namespace Anki
       void DrawAllObjects() const;
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      // Navigation memory
+      // Messages
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
       // template for all events we subscribe to
@@ -493,16 +491,6 @@ namespace Anki
       // Checks whether an object is unobserved and in collision with the robot,
       // for use in filtering objects to mark them as dirty
       bool CheckForCollisionWithRobot(const ObservableObject* object) const;
-      
-//      // Adds a new object based on its origin/family/type. Its ID will be assigned
-//      // if it isn't already, or it will be copied from objectToCopyID if that object
-//      // is not null.
-//      ObjectID AddNewObject(const std::shared_ptr<ObservableObject>& object,
-//                            const ObservableObject* objectToCopyID = nullptr);
-//      
-//      ObjectID AddNewObject(ObjectsMapByType_t& existingFamily,
-//                            const std::shared_ptr<ObservableObject>& object,
-//                            const ObservableObject* objectToCopyID = nullptr);
       
       // NOTE: this function takes control over the passed-in ObservableObject*'s and
       //  will either directly add them to BlockWorld's existing objects or delete them

@@ -370,7 +370,6 @@ void BuildPyramidBehaviorChooser::UpdateStateTrackerForUnrecognizedID(const Obje
   BlockWorldFilter blockInAnyFrameFilter;
   blockInAnyFrameFilter.SetAllowedIDs({objID});
   blockInAnyFrameFilter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  blockInAnyFrameFilter.SetFilterFcn(nullptr);
   const ObservableObject* block = _robot.GetBlockWorld().FindLocatedMatchingObject(blockInAnyFrameFilter);
   
   if ( block == nullptr ) {

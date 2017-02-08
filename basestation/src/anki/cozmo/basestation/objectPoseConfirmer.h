@@ -34,20 +34,14 @@ public:
   
   ObjectPoseConfirmer(Robot& robot);
   
-  // Search for an unconfirmed or confirmed object match. Returns true if the object is already confirmed,
-  // false if the object is not yet confirmed.
-  // outMatchInOrigin: if there is a match for the object in the current origin, regardless of whether it is confirmed
-  // or not, the matched object is stored in outMatch. If there are no confirmed nor unconfirmed matches -> nullptr
-  // outMatchInOtherOrigin: if there isn't a match in the current origin, this method will search in other origins. If
-  // found, the match is stored in outMatchInOtherOrigin. Note this is set to nullptr if a match in the current
-  // origin is found (por performance and simplicity, no semantic reason). Additionally, passive objects can't match
-  // in other origins (not Unique). If no match in other origin is found, another search for an Active connected
-  // object can be performed. Note active conneted object's do not have a valid pose, but are otherwise valid; its ID
-  // can be used to match them.
-  // TODO Andrew evaluate match of Unique vs Passive
-  bool IsObjectConfirmedInCurrentOrigin(const std::shared_ptr<ObservableObject>& objSeen,
-                                        const ObservableObject*& outMatchInOrigin,
-                                        const ObservableObject*& outMatchInOtherOrigin) const;
+  // Search for an unconfirmed or confirmed object and pose match. Returns true if the object is already confirmed at
+  // the observed pose (pose of the objSeen), false if the object is not confirmed there, either because it's not
+  // confirmed, or because it's confirmed far from that pose.
+  // objectToCopyIDFrom: some instance that we have found for this object, and from which we can copy the objectID. No
+  // other functionality is guaranteed from the object (for example whether it's confirmed, or even has a pose)
+  // TODO Andrew evaluate match of Unique vs Passive: COZMO-6171
+  bool IsObjectConfirmedAtObservedPose(const std::shared_ptr<ObservableObject>& objSeen,
+                                       const ObservableObject*& objectToCopyIDFrom) const;
   
   // Saw object with camera from given distance at given time in history. Pose and ID are expected to be properly
   // set in the object passed in.
@@ -139,6 +133,9 @@ protected:
   
   void SetPoseHelper(ObservableObject* object, const Pose3d& newPose, f32 distance,
                      PoseState newPoseState, const char* debugStr) const;
+  
+  void FindObjectMatchForObservation(const std::shared_ptr<ObservableObject>& objSeen,
+                                     const ObservableObject*& objectToCopyIDFrom) const;
   
   Robot& _robot;
   PoseConfirmations _poseConfirmations;
