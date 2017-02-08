@@ -287,10 +287,9 @@ void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
 {
   Json::Value animDefs;
   const bool success = _platform->readAsJson(path.c_str(), animDefs);
-  std::string animationName = Util::FileUtils::GetFileName(path, true, true);
   if (success && !animDefs.empty()) {
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    _cubeLightAnimations->DefineFromJson(animDefs, animationName);
+    _cubeLightAnimations->DefineFromJson(animDefs);
   }
 }
 
