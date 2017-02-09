@@ -5,6 +5,7 @@
 #include "hal/testport.h"
 #include "hal/display.h"
 #include "hal/timers.h"
+#include "../app/app.h"
 #include "../app/fixture.h"
 #include "hal/cube.h"
 #include "hal/flash.h"
@@ -238,9 +239,11 @@ int BPBtnGetMv(void)
   //Drive Gnd-side low
   PIN_RESET(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
   PIN_OUT(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
-  
-  #warning "v1.0 needs pull-up. v1.5 CANNOT have pull-up"
-  PIN_PULL_UP(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
+
+  if( g_fixtureRev <= BOARD_REV_1_0_REV3 ) //v1.0 doesn't support backpack button. pull high to always read as open
+    PIN_PULL_UP(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
+  else //v1.5+
+    PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
  
   // Now grab the voltage
   return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
