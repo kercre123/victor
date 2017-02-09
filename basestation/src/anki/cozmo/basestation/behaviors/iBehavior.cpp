@@ -487,6 +487,12 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
      && !ShouldRunWhileOffTreads()){
     return false;
   }
+
+  //check if the behavior can run from the charger platform (don't want most to run because they could damage
+  //the robot by moving too much, and also will generally look dumb if they try to turn)
+  if(robot.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
+    return false;
+  }
   
   //check if the behavior can handle holding a block
   if(robot.IsCarryingObject() && !CarryingObjectHandledInternally()){

@@ -145,6 +145,9 @@ public:
   // Can be overridden to allow the behavior to run while the robot is not on it's treads (default is to not run)
   virtual bool ShouldRunWhileOffTreads() const { return false;}
 
+  // Can be overridden to allow the behavior to run while the robot is on the charger platform
+  virtual bool ShouldRunWhileOnCharger() const { return false;}
+
   // Return true if the behavior explicitly handles the case where the robot starts holding the block
   // Equivalent to !robot.IsCarryingObject() in IsRunnable()
   virtual bool CarryingObjectHandledInternally() const = 0;

@@ -28,6 +28,10 @@ private:
 public:
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
+  virtual bool ShouldRunWhileOnCharger() const override { return true;}
+
+  // true so that we can handle edge cases where the robot is on the charger and not on his treads
+  virtual bool ShouldRunWhileOffTreads() const override { return true;}
   
 protected:
   virtual Result InitInternal(Robot& robot) override;
