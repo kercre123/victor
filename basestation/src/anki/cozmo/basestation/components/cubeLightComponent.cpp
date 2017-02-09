@@ -955,7 +955,17 @@ ActiveObject* CubeLightComponent::GetActiveObjectInAnyFrame(const ObjectID& obje
 
 Result CubeLightComponent::SetObjectLights(const ObjectID& objectID, const ObjectLights& values)
 {
-  ActiveObject* activeObject = GetActiveObjectInAnyFrame(objectID);
+  ActiveCube* activeObject = nullptr;
+  if ( values.makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF )
+  {
+    // note this could be a checked_cast
+    activeObject = dynamic_cast<ActiveCube*>( _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID) );
+  }
+  else
+  {
+    // note this could be a checked_cast
+    activeObject = dynamic_cast<ActiveCube*>( _robot.GetBlockWorld().GetLocatedObjectByID(objectID) );
+  }
   
   if(activeObject == nullptr)
   {

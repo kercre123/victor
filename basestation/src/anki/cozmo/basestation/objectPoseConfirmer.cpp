@@ -103,7 +103,16 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   if( updatePose )
   {
     const PoseState newPoseState = (setAsKnown ? PoseState::Known : PoseState::Dirty);
-    SetPoseHelper(object, newPose, obsDistance_mm, newPoseState, "ObjectPoseConfirmer.UpdatePoseInInstace");
+    
+    const bool isConfirmedMatch = (object == confirmedMatch);
+    if ( isConfirmedMatch ) {
+      SetPoseHelper(object, newPose, obsDistance_mm, newPoseState, "ObjectPoseConfirmer.UpdatePoseInInstace");
+    } else {
+      // currently we use UpdatePoseInInstance for both unconfirmed and confirmed objects. If we are changing the
+      // pose of the unconfirmedInstance, do not notify anyone about it yet, only if we are modifying the pose
+      // of an actual object in BlockWorld
+      object->SetPose(newPose, obsDistance_mm, newPoseState);
+    }
     
     // udpate the timestamp at which we are actually setting the pose
     DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
@@ -131,6 +140,7 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   DEV_ASSERT(object->HasValidPose() || ObservableObject::IsValidPoseState(newPoseState),
              "ObjectPoseConfirmer.SetPoseHelper.BothPoseStatesAreInvalid");
   
+  // Also this can be sent for Unknown, which is bad, since OnObjectPoseWillChange doesn't seem to handle that :(
   // TODO these notifications should probably be post-change, rather than pre-change
   // Notify about the change we are about to make from old to new:
   _robot.GetBlockWorld().OnObjectPoseWillChange(object->GetID(), newPose, newPoseState);

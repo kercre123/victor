@@ -2586,11 +2586,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // allow adding only in current origin
     DEV_ASSERT(objectOrigin == _robot->GetWorldOrigin(), "BlockWorld.AddLocatedObject.NotCurrentOrigin");
     
-    // grab the current pointer and check it's empty (do not allow overwriting)
-    std::shared_ptr<ObservableObject>& objectLocation =
-      _locatedObjects[objectOrigin][object->GetFamily()][object->GetType()][object->GetID()];
-    DEV_ASSERT(objectLocation == nullptr, "BlockWorld.AddLocatedObject.ObjectIDInUseInOrigin");
-    
     // hook with activeID/factoryID if a connected object is available.
     // rsam: I would like to do this in a cleaner way, maybe just refactoring the code, but here seems fishy design-wise
     {
@@ -2607,9 +2602,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         object->SetFactoryID( connectedObj->GetFactoryID() );
       }
     }
-    
-    // store the new object, this increments refcount
-    objectLocation = object;
+
+    // grab the current pointer and check it's empty (do not allow overwriting)
+    std::shared_ptr<ObservableObject>& objectLocation =
+      _locatedObjects[objectOrigin][object->GetFamily()][object->GetType()][object->GetID()];
+    DEV_ASSERT(objectLocation == nullptr, "BlockWorld.AddLocatedObject.ObjectIDInUseInOrigin");
+    objectLocation = object; // store the new object, this increments refcount
 
     // set the viz manager on this new object
     object->SetVizManager(_robot->GetContext()->GetVizManager());
