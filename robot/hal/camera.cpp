@@ -71,7 +71,7 @@ namespace Anki
       }
       static int CamGetPulls(GPIO_TypeDef* GPIOx, u32 pin, int index)
       {
-        return (!!(GPIO_READ(GPIOx) & pin)) << index;
+        return (GPIOx->PDIR & pin) ? (1 << index) : 0;
       }
       static int CamReadDB(int pullup)
       {
