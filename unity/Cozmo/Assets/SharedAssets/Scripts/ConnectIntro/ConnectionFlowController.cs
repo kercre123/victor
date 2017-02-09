@@ -22,7 +22,7 @@ public class ConnectionFlowController : MonoBehaviour {
 
   [SerializeField]
   private AndroidConnectionFlow _AndroidConnectionFlowPrefab;
-  private GameObject _AndroidConnectionFlowInstance;
+  private AndroidConnectionFlow _AndroidConnectionFlowInstance;
 
   [SerializeField]
   private SearchForCozmoFailedScreen _SearchForCozmoFailedScreenPrefab;
@@ -100,6 +100,14 @@ public class ConnectionFlowController : MonoBehaviour {
     RobotEngineManager.Instance.FlushChannelMessages();
   }
 
+  private void DestroyAndroidFlow() {
+    if (_AndroidConnectionFlowInstance != null) {
+      _AndroidConnectionFlowInstance.Disable();
+      GameObject.Destroy(_AndroidConnectionFlowInstance.gameObject);
+    }
+    _AndroidConnectionFlowInstance = null;
+  }
+
   private void Cleanup() {
     if (_PullCubeTabModalInstance != null) {
       _PullCubeTabModalInstance.DialogClosed -= HandlePullCubeTabsCompleted;
@@ -126,9 +134,7 @@ public class ConnectionFlowController : MonoBehaviour {
       GameObject.Destroy(_WakingUpCozmoScreenInstance.gameObject);
     }
 
-    if (_AndroidConnectionFlowInstance != null) {
-      GameObject.Destroy(_AndroidConnectionFlowInstance);
-    }
+    DestroyAndroidFlow();
   }
 
   public void StartConnectionFlow() {
@@ -197,32 +203,29 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void ShowSearchForCozmoAndroid() {
     DAS.Info("ConnectionFlow.ShowAndroid", "Instantiating android flow");
-    var androidFlowInstance = GameObject.Instantiate(_AndroidConnectionFlowPrefab.gameObject).GetComponent<AndroidConnectionFlow>();
-    _AndroidConnectionFlowInstance = androidFlowInstance.gameObject;
+    _AndroidConnectionFlowInstance = GameObject.Instantiate(_AndroidConnectionFlowPrefab.gameObject).GetComponent<AndroidConnectionFlow>();
 
     // Set up event handlers for things the Android flow might tell us:
     // - if we want to start the flow over again
-    androidFlowInstance.OnRestartFlow += () => {
+    _AndroidConnectionFlowInstance.OnRestartFlow += () => {
       // explicitly unregister handlers before instantiating a new instance,
       // since OnDestroy() invocation is delayed until after frame
-      androidFlowInstance.Disable();
-      GameObject.Destroy(androidFlowInstance.gameObject);
+      DestroyAndroidFlow();
       ShowSearchForCozmoAndroid();
     };
     // - when the android flow starts connecting, transition to the normal search
     //   screen while still monitoring the connection
-    androidFlowInstance.OnStartConnect += () => {
+    _AndroidConnectionFlowInstance.OnStartConnect += () => {
       CreateConnectionFlowBackgroundWithCallback(() => {
         ShowSearchForCozmo();
-        androidFlowInstance.AddConnectingPrefab(_SearchForCozmoScreenInstance);
+        _AndroidConnectionFlowInstance.AddConnectingPrefab(_SearchForCozmoScreenInstance);
       });
     };
     // - when the screen finishes, either continue old connection flow accordingly
     //   or go to "search failed" screen
-    androidFlowInstance.OnScreenComplete += (success) => {
+    _AndroidConnectionFlowInstance.OnScreenComplete += (success) => {
       DAS.Info("ConnectionFlow.ShowAndroid", "OnComplete: " + success);
-      GameObject.Destroy(_AndroidConnectionFlowInstance);
-      _AndroidConnectionFlowInstance = null;
+      DestroyAndroidFlow();
 
       // create background if it doesn't exist yet, then signal we're done
       Action doneAction = () => HandleSearchForCozmoScreenDone(success);
@@ -234,11 +237,10 @@ public class ConnectionFlowController : MonoBehaviour {
       }
     };
     // - if the old flow is requested, start it
-    androidFlowInstance.OnCancelFlow += () => {
+    _AndroidConnectionFlowInstance.OnCancelFlow += () => {
       DAS.Info("ConnectionFlow.ShowAndroid", "CancelAndroid");
       Action cancelFunc = () => {
-        GameObject.Destroy(_AndroidConnectionFlowInstance);
-        _AndroidConnectionFlowInstance = null;
+        DestroyAndroidFlow();
         HandleSearchForCozmoScreenDone(false);
       };
       // create background if not created yet
