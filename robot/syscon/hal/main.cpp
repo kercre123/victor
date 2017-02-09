@@ -72,7 +72,11 @@ int main(void)
   Timer::init();
 
   // Startup the system
+  #ifdef FACTORY
+  Battery::setOperatingMode(BODY_STARTUP);
+  #else
   Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
+  #endif
 
   // NOTE: HERE DOWN SOFTDEVICE ACCESS IS NOT GUARANTEED
   // Run forever, because we are awesome.
