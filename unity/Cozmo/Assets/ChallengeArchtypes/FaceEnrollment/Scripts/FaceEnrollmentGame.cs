@@ -135,10 +135,11 @@ namespace FaceEnrollment {
       _FaceDetailsShelfContentInstance.EraseFacePressed += onDeleteCallback;
     }
 
-    public void ShowMultipleFacesErrorShelf(System.Action tryAgainButtonCallback) {
+    public void ShowMultipleFacesErrorShelf(string nameForFace, System.Action tryAgainButtonCallback) {
       SharedMinigameView.ShowShelf();
       _FaceMultipleFacesErrorShelfContentInstance = SharedMinigameView.ShelfWidget.SetShelfContent(_FaceMultipleFacesErrorShelfContentPrefab).GetComponent<FaceMultipleFacesErrorShelfContent>();
       _FaceMultipleFacesErrorShelfContentInstance.OnRetryButton += tryAgainButtonCallback;
+      _FaceMultipleFacesErrorShelfContentInstance.SetNameLabel(nameForFace);
     }
 
     public void HandleDetailsViewRequested(int faceID, string nameForFace) {

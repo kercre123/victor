@@ -129,7 +129,7 @@ namespace FaceEnrollment {
         DestroyInstructionsModal();
         _FaceEnrollmentGame.SharedMinigameView.HideTitleWidget();
         _FaceEnrollmentGame.SharedMinigameView.ShowFullScreenGameStateSlide(_FaceEnrollmentGame.FaceEnrollmentMultipleFacesErrorSlidePrefab, "multiple_faces_error");
-        _FaceEnrollmentGame.ShowMultipleFacesErrorShelf(CreateInstructionsModal);
+        _FaceEnrollmentGame.ShowMultipleFacesErrorShelf(_NameForFace, CreateInstructionsModal);
       }
       else {
         PopupErrorAlert(faceEnrollmentCompleted);
