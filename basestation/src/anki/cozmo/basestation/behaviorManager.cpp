@@ -66,6 +66,11 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
+// these are defined as private within BehaviorManager, but are so ugly that I'm
+// including them namespaced here for return values
+using TriggerBehaviorMapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
+using TriggerMapIterator = std::vector<TriggerBehaviorMapEntry>::iterator;
+  
 static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
 static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
 static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig";
@@ -119,6 +124,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _defaultLiftHeight(kIgnoreDefaultHeadAndLiftState)
 , _runningAndResumeInfo(new BehaviorRunningAndResumeInfo())
 , _behaviorFactory(new BehaviorFactory())
+, _devCheckTriggerMapImmutableSize(0)
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
 {
@@ -314,6 +320,15 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
             std::make_pair(std::unique_ptr<IReactionTriggerStrategy>(strategy), behavior));
       }
     }
+    
+    std::set<TriggerMapIterator> reactToDoubleTapInfo = GetReactionInfoForTrigger(ReactionTrigger::DoubleTapDetected);
+    // this logic assumes there is only one react to double tap behavior
+    DEV_ASSERT(reactToDoubleTapInfo.size() == 1,
+               "BehaviorManager.UpdateBehaviorWithObjectTapInteraction.TooManyDoubleTapTriggers");
+    if(reactToDoubleTapInfo.size() == 1){
+      _cacheDoubleTapIter = *reactToDoubleTapInfo.begin();
+      _devCheckTriggerMapImmutableSize = static_cast<int>(_reactionTriggerMap.size());
+    }
   }
   
   return RESULT_OK;
@@ -463,19 +478,36 @@ bool BehaviorManager::SwitchToReactionTrigger(IReactionTriggerStrategy& triggerS
   return SwitchToBehaviorBase(newBehaviorInfo);
 }
 
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::set<IBehavior*> BehaviorManager::GetBehaviorsForReactionTrigger(ReactionTrigger trigger)
+std::set<TriggerMapIterator> BehaviorManager::GetReactionInfoForTrigger(ReactionTrigger trigger)
 {
-  std::set<IBehavior*> allMappedTriggers;
-  for(const auto& mapEntry: _reactionTriggerMap){
-    if(mapEntry.first->GetReactionTrigger() == trigger){
-      allMappedTriggers.insert(mapEntry.second);
+  std::set<TriggerMapIterator> allMappedTriggers;
+  
+  for(auto mapIter = _reactionTriggerMap.begin(); mapIter < _reactionTriggerMap.end(); mapIter++){
+    if(mapIter->first->GetReactionTrigger() == trigger){
+      allMappedTriggers.insert(mapIter);
     }
   }
+  
   return allMappedTriggers;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorManager::GetReactToDoubleTapPair(TriggerMapIterator& reactIter)
+{
+  const bool triggerMapUnchanged = _devCheckTriggerMapImmutableSize == _reactionTriggerMap.size();
+  DEV_ASSERT(triggerMapUnchanged,"BehaviorManager.GetReactToDoubleTapPair.ReactionMapSizeChanged");
+  if(triggerMapUnchanged){
+    reactIter = _cacheDoubleTapIter;
+    return true;
+  }
+  
+  return false;
+}
+
+  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::ChooseNextScoredBehaviorAndSwitch()
@@ -926,6 +958,8 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
                 UnlockIdToString(_lastRequestedSpark));
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const UnlockId BehaviorManager::SwitchToRequestedSpark()
 {
   PRINT_CH_INFO("Behaviors", "BehaviorManager.SwitchToRequestedSpark",
@@ -944,6 +978,8 @@ const UnlockId BehaviorManager::SwitchToRequestedSpark()
   return _activeSpark;
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::EnableAllReactionTriggers(const std::string& requesterID, bool isEnabled, bool stopCurrent)
 {
   PRINT_CH_INFO("ReactionTriggers",
@@ -967,7 +1003,9 @@ void BehaviorManager::EnableAllReactionTriggers(const std::string& requesterID, 
   }
   
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RequestCurrentBehaviorEndOnNextActionComplete()
 {
   if(nullptr != GetRunningAndResumeInfo().GetCurrentBehavior()){
@@ -975,6 +1013,8 @@ void BehaviorManager::RequestCurrentBehaviorEndOnNextActionComplete()
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
 {
   // Have to be in freeplay and not picking or placing and flat on the ground
@@ -1004,7 +1044,10 @@ void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
     return;
   }
 
-  if( !_tapInteractionDisabledIDs.empty() ) {
+  TriggerMapIterator doubleTapMapEntry;
+  const bool doubleTapExists = GetReactToDoubleTapPair(doubleTapMapEntry);
+
+  if(doubleTapExists && !doubleTapMapEntry->first->IsReactionEnabled()) {
     PRINT_CH_INFO("Behavior", "BehaviorManager.HandleObjectTapInteraction.Disabled",
                   "Object tap interaction disabled, ignoring tap");
     return;
@@ -1015,6 +1058,8 @@ void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
   
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::LeaveObjectTapInteraction()
 {
   if(!_robot.GetAIComponent().GetWhiteboard().HasTapIntent())
@@ -1049,33 +1094,18 @@ void BehaviorManager::LeaveObjectTapInteraction()
   _currDoubleTappedObject.UnSet();
 }
 
-void BehaviorManager::RequestEnableTapInteraction(const std::string& requesterID, bool enable)
-{
-  if( enable ) {
-    size_t countRemoved = _tapInteractionDisabledIDs.erase(requesterID);
-    if( countRemoved == 0 ) {
-      PRINT_NAMED_WARNING("BehaviorManager.RequestEnableTapInteraction.IDNotFound",
-                          "Attempted to enable tap interaction with invalid id '%s'",
-                          requesterID.c_str());
-    }
-  }
-  else {
-    size_t countInList = _tapInteractionDisabledIDs.count(requesterID);
-    if( countInList > 0 ) {
-      PRINT_NAMED_WARNING("BehaviorManager.RequestEnableTapInteraction.DuplicateID",
-                          "Trying to disable tap interaction with ID previously registered: '%s'",
-                          requesterID.c_str());
-    }
-    _tapInteractionDisabledIDs.insert(requesterID);
-  }
-}
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::UpdateTappedObject()
 {
+  
+  TriggerMapIterator doubleTapMapEntry;
+  const bool doubleTapExists = GetReactToDoubleTapPair(doubleTapMapEntry);
+  
   // If we have a tap intent and are not currently in ReactToDoubleTap
   if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent() &&
      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected &&
-     _tapInteractionDisabledIDs.empty())
+     doubleTapExists && doubleTapMapEntry->first->IsReactionEnabled())
   {
     // If the tapped objects pose becomes unknown then give up and leave object tap interaction
     // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running)
@@ -1116,6 +1146,8 @@ void BehaviorManager::UpdateTappedObject()
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
 {
   // Copy pending object to be assigned to current double tapped object
@@ -1219,16 +1251,18 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
         // This is necessary because otherwise the ObjectTapInteraction goal will exit due to not being able
         // to pick a behavior (all of the ObjectTapInteraction behaviors have similar requirements to run) so
         // if the current one can't run then the others probably won't be able to run either.
+        
+        TriggerMapIterator doubleTapMapEntry;
+        const bool doubleTapExists = GetReactToDoubleTapPair(doubleTapMapEntry);
 
-        std::set<IBehavior*> reactToDoubleTapBehaviors = GetBehaviorsForReactionTrigger(ReactionTrigger::DoubleTapDetected);
-        // this logic assumes there is only one react to double tap behavior
-        DEV_ASSERT(reactToDoubleTapBehaviors.size() == 1,
-                   "BehaviorManager.UpdateBehaviorWithObjectTapInteraction.TooManyDoubleTapTriggers");
-        if(reactToDoubleTapBehaviors.size() == 1){
-          IBehavior* reactToDoubleTap = *reactToDoubleTapBehaviors.begin();
+        if(doubleTapExists){
+          IBehavior* reactToDoubleTap = doubleTapMapEntry->second;
+          
+          const bool isReactionEnabled = doubleTapMapEntry->first->IsReactionEnabled();
+          const bool shouldTrigger = doubleTapMapEntry->first->ShouldTriggerBehavior(_robot, reactToDoubleTap);
 
           BehaviorPreReqRobot preReqRobot(_robot);
-          if(reactToDoubleTap->IsRunnable(preReqRobot))
+          if(isReactionEnabled && shouldTrigger)
           {
             PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.StartingReactToDoubleTap",
                           "Forcing ReactToDoubleTap to run because %s can't run with newly double tapped object",
@@ -1250,8 +1284,8 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
       }
     }
   }
-
 }
+
   
 } // namespace Cozmo
 } // namespace Anki

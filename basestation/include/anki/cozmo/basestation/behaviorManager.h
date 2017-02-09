@@ -186,11 +186,10 @@ public:
   
   const ObjectID& GetLastTappedObject() const { return _lastDoubleTappedObject; }
   const ObjectID& GetCurrTappedObject() const { return _currDoubleTappedObject; }
-
-  // Enable and disable tap interaction
-  void RequestEnableTapInteraction(const std::string& requesterID, bool enable);
   
 private:
+  using TriggerBehaviorMapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
+  using TriggerMapIterator = std::vector<TriggerBehaviorMapEntry>::iterator;
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -199,7 +198,11 @@ private:
   bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehavior* nextBehavior);
   bool SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo);
   
-  std::set<IBehavior*> GetBehaviorsForReactionTrigger(ReactionTrigger trigger);
+  // Get all strategies and behavior given a trigger
+  std::set<TriggerMapIterator> GetReactionInfoForTrigger(ReactionTrigger trigger);
+  // Helper function for reactToDoubleTap that has assumptions GetReactionInfoForTrigger
+  // doesn't have - returns false if trigger doesn't exist for production
+  bool GetReactToDoubleTapPair(TriggerMapIterator& reactIter);
   
   // checks the chooser and switches to a new behavior if neccesary
   void ChooseNextScoredBehaviorAndSwitch();
@@ -235,8 +238,7 @@ private:
   // can respond appropriately to switching between reactions/resumes
   BehaviorRunningAndResumeInfo& GetRunningAndResumeInfo() const {assert(_runningAndResumeInfo); return *_runningAndResumeInfo;}
   void SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo& newInfo);
-
-  
+    
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -277,8 +279,13 @@ private:
   IBehaviorChooser* _meetCozmoChooser = nullptr;
   
   // list of behaviors that fire automatically as reactions to events
-  using mapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
-  std::vector<mapEntry> _reactionTriggerMap;
+  std::vector<TriggerBehaviorMapEntry> _reactionTriggerMap;
+  
+  // To save iterating through the whole map twice each tick we're storing an iterator
+  // to the doubleTap pair - this only works so long as the map is immutable after initialization
+  // The count variable is used to dev assert that we don't change the map size
+  TriggerMapIterator _cacheDoubleTapIter;
+  int _devCheckTriggerMapImmutableSize;
   
   // time at which last chooser was selected
   float _lastChooserSwitchTime;
@@ -320,9 +327,6 @@ private:
   
   // Whether or not we need to handle an object being tapped in Update()
   bool _needToHandleObjectTapped = false;
-
-  // set of things which have disabled tap interaction
-  std::multiset<std::string> _tapInteractionDisabledIDs;
   
   // List of all behaviors belonging to the tap interaction behavior group
   std::list<IBehavior*> _tapInteractionBehaviors;
