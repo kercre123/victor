@@ -236,7 +236,6 @@ namespace Cozmo {
                           "Will start streaming '%s' animation %d times with tag=%d.",
                           _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
       }
-      Anki::Util::sEvent("robot.play_animation", {}, _streamingAnimation->GetName().c_str());
       
       return _tagCtr;
     }
