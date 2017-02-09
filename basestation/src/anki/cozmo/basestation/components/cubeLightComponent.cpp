@@ -89,6 +89,7 @@ CubeLightComponent::CubeLightComponent(Robot& robot, const CozmoContext* context
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLightStates>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCubeSleep>();
   }
   
   static_assert(AnimLayerEnum::User < AnimLayerEnum::Engine &&
@@ -170,8 +171,9 @@ void CubeLightComponent::Update()
             layer = AnimLayerEnum::State;
             
             PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.Update.NoAnimsLeftOnLayer",
-                          "No more animations left on layer %s going to %s layer",
+                          "No more animations left on layer %s for object %u going to %s layer",
                           LayerToString(prevLayer),
+                          objectInfo.first.GetValue(),
                           LayerToString(layer));
             
             PickNextAnimForDefaultLayer(objectInfo.first);
@@ -485,7 +487,7 @@ void CubeLightComponent::StopAllAnimsOnLayer(const AnimLayerEnum& layer, const O
 }
 
 void CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
-                                          const ObjectID& objectID)
+                                       const ObjectID& objectID)
 {
   StopLightAnim(animTrigger, AnimLayerEnum::Engine, objectID);
 }
@@ -495,7 +497,7 @@ void CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
                                           const ObjectID& objectID)
 {
   PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.StopLightAnim",
-                "Stopping %s on object %u on layer %s",
+                "Stopping %s on object %d on layer %s",
                 EnumToString(animTrigger),
                 objectID.GetValue(),
                 LayerToString(layer));
@@ -611,6 +613,13 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
   if(DEBUG_TEST_ALL_ANIM_TRIGGERS)
   {
     CycleThroughAnimTriggers(objectID);
+    return;
+  }
+  
+  // If CubeSleep is enabled then play the sleep animation
+  if(_enableCubeSleep)
+  {
+    PlayLightAnim(objectID, CubeAnimationTrigger::Sleep, AnimLayerEnum::State);
     return;
   }
   
@@ -949,6 +958,28 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::EnableLightState
   // so we don't want to only enable the game layer hence the negation of msg.enable
   // This is so the EnableLightStates message did not need to change
   EnableGameLayerOnly(msg.objectID, !msg.enable);
+}
+
+template<>
+void CubeLightComponent::HandleMessage(const ExternalInterface::EnableCubeSleep& msg)
+{
+  PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.EnableCubeSleep",
+                "%s cube sleep", (msg.enable ? "Enabling" : "Disabling"));
+  
+  _enableCubeSleep = msg.enable;
+  
+  static const ObjectID kAllObjects{};
+  
+  // If we are disabling cube sleep then stop the sleep animation
+  if(!_enableCubeSleep)
+  {
+    StopLightAnim(CubeAnimationTrigger::Sleep, AnimLayerEnum::State, kAllObjects);
+  }
+  
+  // Force game layer to be disabled, this will stop any game layer animations
+  // and force a default layer anim to be played. In the case where _enableCubeSleep is
+  // true the sleep anim will be picked otherwise an appropriate anim will be picked
+  EnableGameLayerOnly(kAllObjects, false);
 }
 
 ActiveObject* CubeLightComponent::GetActiveObjectInAnyFrame(const ObjectID& objectID)
