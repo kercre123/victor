@@ -41,7 +41,7 @@ extern "C" {
 
 #define CRC32_POLYNOMIAL (0xedb88320L)
 
-#define DEBUG_OTA 2
+#define DEBUG_OTA 0
 
 void gen_random(void* ptr, int length)
 {

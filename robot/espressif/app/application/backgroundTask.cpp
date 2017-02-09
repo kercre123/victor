@@ -295,7 +295,7 @@ void Exec(os_event_t *event)
   const u32 btRunTime = system_get_time() - btStart;
   if ((btRunTime > BT_MAX_RUN_TIME_US) && (periodicPrint++ == 0))
   {
-    AnkiWarn( 52, "BackgroundTask.RunTimeTooLong", 296, "Background task run time too long: %dus!", 1, btRunTime);
+    AnkiEvent( 52, "BackgroundTask.RunTimeTooLong", 296, "Background task %d run time too long: %dus!", 2, event->sig, btRunTime);
   }
   lastBTT = btStart;
   // Always repost so we'll execute again.
