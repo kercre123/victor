@@ -85,7 +85,8 @@ namespace Cozmo {
     static bool PoseStateNotUnknownFilter(const ObservableObject* object); // Added by default
     static bool PoseStateKnownFilter(const ObservableObject* object);
     static bool ActiveObjectsFilter(const ObservableObject* object);
-
+    static bool UniqueObjectsFilter(const ObservableObject* object);
+    
     // Normally, all objects known to BlockWorld are checked. Setting this to
     // true will only check those objects observed in the most recent BlockWorld
     // Update() call.
@@ -287,6 +288,11 @@ namespace Cozmo {
   inline bool BlockWorldFilter::ActiveObjectsFilter(const ObservableObject* object) {
     DEV_ASSERT(nullptr != object, "BlockWorldFilter.ActiveObjectsFilter.NullObject");
     return object->IsActive();
+  }
+  
+  inline bool BlockWorldFilter::UniqueObjectsFilter(const ObservableObject* object) {
+    DEV_ASSERT(nullptr != object, "BlockWorldFilter.UniqueObjectsFilter.NullObject");
+    return object->IsUnique();
   }
   
   

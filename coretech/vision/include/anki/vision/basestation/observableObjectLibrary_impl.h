@@ -32,64 +32,89 @@ namespace Vision {
   template<class ObsObjectType>
   ObservableObjectLibrary<ObsObjectType>::~ObservableObjectLibrary<ObsObjectType>()
   {
-    for (auto iter = _knownObjects.begin(); iter != _knownObjects.end(); ++iter)
-    {
-      Util::SafeDelete(*iter);
-    }
-    // List will be cleared by std::list destructor
-    //_knownObjects.clear();
+
   }
   
   template<class ObsObjectType>
-  std::set<const ObsObjectType*> const& // Return value
-  ObservableObjectLibrary<ObsObjectType>::GetObjectsWithCode(const Marker::Code& code) const
+  const ObsObjectType* ObservableObjectLibrary<ObsObjectType>::GetObjectWithCode(const Marker::Code& code) const
   {
-    auto temp = _objectsWithCode.find(code);
-    if(temp != _objectsWithCode.end()) {
+    auto temp = _objectWithCode.find(code);
+    if(temp != _objectWithCode.end()) {
       return temp->second;
     }
     else {
-      return ObservableObjectLibrary::sEmptyObjectVector;
+      return nullptr;
     }
   }
   
   template<class ObsObjectType>
-  std::set<const ObsObjectType*> const& // Return value
-  ObservableObjectLibrary<ObsObjectType>::GetObjectsWithMarker(const Marker& marker) const
+  const ObsObjectType* ObservableObjectLibrary<ObsObjectType>::GetObjectWithMarker(const Marker& marker) const
   {
-    return GetObjectsWithCode(marker.GetCode());
+    return GetObjectWithCode(marker.GetCode());
   }
   
   template<class ObsObjectType>
-  void ObservableObjectLibrary<ObsObjectType>::AddObject(const ObsObjectType* object)
+  Result ObservableObjectLibrary<ObsObjectType>::AddObject(std::unique_ptr<const ObsObjectType>&& object)
   {
-    // TODO: Warn/error if we are overwriting an existing object with this type?
+    // Make sure we don't have anything already using any of the markers on this object
+    // Note that we don't need to worry if we find an object with the same markers that also
+    // has the same type: it will be completely replaced by this new object anyway.
+    // We do this first so that we can't accidentally remove an existing type, _then_ discover another object (with
+    // different type) that has duplicate markers, return RESULT_FAIL, and then not have actually replaced the type
+    // we intended to.
+    for(auto & marker : object->GetMarkers())
+    {
+      const ObsObjectType* knownObjWithMarker = GetObjectWithMarker(marker);
+      if(nullptr != knownObjWithMarker && (knownObjWithMarker->GetType() != object->GetType()))
+      {
+        PRINT_NAMED_WARNING("ObservableObjectsLibrary.AddObject.MarkerAlreadyInUse",
+                            "Cannot add %s object. Already have %s object using %s marker",
+                            EnumToString(object->GetType()),
+                            EnumToString(knownObjWithMarker->GetType()),
+                            MarkerTypeStrings[marker.GetCode()]);
+        
+        return RESULT_FAIL;
+      }
+    }
     
+    // See if we are replacing an existing known type. If so, remove it and unregister its markers.
+    s32 numTypesMatched = 0;
     for (auto knownObjectIter = _knownObjects.begin(); knownObjectIter != _knownObjects.end(); )
     {
-      auto knownObject = *knownObjectIter;
+      const ObsObjectType* knownObject = knownObjectIter->get();
       if (knownObject->GetType() == object->GetType())
       {
-        // Since each Marker can only be bound to one Object, clear out the marker's list
-        // of matching objects, the object is added at the end of the function
-        PRINT_NAMED_WARNING("ObservableObjectLibrary.AddObject",
-                            "The object %s old definition was erased from the Known Objects library.", EnumToString(object->GetType()));
-        for (const auto& marker : object->GetMarkers())
+        PRINT_NAMED_WARNING("ObservableObjectLibrary.AddObject.RemovingPreviousDefinition",
+                            "The old definition for a %s object was erased from the library.",
+                            EnumToString(object->GetType()));
+       
+        // Since each Marker can only be bound to one Object, clear out the entries for the
+        // of matching known objects we are about to replace
+        for (const auto& marker : knownObject->GetMarkers())
         {
-          _objectsWithCode[marker.GetCode()].clear();
+          _objectWithCode.erase(marker.GetCode());
         }
-        Util::SafeDelete(*knownObjectIter);
+        
         knownObjectIter = _knownObjects.erase(knownObjectIter);
+        ++numTypesMatched;
       }
       else
       {
         ++knownObjectIter;
       }
     }
-    _knownObjects.push_back(object);
+    
+    // It should never be possible to have more than one object of the same type in the library, so we can't have
+    // matched more than one
+    DEV_ASSERT(numTypesMatched <= 1, "ObservableObjectLibrary.AddObject.MultipleTypeMatchesFound");
+    
+    // Actually add the object to our known objects and register each marker it has on it
     for(auto & marker : object->GetMarkers()) {
-      _objectsWithCode[marker.GetCode()].insert(object);
+      _objectWithCode[marker.GetCode()] = object.get();
     }
+    _knownObjects.push_back(std::move(object));
+    
+    return RESULT_OK;
   }
   
   template<class ObsObjectType>
@@ -107,21 +132,14 @@ namespace Vision {
       // camera
       if(seenOnlyBy == ANY_CAMERA || marker.GetSeenBy().GetID() == seenOnlyBy)
       {
-        // Find all objects which use this marker...
-        std::set<const ObsObjectType*> const& objectsWithMarker = GetObjectsWithMarker(marker);
+        // Find the object which uses this marker...
+        const ObsObjectType* objectWithMarker = GetObjectWithMarker(marker);
         
-        // ...if there are any, add this marker to the list of observed markers
+        // ...if there is one, add this marker to the list of observed markers
         // that corresponds to this object type.
-        if(!objectsWithMarker.empty()) {
-          if(objectsWithMarker.size() > 1) {
-            PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectFromMarkers.MultipleLibObjectsWithMarker",
-                              "Having multiple objects in the library with the "
-                              "same marker ('%s') is not supported.",
-                              marker.GetCodeName());
-            return RESULT_FAIL;
-          }
-          markersByLibObject[*objectsWithMarker.begin()].push_back(&marker);
-          
+        if(nullptr != objectWithMarker)
+        {
+          markersByLibObject[objectWithMarker].push_back(&marker);
           marker.MarkUsed(true);
         } // IF objectsWithMarker != NULL
       } // IF seenOnlyBy
@@ -254,10 +272,10 @@ namespace Vision {
         // that corresponds to this object type.
         if(!objectsWithMarker.empty()) {
           if(objectsWithMarker.size() > 1) {
-            PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectFromMarkers.MultipleLibObjectsWithMarker",
-                              "Having multiple objects in the library with the "
-                              "same marker ('%s') is not supported.",
-                              marker->GetCodeName());
+            PRINT_NAMED_WARNING("ObservableObjectLibrary.CreateObjectFromMarkers.MultipleLibObjectsWithMarker",
+                                "Having multiple objects in the library with the "
+                                "same marker ('%s') is not supported.",
+                                marker->GetCodeName());
             return RESULT_FAIL;
           }
           markersByLibObject[*objectsWithMarker.begin()].push_back(marker);

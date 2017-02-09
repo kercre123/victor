@@ -55,9 +55,7 @@ namespace Anki
       constexpr static const float kOnCubeStackHeightTolerence = 2 * STACKED_HEIGHT_TOL_MM;
       
       BlockWorld(Robot* robot);
-      
-      void DefineCustomObject(ObjectType type, f32 xSize_mm, f32 ySize_mm, f32 zSize_mm, f32 markerWidth_mm, f32 markerHeight_mm);
-      
+            
       ~BlockWorld();
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
@@ -78,6 +76,11 @@ namespace Anki
       // Processes the edges found in the given frame
       Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
       
+      // Defines an object that could be observed later.
+      // Does not add an instance of this object to the existing objects in the world.
+      // Instead, provides the definition of an object that could be instantiated based on observations.
+      Result DefineObject(std::unique_ptr<const ObservableObject>&& object);
+
       // Adds an active object of the appropriate type based on factoryID at
       // an unknown pose. To be used when the active object first comes into radio contact.
       // This function does nothing if an active object of the same type with the active ID already exists.
@@ -99,6 +102,9 @@ namespace Anki
       // is not a zombie even if it doesn't have any cubes yet.
       bool IsZombiePoseOrigin(const Pose3d* origin) const;
       
+      // Called when robot gets delocalized in order to do internal bookkeeping and broadcast updated object states
+      void OnRobotDelocalized(const Pose3d* newWorldOrigin);
+      
       //
       // Object Access
       //
@@ -119,11 +125,6 @@ namespace Anki
       void DeleteObjectsByOrigin(const Pose3d* origin, bool clearFirst); // can disable clearing before deletion
       void DeleteObjectsByFamily(const ObjectFamily family);
       void DeleteObjectsByType(const ObjectType type);
-      
-      // Get objects that exist in the world, by family, type, ID, etc.
-      // NOTE: Like IDs, object types are unique across objects so they can be
-      //       used without specifying which family.
-      const ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
       
       // Return a pointer to an object with the specified ID (in the current world
       // coordinate frame. If that object does not exist or its pose is unknown, nullptr is returned.
@@ -534,6 +535,7 @@ namespace Anki
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)
+      // TODO: combine into single object library instead of per family (COZMO-9319)
       std::map<ObjectFamily, ObservableObjectLibrary> _objectLibrary;
       
       // Store all observed objects, indexed first by Type, then by ID
@@ -595,18 +597,6 @@ namespace Anki
       
     }; // class BlockWorld
 
-    
-    inline const BlockWorld::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily whichFamily) const
-    {
-      auto objectsWithFamilyIter = _objectLibrary.find(whichFamily);
-      if(objectsWithFamilyIter != _objectLibrary.end()) {
-        return objectsWithFamilyIter->second;
-      } else {
-        static const ObservableObjectLibrary EmptyObjectLibrary;
-        return EmptyObjectLibrary;
-      }
-    }
-    
     inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily) {
       return GetObjectByIdHelper(objectID, inFamily); // returns non-const*
     }

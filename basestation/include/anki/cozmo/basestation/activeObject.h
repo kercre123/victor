@@ -29,6 +29,11 @@ namespace Cozmo {
     
     virtual bool IsActive() const override  { return true; }
     
+    // NOTE: This prevents us from having multiple active objects in the world at the same time: this means we
+    //  match to existing objects based solely on type. If we ever do anything like COZMO-23 to get around that, then
+    //  this would need to be changed.
+    virtual bool IsUnique() const override { return true; }
+    
     // Set the same color and flashing frequency of one or more LEDs on the block
     // If turnOffUnspecifiedLEDs is true, any LEDs that were not indicated by
     // whichLEDs will be turned off. Otherwise, they will be left in their current

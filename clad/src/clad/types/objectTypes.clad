@@ -79,19 +79,35 @@ namespace Cozmo {
     CollisionObstacle,
 
     //////////////////////////////////////////////////////////////////////////
-    // Custom Objects created using the old "block" markers i.e star and arrow
-    // These can be bound at runtime to cuboids of custom size
-    // Fixed objects do not have any markers associated with them
-    // Cube objects are a cube with the same marker on all 6 sides
-    // Box objects are cuboids prisms with unique markers on all 6 sides
+    // Custom Objects defined via DefineCustomObject
+    CustomType00,
+    CustomType01,
+    CustomType02,
+    CustomType03,
+    CustomType04,
+    CustomType05,
+    CustomType06,
+    CustomType07,
+    CustomType08,
+    CustomType09,
+    CustomType10,
+    CustomType11,
+    CustomType12,
+    CustomType13,
+    CustomType14,
+    CustomType15,
+    CustomType16,
+    CustomType17,
+    CustomType18,
+    CustomType19,
 
-    Custom_STAR5_Cube,
-    Custom_STAR5_Box,
-    Custom_ARROW_Cube,
-    Custom_ARROW_Box,
-    Custom_Fixed,
+    // INSERT ADDITIONAL CustomTypes here
 
-    
+    // DO NOT ADD anything other than new CustomTypes before CustomFixedObstacle!
+
+    // Custom "fixed" object (i.e. obstacle)
+    CustomFixedObstacle,
+
   } // enum class ObjectType
   
 } // namespace Cozmo

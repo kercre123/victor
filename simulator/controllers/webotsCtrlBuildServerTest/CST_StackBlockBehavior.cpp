@@ -190,7 +190,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
                                             !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                             NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
-                                            GetNumObjects() == 2)
+                                            GetNumObjects() == 1)
       {
         _behaviorCheckTime = GetSupervisor()->getTime();
         SET_STATE(DontStartBehavior);        

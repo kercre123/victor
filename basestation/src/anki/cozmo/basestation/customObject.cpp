@@ -15,140 +15,290 @@
 #include "anki/common/basestation/math/quad_impl.h"
 
 namespace Anki {
-  namespace Cozmo {
-    
-    const std::vector<Point3f>& CustomObject::GetCanonicalCorners() const
-    {
-      return _canonicalCorners;
-    }
+namespace Cozmo {
 
-    CustomObject::CustomObject(ObjectType type, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm,
-                               const f32 markerWidth_mm, const f32 markerHeight_mm)
-    : ObservableObject(ObjectFamily::CustomObject, type)
-    , _size(Point3f(xSize_mm, ySize_mm, zSize_mm))
-    ,  _markerWidth_mm(markerWidth_mm), _markerHeight_mm(markerHeight_mm)
-    , _vizHandle(VizManager::INVALID_HANDLE)
-    {
-      DefineFacesByType(type);
-      
-      _canonicalCorners = {{
-        Point3f(-0.5f*_size.x(), -0.5f*_size.y(),  0.5f*_size.z()),
-        Point3f( 0.5f*_size.x(), -0.5f*_size.y(),  0.5f*_size.z()),
-        Point3f(-0.5f*_size.x(), -0.5f*_size.y(), -0.5f*_size.z()),
-        Point3f( 0.5f*_size.x(), -0.5f*_size.y(), -0.5f*_size.z()),
-        Point3f(-0.5f*_size.x(),  0.5f*_size.y(),  0.5f*_size.z()),
-        Point3f( 0.5f*_size.x(),  0.5f*_size.y(),  0.5f*_size.z()),
-        Point3f(-0.5f*_size.x(),  0.5f*_size.y(), -0.5f*_size.z()),
-        Point3f( 0.5f*_size.x(),  0.5f*_size.y(), -0.5f*_size.z())
-      }};
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+const std::vector<Point3f>& CustomObject::GetCanonicalCorners() const
+{
+  return _canonicalCorners;
+}
 
-    } // CustomObject(type) Constructor
-    
-    void CustomObject::DefineFacesByType(ObjectType type)
-    {
-      // TODO replace this with actual object definitions, currently we don't have enough markers
-      switch (type) {
-        case ObjectType::Custom_STAR5_Box:
-          AddFace(FRONT_FACE,  Vision::MARKER_STAR5);
-          AddFace(BACK_FACE,   Vision::MARKER_ARROW);
-          break;
-        case ObjectType::Custom_STAR5_Cube:
-          AddFace(FRONT_FACE,  Vision::MARKER_STAR5);
-          AddFace(LEFT_FACE,   Vision::MARKER_STAR5);
-          AddFace(BACK_FACE,   Vision::MARKER_STAR5);
-          AddFace(RIGHT_FACE,  Vision::MARKER_STAR5);
-          AddFace(TOP_FACE,    Vision::MARKER_STAR5);
-          AddFace(BOTTOM_FACE, Vision::MARKER_STAR5);
-          break;
-        case ObjectType::Custom_ARROW_Box:
-          AddFace(FRONT_FACE,  Vision::MARKER_ARROW);
-          AddFace(BACK_FACE,   Vision::MARKER_STAR5);
-          break;
-        case ObjectType::Custom_ARROW_Cube:
-          AddFace(FRONT_FACE,  Vision::MARKER_ARROW);
-          AddFace(LEFT_FACE,   Vision::MARKER_ARROW);
-          AddFace(BACK_FACE,   Vision::MARKER_ARROW);
-          AddFace(RIGHT_FACE,  Vision::MARKER_ARROW);
-          AddFace(TOP_FACE,    Vision::MARKER_ARROW);
-          AddFace(BOTTOM_FACE, Vision::MARKER_ARROW);
-          break;
-        default:
-          break;
-      }
-    }
-
-    void CustomObject::AddFace(const FaceName whichFace, const Vision::MarkerType code)
-    {
-      Pose3d facePose;
-      switch(whichFace)
-      {
-        case FRONT_FACE:
-          facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-_size.x() * 0.5f, 0.f, 0.f},  &GetPose());
-          break;
-          
-        case LEFT_FACE:
-          facePose = Pose3d(M_PI,    Z_AXIS_3D(), {0.f, _size.y() * 0.5f, 0.f},   &GetPose());
-          break;
-          
-        case BACK_FACE:
-          facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {_size.x() * 0.5f, 0.f, 0.f},   &GetPose());
-          break;
-          
-        case RIGHT_FACE:
-          facePose = Pose3d(0.0f,       Z_AXIS_3D(), {0.f, -_size.y() * 0.5f, 0.f},  &GetPose());
-          break;
-          
-        case TOP_FACE:
-          // Rotate -90deg around X, then -90 around Z
-          facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, _size.z() * 0.5f},  &GetPose());
-          break;
-          
-        case BOTTOM_FACE:
-          // Rotate +90deg around X, then -90 around Z
-          facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -_size.z() * 0.5f}, &GetPose());
-          break;
-          
-        default:
-          PRINT_NAMED_WARNING("CustomObject.AddFace", "Attempting to add unknown block face.");
-      }
-      _markersByFace[whichFace] = &AddMarker(code, facePose, Point2f(_markerWidth_mm, _markerHeight_mm));
-    }
-    
-    CustomObject::~CustomObject() {
-      EraseVisualization();
-    }
-    
-    Point3f CustomObject::GetSameDistanceTolerance() const
-    {
-      return _size * kSameDistToleranceFraction;
-    }
-    
-    void CustomObject::Visualize(const ColorRGBA& color) const
-    {
-      DEV_ASSERT(nullptr != _vizManager, "VizManager was not set for object we want to visualize");
-      Pose3d vizPose = GetPose().GetWithRespectToOrigin();
-      _vizHandle = _vizManager->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
-    }
-    
-    void CustomObject::EraseVisualization() const
-    {
-      // Erase the main object
-      if(_vizHandle != VizManager::INVALID_HANDLE) {
-        _vizManager->EraseVizObject(_vizHandle);
-        _vizHandle = VizManager::INVALID_HANDLE;
-      }
-    }
-    
-    
-    void CustomObject::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
-    {
-      corners = GetCanonicalCorners();
-      for(auto & corner : corners) {
-        corner *= _size;
-        corner = atPose * corner;
-      }
-    }
-    
-  } // namespace Cozmo
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+CustomObject::CustomObject(ObjectType objectType,
+                           CustomObjectMarker markerFront,
+                           CustomObjectMarker markerBack,
+                           CustomObjectMarker markerTop,
+                           CustomObjectMarker markerBottom,
+                           CustomObjectMarker markerLeft,
+                           CustomObjectMarker markerRight,
+                           f32 xSize_mm, f32 ySize_mm, f32 zSize_mm,
+                           f32 markerWidth_mm, f32 markerHeight_mm,
+                           bool isUnique,
+                           CustomShape shape)
+: ObservableObject(ObjectFamily::CustomObject, objectType)
+, _size(xSize_mm, ySize_mm, zSize_mm)
+, _markerSize(markerWidth_mm, markerHeight_mm)
+, _vizHandle(VizManager::INVALID_HANDLE)
+, _customShape(shape)
+, _isUnique(isUnique)
+{
+  SetCanonicalCorners();
   
+  AddFace(FrontFace,  markerFront );
+  AddFace(BackFace,   markerBack  );
+  AddFace(LeftFace,   markerLeft  );
+  AddFace(RightFace,  markerRight );
+  AddFace(TopFace,    markerTop   );
+  AddFace(BottomFace, markerBottom);
+  
+  switch(_customShape)
+  {
+    case BoxShape:
+    case UnmarkedBoxShape:
+      // No rotation ambiguities, nothing to do
+      break;
+      
+    case CubeShape:
+      // A cube with the same marker on all faces has complete rotation ambiguity
+      _rotationAmbiguities = RotationAmbiguities(true, {
+        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
+        RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
+        RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
+        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+      });
+      break;
+      
+    case WallShape:
+      // A wall with the same marker on both sides has 180deg rotation ambiguity around the Z axis
+      _rotationAmbiguities = RotationAmbiguities(false, {
+        RotationMatrix3d({ 1,0,0,  0, 1,0,  0,0,1}),
+        RotationMatrix3d({-1,0,0,  0,-1,0,  0,0,1}),
+      });
+      break;
+  }
+  
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+bool CustomObject::IsValidCustomType(ObjectType objectType)
+{
+  static_assert(((ObjectType)(Util::EnumToUnderlying(ObjectType::CustomType19) + 1)) == ObjectType::CustomFixedObstacle,
+                "CustomFixedObstacle should immediately follow the max CustomType");
+  
+  if(objectType < ObjectType::CustomType00 || objectType >= ObjectType::CustomFixedObstacle)
+  {
+    PRINT_NAMED_WARNING("CustomObject.IsValidCustomType.BadObjectType",
+                        "Type should be CustomTypeNN");
+    return false;
+  }
+  
+  return true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+CustomObject* CustomObject::CreateBox(ObjectType objectType,
+                                      CustomObjectMarker markerFront,
+                                      CustomObjectMarker markerBack,
+                                      CustomObjectMarker markerTop,
+                                      CustomObjectMarker markerBottom,
+                                      CustomObjectMarker markerLeft,
+                                      CustomObjectMarker markerRight,
+                                      f32 xSize_mm, f32 ySize_mm, f32 zSize_mm,
+                                      f32 markerWidth_mm, f32 markerHeight_mm,
+                                      bool isUnique)
+{
+  if(!IsValidCustomType(objectType))
+  {
+    return nullptr;
+  }
+  
+  // Validate that all markers are different, since that is required for BoxShape custom objects
+  const std::set<CustomObjectMarker> uniqueMarkers{
+    markerFront, markerBack, markerTop, markerBottom, markerLeft, markerRight
+  };
+  if(uniqueMarkers.size() != NumFaces)
+  {
+    PRINT_NAMED_WARNING("CustomObject.CreateCustomBox.DuplicateMarkers",
+                        "Expecting custom box object to have 6 different markers");
+    return nullptr;
+  }
+  
+  CustomObject* object = new CustomObject(objectType,
+                                          markerFront, markerBack, markerTop, markerBottom, markerLeft, markerRight,
+                                          xSize_mm, ySize_mm, zSize_mm,
+                                          markerWidth_mm, markerHeight_mm,
+                                          isUnique,
+                                          BoxShape);
+  
+  return object;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+CustomObject* CustomObject::CreateWall(ObjectType objectType,
+                                       CustomObjectMarker marker,
+                                       f32 width_mm, f32 height_mm,
+                                       f32 markerWidth_mm, f32 markerHeight_mm,
+                                       bool isUnique)
+{
+  if(!IsValidCustomType(objectType))
+  {
+    return nullptr;
+  }
+  
+  return new CustomObject(objectType,
+                          marker, marker, // Only define front/back markers
+                          CustomObjectMarker::Count, CustomObjectMarker::Count,
+                          CustomObjectMarker::Count, CustomObjectMarker::Count,
+                          kWallThickness_mm, width_mm, height_mm,
+                          markerWidth_mm, markerHeight_mm,
+                          isUnique,
+                          WallShape);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+CustomObject* CustomObject::CreateCube(ObjectType objectType,
+                                       CustomObjectMarker marker, f32 size_mm,
+                                       f32 markerWidth_mm, f32 markerHeight_mm,
+                                       bool isUnique)
+{
+  if(!IsValidCustomType(objectType))
+  {
+    return nullptr;
+  }
+  
+  return new CustomObject(objectType,
+                          marker, marker, marker, marker, marker, marker, // same marker on all faces
+                          size_mm, size_mm, size_mm,
+                          markerWidth_mm, markerHeight_mm,
+                          isUnique,
+                          CubeShape);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+CustomObject* CustomObject::CreateFixedObstacle(f32 xSize_mm, f32 ySize_mm, f32 zSize_mm)
+{
+  return new CustomObject(ObjectType::CustomFixedObstacle,
+                          CustomObjectMarker::Count, CustomObjectMarker::Count, CustomObjectMarker::Count,
+                          CustomObjectMarker::Count, CustomObjectMarker::Count, CustomObjectMarker::Count,
+                          xSize_mm, ySize_mm, zSize_mm,
+                          0.f, 0.f, true, UnmarkedBoxShape);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+Vision::MarkerType CustomObject::GetVisionMarkerType(const CustomObjectMarker customMarker)
+{
+  switch(customMarker)
+  {
+    case CustomObjectMarker::Arrow:
+      return Vision::MARKER_ARROW;
+      
+    case CustomObjectMarker::Star:
+      return Vision::MARKER_STAR5;
+      
+    case CustomObjectMarker::Count:
+      return Vision::MARKER_INVALID;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+void CustomObject::SetCanonicalCorners()
+{
+  _canonicalCorners = {{
+    Point3f(-0.5f*_size.x(), -0.5f*_size.y(),  0.5f*_size.z()),
+    Point3f( 0.5f*_size.x(), -0.5f*_size.y(),  0.5f*_size.z()),
+    Point3f(-0.5f*_size.x(), -0.5f*_size.y(), -0.5f*_size.z()),
+    Point3f( 0.5f*_size.x(), -0.5f*_size.y(), -0.5f*_size.z()),
+    Point3f(-0.5f*_size.x(),  0.5f*_size.y(),  0.5f*_size.z()),
+    Point3f( 0.5f*_size.x(),  0.5f*_size.y(),  0.5f*_size.z()),
+    Point3f(-0.5f*_size.x(),  0.5f*_size.y(), -0.5f*_size.z()),
+    Point3f( 0.5f*_size.x(),  0.5f*_size.y(), -0.5f*_size.z())
+  }};
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+ 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+void CustomObject::AddFace(const FaceName whichFace, const CustomObjectMarker customMarker)
+{
+  Vision::MarkerType visionMarkerType = GetVisionMarkerType(customMarker);
+  if(Vision::MarkerType::MARKER_INVALID == visionMarkerType)
+  {
+    return;
+  }
+  
+  Pose3d facePose;
+  switch(whichFace)
+  {
+    case FrontFace:
+      facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-_size.x() * 0.5f, 0.f, 0.f},  &GetPose());
+      break;
+      
+    case LeftFace:
+      facePose = Pose3d(M_PI,      Z_AXIS_3D(), {0.f, _size.y() * 0.5f, 0.f},   &GetPose());
+      break;
+      
+    case BackFace:
+      facePose = Pose3d(M_PI_2,    Z_AXIS_3D(), {_size.x() * 0.5f, 0.f, 0.f},   &GetPose());
+      break;
+      
+    case RightFace:
+      facePose = Pose3d(0.0f,      Z_AXIS_3D(), {0.f, -_size.y() * 0.5f, 0.f},  &GetPose());
+      break;
+      
+    case TopFace:
+      // Rotate -90deg around X, then -90 around Z
+      facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, _size.z() * 0.5f},  &GetPose());
+      break;
+      
+    case BottomFace:
+      // Rotate +90deg around X, then -90 around Z
+      facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -_size.z() * 0.5f}, &GetPose());
+      break;
+      
+    case NumFaces:
+      PRINT_NAMED_ERROR("CustomObject.AddFace.NumFaces", "Attempting to add NumFaces as a custom object face.");
+      return;
+  }
+  
+  // Keep track of what is on each face, for cloning
+  _markersByFace[whichFace] = customMarker;
+  AddMarker(visionMarkerType, facePose, _markerSize);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+CustomObject::~CustomObject()
+{
+  EraseVisualization();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+Point3f CustomObject::GetSameDistanceTolerance() const
+{
+  // COZMO-9440: Not really correct for non-cube-shaped custom objects
+  return _size * kSameDistToleranceFraction;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+void CustomObject::Visualize(const ColorRGBA& color) const
+{
+  DEV_ASSERT(nullptr != _vizManager, "CustomObject.Visualize.VizManagerNotSet");
+  Pose3d vizPose = GetPose().GetWithRespectToOrigin();
+  _vizHandle = _vizManager->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
+void CustomObject::EraseVisualization() const
+{
+  // Erase the main object
+  if(_vizHandle != VizManager::INVALID_HANDLE) {
+    _vizManager->EraseVizObject(_vizHandle);
+    _vizHandle = VizManager::INVALID_HANDLE;
+  }
+}
+
+
+} // namespace Cozmo
 } // namespace Anki

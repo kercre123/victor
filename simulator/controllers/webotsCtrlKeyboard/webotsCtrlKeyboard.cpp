@@ -1190,9 +1190,9 @@ namespace Anki {
                   if( shiftKeyPressed && altKeyPressed ) {
                     BehaviorChooserType chooser = BehaviorChooserTypeFromString("Selection");
                     if( chooser == BehaviorChooserType::Count ) {
-                      break;
-                    }
-                    
+                    break;
+                  }
+
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                                                        ExternalInterface::ActivateBehaviorChooser(chooser)));
                     break;
@@ -2247,7 +2247,7 @@ namespace Anki {
                 
               case (s32)'J':
               {
-              
+               
                 // unused!
 
                 break;

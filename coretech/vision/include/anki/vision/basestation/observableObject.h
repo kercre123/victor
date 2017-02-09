@@ -387,7 +387,7 @@ namespace Anki {
     inline Point3f ObservableObject::GetSameDistanceTolerance() const {
       // TODO: This is only ok because we're only using totally symmetric 1x1x1 blocks at the moment.
       //       The proper way to do the IsSameAs check is to have objects return a scaled down bounding box of themselves
-      //       and see if the the origin of the candidate object is within it.
+      //       and see if the the origin of the candidate object is within it. COZMO-9440
       Point3f distTol(GetSize() * DEFAULT_SAME_DIST_TOL_FRACTION);
       return distTol;
     }

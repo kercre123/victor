@@ -1,0 +1,20 @@
+// Custom object markers definitions file. These map to MarkerTypes inside the engine, all of which we
+// don't necessarily want to expose through the message API.
+//
+// Author: Andrew Stein
+// Copyright: Anki Inc (c) 2017
+
+namespace Anki {
+namespace Cozmo {
+
+  enum int_16 CustomObjectMarker
+  {
+    Star,
+    Arrow,
+
+    // Should remain last:
+    Count
+  } // enum class CustomObjectMarker
+  
+} // namespace Cozmo
+} // namespace Anki

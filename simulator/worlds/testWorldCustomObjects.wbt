@@ -1,0 +1,76 @@
+#VRML_SIM V8.5 utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.90982119 0.16922022 0.3789326 5.3705983
+  position -0.12112394 -0.70085759 0.93473499
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  showMarkers FALSE
+}
+DEF CustomCube3 Block1x1 {
+  translation -0.22681257 0.37205796 0.049964886
+  rotation 1.4913635e-05 -1.8379435e-06 1 0.2452417
+  markerImg "symbols/star5.png"
+  width 0.1
+  cornerWidth 0
+  markerWidth 0.04
+}
+DEF CustomCube1 Block1x1 {
+  translation 0.38 -0.1 0.05
+  markerImg "symbols/star5.png"
+  width 0.1
+  cornerWidth 0
+  markerWidth 0.04
+}
+DEF CustomCube2 Block1x1 {
+  translation -0.1 0.38 0.05
+  markerImg "symbols/star5.png"
+  width 0.1
+  cornerWidth 0
+  markerWidth 0.04
+}
+DEF CustomWall CustomWall {
+  translation 0.25 0.1 0.06
+  rotation 0 0 1 0.2
+  markerImg "symbols/arrow.png"
+  width 0.15
+  height 0.12
+  markerWidth 0.05
+  markerHeight 0.03
+}
+DEF LightCube LightCube {
+  translation -0.0285 0.235 0.022
+  rotation 0 0 1 -1.0482006
+}
+BlockWorldComms {
+}
+CozmoBot {
+  name "CozmoBot_1"
+}
+BuildServerTestController {
+  controllerArgs "%COZMO_SIM_TEST%"
+#  controllerArgs "CST_CustomObjects"
+}
+CozmoVizDisplay {
+}

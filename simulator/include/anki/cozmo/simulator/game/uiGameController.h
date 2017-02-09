@@ -124,6 +124,7 @@ protected:
   virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
+  virtual void HandleDefinedCustomObject(const ExternalInterface::DefinedCustomObject& msg) {};
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
@@ -463,6 +464,7 @@ private:
   void HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg);
   void HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg);
   void HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg);
+  void HandleDefinedCustomObjectBase(const ExternalInterface::DefinedCustomObject& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();

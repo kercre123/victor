@@ -25,15 +25,26 @@ namespace Anki {
 #pragma mark --- RotationMatrixBase ----
 #endif
   
-  template<MatDimType DIM>
-  RotationMatrixBase<DIM>::RotationMatrixBase(void)
+  template<>
+  RotationMatrixBase<2>::RotationMatrixBase(void)
+  : RotationMatrixBase{
+    1.f, 0.f,
+    0.f, 1.f
+  }
   {
-    for(s32 i=0; i<DIM; ++i) {
-      for(s32 j=0; j<DIM; ++j) {
-        (*this)(i,j) = static_cast<float>(i==j);
-      }
-    }
-  } // Constructor: RotationMatrixBase()
+    
+  }
+  
+  template<>
+  RotationMatrixBase<3>::RotationMatrixBase(void)
+  : RotationMatrixBase{
+    1.f, 0.f, 0.f,
+    0.f, 1.f, 0.f,
+    0.f, 0.f, 1.f
+  }
+  {
+    
+  }
   
   void RenormalizeHelper(RotationMatrixBase<2>& R) {
     // TODO: implement
@@ -65,11 +76,13 @@ namespace Anki {
       // Check if the row norm is crazy
       // TODO: Somehow throw an error?
       if(!NEAR(rowNorm, 1.f, RotationMatrixBase<DIM>::OrthogonalityToleranceHigh)) {
-        CoreTechPrint("Norm of row %d = %f! (Expecting near 1.0) Row = [ ", i, rowNorm);
+        std::string rowString;
         for(s32 j=0; j<DIM; ++j) {
-          CoreTechPrint("%d ", this->operator()(i,j));
+          rowString += std::to_string(this->operator()(i,j)) + " ";
         }
-        CoreTechPrint("]\n");
+        PRINT_NAMED_WARNING("RotationMatrixBase.Renormalize.BadRowNorm",
+                            "Norm of row %d = %f! (Expecting near 1.0) Row = [%s]",
+                            i, rowNorm, rowString.c_str());
         needsRenormalization = true;
         break;
       }
@@ -85,7 +98,8 @@ namespace Anki {
     }
     
     if(needsRenormalization) {
-      //CoreTechPrint("Renormalizing a %dD rotation matrix.\n", DIM);
+      //PRINT_NAMED_INFO("RotationMatrixBase.Renormalize.Renormalizing",
+      //                 "Renormalizing a %dD rotation matrix", DIM);
       RenormalizeHelper(*this);
     }
   }
@@ -137,20 +151,6 @@ namespace Anki {
   : SmallSquareMatrix<DIM,float>(initValues)
   {
     this->Renormalize();
-  }
-  
-  template<MatDimType DIM>
-  RotationMatrixBase<DIM>& RotationMatrixBase<DIM>::Transpose(void)
-  {
-    SmallSquareMatrix<DIM, float>::Transpose();
-    return *this;
-  } // Transpose()
-  
-  template<MatDimType DIM>
-  void RotationMatrixBase<DIM>::GetTranspose(RotationMatrixBase<DIM>& outTransposed) const
-  {
-    outTransposed = *this;
-    outTransposed.Transpose();
   }
   
   template<MatDimType DIM>

@@ -842,15 +842,9 @@ void Robot::Delocalize(bool isCarryingObject)
     }
   }
 
-  // delete objects that have become useless since we delocalized last time
-  _blockWorld->DeleteObjectsFromZombieOrigins();
+  // notify blockworld
+  _blockWorld->OnRobotDelocalized(_worldOrigin);
   
-  // create a new memory map for this origin
-  _blockWorld->CreateLocalizedMemoryMap(_worldOrigin);
-  
-  // deselect blockworld's selected object, if it has one
-  _blockWorld->DeselectCurrentObject();
-      
   // notify behavior whiteboard
   _aiComponent->OnRobotDelocalized();
   
