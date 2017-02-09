@@ -14,13 +14,13 @@ namespace Cozmo.Upgrades {
     private float _ReopenModalCooldown_sec;
 
     private float _ReopenModalCooldownStartTimestamp;
-    private bool _ShouldReopenModalAtEndOfCooldown;
+    private bool _AreCubesUpright;
 
     private void Start() {
       RobotEngineManager.Instance.AddCallback<BuildPyramidPreReqsChanged>(HandleBuildPyramidPreReqsChanged);
       RobotEngineManager.Instance.AddCallback<SparkEnded>(HandleSparkEnded);
       _ReopenModalCooldownStartTimestamp = -1;
-      _ShouldReopenModalAtEndOfCooldown = false;
+      _AreCubesUpright = CheckCubesAreUpright();
     }
 
     private void OnDestroy() {
@@ -32,7 +32,7 @@ namespace Cozmo.Upgrades {
     private void Update() {
       if (!_ReopenModalCooldownStartTimestamp.IsNear(-1, float.Epsilon)
           && (_ReopenModalCooldown_sec <= (Time.time - _ReopenModalCooldownStartTimestamp)
-              && (_ShouldReopenModalAtEndOfCooldown))) {
+              && (!_AreCubesUpright))) {
         OpenCubeShouldBeUprightModal();
       }
     }
@@ -42,12 +42,11 @@ namespace Cozmo.Upgrades {
         if (_ReopenModalCooldownStartTimestamp.IsNear(-1, float.Epsilon)) {
           OpenCubeShouldBeUprightModal();
         }
-        else {
-          _ShouldReopenModalAtEndOfCooldown = true;
-        }
+        _AreCubesUpright = false;
       }
       else {
         CloseCubeShouldBeUprightModal();
+        _AreCubesUpright = true;
       }
     }
 
@@ -61,7 +60,6 @@ namespace Cozmo.Upgrades {
                           (baseModal) => {
                             _PyramidCubeUprightModalInstance = (PyramidCubeUprightModal)baseModal;
                             _PyramidCubeUprightModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleCubeUprightModalClosedByUser;
-                            _ShouldReopenModalAtEndOfCooldown = false;
                             _ReopenModalCooldownStartTimestamp = -1;
                           });
     }
@@ -75,7 +73,17 @@ namespace Cozmo.Upgrades {
         _PyramidCubeUprightModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished -= HandleCubeUprightModalClosedByUser;
         UIManager.CloseModal(_PyramidCubeUprightModalInstance);
       }
-      _ShouldReopenModalAtEndOfCooldown = false;
+    }
+
+    private bool CheckCubesAreUpright() {
+      bool areCubesUpright = true;
+      foreach (LightCube cube in RobotEngineManager.Instance.CurrentRobot.LightCubes.Values) {
+        // Z-Axis is up/down in webots
+        if (cube.UpAxis != Anki.Cozmo.UpAxis.ZPositive) {
+          areCubesUpright = false;
+        }
+      }
+      return areCubesUpright;
     }
   }
 }
