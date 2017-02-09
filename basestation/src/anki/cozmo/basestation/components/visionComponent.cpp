@@ -2077,6 +2077,9 @@ namespace Cozmo {
                            "Finished setting %zu-byte album data and %zu-byte enroll data",
                            _albumData.size(), _enrollData.size());
 
+          PRINT_CH_INFO("VisionComponent", "VisionComponent.LoadFaceAlbumFromRobot.Success", "Number of Loaded Faces: %zu",
+                        loadedFaces.size());
+          
           BroadcastLoadedNamesAndIDs(loadedFaces);
           
         } else {
@@ -2232,6 +2235,10 @@ namespace Cozmo {
     _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
     for(auto & loadedFace : loadedFaces)
     {
+      
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.BroadcastLoadedNamesAndIDs", "broadcasting loaded face id: %d",
+                    loadedFace.faceID);
+      
       _robot.Broadcast(MessageEngineToGame( Vision::LoadedKnownFace(loadedFace) ));
     }
   }
