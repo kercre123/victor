@@ -144,12 +144,8 @@ void HeadQ1Test(void)
   }
   sum >>= OVERSAMPLE;
   ConsolePrintf("q1-mv,%d\r\n", sum);
-  
-  //TODO: fix Q1 threshold for 1.5
-  #warning "head Q1 test disabled"
-  ConsolePrintf("---- HeadQ1Test DISABLED. q1-mv safe threshold = %u\r\n", SAFE_THRESHOLD);
-  //if (sum > SAFE_THRESHOLD)
-  //  throw ERROR_HEAD_Q1;
+  if (sum > SAFE_THRESHOLD)
+    throw ERROR_HEAD_Q1;
 }
 
 TestFunction* GetHeadTestFunctions(void)
