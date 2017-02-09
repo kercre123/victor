@@ -19,73 +19,73 @@ namespace Anki
         {
           // Setup initial state for power on sequencing
           // Initial state of the machine (Powered down, disabled)
-          GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-          GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-          SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
+          GPIO_SET(CAM_PWDN);
+          GPIO_OUT(CAM_PWDN);
+          SOURCE_SETUP(CAM_PWDN, SourceGPIO);
 
-          GPIO_RESET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);
-          GPIO_OUT(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);
-          SOURCE_SETUP(GPIO_CAM_OLED_RESET_N, SOURCE_CAM_OLED_RESET_N, SourceGPIO);
+          GPIO_RESET(CAM_OLED_RESET_N);
+          GPIO_OUT(CAM_OLED_RESET_N);
+          SOURCE_SETUP(CAM_OLED_RESET_N, SourceGPIO);
 
           // NOTE: THESE TWO ARE ACTUALLY IDENTICAL, ONLY DOING THIS INCASE
           // WE DECIDE TO CHANGE PIN MAPPING
 
           if (*HW_VERSION != 0x01050000) {
             // Drive the OLED reset line low on startup
-            GPIO_RESET(GPIO_OLED_RST, PIN_OLED_RST);
-            GPIO_OUT(GPIO_OLED_RST, PIN_OLED_RST);
-            SOURCE_SETUP(GPIO_OLED_RST, SOURCE_OLED_RST, SourceGPIO);
+            GPIO_RESET(OLED_RST);
+            GPIO_OUT(OLED_RST);
+            SOURCE_SETUP(OLED_RST, SourceGPIO);
           } else {
             // Disable V18 rail
-            GPIO_SET(GPIO_nV18_EN, PIN_nV18_EN);
-            GPIO_OUT(GPIO_nV18_EN, PIN_nV18_EN);
-            SOURCE_SETUP(GPIO_nV18_EN, SOURCE_nV18_EN, SourceGPIO);
+            GPIO_SET(nV18_EN);
+            GPIO_OUT(nV18_EN);
+            SOURCE_SETUP(nV18_EN, SourceGPIO);
           }
           
-          GPIO_RESET(GPIO_POWEREN, PIN_POWEREN);
-          GPIO_OUT(GPIO_POWEREN, PIN_POWEREN);
-          SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
+          GPIO_RESET(POWEREN);
+          GPIO_OUT(POWEREN);
+          SOURCE_SETUP(POWEREN, SourceGPIO);
 
           // Pull-up MISO during ESP8266 boot
-          GPIO_IN(GPIO_MISO, PIN_MISO);
-          SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO | SourcePullUp);
+          GPIO_IN(MISO);
+          SOURCE_SETUP(MISO, SourceGPIO | SourcePullUp);
 
           // Pull-down SCK during ESP8266 boot
-          GPIO_RESET(GPIO_SCK, PIN_SCK);
-          GPIO_OUT(GPIO_SCK, PIN_SCK);    // XXX: Driving SCK low here is bad for the ESP, why not pulldown?
-          SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);
+          GPIO_RESET(SCK);
+          GPIO_OUT(SCK);    // XXX: Driving SCK low here is bad for the ESP, why not pulldown?
+          SOURCE_SETUP(SCK, SourceGPIO);
           
           // Weakly pull MOSI high to put ESP8266 into flash boot mode
           // We rely on the fixture to pull this strongly low and enter bootloader mode
-          GPIO_IN(GPIO_MOSI, PIN_MOSI);
-          SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp); 
+          GPIO_IN(MOSI);
+          SOURCE_SETUP(MOSI, SourceGPIO | SourcePullUp); 
 
           // Pull WS high to set correct boot mode on Espressif GPIO2 (flash or bootloader)
-          GPIO_IN(GPIO_WS, PIN_WS);
-          SOURCE_SETUP(GPIO_WS, SOURCE_WS, SourceGPIO | SourcePullUp); 
+          GPIO_IN(WS);
+          SOURCE_SETUP(WS, SourceGPIO | SourcePullUp); 
 
           Anki::Cozmo::HAL::MicroWait(10000);
 
           // Power sequencing
           if (*HW_VERSION == 0x01050000) {
-            GPIO_RESET(GPIO_nV18_EN, PIN_nV18_EN);                  // Enable 1v8 rail
+            GPIO_RESET(nV18_EN);                  // Enable 1v8 rail
             MicroWait(1000);
-            GPIO_SET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);  // Release /RESET
+            GPIO_SET(CAM_OLED_RESET_N);  // Release /RESET
             MicroWait(10);
           }
-          GPIO_SET(GPIO_POWEREN, PIN_POWEREN);                      // Enable 2v8 / 3v3 rail
+          GPIO_SET(POWEREN);                      // Enable 2v8 / 3v3 rail
           MicroWait(1000);
-          GPIO_RESET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);  // Assert /RESET
+          GPIO_RESET(CAM_OLED_RESET_N);  // Assert /RESET
           MicroWait(10);
-          GPIO_RESET(GPIO_CAM_PWDN, PIN_CAM_PWDN);                  // Release camera /PWDN
+          GPIO_RESET(CAM_PWDN);                  // Release camera /PWDN
           MicroWait(10);
 
           #ifndef FCC_TEST
           // Wait for Espressif to toggle out 4 words of I2SPI
           for (int i = 0; i < 32 * 512; i++)
           {
-            while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
-            while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;
+            while (GPIO_READ(WS))     ;
+            while (!GPIO_READ(WS))  ;
           }
 
           // Switch to 10MHz Espressif/external reference and 100MHz clock
@@ -97,16 +97,16 @@ namespace Anki
 
           MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
           
-          GPIO_IN(GPIO_SCK, PIN_SCK);   // XXX: Shouldn't we turn around SCK sooner? Are we driving against each other?
+          GPIO_IN(SCK);   // XXX: Shouldn't we turn around SCK sooner? Are we driving against each other?
           #endif
 
-          SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+          SOURCE_SETUP(MISO, SourceGPIO);
 
           if (*HW_VERSION != 0x01050000) {
-            GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);                  // Release /RESET (OLED)
+            GPIO_SET(OLED_RST);                  // Release /RESET (OLED)
           }
 
-          GPIO_SET(GPIO_CAM_OLED_RESET_N, PIN_CAM_OLED_RESET_N);    // Release /RESET
+          GPIO_SET(CAM_OLED_RESET_N);    // Release /RESET
           MicroWait(5000);
         }
 

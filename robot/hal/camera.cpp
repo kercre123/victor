@@ -102,16 +102,16 @@ namespace Anki
       static void InitIO()
       {
         // Set up databus to all GPIO inputs
-        SOURCE_SETUP(GPIO_CAM_D1, SOURCE_CAM_D1, SourceGPIO);
-        SOURCE_SETUP(GPIO_CAM_D2, SOURCE_CAM_D2, SourceGPIO);
-        SOURCE_SETUP(GPIO_CAM_D3, SOURCE_CAM_D3, SourceGPIO);
-        SOURCE_SETUP(GPIO_CAM_D4, SOURCE_CAM_D4, SourceGPIO);
-        SOURCE_SETUP(GPIO_CAM_D5, SOURCE_CAM_D5, SourceGPIO);
-        SOURCE_SETUP(GPIO_CAM_D6, SOURCE_CAM_D6, SourceGPIO);
-        SOURCE_SETUP(GPIO_CAM_D7, SOURCE_CAM_D7, SourceGPIO);
+        SOURCE_SETUP(CAM_D1, SourceGPIO);
+        SOURCE_SETUP(CAM_D2, SourceGPIO);
+        SOURCE_SETUP(CAM_D3, SourceGPIO);
+        SOURCE_SETUP(CAM_D4, SourceGPIO);
+        SOURCE_SETUP(CAM_D5, SourceGPIO);
+        SOURCE_SETUP(CAM_D6, SourceGPIO);
+        SOURCE_SETUP(CAM_D7, SourceGPIO);
 
         // Set up HSYNC to trigger DMA start on rising edge
-        SOURCE_SETUP(GPIO_CAM_HSYNC, SOURCE_CAM_HSYNC, SourceGPIO | SourceDMARise);
+        SOURCE_SETUP(CAM_HSYNC, SourceGPIO | SourceDMARise);
 
         // Configure XCLK (on FTM1) for bus clock / 2 - fastest we can go (24 MHz)
         SIM_SCGC6 |= SIM_SCGC6_FTM1_MASK;   // Enable FTM1
@@ -120,7 +120,7 @@ namespace Anki
         FTM1_C0SC = FTM_CnSC_ELSB_MASK|FTM_CnSC_MSB_MASK;   // Edge-aligned PWM on CH0
         FTM1_C0V = 1;                                       // 50% duty cycle on CH0
         FTM1_SC = FTM_SC_CLKS(1); // Use bus clock with a /1 prescaler
-        SOURCE_SETUP(GPIO_CAM_XCLK, SOURCE_CAM_XCLK, SourceAlt3);
+        SOURCE_SETUP(CAM_XCLK, SourceAlt3);
       }
 
       volatile u8 eof_ = 0;
@@ -396,7 +396,7 @@ void FTM2_IRQHandler(void)
   dmaBuff_[BYTES_PER_PIX*(TOTAL_COLS-1)] = 1;
 
   // Verify HSYNC is deasserted
-  HAL_ASSERT(~GPIO_READ(GPIO_CAM_HSYNC) & PIN_CAM_HSYNC);
+  HAL_ASSERT(!GPIO_READ(CAM_HSYNC));
 
   // Run all the register-hitting stuff
   HALExec();
