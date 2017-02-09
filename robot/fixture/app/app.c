@@ -33,6 +33,7 @@ app_reset_dat_t g_app_reset;
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
 FixtureType g_fixtureType = FIXTURE_NONE;
+board_rev_t g_fixtureRev = (board_rev_t)0;
 
 char g_lotCode[15] = {0};
 u32 g_time = 0;
@@ -489,21 +490,30 @@ int main(void)
   InitRandom();
  
   SlowPutString("STARTUP!\r\n");
-
-  // If we don't have a full upload, this is version 0 type NO ID
-  g_fixtureType = (FixtureType)InitBoard();
+  InitBoard();
+  g_fixtureRev = GetBoardRev();
+  
+  //Check the fixture's mode (need a freakin' flow chart for this)
+  //1) if we don't have a full upload, always set to version 0, mode NONE
+  //2)   if fixture is 1.0, read ID set by external resistors
+  //3)   if no valid mode detected so far, and one is saved in flash, use that.
+  g_fixtureType = FIXTURE_NONE;
   if (g_canary != 0xcab00d1e)
-    g_fixtureType = g_fixtureReleaseVersion = 0; 
-
-  // Else, figure out which fixture type we are
-  else if (g_fixtureType == FIXTURE_NONE 
-            && g_flashParams.fixtureTypeOverride > FIXTURE_NONE 
-            && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
-    g_fixtureType = g_flashParams.fixtureTypeOverride;
+    g_fixtureReleaseVersion = 0;
+  else
+  {
+    if( g_fixtureRev < BOARD_REV_1_5_0 )
+      g_fixtureType = GetBoardID();
+    
+    if (g_fixtureType == FIXTURE_NONE 
+          && g_flashParams.fixtureTypeOverride > FIXTURE_NONE 
+          && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
+      g_fixtureType = g_flashParams.fixtureTypeOverride;
+  }
   
   SlowPutString("Initializing Display...\r\n");
   
-  InitCube();  
+  InitCube();
   InitDisplay();
 
   SetFixtureText();
@@ -522,6 +532,8 @@ int main(void)
   
   ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, g_fixtureReleaseVersion );
   ConsolePrintf("ConsoleMode=%u\r\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
+  ConsolePrintf("Fixure Rev: %s\r\n", g_fixtureRev <= BOARD_REV_1_0_REV3 ? "1.0 rev1-3" : "1.5");
+  ConsolePrintf("Mode: %s\r\n", FIXTYPES[g_fixtureType]);
   
   while (1)
   {  
