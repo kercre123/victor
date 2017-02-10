@@ -38,8 +38,18 @@ namespace SpeedTap {
             playerInfo.SetGoal(new SpeedTapPlayerGoalTapHuman());
           }
           else if (playerInfo.playerType == PlayerType.Cozmo) {
+            float mistakeChance = _SpeedTapGame.CozmoMistakeChance;
+            // dont mistake at all if in MP and it's "match point"
+            if (playerCount > 2) {
+              for (int j = 0; j < playerCount; ++j) {
+                if (_SpeedTapGame.GetPlayerByIndex(j).playerScoreRound >= (_SpeedTapGame.MaxScorePerRound - 1)) {
+                  mistakeChance = 0.0f;
+                  break;
+                }
+              }
+            }
             playerInfo.SetGoal(new SpeedTapPlayerGoalTapCozmo(CozmoMovementDelay_sec, _ShouldMatch,
-                                    _SpeedTapGame.CozmoMistakeChance, _SpeedTapGame.CozmoFakeoutChance));
+                                    mistakeChance, _SpeedTapGame.CozmoFakeoutChance));
           }
           else if (playerInfo.playerType == PlayerType.Automation) {
             playerInfo.SetGoal(new SpeedTapPlayerGoalTapAuto(_ShouldMatch));
