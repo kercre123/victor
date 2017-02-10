@@ -191,11 +191,41 @@ Vision::MarkerType CustomObject::GetVisionMarkerType(const CustomObjectMarker cu
 {
   switch(customMarker)
   {
-    case CustomObjectMarker::Arrow:
-      return Vision::MARKER_ARROW;
+    case CustomObjectMarker::Circles2:
+      return Vision::MARKER_SDK_2CIRCLES;
+    case CustomObjectMarker::Circles3:
+      return Vision::MARKER_SDK_3CIRCLES;
+    case CustomObjectMarker::Circles4:
+      return Vision::MARKER_SDK_4CIRCLES;
+    case CustomObjectMarker::Circles5:
+      return Vision::MARKER_SDK_5CIRCLES;
       
-    case CustomObjectMarker::Star:
-      return Vision::MARKER_STAR5;
+    case CustomObjectMarker::Diamonds2:
+      return Vision::MARKER_SDK_2DIAMONDS;
+    case CustomObjectMarker::Diamonds3:
+      return Vision::MARKER_SDK_3DIAMONDS;
+    case CustomObjectMarker::Diamonds4:
+      return Vision::MARKER_SDK_4DIAMONDS;
+    case CustomObjectMarker::Diamonds5:
+      return Vision::MARKER_SDK_5DIAMONDS;
+      
+    case CustomObjectMarker::Hexagons2:
+      return Vision::MARKER_SDK_2HEXAGONS;
+    case CustomObjectMarker::Hexagons3:
+      return Vision::MARKER_SDK_3HEXAGONS;
+    case CustomObjectMarker::Hexagons4:
+      return Vision::MARKER_SDK_4HEXAGONS;
+    case CustomObjectMarker::Hexagons5:
+      return Vision::MARKER_SDK_5HEXAGONS;
+      
+    case CustomObjectMarker::Triangles2:
+      return Vision::MARKER_SDK_2TRIANGLES;
+    case CustomObjectMarker::Triangles3:
+      return Vision::MARKER_SDK_3TRIANGLES;
+    case CustomObjectMarker::Triangles4:
+      return Vision::MARKER_SDK_4TRIANGLES;
+    case CustomObjectMarker::Triangles5:
+      return Vision::MARKER_SDK_5TRIANGLES;
       
     case CustomObjectMarker::Count:
       return Vision::MARKER_INVALID;

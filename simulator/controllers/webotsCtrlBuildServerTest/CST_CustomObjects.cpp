@@ -328,7 +328,7 @@ void CST_CustomObjects::DefineObjects()
   using namespace ExternalInterface;
   
   DefineCustomCube defineCube(ObjectType::CustomType00,
-                              CustomObjectMarker::Star,
+                              CustomObjectMarker::Circles2,
                               _cubeSize_mm,
                               _cubeMarkerSize_mm, _cubeMarkerSize_mm,
                               false);
@@ -336,9 +336,9 @@ void CST_CustomObjects::DefineObjects()
   SendMessage(MessageGameToEngine(std::move(defineCube)));
   
   
-  // This one should fail: we can't reuse Star on a different object
+  // This one should fail: we can't reuse TwoCircles on a different object
   DefineCustomWall bogusWall(ObjectType::CustomType02,
-                             CustomObjectMarker::Star,
+                             CustomObjectMarker::Circles2,
                              1.f, 1.f,
                              1.f, 1.f,
                              false);
@@ -347,7 +347,7 @@ void CST_CustomObjects::DefineObjects()
   
   // This one should also fail: bad type specified (can't overwrite built-in types)
   DefineCustomWall bogusCube(ObjectType::Block_LIGHTCUBE1,
-                             CustomObjectMarker::Arrow,
+                             CustomObjectMarker::Triangles3,
                              1.f, 1.f,
                              1.f, 1.f,
                              false);
@@ -356,7 +356,7 @@ void CST_CustomObjects::DefineObjects()
   
   // This definition should succeed
   DefineCustomWall defineWall(ObjectType::CustomType01,
-                              CustomObjectMarker::Arrow,
+                              CustomObjectMarker::Diamonds4,
                               _wallWidth_mm, _wallHeight_mm,
                               _wallMarkerWidth_mm, _wallMarkerHeight_mm,
                               true);
@@ -406,7 +406,7 @@ void CST_CustomObjects::CheckPoses()
     CST_ASSERT(wallIDs.size() == 1, "CST_CustomObjects.CheckPoses.ExpectingOneWall");
     
     CustomObject *customObj = CustomObject::CreateWall(ObjectType::CustomType01,
-                                                       CustomObjectMarker::Arrow,
+                                                       CustomObjectMarker::Diamonds4,
                                                        _wallWidth_mm, _wallHeight_mm,
                                                        _wallMarkerWidth_mm, _wallMarkerHeight_mm,
                                                        true);
@@ -461,7 +461,7 @@ void CST_CustomObjects::CheckPoses()
       CST_ASSERT(poseAndID.objectID <= 5, "CST_CustomObjects.CheckPoses.CubeIDTooLarge");
       
       CustomObject* customCube = CustomObject::CreateCube(ObjectType::CustomType00,
-                                                          CustomObjectMarker::Star,
+                                                          CustomObjectMarker::Circles2,
                                                           _cubeSize_mm,
                                                           _cubeMarkerSize_mm, _cubeMarkerSize_mm,
                                                           false);

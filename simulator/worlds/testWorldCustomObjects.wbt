@@ -28,24 +28,24 @@ DirectionalLight {
 CozmoMat {
   showMarkers FALSE
 }
-DEF CustomCube3 Block1x1 {
-  translation -0.22681257 0.37205796 0.049964886
-  rotation 1.4913635e-05 -1.8379435e-06 1 0.2452417
-  markerImg "symbols/star5.png"
-  width 0.1
-  cornerWidth 0
-  markerWidth 0.04
-}
 DEF CustomCube1 Block1x1 {
   translation 0.38 -0.1 0.05
-  markerImg "symbols/star5.png"
+  markerImg "customSDK/SDK_2Circles.png"
   width 0.1
   cornerWidth 0
   markerWidth 0.04
 }
 DEF CustomCube2 Block1x1 {
   translation -0.1 0.38 0.05
-  markerImg "symbols/star5.png"
+  markerImg "customSDK/SDK_2Circles.png"
+  width 0.1
+  cornerWidth 0
+  markerWidth 0.04
+}
+DEF CustomCube3 Block1x1 {
+  translation -0.22681257 0.37205796 0.049964886
+  rotation 1.4913635e-05 -1.8379435e-06 1 0.2452417
+  markerImg "customSDK/SDK_2Circles.png"
   width 0.1
   cornerWidth 0
   markerWidth 0.04
@@ -53,7 +53,7 @@ DEF CustomCube2 Block1x1 {
 DEF CustomWall CustomWall {
   translation 0.25 0.1 0.06
   rotation 0 0 1 0.2
-  markerImg "symbols/arrow.png"
+  markerImg "customSDK/SDK_4Diamonds.png"
   width 0.15
   height 0.12
   markerWidth 0.05

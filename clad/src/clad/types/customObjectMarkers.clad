@@ -9,8 +9,25 @@ namespace Cozmo {
 
   enum int_16 CustomObjectMarker
   {
-    Star,
-    Arrow,
+    Circles2,
+    Circles3,
+    Circles4,
+    Circles5,
+
+    Diamonds2,
+    Diamonds3,
+    Diamonds4,
+    Diamonds5,
+
+    Hexagons2,
+    Hexagons3,
+    Hexagons4,
+    Hexagons5,
+
+    Triangles2,
+    Triangles3,
+    Triangles4,
+    Triangles5,
 
     // Should remain last:
     Count
