@@ -480,7 +480,9 @@ namespace Cozmo.HomeHub {
           }
         }
 
-        goalProgressText = Localization.GetWithArgs(LocalizationKeys.kLabelFractionCount, goalsCompleted, totalGoals);
+        goalProgressText = Localization.GetWithArgs(LocalizationKeys.kLabelFractionCount,
+                                                    Localization.GetNumber(goalsCompleted),
+                                                    Localization.GetNumber(totalGoals));
       }
 
       foreach (AnkiTextLabel textLabel in _DailyGoalsCompletionTexts) {

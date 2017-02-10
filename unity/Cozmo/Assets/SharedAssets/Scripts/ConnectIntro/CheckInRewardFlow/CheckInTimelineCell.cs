@@ -55,7 +55,7 @@ namespace Cozmo.CheckInFlow.UI {
         _Text.color = new Color(_Text.color.r, _Text.color.g, _Text.color.b, _TextFadeAlpha);
       }
 
-      _Text.text = Localization.GetWithArgs(LocalizationKeys.kLabelDayCount, currDay);
+      _Text.text = Localization.GetWithArgs(LocalizationKeys.kLabelDayCount, Localization.GetNumber(currDay));
     }
 
     private void OnDestroy() {

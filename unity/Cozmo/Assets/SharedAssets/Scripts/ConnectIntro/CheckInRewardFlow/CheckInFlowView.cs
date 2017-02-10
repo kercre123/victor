@@ -166,7 +166,7 @@ namespace Cozmo.CheckInFlow.UI {
       }
       float prog = ((float)currPoints / (float)reqPoints);
       _EnergyChestBar.SetProgress(prog, instant);
-      _EnergyChestBarText.text = string.Format("{0}", currPoints);
+      _EnergyChestBarText.text = Localization.GetNumber(currPoints);
     }
 
     private void ShowCheckInRewardFlowUI() {
@@ -406,7 +406,8 @@ namespace Cozmo.CheckInFlow.UI {
         rewardScript.RewardCount.gameObject.SetActive(false);
       }
       else {
-        rewardScript.RewardCount.text = Localization.GetWithArgs(LocalizationKeys.kLabelPlusCount, count);
+        rewardScript.RewardCount.text = Localization.GetWithArgs(LocalizationKeys.kLabelPlusCount,
+                                                                 Localization.GetNumber(count));
       }
       return rewardScript;
     }

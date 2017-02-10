@@ -47,20 +47,23 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
       // after a long enough time and enough failed attempts, give up
       if (AndroidConnectionFlow.CallJava<bool>("didPasswordFail")) {
         AndroidConnectionFlow.Instance.HandleWrongPassword();
-      } else {
+      }
+      else {
         double secondsSinceStart = (System.DateTime.Now - _StartTime).TotalSeconds;
-        if (  (_ConnectCount >= kNumRetryAttempts && secondsSinceStart > kMinFailureTimeSeconds)
+        if ((_ConnectCount >= kNumRetryAttempts && secondsSinceStart > kMinFailureTimeSeconds)
             || secondsSinceStart > kAutoFailureTimeSeconds) {
           _StatusLabel.text = "FAILED";
           DAS.Event("android_connect.failed", secondsSinceStart.ToString());
           Invoke("ConnectionFailure", 3.0f);
-        } else {
+        }
+        else {
           _ConnectCount++;
           bool result = AndroidConnectionFlow.CallJava<bool>("reconnect", AndroidConnectionFlow.kTimeoutMs);
           DAS.Event(result ? "android_connect.retry" : "android_connect.retry_failed", _ConnectCount.ToString());
         }
       }
-    } else {
+    }
+    else {
       // success, this will auto close when ping test completes
     }
   }
@@ -75,9 +78,10 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
 
   private void UpdateStatusLabels(string ssid, string status) {
     if (Debug.isDebugBuild) {
-      _SSIDLabel.text = string.Format(Localization.Get("wifi.currentSsid"), ssid);
-      _StatusLabel.text = string.Format(Localization.Get("wifi.currentStatus"), status);
-    } else {
+      _SSIDLabel.text = Localization.GetWithArgs(LocalizationKeys.kWifiCurrentSsid, ssid);
+      _StatusLabel.text = Localization.GetWithArgs(LocalizationKeys.kWifiCurrentStatus, status);
+    }
+    else {
       _SSIDLabel.gameObject.SetActive(false);
       _StatusLabel.gameObject.SetActive(false);
     }
