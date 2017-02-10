@@ -2208,11 +2208,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
       DEV_ASSERT(currentNavMemoryMap, "BlockWorld.OnRobotPoseChanged.NoMemoryMap");
       currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
-    }
-    else if ( kAddUnrecognizedMarkerlessObjectsToMemMap )
-    {
-      // Add as obstacle in the memory map
-      AddObjectReportToMemMap(*markerlessObject.get(), obsPose);
+      
+      // Currently we don't add markerless objects to the memory map, however if we did, we just added here the Cliff.
+      // The way we Notify and add objects needs some clean up, because we have to pass every single parameter like
+      // family, type, pose. In the case of cliffs it would be problematic because we have to calculate the bounding
+      // quad. In the future I want to make adding objects to the map easier (for example if they track the objectID,
+      // I don't need to remove them by pose but by ID, so that API can be greatly simplified)
+      // 	COZMO-7844, COZMO-7496
+      DEV_ASSERT(!kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.AddMarkerlessObject.MemoryMapCliffAddedTwice");
     }
     
     return RESULT_OK;
@@ -2837,73 +2840,84 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // - - - - -
     // update memory map
     // - - - - -
-	const bool objectTrackedInMemoryMap = (family != ObjectFamily::CustomObject || kAddCustomObjectsToMemMap); // COZMO-9360
-	if( objectTrackedInMemoryMap ) 
-    {	
-    /* 
-      Three things can happen:
-       a) first time we see an object: OldPoseState=!Valid, NewPoseState= Valid
-       b) updating an object:          OldPoseState= Valid, NewPoseState= Valid
-       c) deleting an object:          OldPoseState= Valid, NewPoseState=!Valid
-     */
-    const bool oldValid = ObservableObject::IsValidPoseState(oldPoseState);
-    const bool newValid = ObservableObject::IsValidPoseState(newPoseState);
-    if ( !oldValid && newValid )
+    bool objectTrackedInMemoryMap = true;
+    if (family == ObjectFamily::CustomObject && !kAddCustomObjectsToMemMap)
     {
-      // first time we see the object, add report
-      const ObservableObject* object = GetLocatedObjectByID(objectID);
-      AddObjectReportToMemMap(*object, *newPose);
+      // COZMO-9360
+      objectTrackedInMemoryMap = false;
     }
-    else if ( oldValid && newValid )
+    else if (family == ObjectFamily::MarkerlessObject && !kAddUnrecognizedMarkerlessObjectsToMemMap)
     {
-      // updating the pose of an object, decide if we update the report. As an optimization, we don't update
-      // it if the poses are close enough
-      const ObservableObject* object = GetLocatedObjectByID(objectID); // can't return null, asserted
-      const int objectIdInt = objectID.GetValue();
-      OriginToPoseInMapInfo& reportedPosesForObject = _navMapReportedPoses[objectIdInt];
-      const PoseOrigin* curOrigin = &newPose->FindOrigin();
-      auto poseInNewOriginIter = reportedPosesForObject.find( curOrigin );
-      if ( poseInNewOriginIter != reportedPosesForObject.end() )
+      // COZMO-7496?
+      objectTrackedInMemoryMap = false;
+    }
+    
+    if( objectTrackedInMemoryMap )
+    {	
+      /*
+        Three things can happen:
+         a) first time we see an object: OldPoseState=!Valid, NewPoseState= Valid
+         b) updating an object:          OldPoseState= Valid, NewPoseState= Valid
+         c) deleting an object:          OldPoseState= Valid, NewPoseState=!Valid
+       */
+      const bool oldValid = ObservableObject::IsValidPoseState(oldPoseState);
+      const bool newValid = ObservableObject::IsValidPoseState(newPoseState);
+      if ( !oldValid && newValid )
       {
-        // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
-        // be smaller than the threshold to not report
-        DEV_ASSERT(kObjectPositionChangeToReport_mm < object->GetDimInParentFrame<'Z'>()*0.5f,
-                  "OnObjectPoseChanged.ChangeThresholdTooBig");
-        const float distThreshold = kObjectPositionChangeToReport_mm;
-        const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
-
-        // compare new pose with previous entry and decide if isFarFromPrev
-        const PoseInMapInfo& info = poseInNewOriginIter->second;
-        const bool isFarFromPrev =
-          ( !info.isInMap || (!newPose->IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
-        
-        // if it is far from previous (or previous was not in the map, remove-add)
-        if ( isFarFromPrev ) {
-          RemoveObjectReportFromMemMap(*object, curOrigin);
-          AddObjectReportToMemMap(*object, *newPose);
-        }
-      }
-      else
-      {
-        // did not find an entry in the current origin for this object, add it now
+        // first time we see the object, add report
         const ObservableObject* object = GetLocatedObjectByID(objectID);
         AddObjectReportToMemMap(*object, *newPose);
       }
+      else if ( oldValid && newValid )
+      {
+        // updating the pose of an object, decide if we update the report. As an optimization, we don't update
+        // it if the poses are close enough
+        const ObservableObject* object = GetLocatedObjectByID(objectID); // can't return null, asserted
+        const int objectIdInt = objectID.GetValue();
+        OriginToPoseInMapInfo& reportedPosesForObject = _navMapReportedPoses[objectIdInt];
+        const PoseOrigin* curOrigin = &newPose->FindOrigin();
+        auto poseInNewOriginIter = reportedPosesForObject.find( curOrigin );
+        if ( poseInNewOriginIter != reportedPosesForObject.end() )
+        {
+          // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
+          // be smaller than the threshold to not report
+          DEV_ASSERT(kObjectPositionChangeToReport_mm < object->GetDimInParentFrame<'Z'>()*0.5f,
+                    "OnObjectPoseChanged.ChangeThresholdTooBig");
+          const float distThreshold = kObjectPositionChangeToReport_mm;
+          const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
+
+          // compare new pose with previous entry and decide if isFarFromPrev
+          const PoseInMapInfo& info = poseInNewOriginIter->second;
+          const bool isFarFromPrev =
+            ( !info.isInMap || (!newPose->IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
+          
+          // if it is far from previous (or previous was not in the map, remove-add)
+          if ( isFarFromPrev ) {
+            RemoveObjectReportFromMemMap(*object, curOrigin);
+            AddObjectReportToMemMap(*object, *newPose);
+          }
+        }
+        else
+        {
+          // did not find an entry in the current origin for this object, add it now
+          const ObservableObject* object = GetLocatedObjectByID(objectID);
+          AddObjectReportToMemMap(*object, *newPose);
+        }
+      }
+      else if ( oldValid && !newValid )
+      {
+        // deleting an object, remove its report using oldOrigin (the origin it was removed from)
+        const PoseOrigin* oldOrigin = &oldPose->FindOrigin();
+        const ObservableObject* object = GetLocatedObjectByID(objectID);
+        RemoveObjectReportFromMemMap(*object, oldOrigin);
+      }
+      else
+      {
+        // not possible
+        PRINT_NAMED_ERROR("BlockWorld.OnObjectPoseChanged.BothStatesAreInvalid",
+                          "Object %d changing from Invalid to Invalid", objectID.GetValue());
+      }
     }
-    else if ( oldValid && !newValid )
-    {
-      // deleting an object, remove its report using oldOrigin (the origin it was removed from)
-      const PoseOrigin* oldOrigin = &oldPose->FindOrigin();
-      const ObservableObject* object = GetLocatedObjectByID(objectID);
-      RemoveObjectReportFromMemMap(*object, oldOrigin);
-    }
-    else
-    {
-      // not possible
-      PRINT_NAMED_ERROR("BlockWorld.OnObjectPoseChanged.BothStatesAreInvalid",
-                        "Object %d changing from Invalid to Invalid", objectID.GetValue());
-    }
-	}
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -103,6 +103,8 @@ namespace Anki
       // notify the blockWorld that someone changed the pose of an object. Note the object may have been destroyed,
       // if the poseState changes to PoseState::Invalid. If a poseState is PoseState::Invalid, its corresponding
       // Pose3d is nullptr, since any information related to it would be wrong.
+      // TODO: we need to pass family, and potentially type. Instead, we should probably pass the object pointer
+      // if the object is still valid, and nullptr if it's not, like we do with newPose. That would simplify API.
       void OnObjectPoseChanged(const ObjectID& objectID,
                                const ObjectFamily family,
                                const Pose3d* oldPose, PoseState oldPoseState,
