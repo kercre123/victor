@@ -25,6 +25,7 @@ public static class LocalizationKeys {
   public const string kBehaviorReactToPet = "behavior.ReactToPet";
   public const string kBehaviorRequestToPlay = "behavior.RequestToPlay";
   public const string kBehaviorAcknowledgeObject = "behavior.AcknowledgeObject";
+  public const string kBehaviorAcknowledgeFace = "behavior.AcknowledgeFace";
   public const string kBehaviorReactToOnBack = "behavior.ReactToOnBack";
   public const string kBehaviorReactToOnFace = "behavior.ReactToOnFace";
   public const string kBehaviorReactToOnTreads = "behavior.ReactToOnTreads";
@@ -34,7 +35,11 @@ public static class LocalizationKeys {
   public const string kBehaviorWorkout = "behavior.Workout";
   public const string kBehaviorCheckForStackAtInterval = "behavior.CheckForStackAtInterval";
   public const string kBehaviorLookForFaceAndCube = "behavior.LookForFaceAndCube";
+  public const string kErrorTooManyFaces = "error.TooManyFaces";
+  public const string kBehaviorBuildPyramid = "behavior.BuildPyramid";
+  public const string kBehaviorPrepareCubes = "behavior.PrepareCubes";
   public const string kBehaviorLookInPlaceForCube = "behavior.LookInPlaceForCube";
+  public const string kButtonClearThisSlot = "button.clearThisSlot";
 
   #endregion
 
@@ -355,7 +360,6 @@ public static class LocalizationKeys {
   public const string kSpeedTapTextMPBestOf = "speedTap.text.MP.bestOf";
   public const string kSpeedTapTitleMPLocked = "speedTap.title.MP.Locked";
   public const string kSpeedTapTextMPLocked = "speedTap.text.MP.Locked";
-  public const string kSpeedTapGameLabelX2 = "speedTapGame.label.x2";
   public const string kSpeedTapGameLabelVs = "speedTapGame.label.vs";
   public const string kSpeedTapGameModeHvC = "speedTapGame.mode.HvC";
   public const string kSpeedTapGameModeHvHvC = "speedTapGame.mode.HvHvC";
@@ -425,6 +429,7 @@ public static class LocalizationKeys {
   public const string kRewardDescriptionFreeplayCompleteBehaviorPounce = "reward.description.Freeplay.CompleteBehavior.Pounce";
   public const string kRewardDescriptionFreeplayCompleteBehaviorPyramid = "reward.description.Freeplay.CompleteBehavior.Pyramid";
   public const string kRewardDescriptionFreeplayCompleteBehaviorPopWheelie = "reward.description.Freeplay.CompleteBehavior.PopWheelie";
+  public const string kRewardDescriptionFreeplayCompleteBehaviorFistBump = "reward.description.Freeplay.CompleteBehavior.FistBump";
   public const string kRewardDescriptionMemoryMatchPlayedSolo = "reward.description.MemoryMatch.Played.Solo";
   public const string kRewardDescriptionMemoryMatchPlayedVs = "reward.description.MemoryMatch.Played.Vs";
   public const string kRewardDescriptionMemoryMatchWinGameVs = "reward.description.MemoryMatch.WinGame.Vs";
@@ -715,7 +720,6 @@ public static class LocalizationKeys {
   public const string kWifiPleaseLocationPermission = "wifi.pleaseLocationPermission";
   public const string kWifiEnableLocation = "wifi.enableLocation";
   public const string kWifiPleaseEnableLocation = "wifi.pleaseEnableLocation";
-  public const string kWifiConnecting = "wifi.connecting";
   public const string kWifiPasswordRememberStatement = "wifi.passwordRememberStatement";
 
   #endregion

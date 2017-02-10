@@ -87,6 +87,9 @@
   "behavior.AcknowledgeObject": {
     "translation": ""
   },
+  "behavior.AcknowledgeFace": {
+    "translation": "Cozmo sees a face"
+  },
   "behavior.ReactToOnBack": {
     "translation": ""
   },
