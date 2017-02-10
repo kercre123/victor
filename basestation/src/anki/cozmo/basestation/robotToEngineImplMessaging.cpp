@@ -720,7 +720,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       // we don't know where it is anymore. Next time we see it, relocalize it
       // relative to robot's pose estimate. Then we can use it for localization
       // again.
-      robot->GetObjectPoseConfirmer().SetPoseState(object, PoseState::Dirty);
+      robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
       
       // Do additional checks for objects in the current frame
       const bool isInCurrentFrame = (&object->GetPose().FindOrigin() == robot->GetWorldOrigin());

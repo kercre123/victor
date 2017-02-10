@@ -77,15 +77,37 @@ public:
   // without changing its pose or changing its observation count.
   Result AddInExistingPose(const ObservableObject* object);
   
+  // Notify listeners of the pose and poseState change happening for the given object. It should arguably not be in the
+  // poseConfirmer, but for now it's a good place to put together these calls
+  // This method internally calls BroadcastObjectPoseStateChanged if the poseStates change
+  void BroadcastObjectPoseChanged(const ObjectID& objectID,
+                                  const Pose3d* oldPose, PoseState oldPoseState,
+                                  const Pose3d* newPose, PoseState newPoseState);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Pose State
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // These methods specifically deal with changes to PoseStates. It would be nice if they encapsulate what they
+  // mean, rather than the PoseState that they set. For example, MarkObjectMoved would set as Dirty or Unreliable.
+  // For now, there can be a 1 to 1 match while we come up with the concepts.
+
   // Increment the number of times the object has gone unobserved.
   // Once object is unobserved enough times, its pose state will be set to Unknown
-  // and it will be cleared from BlockWorld.
+  // and it will be deleted from BlockWorld.
   // Fails if this object wasn't previously added.
-  Result MarkObjectUnobserved(ObservableObject* object);
+  // Important: if the object is deleted from the world, the passed in pointer is nulled out to prevent
+  // using freed memory
+  Result MarkObjectUnobserved(ObservableObject*& object);
 
-  // TODO change to SetX, where X is a posestate
-  void SetPoseState(ObservableObject* object, PoseState newState) const;
-  
+  // Purposely mark the object as Dirty and notify listeners of the change. It does not need to count how many times
+  // we set Dirty. 1 is enough to make the change. This is in contrast with MarkObjectUnobserved, and they should be
+  // standarized so that MarkObjectX is the confirming change, rather than an unconfirmed mark.
+  void MarkObjectDirty(ObservableObject* object);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  //
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   // Remove all last pose and num observation information for all object IDs,
   // e.g. when the robot delocalizes
   void Clear();
@@ -134,8 +156,20 @@ protected:
                             bool robotWasMoving,
                             f32 obsDistance_mm);
   
-  void SetPoseHelper(ObservableObject* object, const Pose3d& newPose, f32 distance,
-                     PoseState newPoseState, const char* debugStr) const;
+  // Note: if the pose is set to PoseState::Invalid, the object can be destroyed from the BlockWorld. In that case,
+  // the object pointer passed in is set to nullptr to prevent using the freed memory
+  void SetPoseHelper(ObservableObject*& object, const Pose3d& newPose, f32 distance,
+                     PoseState newPoseState, const char* debugStr);
+  
+  // Note this method doesn't accept Invalid poseStates, since it won't destroy the object
+  void SetPoseStateHelper(ObservableObject* object, PoseState newState);
+  
+  // Notify listeners of the poseState only change happening for the given object. It should arguably not be in the
+  // poseConfirmer, but for now it's a good place to put together these calls
+  // Note this method is used when the intended change affects only the poseState, but not the Pose
+  void BroadcastObjectPoseStateChanged(const ObjectID& objectID,
+                                       PoseState oldPoseState,
+                                       PoseState newPoseState);
   
   void FindObjectMatchForObservation(const std::shared_ptr<ObservableObject>& objSeen,
                                      const ObservableObject*& objectToCopyIDFrom) const;

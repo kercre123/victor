@@ -663,16 +663,16 @@ void CubeLightComponent::SetTapInteractionObject(const ObjectID& objectID)
   PlayLightAnim(objectID, anim);
 }
 
-void CubeLightComponent::OnObjectPoseStateWillChange(const ObjectID& objectID,
-                                                        const PoseState oldPoseState,
-                                                        const PoseState newPoseState)
+void CubeLightComponent::OnObjectPoseStateChanged(const ObjectID& objectID,
+                                                  const PoseState oldPoseState,
+                                                  const PoseState newPoseState)
 {
   if(oldPoseState == newPoseState)
   {
     return;
   }
   
-  if(newPoseState != PoseState::Known)
+  if(newPoseState != PoseState::Known) // TODO Change to use function
   {
     PlayLightAnim(objectID, CubeAnimationTrigger::Connected, AnimLayerEnum::State);
   }

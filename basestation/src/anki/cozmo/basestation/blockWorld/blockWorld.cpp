@@ -1719,7 +1719,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
       else
       {
-        PRINT_NAMED_WARNING("BlockWorld.UpdateStacks", "'%d' does not exist in current frame! Ignoring change.",
+        // if the object changed to Invalid (unobserved, unknown, ..), then we don't have to update objects
+        // that were on top of it here. The system that flagged as unobserved should have updated the top one
+        // two.
+        // TODO: Is that currently happening ^?
+        // TODO Test: see a stack, look to bottom only, move stack, see cube behind (will unobserve bottom of stack).
+        //            Does this flag the top as unknown too? Should it? 
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateStacks", "'%d' does not exist in current frame. Ignoring change.",
           changedObjectIt->_id.GetValue() );
       }
       
@@ -2586,7 +2592,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // allow adding only in current origin
     DEV_ASSERT(objectOrigin == _robot->GetWorldOrigin(), "BlockWorld.AddLocatedObject.NotCurrentOrigin");
     
-    // hook with activeID/factoryID if a connected object is available.
+    // hook activeID/factoryID if a connected object is available.
     // rsam: I would like to do this in a cleaner way, maybe just refactoring the code, but here seems fishy design-wise
     {
       // should not be connected if we are just adding to the world
@@ -2603,7 +2609,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
     }
 
-    // grab the current pointer and check it's empty (do not allow overwriting)
+    // grab the current pointer and check it's empty (do not expect overwriting)
     std::shared_ptr<ObservableObject>& objectLocation =
       _locatedObjects[objectOrigin][object->GetFamily()][object->GetType()][object->GetID()];
     DEV_ASSERT(objectLocation == nullptr, "BlockWorld.AddLocatedObject.ObjectIDInUseInOrigin");
@@ -2623,23 +2629,49 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                   object->GetPose().GetTranslation().y(),
                   object->GetPose().GetTranslation().z(),
                   object->GetPose().FindOrigin().GetName().c_str());
+    
+    // fire event to represent "first time an object has been seen in this origin"
+    Util::sEventF("robot.object_located", {}, "%s", EnumToString(object->GetType()));
+
+    // make sure that everyone gets notified that there's a new object in town, I mean in this origin
+    {
+      const ObjectID& objectID = object->GetID();
+      const Pose3d* newPosePtr = &object->GetPose();
+      const Pose3d* oldPosePtr = nullptr;
+      const PoseState newPoseState = object->GetPoseState();
+      const PoseState oldPoseState = PoseState::Invalid;
+      _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(objectID, oldPosePtr, oldPoseState, newPosePtr, newPoseState);
+    }
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectPoseWillChange(const ObjectID& objectID, const Pose3d& newPose, PoseState newPoseState)
+  void BlockWorld::OnObjectPoseChanged(const ObjectID& objectID,
+                                       const Pose3d* oldPose, PoseState oldPoseState,
+                                       const Pose3d* newPose, PoseState newPoseState)
   {
-    DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseWillChange.InvalidObjectID");
-
-    // find the object
-    const ObservableObject* object = GetLocatedObjectByID(objectID);
-    if ( nullptr == object )
+    // Sanity checks
+    #if ANKI_DEVELOPER_CODE
     {
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseWillChange.NotAnObject",
-                    "Could not find object ID '%d' in BlockWorld", objectID.GetValue() );
-      return;
+      DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
+      // Check: PoseState=Invalid <-> Pose=nullptr
+      const bool oldStateInvalid = !ObservableObject::IsValidPoseState(oldPoseState);
+      const bool oldPoseNull     = (nullptr == oldPose);
+      DEV_ASSERT(oldStateInvalid == oldPoseNull, "BlockWorld.OnObjectPoseChanged.InvalidOldPoseParameters");
+      const bool newStateInvalid = !ObservableObject::IsValidPoseState(newPoseState);
+      const bool newPoseNull     = (nullptr == newPose);
+      DEV_ASSERT(newStateInvalid == newPoseNull, "BlockWorld.OnObjectPoseChanged.InvalidNewPoseParameters");
+      // Check: Can't set from and to Invalid
+      DEV_ASSERT(newStateInvalid != oldStateInvalid, "BlockWorld.OnObjectPoseChanged.BothStatesAreInvalid");
+      // Check: newPose valid/invalid correlates with the object instance in the world (if invalid, null object),
+      const ObservableObject* locatedObject = GetLocatedObjectByID(objectID);
+      const bool isObjectNull = (nullptr == locatedObject);
+      DEV_ASSERT(newStateInvalid == isObjectNull, "BlockWorld.OnObjectPoseChanged.PoseStateAndObjectDontMatch");
     }
-    
-    // - - update the container that keeps track of changes per Update
+    #endif
+
+    // - - - - -
+    // update the container that keeps track of changes per Update
+    // - - - - -
     if ( _trackPoseChanges )
     {
       // find this object in the list of changes
@@ -2647,58 +2679,98 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       auto const matchIter = std::find_if(_objectPoseChangeList.begin(), _objectPoseChangeList.end(), matchIDlambda);
       const bool alreadyChanged = (matchIter != _objectPoseChangeList.end());
       if ( alreadyChanged ) {
-        // if it's already there, warn about it because we don't think it should be possible
-        PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseWillChange.MultipleChanges",
-                            "Object '%d' is changing its pose again this tick!", objectID.GetValue());
+        // this can happen if an object on top of a stack changes its pose. The bottom one can upon updating the
+        // stack also try to change the top one, but that relative change will be ignored here because we
+        // already knew the top object moved (that's one example of multiple pose changes that are valid.)
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseChanged.MultipleChanges",
+                      "Object '%d' is changing its pose again this tick. Ignoring second change",
+                      objectID.GetValue());
         // do not update old pose, conserve the original pose it had when it changed the first time
       }
       else
       {
-        // add an entry at the end (this does not invalidate iterators or references to the current elements)
-        _objectPoseChangeList.emplace_back( objectID, object->GetPose(), object->GetPoseState() );
+        // if the old pose was valid add to the list of the changes. Otherwise this is the first time that
+        // we see the object, so we don't need to update anything. Also oldPose will be nullptr in that case, useless.
+        if ( ObservableObject::IsValidPoseState(oldPoseState) )
+        {
+          DEV_ASSERT(nullptr!=oldPose, "BlockWorld.OnObjectPoseChanged.ValidPoseStateNullPose");
+          // add an entry at the end (this does not invalidate iterators or references to the current elements)
+          _objectPoseChangeList.emplace_back( objectID, *oldPose, oldPoseState );
+        }
+        else
+        {
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseChanged.FirstPoseForObject",
+                        "Object '%d' is setting its first pose. Not queueing change.",
+                        objectID.GetValue());
+        }
       }
     }
 
-    // find the info for this object in the same origin as the new pose
-    const int objectIdInt = objectID.GetValue();
-    OriginToPoseInMapInfo& reportedPosesForObject = _navMapReportedPoses[objectIdInt];
-    const PoseOrigin* curOrigin = &newPose.FindOrigin();
-    auto matchIt = reportedPosesForObject.find( curOrigin );
-    if ( matchIt != reportedPosesForObject.end() )
+    // - - - - -
+    // update memory map
+    // - - - - -
+    /* 
+      Three things can happen:
+       a) first time we see an object: OldPoseState=!Valid, NewPoseState= Valid
+       b) updating an object:          OldPoseState= Valid, NewPoseState= Valid
+       c) deleting an object:          OldPoseState= Valid, NewPoseState=!Valid
+     */
+    const bool oldValid = ObservableObject::IsValidPoseState(oldPoseState);
+    const bool newValid = ObservableObject::IsValidPoseState(newPoseState);
+    if ( !oldValid && newValid )
     {
-      // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
-      // be smaller than the threshold to not report
-      DEV_ASSERT(kObjectPositionChangeToReport_mm < object->GetDimInParentFrame<'Z'>()*0.5f,
-                 "OnObjectPoseWillChange.ChangeThresholdTooBig");
-      const float distThreshold = kObjectPositionChangeToReport_mm;
-      const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
+      // first time we see the object, add report
+      const ObservableObject* object = GetLocatedObjectByID(objectID);
+      AddObjectReportToMemMap(*object, *newPose);
+    }
+    else if ( oldValid && newValid )
+    {
+      // updating the pose of an object, decide if we update the report. As an optimization, we don't update
+      // it if the poses are close enough
+      const ObservableObject* object = GetLocatedObjectByID(objectID); // can't return null, asserted
+      const int objectIdInt = objectID.GetValue();
+      OriginToPoseInMapInfo& reportedPosesForObject = _navMapReportedPoses[objectIdInt];
+      const PoseOrigin* curOrigin = &newPose->FindOrigin();
+      auto poseInNewOriginIter = reportedPosesForObject.find( curOrigin );
+      if ( poseInNewOriginIter != reportedPosesForObject.end() )
+      {
+        // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
+        // be smaller than the threshold to not report
+        DEV_ASSERT(kObjectPositionChangeToReport_mm < object->GetDimInParentFrame<'Z'>()*0.5f,
+                  "OnObjectPoseChanged.ChangeThresholdTooBig");
+        const float distThreshold = kObjectPositionChangeToReport_mm;
+        const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
 
-      // found a previous entry, compare old
-      const PoseInMapInfo& info = matchIt->second;
-      const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
-      const bool isUsableAndFarFromPrev = isNewPoseValid &&
-      ( !info.isInMap || (!newPose.IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
-      
-      // if new one is Invalid or far, we want to remove the old one, since it's being cleared or overridden
-      const bool removeOld = ( !isNewPoseValid || isUsableAndFarFromPrev );
-      if ( removeOld ) {
-        RemoveObjectReportFromMemMap(*object, curOrigin);
+        // compare new pose with previous entry and decide if isFarFromPrev
+        const PoseInMapInfo& info = poseInNewOriginIter->second;
+        const bool isFarFromPrev =
+          ( !info.isInMap || (!newPose->IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
+        
+        // if it is far from previous (or previous was not in the map, remove-add)
+        if ( isFarFromPrev ) {
+          RemoveObjectReportFromMemMap(*object, curOrigin);
+          AddObjectReportToMemMap(*object, *newPose);
+        }
       }
-
-      // if new one is notUnknown and far, we want to add the new one
-      const bool addNew = isUsableAndFarFromPrev;
-      if ( addNew ) {
-        AddObjectReportToMemMap(*object, newPose);
+      else
+      {
+        // did not find an entry in the current origin for this object, add it now
+        const ObservableObject* object = GetLocatedObjectByID(objectID);
+        AddObjectReportToMemMap(*object, *newPose);
       }
+    }
+    else if ( oldValid && !newValid )
+    {
+      // deleting an object, remove its report using oldOrigin (the origin it was removed from)
+      const PoseOrigin* oldOrigin = &oldPose->FindOrigin();
+      const ObservableObject* object = GetLocatedObjectByID(objectID);
+      RemoveObjectReportFromMemMap(*object, oldOrigin);
     }
     else
     {
-      // if new one is valid, we want to add the new one
-      const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
-      const bool addNew = isNewPoseValid;
-      if ( addNew ) {
-        AddObjectReportToMemMap(*object, newPose);
-      }
+      // not possible
+      PRINT_NAMED_ERROR("BlockWorld.OnObjectPoseChanged.BothStatesAreInvalid",
+                        "Object %d changing from Invalid to Invalid", objectID.GetValue());
     }
   }
   
@@ -3824,7 +3896,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // for it and don't see it, we will fully clear it and mark it as "unknown"
         ObservableObject* objectOnTop = object;
         BOUNDED_WHILE(20, objectOnTop != nullptr) {
-          _robot->GetObjectPoseConfirmer().SetPoseState(objectOnTop, PoseState::Dirty);
+          _robot->GetObjectPoseConfirmer().MarkObjectDirty(objectOnTop);
           objectOnTop = FindLocatedObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
         }
       };

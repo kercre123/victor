@@ -123,8 +123,8 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const Pose3d& newPose,
-                                               f32 distance, PoseState newPoseState, const char* debugStr) const
+inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const Pose3d& newPose,
+                                               f32 distance, PoseState newPoseState, const char* debugStr)
 {
   if(VERBOSE_DEBUG_PRINT)
   {
@@ -140,26 +140,11 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   DEV_ASSERT(object->HasValidPose() || ObservableObject::IsValidPoseState(newPoseState),
              "ObjectPoseConfirmer.SetPoseHelper.BothPoseStatesAreInvalid");
   
-  // Also this can be sent for Unknown, which is bad, since OnObjectPoseWillChange doesn't seem to handle that :(
-  // TODO these notifications should probably be post-change, rather than pre-change
-  // Notify about the change we are about to make from old to new:
-  _robot.GetBlockWorld().OnObjectPoseWillChange(object->GetID(), newPose, newPoseState);
-  _robot.GetCubeLightComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newPoseState);
-  
-  // if state changed from Invalid to anything, fire an event object detected/seen
-  if (!object->HasValidPose())
-  {
-    // should not set from invalid to invalid
-    DEV_ASSERT(ObservableObject::IsValidPoseState(newPoseState), "ObjectPoseConfirmer.SetPoseHelper.InvalidNewPose");
-    // event
-    Util::sEventF("robot.object_seen",
-                  {{DDATA, std::to_string(distance).c_str()}},
-                  "%s",
-                  EnumToString(object->GetType()));
-  }
-  
-  // copy objectID since we can destroy the object
+  // copy vars we need to notify since we can destroy the object
   const ObjectID objectID = object->GetID();
+  const Pose3d oldPoseCopy = object->GetPose();
+  const PoseState oldPoseState = object->GetPoseState();
+  const bool isOldPoseValid = ObservableObject::IsValidPoseState(oldPoseState);
   
   // if setting an invalid pose, we want to destroy the located copy of this object in its origin
   const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
@@ -176,15 +161,34 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
     _robot.GetBlockWorld().DeleteLocatedObjectByIDInCurOrigin(object->GetID());
     object = nullptr; // do not use anymore, since it's deleted
   }
-  
-  _robot.GetBlockWorld().NotifyBlockConfigurationManagerObjectPoseChanged(objectID);
+
+  // Notify the change
+  {
+    const Pose3d* newPosePtr = isNewPoseValid ? &newPose : nullptr;
+    const Pose3d* oldPosePtr = isOldPoseValid ? &oldPoseCopy : nullptr;
+    BroadcastObjectPoseChanged(objectID, oldPosePtr, oldPoseState, newPosePtr, newPoseState);
+  }
 }
 
-void ObjectPoseConfirmer::SetPoseState(ObservableObject* object, PoseState newState) const
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectPoseConfirmer::SetPoseStateHelper(ObservableObject* object, PoseState newState)
 {
-  _robot.GetCubeLightComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newState);
+  if ( ObservableObject::IsValidPoseState(newState) )
+  {
+    const PoseState oldState = object->GetPoseState();
+    object->SetPoseState(newState);
   
-  object->SetPoseState(newState);
+    // broadcast the poseState change
+    BroadcastObjectPoseStateChanged(object->GetID(), oldState, newState);
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("ObjectPoseConfirmer.SetPoseStateHelper.CantSetInvalidPoseState",
+                      "Can't set pose state to '%s' for object %d.",
+                      EnumToString(newState),
+                      object->GetID().GetValue());
+  }
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -513,13 +517,35 @@ Result ObjectPoseConfirmer::AddRobotRelativeObservation(ObservableObject* object
   
   const ObjectID& objectID = object->GetID();
   
-  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddRobotRelativeObservation.UnSetObjectID");
-  
+  // Sanity checks
+  DEV_ASSERT(objectID.IsSet(),
+             "ObjectPoseConfirmer.AddRobotRelativeObservation.UnSetObjectID");
+  DEV_ASSERT(ObservableObject::IsValidPoseState(poseState),
+             "ObjectPoseConfirmer.AddRobotRelativeObservation.RelativePoseStateNotValid");
+
   Pose3d poseWrtOrigin(poseRelToRobot);
   poseWrtOrigin.SetParent(&_robot.GetPose());
   poseWrtOrigin = poseWrtOrigin.GetWithRespectToOrigin();
   
-  SetPoseHelper(object, poseWrtOrigin, -1.f, poseState, "AddRobotRelativeObservation");
+  // When we add a relative observation we can be adding an observation for a new object (that doesn't exist
+  // in the BlockWorld), or for an existing one, depending on the case, we do different things
+  const ObservableObject* curWorldObjectWithID = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
+  if ( nullptr != curWorldObjectWithID )
+  {
+    // we currently have an object in this origin, it should be the same, since the objectID is unique
+    DEV_ASSERT(curWorldObjectWithID == object,
+             "ObjectPoseConfirmer.AddRobotRelativeObservation.InstanceIsNotTheBlockWorldInstance");
+    
+    // in this case, we are simply updating the pose of an the object
+    SetPoseHelper(object, poseWrtOrigin, -1.f, poseState, "AddRobotRelativeObservation");
+  }
+  else
+  {
+    // we don't currently have an object, this is the same as using the observation to confirm the object exists
+    // change the pose in this instance, and then add to the world
+    object->SetPose(poseWrtOrigin, -1, poseState);
+    _robot.GetBlockWorld().AddLocatedObject(std::shared_ptr<ObservableObject>(object));
+  }
   
   // numObservations is set to 1.
   // Basically, this requires that the object is observed a few times in a row without this method being called
@@ -538,7 +564,13 @@ Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objec
   
   const ObjectID& objectID = objectToUpdate->GetID();
   
-  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddObjectRelativeObservation.UnSetObjectID");
+  // Sanity checks
+  DEV_ASSERT(objectID.IsSet(),
+             "ObjectPoseConfirmer.AddObjectRelativeObservation.UnSetObjectID");
+  DEV_ASSERT(observedObject->HasValidPose(),
+             "ObjectPoseConfirmer.AddObjectRelativeObservation.ReferenceNotValid");
+  DEV_ASSERT( objectToUpdate == _robot.GetBlockWorld().GetLocatedObjectByID(objectID),
+             "ObjectPoseConfirmer.AddObjectRelativeObservation.NotTheObjectInBlockWorldForID");
   
 // This fails for ghost objects. Hopefully in the future those are handled differently, not through poseConfirmation,
 // since they are actually not real
@@ -547,11 +579,8 @@ Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objec
 //  DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
 //             "ObjectPoseConfirmer.AddObjectRelativeObservation.NoPreviousObservationsForObjectToUpdate");
 
-  DEV_ASSERT(observedObject->HasValidPose(), "ObjectPoseConfirmer.AddObjectRelativeObservation.ReferenceNotValid");
-
   const PoseState newPoseState = PoseState::Dirty; // do not inherit the pose state from the observed object
   SetPoseHelper(objectToUpdate, newPose, -1.f, newPoseState, "AddObjectRelativeObservation");
-  _poseConfirmations[objectID].lastPoseUpdatedTime = observedObject->GetLastObservedTime();
   _poseConfirmations[objectID].referencePose = newPose;
   
   return RESULT_OK;
@@ -564,11 +593,13 @@ Result ObjectPoseConfirmer::AddLiftRelativeObservation(ObservableObject* object,
   
   const ObjectID& objectID = object->GetID();
   
-  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddLiftRelativeObservation.UnSetObjectID");
-  
-  // Sanity check
+  // Sanity checks
+  DEV_ASSERT(objectID.IsSet(),
+             "ObjectPoseConfirmer.AddLiftRelativeObservation.UnSetObjectID");
   DEV_ASSERT(newPoseWrtLift.GetParent() == &_robot.GetLiftPose(),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.PoseNotWrtLift");
+  DEV_ASSERT( object == _robot.GetBlockWorld().GetLocatedObjectByID(objectID),
+             "ObjectPoseConfirmer.AddLiftRelativeObservation.NotTheObjectInBlockWorldForID");
 
   // If the object is on the lift, consider its pose as accurately known
   SetPoseHelper(object, newPoseWrtLift, -1, PoseState::Known, "AddLiftRelativeObservation");
@@ -577,7 +608,6 @@ Result ObjectPoseConfirmer::AddLiftRelativeObservation(ObservableObject* object,
   // Basically, this requires that the object is observed a few times in a row without this method being called
   // in order for it to be localized to.
   _poseConfirmations[objectID] = PoseConfirmation(newPoseWrtLift, 1, object->GetLastObservedTime());
-
   
   return RESULT_OK;
 }
@@ -591,9 +621,10 @@ Result ObjectPoseConfirmer::CopyWithNewPose(ObservableObject *newObject, const P
   
   const ObjectID& objectID = newObject->GetID();
   
-  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.CopyWithNewPose.UnSetObjectID");
-  
-  //SetPoseHelper(newObject, newPose, oldObject->GetLastPoseUpdateDistance(), oldObject->GetPoseState(), "CopyWithNewPose");
+  DEV_ASSERT(objectID.IsSet(),
+             "ObjectPoseConfirmer.CopyWithNewPose.UnSetObjectID");
+
+  // do not use SetPoseHelper to avoid notifying of the change (this is not a change, but inheriting someone else's)
   newObject->SetPose(newPose, oldObject->GetLastPoseUpdateDistance(), oldObject->GetPoseState());
   
   // If IDs match, then this just updates the old object's pose (and leaves num observations
@@ -611,15 +642,69 @@ Result ObjectPoseConfirmer::AddInExistingPose(const ObservableObject* object)
   
   const ObjectID& objectID = object->GetID();
   
-  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddInExistingPose.UnSetObjectID");
+  DEV_ASSERT(objectID.IsSet(),
+             "ObjectPoseConfirmer.AddInExistingPose.UnSetObjectID");
+  DEV_ASSERT( object == _robot.GetBlockWorld().GetLocatedObjectByID(objectID),
+             "ObjectPoseConfirmer.AddInExistingPose.NotTheObjectInBlockWorldForID");
   
   _poseConfirmations[objectID].referencePose = object->GetPose();
   
   return RESULT_OK;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObjectID& objectID,
+                                                     const Pose3d* oldPose, PoseState oldPoseState,
+                                                     const Pose3d* newPose, PoseState newPoseState)
+{
+  // Sanity checks. These are guaranteed before we call the listeners, so they don't have to check
+  #if ANKI_DEVELOPER_CODE
+  {
+    // Check: objectID is valid
+    DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
+    // Check: PoseState=Invalid <-> Pose=nullptr
+    const bool oldStateInvalid = !ObservableObject::IsValidPoseState(oldPoseState);
+    const bool oldPoseNull     = (nullptr == oldPose);
+    DEV_ASSERT(oldStateInvalid == oldPoseNull, "BlockWorld.OnObjectPoseChanged.InvalidOldPoseParameters");
+    const bool newStateInvalid = !ObservableObject::IsValidPoseState(newPoseState);
+    const bool newPoseNull     = (nullptr == newPose);
+    DEV_ASSERT(newStateInvalid == newPoseNull, "BlockWorld.OnObjectPoseChanged.InvalidNewPoseParameters");
+    // Check: Can't set from Invalid to Invalid
+    DEV_ASSERT(!newStateInvalid || !oldStateInvalid, "BlockWorld.OnObjectPoseChanged.BothStatesAreInvalid");
+    // Check: newPose valid/invalid correlates with the object instance in the world (if invalid, null object;
+    // if valid, non-null object)
+    const ObservableObject* locatedObject = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
+    const bool isObjectNull = (nullptr == locatedObject);
+    DEV_ASSERT(newStateInvalid == isObjectNull, "BlockWorld.OnObjectPoseChanged.PoseStateAndObjectDontMatch");
+  }
+  #endif
+
+  // note we don't check if the Pose or PoseState actually changes. We assume something has changed if we called
+  // this Broadcast
+
+  // listeners
+  _robot.GetBlockWorld().OnObjectPoseChanged(objectID, oldPose, oldPoseState, newPose, newPoseState);
+  _robot.GetBlockWorld().NotifyBlockConfigurationManagerObjectPoseChanged(objectID);
   
-  
-Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject* object)
+  // notify poseState changes if it changed
+  BroadcastObjectPoseStateChanged(objectID, oldPoseState, newPoseState);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectPoseConfirmer::BroadcastObjectPoseStateChanged(const ObjectID& objectID,
+                                                          PoseState oldPoseState,
+                                                          PoseState newPoseState)
+{
+  // only if it changes
+  if ( oldPoseState != newPoseState )
+  {
+    // listeners
+    _robot.GetCubeLightComponent().OnObjectPoseStateChanged(objectID, oldPoseState, newPoseState);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject*& object)
 {
   DEV_ASSERT(nullptr != object, "ObjectPoseConfirmer.MarkObjectUnobserved.NullObject");
   
@@ -648,11 +733,18 @@ Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject* object)
                     "ObjectID:%d unobserved %d times, marking Unknown",
                     objectID.GetValue(), poseConf.numTimesUnobserved);
       
+      // TODO: // Evaluate Delete vs Unknown broadcasted messages
       SetPoseHelper(object, object->GetPose(), -1.f, PoseState::Invalid, "MarkObjectUnobserved");
     }
   }
   
   return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectPoseConfirmer::MarkObjectDirty(ObservableObject* object)
+{
+  SetPoseStateHelper(object, PoseState::Dirty);
 }
   
   

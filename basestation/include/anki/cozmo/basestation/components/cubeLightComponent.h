@@ -121,9 +121,9 @@ public:
   void SetTapInteractionObject(const ObjectID& objectID);
   
   // Called whenever an object's posestate changes in order to update the lights
-  void OnObjectPoseStateWillChange(const ObjectID& objectID,
-                                   const PoseState oldPoseState,
-                                   const PoseState newPoseState);
+  void OnObjectPoseStateChanged(const ObjectID& objectID,
+                                const PoseState oldPoseState,
+                                const PoseState newPoseState);
   
   Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights);
   Result SetObjectLights(const ObjectID& objectID,

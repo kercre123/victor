@@ -382,15 +382,15 @@ void Robot::SetOnCharger(bool onCharger)
       chargerInstance = GetBlockWorld().CreateActiveObject(ActiveObjectType::OBJECT_CHARGER,
                                                            unconnectedActiveID, unconnectedFactoryID);
       
-      // check if there is a connected instance, because we can inherit its IDs (objectID, activeID, factoryID)
+
+      // check if there is a connected instance, because we can inherit its ID (objectID)
+      // note that setting ActiveID and FactoryID is responsibility of whenever we Add the object to the BlockWorld
       ActiveObject* connectedInstance = GetBlockWorld().FindConnectedActiveMatchingObject(filter);
       if ( nullptr != connectedInstance ) {
         chargerInstance->CopyID(connectedInstance);
-        chargerInstance->SetActiveID(connectedInstance->GetActiveID()); // should CopyID be virtual and do this?
-        chargerInstance->SetFactoryID(connectedInstance->GetFactoryID());
       }
     }
-    
+
     // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
     // that timestamp refers to visual observations only (TODO: maybe that should be more explicit or any
     // observation should set that timestamp)
@@ -3016,7 +3016,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
   }
 
   // Mark as dirty so that the robot no longer localizes to this object
-  GetObjectPoseConfirmer().SetPoseState(object, PoseState::Dirty);
+  GetObjectPoseConfirmer().MarkObjectDirty(object);
       
   _usingManualPathSpeed = useManualSpeed;
   _lastPickOrPlaceSucceeded = false;
