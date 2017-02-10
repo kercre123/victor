@@ -120,10 +120,10 @@ public:
   // Plays the tap interaction animations on an object depending on its posestate
   void SetTapInteractionObject(const ObjectID& objectID);
   
-  // Called whenever an object's posestate changes in order to update the lights
-  void OnObjectPoseStateChanged(const ObjectID& objectID,
-                                const PoseState oldPoseState,
-                                const PoseState newPoseState);
+  // Called whenever an active object's posestate changes in order to update the lights
+  void OnActiveObjectPoseStateChanged(const ObjectID& objectID,
+                                      const PoseState oldPoseState,
+                                      const PoseState newPoseState);
   
   Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights);
   Result SetObjectLights(const ObjectID& objectID,
@@ -300,6 +300,9 @@ private:
   bool _robotDelocalized = false;
   
   bool _onlyGameLayerEnabledForAll = false;
+  
+  // Whether or not cube sleep is enabled
+  bool _enableCubeSleep = false;
   
 };
 

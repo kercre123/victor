@@ -352,7 +352,8 @@ message CreatedFixedCustomObject {
 
 // DefinedCustomObject
 message DefinedCustomObject {
-    uint_32 robotID
+    uint_32 robotID,
+    bool success     // false if the last custom object definition failed (e.g. due to duplicate marker already in use)
 }
 
 // RobotMarkedObjectPoseUnknown

@@ -149,6 +149,8 @@ Supervisor {
     }
 
     %{ 
+      if fields.cornerWidth.value > 0 then
+      
       # Index array of corner positions
       idx = {}
       idx[1] = { -1, -1,  1}
@@ -181,7 +183,10 @@ Supervisor {
       }
       ]
     }
-    %{ end }% # End corner for loop
+    %{ 
+      end  # End corner for loop
+    end  # End if cornerWidth > 0
+    }%
     
     %{ 
     if fields.active.value then

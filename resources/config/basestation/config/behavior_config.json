@@ -64,7 +64,7 @@
         {
          "type" : "sparks",
          "minTimeSecs": 0,
-         "maxTimeSecs": 60,
+         "maxTimeSecs": 80,
          "numberOfRepetitions": 1,
          "behaviorObjective": "StackedBlock",
          "softSparkTrigger": "SoftSparkUpgradeLift",
@@ -84,7 +84,7 @@
         {
          "type" : "sparks",
          "minTimeSecs": 0,
-         "maxTimeSecs": 60,
+         "maxTimeSecs": 30,
          "numberOfRepetitions": 0,
          "behaviorObjective": "PouncedAndCaught",
          "softSparkTrigger": "SoftSparkUpgradeLift",

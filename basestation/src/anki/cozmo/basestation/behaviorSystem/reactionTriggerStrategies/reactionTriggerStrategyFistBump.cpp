@@ -67,28 +67,28 @@ void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
                                                                "ReactionTriggerStrategyFistBump.LoadJson.NullBehaviorObjective");
       BehaviorObjective objective = BehaviorObjectiveFromString(objectiveStr.c_str());
       if (objective == BehaviorObjective::Count) {
-        PRINT_NAMED_WARNING("ReactionTriggerStrategyFistBump.LoadJson.UnknownBehaviorObjective", "%s", objectiveStr.c_str());
+        PRINT_NAMED_ERROR("ReactionTriggerStrategyFistBump.LoadJson.UnknownBehaviorObjective", "%s", objectiveStr.c_str());
         continue;
       }
       
       // Get cooldown time
       float cooldownTime_s = params.get(kCooldownTime_sKey, -1.f).asFloat();
       if (cooldownTime_s < 0.f) {
-        PRINT_NAMED_WARNING("ReactionTriggerStrategyFistBump.LoadJson.UnspecifiedCooldownTime", "%s", objectiveStr.c_str());
+        PRINT_NAMED_ERROR("ReactionTriggerStrategyFistBump.LoadJson.UnspecifiedCooldownTime", "%s", objectiveStr.c_str());
         continue;
       }
       
       // Get probability of triggering
       float triggerProbability = params.get(kTriggerProbabilityKey, -1.f).asFloat();
       if (triggerProbability <= 0.f || triggerProbability > 1.f) {
-        PRINT_NAMED_WARNING("ReactionTriggerStrategyFistBump.LoadJson.InvalidTriggerProbability", "%s", objectiveStr.c_str());
+        PRINT_NAMED_ERROR("ReactionTriggerStrategyFistBump.LoadJson.InvalidTriggerProbability", "%s", objectiveStr.c_str());
         continue;
       }
       
       // Get trigger expiration
       float triggerExpiration_s = params.get(kTriggerExpirationKey, 0.f).asFloat();
       if (triggerExpiration_s <= 0.f) {
-        PRINT_NAMED_WARNING("ReactionTriggerStrategyFistBump.LoadJson.UnspecifiedTriggerExpirationTime", "%s", objectiveStr.c_str());
+        PRINT_NAMED_ERROR("ReactionTriggerStrategyFistBump.LoadJson.UnspecifiedTriggerExpirationTime", "%s", objectiveStr.c_str());
         continue;
       }
       

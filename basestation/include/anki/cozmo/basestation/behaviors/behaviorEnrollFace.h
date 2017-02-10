@@ -36,6 +36,10 @@ namespace ExternalInterface {
 
 namespace Cozmo {
 
+// Forward declaration
+class FaceWorld;
+
+  
 class BehaviorEnrollFace : public IBehavior
 {
 protected:
@@ -76,6 +80,9 @@ private:
   using FaceID_t = Vision::FaceID_t;
 
   enum class State : uint8_t {
+    Success,
+    
+    // All failure states:
     NotStarted,
     LookingForFace,
     Enrolling,
@@ -84,11 +91,9 @@ private:
     TimedOut,
     ScanningInterrupted,
     SaveFailed,
-    SuccessNoSave,
-    SuccessWithSave,
     Failed_WrongFace,
     Failed_UnknownReason,
-    Cancelled
+    Cancelled,
   };
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -103,19 +108,20 @@ private:
   void TransitionToSayingName(Robot& robot);
   void TransitionToSavingToRobot(Robot& robot);
   
-  void UpdateFaceToEnroll(const Robot& robot);
+  void UpdateFaceToEnroll(Robot& robot);
   void UpdateFaceIDandTime(const Face* newFace);
   
   IActionRunner* CreateTurnTowardsFaceAction(Robot& robot, FaceID_t faceID, FaceID_t saveID, bool playScanningGetOut);
   IActionRunner* CreateLookAroundAction(Robot& robot);
 
   bool HasTimedOut() const;
+  bool IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeStamp_t lastImgTime);
   
   // Helper which returns false if the robot is not on its treads or a cliff is being detected
   bool CanMoveTreads(const Robot& robot) const;
   
   bool IsEnrollmentRequested() const;
-  void DisableEnrollment();
+  void DisableEnrollment(Robot& robot);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Members
@@ -129,6 +135,9 @@ private:
   
   TimeStamp_t               _lastFaceSeenTime_ms;
   
+  s32                       _maxFacesVisible;
+  f32                       _tooManyFacesTimeout_sec;
+  f32                       _startedSeeingMultipleFaces_sec;
   f32                       _startTime_sec;
   f32                       _timeout_sec;
   f32                       _totalBackup_mm;

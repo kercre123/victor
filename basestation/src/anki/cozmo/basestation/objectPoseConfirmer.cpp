@@ -145,6 +145,7 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
   const Pose3d oldPoseCopy = object->GetPose();
   const PoseState oldPoseState = object->GetPoseState();
   const bool isOldPoseValid = ObservableObject::IsValidPoseState(oldPoseState);
+  const bool isActive = object->IsActive();
   
   // if setting an invalid pose, we want to destroy the located copy of this object in its origin
   const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
@@ -166,7 +167,7 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
   {
     const Pose3d* newPosePtr = isNewPoseValid ? &newPose : nullptr;
     const Pose3d* oldPosePtr = isOldPoseValid ? &oldPoseCopy : nullptr;
-    BroadcastObjectPoseChanged(objectID, oldPosePtr, oldPoseState, newPosePtr, newPoseState);
+    BroadcastObjectPoseChanged(objectID, isActive, oldPosePtr, oldPoseState, newPosePtr, newPoseState);
   }
 }
 
@@ -179,7 +180,8 @@ void ObjectPoseConfirmer::SetPoseStateHelper(ObservableObject* object, PoseState
     object->SetPoseState(newState);
   
     // broadcast the poseState change
-    BroadcastObjectPoseStateChanged(object->GetID(), oldState, newState);
+    const bool isActive = object->IsActive();
+    BroadcastObjectPoseStateChanged(object->GetID(), isActive, oldState, newState);
   }
   else
   {
@@ -653,7 +655,7 @@ Result ObjectPoseConfirmer::AddInExistingPose(const ObservableObject* object)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObjectID& objectID,
+void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObjectID& objectID, bool isActive,
                                                      const Pose3d* oldPose, PoseState oldPoseState,
                                                      const Pose3d* newPose, PoseState newPoseState)
 {
@@ -687,11 +689,12 @@ void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObjectID& objectID,
   _robot.GetBlockWorld().NotifyBlockConfigurationManagerObjectPoseChanged(objectID);
   
   // notify poseState changes if it changed
-  BroadcastObjectPoseStateChanged(objectID, oldPoseState, newPoseState);
+  BroadcastObjectPoseStateChanged(objectID, isActive, oldPoseState, newPoseState);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ObjectPoseConfirmer::BroadcastObjectPoseStateChanged(const ObjectID& objectID,
+                                                          const bool isActive,
                                                           PoseState oldPoseState,
                                                           PoseState newPoseState)
 {
@@ -699,7 +702,9 @@ void ObjectPoseConfirmer::BroadcastObjectPoseStateChanged(const ObjectID& object
   if ( oldPoseState != newPoseState )
   {
     // listeners
-    _robot.GetCubeLightComponent().OnObjectPoseStateChanged(objectID, oldPoseState, newPoseState);
+    if(isActive) {  // notify cubeLights only if the object is active
+      _robot.GetCubeLightComponent().OnActiveObjectPoseStateChanged(objectID, oldPoseState, newPoseState);
+    }
   }
 }
 

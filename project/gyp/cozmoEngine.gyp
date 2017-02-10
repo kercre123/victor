@@ -417,6 +417,7 @@
                     '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_ios)',
+                    '<@(flatbuffers_lib_search_path_ios)',
                 ],
                  'FRAMEWORK_SEARCH_PATHS': [
                   '../../lib/HockeySDK-iOS/HockeySDK.framework',

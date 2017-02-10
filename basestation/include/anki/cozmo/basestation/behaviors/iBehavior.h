@@ -145,6 +145,9 @@ public:
   // Can be overridden to allow the behavior to run while the robot is not on it's treads (default is to not run)
   virtual bool ShouldRunWhileOffTreads() const { return false;}
 
+  // Can be overridden to allow the behavior to run while the robot is on the charger platform
+  virtual bool ShouldRunWhileOnCharger() const { return false;}
+
   // Return true if the behavior explicitly handles the case where the robot starts holding the block
   // Equivalent to !robot.IsCarryingObject() in IsRunnable()
   virtual bool CarryingObjectHandledInternally() const = 0;
@@ -339,10 +342,6 @@ protected:
   // and stop tracking it
   void SmartReEnableReactionTrigger(ReactionTrigger trigger);
   void SmartReEnableReactionTrigger(const std::set<ReactionTrigger> triggerList);
-
-  // Disable / ReEnable tap interaction. Useful if a behavior is concerned about trigger false double-taps
-  void SmartDisableTapInteraction();
-  void SmartReEnableTapInteraction();
   
   // Allows the behavior to lock and unlock tracks without worrying about the possibility of the behavior
   // being interrupted and leaving the track locked
@@ -454,8 +453,6 @@ private:
   // these will be automatically re-enabled during IBehavior::Stop using the current behavior's name
   // populated by SmartDisableReactionaryBehavior and SmartReEnableReactionaryBehavior
   std::set<ReactionTrigger> _disabledReactionTriggers;
-
-  bool _tapInteractionDisabled = false;
   
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;

@@ -40,7 +40,8 @@ static std::set<ReactionTrigger> kReactionsToDisable = {
   ReactionTrigger::RobotOnBack,
   ReactionTrigger::CubeMoved,
   ReactionTrigger::UnexpectedMovement,
-  ReactionTrigger::ReturnedToTreads
+  ReactionTrigger::ReturnedToTreads,
+  ReactionTrigger::DoubleTapDetected
 };
 
 }
@@ -136,10 +137,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   auto disableCliff = [this](Robot& robot) {
     // disable reactions we don't want
     this->SmartDisableReactionTrigger(kReactionsToDisable);
-    
-    // Wheelies (or the animation afterwards) sometimes cause false double tap events, so disable tap
-    // interaction until the behavior is complete
-    SmartDisableTapInteraction();
     
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;

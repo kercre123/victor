@@ -380,6 +380,7 @@ namespace Anki {
         printf("Toggle accel from streamObjectID: |\n");
         printf("               Toggle headlights: ,\n");
         printf("             Pronounce sayString: \" <double-quote>\n");
+        printf("       Pronounce sayString (raw): \' <single-quote>\n");
         printf("                 Set console var: ]\n");
         printf("        Quit keyboard controller:  Alt+Shift+x\n");
         printf("                      Print help:  ?,/\n");
@@ -1182,9 +1183,9 @@ namespace Anki {
                   if( shiftKeyPressed && altKeyPressed ) {
                     BehaviorChooserType chooser = BehaviorChooserTypeFromString("Selection");
                     if( chooser == BehaviorChooserType::Count ) {
-                      break;
-                    }
-                    
+                    break;
+                  }
+
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                                                        ExternalInterface::ActivateBehaviorChooser(chooser)));
                     break;
@@ -2239,7 +2240,7 @@ namespace Anki {
                 
               case (s32)'J':
               {
-              
+               
                 // unused!
 
                 break;
@@ -2300,6 +2301,7 @@ namespace Anki {
               }
                 
               case (s32)'"':
+              case (s32)'\'':
               {
                 webots::Field* sayStringField = root_->getField("sayString");
                 if(sayStringField == nullptr) {
@@ -2311,9 +2313,12 @@ namespace Anki {
                 sayTextMsg.text = sayStringField->getSFString();
                 if(sayTextMsg.text.empty()) {
                   printf("ERROR: sayString field is empty\n");
+                  break;
                 }
+                
                 // TODO: Add ability to set action style, voice style, duration scalar and pitch from KB controller
-                sayTextMsg.voiceStyle = SayTextVoiceStyle::CozmoProcessing_Sentence;
+                sayTextMsg.voiceStyle = (key == '"' ? SayTextVoiceStyle::CozmoProcessing_Sentence :
+                                         SayTextVoiceStyle::Unprocessed);
                 sayTextMsg.durationScalar = 2.f;
                 sayTextMsg.voicePitch = 0.f;
                 sayTextMsg.playEvent = AnimationTrigger::Count;

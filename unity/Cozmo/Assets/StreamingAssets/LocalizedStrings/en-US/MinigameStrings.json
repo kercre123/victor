@@ -336,9 +336,6 @@
   "speedTap.text.MP.Locked": {
     "translation": "To unlock 3 player mode, play Human vs Cozmo once on this difficulty."
   },
-  "speedTapGame.label.x2": {
-    "translation": "x2"
-  },
   "speedTapGame.label.vs": {
     "translation": "VS"
   },

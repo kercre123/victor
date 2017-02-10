@@ -61,11 +61,6 @@ private:
   f32  _maxTimeToLookForFace_s;
   bool _abortIfNoFaceFound;
 
-  // Whether or not to do long request
-  f32 _longRequestCooldownTime_s;
-  f32 _longRequestProbability;
-  f32 _lastLongRequestPlayTime_s;
-  
   // Wait for bump vars
   f32 _waitStartTime_s;
   int _fistBumpRequestCnt;

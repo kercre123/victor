@@ -80,7 +80,7 @@ public:
   // Notify listeners of the pose and poseState change happening for the given object. It should arguably not be in the
   // poseConfirmer, but for now it's a good place to put together these calls
   // This method internally calls BroadcastObjectPoseStateChanged if the poseStates change
-  void BroadcastObjectPoseChanged(const ObjectID& objectID,
+  void BroadcastObjectPoseChanged(const ObjectID& objectID, bool isActive,
                                   const Pose3d* oldPose, PoseState oldPoseState,
                                   const Pose3d* newPose, PoseState newPoseState);
 
@@ -168,6 +168,7 @@ protected:
   // poseConfirmer, but for now it's a good place to put together these calls
   // Note this method is used when the intended change affects only the poseState, but not the Pose
   void BroadcastObjectPoseStateChanged(const ObjectID& objectID,
+                                       const bool isActive,
                                        PoseState oldPoseState,
                                        PoseState newPoseState);
   

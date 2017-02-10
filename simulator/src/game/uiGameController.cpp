@@ -295,6 +295,13 @@ namespace Anki {
     
     void UiGameController::HandleLocatedObjectStatesBase(ExternalInterface::LocatedObjectStates const& msg)
     {
+      PRINT_NAMED_INFO("HandleObjectStates", "Clearing all objects before updating with %zu new objects",
+                       msg.objects.size());
+      
+      _objectIDToPoseMap.clear();
+      _objectIDToFamilyTypeMap.clear();
+      _objectFamilyToTypeToIDMap.clear();
+      
       for(auto & objectState : msg.objects)
       {
         PRINT_NAMED_INFO("HandleLocatedObjectStates",
@@ -408,6 +415,11 @@ namespace Anki {
     void UiGameController::HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg)
     {
       _engineLoadedRatio = msg.ratioComplete;
+    }
+    
+    void UiGameController::HandleDefinedCustomObjectBase(const ExternalInterface::DefinedCustomObject& msg)
+    {
+      HandleDefinedCustomObject(msg);
     }
     
     // ===== End of message handler callbacks ====
@@ -573,7 +585,10 @@ namespace Anki {
             HandleEngineLoadingStatusBase(message.Get_EngineLoadingDataStatus());
             break;
           case ExternalInterface::MessageEngineToGameTag::FaceEnrollmentCompleted:
-            HandleFaceEnrollmentCompleted(message.Get_FaceEnrollmentCompleted());
+            HandleFaceEnrollmentCompletedBase(message.Get_FaceEnrollmentCompleted());
+            break;
+          case ExternalInterface::MessageEngineToGameTag::DefinedCustomObject:
+            HandleDefinedCustomObjectBase(message.Get_DefinedCustomObject());
             break;
           default:
             // ignore

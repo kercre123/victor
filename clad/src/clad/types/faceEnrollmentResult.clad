@@ -18,9 +18,11 @@ enum uint_8 FaceEnrollmentResult
 
     // Failures:
     SawWrongFace,
+    SawMultipleFaces,
     TimedOut,
     SaveFailed,
     Incomplete,
+    Cancelled,
     UnknownFailure
 }
 

@@ -13,9 +13,13 @@ namespace SpeedTap {
     public float LastTapTimeStamp { get; set; }
     public readonly Color[] PlayerWinColors = new Color[4];
     public Cozmo.MinigameWidgets.ScoreWidget scoreWidget;
+    public int MistakeTapsTotal { get; set; }
+    public int CorrectTapsTotal { get; set; }
     public SpeedTapPlayerInfo(PlayerType playerType, string name) : base(playerType, name) {
       CubeID = -1;
       LastTapTimeStamp = -1;
+      MistakeTapsTotal = 0;
+      CorrectTapsTotal = 0;
     }
     public Color PlayerWinColor {
       get {
@@ -433,5 +437,42 @@ namespace SpeedTap {
         }
       }
     }
+
+    public virtual void AddPoint(List<PlayerInfo> playersScored, bool wasMistakeMade) {
+      base.AddPoint(playersScored);
+      // extra bookkeeping for if a mistake was made accuracy goal
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        SpeedTapPlayerInfo speedTapPlayer = (SpeedTapPlayerInfo)_PlayerInfo[i];
+        if (wasMistakeMade && !playersScored.Contains(_PlayerInfo[i])) {
+          speedTapPlayer.MistakeTapsTotal = speedTapPlayer.MistakeTapsTotal + 1;
+        }
+        else if (!wasMistakeMade && playersScored.Contains(_PlayerInfo[i])) {
+          speedTapPlayer.CorrectTapsTotal = speedTapPlayer.CorrectTapsTotal + 1;
+        }
+      }
+    }
+
+    // event values to add on game completion
+    protected override Dictionary<string, float> GetGameSpecificEventValues() {
+      Dictionary<string, float> ret = new Dictionary<string, float>();
+      float minAccuracy = 1.0f;
+      // CorrectScoreTotalCount / TotalScore;
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        SpeedTapPlayerInfo speedTapPlayer = (SpeedTapPlayerInfo)_PlayerInfo[i];
+        if (speedTapPlayer.playerType != PlayerType.Cozmo) {
+          float total_taps = (float)(speedTapPlayer.CorrectTapsTotal + speedTapPlayer.MistakeTapsTotal);
+          float accuracy = 0.0f;
+          // never tapping counts as 0
+          if (total_taps > 0) {
+            accuracy = ((float)speedTapPlayer.CorrectTapsTotal) / total_taps;
+          }
+          minAccuracy = Mathf.Min(minAccuracy, accuracy);
+        }
+      }
+      // in MP with take the lowest human score
+      ret.Add(ChallengeAccuracyCondition.kConditionKey, minAccuracy);
+      return ret;
+    }
+
   }
 }

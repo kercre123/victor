@@ -89,7 +89,6 @@ enum int_32 AnimationTrigger
   FacePlantRollArmUp,
   FailedToRightFromFace,
   FistBumpIdle,
-  FistBumpRequestLong,
   FistBumpRequestOnce,
   FistBumpRequestRetry,
   FistBumpSuccess,

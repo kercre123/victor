@@ -21,6 +21,9 @@ public class AndroidSelectNetwork : AndroidConnectionFlowStage {
   private CozmoButton _ContinueButton;
 
   [SerializeField]
+  private AnkiButton _CancelButton;
+
+  [SerializeField]
   private AndroidNetworkCell _NetworkCellPrefab;
 
   [SerializeField]
@@ -39,6 +42,8 @@ public class AndroidSelectNetwork : AndroidConnectionFlowStage {
     StartCoroutine("UpdateNetworks");
     _ContinueButton.Initialize(HandleContinueButton, "continue_button", "android_select_network");
     _ContinueButton.Interactable = false;
+
+    _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "close_button", "android_select_network");
 
     var receiver = AndroidConnectionFlow.Instance.GetMessageReceiver();
     RegisterJavaListener(receiver, "scanResults", HandleScanResults);

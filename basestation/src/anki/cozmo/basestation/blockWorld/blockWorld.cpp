@@ -124,6 +124,9 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
 // Whether or not to put unrecognized markerless objects like collision/prox obstacles and cliffs into the memory map
 CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
 
+// Whether or not to put custom objects in the memory map (COZMO-9360)
+CONSOLE_VAR(bool, kAddCustomObjectsToMemMap, "BlockWorld.MemoryMap", false);
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper namespace
 namespace {
@@ -162,11 +165,28 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       break;
     }
       
+    case ObjectFamily::CustomObject:
+    {
+      // old .badIsAdding message
+      if(!isAdding)
+      {
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.CustomOject.RemovalNotSupported",
+                            "ContentType CustomObject removal is not supported. kCustomObjectsToMemMap was (%s)",
+                            kAddCustomObjectsToMemMap ? "true" : "false");
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.CustomOject.AdditionNotSupported",
+                            "ContentType CustomObject addition is not supported. kCustomObjectsToMemMap was (%s)",
+                            kAddCustomObjectsToMemMap ? "true" : "false");
+      }
+      break;
+    }
+      
     case ObjectFamily::Invalid:
     case ObjectFamily::Unknown:
     case ObjectFamily::Ramp:
     case ObjectFamily::Mat:
-    case ObjectFamily::CustomObject:
     break;
   };
 
@@ -243,10 +263,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     //////////////////////////////////////////////////////////////////////////
     // 1x1 Light Cubes
     //
-    
-    _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE1));
-    _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE2));
-    _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE3));      
+    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE1));
+    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE2));
+    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE3));
     
     //////////////////////////////////////////////////////////////////////////
     // 2x1 Blocks
@@ -283,7 +302,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     //////////////////////////////////////////////////////////////////////////
     // Charger
     //
-    _objectLibrary[ObjectFamily::Charger].AddObject(new Charger());
+    DefineObject(std::make_unique<Charger>());
     
     if(_robot->HasExternalInterface())
     {
@@ -292,11 +311,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           
   } // BlockWorld() Constructor
 
-  void BlockWorld::DefineCustomObject(ObjectType type, f32 xSize_mm, f32 ySize_mm, f32 zSize_mm, f32 markerWidth_mm, f32 markerHeight_mm)
-  {
-      _objectLibrary[ObjectFamily::CustomObject].AddObject(new CustomObject(type, xSize_mm, ySize_mm, zSize_mm, markerWidth_mm, markerHeight_mm));
-  }
-
   void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
   {
     using namespace ExternalInterface;
@@ -304,7 +318,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DeleteAllCustomObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SelectNextObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CreateFixedCustomObject>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomObject>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomBox>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomCube>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomWall>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapRenderEnabled>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocatedObjectStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestConnectedObjects>();
@@ -315,6 +331,26 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     
   } // ~BlockWorld() Destructor
+  
+  Result BlockWorld::DefineObject(std::unique_ptr<const ObservableObject>&& object)
+  {
+    const ObjectFamily objFamily = object->GetFamily(); // Remove with COZMO-9319
+    const ObjectType objType = object->GetType(); // Store due to std::move
+    const Result addResult = _objectLibrary[objFamily].AddObject(std::move(object));
+    
+    if(RESULT_OK == addResult)
+    {
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.DefineObject.AddedObjectDefinition",
+                    "Defined %s in Object Library", EnumToString(objType));
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("BlockWorld.DefineObject.FailedToDefineObject",
+                          "Failed defining %s", EnumToString(objType));
+    }
+    
+    return addResult;
+  }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -343,11 +379,70 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   };
 
   template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::DefineCustomObject& msg)
+  void BlockWorld::HandleMessage(const ExternalInterface::DefineCustomBox& msg)
   {
-    BlockWorld::DefineCustomObject(msg.objectType, msg.xSize_mm, msg.ySize_mm, msg.zSize_mm, msg.markerWidth_mm, msg.markerHeight_mm);
+    bool success = false;
     
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(_robot->GetID());
+    CustomObject* customBox = CustomObject::CreateBox(msg.customType,
+                                                      msg.markerFront,
+                                                      msg.markerBack,
+                                                      msg.markerTop,
+                                                      msg.markerBottom,
+                                                      msg.markerLeft,
+                                                      msg.markerRight,
+                                                      msg.xSize_mm, msg.ySize_mm, msg.zSize_mm,
+                                                      msg.markerWidth_mm, msg.markerHeight_mm,
+                                                      msg.isUnique);
+    
+    if(nullptr != customBox)
+    {
+      const Result defineResult = DefineObject(std::unique_ptr<CustomObject>(customBox));
+      success = (defineResult == RESULT_OK);
+    }
+    
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(_robot->GetID(),
+                                                                                                          success);
+  };
+  
+  template<>
+  void BlockWorld::HandleMessage(const ExternalInterface::DefineCustomCube& msg)
+  {
+    bool success = false;
+    
+    CustomObject* customCube = CustomObject::CreateCube(msg.customType,
+                                                        msg.marker,
+                                                        msg.size_mm,
+                                                        msg.markerWidth_mm, msg.markerHeight_mm,
+                                                        msg.isUnique);
+    
+    if(nullptr != customCube)
+    {
+      const Result defineResult = DefineObject(std::unique_ptr<CustomObject>(customCube));
+      success = (defineResult == RESULT_OK);
+    }
+    
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(_robot->GetID(),
+                                                                                                          success);
+  };
+  
+  template<>
+  void BlockWorld::HandleMessage(const ExternalInterface::DefineCustomWall& msg)
+  {
+    bool success = false;
+    
+    CustomObject* customWall = CustomObject::CreateWall(msg.customType,
+                                                        msg.marker,
+                                                        msg.width_mm, msg.height_mm,
+                                                        msg.markerWidth_mm, msg.markerHeight_mm,
+                                                        msg.isUnique);
+    if(nullptr != customWall)
+    {
+      const Result defineResult = DefineObject(std::unique_ptr<CustomObject>(customWall));
+      success = (defineResult == RESULT_OK);
+    }
+    
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(_robot->GetID(),
+                                                                                                          success);
   };
   
   template<>
@@ -909,18 +1004,38 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const Vec3f& T_old = oldObject->GetPose().GetTranslation();
       const Vec3f& T_new = newPose.GetTranslation();
       
-      // Look for a matching object in the new origin (should have same family, type, and ID)
+      // Look for a matching object in the new origin. Should have same family and type. If unique, should also have
+      // same ID, or if not unique, the poses should match.
       BlockWorldFilter filterNew;
       filterNew.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
       filterNew.AddAllowedOrigin(newOrigin);
       filterNew.AddAllowedFamily(oldObject->GetFamily());
       filterNew.AddAllowedType(oldObject->GetType());
-      filterNew.AddAllowedID(oldObject->GetID());
-      ObservableObject* newObject = FindLocatedMatchingObject(filterNew);
+      
+      ObservableObject* newObject = nullptr;
+      
+      if(oldObject->IsUnique())
+      {
+        filterNew.AddFilterFcn(BlockWorldFilter::UniqueObjectsFilter);
+        filterNew.AddAllowedID(oldObject->GetID());
+        newObject = FindLocatedMatchingObject(filterNew);
+      }
+      else
+      {
+        newObject = FindObjectClosestTo(oldObject->GetPose(),
+                                        oldObject->GetSameDistanceTolerance(),
+                                        filterNew);
+      }    
       
       bool addNewObject = false;
       if(nullptr == newObject)
       {
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.NoMatchFound",
+                      "No match found for %s %d, adding new at T=(%.1f,%.1f,%.1f)",
+                      EnumToString(oldObject->GetType()),
+                      oldObject->GetID().GetValue(),
+                      T_new.x(), T_new.y(), T_new.z());
+        
         newObject = oldObject->CloneType();
         
         // This call is necessary due to dependencies from CopyWithNewPose and AddNewObject
@@ -934,11 +1049,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       else
       {
         PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.ObjectOriginChanged",
-                      "Updating object %d's origin from %s to %s. "
+                      "Updating %s %d's origin from %s to %s (matched by %s to ID:%d). "
                       "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
+                      EnumToString(oldObject->GetType()),
                       oldObject->GetID().GetValue(),
                       oldOrigin->GetName().c_str(),
                       newOrigin->GetName().c_str(),
+                      oldObject->IsUnique() ? "type" : "pose",
+                      newObject->GetID().GetValue(),
                       T_old.x(), T_old.y(), T_old.z(),
                       T_new.x(), T_new.y(), T_new.z());
       }
@@ -947,7 +1065,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       newObject->SetObservationTimes(oldObject);
       result = _robot->GetObjectPoseConfirmer().CopyWithNewPose(newObject, newPose, oldObject);
       
-      if(addNewObject) {
+      if(addNewObject)
+      {
         // Note: need to call SetPose first because that sets the origin which
         // controls which map the object gets added to
         AddLocatedObject(std::shared_ptr<ObservableObject>(newObject));
@@ -963,7 +1082,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     };
     
     // Apply the filter and modify each object that matches
-    FindLocatedObjectHelper(filterOld, originUpdater, false);
+    ModifyLocatedObjects(originUpdater, filterOld);
     
     if(RESULT_OK == result) {
       // Erase all the objects in the old frame now that their counterparts in the new
@@ -978,7 +1097,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     filterOld.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
     filterOld.AddAllowedOrigin(newOrigin);
     
-    ModifierFcn addToPoseConfirmer = [this](ObservableObject* object){
+    ModifierFcn addToPoseConfirmer = [this,&newOrigin](ObservableObject* object){
       _robot->GetObjectPoseConfirmer().AddInExistingPose(object);
     };
     
@@ -1432,17 +1551,17 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       filter.AddAllowedFamily(objSeen->GetFamily());
       filter.AddAllowedType(objSeen->GetType());
       
-      if (objSeen->IsActive())
+      if (objSeen->IsUnique())
       {
+        // Can consider matches for active objects in other coordinate frames,
         filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-        filter.AddFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
+        filter.AddFilterFcn(&BlockWorldFilter::UniqueObjectsFilter);
         
-        // For active objects, just match based on type, since we assume there is only one
-        // active object of each type
+        // Unique objects just match based on type (already set above)
         std::vector<ObservableObject*> objectsFound;
         FindLocatedMatchingObjects(filter, objectsFound);
         
-        // debug whether the object is currently connected
+        if(objSeen->IsActive())
         {
           const ActiveObject* conObjMatch = GetConnectedActiveObjectByID( objSeen->GetID() );
           if(nullptr == conObjMatch)
@@ -1506,8 +1625,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           // and add to our map of matches by origin
           auto iter = matchingObjects.find(origin);
           if(iter != matchingObjects.end()) {
-            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleMatchesForActiveObjectInSameFrame",
-                                "Observed active object of type %s matches multiple existing objects of "
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleMatchesForUniqueObjectInSameFrame",
+                                "Observed unique object of type %s matches multiple existing objects of "
                                 "same type and in the same frame (%p).",
                                 EnumToString(objSeen->GetType()), origin);
           } else {
@@ -1522,7 +1641,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
       else
       {
-        // For passive objects, match based on pose (considering only objects in current frame)
+        // For non-unique objects, match based on pose (considering only objects in current frame)
         // Ignore objects we're carrying
         const ObjectID& carryingObjectID = _robot->GetCarryingObject();
         filter.AddFilterFcn([&carryingObjectID](const ObservableObject* candidate) {
@@ -2101,13 +2220,19 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
   ObjectID BlockWorld::CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm)
   {
-    // Create an instance of the custom object
-    auto customObject = std::make_shared<CustomObject>(ObjectType::Custom_Fixed, xSize_mm, ySize_mm, zSize_mm);
+    // Create an instance of the custom obstacle
+    CustomObject* customObstacle = CustomObject::CreateFixedObstacle(xSize_mm, ySize_mm, zSize_mm);
+    if(nullptr == customObstacle)
+    {
+      PRINT_NAMED_ERROR("BlockWorld.CreateFixedCustomObject.CreateFailed", "");
+      return ObjectID{};
+    }
     
     Pose3d obsPose(p);
     obsPose.SetParent(_robot->GetPose().GetParent());
     
     // Initialize with Known pose so it won't delete immediately because it isn't re-seen
+    auto customObject = std::unique_ptr<CustomObject>(customObstacle);
     customObject->InitPose(obsPose, PoseState::Known);
 
     // set new ID before adding to the world, since this is a new object
@@ -2709,6 +2834,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // - - - - -
     // update memory map
     // - - - - -
+	const bool objectTrackedInMemoryMap = (object->GetFamily() != ObjectFamily::CustomObject || kAddCustomObjectsToMemMap); // COZMO-9360
+	if( objectTrackedInMemoryMap ) 
+    {	
     /* 
       Three things can happen:
        a) first time we see an object: OldPoseState=!Valid, NewPoseState= Valid
@@ -2772,6 +2900,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       PRINT_NAMED_ERROR("BlockWorld.OnObjectPoseChanged.BothStatesAreInvalid",
                         "Object %d changing from Invalid to Invalid", objectID.GetValue());
     }
+	}
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3016,6 +3145,21 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
   }
   
+  
+  void BlockWorld::OnRobotDelocalized(const Pose3d* newWorldOrigin)
+  {
+    // delete objects that have become useless since we delocalized last time
+    DeleteObjectsFromZombieOrigins();
+    
+    // create a new memory map for this origin
+    CreateLocalizedMemoryMap(newWorldOrigin);
+    
+    // deselect blockworld's selected object, if it has one
+    DeselectCurrentObject();
+    
+    // notify about updated object states
+    BroadcastObjectStates(false, newWorldOrigin);
+  }
   Result BlockWorld::AddCliff(const Pose3d& p)
   {
     // at the moment we treat them as markerless objects
@@ -3781,6 +3925,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
       Result updateResult;
 
+      
+      // TODO: Combine these into a single UpdateObjectPoses call for all families (COZMO-9319)
+      
       //
       // Find any observed active blocks from the remaining markers.
       // Do these first because they can update our localization, meaning that
@@ -4529,9 +4676,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             if ( isCurrentOrigin ) {
               ClearLocatedObjectHelper(objectIter->second.get());
             }
-            
-            // we used to have a delete here with memset(0), I don't think we need that anymore or that it's safe
-            // now that the memory is managed by smart pointers
             ++objectIter;
           }
         }

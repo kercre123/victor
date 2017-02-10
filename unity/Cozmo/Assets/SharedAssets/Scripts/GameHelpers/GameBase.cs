@@ -213,6 +213,12 @@ public abstract class GameBase : MonoBehaviour {
     AddDefaultPlayers();
   }
 
+  public void PopulateTitleWidget() {
+    ChallengeTitleWidget titleWidget = _SharedMinigameViewInstance.TitleWidget;
+    titleWidget.Text = Localization.Get(_ChallengeData.ChallengeTitleLocKey);
+    titleWidget.SubtitleText = null;
+  }
+
   private void PlayGetInAnimation() {
     CurrentRobot.SendAnimationTrigger(_ChallengeData.GetInAnimTrigger.Value, callback: (success) => {
       InitializeMinigameDone();
@@ -284,9 +290,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private void InitializeMinigameView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    ChallengeTitleWidget titleWidget = newView.TitleWidget;
-    titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    titleWidget.SubtitleText = null;
+    PopulateTitleWidget();
     newView.ShowQuitButton();
 
     if (data.IsMinigame) {
@@ -430,25 +434,6 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Scoring
 
-
-  // Number of Errors made, Error being a player action
-  // that causes failure (not cozmo scoring a point)
-  private int _PlayerMistakeCount;
-  public int PlayerMistakeCount {
-    get {
-      return _PlayerMistakeCount;
-    }
-  }
-
-  // Number of Errors made by cozmo, error being a cozmo
-  // mistake that gives the player points.
-  private int _CozmoMistakeCount;
-  public int CozmoMistakeCount {
-    get {
-      return _CozmoMistakeCount;
-    }
-  }
-
   public int HumanScore {
     get {
       PlayerInfo player = GetFirstPlayerByType(PlayerType.Human);
@@ -487,33 +472,9 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  // The accuracy of the player's attempts to score points
-  public float PlayerAccuracy {
-    get {
-      // If the player didn't score any points without cozmo making a mistake
-      // then they have 0 % accuracy.
-      if (HumanScoreTotal - _CozmoMistakeCount <= 0) {
-        return 0.0f;
-      }
-      // If the player has scored points intentionally, then their accuracy is
-      // equal to their total points scored out of their attempts to score
-      // points.
-      float acc = ((float)HumanScoreTotal / (float)(HumanScoreTotal + _PlayerMistakeCount));
-      return acc;
-    }
-  }
-
   // Points needed to win Round
   [HideInInspector]
   public int MaxScorePerRound;
-
-  public virtual void PlayerMistake() {
-    _PlayerMistakeCount++;
-  }
-
-  public virtual void CozmoMistake() {
-    _CozmoMistakeCount++;
-  }
 
   public void ResetScore() {
     for (int i = 0; i < _PlayerInfo.Count; ++i) {

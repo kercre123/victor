@@ -388,11 +388,6 @@ void IBehavior::Stop()
   // re-enable before stopping
   SmartReEnableReactionTrigger(_disabledReactionTriggers);
 
-  // re-enable tap interaction if needed
-  if( _tapInteractionDisabled ) {
-    SmartReEnableTapInteraction();
-  }
-  
   // Unlock any tracks which the behavior hasn't had a chance to unlock
   for(const auto& entry: _lockingNameToTracksMap){
     _robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
@@ -403,7 +398,6 @@ void IBehavior::Stop()
   _customLightObjects.clear();
   
   DEV_ASSERT(_disabledReactionTriggers.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
-  DEV_ASSERT(!_tapInteractionDisabled, "IBehavior.Stop.TapInteractionStillDisabled");
 }
   
   
@@ -485,6 +479,12 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
   //check if the behavior runs while in the air
   if(robot.GetOffTreadsState() != OffTreadsState::OnTreads
      && !ShouldRunWhileOffTreads()){
+    return false;
+  }
+
+  //check if the behavior can run from the charger platform (don't want most to run because they could damage
+  //the robot by moving too much, and also will generally look dumb if they try to turn)
+  if(robot.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
     return false;
   }
   
@@ -583,15 +583,16 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   
   if( !IsResuming() && !IsRunning() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotRunning",
-                        "Behavior '%s' can't start acting because it is not running",
-                        GetName().c_str());
+                        "Behavior '%s' can't start %s action because it is not running",
+                        GetName().c_str(), action->GetName().c_str());
     return false;
   }
 
   if( IsActing() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.AlreadyActing",
-                        "Behavior '%s' can't start acting because it is already running an action",
-                        GetName().c_str());
+                        "Behavior '%s' can't start %s action because it is already running an action in state %s",
+                        GetName().c_str(), action->GetName().c_str(),
+                        GetDebugStateName().c_str());
     return false;
   }
 
@@ -723,30 +724,6 @@ void IBehavior::SmartReEnableReactionTrigger(const std::set<ReactionTrigger> tri
   for(auto triger: triggerList){
     SmartReEnableReactionTrigger(triger);
   }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartDisableTapInteraction()
-{
-  if( !_tapInteractionDisabled ) {
-    _robot.GetBehaviorManager().RequestEnableTapInteraction(GetName(), false);
-    _tapInteractionDisabled = true;
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartReEnableTapInteraction()
-{
-  if( _tapInteractionDisabled ) {
-    _robot.GetBehaviorManager().RequestEnableTapInteraction(GetName(), true);
-    _tapInteractionDisabled = false;
-  }
-  else {
-    PRINT_NAMED_WARNING("IBehavior.SmartReEnableTapInteraction.NotDisabled",
-                        "Attempted to re-enable tap interaction (manually), but it wasn't disabled");
-  }    
 }
 
   

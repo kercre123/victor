@@ -314,6 +314,7 @@ void BehaviorKnockOverCubes::PrepareForKnockOverAttempt()
 {
   _objectsFlipped.clear();
   IncreaseScoreWhileActing(kScoreIncreaseSoNoRoll);
+  SmartDisableReactionTrigger(ReactionTrigger::DoubleTapDetected);
 }
   
 }

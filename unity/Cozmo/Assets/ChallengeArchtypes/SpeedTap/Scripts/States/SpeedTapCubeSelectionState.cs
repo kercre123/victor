@@ -142,8 +142,10 @@ namespace SpeedTap {
     }
 
     private void MoveToNextState() {
-      _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
-      _StateMachine.SetNextState(new SpeedTapBeginRound());
+      if (_SpeedTapGame != null) {
+        _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
+        _StateMachine.SetNextState(new SpeedTapBeginRound());
+      }
     }
   }
 }
