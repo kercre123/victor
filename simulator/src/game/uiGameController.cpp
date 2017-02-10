@@ -139,7 +139,7 @@ namespace Anki {
       HandleEngineErrorCode(msg);
     }
     
-    void UiGameController::HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg)
+    void UiGameController::HandleRobotDeletedLocatedObjectBase(ExternalInterface::RobotDeletedLocatedObject const& msg)
     {
       PRINT_NAMED_INFO("UiGameController.HandleRobotDeletedObjectBase", "Robot %d reported deleting object %d", msg.robotID, msg.objectID);
       
@@ -155,7 +155,7 @@ namespace Anki {
         }
       }
       
-      HandleRobotDeletedObject(msg);
+      HandleRobotDeletedLocatedObject(msg);
     }
 
     void UiGameController::HandleUiDeviceConnectionBase(ExternalInterface::UiDeviceAvailable const& msgIn)
@@ -524,8 +524,8 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::ImageChunk:
             HandleImageChunkBase(message.Get_ImageChunk());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::RobotDeletedObject:
-            HandleRobotDeletedObjectBase(message.Get_RobotDeletedObject());
+          case ExternalInterface::MessageEngineToGame::Tag::RobotDeletedLocatedObject:
+            HandleRobotDeletedLocatedObjectBase(message.Get_RobotDeletedLocatedObject());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::RobotCompletedAction:
             HandleRobotCompletedActionBase(message.Get_RobotCompletedAction());

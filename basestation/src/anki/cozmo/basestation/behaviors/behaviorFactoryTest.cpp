@@ -191,7 +191,7 @@ namespace Cozmo {
     // Subscribe to EngineToGame messages
     SubscribeToTags({{
       EngineToGameTag::RobotObservedObject,
-      EngineToGameTag::RobotDeletedObject,
+      EngineToGameTag::RobotDeletedLocatedObject,
       EngineToGameTag::ObjectMoved,
       EngineToGameTag::CameraCalibration,
       EngineToGameTag::RobotStopped,
@@ -1686,8 +1686,8 @@ namespace Cozmo {
                                                   event.GetData().Get_RobotObservedObject());
         break;
         
-      case EngineToGameTag::RobotDeletedObject:
-        _lastHandlerResult = HandleDeletedObject(event.GetData().Get_RobotDeletedObject());
+      case EngineToGameTag::RobotDeletedLocatedObject:
+        _lastHandlerResult = HandleDeletedLocatedObject(event.GetData().Get_RobotDeletedLocatedObject());
         break;
         
       case EngineToGameTag::ObjectMoved:
@@ -1850,7 +1850,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
-  Result BehaviorFactoryTest::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg)
+  Result BehaviorFactoryTest::HandleDeletedLocatedObject(const ExternalInterface::RobotDeletedLocatedObject &msg)
   {
     // remove the object if we knew about it
     ObjectID objectID;

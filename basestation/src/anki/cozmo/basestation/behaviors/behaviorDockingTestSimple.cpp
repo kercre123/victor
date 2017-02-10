@@ -121,8 +121,7 @@ namespace Anki {
       
       SubscribeToTags({{
         EngineToGameTag::RobotCompletedAction,
-        EngineToGameTag::RobotObservedObject,
-        EngineToGameTag::RobotDeletedObject,
+        EngineToGameTag::RobotObservedObject,        
         EngineToGameTag::ObjectMoved,
         EngineToGameTag::RobotStopped,
         EngineToGameTag::RobotOffTreadsStateChanged
