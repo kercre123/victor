@@ -16,7 +16,6 @@
 #include "cubes.h"
 #include "backpack.h"
 #include "motors.h"
-#include "temp.h"
 #include "head.h"
 #include "tasks.h"
 #include "ota.h"
@@ -124,7 +123,7 @@ static inline void sendPowerStateUpdate()
   msg.operatingMode = active_operating_mode;
   msg.VBatFixed = vBat;
   msg.VExtFixed = vExt;
-  msg.BodyTemp = Temp::getTemp();
+  msg.BodyTemp = 0;
   msg.batteryLevel = Battery::getLevel();
   msg.onCharger  = ContactTime > MinContactTime;
   msg.isCharging = isCharging;

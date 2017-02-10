@@ -27,7 +27,6 @@ extern "C" {
 #include "bluetooth.h"
 #include "messages.h"
 #include "watchdog.h"
-#include "temp.h"
 #include "tests.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -63,7 +62,6 @@ int main(void)
   Lights::init();
 
   // Setup all tasks
-  Temp::init();
   Motors::init();
   Radio::init();
   Head::init();
@@ -87,7 +85,6 @@ int main(void)
     Tasks::manage();
     Radio::rotate(Lights::manage());
     Backpack::manage();
-    Temp::manage();
 
     #ifdef FACTORY
     TestFixtures::manage();
