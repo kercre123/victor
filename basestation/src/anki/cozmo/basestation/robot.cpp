@@ -401,6 +401,9 @@ void Robot::SetOnCharger(bool onCharger)
 
 void Robot::SetOnChargerPlatform(bool onPlatform)
 {
+  // Can only not be on platform if not on charge contacts
+  onPlatform = onPlatform || IsOnCharger();
+  
   const bool shouldBroadcast = _isOnChargerPlatform != onPlatform;
   _isOnChargerPlatform = onPlatform;
   
