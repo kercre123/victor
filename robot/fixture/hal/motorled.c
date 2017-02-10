@@ -227,8 +227,14 @@ int LEDGetExpectedMv(u8 led)
 
 //return button state (true=pressed)
 bool BPBtnGet(void) {
-  #warning "need to test btn threshold"
-  return BPBtnGetMv() < 100;
+  /*
+  const int samples = 8;
+  int mv = 0;
+  for( int x=0; x < samples; x++ )
+    mv += BPBtnGetMv();
+  return (mv < (500*samples)); //500mV threshold
+  */
+  return BPBtnGetMv() < 500;
 }
 
 //return button input voltage [mV]
@@ -244,8 +250,9 @@ int BPBtnGetMv(void)
     PIN_PULL_UP(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
   else //v1.5+
     PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
- 
+  
   // Now grab the voltage
+  MicroWait(50); //wait for voltages to stabilize
   return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
 }
 

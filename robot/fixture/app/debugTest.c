@@ -64,15 +64,47 @@ static void BackpackButton(void)
   
   while(1) //( getMicroCounter() - start_time < (1000000 * 10) )
   {
-    if( getMicroCounter() - tick_time > 100*1000 )
+    if( getMicroCounter() - tick_time > 250*1000 )
     {
       tick_time = getMicroCounter();
-      int btn_mv = BPBtnGetMv();
-      bool on = BPBtnGet();
       
+      const int avg_num_samples = 4;
+      const int bnt_press_threshold_mv = 500;
+      
+      //single measurement
+      int btn_mv_single = BPBtnGetMv();
+      
+      MicroWait(10000);
+      
+      //Fast average
+      int btn_mv_avg_fast = 0;
+      for(int i=0; i<avg_num_samples; i++) {
+        btn_mv_avg_fast += BPBtnGetMv();
+        //MicroWait(10000);
+      }
+      btn_mv_avg_fast /= avg_num_samples;
+      
+      MicroWait(10000);
+      
+      //Slow average
+      int btn_mv_avg_slow = 0;
+      for(int i=0; i<avg_num_samples; i++) {
+        btn_mv_avg_slow += BPBtnGetMv();
+        MicroWait(10000);
+      }
+      btn_mv_avg_slow /= avg_num_samples;
+      
+      //digital
+      bool btn_pressed = btn_mv_avg_fast < bnt_press_threshold_mv;
+      
+      //display
       for(int x=0; x < print_len; x++ )
         ConsolePutChar(0x08); //backspace
-      print_len = ConsolePrintf("%d.%03dV %s", btn_mv/1000, btn_mv%1000, on ? "on" : "off" );
+      print_len = ConsolePrintf("single/avg-fast/avg-slow: %d.%03dV %d.%03dV %d.%03dV %s", 
+        btn_mv_single/1000, btn_mv_single%1000, 
+        btn_mv_avg_fast/1000, btn_mv_avg_fast%1000,
+        btn_mv_avg_slow/1000, btn_mv_avg_slow%1000,
+        btn_pressed ? "on" : "off" );
     }
   }
   //ConsolePrintf("\r\n");
