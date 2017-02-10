@@ -140,35 +140,55 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
   DEV_ASSERT(object->HasValidPose() || ObservableObject::IsValidPoseState(newPoseState),
              "ObjectPoseConfirmer.SetPoseHelper.BothPoseStatesAreInvalid");
   
+  // if we destroy the object we need a copy so we can notify other systems and passing all relevant parameters
+  // liek family, type, new pose, objectID etc.
+  const ObservableObject* instanceToNotify = nullptr;
+  
   // copy vars we need to notify since we can destroy the object
-  const ObjectID objectID = object->GetID();
-  const Pose3d oldPoseCopy = object->GetPose();
+  const Pose3d oldPoseCopy = object->GetPose(); // note calling GetPose on PoseState::Invalid asserts
   const PoseState oldPoseState = object->GetPoseState();
-  const bool isOldPoseValid = ObservableObject::IsValidPoseState(oldPoseState);
-  const bool isActive = object->IsActive();
-  const ObjectFamily family = object->GetFamily();
   
   // if setting an invalid pose, we want to destroy the located copy of this object in its origin
   const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
   if( isNewPoseValid )
   {
     object->SetPose(newPose, distance, newPoseState);
+    
+    // we can pass the same instance since BlockWorld keeps it
+    instanceToNotify = object;
   }
   else
   {
+    // we need a new instance before, remember to delete before exit
+    ObservableObject* objCopy = object->CloneType();
+    objCopy->CopyID(object);
+    DEV_ASSERT(!objCopy->HasValidPose(), "ObjectPoseConfirmer.CopyInheritedPose");
+    instanceToNotify = objCopy;
+  
     // Notify listeners if object is becoming Unknown
     using namespace ExternalInterface;
-    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), objectID.GetValue())));
+    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), object->GetID().GetValue())));
     
+    // delete the object from BlockWorld
     _robot.GetBlockWorld().DeleteLocatedObjectByIDInCurOrigin(object->GetID());
     object = nullptr; // do not use anymore, since it's deleted
   }
 
   // Notify the change
   {
-    const Pose3d* newPosePtr = isNewPoseValid ? &newPose : nullptr;
+    // should have an instance to notify
+    DEV_ASSERT(nullptr != instanceToNotify, "ObjectPoseConfirmer.SetPoseHelper.NeedInstanceRef");
+  
+    const bool isOldPoseValid = ObservableObject::IsValidPoseState(oldPoseState);
     const Pose3d* oldPosePtr = isOldPoseValid ? &oldPoseCopy : nullptr;
-    BroadcastObjectPoseChanged(objectID, isActive, family, oldPosePtr, oldPoseState, newPosePtr, newPoseState);
+    BroadcastObjectPoseChanged(*instanceToNotify, oldPosePtr, oldPoseState);
+  }
+  
+  // destroy the copy if it's new
+  const bool isInstanceACopy = (instanceToNotify != object);
+  if ( isInstanceACopy ) {
+    DEV_ASSERT(nullptr == object, "ObjectPoseConfirmer.SetPoseHelper.WhyCopyIfItsAlive");
+    Util::SafeDelete(instanceToNotify);
   }
 }
 
@@ -177,12 +197,12 @@ void ObjectPoseConfirmer::SetPoseStateHelper(ObservableObject* object, PoseState
 {
   if ( ObservableObject::IsValidPoseState(newState) )
   {
+    // do the change, store old for notification
     const PoseState oldState = object->GetPoseState();
     object->SetPoseState(newState);
   
-    // broadcast the poseState change
-    const bool isActive = object->IsActive();
-    BroadcastObjectPoseStateChanged(object->GetID(), isActive, oldState, newState);
+    // broadcast the poseState change    
+    BroadcastObjectPoseStateChanged(*object, oldState);
   }
   else
   {
@@ -191,7 +211,6 @@ void ObjectPoseConfirmer::SetPoseStateHelper(ObservableObject* object, PoseState
                       EnumToString(newState),
                       object->GetID().GetValue());
   }
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -656,30 +675,31 @@ Result ObjectPoseConfirmer::AddInExistingPose(const ObservableObject* object)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObjectID& objectID, bool isActive,
-                                                     const ObjectFamily family,
-                                                     const Pose3d* oldPose, PoseState oldPoseState,
-                                                     const Pose3d* newPose, PoseState newPoseState)
+void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObservableObject& object,
+                                                     const Pose3d* oldPose, PoseState oldPoseState)
 {
+  const ObjectID& objectID = object.GetID();
+  const PoseState newPoseState = object.GetPoseState();
+
   // Sanity checks. These are guaranteed before we call the listeners, so they don't have to check
   #if ANKI_DEVELOPER_CODE
   {
     // Check: objectID is valid
-    DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
+    DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.BroadcastObjectPoseChanged.InvalidObjectID");
     // Check: PoseState=Invalid <-> Pose=nullptr
     const bool oldStateInvalid = !ObservableObject::IsValidPoseState(oldPoseState);
     const bool oldPoseNull     = (nullptr == oldPose);
-    DEV_ASSERT(oldStateInvalid == oldPoseNull, "BlockWorld.OnObjectPoseChanged.InvalidOldPoseParameters");
+    DEV_ASSERT(oldStateInvalid == oldPoseNull, "ObjectPoseConfirmer.BroadcastObjectPoseChanged.InvalidOldPoseParameters");
     const bool newStateInvalid = !ObservableObject::IsValidPoseState(newPoseState);
-    const bool newPoseNull     = (nullptr == newPose);
-    DEV_ASSERT(newStateInvalid == newPoseNull, "BlockWorld.OnObjectPoseChanged.InvalidNewPoseParameters");
     // Check: Can't set from Invalid to Invalid
-    DEV_ASSERT(!newStateInvalid || !oldStateInvalid, "BlockWorld.OnObjectPoseChanged.BothStatesAreInvalid");
+    DEV_ASSERT(!newStateInvalid || !oldStateInvalid, "ObjectPoseConfirmer.BroadcastObjectPoseChanged.BothStatesAreInvalid");
     // Check: newPose valid/invalid correlates with the object instance in the world (if invalid, null object;
     // if valid, non-null object)
     const ObservableObject* locatedObject = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
     const bool isObjectNull = (nullptr == locatedObject);
-    DEV_ASSERT(newStateInvalid == isObjectNull, "BlockWorld.OnObjectPoseChanged.PoseStateAndObjectDontMatch");
+    DEV_ASSERT(newStateInvalid == isObjectNull, "ObjectPoseConfirmer.BroadcastObjectPoseChanged.PoseStateAndObjectDontMatch");
+    const bool isCopy = (&object != locatedObject);
+    DEV_ASSERT(newStateInvalid == isCopy, "ObjectPoseConfirmer.BroadcastObjectPoseChanged.ObjectCopyExpectedOnlyIfInvalid");
   }
   #endif
 
@@ -687,22 +707,25 @@ void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObjectID& objectID, b
   // this Broadcast
 
   // listeners
-  _robot.GetBlockWorld().OnObjectPoseChanged(objectID, family, oldPose, oldPoseState, newPose, newPoseState);
+  _robot.GetBlockWorld().OnObjectPoseChanged(object, oldPose, oldPoseState);
   _robot.GetBlockWorld().NotifyBlockConfigurationManagerObjectPoseChanged(objectID);
   
   // notify poseState changes if it changed
-  BroadcastObjectPoseStateChanged(objectID, isActive, oldPoseState, newPoseState);
+  BroadcastObjectPoseStateChanged(object, oldPoseState);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::BroadcastObjectPoseStateChanged(const ObjectID& objectID,
-                                                          const bool isActive,
-                                                          PoseState oldPoseState,
-                                                          PoseState newPoseState)
+void ObjectPoseConfirmer::BroadcastObjectPoseStateChanged(const ObservableObject& object, PoseState oldPoseState)
 {
+  const ObjectID& objectID = object.GetID();
+  const PoseState newPoseState = object.GetPoseState();
+  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.BroadcastObjectPoseStateChanged.InvalidObjectID");
+  
   // only if it changes
   if ( oldPoseState != newPoseState )
   {
+    const bool isActive = object.IsActive();
+    
     // listeners
     if(isActive) {  // notify cubeLights only if the object is active
       _robot.GetCubeLightComponent().OnActiveObjectPoseStateChanged(objectID, oldPoseState, newPoseState);

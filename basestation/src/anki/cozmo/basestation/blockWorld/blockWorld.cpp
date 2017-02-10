@@ -2767,43 +2767,18 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
     // make sure that everyone gets notified that there's a new object in town, I mean in this origin
     {
-      const ObjectID& objectID = object->GetID();
-      const Pose3d* newPosePtr = &object->GetPose();
       const Pose3d* oldPosePtr = nullptr;
-      const PoseState newPoseState = object->GetPoseState();
       const PoseState oldPoseState = PoseState::Invalid;
-      const bool isActive = object->IsActive();
-      const ObjectFamily family = object->GetFamily();
-      _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(objectID, isActive, family, oldPosePtr, oldPoseState, newPosePtr, newPoseState);
+      _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(*object, oldPosePtr, oldPoseState);
     }
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectPoseChanged(const ObjectID& objectID,
-                                       const ObjectFamily family,
-                                       const Pose3d* oldPose, PoseState oldPoseState,
-                                       const Pose3d* newPose, PoseState newPoseState)
+  void BlockWorld::OnObjectPoseChanged(const ObservableObject& object, const Pose3d* oldPose, PoseState oldPoseState)
   {
-    // Sanity checks
-    #if ANKI_DEVELOPER_CODE
-    {
-      DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
-      // Check: PoseState=Invalid <-> Pose=nullptr
-      const bool oldStateInvalid = !ObservableObject::IsValidPoseState(oldPoseState);
-      const bool oldPoseNull     = (nullptr == oldPose);
-      DEV_ASSERT(oldStateInvalid == oldPoseNull, "BlockWorld.OnObjectPoseChanged.InvalidOldPoseParameters");
-      const bool newStateInvalid = !ObservableObject::IsValidPoseState(newPoseState);
-      const bool newPoseNull     = (nullptr == newPose);
-      DEV_ASSERT(newStateInvalid == newPoseNull, "BlockWorld.OnObjectPoseChanged.InvalidNewPoseParameters");
-      // Check: Can't set from and to Invalid
-      DEV_ASSERT(newStateInvalid != oldStateInvalid, "BlockWorld.OnObjectPoseChanged.BothStatesAreInvalid");
-      // Check: newPose valid/invalid correlates with the object instance in the world (if invalid, null object),
-      const ObservableObject* locatedObject = GetLocatedObjectByID(objectID);
-      const bool isObjectNull = (nullptr == locatedObject);
-      DEV_ASSERT(newStateInvalid == isObjectNull, "BlockWorld.OnObjectPoseChanged.PoseStateAndObjectDontMatch");
-    }
-    #endif
-
+    const ObjectID& objectID = object.GetID();
+    DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
+    
     // - - - - -
     // update the container that keeps track of changes per Update
     // - - - - -
@@ -2844,16 +2819,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // - - - - -
     // update memory map
     // - - - - -
+    const PoseState newPoseState = object.GetPoseState();
+    const ObjectFamily family = object.GetFamily();
     bool objectTrackedInMemoryMap = true;
-    if (family == ObjectFamily::CustomObject && !kAddCustomObjectsToMemMap)
-    {
-      // COZMO-9360
-      objectTrackedInMemoryMap = false;
+    if (family == ObjectFamily::CustomObject && !kAddCustomObjectsToMemMap) {
+      objectTrackedInMemoryMap = false; // COZMO-9360
     }
-    else if (family == ObjectFamily::MarkerlessObject && !kAddUnrecognizedMarkerlessObjectsToMemMap)
-    {
-      // COZMO-7496?
-      objectTrackedInMemoryMap = false;
+    else if (family == ObjectFamily::MarkerlessObject && !kAddUnrecognizedMarkerlessObjectsToMemMap) {
+      objectTrackedInMemoryMap = false; // COZMO-7496?
     }
     
     if( objectTrackedInMemoryMap )
@@ -2869,23 +2842,21 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       if ( !oldValid && newValid )
       {
         // first time we see the object, add report
-        const ObservableObject* object = GetLocatedObjectByID(objectID);
-        AddObjectReportToMemMap(*object, *newPose);
+        AddObjectReportToMemMap(object, object.GetPose());
       }
       else if ( oldValid && newValid )
       {
         // updating the pose of an object, decide if we update the report. As an optimization, we don't update
         // it if the poses are close enough
-        const ObservableObject* object = GetLocatedObjectByID(objectID); // can't return null, asserted
         const int objectIdInt = objectID.GetValue();
         OriginToPoseInMapInfo& reportedPosesForObject = _navMapReportedPoses[objectIdInt];
-        const PoseOrigin* curOrigin = &newPose->FindOrigin();
+        const PoseOrigin* curOrigin = &object.GetPose().FindOrigin();
         auto poseInNewOriginIter = reportedPosesForObject.find( curOrigin );
         if ( poseInNewOriginIter != reportedPosesForObject.end() )
         {
           // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
           // be smaller than the threshold to not report
-          DEV_ASSERT(kObjectPositionChangeToReport_mm < object->GetDimInParentFrame<'Z'>()*0.5f,
+          DEV_ASSERT(kObjectPositionChangeToReport_mm < object.GetDimInParentFrame<'Z'>()*0.5f,
                     "OnObjectPoseChanged.ChangeThresholdTooBig");
           const float distThreshold = kObjectPositionChangeToReport_mm;
           const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
@@ -2893,27 +2864,25 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           // compare new pose with previous entry and decide if isFarFromPrev
           const PoseInMapInfo& info = poseInNewOriginIter->second;
           const bool isFarFromPrev =
-            ( !info.isInMap || (!newPose->IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
+            ( !info.isInMap || (!object.GetPose().IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
           
           // if it is far from previous (or previous was not in the map, remove-add)
           if ( isFarFromPrev ) {
-            RemoveObjectReportFromMemMap(*object, curOrigin);
-            AddObjectReportToMemMap(*object, *newPose);
+            RemoveObjectReportFromMemMap(object, curOrigin);
+            AddObjectReportToMemMap(object, object.GetPose());
           }
         }
         else
         {
           // did not find an entry in the current origin for this object, add it now
-          const ObservableObject* object = GetLocatedObjectByID(objectID);
-          AddObjectReportToMemMap(*object, *newPose);
+          AddObjectReportToMemMap(object, object.GetPose());
         }
       }
       else if ( oldValid && !newValid )
       {
         // deleting an object, remove its report using oldOrigin (the origin it was removed from)
         const PoseOrigin* oldOrigin = &oldPose->FindOrigin();
-        const ObservableObject* object = GetLocatedObjectByID(objectID);
-        RemoveObjectReportFromMemMap(*object, oldOrigin);
+        RemoveObjectReportFromMemMap(object, oldOrigin);
       }
       else
       {
