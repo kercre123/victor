@@ -792,6 +792,11 @@ public class Robot : IRobot {
   public void HandleDeleteObservedObject(Anki.Cozmo.ExternalInterface.RobotDeletedObject message) {
     if (ID == message.robotID) {
       KnownObjects.Remove((int)message.objectID);
+
+      ActiveObject objectPoseUnknown = GetActiveObjectById(objectID);
+      if (objectPoseUnknown != null) {
+      	objectPoseUnknown.MarkPoseUnknown();
+      }
     }
   }
 
@@ -928,6 +933,10 @@ public class Robot : IRobot {
   }
 
   private void HandleLocatedObjectStatesUpdate(G2U.LocatedObjectStates message) {
+    // first flag all objects as Unknown because LocatedObjectStates only broadcasts objects that currently
+    // exist in the current coordinate frame. Flag all Unknown, and then Update the poses of those received
+    MarkAllActiveObjectsPoseAsUnknown();
+
     LocatedObjectState[] locObjectStates = message.objects;
     if (locObjectStates != null) {
       for (int i = 0; i < locObjectStates.Length; ++i) {
@@ -1050,6 +1059,16 @@ public class Robot : IRobot {
       if (objectPoseUnknown != null) {
         objectPoseUnknown.HandleObjectTapped(message);
       }
+    }
+  }
+
+  // Flags the pose of all active objects as Unknown
+  public void MarkAllActiveObjectsPoseAsUnknown() {
+    if (Charger) {
+      Charger.MarkPoseUnknown();
+    }
+    foreach (var kvp in LightCubes) {
+      kvp.Value.MarkPoseUnknown();
     }
   }
 

@@ -1087,7 +1087,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     if(RESULT_OK == result) {
       // Erase all the objects in the old frame now that their counterparts in the new
       // frame have had their poses updated
-      DeleteLocatedObjectsByOrigin(oldOrigin);
+      // rsam: Note we don't have to call Delete since we don't clear or notify. There is no way that we could
+      // be deleting any objects during rejigger, since we bring objects to the previously known map or
+      // override their pose. For that reason, directly remove the origin rather than calling DeleteLocatedObjectsByOrigin
+      // DeleteLocatedObjectsByOrigin(oldOrigin);
+      _locatedObjects.erase(oldOrigin);
     }
     
     // Now go through all the objects already in the origin we are switching _to_
@@ -4672,59 +4676,37 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     auto originIter = _locatedObjects.find(origin);
     if(originIter != _locatedObjects.end())
     {
+      // cache objectIDs since we are going to destroy the objects
+      std::set<ObjectID> idsToBroadcast;
       const bool isCurrentOrigin = (originIter->first == _robot->GetWorldOrigin());
       
-      // cache objectIDs since we are going to destroy the objects
-      std::set<ObjectID> objectsInOrigin;
-      
-      // iterate all families and types
-      for(auto & objectsByFamily : originIter->second)
-      {
-        for(auto & objectsByType : objectsByFamily.second)
+      // clearing the object and adding to notification should only be needed for current origin
+      if ( isCurrentOrigin ) {
+        // iterate all families and types
+        for(auto & objectsByFamily : originIter->second)
         {
-          // for every object
-          auto objectIter = objectsByType.second.begin();
-          while(objectIter != objectsByType.second.end())
+          for(auto & objectsByType : objectsByFamily.second)
           {
-            // cache its ID (for later usage)
-            objectsInOrigin.insert(objectIter->second->GetID());
-            
-            // clear the object if it's in the current origin (other origins should not be necessary)
-            if ( isCurrentOrigin ) {
+            // for every object
+            auto objectIter = objectsByType.second.begin();
+            while(objectIter != objectsByType.second.end())
+            {
+              // clear the object and add to notification
+              idsToBroadcast.insert(objectIter->second->GetID());
               ClearLocatedObjectHelper(objectIter->second.get());
+              ++objectIter;
             }
-            ++objectIter;
           }
         }
       }
+    
+      // always delete the origin itself, which frees all the objects in it
       _locatedObjects.erase(originIter);
       
-      // rsampedro: I don't know if this is useful anymore. Some of these things were due to active/unique objects
-      // being destroyed, which now can be tracked separately due to the connected objects container
-      
-      // Find all objects in all _other_ origins and remove their IDs from the
-      // set of object IDs we found in _this_ origin. If anything is left in the
-      // set, then that object ID did not exist in any other frame and thus its
-      // deletion should be broadcast below. Note that we can search all origins
-      // now because we just erased "origin".
-      BlockWorldFilter filter;
-      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-      filter.SetFilterFcn([&objectsInOrigin](const ObservableObject* object)
-                          {
-                            objectsInOrigin.erase(object->GetID());
-                            return true;
-                          });
-      
-      FilterLocatedObjects(filter);
-      
-      for(const ObjectID& objectID : objectsInOrigin)
-      {
-        PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsByOrigin.RemovedObjectFromAllFrames",
-                       "Broadcasting deletion of object %d, which no longer exists in any frame",
-                       objectID.GetValue());
-        
-        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
-                                                                                                       objectID)));
+      // notify of the deleted objects
+      for(const auto& id : idsToBroadcast) {
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(
+                            ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), id)));
       }
     }
   }
@@ -4741,11 +4723,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       if(familyIter != objectsByOrigin.second.end()) {
         for(auto & objectsByType : familyIter->second) {
           for(auto & objectsByID : objectsByType.second) {
-            idsToBroadcast.insert(objectsByID.first);
             
             // clear object in current origin (others should not be needed)
             const bool isCurrentOrigin = (&objectsByID.second->GetPose().FindOrigin() == _robot->GetWorldOrigin());
             if ( isCurrentOrigin ) {
+              idsToBroadcast.insert(objectsByID.first);
               ClearLocatedObjectHelper(objectsByID.second.get());
             }
           }
@@ -4756,8 +4738,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
     
     for(const auto& id : idsToBroadcast) {
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
-                                                                                                     id)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
+                          ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), id)));
     }
   }
   
@@ -4771,9 +4753,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         if(typeIter != objectsByFamily.second.end()) {
           for(auto & objectsByID : typeIter->second) {
           
-            idsToBroadcast.insert(objectsByID.first);
             const bool isCurrentOrigin = (&objectsByID.second->GetPose().FindOrigin() == _robot->GetWorldOrigin());
             if ( isCurrentOrigin ) {
+              idsToBroadcast.insert(objectsByID.first); // broadcast only in current origin (per message design)
               ClearLocatedObjectHelper(objectsByID.second.get());
             }
           }
@@ -4783,9 +4765,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
     }
     
-    for(auto id : idsToBroadcast) {
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
-                                                                                                     id)));
+    // notify of deleted objects (per message design)
+    for(const auto& id : idsToBroadcast) {
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
+                          ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), id)));
     }
   }
 
@@ -4799,6 +4782,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     std::vector<ObservableObject*> objects;
     FindLocatedMatchingObjects(filter, objects);
 
+    bool existedInCurrentOrigin = false; // will update if found
     for(auto* object : objects)
     {
       DEV_ASSERT(nullptr != object, "BlockWorld.DeleteLocatedObjectByID.NullObject");
@@ -4811,6 +4795,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       ObjectFamily inFamily = object->GetFamily();
       ObjectType   withType = object->GetType();
       
+      // update existedInCurrentOrigin
+      existedInCurrentOrigin = existedInCurrentOrigin || (origin == _robot->GetWorldOrigin());
+      
       // And remove it from the container
       // Note: we're using shared_ptr to store the objects, so erasing from
       //       the container will delete it if nothing else is referring to it
@@ -4821,9 +4808,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                      origin, EnumToString(withType), object->GetID().GetValue());
     }
     
-    // notify something was deleted
-    if ( !objects.empty() ) {
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(), withID)));
+    // notify the object was deleted from the current origin
+    if ( existedInCurrentOrigin ) {
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
+                          ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), withID)));
     }
   }
   
@@ -4848,11 +4836,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                      "Origin %p Type %s ID %u",
                      origin, EnumToString(withType), object->GetID().GetValue());
 
-      // TODO we need to revise Deleted vs InstanceDeleted (old Unknown)
-      // VIP ^ Deleted used to mean including not connected. This should probably broadcast set to Unknown instead
-      // broadcast if there was a deletion
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
-                                                                                                     withID)));
+      // broadcast the fact that we have removed the object from this origin
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
+                          ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), withID)));
     }
   }
 

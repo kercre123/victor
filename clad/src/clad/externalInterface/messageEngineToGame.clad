@@ -328,16 +328,20 @@ message RobotDeletedFace {
     uint_32 robotID
 }
 
-// RobotDeletedObject
-message RobotDeletedObject {
+// RobotDeletedLocatedObject: This message is broadcasted when we delete an object from the current origin. It's intended
+// to notify clients that the object is no longer in the current origin, and thus its pose is not reliable.
+// Note the robot might be able to "bring back" a location for the object by relocalizing to a previously known
+// object.
+message RobotDeletedLocatedObject {
     uint_32 robotID,
     uint_32 objectID
 }
 
-// RobotDeletedAllObjects
-message RobotDeletedAllObjects {
-    uint_32 robotID
-}
+// RobotDeletedAllObjects: deprecated in favor of LocatedObjectStates, which already notifies
+// of the current state of objects.
+//message RobotDeletedAllObjects {
+//    uint_32 robotID
+//}
 
 // RobotDeletedAllCustomObjects
 message RobotDeletedAllCustomObjects {
