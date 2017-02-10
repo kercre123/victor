@@ -388,7 +388,7 @@ namespace Anki {
             if(kNumRandomObstacles > 0)
             {
               // Delete the old obstacles we added
-              robot.GetBlockWorld().DeleteObjectsByFamily(ObjectFamily::CustomObject);
+              robot.GetBlockWorld().DeleteLocatedObjectsByFamily(ObjectFamily::CustomObject);
             
               // Add new obstacles at random poses around the preDock pose corresponding with _initialVisionMarker
               for(u32 i = 0; i < kNumRandomObstacles; ++i)

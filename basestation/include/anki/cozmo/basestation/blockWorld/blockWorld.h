@@ -104,8 +104,9 @@ namespace Anki
       // if the poseState changes to PoseState::Invalid. If a poseState is PoseState::Invalid, its corresponding
       // Pose3d is nullptr, since any information related to it would be wrong.
       void OnObjectPoseChanged(const ObjectID& objectID,
-                                const Pose3d* oldPose, PoseState oldPoseState,
-                                const Pose3d* newPose, PoseState newPoseState);
+                               const ObjectFamily family,
+                               const Pose3d* oldPose, PoseState oldPoseState,
+                               const Pose3d* newPose, PoseState newPoseState);
       
       // notify the blockWorld that someone (poseConfirmer) has visually verified the given object at their current pose
       void OnObjectVisuallyVerified(const ObservableObject* object);

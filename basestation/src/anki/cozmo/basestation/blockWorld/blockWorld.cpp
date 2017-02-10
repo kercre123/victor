@@ -1022,9 +1022,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
       else
       {
-        newObject = FindObjectClosestTo(oldObject->GetPose(),
-                                        oldObject->GetSameDistanceTolerance(),
-                                        filterNew);
+        newObject = FindLocatedObjectClosestTo(oldObject->GetPose(),
+                                               oldObject->GetSameDistanceTolerance(),
+                                               filterNew);
       }    
       
       bool addNewObject = false;
@@ -2232,7 +2232,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     obsPose.SetParent(_robot->GetPose().GetParent());
     
     // Initialize with Known pose so it won't delete immediately because it isn't re-seen
-    auto customObject = std::unique_ptr<CustomObject>(customObstacle);
+    auto customObject = std::shared_ptr<CustomObject>(customObstacle);
     customObject->InitPose(obsPose, PoseState::Known);
 
     // set new ID before adding to the world, since this is a new object
@@ -2765,12 +2765,15 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const Pose3d* oldPosePtr = nullptr;
       const PoseState newPoseState = object->GetPoseState();
       const PoseState oldPoseState = PoseState::Invalid;
-      _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(objectID, oldPosePtr, oldPoseState, newPosePtr, newPoseState);
+      const bool isActive = object->IsActive();
+      const ObjectFamily family = object->GetFamily();
+      _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(objectID, isActive, family, oldPosePtr, oldPoseState, newPosePtr, newPoseState);
     }
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::OnObjectPoseChanged(const ObjectID& objectID,
+                                       const ObjectFamily family,
                                        const Pose3d* oldPose, PoseState oldPoseState,
                                        const Pose3d* newPose, PoseState newPoseState)
   {
@@ -2834,7 +2837,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // - - - - -
     // update memory map
     // - - - - -
-	const bool objectTrackedInMemoryMap = (object->GetFamily() != ObjectFamily::CustomObject || kAddCustomObjectsToMemMap); // COZMO-9360
+	const bool objectTrackedInMemoryMap = (family != ObjectFamily::CustomObject || kAddCustomObjectsToMemMap); // COZMO-9360
 	if( objectTrackedInMemoryMap ) 
     {	
     /* 
@@ -3158,7 +3161,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     DeselectCurrentObject();
     
     // notify about updated object states
-    BroadcastObjectStates(false, newWorldOrigin);
+    BroadcastLocatedObjectStates();
   }
   Result BlockWorld::AddCliff(const Pose3d& p)
   {
