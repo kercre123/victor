@@ -15,11 +15,13 @@ namespace SpeedTap {
     public Cozmo.MinigameWidgets.ScoreWidget scoreWidget;
     public int MistakeTapsTotal { get; set; }
     public int CorrectTapsTotal { get; set; }
-    public SpeedTapPlayerInfo(PlayerType playerType, string name) : base(playerType, name) {
+    public Color ScoreboardColor { get; private set; }
+    public SpeedTapPlayerInfo(PlayerType playerType, string name, Color color) : base(playerType, name) {
       CubeID = -1;
       LastTapTimeStamp = -1;
       MistakeTapsTotal = 0;
       CorrectTapsTotal = 0;
+      ScoreboardColor = color;
     }
     public Color PlayerWinColor {
       get {
@@ -69,7 +71,7 @@ namespace SpeedTap {
     public float TapResolutionDelay { get; private set; }
 
     public float MPTimeBetweenRoundsSec { get { return _GameConfig.MPTimeBetweenRoundsSec; } }
-
+    public SpeedTapGameConfig GameConfig { get { return _GameConfig; } }
     private SpeedTapGameConfig _GameConfig;
 
     #endregion
@@ -127,8 +129,8 @@ namespace SpeedTap {
     public static bool sWantsSuddenDeathHumanHuman = false;
     public static bool sWantsSuddenDeathHumanCozmo = false;
 #endif
-    public override PlayerInfo AddPlayer(PlayerType playerType, string playerName) {
-      SpeedTapPlayerInfo info = new SpeedTapPlayerInfo(playerType, playerName);
+    public virtual PlayerInfo AddPlayer(PlayerType playerType, string playerName, Color color) {
+      SpeedTapPlayerInfo info = new SpeedTapPlayerInfo(playerType, playerName, color);
       _PlayerInfo.Add(info);
       // As a special case, Cozmo always grabs the first cube because it was shown first
       if (playerType == PlayerType.Cozmo && CubeIdsForGame.Count >= 1) {
@@ -241,7 +243,10 @@ namespace SpeedTap {
       int playerCount = GetPlayerCount();
       for (int i = 0; i < playerCount; ++i) {
         SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        playerInfo.scoreWidget.Dim = false;
+        // portrait colors mean something specific in MP
+        if (playerCount <= 2) {
+          playerInfo.scoreWidget.Dim = playerInfo != winner;
+        }
         playerInfo.scoreWidget.IsWinner = playerInfo == winner;
       }
     }

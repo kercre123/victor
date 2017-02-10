@@ -18,7 +18,7 @@ namespace SpeedTap {
 
     private UnityAction _Callback = null;
 
-    private GameBase _Game;
+    private SpeedTapGame _Game;
 
     public void Init(UnityAction callback, SpeedTapGame game) {
       _Callback = callback;
@@ -34,8 +34,8 @@ namespace SpeedTap {
 
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("StartAutomation", "SpeedTap",
                                   (string str) => {
-                                    _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
-                                    _Game.AddPlayer(PlayerType.Automation, "Automation");
+                                    _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo), Color.white);
+                                    _Game.AddPlayer(PlayerType.Automation, "Automation", Color.white);
                                     StartGame();
                                   });
     }
@@ -55,16 +55,16 @@ namespace SpeedTap {
     }
 
     private void Handle2PlayerClicked() {
-      _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
-      _Game.AddPlayer(PlayerType.Human, DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo), Color.white);
+      _Game.AddPlayer(PlayerType.Human, DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName, Color.white);
       StartGame();
     }
 
     private void HandleMPClicked() {
       if (IsMPModeUnlocked()) {
-        _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo));
-        _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer1));
-        _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer2));
+        _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo), _Game.GameConfig.CozmoTint);
+        _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer1), _Game.GameConfig.Player1Tint);
+        _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer2), _Game.GameConfig.Player2Tint);
         StartGame();
       }
       else {

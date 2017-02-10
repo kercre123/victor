@@ -164,6 +164,7 @@ public abstract class GameBase : MonoBehaviour {
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FacePositionUpdated);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.Frustration);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FistBump);
   }
 
   private void ResetReactionaryBehaviorsForGameEnd() {

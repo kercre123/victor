@@ -82,7 +82,7 @@ namespace SpeedTap {
         _SpeedTapGame.SharedMinigameView.InfoTitleText = string.Empty;
 
         if (_SpeedTapGame.IsGameComplete()) {
-          UpdateBlockLights(false);
+          UpdateBlockLights(_WasMistakeMade);
           _SpeedTapGame.UpdateUIForGameEnd();
           PlayReactToGameAnimationAndSendEvent();
         }

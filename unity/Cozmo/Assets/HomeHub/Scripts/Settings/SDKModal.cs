@@ -73,16 +73,8 @@ namespace Cozmo.Settings {
 
     private string SecondsToDateTimeString(float inSeconds) {
       TimeSpan timespan = TimeSpan.FromSeconds(inSeconds);
-
-      int tenthsOfASecond = timespan.Milliseconds / 100;
-      if (timespan.Days > 0) {
-        return string.Format("{0}d:{1:D2}h:{2:D2}m:{3:D2}.{4:D1}s", timespan.Days, timespan.Hours, timespan.Minutes,
-                                    timespan.Seconds, tenthsOfASecond);
-      }
-      else {
-        return string.Format("{0:D2}h:{1:D2}m:{2:D2}.{3:D1}s", timespan.Hours, timespan.Minutes,
-                                    timespan.Seconds, tenthsOfASecond);
-      }
+      // Displays as [-][d:]h:mm:ss[.FFFFFFF], but culturally sensitive
+      return string.Format(Localization.GetCultureInfo(), "0:g", timespan);
     }
 
     private void HandleShowScreenButtonTapped() {
@@ -119,7 +111,7 @@ namespace Cozmo.Settings {
         _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelConnectionDurationText,
                                                            SecondsToDateTimeString(message.connectionStatus.timeInCurrentConnection_s)) + "\n";
         _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelConnectionCommandCountText,
-                                                           message.connectionStatus.numCommands) + "\n";
+                                                           Localization.GetNumber((int)message.connectionStatus.numCommands)) + "\n";
 
         if (message.timeSinceLastSdkCommand_s >= 0.0f) {
           if (message.timeSinceLastSdkCommand_s >= kConnectionTimeoutThreshold_s) {

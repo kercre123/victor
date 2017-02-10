@@ -535,20 +535,21 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
         if num_retries_counting_up > 0:
           UtilLog.info("Retry #{retry_number}".format(retry_number=num_retries_counting_up))
 
-        log_file_name = get_log_file_path(log_folder, test_controller, world_file, cur_time, num_retries_counting_up)
-        UtilLog.info('results will be logged to {file}'.format(file=log_file_name))
-        log_file_paths.append(log_file_name)
-        log_file_paths.append(log_file_name + '.sdk')
+        webots_log_file_name = get_log_file_path(log_folder, test_controller, world_file, "txt", cur_time, num_retries_counting_up)
+        sdk_log_file_name =    get_log_file_path(log_folder, test_controller, world_file, "sdk.txt", cur_time, num_retries_counting_up)
+        UtilLog.info('results will be logged to {file}'.format(file=webots_log_file_name))
+        log_file_paths.append(webots_log_file_name)
+        log_file_paths.append(sdk_log_file_name)
       
         output_webots = ThreadOutput() #We don't care about the webot return code since we kill it
         output_sdk = ThreadOutput()
         run_webots_thread = threading.Thread(target=run_webots, args=[output_webots, GENERATED_FILE_PATH, world_file,
-                                                                      show_graphics, log_file_name])
+                                                                      show_graphics, webots_log_file_name])
         run_webots_thread.start()
         time.sleep(15) #TODO wait until robot is connected instead of 10 seconds
 
         for sdk_file in sdk_scripts:
-          run_sdk_thread = threading.Thread(target=run_sdk, args=[output_sdk, sdk_root, sdk_file, log_file_name + '.sdk'])
+          run_sdk_thread = threading.Thread(target=run_sdk, args=[output_sdk, sdk_root, sdk_file, sdk_log_file_name])
           run_sdk_thread.start()
 
           run_sdk_thread.join(timeout)
@@ -558,7 +559,7 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
         stop_webots()
 
         # Check log for crashes, errors, and warnings
-        (crash_count, error_count, warning_count) = parse_output(forward_webots_log_level, log_file_name)
+        (crash_count, error_count, warning_count) = parse_output(forward_webots_log_level, webots_log_file_name)
 
         # Check if timeout exceeded
         if run_webots_thread.isAlive():
@@ -667,7 +668,7 @@ def get_build_folder(build_type):
   assert build_type in BuildType
   return get_subpath("build/mac", build_type.name)
 
-def get_log_file_path(log_folder, test_name, world_file_name, timestamp="", retry_number=0):
+def get_log_file_path(log_folder, test_name, world_file_name, extension=".txt", timestamp="", retry_number=0):
   """Returns what the log file names should be.
 
   log_folder (string) --
@@ -691,9 +692,9 @@ def get_log_file_path(log_folder, test_name, world_file_name, timestamp="", retr
     retry_string = "_retry{0}".format(retry_number)
     
   if timestamp == "":
-    file_name = "webots_out_{0}_{1}{2}.txt".format(test_name, world_file_name, retry_string)
+    file_name = "webots_out_{0}_{1}{2}.{4}".format(test_name, world_file_name, retry_string, extension)
   else:
-    file_name = "webots_out_{0}_{1}_{2}{3}.txt".format(test_name, world_file_name, timestamp, retry_string)
+    file_name = "webots_out_{0}_{1}_{2}{3}.{4}".format(test_name, world_file_name, timestamp, retry_string, extension)
 
   log_file_path = os.path.join(log_folder, file_name)
 

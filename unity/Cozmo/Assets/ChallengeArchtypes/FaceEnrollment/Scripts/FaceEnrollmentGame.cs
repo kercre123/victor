@@ -71,12 +71,10 @@ namespace FaceEnrollment {
     }
 
     protected override void AddDisabledReactionaryBehaviors() {
-      // Meet Cozmo has special logic for this stuff so override the base class.
-      // Reactionary behavior and custom freeplay behavior inside of MeetCozmo is set in
-      // FaceSlideState class.
-
-      // Disable ReactToPet to avoid false positive disruptions
+      // Meet cozmo shouldn't use the GameBase reactionary behaviors because it is in a freeplay-like
+      // mode for the behavior chooser "MeetCozmoFindFaces"
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FistBump);
     }
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {

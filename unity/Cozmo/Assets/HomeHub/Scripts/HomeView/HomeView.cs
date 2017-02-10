@@ -452,6 +452,12 @@ namespace Cozmo.HomeHub {
     }
 
     public void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
+      // This is still needed because if you click on a challenge after the rewards is finshed,
+      // but before the asset bundle is done loading the game dialog will come up before loot.
+      // and loot will be stuck.
+      if (_LootSequenceActive) {
+        return;
+      }
       if (OnUnlockedChallengeClicked != null) {
         OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
       }
@@ -480,7 +486,9 @@ namespace Cozmo.HomeHub {
           }
         }
 
-        goalProgressText = Localization.GetWithArgs(LocalizationKeys.kLabelFractionCount, goalsCompleted, totalGoals);
+        goalProgressText = Localization.GetWithArgs(LocalizationKeys.kLabelFractionCount,
+                                                    Localization.GetNumber(goalsCompleted),
+                                                    Localization.GetNumber(totalGoals));
       }
 
       foreach (AnkiTextLabel textLabel in _DailyGoalsCompletionTexts) {
@@ -742,6 +750,7 @@ namespace Cozmo.HomeHub {
         UIManager.EnableTouchEvents();
         _RewardSequenceActive = false;
       }
+      // This is the thing that eventually opens lootview via HandleCheckForLootView handler
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
 
