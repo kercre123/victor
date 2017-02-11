@@ -234,7 +234,7 @@ bool BPBtnGet(void) {
     mv += BPBtnGetMv();
   return (mv < (500*samples)); //500mV threshold
   */
-  return BPBtnGetMv() < 500;
+  return BPBtnGetMv() < 250;
 }
 
 //return button input voltage [mV]
@@ -252,7 +252,55 @@ int BPBtnGetMv(void)
     PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
   
   // Now grab the voltage
-  MicroWait(50); //wait for voltages to stabilize
+  MicroWait(100); //wait for voltages to stabilize
   return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
+}
+
+//======================================
+//DEBUG:
+//======================================
+
+void _btn_low_drive_0(void) {
+  PIN_RESET(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
+  PIN_OUT(GPIOA, BPLED[BPLED_BTN_IDX].pinlow); }
+void _btn_low_float(void) {
+  PIN_PULL_NONE(GPIOA,BPLED[BPLED_BTN_IDX].pinlow);
+  PIN_IN(GPIOA,BPLED[BPLED_BTN_IDX].pinlow); }
+void _btn_high_drive_1(void) {
+  PIN_SET(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
+  PIN_OUT(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh); }
+void _btn_high_float(void) {
+  PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
+  PIN_IN(GPIOA,BPLED[BPLED_BTN_IDX].pinhigh); }
+
+int Debug_BPBtnGetMv_Normal(void)
+{ 
+  _bp_signal_float(); //all backpack signals -> input Z
+  _btn_low_drive_0();
+  _btn_high_float();  
+  MicroWait(100);
+  return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
+}
+
+int Debug_BPBtnGetMv_Precharge(void)
+{
+  _bp_signal_float(); //all backpack signals -> input Z
+  _btn_low_drive_0();
+  _btn_high_drive_1(); //precharge any wire capacitance
+  MicroWait(100);
+  _btn_high_float();
+  MicroWait(100);
+  return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
+}
+
+int Debug_BPBtnGetAveragedMv(u32 num_samples, u32 sample_delay_us, int(*getMv)(void) = Debug_BPBtnGetMv_Normal )
+{
+  int mv = 0;
+  if( !num_samples ) return 0;
+  for( u32 i=0; i < num_samples; i++ ) {
+    mv += getMv();
+    MicroWait( sample_delay_us );
+  }
+  return (mv / num_samples);
 }
 

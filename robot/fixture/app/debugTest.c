@@ -55,56 +55,48 @@ static void BackpackLeds(void)
     throw me;
 }
 
+//motorled.c debug functions
+int Debug_BPBtnGetMv_Normal(void);
+int Debug_BPBtnGetMv_Precharge(void);
+int Debug_BPBtnGetAveragedMv(u32 num_samples, u32 sample_delay_us, int(*getMv)(void) = Debug_BPBtnGetMv_Normal );
 static void BackpackButton(void)
 {
-  ConsolePrintf("Backback Button Voltage = ");
+  ConsolePrintf("Backback Button Voltage:\r\n");
   start_time = getMicroCounter();
   u32 tick_time = start_time;
   int print_len = 0;
   
+  BPBtnGetMv(); //sample once to init btn pin cfg
+  
+  bool print_header = 1;
   while(1) //( getMicroCounter() - start_time < (1000000 * 10) )
   {
     if( getMicroCounter() - tick_time > 250*1000 )
     {
       tick_time = getMicroCounter();
+      const int bnt_press_threshold_mv = 250;
+      const int btn_idle_threshold_mv = 
       
-      const int avg_num_samples = 4;
-      const int bnt_press_threshold_mv = 500;
-      
-      //single measurement
-      int btn_mv_single = BPBtnGetMv();
-      
-      MicroWait(10000);
-      
-      //Fast average
-      int btn_mv_avg_fast = 0;
-      for(int i=0; i<avg_num_samples; i++) {
-        btn_mv_avg_fast += BPBtnGetMv();
-        //MicroWait(10000);
-      }
-      btn_mv_avg_fast /= avg_num_samples;
-      
-      MicroWait(10000);
-      
-      //Slow average
-      int btn_mv_avg_slow = 0;
-      for(int i=0; i<avg_num_samples; i++) {
-        btn_mv_avg_slow += BPBtnGetMv();
-        MicroWait(10000);
-      }
-      btn_mv_avg_slow /= avg_num_samples;
-      
-      //digital
-      bool btn_pressed = btn_mv_avg_fast < bnt_press_threshold_mv;
+      //Collect samples
+      MicroWait(10000); int btn_mv_single       = Debug_BPBtnGetAveragedMv(1,0,     Debug_BPBtnGetMv_Normal);
+      MicroWait(10000); int btn_mv_single_pre   = Debug_BPBtnGetAveragedMv(1,0,     Debug_BPBtnGetMv_Precharge);
+      MicroWait(10000); int btn_mv_avg_slow     = Debug_BPBtnGetAveragedMv(4,10000, Debug_BPBtnGetMv_Normal);
+      MicroWait(10000); int btn_mv_avg_slow_pre = Debug_BPBtnGetAveragedMv(4,10000, Debug_BPBtnGetMv_Precharge);
+      MicroWait(10000); int btn_mv_avg_fast     = Debug_BPBtnGetAveragedMv(4,0,     Debug_BPBtnGetMv_Normal);
+      MicroWait(10000); int btn_mv_avg_fast_pre = Debug_BPBtnGetAveragedMv(4,0,     Debug_BPBtnGetMv_Precharge);
       
       //display
+      if( print_header ) {
+        ConsolePrintf("single/pre      avg-slow/pre    avg-fast/pre    state\r\n");
+        print_header = 0;
+      }
       for(int x=0; x < print_len; x++ )
         ConsolePutChar(0x08); //backspace
-      print_len = ConsolePrintf("single/avg-fast/avg-slow: %d.%03dV %d.%03dV %d.%03dV %s", 
-        btn_mv_single/1000, btn_mv_single%1000, 
-        btn_mv_avg_fast/1000, btn_mv_avg_fast%1000,
-        btn_mv_avg_slow/1000, btn_mv_avg_slow%1000,
-        btn_pressed ? "on" : "off" );
+      print_len = ConsolePrintf("%d.%03dV/%d.%03dV   %d.%03dV/%d.%03dV   %d.%03dV/%d.%03dV   %s",
+        btn_mv_single/1000,   btn_mv_single%1000,   btn_mv_single_pre/1000,   btn_mv_single_pre%1000,
+        btn_mv_avg_slow/1000, btn_mv_avg_slow%1000, btn_mv_avg_slow_pre/1000, btn_mv_avg_slow_pre%1000,
+        btn_mv_avg_fast/1000, btn_mv_avg_fast%1000, btn_mv_avg_fast_pre/1000, btn_mv_avg_fast_pre%1000,
+        btn_mv_single < bnt_press_threshold_mv ? "on" : "off" );
     }
   }
   //ConsolePrintf("\r\n");
