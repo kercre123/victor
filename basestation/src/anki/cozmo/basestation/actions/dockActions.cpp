@@ -128,7 +128,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDockAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _dockObjectID.GetValue());
-        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Interacting, _dockObjectID);
+        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Interacting, _dockObjectID);
       }
       
       // Stop squinting

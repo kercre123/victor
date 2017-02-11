@@ -399,7 +399,7 @@ namespace Anki {
       // If the action has started and the light animation has not ended stop the animation
       if(HasStarted() && !_animEnded)
       {
-        GetRobot().GetCubeLightComponent().StopLightAnim(_trigger);
+        GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(_trigger);
       }
     }
     

@@ -105,7 +105,7 @@ void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
   robot.GetAnimationStreamer().PopIdleAnimation();
   
   // Ensure the cube workout lights are not set
-  robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Workout, _targetBlockID);
+  robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
 }
 
 IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(Robot& robot)
@@ -295,7 +295,7 @@ void BehaviorCubeLiftWorkout::TransitionToPuttingDown(Robot& robot)
 void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(Robot& robot)
 {
   // Stop the workout cube lights as soon as we think we have put the cube down
-  robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Workout, _targetBlockID);
+  robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
 
   // if we still think we are carrying the object, see if we can find it
   if( robot.IsCarryingObject() ) {

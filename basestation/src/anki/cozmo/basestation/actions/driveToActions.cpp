@@ -99,7 +99,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DrivingTo, _objectID);
+        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
       }
       _compoundAction.PrepForCompletion();
     }
@@ -1255,7 +1255,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DrivingTo, _objectID);
+        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
         _lightsSet = false;
       }
     }
