@@ -75,7 +75,7 @@ static void BackpackButton(void)
     {
       tick_time = getMicroCounter();
       const int bnt_press_threshold_mv = 250;
-      const int btn_idle_threshold_mv = 
+      //const int btn_idle_threshold_mv = 
       
       //Collect samples
       MicroWait(10000); int btn_mv_single       = Debug_BPBtnGetAveragedMv(1,0,     Debug_BPBtnGetMv_Normal);
