@@ -129,8 +129,10 @@ namespace MemoryMatch {
     }
 
     private ScannedSetupCubeState GetCubeDistance(LightCube cubeA, LightCube cubeB) {
+      // distZ check meant to catch issue with pyramid cubes in a pyramid; z is up axis
       float dist = Vector3.Distance(cubeA.WorldPosition, cubeB.WorldPosition);
-      if (dist < _MinDistBetweenCubesMM) {
+      float distZ = Mathf.Abs(cubeA.WorldPosition.z - cubeB.WorldPosition.z);
+      if (dist < _MinDistBetweenCubesMM || distZ >= CozmoUtil.kBlockLengthMM) {
         return ScannedSetupCubeState.TooClose;
       }
       return ScannedSetupCubeState.Ready;
