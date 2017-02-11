@@ -382,7 +382,7 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectTapped>(HandleActiveObjectTapped);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedLocatedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.AddCallback<ObjectMoved>(HandleActiveObjectMoved);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.LocatedObjectStates>(HandleLocatedObjectStatesUpdate);
@@ -415,7 +415,7 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectTapped>(HandleActiveObjectTapped);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedLocatedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.RemoveCallback<ObjectMoved>(HandleActiveObjectMoved);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.LocatedObjectStates>(HandleLocatedObjectStatesUpdate);
@@ -789,11 +789,11 @@ public class Robot : IRobot {
     }
   }
 
-  public void HandleDeleteObservedObject(Anki.Cozmo.ExternalInterface.RobotDeletedObject message) {
+  public void HandleDeleteObservedObject(Anki.Cozmo.ExternalInterface.RobotDeletedLocatedObject message) {
     if (ID == message.robotID) {
       KnownObjects.Remove((int)message.objectID);
 
-      ActiveObject objectPoseUnknown = GetActiveObjectById(objectID);
+      ActiveObject objectPoseUnknown = GetActiveObjectById((int)message.objectID);
       if (objectPoseUnknown != null) {
       	objectPoseUnknown.MarkPoseUnknown();
       }
@@ -1064,7 +1064,7 @@ public class Robot : IRobot {
 
   // Flags the pose of all active objects as Unknown
   public void MarkAllActiveObjectsPoseAsUnknown() {
-    if (Charger) {
+    if (Charger != null) {
       Charger.MarkPoseUnknown();
     }
     foreach (var kvp in LightCubes) {
