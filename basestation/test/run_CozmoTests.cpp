@@ -754,11 +754,11 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ActiveObjectType act
   originPose.SetParent( robot.GetWorldOrigin() );
   objectPtr->InitPose( originPose, Anki::PoseState::Known); // posestate could be something else
   
-  // need to pretend we observed this object
-  robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr);
-
   // now they can be added to the world
   blockWorld.AddLocatedObject(std::shared_ptr<ObservableObject>(objectPtr));
+
+  // need to pretend we observed this object
+  robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr); // this requies to be called after AddLocated just because
   
   // verify they are there now
   DEV_ASSERT(objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDNotset");
