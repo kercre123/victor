@@ -679,11 +679,11 @@ void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObservableObject& obj
                                                      const Pose3d* oldPose, PoseState oldPoseState)
 {
   const ObjectID& objectID = object.GetID();
-  const PoseState newPoseState = object.GetPoseState();
 
   // Sanity checks. These are guaranteed before we call the listeners, so they don't have to check
   #if ANKI_DEVELOPER_CODE
   {
+    const PoseState newPoseState = object.GetPoseState();
     // Check: objectID is valid
     DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.BroadcastObjectPoseChanged.InvalidObjectID");
     // Check: PoseState=Invalid <-> Pose=nullptr
