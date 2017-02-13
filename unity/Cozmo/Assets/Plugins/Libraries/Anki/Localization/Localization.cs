@@ -65,39 +65,42 @@ public static class Localization {
   private static string _CurrentLocale = null;
   private static System.Globalization.CultureInfo _CurrentCulture = null;
 
+  public static string LoadLocaleAndCultureInfo(string languageOverride = null) {
+    string deviceLocale;
+    if (string.IsNullOrEmpty(languageOverride)) {
+      SystemLanguage language = Application.systemLanguage;
+      switch (language) {
+      case SystemLanguage.English:
+        deviceLocale = "en-US";
+        break;
+      case SystemLanguage.French:
+        deviceLocale = "fr-FR";
+        break;
+      case SystemLanguage.German:
+        deviceLocale = "de-DE";
+        break;
+      case SystemLanguage.Japanese:
+        deviceLocale = "ja-JP";
+        break;
+      default:
+        deviceLocale = "en-US";
+        break;
+      }
+    }
+    else {
+      deviceLocale = languageOverride;
+    }
+
+    _CurrentLocale = deviceLocale;
+    _CurrentCulture = new System.Globalization.CultureInfo(_CurrentLocale);
+
+    return _CurrentLocale;
+  }
+
   // Return locale code for a language code.
   public static string GetStringsLocale() {
-
     if (string.IsNullOrEmpty(_CurrentLocale)) {
-      // TODO: INGO - Need to provide functionality for GetCurrentLocale that 
-      // string lang;
-      // string country;
-      // string deviceLocale = Anki.ApplicationServices.GetCurrentLocale(out lang, out country);
-      string lang = "en";
-      string deviceLocale = "en-US";
-
-      if (_SupportedLocales.Contains(deviceLocale)) {
-        // TODO: Biggest hack ever, but we don't currently have any text data for en-GB, so just hard code it back to en-US
-        if (deviceLocale == "en-GB") {
-          deviceLocale = "en-US";
-        }
-      }
-      else {
-        switch (lang) {
-        case "en":
-          deviceLocale = "en-US";
-          break;
-        case "de":
-          deviceLocale = "de-DE";
-          break;
-        default:
-          deviceLocale = "en-US";
-          break;
-        }
-      }
-
-      _CurrentLocale = deviceLocale;
-      _CurrentCulture = new System.Globalization.CultureInfo(_CurrentLocale);
+      LoadLocaleAndCultureInfo();
     }
 
     return _CurrentLocale;
@@ -106,7 +109,6 @@ public static class Localization {
   private const string kLocalizationStreamingAssetsFolderPath = "/LocalizedStrings/";
 
   public static void LoadStrings() {
-
     // For each localization file in the locale's directory
     string locale = GetStringsLocale();
     foreach (var filePath in GetLocalizationJsonFilePaths(locale)) {

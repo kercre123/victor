@@ -1,0 +1,135 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "behavior.BringCubeToBeacon": {
+    "translation": "Cozmo is collecting his Cubes"
+  },
+  "behavior.ExploreVisitPossibleMarker": {
+    "translation": "Cozmo is exploring his surroundings"
+  },
+  "behavior.LookInPlaceMemoryMap": {
+    "translation": "Cozmo is exploring his surroundings"
+  },
+  "behavior.ExploreLookAroundInPlace": {
+    "translation": "Cozmo is exploring his surroundings"
+  },
+  "behavior.ThinkAboutBeacons": {
+    "translation": "Cozmo is exploring his surroundings"
+  },
+  "behavior.VisitInterestingEdge": {
+    "translation": "Cozmo is exploring his surroundings"
+  },
+  "behavior.KnockOverCubes": {
+    "translation": "Cozmo is knocking over a stack of Cubes"
+  },
+  "behavior.PopAWheelie": {
+    "translation": "Cozmo is popping a wheelie"
+  },
+  "behavior.PounceOnMotion": {
+    "translation": "Cozmo wants to pounce on your finger"
+  },
+  "behavior.FistBump": {
+    "translation": "Cozmo wants to fist bump"
+  },
+  "behavior.RollBlock": {
+    "translation": "Cozmo is rolling a Cube"
+  },
+  "behavior.StackCube": {
+    "translation": "Cozmo is creating a stack of Cubes"
+  },
+  "behavior.LookingForFaces": {
+    "translation": "Cozmo is looking around"
+  },
+  "behavior.InteractWithFaces": {
+    "translation": "Cozmo is looking around"
+  },
+  "behavior.Bored": {
+    "translation": "Cozmo is bored"
+  },
+  "behavior.ReactToCliff": {
+    "translation": ""
+  },
+  "behavior.ReactToFrustration": {
+    "translation": "Cozmo is upset"
+  },
+  "behavior.ReactToOnCharger": {
+    "translation": "Cozmo is going to sleep"
+  },
+  "behavior.ReactToPickup": {
+    "translation": "Cozmo wants to be put down"
+  },
+  "behavior.ReactToOnSide": {
+    "translation": "Cozmo wants to be put upright"
+  },
+  "behavior.ReactToPet": {
+    "translation": "Cozmo sees a pet"
+  },
+  "behavior.RequestToPlay": {
+    "translation": "Cozmo is setting up a game"
+  },
+  "behavior.AcknowledgeObject": {
+    "translation": ""
+  },
+  "behavior.AcknowledgeFace": {
+    "translation": "Cozmo sees a face"
+  },
+  "behavior.ReactToOnBack": {
+    "translation": ""
+  },
+  "behavior.ReactToOnFace": {
+    "translation": ""
+  },
+  "behavior.ReactToOnTreads": {
+    "translation": " "
+  },
+  "behavior.ReactToUnexpectedMovement": {
+    "translation": ""
+  },
+  "behavior.DriveOffCharger": {
+    "translation": "Cozmo is waking up"
+  },
+  "behavior.PickupCube": {
+    "translation": "Cozmo is picking up a cube"
+  },
+  "behavior.Workout": {
+    "translation": "Cozmo is doing a workout"
+  },
+  "behavior.CheckForStackAtInterval": {
+    "translation": "Cozmo is looking for a stack"
+  },
+  "behavior.LookForFaceAndCube": {
+    "translation": " "
+  },
+  "error.TooManyFaces": {
+    "translation": "Make sure Cozmo only sees"
+  },
+  "behavior.BuildPyramid": {
+    "translation": "Cozmo is building a pyramid"
+  },
+  "behavior.PrepareCubes": {
+    "translation": "Cozmo is preparing his cubes"
+  },
+  "behavior.LookInPlaceForCube": {
+    "translation": "Cozmo is looking for a cube"
+  },
+  "button.clearThisSlot": {
+    "translation": "Clear This Slot"
+  }
+}
