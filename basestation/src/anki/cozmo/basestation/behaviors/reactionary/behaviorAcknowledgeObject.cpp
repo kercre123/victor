@@ -270,7 +270,9 @@ void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const O
     ghostPose.GetTranslation().y(),
     ghostPose.GetTranslation().z() + zOffset});
   
-  robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
+  // robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
+  // Using the PoseConfimer for ghost objects is weird, so we have to call the apropriate function for its asserts :/
+  robot.GetObjectPoseConfirmer().CopyWithNewPose(_ghostStackedObject.get(), ghostPose, _ghostStackedObject.get());
   
   _shouldRestoreGhostPose = true;
 }
@@ -310,7 +312,8 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const Obs
   
   //restore ghost pose
   if ( _shouldRestoreGhostPose ) {
-    robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), currentGhostPose, obj);
+    //robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), currentGhostPose, obj);
+    robot.GetObjectPoseConfirmer().CopyWithNewPose(_ghostStackedObject.get(), currentGhostPose, _ghostStackedObject.get());
   }
   
   // If we couldn't see the ghost cube b/c it was outside FOV, we should retry

@@ -1652,15 +1652,21 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           const bool isObjectBeingCarried = (candidate->GetID() == carryingObjectID);
           return !isObjectBeingCarried;
         });
+
+
+        // the observation has matched by pose, otherwise it would not be confirmed at this pose. We don't need
+        // to match by pose here, we can just used the ID we found as part of the observation confirmation
+        ObservableObject* matchingObject = GetLocatedObjectByID( objSeen->GetID() );
         
-        ObservableObject* matchingObject = FindLocatedClosestMatchingObject(*objSeen,
-                                                                            objSeen->GetSameDistanceTolerance(),
-                                                                            objSeen->GetSameAngleTolerance(),
-                                                                            filter);
         if (nullptr != matchingObject) {
           DEV_ASSERT(&matchingObject->GetPose().FindOrigin() == currFrame,
                      "BlockWorld.AddAndUpdateObjects.MatchedPassiveObjectInOtherCoordinateFrame");
           matchingObjects[currFrame] = matchingObject;
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("BlockWorld.UpdateObjectPoses.AddAndUpdateNoCurrentOriginMatchNonUnique",
+                            "Must find match in current origin, since object is confirmed.");
         }
         
       } // if/else object is active

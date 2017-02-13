@@ -284,7 +284,7 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
   filter.AddAllowedType(objSeen->GetType());
 
   // find confirmed object or unconfirmed
-  if ( objSeen->IsActive() )
+  if ( objSeen->IsUnique() )
   {
     // ask blockworld to find matches by type/family in the current origin, since we assume only one instance per type
     std::vector<ObservableObject*> confirmedMatches;
@@ -321,7 +321,6 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
       }
       
       // did not find an unconfirmed entry, search in other frames or in connected
-      
       filter.SetOriginMode(BlockWorldFilter::OriginMode::NotInRobotFrame);
       objectToCopyIDFrom = _robot.GetBlockWorld().FindLocatedMatchingObject(filter);
       if ( nullptr == objectToCopyIDFrom ) {
@@ -593,13 +592,12 @@ Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objec
              "ObjectPoseConfirmer.AddObjectRelativeObservation.ReferenceNotValid");
   DEV_ASSERT( objectToUpdate == _robot.GetBlockWorld().GetLocatedObjectByID(objectID),
              "ObjectPoseConfirmer.AddObjectRelativeObservation.NotTheObjectInBlockWorldForID");
+
+  // the object to update should have an entry in poseConfirmations, otherwise how did it become an
+  // object that can be grabbed to add a relative observation?
+  DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
+             "ObjectPoseConfirmer.AddObjectRelativeObservation.NoPreviousObservationsForObjectToUpdate");
   
-// This fails for ghost objects. Hopefully in the future those are handled differently, not through poseConfirmation,
-// since they are actually not real
-//  // the object to update should have an entry in poseConfirmations, otherwise how did it become an
-//  // object that can be grabbed to add a relative observation?
-//  DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
-//             "ObjectPoseConfirmer.AddObjectRelativeObservation.NoPreviousObservationsForObjectToUpdate");
 
   const PoseState newPoseState = PoseState::Dirty; // do not inherit the pose state from the observed object
   SetPoseHelper(objectToUpdate, newPose, -1.f, newPoseState, "AddObjectRelativeObservation");

@@ -263,29 +263,29 @@ void CustomObject::AddFace(const FaceName whichFace, const CustomObjectMarker cu
   switch(whichFace)
   {
     case FrontFace:
-      facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-_size.x() * 0.5f, 0.f, 0.f},  &GetPose());
+      facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-_size.x() * 0.5f, 0.f, 0.f},  nullptr);
       break;
       
     case LeftFace:
-      facePose = Pose3d(M_PI,      Z_AXIS_3D(), {0.f, _size.y() * 0.5f, 0.f},   &GetPose());
+      facePose = Pose3d(M_PI,      Z_AXIS_3D(), {0.f, _size.y() * 0.5f, 0.f},   nullptr);
       break;
       
     case BackFace:
-      facePose = Pose3d(M_PI_2,    Z_AXIS_3D(), {_size.x() * 0.5f, 0.f, 0.f},   &GetPose());
+      facePose = Pose3d(M_PI_2,    Z_AXIS_3D(), {_size.x() * 0.5f, 0.f, 0.f},   nullptr);
       break;
       
     case RightFace:
-      facePose = Pose3d(0.0f,      Z_AXIS_3D(), {0.f, -_size.y() * 0.5f, 0.f},  &GetPose());
+      facePose = Pose3d(0.0f,      Z_AXIS_3D(), {0.f, -_size.y() * 0.5f, 0.f},  nullptr);
       break;
       
     case TopFace:
       // Rotate -90deg around X, then -90 around Z
-      facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, _size.z() * 0.5f},  &GetPose());
+      facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, _size.z() * 0.5f},  nullptr);
       break;
       
     case BottomFace:
       // Rotate +90deg around X, then -90 around Z
-      facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -_size.z() * 0.5f}, &GetPose());
+      facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -_size.z() * 0.5f}, nullptr);
       break;
       
     case NumFaces:
