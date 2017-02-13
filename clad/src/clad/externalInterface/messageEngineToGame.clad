@@ -23,6 +23,7 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/loadedKnownFace.clad"
+#include "clad/types/logLevels.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/objectFamilies.clad"
@@ -535,7 +536,8 @@ message VerifyDebugConsoleVarMessage {
 }
 
 message DebugAppendConsoleLogLine {
-  string line
+  string[uint_16] line,
+  LogLevel logLevel
 }
 
 structure TimingInfo
