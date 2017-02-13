@@ -358,6 +358,21 @@ namespace Anki {
     }
     
     
+    bool IgnoreMessageTypeForSdkConnection(ExternalInterface::MessageGameToEngine::Tag messageTag)
+    {
+      // Return true for any messages that we want to ignore (blacklist) from SDK usage
+      
+      using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
+      switch (messageTag)
+      {
+        case GameToEngineTag::RequestUnlockDataFromBackup:  return true;
+        case GameToEngineTag::RequestSetUnlock:             return true;
+        default:
+          return false;
+      }
+    }
+    
+    
     void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message,
                                 UiConnectionType connectionType, size_t messageSize, bool handleMessagesFromConnection)
     {
@@ -371,9 +386,17 @@ namespace Anki {
         }
       }
       
-      if (_sdkStatus.IsInSdkMode() && !IsSdkConnection(connectionType))
+      const bool isSdkConnection = IsSdkConnection(connectionType);
+      if (isSdkConnection && IgnoreMessageTypeForSdkConnection(messageTag))
       {
-        // Accept a limited set of messages (e.g. enter/exit mode)
+        // Ignore - this message type is blacklisted from SDK usage
+        PRINT_CH_INFO("UiComms", "sdk.bannedmessage", "%s", MessageGameToEngineTagToString(messageTag));
+        return;
+      }
+      
+      if (_sdkStatus.IsInSdkMode() && !isSdkConnection)
+      {
+        // Accept only a limited set of messages (e.g. enter/exit mode)
         if (!AlwaysHandleMessageTypeForNonSdkConnection(messageTag))
         {
           return;
@@ -387,7 +410,7 @@ namespace Anki {
       }
       #endif
       
-      if (IsSdkConnection(connectionType))
+      if (isSdkConnection)
       {
         _sdkStatus.OnRecvMessage(message, messageSize);
       }
