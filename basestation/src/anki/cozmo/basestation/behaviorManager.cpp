@@ -183,15 +183,10 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
       const size_t eBT = (size_t)executableBehaviorType;
       if (eBT < (size_t)ExecutableBehaviorType::Count)
       {
-        const ExecutableBehaviorType executableBehaviorType = behaviorPtr->GetExecutableType();
-        const size_t eBT = (size_t)executableBehaviorType;
-        if (eBT < (size_t)ExecutableBehaviorType::Count)
-        {
-          DEV_ASSERT_MSG((numEntriesOfExecutableType[eBT] == 0), "ExecutableBehaviorType.NotUnique",
-                         "Multiple behaviors marked as %s including '%s'",
-                         EnumToString(executableBehaviorType), it.first.c_str());
-          ++numEntriesOfExecutableType[eBT];
-        }
+        DEV_ASSERT_MSG((numEntriesOfExecutableType[eBT] == 0), "ExecutableBehaviorType.NotUnique",
+                       "Multiple behaviors marked as %s including '%s'",
+                       EnumToString(executableBehaviorType), it.first.c_str());
+        ++numEntriesOfExecutableType[eBT];
       }
     }
     
@@ -441,8 +436,10 @@ void BehaviorManager::SendDasTransitionMessage(const BehaviorRunningAndResumeInf
   ExternalInterface::BehaviorTransition msg;
   msg.oldBehaviorName = oldBehaviorName;
   msg.oldBehaviorClass = nullptr != oldBehavior ? oldBehavior->GetClass() : BehaviorClass::NoneBehavior;
+  msg.oldBehaviorExecType = nullptr != oldBehavior ? oldBehavior->GetExecutableType() : ExecutableBehaviorType::NoneBehavior;
   msg.newBehaviorName = newBehaviorName;
   msg.newBehaviorClass = nullptr != newBehavior ? newBehavior->GetClass() : BehaviorClass::NoneBehavior;
+  msg.newBehaviorExecType = nullptr != newBehavior ? newBehavior->GetExecutableType() : ExecutableBehaviorType::NoneBehavior;
   msg.newBehaviorDisplayKey = newBehavior ? newBehavior->GetDisplayNameKey() : "";
   _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
 }

@@ -688,7 +688,9 @@ message BehaviorTransition{
   string oldBehaviorName,
   string newBehaviorName,
   BehaviorClass oldBehaviorClass,
+  ExecutableBehaviorType oldBehaviorExecType,
   BehaviorClass newBehaviorClass,
+  ExecutableBehaviorType newBehaviorExecType,
   string newBehaviorDisplayKey
 }
 
