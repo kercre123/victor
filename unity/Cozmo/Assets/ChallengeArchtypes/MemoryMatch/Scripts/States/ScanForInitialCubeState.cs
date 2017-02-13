@@ -63,12 +63,13 @@ namespace MemoryMatch {
       }
       // Intentionally avoid base class since that will only check currently visible cubes
       if (_ScanPhase == ScanPhase.NoCubesSeen) {
-        int visibleLightCount = _CurrentRobot.VisibleLightCubes.Count;
-        if (visibleLightCount > 0) {
+        int visibleCubeCount = _CurrentRobot.VisibleLightCubes.Count;
+        if (visibleCubeCount > 0) {
+          PopIdleAnimation();
           UpdateScannedCubes();
           // If Cozmo can see all at once, we know it's too close
           int closeCubes = 0;
-          if (visibleLightCount == _CubesRequired) {
+          if (visibleCubeCount == _CubesRequired) {
             foreach (KeyValuePair<int, ScannedSetupCubeState> cubeState in _SetupCubeState) {
               if (cubeState.Value == ScannedSetupCubeState.TooClose) {
                 closeCubes++;
