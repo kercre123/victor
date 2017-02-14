@@ -508,6 +508,10 @@ namespace Anki {
 
             // Apply height
             LiftController::SetDesiredHeight(liftHeight);
+#ifdef SIMULATOR
+            // SetDesiredHeight might engage the gripper, but we don't want it engaged right now.
+            HAL::DisengageGripper();
+#endif
           }
         }
       }
