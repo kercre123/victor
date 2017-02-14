@@ -1,3 +1,0 @@
-../unix/dasLocalAppender.cpp
-../unix/dasLogMacros.h
-../unix/dasPostToServer.cpp

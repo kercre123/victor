@@ -1,8 +1,0 @@
-dasDemoApp.dSYM
-dasDemoApp
-*.o
-*.a
-dasLogs/*
-das_unittest
-gameLogs/*
-*.d
