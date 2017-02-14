@@ -181,7 +181,9 @@ void SparksBehaviorChooser::OnSelected()
   }
   
   // Turn off reactionary behaviors that could interrupt the spark
-  mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, false);
+  for(const auto& trigger: kReactionsToDisable){
+    SmartRequestEnableReactionTrigger(trigger, false);
+  }
 
   // Notify the delegate chooser if it exists
   if(_simpleBehaviorChooserDelegate != nullptr){
@@ -194,11 +196,13 @@ void SparksBehaviorChooser::OnSelected()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::OnDeselected()
 {
-  BehaviorManager& mngr = _robot.GetBehaviorManager();
-
   ResetLightsAndAnimations();
   
-  mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, true);
+  for(const auto& trigger: _reactionsDynamicallyDisabled){
+    _robot.GetBehaviorManager().RequestEnableReactionTrigger(
+                                     GetName(), trigger, true);
+  }
+  _reactionsDynamicallyDisabled.clear();
 
   // clear any custom light events set during the spark
   
@@ -208,6 +212,7 @@ void SparksBehaviorChooser::OnDeselected()
   }
   
   _robot.GetCubeLightComponent().StopAllAnims();
+  
 }
   
   
@@ -222,6 +227,19 @@ void SparksBehaviorChooser::ResetLightsAndAnimations()
     _idleAnimationsSet = false;
   }
   
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SparksBehaviorChooser::SmartRequestEnableReactionTrigger(const ReactionTrigger& trigger, bool enable)
+{
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(
+                                      GetName(), trigger, enable);
+  if(enable){
+    _reactionsDynamicallyDisabled.erase(trigger);
+  }else{
+    _reactionsDynamicallyDisabled.insert(trigger);
+  }
 }
 
 
@@ -495,6 +513,9 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd()
     ResetLightsAndAnimations();
     mngr.RequestCurrentBehaviorEndOnNextActionComplete();
     _state = ChooserState::WaitingForCurrentBehaviorToStop;
+    
+    // Make sure we don't interrupt the final stage animation if we see a cube
+    SmartRequestEnableReactionTrigger(ReactionTrigger::ObjectPositionUpdated, false);
   }else{
     // Transitioning directly between sparks - end current spark immediately
     if(mngr.GetRequestedSpark() != UnlockId::Count){
