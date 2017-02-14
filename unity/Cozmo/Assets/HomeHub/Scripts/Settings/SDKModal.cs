@@ -45,6 +45,7 @@ namespace Cozmo.Settings {
 
     // Use this for initialization
     private void Start() {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Invalid);
       // Send EnterSDKMode to engine as we enter this view
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.EnterSDKMode();
@@ -65,6 +66,7 @@ namespace Cozmo.Settings {
 
 
     private void HandleDisableSDKButtonTapped() {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
       DAS.Info("SDKView.HandleDisableSDKButtonTapped", "Disable SDK Button tapped!");
       DataPersistenceManager.Instance.IsSDKEnabled = false;
       DataPersistenceManager.Instance.Save();
