@@ -558,7 +558,7 @@ void BehaviorManager::TryToResumeBehavior()
     }
     
     IBehavior* behaviorToResume = GetRunningAndResumeInfo().GetBehaviorToResume();
-    const Result resumeResult =  behaviorToResume->Init();//behaviorToResume->Resume(resumingFromType);
+    const Result resumeResult = behaviorToResume->Resume(resumingFromTrigger);
     if( resumeResult == RESULT_OK )
     {
       PRINT_CH_INFO("Behaviors", "BehaviorManager.ResumeBehavior", "Successfully resumed '%s'",
