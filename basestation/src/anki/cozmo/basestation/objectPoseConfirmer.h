@@ -64,11 +64,13 @@ public:
   Result AddLiftRelativeObservation(ObservableObject* object, const Pose3d& newPoseWrtLift);
   
   // Saw one object and that observation influenced another object (e.g. stacked blocks).
-  // Iff the _observedObject_ is confirmed, then objectToUpdate gets the newPose and
-  // the same PoseState as the observedObject. Otherwise, objectToUpdate remains the same.
+  // Checks the blockWorld, and if the object doesn't exist, it could add it to the
+  // blockWorld at this point. This is not supported because we don't have a use case, but it's
+  // how AddRobotRelativeObservation works, for example to add a charger. Inherits observation time from the
+  // observedObject, but does not inherit its poseState.
   Result AddObjectRelativeObservation(ObservableObject* objectToUpdate, const Pose3d& newPose,
                                       const ObservableObject* observedObject);
-  
+
   // New object's pose will immediately be updated, but will inherit old object's
   // number of observations and pose state.
   Result CopyWithNewPose(ObservableObject* newObject, const Pose3d& newPose,
@@ -77,6 +79,12 @@ public:
   // Simply adds the given object in its current pose to the PoseConfirmer's records,
   // without changing its pose or changing its observation count.
   Result AddInExistingPose(const ObservableObject* object);
+  
+  // Ghost objects are expected to not be in the BlockWorld and to not be added. They also do not notify of changes.
+  // This should not be a PoseConfirmation event, however to keep a consistent API to access SetPose, we need to
+  // provide it here. TODO: Design proper API, for example having BlockWorldPoseConfirmer vs BlockWorldGhostConfirmer,
+  // which share code, but make this distinction clear.
+  Result SetGhostObjectPose(ObservableObject* ghostObject, const Pose3d& newPose, PoseState newPoseState);
   
   // Notify listeners of the pose and poseState change happening for the given object. It should arguably not be in the
   // poseConfirmer, but for now it's a good place to put together these calls

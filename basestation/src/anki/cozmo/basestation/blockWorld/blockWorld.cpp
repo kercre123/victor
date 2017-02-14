@@ -1588,40 +1588,21 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           
           if(origin == currFrame)
           {
-            // handle special case of seeing the object that we are carrying. Alternatively all this code could
-            // be in potential objects to localize to or in addObservation, but here it seems to detect early
-            // what's going on
+            // handle special case of seeing the object that we are carrying. We don't want to use it for localization
+            // Note that if the object is observed at a different location than the lift, it will be moved to that
+            // location, and the robot should be notified that it's no longer carried. That responsibility now
+            // lies on whomever changes the position (PoseConfirmer)
             if (_robot->IsCarryingObject(objectFound->GetID()))
             {
-              if (_robot->GetLiftHeight() >= LIFT_HEIGHT_HIGHDOCK &&
-                  objectFound->IsSameAs(*objSeen))
-              {
-                // If this is the object we're carrying observed in the carry position,
-                // do nothing and continue to the next observed object.
-                matchedCarryingObject = true;
-                PRINT_NAMED_WARNING("Blockworld.AddAndUpdateObjects.SeeingCarriedObject",
-                                    "Seeing object %s[%d] on lift at height %fmm",
-                                    EnumToString(objSeen->GetType()),
-                                    objSeen->GetID().GetValue(),
-                                    _robot->GetLiftHeight());
-                break; // break out of the current matches for the observation
-              }
-              else
-              {
-                // Otherwise, it must've been moved off the lift so unset its carry state
-                // and update it as normal
-                PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.SeeingCarryingObjectNotOnLift",
-                              "Thought we were carrying object %d but seeing it in non-carry pose",
-                              _robot->GetCarryingObject().GetValue());
-                _robot->UnSetCarryObject(objectFound->GetID());
-                
-                // if the observation was used to correct the pose, it should have dettached
-                DEV_ASSERT(objectFound->GetPose().GetParent() != &_robot->GetLiftPose(),
-                           "BlockWorld.ConfirmingObservationDidNotCorrectLift");
-                
-                // moreover, only the confirming observation should have to do this
-                DEV_ASSERT(observationAlreadyUsed, "BlockWorld.NonConfirmingObservationStillCarryingObject");
-              }
+              // If this is the object we're carrying observed in the carry position,
+              // do nothing and continue to the next observed object.
+              matchedCarryingObject = true;
+              PRINT_NAMED_WARNING("Blockworld.AddAndUpdateObjects.SeeingCarriedObject",
+                                  "Seeing object %s[%d] on lift at height %fmm",
+                                  EnumToString(objSeen->GetType()),
+                                  objSeen->GetID().GetValue(),
+                                  _robot->GetLiftHeight());
+              break; // break out of the current matches for the observation
             }
           }
           

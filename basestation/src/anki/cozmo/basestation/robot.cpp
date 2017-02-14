@@ -3222,7 +3222,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
       Result poseResult = GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, onTopPoseWrtCarriedPose, object);
       if(RESULT_OK != poseResult)
       {
-        PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift.AddObjectRelativeObservationFailed",
+        PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift.AddObjectRelativeObservation",
                             "objectID:%d", object->GetID().GetValue());
         return poseResult;
       }

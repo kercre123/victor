@@ -65,6 +65,7 @@ BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::V
 
   // give the ghost object and ID so we can visualize it
   _ghostStackedObject->SetVizManager(robot.GetContext()->GetVizManager());
+  _ghostStackedObject->InitPose(Pose3d(), PoseState::Dirty); // we rely on restoring poses, so just set a valid one
 }
   
   
@@ -270,11 +271,8 @@ void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const O
     ghostPose.GetTranslation().y(),
     ghostPose.GetTranslation().z() + zOffset});
   
-  // robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
-  // Using the PoseConfimer for ghost objects is weird, so we have to call the apropriate function for its asserts :/
-  robot.GetObjectPoseConfirmer().CopyWithNewPose(_ghostStackedObject.get(), ghostPose, _ghostStackedObject.get());
-  
-  _shouldRestoreGhostPose = true;
+  // Using the PoseConfimer for ghost objects is weird, we need to fake PoseConfirmations here
+  robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
 }
   
 inline bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset)
@@ -286,7 +284,7 @@ inline bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, co
 bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset, bool& shouldRetry)
 {
   // store the current ghost pose so that it can be restored after the check
-  const Pose3d& currentGhostPose = _shouldRestoreGhostPose ? _ghostStackedObject->GetPose() : Pose3d();
+  Pose3d currentGhostPose = _ghostStackedObject->GetPose();
   
   SetGhostBlockPoseRelObject(robot, obj, zOffset);
   
@@ -311,10 +309,7 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const Obs
                                                                                               false);
   
   //restore ghost pose
-  if ( _shouldRestoreGhostPose ) {
-    //robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), currentGhostPose, obj);
-    robot.GetObjectPoseConfirmer().CopyWithNewPose(_ghostStackedObject.get(), currentGhostPose, _ghostStackedObject.get());
-  }
+  robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), currentGhostPose, PoseState::Dirty);
   
   // If we couldn't see the ghost cube b/c it was outside FOV, we should retry
   shouldRetry = (reason == Vision::KnownMarker::NotVisibleReason::OUTSIDE_FOV);

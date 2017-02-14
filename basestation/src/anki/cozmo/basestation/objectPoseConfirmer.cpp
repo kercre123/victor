@@ -107,6 +107,16 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
     const bool isConfirmedMatch = (object == confirmedMatch);
     if ( isConfirmedMatch ) {
       SetPoseHelper(object, newPose, obsDistance_mm, newPoseState, "ObjectPoseConfirmer.UpdatePoseInInstace");
+      
+      // when we set the pose for an object we were carrying, we also unset it from the lift, tell the robot
+      // we are not carrying it anymore
+      if ( updateDueToObservingCarriedObject )
+      {
+        PRINT_CH_INFO("PoseConfirmer", "ObjectPoseConfirmer.AddVisualObservation.SeeingCarriedObject",
+                      "We changed the pose of %d, we must not be carrying it anymore. Unsetting as carried object.",
+                      object->GetID().GetValue());
+        _robot.UnSetCarryObject(object->GetID());
+      }
     } else {
       // currently we use UpdatePoseInInstance for both unconfirmed and confirmed objects. If we are changing the
       // pose of the unconfirmedInstance, do not notify anyone about it yet, only if we are modifying the pose
@@ -139,6 +149,9 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
   
   DEV_ASSERT(object->HasValidPose() || ObservableObject::IsValidPoseState(newPoseState),
              "ObjectPoseConfirmer.SetPoseHelper.BothPoseStatesAreInvalid");
+  // note otherwise we don't delete the memory but we clear the pointer!
+  DEV_ASSERT( object == _robot.GetBlockWorld().GetLocatedObjectByID(object->GetID()),
+             "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForBlockWorldObjects");
   
   // if we destroy the object we need a copy so we can notify other systems and passing all relevant parameters
   // liek family, type, new pose, objectID etc.
@@ -580,8 +593,8 @@ Result ObjectPoseConfirmer::AddRobotRelativeObservation(ObservableObject* object
 Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objectToUpdate, const Pose3d& newPose,
                                                          const ObservableObject* observedObject)
 {
-  DEV_ASSERT(nullptr != objectToUpdate, "ObjectPoseConfirmer.AddRobotRelativeObservation.NullObjectToUpdate");
-  DEV_ASSERT(nullptr != observedObject, "ObjectPoseConfirmer.AddRobotRelativeObservation.NullObservedObject");
+  DEV_ASSERT(nullptr != objectToUpdate, "ObjectPoseConfirmer.AddObjectRelativeObservation.NullObjectToUpdate");
+  DEV_ASSERT(nullptr != observedObject, "ObjectPoseConfirmer.AddObjectRelativeObservation.NullObservedObject");
   
   const ObjectID& objectID = objectToUpdate->GetID();
   
@@ -590,18 +603,56 @@ Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objec
              "ObjectPoseConfirmer.AddObjectRelativeObservation.UnSetObjectID");
   DEV_ASSERT(observedObject->HasValidPose(),
              "ObjectPoseConfirmer.AddObjectRelativeObservation.ReferenceNotValid");
-  DEV_ASSERT( objectToUpdate == _robot.GetBlockWorld().GetLocatedObjectByID(objectID),
-             "ObjectPoseConfirmer.AddObjectRelativeObservation.NotTheObjectInBlockWorldForID");
-
-  // the object to update should have an entry in poseConfirmations, otherwise how did it become an
-  // object that can be grabbed to add a relative observation?
-  DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
-             "ObjectPoseConfirmer.AddObjectRelativeObservation.NoPreviousObservationsForObjectToUpdate");
   
+  // if the object is in blockWorld, we need to notify of changes, use the helper for that
+  const ObservableObject* objectInBlockWorld = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
+  if ( nullptr != objectInBlockWorld )
+  {
+    // if the ID retrieved something from BlockWorld, it has to be the objectToUpdate, otherwise are we updating
+    // an unconfirmed observation based on relative observations?
+    DEV_ASSERT( objectToUpdate == objectInBlockWorld,
+               "ObjectPoseConfirmer.AddObjectRelativeObservation.NotTheObjectInBlockWorldForID");
+    // the object to update should have an entry in poseConfirmations, otherwise how did it become an
+    // object that can be grabbed to add a relative observation?
+    DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
+              "ObjectPoseConfirmer.AddObjectRelativeObservation.NoPreviousObservationsForObjectToUpdate");
 
-  const PoseState newPoseState = PoseState::Dirty; // do not inherit the pose state from the observed object
-  SetPoseHelper(objectToUpdate, newPose, -1.f, newPoseState, "AddObjectRelativeObservation");
+    // update pose
+    const PoseState newPoseState = PoseState::Dirty; // do not inherit the pose state from the observed object
+    SetPoseHelper(objectToUpdate, newPose, -1.f, newPoseState, "AddObjectRelativeObservation");
+  }
+  else
+  {
+    // here we should set the pose and then add the BlockWorld. We can definitely support it, but I don't have
+    // a use case for it, and don't want to support it yet if it's not a thing
+    PRINT_NAMED_ERROR("ObjectPoseConfirmer.AddObjectRelativeObservation.NotABlockWorldObject",
+                      "Object %d is not in the blockWorld. We could add it, but we don't support it at the moment.",
+                      objectID.GetValue());
+  }
+
+  // in any case, add to objects tracked by PoseConfirmer
   _poseConfirmations[objectID].referencePose = newPose;
+  _poseConfirmations[objectID].lastPoseUpdatedTime = observedObject->GetLastObservedTime();
+  
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ObjectPoseConfirmer::SetGhostObjectPose(ObservableObject* ghostObject, const Pose3d& newPose, PoseState newPoseState)
+{
+  DEV_ASSERT(nullptr != ghostObject, "ObjectPoseConfirmer.AddGhostObjectRelativeObservation.NullGhostObjectToUpdate");
+  
+  // Sanity checks
+  DEV_ASSERT(ghostObject->GetID().IsSet(),
+             "ObjectPoseConfirmer.AddGhostObjectRelativeObservation.UnSetObjectID");
+  DEV_ASSERT(nullptr == _robot.GetBlockWorld().GetLocatedObjectByID(ghostObject->GetID()),
+             "ObjectPoseConfirmer.AddGhostObjectRelativeObservation.ObjectInBlockWorld");
+
+  // simply update the object directly, since it's a ghost and doesn't need confirmations
+  ghostObject->SetPose(newPose, -1.0f, newPoseState);
+
+  // I don't think we need to add ghost objects to PoseConfirmer
+  // _poseConfirmations[objectID] = ???;
   
   return RESULT_OK;
 }

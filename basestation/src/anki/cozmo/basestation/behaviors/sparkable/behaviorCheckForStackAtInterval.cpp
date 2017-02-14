@@ -127,7 +127,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(Robot& robo
       ghostPose.GetTranslation().y(),
       ghostPose.GetTranslation().z() + obj->GetDimInParentFrame<'Z'>(ghostPose)});
     
-    robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
+    robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
     
     // use 0 for max turn angle so we only look with the head
     TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
