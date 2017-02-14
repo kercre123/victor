@@ -463,7 +463,8 @@ namespace Anki {
            !PickAndPlaceController::IsCarryingBlock() &&
            PickAndPlaceController::GetCurAction() != DA_ALIGN &&
            PickAndPlaceController::GetCurAction() != DA_ROLL_LOW &&
-           PickAndPlaceController::GetCurAction() != DA_DEEP_ROLL_LOW)
+           PickAndPlaceController::GetCurAction() != DA_DEEP_ROLL_LOW &&
+           PickAndPlaceController::GetCurAction() != DA_POP_A_WHEELIE)
         {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
           if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
