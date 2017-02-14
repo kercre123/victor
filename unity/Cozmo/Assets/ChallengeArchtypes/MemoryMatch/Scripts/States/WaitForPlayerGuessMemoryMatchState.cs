@@ -31,6 +31,13 @@ namespace MemoryMatch {
 
       _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Human, false);
       SetTimeoutDuration(_GameInstance.Config.IdleTimeoutSec);
+
+      if (_GameInstance.IsSoloMode()) {
+        PlayerInfo cozmoPlayer = _GameInstance.GetFirstPlayerByType(PlayerType.Cozmo);
+        if (cozmoPlayer != null) {
+          cozmoPlayer.SetGoal(new MemoryMatchPlayerGoalCozmoPositionReset(_GameInstance, null));
+        }
+      }
     }
 
     public override void Exit() {
@@ -45,6 +52,13 @@ namespace MemoryMatch {
       base.Update();
       if (_SubState == SubState.WaitForBlinkDone) {
         if (Time.time - _StartLightBlinkTime > MemoryMatchGame.kLightBlinkLengthSeconds) {
+
+          // Player is done, if cozmo is correcting himself he needs to react now...
+          PlayerInfo cozmoPlayer = _GameInstance.GetFirstPlayerByType(PlayerType.Cozmo);
+          if (cozmoPlayer != null && cozmoPlayer.HasGoal()) {
+            cozmoPlayer.SetGoal(null);
+          }
+
           if (_CurrentSequenceIndex == _SequenceList.Count) {
             PlayerWinHand();
           }
