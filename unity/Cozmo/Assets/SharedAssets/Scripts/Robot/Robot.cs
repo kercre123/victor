@@ -510,7 +510,7 @@ public class Robot : IRobot {
 
     DAS.Info("Robot.HandleLoadedKnownFace.NumFace", "EnrolledFaces.Count: " + EnrolledFaces.Count + " LoadedKnownFace Id: " + loadedKnownFaceMessage.faceID);
     foreach (KeyValuePair<int, string> kvp in EnrolledFaces) {
-      DAS.Info("Robot.HandleLoadedKnownFace.EnrolledFace", "Enrolled face: " + kvp.Key + " " + kvp.Value);
+      DAS.Info("Robot.HandleLoadedKnownFace.EnrolledFace", "Enrolled face: " + kvp.Key + " " + PrivacyGuard.HidePersonallyIdentifiableInfo(kvp.Value));
     }
 
     if (EnrolledFaces.ContainsKey(loadedKnownFaceMessage.faceID)) {
