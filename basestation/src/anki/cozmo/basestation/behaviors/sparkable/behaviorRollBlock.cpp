@@ -173,6 +173,9 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   
     // Don't turn towards the face when retrying
     rollAction->DontTurnTowardsFace();
+    
+    // Try again to select a pre-action pose which will upright the block
+    rollAction->RollToUpright();
   
     // Only try to use another preAction pose if we aren't using an approach angle otherwise there is only
     // one preAction pose to roll the object upright and the roll action failed due to not seeing the object

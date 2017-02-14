@@ -441,7 +441,7 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
       
       if(_robot.IsCarryingObject() == false) {
-        PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
+        PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
                           "Robot %d cannot place an object because it is not carrying anything.",
                           _robot.GetID());
         result = ActionResult::NOT_CARRYING_OBJECT_ABORT;

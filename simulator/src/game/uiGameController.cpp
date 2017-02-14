@@ -885,17 +885,22 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendTurnInPlace(const f32 angle_rad, const f32 speed_radPerSec, const f32 accel_radPerSec2)
+    uint32_t UiGameController::SendTurnInPlace(const f32 angle_rad,
+                                               const f32 speed_radPerSec,
+                                               const f32 accel_radPerSec2,
+                                               const bool isAbsolute,
+                                               const QueueActionPosition queueActionPosition)
     {
-      ExternalInterface::TurnInPlace m;
+      ExternalInterface::QueueSingleAction m;
       m.robotID = 1;
-      m.angle_rad = angle_rad;
-      m.speed_rad_per_sec = speed_radPerSec;
-      m.accel_rad_per_sec2 = accel_radPerSec2;
-      m.isAbsolute = false;
+      m.idTag = ++_queueActionIdTag;
+      m.position = queueActionPosition;
+      m.numRetries = 1;
+      m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( angle_rad, speed_radPerSec, accel_radPerSec2, isAbsolute, 1 ));
       ExternalInterface::MessageGameToEngine message;
-      message.Set_TurnInPlace(m);
+      message.Set_QueueSingleAction(m);
       SendMessage(message);
+      return m.idTag;
     }
 
     void UiGameController::SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
@@ -1567,15 +1572,17 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
+    uint32_t UiGameController::SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
       ExternalInterface::QueueSingleAction msg;
       msg.robotID = 1;
+      msg.idTag = ++_queueActionIdTag;
       msg.position = pos;
       msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(msg.robotID, numLoops, animName));
 
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(msg);
       SendMessage(message);
+      return msg.idTag;
     }
     
     void UiGameController::SendCancelAction() {
