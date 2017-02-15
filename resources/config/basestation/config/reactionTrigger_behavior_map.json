@@ -97,6 +97,10 @@
       "behaviorName": "reactToPickup"
     },
     {
+      "reactionTrigger": "RobotPlacedOnSlope",
+      "behaviorName": "reactToPlacedOnSlope"
+    },
+    {
       "reactionTrigger": "PyramidInitialDetection",
       "behaviorName": "reactToPyramid"
     },

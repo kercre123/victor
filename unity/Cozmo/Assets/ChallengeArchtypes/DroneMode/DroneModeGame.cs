@@ -36,6 +36,7 @@ namespace Cozmo {
           _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.CubeMoved);
           _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.CliffDetected);
           _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
+          _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.RobotPlacedOnSlope);
         }
 
         private void InitializeStateMachine() {

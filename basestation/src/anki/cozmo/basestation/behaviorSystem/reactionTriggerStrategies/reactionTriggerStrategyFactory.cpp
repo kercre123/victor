@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPlacedOnCharger.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPetInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotPickedUp.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotPlacedOnSlope.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPyramidInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyReturnedToTreads.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotOnBack.h"
@@ -99,6 +100,11 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotPickedUp:
     {
       strategy = new ReactionTriggerStrategyRobotPickedUp(robot, config);
+      break;
+    }
+    case ReactionTrigger::RobotPlacedOnSlope:
+    {
+      strategy = new ReactionTriggerStrategyRobotPlacedOnSlope(robot, config);
       break;
     }
     case ReactionTrigger::PyramidInitialDetection:

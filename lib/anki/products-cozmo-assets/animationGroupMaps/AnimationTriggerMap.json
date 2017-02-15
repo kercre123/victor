@@ -921,6 +921,10 @@
       "AnimName": "ag_reacttocliff_stuckrightside_01"
     },
     {
+      "CladEvent": "ReactToPerchedOnBlock",
+      "AnimName": "ag_reacttoblock_stuckonblock"
+    },
+    {
       "CladEvent": "ReactToPickup",
       "AnimName": "ag_reacttocliff_pickup"
     },

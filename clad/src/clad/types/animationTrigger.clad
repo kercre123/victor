@@ -246,6 +246,7 @@ enum int_32 AnimationTrigger
   ReactToNewBlockSmall,
   ReactToOnLeftSide,
   ReactToOnRightSide,
+  ReactToPerchedOnBlock,
   ReactToPickup,
   ReactToPokeReaction,
   ReactToPokeStartled,

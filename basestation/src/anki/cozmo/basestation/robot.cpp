@@ -551,7 +551,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     return false;
   }
   
-  const bool isOfftreads = IS_STATUS_FLAG_SET(IS_PICKED_UP);
+  const bool isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   const bool isFalling = IS_STATUS_FLAG_SET(IS_FALLING);
   TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
@@ -626,7 +626,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   ////
   
   // Transition from ontreads to InAir - happens instantly
-  if(_awaitingConfirmationTreadState == OffTreadsState::OnTreads && isOfftreads == true) {
+  if(_awaitingConfirmationTreadState == OffTreadsState::OnTreads && isPickedUp == true) {
     // Robot is being picked up from not being picked up, notify systems
     _awaitingConfirmationTreadState = OffTreadsState::InAir;
     // Allows this to be called instantly
@@ -635,7 +635,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   
   // Transition from inAir to Ontreads
   // there is a delay for the cliff sensor to confirm the robot is no longer picked up
-  if (_awaitingConfirmationTreadState != OffTreadsState::OnTreads && isOfftreads != true
+  if (_awaitingConfirmationTreadState != OffTreadsState::OnTreads && isPickedUp != true
       && !currOnBack && !currOnSide && !currFacePlant) {
     _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
     // Allows this to be called instantly
@@ -1044,6 +1044,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const bool isCarryingObject = IS_STATUS_FLAG_SET(IS_CARRYING_BLOCK);
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
+  _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
   SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   _isCliffSensorOn = IS_STATUS_FLAG_SET(CLIFF_DETECTED);
