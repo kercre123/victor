@@ -65,3 +65,15 @@ namespace Cat {
     od432 myOD432
   }
 } // namespace Cat
+
+namespace Constructor {
+  structure HasDefaultConstructor {
+    float_32 foo,
+    int_32 bar
+  }
+
+  no_default_constructor structure HasNoDefaultConstructor {
+    float_32 foo,
+    int_32 bar
+  }
+}

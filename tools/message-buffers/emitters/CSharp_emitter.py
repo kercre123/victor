@@ -300,7 +300,8 @@ class StructEmitter(ast.NodeVisitor):
     def emitConstructors(self, node, globals):
         self.output.write('\t/**** Constructors ****/\n\n')
 
-        self.emitDefaultConstructor(node, globals)
+        if(node.default_constructor):
+            self.emitDefaultConstructor(node, globals)
         if node.members():
             self.emitValueConstructor(node, globals)
         self.emitUnpackConstructors(node, globals)
