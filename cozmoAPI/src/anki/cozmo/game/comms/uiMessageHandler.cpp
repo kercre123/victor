@@ -67,6 +67,8 @@ namespace Anki {
     static_assert(!kEnableSdkCommsAlways, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
 #endif
     
+CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
+    
 
 #define ANKI_ENABLE_SDK_OVER_TCP  1
     
@@ -360,13 +362,50 @@ namespace Anki {
     
     bool IgnoreMessageTypeForSdkConnection(ExternalInterface::MessageGameToEngine::Tag messageTag)
     {
+      if (kAllowBannedSdkMessages)
+      {
+        return false;
+      }
+      
       // Return true for any messages that we want to ignore (blacklist) from SDK usage
       
       using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
       switch (messageTag)
       {
-        case GameToEngineTag::RequestUnlockDataFromBackup:  return true;
-        case GameToEngineTag::RequestSetUnlock:             return true;
+        case GameToEngineTag::CalibrateMotors:                  return true;
+        case GameToEngineTag::ReadToolCode:                     return true;
+        case GameToEngineTag::IMURequest:                       return true;
+        case GameToEngineTag::StartControllerTestMode:          return true;
+        case GameToEngineTag::RawPWM:                           return true;
+        case GameToEngineTag::ReliableTransportRunMode:         return true;
+        case GameToEngineTag::RequestFeatureToggles:            return true;
+        case GameToEngineTag::SetFeatureToggle:                 return true;
+        case GameToEngineTag::UpdateFirmware:                   return true;
+        case GameToEngineTag::ResetFirmware:                    return true;
+        case GameToEngineTag::ControllerGains:                  return true;
+        case GameToEngineTag::RestoreRobotFromBackup:           return true;
+        case GameToEngineTag::RequestRobotRestoreData:          return true;
+        case GameToEngineTag::WipeRobotGameData:                return true;
+        case GameToEngineTag::RequestUnlockDataFromBackup:      return true;
+        case GameToEngineTag::SetRobotImageSendMode:            return true;
+        case GameToEngineTag::SaveImages:                       return true;
+        case GameToEngineTag::SaveRobotState:                   return true;
+        case GameToEngineTag::ExecuteTestPlan:                  return true;
+        case GameToEngineTag::PlannerRunMode:                   return true;
+        case GameToEngineTag::SetObjectAdditionAndDeletion:     return true;
+        case GameToEngineTag::StartTestMode:                    return true;
+        case GameToEngineTag::TransitionToNextOnboardingState:  return true;
+        case GameToEngineTag::ProgressionMessage:               return true; // (SetFriendshipPoints + Level)
+        case GameToEngineTag::RequestSetUnlock:                 return true;
+        case GameToEngineTag::GetJsonDasLogsMessage:            return true;
+        case GameToEngineTag::SaveCalibrationImage:             return true;
+        case GameToEngineTag::ClearCalibrationImages:           return true;
+        case GameToEngineTag::ComputeCameraCalibration:         return true;
+        case GameToEngineTag::NVStorageEraseEntry:              return true;
+        case GameToEngineTag::NVStorageWipeAll:                 return true;
+        case GameToEngineTag::NVStorageWriteEntry:              return true;
+        case GameToEngineTag::NVStorageClearPartialPendingWriteEntry:  return true;
+        case GameToEngineTag::NVStorageReadEntry:               return true;
         default:
           return false;
       }
@@ -390,7 +429,7 @@ namespace Anki {
       if (isSdkConnection && IgnoreMessageTypeForSdkConnection(messageTag))
       {
         // Ignore - this message type is blacklisted from SDK usage
-        PRINT_CH_INFO("UiComms", "sdk.bannedmessage", "%s", MessageGameToEngineTagToString(messageTag));
+        PRINT_NAMED_WARNING("sdk.bannedmessage", "%s", MessageGameToEngineTagToString(messageTag));
         return;
       }
       

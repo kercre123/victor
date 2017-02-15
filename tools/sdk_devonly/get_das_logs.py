@@ -31,6 +31,11 @@ def handle_json_das_log_all_sent_message(evt, *, msg):
     os._exit(0)
 
 def run(coz_conn):
+    # GetJsonDasLogsMessage is now ignored when sent from an SDK connection,
+    # but for internal engine builds we can disable that via a console var
+    msg = cozmo._clad._clad_to_engine_iface.SetDebugConsoleVarMessage(varName="AllowBannedSdkMessages", tryValue="1")
+    coz_conn.send_msg(msg)
+
     get_json_das_logs = cozmo._clad._clad_to_engine_iface.GetJsonDasLogsMessage()
     coz_conn.add_event_handler(_clad._MsgJsonDasLogMessage, handle_json_das_log_message)
     coz_conn.add_event_handler(_clad._MsgJsonDasLogAllSentMessage, handle_json_das_log_all_sent_message)
