@@ -22,7 +22,7 @@
 #include "nvReset.h"
 
 u8 g_fixtureReleaseVersion = 86;
-#define BUILD_INFO "EP1 v1.5"
+#define BUILD_INFO "EP2 v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
 #define NOT_FOR_FACTORY 1

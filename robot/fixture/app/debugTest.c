@@ -38,17 +38,16 @@ static void BackpackLeds(void)
   int me = ERROR_OK;
   for( int i=0; i < LEDCnt(); i++ )
   {
-    int print_len = ConsolePrintf("led %02d...", i);
+    //int print_len = ConsolePrintf("led %02d...", i);
     LEDOn(i);
     MicroWait(1000*333);
     LEDOn(255); //all off
     
     try {
       TestLED(i);
-      ConsolePrintf("ok\r\n");
     } catch(int e) {
       me = e;
-      ConsolePrintf("FAIL\r\n");
+      ConsolePrintf("...LED %02d FAIL\r\n", i);
     }
   }
   if( me != ERROR_OK ) {
