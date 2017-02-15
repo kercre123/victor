@@ -2188,14 +2188,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     obsPose.SetParent(_robot->GetPose().GetParent());
     
     // Initialize with Known pose so it won't delete immediately because it isn't re-seen
-    auto customObject = std::unique_ptr<CustomObject>(customObstacle);
+    auto customObject = std::shared_ptr<CustomObject>(customObstacle);
     customObject->InitPose(obsPose, PoseState::Known);
 
-    AddNewObject(std::move(customObject));
     _didObjectsChange = true;
     _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
     
-    return customObject->GetID();
+    const ObjectID id = AddNewObject(customObject);
+    return id;
   }
 
   void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
