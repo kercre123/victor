@@ -612,6 +612,9 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   auto activeID = payload.objectID;
   
   const std::string eventPrefix = GetEventPrefix<PayloadType>();
+
+  // if we find an object with that activeID, its objectID will be here
+  ObjectID matchedObjectID;
   
 # define MAKE_EVENT_NAME(__str__) (eventPrefix + __str__).c_str()
   
@@ -647,30 +650,8 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       return;
     }
     
-    // Don't notify game about objects being carried that have moved, since we expect
-    // them to move when the robot does.
-    // TODO: Consider broadcasting carried object movement if the robot is _not_ moving
-    //
-    // Don't notify game about moving objects that are being docked with, because
-    // we expect those to move if/when we bump them. But we still mark them as dirty/inaccurate
-    // below because they have in fact moved and we wouldn't want to localize with them.
-    //
-    // TODO: Consider not filtering these out and letting game ignore them somehow
-    //       - Option 1: give game access to dockingID so it can do this same filtering
-    //       - Option 2: add a "wasDocking" flag to the ObjectMoved/Stopped message
-    //       - Option 3: add a new ObjectMovedWhileDocking message
-    //
-    const bool isDockingObject = (connectedObj->GetID() == robot->GetDockObject());
-    const bool isCarryingObject = robot->IsCarryingObject(connectedObj->GetID());
-    
-    // Update the ID to be the blockworld ID before broadcasting
-    payload.objectID = connectedObj->GetID();
-    payload.robotID = robot->GetID();
-    
-    if(!isDockingObject && !isCarryingObject)
-    {
-      robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
-    }
+    // for later notification
+    matchedObjectID = connectedObj->GetID();
     
     // update Moving flag of connected object when it changes
     const bool wasMoving = connectedObj->IsMoving();
@@ -688,8 +669,8 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   // has the matching active ID. We also need to consider all pose states and origin frames.
   BlockWorldFilter filter;
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn([&payload](const ObservableObject* object) {
-    return object->IsActive() && object->GetActiveID() == payload.objectID;
+  filter.SetFilterFcn([activeID](const ObservableObject* object) {
+    return object->IsActive() && object->GetActiveID() == activeID;
   });
   
   std::vector<ObservableObject *> matchingObjects;
@@ -767,7 +748,40 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     }
     
   } // for(ObservableObject* object : matchingObjects)
-                           
+  
+  if ( matchedObjectID.IsSet() )
+  {
+    // Don't notify game about objects being carried that have moved, since we expect
+    // them to move when the robot does.
+    // TODO: Consider broadcasting carried object movement if the robot is _not_ moving
+    //
+    // Don't notify game about moving objects that are being docked with, because
+    // we expect those to move if/when we bump them. But we still mark them as dirty/inaccurate
+    // below because they have in fact moved and we wouldn't want to localize with them.
+    //
+    // TODO: Consider not filtering these out and letting game ignore them somehow
+    //       - Option 1: give game access to dockingID so it can do this same filtering
+    //       - Option 2: add a "wasDocking" flag to the ObjectMoved/Stopped message
+    //       - Option 3: add a new ObjectMovedWhileDocking message
+    //
+    const bool isDockingObject = (connectedObj->GetID() == robot->GetDockObject());
+    const bool isCarryingObject = robot->IsCarryingObject(connectedObj->GetID());
+    
+    // Update the ID to be the blockworld ID before broadcasting
+    payload.objectID = matchedObjectID;
+    payload.robotID = robot->GetID();
+    
+    if(!isDockingObject && !isCarryingObject)
+    {
+      robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
+    }
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("ObjectMovedOrStoppedHelper.UnknownActiveID",
+                        "Could not find match for active object ID %d", activeID);
+  }
+  
 # undef MAKE_EVENT_NAME
   
 } // ObjectMovedOrStoppedHelper()
@@ -818,7 +832,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
     #if ANKI_DEVELOPER_CODE
     {
       // maybe we do not have located instances, there should be a connected one though
-      const ActiveID& activeID = payload.objectID;
+      ActiveID activeID = payload.objectID;
       const bool isConnected = ( nullptr != robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID) );
       if ( !isConnected ) {
         PRINT_NAMED_WARNING("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
