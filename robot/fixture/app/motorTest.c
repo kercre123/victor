@@ -124,13 +124,13 @@ void TestEncoders(void)
 // Count encoder ticks, check direction, and collect min/max a/b values
 const int OVERSAMPLE = 18;    // 2^N samples
 const int ENC_LOW = 1000, ENC_HIGH = 2300;   // Low/high threshold
-int MeasureMotor(int speed, bool fast)
+int MeasureMotor(int speed, bool fast, bool reverse = false )
 {
   int mina = 2800, minb = 2800, maxa = 0, maxb = 0;
   bool ahi = 0, bhi = 0;
   int aticks = 0, bticks = 0;
   
-  MotorMV(speed);
+  MotorMV(speed, reverse);
   MicroWait(250000);  // Spin up time
 
   // Collect samples at full speed
@@ -197,10 +197,17 @@ void TestMotorH(void)
 {
   const int TICKS_SLOW = 10;
   const int TICKS_FAST = 80;
-  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)
+  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)       //Forward slow
     throw ERROR_MOTOR_SLOW;
-  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)
-    throw ERROR_MOTOR_FAST;    
+  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)       //Forward fast
+    throw ERROR_MOTOR_FAST;
+  if (MeasureMotor(MOTOR_LOW_MV, false, true) < TICKS_SLOW) //Reverse slow
+    ConsolePrintf("throw ERROR_MOTOR_SLOW\r\n");
+  if (MeasureMotor(MOTOR_FULL_MV, true, true) < TICKS_FAST) //Reverse fast
+    ConsolePrintf("throw ERROR_MOTOR_FAST\r\n");
+  
+  //Because we aint' finished
+  throw ERROR_MOTOR_SLOW;
 }
 
 // List of all functions invoked by the test, in order
