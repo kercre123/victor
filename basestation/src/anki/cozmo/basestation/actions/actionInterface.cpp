@@ -6,6 +6,10 @@
  *
  * Description: Implements interfaces for action states for a robot.
  *
+ *              Note about subActions (manually ticking actions inside another action)
+ *              Store subActions as unique_ptrs since the subAction is unique to the 
+ *              parent and the parent is responsible for managing everything about the
+ *              subAction. (see PickupObjectAction for examples)
  *
  * Copyright: Anki, Inc. 2014
  **/

@@ -202,6 +202,9 @@ namespace Anki {
         completionUnion.Set_objectInteractionCompleted(interactionCompleted);
       }
       
+      // Purely to shorten the name for nice whitespace alignment
+      using UniqueCompoundPtr = std::unique_ptr<ICompoundAction>;
+      
       ObjectID                   _dockObjectID;
       DockAction                 _dockAction;
       const Vision::KnownMarker* _dockMarker                     = nullptr;
@@ -210,7 +213,7 @@ namespace Anki {
       f32                        _waitToVerifyTime               = -1;
       bool                       _wasPickingOrPlacing            = false;
       bool                       _useManualSpeed                 = false;
-      ICompoundAction*           _faceAndVerifyAction            = nullptr;
+      UniqueCompoundPtr          _faceAndVerifyAction            = nullptr;
       f32                        _placementOffsetX_mm            = 0;
       f32                        _placementOffsetY_mm            = 0;
       f32                        _placementOffsetAngle_rad       = 0;
@@ -340,9 +343,9 @@ namespace Anki {
       
     private:
     
-      IActionRunner*         _verifyAction = nullptr;
-      bool                   _verifyActionDone = false;
-      TimeStamp_t            _firstVerifyCallTime = 0;
+      std::unique_ptr<IActionRunner> _verifyAction = nullptr;
+      bool                           _verifyActionDone = false;
+      TimeStamp_t                    _firstVerifyCallTime = 0;
       
       const u32 kLiftLoadTimeout_ms = 500;
       u32 _liftLoadWaitTime_ms = 0;
@@ -378,10 +381,10 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      ObjectID                    _carryingObjectID;
-      const Vision::KnownMarker*  _carryObjectMarker = nullptr;
-      IActionRunner*              _faceAndVerifyAction = nullptr;
-      bool                        _startedPlacing = false;
+      ObjectID                       _carryingObjectID;
+      const Vision::KnownMarker*     _carryObjectMarker = nullptr;
+      std::unique_ptr<IActionRunner> _faceAndVerifyAction = nullptr;
+      bool                           _startedPlacing = false;
       
       
     }; // class PlaceObjectOnGroundAction
@@ -406,7 +409,7 @@ namespace Anki {
       void SetMotionProfile(const PathMotionProfile& motionProfile);
       
     private:
-      DriveToPlaceCarriedObjectAction* _driveAction = nullptr;
+      std::weak_ptr<IActionRunner> _driveAction;
     };
     
     
@@ -427,7 +430,6 @@ namespace Anki {
         {
           _placementVerifyAction->PrepForCompletion();
         }
-        Util::SafeDelete(_placementVerifyAction);
       }
       
       virtual ActionResult InitInternal() override;
@@ -450,8 +452,8 @@ namespace Anki {
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
       
-      IActionRunner*             _placementVerifyAction = nullptr;
-      bool                       _verifyComplete; // used in PLACE modes
+      std::unique_ptr<IActionRunner> _placementVerifyAction = nullptr;
+      bool                           _verifyComplete; // used in PLACE modes
       
     private:
       f32 _relOffsetX_mm;
@@ -478,7 +480,6 @@ namespace Anki {
         {
           _rollVerifyAction->PrepForCompletion();
         }
-        Util::SafeDelete(_rollVerifyAction);
       }
       
       // Whether or not to do the deep roll action instead of the default roll
@@ -500,7 +501,7 @@ namespace Anki {
       
       const Vision::KnownMarker* _expectedMarkerPostRoll = nullptr;
       
-      IActionRunner*             _rollVerifyAction = nullptr;
+      std::unique_ptr<IActionRunner> _rollVerifyAction = nullptr;
       
     private:
       // How much we should look down to be able to see the marker of the object we just rolled

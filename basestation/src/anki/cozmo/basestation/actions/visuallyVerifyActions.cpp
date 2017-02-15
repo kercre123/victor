@@ -41,16 +41,15 @@ namespace Cozmo {
   {
     if(nullptr != _compoundAction) {
       _compoundAction->PrepForCompletion();
-      Util::SafeDelete(_compoundAction);
     }
   }
   
   ActionResult IVisuallyVerifyAction::Init()
   {
-    _compoundAction = new CompoundActionParallel(_robot, {
+    _compoundAction.reset(new CompoundActionParallel(_robot, {
       new MoveLiftToHeightAction(_robot, _liftPreset),
       new WaitForImagesAction(_robot, GetNumImagesToWaitFor(), _imageTypeToWaitFor),
-    });
+    }));
     
     _compoundAction->ShouldSuppressTrackLocking(true);
     _compoundAction->ShouldEmitCompletionSignal(false);
@@ -276,13 +275,11 @@ VisuallyVerifyNoObjectAtPoseAction::~VisuallyVerifyNoObjectAtPoseAction()
   if(_turnTowardsPoseAction != nullptr)
   {
     _turnTowardsPoseAction->PrepForCompletion();
-    Util::SafeDelete(_turnTowardsPoseAction);
   }
   
   if(_waitForImagesAction != nullptr)
   {
     _waitForImagesAction->PrepForCompletion();
-    Util::SafeDelete(_waitForImagesAction);
   }
 }
 
@@ -290,9 +287,11 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::Init()
 {
   // Turn towards the pose and move the lift out of the way while we turn
   // then wait for a number of images
-  _turnTowardsPoseAction = new CompoundActionParallel(_robot, {new TurnTowardsPoseAction(_robot, _pose, DEG_TO_RAD(180)),
-                                                               new MoveLiftToHeightAction(_robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV)});
-  _waitForImagesAction = new WaitForImagesAction(_robot, _numImagesToWaitFor, VisionMode::DetectingMarkers);
+  _turnTowardsPoseAction.reset(new CompoundActionParallel(_robot, {
+    new TurnTowardsPoseAction(_robot, _pose, DEG_TO_RAD(180)),
+    new MoveLiftToHeightAction(_robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV)
+  }));
+  _waitForImagesAction.reset(new WaitForImagesAction(_robot, _numImagesToWaitFor, VisionMode::DetectingMarkers));
   
   _turnTowardsPoseAction->ShouldEmitCompletionSignal(false);
   _turnTowardsPoseAction->ShouldSuppressTrackLocking(true);
@@ -322,7 +321,7 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
     }
     
     _turnTowardsPoseAction->PrepForCompletion();
-    Util::SafeDelete(_turnTowardsPoseAction);
+    _turnTowardsPoseAction.reset();
     
     return ActionResult::RUNNING;
   }

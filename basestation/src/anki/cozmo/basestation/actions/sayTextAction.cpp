@@ -174,7 +174,6 @@ SayTextAction::~SayTextAction()
   if(_playAnimationAction != nullptr) {
     _playAnimationAction->PrepForCompletion();
   }
-  Util::SafeDelete(_playAnimationAction);
 } // ~SayTextAction()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -231,7 +230,7 @@ ActionResult SayTextAction::Init()
         const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
         _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
         _animation.SetIsLive(true);
-        _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
+        _playAnimationAction.reset(new PlayAnimationAction(_robot, &_animation));
       }
       else {
         if (DEBUG_SAYTEXT_ACTION) {
@@ -248,11 +247,15 @@ ActionResult SayTextAction::Init()
           
           // Generate animation
           UpdateAnimationToFitDuration(duration_ms);
-          _playAnimationAction = new PlayAnimationAction(_robot, &_animation, 1, true, _ignoreAnimTracks);
+          _playAnimationAction.reset(new PlayAnimationAction(_robot, &_animation, 1, true, _ignoreAnimTracks));
         }
         else {
           // Use current animation trigger
-          _playAnimationAction = new TriggerLiftSafeAnimationAction(_robot, _animationTrigger, 1, true, _ignoreAnimTracks);
+          _playAnimationAction.reset(new TriggerLiftSafeAnimationAction(_robot,
+                                                                        _animationTrigger,
+                                                                        1,
+                                                                        true,
+                                                                        _ignoreAnimTracks));
         }
       }
       
