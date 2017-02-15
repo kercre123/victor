@@ -37,6 +37,7 @@ bool MotorDetect(void)
 }
 
 typedef enum { SHORT, RED, GREEN, BLUE, OPEN } VoltRange;
+const char * VoltRangeStr[] = { "SHORT", "RED", "GREEN", "BLUE", "OPEN" };
 
 // Check which 'voltage range' (0-4) an LED is in
 // 0:SHORT, 1:RED, 2:GREEN, 3:BLUE, 4:OPEN
@@ -54,8 +55,19 @@ VoltRange ledmv2voltrange(int x)
 }
 
 //separate for extern usage
-void TestLED(int i) {
-  if( ledmv2voltrange(LEDGetHighSideMv(i)) != ledmv2voltrange(LEDGetExpectedMv(i)))
+void TestLED(int i)
+{
+  //get voltages
+  int mv_meas = LEDGetHighSideMv(i);
+  int mv_exp  = LEDGetExpectedMv(i);
+  
+  //convert to voltage ranges
+  VoltRange vrmeas = ledmv2voltrange( mv_meas );
+  VoltRange vrexp  = ledmv2voltrange( mv_exp );
+  
+  ConsolePrintf("led,%d,%i,%i,%s,%s\r\n", i, mv_meas, mv_exp, VoltRangeStr[vrmeas], VoltRangeStr[vrexp]);
+  
+  if( vrmeas != vrexp ) //ledmv2voltrange(LEDGetHighSideMv(i)) != ledmv2voltrange(LEDGetExpectedMv(i)))
     throw ERROR_BACKPACK_LED;
 }
 
