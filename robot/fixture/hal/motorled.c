@@ -306,10 +306,10 @@ int BPBtnGetMv(void)
   PIN_RESET(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
   PIN_OUT(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
 
-  //if( g_fixtureRev <= BOARD_REV_1_0_REV3 ) //v1.0 doesn't support backpack button. pull high to always read as open
+  if( g_fixtureRev <= BOARD_REV_1_0_REV3 ) //v1.0 doesn't support backpack button. pull high to always read as open
     PIN_PULL_UP(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
-  //else //v1.5+
-  //  PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
+  else //v1.5+
+    PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
   
   // Now grab the voltage
   MicroWait(100); //wait for voltages to stabilize
