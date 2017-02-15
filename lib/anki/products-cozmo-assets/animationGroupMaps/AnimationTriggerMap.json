@@ -530,7 +530,7 @@
     },
     {
       "CladEvent": "MemoryMatchPlayerLoseHand",
-      "AnimName": "ag_memorymatch_successhand_cozmo"
+      "AnimName": "ag_memorymatch_failhand_player_01"
     },
     {
       "CladEvent": "MemoryMatchPlayerLoseHandSolo",
