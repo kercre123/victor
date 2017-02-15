@@ -14,18 +14,6 @@
 
 const int ENCODER_DETECT_VOLTAGE = 1400;  // Above 1400mV, an encoder is probably pulling us up
 
-void AllOn()
-{
-  // Light up all the LEDs in fixture 2H
-  if (g_fixtureType == FIXTURE_MOTOR2H_TEST)
-  {
-    static int x = 0;
-    LEDOn(x++); 
-    if (x >= LEDCnt())
-      x = 0;
-  }
-}
-
 // Return true if device is detected on contacts
 bool MotorDetect(void)
 {  
@@ -34,11 +22,15 @@ bool MotorDetect(void)
   PIN_IN(GPIOA, PINA_ENCLED);
   if (GrabADC(PINA_ENCLED) > ENCODER_DETECT_VOLTAGE)
   {
-    for (int i = 0; i < 11; i++)
-    {
-      AllOn();
+    for (int i = 0; i < LEDCnt(); i++) {
+      if (g_fixtureType == FIXTURE_MOTOR2H_TEST)
+        LEDOn(i);
       MicroWait(150);  // Extra debounce time
     }
+    
+    if (g_fixtureType == FIXTURE_MOTOR2H_TEST)
+      LEDOn(255); //turn off
+
     return true;
   }
   return false;
