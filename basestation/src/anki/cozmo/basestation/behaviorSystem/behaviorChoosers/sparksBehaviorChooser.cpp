@@ -11,8 +11,8 @@
  **/
 #include "SparksBehaviorChooser.h"
 
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
@@ -22,12 +22,11 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/components/cubeLightComponent.h"
-#include "anki/cozmo/basestation/components/bodyLightComponent.h"
-#include "anki/cozmo/basestation/drivingAnimationHandler.h"
-#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
@@ -175,7 +174,7 @@ void SparksBehaviorChooser::OnSelected()
                                                                AnimationTrigger::SparkDrivingLoop,
                                                                AnimationTrigger::SparkDrivingStop});
     _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-    _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights);
+    _bodyLightDataLocator = _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights, BackpackLightSource::Behavior);
 
     _idleAnimationsSet = true;
   }
@@ -223,7 +222,7 @@ void SparksBehaviorChooser::ResetLightsAndAnimations()
     // Revert to driving anims
     _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     _robot.GetAnimationStreamer().PopIdleAnimation();
-    _robot.GetBodyLightComponent().StopLoopingBackpackLights();
+    _robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
     _idleAnimationsSet = false;
   }
   
