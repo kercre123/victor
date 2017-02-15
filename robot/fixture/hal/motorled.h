@@ -3,7 +3,7 @@
 
 #include "portable.h"
 
-void MotorMV(int millivolts); // Set motor speed between 0 and 5000 millivolts
+void MotorMV(int millivolts, bool reverse_nForward = false ); // Set motor speed and direction between 0 and 5000 millivolts
 int GrabADC(int channel); //slow oversampled ADC
 int QuickADC(int channel); //quick & dirty
 void ReadEncoder(bool light, int usDelay, int& a, int& b, bool skipa = false);

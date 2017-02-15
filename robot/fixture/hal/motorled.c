@@ -14,9 +14,70 @@
 
 #define MOTOR_PWM_MAXVAL 3000
 
-// Set motor speed between 0 and 5000 millivolts
-void MotorMV(int millivolts)
+//1/2 HBridge config.
+typedef enum { HBC_OFF /*high Z*/, HBC_GND, HBC_VCC } HBridgeHalfCfg;
+
+//Configure the motor H-Bridge circuit (control lines)
+static void m_motor_set_cfg( HBridgeHalfCfg MOTA, HBridgeHalfCfg MOTB )
 {
+  //config motor controller pins on first use
+  static int init_motordrv_pins = 0;
+  if( !init_motordrv_pins ) {
+    init_motordrv_pins = 1;
+    PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
+    PIN_OUT(GPIOB, PINB_MOTDRV_IN1);
+    PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
+    PIN_OUT(GPIOB, PINB_MOTDRV_EN1);
+    
+    PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
+    PIN_OUT(GPIOB, PINB_MOTDRV_IN2);
+    PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
+    PIN_OUT(GPIOB, PINB_MOTDRV_EN2);
+  }
+  
+  switch( MOTA ) {
+    case HBC_OFF:
+      PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
+      break;
+    case HBC_GND:
+      PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
+      PIN_SET(GPIOB, PINB_MOTDRV_EN1);
+      break;
+    case HBC_VCC:
+      PIN_SET(GPIOB, PINB_MOTDRV_IN1);
+      PIN_SET(GPIOB, PINB_MOTDRV_EN1);
+      break;
+  }
+  
+  switch( MOTB ) {
+    case HBC_OFF:
+      PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
+      break;
+    case HBC_GND:
+      PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
+      PIN_SET(GPIOB, PINB_MOTDRV_EN2);
+      break;
+    case HBC_VCC:
+      PIN_SET(GPIOB, PINB_MOTDRV_IN2);
+      PIN_SET(GPIOB, PINB_MOTDRV_EN2);
+      break;
+  }
+}
+
+// Set motor speed between 0 and 5000 millivolts
+void MotorMV(int millivolts, bool reverse_nForward )
+{
+  //v1.5 has motor driver IC. Need to configure additional control signals
+  if( g_fixtureRev >= BOARD_REV_1_5_0 )
+  {
+    if( !millivolts )
+      m_motor_set_cfg(HBC_OFF, HBC_OFF);
+    else if( !reverse_nForward )
+      m_motor_set_cfg(HBC_VCC, HBC_GND); //MOTA=Vcc, MOTB=Gnd
+    else
+      m_motor_set_cfg(HBC_GND, HBC_VCC); //MOTA=Gnd, MOTB=Vcc
+  }
+  
   TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
   TIM_OCInitTypeDef  TIM_OCInitStructure;
 
@@ -245,10 +306,10 @@ int BPBtnGetMv(void)
   PIN_RESET(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
   PIN_OUT(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
 
-  if( g_fixtureRev <= BOARD_REV_1_0_REV3 ) //v1.0 doesn't support backpack button. pull high to always read as open
+  //if( g_fixtureRev <= BOARD_REV_1_0_REV3 ) //v1.0 doesn't support backpack button. pull high to always read as open
     PIN_PULL_UP(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
-  else //v1.5+
-    PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
+  //else //v1.5+
+  //  PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
   
   // Now grab the voltage
   MicroWait(100); //wait for voltages to stabilize
