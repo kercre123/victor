@@ -34,6 +34,7 @@ def Remote():
     @app.route('/lights', methods=['POST'])
     def lights():
         message = json.loads(request.data.decode("utf-8"))
+        # Spine
         lights = robotInterface.RI.BackpackLightsMiddle()
 
         color = (int(message['red']   * 0x1F) << 10) + (int(message['green'] * 0x1F) << 5) + (int(message['blue']  * 0x1F) << 0)
@@ -42,6 +43,13 @@ def Remote():
             light.onColor = light.offColor = color
 
         robotInterface.Send(robotInterface.RI.EngineToRobot(setBackpackLightsMiddle=lights))
+
+        # Turnsignals
+        lights = robotInterface.RI.BackpackLightsTurnSignals()
+        lights.lights[0].onColor = lights.lights[0].offColor = int(message['left'] * 0x1F) * 0b10000100001
+        lights.lights[1].onColor = lights.lights[1].offColor = int(message['right'] * 0x1F) * 0b10000100001
+
+        robotInterface.Send(robotInterface.RI.EngineToRobot(setBackpackLightsTurnSignals=lights))
 
         return "ok."
 
