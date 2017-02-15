@@ -913,8 +913,8 @@ def main(args):
     results_failed_msg = ''
     for test_controller,results in global_test_results.items():
       if results.count('failed') > 0:
-        results_failed_msg += "{} - {}/{} FAILED\n".format(test_controller, results.count('failed'), len(results))
-      if results.count('passed') > 0:
+        results_failed_msg += "{} - {}/{} PASSED\n".format(test_controller, len(results)-results.count('failed'), len(results))
+      elif results.count('passed') > 0:
         results_passed_msg += "{} - {}/{} PASSED\n".format(test_controller, results.count('passed'), len(results))
 
     UtilLog.info('results_passed_msg:\n{}'.format(results_passed_msg))

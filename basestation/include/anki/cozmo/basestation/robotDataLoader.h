@@ -79,6 +79,7 @@ public:
   const Json::Value& GetRobotVisionConfig() const { return _robotVisionConfig; }
   const Json::Value& GetReactionTriggerMap() const { return _reactionTriggerMap; }
 
+  bool IsCustomAnimLoadEnabled() const;
   
 private:
   void CollectAnimFiles();

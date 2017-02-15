@@ -333,6 +333,22 @@
       "AnimName": "ag_reacttoblock_frustrated"
     },
     {
+      "CladEvent": "GameSetupGetIn",
+      "AnimName": "ag_gamesetup_getin"
+    },
+    {
+      "CladEvent": "GameSetupGetOut",
+      "AnimName": "ag_gamesetup_getout"
+    },
+    {
+      "CladEvent": "GameSetupIdle",
+      "AnimName": "ag_gamesetup_idle"
+    },
+    {
+      "CladEvent": "GameSetupReaction",
+      "AnimName": "ag_gamesetup_reaction"
+    },
+    {
       "CladEvent": "GoToSleepGetIn",
       "AnimName": "ag_gotosleep_getin"
     },

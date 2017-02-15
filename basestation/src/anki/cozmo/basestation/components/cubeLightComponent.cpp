@@ -101,7 +101,7 @@ CubeLightComponent::CubeLightComponent(Robot& robot, const CozmoContext* context
                 "CubeLightComponent.LayersInUnexpectedOrder");
 }
 
-void CubeLightComponent::Update()
+void CubeLightComponent::Update(bool shouldPickNextAnim)
 {
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
@@ -180,7 +180,12 @@ void CubeLightComponent::Update()
                           objectInfo.first.GetValue(),
                           LayerToString(layer));
             
-            PickNextAnimForDefaultLayer(objectInfo.first);
+            // In some cases we don't want to PickNextAnimForDefaultLayer in order to prevent
+            // lights from flickering when stopping and playing anims
+            if(shouldPickNextAnim)
+            {
+              PickNextAnimForDefaultLayer(objectInfo.first);
+            }
           }
           // Otherwise only game layer is enable so just turn the lights off
           else
@@ -490,15 +495,16 @@ void CubeLightComponent::StopAllAnimsOnLayer(const AnimLayerEnum& layer, const O
   Update();
 }
 
-void CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
-                                       const ObjectID& objectID)
+bool CubeLightComponent::StopLightAnimAndResumePrevious(const CubeAnimationTrigger& animTrigger,
+                                                        const ObjectID& objectID)
 {
-  StopLightAnim(animTrigger, AnimLayerEnum::Engine, objectID);
+  return StopLightAnim(animTrigger, AnimLayerEnum::Engine, objectID);
 }
 
-void CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
-                                          const AnimLayerEnum& layer,
-                                          const ObjectID& objectID)
+bool CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
+                                       const AnimLayerEnum& layer,
+                                       const ObjectID& objectID,
+                                       bool shouldPickNextAnim)
 {
   PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.StopLightAnim",
                 "Stopping %s on object %d on layer %s",
@@ -508,22 +514,25 @@ void CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
   
   auto helper = [this](const CubeAnimationTrigger& animTrigger,
                        const ObjectID& objectID,
-                       const AnimLayerEnum& layer) {
+                       const AnimLayerEnum& layer,
+                       bool& foundAnimWithTrigger) {
     auto& iter = _objectInfo[objectID];
     for(auto& anim : iter.animationsOnLayer[layer])
     {
       if(anim.trigger == animTrigger)
       {
         anim.stopNow = true;
+        foundAnimWithTrigger = true;
       }
     }
   };
 
+  bool foundAnimWithTrigger = false;
   if(objectID.IsUnknown())
   {
     for(auto& iter : _objectInfo)
     {
-      helper(animTrigger, iter.first, layer);
+      helper(animTrigger, iter.first, layer, foundAnimWithTrigger);
     }
   }
   else
@@ -531,12 +540,14 @@ void CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
     const auto& iter = _objectInfo.find(objectID);
     if(iter != _objectInfo.end())
     {
-      helper(animTrigger, objectID, layer);
+      helper(animTrigger, objectID, layer, foundAnimWithTrigger);
     }
   }
   
   // Manually update so the anims are immediately stopped
-  Update();
+  Update(shouldPickNextAnim);
+  
+  return foundAnimWithTrigger;
 }
 
 void CubeLightComponent::ApplyAnimModifier(const LightAnim& anim,
@@ -585,7 +596,7 @@ bool CubeLightComponent::BlendAnimWithCurLights(const ObjectID& objectID,
   
   // For every pattern in the anim replace the on/offColors that are completely zero
   // (completely zero meaning alpha is 0 as well as r,g,b are 0, normally alpha should be 1)
-  // with what ever the corresponding color that is currently being displayed on the object
+  // with whatever the corresponding color that is currently being displayed on the object
   for(auto& pattern : blendedAnim)
   {
     for(int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
@@ -605,6 +616,19 @@ bool CubeLightComponent::BlendAnimWithCurLights(const ObjectID& objectID,
   }
 
   return res;
+}
+
+bool CubeLightComponent::StopAndPlayLightAnim(const ObjectID& objectID,
+                                              const CubeAnimationTrigger& animTriggerToStop,
+                                              const CubeAnimationTrigger& animTriggerToPlay,
+                                              AnimCompletedCallback callback,
+                                              bool hasModifier,
+                                              const ObjectLights& modifier)
+{
+  // Stop the anim and prevent the update call in StopLightAnim from picking a next default anim
+  // This will prevent the lights from briefly flickering between the calls to stop and play
+  StopLightAnim(animTriggerToStop, AnimLayerEnum::Engine, objectID, false);
+  return PlayLightAnim(objectID, animTriggerToPlay, callback, hasModifier, modifier);
 }
 
 void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)

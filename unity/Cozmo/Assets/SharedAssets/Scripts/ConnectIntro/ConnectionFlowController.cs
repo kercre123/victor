@@ -455,6 +455,14 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void WakeupSequence() {
+
+    RobotEngineManager.Instance.CurrentRobot.EnableAllReactionTriggers(true);
+
+    //Disable reactionary behaviors during wakeup
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, false);
+
     _WakingUpCozmoScreenInstance = UIManager.CreateUIElement(_WakingUpCozmoScreenPrefab, _ConnectionFlowBackgroundModalInstance.transform);
     if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
       // just a quick animation to kick the eyes on in SDK mode, but not hold for seconds
@@ -625,10 +633,7 @@ public class ConnectionFlowController : MonoBehaviour {
       RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
     }
 
-    //Disable reactionary behaviors during wakeup
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, false);
+    RobotEngineManager.Instance.CurrentRobot.EnableAllReactionTriggers(false);
   }
 
   public void HandleRobotDisconnect() {

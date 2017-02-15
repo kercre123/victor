@@ -1,0 +1,115 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+
+  "helpTipsStrings.viewTitle": {
+    "translation": "Help & Tips"
+  },
+  "helpTipsStrings.Slide0.title": {
+    "translation": "Create a Great Play Space"
+  },
+  "helpTipsStrings.Slide0.body": {
+    "translation": "Cozmo likes a clean, open table in a well lit room. He sees best indoors and out of direct sunlight."
+  },
+  "helpTipsStrings.Slide1.title": {
+    "translation": "Cozmo's Cubes"
+  },
+  "helpTipsStrings.Slide1.body": {
+    "translation": "Cozmo likes to be around his Cubes. They work best when he can see the symbol clearly, and they're right side up. Check out Settings for Cube maintenance."
+  },
+
+  "helpTipsStrings.Slide2.title": {
+    "translation": "When you're not playing a game,\nthe Cube lights can tell you that..."
+  },
+  "helpTipsStrings.Slide2.subtitle1": {
+    "translation": "Cozmo has seen\nthis Cube"
+  },
+  "helpTipsStrings.Slide2.subtitle2": {
+    "translation": "Cozmo wants to use\nthis Cube"
+  },
+  "helpTipsStrings.Slide2.subtitle3": {
+    "translation": "This Cube is low\non batteries"
+  },
+  
+  "helpTipsStrings.Slide3.title": {
+    "translation": "Cozmo Gets Better Over Time"
+  },
+  "helpTipsStrings.Slide3.body": {
+    "translation": "You can <color=orange>Upgrade</color> Cozmo to learn more abilities, and watch Cozmo grow. You can also unlock new Cozmo <color=#00aee0ff>Apps</color>, and get more games & activities."
+  },
+  "helpTipsStrings.Slide3.bodyUpgrade": {
+    "translation": "Upgrade"
+  },
+  "helpTipsStrings.Slide3.bodyApp": {
+    "translation": "App"
+  },
+  "helpTipsStrings.Slide4.title": {
+    "translation": "Energy, Bits, and Sparks"
+  },
+  "helpTipsStrings.Slide4.body": {
+    "translation": "Earn <color=#00bd3dff>Energy</color> by completing your Daily Goals. Energy rewards you with <color=#fe8f00ff>Bits</color> and <color=#11a2f0ff>Sparks</color>: use these to unlock Cozmo's Upgrades & Apps!"
+  },
+  "helpTipsStrings.Slide4.bodyEnergy": {
+    "translation": "Energy"
+  },
+  "helpTipsStrings.Slide4.bodyBits": {
+    "translation": "Bits"
+  },
+  "helpTipsStrings.Slide4.bodySparks": {
+    "translation": "Sparks"
+  },
+
+  "helpTipsStrings.Slide5.title": {
+    "translation": "Check-in with Cozmo"
+  },
+  "helpTipsStrings.Slide5.body": {
+    "translation": "Launch the Cozmo App to check-in every day and receive new rewards. Connect to Cozmo to wake him up and give him the attention he needs."
+  },
+  "helpTipsStrings.Slide6.title": {
+    "translation": "Keep Cozmo Safe"
+  },
+  "helpTipsStrings.Slide6.body": {
+    "translation": "Cozmo needs you to keep him safe. He's just like a hamster or other small pet. Keep an eye on him in case he gets into trouble; he may need your help to get un-stuck."
+  },
+  "helpTipsStrings.Slide7.title": {
+    "translation": "Cozmo's backpack lights can tell you that..."
+  },
+  "helpTipsStrings.Slide7.subtitle1": {
+    "translation": "Cozmo is\ncharged"
+  },
+  "helpTipsStrings.Slide7.subtitle2": {
+    "translation": "Cozmo is\ncharging"
+  },
+  "helpTipsStrings.Slide7.subtitle3": {
+    "translation": "Cozmo has a\nlow battery"
+  },
+  "helpTipsStrings.Slide8.title": {
+    "translation": "Cozmo is Secure"
+  },
+  "helpTipsStrings.Slide8.body": {
+    "translation": "Cozmo and his camera are safe and secure. No images or video are ever stored, online or offline. Cozmo will only talk to devices you authorize."
+  },
+  "helpTipsStrings.Slide9.title": {
+    "translation": "Charge Up"
+  },
+  "helpTipsStrings.Slide9.body": {
+    "translation": "Cozmo needs his charger, so keep it with you. When you're done playing, place him on his charger to put him to sleep."
+  }
+}

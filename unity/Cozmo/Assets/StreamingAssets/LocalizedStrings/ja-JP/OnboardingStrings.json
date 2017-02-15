@@ -1,0 +1,147 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "onboarding.CozmoNeedsCharge.Title": {
+    "translation": "Cozmo is Charging"
+  },
+  "onboarding.CozmoNeedsCharge.SecondsLeft": {
+    "translation": "Seconds left..."
+  },
+  "onboarding.CozmoNeedsCharge.KeepOnCharger": {
+    "translation": "Keep him on the charger"
+  },
+  "onboarding.CozmoNeedsCharge.PutBackOnCharger": {
+    "translation": "Please put Cozmo back on the charger"
+  },
+  "onboarding.CozmoNeedsCharge.CozmoIsReady": {
+    "translation": "Cozmo is ready!"
+  },
+  "onboarding.CozmoNeedsCharge.message1": {
+    "translation": "You're connected to your Cozmo, and he's almost ready!\nHe just needs a moment to charge."
+  },
+  "onboarding.CozmoNeedsCharge.message2": {
+    "translation": "Once he's done charging, let Cozmo come to life\nand learn about his new home."
+  },
+  "onboarding.CozmoNeedsCharge.message3": {
+    "translation": "Cozmo comes with Upgrades that you can unlock.\nEach one gives him a new ability that he'll do on his own."
+  },
+  "onboarding.CozmoNeedsCharge.message4": {
+    "translation": "You can pick up Cozmo if you need to,\nbut he's happiest when he can drive on his own."
+  },
+  "onboarding.CozmoNeedsCharge.message5": {
+    "translation": "When you're not playing games with Cozmo,\nit's great to sit back and watch him explore the world."
+  },
+  "onboarding.CozmoNeedsCharge.finalMessage": {
+    "translation": "Cozmo is ready to play. To completely charge his battery,\nyou can keep him on the charger for another 7 minutes."
+  },
+  "onboarding.Slide0": {
+    "translation": "Create a <b>great</b> play space "
+  },
+  "onboarding.Slide2Header": {
+    "translation": "<b>Welcome!</b>"
+  },
+  "onboarding.Slide2": {
+    "translation": "Cozmo is a very special robot who needs a caring owner\n\n Follow the instructions carefully!"
+  },
+  "onboarding.Phase3.Header1": {
+    "translation": "Place a Power Cube in front of Cozmo"
+  },
+  "onboarding.Phase3.Body1": {
+    "translation": "It will turn <color=cyan>blue</color> when he can see it"
+  },
+  "onboarding.Phase3.Body2": {
+    "translation": "<b>Great!</b>\nJust like you, if the Cube is too close it's hard to see."
+  },
+  "onboarding.Phase3.Header3": {
+    "translation": "He'll tell you when he's ready to proceed..."
+  },
+  "onboarding.Phase3.Body3": {
+    "translation": "Let Cozmo inspect the Cube on his own"
+  },
+  "onboarding.Phase3.Body4": {
+    "translation": "Well done!\nCozmo is ready to play!"
+  },
+  "onboarding.Phase3.ErrorCube": {
+    "translation": "The Cube has moved!"
+  },
+  "onboarding.Phase3.ErrorCubeRightSideUp": {
+    "translation": "Lights Side Up!"
+  },
+  "onboarding.Phase3.ErrorCozmo": {
+    "translation": "<b>Tutorial Paused</b>\nCozmo needs to be on a stable, flat, surface and to explore on his own."
+  },
+  "onboarding.Phase3.ErrorFinal": {
+    "translation": "<b>Having Trouble?</b>\nMake sure Cozmo is on a flat, clean table. Cozmo may struggle on glass surfaces.\n\nIf you're still having issues, visit <b>support.anki.com</b> on another device."
+  },
+  "onboarding.Phase4.Body1a": {
+    "translation": "You've charged Cozmo's Emotion Chip! It's what makes him special and alive"
+  },
+  "onboarding.Phase4.Body1b": {
+    "translation": "The more you play with Cozmo, the faster it will charge"
+  },
+  "onboarding.Phase4.Body2a": {
+    "translation": "When the chip is fully charged..."
+  },
+  "onboarding.Phase4.Body2b": {
+    "translation": "...open it to get more <color=#fe8f00ff>Bits</color> & <color=#11a2f0ff>Sparks</color>!"
+  },
+  "onboarding.Phase4.Body3bits": {
+    "translation": "Use <color=#fe8f00ff>Bits</color> to unlock new Upgrades"
+  },
+  "onboarding.Phase4.Body3sparks": {
+    "translation": "Use <color=#11a2f0ff>Sparks</color> to ask Cozmo to perform tricks"
+  },
+  "onboarding.Phase4.Body4": {
+    "translation": "Unlock Upgrades to give Cozmo new skills and abilities\n\nLet's unlock Stack Cubes now!"
+  },
+  "onboarding.Phase5.Body2": {
+    "translation": "Each day you'll get a new set of Goals\n\nCompleting these is the quickest way to improve your Cozmo!"
+  },
+  "onboarding.Phase5.Body3": {
+    "translation": "Cozmo Apps are games & activities you can play with Cozmo"
+  },
+  "onboarding.Phase5.Body4": {
+    "translation": "Cozmo loves to spend time exploring the world, interacting with Cubes, and just hanging out!\n\nYou can see what\nCozmo is doing, here"
+  },
+  "onboarding.Phase5.FinalButton": {
+    "translation": "Let's Play"
+  },
+  "onboarding.Slide0a": {
+    "translation": "Put Cozmo on a clean, open table in a well lit room"
+  },
+  "onboarding.GreatPlaySpace2Header": {
+    "translation": "Keep Cozmo Safe"
+  },
+  "onboarding.GreatPlaySpace2Footer": {
+    "translation": "Cozmo will try to avoid falling, but just like a pet, he might need your help."
+  },
+  "onboarding.OldRobotSkip": {
+    "translation": "This Cozmo has already been through the Tutorial. Would you like to Skip it, or Start it again?"
+  },
+  "onboarding.FreeplayStringFakeOnboarding": {
+    "translation": "Cozmo is ready and waiting to play"
+  },
+  "onboarding.BirthWait": {
+    "translation": "Watch Cozmo come to life"
+  },
+  "onboarding.Phase4.Body5": {
+    "translation": "Now Cozmo can Stack Cubes!\n\nWatch him try out his new skill now..."
+  }
+}

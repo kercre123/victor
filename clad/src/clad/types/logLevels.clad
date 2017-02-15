@@ -1,0 +1,23 @@
+// File: LogLevels
+// Author: Mark Wesley
+// Copyright: Anki Inc (c) 2017
+
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_8 LogLevel
+{
+  Debug = 0,
+  Info,
+  Event,
+  Warning,
+  Error,
+
+  Count
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

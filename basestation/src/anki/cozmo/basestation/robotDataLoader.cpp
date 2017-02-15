@@ -222,6 +222,11 @@ void RobotDataLoader::LoadAnimations()
   LoadAnimationsInternal();
   _jsonFiles.clear();
 }
+  
+bool RobotDataLoader::IsCustomAnimLoadEnabled() const
+{
+  return (_context->IsInSdkMode() || (ANKI_DEV_CHEATS != 0));
+}
 
 void RobotDataLoader::LoadAnimationsInternal()
 {
@@ -242,13 +247,14 @@ void RobotDataLoader::LoadAnimationsInternal()
     //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
   }
   
-#if ANKI_DEV_CHEATS
-  std::string test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
-  if (Util::FileUtils::FileExists(test_anim)) {
-    myWorker.PushJob(test_anim);
-    size += 1;
+  if (IsCustomAnimLoadEnabled())
+  {
+    std::string test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
+    if (Util::FileUtils::FileExists(test_anim)) {
+      myWorker.PushJob(test_anim);
+      size += 1;
+    }
   }
-#endif
 
   _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
   myWorker.Process();
@@ -520,9 +526,10 @@ void RobotDataLoader::LoadReactionTriggerMap()
 void RobotDataLoader::LoadFaceAnimations()
 {
   FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
-#if ANKI_DEV_CHEATS
-  FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
-#endif
+  if (IsCustomAnimLoadEnabled())
+  {
+    FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
+  }
 }
 
 void RobotDataLoader::LoadAnimationTriggerResponses()

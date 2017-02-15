@@ -162,9 +162,11 @@ void WebotsDevLogController::UpdateCurrTimeRender(uint32_t time_ms, uint32_t tar
     const int maxInnerWidth = totalWidth - 2 * kInnerPadding;
     const int progressWidth = time_ms * maxInnerWidth / _totalLogLength_ms;
     const int width = std::min( progressWidth, maxInnerWidth );
-      
-    _disp->setColor(0x00CCCC);
-    _disp->fillRectangle(left, top, width, height);
+    
+    if (width > 0) {
+      _disp->setColor(0x00CCCC);
+      _disp->fillRectangle(left, top, width, height);
+    }
 
     // if we are jumping, draw a mark where we are jumping to
     if( targetJumpTime_ms > 0 ) {

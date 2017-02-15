@@ -125,6 +125,7 @@ enum uint_8 ExecutableBehaviorType {
   PounceOnMotion,
   RollBlock,
   StackBlocks,
+  EnrollFace,
   Count
 }
 

@@ -941,18 +941,21 @@ void BuildPyramidBehaviorChooser::SetCubeLights()
   // Remove any lights that are currently set
   for(auto& entry: _pyramidCubePropertiesTrackers){
     if(entry.second.GetCurrentLightTrigger() != entry.second.GetDesiredLightTrigger() ||
-       entry.second.GetDesiredLightModifier() != kEmptyObjectLights
-       ){
-      PRINT_NAMED_WARNING("", "stopping %s", EnumToString(entry.second.GetCurrentLightTrigger()));
-      _robot.GetCubeLightComponent().StopLightAnim(
-               entry.second.GetCurrentLightTrigger(), entry.second.GetObjectID());
-      
-      if(entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count){
-        _robot.GetCubeLightComponent().PlayLightAnim(entry.second.GetObjectID(),
-                                                     entry.second.GetDesiredLightTrigger(),
-                                                     nullptr,
-                                                     true,
-                                                     entry.second.GetDesiredLightModifier());
+       entry.second.GetDesiredLightModifier() != kEmptyObjectLights)
+    {
+      if(entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count)
+      {
+        _robot.GetCubeLightComponent().StopAndPlayLightAnim(entry.second.GetObjectID(),
+                                                            entry.second.GetCurrentLightTrigger(),
+                                                            entry.second.GetDesiredLightTrigger(),
+                                                            nullptr,
+                                                            true,
+                                                            entry.second.GetDesiredLightModifier());
+      }
+      else
+      {
+        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(entry.second.GetCurrentLightTrigger(),
+                                                                      entry.second.GetObjectID());
       }
       entry.second.SetCurrentLightTrigger(entry.second.GetDesiredLightTrigger());
       entry.second.SetDesiredLightModifier(kEmptyObjectLights);

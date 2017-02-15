@@ -364,15 +364,16 @@ namespace Cozmo {
         Action<BaseModal> lowBatteryAlertCreated = (newModal) => {
           AlertModal alertModal = (AlertModal)newModal;
           alertModal.InitializeAlertData(lowBatteryAlertData);
-
           _LowBatteryAlertInstance = alertModal;
-          _LowBatteryAlertTriggered = true;
         };
 
         var lowBatteryPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryLow, 0,
                                                            LowPriorityModalAction.Queue,
                                                            HighPriorityModalAction.Queue);
+        DAS.Debug("PauseManager.OpenLowBatteryAlert", "Opening Low Battery Alert");
         UIManager.OpenModal(_LowBatteryAlertPrefab, lowBatteryPriorityData, lowBatteryAlertCreated);
+        // this needs to be set right away otherwise the low battery listener will call OpenLowBatteryAlert a ton of times.
+        _LowBatteryAlertTriggered = true;
       }
     }
 

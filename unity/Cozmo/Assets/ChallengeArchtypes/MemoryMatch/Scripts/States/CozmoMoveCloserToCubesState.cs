@@ -4,14 +4,10 @@ using System.Collections.Generic;
 
 namespace MemoryMatch {
   public class CozmoMoveCloserToCubesState : State {
-    public const float kTargetDistance = 125f;
     private const float _kCubeIntroBlinkTimes = 0.5f;
 
     private State _NextState;
     private MemoryMatchGame _GameInstance;
-    private Vector2 _TargetPosition;
-    private Quaternion _TargetRotation;
-    private Vector2 _CubeMidpoint;
 
     private bool _CozmoInPosition;
     private int _FlashingIndex;
@@ -38,7 +34,6 @@ namespace MemoryMatch {
       _FlashingIndex = _WantsCubeBlink ? 0 : _GameInstance.CubeIdsForGame.Count;
       _EndFlashTime = 0;
 
-      List<LightCube> cubesForGame = new List<LightCube>();
       // Wait until we get to goal, shouldn't continue
       _GameInstance.InitColorsAndSounds();
       _GameInstance.SharedMinigameView.HideMiddleBackground();
@@ -47,33 +42,10 @@ namespace MemoryMatch {
       if (_ShowLabel) {
         _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kMinigameTextWaitForCozmo);
       }
-
-      IRobot robot = _GameInstance.CurrentRobot;
-      foreach (int id in _GameInstance.CubeIdsForGame) {
-        LightCube lightCube = null;
-        // if this is null, very likely that the "cube disconnect" message is coming up.
-        if (robot.LightCubes.TryGetValue(id, out lightCube)) {
-          cubesForGame.Add(lightCube);
-        }
-      }
-      LightCube cubeA, cubeB;
-      LightCube.TryFindCubesFurthestApart(cubesForGame, out cubeA, out cubeB);
-      if (cubeA != null && cubeB != null &&
-          cubeA.CurrentPoseState != ObservableObject.PoseState.Invalid &&
-          cubeB.CurrentPoseState != ObservableObject.PoseState.Invalid) {
-        _CubeMidpoint = VectorUtil.Midpoint(cubeA.WorldPosition.xy(), cubeB.WorldPosition.xy());
-        Vector2 cubeAlignmentVector = cubeA.WorldPosition - cubeB.WorldPosition;
-        Vector2 perpendicularToCubes = cubeAlignmentVector.PerpendicularAlignedWith(_CurrentRobot.Forward.xy());
-
-        // Add the vector to the center of the blocks to figure out the target world position
-        _TargetPosition = _CubeMidpoint + (-perpendicularToCubes.normalized * kTargetDistance);
-        float targetAngle = Mathf.Atan2(perpendicularToCubes.y, perpendicularToCubes.x) * Mathf.Rad2Deg;
-        _TargetRotation = Quaternion.Euler(0, 0, targetAngle);
-
-        MoveToTargetLocation(_TargetPosition, _TargetRotation);
-      }
-      else {
-        HandleGotoRotationComplete(false);
+      PlayerInfo cozmoPlayer = _GameInstance.GetFirstPlayerByType(PlayerType.Cozmo);
+      if (cozmoPlayer != null) {
+        cozmoPlayer.SetGoal(new MemoryMatchPlayerGoalCozmoPositionReset(_GameInstance, HandleGotoRotationComplete,
+                                                                        _DistanceThreshold, _AngleTol_Deg));
       }
     }
 
@@ -102,40 +74,7 @@ namespace MemoryMatch {
 
     }
 
-    private void MoveToTargetLocation(Vector2 targetPosition, Quaternion targetRotation) {
-      // Skip moving if we're already close to the target
-      if (_CurrentRobot != null) {
-        if (_CurrentRobot.WorldPosition.xy().IsNear(targetPosition, _DistanceThreshold)) {
-          HandleGotoPoseComplete(true);
-        }
-        else {
-          _CurrentRobot.GotoPose(targetPosition, targetRotation, callback: HandleGotoPoseComplete);
-        }
-      }
-      else {
-        HandleGotoRotationComplete(false);
-      }
-    }
-
-    private void HandleGotoPoseComplete(bool success) {
-      MoveToTargetRotation(_TargetRotation);
-    }
-
-    private void MoveToTargetRotation(Quaternion targetRotation) {
-      if (_CurrentRobot != null) {
-        if (_CurrentRobot.Rotation.IsSimilarAngle(targetRotation, _AngleTol_Deg)) {
-          HandleGotoRotationComplete(true);
-        }
-        else {
-          _CurrentRobot.GotoPose(_TargetPosition, targetRotation, callback: HandleGotoRotationComplete);
-        }
-      }
-      else {
-        HandleGotoRotationComplete(false);
-      }
-    }
-
-    private void HandleGotoRotationComplete(bool success) {
+    private void HandleGotoRotationComplete(PlayerInfo playerBase, int completedCode) {
       _CozmoInPosition = true;
       GoToNextState();
     }

@@ -13,6 +13,8 @@ namespace DataPersistence {
     public bool NoFreeplayOnStart;
     public bool ShowDroneModeDebugInfo;
     public bool UseFastConnectivityFlow;
+    public bool OverrideLanguage;
+    public string LanguageSetting;
 
     public DebugProfile() {
       LatencyDisplayEnabled = false;
@@ -24,8 +26,33 @@ namespace DataPersistence {
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("UseFastConnectivityFlow", "QA", this);
 
-      DebugConsoleData.Instance.DebugConsoleVarUpdated += HandleDebugConsoleVarUpdated;
+      DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
+        OverrideLanguage = false;
+        LanguageSetting = null;
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
+      DebugConsoleData.Instance.AddConsoleFunction("UseEnglish", "Language", (str) => {
+        OverrideLanguage = true;
+        LanguageSetting = "en-US";
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
+      DebugConsoleData.Instance.AddConsoleFunction("UseFrench", "Language", (str) => {
+        OverrideLanguage = true;
+        LanguageSetting = "fr-FR";
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
+      DebugConsoleData.Instance.AddConsoleFunction("UseGerman", "Language", (str) => {
+        OverrideLanguage = true;
+        LanguageSetting = "de-DE";
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
+      DebugConsoleData.Instance.AddConsoleFunction("UseJapanese", "Language", (str) => {
+        OverrideLanguage = true;
+        LanguageSetting = "ja-JP";
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
 
+      DebugConsoleData.Instance.DebugConsoleVarUpdated += HandleDebugConsoleVarUpdated;
     }
 
     private void HandleDebugConsoleVarUpdated(string varName) {
@@ -40,7 +67,6 @@ namespace DataPersistence {
         DataPersistence.DataPersistenceManager.Instance.Save();
         break;
       }
-
     }
   }
 }

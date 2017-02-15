@@ -250,14 +250,14 @@ namespace Vision {
         StopThread();
       }
       
+      _isRunningAsync = true;
+      
       _featureExtractionThread = std::thread(&FaceRecognizer::Run, this);
     }
     else
     {
       PRINT_NAMED_WARNING("FaceRecognizer.StartThread.NotInitialized", "");
     }
-    
-    _isRunningAsync = true;
   }
   
   void FaceRecognizer::StopThread()
@@ -574,7 +574,9 @@ namespace Vision {
       
       // Whether or not we used the computed features, mark that we are ready to
       // process more
+      _mutex.lock();
       _state = ProcessingState::Idle;
+      _mutex.unlock();
       
     } // if(ProcessingState::FeaturesReady == _state)
     
@@ -692,6 +694,9 @@ namespace Vision {
       // Sleep for a bit
       std::this_thread::sleep_for(std::chrono::milliseconds(kFaceRec_MinSleepTime_ms));
     }
+    
+    PRINT_NAMED_WARNING("FaceRecognizer.Run.ThreadHasStopped",
+                        "FaceRecognizer thread has stopped. No longer running asynchronously");
   } // Run()
   
   

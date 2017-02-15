@@ -2266,6 +2266,7 @@ namespace Anki {
 
                   UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
                   bool val = !shiftKeyPressed;
+                  printf("%s %s\n", (val ? "Unlocking" : "Locking"), unlockName.c_str());
                   SendMessage( ExternalInterface::MessageGameToEngine(
                                  ExternalInterface::RequestSetUnlock(unlock, val)));
 

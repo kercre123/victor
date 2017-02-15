@@ -15,6 +15,7 @@
 #include "json/json.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "util/console/consoleInterface.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/console/consoleSystem.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -26,6 +27,7 @@
 #include <fstream>
 
 #if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/cladLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "util/fileUtils/fileUtils.h"
@@ -84,6 +86,10 @@ const u8 forcedRobotId = 1;
 const char* forcedRobotIP = "172.31.1.1";     // cozmo3
 */
 
+namespace Anki { namespace Cozmo {
+  CONSOLE_VAR_EXTERN(bool, kEnableCladLogger);
+} }
+
 using namespace Anki;
 using namespace Anki::Cozmo;
 
@@ -102,6 +108,7 @@ int main(int argc, char **argv)
   
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger"), "mac");
+  Util::IFormattedLoggerProvider* unityLoggerProvider = new CLADLoggerProvider();
 #endif
 
   // - create and set logger
@@ -109,6 +116,7 @@ int main(int argc, char **argv)
   Anki::Util::MultiFormattedLoggerProvider loggerProvider({
     printfLoggerProvider
 #if ANKI_DEV_CHEATS
+    , unityLoggerProvider
     , new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
             Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
@@ -142,6 +150,19 @@ int main(int argc, char **argv)
     
     // also parse additional info for providers
     printfLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+    
+    #if ANKI_DEV_CHEATS
+    {
+      // Disable the Clad logger by default - prevents it sending the log messages,
+      // otherwise anyone with a config set to spam every message could run into issues
+      // with the amount of messages overwhelming the socket on engine startup/load.
+      // Anyone who needs the log messages can enable it afterwards via Unity, SDK or Webots
+      Anki::Cozmo::kEnableCladLogger = false;
+
+      unityLoggerProvider->SetFilter(filterPtr);
+      unityLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+    }
+    #endif // ANKI_DEV_CHEATS
   }
   else
   {

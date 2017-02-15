@@ -129,6 +129,12 @@ namespace SpeedTap {
     public static bool sWantsSuddenDeathHumanHuman = false;
     public static bool sWantsSuddenDeathHumanCozmo = false;
 #endif
+
+    // Used by baseclass default if we skipped the num players screen.
+    public override PlayerInfo AddPlayer(PlayerType playerType, string playerName) {
+      return AddPlayer(playerType, playerName, Color.white);
+    }
+
     public virtual PlayerInfo AddPlayer(PlayerType playerType, string playerName, Color color) {
       SpeedTapPlayerInfo info = new SpeedTapPlayerInfo(playerType, playerName, color);
       _PlayerInfo.Add(info);

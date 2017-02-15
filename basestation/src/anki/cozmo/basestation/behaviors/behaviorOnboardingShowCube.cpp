@@ -91,7 +91,7 @@ void BehaviorOnboardingShowCube::StopInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   EnableSpecificReactionaryBehavior(robot, true);
-  robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Onboarding);
+  robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }
 
@@ -358,7 +358,7 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
   StartActing(action,
               [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
               {
-                robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Onboarding);
+                robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
                 SET_STATE(WaitForFinalContinue,robot);
               });
 }

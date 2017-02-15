@@ -789,7 +789,7 @@ bool IBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
   if(objectIter != _customLightObjects.end()){
     for(const auto& anim : anims)
     {
-      _robot.GetCubeLightComponent().StopLightAnim(anim, objectID);
+      _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(anim, objectID);
     }
     _customLightObjects.erase(objectIter);
     return true;
@@ -840,8 +840,8 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
     const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
     
 
-    _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedKnown);
-    _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedUnsure);
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
     
     if(on)
     {
