@@ -226,15 +226,14 @@ int LEDGetExpectedMv(u8 led)
 }
 
 //return button state (true=pressed)
-bool BPBtnGet(void) {
-  /*
-  const int samples = 8;
-  int mv = 0;
-  for( int x=0; x < samples; x++ )
-    mv += BPBtnGetMv();
-  return (mv < (500*samples)); //500mV threshold
-  */
-  return BPBtnGetMv() < 250;
+bool BPBtnGet(int *out_mv) {
+  //backpack btn has 10k series + 100k pull-up.
+  //Worst case (highest) pressed threshold is 11/(90+11)*Vcc -- assuming 10% tolerance resistors
+  //-> ~305mV @ Vcc=2.8V.
+  int btn_mv = BPBtnGetMv();
+  if( out_mv != NULL )
+    *out_mv = btn_mv;
+  return btn_mv < 310;
 }
 
 //return button input voltage [mV]
@@ -254,53 +253,5 @@ int BPBtnGetMv(void)
   // Now grab the voltage
   MicroWait(100); //wait for voltages to stabilize
   return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
-}
-
-//======================================
-//DEBUG:
-//======================================
-
-void _btn_low_drive_0(void) {
-  PIN_RESET(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
-  PIN_OUT(GPIOA, BPLED[BPLED_BTN_IDX].pinlow); }
-void _btn_low_float(void) {
-  PIN_PULL_NONE(GPIOA,BPLED[BPLED_BTN_IDX].pinlow);
-  PIN_IN(GPIOA,BPLED[BPLED_BTN_IDX].pinlow); }
-void _btn_high_drive_1(void) {
-  PIN_SET(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
-  PIN_OUT(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh); }
-void _btn_high_float(void) {
-  PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
-  PIN_IN(GPIOA,BPLED[BPLED_BTN_IDX].pinhigh); }
-
-int Debug_BPBtnGetMv_Normal(void)
-{ 
-  _bp_signal_float(); //all backpack signals -> input Z
-  _btn_low_drive_0();
-  _btn_high_float();  
-  MicroWait(100);
-  return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
-}
-
-int Debug_BPBtnGetMv_Precharge(void)
-{
-  _bp_signal_float(); //all backpack signals -> input Z
-  _btn_low_drive_0();
-  _btn_high_drive_1(); //precharge any wire capacitance
-  MicroWait(100);
-  _btn_high_float();
-  MicroWait(100);
-  return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
-}
-
-int Debug_BPBtnGetAveragedMv(u32 num_samples, u32 sample_delay_us, int(*getMv)(void) = Debug_BPBtnGetMv_Normal )
-{
-  int mv = 0;
-  if( !num_samples ) return 0;
-  for( u32 i=0; i < num_samples; i++ ) {
-    mv += getMv();
-    MicroWait( sample_delay_us );
-  }
-  return (mv / num_samples);
 }
 

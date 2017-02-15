@@ -51,52 +51,35 @@ static void BackpackLeds(void)
       ConsolePrintf("FAIL\r\n");
     }
   }
-  if( me != ERROR_OK )
-    throw me;
+  if( me != ERROR_OK ) {
+    //throw me;
+  }
 }
 
-//motorled.c debug functions
-int Debug_BPBtnGetMv_Normal(void);
-int Debug_BPBtnGetMv_Precharge(void);
-int Debug_BPBtnGetAveragedMv(u32 num_samples, u32 sample_delay_us, int(*getMv)(void) = Debug_BPBtnGetMv_Normal );
 static void BackpackButton(void)
 {
-  ConsolePrintf("Backback Button Voltage:\r\n");
   start_time = getMicroCounter();
   u32 tick_time = start_time;
-  int print_len = 0;
+  int print_len = 0, print_header = 1;
   
-  BPBtnGetMv(); //sample once to init btn pin cfg
-  
-  bool print_header = 1;
   while(1) //( getMicroCounter() - start_time < (1000000 * 10) )
   {
-    if( getMicroCounter() - tick_time > 250*1000 )
+    if( getMicroCounter() - tick_time > 100*1000 )
     {
       tick_time = getMicroCounter();
-      const int bnt_press_threshold_mv = 250;
-      //const int btn_idle_threshold_mv = 
-      
-      //Collect samples
-      MicroWait(10000); int btn_mv_single       = Debug_BPBtnGetAveragedMv(1,0,     Debug_BPBtnGetMv_Normal);
-      MicroWait(10000); int btn_mv_single_pre   = Debug_BPBtnGetAveragedMv(1,0,     Debug_BPBtnGetMv_Precharge);
-      MicroWait(10000); int btn_mv_avg_slow     = Debug_BPBtnGetAveragedMv(4,10000, Debug_BPBtnGetMv_Normal);
-      MicroWait(10000); int btn_mv_avg_slow_pre = Debug_BPBtnGetAveragedMv(4,10000, Debug_BPBtnGetMv_Precharge);
-      MicroWait(10000); int btn_mv_avg_fast     = Debug_BPBtnGetAveragedMv(4,0,     Debug_BPBtnGetMv_Normal);
-      MicroWait(10000); int btn_mv_avg_fast_pre = Debug_BPBtnGetAveragedMv(4,0,     Debug_BPBtnGetMv_Precharge);
+      //const int bnt_press_threshold_mv = 310;
+      const int btn_idle_threshold_mv = 2600;
+      int btn_mv;
+      bool pressed = BPBtnGet(&btn_mv);
       
       //display
       if( print_header ) {
-        ConsolePrintf("single/pre      avg-slow/pre    avg-fast/pre    state\r\n");
+        ConsolePrintf("Backpack Btn/D4: ");
         print_header = 0;
       }
       for(int x=0; x < print_len; x++ )
         ConsolePutChar(0x08); //backspace
-      print_len = ConsolePrintf("%d.%03dV/%d.%03dV   %d.%03dV/%d.%03dV   %d.%03dV/%d.%03dV   %s",
-        btn_mv_single/1000,   btn_mv_single%1000,   btn_mv_single_pre/1000,   btn_mv_single_pre%1000,
-        btn_mv_avg_slow/1000, btn_mv_avg_slow%1000, btn_mv_avg_slow_pre/1000, btn_mv_avg_slow_pre%1000,
-        btn_mv_avg_fast/1000, btn_mv_avg_fast%1000, btn_mv_avg_fast_pre/1000, btn_mv_avg_fast_pre%1000,
-        btn_mv_single < bnt_press_threshold_mv ? "on" : "off" );
+      print_len = ConsolePrintf("%d.%03dV  %s", btn_mv/1000, btn_mv%1000, pressed ? "on" : btn_mv < btn_idle_threshold_mv ? "---INVALID---" : "off");
     }
   }
   //ConsolePrintf("\r\n");

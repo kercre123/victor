@@ -15,7 +15,7 @@ int  LEDGetHighSideMv(u8 led); //PU LED high side and measure led anode voltage 
 int  LEDGetExpectedMv(u8 led); //expected value from LEDGetHighSideMv(), if circuit is working correctly.
 
 //Backpack Button
-bool BPBtnGet(void);    //return button state (true=pressed)
+bool BPBtnGet(int *out_mv = NULL); //return button state (true=pressed). Returns optional ADC sample.
 int  BPBtnGetMv(void);  //return button input voltage [mV]
 
 #endif
