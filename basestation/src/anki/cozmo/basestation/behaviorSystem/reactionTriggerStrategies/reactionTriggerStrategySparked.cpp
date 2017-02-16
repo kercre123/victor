@@ -39,7 +39,14 @@ bool ReactionTriggerStrategySparked::ShouldTriggerBehavior(const Robot& robot, c
     return false;
   }
   
-  const bool cancelCurrentReaction = robot.GetBehaviorManager().ShouldSwitchToSpark();
+  // Since there are situations where a fist bump could play as a celebratory reaction to a successful spark completion,
+  // but we remain in sparksBehaviorChooser, we're doing a more specific check here that allows us to cancel the currently
+  // running reaction if any new spark is requested before the previous spark has technically completed.
+  // We used to call ShouldSwitchToSpark() but that would be false because _activeSpark is still not UnlockId::Count from the previous spark.
+  // Also, I think this only makes sense when going into a new spark and not from spark to non-spark.
+  // This also won't do anything if re-activating the same spark as before.
+  const bool cancelCurrentReaction = (robot.GetBehaviorManager().GetRequestedSpark() != UnlockId::Count) &&
+                                     (robot.GetBehaviorManager().GetActiveSpark() != robot.GetBehaviorManager().GetRequestedSpark());
   
   const IBehavior* currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
   const bool behaviorWhitelisted = (currentBehavior != nullptr &&
