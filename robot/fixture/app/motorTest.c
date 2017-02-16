@@ -8,6 +8,7 @@
 #include "hal/cube.h"
 #include "hal/monitor.h"
 #include "hal/motorled.h"
+#include "hal/portable.h"
 #include "app/app.h"
 #include "app/fixture.h"
 #include "binaries.h"
@@ -165,19 +166,29 @@ int MeasureMotor(int speed, bool fast, bool reverse = false )
       minb = b;
     getMicroCounter();  // Required to measure long intervals
   }
-  int hz = (aticks*15625)/((getMicroCounter()-start)>>6);  // Rising edges per second
-  int normalized = aticks >> (OVERSAMPLE-13);   // Original calibration was at OVERSAMPLE=13
-  ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n", speed, normalized, hz, aticks, mina, maxa, bticks, minb, maxb);
+  u32 test_time = getMicroCounter()-start;
   MotorMV(0);
+  
+  //int hz = (ABS(aticks)*15625)/(test_time>>6);  // Rising edges per second
+  //int normalized = aticks >> (OVERSAMPLE-13);   // Original calibration was at OVERSAMPLE=13
+  //ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n", speed, normalized, hz, aticks, mina, maxa, bticks, minb, maxb);
+  
+  int a_hz = ABS( (aticks*15625)/((int)(test_time>>6)) );
+  int b_hz = ABS( (bticks*15625)/((int)(test_time>>6)) );
+  int a_norm = aticks>>(OVERSAMPLE-13);
+  int b_norm = bticks>>(OVERSAMPLE-13);
+  ConsolePrintf("motortest,%s,speed=%d,time=%dus\r\n", reverse?"rev":"fwd", speed, test_time);
+  ConsolePrintf("  a:ticks,norm,hz,min,max = %i,%i,%i,%i,%i\r\n", aticks, a_norm, a_hz, mina, maxa );
+  ConsolePrintf("  b:ticks,norm,hz,min,max = %i,%i,%i,%i,%i\r\n", bticks, b_norm, b_hz, minb, maxb );
   
   // Throw some errors - note that 'fast' tests are really checking the encoder (not wiring)
   int diff = aticks-bticks;
   if (diff > 2 || diff < -2)
     throw fast ? ERROR_ENCODER_SPEED_FAULT : ERROR_ENCODER_FAULT;
-  if (aticks < 0)
+  if ( (!reverse && aticks < 0) || (reverse && aticks > 0) )
     throw fast ? ERROR_ENCODER_RISE_TIME : ERROR_MOTOR_BACKWARD;
   
-  return normalized;
+  return a_norm;
 }
 
 // MotorL: Lift motor with encoders
@@ -186,28 +197,25 @@ void TestMotorL(void)
 {
   const int TICKS_SLOW = 10;
   const int TICKS_FAST = 80;
-  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)
+  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)       //Forward slow
     throw ERROR_MOTOR_SLOW;
-  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)
-    throw ERROR_MOTOR_FAST;    
+  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)       //Forward fast
+    throw ERROR_MOTOR_FAST;
+  
+  MotorMV(-1); //motor brake before reverse direction
+  MicroWait(100*1000);
+  MotorMV(0);
+  
+  if (-MeasureMotor(MOTOR_LOW_MV, false, true) < TICKS_SLOW) //Reverse slow
+    throw ERROR_MOTOR_SLOW;
+  if (-MeasureMotor(MOTOR_FULL_MV, true, true) < TICKS_FAST) //Reverse fast
+    throw ERROR_MOTOR_FAST;  
 }
 
 // MotorH (head motor) makes about same number of ticks
 void TestMotorH(void)
 {
-  const int TICKS_SLOW = 10;
-  const int TICKS_FAST = 80;
-  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)       //Forward slow
-    throw ERROR_MOTOR_SLOW;
-  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)       //Forward fast
-    throw ERROR_MOTOR_FAST;
-  if (MeasureMotor(MOTOR_LOW_MV, false, true) < TICKS_SLOW) //Reverse slow
-    ConsolePrintf("throw ERROR_MOTOR_SLOW\r\n");
-  if (MeasureMotor(MOTOR_FULL_MV, true, true) < TICKS_FAST) //Reverse fast
-    ConsolePrintf("throw ERROR_MOTOR_FAST\r\n");
-  
-  //Because we aint' finished
-  throw ERROR_MOTOR_SLOW;
+  TestMotorL();
 }
 
 // List of all functions invoked by the test, in order
