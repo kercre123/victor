@@ -121,7 +121,8 @@ namespace DG.Tweening
         internal bool delayComplete = true; // TRUE when the delay has elapsed or isn't set, also set by Delay extension method (shared by Sequences only for compatibility reasons, otherwise not used)
         
         internal int miscInt = -1; // Used by some plugins to store data (currently only by Paths to store current waypoint index)
-
+        
+        internal string targetName;
         internal string constructorCallstack;
 
         internal Tween()
@@ -148,6 +149,8 @@ namespace DG.Tweening
         public void ProcessDoTweenException(Exception e)
         {
             string exceptionMessage = e.Message;
+            exceptionMessage += "\n---------------------------------------------------\n";
+            exceptionMessage += "Target Name: \n" + targetName;
             exceptionMessage += "\n---------------------------------------------------\n";
             exceptionMessage += "Constructor Callstack: \n" + constructorCallstack;
             exceptionMessage += "\n---------------------------------------------------\n";
