@@ -70,13 +70,18 @@ void MotorMV(int millivolts, bool reverse_nForward )
   //v1.5 has motor driver IC. Need to configure additional control signals
   if( g_fixtureRev >= BOARD_REV_1_5_0 )
   {
-    if( !millivolts )
+    if( millivolts < 0 )
+      m_motor_set_cfg(HBC_GND, HBC_GND); //electrical motor brake
+    else if( !millivolts )
       m_motor_set_cfg(HBC_OFF, HBC_OFF);
     else if( !reverse_nForward )
       m_motor_set_cfg(HBC_VCC, HBC_GND); //MOTA=Vcc, MOTB=Gnd
     else
       m_motor_set_cfg(HBC_GND, HBC_VCC); //MOTA=Gnd, MOTB=Vcc
   }
+  
+  if( millivolts < 0 )
+    millivolts = 0;
   
   TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
   TIM_OCInitTypeDef  TIM_OCInitStructure;
