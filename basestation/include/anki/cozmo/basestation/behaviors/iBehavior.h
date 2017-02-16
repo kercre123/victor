@@ -57,6 +57,7 @@ class ISubtaskListener;
 class IReactToFaceListener;
 class IReactToObjectListener;
 class IReactToPetListener;
+class IFistBumpListener;
 
 enum class CubeAnimationTrigger;
 
@@ -196,6 +197,8 @@ public:
                 { DEV_ASSERT(false, "AddListener.ObjectListener.Unimplemented"); }
   virtual void AddListener(IReactToPetListener* listener)
                 { DEV_ASSERT(false, "AddListener.PetListener.Unimplemented"); }
+  virtual void AddListener(IFistBumpListener* listener)
+                { DEV_ASSERT(false, "AddListener.FistBumpListener.Unimplemented"); }
   
 protected:
   

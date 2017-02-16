@@ -10,7 +10,7 @@
  **/
 
 #include "anki/cozmo/basestation/behaviors/behaviorFistBump.h"
-
+#include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iFistBumpListener.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
@@ -25,7 +25,7 @@ namespace Cozmo {
   // Json parameter keys
   static const char* kMaxTimeToLookForFaceKey       = "maxTimeToLookForFace_s";
   static const char* kAbortIfNoFaceFoundKey         = "abortIfNoFaceFound";
-  static const char* kReportSuccessFailKey          = "reportSuccessFail";
+  static const char* kUpdateLastCompletionTimeKey   = "updateLastCompletionTime";
   
   // Constants
   static constexpr f32 kLiftAngleBumpThresh_radps   = DEG_TO_RAD(0.5f);
@@ -54,13 +54,13 @@ BehaviorFistBump::BehaviorFistBump(Robot& robot, const Json::Value& config)
   , _fistBumpRequestCnt(0)
   , _liftWaitingAngle_rad(0.f)
   , _lastTimeOffTreads_s(0.f)
-  , _reportSuccessOrFail(false)
+  , _updateLastCompletionTime(false)
 {
   SetDefaultName("FistBump");
   
-  JsonTools::GetValueOptional(config, kMaxTimeToLookForFaceKey,    _maxTimeToLookForFace_s);
-  JsonTools::GetValueOptional(config, kAbortIfNoFaceFoundKey,      _abortIfNoFaceFound);
-  JsonTools::GetValueOptional(config, kReportSuccessFailKey,       _reportSuccessOrFail);
+  JsonTools::GetValueOptional(config, kMaxTimeToLookForFaceKey,     _maxTimeToLookForFace_s);
+  JsonTools::GetValueOptional(config, kAbortIfNoFaceFoundKey,       _abortIfNoFaceFound);
+  JsonTools::GetValueOptional(config, kUpdateLastCompletionTimeKey, _updateLastCompletionTime);
 }
 
 bool BehaviorFistBump::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
@@ -254,12 +254,13 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
     {
       // Should only be sending FistBumpSuccess or FistBumpLeftHanging if this not the sparks Fist bump
       // since we don't want the sparks fist bumps to reset the cooldown timer in the trigger strategy.
-      BehaviorObjectiveAchieved(_state == State::CompleteSuccess ? BehaviorObjective::FistBumpSuccess : BehaviorObjective::FistBumpLeftHanging, _reportSuccessOrFail);
-
+      BehaviorObjectiveAchieved(_state == State::CompleteSuccess ? BehaviorObjective::FistBumpSuccess : BehaviorObjective::FistBumpLeftHanging);
+      
       // Fall through
     }
     case State::Complete:
     {
+      ResetTrigger(_updateLastCompletionTime);
       BehaviorObjectiveAchieved(BehaviorObjective::FistBumpComplete);
       return Status::Complete;
     }
@@ -275,6 +276,9 @@ void BehaviorFistBump::StopInternal(Robot& robot)
   robot.GetMoveComponent().EnableHeadPower(true);
   
   robot.GetAnimationStreamer().PopIdleAnimation();
+
+  // Make sure trigger is reset if behavior is interrupted
+  ResetTrigger(false);
 }
 
   
@@ -287,6 +291,18 @@ bool BehaviorFistBump::CheckForBump(const Robot& robot)
   return liftBumped || gyroBumped || accelBumped;
 }
 
+
+void BehaviorFistBump::AddListener(IFistBumpListener* listener)
+{
+  _fistBumpListeners.insert(listener);
+}
+
+void BehaviorFistBump::ResetTrigger(bool updateLastCompletionTime)
+{
+  for (auto &listener : _fistBumpListeners) {
+    listener->ResetTrigger(updateLastCompletionTime);
+  }
+}
 
 
 } // namespace Cozmo

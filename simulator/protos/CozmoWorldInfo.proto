@@ -6,6 +6,8 @@ PROTO CozmoWorldInfo [
 					    "Author: Andrew Stein <andrew@anki.com>"
 					    "Date: 02 Aug 2013"
 					  ]
+
+  field SFFloat basicTimeStep 5
 ]
 {
 WorldInfo {
@@ -13,7 +15,7 @@ WorldInfo {
   info IS info
   gravity 0 0 -9.81
   physics "cozmo_physics"
-  basicTimeStep 5
+  basicTimeStep IS basicTimeStep
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
       material1 "cmat_floor"

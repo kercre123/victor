@@ -45,7 +45,6 @@ BlockWorldComms {
 DEF Cozmo_1 CozmoBot {
   rotation 0 1 0 0
   name "CozmoBot_1"
-  usbChannel 10
 }
 Face {
   translation -0.01 0.31 0.11

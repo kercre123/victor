@@ -17,6 +17,8 @@
 namespace Anki {
 namespace Cozmo {
   
+class IFistBumpListener;
+  
 class BehaviorFistBump : public IBehavior
 {
 private:
@@ -35,6 +37,8 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void StopInternal(Robot& robot) override;
+  
+  virtual void AddListener(IFistBumpListener* listener) override;
 
 private:
   
@@ -72,9 +76,12 @@ private:
   // Abort when picked up for long enough
   f32 _lastTimeOffTreads_s;
   
-  // Whether or not to report success or fail in addition to the always
-  // report FistBumpComplete
-  bool _reportSuccessOrFail;
+  // Whether or not to update the last time the FistBump completed for the
+  // purpose of affecting trigger cooldown times
+  bool _updateLastCompletionTime;
+
+  std::set<IFistBumpListener*> _fistBumpListeners;
+  void ResetTrigger(bool updateLastCompletionTime);
   
 }; // class BehaviorFistBump
   

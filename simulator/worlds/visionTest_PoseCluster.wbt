@@ -81,7 +81,7 @@
       bounce 0.001
     }
   ] # ContactProperties
-} # WorldInfo 
+} # WorldInfo
 
 Viewpoint {
   fieldOfView 0.785398
@@ -105,7 +105,6 @@ DEF Cozmo_1 CozmoBot {
   name "Cozmo_1"
   translation  0.000000 0.000000 0.000000
   rotation     1.000000 0.000000 0.000000 0.000000
-  usbChannel   10
   cameraWidth  320
   cameraHeight 240
   controller "visionUnitTestController"
@@ -119,4 +118,3 @@ Block1x1 {
   rotation    0.000000 0.000000 1.000000 0.785398
   markerImg "symbols/angryFace.png"
 }
-

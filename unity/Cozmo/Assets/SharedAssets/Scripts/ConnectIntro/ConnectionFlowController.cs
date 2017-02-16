@@ -339,7 +339,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void ReplaceCozmoOnCharger() {
-    ModalPriorityData replaceCozmoPriorityData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalPrefab.PriorityData);
+    ModalPriorityData replaceCozmoPriorityData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_ReplaceCozmoOnChargerModalPrefab, replaceCozmoPriorityData, HandleReplaceCozmoOnChargerCreated);
   }
 
@@ -361,7 +361,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void ShowInvalidPinScreen() {
-    ModalPriorityData invalidPinModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalPrefab.PriorityData);
+    ModalPriorityData invalidPinModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_InvalidPinModalPrefab, invalidPinModalData, HandleInvalidPinModalCreated);
   }
 
@@ -372,7 +372,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void ShowPinScreen() {
-    ModalPriorityData pinSecurityModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalPrefab.PriorityData);
+    ModalPriorityData pinSecurityModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_PinSecurityModalPrefab, pinSecurityModalData, HandlePinSecurityViewCreated);
   }
 
@@ -383,7 +383,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void UpdateAppScreen() {
-    ModalPriorityData updateAppModalPrefab = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalPrefab.PriorityData);
+    ModalPriorityData updateAppModalPrefab = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_UpdateAppModalPrefab, updateAppModalPrefab, HandleUpdateAppViewCreated);
   }
 
