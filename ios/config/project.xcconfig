@@ -1,0 +1,60 @@
+//
+//  project.xcconfig
+//
+//  Created by damjan stulic on 5/15/14.
+//  Copyright (c) 2014 Anki. All rights reserved.
+//
+
+
+// latest iphoneos
+SDKROOT = iphoneos
+
+// Build all architectures
+ONLY_ACTIVE_ARCH = YES
+
+// BRC: We only support armv7 builds for iOS Unity
+// arm64 support was just released, so we will evaluate that soon.
+// For now, limit archs to armv7
+VALID_ARCHS = armv7 i386
+ONLY_ACTIVE_ARCH = NO
+
+// For reference, this is the full set of ARCHS
+// VALID_ARCHS = arm64 armv7 armv7s
+
+
+// search paths
+
+ALWAYS_SEARCH_USER_PATHS = NO
+
+HEADER_SEARCH_PATHS = $(inherited) /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include ../include/DAS Libs/Darwin/include
+LIBRARY_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)/Libs/Darwin/lib
+FRAMEWORK_SEARCH_PATHS = $(PROJECT_DIR)/../testing/gtest/prebuild
+
+
+// we should remove this..
+GCC_INLINES_ARE_PRIVATE_EXTERN = YES
+
+
+GCC_OPTIMIZATION_LEVEL = 0
+
+OTHER_CFLAGS = -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Winit-self -Wconditional-uninitialized -Wshorten-64-to-32 -Wempty-body
+OTHER_CPLUSPLUSFLAGS = -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Winit-self -Wconditional-uninitialized -Wshorten-64-to-32 -Wempty-body
+
+// language standard
+GCC_C_LANGUAGE_STANDARD = c11
+CLANG_CXX_LANGUAGE_STANDARD = c++11
+
+// stl library
+CLANG_CXX_LIBRARY = libc++
+
+// preprocessor definitions
+PROJECT_PREPROCESSOR_DEFINITIONS =
+CONFIGURATION_PREPROCESSOR_DEFINITIONS =
+TARGET_PREPROCESSOR_DEFINITIONS = 
+GCC_PREPROCESSOR_DEFINITIONS = $(PROJECT_PREPROCESSOR_DEFINITIONS) $(CONFIGURATION_PREPROCESSOR_DEFINITIONS) $(TARGET_PREPROCESSOR_DEFINITIONS)
+
+
+CLANG_ANALYZER_SECURITY_INSECUREAPI_STRCPY = YES
+CLANG_LINK_OBJC_RUNTIME = NO
+SKIP_INSTALL = YES
+

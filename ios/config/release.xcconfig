@@ -1,0 +1,17 @@
+//
+//  release.xcconfig
+//
+//  Created by damjan stulic on 5/15/14.
+//  Copyright (c) 2014 Anki. All rights reserved.
+//
+#include "project.xcconfig"
+
+VALIDATE_PRODUCT = YES
+
+// fastest smallest -Os
+//GCC_OPTIMIZATION_LEVEL = s
+// fastest
+GCC_OPTIMIZATION_LEVEL = s
+ONLY_ACTIVE_ARCH = NO
+
+CONFIGURATION_PREPROCESSOR_DEFINITIONS = RELEASE=1 NDEBUG

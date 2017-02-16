@@ -1,0 +1,13 @@
+../ios/DASClientInfo.h
+../ios/DASClientInfo.m
+../ios/dasLocalAppenderImpl.mm
+../ios/dasLocalAppenderFactory.cpp
+../ios/dasLogMacros.h
+../ios/dasNSLog.h
+../ios/dasNSLog.mm
+../ios/dasPlatform_ios.mm
+../ios/dasPostToServer.mm
+../ios/NSData+Base64.h
+../ios/NSData+Base64.m
+../ios/NSString+URLEncoding.h
+../ios/NSString+URLEncoding.m

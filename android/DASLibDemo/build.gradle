@@ -1,0 +1,51 @@
+apply plugin: 'com.android.application'
+
+android { 
+    compileSdkVersion 19
+    buildToolsVersion "19.1.0"
+
+    sourceSets { 
+        main { 
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+}
+
+dependencies { 
+    compile project (':DASJavaLib')
+}
+
+task copyDasLibsDebug(type: Copy) {
+
+    def libsFolder = file("libs")
+    libsFolder.mkdirs()
+
+    from file("../DASNativeLib/libs/")
+    into file("libs/")
+
+    outputs.upToDateWhen { false }
+}
+
+task copyDasLibsRelease(type: Copy) {
+
+    def libsFolder = file("libs")
+    libsFolder.mkdirs()
+
+    from file("../DASNativeLib/libs/")
+    into file("libs/")
+
+    outputs.upToDateWhen { false }
+}
+
+task cleanLibs() {
+    delete 'libs'
+}
+
+gradle.projectsEvaluated {
+    cleanLibs.dependsOn ':DASNativeLib:cleanLibs'
+    clean.dependsOn 'cleanLibs'
+    copyDasLibsDebug.dependsOn ':DASNativeLib:buildLibsDebug'
+    packageDebug.dependsOn 'copyDasLibsDebug'
+    copyDasLibsRelease.dependsOn ':DASNativeLib:buildLibs'
+    packageRelease.dependsOn 'copyDasLibsRelease'
+}

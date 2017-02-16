@@ -1,0 +1,7 @@
+../android/DASNativeLib/jni/dasJni.cpp
+../android/DASNativeLib/jni/dasLocalAppenderImpl.h
+../android/DASNativeLib/jni/dasLocalAppenderImpl.cpp
+../android/DASNativeLib/jni/dasLocalAppenderFactory.cpp
+../android/DASNativeLib/jni/dasLogMacros.h
+../android/DASNativeLib/jni/dasPlatform_android.cpp
+
