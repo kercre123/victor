@@ -11,8 +11,8 @@
  **/
 #include "SparksBehaviorChooser.h"
 
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
@@ -22,12 +22,11 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/components/cubeLightComponent.h"
-#include "anki/cozmo/basestation/components/bodyLightComponent.h"
-#include "anki/cozmo/basestation/drivingAnimationHandler.h"
-#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
@@ -175,13 +174,15 @@ void SparksBehaviorChooser::OnSelected()
                                                                AnimationTrigger::SparkDrivingLoop,
                                                                AnimationTrigger::SparkDrivingStop});
     _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-    _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights);
+    _bodyLightDataLocator = _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights, BackpackLightSource::Behavior);
 
     _idleAnimationsSet = true;
   }
   
   // Turn off reactionary behaviors that could interrupt the spark
-  mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, false);
+  for(const auto& trigger: kReactionsToDisable){
+    SmartRequestEnableReactionTrigger(trigger, false);
+  }
 
   // Notify the delegate chooser if it exists
   if(_simpleBehaviorChooserDelegate != nullptr){
@@ -194,11 +195,13 @@ void SparksBehaviorChooser::OnSelected()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::OnDeselected()
 {
-  BehaviorManager& mngr = _robot.GetBehaviorManager();
-
   ResetLightsAndAnimations();
   
-  mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, true);
+  for(const auto& trigger: _reactionsDynamicallyDisabled){
+    _robot.GetBehaviorManager().RequestEnableReactionTrigger(
+                                     GetName(), trigger, true);
+  }
+  _reactionsDynamicallyDisabled.clear();
 
   // clear any custom light events set during the spark
   
@@ -208,6 +211,7 @@ void SparksBehaviorChooser::OnDeselected()
   }
   
   _robot.GetCubeLightComponent().StopAllAnims();
+  
 }
   
   
@@ -218,10 +222,23 @@ void SparksBehaviorChooser::ResetLightsAndAnimations()
     // Revert to driving anims
     _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     _robot.GetAnimationStreamer().PopIdleAnimation();
-    _robot.GetBodyLightComponent().StopLoopingBackpackLights();
+    _robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
     _idleAnimationsSet = false;
   }
   
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SparksBehaviorChooser::SmartRequestEnableReactionTrigger(const ReactionTrigger& trigger, bool enable)
+{
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(
+                                      GetName(), trigger, enable);
+  if(enable){
+    _reactionsDynamicallyDisabled.erase(trigger);
+  }else{
+    _reactionsDynamicallyDisabled.insert(trigger);
+  }
 }
 
 
@@ -495,6 +512,9 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd()
     ResetLightsAndAnimations();
     mngr.RequestCurrentBehaviorEndOnNextActionComplete();
     _state = ChooserState::WaitingForCurrentBehaviorToStop;
+    
+    // Make sure we don't interrupt the final stage animation if we see a cube
+    SmartRequestEnableReactionTrigger(ReactionTrigger::ObjectPositionUpdated, false);
   }else{
     // Transitioning directly between sparks - end current spark immediately
     if(mngr.GetRequestedSpark() != UnlockId::Count){

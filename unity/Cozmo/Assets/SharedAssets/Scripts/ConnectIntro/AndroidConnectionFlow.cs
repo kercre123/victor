@@ -154,6 +154,9 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   }
 
   public void Disable() {
+    if (_Disabled) {
+      return;
+    }
     StopPingTest();
     StopCoroutine("CheckConnectivity");
     if (_StageInstance != null) {
@@ -167,9 +170,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   }
 
   protected override void OnDestroy() {
-    if (!_Disabled) {
-      Disable();
-    }
+    Disable();
     base.OnDestroy();
   }
 

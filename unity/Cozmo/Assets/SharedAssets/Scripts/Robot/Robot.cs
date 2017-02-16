@@ -507,6 +507,12 @@ public class Robot : IRobot {
   }
 
   private void HandleLoadedKnownFace(Anki.Vision.LoadedKnownFace loadedKnownFaceMessage) {
+
+    DAS.Info("Robot.HandleLoadedKnownFace.NumFace", "EnrolledFaces.Count: " + EnrolledFaces.Count + " LoadedKnownFace Id: " + loadedKnownFaceMessage.faceID);
+    foreach (KeyValuePair<int, string> kvp in EnrolledFaces) {
+      DAS.Info("Robot.HandleLoadedKnownFace.EnrolledFace", "Enrolled face: " + kvp.Key + " " + PrivacyGuard.HidePersonallyIdentifiableInfo(kvp.Value));
+    }
+
     if (EnrolledFaces.ContainsKey(loadedKnownFaceMessage.faceID)) {
       DAS.Error("Robot.HandleLoadedKnownFace", "Attempting to load already existing face ID: " + loadedKnownFaceMessage.faceID);
       return;

@@ -75,6 +75,8 @@ namespace Cozmo {
   CONSOLE_VAR_RANGED(f32, kSimulateDroppedFrameFraction, "Vision.General", 0.f, 0.f, 1.f); // DO NOT COMMIT > 0!
   
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
+  CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
+  
   
   namespace JsonKey
   {
@@ -1007,8 +1009,7 @@ namespace Cozmo {
                                       NamedColors::BLUE : NamedColors::RED);
         _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
         
-        const bool drawMarkerNames = false;
-        if(drawMarkerNames)
+        if(kDrawMarkerNames)
         {
           Rectangle<f32> boundingRect(corners);
           std::string markerName(visionMarker.GetCodeName());
@@ -2077,6 +2078,9 @@ namespace Cozmo {
                            "Finished setting %zu-byte album data and %zu-byte enroll data",
                            _albumData.size(), _enrollData.size());
 
+          PRINT_CH_INFO("VisionComponent", "VisionComponent.LoadFaceAlbumFromRobot.Success", "Number of Loaded Faces: %zu",
+                        loadedFaces.size());
+          
           BroadcastLoadedNamesAndIDs(loadedFaces);
           
         } else {
@@ -2232,6 +2236,10 @@ namespace Cozmo {
     _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
     for(auto & loadedFace : loadedFaces)
     {
+      
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.BroadcastLoadedNamesAndIDs", "broadcasting loaded face id: %d",
+                    loadedFace.faceID);
+      
       _robot.Broadcast(MessageEngineToGame( Vision::LoadedKnownFace(loadedFace) ));
     }
   }

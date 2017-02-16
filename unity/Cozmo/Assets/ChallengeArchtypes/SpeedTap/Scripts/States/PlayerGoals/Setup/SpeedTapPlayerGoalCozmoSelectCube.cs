@@ -10,6 +10,10 @@ namespace SpeedTap {
     private bool _ForceRaiseLift = false;
     public const int ERROR_LOSTCUBE = 2;
 
+    // How many times we try driving to the cube
+    private int _kMaxRetries = 5;
+    private int _numRetries = 0;
+
     public override void Enter() {
       base.Enter();
       DAS.Debug("SpeedTapPlayerGoalCozmoSelectCube", "Enter");
@@ -78,7 +82,13 @@ namespace SpeedTap {
         RaiseLift();
       }
       else {
-        DriveToPreDockPose();
+        if (_numRetries++ >= _kMaxRetries) {
+          // unable to drive to cube - bail out
+          CompletePlayerGoal(ERROR_LOSTCUBE);
+        }
+        else {
+          DriveToPreDockPose();
+        }
       }
     }
 
@@ -89,6 +99,7 @@ namespace SpeedTap {
     private void HandleLiftRaiseComplete(bool success) {
       DAS.Debug("HandleLiftRaiseComplete", "found " + success);
       if (success) {
+        _numRetries = 0;
         DriveToCube();
       }
       else {
@@ -106,7 +117,13 @@ namespace SpeedTap {
         CompleteDriveToCube();
       }
       else {
-        DriveToCube();
+        if (_numRetries++ >= _kMaxRetries) {
+          // unable to drive to cube - bail out
+          CompletePlayerGoal(ERROR_LOSTCUBE);
+        }
+        else {
+          DriveToCube();
+        }
       }
     }
 

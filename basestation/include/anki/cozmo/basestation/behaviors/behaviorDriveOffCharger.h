@@ -31,17 +31,17 @@ public:
 
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool ShouldRunWhileOnCharger() const override { return true;}
+
+  // true so that we can handle edge cases where the robot is on the charger and not on his treads
+  virtual bool ShouldRunWhileOffTreads() const override { return true;}
 
 protected:
 
   virtual Result InitInternal(Robot& robot) override;
-  virtual Result ResumeInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
-  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
-  virtual float EvaluateScoreInternal(const Robot& robot) const override;
-
   enum class DebugState {
     DrivingForward,
   };
@@ -55,7 +55,6 @@ private:
   
   using BaseClass = IBehavior;
 
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -67,10 +66,7 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  int   _timesResumed = 0;
-
   float _distToDrive_mm = 0.0f;
-  float _internalScore;
 
 };
 

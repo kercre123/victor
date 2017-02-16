@@ -95,7 +95,7 @@ public class StartupManager : MonoBehaviour {
 
     Screen.orientation = ScreenOrientation.LandscapeLeft;
 
-    #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
     bool needPermission = false;
     using (var permissionUtil = new AndroidJavaClass("com.anki.util.PermissionUtil")) {
       System.Func<bool> permissionChecker =
@@ -115,7 +115,7 @@ public class StartupManager : MonoBehaviour {
         GameObject.Destroy(_AndroidPermissionInstance);
       }
     }
-    #endif
+#endif
 
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
@@ -173,6 +173,13 @@ public class StartupManager : MonoBehaviour {
     // platform dependent only (usually prefabs)
     assetBundleManager.AddActiveVariant(GetVariantBasedOnPlatform());
 
+    string languageOverride = null;
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage) {
+      languageOverride = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSetting;
+    }
+    string localeVariant = Localization.LoadLocaleAndCultureInfo(languageOverride);
+    assetBundleManager.AddActiveVariant(localeVariant.ToLower());
+
     yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
 
     AddLoadingBarProgress(0.1f);
@@ -187,7 +194,7 @@ public class StartupManager : MonoBehaviour {
 
     // Set up localization files and add managers
     if (Application.isPlaying) {
-      // TODO: Localization based on variant?
+      // TODO Load strings based on variants?
       Localization.LoadStrings();
 
       AddComponents();
@@ -371,7 +378,6 @@ public class StartupManager : MonoBehaviour {
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {
-    // TODO: Don't hardcode this?
     assetBundleManager.LoadAssetAsync<Cozmo.ShaderHolder>(_BasicUIPrefabAssetBundleName,
       "ShaderHolder", (Cozmo.ShaderHolder sh) => {
         Cozmo.ShaderHolder.SetInstance(sh);

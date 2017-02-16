@@ -27,43 +27,49 @@ extern GlobalDataToBody g_dataToBody;
 
 // Define charlie wiring here:
 struct BackpackLight {
+  // Dynamic values to light the LEDS
+  BackpackLight* next;
+  uint32_t value;
+  uint32_t anode;
+  uint32_t outputs;
+
   uint8_t controller_pos;
   uint8_t controller_index;
-  uint8_t anode;
-  uint8_t cathode;
   uint8_t gamma;
 };
 
-static const BackpackLight setting[] = { 
-  { 0, 0, PIN_LED1, PIN_LED2, 0x10 }, // 0
-  { 1, 0, PIN_LED1, PIN_LED4, 0x10 }, // 1
-  { 3, 0, PIN_LED2, PIN_LED1, 0x0D }, // 2
-  { 3, 1, PIN_LED2, PIN_LED3, 0x0B }, // 3
-  { 3, 2, PIN_LED2, PIN_LED4, 0x10 }, // 4
-  { 2, 0, PIN_LED3, PIN_LED1, 0x0D }, // 5
-  { 2, 1, PIN_LED3, PIN_LED2, 0x0B }, // 6
-  { 2, 2, PIN_LED3, PIN_LED4, 0x10 }, // 7
-  { 4, 0, PIN_LED4, PIN_LED1, 0x0D }, // 8
-  { 4, 1, PIN_LED4, PIN_LED3, 0x0B }, // 9
-  { 4, 2, PIN_LED4, PIN_LED2, 0x10 }, // 10
-  { 0, 0, PIN_LED1, PIN_LED1,    0 }, // 10
+static BackpackLight setting[] = { 
+  { NULL, 0,             0,                                 0, 0, 0,    0 }, // DUMMY CHANNEL
+  { NULL, 0, 1 << PIN_LED1, (1 << PIN_LED1) | (1 << PIN_LED2), 0, 0, 0x10 }, // 0
+  { NULL, 0, 1 << PIN_LED1, (1 << PIN_LED1) | (1 << PIN_LED4), 1, 0, 0x10 }, // 1
+  { NULL, 0, 1 << PIN_LED2, (1 << PIN_LED2) | (1 << PIN_LED1), 3, 0, 0x0D }, // 2
+  { NULL, 0, 1 << PIN_LED2, (1 << PIN_LED2) | (1 << PIN_LED3), 3, 1, 0x0B }, // 3
+  { NULL, 0, 1 << PIN_LED2, (1 << PIN_LED2) | (1 << PIN_LED4), 3, 2, 0x10 }, // 4
+  { NULL, 0, 1 << PIN_LED3, (1 << PIN_LED3) | (1 << PIN_LED1), 2, 0, 0x0D }, // 5
+  { NULL, 0, 1 << PIN_LED3, (1 << PIN_LED3) | (1 << PIN_LED2), 2, 1, 0x0B }, // 6
+  { NULL, 0, 1 << PIN_LED3, (1 << PIN_LED3) | (1 << PIN_LED4), 2, 2, 0x10 }, // 7
+  { NULL, 0, 1 << PIN_LED4, (1 << PIN_LED4) | (1 << PIN_LED1), 4, 0, 0x0D }, // 8
+  { NULL, 0, 1 << PIN_LED4, (1 << PIN_LED4) | (1 << PIN_LED3), 4, 1, 0x0B }, // 9
+  { NULL, 0, 1 << PIN_LED4, (1 << PIN_LED4) | (1 << PIN_LED2), 4, 2, 0x10 }, // 10
 };
 
-static const int LIGHT_COUNT = sizeof(setting) / sizeof(setting[0]) - 1;
+static const int LIGHT_COUNT = sizeof(setting) / sizeof(setting[0]);
 
 static uint32_t TIMER_MINIMUM = 0xC0;
 static uint32_t TIMER_DIVIDE  = 9;
 static uint32_t TIMER_SKIPS   = 4;
 
+static const uint32_t MASK_LEDS = (1 << PIN_LED1) | (1 << PIN_LED2) | (1 << PIN_LED3) | (1 << PIN_LED4);
+
 static LightState lightState[BACKPACK_LAYERS][BACKPACK_LIGHTS];
 static BackpackLayer currentLayer = BPL_IMPULSE;
 static CurrentChargeState chargeState = CHARGE_OFF_CHARGER;
-static uint32_t drive_value[LIGHT_COUNT];
 
 static bool isBatteryLow = false;
 static bool override = false;
 static bool button_pressed = false;
 static bool lights_enabled = false;
+static BackpackLight* currentChannel;
 
 extern "C" void TIMER1_IRQHandler(void);
 
@@ -91,7 +97,7 @@ void Backpack::init()
 
 void Backpack::testLight(int channel) {
   if (channel > 0) {
-    drive_value[channel-1] = 0xFFFF >> TIMER_DIVIDE;
+    setting[channel].value = 0xFFFF >> TIMER_DIVIDE;
     override = true;
   } else {
     override = false;
@@ -107,17 +113,6 @@ void Backpack::manage() {
     RobotInterface::SendMessage(msg);
 
     was_button_pressed = button_pressed;
-  }
-
-  if (override) return ;
-
-  for (int i = 0; i < LIGHT_COUNT; i++) {
-    const BackpackLight& light = setting[i];
-    uint8_t* rgbi = (uint8_t*) &lightController.backpack[light.controller_pos].values;
-    uint32_t drive = light.gamma * (uint32_t)rgbi[light.controller_index];
-
-    // We shift by 16 to adjust for the gain from gamma (which is a 24:8 fixed)
-    drive_value[i] = (drive * drive) >> TIMER_DIVIDE;
   }
 }
 
@@ -278,46 +273,70 @@ void Backpack::trigger() {
     Battery::hookButton(button_pressed);
   }
 
-  if (lights_enabled) TIMER1_IRQHandler();
+  // Light timer disabled, don't run
+  if (!lights_enabled) {
+    return ;
+  }
+  
+  // Recalculate the LED drive values
+  if (!override) {
+    for (int i = 1; i < LIGHT_COUNT; i++) {
+      BackpackLight& light = setting[i];
+      uint8_t* rgbi = (uint8_t*) &lightController.backpack[light.controller_pos].values;
+      uint32_t drive = light.gamma * (uint32_t)rgbi[light.controller_index];
+
+      // We shift by 16 to adjust for the gain from gamma (which is a 24:8 fixed)
+      light.value = (drive * drive) >> TIMER_DIVIDE;
+    }
+  }
+
+  // Start with our dummy channel
+  currentChannel = &setting[0];
+  currentChannel->next = NULL;
+
+  // Calculate our light linked list
+  BackpackLight* target = currentChannel;
+  for (int i = 1; i < LIGHT_COUNT; i++) {
+    BackpackLight* light = &setting[i];
+
+    if (light->value < TIMER_MINIMUM) {
+      continue ;
+    }
+
+    target->next = light;
+    target = light;
+    light->next = NULL;
+  }
+
+  // Retrigger the LED system (if we light is available)
+  if (currentChannel->next) {
+    TIMER1_IRQHandler();
+    NRF_TIMER1->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
+  }
   #endif
 }
 
 extern "C" void TIMER1_IRQHandler(void) { 
-  static const BackpackLight* currentChannel = &setting[0];
-  static int active_channel = 0;
-
-    // This just clears out lights
+  // This just clears out lights
   NRF_TIMER1->EVENTS_COMPARE[0] = 0;
 
-  // Turn off lights
-  nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(currentChannel->cathode, NRF_GPIO_PIN_NOPULL);
+  // Turn off previous light
+  NRF_GPIO->DIRCLR = MASK_LEDS;
+  NRF_GPIO->OUTCLR = MASK_LEDS;
 
-  // Setup next LED
-  for (;;) {
-    currentChannel = &setting[active_channel];
-    uint32_t delta = drive_value[active_channel];
-    ++active_channel;
-    
-    if (currentChannel->gamma == 0 ) {
-      active_channel = 0;
-      NRF_TIMER1->INTENCLR = TIMER_INTENSET_COMPARE0_Msk;
-      return ;
-    }
+  currentChannel = currentChannel->next;
 
-    if (delta >= TIMER_MINIMUM) {
-      NRF_TIMER1->TASKS_CAPTURE[0] = 1;
-      NRF_TIMER1->CC[0] += delta;
-      NRF_TIMER1->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
-
-      // Turn on our light
-      nrf_gpio_pin_clear(currentChannel->cathode);
-      nrf_gpio_pin_set(currentChannel->anode);
-
-      nrf_gpio_cfg_output(currentChannel->cathode);
-      nrf_gpio_cfg_output(currentChannel->anode);
-
-      return ;
-    }
+  // We have entered a dark period
+  if (currentChannel == NULL) {
+    NRF_TIMER1->INTENCLR = TIMER_INTENSET_COMPARE0_Msk;
+    return ;
   }
+
+  // Setup timing for our next period
+  NRF_TIMER1->TASKS_CLEAR = 1;
+  NRF_TIMER1->CC[0] = currentChannel->value;
+
+  // Turn on our light
+  NRF_GPIO->OUTSET = currentChannel->anode;
+  NRF_GPIO->DIRSET = currentChannel->outputs;
 }

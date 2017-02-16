@@ -104,7 +104,7 @@ class TestCompoundActionSequential : public CompoundActionSequential
 public:
   TestCompoundActionSequential(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
   virtual ~TestCompoundActionSequential() { actionsDestroyed.push_back(_name); }
-  virtual std::list<IActionRunner*> GetActions() { return _actions; }
+  virtual std::list<std::shared_ptr<IActionRunner>>& GetActions() { return _actions; }
 private:
   std::string _name;
 };
@@ -124,7 +124,7 @@ class TestCompoundActionParallel : public CompoundActionParallel
 public:
   TestCompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
   virtual ~TestCompoundActionParallel() { actionsDestroyed.push_back(GetName()); }
-  virtual std::list<IActionRunner*> GetActions() { return _actions; }
+  virtual std::list<std::shared_ptr<IActionRunner>>& GetActions() { return _actions; }
 private:
   std::string _name;
 };
@@ -178,9 +178,9 @@ ActionResult TestActionWithinAction::Init()
 ActionResult TestActionWithinAction::CheckIfDone()
 {
   bool result = true;
-  for(auto action : _compoundAction.GetActions())
+  for(auto& action : _compoundAction.GetActions())
   {
-    result &= ((TestAction*)action)->_complete;
+    result &= ((TestAction*)action.get())->_complete;
   }
   return (result ? ActionResult::SUCCESS : ActionResult::RUNNING);
 }
@@ -1017,12 +1017,12 @@ TEST(QueueAction, QueueActionWithinAction)
   CheckTracksLocked(r, track1);
   
   // Sets the subActions of testActionWithinAction to be complete so that testActionWithinAction can complete
-  auto subActions = testActionWithinAction->GetAction()->GetActions();
-  for(auto action : subActions)
+  auto& subActions = testActionWithinAction->GetAction()->GetActions();
+  for(auto& action : subActions)
   {
     // Set during Init() when RegisterSubActions() is called
-    EXPECT_EQ(&(((TestAction*)action)->GetRobot()), &r);
-    ((TestAction*)action)->_complete = true;
+    EXPECT_EQ(&(((TestAction*)action.get())->GetRobot()), &r);
+    ((TestAction*)action.get())->_complete = true;
   }
   
   r.GetActionList().Update();
@@ -1065,7 +1065,7 @@ TEST(QueueAction, ActionFailureRetry)
   
   // Both actions are set to complete but testAction2 is going to retry once
   // so it is still left
-  auto actions = compoundAction->GetActions();
+  auto& actions = compoundAction->GetActions();
   EXPECT_EQ(actions.size(), 1);
   EXPECT_EQ(actions.front()->GetName(), "Test2");
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);

@@ -358,7 +358,7 @@ public class BehaviorEditor : EditorWindow {
       }
       case BehaviorCategory.Reactionary:
       {
-        lastBehaviorType = entry.ReacitonaryBehaviorType;
+        lastBehaviorType = entry.ReactionaryBehaviorType;
         break;
       }
     }

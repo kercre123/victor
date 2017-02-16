@@ -587,6 +587,18 @@ TEST Enum_Complex() {
   PASS();
 }
 
+TEST DefaultConstructor() {
+  // HasDefaultConstructor should be constructible with no arguments or two arguments
+  ASSERT_EQ((std::is_constructible<Constructor::HasDefaultConstructor>::value), true);
+  ASSERT_EQ((std::is_constructible<Constructor::HasDefaultConstructor, double, int>::value), true);
+  
+  // HasNoDefaultConstructor should NOT be constructible with no arguments but should be constructible with two arguments
+  ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructor>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructor, double, int>::value), true);
+  
+  PASS();
+}
+
 SUITE(CPP_Emitter) {
 
   // Enum Tests
@@ -627,6 +639,9 @@ SUITE(CPP_Emitter) {
   // Default Values
   RUN_TEST(DefaultValues_Ints);
   RUN_TEST(DefaultValues_Floats);
+  
+  // Default constructor generation
+  RUN_TEST(DefaultConstructor);
 }
 
 /* Add definitions that need to be in the test runner's main file. */

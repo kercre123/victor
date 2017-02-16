@@ -128,7 +128,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDockAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _dockObjectID.GetValue());
-        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Interacting, _dockObjectID);
+        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Interacting, _dockObjectID);
       }
       
       // Stop squinting
@@ -144,9 +144,6 @@ namespace Anki {
                                                                  ReactionTrigger::ObjectPositionUpdated,
                                                                  true);
       }
-
-      
-      Util::SafeDelete(_faceAndVerifyAction);
       
       for (auto& b : _reactionTriggersToSuppress) {
         _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), b, true);
@@ -624,7 +621,7 @@ namespace Anki {
         } else {
           if(actionResult == ActionResult::SUCCESS) {
             // Finished with visual verification:
-            Util::SafeDelete(_faceAndVerifyAction);
+            _faceAndVerifyAction.reset();
             actionResult = ActionResult::RUNNING;
             
             PRINT_CH_INFO("Actions", "IDockAction.DockWithObjectHelper.BeginDocking",
@@ -714,7 +711,7 @@ namespace Anki {
     
     void IDockAction::SetupTurnAndVerifyAction(const ObservableObject* dockObject)
     {
-      _faceAndVerifyAction = new CompoundActionSequential(_robot,{});
+      _faceAndVerifyAction.reset(new CompoundActionSequential(_robot,{}));
       
       _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
       _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
@@ -1127,7 +1124,6 @@ namespace Anki {
       if(_verifyAction != nullptr)
       {
         _verifyAction->PrepForCompletion();
-        Util::SafeDelete(_verifyAction);
       }
     }
     
@@ -1276,7 +1272,7 @@ namespace Anki {
       
       if(_verifyAction == nullptr)
       {
-        _verifyAction = new TurnTowardsPoseAction(_robot, _dockObjectOrigPose, 0);
+        _verifyAction.reset(new TurnTowardsPoseAction(_robot, _dockObjectOrigPose, 0));
         _verifyAction->ShouldEmitCompletionSignal(false);
         _verifyAction->ShouldSuppressTrackLocking(true);
         _verifyActionDone = false;
@@ -1428,7 +1424,6 @@ namespace Anki {
       {
         _faceAndVerifyAction->PrepForCompletion();
       }
-      Util::SafeDelete(_faceAndVerifyAction);
     }
     
     ActionResult PlaceObjectOnGroundAction::Init()
@@ -1456,10 +1451,10 @@ namespace Anki {
           result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
         }
         
-        _faceAndVerifyAction = new TurnTowardsObjectAction(_robot,
-                                                           _carryingObjectID,
-                                                           _carryObjectMarker->GetCode(),
-                                                           0, true, false);
+        _faceAndVerifyAction.reset(new TurnTowardsObjectAction(_robot,
+                                                               _carryingObjectID,
+                                                               _carryObjectMarker->GetCode(),
+                                                               0, true, false));
         
         _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
         _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
@@ -1540,14 +1535,14 @@ namespace Anki {
                                                                      const float destinationObjectPadding_mm)
     : CompoundActionSequential(robot)
     {
-      _driveAction = new DriveToPlaceCarriedObjectAction(robot,
-                                                         placementPose,
-                                                         true,
-                                                         useExactRotation,
-                                                         useManualSpeed,
-                                                         checkFreeDestination,
-                                                         destinationObjectPadding_mm);
-      AddAction(_driveAction);
+      auto* driveAction = new DriveToPlaceCarriedObjectAction(robot,
+                                                              placementPose,
+                                                              true,
+                                                              useExactRotation,
+                                                              useManualSpeed,
+                                                              checkFreeDestination,
+                                                              destinationObjectPadding_mm);
+      _driveAction = AddAction(driveAction);
       
       PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction(robot);
       AddAction(action);
@@ -1556,8 +1551,14 @@ namespace Anki {
     
     void PlaceObjectOnGroundAtPoseAction::SetMotionProfile(const PathMotionProfile& motionProfile)
     {
-      if(nullptr != _driveAction) {
-        _driveAction->SetMotionProfile(motionProfile);
+      if(!_driveAction.expired()) {
+        // For debug builds do a dynamic cast for validity checks
+        DEV_ASSERT(dynamic_cast<DriveToPlaceCarriedObjectAction*>(_driveAction.lock().get()) != nullptr,
+                   "PlaceObjectOnGroundAtPoseAction.SetMotionProfile.DynamicCastFailed");
+        
+        DriveToPlaceCarriedObjectAction* rawDriveAction =
+          static_cast<DriveToPlaceCarriedObjectAction*>(_driveAction.lock().get());
+        rawDriveAction->SetMotionProfile(motionProfile);
       } else {
         PRINT_NAMED_WARNING("PlaceObjectOnGroundAtPoseAction.SetMotionProfile.NullDriveAction", "");
       }
@@ -1710,7 +1711,11 @@ namespace Anki {
             // If the physical robot thinks it succeeded, move the lift out of the
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
-              _placementVerifyAction = new TurnTowardsObjectAction(_robot, _carryObjectID, Radians(0), true, false);
+              _placementVerifyAction.reset(new TurnTowardsObjectAction(_robot,
+                                                                       _carryObjectID,
+                                                                       Radians(0),
+                                                                       true,
+                                                                       false));
               _placementVerifyAction->ShouldSuppressTrackLocking(true);
               _verifyComplete = false;
               
@@ -1730,7 +1735,7 @@ namespace Anki {
             if(result != ActionResult::RUNNING) {
               
               // Visual verification is done
-              Util::SafeDelete(_placementVerifyAction);
+              _placementVerifyAction.reset();
               
               if(result != ActionResult::SUCCESS)
               {
@@ -1750,8 +1755,8 @@ namespace Anki {
                 if(result == ActionResult::SUCCESS) {
                   // Visual verification succeeded, drop lift (otherwise, just
                   // leave it up, since we are assuming we are still carrying the object)
-                  _placementVerifyAction = new MoveLiftToHeightAction(_robot,
-                                                                      MoveLiftToHeightAction::Preset::LOW_DOCK);
+                  _placementVerifyAction.reset(new MoveLiftToHeightAction(_robot,
+                                                                          MoveLiftToHeightAction::Preset::LOW_DOCK));
                   _placementVerifyAction->ShouldSuppressTrackLocking(true);
                   
                   // Disable completion signals since this is inside another action
@@ -1963,9 +1968,11 @@ namespace Anki {
               // Since rolling is the only action that moves the block and then immediatly needs to visually verify
               // The head needs to look down more to account for the fact the block pose moved towards us and then we can
               // do the verification
-              _rollVerifyAction = new CompoundActionSequential(_robot,
-                                                               {new MoveHeadToAngleAction(_robot, kAngleToLookDown),
-                                                                new VisuallyVerifyObjectAction(_robot, _dockObjectID, _expectedMarkerPostRoll->GetCode())});
+              _rollVerifyAction.reset(new CompoundActionSequential(_robot, {
+                new MoveHeadToAngleAction(_robot, kAngleToLookDown),
+                new VisuallyVerifyObjectAction(_robot, _dockObjectID, _expectedMarkerPostRoll->GetCode())
+              }));
+              
               _rollVerifyAction->ShouldSuppressTrackLocking(true);
               
               // Disable completion signals since this is inside another action
@@ -1982,7 +1989,7 @@ namespace Anki {
             if(result != ActionResult::RUNNING) {
               
               // Visual verification is done
-              Util::SafeDelete(_rollVerifyAction);
+              _rollVerifyAction.reset();
               
               if(result != ActionResult::SUCCESS) {
                 PRINT_CH_INFO("Actions", "RollObjectAction.Verify.VisualVerifyFailed",

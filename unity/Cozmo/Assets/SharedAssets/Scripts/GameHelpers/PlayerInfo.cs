@@ -21,20 +21,28 @@ public class PlayerInfo {
   public int playerScoreRound;
   public int playerScoreTotal; // not reset between rounds...
   public int playerRoundsWon;
-  public PlayerGoalBase _PlayerGoal = null;
+  protected PlayerGoalBase _PlayerGoal = null;
   public PlayerInfo(PlayerType setPlayerType, string setName) {
     playerType = setPlayerType;
     name = setName;
   }
 
   public void UpdateGoal() {
-    // because
+    // because if a goal completed itself last tick, null self out and allow exists if wasn't re-written already
     if (_PlayerGoal != null && _PlayerGoal.IsComplete) {
       SetGoal(null);
     }
     if (_PlayerGoal != null) {
       _PlayerGoal.Update();
     }
+  }
+
+  public bool HasGoal() {
+    return _PlayerGoal != null;
+  }
+
+  public PlayerGoalBase GetGoal() {
+    return _PlayerGoal;
   }
 
   public void SetGoal(PlayerGoalBase goal) {

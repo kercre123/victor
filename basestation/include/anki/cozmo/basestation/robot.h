@@ -322,7 +322,8 @@ public:
 
   // True if we think the robot is on a charger. This becomes true only when the robot touches the charger
   // contacts, and remains true until we think the robot has driven off the charger. It will not become true
-  // based on localization or observing the charger marker, only based on feeling the charger.
+  // based on localization or observing the charger marker, only based on feeling the charger. A robot on the
+  // charger contacts is always on the platform( NOTE: even if it thinks it's in the air or on it's side)
   bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
   
   // True if robot is charging
@@ -600,6 +601,8 @@ public:
   void SetCliffDetected(const bool isCliffDetected) { _isCliffDetected = isCliffDetected; }
   bool IsCliffDetected() const { return _isCliffDetected; }
   bool IsCliffSensorOn() const { return _isCliffSensorOn; }
+  
+  bool IsPickedUp() const { return _isPickedUp; }
   
   u16  GetCliffDataRaw() const { return _cliffDataRaw; }
   
@@ -999,6 +1002,7 @@ protected:
   bool             _enableCliffSensor     = true;
   u32              _lastSentImageID       = 0;
   u8               _enabledAnimTracks     = (u8)AnimTrackFlag::ALL_TRACKS;
+  bool             _isPickedUp            = false;
   bool             _isCliffDetected       = false;
   bool             _isCliffSensorOn       = false;
   u16              _cliffDataRaw          = std::numeric_limits<u16>::max();

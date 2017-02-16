@@ -152,10 +152,14 @@ private:
     , sending(false)
     { }
     
-    ~WriteDataObject() {
+    void ClearData() {
       Util::SafeDelete(data);
     }
-
+    
+    ~WriteDataObject() {
+      ClearData();
+    }
+    
     NVStorage::NVEntryTag baseTag;
     u32 nextTag;
     u32 sendIndex;
@@ -193,10 +197,14 @@ private:
     , dataSizeKnown(false)
     { }
     
-    ~RecvDataObject() {
+    void ClearData() {
       if (deleteVectorWhenDone) {
         Util::SafeDelete(data);
       }
+    }
+    
+    ~RecvDataObject() {
+      ClearData();
     }
     
     NVStorage::NVEntryTag tag;

@@ -31,9 +31,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-  // Forward declaration
-  class VisuallyVerifyObjectAction;
 
     // Turn in place by a given angle, wherever the robot is when the action
     // is executed.
@@ -358,7 +355,6 @@ namespace Cozmo {
         {
           _chosenAction->PrepForCompletion();
         }
-        Util::SafeDelete(_chosenAction);
       }
       
       void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
@@ -370,7 +366,7 @@ namespace Cozmo {
       virtual void Reset(bool shouldUnlockTracks = true) override { }
       
       ObjectID       _objectID;
-      IActionRunner* _chosenAction = nullptr;
+      std::unique_ptr<IActionRunner> _chosenAction = nullptr;
       f32            _speed_mmps;
       f32            _accel_mmps2;
       f32            _decel_mmps2;
@@ -507,7 +503,7 @@ namespace Cozmo {
 
       bool                       _facePoseCompoundActionDone = false;
       
-      VisuallyVerifyObjectAction*_visuallyVerifyAction = nullptr;
+      std::unique_ptr<IActionRunner> _visuallyVerifyAction = nullptr;
       bool                       _visuallyVerifyWhenDone = false;
       bool                       _refinedTurnTowardsDone = false;
       
@@ -576,7 +572,7 @@ namespace Cozmo {
       };
       
       Vision::FaceID_t  _faceID                  = Vision::UnknownFaceID;
-      IActionRunner*    _action                  = nullptr;
+      std::unique_ptr<IActionRunner> _action     = nullptr;
       f32               _closestDistSq           = std::numeric_limits<f32>::max();
       u32               _maxFramesToWait         = 10;
       Vision::FaceID_t  _obsFaceID               = Vision::UnknownFaceID;

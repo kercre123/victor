@@ -599,8 +599,8 @@ bool RobotDataBackupManager::ParseBackupFile(const std::string& fileName,
   
   if(file.length() == 0)
   {
-    PRINT_NAMED_ERROR("RobotDataBackupManager.ParseBackupFile.ReadFileFailed",
-                      "Unable to read backup file");
+    PRINT_NAMED_WARNING("RobotDataBackupManager.ParseBackupFile.ReadFileFailed",
+                        "Unable to read backup file");
     return false;
   }
   const char* fileContents = file.data();

@@ -154,7 +154,7 @@ namespace Cozmo.Upgrades {
           SetupButton(_RequestTrickButton, StartSparkUnlock, "request_trick_button",
                       unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
 
-          _SparkButtonCostLabel.text = string.Format("{0}", unlockInfo.RequestTrickCostAmountNeeded);
+          _SparkButtonCostLabel.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmountNeeded);
           RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
         }
       }
@@ -166,14 +166,16 @@ namespace Cozmo.Upgrades {
         SetupButton(_UnlockUpgradeButton, OnUpgradeClicked, "request_upgrade_button",
                     unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel, false);
 
-        _UnlockButtonCostLabel.text = string.Format("{0}", unlockInfo.UpgradeCostAmountNeeded);
+        _UnlockButtonCostLabel.text = Localization.GetNumber(unlockInfo.UpgradeCostAmountNeeded);
         _UnlockableIcon.color = new Color(1.0F, 1.0F, 1.0F, 0.5F);
       }
       else if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked) {
         _FragmentInventoryContainer.gameObject.SetActive(true);
 
         ItemData itemData = ItemDataConfig.GetData(unlockInfo.UpgradeCostItemId);
-        _FragmentInventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount, itemData.GetPluralName(), playerInventory.GetItemAmount(unlockInfo.UpgradeCostItemId));
+        _FragmentInventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,
+                                                                itemData.GetPluralName(),
+                                                                Localization.GetNumber(playerInventory.GetItemAmount(unlockInfo.UpgradeCostItemId)));
 
         _SparksInventoryContainer.gameObject.SetActive(false);
         _LockedPromptContainer.SetActive(true);
@@ -247,8 +249,8 @@ namespace Cozmo.Upgrades {
       }
 
       inventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,
-        itemData.GetPluralName(),
-        playerInventory.GetItemAmount(costItemId));
+                                                     itemData.GetPluralName(),
+                                                     Localization.GetNumber(playerInventory.GetItemAmount(costItemId)));
     }
 
     protected override void HandleUserClose() {
@@ -402,7 +404,7 @@ namespace Cozmo.Upgrades {
       }
       _ButtonPromptDescription.text = Localization.GetWithArgs(costLabelKey, new object[] { cost, costName });
 
-      _SparkButtonCostLabel.text = string.Format("{0}", cost);
+      _SparkButtonCostLabel.text = Localization.GetNumber(cost);
     }
 
     protected void Update() {
@@ -430,7 +432,7 @@ namespace Cozmo.Upgrades {
       ItemData itemData = ItemDataConfig.GetData(itemId);
       label.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,
                                             itemData.GetPluralName(),
-                                            playerInventory.GetItemAmount(itemId));
+                                            Localization.GetNumber(playerInventory.GetItemAmount(itemId)));
     }
 
     private void HandleSparkEnded(Anki.Cozmo.ExternalInterface.SparkEnded message) {

@@ -28,7 +28,7 @@ DirectionalLight {
 CozmoMat {
   showMarkers FALSE
 }
-LightCube {
+DEF cube LightCube {
   translation 0.192532 -0.0292112 0.022
   rotation 0.250563 0.935113 -0.250563 1.63783
 }

@@ -16,11 +16,14 @@ using UnityEditor;
 /// </summary>
 namespace Anki {
   namespace Cozmo {
+    // If this were implemented fully in the new system it'd be a ChallengeSpecificGameCondition
+    // we don't really want to change the rendering though, so just leave Editor facing stuff as is.
     [System.Serializable]
     public class ChallengeAccuracyCondition : GoalCondition {
 
       public float TargetAcc;
       public ComparisonType compareType;
+      public const string kConditionKey = "PlayerAccuracy";
 
       // Returns true if the specified player's % points earned out of total matches the target
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
@@ -28,7 +31,10 @@ namespace Anki {
         if ((cozEvent is MinigameGameEvent)) {
           GameBase miniGameInstance = HomeHub.Instance.MiniGameInstance;
           if (miniGameInstance == null) { return false; }
-          isMet = CompareConditionValues(miniGameInstance.PlayerAccuracy, TargetAcc, compareType);
+          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
+          if (miniGameEvent.GameSpecificValues != null && miniGameEvent.GameSpecificValues.ContainsKey(kConditionKey)) {
+            isMet = CompareConditionValues(miniGameEvent.GameSpecificValues[kConditionKey], TargetAcc, compareType);
+          }
         }
         return isMet;
       }

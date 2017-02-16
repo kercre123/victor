@@ -320,6 +320,7 @@ public final class WifiUtil {
     switch (netState) {
       case CONNECTED:
       case VERIFYING_POOR_LINK:
+      case CAPTIVE_PORTAL_CHECK:
         return true;
       default:
         return false;

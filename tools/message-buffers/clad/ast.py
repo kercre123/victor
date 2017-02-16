@@ -246,10 +246,11 @@ class IncludeDecl(Node):
         return self.name
 
 class MessageDecl(Decl):
-    def __init__(self, name, decl_list, coord, namespace=None, is_structure=False):
+    def __init__(self, name, decl_list, coord, namespace=None, is_structure=False, default_constructor=True):
         super(MessageDecl, self).__init__(name, coord=coord, namespace=namespace)
         self.decl_list = decl_list
         self._is_structure = is_structure
+        self.default_constructor = default_constructor
         self.hash_str = "None"
 
     def children(self):

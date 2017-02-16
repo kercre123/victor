@@ -48,7 +48,7 @@ public:
                                        const bool shouldDriveToClosestPose);
   
 private:
-  FlipBlockAction* _flipBlockAction = nullptr;
+  std::weak_ptr<IActionRunner> _flipBlockAction;
   float _minAlignThreshold_mm;
 };
 

@@ -1,0 +1,147 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "reward.description.Missing": {
+    "translation": "Missing description"
+  },
+  "reward.description.Freeplay.Spark": {
+    "translation": "Spark an Upgrade"
+  },
+  "reward.description.Freeplay.CompleteBehavior.Stack": {
+    "translation": "completing the 'Stack Cubes' behavior successfully"
+  },
+  "reward.description.Freeplay.CompleteBehavior.Pounce": {
+    "translation": "completing the 'Pounce On Fingers' behavior successfully"
+  },
+  "reward.description.Freeplay.CompleteBehavior.Pyramid": {
+    "translation": "completing the 'Build a Pyramid' behavior successfully"
+  },
+  "reward.description.Freeplay.CompleteBehavior.PopWheelie": {
+    "translation": "completing the 'Pop a Wheelie' behavior successfully"
+  },
+  "reward.description.Freeplay.CompleteBehavior.FistBump": {
+    "translation": "completing the 'Fist Bump' behavior successfully"
+  },
+  "reward.description.MemoryMatch.Played.Solo": {
+    "translation": "Played a game of Memory Match in Solo mode"
+  },
+  "reward.description.MemoryMatch.Played.Vs": {
+    "translation": "Played a game of Memory Match in Vs. mode"
+  },
+  "reward.description.MemoryMatch.WinGame.Vs": {
+    "translation": "Won a game of Memory Match in Vs. mode"
+  },
+  "reward.description.MemoryMatch.Lives.OneLeft": {
+    "translation": "Won Memory Match Vs. mode on your last life"
+  },
+  "reward.description.MemoryMatch.Lives.TwoLeft": {
+    "translation": "Won Memory Match Vs. mode with two lives left"
+  },
+  "reward.description.MemoryMatch.Lives.ThreeLeft": {
+    "translation": "Won Memory Match Vs. mode without losing a life"
+  },
+  "reward.description.MemoryMatch.PatternLength.Five": {
+    "translation": "Completed a Memory Match pattern > 5 lights long."
+  },
+  "reward.description.MemoryMatch.PatternLength.Ten": {
+    "translation": "Completed a Memory Match pattern > 10 lights long."
+  },
+  "reward.description.MemoryMatch.PatternLength.Twenty": {
+    "translation": "Completed a Memory Match pattern > 20 lights long."
+  },
+  "reward.description.MemoryMatch.HighScore.Solo": {
+    "translation": "Set a new pattern record for Memory Match solo"
+  },
+  "reward.description.QuickTap.Played": {
+    "translation": "Played a game of Quick Tap"
+  },
+  "reward.description.QuickTap.WinGame.OneColor": {
+    "translation": "Won a game of Quick Tap in 'One Color' mode"
+  },
+  "reward.description.QuickTap.WinGame.TwoColor": {
+    "translation": "Won a game of Quick Tap in 'Two Colors' mode"
+  },
+  "reward.description.QuickTap.WinGame.ThreeColor": {
+    "translation": "Won a game of Quick Tap in 'Three Colors' mode"
+  },
+  "reward.description.QuickTap.WinGame.FourColor": {
+    "translation": "Won a game of Quick Tap in 'Four Colors' mode"
+  },
+  "reward.description.QuickTap.Accuracy.50": {
+    "translation": "Finished a game of Quick Tap with tap accuracy >50%"
+  },
+  "reward.description.QuickTap.Accuracy.75": {
+    "translation": "Finished a game of Quick Tap with tap accuracy >75%"
+  },
+  "reward.description.QuickTap.Accuracy.100": {
+    "translation": "Finished a game of Quick Tap with 100% tap accuracy!"
+  },
+  "reward.description.QuickTap.Shutout.SingleRound": {
+    "translation": "Won a round of Quick Tap 5 to 0"
+  },
+  "reward.description.QuickTap.TieBreaker.OneRound": {
+    "translation": "Won a round of Quick Tap after being tied 4-4"
+  },
+  "reward.description.QuickTap.PlayMP": {
+    "translation": "Played QuickTap Human vs Human vs Cozmo"
+  },
+  "reward.description.Keepaway.Played": {
+    "translation": "Played a game of Keepaway"
+  },
+  "reward.description.Keepaway.Won": {
+    "translation": "Won a game of Keepaway"
+  },
+  "reward.description.Keepaway.Shutout": {
+    "translation": "Won a game of Keepaway 5 to 0"
+  },
+  "reward.description.Keepaway.TieBreaker": {
+    "translation": "Won Keepaway after being tied 4-4"
+  },
+  "reward.description.Explorer.Time.5": {
+    "translation": "Played Explorer Mode for longer than 5 minutes"
+  },
+  "reward.description.Explorer.Time.10": {
+    "translation": "Played Explorer Mode for longer than 10 minutes"
+  },
+  "reward.description.Explorer.Time.15": {
+    "translation": "Played Explorer Mode for longer than 15 minutes"
+  },
+  "reward.description.Explorer.Time.20": {
+    "translation": "Played Explorer Mode for longer than 20 minutes"
+  },
+  "reward.collect.CollectEnergy": {
+    "translation": "+{0} Energy!"
+  },
+  "reward.collect.Instruction": {
+    "translation": "Tap to Collect"
+  },
+  "reward.description.NewDifficulty": {
+    "translation": "{0} Mode Unlocked!"
+  },
+  "reward.description.StartNewDay": {
+    "translation": "Check In Streak Reward"
+  },
+  "reward.description.SkillUp": {
+    "translation": "Cozmo's {0} skill has increased!"
+  },
+  "reward.freeplay.BehaviorDisplay": {
+    "translation": "Cozmo got +{0} energy from {1}!"
+  }
+}

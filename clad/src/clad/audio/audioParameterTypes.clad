@@ -15,6 +15,8 @@ enum uint_32 ParameterType
   Mood = 3128647864,
   Music_Mood = 1579946944,
   Music_Volume = 1006694123,
+  Mvt_Effort_Pitch = 3281296278,
+  Mvt_Effort_Volume = 537268346,
   Mvt_Speed = 3464961452,
   Relationship = 3723222599,
   Robot_Volume = 1669075520,

@@ -42,11 +42,11 @@ protected:
 
 private:
   
-  Vision::Image             _faceImage;
-  ProceduralFace            _procFace;
-  Animation                 _animation;
-  IActionRunner*            _playAnimationAction  = nullptr;
-  u32                       _duration_ms;
+  Vision::Image                  _faceImage;
+  ProceduralFace                 _procFace;
+  Animation                      _animation;
+  std::unique_ptr<IActionRunner> _playAnimationAction  = nullptr;
+  u32                            _duration_ms;
   
 }; // class SetFaceAction
 

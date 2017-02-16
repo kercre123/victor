@@ -44,7 +44,7 @@ namespace SpeedTap {
         }
       }
 
-      _SpeedTapGame.AddPoint(pointPlayers);
+      _SpeedTapGame.AddPoint(pointPlayers, _WasMistakeMade);
       // Debug mode for Sudden Death
 #if ANKI_DEV_CHEATS
       if (_SpeedTapGame.GetPlayerCount() > 2) {
@@ -70,18 +70,6 @@ namespace SpeedTap {
       }
 #endif
 
-      // Count towards player mistake if cozmo wins a point off of the player tapping wrong.
-      // Don't count mistakes in MP mode, just a daily goals thing.
-      if (_SpeedTapGame.GetPlayerCount() == 2) {
-        if (_WasMistakeMade) {
-          if (_FirstTapper.playerType == PlayerType.Cozmo) {
-            _SpeedTapGame.PlayerMistake();
-          }
-          else {
-            _SpeedTapGame.CozmoMistake();
-          }
-        }
-      }
       // Depends on points being scored first
       _SpeedTapGame.UpdateUI();
 
@@ -94,7 +82,7 @@ namespace SpeedTap {
         _SpeedTapGame.SharedMinigameView.InfoTitleText = string.Empty;
 
         if (_SpeedTapGame.IsGameComplete()) {
-          UpdateBlockLights(false);
+          UpdateBlockLights(_WasMistakeMade);
           _SpeedTapGame.UpdateUIForGameEnd();
           PlayReactToGameAnimationAndSendEvent();
         }

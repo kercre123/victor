@@ -1,7 +1,7 @@
 /**
  * File: customObject.h
  *
- * Author: Alec Solder
+ * Author: Alec Solder / Andrew Stein
  * Date:   06/20/16
  *
  * Description: Implements CustomObject which is an object type that is created from external sources, such as via the SDK
@@ -11,12 +11,13 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#ifndef ANKI_COZMO_CUSTOMOBJECT_H
-#define ANKI_COZMO_CUSTOMOBJECT_H
+#ifndef __Anki_Cozmo_CustomObject_H__
+#define __Anki_Cozmo_CustomObject_H__
 
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "clad/types/customObjectMarkers.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/objectFamilies.h"
 
@@ -24,82 +25,135 @@
 
 
 namespace Anki {
+namespace Cozmo {
+    
+class CustomObject : public ObservableObject
+{
+public:
   
-  namespace Cozmo {
-    
-    class CustomObject : public ObservableObject 
-    {
-    public:
-      enum FaceName {
-        FIRST_FACE  = 0,
-        FRONT_FACE  = 0,
-        LEFT_FACE   = 1,
-        BACK_FACE   = 2,
-        RIGHT_FACE  = 3,
-        TOP_FACE    = 4,
-        BOTTOM_FACE = 5,
-        NUM_FACES
-      };
-      
-      // Creates a custom object and depending on the type will either bind markers to it or not.
-      // Custom_Fixed will have no markers, Custom_xxxx_Cube is a cube with the same marker on all sides
-      // Custom_xxxx_Box will have unique markers on all sides and is any rectangular prism
-      CustomObject(ObjectType type, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm,
-                   const f32 markerWidth_mm = 25.f, const f32 markerHeight_mm = 25.f);
-      
-      virtual ~CustomObject();
-      
-      //
-      // Inherited Virtual Methods
-      //
-      
-      
-      virtual CustomObject* CloneType() const override;
-      
-      virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-      
-      virtual void Visualize(const ColorRGBA& color) const override;
-      virtual void EraseVisualization() const override;
-      
-      virtual Point3f GetSameDistanceTolerance() const override;      
-      
-      // CustomObject object functions
-      virtual const Point3f& GetSize() const override { return _size; }
-
-      // TODO: Consider making this settable
-      virtual bool CanIntersectWithRobot() const override { return true; }
-      
-    protected:
-
-      constexpr static const f32 kSameDistToleranceFraction      = 0.8f;
-
-      virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
-      
-      void DefineFacesByType(ObjectType type);
-      void AddFace(const FaceName whichFace, const Vision::MarkerType code);
-
-      Point3f _size;
-
-      std::array<const Vision::KnownMarker*, NUM_FACES> _markersByFace;
-
-      f32 _markerWidth_mm;
-      f32 _markerHeight_mm;
-      
-      std::vector<Point3f> _canonicalCorners;
-            
-      mutable VizManager::Handle_t _vizHandle;
-      
-    }; // class CustomObject
-    
-    
-    inline CustomObject* CustomObject::CloneType() const
-    {
-      // Call the copy constructor
-      return new CustomObject(this->_type, _size.x(), _size.y(), _size.z(), _markerWidth_mm, _markerHeight_mm);
-    }
-    
-  } // namespace Cozmo
+  // NOTE: You cannot directly construct a CustomObject, but instead must use one of these
+  // static Create methods
   
+  // Creates a fully custom box with a specific marker on each side
+  static CustomObject* CreateBox(ObjectType objectType,
+                                 CustomObjectMarker markerFront,
+                                 CustomObjectMarker markerBack,
+                                 CustomObjectMarker markerTop,
+                                 CustomObjectMarker markerBottom,
+                                 CustomObjectMarker markerLeft,
+                                 CustomObjectMarker markerRight,
+                                 f32 xSize_mm, f32 ySize_mm, f32 zSize_mm,
+                                 f32 markerWidth_mm, f32 markerHeight_mm,
+                                 bool isUnique);
+  
+  // Create a wall with the same marker on the front and back
+  static CustomObject* CreateWall(ObjectType objectType,
+                                  CustomObjectMarker marker,
+                                  f32 width_mm, f32 height_mm,
+                                  f32 markerWidth_mm, f32 markerHeight_mm,
+                                  bool isUnique);
+  
+  // Create a cube with the same marker on all sides
+  static CustomObject* CreateCube(ObjectType objectType,
+                                  CustomObjectMarker marker, f32 size_mm,
+                                  f32 markerWidth_mm, f32 markerHeight_mm,
+                                  bool isUnique);
+  
+  // Create a box with no markers (not actually observable, but can be treated as a fixed obstacle)
+  static CustomObject* CreateFixedObstacle(f32 xSize_mm, f32 ySize_mm, f32 zSize_mm);
+  
+  virtual ~CustomObject();
+  
+  //
+  // Inherited Virtual Methods
+  //
+  
+  virtual CustomObject* CloneType() const override;
+  
+  virtual void Visualize(const ColorRGBA& color) const override;
+  virtual void EraseVisualization() const override;
+  
+  virtual Point3f GetSameDistanceTolerance() const override;      
+  
+  virtual const Point3f& GetSize() const override { return _size; }
+
+  virtual bool IsUnique() const override { return _isUnique; }
+  
+  virtual RotationAmbiguities const& GetRotationAmbiguities() const override { return _rotationAmbiguities; }
+  
+private:
+  
+  enum FaceName {
+    FrontFace = 0,
+    LeftFace,
+    BackFace,
+    RightFace,
+    TopFace,
+    BottomFace,
+    
+    NumFaces
+  };
+  
+  enum CustomShape {
+    BoxShape,  // All six sides different: no rotation ambiguity
+    CubeShape, // All six sides same: full rotation ambiguity
+    WallShape, // Both sides same: two-rotation ambiguity
+    UnmarkedBoxShape,  // Box with no markers (no ambiguity required)
+  };
+  
+  constexpr static const f32 kSameDistToleranceFraction    = 0.5f;
+  constexpr static const f32 kWallThickness_mm             = 10.f; // x dimension of "walls"
+  
+  CustomObject(ObjectType objectType,
+               CustomObjectMarker markerFront,
+               CustomObjectMarker markerBack,
+               CustomObjectMarker markerTop,
+               CustomObjectMarker markerBottom,
+               CustomObjectMarker markerLeft,
+               CustomObjectMarker markerRight,
+               f32 xSize_mm, f32 ySize_mm, f32 zSize_mm,
+               f32 markerWidth_mm, f32 markerHeight_mm,
+               bool isUnique,
+               CustomShape shape);
+  
+  static bool IsValidCustomType(ObjectType objectType);
+  
+  virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
+  
+  void SetCanonicalCorners();
+  static Vision::MarkerType GetVisionMarkerType(const CustomObjectMarker customMarker);
+  void AddFace(const FaceName whichFace, const CustomObjectMarker marker);
+
+  std::array<CustomObjectMarker, NumFaces> _markersByFace;
+  std::vector<Point3f>                     _canonicalCorners;
+  RotationAmbiguities                      _rotationAmbiguities;
+
+  Point3f _size;
+  Point2f _markerSize;
+  
+  mutable VizManager::Handle_t _vizHandle;
+  const CustomShape            _customShape;
+  const bool                   _isUnique;
+  
+}; // class CustomObject
+
+
+inline CustomObject* CustomObject::CloneType() const
+{
+  return new CustomObject(this->GetType(),
+                          _markersByFace[FrontFace],
+                          _markersByFace[BackFace],
+                          _markersByFace[TopFace],
+                          _markersByFace[BottomFace],
+                          _markersByFace[LeftFace],
+                          _markersByFace[RightFace],
+                          _size.x(), _size.y(), _size.z(),
+                          _markerSize.x(), _markerSize.y(),
+                          _isUnique,
+                          _customShape);
+}
+  
+} // namespace Cozmo
 } // namespace Anki
 
-#endif // ANKI_COZMO_CUSTOMOBJECT_H
+#endif // __Anki_Cozmo_CustomObject_H__

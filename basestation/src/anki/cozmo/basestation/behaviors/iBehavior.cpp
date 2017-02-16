@@ -388,11 +388,6 @@ void IBehavior::Stop()
   // re-enable before stopping
   SmartReEnableReactionTrigger(_disabledReactionTriggers);
 
-  // re-enable tap interaction if needed
-  if( _tapInteractionDisabled ) {
-    SmartReEnableTapInteraction();
-  }
-  
   // Unlock any tracks which the behavior hasn't had a chance to unlock
   for(const auto& entry: _lockingNameToTracksMap){
     _robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
@@ -403,7 +398,6 @@ void IBehavior::Stop()
   _customLightObjects.clear();
   
   DEV_ASSERT(_disabledReactionTriggers.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
-  DEV_ASSERT(!_tapInteractionDisabled, "IBehavior.Stop.TapInteractionStillDisabled");
 }
   
   
@@ -485,6 +479,12 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
   //check if the behavior runs while in the air
   if(robot.GetOffTreadsState() != OffTreadsState::OnTreads
      && !ShouldRunWhileOffTreads()){
+    return false;
+  }
+
+  //check if the behavior can run from the charger platform (don't want most to run because they could damage
+  //the robot by moving too much, and also will generally look dumb if they try to turn)
+  if(robot.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
     return false;
   }
   
@@ -726,30 +726,6 @@ void IBehavior::SmartReEnableReactionTrigger(const std::set<ReactionTrigger> tri
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartDisableTapInteraction()
-{
-  if( !_tapInteractionDisabled ) {
-    _robot.GetBehaviorManager().RequestEnableTapInteraction(GetName(), false);
-    _tapInteractionDisabled = true;
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartReEnableTapInteraction()
-{
-  if( _tapInteractionDisabled ) {
-    _robot.GetBehaviorManager().RequestEnableTapInteraction(GetName(), true);
-    _tapInteractionDisabled = false;
-  }
-  else {
-    PRINT_NAMED_WARNING("IBehavior.SmartReEnableTapInteraction.NotDisabled",
-                        "Attempted to re-enable tap interaction (manually), but it wasn't disabled");
-  }    
-}
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::ReactionTriggerIter IBehavior::SmartReEnableReactionTrigger(ReactionTriggerIter iter)
@@ -813,7 +789,7 @@ bool IBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
   if(objectIter != _customLightObjects.end()){
     for(const auto& anim : anims)
     {
-      _robot.GetCubeLightComponent().StopLightAnim(anim, objectID);
+      _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(anim, objectID);
     }
     _customLightObjects.erase(objectIter);
     return true;
@@ -864,8 +840,8 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
     const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
     
 
-    _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedKnown);
-    _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedUnsure);
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
     
     if(on)
     {

@@ -38,9 +38,6 @@ namespace Anki {
   class RotationMatrixBase : public SmallSquareMatrix<DIM, float>
   {
   public:
-    RotationMatrixBase(); // init to identity matrix
-    RotationMatrixBase(const SmallSquareMatrix<DIM, float> &matrix);
-    RotationMatrixBase(std::initializer_list<float> initValues);
     
     // Matrix multiplication operations just call base class functions but then
     // also make sure things stay normalized
@@ -48,19 +45,22 @@ namespace Anki {
     RotationMatrixBase<DIM>& operator*=(const RotationMatrixBase<DIM>& R_other);
     RotationMatrixBase<DIM>& PreMultiplyBy(const RotationMatrixBase<DIM>& R_other);
     
-    // Matrix inversion and transpose just negate the change the sign of the
-    // rotation angle
-    RotationMatrixBase<DIM>& Transpose(void);
-    void              GetTranspose(RotationMatrixBase<DIM>& outTransposed) const;
-    RotationMatrixBase<DIM>& Invert(void); // same as transpose
-    void              GetInverse(RotationMatrixBase<DIM>& outInverted) const;
+    // Note that inverting a rotation is equivalent to transposing it
+    RotationMatrixBase<DIM>& Invert(void);
+    void                     GetInverse(RotationMatrixBase<DIM>& outInverted) const;
 
     
     bool IsValid(const float tolerance = 1e-6f) const;
     
   protected:
+    
     constexpr static const float OrthogonalityToleranceLow  = 1e-6f;
     constexpr static const float OrthogonalityToleranceHigh = 1e-2f;
+    
+    // NOTE: RotationMatrixBase is not directly instantiable
+    RotationMatrixBase(); // init to identity matrix
+    RotationMatrixBase(const SmallSquareMatrix<DIM, float> &matrix);
+    RotationMatrixBase(std::initializer_list<float> initValues);
     
     // Keep this an orthogonal matrix.  Throw exception if things get too
     // far from orthogonal, i.e. if any of the rows' norms are more than

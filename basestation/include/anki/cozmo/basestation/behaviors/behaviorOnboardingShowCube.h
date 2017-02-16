@@ -39,6 +39,7 @@ public:
 
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool ShouldRunWhileOnCharger() const override { return true;}
 
 protected:
 

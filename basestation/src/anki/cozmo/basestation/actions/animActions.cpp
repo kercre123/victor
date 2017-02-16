@@ -206,8 +206,9 @@ namespace Anki {
                              u32 numLoops,
                              bool interruptRunning,
                              u8 tracksToLock)
-    : PlayAnimationAction(robot, "", numLoops, interruptRunning, tracksToLock),
-    _animGroupName("")
+    : PlayAnimationAction(robot, "", numLoops, interruptRunning, tracksToLock)
+    , _animTrigger(animEvent)
+    , _animGroupName("")
     {
       RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
       if( robot_mgr->HasAnimationForTrigger(animEvent) )
@@ -237,7 +238,15 @@ namespace Anki {
         return ActionResult::NO_ANIM_NAME;
       }
       else {
-        return PlayAnimationAction::Init();
+        const ActionResult res = PlayAnimationAction::Init();
+        if( res == ActionResult::SUCCESS ) {
+          const std::string& dataStr = std::string(AnimationTriggerToString(_animTrigger)) + ":" + _animGroupName;
+          Anki::Util::sEvent("robot.play_animation",
+                             {{DDATA, dataStr.c_str()}},
+                             _animName.c_str());
+        }
+
+        return res;
       }
     }
 
@@ -390,7 +399,7 @@ namespace Anki {
       // If the action has started and the light animation has not ended stop the animation
       if(HasStarted() && !_animEnded)
       {
-        GetRobot().GetCubeLightComponent().StopLightAnim(_trigger);
+        GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(_trigger);
       }
     }
     

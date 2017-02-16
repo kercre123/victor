@@ -153,6 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _RetryButton: {fileID: 0}
+  _NameLabel: {fileID: 11437270}
 --- !u!114 &11448422
 MonoBehaviour:
   m_ObjectHideFlags: 1

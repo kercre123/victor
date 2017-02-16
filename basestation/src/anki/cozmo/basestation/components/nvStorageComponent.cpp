@@ -542,6 +542,8 @@ void NVStorageComponent::ProcessRequest()
   switch(req.op) {
     case NVOperation::NVOP_WRITE:
     {
+      _writeDataObject.ClearData();
+      
       // Copy data locally and break up into as many messages as needed
       _writeDataObject.baseTag   = req.tag;
       _writeDataObject.nextTag   = entryTag;
@@ -640,6 +642,7 @@ void NVStorageComponent::ProcessRequest()
 
       
       // Create RecvDataObject
+      _recvDataInfo.ClearData();
       _recvDataInfo.tag                   = req.tag;
       _recvDataInfo.pending               = true;
       _recvDataInfo.dataSizeKnown         = false;

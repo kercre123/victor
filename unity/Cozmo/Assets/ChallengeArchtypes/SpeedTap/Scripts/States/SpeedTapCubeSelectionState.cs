@@ -7,6 +7,8 @@ namespace SpeedTap {
   public class SpeedTapCubeSelectionState : State {
     private SpeedTapGame _SpeedTapGame;
     private int _PlayerIndexSelecting;
+    private float _WantsContinueTimeStamp = -1.0f;
+
     public override void Enter() {
       base.Enter();
 
@@ -40,6 +42,15 @@ namespace SpeedTap {
       }
     }
 
+    public override void Update() {
+      base.Update();
+
+      if (_WantsContinueTimeStamp > 0 && _WantsContinueTimeStamp < Time.time) {
+        _WantsContinueTimeStamp = -1.0f;
+        MoveToNextState();
+      }
+    }
+
     private bool IsCubeClaimed(int cubeID) {
       int playerCount = _SpeedTapGame.GetPlayerCount();
       for (int i = 0; i < playerCount; ++i) {
@@ -56,7 +67,14 @@ namespace SpeedTap {
       _PlayerIndexSelecting++;
       // Selected everyone...
       if (_PlayerIndexSelecting >= _SpeedTapGame.GetPlayerCount()) {
-        MoveToNextState();
+        // if first round, and 3 player we want to do a 5 second hold
+        if (_SpeedTapGame.GetPlayerCount() >= 3 && _SpeedTapGame.CurrentRound == 1) {
+          _SpeedTapGame.ShowPlayerTapConfirmSlide(-1);
+          _WantsContinueTimeStamp = Time.time + _SpeedTapGame.GameConfig.MPTimeSetupHoldSec;
+        }
+        else {
+          MoveToNextState();
+        }
       }
       else {
         SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)_SpeedTapGame.GetPlayerByIndex(_PlayerIndexSelecting);
@@ -105,12 +123,22 @@ namespace SpeedTap {
                                                              LocalizationKeys.kMinigameLostTrackOfBlockDescription);
         }
         else {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Cube_Cozmo_Tap);
-          _SpeedTapGame.SetLEDs(player.CubeID, CubePalette.Instance.ReadyColor.lightColor);
+          LightCubeForPlayer(player);
           SelectCubeForNextPlayer();
         }
       }
 
+    }
+
+    private void LightCubeForPlayer(SpeedTapPlayerInfo player) {
+      // If in MP it needs to be their color, not others...
+      if (_SpeedTapGame.GetPlayerCount() >= 3) {
+        _SpeedTapGame.SetLEDs(player.CubeID, player.ScoreboardColor);
+      }
+      else {
+        _SpeedTapGame.SetLEDs(player.CubeID, CubePalette.Instance.ReadyColor.lightColor);
+      }
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Cube_Cozmo_Tap);
     }
 
     private void HandleCubeSelectedAttempted(PlayerInfo playerBase, int cubeID) {
@@ -134,8 +162,7 @@ namespace SpeedTap {
 
       if (valid) {
         if (player.playerType != PlayerType.Cozmo) {
-          _SpeedTapGame.SetLEDs(player.CubeID, CubePalette.Instance.ReadyColor.lightColor);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Cube_Cozmo_Tap);
+          LightCubeForPlayer(player);
           SelectCubeForNextPlayer();
         }
       }

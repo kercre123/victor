@@ -97,7 +97,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   }
 
   private void Update() {
-    if (_PingStatus.GetPingStatus()) {
+    if (_PingStatus != null && _PingStatus.GetPingStatus()) {
       if (OnEndpointFound != null) {
         OnEndpointFound();
       }

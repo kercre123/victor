@@ -296,8 +296,10 @@ class MessageEmitter(BaseEmitter):
         default_value_visitor = DefaultValueVisitor(output=self.output)
         self.output.write('\tdef __init__(self')
         for member in node.members():
-            self.output.write(', {member_name}='.format(member_name=member.name))
-            default_value_visitor.visit(member)
+            self.output.write(', {member_name}'.format(member_name=member.name))
+            if node.default_constructor:
+              self.output.write('=')
+              default_value_visitor.visit(member)
         self.output.write('):\n')
 
         if node.members():

@@ -1,0 +1,105 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "connectivity.connectingToCozmoText": {
+    "translation": "Connecting to your Cozmo..."
+  },
+  "connectivity.searchForCozmoFailedText": {
+    "translation": "You need to connect to Cozmo"
+  },
+  "connectivity.moreInfo": {
+    "translation": "More Info"
+  },
+  "connectivity.turnCozmoOn": {
+    "translation": "Turn Cozmo On"
+  },
+  "connectivity.connectInWifiSettings": {
+    "translation": "Connect in WiFi Settings"
+  },
+  "connectivity.searchingForCozmo": {
+    "translation": "Searching for Cozmo..."
+  },
+  "connectivity.securingConnection": {
+    "translation": "Securing your connection..."
+  },
+  "connection.wakingUpCozmo": {
+    "translation": "Waking up Cozmo..."
+  },
+  "connectivity.updatingFirmware": {
+    "translation": "Updating your Cozmo..."
+  },
+  "connectivity.updatingFirmwareSubTitle": {
+    "translation": "Please keep Cozmo on his charger"
+  },
+  "connectivity.updatingFirmwareFooter": {
+    "translation": "You will need to reconnect to Cozmo's WiFi after the update completes"
+  },
+  "connectivity.pairingPinTitle": {
+    "translation": "Enter the pin shown on your Cozmo"
+  },
+  "connectivity.invalidPinTitle": {
+    "translation": "Invalid Pin"
+  },
+  "connectivity.updateApp": {
+    "translation": "You must update your Cozmo App to continue"
+  },
+  "connectivity.pullTabsTitle": {
+    "translation": "Pull the tabs on your Power Cubes"
+  },
+  "connectivity.enterDOB": {
+    "translation": "Enter your birthday"
+  },
+  "connectivity.enterName": {
+    "translation": "Enter your first name"
+  },
+  "connectivity.pairingDesc": {
+    "translation": "This step is required when connecting from a new device"
+  },
+  "connectivity.cozmoSleepTitle": {
+    "translation": "Going to Sleep"
+  },
+  "connectivity.cozmoSleepDesc": {
+    "translation": "Cozmo is going to sleep and will disconnect soon"
+  },
+  "connectivity.cozmoLowBatteryTitle": {
+    "translation": "Cozmo is Low on Battery"
+  },
+  "connectivity.cozmoLowBatteryDesc": {
+    "translation": "Please place Cozmo on his charger"
+  },
+  "connectivity.keepCozmoOnCharger": {
+    "translation": "Please leave Cozmo on his charger during Setup"
+  },
+  "connectivity.placeCozmoOnCharger": {
+    "translation": "Place Cozmo on his charger"
+  },
+  "connectivity.replaceCozmoOnCharger": {
+    "translation": "Remove and replace Cozmo on his charger"
+  },
+  "label.getHelp": {
+    "translation": "Get Help"
+  },
+  "label.cubesNotWorking": {
+    "translation": "Cubes not working?"
+  },
+  "connectivity.connectionRejected.title": {
+    "translation": "Another Device is connected to Cozmo\nPlease disconnect that Device and try again"
+  }
+}

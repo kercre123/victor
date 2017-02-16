@@ -9,6 +9,9 @@ public class InitialCubesState : State {
   protected GameBase _Game;
 
   private const float _kCubeSqrDistanceWithoutInLift_mm = 360.0f;
+  private bool _PushedIdleAnimation = false;
+
+  private bool _IsPlayingReactionAnim = false;
 
   public InitialCubesState(State nextState, int cubesRequired) {
     _NextState = nextState;
@@ -34,11 +37,6 @@ public class InitialCubesState : State {
     _Game.CubeIdsForGame = new List<int>();
 
     CheckForNewlySeenCubes();
-
-    Anki.Cozmo.ExternalInterface.PushIdleAnimation pushIdleAnimMsg = new Anki.Cozmo.ExternalInterface.PushIdleAnimation();
-    pushIdleAnimMsg.animTrigger = Anki.Cozmo.AnimationTrigger.OnWaitForCubesMinigameSetup;
-    RobotEngineManager.Instance.Message.PushIdleAnimation = pushIdleAnimMsg;
-    RobotEngineManager.Instance.SendMessage();
   }
 
   public override void Update() {
@@ -59,18 +57,38 @@ public class InitialCubesState : State {
   }
 
   private void SetupRobot() {
-    _CurrentRobot.SetLiftHeight(0f);
-    _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+    _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupGetIn);
     _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+    PushIdleAnimation();
+  }
+
+  protected void PushIdleAnimation() {
+    if (!_PushedIdleAnimation) {
+      Anki.Cozmo.ExternalInterface.PushIdleAnimation pushIdleAnimMsg = new Anki.Cozmo.ExternalInterface.PushIdleAnimation();
+      pushIdleAnimMsg.animTrigger = Anki.Cozmo.AnimationTrigger.GameSetupIdle;
+      RobotEngineManager.Instance.Message.PushIdleAnimation = pushIdleAnimMsg;
+      RobotEngineManager.Instance.SendMessage();
+      _PushedIdleAnimation = true;
+    }
+  }
+
+  protected void PopIdleAnimation() {
+    if (_PushedIdleAnimation) {
+      RobotEngineManager.Instance.Message.PopIdleAnimation = new Anki.Cozmo.ExternalInterface.PopIdleAnimation();
+      RobotEngineManager.Instance.SendMessage();
+      _PushedIdleAnimation = false;
+    }
   }
 
   protected virtual void CheckForNewlySeenCubes() {
-    bool validCubesChanged = false;
-    LightCube cube = null;
-
-    if (null == _CurrentRobot) {
+    // The reaction animation has head movement, so don't
+    // mark cubes as out of view while the animation is playing
+    if (null == _CurrentRobot || _IsPlayingReactionAnim) {
       return;
     }
+
+    bool validCubesChanged = false;
+    LightCube cube = null;
 
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       cube = lightCube.Value;
@@ -79,7 +97,21 @@ public class InitialCubesState : State {
 
     if (validCubesChanged) {
       UpdateUI(_Game.CubeIdsForGame.Count);
+      if (_Game.CubeIdsForGame.Count == 0) {
+        PushIdleAnimation();
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupGetOut);
+      }
+      else {
+        PopIdleAnimation();
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupReaction, HandlePlayReactionFinished);
+        _IsPlayingReactionAnim = true;
+      }
     }
+  }
+
+  private void HandlePlayReactionFinished(bool success) {
+    _IsPlayingReactionAnim = false;
+    _Game.SharedMinigameView.EnableContinueButton(true);
   }
 
   private bool TryUpdateCubeIdForGame(LightCube cube) {
@@ -134,8 +166,6 @@ public class InitialCubesState : State {
 
     if (numValidCubes >= _CubesRequired) {
       _Game.SharedMinigameView.SetContinueButtonSupplementText(GetCubesReadyText(_CubesRequired), Cozmo.UI.UIColorPalette.MinigameTextColor);
-
-      _Game.SharedMinigameView.EnableContinueButton(true);
     }
     else {
       _Game.SharedMinigameView.SetContinueButtonSupplementText(GetWaitingForCubesText(_CubesRequired), Cozmo.UI.UIColorPalette.NeutralTextColor);
@@ -162,12 +192,11 @@ public class InitialCubesState : State {
           lightCube.Value.SetLEDsOff();
         }
       }
+
+      PopIdleAnimation();
     }
 
     _Game.SharedMinigameView.HideGameStateSlide();
-
-    RobotEngineManager.Instance.Message.PopIdleAnimation = new Anki.Cozmo.ExternalInterface.PopIdleAnimation();
-    RobotEngineManager.Instance.SendMessage();
   }
 
   protected virtual void HandleContinueButtonClicked() {

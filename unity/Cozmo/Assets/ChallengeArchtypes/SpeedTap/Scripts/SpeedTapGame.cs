@@ -13,9 +13,15 @@ namespace SpeedTap {
     public float LastTapTimeStamp { get; set; }
     public readonly Color[] PlayerWinColors = new Color[4];
     public Cozmo.MinigameWidgets.ScoreWidget scoreWidget;
-    public SpeedTapPlayerInfo(PlayerType playerType, string name) : base(playerType, name) {
+    public int MistakeTapsTotal { get; set; }
+    public int CorrectTapsTotal { get; set; }
+    public Color ScoreboardColor { get; private set; }
+    public SpeedTapPlayerInfo(PlayerType playerType, string name, Color color) : base(playerType, name) {
       CubeID = -1;
       LastTapTimeStamp = -1;
+      MistakeTapsTotal = 0;
+      CorrectTapsTotal = 0;
+      ScoreboardColor = color;
     }
     public Color PlayerWinColor {
       get {
@@ -65,7 +71,7 @@ namespace SpeedTap {
     public float TapResolutionDelay { get; private set; }
 
     public float MPTimeBetweenRoundsSec { get { return _GameConfig.MPTimeBetweenRoundsSec; } }
-
+    public SpeedTapGameConfig GameConfig { get { return _GameConfig; } }
     private SpeedTapGameConfig _GameConfig;
 
     #endregion
@@ -123,8 +129,14 @@ namespace SpeedTap {
     public static bool sWantsSuddenDeathHumanHuman = false;
     public static bool sWantsSuddenDeathHumanCozmo = false;
 #endif
+
+    // Used by baseclass default if we skipped the num players screen.
     public override PlayerInfo AddPlayer(PlayerType playerType, string playerName) {
-      SpeedTapPlayerInfo info = new SpeedTapPlayerInfo(playerType, playerName);
+      return AddPlayer(playerType, playerName, Color.white);
+    }
+
+    public virtual PlayerInfo AddPlayer(PlayerType playerType, string playerName, Color color) {
+      SpeedTapPlayerInfo info = new SpeedTapPlayerInfo(playerType, playerName, color);
       _PlayerInfo.Add(info);
       // As a special case, Cozmo always grabs the first cube because it was shown first
       if (playerType == PlayerType.Cozmo && CubeIdsForGame.Count >= 1) {
@@ -237,7 +249,10 @@ namespace SpeedTap {
       int playerCount = GetPlayerCount();
       for (int i = 0; i < playerCount; ++i) {
         SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        playerInfo.scoreWidget.Dim = false;
+        // portrait colors mean something specific in MP
+        if (playerCount <= 2) {
+          playerInfo.scoreWidget.Dim = playerInfo != winner;
+        }
         playerInfo.scoreWidget.IsWinner = playerInfo == winner;
       }
     }
@@ -433,5 +448,42 @@ namespace SpeedTap {
         }
       }
     }
+
+    public virtual void AddPoint(List<PlayerInfo> playersScored, bool wasMistakeMade) {
+      base.AddPoint(playersScored);
+      // extra bookkeeping for if a mistake was made accuracy goal
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        SpeedTapPlayerInfo speedTapPlayer = (SpeedTapPlayerInfo)_PlayerInfo[i];
+        if (wasMistakeMade && !playersScored.Contains(_PlayerInfo[i])) {
+          speedTapPlayer.MistakeTapsTotal = speedTapPlayer.MistakeTapsTotal + 1;
+        }
+        else if (!wasMistakeMade && playersScored.Contains(_PlayerInfo[i])) {
+          speedTapPlayer.CorrectTapsTotal = speedTapPlayer.CorrectTapsTotal + 1;
+        }
+      }
+    }
+
+    // event values to add on game completion
+    protected override Dictionary<string, float> GetGameSpecificEventValues() {
+      Dictionary<string, float> ret = new Dictionary<string, float>();
+      float minAccuracy = 1.0f;
+      // CorrectScoreTotalCount / TotalScore;
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        SpeedTapPlayerInfo speedTapPlayer = (SpeedTapPlayerInfo)_PlayerInfo[i];
+        if (speedTapPlayer.playerType != PlayerType.Cozmo) {
+          float total_taps = (float)(speedTapPlayer.CorrectTapsTotal + speedTapPlayer.MistakeTapsTotal);
+          float accuracy = 0.0f;
+          // never tapping counts as 0
+          if (total_taps > 0) {
+            accuracy = ((float)speedTapPlayer.CorrectTapsTotal) / total_taps;
+          }
+          minAccuracy = Mathf.Min(minAccuracy, accuracy);
+        }
+      }
+      // in MP with take the lowest human score
+      ret.Add(ChallengeAccuracyCondition.kConditionKey, minAccuracy);
+      return ret;
+    }
+
   }
 }

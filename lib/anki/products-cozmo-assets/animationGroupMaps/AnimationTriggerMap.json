@@ -333,6 +333,22 @@
       "AnimName": "ag_reacttoblock_frustrated"
     },
     {
+      "CladEvent": "GameSetupGetIn",
+      "AnimName": "ag_gamesetup_getin"
+    },
+    {
+      "CladEvent": "GameSetupGetOut",
+      "AnimName": "ag_gamesetup_getout"
+    },
+    {
+      "CladEvent": "GameSetupIdle",
+      "AnimName": "ag_gamesetup_idle"
+    },
+    {
+      "CladEvent": "GameSetupReaction",
+      "AnimName": "ag_gamesetup_reaction"
+    },
+    {
       "CladEvent": "GoToSleepGetIn",
       "AnimName": "ag_gotosleep_getin"
     },
@@ -514,7 +530,7 @@
     },
     {
       "CladEvent": "MemoryMatchPlayerLoseHand",
-      "AnimName": "ag_memorymatch_successhand_cozmo"
+      "AnimName": "ag_memorymatch_failhand_player_01"
     },
     {
       "CladEvent": "MemoryMatchPlayerLoseHandSolo",
@@ -903,6 +919,10 @@
     {
       "CladEvent": "ReactToOnRightSide",
       "AnimName": "ag_reacttocliff_stuckrightside_01"
+    },
+    {
+      "CladEvent": "ReactToPerchedOnBlock",
+      "AnimName": "ag_reacttoblock_stuckonblock"
     },
     {
       "CladEvent": "ReactToPickup",

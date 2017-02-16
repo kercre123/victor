@@ -1,0 +1,213 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "name.cozmo": {
+    "translation": "Cozmo"
+  },
+  "name.player": {
+    "translation": "Player"
+  },
+  "button.quit": {
+    "translation": "Quit"
+  },
+  "button.cancel": {
+    "translation": "Cancel"
+  },
+  "button.yes": {
+    "translation": "Yes"
+  },
+  "button.no": {
+    "translation": "No"
+  },
+  "button.continue": {
+    "translation": "Continue"
+  },
+  "button.okay": {
+    "translation": "Okay"
+  },
+  "button.again": {
+    "translation": "Play Again"
+  },
+  "button.refresh": {
+    "translation": "Refresh"
+  },
+  "button.close": {
+    "translation": "Close"
+  },
+  "button.done": {
+    "translation": "Done"
+  },
+  "button.play": {
+    "translation": "Play"
+  },
+  "button.leave": {
+    "translation": "Leave"
+  },
+  "button.back": {
+    "translation": "Back"
+  },
+  "button.next": {
+    "translation": "Next"
+  },
+  "button.staySparked": {
+    "translation": "Stay Sparked"
+  },
+  "button.soundsGood": {
+    "translation": "Sounds Good"
+  },
+  "label.plusCount": {
+    "translation": "+{0}"
+  },
+  "label.xCount": {
+    "translation": "x{0}"
+  },
+  "label.totalCount": {
+    "translation": "Your {0}: {1}"
+  },
+  "label.fractionCount": {
+    "translation": "{0}/{1}"
+  },
+  "label.dayCount": {
+    "translation": "Day {0}"
+  },
+  "label.waiting": {
+    "translation": "Waiting..."
+  },
+  "requestGame.title": {
+    "translation": "{0}!"
+  },
+  "requestGame.description": {
+    "translation": "Cozmo wants to play"
+  },
+  "dailyGoal.title": {
+    "translation": "Today's Goals"
+  },
+  "dailyGoal.FriendBonus": {
+    "translation": "Friend Bonus"
+  },
+  "label.connect": {
+    "translation": "Connect"
+  },
+  "label.start": {
+    "translation": "Start"
+  },
+  "cozmoTab.title": {
+    "translation": "Upgrades"
+  },
+  "cozmoTab.subTitle": {
+    "translation": ": Expand Cozmo's abilities"
+  },
+  "coreUpgradeDetailsDialog.cubesNeeded": {
+    "translation": "{0} {1} Required"
+  },
+  "loot.Start": {
+    "translation": "Tap Repeatedly!"
+  },
+  "loot.Mid": {
+    "translation": "Keep Going!"
+  },
+  "loot.Almost": {
+    "translation": "Almost There!"
+  },
+  "loot.Announce": {
+    "translation": "Emotion Chip Charged!"
+  },
+  "label.emptyWithArg": {
+    "translation": "{0}"
+  },
+  "title.soundCheck": {
+    "translation": "Sound Check"
+  },
+  "button.GetACozmo": {
+    "translation": "Get A Cozmo"
+  },
+  "button.start": {
+    "translation": "Start"
+  },
+  "button.begin": {
+    "translation": "Let's Begin"
+  },
+  "soundcheck.description": {
+    "translation": "Please make sure your device's sound is turned on"
+  },
+  "refreshCubesPrompt.description": {
+    "translation": "Put one of each Cube next to Cozmo and tap 'Refresh'. Cozmo will Connect to the 3 that he thinks are closest."
+  },
+  "label.available": {
+    "translation": "Available!"
+  },
+  "button.replay": {
+    "translation": "Replay"
+  },
+  "label.to": {
+    "translation": "To:"
+  },
+  "button.skip": {
+    "translation": "Skip"
+  },
+  "soundcheck.description.confirm": {
+    "translation": "Did you hear the sound?"
+  },
+  "error.badLight.Top": {
+    "translation": "Cozmo is having trouble seeing"
+  },
+  "error.badLight.Bottom": {
+    "translation": "Avoid bright lights and dimly lit spaces"
+  },
+  "label.cozmo.serial": {
+    "translation": "Cozmo ID: {0}"
+  },
+  "label.deviceid": {
+    "translation": "Device ID: {0}"
+  },
+  "label.privacyPolicy": {
+    "translation": "Privacy Policy"
+  },
+  "button.openEnvelope": {
+    "translation": "TAP TO OPEN"
+  },
+  "label.pressAndHoldInstruction": {
+    "translation": "Press and hold {0} to confirm"
+  },
+  "label.activePlayer": {
+    "translation": "Active Player:"
+  },
+  "label.streaksCount": {
+    "translation": "Longest Daily Streak:"
+  },
+  "label.goalsCompleted": {
+    "translation": "Goals Completed:"
+  },
+  "label.daysWithCozmo": {
+    "translation": "Days Played With Cozmo:"
+  },
+  "label.termsOfUse": {
+    "translation": "Terms of Use"
+  },
+  "label.totalSparks": {
+    "translation": "Total Sparks: {0}"
+  },
+  "label.termsInstructions": {
+    "translation": "By tapping \"Start\", you agree to the terms below:"
+  },
+  "label.simpleCount": {
+    "translation": "{0} {1}"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "ReactToPlacedOnSlope",
+  "name": "reactToPlacedOnSlope",
+  "displayNameKey":"behavior.ReactToPlacedOnSlope",
+  "disableByDefault": false
+}

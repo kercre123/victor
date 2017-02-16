@@ -96,7 +96,6 @@ namespace MemoryMatch {
       _DisabledReactionaryBehaviors.Add(ReactionTrigger.RobotPickedUp);
       _DisabledReactionaryBehaviors.Add(ReactionTrigger.ReturnedToTreads);
       _DisabledReactionaryBehaviors.Add(ReactionTrigger.UnexpectedMovement);
-      _DisabledReactionaryBehaviors.Add(ReactionTrigger.CubeMoved);
     }
 
     // Use this for initialization

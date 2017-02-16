@@ -52,6 +52,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPet.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPlacedOnSlope.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/BehaviorReactToPyramid.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToReturnedToTreads.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnBack.h"
@@ -335,6 +336,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::ReactToPickup:
     {
       newBehavior = new BehaviorReactToPickup(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToPlacedOnSlope:
+    {
+      newBehavior = new BehaviorReactToPlacedOnSlope(robot, config);
       break;
     }
     case BehaviorClass::ReactToCliff:

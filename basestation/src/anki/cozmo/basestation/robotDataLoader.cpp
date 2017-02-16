@@ -222,6 +222,11 @@ void RobotDataLoader::LoadAnimations()
   LoadAnimationsInternal();
   _jsonFiles.clear();
 }
+  
+bool RobotDataLoader::IsCustomAnimLoadEnabled() const
+{
+  return (_context->IsInSdkMode() || (ANKI_DEV_CHEATS != 0));
+}
 
 void RobotDataLoader::LoadAnimationsInternal()
 {
@@ -242,13 +247,14 @@ void RobotDataLoader::LoadAnimationsInternal()
     //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
   }
   
-#if ANKI_DEV_CHEATS
-  std::string test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
-  if (Util::FileUtils::FileExists(test_anim)) {
-    myWorker.PushJob(test_anim);
-    size += 1;
+  if (IsCustomAnimLoadEnabled())
+  {
+    std::string test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
+    if (Util::FileUtils::FileExists(test_anim)) {
+      myWorker.PushJob(test_anim);
+      size += 1;
+    }
   }
-#endif
 
   _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
   myWorker.Process();
@@ -391,12 +397,27 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
 
     // Read the binary file
     auto binFileContents = Util::FileUtils::ReadFileAsBinary(path);
+    if (binFileContents.size() == 0) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataEmpty", "Found no data in %s", path.c_str());
+      return;
+    }
     unsigned char *binData = binFileContents.data();
-
+    if (nullptr == binData) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataNull", "Found no data in %s", path.c_str());
+      return;
+    }
     auto animClips = CozmoAnim::GetAnimClips(binData);
+    if (nullptr == animClips) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsNull", "Found no animations in %s", path.c_str());
+      return;
+    }
     auto allClips = animClips->clips();
+    if (nullptr == allClips) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AllClipsNull", "Found no animations in %s", path.c_str());
+      return;
+    }
     if (allClips->size() == 0) {
-      PRINT_NAMED_ERROR("RobotDataLoader::LoadAnimationFile", "Found no animations in %s", path.c_str());
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsEmpty", "Found no animations in %s", path.c_str());
       return;
     }
 
@@ -520,9 +541,10 @@ void RobotDataLoader::LoadReactionTriggerMap()
 void RobotDataLoader::LoadFaceAnimations()
 {
   FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
-#if ANKI_DEV_CHEATS
-  FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
-#endif
+  if (IsCustomAnimLoadEnabled())
+  {
+    FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
+  }
 }
 
 void RobotDataLoader::LoadAnimationTriggerResponses()
