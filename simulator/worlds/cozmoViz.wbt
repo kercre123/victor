@@ -1,5 +1,6 @@
 #VRML_SIM V7.3.0 utf8
 CozmoWorldInfo {
+  basicTimeStep 60
 }
 Viewpoint {
   fieldOfView 0.8
@@ -34,6 +35,7 @@ DEF CozmoViz_1 CozmoBot {
 }
 DEF WorldComms BlockWorldComms {
   filterLogs TRUE
+  sleepUntilEndOfTic TRUE
 }
 CozmoVizDisplay {
 }

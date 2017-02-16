@@ -103,7 +103,6 @@ BlockWorldComms {
 }
 CozmoBot {
   name "CozmoBot_1"
-  usbChannel 10
 }
 BuildServerTestController {
   controllerArgs "%COZMO_SIM_TEST%"

@@ -69,7 +69,6 @@ DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   headAngle -0.347998
   liftAngle 0.00104144
-  usbChannel 10
 }
 CozmoVizDisplay {
 }
