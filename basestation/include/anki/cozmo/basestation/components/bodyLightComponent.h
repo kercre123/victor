@@ -84,9 +84,6 @@ private:
   // Reference to the most recently used light configuration
   BackpackLightDataRef            _curBackpackLightConfig;
   
-  // Locator handle for the light configuration associated with charge status
-  BackpackLightDataLocator        _chargeStatusLightConfig{};
-  
   // Locator handle for the shared light configuration associated with SetBackpackLights above
   BackpackLightDataLocator        _sharedLightConfig{};
   
