@@ -57,7 +57,7 @@ enum e_nrf_gpio {
 
   // Backpack button
   PIN_BUTTON_SENSE    = 8,
-  PIN_BUTTON_DRIVE    = 10,
+  PIN_BUTTON_DRIVE    = 9,
 
   // Charging
   PIN_CHARGE_EN       = 20,

@@ -266,7 +266,7 @@ void Backpack::trigger() {
   if (BODY_VER == BODY_VER_1v5) {
     nrf_gpio_pin_clear(PIN_BUTTON_DRIVE);
     nrf_gpio_cfg_output(PIN_BUTTON_DRIVE);
-    MicroWait(100);
+    MicroWait(10);
     button_pressed = !nrf_gpio_pin_read(PIN_BUTTON_SENSE);
     nrf_gpio_cfg_input(PIN_BUTTON_DRIVE, NRF_GPIO_PIN_NOPULL);
 
