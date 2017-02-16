@@ -26,7 +26,7 @@
     ],
 
     # TODO: Find this programmatically or pass it in
-    'matlabRootDir' : ['/Applications/MATLAB_R2015a.app'],
+    'matlabRootDir' : ['/Applications/MATLAB_R2016b.app'],
     
     # TODO: Get this programmatically (via configure.py?) using a call to <(matlabRootDir)/bin/mexext
     'mexext' : ['mexmaci64'],  
@@ -284,7 +284,7 @@
         '<@(common_mex_sources)',
       ],
       'defines': [
-        'OPENCV_ROOT_PATH=<(coretech_external_path)/opencv-2.4.8',
+        'OPENCV_ROOT_PATH=<(coretech_external_path)/opencv-<(opencv_version)',
       ],
       'dependencies': [
         '<(ce-cti_gyp_path):ctiCommonRobot',
