@@ -1,0 +1,17 @@
+//
+//  release-osx.xcconfig
+//
+//  Created by damjan stulic on 5/16/14.
+//  Copyright (c) 2014 Anki. All rights reserved.
+//
+#include "release.xcconfig"
+
+SDKROOT = macosx
+ONLY_ACTIVE_ARCH = YES
+VALID_ARCHS = i386 x86_64
+SUPPORTED_PLATFORMS = macosx
+MACOSX_DEPLOYMENT_TARGET = 10.9
+
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+
+TARGET_PREPROCESSOR_DEFINITIONS = UNIT_TEST=1

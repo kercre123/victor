@@ -1,0 +1,48 @@
+//this needs to call ndk build
+
+def ndk_build(debuggable) {
+    def command = ['ndk-build']
+    command += ['-j', Runtime.runtime.availableProcessors() + 2]
+    if (debuggable) {
+        command << 'NDK_DEBUG=1'
+    }
+    return command
+}
+
+task buildLibs(type:Exec) {
+    doFirst {
+        println '*** Starting DAS build'
+    }
+
+    commandLine ndk_build(false)
+
+    doLast {
+        println '*** Finished DAS build'
+    }
+}
+
+task buildLibsDebug(type:Exec) {
+    doFirst {
+        println '*** Starting DAS DEBUG build'
+    }
+
+    commandLine ndk_build(true) 
+
+    doLast {
+        println '*** Finished DAS DEBUG build'
+    }
+}
+
+
+task cleanLibs(type:Delete) {
+    doFirst {
+        println '*** Starting DAS Android clean ***'
+    }
+
+    delete "libs/"
+    delete "obj/"
+
+    doLast {
+        println '*** Finished DAS Android clean ***'
+    }
+}

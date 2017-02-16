@@ -1,0 +1,726 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		17149CC51E1D75B2006A977E /* dasAslAppender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17149CC01E1D75B2006A977E /* dasAslAppender.cpp */; };
+		17149CC61E1D75B2006A977E /* dasAslAppender.h in Headers */ = {isa = PBXBuildFile; fileRef = 17149CC11E1D75B2006A977E /* dasAslAppender.h */; };
+		17149CC71E1D75B2006A977E /* dasLocalAppenderFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17149CC21E1D75B2006A977E /* dasLocalAppenderFactory.cpp */; };
+		17149CC81E1D75B2006A977E /* dasPrintfAppender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17149CC31E1D75B2006A977E /* dasPrintfAppender.cpp */; };
+		17149CC91E1D75B2006A977E /* dasPrintfAppender.h in Headers */ = {isa = PBXBuildFile; fileRef = 17149CC41E1D75B2006A977E /* dasPrintfAppender.h */; };
+		17149CCB1E1D7674006A977E /* dasLocalAppenderFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = 17149CCA1E1D7674006A977E /* dasLocalAppenderFactory.h */; };
+		1727B3641A701475009F11BD /* DAS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3501A701475009F11BD /* DAS.cpp */; };
+		1727B3651A701475009F11BD /* dasAppender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3511A701475009F11BD /* dasAppender.cpp */; };
+		1727B3671A701475009F11BD /* dasLogFileAppender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3561A701475009F11BD /* dasLogFileAppender.cpp */; };
+		1727B3681A701475009F11BD /* fileUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B35A1A701475009F11BD /* fileUtils.cpp */; };
+		1727B3691A701475009F11BD /* jsoncpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B35F1A701475009F11BD /* jsoncpp.cpp */; };
+		1727B36A1A701475009F11BD /* stringUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3601A701475009F11BD /* stringUtils.cpp */; };
+		1727B36B1A701475009F11BD /* taskExecutor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3621A701475009F11BD /* taskExecutor.cpp */; };
+		1727B3711A7015CA009F11BD /* dasPostToServer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3701A7015CA009F11BD /* dasPostToServer.mm */; };
+		1727B3721A70178C009F11BD /* DAS.h in Headers */ = {isa = PBXBuildFile; fileRef = 1727B36E1A7014A2009F11BD /* DAS.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		176D20911B79017300076C84 /* dasFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 176D208F1B79017300076C84 /* dasFilter.cpp */; };
+		176D20921B79017300076C84 /* dasFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 176D208F1B79017300076C84 /* dasFilter.cpp */; };
+		176D20931B79017300076C84 /* dasFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 176D20901B79017300076C84 /* dasFilter.h */; };
+		17811C7E1A701BB100D84283 /* DASClientInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 17811C7D1A701BB100D84283 /* DASClientInfo.m */; };
+		17811C7F1A701BE700D84283 /* DASClientInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 17811C7C1A701BB100D84283 /* DASClientInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		17C559CB1A77FBF1000EE7B3 /* dasGameLogAppender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17C559C91A77FBF1000EE7B3 /* dasGameLogAppender.cpp */; };
+		17C559CC1A77FBF1000EE7B3 /* dasGameLogAppender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17C559C91A77FBF1000EE7B3 /* dasGameLogAppender.cpp */; };
+		17C559CD1A77FBF1000EE7B3 /* dasGameLogAppender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17C559C91A77FBF1000EE7B3 /* dasGameLogAppender.cpp */; };
+		17C559D11A77FC0F000EE7B3 /* dasGameLogAppender_unittest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17C559CE1A77FC0F000EE7B3 /* dasGameLogAppender_unittest.cpp */; };
+		17C559D31A77FC0F000EE7B3 /* testUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17C559CF1A77FC0F000EE7B3 /* testUtils.cpp */; };
+		17E62D981A7030EE0010955D /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = 17E62D941A7030EE0010955D /* NSData+Base64.m */; };
+		17E62D991A7030EE0010955D /* NSString+URLEncoding.m in Sources */ = {isa = PBXBuildFile; fileRef = 17E62D961A7030EE0010955D /* NSString+URLEncoding.m */; };
+		17E62D9B1A7034030010955D /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17E62D9A1A7034030010955D /* Security.framework */; };
+		17E62DA01A7034740010955D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17E62D9F1A7034740010955D /* Foundation.framework */; };
+		17E62DA41A7039DA0010955D /* dasNSLog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 17E62DA31A7039DA0010955D /* dasNSLog.mm */; };
+		AD1CF66B1A72BDDA00019CD7 /* NSString+URLEncoding.m in Sources */ = {isa = PBXBuildFile; fileRef = 17E62D961A7030EE0010955D /* NSString+URLEncoding.m */; };
+		AD1CF66C1A72BDDA00019CD7 /* dasPostToServer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3701A7015CA009F11BD /* dasPostToServer.mm */; };
+		AD1CF66D1A72BDDA00019CD7 /* fileUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B35A1A701475009F11BD /* fileUtils.cpp */; };
+		AD1CF66E1A72BDDA00019CD7 /* dasLogFileAppender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3561A701475009F11BD /* dasLogFileAppender.cpp */; };
+		AD1CF66F1A72BDDA00019CD7 /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = 17E62D941A7030EE0010955D /* NSData+Base64.m */; };
+		AD1CF6721A72BDDA00019CD7 /* taskExecutor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3621A701475009F11BD /* taskExecutor.cpp */; };
+		AD1CF6731A72BDDA00019CD7 /* jsoncpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B35F1A701475009F11BD /* jsoncpp.cpp */; };
+		AD1CF6741A72BDDA00019CD7 /* DAS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3501A701475009F11BD /* DAS.cpp */; };
+		AD1CF6771A72BDDA00019CD7 /* stringUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3601A701475009F11BD /* stringUtils.cpp */; };
+		AD1CF6781A72BDDA00019CD7 /* dasNSLog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 17E62DA31A7039DA0010955D /* dasNSLog.mm */; };
+		AD1CF6791A72BDDA00019CD7 /* dasAppender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1727B3511A701475009F11BD /* dasAppender.cpp */; };
+		AD1CF67B1A72BDDA00019CD7 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17E62D9F1A7034740010955D /* Foundation.framework */; };
+		AD1CF67C1A72BDDA00019CD7 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17E62D9A1A7034030010955D /* Security.framework */; };
+		AD1CF6801A72BDDA00019CD7 /* DASClientInfo.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 17811C7C1A701BB100D84283 /* DASClientInfo.h */; };
+		AD1CF6811A72BDDA00019CD7 /* DAS.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1727B36E1A7014A2009F11BD /* DAS.h */; };
+		AD1CF6881A72C12A00019CD7 /* das_unittest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AD1CF55F1A72BAF800019CD7 /* das_unittest.cpp */; };
+		AD1CF6891A72C12D00019CD7 /* dasAppender_unittest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AD1CF5601A72BAF800019CD7 /* dasAppender_unittest.cpp */; };
+		AD1CF68B1A72C13200019CD7 /* dasLogFileAppender_unittest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AD1CF5621A72BAF800019CD7 /* dasLogFileAppender_unittest.cpp */; };
+		AD1CF68E1A72C15200019CD7 /* libDAS_OSX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AD1CF6851A72BDDA00019CD7 /* libDAS_OSX.a */; };
+		AD1CF68F1A72C17E00019CD7 /* gtest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AD1CF6861A72BFAB00019CD7 /* gtest.framework */; };
+		AD1CF6941A72C53300019CD7 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AD1CF6931A72C53300019CD7 /* Foundation.framework */; };
+		AD1CF6951A72C5B000019CD7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AD1CF6591A72BB9A00019CD7 /* main.cpp */; };
+		AD1CF6971A72C61A00019CD7 /* gtest.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AD1CF6861A72BFAB00019CD7 /* gtest.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AD1CF68C1A72C14B00019CD7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 17D6472B1A70137300CE5BE7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AD1CF6691A72BDDA00019CD7;
+			remoteInfo = DAS_OSX;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AD1CF67E1A72BDDA00019CD7 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+				AD1CF6801A72BDDA00019CD7 /* DASClientInfo.h in CopyFiles */,
+				AD1CF6811A72BDDA00019CD7 /* DAS.h in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD1CF6961A72C60A00019CD7 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 16;
+			files = (
+				AD1CF6971A72C61A00019CD7 /* gtest.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		17149CC01E1D75B2006A977E /* dasAslAppender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dasAslAppender.cpp; sourceTree = "<group>"; };
+		17149CC11E1D75B2006A977E /* dasAslAppender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dasAslAppender.h; sourceTree = "<group>"; };
+		17149CC21E1D75B2006A977E /* dasLocalAppenderFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dasLocalAppenderFactory.cpp; sourceTree = "<group>"; };
+		17149CC31E1D75B2006A977E /* dasPrintfAppender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dasPrintfAppender.cpp; sourceTree = "<group>"; };
+		17149CC41E1D75B2006A977E /* dasPrintfAppender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dasPrintfAppender.h; sourceTree = "<group>"; };
+		17149CCA1E1D7674006A977E /* dasLocalAppenderFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasLocalAppenderFactory.h; path = ../src/dasLocalAppenderFactory.h; sourceTree = "<group>"; };
+		1727B3501A701475009F11BD /* DAS.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DAS.cpp; path = ../src/DAS.cpp; sourceTree = "<group>"; };
+		1727B3511A701475009F11BD /* dasAppender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasAppender.cpp; path = ../src/dasAppender.cpp; sourceTree = "<group>"; };
+		1727B3521A701475009F11BD /* dasAppender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasAppender.h; path = ../src/dasAppender.h; sourceTree = "<group>"; };
+		1727B3551A701475009F11BD /* dasLocalAppender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasLocalAppender.h; path = ../src/dasLocalAppender.h; sourceTree = "<group>"; };
+		1727B3561A701475009F11BD /* dasLogFileAppender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasLogFileAppender.cpp; path = ../src/dasLogFileAppender.cpp; sourceTree = "<group>"; };
+		1727B3571A701475009F11BD /* dasLogFileAppender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasLogFileAppender.h; path = ../src/dasLogFileAppender.h; sourceTree = "<group>"; };
+		1727B3581A701475009F11BD /* dasPostToServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasPostToServer.h; path = ../src/dasPostToServer.h; sourceTree = "<group>"; };
+		1727B3591A701475009F11BD /* DASPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DASPrivate.h; path = ../src/DASPrivate.h; sourceTree = "<group>"; };
+		1727B35A1A701475009F11BD /* fileUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fileUtils.cpp; path = ../src/fileUtils.cpp; sourceTree = "<group>"; };
+		1727B35B1A701475009F11BD /* fileUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fileUtils.h; path = ../src/fileUtils.h; sourceTree = "<group>"; };
+		1727B35D1A701475009F11BD /* json-forwards.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "json-forwards.h"; sourceTree = "<group>"; };
+		1727B35E1A701475009F11BD /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
+		1727B35F1A701475009F11BD /* jsoncpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jsoncpp.cpp; path = ../src/jsoncpp.cpp; sourceTree = "<group>"; };
+		1727B3601A701475009F11BD /* stringUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = stringUtils.cpp; path = ../src/stringUtils.cpp; sourceTree = "<group>"; };
+		1727B3611A701475009F11BD /* stringUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stringUtils.h; path = ../src/stringUtils.h; sourceTree = "<group>"; };
+		1727B3621A701475009F11BD /* taskExecutor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = taskExecutor.cpp; path = ../src/taskExecutor.cpp; sourceTree = "<group>"; };
+		1727B3631A701475009F11BD /* taskExecutor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = taskExecutor.h; path = ../src/taskExecutor.h; sourceTree = "<group>"; };
+		1727B36E1A7014A2009F11BD /* DAS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DAS.h; sourceTree = "<group>"; };
+		1727B36F1A7014F1009F11BD /* dasLogMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dasLogMacros.h; sourceTree = "<group>"; };
+		1727B3701A7015CA009F11BD /* dasPostToServer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dasPostToServer.mm; sourceTree = "<group>"; };
+		176D208F1B79017300076C84 /* dasFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasFilter.cpp; path = ../src/dasFilter.cpp; sourceTree = "<group>"; };
+		176D20901B79017300076C84 /* dasFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasFilter.h; path = ../src/dasFilter.h; sourceTree = "<group>"; };
+		17811C7C1A701BB100D84283 /* DASClientInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DASClientInfo.h; sourceTree = "<group>"; };
+		17811C7D1A701BB100D84283 /* DASClientInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DASClientInfo.m; sourceTree = "<group>"; };
+		17C559C91A77FBF1000EE7B3 /* dasGameLogAppender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasGameLogAppender.cpp; path = ../src/dasGameLogAppender.cpp; sourceTree = "<group>"; };
+		17C559CA1A77FBF1000EE7B3 /* dasGameLogAppender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasGameLogAppender.h; path = ../src/dasGameLogAppender.h; sourceTree = "<group>"; };
+		17C559CE1A77FC0F000EE7B3 /* dasGameLogAppender_unittest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dasGameLogAppender_unittest.cpp; sourceTree = "<group>"; };
+		17C559CF1A77FC0F000EE7B3 /* testUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = testUtils.cpp; sourceTree = "<group>"; };
+		17C559D01A77FC0F000EE7B3 /* testUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = testUtils.h; sourceTree = "<group>"; };
+		17D647331A70137300CE5BE7 /* libDAS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libDAS.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		17E62D931A7030EE0010955D /* NSData+Base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+Base64.h"; sourceTree = "<group>"; };
+		17E62D941A7030EE0010955D /* NSData+Base64.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+Base64.m"; sourceTree = "<group>"; };
+		17E62D951A7030EE0010955D /* NSString+URLEncoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+URLEncoding.h"; sourceTree = "<group>"; };
+		17E62D961A7030EE0010955D /* NSString+URLEncoding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+URLEncoding.m"; sourceTree = "<group>"; };
+		17E62D9A1A7034030010955D /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		17E62D9F1A7034740010955D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		17E62DA11A7039600010955D /* dasNSLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dasNSLog.h; sourceTree = "<group>"; };
+		17E62DA31A7039DA0010955D /* dasNSLog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dasNSLog.mm; sourceTree = "<group>"; };
+		17E801071A7C5A8C008BD7F3 /* dasGlobals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasGlobals.h; path = ../src/dasGlobals.h; sourceTree = "<group>"; };
+		AD1CF55F1A72BAF800019CD7 /* das_unittest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = das_unittest.cpp; sourceTree = "<group>"; };
+		AD1CF5601A72BAF800019CD7 /* dasAppender_unittest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = dasAppender_unittest.cpp; sourceTree = "<group>"; };
+		AD1CF5621A72BAF800019CD7 /* dasLogFileAppender_unittest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = dasLogFileAppender_unittest.cpp; sourceTree = "<group>"; };
+		AD1CF6571A72BB9A00019CD7 /* dasTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dasTest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD1CF6591A72BB9A00019CD7 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		AD1CF65F1A72BD9D00019CD7 /* debug-dist.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "debug-dist.xcconfig"; sourceTree = "<group>"; };
+		AD1CF6601A72BD9D00019CD7 /* debug-osx.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "debug-osx.xcconfig"; sourceTree = "<group>"; };
+		AD1CF6611A72BD9D00019CD7 /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = debug.xcconfig; sourceTree = "<group>"; };
+		AD1CF6621A72BD9D00019CD7 /* profile-dist.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "profile-dist.xcconfig"; sourceTree = "<group>"; };
+		AD1CF6631A72BD9D00019CD7 /* profile-osx.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "profile-osx.xcconfig"; sourceTree = "<group>"; };
+		AD1CF6641A72BD9D00019CD7 /* profile.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = profile.xcconfig; sourceTree = "<group>"; };
+		AD1CF6651A72BD9D00019CD7 /* project.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = project.xcconfig; sourceTree = "<group>"; };
+		AD1CF6661A72BD9D00019CD7 /* release-dist.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "release-dist.xcconfig"; sourceTree = "<group>"; };
+		AD1CF6671A72BD9D00019CD7 /* release-osx.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "release-osx.xcconfig"; sourceTree = "<group>"; };
+		AD1CF6681A72BD9D00019CD7 /* release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = release.xcconfig; sourceTree = "<group>"; };
+		AD1CF6851A72BDDA00019CD7 /* libDAS_OSX.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libDAS_OSX.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD1CF6861A72BFAB00019CD7 /* gtest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = gtest.framework; path = ../testing/gtest/prebuild/gtest.framework; sourceTree = "<group>"; };
+		AD1CF6931A72C53300019CD7 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		17D647301A70137300CE5BE7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17E62DA01A7034740010955D /* Foundation.framework in Frameworks */,
+				17E62D9B1A7034030010955D /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD1CF6541A72BB9A00019CD7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD1CF6941A72C53300019CD7 /* Foundation.framework in Frameworks */,
+				AD1CF68F1A72C17E00019CD7 /* gtest.framework in Frameworks */,
+				AD1CF68E1A72C15200019CD7 /* libDAS_OSX.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD1CF67A1A72BDDA00019CD7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD1CF67B1A72BDDA00019CD7 /* Foundation.framework in Frameworks */,
+				AD1CF67C1A72BDDA00019CD7 /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1727B34E1A701444009F11BD /* src */ = {
+			isa = PBXGroup;
+			children = (
+				176D208F1B79017300076C84 /* dasFilter.cpp */,
+				176D20901B79017300076C84 /* dasFilter.h */,
+				17E801071A7C5A8C008BD7F3 /* dasGlobals.h */,
+				17C559C91A77FBF1000EE7B3 /* dasGameLogAppender.cpp */,
+				17C559CA1A77FBF1000EE7B3 /* dasGameLogAppender.h */,
+				1727B3501A701475009F11BD /* DAS.cpp */,
+				1727B3511A701475009F11BD /* dasAppender.cpp */,
+				1727B3521A701475009F11BD /* dasAppender.h */,
+				1727B3551A701475009F11BD /* dasLocalAppender.h */,
+				1727B3561A701475009F11BD /* dasLogFileAppender.cpp */,
+				1727B3571A701475009F11BD /* dasLogFileAppender.h */,
+				1727B3581A701475009F11BD /* dasPostToServer.h */,
+				1727B3591A701475009F11BD /* DASPrivate.h */,
+				1727B35A1A701475009F11BD /* fileUtils.cpp */,
+				1727B35B1A701475009F11BD /* fileUtils.h */,
+				1727B35C1A701475009F11BD /* json */,
+				1727B35F1A701475009F11BD /* jsoncpp.cpp */,
+				1727B3601A701475009F11BD /* stringUtils.cpp */,
+				1727B3611A701475009F11BD /* stringUtils.h */,
+				1727B3621A701475009F11BD /* taskExecutor.cpp */,
+				1727B3631A701475009F11BD /* taskExecutor.h */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		1727B35C1A701475009F11BD /* json */ = {
+			isa = PBXGroup;
+			children = (
+				1727B35D1A701475009F11BD /* json-forwards.h */,
+				1727B35E1A701475009F11BD /* json.h */,
+			);
+			name = json;
+			path = ../src/json;
+			sourceTree = "<group>";
+		};
+		1727B36C1A7014A2009F11BD /* include */ = {
+			isa = PBXGroup;
+			children = (
+				1727B36D1A7014A2009F11BD /* DAS */,
+			);
+			name = include;
+			path = ../include;
+			sourceTree = "<group>";
+		};
+		1727B36D1A7014A2009F11BD /* DAS */ = {
+			isa = PBXGroup;
+			children = (
+				1727B36E1A7014A2009F11BD /* DAS.h */,
+			);
+			path = DAS;
+			sourceTree = "<group>";
+		};
+		17D6472A1A70137300CE5BE7 = {
+			isa = PBXGroup;
+			children = (
+				AD1CF65E1A72BD9D00019CD7 /* config */,
+				AD1CF55E1A72BAF800019CD7 /* testing */,
+				17149CCA1E1D7674006A977E /* dasLocalAppenderFactory.h */,
+				17149CC01E1D75B2006A977E /* dasAslAppender.cpp */,
+				17149CC11E1D75B2006A977E /* dasAslAppender.h */,
+				17149CC21E1D75B2006A977E /* dasLocalAppenderFactory.cpp */,
+				17149CC31E1D75B2006A977E /* dasPrintfAppender.cpp */,
+				17149CC41E1D75B2006A977E /* dasPrintfAppender.h */,
+				17E62DA31A7039DA0010955D /* dasNSLog.mm */,
+				17E62DA11A7039600010955D /* dasNSLog.h */,
+				17E62D931A7030EE0010955D /* NSData+Base64.h */,
+				17E62D941A7030EE0010955D /* NSData+Base64.m */,
+				17E62D951A7030EE0010955D /* NSString+URLEncoding.h */,
+				17E62D961A7030EE0010955D /* NSString+URLEncoding.m */,
+				17811C7C1A701BB100D84283 /* DASClientInfo.h */,
+				17811C7D1A701BB100D84283 /* DASClientInfo.m */,
+				1727B3701A7015CA009F11BD /* dasPostToServer.mm */,
+				1727B36F1A7014F1009F11BD /* dasLogMacros.h */,
+				AD1CF6581A72BB9A00019CD7 /* dasTest */,
+				17E62DA21A70396E0010955D /* Frameworks */,
+				1727B36C1A7014A2009F11BD /* include */,
+				1727B34E1A701444009F11BD /* src */,
+				17D647341A70137300CE5BE7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		17D647341A70137300CE5BE7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				17D647331A70137300CE5BE7 /* libDAS.a */,
+				AD1CF6571A72BB9A00019CD7 /* dasTest */,
+				AD1CF6851A72BDDA00019CD7 /* libDAS_OSX.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		17E62DA21A70396E0010955D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AD1CF6931A72C53300019CD7 /* Foundation.framework */,
+				AD1CF6861A72BFAB00019CD7 /* gtest.framework */,
+				17E62D9F1A7034740010955D /* Foundation.framework */,
+				17E62D9A1A7034030010955D /* Security.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		AD1CF55E1A72BAF800019CD7 /* testing */ = {
+			isa = PBXGroup;
+			children = (
+				17C559CE1A77FC0F000EE7B3 /* dasGameLogAppender_unittest.cpp */,
+				17C559CF1A77FC0F000EE7B3 /* testUtils.cpp */,
+				17C559D01A77FC0F000EE7B3 /* testUtils.h */,
+				AD1CF55F1A72BAF800019CD7 /* das_unittest.cpp */,
+				AD1CF5601A72BAF800019CD7 /* dasAppender_unittest.cpp */,
+				AD1CF5621A72BAF800019CD7 /* dasLogFileAppender_unittest.cpp */,
+			);
+			name = testing;
+			path = ../testing;
+			sourceTree = "<group>";
+		};
+		AD1CF6581A72BB9A00019CD7 /* dasTest */ = {
+			isa = PBXGroup;
+			children = (
+				AD1CF6591A72BB9A00019CD7 /* main.cpp */,
+			);
+			path = dasTest;
+			sourceTree = "<group>";
+		};
+		AD1CF65E1A72BD9D00019CD7 /* config */ = {
+			isa = PBXGroup;
+			children = (
+				AD1CF65F1A72BD9D00019CD7 /* debug-dist.xcconfig */,
+				AD1CF6601A72BD9D00019CD7 /* debug-osx.xcconfig */,
+				AD1CF6611A72BD9D00019CD7 /* debug.xcconfig */,
+				AD1CF6621A72BD9D00019CD7 /* profile-dist.xcconfig */,
+				AD1CF6631A72BD9D00019CD7 /* profile-osx.xcconfig */,
+				AD1CF6641A72BD9D00019CD7 /* profile.xcconfig */,
+				AD1CF6651A72BD9D00019CD7 /* project.xcconfig */,
+				AD1CF6661A72BD9D00019CD7 /* release-dist.xcconfig */,
+				AD1CF6671A72BD9D00019CD7 /* release-osx.xcconfig */,
+				AD1CF6681A72BD9D00019CD7 /* release.xcconfig */,
+			);
+			path = config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		E7B193FC1AAA7BBF0021B281 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17811C7F1A701BE700D84283 /* DASClientInfo.h in Headers */,
+				17149CCB1E1D7674006A977E /* dasLocalAppenderFactory.h in Headers */,
+				17149CC61E1D75B2006A977E /* dasAslAppender.h in Headers */,
+				17149CC91E1D75B2006A977E /* dasPrintfAppender.h in Headers */,
+				1727B3721A70178C009F11BD /* DAS.h in Headers */,
+				176D20931B79017300076C84 /* dasFilter.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		17D647321A70137300CE5BE7 /* DAS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 17D647471A70137300CE5BE7 /* Build configuration list for PBXNativeTarget "DAS" */;
+			buildPhases = (
+				E7B193FC1AAA7BBF0021B281 /* Headers */,
+				17D6472F1A70137300CE5BE7 /* Sources */,
+				17D647301A70137300CE5BE7 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DAS;
+			productName = DAS;
+			productReference = 17D647331A70137300CE5BE7 /* libDAS.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		AD1CF6561A72BB9A00019CD7 /* dasTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AD1CF65B1A72BB9A00019CD7 /* Build configuration list for PBXNativeTarget "dasTest" */;
+			buildPhases = (
+				AD1CF6531A72BB9A00019CD7 /* Sources */,
+				AD1CF6541A72BB9A00019CD7 /* Frameworks */,
+				AD1CF6961A72C60A00019CD7 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AD1CF68D1A72C14B00019CD7 /* PBXTargetDependency */,
+			);
+			name = dasTest;
+			productName = dasTest;
+			productReference = AD1CF6571A72BB9A00019CD7 /* dasTest */;
+			productType = "com.apple.product-type.tool";
+		};
+		AD1CF6691A72BDDA00019CD7 /* DAS_OSX */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AD1CF6821A72BDDA00019CD7 /* Build configuration list for PBXNativeTarget "DAS_OSX" */;
+			buildPhases = (
+				AD1CF66A1A72BDDA00019CD7 /* Sources */,
+				AD1CF67A1A72BDDA00019CD7 /* Frameworks */,
+				AD1CF67E1A72BDDA00019CD7 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DAS_OSX;
+			productName = DAS;
+			productReference = AD1CF6851A72BDDA00019CD7 /* libDAS_OSX.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		17D6472B1A70137300CE5BE7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = "Anki, Inc.";
+				TargetAttributes = {
+					17D647321A70137300CE5BE7 = {
+						CreatedOnToolsVersion = 6.1.1;
+					};
+					AD1CF6561A72BB9A00019CD7 = {
+						CreatedOnToolsVersion = 6.1;
+					};
+				};
+			};
+			buildConfigurationList = 17D6472E1A70137300CE5BE7 /* Build configuration list for PBXProject "DAS" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 17D6472A1A70137300CE5BE7;
+			productRefGroup = 17D647341A70137300CE5BE7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				17D647321A70137300CE5BE7 /* DAS */,
+				AD1CF6561A72BB9A00019CD7 /* dasTest */,
+				AD1CF6691A72BDDA00019CD7 /* DAS_OSX */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		17D6472F1A70137300CE5BE7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17E62D991A7030EE0010955D /* NSString+URLEncoding.m in Sources */,
+				1727B3711A7015CA009F11BD /* dasPostToServer.mm in Sources */,
+				1727B3681A701475009F11BD /* fileUtils.cpp in Sources */,
+				1727B3671A701475009F11BD /* dasLogFileAppender.cpp in Sources */,
+				17E62D981A7030EE0010955D /* NSData+Base64.m in Sources */,
+				1727B36B1A701475009F11BD /* taskExecutor.cpp in Sources */,
+				17149CC71E1D75B2006A977E /* dasLocalAppenderFactory.cpp in Sources */,
+				1727B3691A701475009F11BD /* jsoncpp.cpp in Sources */,
+				1727B3641A701475009F11BD /* DAS.cpp in Sources */,
+				17C559CB1A77FBF1000EE7B3 /* dasGameLogAppender.cpp in Sources */,
+				17811C7E1A701BB100D84283 /* DASClientInfo.m in Sources */,
+				17149CC81E1D75B2006A977E /* dasPrintfAppender.cpp in Sources */,
+				176D20911B79017300076C84 /* dasFilter.cpp in Sources */,
+				1727B36A1A701475009F11BD /* stringUtils.cpp in Sources */,
+				17149CC51E1D75B2006A977E /* dasAslAppender.cpp in Sources */,
+				17E62DA41A7039DA0010955D /* dasNSLog.mm in Sources */,
+				1727B3651A701475009F11BD /* dasAppender.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD1CF6531A72BB9A00019CD7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17C559CC1A77FBF1000EE7B3 /* dasGameLogAppender.cpp in Sources */,
+				AD1CF6881A72C12A00019CD7 /* das_unittest.cpp in Sources */,
+				AD1CF6891A72C12D00019CD7 /* dasAppender_unittest.cpp in Sources */,
+				AD1CF6951A72C5B000019CD7 /* main.cpp in Sources */,
+				17C559D11A77FC0F000EE7B3 /* dasGameLogAppender_unittest.cpp in Sources */,
+				AD1CF68B1A72C13200019CD7 /* dasLogFileAppender_unittest.cpp in Sources */,
+				17C559D31A77FC0F000EE7B3 /* testUtils.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD1CF66A1A72BDDA00019CD7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD1CF66B1A72BDDA00019CD7 /* NSString+URLEncoding.m in Sources */,
+				AD1CF66C1A72BDDA00019CD7 /* dasPostToServer.mm in Sources */,
+				17C559CD1A77FBF1000EE7B3 /* dasGameLogAppender.cpp in Sources */,
+				AD1CF66D1A72BDDA00019CD7 /* fileUtils.cpp in Sources */,
+				AD1CF66E1A72BDDA00019CD7 /* dasLogFileAppender.cpp in Sources */,
+				AD1CF66F1A72BDDA00019CD7 /* NSData+Base64.m in Sources */,
+				176D20921B79017300076C84 /* dasFilter.cpp in Sources */,
+				AD1CF6721A72BDDA00019CD7 /* taskExecutor.cpp in Sources */,
+				AD1CF6731A72BDDA00019CD7 /* jsoncpp.cpp in Sources */,
+				AD1CF6741A72BDDA00019CD7 /* DAS.cpp in Sources */,
+				AD1CF6771A72BDDA00019CD7 /* stringUtils.cpp in Sources */,
+				AD1CF6781A72BDDA00019CD7 /* dasNSLog.mm in Sources */,
+				AD1CF6791A72BDDA00019CD7 /* dasAppender.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AD1CF68D1A72C14B00019CD7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AD1CF6691A72BDDA00019CD7 /* DAS_OSX */;
+			targetProxy = AD1CF68C1A72C14B00019CD7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		17D647451A70137300CE5BE7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD1CF6651A72BD9D00019CD7 /* project.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					../include/DAS,
+					Libs/Darwin/include,
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Libs/Darwin/lib",
+				);
+				MTL_ENABLE_DEBUG_INFO = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		17D647461A70137300CE5BE7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD1CF6651A72BD9D00019CD7 /* project.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					../include/DAS,
+					Libs/Darwin/include,
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Libs/Darwin/lib",
+				);
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		17D647481A70137300CE5BE7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD1CF6611A72BD9D00019CD7 /* debug.xcconfig */;
+			buildSettings = {
+				GENERATE_MASTER_OBJECT_FILE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Libs/Darwin/lib",
+				);
+				OTHER_LDFLAGS = "-OBJC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PUBLIC_HEADERS_FOLDER_PATH = "include/$(PRODUCT_NAME)";
+				VALID_ARCHS = "armv7 i386 arm64";
+			};
+			name = Debug;
+		};
+		17D647491A70137300CE5BE7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD1CF6681A72BD9D00019CD7 /* release.xcconfig */;
+			buildSettings = {
+				GENERATE_MASTER_OBJECT_FILE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Libs/Darwin/lib",
+				);
+				OTHER_LDFLAGS = "-OBJC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PUBLIC_HEADERS_FOLDER_PATH = "include/$(PRODUCT_NAME)";
+				VALID_ARCHS = "armv7 i386 arm64";
+			};
+			name = Release;
+		};
+		AD1CF65C1A72BB9A00019CD7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD1CF6601A72BD9D00019CD7 /* debug-osx.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		AD1CF65D1A72BB9A00019CD7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD1CF6671A72BD9D00019CD7 /* release-osx.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		AD1CF6831A72BDDA00019CD7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD1CF6601A72BD9D00019CD7 /* debug-osx.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				PRODUCT_NAME = DAS_OSX;
+			};
+			name = Debug;
+		};
+		AD1CF6841A72BDDA00019CD7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD1CF6671A72BD9D00019CD7 /* release-osx.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				PRODUCT_NAME = DAS_OSX;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		17D6472E1A70137300CE5BE7 /* Build configuration list for PBXProject "DAS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				17D647451A70137300CE5BE7 /* Debug */,
+				17D647461A70137300CE5BE7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		17D647471A70137300CE5BE7 /* Build configuration list for PBXNativeTarget "DAS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				17D647481A70137300CE5BE7 /* Debug */,
+				17D647491A70137300CE5BE7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AD1CF65B1A72BB9A00019CD7 /* Build configuration list for PBXNativeTarget "dasTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD1CF65C1A72BB9A00019CD7 /* Debug */,
+				AD1CF65D1A72BB9A00019CD7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AD1CF6821A72BDDA00019CD7 /* Build configuration list for PBXNativeTarget "DAS_OSX" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD1CF6831A72BDDA00019CD7 /* Debug */,
+				AD1CF6841A72BDDA00019CD7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 17D6472B1A70137300CE5BE7 /* Project object */;
+}

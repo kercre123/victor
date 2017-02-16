@@ -1,0 +1,12 @@
+//
+//  debug-dist.xcconfig
+//
+//  Created by damjan stulic on 5/16/14.
+//  Copyright (c) 2014 Anki. All rights reserved.
+//
+#include "release.xcconfig"
+
+ONLY_ACTIVE_ARCH = NO
+
+DEPLOYMENT_POSTPROCESSING = YES
+GENERATE_MASTER_OBJECT_FILE = YES
