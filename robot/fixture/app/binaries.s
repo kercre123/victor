@@ -12,7 +12,8 @@ g_Cube
 #ifdef FCC
   INCBIN releases\\xsfcc.bin
 #else
-  INCBIN releases\\xsboot.bin
+  #warning "REMOVED CUBE IMAGE FOR LINKER FIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  //INCBIN releases\\xsboot.bin
 #endif
 g_CubeEnd
 
