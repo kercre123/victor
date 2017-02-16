@@ -103,10 +103,10 @@ int ConsoleGetCharWait(u32 timeout)
 
 int ConsolePrintf(const char* format, ...)
 {
-  char dest[64];
+  char dest[128];
   va_list argptr;
   va_start(argptr, format);
-  int len = vsnprintf(dest, 64, format, argptr);
+  int len = vsnprintf(dest, sizeof(dest), format, argptr);
   va_end(argptr);
   ConsoleWrite(dest);
   return len;
