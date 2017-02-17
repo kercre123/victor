@@ -169,10 +169,12 @@ int MeasureMotor(int speed, bool fast, bool reverse = false )
   u32 test_time = getMicroCounter()-start;
   MotorMV(0);
   
-  //int hz = (ABS(aticks)*15625)/(test_time>>6);  // Rising edges per second
-  //int normalized = aticks >> (OVERSAMPLE-13);   // Original calibration was at OVERSAMPLE=13
-  //ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n", speed, normalized, hz, aticks, mina, maxa, bticks, minb, maxb);
+  //Keep the old-style debug printing so we can do comparisons
+  int hz = (ABS(aticks)*15625)/((int)(test_time>>6));  // Rising edges per second
+  int normalized = aticks >> (OVERSAMPLE-13);   // Original calibration was at OVERSAMPLE=13
+  ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n", speed, normalized, hz, aticks, mina, maxa, bticks, minb, maxb);
   
+  //Add new verbose printing
   int a_hz = ABS( (aticks*15625)/((int)(test_time>>6)) );
   int b_hz = ABS( (bticks*15625)/((int)(test_time>>6)) );
   int a_norm = aticks>>(OVERSAMPLE-13);
@@ -195,8 +197,9 @@ int MeasureMotor(int speed, bool fast, bool reverse = false )
 const int MOTOR_LOW_MV = 1000, MOTOR_FULL_MV = 5000;   // In millivolts
 void TestMotorL(void)
 {
-  const int TICKS_SLOW = 10;
-  const int TICKS_FAST = 80;
+  const int TICKS_SLOW = 10 / 2;  //adjust for reduced flag cnt on new motors
+  const int TICKS_FAST = 80 / 2;  //"
+  
   if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)       //Forward slow
     throw ERROR_MOTOR_SLOW;
   if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)       //Forward fast
@@ -209,13 +212,25 @@ void TestMotorL(void)
   if (-MeasureMotor(MOTOR_LOW_MV, false, true) < TICKS_SLOW) //Reverse slow
     throw ERROR_MOTOR_SLOW;
   if (-MeasureMotor(MOTOR_FULL_MV, true, true) < TICKS_FAST) //Reverse fast
-    throw ERROR_MOTOR_FAST;  
+    throw ERROR_MOTOR_FAST;
 }
 
 // MotorH (head motor) makes about same number of ticks
 void TestMotorH(void)
 {
   TestMotorL();
+}
+
+//enforce hardware compatibility for motor tests
+static void CheckFixtureCompatibility(void)
+{
+  #warning "WHITELISTING FIXTURE COMPATIBILITY DURING EP2 TRANSITION-------------"
+  
+  //new tests require v1.5 hardware w/ H-Bridge driver
+  if( g_fixtureRev < BOARD_REV_1_5_0 )
+    ConsolePrintf("WARNING: Fixture Rev 1.0 is incompatible with this test\r\n"); //throw ERROR_INCOMPATIBLE_FIX_REV;
+  else
+    ConsolePrintf("fixture rev ok: 1.5+\r\n");
 }
 
 // List of all functions invoked by the test, in order
@@ -241,6 +256,7 @@ TestFunction* GetMotor2LTestFunctions(void)
 {
   static TestFunction functions[] =
   {
+    CheckFixtureCompatibility,
     TestMotorL,
     NULL
   };
@@ -253,6 +269,7 @@ TestFunction* GetMotor2HTestFunctions(void)
 {
   static TestFunction functions[] =
   {
+    CheckFixtureCompatibility,
     TestLEDs,
     TestMotorH,
     NULL

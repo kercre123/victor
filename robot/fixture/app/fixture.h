@@ -90,6 +90,8 @@ u32 GetSerial();
 
 #define ERROR_RADIO_TIMEOUT         14    // On-board radio firmware failed to boot
 
+#define ERROR_INCOMPATIBLE_FIX_REV  15    // Test is incompatible with the current fixture hardware revision
+
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
 // General motor errors
