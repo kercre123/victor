@@ -505,10 +505,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         CST_ASSERT(GetCarryingObjectID() == 1, "robot should be carrying object at this point");
         
         // Remove the light cube from the world (as it someone has taken it off the lift)
-        webots::Node* lightCube = GetLightCubeById(1);
-        CST_ASSERT(lightCube, "NULL pointer to lightCube!");
-        // remove this node:
-        lightCube->remove();
+        CST_ASSERT(RemoveLightCubeByType(ObjectType::Block_LIGHTCUBE2), "LightCube removal failed");
         
         // Attempt to place the now-removed block:
         Pose3d placePose = GetRobotPoseActual();
