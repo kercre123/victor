@@ -65,10 +65,6 @@ public class StartupManager : MonoBehaviour {
   private GameObject _AndroidPermissionPrefab;
   private GameObject _AndroidPermissionInstance;
 
-  // These don't go through the normal loc system because it isn't loaded yet but is in the same format.
-  // Add more when we have more than just EN-us, or just change the format to include multiple languages.
-  [SerializeField]
-  private TextAsset _BootLocEnStrings;
   private JSONObject _BootStrings = null;
 
   private string _ExtractionErrorMessage;
@@ -471,8 +467,11 @@ public class StartupManager : MonoBehaviour {
 
   public string GetBootString(string key, params object[] args) {
     string stringOut = "";
-    if (_BootStrings == null && _BootLocEnStrings != null) {
-      _BootStrings = JSONObject.Create(_BootLocEnStrings.text);
+    if (_BootStrings == null) {
+      // Copied over from a build process.
+      string loadFromPath = "bootstrap/LocalizedStrings/" + Localization.LoadLocaleAndCultureInfo() + "/BootStrings";
+      TextAsset jsonfile = Resources.Load<TextAsset>(loadFromPath);
+      _BootStrings = JSONObject.Create(jsonfile.text);
     }
     if (_BootStrings != null) {
       JSONObject wrapper = _BootStrings.GetField(key);

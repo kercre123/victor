@@ -1,6 +1,25 @@
 {
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
   "boot.errorDiskFull": {
-    "translation": "The Cozmo App could not load because your device's storage is too full. Try removing media or unused apps from your phone, and try again."
+    "translation": "The Cozmo App could not load because your device's storage is too full. Try removing media or unused apps from your phone, and try again. D"
   },
   "boot.errorReadingFiles": {
     "translation": "The Cozmo App could not read files. Error: {0}"
