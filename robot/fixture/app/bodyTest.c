@@ -18,7 +18,7 @@
 using namespace Anki::Cozmo::RobotInterface;
 
 //debug flag: set 1 to enable verbose prints for debugging
-#define DBG_VERBOSE_PRINTING 1
+#define DBG_VERBOSE_PRINTING 0
 
 //inline macro
 #if DBG_VERBOSE_PRINTING > 0
@@ -179,19 +179,16 @@ const int THRESH = 975;   // 975mm/sec
 void BodyMotor(void)
 {
   //try all the motors (collect debug info before failing out)
-  DBG_VERBOSE( ConsolePrintf("RUN LEFT MOTOR: FWD\r\n"); );
+  DBG_VERBOSE( ConsolePrintf("\r\nRUN LEFT MOTOR: FWD\r\n"); );
   int mot_left_fwd  = TryMotor(0, 124);
-  DBG_VERBOSE( MicroWait(1000*500) );
   
-  DBG_VERBOSE( ConsolePrintf("RUN LEFT MOTOR: REV\r\n"); );
+  DBG_VERBOSE( ConsolePrintf("\r\nRUN LEFT MOTOR: REV\r\n"); );
   int mot_left_rev  = TryMotor(0, -124);
-  DBG_VERBOSE( MicroWait(1000*500) );
   
-  DBG_VERBOSE( ConsolePrintf("RUN RIGHT MOTOR: FWD\r\n"); );
+  DBG_VERBOSE( ConsolePrintf("\r\nRUN RIGHT MOTOR: FWD\r\n"); );
   int mot_right_fwd = TryMotor(1, 124);
-  DBG_VERBOSE( MicroWait(1000*500) );
   
-  DBG_VERBOSE( ConsolePrintf("RUN RIGHT MOTOR: REV\r\n"); );
+  DBG_VERBOSE( ConsolePrintf("\r\nRUN RIGHT MOTOR: REV\r\n"); );
   int mot_right_rev = TryMotor(1, -124);
   
   if (mot_left_fwd < THRESH)
