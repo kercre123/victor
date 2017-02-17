@@ -56,13 +56,19 @@ void InfoTest(void)
   unsigned int version[2];
   
   // Pump the comm-link 4 times before trying to send
-  for (int i = 0; i < 4; i++)
+  ConsolePrintf("warming up the com port...");
+  int n = 0;
+  for (int i = 0; i < 4; i++) {
     try {
       SendTestChar(-1);
-    } catch (int e) { }
+    } catch (int e) { n++; }
+  }
+  ConsolePrintf("%d missed pulses\r\n", n);
+  
   // Let Espressif finish booting
   MicroWait(300000); 
   
+  ConsolePrintf("read robot version:\r\n");
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
   SendCommand(TEST_GETVER, 0, sizeof(version), (u8*)version);
 
