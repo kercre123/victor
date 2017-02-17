@@ -22,6 +22,14 @@ namespace Anki {
       private static string[] _kFileExclusions = {
         ".meta",
         ".DS_Store",
+        ".travis.yml",
+        ".npmrc",
+        ".npmignore",
+        ".eslintrc.js",
+        ".eslintrc",
+        ".eslintignore",
+        ".editorconfig",
+        ".gitignore"
       };
 
       private static string[] _kDirectoryExclusions = {
@@ -422,6 +430,11 @@ namespace Anki {
           PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, savePoundDefines);
           return result;
         }
+
+#if SHIPPING
+		// Delete Scratch assets. Will remove this when ready to ship the feature.
+		FileUtil.DeleteFileOrDirectory(Path.Combine(Application.streamingAssetsPath, "Scratch"));
+#endif
 
         // copy assets
         if (assetFolder != null && buildType.ToLower() != "onlyplayer") {
