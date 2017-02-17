@@ -18,7 +18,7 @@
 using namespace Anki::Cozmo::RobotInterface;
 
 //debug flag: set 1 to enable verbose prints for debugging
-#define DBG_VERBOSE_PRINTING 0
+#define DBG_VERBOSE_PRINTING 1
 
 //inline macro
 #if DBG_VERBOSE_PRINTING > 0
@@ -160,6 +160,10 @@ int TryMotor(s8 motor, s8 speed, bool limitToLimit = false)
   len_check = SendCommand(TEST_RUNMOTOR, 0 + motor, 0, NULL);
   DBG_VERBOSE( ConsolePrintf("len=%d\r\n", len_check) );
   
+  DBG_VERBOSE( ConsolePrintf("DBG: first ,%d,%d,%d,%d\r\n", first[0], first[1], first[2], first[3] ) );
+  DBG_VERBOSE( ConsolePrintf("DBG: second,%d,%d,%d,%d\r\n", second[0], second[1], second[2], second[3] ) );
+  DBG_VERBOSE( ConsolePrintf("DBG: diff  ,%d,%d,%d,%d\r\n", second[0]-first[0], second[1]-first[1], second[2]-first[2], second[3]-first[3] ) );
+  
   int ticks = second[motor] - first[motor];
   if (motor < 2)
     ticks = ((1000000/MOTOR_RUNTIME)*ticks * MM_PER_TICK_F12) >> 12;    // mm/sec for 1/10th sec
@@ -175,9 +179,19 @@ const int THRESH = 975;   // 975mm/sec
 void BodyMotor(void)
 {
   //try all the motors (collect debug info before failing out)
+  DBG_VERBOSE( ConsolePrintf("RUN LEFT MOTOR: FWD\r\n"); );
   int mot_left_fwd  = TryMotor(0, 124);
+  DBG_VERBOSE( MicroWait(1000*500) );
+  
+  DBG_VERBOSE( ConsolePrintf("RUN LEFT MOTOR: REV\r\n"); );
   int mot_left_rev  = TryMotor(0, -124);
+  DBG_VERBOSE( MicroWait(1000*500) );
+  
+  DBG_VERBOSE( ConsolePrintf("RUN RIGHT MOTOR: FWD\r\n"); );
   int mot_right_fwd = TryMotor(1, 124);
+  DBG_VERBOSE( MicroWait(1000*500) );
+  
+  DBG_VERBOSE( ConsolePrintf("RUN RIGHT MOTOR: REV\r\n"); );
   int mot_right_rev = TryMotor(1, -124);
   
   if (mot_left_fwd < THRESH)
