@@ -592,6 +592,8 @@ MonoBehaviour:
     type: 2}
   _ContinueButtonCenterPrefab: {fileID: 11475114, guid: a00c37124fe114bf488dc5e7b941db3e,
     type: 2}
+  _ContinueButtonRewardPrefab: {fileID: 11424958, guid: df21a032fafea49fb8697d729a842415,
+    type: 2}
   _InstructionsVideoButtonPrefab: {fileID: 11438504, guid: 7ae16cb335cec4733bcb35a2776c79ca,
     type: 2}
   _ShelfWidgetPrefab: {fileID: 11434798, guid: 67811252d71234c3bab17cbc8daea4a0, type: 2}
