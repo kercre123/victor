@@ -81,6 +81,9 @@
   "behavior.ReactToPet": {
     "translation": "Cozmo sees a pet"
   },
+  "behavior.ReactToPlacedOnSlope": {
+    "translation": ""
+  },
   "behavior.RequestToPlay": {
     "translation": "Cozmo is setting up a game"
   },
