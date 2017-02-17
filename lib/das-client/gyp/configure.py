@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import os
 import os.path
@@ -32,7 +32,7 @@ parser.add_argument('--arch', action='store',
                     default='universal',
                     help="Target set of architectures")
 parser.add_argument('--platform', action='append', dest='platforms',
-                    choices=('ios', 'mac', 'android'),
+                    choices=('ios', 'mac', 'android', 'linux'),
                     help="Generate output for a specific platform")
 (options, args) = parser.parse_known_args()
 

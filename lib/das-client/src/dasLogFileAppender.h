@@ -55,7 +55,7 @@ private:
   uint32_t NextLogFileNumber();
   uint32_t NextAvailableLogFileNumber() const;
   std::ofstream& CurrentLogFileHandle();
-  void PrvCurrentLogFilePath(std::string* logFilePath);
+  std::string PrvCurrentLogFilePath();
   void PrvRolloverCurrentLogFile();
   void RolloverLogFileAtPath(std::string path) const;
   std::vector<uint32_t> InProgressLogNumbers() const;
