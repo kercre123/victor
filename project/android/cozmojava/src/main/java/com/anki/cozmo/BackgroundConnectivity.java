@@ -103,7 +103,17 @@ public class BackgroundConnectivity extends IntentService {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "received connectivity broadcast");
-            BackgroundConnectivity.ExecuteBackgroundTransfers();
+            Runnable r = new Runnable() {
+                @Override public void run() {
+                    BackgroundConnectivity.ExecuteBackgroundTransfers();
+                }
+            };
+            if (android.os.Looper.getMainLooper().getThread() == Thread.currentThread()) {
+                new Thread(r).start();
+            }
+            else {
+                r.run();
+            }
         }
     }
 
