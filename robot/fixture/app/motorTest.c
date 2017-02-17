@@ -68,7 +68,7 @@ void TestLED(int i)
   
   ConsolePrintf("led,%d,%i,%i,%s,%s\r\n", i, mv_meas, mv_exp, VoltRangeStr[vrmeas], VoltRangeStr[vrexp]);
   
-  if( vrmeas != vrexp ) //ledmv2voltrange(LEDGetHighSideMv(i)) != ledmv2voltrange(LEDGetExpectedMv(i)))
+  if( vrmeas != vrexp )
     throw ERROR_BACKPACK_LED;
 }
 
@@ -205,14 +205,22 @@ void TestMotorL(void)
   if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)       //Forward fast
     throw ERROR_MOTOR_FAST;
   
-  MotorMV(-1); //motor brake before reverse direction
-  MicroWait(100*1000);
-  MotorMV(0);
-  
-  if (-MeasureMotor(MOTOR_LOW_MV, false, true) < TICKS_SLOW) //Reverse slow
-    throw ERROR_MOTOR_SLOW;
-  if (-MeasureMotor(MOTOR_FULL_MV, true, true) < TICKS_FAST) //Reverse fast
-    throw ERROR_MOTOR_FAST;
+  if( g_fixtureRev < BOARD_REV_1_5_0 )
+  {
+    #warning "SKIP REVERSE DIRECTION MOTOR TESTS DURING EP2 TRANSITION-------------"
+    ConsolePrintf("WARNING: Skipping motor reverse direction testing\r\n");
+  }
+  else
+  {
+    MotorMV(-1); //motor brake before reverse direction
+    MicroWait(100*1000);
+    MotorMV(0);
+    
+    if (-MeasureMotor(MOTOR_LOW_MV, false, true) < TICKS_SLOW) //Reverse slow
+      throw ERROR_MOTOR_SLOW;
+    if (-MeasureMotor(MOTOR_FULL_MV, true, true) < TICKS_FAST) //Reverse fast
+      throw ERROR_MOTOR_FAST;
+  }
 }
 
 // MotorH (head motor) makes about same number of ticks
@@ -224,13 +232,12 @@ void TestMotorH(void)
 //enforce hardware compatibility for motor tests
 static void CheckFixtureCompatibility(void)
 {
-  #warning "WHITELISTING FIXTURE COMPATIBILITY DURING EP2 TRANSITION-------------"
+  ConsolePrintf("fixture rev %s\r\n", GetBoardRevStr());
   
   //new tests require v1.5 hardware w/ H-Bridge driver
+  #warning "WHITELISTING FIXTURE COMPATIBILITY DURING EP2 TRANSITION-------------"
   if( g_fixtureRev < BOARD_REV_1_5_0 )
     ConsolePrintf("WARNING: Fixture Rev 1.0 is incompatible with this test\r\n"); //throw ERROR_INCOMPATIBLE_FIX_REV;
-  else
-    ConsolePrintf("fixture rev ok: 1.5+\r\n");
 }
 
 // List of all functions invoked by the test, in order
