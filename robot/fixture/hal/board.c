@@ -174,6 +174,22 @@ board_rev_t GetBoardRev(void)
   return BOARD_REV_1_0_REV1; //silly compiler. we'll never make it here.
 }
 
+static const char board_rev_str_0[] = "1.0.r{1,2,3}";
+static const char board_rev_str_3[] = "1.5.0";
+static const char board_rev_str_x[] = "?";
+char* GetBoardRevStr(void) 
+{
+  char* s;
+  switch( GetBoardRev() ) {
+    case BOARD_REV_1_0_REV1:
+    case BOARD_REV_1_0_REV2:
+    case BOARD_REV_1_0_REV3:  s = (char*)&board_rev_str_0[0]; break;
+    case BOARD_REV_1_5_0:     s = (char*)&board_rev_str_3[0]; break;
+    default:                  s = (char*)&board_rev_str_x[0]; break;
+  }
+  return s;
+}
+
 u8 GetBoardID(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;

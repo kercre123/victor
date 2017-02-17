@@ -111,8 +111,9 @@ typedef enum {
 } board_rev_t;
 
 void InitBoard(void);
-board_rev_t GetBoardRev(void); //read the board revision
-u8   GetBoardID(void);  //read the ID set resistors to determine test mode
+board_rev_t GetBoardRev(void);  //read the board revision
+char* GetBoardRevStr(void);     //get board revision, descriptive string (const)
+u8   GetBoardID(void);          //read the ID set resistors to determine test mode
 void EnableBAT(void);
 void DisableBAT(void);
 void EnableVEXT(void);
