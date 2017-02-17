@@ -32,7 +32,7 @@ BehaviorRespondPossiblyRoll::BehaviorRespondPossiblyRoll(Robot& robot, const Jso
 , _reactionAnimation(AnimationTrigger::Count)
 , _responseSuccessfull(false)
 , _attemptingRoll(false)
-, _completedTimestamp_s(-1)
+, _completedTimestamp_s(-1.0f)
 {
   SetDefaultName("RespondPossiblyRoll");
 }
@@ -56,7 +56,7 @@ Result BehaviorRespondPossiblyRoll::InitInternal(Robot& robot)
 {
   _responseSuccessfull = false;
   _attemptingRoll = false;
-  _completedTimestamp_s = -1;
+  _completedTimestamp_s = -1.0f;
   
   TurnAndReact(robot);
   return Result::RESULT_OK;
@@ -66,7 +66,7 @@ Result BehaviorRespondPossiblyRoll::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRespondPossiblyRoll::ResumeInternal(Robot& robot)
 {
-  _completedTimestamp_s = -1;
+  _completedTimestamp_s = -1.0f;
   return RESULT_OK;
 }
 

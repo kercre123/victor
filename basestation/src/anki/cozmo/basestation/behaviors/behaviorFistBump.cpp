@@ -38,8 +38,8 @@ namespace Cozmo {
   // Looking for face parameters
   static const std::vector<f32> kLookForFaceAngleChanges_rad = {DEG_TO_RAD(-15), DEG_TO_RAD(30)};
   static constexpr f32 kLookForFaceHeadAngle                 = DEG_TO_RAD(35);
-  static constexpr f32 kMinTimeBeforeGazeChage_s             = 1.f;
-  static constexpr f32 kMaxTimeBeforeGazeChage_s             = 2.f;
+  static constexpr f32 kMinTimeBeforeGazeChange_s            = 1.f;
+  static constexpr f32 kMaxTimeBeforeGazeChange_s            = 2.f;
   static constexpr u32 kMaxTimeInPastToHaveObservedFace_ms   = 1000;
   
   
@@ -185,7 +185,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
         StartActing(ptAction);
         
         // Set next gaze change time
-        _nextGazeChangeTime_s = now + GetRNG().RandDblInRange(kMinTimeBeforeGazeChage_s, kMaxTimeBeforeGazeChage_s);
+        _nextGazeChangeTime_s = now + Util::numeric_cast<float>(GetRNG().RandDblInRange(kMinTimeBeforeGazeChange_s, kMaxTimeBeforeGazeChange_s));
         if (++_nextGazeChangeIndex >= kLookForFaceAngleChanges_rad.size()) {
           _nextGazeChangeIndex = 0;
         }

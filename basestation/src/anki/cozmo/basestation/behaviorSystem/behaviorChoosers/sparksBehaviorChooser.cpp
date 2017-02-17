@@ -496,7 +496,7 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd()
   BehaviorManager& mngr = _robot.GetBehaviorManager();
   const IBehavior* currentRunningBehavior = mngr.GetCurrentBehavior();
   
-  float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Behaviors with _numberOfRepetitions == 0 will always wait until max time and then play success outro
   const bool minTimeAndRepetitions = FLT_GE(currentTime_s, _timeChooserStarted + _minTimeSecs)

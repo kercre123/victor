@@ -540,11 +540,11 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForShouldThankUser(Robot& robot,
        pyramidCubeProperties != nullptr &&
        !pyramidCubeProperties->GetHasEverBeenUpright() &&
        pyramidCubeProperties->GetCurrentUpAxis() == UpAxis::ZPositive){
-      float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       AnimationTrigger placeHolder;
       float completedTimestamp;
       bool hadToRoll;
-      const float kMaxTimeSinceResponse = 1;
+      const float kMaxTimeSinceResponse = 1.0f;
       
       const bool didRecentlyRollCube =
       _behaviorRespondPossiblyRoll->WasResponseSuccessful(placeHolder,
@@ -593,11 +593,11 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
   
   // If the respond behavior has completed successfully, update the state tracker
   {
-    float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     AnimationTrigger responseTrigger;
     float completedTimestamp;
     bool hadToRoll;
-    const float kMaxTimeSinceResponse = 1;
+    const float kMaxTimeSinceResponse = 1.0f;
     if(_behaviorRespondPossiblyRoll->WasResponseSuccessful(responseTrigger, completedTimestamp, hadToRoll)
        && FLT_LE(currentTime_s - completedTimestamp, kMaxTimeSinceResponse)){
       UpdateCurrentAnimationTrigger(responseTrigger);
@@ -659,7 +659,7 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BuildPyramidBehaviorChooser::Update(Robot& robot)
 {
-  float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currentTime_s > _nextTimeCheckBlockOrientations_s){
     CheckBlockWorldCubeOrientations(robot);
     _nextTimeCheckBlockOrientations_s = currentTime_s + kIntervalCheckCubeOrientation;

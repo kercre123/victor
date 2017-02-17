@@ -34,7 +34,7 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   
 private:
-  TimeStamp_t _nextValidReactionTime_s;
+  float _nextValidReactionTime_s;
   
 };
 

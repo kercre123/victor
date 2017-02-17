@@ -782,7 +782,7 @@ namespace Anki {
           break;
           
         case ERobotDriveToPoseStatus::ComputingPath: {
-          float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           
           // handle aborting the plan. If we don't have a timeout set, set one now
           if( _timeToAbortPlanning < 0.0f ) {
@@ -800,7 +800,7 @@ namespace Anki {
         }
           
         case ERobotDriveToPoseStatus::Replanning: {
-          float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           
           // handle aborting the plan. If we don't have a timeout set, set one now
           if( _timeToAbortPlanning < 0.0f ) {

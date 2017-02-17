@@ -24,7 +24,7 @@
 #define LOG_DEBUG(...) PRINT_CH_DEBUG("ReactionTriggers", ##__VA_ARGS__)
 #define LOG_INFO(...) PRINT_CH_INFO("ReactionTriggers", ##__VA_ARGS__)
 
-namespace{
+namespace {
 static const char* kTriggerStrategyName = "Trigger Strategy Pet detected";
   
 // Console parameters
@@ -33,10 +33,6 @@ static const char* kTriggerStrategyName = "Trigger Strategy Pet detected";
 CONSOLE_VAR(s32, kReactToPetNumTimesObserved, CONSOLE_GROUP, 3);
 CONSOLE_VAR(f32, kReactToPetCooldown_s, CONSOLE_GROUP, 60.0f);
 CONSOLE_VAR(bool, kReactToPetEnable, CONSOLE_GROUP, true);
-  
-static inline double GetCurrentTimeInSeconds() {
-  return Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-}
 }
 
 
@@ -108,7 +104,7 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehavior(const Rob
 bool ReactionTriggerStrategyPetInitialDetection::RecentlyReacted() const
 {
   if (_lastReactionTime_s > NEVER) {
-    if (_lastReactionTime_s + kReactToPetCooldown_s > GetCurrentTimeInSeconds()) {
+    if (_lastReactionTime_s + kReactToPetCooldown_s > BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
       return true;
     }
   }
@@ -121,8 +117,7 @@ void ReactionTriggerStrategyPetInitialDetection::BehaviorThatStrategyWillTrigger
   behavior->AddListener(this);
 }
 
-
-  void ReactionTriggerStrategyPetInitialDetection::BehaviorDidReact(const std::set<Vision::FaceID_t> & targets)
+void ReactionTriggerStrategyPetInitialDetection::BehaviorDidReact(const std::set<Vision::FaceID_t> & targets)
 {
   //
   // Remember all petIDs at end of iteration to prevent triggering twice for the same petID.
@@ -133,7 +128,7 @@ void ReactionTriggerStrategyPetInitialDetection::BehaviorThatStrategyWillTrigger
 
   InitReactedTo(_robot);
   _reactedTo.insert(targets.begin(), targets.end());
-  _lastReactionTime_s = GetCurrentTimeInSeconds();
+  _lastReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _targets.clear();
 
 }

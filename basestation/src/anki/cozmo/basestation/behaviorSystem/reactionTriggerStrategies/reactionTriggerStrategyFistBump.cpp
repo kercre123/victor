@@ -110,7 +110,7 @@ void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
   
 bool ReactionTriggerStrategyFistBump::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
 {
-  const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   if (_shouldTrigger) {
     

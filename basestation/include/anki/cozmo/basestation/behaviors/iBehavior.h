@@ -98,8 +98,8 @@ public:
   // OK, not counting calls to Resume)
   int GetNumTimesBehaviorStarted() const { return _startCount; }
   void ResetStartCount() { _startCount = 0; }
-  double GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
-  double GetRunningDuration() const;
+  float GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
+  float GetRunningDuration() const;
     
   // Will be called upon first switching to a behavior before calling update.
   // Calls protected virtual InitInternal() method, which each derived class
@@ -391,8 +391,8 @@ private:
   
   std::vector<::Signal::SmartHandle> _eventHandles;
   Robot& _robot;
-  double _lastRunTime_s;
-  double _startedRunningTime_s;
+  float _lastRunTime_s;
+  float _startedRunningTime_s;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool IsRunnableBase(const Robot& robot, bool allowWhileRunning) const;

@@ -130,7 +130,7 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
   }
   else {  
     // store in whiteboard our success
-    const float curTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     robot.GetAIComponent().GetWhiteboard().GotOffChargerAtTime( curTime );
 
     return Status::Complete;

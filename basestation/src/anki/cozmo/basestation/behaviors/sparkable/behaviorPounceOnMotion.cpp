@@ -77,8 +77,8 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   , _cumulativeTurn_rad(0)
   , _observedX(0)
   , _observedY(0)
-  , _lastTimeRotate(0)
-  , _lastCliffEvent_sec(0)
+  , _lastTimeRotate(0.0f)
+  , _lastCliffEvent_sec(0.0f)
   , _motionObservedNoPounceCount(0)
 {
   SetDefaultName("PounceOnMotion");
@@ -116,7 +116,7 @@ float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
   float multiplier = 1.f;
   if( !IsRunning() )
   {
-    double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if ( _lastMotionTime + _maxTimeSinceNoMotion_notRunning_sec < currentTime_sec )
     {
       multiplier = _boredomMultiplier;
@@ -143,9 +143,9 @@ Result BehaviorPounceOnMotion::ResumeInternal(Robot& robot)
   
 void BehaviorPounceOnMotion::InitHelper(Robot& robot)
 {
-  double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _startedBehaviorTime_sec = currentTime_sec;
-  _lastMotionTime = (float)currentTime_sec;
+  _lastMotionTime = currentTime_sec;
   _motionObservedNoPounceCount = 0;
   
   // Don't override sparks idle animation
@@ -172,8 +172,8 @@ void BehaviorPounceOnMotion::TransitionToInitialPounce(Robot& robot)
   
   // Determine if there is a cliff in front of us so we don't pounce off an edge
   IActionRunner* potentialCliffSafetyTurn = nullptr;
-  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool cliffInFront = currentTime_sec - _lastCliffEvent_sec < kMinCliffInFrontWait_sec;
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool cliffInFront = (currentTime_sec - _lastCliffEvent_sec) < kMinCliffInFrontWait_sec;
   
   if(cliffInFront){
     // This initial turn means that if Cozmo hits a cliff during an initial pounce
@@ -288,23 +288,23 @@ void BehaviorPounceOnMotion::TransitionFromWaitForMotion(Robot& robot)
   
   //Otherwise, check to see if there has been a timeout or go back to waitingForMotion
   
-  float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // We're done if we haven't seen motion in a long while or since start.
-  if ( _lastMotionTime + _maxTimeSinceNoMotion_running_sec < currentTime_sec )
+  if ( (_lastMotionTime + _maxTimeSinceNoMotion_running_sec) < currentTime_sec )
   {
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
     
     //Set the exit state information and then cancel the hang action
     TransitionToGetOutBored(robot);
   }
-  else if ( _lastTimeRotate + _maxTimeBeforeRotate < currentTime_sec )
+  else if ( (_lastTimeRotate + _maxTimeBeforeRotate) < currentTime_sec )
   {
     //Set the exit state information and then cancel the hang action
     TransitionToRotateToWatchingNewArea(robot);
-  }else if(_startedBehaviorTime_sec + _maxTimeBehaviorTimeout_sec < currentTime_sec){
+  } else if ( (_startedBehaviorTime_sec + _maxTimeBehaviorTimeout_sec) < currentTime_sec) {
     TransitionToGetOutBored(robot);
-  }else{
+  } else {
     TransitionToWaitForMotion(robot);
   }
 }
@@ -442,15 +442,15 @@ void BehaviorPounceOnMotion::AlwaysHandle(const EngineToGameEvent& event, const 
       break;
     }
       
-    case MessageEngineToGameTag::CliffEvent:{
+    case MessageEngineToGameTag::CliffEvent: {
       if(event.GetData().Get_CliffEvent().detected){
         _lastCliffEvent_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
       break;
     }
       
-    case EngineToGameTag::RobotOffTreadsStateChanged:{
-      _lastCliffEvent_sec = 0;
+    case EngineToGameTag::RobotOffTreadsStateChanged: {
+      _lastCliffEvent_sec = 0.0f;
       break;
     }
       
@@ -479,8 +479,8 @@ void BehaviorPounceOnMotion::HandleWhileNotRunning(const EngineToGameEvent& even
         float maxDistSquared = _maxPounceDist * _maxPounceDist;
         if( distSquared <= maxDistSquared )
         {
-          double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          _lastMotionTime = (float)currentTime_sec;
+          const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          _lastMotionTime = currentTime_sec;
         }
       }
       break;
@@ -509,22 +509,22 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
       const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
       const bool inGroundPlane = motionObserved.ground_area > _minGroundAreaForPounce;
       
-      double currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      if( inGroundPlane )
+      const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if ( inGroundPlane )
       {
-        _lastMotionTime = (float)currTime;
+        _lastMotionTime = currTime;
       }
-      if( _state == State::WaitingForMotion )
+      if ( _state == State::WaitingForMotion )
       {
         const float robotOffsetX = motionObserved.ground_x;
         const float robotOffsetY = motionObserved.ground_y;
         
         bool gotPose = false;
         // we haven't started the pounce, so update the pounce location
-        if( inGroundPlane )
+        if ( inGroundPlane )
         {
           float dist = std::sqrt( std::pow( robotOffsetX, 2 ) + std::pow( robotOffsetY, 2) );
-          if( dist <= _maxPounceDist )
+          if ( dist <= _maxPounceDist )
           {
             gotPose = true;
             _numValidPouncePoses++;
@@ -554,8 +554,8 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
         }
         
         // reset everything if it's been this long since we got a valid pose
-        if( ! gotPose && currTime >= _lastValidPouncePoseTime + _maxTimeBetweenPoses ) {
-          if( _numValidPouncePoses > 0 ) {
+        if ( ! gotPose && currTime >= _lastValidPouncePoseTime + _maxTimeBetweenPoses ) {
+          if ( _numValidPouncePoses > 0 ) {
             PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.ResetValid",
                           "resetting num valid poses because it has been %f seconds since the last one",
                           currTime - _lastValidPouncePoseTime);

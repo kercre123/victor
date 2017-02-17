@@ -68,8 +68,8 @@ static const float kCooldownFromCliffResumes_sec = 15.0;
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
   , _robot(robot)
-  , _lastRunTime_s(0.0)
-  , _startedRunningTime_s(0.0)
+  , _lastRunTime_s(0.0f)
+  , _startedRunningTime_s(0.0f)
   , _executableType(ExecutableBehaviorType::Count)
   , _requiredUnlockId( UnlockId::Count )
   , _requiredRecentDriveOffCharger_sec(-1.0f)
@@ -457,7 +457,7 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
       return false;
     }
     
-    const bool isRecent = FLT_LE(curTime, (lastDriveOff+_requiredRecentDriveOffCharger_sec));
+    const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
     if ( !isRecent ) {
       // driven off, but not recently enough
       return false;
@@ -468,7 +468,6 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
   const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
   if ( requiresRecentParentSwitch ) {
     const float lastTime = robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
-    const float curTime  = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const float changedAgoSecs = curTime - lastTime;
     const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
     if ( !isSwitchRecent ) {
@@ -538,15 +537,15 @@ IBehavior::Status IBehavior::UpdateInternal(Robot& robot)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-double IBehavior::GetRunningDuration() const
+float IBehavior::GetRunningDuration() const
 {  
   if (_isRunning)
   {
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const double timeSinceStarted = currentTime_sec - _startedRunningTime_s;
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float timeSinceStarted = currentTime_sec - _startedRunningTime_s;
     return timeSinceStarted;
   }
-  return 0.0;
+  return 0.0f;
 }
 
   
@@ -942,10 +941,10 @@ float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float IBehavior::EvaluateRepetitionPenalty() const
 {
-  if (_lastRunTime_s > 0.0)
+  if (_lastRunTime_s > 0.0f)
   {
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float timeSinceRun = Util::numeric_cast<float>(currentTime_sec - _lastRunTime_s);
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float timeSinceRun = currentTime_sec - _lastRunTime_s;
     const float repetitionPenalty = _repetitionPenalty.EvaluateY(timeSinceRun);
     return repetitionPenalty;
   }
@@ -957,10 +956,10 @@ float IBehavior::EvaluateRepetitionPenalty() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float IBehavior::EvaluateRunningPenalty() const
 {
-  if (_startedRunningTime_s > 0.0)
+  if (_startedRunningTime_s > 0.0f)
   {
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float timeSinceStarted = Util::numeric_cast<float>(currentTime_sec - _startedRunningTime_s);
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float timeSinceStarted = currentTime_sec - _startedRunningTime_s;
     const float runningPenalty = _runningPenalty.EvaluateY(timeSinceStarted);
     return runningPenalty;
   }
@@ -994,8 +993,7 @@ float IBehavior::EvaluateScore(const Robot& robot) const
       const float runningPenalty = EvaluateRunningPenalty();
       score *= runningPenalty;
     }
-    
-    
+
     
     if (_enableRepetitionPenalty && !isRunning)
     {

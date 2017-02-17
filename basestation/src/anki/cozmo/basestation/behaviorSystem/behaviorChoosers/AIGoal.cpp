@@ -173,7 +173,13 @@ void AIGoal::Exit(Robot& robot)
   }
   
   // log event to das
-  const int nSecs = static_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs);
+  int nSecs = Util::numeric_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs);
+  if (nSecs < 0) { // Attempt to fix COZMO-7862
+    PRINT_NAMED_ERROR("AIGoal.Exit.NegativeDuration",
+                      "Negative duration (%i secs, started at %f and stopped at %f",
+                      nSecs, _lastTimeGoalStartedSecs, _lastTimeGoalStoppedSecs);
+    nSecs = 0;
+  }
   Util::sEventF("robot.freeplay_goal_ended",
                 {{DDATA, std::to_string(nSecs).c_str()}},
                 "%s", _name.c_str());

@@ -233,7 +233,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                  {
                                    case BehaviorChooserType::Freeplay:
                                    {
-                                     if( _firstTimeFreeplayStarted < 0 ) {
+                                     if( _firstTimeFreeplayStarted < 0.0f ) {
                                        const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
                                        _firstTimeFreeplayStarted = currTime_s;
                                      }
@@ -761,7 +761,7 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   _currentChooserPtr->OnSelected();
   
   // mark the time at which the change happened (this is checked by behaviors)
-  _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
+  _lastChooserSwitchTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
   if(!currentIsReactionary){
@@ -966,7 +966,7 @@ const UnlockId BehaviorManager::SwitchToRequestedSpark()
                 _isSoftSpark ? "soft" : "hard",
                 _isRequestedSparkSoft ? "soft" : "hard");
 
-  _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
+  _lastChooserSwitchTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   _activeSpark = _lastRequestedSpark;
   _isSoftSpark = _isRequestedSparkSoft;

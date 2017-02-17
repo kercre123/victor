@@ -83,7 +83,7 @@ void BlockTapFilterComponent::Update()
   
   if( !_tapInfo.empty() )
   {
-    TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if( currTime > _waitToTime )
     {
       std::list<ObjectTapped>::iterator highIter = _tapInfo.begin();
@@ -162,7 +162,7 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
   ObservableObject* object = matchingObjects.front();
   
-  Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
                 "Received message that %s %d (Active ID %d) was tapped %d times "
                 "(robotTime %d, tapTime %d, intensity: %d, engineTime: %d).",
@@ -270,7 +270,7 @@ bool BlockTapFilterComponent::ShouldIgnoreMovementDueToDoubleTap(const ObjectID&
 
 void BlockTapFilterComponent::CheckForDoubleTap(const ObjectID& objectID)
 {
-  TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   auto doubleTapInfo = _doubleTapObjects.find(objectID);
   if(doubleTapInfo == _doubleTapObjects.end())

@@ -53,7 +53,7 @@ public:
   // Set how long the tracker will run without seeing whatever it is trying to
   // track. After this, it will complete "successfully".
   // Set to 0 to disable timeout (default).
-  void SetUpdateTimeout(double timeout_sec) { _updateTimeout_sec = timeout_sec; }
+  void SetUpdateTimeout(float timeout_sec) { _updateTimeout_sec = timeout_sec; }
 
   // Tells this action to keep running until another action (being run separately) stops. As soon as this
   // other action completes, this action will complete as well
@@ -113,8 +113,8 @@ protected:
 private:
   
   Mode     _mode = Mode::HeadAndBody;
-  double   _updateTimeout_sec = 0.;
-  double   _lastUpdateTime = 0.;
+  float    _updateTimeout_sec = 0.0f;
+  float    _lastUpdateTime = 0.0f;
   Radians  _panTolerance  = POINT_TURN_ANGLE_TOL;
   Radians  _tiltTolerance = HEAD_ANGLE_TOL;
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;

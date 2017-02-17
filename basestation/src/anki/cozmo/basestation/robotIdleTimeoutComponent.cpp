@@ -39,7 +39,7 @@ RobotIdleTimeoutComponent::RobotIdleTimeoutComponent(Robot& robot)
   }
 }
 
-void RobotIdleTimeoutComponent::Update(double currentTime_s)
+void RobotIdleTimeoutComponent::Update(float currentTime_s)
 {
   // If it's time to do sleep and face off
   if(_faceOffTimeout_s > 0.0f && _faceOffTimeout_s <= currentTime_s)
@@ -57,7 +57,7 @@ void RobotIdleTimeoutComponent::Update(double currentTime_s)
   }
 }
   
-static bool ShouldUpdateTimeoutHelper(double currentTime, double oldTimeout, double newTimeoutDuration)
+static bool ShouldUpdateTimeoutHelper(float currentTime, float oldTimeout, float newTimeoutDuration)
 {
   bool oldTimeoutNotSet = (oldTimeout == -1.0f);
   // If we have a new timeout duration to use and (no existing timeout or a later existing timeout)
@@ -72,7 +72,7 @@ static bool ShouldUpdateTimeoutHelper(double currentTime, double oldTimeout, dou
 template<>
 void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::StartIdleTimeout& msg)
 {
-  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // We need to have received our first state message from the robot (indicating successful communication) to send animations
   if (_robot.HasReceivedFirstStateMessage() && ShouldUpdateTimeoutHelper(currentTime, _faceOffTimeout_s, msg.faceOffTime_s))
   {
@@ -88,8 +88,8 @@ void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::StartIdle
 template<>
 void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::CancelIdleTimeout& msg)
 {
-  _faceOffTimeout_s = -1;
-  _disconnectTimeout_s = -1;
+  _faceOffTimeout_s = -1.0f;
+  _disconnectTimeout_s = -1.0f;
 }
   
 IActionRunner* RobotIdleTimeoutComponent::CreateGoToSleepAnimSequence(Robot& robot)

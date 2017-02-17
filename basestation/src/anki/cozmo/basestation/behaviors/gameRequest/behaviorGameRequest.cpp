@@ -246,7 +246,7 @@ IBehavior::Status IBehaviorRequestGame::UpdateInternal(Robot& robot)
 bool IBehaviorRequestGame::HasFace(const Robot& robot) const
 {
   float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const u32 currTime_ms = Util::numeric_cast<u32>( std::floor( currentTime_sec * 0.001 ) );
+  const u32 currTime_ms = Util::numeric_cast<u32>( std::floor( currentTime_sec * 0.001f ) );
 
   Pose3d waste;
   TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFace(waste);

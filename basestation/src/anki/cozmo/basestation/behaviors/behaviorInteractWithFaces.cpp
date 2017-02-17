@@ -118,7 +118,7 @@ Result BehaviorInteractWithFaces::InitInternal(Robot& robot)
 IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot)
 {
   if( _trackFaceUntilTime_s >= 0.0f ) {
-    float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( currTime_s >= _trackFaceUntilTime_s ) {
       BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
       StopActing();
@@ -291,7 +291,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace(Robot& robot)
 {
   DEBUG_SET_STATE(TrackingFace);
 
-  const float randomTimeToTrack_s = GetRNG().RandDblInRange(kMinTimeToTrackFace_s, kMaxTimeToTrackFace_s);
+  const float randomTimeToTrack_s = Util::numeric_cast<float>(GetRNG().RandDblInRange(kMinTimeToTrackFace_s, kMaxTimeToTrackFace_s));
   PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TrackTime", "will track for %f seconds", randomTimeToTrack_s);
   _trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + randomTimeToTrack_s;
 
