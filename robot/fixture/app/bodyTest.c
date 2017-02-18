@@ -31,7 +31,7 @@ using namespace Anki::Cozmo::RobotInterface;
 bool BodyDetect(void)
 {
   DisableVEXT();  // Make sure power is not applied, as it messes up the detection code below
-
+  
   // Set up TRX as weakly pulled-up - it will detect as grounded when the board is attached
   GPIO_InitTypeDef  GPIO_InitStructure;
   GPIO_InitStructure.GPIO_Pin = GPIOC_TRX;
@@ -69,8 +69,8 @@ void SendTestChar(int c);
 
 void HeadlessBoot(void)
 { 
-  DBG_VERBOSE( u32 startTime = getMicroCounter() );
-  DBG_VERBOSE( ConsolePrintf("DBG: Headless Boot...") );
+  u32 startTime = getMicroCounter();
+  ConsolePrintf("Headless Boot...");
   
   // Let last step drain out
   DisableVEXT();
@@ -85,7 +85,11 @@ void HeadlessBoot(void)
     
   // Make sure the robot really booted into test mode
   SendTestChar(-1);
-  DBG_VERBOSE( ConsolePrintf("ok (in %u ms)\r\n", (getMicroCounter()-startTime)/1000 ) );
+  ConsolePrintf("ok in %dms\r\n", (getMicroCounter()-startTime)/1000 );
+  
+  //Delay to make sure syscon is fully booted
+  ConsolePrintf("syscon boot delay 1s\r\n");
+  MicroWait(1000*1000);
 }
 
 // The real (mass production) numbers are: 8 ticks/revolution, 28.5mm diameter, 172.3:1 
@@ -181,13 +185,10 @@ void BodyMotor(void)
   //try all the motors (collect debug info before failing out)
   DBG_VERBOSE( ConsolePrintf("\r\nRUN LEFT MOTOR: FWD\r\n"); );
   int mot_left_fwd  = TryMotor(0, 124);
-  
   DBG_VERBOSE( ConsolePrintf("\r\nRUN LEFT MOTOR: REV\r\n"); );
   int mot_left_rev  = TryMotor(0, -124);
-  
   DBG_VERBOSE( ConsolePrintf("\r\nRUN RIGHT MOTOR: FWD\r\n"); );
   int mot_right_fwd = TryMotor(1, 124);
-  
   DBG_VERBOSE( ConsolePrintf("\r\nRUN RIGHT MOTOR: REV\r\n"); );
   int mot_right_rev = TryMotor(1, -124);
   
