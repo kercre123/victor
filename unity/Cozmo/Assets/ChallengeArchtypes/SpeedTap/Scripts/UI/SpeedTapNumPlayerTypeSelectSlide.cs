@@ -62,10 +62,29 @@ namespace SpeedTap {
 
     private void HandleMPClicked() {
       if (IsMPModeUnlocked()) {
-        _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo), _Game.GameConfig.CozmoTint);
-        _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer1), _Game.GameConfig.Player1Tint);
-        _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer2), _Game.GameConfig.Player2Tint);
-        StartGame();
+        // Requires 3 cubes, not two to play this mode...
+        int neededCubes = 3;
+        if (_Game.CurrentRobot.LightCubes.Count >= neededCubes) {
+
+          _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo), _Game.GameConfig.CozmoTint);
+          _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer1), _Game.GameConfig.Player1Tint);
+          _Game.AddPlayer(PlayerType.Human, Localization.Get(LocalizationKeys.kSpeedTapMultiplayerPlayer2), _Game.GameConfig.Player2Tint);
+          StartGame();
+        }
+        else {
+          int differenceCubes = neededCubes - _Game.CurrentRobot.LightCubes.Count;
+          object[] descLocArgs = new object[] {
+              differenceCubes,
+              (Cozmo.ItemDataConfig.GetCubeData().GetAmountName(differenceCubes)),
+              Localization.Get(LocalizationKeys.kSpeedTapTitle)
+            };
+          AlertModalData notEnoughCubesData = new AlertModalData("speedtap_mp_not_enough_cubes_alert",
+                                                                 LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle,
+                                                                  LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription,
+                                                                 new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
+                                                                 descLocArgs: descLocArgs);
+          UIManager.OpenAlert(notEnoughCubesData, new ModalPriorityData(ModalPriorityLayer.Low, 0, LowPriorityModalAction.Queue, HighPriorityModalAction.Queue));
+        }
       }
       else {
         // Throw up the warning
