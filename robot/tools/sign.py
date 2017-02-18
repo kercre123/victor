@@ -29,6 +29,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("output", type=str,
                     help="target location for file")
 
+parser.add_argument("-m", "--model", type=int, default=5,
+                    help="Compatible model number")
 parser.add_argument("-r", "--rtip", type=str,
                     help="K02 ELF Image")
 parser.add_argument("-b", "--body", type=str,
@@ -46,7 +48,7 @@ parser.add_argument("--prepend_size_word", action="store_true",
 parser.add_argument("--factory_upgrade", nargs=2, type=str,
                     help="Generate a factory firmware upgrade image")
 
-FILE_TYPE_VERSION   = 0x00000001
+FILE_TYPE_VERSION   = 0x00000002
 
 AES_BLOCK_LENGTH    = 16
 BLOCK_LENGTH        = 0x800
@@ -170,17 +172,19 @@ def git_sha():
     out = execute('git', 'rev-parse', 'HEAD')
     return int(out, 16).to_bytes(20, byteorder='little')
 
-def make_header(key=None, iv=None, digestType=None):
+def make_header(key=None, iv=None, digestType=None, model=0):
     timestamp = int(time.time())
     ctime = bytearray(time.ctime(), 'utf-8')
 
-    header = pack("<4sI%isI32s20s" % AES_BLOCK_LENGTH,
+    header = pack("<4sI%isI32s20sB" % AES_BLOCK_LENGTH,
         b'CZM0',
         FILE_TYPE_VERSION,
         iv if iv else (b"\x00" * 16),
         timestamp,
         ctime,
-        git_sha())
+        git_sha(),
+        model
+        )
 
     # Include OID for the hash algorithm used
     oid = digestType.new().oid if digestType else b''
@@ -237,7 +241,7 @@ if __name__ == '__main__':
         aes_key = int(aes_key,16).to_bytes(AES_BLOCK_LENGTH, byteorder='little')
     
         print ("Writting header information")
-        fo.write(make_header(cert, fo.iv, SHA512), HEADER_INFORMATION)
+        fo.write(make_header(cert, fo.iv, SHA512, args.model), HEADER_INFORMATION)
         fo.writeCert(cert)
     else:
         cert, aes_key = None, None

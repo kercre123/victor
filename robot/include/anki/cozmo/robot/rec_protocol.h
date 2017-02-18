@@ -13,6 +13,8 @@ typedef uint16_t commandWord;
 #define ROBOT_BOOTLOADER 0x1000
 #define FIRST_BODY_BLOCK  (BODY_BLOCK | 0x18000)
 #define FIRST_RTIP_BLOCK  (0x1000)
+#define CURRENT_FILE_VERSION  2
+#define PRODUCTION_V1         4
 
 // These are used for the Head communication protocol
 static const commandWord COMMAND_HEADER = 0x5478;
@@ -44,6 +46,7 @@ typedef struct {
   uint32_t   timestamp;
   uint8_t    c_time[32];
   uint8_t    git_sha[20];
+  uint8_t    max_model;
 
   // HASH OID
   // MODULUS FOR CERT
