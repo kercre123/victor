@@ -3,7 +3,7 @@
 
 // Uncomment this line to build a mini-version without binaries (to speed debugging)
 //#define INCBIN ;
-    
+
   ; Note:  Cube and charger share the same binary
   ALIGN
   EXPORT g_Cube
@@ -12,8 +12,7 @@ g_Cube
 #ifdef FCC
   INCBIN releases\\xsfcc.bin
 #else
-  #warning "REMOVED CUBE IMAGE FOR LINKER FIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-  //INCBIN releases\\xsboot.bin
+  INCBIN releases\\xsboot.bin
 #endif
 g_CubeEnd
 
@@ -40,14 +39,6 @@ g_BodyBLE
 g_BodyBLEEnd
 
   ALIGN
-  EXPORT g_stubBody
-  EXPORT g_stubBodyEnd
-g_stubBody
-  INCBIN releases\\nrf51_stub.bin
-g_stubBodyEnd
-
-
-  ALIGN
   EXPORT g_K02
   EXPORT g_K02End
 g_K02
@@ -64,13 +55,6 @@ g_K02End
 g_K02Boot
   INCBIN releases\\robot_boot.bin
 g_K02BootEnd
-
-  ALIGN
-  EXPORT g_stubK02
-  EXPORT g_stubK02End
-g_stubK02
-  INCBIN releases\\k02_stub.bin
-g_stubK02End
 
   ALIGN
   EXPORT g_EspUser

@@ -532,7 +532,7 @@ int main(void)
   
   ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, g_fixtureReleaseVersion );
   ConsolePrintf("ConsoleMode=%u\r\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
-  ConsolePrintf("Fixure Rev: %s\r\n", g_fixtureRev <= BOARD_REV_1_0_REV3 ? "1.0 rev1-3" : "1.5");
+  ConsolePrintf("Fixure Rev: %s\r\n", GetBoardRevStr() );
   ConsolePrintf("Mode: %s\r\n", FIXTYPES[g_fixtureType]);
   
   while (1)

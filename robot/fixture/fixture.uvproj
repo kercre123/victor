@@ -549,6 +549,11 @@
               <FilePath>.\app\binaries.s</FilePath>
             </File>
             <File>
+              <FileName>binaries2.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\app\binaries2.s</FilePath>
+            </File>
+            <File>
               <FileName>binariesc.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\app\binariesc.c</FilePath>
@@ -1210,6 +1215,11 @@
               <FileName>binaries.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\app\binaries.s</FilePath>
+            </File>
+            <File>
+              <FileName>binaries2.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\app\binaries2.s</FilePath>
             </File>
             <File>
               <FileName>binariesc.c</FileName>
