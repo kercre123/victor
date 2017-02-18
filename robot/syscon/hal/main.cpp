@@ -71,7 +71,11 @@ int main(void)
 
   // Startup the system
   #ifdef FACTORY
-  Battery::setOperatingMode(BODY_STARTUP);
+  if (*FIXTURE_HOOK != 0xDEADFACE) {
+    Battery::setOperatingMode(BODY_STARTUP);
+  } else {
+    Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
+  }
   #else
   Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
   #endif
