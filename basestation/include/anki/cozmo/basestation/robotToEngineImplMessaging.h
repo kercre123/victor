@@ -95,7 +95,8 @@ private:
   
   // For tracking time since last power level report (per accessory)
   std::map<uint32_t, uint32_t> _lastPowerLevelSentTime;
-  
+  std::map<uint32_t, uint32_t> _lastMissedPacketCount;
+
   // Internal helpers
   bool ShouldIgnoreMultipleImages() const;
 
