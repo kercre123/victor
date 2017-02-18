@@ -497,7 +497,7 @@ void ProgramEspressif(int serial)
       
       //Set serial/model
       data.serial[0] = serial;  // Serial
-      data.serial[1] = 0;       // Model
+      data.serial[1] = 5;       // Model ;try to keep this in sync with HW version in sys_boot - 0 = pre-Pilot, 1 = Pilot, 3 = "First 1000" Prod, 4 = Full Prod, 5 = 1.5 EP2
       
       // Add 64 bytes of random gibberish, at Daniel's request
       for( int i=0; i < RANDLEN; i++ )
