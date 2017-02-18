@@ -63,6 +63,7 @@ private:
   bool _responseSuccessfull;
   bool _attemptingRoll;
   float _completedTimestamp_s;
+
   
   void TurnAndReact(Robot& robot);
   void RollIfNecessary(Robot& robot);

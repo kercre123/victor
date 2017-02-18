@@ -12,11 +12,14 @@
 #ifndef __Cozmo_Basestation_Behaviors_IBehavior_H__
 #define __Cozmo_Basestation_Behaviors_IBehavior_H__
 
+#include "anki/cozmo/basestation/behaviors/iBehavior_fwd.h"
+
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/helperHandle.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
@@ -46,6 +49,7 @@ namespace Cozmo {
 class Robot;
 class ActionableObject;
 class DriveToObjectAction;
+class IHelper;
   
 class BehaviorPreReqNone;
 class BehaviorPreReqRobot;
@@ -68,12 +72,15 @@ struct RobotCompletedAction;
 struct BehaviorObjectiveAchieved;
 }
 template<typename TYPE> class AnkiEvent;
-  
+
 // Base Behavior Interface specification
 class IBehavior
 {
 protected:  
   friend class BehaviorFactory;
+  // Allows helpers to run StartActing calls directly on the behavior that
+  // delegated to them
+  friend class IHelper;
 
   // Can't create a public IBehavior, but derived classes must pass a robot
   // reference into this protected constructor.
@@ -83,11 +90,7 @@ protected:
     
 public:
 
-  enum class Status {
-    Failure,
-    Running,
-    Complete
-  };
+  using Status = BehaviorStatus;
     
   bool IsRunning() const { return _isRunning; }
   // returns true if any action from StartAction is currently running, indicating that the behavior is
@@ -125,11 +128,6 @@ public:
   
   // Prevents the behavior from calling a callback function when ActionCompleted occurs
   // this allows the behavior to be stopped gracefully
-
-  // NOTE: this may not actually stop the behavior. It will disable action callbacks, so if the behavior
-  // relies on those to run (like almost all behaviors now do) it will stop. However, if the behavior isn't
-  // using StartActing or is directly doing stuff from its UpdateInternal, this won't actually stop the
-  // behavior
   void StopOnNextActionComplete();
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
@@ -302,22 +300,27 @@ protected:
 
   // Start an action now, and optionally provide a callback which will be called with the
   // RobotCompletedAction that corresponds to the action
-  using RobotCompletedActionCallback = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
+  using RobotCompletedActionCallback = BehaviorRobotCompletedActionCallback;
   bool StartActing(IActionRunner* action, RobotCompletedActionCallback callback = {});
 
   // helper that just looks at the result (simpler, but you can't get things like the completion union)
-  using ActionResultCallback = std::function<void(ActionResult)>;
+  using ActionResultCallback = BehaviorActionResultCallback;
   bool StartActing(IActionRunner* action, ActionResultCallback callback);
+  
+  // helper that passes through both the ActionResult and Robot so that behaviors don't have
+  // to store references to robot as much
+  using ActionResultWithRobotCallback = BehaviorActionResultWithRobotCallback;
+  bool StartActing(IActionRunner* action, ActionResultWithRobotCallback callback);
 
   // If you want to do something when the action finishes, regardless of it's result, you can use the
   // following callbacks, with either a callback function taking no arguments or taking a single Robot&
   // argument. You can also use member functions. The callback will be called when action completes for any
   // reason (as long as the behavior is running)
 
-  using SimpleCallback = std::function<void(void)>;
+  using SimpleCallback = BehaviorSimpleCallback;
   bool StartActing(IActionRunner* action, SimpleCallback callback);
 
-  using SimpleCallbackWithRobot = std::function<void(Robot& robot)>;
+  using SimpleCallbackWithRobot = BehaviorSimpleCallbackWithRobot;
   bool StartActing(IActionRunner* action, SimpleCallbackWithRobot callback);
 
   template<typename T>
@@ -326,10 +329,14 @@ protected:
   template<typename T>
   bool StartActing(IActionRunner* action, void(T::*callback)(void));
   
-  // This function cancels the action started by StartActing (if there is one). Returns true if an action
-  // was canceled, false otherwise. Note that if you are running, this will trigger a callback for the
-  // cancellation unless you set allowCallback to false
-  bool StopActing(bool allowCallback = true);
+  template<typename T>
+  bool StartActing(IActionRunner* action, void(T::*callback)(ActionResult, Robot&));
+  
+  // This function cancels the action started by StartActing (if there is one). Returns true if an action was
+  // canceled, false otherwise. Note that if you are running, this will trigger a callback for the
+  // cancellation unless you set allowCallback to false. If the action was created by a helper, the helper
+  // will be canceled as well, unless allowHelperToContinue is true
+  bool StopActing(bool allowCallback = true, bool allowHelperToContinue = false);
   
   // Behaviors should call this function when they reach their completion state
   // in order to log das events and notify goal strategies if they listen for the message
@@ -357,6 +364,14 @@ protected:
                                   const ObjectLights& modifier = {});
   bool SmartRemoveCustomLightPattern(const ObjectID& objectID,
                                      const std::vector<CubeAnimationTrigger>& anims);
+  
+  // Ensures that a handle is stopped if the behavior is stopped
+  bool SmartDelegateToHelper(Robot& robot,
+                             HelperHandle handleToRun,
+                             SimpleCallbackWithRobot successCallback,
+                             SimpleCallbackWithRobot failureCallback);
+  bool SmartStopHelper();
+  
 
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const {};
   
@@ -440,7 +455,7 @@ private:
   // for Start/StopActing if invalid, no action
   u32 _lastActionTag = ActionConstants::INVALID_TAG;
   RobotCompletedActionCallback  _actingCallback;
-  bool _canStartActing = true;
+  bool _stopRequestedAfterAction = false;
     
   BehaviorGroupFlags  _behaviorGroups;
 
@@ -461,6 +476,10 @@ private:
   std::map<std::string, u8> _lockingNameToTracksMap;
   
   bool _requireObjectTapped = false;
+  
+  // Handle for SmartDelegateToHelper
+  WeakHelperHandle _currentHelperHandle;
+
 
   //A list of object IDs that have had a custom light pattern set
   std::vector<ObjectID> _customLightObjects;
@@ -576,6 +595,13 @@ bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(void))
   return StartActing(action, boundCallback);
 }
 
+template<typename T>
+bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(ActionResult, Robot&))
+{
+  return StartActing(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1, std::placeholders::_2));
+}
+  
+  
 inline bool IBehavior::IsActing() const {
   return _lastActionTag != ActionConstants::INVALID_TAG;
 }

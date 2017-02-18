@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -289,7 +290,7 @@ Result IBehavior::Init()
   }
   
   _isRunning = true;
-  _canStartActing = true;
+  _stopRequestedAfterAction = false;
   _actingCallback = nullptr;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = InitInternal(_robot);
@@ -361,13 +362,13 @@ Result IBehavior::Resume(ReactionTrigger resumingFromType)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status IBehavior::Update()
 {
-  DEV_ASSERT(IsRunning(), "IBehavior::UpdateNotRunning");
-  // Ensure that behaviors which have been requested to stop, stop
-  if(!_canStartActing && !IsActing()){
-    UpdateInternal(_robot);
+
+  if(_stopRequestedAfterAction && !IsActing()) {
+    // we've been asked to stop, don't bother ticking update
     return Status::Complete;
   }
   
+  DEV_ASSERT(IsRunning(), "IBehavior::UpdateNotRunning");  
   return UpdateInternal(_robot);
 }
 
@@ -377,6 +378,11 @@ void IBehavior::Stop()
 {
   PRINT_CH_INFO("Behaviors", (GetName() + ".Stop").c_str(), "Stopping...");
 
+  // If the behavior delegated off to a helper, stop that first
+  if(!_currentHelperHandle.expired()){
+    SmartStopHelper();
+  }
+  
   _isRunning = false;
   // If the behavior uses double tapped objects then call StopInternalFromDoubleTap in case
   // StopInternal() does things like fire mood events or sets failures to use
@@ -404,8 +410,13 @@ void IBehavior::Stop()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::StopOnNextActionComplete()
 {
+  if( !_stopRequestedAfterAction ) {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".StopOnNextActionComplete").c_str(),
+                  "Behavior has been asked to stop on the next complete action");
+  }
+  
   // clear the callback and don't let any new actions start
-  _canStartActing = false;
+  _stopRequestedAfterAction = true;
   _actingCallback = nullptr;
 }
 
@@ -576,7 +587,7 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
 {
   // needed for StopOnNextActionComplete to work properly, don't allow starting new actions if we've requested
   // the behavior to stop
-  if( ! _canStartActing ) {
+  if( _stopRequestedAfterAction ) {
     return false;
   }
   
@@ -613,7 +624,17 @@ bool IBehavior::StartActing(IActionRunner* action, ActionResultCallback callback
                      });
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::StartActing(IActionRunner* action, ActionResultWithRobotCallback callback)
+{
+  return StartActing(action,
+                     [this, callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
+                       callback(msg.result, _robot);
+                     });
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::StartActing(IActionRunner* action, SimpleCallback callback)
 {
@@ -641,10 +662,20 @@ void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedActi
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::StopActing(bool allowCallback)
+bool IBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
 {
   ScoredActingStateChanged(false);
 
+  if( !allowHelperToContinue ) {
+    // stop the helper first. This is generally what we want, because if someone else is stopping an action,
+    // the helper likely won't know how to respond. Note that helpers can't call StopActing
+    if( !_currentHelperHandle.expired() ) {
+      PRINT_CH_INFO("Behaviors", (GetName() + ".StopActing.WithoutCallback.StopHelper").c_str(),
+                    "Stopping behavior helper because action stopped without callback");
+    }
+    SmartStopHelper();
+  }    
+  
   if( IsActing() ) {
     u32 tagToCancel = _lastActionTag;
       
@@ -664,6 +695,7 @@ bool IBehavior::StopActing(bool allowCallback)
     if( _lastActionTag == tagToCancel ) {
       _lastActionTag = ActionConstants::INVALID_TAG;
     }
+    
     return ret;
   }
 
@@ -798,7 +830,55 @@ bool IBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
     return false;
   }
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::SmartDelegateToHelper(Robot& robot,
+                                      HelperHandle handleToRun,
+                                      SimpleCallbackWithRobot successCallback,
+                                      SimpleCallbackWithRobot failureCallback)
+{
+  PRINT_CH_INFO("Behaviors", (GetName() + ".SmartDelegateToHelper").c_str(),
+                "Behavior requesting to delegate to helper %s", handleToRun->GetName().c_str());
+
+  if(!_currentHelperHandle.expired()){
+   PRINT_NAMED_WARNING("IBehavior.SmartDelegateToHelper",
+                       "Attempted to start a handler while handle already running, stopping running helper");
+   SmartStopHelper();
+  }
+  const bool delegateSuccess = _robot.GetAIComponent().GetBehaviorHelperComponent().
+                               DelegateToHelper(robot,
+                                                handleToRun,
+                                                successCallback,
+                                                failureCallback);
+
+  if( delegateSuccess ) {
+    _currentHelperHandle = handleToRun;
+  }
+  else {
+    PRINT_CH_INFO("Behaviors", (GetName() + "SmartDelegateToHelper.Failed").c_str(),
+                  "Failed to delegate to helper");
+  }
+  
+  return delegateSuccess;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::SmartStopHelper()
+{
+  bool handleStopped = false;
+  auto handle = _currentHelperHandle.lock();
+  if( handle ) {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".SmartStopHelper").c_str(),
+                  "Behavior stopping it's helper");
+
+    handleStopped = _robot.GetAIComponent().GetBehaviorHelperComponent().StopHelper(handle);
+  }
+  
+  return handleStopped;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* action,

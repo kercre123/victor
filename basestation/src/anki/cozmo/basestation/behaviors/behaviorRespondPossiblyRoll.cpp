@@ -14,7 +14,9 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -121,9 +123,10 @@ void BehaviorRespondPossiblyRoll::RollIfNecessary(Robot& robot)
       object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
   {
     _attemptingRoll = true;
-    DriveToRollObjectAction* action = new DriveToRollObjectAction(robot, _targetID);
-    action->RollToUpright();
-    StartActing(action);
+    auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+    const bool upright = true;
+    HelperHandle rollHelper = factory.CreateRollBlockHelper(robot, this, _targetID, upright);
+    SmartDelegateToHelper(robot, rollHelper, nullptr, nullptr);
   }
 }
 
