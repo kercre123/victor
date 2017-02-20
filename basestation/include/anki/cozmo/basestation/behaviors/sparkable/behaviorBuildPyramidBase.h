@@ -81,7 +81,6 @@ protected:
   // Ensures that blocks IDs which become invalid are cleared out of
   // the assigned ObjectIDs below - not actually const
   void ClearInvalidBlockIDs(const Robot& robot) const;
-  bool AreAllBlockIDsUnique() const;
   
   /// Attributes
   mutable ObjectID _staticBlockID;
@@ -91,6 +90,7 @@ protected:
   // track how many pyramid bases are known for updating the behavior when they are
   // created or destroyed
   int _lastBasesCount;
+  float _timeFirstBaseFormed;
   
   // track retrys with searches
   int _searchingForNearbyBaseBlockCount;
@@ -110,6 +110,7 @@ protected:
 private:
   typedef std::vector<const ObservableObject*> BlockList;
 
+  bool AreAllBlockIDsUnique() const;
   ObjectID GetBestBaseBlock(const Robot& robot, const BlockList& availableBlocks) const;
   ObjectID GetBestStaticBlock(const Robot& robot, const BlockList& availableBlocks) const;
   ObjectID GetNearestBlockToPose(const Robot& robot, const Pose3d& pose, const BlockList& availableBlocks) const;

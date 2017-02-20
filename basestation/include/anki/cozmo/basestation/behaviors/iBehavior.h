@@ -56,6 +56,7 @@ class BehaviorPreReqRobot;
 class BehaviorPreReqAcknowledgeObject;
 class BehaviorPreReqAcknowledgeFace;
 class BehaviorPreReqAcknowledgePet;
+class BehaviorPreReqRespondPossiblyRoll;
   
 class ISubtaskListener;
 class IReactToFaceListener;
@@ -232,6 +233,8 @@ protected:
                  { DEV_ASSERT(false, "IsRunnableInternal.PreReqAcknowledgeFace.NoOverride"); return false;}
   virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgePet& preReqData ) const
                  { DEV_ASSERT(false, "IsRunnableInternal.PreReqAcknowledgePet.NoOverride"); return false;}
+  virtual bool IsRunnableInternal(const BehaviorPreReqRespondPossiblyRoll& preReqData ) const
+                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqRespondPossiblyRoll.NoOverride"); return false;}
 
   // This function can be implemented by behaviors. It should return Running while it is running, and Complete
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to

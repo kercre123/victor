@@ -21,6 +21,46 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+class BehaviorRespondPossiblyRoll;
+  
+struct RespondPossiblyRollMetadata{
+public:
+  RespondPossiblyRollMetadata(){};
+  RespondPossiblyRollMetadata(const ObjectID& objID,
+                              u32 uprightAnimIndex,
+                              u32  onSideAnimIndex)
+  : _objID(objID)
+  , _uprightAnimIndex(uprightAnimIndex)
+  , _playedUpright(false)
+  , _onSideAnimIndex(onSideAnimIndex)
+  , _playedOnSide(false)
+  , _reachedPreDocRoll(false)
+  {
+  }
+  
+  const ObjectID& GetObjectID() const { return _objID;}
+  u32 GetUprightAnimIndex()     const { return _uprightAnimIndex;}
+  bool GetPlayedUprightAnim()   const { return _playedUpright;}
+  u32 GetOnSideAnimIndex()      const { return _onSideAnimIndex;}
+  bool GetPlayedOnSideAnim()    const { return _playedOnSide;}
+  bool GetReachedPreDocRoll()   const { return _reachedPreDocRoll;}
+  
+protected:
+  friend class BehaviorRespondPossiblyRoll;
+  void SetPlayedUprightAnim() { _playedUpright = true;}
+  void SetPlayedOnSideAnim() { _playedOnSide = true;}
+  void SetReachedPreDocRoll() { _reachedPreDocRoll = true;}
+
+private:
+  ObjectID _objID;
+  u32 _uprightAnimIndex = 0;
+  bool _playedUpright = false;
+  u32 _onSideAnimIndex = 0;
+  bool _playedOnSide = false;
+  bool _reachedPreDocRoll = false;
+};
+  
 
 class BehaviorRespondPossiblyRoll: public IBehavior
 {
@@ -32,42 +72,30 @@ private:
 public:
   virtual ~BehaviorRespondPossiblyRoll();
   virtual bool CarryingObjectHandledInternally() const override { return false;}
-
   
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
-  void SetReactionAnimation(AnimationTrigger trigger){ _reactionAnimation = trigger;}
-
-  void SetTarget(const ObjectID& objID){ _targetID = objID; }
-  const ObjectID& GetTargetID(){ return _targetID;}
-  void ClearTarget(){_targetID.UnSet();}
+  virtual bool IsRunnableInternal(const BehaviorPreReqRespondPossiblyRoll& preReqData) const override;
   
-  
-  
-  // Behavior can be queried to find out whether it responded successfully
-  // sets the trigger responded with if the response was successful
-  bool WasResponseSuccessful(AnimationTrigger& response,
-                             float& completedTimestamp_s,
-                             bool& hadToRoll) const;
-  
-  virtual void   StopInternal(Robot& robot) override;
-
+  // Behavior can be queried to find out where it is in its process
+  const RespondPossiblyRollMetadata& GetResponseMetadata() const { return _metadata;}
   
 protected:
   virtual Result InitInternal(Robot& robot) override;
-  // We shouldn't play the animation a second time if it's interrupted so simply return RESULT_OK
+  virtual Status UpdateInternal(Robot& robot) override;
+  // Override b/c default resume internal uses invalid pre-req data
   virtual Result ResumeInternal(Robot& robot) override;
+
   
 private:
-  AnimationTrigger _reactionAnimation;
-  ObjectID _targetID;
-  bool _responseSuccessfull;
-  bool _attemptingRoll;
-  float _completedTimestamp_s;
-
+  mutable RespondPossiblyRollMetadata _metadata;
   
-  void TurnAndReact(Robot& robot);
-  void RollIfNecessary(Robot& robot);
-
+  std::map<ObjectID, UpAxis> _upAxisChangedIDs;
+  std::vector<Signal::SmartHandle> _eventHalders;
+  u32 _lastActionTag = ActionConstants::INVALID_TAG;
+  
+  void DetermineNextResponse(Robot& robot);
+  void TurnAndRespondPositively(Robot& robot);
+  void TurnAndRespondNegatively(Robot& robot);
+  void RollBlock(Robot& robot);
 
 };
   

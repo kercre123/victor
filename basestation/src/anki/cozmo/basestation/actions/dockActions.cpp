@@ -483,7 +483,7 @@ namespace Anki {
             PRINT_CH_INFO("Actions", "IDockAction.MovingLiftPostDockHandler",
                           "Playing animation %s ",
                           EnumToString(_liftMovingAnimation));
-            IActionRunner* animAction = new TriggerAnimationAction(_robot, _liftMovingAnimation, 1, false);
+            IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_robot, _liftMovingAnimation, 1, false);
             animAction->ShouldEmitCompletionSignal(false);
             _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
           } else {

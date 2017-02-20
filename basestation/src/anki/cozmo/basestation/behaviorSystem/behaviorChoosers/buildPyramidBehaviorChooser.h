@@ -118,13 +118,16 @@ private:
   ///////
   
   PyramidConstructionStage _currentPyramidConstructionStage;
+  float _lastTimeConstructionStageChanged_s;
   int _lastCountBasesSeen;
   // For tracking the number of times cozmo has had to roll blocks to get
   // ready for pyramid
   int _uprightAnimIndex;
   int _onSideAnimIndex;
+  bool _forceLightMusicUpdate;
   
   
+  void UpdateActiveBehaviorGroup(Robot& robot, bool settingUpPyramid);
   
   ////////
   /// General Chooser functions
@@ -148,8 +151,10 @@ private:
   
   // These behaviors return a behavior pointer that should be choosen if they want something run
   // and nullptr if the requester should select a behavior given its own criteria
-  IBehavior* CheckForResponsePossiblyRoll(Robot& robot, const IBehavior* currentRunningBehavior);
   IBehavior* CheckForShouldThankUser(Robot& robot, const IBehavior* currentRunningBehavior);
+  IBehavior* CheckForResponsePossiblyRoll(Robot& robot, const IBehavior* currentRunningBehavior);
+  
+  void UpdateTrackerPropertiesBasedOnCurrentRunningBehavior(const IBehavior* currentRunningBehavior);
   
   
   ////////
@@ -174,15 +179,8 @@ private:
   ObjectLights GetBaseFormedStaticLightsModifier(Robot& robot,
                                                         const ObjectID& staticID,
                                                         const ObjectID& baseID) const;
-  
-  // functions that determine which animation trigger should be passed through to
-  // the reaction behavior
-  AnimationTrigger GetUprightAnimationTrigger() const;
-  AnimationTrigger GetOnSideAnimationTrigger() const;
-  void UpdateCurrentAnimationTrigger(AnimationTrigger lastSuccess);
-  
 
-
+  
 };
    
 } // namespace Cozmo

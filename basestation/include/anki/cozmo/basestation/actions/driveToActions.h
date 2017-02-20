@@ -369,7 +369,8 @@ namespace Anki {
                                 const f32 approachAngle_rad = 0,
                                 const bool useManualSpeed = false,
                                 Radians maxTurnTowardsFaceAngle_rad = 0.f,
-                                const bool sayName = false);
+                                const bool sayName = false,
+                                AnimationTrigger animBeforeDock = AnimationTrigger::Count);
       
       virtual ~DriveToPickupObjectAction() { }
       

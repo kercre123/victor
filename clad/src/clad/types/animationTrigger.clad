@@ -371,7 +371,6 @@ enum int_32 CubeAnimationTrigger
   Interacting,
   Onboarding,
   PyramidBaseBottom,
-  PyramidBaseTop,
   PyramidFlourish,
   PyramidOnSide,
   PyramidPickup,

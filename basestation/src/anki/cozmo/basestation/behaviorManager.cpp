@@ -553,9 +553,7 @@ void BehaviorManager::TryToResumeBehavior()
   {
     StopAndNullifyCurrentBehavior();
     ReactionTrigger resumingFromTrigger = ReactionTrigger::NoneTrigger;
-    if(nullptr != GetRunningAndResumeInfo().GetCurrentBehavior()){
-      resumingFromTrigger = GetRunningAndResumeInfo().GetCurrentReactionTrigger();
-    }
+    resumingFromTrigger = GetRunningAndResumeInfo().GetCurrentReactionTrigger();
     
     IBehavior* behaviorToResume = GetRunningAndResumeInfo().GetBehaviorToResume();
     const Result resumeResult = behaviorToResume->Resume(resumingFromTrigger);
