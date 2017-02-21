@@ -152,6 +152,11 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
   // note otherwise we don't delete the memory but we clear the pointer!
   DEV_ASSERT( object == _robot.GetBlockWorld().GetLocatedObjectByID(object->GetID()),
              "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForBlockWorldObjects");
+  // this method is only called for instances in the current origin, not in other origins (would not make sense to clients)
+  DEV_ASSERT( !object->HasValidPose() || (&object->GetPose().FindOrigin() == _robot.GetWorldOrigin()),
+             "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForCurrentOriginCurrent");
+  DEV_ASSERT( !ObservableObject::IsValidPoseState(newPoseState) || (&newPose.FindOrigin() == _robot.GetWorldOrigin()),
+             "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForCurrentOriginNew");
   
   // if we destroy the object we need a copy so we can notify other systems and passing all relevant parameters
   // liek family, type, new pose, objectID etc.
@@ -208,14 +213,23 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ObjectPoseConfirmer::SetPoseStateHelper(ObservableObject* object, PoseState newState)
 {
+  DEV_ASSERT( object->HasValidPose(), "ObjectPoseConfirmer.SetPoseStateHelper.CantChangePoseStateOfInvalidObjects");
+
   if ( ObservableObject::IsValidPoseState(newState) )
   {
     // do the change, store old for notification
     const PoseState oldState = object->GetPoseState();
     object->SetPoseState(newState);
-  
-    // broadcast the poseState change    
-    BroadcastObjectPoseStateChanged(*object, oldState);
+    
+    // this method can change poseStates in other origins (arguably this should not be the case, but we
+    // support it atm because we need to change other instances to Dirty when they move, etc). In that
+    // case do not notify
+    const bool isInCurOrigin = (&object->GetPose().FindOrigin() == _robot.GetWorldOrigin());
+    if ( isInCurOrigin )
+    {
+      // broadcast the poseState change
+      BroadcastObjectPoseStateChanged(*object, oldState);
+    }
   }
   else
   {
@@ -743,12 +757,15 @@ void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObservableObject& obj
     // Check: Can't set from Invalid to Invalid
     DEV_ASSERT(!newStateInvalid || !oldStateInvalid, "ObjectPoseConfirmer.BroadcastObjectPoseChanged.BothStatesAreInvalid");
     // Check: newPose valid/invalid correlates with the object instance in the world (if invalid, null object;
-    // if valid, non-null object)
+    // if valid, non-null object). This guarantees we only notify for objects in current world
     const ObservableObject* locatedObject = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
     const bool isObjectNull = (nullptr == locatedObject);
     DEV_ASSERT(newStateInvalid == isObjectNull, "ObjectPoseConfirmer.BroadcastObjectPoseChanged.PoseStateAndObjectDontMatch");
     const bool isCopy = (&object != locatedObject);
     DEV_ASSERT(newStateInvalid == isCopy, "ObjectPoseConfirmer.BroadcastObjectPoseChanged.ObjectCopyExpectedOnlyIfInvalid");
+    // we broadcast only current origin
+    DEV_ASSERT(newStateInvalid || (&object.GetPose().FindOrigin() == _robot.GetWorldOrigin()),
+              "ObjectPoseConfirmer.BroadcastObjectPoseChanged.BroadcastNotInCurrentOrigin");
   }
   #endif
 
@@ -768,7 +785,12 @@ void ObjectPoseConfirmer::BroadcastObjectPoseStateChanged(const ObservableObject
 {
   const ObjectID& objectID = object.GetID();
   const PoseState newPoseState = object.GetPoseState();
-  DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.BroadcastObjectPoseStateChanged.InvalidObjectID");
+  DEV_ASSERT(objectID.IsSet(),
+             "ObjectPoseConfirmer.BroadcastObjectPoseStateChanged.InvalidObjectID");
+  
+  // we broadcast only current origin
+  DEV_ASSERT(!object.HasValidPose() || (&object.GetPose().FindOrigin() == _robot.GetWorldOrigin()),
+             "ObjectPoseConfirmer.BroadcastObjectPoseStateChanged.BroadcastNotInCurrentOrigin");
   
   // only if it changes
   if ( oldPoseState != newPoseState )
@@ -812,7 +834,6 @@ Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject*& object)
                     "ObjectID:%d unobserved %d times, marking Unknown",
                     objectID.GetValue(), poseConf.numTimesUnobserved);
       
-      // TODO: // Evaluate Delete vs Unknown broadcasted messages
       SetPoseHelper(object, object->GetPose(), -1.f, PoseState::Invalid, "MarkObjectUnobserved");
     }
   }

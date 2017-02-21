@@ -99,7 +99,6 @@ namespace Cozmo {
       Custom            // Uses allowed/ignored sets provided using methods above
     };
     void SetOriginMode(OriginMode mode) { _originMode = mode; }
-    OriginMode GetOriginMode() const { return _originMode; }
     
   protected:
     std::set<ObjectID>             _ignoreIDs,      _allowedIDs;

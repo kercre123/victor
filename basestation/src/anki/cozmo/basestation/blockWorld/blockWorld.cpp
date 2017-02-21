@@ -1059,6 +1059,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                       newObject->GetID().GetValue(),
                       T_old.x(), T_old.y(), T_old.z(),
                       T_new.x(), T_new.y(), T_new.z());
+        
+        // we also want to keep the MOST recent objectID, rather than the one we used to have for this object, because
+        // if clients are bookkeeping IDs, the know about the new one (for example, if an action is already going
+        // to pick up that objectID, it should not change by virtue of rejiggering)
+        // Note: despite the name, oldObject is the most recent instance of this match. Thanks, Andrew.
+        newObject->CopyID( oldObject );
       }
       
       // Use all of oldObject's time bookkeeping, then update the pose and pose state
@@ -1088,8 +1094,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // Erase all the objects in the old frame now that their counterparts in the new
       // frame have had their poses updated
       // rsam: Note we don't have to call Delete since we don't clear or notify. There is no way that we could
-      // be deleting any objects during rejigger, since we bring objects to the previously known map or
+      // be deleting any objects in this origin during rejigger, since we bring objects to the previously known map or
       // override their pose. For that reason, directly remove the origin rather than calling DeleteLocatedObjectsByOrigin
+      // Note that we decide to not notify of objects that merge (passive matched by pose), because the old ID in the
+      // old origin is not in the current one.
       // DeleteLocatedObjectsByOrigin(oldOrigin);
       _locatedObjects.erase(oldOrigin);
     }
@@ -2435,6 +2443,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Is there an active object with the same activeID and type that already exists?
     BlockWorldFilter filterByActiveID;
+    filterByActiveID.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
     filterByActiveID.AddFilterFcn([activeID](const ObservableObject* object) { return object->GetActiveID() == activeID;} );
     filterByActiveID.SetAllowedTypes({objType});
     std::vector<ObservableObject*> matchingObjects;
@@ -2464,6 +2473,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             // set once
             matchObjectID = sameTypeObject->GetID();
           }
+
+          // COZMO-9663: Separate localizable property from poseState
+          _robot->GetObjectPoseConfirmer().MarkObjectDirty(sameTypeObject);
         
           // check if the instance has activeID
           if (sameTypeObject->GetActiveID() == ObservableObject::InvalidActiveID)
@@ -2662,11 +2674,19 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
     } // - families
     
-    // TODO: consider a new poseState here as "it was previously useful, but we can't trust the pose anymore since
-    // the object has disconnected and we may miss moved messages".
-    // For now, the old code used to flag as unknown, which in the new code equals to removing the objects
-    if ( removedObjectID.IsSet() ) {
-      DeleteLocatedObjectsByID(removedObjectID);
+    // We can't localize to the instances of this object anymore. We can do so by removing their activeID, which
+    // we need to do anyway. Flagging as Dirty would be optional, but see COZMO-9663
+    if ( removedObjectID.IsSet() )
+    {
+      // COZMO-9663: Separate localizable property from poseState
+      BlockWorldFilter matchingIDInAnyOrigin;
+      matchingIDInAnyOrigin.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+      matchingIDInAnyOrigin.SetAllowedIDs({removedObjectID});
+      ModifierFcn clearActiveID = [this](ObservableObject* object) {
+        object->SetActiveID(ObservableObject::InvalidActiveID);
+        object->SetFactoryID(ObservableObject::InvalidFactoryID); // should not be needed. Should we keep it?
+      };
+      ModifyLocatedObjects(clearActiveID, matchingIDInAnyOrigin);
     }
     
     // return the objectID
@@ -4670,25 +4690,23 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DeleteLocatedObjectsByFamily(const ObjectFamily family)
   {
-    // TODO what happens when we try to delete ActiveObjects? We do not remove their connected instance at the moment,
-    // is that expected from this method?
-  
     std::set<ObjectID> idsToBroadcast;
     for(auto & objectsByOrigin : _locatedObjects) {
       auto familyIter = objectsByOrigin.second.find(family);
-      if(familyIter != objectsByOrigin.second.end()) {
-        for(auto & objectsByType : familyIter->second) {
-          for(auto & objectsByID : objectsByType.second) {
-            
-            // clear object in current origin (others should not be needed)
-            const bool isCurrentOrigin = (&objectsByID.second->GetPose().FindOrigin() == _robot->GetWorldOrigin());
-            if ( isCurrentOrigin ) {
+      if(familyIter != objectsByOrigin.second.end())
+      {
+        // clear objects in current origin (others should not be needed)
+        const bool isCurrentOrigin = (objectsByOrigin.first == _robot->GetWorldOrigin());
+        if ( isCurrentOrigin ) {
+          for(auto & objectsByType : familyIter->second) {
+            for(auto & objectsByID : objectsByType.second) {
               idsToBroadcast.insert(objectsByID.first);
               ClearLocatedObjectHelper(objectsByID.second.get());
             }
           }
         }
-        //
+        
+        // remove the family
         objectsByOrigin.second.erase(familyIter);
       }
     }
@@ -4704,14 +4722,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     std::set<ObjectID> idsToBroadcast;
     for(auto & objectsByOrigin : _locatedObjects) {
+      const bool isCurrentOrigin = (objectsByOrigin.first == _robot->GetWorldOrigin());
       for(auto & objectsByFamily : objectsByOrigin.second) {
         auto typeIter = objectsByFamily.second.find(type);
         if(typeIter != objectsByFamily.second.end()) {
-          for(auto & objectsByID : typeIter->second) {
-          
-            const bool isCurrentOrigin = (&objectsByID.second->GetPose().FindOrigin() == _robot->GetWorldOrigin());
-            if ( isCurrentOrigin ) {
-              idsToBroadcast.insert(objectsByID.first); // broadcast only in current origin (per message design)
+          // broadcast only in current origin (per message design), and clear should only affect current origin objects
+          if ( isCurrentOrigin ) {
+            for(auto & objectsByID : typeIter->second) {
+              idsToBroadcast.insert(objectsByID.first);
               ClearLocatedObjectHelper(objectsByID.second.get());
             }
           }
@@ -4743,23 +4761,26 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       DEV_ASSERT(nullptr != object, "BlockWorld.DeleteLocatedObjectByID.NullObject");
       
-      // Need to do all the same cleanup as Clear() calls
-      ClearLocatedObjectHelper(object);
-      
-      // Actually delete the object we found
+      // Grab vars for this instance
       const Pose3d* origin = &object->GetPose().FindOrigin();
       ObjectFamily inFamily = object->GetFamily();
       ObjectType   withType = object->GetType();
+
+      // Clear in current origin
+      const bool isCurrentOrigin = (origin == _robot->GetWorldOrigin());
+      if ( isCurrentOrigin ) {
+        ClearLocatedObjectHelper(object);
+      }
       
-      // update existedInCurrentOrigin
-      existedInCurrentOrigin = existedInCurrentOrigin || (origin == _robot->GetWorldOrigin());
+      // Update existedInCurrentOrigin
+      existedInCurrentOrigin = existedInCurrentOrigin || isCurrentOrigin;
       
       // And remove it from the container
       // Note: we're using shared_ptr to store the objects, so erasing from
       //       the container will delete it if nothing else is referring to it
       const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
       DEV_ASSERT_MSG(numDeleted != 0,
-                     "BlockWorld.DeleteObject.NoObjectsDeleted",
+                     "BlockWorld.DeleteLocatedObjectByID.NoObjectsDeleted",
                      "Origin %p Type %s ID %u",
                      origin, EnumToString(withType), object->GetID().GetValue());
     }
@@ -4788,7 +4809,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // And remove it from the container (smart pointer will delete)
       const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
       DEV_ASSERT_MSG(numDeleted != 0,
-                     "BlockWorld.DeleteObject.NoObjectsDeleted",
+                     "BlockWorld.DeleteLocatedObjectByIDInCurOrigin.NoObjectsDeleted",
                      "Origin %p Type %s ID %u",
                      origin, EnumToString(withType), object->GetID().GetValue());
 
@@ -4818,6 +4839,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     return next;
   }
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DeselectCurrentObject()
   {
     if(_selectedObject.IsSet()) {
@@ -4842,6 +4864,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     ClearLocatedObjectHelper(object);
   }
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BlockWorld::SelectObject(const ObjectID& objectID)
   {
     ActionableObject* newSelection = dynamic_cast<ActionableObject*>(GetLocatedObjectByID(objectID));
@@ -4864,6 +4887,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
   } // SelectObject()
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::CycleSelectedObject()
   {
     if(_selectedObject.IsSet()) {
@@ -4949,6 +4973,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
   } // CycleSelectedObject()
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DrawAllObjects() const
   {
     const ObjectID& locObject = _robot->GetLocalizedTo();
@@ -5001,7 +5026,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
   } // DrawAllObjects()
   
-  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::NotifyBlockConfigurationManagerObjectPoseChanged(const ObjectID& objectID) const
   {
     _blockConfigurationManager->SetObjectPoseChanged(objectID);
