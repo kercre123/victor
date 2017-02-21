@@ -46,7 +46,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     GameObject wifiAnimations = GameObject.Instantiate(_WifiAnimationsPrefab);
     wifiAnimations.transform.SetParent(transform, false);
 
-    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Fail);
+    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Error);
 
     var persistence = DataPersistence.DataPersistenceManager.Instance;
     var lastCozmoSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
