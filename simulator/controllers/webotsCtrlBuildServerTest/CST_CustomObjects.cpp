@@ -457,9 +457,6 @@ void CST_CustomObjects::CheckPoses()
    
     for(auto & poseAndID : posesAndIDs)
     {
-      // We should not add too many cubes and get an ID too large (one should get merged in the final rejigger)
-      CST_ASSERT(poseAndID.objectID <= 5, "CST_CustomObjects.CheckPoses.CubeIDTooLarge");
-      
       CustomObject* customCube = CustomObject::CreateCube(ObjectType::CustomType00,
                                                           CustomObjectMarker::Circles2,
                                                           _cubeSize_mm,
