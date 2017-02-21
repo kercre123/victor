@@ -35,5 +35,11 @@
   },
   "boot.settings": {
     "translation": "Einstellungen"
+  },
+  "boot.appVersion": {
+    "translation": "VERSION: {0}"
+  },
+  "boot.deviceId": {
+    "translation": "GERÄTE ID: {0}"
   }
 }
