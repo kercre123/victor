@@ -103,7 +103,7 @@ bool BlockConfigurationManager::DidAnyObjectsMovePastThreshold()
     if(blockMoved == nullptr){
       // The block's pose was known at some point and has changed to unknown -
       // It may have been part of a configuration - if it was we need to rebuild the configurations
-      if(IsObjectPartOfAnyConfiguration(blockMoved->GetID())){
+      if(IsObjectPartOfAnyConfiguration(objectID)){
         anyObjectMovedPastThreshold = true;
       }
       continue;
