@@ -25,6 +25,8 @@
 #include "OkaoDtAPI.h" // Face Detection
 #include "OkaoPtAPI.h" // Face parts detection
 #include "OkaoExAPI.h" // Expression recognition
+#include "OkaoSmAPI.h" // Smile estimation
+#include "OkaoGbAPI.h" // Gaze & blink estimation
 #include "CommonDef.h"
 #include "DetectorComDef.h"
 
@@ -65,8 +67,16 @@ namespace Vision {
                                s32 numEnrollments);
 																						      
     void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
+    void EnableSmileDetection(bool enable)   { _detectSmiling = enable; }
+    void EnableGazeDetection(bool enable)    { _detectGaze    = enable; }
+    void EnableBlinkDetection(bool enable)   { _detectBlinks  = enable; }
+    
     bool IsEmotionDetectionEnabled() const   { return _detectEmotion;  }
-
+    bool IsSmileDetectionEnabled()   const   { return _detectSmiling;  }
+    bool IsGazeDetectionEnabled()    const   { return _detectGaze;     }
+    bool IsBlinkDetectionEnabled()   const   { return _detectBlinks;   }
+    
+    
     Result   AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
@@ -93,10 +103,19 @@ namespace Vision {
     Result EstimateExpression(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                               TrackedFace& face);
   
+    Result DetectSmile(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                       Vision::TrackedFace& face);
+    
+    Result DetectGazeAndBlink(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                              Vision::TrackedFace& face);
+  
     bool IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face);
     
     bool _isInitialized = false;
     bool _detectEmotion = false;
+    bool _detectSmiling = false;
+    bool _detectGaze    = false;
+    bool _detectBlinks  = false;
     
     Json::Value _config;
     
@@ -117,6 +136,10 @@ namespace Vision {
     HPTRESULT   _okaoPartDetectionResultHandle2 = NULL;
     HEXPRESSION _okaoEstimateExpressionHandle   = NULL;
     HEXPRESSION _okaoExpressionResultHandle     = NULL;
+    HSMILE      _okaoSmileDetectHandle          = NULL;
+    HSMRESULT   _okaoSmileResultHandle          = NULL;
+    HGAZEBLINK  _okaoGazeBlinkDetectHandle      = NULL;
+    HGBRESULT   _okaoGazeBlinkResultHandle      = NULL;
     
     // Space for detected face parts / expressions
     POINT _facialParts[PT_POINT_KIND_MAX];

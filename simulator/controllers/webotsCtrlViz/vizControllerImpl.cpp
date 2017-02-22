@@ -65,6 +65,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizVisionMarkerMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraQuad,
     std::bind(&VizControllerImpl::ProcessVizCameraQuadMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::CameraRect,
+    std::bind(&VizControllerImpl::ProcessVizCameraRectMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraLine,
     std::bind(&VizControllerImpl::ProcessVizCameraLineMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraOval,
@@ -276,6 +278,8 @@ static inline void SetColorHelper(webots::Display* disp, u32 ankiColor)
   if(alpha < 0xff) {
     static const float oneOver255 = 1.f / 255.f;
     disp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+  } else {
+    disp->setAlpha(1.f); // need to restore alpha to 1.0 in case it was lowered from a previous call
   }
 }
   
@@ -400,6 +404,21 @@ void VizControllerImpl::ProcessVizCameraQuadMessage(const AnkiEvent<VizInterface
     SetColorHelper(_camDisp, payload.topColor);
   }
   _camDisp->drawLine((int)payload.xUpperRight, (int)payload.yUpperRight, (int)payload.xUpperLeft, (int)payload.yUpperLeft);
+}
+  
+void VizControllerImpl::ProcessVizCameraRectMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_CameraRect();
+  
+  SetColorHelper(_camDisp, payload.color);
+  if(payload.filled)
+  {
+    _camDisp->fillRectangle(payload.x, payload.y, payload.width, payload.height);
+  }
+  else
+  {
+    _camDisp->drawRectangle(payload.x, payload.y, payload.width, payload.height);
+  }
 }
 
 void VizControllerImpl::ProcessVizCameraLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg)

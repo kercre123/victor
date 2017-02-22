@@ -15,6 +15,7 @@
 #include "clad/types/deviceDataTypes.clad"
 #include "clad/types/engineErrorCodes.clad"
 #include "clad/types/engineState.clad"
+#include "clad/types/faceDetectionMetaData.clad"
 #include "clad/types/faceEnrollmentResult.clad"
 #include "clad/types/facialExpressions.clad"
 #include "clad/types/factoryTestTypes.clad"
@@ -285,7 +286,13 @@ message RobotObservedFace {
     CladRect      img_rect,       // position in image coords
     string        name,           // Empty if none assigned yet
 
-    Vision::FacialExpression expression,
+    Vision::FacialExpression  expression,
+    Vision::SmileAmount       smileAmount,
+    Vision::Gaze              gaze,
+    Vision::BlinkAmount       blinkAmount,
+
+    // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
+    uint_8        expressionValues[5], // One value for each of FacialExpression::Count enum types
 
     // Face landmarks
     CladPoint2d   leftEye[uint_8],
