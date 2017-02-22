@@ -29,7 +29,7 @@ public static class CozmoBinding {
 
   private static bool initialized = false;
 
-  public static Guid AppRunId = Guid.NewGuid();
+  public static Guid AppRunId = GetAppRunId();
 
   #if UNITY_IOS || UNITY_STANDALONE
 
@@ -104,9 +104,6 @@ public static class CozmoBinding {
 
     AnkiResult result = AnkiResult.RESULT_OK;
     #if !UNITY_EDITOR && !UNITY_STANDALONE
-    #if UNITY_ANDROID
-    new AndroidJavaClass("java.lang.System").CallStatic("loadLibrary", "DAS");
-    #endif
     Profiler.BeginSample ("CozmoBinding.cozmo_startup");
     result = (AnkiResult)CozmoBinding.cozmo_startup (configurationData.ToString());
     Profiler.EndSample ();
@@ -202,4 +199,11 @@ public static class CozmoBinding {
   }
   #endif
 
+  private static Guid GetAppRunId() {
+    #if UNITY_ANDROID && !UNITY_EDITOR
+    return new Guid(GetCurrentActivity().GetStatic<string>("APP_RUN_ID"));
+    #else
+    return Guid.NewGuid();
+    #endif
+  }
 }

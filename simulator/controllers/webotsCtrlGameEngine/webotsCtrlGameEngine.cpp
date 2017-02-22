@@ -253,12 +253,13 @@ int main(int argc, char **argv)
   //
   // Main Execution loop: step the world forward forever
   //
-  auto tick_start = std::chrono::system_clock::now();
+  auto tick_start = std::chrono::steady_clock::now();
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
     stopWatch.Start();
 
-    myCozmo.Update(basestationController.getTime());
+    double currTimeNanoseconds = Util::SecToNanoSec(basestationController.getTime());
+    myCozmo.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
 
     double timeMS = stopWatch.Stop();
 
@@ -270,7 +271,7 @@ int main(int argc, char **argv)
     }
     
     if (sleepUntilEndOfTicField) {
-      auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tick_start);
+      auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::steady_clock::now() - tick_start);
       
       // ms_left is almost always negative when connected to a sim robot. The amount of time that step() takes depends
       // on what all controllers in the sim world are doing so this while loop usually takes more than 60 real milliseconds per iteration.
@@ -285,7 +286,7 @@ int main(int argc, char **argv)
       std::this_thread::sleep_for(ms_left);
     }
 
-    tick_start = std::chrono::system_clock::now();
+    tick_start = std::chrono::steady_clock::now();
     
   } // while still stepping
 #if ANKI_DEV_CHEATS

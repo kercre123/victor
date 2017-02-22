@@ -283,14 +283,14 @@ namespace Anki {
       _wasJustReset = true;
     }
     
-    ActionResult CompoundActionSequential::MoveToNextAction(double currentTime)
+    ActionResult CompoundActionSequential::MoveToNextAction(float currentTime_secs)
     {
       ActionResult subResult = ActionResult::SUCCESS;
       
       if(_delayBetweenActionsInSeconds > 0.f) {
         // If there's a delay specified, figure out how long we need to
         // wait from now to start next action
-        _waitUntilTime = currentTime + _delayBetweenActionsInSeconds;
+        _waitUntilTime = currentTime_secs + _delayBetweenActionsInSeconds;
       }
       
       // Store this actions completion union and delete _currentActionPair
@@ -302,7 +302,7 @@ namespace Anki {
           RunCallbacks(ActionResult::SUCCESS);
         }
         return ActionResult::SUCCESS;
-      } else if(currentTime >= _waitUntilTime) {
+      } else if(currentTime_secs >= _waitUntilTime) {
         PRINT_NAMED_INFO("CompoundActionSequential.Update.NextAction",
                          "Moving to action %s [%d]",
                          (*_currentAction)->GetName().c_str(),
@@ -367,8 +367,8 @@ namespace Anki {
         // If the compound action is suppressing track locking then the constituent actions should too
         (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
         
-        double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
+        const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        if(_waitUntilTime < 0.0f || currentTime >= _waitUntilTime)
         {
           ActionResult subResult = (*_currentAction)->Update();
           SetStatus((*_currentAction)->GetStatus());

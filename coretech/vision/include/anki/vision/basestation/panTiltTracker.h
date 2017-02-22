@@ -74,7 +74,7 @@ namespace Anki {
         s32 yCen;
         s32 height;
         
-        u32 timeoutTime_ms;
+        u32 timeoutTime_ms = 0;
         
         void Set(s32 x, s32 y, s32 h);
       };

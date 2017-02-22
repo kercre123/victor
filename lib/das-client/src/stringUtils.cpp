@@ -55,6 +55,48 @@ std::string StringFromContentsOfFile(const std::string &filename)
   return "";
 }
 
+bool StoreStringInFile(const std::string& fileName, const std::string& body)
+{
+  bool success = false;
+  std::ofstream fileOut;
+  fileOut.open(fileName, std::ios::out | std::ofstream::binary);
+  if( fileOut.is_open() ) {
+    copy(body.begin(), body.end(), std::ostreambuf_iterator<char>(fileOut));
+    fileOut.close();
+    success = true;
+  }
+  return success;
+}
+
+bool StoreStringMapInFile(const std::string& fileName, const std::map<std::string,std::string> &stringMap)
+{
+  std::string jsonString = StringMapToPrettyJson(stringMap);
+  return StoreStringInFile(fileName, jsonString);
+}
+
+std::map<std::string, std::string> JsonFileToStringMap(const std::string& fileName)
+{
+  std::string jsonString = StringFromContentsOfFile(fileName);
+  return JsonToStringMap(jsonString);
+}
+
+std::map<std::string,std::string> JsonToStringMap(const std::string &jsonString)
+{
+  std::map<std::string,std::string> stringMap;
+
+  DASClient::Json::Value root;
+  DASClient::Json::Reader reader;
+  bool parsingSuccessful = reader.parse(jsonString, root);
+  if(parsingSuccessful) {
+    for (auto const& id : root.getMemberNames()) {
+      stringMap[id] = root[id].asString();
+    }
+  }
+
+  return stringMap;
+}
+
+
 std::string StringMapToJson(const std::map<std::string,std::string> &stringMap)
 {
   DASClient::Json::Value root;
@@ -65,6 +107,20 @@ std::string StringMapToJson(const std::map<std::string,std::string> &stringMap)
 
   DASClient::Json::FastWriter writer;
   writer.omitEndingLineFeed();
+  std::string outputJson = writer.write(root);
+
+  return outputJson;
+}
+
+std::string StringMapToPrettyJson(const std::map<std::string,std::string> &stringMap)
+{
+  DASClient::Json::Value root;
+
+  for (auto const& kv : stringMap) {
+    root[kv.first] = kv.second;
+  }
+
+  DASClient::Json::StyledWriter writer;
   std::string outputJson = writer.write(root);
 
   return outputJson;

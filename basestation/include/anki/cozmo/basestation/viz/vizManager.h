@@ -234,6 +234,10 @@ namespace Anki {
                           const ColorRGBA& color,
                           const ColorRGBA& topColor);
       
+      // Draw a rectangle in the camera display
+      template<typename T>
+      void DrawCameraRect(const Rectangle<T>& rect, const ColorRGBA& color, bool filled = false);
+      
       // Draw a line segment in the camera display
       void DrawCameraLine(const Point2f& start,
                           const Point2f& end,
@@ -580,6 +584,20 @@ namespace Anki {
       v.color = (uint32_t)color;
       v.topColor = (uint32_t)topColor;
       SendMessage(VizInterface::MessageViz(std::move(v)));
+    }
+    
+    template<typename T>
+    void VizManager::DrawCameraRect(const Rectangle<T>& rect, const ColorRGBA& color, bool filled)
+    {
+      VizInterface::CameraRect msg{
+        (uint32_t)color,
+        static_cast<float>(rect.GetX()),
+        static_cast<float>(rect.GetY()),
+        static_cast<float>(rect.GetWidth()),
+        static_cast<float>(rect.GetHeight()),
+        filled,
+      };
+      SendMessage(VizInterface::MessageViz(std::move(msg)));
     }
     
     template<typename T>

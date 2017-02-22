@@ -5,10 +5,11 @@
 namespace Anki {
 namespace Vision {
 
-enum uint_8 FacialExpression 
+enum int_8 FacialExpression
 {
-		Unknown = 0,    // e.g. expression estimation disabled
-		Neutral,
+		Unknown = -1,    // e.g. expression estimation disabled
+
+		Neutral = 0,
 		Happiness,
 		Surprise,
 		Anger,

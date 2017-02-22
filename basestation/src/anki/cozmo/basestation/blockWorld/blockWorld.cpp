@@ -1335,7 +1335,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::BroadcastNavMemoryMap()
   {
-    if ( _memoryMapBroadcastRate_sec >= 0.0f )
+    if (_memoryMapBroadcastRate_sec >= 0.0f)
     {
       const float currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       if (FLT_GT(_nextMemoryMapBroadcastTimeStamp, currentTimeInSeconds)) {

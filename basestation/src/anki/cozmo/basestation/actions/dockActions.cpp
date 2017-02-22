@@ -426,7 +426,7 @@ namespace Anki {
 
     ActionResult IDockAction::Init()
     {
-      _waitToVerifyTime = -1.f;
+      _waitToVerifyTimeSecs = -1.f;
 
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_dockObjectID));
       
@@ -483,7 +483,7 @@ namespace Anki {
             PRINT_CH_INFO("Actions", "IDockAction.MovingLiftPostDockHandler",
                           "Playing animation %s ",
                           EnumToString(_liftMovingAnimation));
-            IActionRunner* animAction = new TriggerAnimationAction(_robot, _liftMovingAnimation, 1, false);
+            IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_robot, _liftMovingAnimation, 1, false);
             animAction->ShouldEmitCompletionSignal(false);
             _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
           } else {
@@ -684,12 +684,12 @@ namespace Anki {
         
         // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
         if (_robot.GetMoveComponent().IsHeadMoving()) {
-          _waitToVerifyTime = -1;
+          _waitToVerifyTimeSecs = -1;
         }
         
         // Set the verification time if not already set
-        if(_waitToVerifyTime < 0.f) {
-          _waitToVerifyTime = currentTime + GetVerifyDelayInSeconds();
+        if(_waitToVerifyTimeSecs < 0.f) {
+          _waitToVerifyTimeSecs = currentTime + GetVerifyDelayInSeconds();
         }
         
         // Stopped executing docking path, and should have backed out by now,
@@ -697,7 +697,7 @@ namespace Anki {
         // picked up from. So we will check if we see a block with the same
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
-        if(currentTime >= _waitToVerifyTime) {
+        if(currentTime >= _waitToVerifyTimeSecs) {
           //PRINT_CH_INFO("Actions", "IDockAction.CheckIfDone",
           //              "Robot has stopped moving and picking/placing. Will attempt to verify success.");
           

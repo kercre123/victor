@@ -76,7 +76,7 @@ namespace Cozmo.Settings {
     private string SecondsToDateTimeString(float inSeconds) {
       TimeSpan timespan = TimeSpan.FromSeconds(inSeconds);
       // Displays as [-][d:]h:mm:ss[.FFFFFFF], but culturally sensitive
-      return string.Format(Localization.GetCultureInfo(), "0:g", timespan);
+      return string.Format(Localization.GetCultureInfo(), "{0:g}", timespan);
     }
 
     private void HandleShowScreenButtonTapped() {

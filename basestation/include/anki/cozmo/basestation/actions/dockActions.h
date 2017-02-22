@@ -210,7 +210,7 @@ namespace Anki {
       const Vision::KnownMarker* _dockMarker                     = nullptr;
       const Vision::KnownMarker* _dockMarker2                    = nullptr;
       Radians                    _preActionPoseAngleTolerance    = DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE;
-      f32                        _waitToVerifyTime               = -1;
+      f32                        _waitToVerifyTimeSecs           = -1.0f;
       bool                       _wasPickingOrPlacing            = false;
       bool                       _useManualSpeed                 = false;
       UniqueCompoundPtr          _faceAndVerifyAction            = nullptr;

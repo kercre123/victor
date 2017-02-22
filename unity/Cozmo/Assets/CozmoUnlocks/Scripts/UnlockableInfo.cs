@@ -27,7 +27,17 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   [SerializeField, Tooltip("Will never leave the 'locked' state and is never shown in the UI")]
   private bool _HideInUI;
 
-  public bool NeverAvailable { get { return _ComingSoon || _HideInUI; } }
+  public bool NeverAvailable {
+    get {
+      // If a featuregate can block it ever showing up if it has the same name as the unlockable
+      if (FeatureGate.Instance.FeatureMap.ContainsKey(Id.Value.ToString().ToLower())) {
+        if (!FeatureGate.Instance.IsFeatureEnabled(Id.Value.ToString().ToLower())) {
+          return true;
+        }
+      }
+      return _ComingSoon || _HideInUI;
+    }
+  }
 
   public string DescriptionKey;
 

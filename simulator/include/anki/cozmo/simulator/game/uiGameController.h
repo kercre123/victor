@@ -396,6 +396,24 @@ protected:
   void SetLightCubePose(int lightCubeId, const Pose3d& pose);
   bool HasActualLightCubePose(int lightCubeId) const;
   
+  ///
+  // @brief      Iterates through _lightCubes and removes the one of the given ObjectType
+  //             (should be unique).
+  // @param[in]  type  Cube ObjectType
+  // @return     Whether or not it was successfully removed
+  //
+  bool RemoveLightCubeByType(ObjectType type);
+  
+  ///
+  // @brief      Adds a cube of the given ObjectType if doesn't already exist
+  //             (should be unique).
+  // @param[in]  type   Cube ObjectType
+  // @return     Whether or not it was successfully added
+  //
+  bool AddLightCubeByType(ObjectType type, const Pose3d& p);
+
+  
+  
   static size_t MakeWordAligned(size_t size);
   const std::string GetAnimationTestName() const;
   const double GetSupervisorTime() const;
@@ -441,13 +459,6 @@ protected:
   //
   void SendApplyForce(const std::string& defName, int xForce, int yForce, int zForce);
   
-  ///
-  // @brief      Iterates through _lightCubes and returns the first light cube with the given ID
-  //             (should be unique).
-  // @param[in]  id    The identifier
-  // @return     The webots node for the light cube.
-  //
-  webots::Node* GetLightCubeById(int lightCubeId) const;
   
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
@@ -482,6 +493,14 @@ private:
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
+  
+  ///
+  // @brief      Iterates through _lightCubes and returns the first light cube with the given ID
+  //             (should be unique).
+  // @param[in]  id    The identifier
+  // @return     The webots node for the light cube.
+  //
+  webots::Node* GetLightCubeById(int lightCubeId) const;
   
   const f32 TIME_UNTIL_READY_SEC = 1.5;
   

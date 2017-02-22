@@ -37,7 +37,11 @@ public:
               ThreadId_t threadId, const char* file, const char* funct, int line,
               const std::map<std::string,std::string>* globals,
               const std::map<std::string,std::string>& data);
-  
+  void append(DASLogLevel level, const char* eventName, const char* eventValue,
+              const std::map<std::string,std::string>& data) {
+    append(level, eventName, eventValue, 0, nullptr, nullptr, 0, nullptr, data);
+  }
+
   void ForceFlush();
   void ForceFlushWithCallback(const DASFlushCallback& completionBlock);
   

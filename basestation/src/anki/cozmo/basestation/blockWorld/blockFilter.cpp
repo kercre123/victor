@@ -36,10 +36,10 @@ constexpr std::array<ObjectType, 4> BlockFilter::kObjectTypes;
 BlockFilter::BlockFilter(Robot* inRobot, IExternalInterface* externalInterface)
   : _robot(inRobot)
   , _path()
-  , _maxDiscoveryTime(0)
-  , _enabledTime(0)
-  , _discoveredCompletedTime(0)
-  , _lastConnectivityCheckTime(0)
+  , _maxDiscoveryTime(0.0f)
+  , _enabledTime(0.0f)
+  , _discoveredCompletedTime(0.0f)
+  , _lastConnectivityCheckTime(0.0f)
   , _enabled(false)
   , _externalInterface(externalInterface)
 {
@@ -72,8 +72,8 @@ void BlockFilter::Update()
   }
   
   // Check connectivity only every once in a while
-  double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if ((_lastConnectivityCheckTime > 0) && (currentTime < (_lastConnectivityCheckTime + kConnectivityCheckDelay))) {
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if ((_lastConnectivityCheckTime > 0.0f) && (currentTime < (_lastConnectivityCheckTime + kConnectivityCheckDelay))) {
     return;
   }
   
@@ -104,7 +104,7 @@ void BlockFilter::UpdateDiscovering()
   }
 
   // If the discovery phase is over, then connect to the objects we found
-  double time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if ((time >= (_enabledTime + _maxDiscoveryTime)) && (_discoveryPool.size() > 0))
   {
     PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateDiscovering", "Connecting to discovered objects");
@@ -369,8 +369,9 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
 
       _maxDiscoveryTime = msg.discoveryTimeSecs;
       _enabled = msg.enabled;
-      _enabledTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      _discoveredCompletedTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _enabledTime = currTime;
+      _discoveredCompletedTime = currTime;
       
       break;
     }

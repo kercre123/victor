@@ -71,6 +71,7 @@
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
+          '-DNO_LOCALE_SUPPORT=1',
           '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
           '-fpic',
           '-ffunction-sections',
@@ -155,6 +156,8 @@
         'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
         'ALWAYS_SEARCH_USER_PATHS': 'NO',
         'DYLIB_INSTALL_NAME_BASE': '@loader_path',
+        'ENABLE_BITCODE': 'NO',
+        'SKIP_INSTALL': 'YES',
     },
     'configurations': {
       'Debug': {

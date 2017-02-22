@@ -36,7 +36,7 @@ void RandomGenerator::SetSeed(const std::string& who, uint32_t seed)
   }
 }
   
-double RandomGenerator::GetNextDbl()
+double RandomGenerator::GetNextDbl() const
 {
   double r = uniDbl(rng);
 
@@ -46,7 +46,7 @@ double RandomGenerator::GetNextDbl()
 // Return a random floating point number in the range [0,maxVal).  This is much
 // better than any sort of mod-based rand because that only focuses on the lower
 // bits which are not as random as the higher bits.
-double RandomGenerator::RandDbl(double maxVal) 
+double RandomGenerator::RandDbl(double maxVal) const
 {
   return maxVal * GetNextDbl();
 }

@@ -121,7 +121,7 @@ namespace Anki {
       
       virtual ActionResult UpdateInternal() override final;
       
-      ActionResult MoveToNextAction(double currentTime);
+      ActionResult MoveToNextAction(float currentTime_secs);
       
       f32 _delayBetweenActionsInSeconds;
       f32 _waitUntilTime;

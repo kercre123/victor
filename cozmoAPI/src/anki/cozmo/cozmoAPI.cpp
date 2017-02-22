@@ -78,7 +78,7 @@ bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& 
 ANKI_CPU_PROFILER_ENABLED_ONLY(const float kMaxDesiredEngineDuration = 60.0f); // Above this warn etc.
 
 
-bool CozmoAPI::Update(const double currentTime_sec)
+bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
 {
   // If we have a joinable thread already, shouldn't be updating
   if (_cozmoRunnerThread.joinable())
@@ -95,7 +95,7 @@ bool CozmoAPI::Update(const double currentTime_sec)
   
   ANKI_CPU_TICK("CozmoEngineWebots", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
   
-  return _cozmoRunner->Update(currentTime_sec);
+  return _cozmoRunner->Update(currentTime_nanosec);
 }
 
 size_t CozmoAPI::SendMessages(uint8_t* buffer, size_t bufferSize)
@@ -187,25 +187,27 @@ CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
 
 void CozmoAPI::CozmoInstanceRunner::Run()
 {
-  auto runStart = std::chrono::system_clock::now();
+  using TimeClock = std::chrono::steady_clock;
+  auto runStart = TimeClock::now();
 
   while(_isRunning)
   {
     ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
     
-    auto tickStart = std::chrono::system_clock::now();
+    auto tickStart = TimeClock::now();
 
     std::chrono::duration<double> timeSeconds = tickStart - runStart;
+    double timeNanoseconds = Util::SecToNanoSec(timeSeconds.count());
 
     // If we fail to update properly stop running
-    if (!Update(timeSeconds.count()))
+    if (!Update(Util::numeric_cast<BaseStationTime_t>(timeNanoseconds)))
     {
       Stop();
     }
     
     const auto minimumSleepTimeMs = std::chrono::milliseconds( (long)(BS_TIME_STEP * 0.2) ); // 60 * 0.2 = 12 milliseconds!?
     
-    auto tickNow = std::chrono::system_clock::now();
+    auto tickNow = TimeClock::now();
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
     if (ms_left < std::chrono::milliseconds(0))
     {
@@ -228,9 +230,9 @@ void CozmoAPI::CozmoInstanceRunner::Run()
   }
 }
 
-bool CozmoAPI::CozmoInstanceRunner::Update(const double currentTime_sec)
+bool CozmoAPI::CozmoInstanceRunner::Update(const BaseStationTime_t currentTime_nanosec)
 {
-  Result updateResult = _cozmoInstance->Update(static_cast<float>(currentTime_sec));
+  Result updateResult = _cozmoInstance->Update(currentTime_nanosec);
   if (updateResult != RESULT_OK) {
     PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner.Update", "Cozmo update failed with error %d", updateResult);
   }

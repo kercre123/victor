@@ -42,6 +42,7 @@ public:
   void Wake(std::function<void()> task);
   void WakeSync(std::function<void()> task);
   void WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::system_clock> when);
+  void StopExecution();
 protected:
   TaskExecutor(const TaskExecutor&) = delete;
   TaskExecutor& operator=(const TaskExecutor&) = delete;

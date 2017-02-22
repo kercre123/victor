@@ -118,8 +118,8 @@ CONSOLE_VAR(bool, kDoProgressiveThresholdAdjustOnSuspiciousCliff, "Robot", true)
 
 // timeToConsiderOfftreads is tuned based on the fact that we have to wait half a second from the time the cliff sensor detects
 // ground to when the robot state message updates to the fact that it is no longer picked up
-static const float kRobotTimeToConsiderOfftreads_ms = 250.0f;
-static const float kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 3.0f;
+static const TimeStamp_t kRobotTimeToConsiderOfftreads_ms = 250;
+static const TimeStamp_t kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 3;
 
 // Laying flat angles
 static const float kPitchAngleOntreads_rads = DEG_TO_RAD(0);
@@ -131,8 +131,8 @@ static const float kPitchAngleOnBack_sim_rads = DEG_TO_RAD(96.4f);
 static const float kPitchAngleOnBackTolerance_deg = 15.0f;
 
 //Constants for on side
-static const float kOnLeftSide_rawYAccel = -9000.0;
-static const float kOnRightSide_rawYAccel = 10500.0;
+static const float kOnLeftSide_rawYAccel = -9000.0f;
+static const float kOnRightSide_rawYAccel = 10500.0f;
 static const float kOnSideTolerance_rawYAccel =3000.0f;
 
 // On face angles
@@ -553,7 +553,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   
   const bool isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   const bool isFalling = IS_STATUS_FLAG_SET(IS_FALLING);
-  TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   //////////
   // Check the robot's orientation
@@ -1404,14 +1404,14 @@ Result Robot::Update()
 {
   ANKI_CPU_PROFILE("Robot::Update");
   
-  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   _robotIdleTimeoutComponent->Update(currentTime);
   
   // Check for syncTimeAck taking too long to arrive
-  if (_syncTimeSentTime_sec > 0 && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
+  if (_syncTimeSentTime_sec > 0.0f && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
     PRINT_NAMED_WARNING("Robot.Update.SyncTimeAckNotReceived", "");
-    _syncTimeSentTime_sec = 0;
+    _syncTimeSentTime_sec = 0.0f;
   }
   
   if (!_gotStateMsgAfterTimeSync)
@@ -1427,12 +1427,12 @@ Result Robot::Update()
   GetContext()->GetVizManager()->SendStartRobotUpdate();
       
   /* DEBUG
-     const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-     static double lastUpdateTime = currentTime_sec;
+     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+     static float lastUpdateTime = currentTime_sec;
        
-     const double updateTimeDiff = currentTime_sec - lastUpdateTime;
-     if(updateTimeDiff > 1.0) {
-     PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
+     const float updateTimeDiff = currentTime_sec - lastUpdateTime;
+     if(updateTimeDiff > 1.0f) {
+       PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
      }
      lastUpdateTime = currentTime_sec;
   */
@@ -1829,7 +1829,7 @@ Result Robot::Update()
   GetContext()->GetVizManager()->SendEndRobotUpdate();
 
   // update time since last image received
-  _timeSinceLastImage_s = std::max(0.0, currentTime - _robotToEngineImplMessaging->GetLastImageReceivedTime()); 
+  _timeSinceLastImage_s = std::max(0.0, currentTime - _robotToEngineImplMessaging->GetLastImageReceivedTime());
       
   // Sending debug string to game and viz
   char buffer [128];
@@ -3949,7 +3949,7 @@ void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, Obje
   RemoveDiscoveredObjects(factoryID);
   
   _connectedObjects[activeID].connectionState = ActiveObjectInfo::ConnectionState::Connected;
-  _connectedObjects[activeID].lastDisconnectionTime = 0;
+  _connectedObjects[activeID].lastDisconnectionTime = 0.0f;
 }
 
 void Robot::HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType)
@@ -4102,8 +4102,8 @@ void Robot::CheckDisconnectedObjects()
 {
   // Check for objects that have been disconnected long enough to consider them gone. Note the object has to be in
   // the Disconnected state which is the state we get when the disconnection wasn't requested.
-  double time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if ((_lastDiconnectedCheckTime <= 0) || (time >= (_lastDiconnectedCheckTime + kDiconnectedCheckDelay)))
+  const float time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if ((_lastDiconnectedCheckTime <= 0.0f) || (time >= (_lastDiconnectedCheckTime + kDiconnectedCheckDelay)))
   {
     for (int i = 0; i < _connectedObjects.size(); ++i)
     {
@@ -4494,7 +4494,7 @@ void Robot::ActiveObjectInfo::Reset()
   connectionState = ConnectionState::Invalid;
   rssi = 0;
   lastDiscoveredTimeStamp = 0;
-  lastDisconnectionTime = 0;
+  lastDisconnectionTime = 0.0f;
 }
 
 } // namespace Cozmo

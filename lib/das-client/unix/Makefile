@@ -11,7 +11,8 @@ DAS_SRC_FILES := \
 	$(DAS_SRC_DIR)/dasLogFileAppender.cpp \
 	$(DAS_SRC_DIR)/dasGameLogAppender.cpp \
 	$(DAS_SRC_DIR)/dasFilter.cpp \
-	dasLocalAppender.cpp \
+	dasLocalAppenderImpl.cpp \
+	dasLocalAppenderFactory.cpp \
 	dasPostToServer.cpp \
 	$(DAS_SRC_DIR)/stringUtils.cpp \
 	$(DAS_SRC_DIR)/fileUtils.cpp \
@@ -36,7 +37,7 @@ CXXFLAGS += -Wno-return-type-c-linkage
 CXXFLAGS += -Wno-tautological-compare
 CXXFLAGS += -Wno-parentheses-equality
 CXXFLAGS += -Wno-static-in-inline
-CXXFLAGS += -std=gnu++11
+CXXFLAGS += -std=c++14
 CXXFLAGS += -pthread
 
 # Flags passed to the preprocessor.

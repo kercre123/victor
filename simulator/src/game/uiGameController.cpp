@@ -2088,6 +2088,55 @@ namespace Anki {
                      "Can't find the light cube with id %d in the world", lightCubeId);
       return nullptr;
     }
+    
+    bool UiGameController::RemoveLightCubeByType(ObjectType type)
+    {
+      int proto_type = static_cast<int>(type) - 1;
+      for (auto it = _lightCubes.begin(); it != _lightCubes.end(); ++it) {
+        webots::Field* id = (*it)->getField("ID");
+        if (id && id->getSFInt32() == proto_type) {
+          (*it)->remove();
+          _lightCubes.erase(it);
+          return true;
+        }
+      }
+      
+      DEV_ASSERT_MSG(false, "UiGameController.RemoveLightCubeById",
+                     "Can't find the light cube of ObjectType %d in the world", proto_type);
+      return false;
+
+    }
+    
+    bool UiGameController::AddLightCubeByType(ObjectType type, const Pose3d& p)
+    {
+      // Check if world already has a light cube with that ID
+      int proto_type = static_cast<int>(type) - 1;
+      for (auto lightCube : _lightCubes) {
+        webots::Field* id = lightCube->getField("ID");
+        if (id && id->getSFInt32() == proto_type) {
+          PRINT_NAMED_WARNING("UiGameController.AddLightCubeByType.ObjectTypeAlreadyExists", "%d", type);
+          return false;
+        }
+      }
+      
+      //
+      std::stringstream ss;
+      ss << "LightCube { "
+      << " ID " << proto_type
+      << " translation "
+      << 0.001f * p.GetTranslation().x() << " "
+      << 0.001f * p.GetTranslation().y() << " "
+      << 0.001f * p.GetTranslation().z() << " "
+      << " rotation "
+      << p.GetRotationAxis().x() << " " << p.GetRotationAxis().y() << " " << p.GetRotationAxis().z() << " "
+      << p.GetRotationAngle().ToFloat() << " }";
+      
+      webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
+      int numRootChildren = rootChildren->getCount();
+      rootChildren->importMFNodeFromString(numRootChildren, ss.str());
+      
+      return true;
+    }
 
     const double UiGameController::GetSupervisorTime() const
     {

@@ -8,7 +8,10 @@
     "DetectingMotion"            : true,
     "DetectingOverheadEdges"     : true,
     "CheckingQuality"            : true,
-    "EstimatingFacialExpression" : false
+    "EstimatingFacialExpression" : false,
+    "DetectingSmileAmount"       : false,
+    "DetectingGaze"              : false,
+    "DetectingBlinkAmount"       : false
   },
   
   "InitialModeSchedules" :

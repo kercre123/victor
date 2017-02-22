@@ -103,6 +103,14 @@ Java_com_anki_cozmoengine_Standalone_stopCozmoEngine(JNIEnv* env,
   cozmo_shutdown();
 }
 
+JNIEXPORT void JNICALL
+Java_com_anki_cozmo_CozmoActivity_installBreakpad(JNIEnv* env, jclass thiz, jstring jpath)
+{
+  const char* path = env->GetStringUTFChars(jpath, nullptr);
+  Anki::Cozmo::AndroidBinding::InstallGoogleBreakpad(path);
+  env->ReleaseStringUTFChars(jpath, path);
+}
+
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
   Anki::Util::JNIUtils::SetJvm(vm);

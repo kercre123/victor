@@ -100,7 +100,7 @@ bool IAIGoalStrategy::WantsToStart(const Robot& robot, float lastTimeGoalRanSec,
     // prevent it from thrashing back and forth failing (when there are no behaviors to run) over and over,
     // but also won't trigger the potentially much longer normal cooldown for when the goal actually runs
     const float lastGoalRanDurationSecs = lastTimeGoalRanSec - lastTimeGoalStartedSec;
-    const float twoTicsSecs = 2*BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds();
+    const float twoTicsSecs = 2.0f * BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds();
     const bool lastRunWasVeryShort = lastGoalRanDurationSecs <= twoTicsSecs;
     
     const float cooldownSecs = lastRunWasVeryShort ? kShortFailureCooldownSecs : _cooldownSecs;

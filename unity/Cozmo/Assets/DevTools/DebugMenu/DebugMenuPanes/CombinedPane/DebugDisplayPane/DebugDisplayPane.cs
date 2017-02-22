@@ -39,6 +39,10 @@ public class DebugDisplayPane : MonoBehaviour {
   [SerializeField]
   private Text _ActiveVariantText;
 
+  [SerializeField]
+  private Button _LoadWebViewButton;
+  private GameObject _WebViewObject;
+
   private void Start() {
 
     _ToggleDebugStringButton.onClick.AddListener(HandleToggleDebugString);
@@ -55,12 +59,20 @@ public class DebugDisplayPane : MonoBehaviour {
     _ActiveVariantText.text = Screen.currentResolution + "\n" + Anki.Assets.AssetBundleManager.Instance.ActiveVariantsToString();
     FillKnownDeviceDataInformation();
 
+    _LoadWebViewButton.onClick.AddListener(HandleLoadWebView);
+
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
     RobotEngineManager.Instance.SendRequestDeviceData();
   }
 
   private void OnDestroy() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
+
+    if (_WebViewObject != null)
+    {
+      GameObject.Destroy(_WebViewObject);
+      _WebViewObject = null;
+    }
   }
 
   private void HandleToggleDebugStringType(bool check) {
@@ -149,4 +161,39 @@ public class DebugDisplayPane : MonoBehaviour {
   }
 #endif
 
+  private void HandleLoadWebView()
+  {
+    if (_WebViewObject == null)
+    {
+      _WebViewObject = new GameObject("WebView", typeof(WebViewObject));
+      WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+      webViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
+
+#if UNITY_EDITOR
+      string indexFile = Application.streamingAssetsPath + "/Scratch/index.html";
+#else
+      string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
+#endif
+
+      Debug.Log("Index file = " + indexFile);
+      webViewObjectComponent.LoadURL(indexFile);
+    }
+  }
+
+  private void WebViewCallback(string text)
+  {
+    Debug.Log("WebViewCallback: " + text);
+  }
+
+  private void WebViewError(string text)
+  {
+    Debug.LogError("WebViewError: " + text);
+  }
+
+  private void WebViewLoaded(string text)
+  {
+    Debug.Log("WebViewLoaded: " + text);
+    WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+    webViewObjectComponent.SetVisibility(true);
+  }
 }

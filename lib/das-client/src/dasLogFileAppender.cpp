@@ -53,6 +53,7 @@ DasLogFileAppender::DasLogFileAppender(const std::string& logDirPath)
 
 DasLogFileAppender::~DasLogFileAppender()
 {
+  _loggingQueue.StopExecution();
   _currentLogFileHandle.close();
 }
 
@@ -176,16 +177,19 @@ std::ofstream& DasLogFileAppender::CurrentLogFileHandle()
 std::string DasLogFileAppender::CurrentLogFilePath()
 {
   std::string logFilePath;
-  _loggingQueue.WakeSync(std::bind(&DasLogFileAppender::PrvCurrentLogFilePath, this, &logFilePath));
+  _loggingQueue.WakeSync([this, &logFilePath] {
+    logFilePath = PrvCurrentLogFilePath();
+  });
   return logFilePath;
 }
 
-void DasLogFileAppender::PrvCurrentLogFilePath(std::string* logFilePath)
+std::string DasLogFileAppender::PrvCurrentLogFilePath()
 {
   if (_currentLogFileName.empty()) {
     UpdateLogFilePath();
   }
-  *logFilePath = FullLogFilePath();
+  std::string logFilePath = FullLogFilePath();
+  return logFilePath;
 }
 
 void DasLogFileAppender::WriteDataToCurrentLogfile(std::string logData)
@@ -224,8 +228,7 @@ void DasLogFileAppender::RolloverCurrentLogFile()
 void DasLogFileAppender::PrvRolloverCurrentLogFile()
 {
   _currentLogFileHandle.close();
-  std::string inProgressLogPath;
-  PrvCurrentLogFilePath(&inProgressLogPath);
+  std::string inProgressLogPath = PrvCurrentLogFilePath();
 
   RolloverLogFileAtPath(inProgressLogPath);
 

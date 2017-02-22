@@ -13,6 +13,7 @@
 
 #ifndef __Anki_Cozmo_CozmoAPI_h__
 #define __Anki_Cozmo_CozmoAPI_h__
+#include "anki/common/types.h"
 #include "util/helpers/noncopyable.h"
 #include "json/json.h"
 
@@ -42,7 +43,7 @@ public:
   
   // When manual control over updating the engine is desired:
   bool Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
-  bool Update(const double currentTime_sec);
+  bool Update(const BaseStationTime_t currentTime_nanosec);
 
   // Send messages to game, receive messages from game
   size_t SendMessages(uint8_t* buffer, size_t bufferSize);
@@ -69,7 +70,7 @@ private:
     void Stop() { _isRunning.store(false); }
     
     // For manually ticking the game
-    bool Update(const double currentTime_sec);
+    bool Update(const BaseStationTime_t currentTime_nanosec);
     GameMessagePort* GetGameMessagePort() const { return _gameMessagePort.get(); }
     GameMessagePort* GetVizMessagePort() const { return _vizMessagePort.get(); }
     CozmoEngine* GetEngine() const { return _cozmoInstance.get(); }

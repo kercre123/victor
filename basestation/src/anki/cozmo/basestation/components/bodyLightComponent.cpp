@@ -33,7 +33,6 @@ namespace Cozmo {
 enum class BackpackLightSourcePrivate : BackpackLightSourceType
 {
   Shared = Util::EnumToUnderlying(BackpackLightSource::Count),
-  ChargeStatus,
   
   Count
 };
@@ -82,12 +81,6 @@ void BodyLightComponent::UpdateChargingLightConfig()
   {
     _curBackpackChargeState = state;
     
-    // If we already had a light config we were using for a charging state, clear it
-    if (_chargeStatusLightConfig.IsValid())
-    {
-      StopLoopingBackpackLights(_chargeStatusLightConfig);
-    }
-    
     const auto* anim = _backpackLightAnimations.GetAnimation(StateToString(state));
     if(anim == nullptr)
     {
@@ -97,7 +90,7 @@ void BodyLightComponent::UpdateChargingLightConfig()
       return;
     }
     
-    _chargeStatusLightConfig = StartLoopingBackpackLightsInternal(*anim, Util::EnumToUnderlying(BackpackLightSourcePrivate::ChargeStatus));
+    SetBackpackLights(*anim);
   }
 }
 
@@ -279,7 +272,6 @@ std::vector<BackpackLightSourceType> BodyLightComponent::GetLightSourcePriority(
   {
     Util::EnumToUnderlying(BackpackLightSource::Voice),
     Util::EnumToUnderlying(BackpackLightSource::Behavior),
-    Util::EnumToUnderlying(BackpackLightSourcePrivate::ChargeStatus),
     Util::EnumToUnderlying(BackpackLightSourcePrivate::Shared)
   };
   constexpr auto numElements = sizeof(priorityOrder) / sizeof(priorityOrder[0]);

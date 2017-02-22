@@ -74,6 +74,15 @@ namespace DG.Tweening
             if (t == null || !t.active) return t;
 
             t.target = target;
+            if (target is GameObject) {
+              t.targetName = (target as GameObject).name;
+            }
+            else if (target is MonoBehaviour) {
+              t.targetName = (target as MonoBehaviour).gameObject.name;
+            }
+            else {
+              t.targetName = target.ToString();
+            }
             return t;
         }
 

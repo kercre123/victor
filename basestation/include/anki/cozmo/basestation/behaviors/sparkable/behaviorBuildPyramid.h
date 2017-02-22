@@ -54,9 +54,7 @@ private:
   void TransitionToDrivingToTopBlock(Robot& robot);
   void TransitionToPlacingTopBlock(Robot& robot);
   void TransitionToReactingToPyramid(Robot& robot);
-    
-  ObjectID GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const;
-  
+      
   int _searchingForTopBlockCount;
   
 }; //class BehaviorBuildPyramid
