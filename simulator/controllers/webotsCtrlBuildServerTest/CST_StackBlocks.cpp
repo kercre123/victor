@@ -26,6 +26,8 @@ namespace Anki {
       TestDone
     };
     
+    namespace {
+    
     // Motion profile for test
     const f32 defaultPathSpeed_mmps = 60;
     const f32 defaultPathAccel_mmps2 = 200;
@@ -52,6 +54,8 @@ namespace Anki {
     const f32 ROBOT_POSITION_TOL_MM = 15;
     const f32 ROBOT_ANGLE_TOL_DEG = 5;
     const f32 BLOCK_HEIGHT_TOL_MM = 10;
+    
+    };
     
     // ============ Test class declaration ============
     class CST_StackBlocks : public CozmoSimTestController {
@@ -153,7 +157,7 @@ namespace Anki {
                                            NEAR(pose1.GetTranslation().z(), 22, BLOCK_HEIGHT_TOL_MM) &&
                                            NEAR(GetRobotPose().GetTranslation().x(), 105, ROBOT_POSITION_TOL_MM) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM), 20)
-          {
+          {  
             StopMovie();
             CST_EXIT();
           }

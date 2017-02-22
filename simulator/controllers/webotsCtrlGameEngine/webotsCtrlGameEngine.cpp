@@ -125,6 +125,19 @@ int main(int argc, char **argv)
   Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
   
+  #if ANKI_DEV_CHEATS
+  {
+    // Disable the Clad logger by default - prevents it sending the log messages,
+    // otherwise anyone with a config set to spam every message could run into issues
+    // with the amount of messages overwhelming the socket on engine startup/load.
+    // Anyone who needs the log messages can enable it afterwards via Unity, SDK or Webots
+    Anki::Cozmo::kEnableCladLogger = false;
+    
+    // rsam: moved it here because webots tests do not filter logs, but don't need CLAD. It's causing message
+    // dropping, which hangs some tests locally.
+  }
+  #endif // ANKI_DEV_CHEATS
+  
   // - console filter for logs
   if ( params.filterLog )
   {
@@ -153,12 +166,6 @@ int main(int argc, char **argv)
     
     #if ANKI_DEV_CHEATS
     {
-      // Disable the Clad logger by default - prevents it sending the log messages,
-      // otherwise anyone with a config set to spam every message could run into issues
-      // with the amount of messages overwhelming the socket on engine startup/load.
-      // Anyone who needs the log messages can enable it afterwards via Unity, SDK or Webots
-      Anki::Cozmo::kEnableCladLogger = false;
-
       unityLoggerProvider->SetFilter(filterPtr);
       unityLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
     }

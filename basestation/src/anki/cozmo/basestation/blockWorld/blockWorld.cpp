@@ -2009,8 +2009,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           if(RESULT_OK != markResult)
           {
             PRINT_NAMED_WARNING("BlockWorldCheckForUnobservedObjects.MarkObjectUnobservedFailed", "");
+          }
         }
-      }
       }
       else if(unobservedObject->GetFamily() != ObjectFamily::Mat && !_robot->IsCarryingObject(unobservedObject->GetID()))
       {

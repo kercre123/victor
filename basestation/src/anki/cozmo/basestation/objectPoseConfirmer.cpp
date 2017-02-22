@@ -61,15 +61,16 @@ ObjectPoseConfirmer::ObjectPoseConfirmer(Robot& robot)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
-                           const ObservableObject* observation,
-                           const ObservableObject* confirmedMatch,
-                           const Pose3d& newPose,
-                           bool robotWasMoving,
-                           f32 obsDistance_mm)
+                                               const ObservableObject* observation,
+                                               const ObservableObject* confirmedMatch,
+                                               const Pose3d& newPose,
+                                               bool robotWasMoving,
+                                               f32 obsDistance_mm)
 {
   // if we are updating an object that we are carrying, we always want to update, so that we can correct the
   // fact that it's not in the lift, it's where the observation happens
-  bool updateDueToObservingCarriedObject = (nullptr != confirmedMatch) && _robot.IsCarryingObject( confirmedMatch->GetID() );
+  const bool updateDueToObservingCarriedObject = (nullptr != confirmedMatch) && _robot.IsCarryingObject( confirmedMatch->GetID() );
+  const bool updateNonLocalizableObject = !object->CanBeUsedForLocalization();
   
   // now calculate what posestate we should set and if that poseState overrides the current one (we still need
   // to calculate which one we are going to set, even if forceUpdate is already true)
@@ -99,7 +100,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   const bool isFarAway  = Util::IsFltGT(obsDistance_mm,  kMaxLocalizationDistance_mm);
   const bool setAsKnown = isRobotOnTreads && !isFarAway && !robotWasMoving && !objectIsMoving;
 
-  const bool updatePose = updateDueToObservingCarriedObject || setAsKnown || !object->IsPoseStateKnown();
+  const bool updatePose = updateDueToObservingCarriedObject || setAsKnown || !object->IsPoseStateKnown() || updateNonLocalizableObject;
   if( updatePose )
   {
     const PoseState newPoseState = (setAsKnown ? PoseState::Known : PoseState::Dirty);
@@ -159,7 +160,7 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
              "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForCurrentOriginNew");
   
   // if we destroy the object we need a copy so we can notify other systems and passing all relevant parameters
-  // liek family, type, new pose, objectID etc.
+  // like family, type, new pose, objectID etc.
   const ObservableObject* instanceToNotify = nullptr;
   
   // copy vars we need to notify since we can destroy the object
@@ -270,10 +271,12 @@ bool ObjectPoseConfirmer::PoseConfirmation::IsReferencePoseConfirmed() const
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectPoseConfirmer::IsObjectConfirmedAtObservedPose(const std::shared_ptr<ObservableObject>& objSeen,
-                                       const ObservableObject*& objectToCopyIDFrom ) const
+                                                          const ObservableObject*& objectToCopyIDFrom ) const
 {
   bool poseIsSameAsReference = false;
   
+  // COZMO-9602. If the ID is preset in the observations (via objectLibrary storage, then this is only needed
+  // if the object is passive)
   // first, find the ID for that observation
   FindObjectMatchForObservation(objSeen, objectToCopyIDFrom);
   
@@ -368,7 +371,7 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
       return !isObjectBeingCarried;
     });
     
-    ObservableObject* matchingObject = _robot.GetBlockWorld().FindLocatedClosestMatchingObject(*objSeen,
+    const ObservableObject* matchingObject = _robot.GetBlockWorld().FindLocatedClosestMatchingObject(*objSeen,
                                                                 objSeen->GetSameDistanceTolerance(),
                                                                 objSeen->GetSameAngleTolerance(),
                                                                 filter);
@@ -486,17 +489,17 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
       // Check if the new observation is (roughly) in the same pose as the last one.
       const Point3f distThreshold  = observation->GetSameDistanceTolerance();
       const Radians angleThreshold = observation->GetSameAngleTolerance();
-      const bool poseIsSame = newPose.IsSameAs(poseConf.referencePose, distThreshold, angleThreshold);
+      const bool newPoseIsSameAsRef = newPose.IsSameAs(poseConf.referencePose, distThreshold, angleThreshold);
       
-      if(poseIsSame)
+      if(newPoseIsSameAsRef)
       {
         ++poseConf.numTimesObserved; // this can cause IsReferencePoseConfirmed to become true
         
         const bool confirmingObjectAtObservedPose = poseConf.IsReferencePoseConfirmed();
         if(confirmingObjectAtObservedPose)
         {
-          const bool isCurrentlyUnconfirmed = (nullptr != unconfirmedObjectPtr);
-          if( isCurrentlyUnconfirmed )
+          const bool isCurrentlyConfirmed = (nullptr == unconfirmedObjectPtr);
+          if( !isCurrentlyConfirmed )
           {
             // udpate pose in unconfirmed instance before passing onto world
             UpdatePoseInInstance(unconfirmedObjectPtr, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
@@ -511,8 +514,6 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
           }
           else
           {
-            // We need to update the pose because we have proof that it's in a different location. Even if the
-            // new location's PoseState is less accurate that the one we have at the moment, we need to update it.
             // KnownIssue: we do not store unconfirmed poses for objects that are already confirmed. However we do not
             // update their pose until they become confirmed. This means that only the last pose and pose state
             // are actually considered. In a scenario where we have: Known, Known, Dirty, Dirty observations, where we

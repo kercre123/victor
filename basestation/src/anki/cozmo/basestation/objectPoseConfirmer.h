@@ -37,10 +37,9 @@ public:
   
   // Search for an unconfirmed or confirmed object and pose match. Returns true if the object is already confirmed at
   // the observed pose (pose of the objSeen), false if the object is not confirmed there, either because it's not
-  // confirmed, or because it's confirmed far from that pose.
+  // confirmed, or because it's confirmed at a different pose or origin, or just connected but not located.
   // objectToCopyIDFrom: some instance that we have found for this object, and from which we can copy the objectID. No
   // other functionality is guaranteed from the object (for example whether it's confirmed, or even has a pose)
-  // TODO Andrew evaluate match of Unique vs Passive: COZMO-6171
   bool IsObjectConfirmedAtObservedPose(const std::shared_ptr<ObservableObject>& objSeen,
                                        const ObservableObject*& objectToCopyIDFrom) const;
   
@@ -133,9 +132,6 @@ protected:
     s32    numTimesUnobserved = 0;
     TimeStamp_t    lastPoseUpdatedTime = 0;
     
-    // returns true if the reference pose is confirmed (by comparing observation number)
-    bool IsReferencePoseConfirmed() const;
-    
     // pointer to the object while it's not confirmed. Once it is confirmed in a pose, its ownership is passed
     // onto the blockworld, and this pointer is set to nullptr.
     std::shared_ptr<ObservableObject> unconfirmedObject;
@@ -153,11 +149,14 @@ protected:
     PoseConfirmation(const Pose3d& initPose,
                      s32 initNumTimesObserved,
                      TimeStamp_t initLastPoseUpdatedTime);
-    
+
+    // returns true if the reference pose is confirmed (by comparing observation number)
+    bool IsReferencePoseConfirmed() const;
   };
   
   using PoseConfirmations = std::map<ObjectID, PoseConfirmation>;
   
+  // Helper to share code between updating BlockWorld instances and unconfirmed instances
   void UpdatePoseInInstance(ObservableObject* object,
                             const ObservableObject* observation,
                             const ObservableObject* confirmedMatch,
