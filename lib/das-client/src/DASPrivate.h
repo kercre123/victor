@@ -32,6 +32,8 @@ void _DAS_GetGlobal(const char* key, std::string& outValue);
 
 void _DAS_ClearGlobals();
 
+Anki::Das::DasGameLogAppender* _DAS_GetGameLogAppender(); // used for unit tests
+
 void getDASGlobalsAndDataString(const std::map<std::string,std::string>* globals,
                                 const std::map<std::string,std::string>& data,
                                 std::string& outGlobalsAndData);

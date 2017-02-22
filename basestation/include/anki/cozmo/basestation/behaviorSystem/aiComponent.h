@@ -25,6 +25,7 @@ namespace Cozmo {
 // Forward declarations
 class AIInformationAnalyzer;
 class AIWhiteboard;
+class BehaviorHelperComponent;
 class Robot;
 class WorkoutComponent;
 
@@ -53,6 +54,10 @@ public:
     assert(_aiInformationAnalyzer);
     return *_aiInformationAnalyzer;
   }
+  
+  inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
+  inline BehaviorHelperComponent&       GetBehaviorHelperComponent()       { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
+  
 
   ////////////////////////////////////////////////////////////////////////////////
   // Update and init
@@ -81,6 +86,9 @@ private:
   // module to analyze information for the AI in processes common to more than one behavior, for example
   // border calculation
   std::unique_ptr<AIInformationAnalyzer>   _aiInformationAnalyzer;
+  
+  // component which behaviors can delegate to for automatic action error handling
+  std::unique_ptr<BehaviorHelperComponent> _behaviorHelperComponent;
 };
 
 }

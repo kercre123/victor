@@ -63,8 +63,8 @@ private:
     ObjectType 			objectType;
   };
   
-  static constexpr double kConnectivityCheckDelay = 2.0f; // How often do we check for connectivity changes in seconds
-  static constexpr double kMaxWaitForPooledObjects = 5.0f; // How long do we wait for the discovered objects to connect before looking for another one of the same type
+  static constexpr float kConnectivityCheckDelay  = 2.0f; // How often do we check for connectivity changes in seconds
+  static constexpr float kMaxWaitForPooledObjects = 5.0f; // How long do we wait for the discovered objects to connect before looking for another one of the same type
   
   static constexpr uint8_t kMaxRSSI = 150;
   
@@ -102,10 +102,10 @@ private:
   ObjectInfoArray     _runtimePool;								// The current session pool list
   ObjectInfoMap       _discoveryPool;             // Selected set of objects until the discovery phase is over
   std::string         _path;											// Path where we are saving/loading the list of objects
-  double              _maxDiscoveryTime;          // Time we'll spend looking for objects before pooling
-  double              _enabledTime;								// Time when the block pool was enabled
-  double              _discoveredCompletedTime;   // Time when the last discovery period was done
-  double              _lastConnectivityCheckTime; // Used to check for connectivity every once in a while
+  float               _maxDiscoveryTime;          // Time we'll spend looking for objects before pooling
+  float               _enabledTime;								// Time when the block pool was enabled
+  float               _discoveredCompletedTime;   // Time when the last discovery period was done
+  float               _lastConnectivityCheckTime; // Used to check for connectivity every once in a while
   bool                _enabled;                   // True if the automatic pool is enabled
   
   std::vector<Signal::SmartHandle> _signalHandles;

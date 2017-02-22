@@ -397,12 +397,27 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
 
     // Read the binary file
     auto binFileContents = Util::FileUtils::ReadFileAsBinary(path);
+    if (binFileContents.size() == 0) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataEmpty", "Found no data in %s", path.c_str());
+      return;
+    }
     unsigned char *binData = binFileContents.data();
-
+    if (nullptr == binData) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataNull", "Found no data in %s", path.c_str());
+      return;
+    }
     auto animClips = CozmoAnim::GetAnimClips(binData);
+    if (nullptr == animClips) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsNull", "Found no animations in %s", path.c_str());
+      return;
+    }
     auto allClips = animClips->clips();
+    if (nullptr == allClips) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AllClipsNull", "Found no animations in %s", path.c_str());
+      return;
+    }
     if (allClips->size() == 0) {
-      PRINT_NAMED_ERROR("RobotDataLoader::LoadAnimationFile", "Found no animations in %s", path.c_str());
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsEmpty", "Found no animations in %s", path.c_str());
       return;
     }
 

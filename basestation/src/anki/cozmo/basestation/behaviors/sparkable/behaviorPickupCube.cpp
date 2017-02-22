@@ -229,14 +229,22 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
     // Use a different preAction pose if we are retrying because we weren't seeing the object
     if(completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
     {
-      pickupAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc(
-        [this, pickupAction](ActionableObject* object,
-                             std::vector<Pose3d>& possiblePoses,
-                             bool& alreadyInPosition)
-        {
-          return IBehavior::UseSecondClosestPreActionPose(pickupAction->GetDriveToObjectAction(),
-                                                          object, possiblePoses, alreadyInPosition);
-        });
+      DriveToObjectAction* driveToObjectAction = pickupAction->GetDriveToObjectAction();
+      if(driveToObjectAction != nullptr)
+      {
+        driveToObjectAction->SetGetPossiblePosesFunc([this, pickupAction](ActionableObject* object,
+                                                                          std::vector<Pose3d>& possiblePoses,
+                                                                          bool& alreadyInPosition)
+          {
+            return IBehavior::UseSecondClosestPreActionPose(pickupAction->GetDriveToObjectAction(),
+                                                            object, possiblePoses, alreadyInPosition);
+          });
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("BehaviorPickupCube.TransitionToPickingUpCube.RetryCallback.NullDriveAction",
+                          "DriveToObjectAction in DriveToPickupObjectAction is null");
+      }
       return true;
     }
     else {

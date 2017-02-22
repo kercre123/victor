@@ -61,7 +61,7 @@ PyramidBase::PyramidBase(const ObjectID& baseBlock1, const ObjectID& baseBlock2)
   _staticBlockID = baseBlock1 < baseBlock2 ? baseBlock2 : baseBlock1;
   
   if(_staticBlockID == _baseBlockID){
-    PRINT_NAMED_WARNING("PyramidBase.PyramidBase.InvalidBlocksPassedIn","Attempted to create a base with two blocks with ID:%d", (int)_staticBlockID);
+    DEV_ASSERT(false, "PyramidBase.PyramidBase.StaticAndBaseBlockCantMatch");
     ClearBase();
   }
 }
@@ -269,6 +269,9 @@ Pyramid::Pyramid(const PyramidBase& base, const ObjectID& topBlockID)
 , _base(base)
 , _topBlockID(topBlockID)
 {
+  if(base.GetBaseBlockID() == topBlockID || base.GetStaticBlockID() == topBlockID){
+    DEV_ASSERT(false, "Pyramid.PyramidBaseConstructor.StaticBaseAndTopBlockCantMatch");
+  }
 }
   
   
@@ -278,6 +281,9 @@ Pyramid::Pyramid(const ObjectID& baseBlock1, const ObjectID& baseBlock2, const O
 , _base(PyramidBase(baseBlock1, baseBlock2))
 , _topBlockID(topBlockID)
 {
+  if(baseBlock1 == topBlockID || baseBlock2 == topBlockID){
+    DEV_ASSERT(false, "Pyramid.PyramidBlocksConstructor.StaticBaseAndTopBlockCantMatch");
+  }
 }
   
   

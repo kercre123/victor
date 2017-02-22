@@ -112,7 +112,7 @@ ActionResult SetFaceAction::Init()
     return ActionResult::ABORT;
   }
   
-  _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
+  _playAnimationAction.reset(new PlayAnimationAction(_robot, &_animation));
   
   return ActionResult::SUCCESS;
 }
@@ -123,7 +123,6 @@ SetFaceAction::~SetFaceAction()
   if(_playAnimationAction != nullptr) {
     _playAnimationAction->PrepForCompletion();
   }
-  Util::SafeDelete(_playAnimationAction);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

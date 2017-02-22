@@ -9,7 +9,7 @@
   },
   {
     "feature": "SpeedTapMultiPlayer",
-    "enabled": false
+    "enabled": true
   }
 ]
 

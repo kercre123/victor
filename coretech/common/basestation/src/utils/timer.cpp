@@ -16,60 +16,12 @@
  **/
 
 #include "anki/common/basestation/utils/timer.h"
+#include "util/helpers/templateHelpers.h"
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
 
-//#include "basestation/utils/parameters.h"
-
-//#ifndef LINUX
-//#include <mach/mach_time.h>
-//#endif
 
 namespace Anki {
-
-  /*
-int getTimeInMilliSeconds()
-{
-  #ifndef LINUX
-  {
-    const int64_t kOneMillion = 1000 * 1000;
-    static mach_timebase_info_data_t s_timebase_info;
-
-    if (s_timebase_info.denom == 0) {
-      (void) mach_timebase_info(&s_timebase_info);
-    }
-
-    // mach_absolute_time() returns billionth of seconds,
-    // so divide by one million to get milliseconds
-    return (int)((mach_absolute_time() * s_timebase_info.numer) / (kOneMillion * s_timebase_info.denom));
-  }
-  #else
-  {
-    return 0;
-  }
-  #endif
-}
- 
-float getTimeInSeconds()
-{
-  const float secs = getTimeInMilliSeconds() / 1000.0f;
-  return secs;
-}
-  */
-  
-  
-
-const std::string GetCurrentDateTime() {
-  time_t     now = time(0);
-  struct tm  tstruct;
-  char       buf[80];
-  tstruct = *localtime(&now);
-  strftime(buf, sizeof(buf), "%F_%H-%M-%S", &tstruct);
-  
-  return buf;
-}
-  
-  
   
 // Definition of static field
 BaseStationTimer* BaseStationTimer::_instance = 0;
@@ -77,97 +29,82 @@ BaseStationTimer* BaseStationTimer::_instance = 0;
 /**
  * Returns the single instance of the object.
  */
-BaseStationTimer* BaseStationTimer::getInstance() {
-  // check if the instance has been created yet
-  if(0 == _instance) {
-    // if not, then create it
-    _instance = new BaseStationTimer;
+BaseStationTimer* BaseStationTimer::getInstance()
+{
+  if (nullptr == _instance) {
+     _instance = new BaseStationTimer;
   }
-  // return the single instance
   return _instance;
 }
 
 /**
 * Removes instance
 */
-void BaseStationTimer::removeInstance() {
-  // check if the instance has been created yet
-  if(0 != _instance) {
-    delete _instance;
-    _instance = 0;
-  }
-};
+void BaseStationTimer::removeInstance()
+{
+  Util::SafeDelete(_instance);
+}
 
-// Constructor implementation
-BaseStationTimer::BaseStationTimer() :
-  currentTimeInSeconds_(0.0),
-  currentTimeInNanoSeconds_(0),
-  elapsedTimeInSeconds_(0.0),
-  elapsedTimeInNanoSeconds_(0)
-{}
+BaseStationTimer::BaseStationTimer()
+: currTimeSecondsDouble_(0.0)
+, currTimeSecondsFloat_(0.0f)
+, currTimeNanoSeconds_(0)
+, elapsedTimeSecondsFloat_(0.0f)
+{
+}
 
-// Destructor implementation
 BaseStationTimer::~BaseStationTimer()
 {
-
 }
 
 
 // Updates the current system time used for tracking
-void BaseStationTimer::UpdateTime(BaseStationTime_t currTime)
-{
-  elapsedTimeInNanoSeconds_ = currTime - currentTimeInNanoSeconds_;
-  elapsedTimeInSeconds_ = Util::NanoSecToSec(elapsedTimeInNanoSeconds_);
 
-  currentTimeInNanoSeconds_ = currTime;
-  currentTimeInSeconds_ = Util::NanoSecToSec(currTime);
+void BaseStationTimer::UpdateTime(BaseStationTime_t currTime_NS)
+{
+  // Calculate time since last tick and store as a float
+  auto elapsedNanoSecs = currTime_NS - currTimeNanoSeconds_;
+  elapsedTimeSecondsFloat_ = Util::numeric_cast<float>(Util::NanoSecToSec(elapsedNanoSecs));
+
+  // Store the current time in three different convenient formats
+  currTimeNanoSeconds_ = currTime_NS;
+  currTimeSecondsDouble_ = Util::NanoSecToSec(currTime_NS);
+  currTimeSecondsFloat_ = Util::numeric_cast<float>(currTimeSecondsDouble_);
   
-  //printf("Updating basestation time to %llu\n", currentTimeInNanoSeconds_);
-  tickCount_ += 1;
+  ++tickCount_;
 }
 
 
-//static int localCount = 0;
-double BaseStationTimer::GetCurrentTimeInSeconds() const
+float BaseStationTimer::GetCurrentTimeInSeconds() const
 {
-  return currentTimeInSeconds_;
+  return currTimeSecondsFloat_;
 }
 
-float BaseStationTimer::GetCurrentTimeInSeconds_f() const
+double BaseStationTimer::GetCurrentTimeInSecondsDouble() const
 {
-  return Util::numeric_cast<float>( GetCurrentTimeInSeconds() );
+  return currTimeSecondsDouble_;
 }
 
 BaseStationTime_t BaseStationTimer::GetCurrentTimeInNanoSeconds() const
 {
-  return currentTimeInNanoSeconds_;
+  return currTimeNanoSeconds_;
 }
 
-double BaseStationTimer::GetTimeSinceLastTickInSeconds() const
+float BaseStationTimer::GetTimeSinceLastTickInSeconds() const
 {
-  return elapsedTimeInSeconds_;
-}
-
-BaseStationTime_t BaseStationTimer::GetTimeSinceLastTickInNanoSeconds() const
-{
-  return elapsedTimeInNanoSeconds_;
+  return elapsedTimeSecondsFloat_;
 }
 
 TimeStamp_t BaseStationTimer::GetCurrentTimeStamp() const
 {
-  return static_cast<TimeStamp_t>(currentTimeInNanoSeconds_ / 1000000);
+  return Util::numeric_cast<TimeStamp_t>(Util::SecToMilliSec(currTimeSecondsDouble_));
 }
-  
+
 const size_t BaseStationTimer::GetTickCount() const
 {
   return tickCount_;
 }
 
-const float BaseStationTimer::GetRunTime() const
-{
-  return static_cast<float>(currentTimeInSeconds_);
-}
-  
   /*
 void SchedulingTimer::Reset(double newPeriodTime, bool repeating, bool checkForPeriodSkips)
 {

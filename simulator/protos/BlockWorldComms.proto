@@ -4,6 +4,14 @@ PROTO BlockWorldComms [
   field SFInt32 numUIDevicesToWaitFor 1
 
   field SFBool filterLogs FALSE
+
+  # When true this inserts sleeps such that the engine tic
+  # runs no faster than 60ms. Should only be true for worlds
+  # that connect to a physical robot.
+  # Make sure that the basicTimeStep in the world is set to the
+  # engine tic period of 60ms. Otherwise, it's likely to always run
+  # longer sometimes a lot longer than 60ms.
+  field SFBool sleepUntilEndOfTic FALSE
 ]
 {
 Supervisor {

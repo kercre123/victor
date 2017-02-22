@@ -22,10 +22,8 @@ namespace Util {
 
 class ITickTimeProvider {
 public:
-  virtual ~ITickTimeProvider(){};
+  virtual ~ITickTimeProvider() {};
   virtual const size_t GetTickCount() const = 0;
-  virtual const float GetRunTime() const  = 0;
-
 };
 
 } // namespace Util

@@ -45,10 +45,6 @@
             "AnimName": "pyramidBaseBottom"
         },
         {
-            "CladEvent": "PyramidBaseTop",
-            "AnimName": "pyramidBaseTop"
-        },
-        {
             "CladEvent": "PyramidFlourish",
             "AnimName": "pyramidFlourish"
         },

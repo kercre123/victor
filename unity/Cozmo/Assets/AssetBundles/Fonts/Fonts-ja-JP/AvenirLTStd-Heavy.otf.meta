@@ -9,14 +9,10 @@ TrueTypeFontImporter:
   characterSpacing: 1
   characterPadding: 0
   includeFontData: 1
-  fontNames:
-  - Avenir LT Std
+  fontNames: []
   fallbackFontReferences:
   - {fileID: 12800000, guid: 3f06cbe4f4a8b4c91a47bca010fcd7f0, type: 3}
-  - {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62, type: 3}
-  - {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
   - {fileID: 12800000, guid: 0fc828baed24a4e769384aec33388171, type: 3}
-  - {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
   customCharacters: 
   fontRenderingMode: 0
   ascentCalculationMode: 1

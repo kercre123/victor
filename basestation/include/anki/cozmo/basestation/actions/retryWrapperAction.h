@@ -59,8 +59,8 @@ namespace Cozmo {
     virtual f32 GetTimeoutInSeconds() const override;
     
   private:
-    IActionRunner*       _subAction       = nullptr;
-    PlayAnimationAction* _animationAction = nullptr;
+    std::unique_ptr<IActionRunner>       _subAction       = nullptr;
+    std::unique_ptr<PlayAnimationAction> _animationAction = nullptr;
     RetryCallback        _retryCallback;
     const u8             _numRetries;
     u8                   _retryCount = 0;

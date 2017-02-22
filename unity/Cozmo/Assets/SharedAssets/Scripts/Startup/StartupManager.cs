@@ -65,10 +65,12 @@ public class StartupManager : MonoBehaviour {
   private GameObject _AndroidPermissionPrefab;
   private GameObject _AndroidPermissionInstance;
 
-  // These don't go through the normal loc system because it isn't loaded yet but is in the same format.
-  // Add more when we have more than just EN-us, or just change the format to include multiple languages.
   [SerializeField]
-  private TextAsset _BootLocEnStrings;
+  private Anki.UI.AnkiTextLabel _LoadingVersionLabel;
+
+  [SerializeField]
+  private Anki.UI.AnkiTextLabel _LoadingDeviceIdLabel;
+
   private JSONObject _BootStrings = null;
 
   private string _ExtractionErrorMessage;
@@ -120,6 +122,8 @@ public class StartupManager : MonoBehaviour {
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
     _LoadingBar.SetProgress(_CurrentProgress);
+    _LoadingVersionLabel.text = null;
+    _LoadingDeviceIdLabel.text = null;
 
     // set up progress bar updater for resource extraction
     float startingProgress = _CurrentProgress;
@@ -208,6 +212,10 @@ public class StartupManager : MonoBehaviour {
     // As soon as we're done connecting to the engine, start up some music
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
 
+    // Ask for device data as early as you can
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
+    RobotEngineManager.Instance.SendRequestDeviceData();
+
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       float progressBeforeEngineLoading = _CurrentProgress;
       while (_EngineLoadingProgress < 1.0f) {
@@ -250,6 +258,38 @@ public class StartupManager : MonoBehaviour {
 
   private void HandleDataLoaded(Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus message) {
     _EngineLoadingProgress = message.ratioComplete;
+  }
+
+  private void HandleDeviceDataMessage(Anki.Cozmo.ExternalInterface.DeviceDataMessage message) {
+    for (int i = 0; i < message.dataList.Length; ++i) {
+      Anki.Cozmo.DeviceDataPair currentPair = message.dataList[i];
+      string shortData = ShortenData(currentPair.dataValue);
+      switch (currentPair.dataType) {
+      case Anki.Cozmo.DeviceDataType.DeviceID: {
+          _LoadingDeviceIdLabel.text = GetBootString("boot.deviceId", new object[] { shortData });
+          break;
+        }
+      case Anki.Cozmo.DeviceDataType.BuildVersion: {
+          _LoadingVersionLabel.text = GetBootString("boot.appVersion", new object[] { shortData });
+          break;
+        }
+      default: {
+          DAS.Debug("SettingsVersionsPanel.HandleDeviceDataMessage.UnhandledDataType", currentPair.dataType.ToString());
+          break;
+        }
+      }
+    }
+  }
+
+  private string ShortenData(string data) {
+    // It's possible  DefaultSettingsValuesConfig.Instance.CharactersOfAppInfoToShow 
+    // is not loaded yet so just hardcode it
+    int desiredStringLength = 13;
+    string shortData = data;
+    if (shortData.Length > desiredStringLength) {
+      shortData = shortData.Substring(0, desiredStringLength);
+    }
+    return shortData;
   }
 
   private void SetupEngine() {
@@ -471,8 +511,11 @@ public class StartupManager : MonoBehaviour {
 
   public string GetBootString(string key, params object[] args) {
     string stringOut = "";
-    if (_BootStrings == null && _BootLocEnStrings != null) {
-      _BootStrings = JSONObject.Create(_BootLocEnStrings.text);
+    if (_BootStrings == null) {
+      // Copied over from a build process.
+      string loadFromPath = "bootstrap/LocalizedStrings/" + Localization.LoadLocaleAndCultureInfo() + "/BootStrings";
+      TextAsset jsonfile = Resources.Load<TextAsset>(loadFromPath);
+      _BootStrings = JSONObject.Create(jsonfile.text);
     }
     if (_BootStrings != null) {
       JSONObject wrapper = _BootStrings.GetField(key);

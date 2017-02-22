@@ -164,7 +164,7 @@ public:
   bool HasReceivedRobotState() const;
 
   const bool GetTimeSynced() const {return _timeSynced;}
-  void       SetTimeSynced()       {_timeSynced = true; _syncTimeSentTime_sec = 0; }
+  void       SetTimeSynced()       {_timeSynced = true; _syncTimeSentTime_sec = 0.0f; }
 
   Result SyncTime();  // TODO:(bn) only for robot event handler, move out of this header...
 
@@ -601,6 +601,8 @@ public:
   bool IsCliffDetected() const { return _isCliffDetected; }
   bool IsCliffSensorOn() const { return _isCliffSensorOn; }
   
+  bool IsPickedUp() const { return _isPickedUp; }
+  
   u16  GetCliffDataRaw() const { return _cliffDataRaw; }
   
   // sets distance detected by forward proximity sensor
@@ -999,6 +1001,7 @@ protected:
   bool             _enableCliffSensor     = true;
   u32              _lastSentImageID       = 0;
   u8               _enabledAnimTracks     = (u8)AnimTrackFlag::ALL_TRACKS;
+  bool             _isPickedUp            = false;
   bool             _isCliffDetected       = false;
   bool             _isCliffSensorOn       = false;
   u16              _cliffDataRaw          = std::numeric_limits<u16>::max();
@@ -1150,7 +1153,7 @@ protected:
     ConnectionState connectionState;
     uint8_t         rssi;
     TimeStamp_t     lastDiscoveredTimeStamp;
-    double          lastDisconnectionTime;
+    float           lastDisconnectionTime;
       
     ActiveObjectInfo() {
       Reset();
@@ -1197,8 +1200,8 @@ protected:
   // Sync time with physical robot and trigger it robot to send back camera
   // calibration
   Result SendSyncTime() const;
-  double _syncTimeSentTime_sec = 0;
-  constexpr static double kMaxSyncTimeAckDelay_sec = 5;
+  float _syncTimeSentTime_sec = 0.0f;
+  constexpr static float kMaxSyncTimeAckDelay_sec = 5.0f;
   
   // Send's robot's current pose
   Result SendAbsLocalizationUpdate() const;

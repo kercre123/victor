@@ -244,7 +244,7 @@ public:
   void GotOffChargerAtTime(const float time_sec) { _gotOffChargerAtTime_sec = time_sec; }
   float GetTimeAtWhichRobotGotOffCharger() const { return _gotOffChargerAtTime_sec; }
   
-  // return time at which Cozmo got back on treads (negative in never recorded)
+  // return time at which Cozmo got back on treads (negative if never recorded)
   float GetTimeAtWhichRobotReturnedToTreadsSecs() const { return _returnedToTreadsAtTime_sec; }
   
   // set/return time at which engine processed information regarding edges

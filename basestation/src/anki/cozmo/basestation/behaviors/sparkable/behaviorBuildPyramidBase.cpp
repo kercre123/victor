@@ -30,6 +30,7 @@
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "anki/common/basestation/utils/timer.h"
 #include "clad/types/unlockTypes.h"
 
 namespace Anki {
@@ -40,6 +41,7 @@ const int kMaxSearchCount = 1;
 const int kCubeSizeBuffer_mm = 12;
 const float kDriveBackDistance_mm = 40.f;
 const float kDriveBackSpeed_mm_s = 40.f;
+const float kTimeUntilRespondToBase_s = 2.f;
 
 RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
 {
@@ -73,7 +75,7 @@ bool BehaviorBuildPyramidBase::IsRunnableInternal(const BehaviorPreReqRobot& pre
   UpdatePyramidTargets(robot);
 
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && !_topBlockID.IsSet();
-  if(allSet && AreAllBlockIDsUnique()){
+  if(allSet){
     // Ensure a base does not already exist in the world
     using namespace BlockConfigurations;
     auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
@@ -111,8 +113,20 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
   using namespace BlockConfigurations;
   const auto& pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   const auto& pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+  
+  // We need a slight delay from when a configuration is made and we respond to it
+  if(_lastBasesCount == 0 && !pyramidBases.empty()){
+    _timeFirstBaseFormed = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+  
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  const bool baseAppearedWhileNotPlacing =
+                        !pyramidBases.empty() &&
+                        _behaviorState < State::ObservingBase &&
+                        (_timeFirstBaseFormed + kTimeUntilRespondToBase_s < currentTime_s);
 
-  if(!pyramidBases.empty() && _behaviorState < State::ObservingBase){
+  if(baseAppearedWhileNotPlacing){
     StopWithoutImmediateRepetitionPenalty();
     return IBehavior::Status::Complete;
   }
@@ -156,14 +170,17 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
 void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(Robot& robot)
 {
   SET_STATE(DrivingToBaseBlock);
-  DriveToPickupObjectAction* driveAction = new DriveToPickupObjectAction(robot, _baseBlockID);
+  DriveToPickupObjectAction* driveAction =
+     new DriveToPickupObjectAction(robot, _baseBlockID,
+                                   false, 0, false, 0, false, // default values
+                                   AnimationTrigger::BuildPyramidSecondBlockUpright);
   
   StartActing(driveAction,
               [this, &robot](const ActionResult& result){
                 if(result == ActionResult::SUCCESS)
                 {
                   TransitionToPlacingBaseBlock(robot);
-                }else{
+                }else if(!robot.IsCarryingObject()){
                   if(_searchingForNearbyBaseBlockCount < kMaxSearchCount){
                     _searchingForNearbyBaseBlockCount++;
                     TransitionToSearchingWithCallback(robot, _baseBlockID, &BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock);
@@ -217,7 +234,7 @@ void BehaviorBuildPyramidBase::TransitionToObservingBase(Robot& robot)
   
   CompoundActionSequential* action = new CompoundActionSequential(robot);
   action->AddAction(new DriveStraightAction(robot, -kDriveBackDistance_mm, kDriveBackSpeed_mm_s));
-  action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::BuildPyramidReactToBase));
+  action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidReactToBase));
 
   StartActing(action,
               [this, &robot]{
@@ -351,6 +368,8 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
       _topBlockID = GetNearestBlockToPose(robot, staticBlockPose, allBlocks);
     }
   }
+  
+  DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramidBase.UpdatePyramidTargets.BlockIDsNotUnique");
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -463,10 +482,6 @@ ObjectID BehaviorBuildPyramidBase::GetBestStaticBlock(const Robot& robot, const 
 {
   const Pose3d& robotPose = robot.GetPose().GetWithRespectToOrigin();
   
-  if(robot.IsCarryingObject()){
-    return robot.GetCarryingObject();
-  }
-  
   // Static blocks shouldn't have any blocks on top of them and should be on the ground
   BlockList validStaticBlocks;
   for(auto& block: availableBlocks){
@@ -566,9 +581,17 @@ void BehaviorBuildPyramidBase::ClearInvalidBlockIDs(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBuildPyramidBase::AreAllBlockIDsUnique() const
 {
-  return (_topBlockID != _staticBlockID &&
-          _topBlockID != _baseBlockID &&
-          _staticBlockID != _baseBlockID);
+  if(_staticBlockID.IsSet() && _baseBlockID.IsSet()){
+    const bool baseIDsUnique = _staticBlockID != _baseBlockID;
+    if(_topBlockID.IsSet()){
+      const bool topIDUnique = _topBlockID != _staticBlockID &&
+                                _topBlockID != _baseBlockID;
+      return baseIDsUnique && topIDUnique;
+    }
+    return baseIDsUnique;
+  }
+  
+  return true;
 }
 
 

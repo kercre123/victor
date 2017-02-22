@@ -55,7 +55,7 @@ class MoodManager
 {
 public:
   
-  using MoodEventTimes = std::map<std::string, double>;
+  using MoodEventTimes = std::map<std::string, float>;
   
   explicit MoodManager(Robot* inRobot = nullptr);
   
@@ -65,22 +65,22 @@ public:
   
   void Reset();
   
-  void Update(double currentTime);
+  void Update(float currentTime);
   
   // ==================== Modify Emotions ====================
   
-  void TriggerEmotionEvent(const std::string& eventName, double currentTimeInSeconds);
+  void TriggerEmotionEvent(const std::string& eventName, float currentTimeInSeconds);
   
-  void AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString, double currentTimeInSeconds);
+  void AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString, float currentTimeInSeconds);
   
   void AddToEmotions(EmotionType emotionType1, float baseValue1,
                      EmotionType emotionType2, float baseValue2,
-                     const char* uniqueIdString, double currentTimeInSeconds);
+                     const char* uniqueIdString, float currentTimeInSeconds);
   
   void AddToEmotions(EmotionType emotionType1, float baseValue1,
                      EmotionType emotionType2, float baseValue2,
                      EmotionType emotionType3, float baseValue3,
-                     const char* uniqueIdString, double currentTimeInSeconds);
+                     const char* uniqueIdString, float currentTimeInSeconds);
   
   void SetEmotion(EmotionType emotionType, float value); // directly set the value e.g. for debugging
 
@@ -106,7 +106,7 @@ public:
   
   SimpleMoodType GetSimpleMood() const;
   
-  double GetLastUpdateTime() const { return _lastUpdateTime; }
+  float GetLastUpdateTime() const { return _lastUpdateTime; }
   
   // ==================== Event/Message Handling ====================
   // Handle various message types
@@ -120,15 +120,15 @@ public:
   static StaticMoodData& GetStaticMoodData();
   
   // Helper for anything calling functions that require currentTimeInSeconds, where they don't already have access to it
-  static double GetCurrentTimeInSeconds();
+  static float GetCurrentTimeInSeconds();
   
 private:
   
   // ============================== Private Member Funcs ==============================
   
-  float UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::string& eventName, double currentTimeInSeconds);
+  float UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::string& eventName, float currentTimeInSeconds);
   
-  float UpdateEventTimeAndCalculateRepetitionPenalty(const std::string& eventName, double currentTimeInSeconds);
+  float UpdateEventTimeAndCalculateRepetitionPenalty(const std::string& eventName, float currentTimeInSeconds);
   
   void  FadeEmotionsToDefault(float delta);
 
@@ -158,7 +158,7 @@ private:
   MoodEventTimes  _moodEventTimes;
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
   Robot*          _robot;
-  double          _lastUpdateTime;
+  float           _lastUpdateTime;
 
   // maps from action type -> action result -> emotion event
   using ActionCompletedEventMap = std::map< std::string, std::map< std::string, std::string > >;

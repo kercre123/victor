@@ -7,6 +7,13 @@
  * Description: Defines compound actions, which are groups of IActions to be
  *              run together in series or in parallel.
  *
+ *              Note about inheriting from CompoundActions
+ *              If you are storing pointers to actions in the compound action
+ *              store them as weak_ptrs returned from AddAction. Once an action
+ *              is added to a compound action, the compound action completely manages
+ *              the action including deleting it
+ *              (see IDriveToInteractWithObject for examples)
+ *
  * Copyright: Anki, Inc. 2014
  **/
 
@@ -27,15 +34,23 @@ namespace Anki {
     public:
       ICompoundAction(Robot& robot, std::list<IActionRunner*> actions);
       
+      // Adds an action to this compound action. Completely hands ownership and memory management
+      // of the action over to this compoundAction
+      // Internally creates a shared_ptr and will return a weak_ptr to it should the caller
+      // want to do something with the action at a later time
       using ShouldIgnoreFailureFcn = std::function<bool(ActionResult, const IActionRunner*)>;
-      virtual void AddAction(IActionRunner* action, ShouldIgnoreFailureFcn fcn, bool emitCompletionSignal = false);
-      virtual void AddAction(IActionRunner* action, bool ignoreFailure = false, bool emitCompletionSignal = false);
+      virtual std::weak_ptr<IActionRunner> AddAction(IActionRunner* action,
+                                                     ShouldIgnoreFailureFcn fcn,
+                                                     bool emitCompletionSignal = false);
+      virtual std::weak_ptr<IActionRunner> AddAction(IActionRunner* action,
+                                                     bool ignoreFailure = false,
+                                                     bool emitCompletionSignal = false);
       
       // First calls cleanup on any constituent actions and then removes them
       // from this compound action completely.
       void ClearActions();
       
-      const std::list<IActionRunner*>& GetActionList() const { return _actions; }
+      const std::list<std::shared_ptr<IActionRunner>>& GetActionList() const { return _actions; }
       
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();
@@ -55,9 +70,10 @@ namespace Anki {
       // Call the constituent actions' Reset() methods and mark them each not done.
       virtual void Reset(bool shouldUnlockTracks = true) override;
       
-      std::list<IActionRunner*> _actions;
+      // The list of actions in this compound action stored as shared_ptrs
+      std::list<std::shared_ptr<IActionRunner>> _actions;
       
-      bool ShouldIgnoreFailure(ActionResult result, const IActionRunner* action) const;
+      bool ShouldIgnoreFailure(ActionResult result, const std::shared_ptr<IActionRunner>& action) const;
       
       // Stack of pairs of actionCompletionUnions and actionTypes of the already completed actions
       struct CompletionData {
@@ -69,7 +85,7 @@ namespace Anki {
       std::map<u32, CompletionData> _completedActionInfoStack;
       
       // NOTE: Moves currentAction iterator to next action after deleting
-      void StoreUnionAndDelete(std::list<IActionRunner*>::iterator& currentAction);
+      void StoreUnionAndDelete(std::list<std::shared_ptr<IActionRunner>>::iterator& currentAction);
       
     private:
       
@@ -105,11 +121,11 @@ namespace Anki {
       
       virtual ActionResult UpdateInternal() override final;
       
-      ActionResult MoveToNextAction(double currentTime);
+      ActionResult MoveToNextAction(float currentTime_secs);
       
       f32 _delayBetweenActionsInSeconds;
       f32 _waitUntilTime;
-      std::list<IActionRunner*>::iterator _currentAction;
+      std::list<std::shared_ptr<IActionRunner>>::iterator _currentAction;
       bool _wasJustReset;
       
     }; // class CompoundActionSequential

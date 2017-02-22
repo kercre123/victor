@@ -1,0 +1,45 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "boot.errorDiskFull": {
+    "translation": "L'application Cozmo n'a pas pu être chargée car le stockage de votre appareil est trop chargé. Essayez de supprimer les médias ou les applications inutilisées de votre téléphone, puis réessayez."
+  },
+  "boot.errorReadingFiles": {
+    "translation": "L'application Cozmo n'a pas pu lire les fichiers. Erreur: {0}"
+  },
+  "boot.needStoragePermission": {
+    "translation": "L'application Cozmo doit accéder aux fichiers de jeu sur votre appareil pour pouvoir s'exécuter."
+  },
+  "boot.appSettingsPermission": {
+    "translation": "L'application Cozmo doit accéder aux fichiers de jeu sur votre appareil pour pouvoir s'exécuter. Utilisez le lien ci-dessous pour visiter les Paramètres de l'application Cozmo et appuyez sur <b> Autorisations> Stockage </ b> pour activer cette option."
+  },
+  "boot.continue": {
+    "translation": "Continuer"
+  },
+  "boot.settings": {
+    "translation": "Paramètres"
+  },
+  "boot.appVersion": {
+    "translation": "VERSION: {0}"
+  },
+  "boot.deviceId": {
+    "translation": "REFERENCE DE L'APPAREIL: {0}"
+  }
+}

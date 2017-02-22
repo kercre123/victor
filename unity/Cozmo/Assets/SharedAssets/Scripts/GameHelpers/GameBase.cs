@@ -165,6 +165,7 @@ public abstract class GameBase : MonoBehaviour {
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.Frustration);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FistBump);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.RobotPlacedOnSlope);
   }
 
   private void ResetReactionaryBehaviorsForGameEnd() {
@@ -1032,11 +1033,12 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView.HideCozmoScoreboard();
       RewardedActionManager.Instance.PendingActionRewards = RewardedActionManager.Instance.ResolveTagRewardCollisions(RewardedActionManager.Instance.PendingActionRewards);
       DASReportPendingActionRewards();
-      SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
-        Localization.GetWithArgs(LocalizationKeys.kRewardCollectCollectEnergy, RewardedActionManager.Instance.TotalPendingEnergy),
-        Localization.Get(LocalizationKeys.kRewardCollectInstruction),
+      SharedMinigameView.ShowContinueButtonReward(HandleChallengeResultViewClosed,
+        Localization.Get(LocalizationKeys.kRewardCollectCollectEnergyButton),
+        null,
         UIColorPalette.EnergyTextColor,
-        "game_results_continue_button");
+        "game_results_continue_button",
+        RewardedActionManager.Instance.TotalPendingEnergy);
       _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(_ChallengeData);
       _ChallengeEndViewInstance.DisplayRewards();
     }

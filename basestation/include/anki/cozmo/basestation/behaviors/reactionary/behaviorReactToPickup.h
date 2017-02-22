@@ -14,9 +14,6 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToPickup_H__
 
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "clad/externalInterface/messageEngineToGame.h"
-#include <vector>
 
 namespace Anki {
 namespace Cozmo {
@@ -44,7 +41,7 @@ protected:
 
 private:
 
-  double _nextRepeatAnimationTime = 0;
+  float _nextRepeatAnimationTime = 0.0f;
   double _repeatAnimatingMultiplier = 1;
   
 }; // class BehaviorReactToPickup

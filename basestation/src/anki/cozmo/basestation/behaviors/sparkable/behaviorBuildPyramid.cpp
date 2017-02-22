@@ -107,7 +107,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
     
     allSetAndUsable = allSetAndUsable && !hasStaticFailed && !hasBaseFailed && !hasTopFailed;
   }
-  return allSetAndUsable && AreAllBlockIDsUnique();
+  return allSetAndUsable;
 }
 
   
@@ -158,7 +158,10 @@ void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 {
   SET_STATE(DrivingToTopBlock);
 
-  DriveToPickupObjectAction* driveAction = new DriveToPickupObjectAction(robot, _topBlockID);
+  DriveToPickupObjectAction* driveAction =
+     new DriveToPickupObjectAction(robot, _topBlockID,
+                                false, 0, false, 0, false, // default values
+                                AnimationTrigger::BuildPyramidThirdBlockUpright);
   
   StartActing(driveAction,
               [this, &robot](const ActionResult& result){
@@ -223,7 +226,7 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
                   [this, &robot](const ActionResult& result){
                     if (result == ActionResult::SUCCESS) {
                       TransitionToReactingToPyramid(robot);
-                    }else{
+                    }else if(!robot.IsCarryingObject()){
                       _checkForFullPyramidVisualVerifyFailure = true;
                       // This will be removed by a helper soon - hopefully....
                       CompoundActionParallel* checkForTopBlock =
@@ -254,27 +257,6 @@ void BehaviorBuildPyramid::TransitionToReactingToPyramid(Robot& robot)
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID BehaviorBuildPyramid::GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const
-{
-  f32 shortestDistance = -1.f;
-  f32 currentDistance = -1.f;
-  ObjectID nearestObject;
-  
-  //Find nearest block to pickup
-  for(auto block: allBlocks){
-    auto blockPose = block->GetPose().GetWithRespectToOrigin();
-    ComputeDistanceBetween(pose, blockPose, currentDistance);
-    if(currentDistance < shortestDistance || shortestDistance < 0){
-      shortestDistance = currentDistance;
-      nearestObject = block->GetID();
-    }
-  }
-  
-  return nearestObject;
-}
-  
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
 void BehaviorBuildPyramid::TransitionToSearchingWithCallback(Robot& robot,

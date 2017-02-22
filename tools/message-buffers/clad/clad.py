@@ -518,7 +518,17 @@ class CLADParser(PLYParser):
         """ message_decl : message_decl_begin ID LBRACE message_member_decl_list RBRACE
                          | message_decl_begin ID LBRACE message_member_decl_list COMMA RBRACE
                          | message_decl_begin ID LBRACE RBRACE
+                         | NO_DEFAULT_CONSTRUCTOR message_decl_begin ID LBRACE message_member_decl_list RBRACE
+                         | NO_DEFAULT_CONSTRUCTOR message_decl_begin ID LBRACE message_member_decl_list COMMA RBRACE
+                         | NO_DEFAULT_CONSTRUCTOR message_decl_begin ID LBRACE RBRACE
         """
+        default_constructor = p[1] != "no_default_constructor"
+        
+        # if no default constructor remove the word from the list(YaccProduction object)
+        # so the later code is not affected by it
+        if not default_constructor:
+            p.pop(1)
+        
         if len(p) >= 6:
             members = p[4]
         else:
@@ -528,7 +538,8 @@ class CLADParser(PLYParser):
         p[0] = ast.MessageDecl(p[2], members,
                                self.production_to_coord(p, 2),
                                self._get_current_namespace(),
-                               is_structure)
+                               is_structure,
+                               default_constructor)
 
         self._check_duplicates(p[0], p[1])
 

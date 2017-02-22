@@ -27,7 +27,7 @@ import sys
 
 import unittest
 
-from SimpleTest import AnkiTypes, Foo, Bar, Baz, Cat, SoManyStrings
+from SimpleTest import AnkiTypes, Foo, Bar, Baz, Cat, SoManyStrings, Constructor
 from SimpleTest import ExplicitlyTaggedUnion, AnInt, AFloat, AListOfDoubles, AFixedListOfBytes
 from SimpleTest import ExplicitlyTaggedAutoUnion, AnIntMessage, AFloatMessage, AListOfDoublesMessage, AFixedListOfBytesMessage, ABoolMessage
 from aligned.AutoUnionTest import FunkyMessage, Funky, Monkey, Music
@@ -300,6 +300,10 @@ class TestEnumComplex(unittest.TestCase):
       self.assertEqual(BarEnum.bar5, 16)
       self.assertEqual(BarEnum.bar6, 17)
 
+class TestDefaultConstructor(unittest.TestCase):
+    def test_defaultConstructor(self):
+      self.assertEqual(Constructor.HasDefaultConstructor.__init__.__defaults__, (0.0,0))
+      self.assertEqual(Constructor.HasNoDefaultConstructor.__init__.__defaults__, None)
 
 # Required unittest.main
 if __name__ == '__main__':

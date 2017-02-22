@@ -160,12 +160,12 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const GameToEngineEvent& eve
   }
 }
 
-// This  Behavior is killed by unity switching to none
+// This behavior is killed by unity switching to none
 IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal(Robot& robot)
 {
   if( !IsActing() && !IsSequenceComplete() )
   {
-    double timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s();
+    float timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s();
     if( timeRunning > _maxTimeBeforeTimeout_Sec )
     {
       SET_STATE(ErrorFinal,robot);

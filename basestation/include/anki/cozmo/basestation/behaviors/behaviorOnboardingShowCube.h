@@ -82,7 +82,7 @@ private:
   
   uint8_t _maxErrorsTotal = 4;
   uint8_t _maxErrorsPickup = 5;
-  double  _maxTimeBeforeTimeout_Sec = 5 * 60.0;
+  float  _maxTimeBeforeTimeout_Sec = 5.0f * 60.0f;
 };
 
 }

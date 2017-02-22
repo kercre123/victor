@@ -38,7 +38,7 @@ namespace FaceEnrollment {
       base.Enter();
       IsPauseable = false;
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
+      RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete += HandleEnrolledFace;
       CreateInstructionsModal();
     }
 
@@ -85,7 +85,7 @@ namespace FaceEnrollment {
       _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
       _FaceEnrollmentGame.SharedMinigameView.HideShelf();
 
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
+      RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete -= HandleEnrolledFace;
     }
 
     private void HandleUserClosedInstructionsModal() {
@@ -130,6 +130,7 @@ namespace FaceEnrollment {
         _FaceEnrollmentGame.SharedMinigameView.HideTitleWidget();
         _FaceEnrollmentGame.SharedMinigameView.ShowFullScreenGameStateSlide(_FaceEnrollmentGame.FaceEnrollmentMultipleFacesErrorSlidePrefab, "multiple_faces_error");
         _FaceEnrollmentGame.ShowMultipleFacesErrorShelf(_NameForFace, CreateInstructionsModal);
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Error);
       }
       else {
         PopupErrorAlert(faceEnrollmentCompleted);
@@ -165,6 +166,7 @@ namespace FaceEnrollment {
       System.Action<AlertModal> errorAlertCreated = (alertModal) => {
         alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += ReturnToFaceSlide;
         _ErrorAlertModal = alertModal;
+        _ErrorAlertModal.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Error);
       };
 
       // we didn't succeed so let's show an error to the user saying why
@@ -175,24 +177,9 @@ namespace FaceEnrollment {
       _FaceEnrollmentGame.ShowDoneShelf = true;
 
       if (_CurrentRobot.EnrolledFaces.ContainsKey(faceEnrollmentCompleted.faceID)) {
-        DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + PrivacyGuard.HidePersonallyIdentifiableInfo(_NameForFace));
-        _CurrentRobot.EnrolledFaces[faceEnrollmentCompleted.faceID] = _NameForFace;
-        _CurrentRobot.EnrolledFacesLastEnrolledTime[faceEnrollmentCompleted.faceID] = Time.time;
-        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnReEnrollFace);
-        // don't want to show how to play again in re-enrollments
         ReturnToFaceSlide();
       }
       else {
-        _CurrentRobot.EnrolledFaces.Add(faceEnrollmentCompleted.faceID, _NameForFace);
-        _CurrentRobot.EnrolledFacesLastEnrolledTime.Add(faceEnrollmentCompleted.faceID, 0);
-        _CurrentRobot.EnrolledFacesLastSeenTime.Add(faceEnrollmentCompleted.faceID, 0);
-        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
-        DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + PrivacyGuard.HidePersonallyIdentifiableInfo(_NameForFace));
-
-        // log using up another face slot to das
-        DAS.Event("robot.face_slots_used", _CurrentRobot.EnrolledFaces.Count.ToString(),
-          DASUtil.FormatExtraData("1"));
-
         if (_CurrentRobot.EnrolledFaces.Count == 1) {
           ShowDoneAlertModal();
         }

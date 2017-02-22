@@ -28,11 +28,8 @@
 namespace Anki {
   
   namespace Cozmo {
-    
-    class PickupObjectAction;
+  
     class IDockAction;
-    class TurnTowardsLastFacePoseAction;
-    class TurnTowardsObjectAction;
 
     class DriveToPoseAction : public IAction
     {
@@ -48,7 +45,7 @@ namespace Anki {
       
       DriveToPoseAction(Robot& robot,
                         const bool forceHeadDown  = true,
-                        const bool useManualSpeed = false); // Note that SetGoal(s) must be called befure Update()!
+                        const bool useManualSpeed = false); // Note that SetGoal(s) must be called before Update()!
       
       DriveToPoseAction(Robot& robot,
                         const std::vector<Pose3d>& poses,
@@ -273,13 +270,17 @@ namespace Anki {
       void SetTiltTolerance(const Radians tol);
       
       DriveToObjectAction* GetDriveToObjectAction() {
-        return _driveToObjectAction;
+        // For debug builds do a dynamic cast for the validity checks
+        DEV_ASSERT(dynamic_cast<DriveToObjectAction*>(_driveToObjectAction.lock().get()) != nullptr,
+                   "DriveToObjectAction.GetDriveToObjectAction.DynamicCastFailed");
+        
+        return static_cast<DriveToObjectAction*>(_driveToObjectAction.lock().get());
       }
       
       // Subclasses that are a drive-to action followed by a dock action should be calling
       // this function instead of the base classes AddAction() in order to set the approriate
       // preDock pose offset for the dock action
-      void AddDockAction(IDockAction* dockAction, bool ignoreFailure = false);
+      std::weak_ptr<IActionRunner> AddDockAction(IDockAction* dockAction, bool ignoreFailure = false);
 
       // Sets the animation trigger to use to say the name. Only valid if sayName was true
       void SetSayNameAnimationTrigger(AnimationTrigger trigger);
@@ -308,10 +309,15 @@ namespace Anki {
       void SetApproachAngle(const f32 angle_rad);
       
     private:
-      DriveToObjectAction*           _driveToObjectAction           = nullptr;
-      TurnTowardsLastFacePoseAction* _turnTowardsLastFacePoseAction = nullptr;
-      TurnTowardsObjectAction*       _turnTowardsObjectAction       = nullptr;
-      IDockAction*                   _dockAction                    = nullptr;
+      // Keep weak_ptrs to each of the actions inside this compound action so they can be easily
+      // modified
+      // Unfortunately the weak_ptrs need to be cast to the appropriate types to use them. Static casts
+      // are used for this. These are safe in this case as they are only ever casting to the
+      // original type of the action
+      std::weak_ptr<IActionRunner> _driveToObjectAction;
+      std::weak_ptr<IActionRunner> _turnTowardsLastFacePoseAction;
+      std::weak_ptr<IActionRunner> _turnTowardsObjectAction;
+      std::weak_ptr<IActionRunner> _dockAction;
       ObjectID _objectID;
       bool     _lightsSet = false;
       f32      _preDockPoseDistOffsetX_mm = 0;
@@ -358,7 +364,8 @@ namespace Anki {
                                 const f32 approachAngle_rad = 0,
                                 const bool useManualSpeed = false,
                                 Radians maxTurnTowardsFaceAngle_rad = 0.f,
-                                const bool sayName = false);
+                                const bool sayName = false,
+                                AnimationTrigger animBeforeDock = AnimationTrigger::Count);
       
       virtual ~DriveToPickupObjectAction() { }
       
@@ -367,7 +374,7 @@ namespace Anki {
       void SetPostDockLiftMovingAnimation(Anki::Cozmo::AnimationTrigger trigger);
       
     private:
-      PickupObjectAction* _pickupAction = nullptr;
+      std::weak_ptr<IActionRunner> _pickupAction;
     };
     
     
@@ -447,7 +454,7 @@ namespace Anki {
       
     private:
       ObjectID _objectID;
-      RollObjectAction* _rollAction = nullptr;
+      std::weak_ptr<IActionRunner> _rollAction;
     };
     
     

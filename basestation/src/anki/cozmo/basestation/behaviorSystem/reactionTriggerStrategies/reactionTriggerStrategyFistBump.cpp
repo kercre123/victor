@@ -110,7 +110,7 @@ void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
   
 bool ReactionTriggerStrategyFistBump::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
 {
-  const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   if (_shouldTrigger) {
     
@@ -166,9 +166,6 @@ void ReactionTriggerStrategyFistBump::AlwaysHandleInternal(const EngineToGameEve
           }
         }
         
-      } else if (objective == BehaviorObjective::FistBumpSuccess || objective == BehaviorObjective::FistBumpLeftHanging) {
-        _shouldTrigger = false;
-        _lastFistBumpCompleteTime_sec = now;
       }
       break;
     }
@@ -176,6 +173,20 @@ void ReactionTriggerStrategyFistBump::AlwaysHandleInternal(const EngineToGameEve
     {
       break;
     }
+  }
+}
+  
+void ReactionTriggerStrategyFistBump::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
+{
+  behavior->AddListener(this);
+}
+  
+  
+void ReactionTriggerStrategyFistBump::ResetTrigger(bool updateLastCompletionTime)
+{
+  _shouldTrigger = false;
+  if (updateLastCompletionTime) {
+    _lastFistBumpCompleteTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
 }
   

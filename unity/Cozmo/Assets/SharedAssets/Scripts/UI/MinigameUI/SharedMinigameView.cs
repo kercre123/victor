@@ -94,7 +94,15 @@ namespace Cozmo {
       [SerializeField]
       private ContinueGameButtonWidget _ContinueButtonCenterPrefab;
 
-      private bool _IsContinueButtonCentered;
+      [SerializeField]
+      private ContinueGameButtonWidget _ContinueButtonRewardPrefab;
+
+      private enum ContinueButtonState {
+        Centered,
+        Offset,
+        Reward
+      }
+      private ContinueButtonState _ContinueButtonState;
       private ContinueGameButtonWidget _ContinueButtonInstance;
 
       [SerializeField]
@@ -711,13 +719,13 @@ namespace Cozmo {
 
       public void ShowContinueButtonOffset(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
                                            string buttonText, string shelfText, Color shelfTextColor, string dasButtonName) {
-        if (_IsContinueButtonCentered) {
+        if (_ContinueButtonState != ContinueButtonState.Offset) {
           if (_ContinueButtonInstance != null) {
             HideContinueButton();
           }
         }
         CreateWidgetIfNull<ContinueGameButtonWidget>(ref _ContinueButtonInstance, _ContinueButtonOffsetPrefab);
-        _IsContinueButtonCentered = false;
+        _ContinueButtonState = ContinueButtonState.Offset;
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
         _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfTextColor, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
@@ -725,15 +733,30 @@ namespace Cozmo {
 
       public void ShowContinueButtonCentered(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
                                              string buttonText, string dasButtonName) {
-        if (!_IsContinueButtonCentered) {
+        if (_ContinueButtonState != ContinueButtonState.Centered) {
           if (_ContinueButtonInstance != null) {
             HideContinueButton();
           }
         }
         CreateWidgetIfNull<ContinueGameButtonWidget>(ref _ContinueButtonInstance, _ContinueButtonCenterPrefab);
-        _IsContinueButtonCentered = true;
+        _ContinueButtonState = ContinueButtonState.Centered;
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
         _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, string.Empty, Color.clear, dasButtonName, dasViewControllerName);
+        EnableContinueButton(true);
+      }
+
+      public void ShowContinueButtonReward(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
+                                           string buttonText, string shelfText, Color shelfTextColor, string dasButtonName, int rewardAmount) {
+        if (_ContinueButtonState != ContinueButtonState.Reward) {
+          if (_ContinueButtonInstance != null) {
+            HideContinueButton();
+          }
+        }
+        CreateWidgetIfNull<ContinueGameButtonWidget>(ref _ContinueButtonInstance, _ContinueButtonRewardPrefab);
+        _ContinueButtonState = ContinueButtonState.Reward;
+        string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
+        _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfTextColor, dasButtonName, dasViewControllerName);
+        _ContinueButtonInstance.SetAmountText(rewardAmount);
         EnableContinueButton(true);
       }
 

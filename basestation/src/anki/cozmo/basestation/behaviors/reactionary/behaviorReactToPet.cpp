@@ -49,10 +49,6 @@ using namespace Anki::Vision;
 #define PRINT_TRACE(name...) {}
 #endif
 
-static inline float GetCurrentTimeInSeconds() {
-  return Util::numeric_cast<float>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
-}
-  
 BehaviorReactToPet::BehaviorReactToPet(Robot& robot, const Json::Value& config)
   : super(robot, config)
 {
@@ -114,7 +110,7 @@ IBehavior::Status BehaviorReactToPet::UpdateInternal(Robot& robot)
   // end condition for each iteration.
   //
   if (_endReactionTime_s > NEVER) {
-    const float currTime_s = GetCurrentTimeInSeconds();
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (_endReactionTime_s < currTime_s) {
       PRINT_TRACE("ReactToPet.Update.ReactionTimeExpired", "Reaction time has expired");
       EndIteration(robot);
@@ -204,7 +200,7 @@ void BehaviorReactToPet::BeginIteration(Robot& robot)
   
   // Tracking animations do not end by themselves.
   // Choose a random duration and rely on UpdateInternal() to end the action.
-  const float currTime_s = GetCurrentTimeInSeconds();
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const float randTime_s = Util::numeric_cast<float>(robot.GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
   const float endTime_s = currTime_s + randTime_s;
 
@@ -250,7 +246,7 @@ void BehaviorReactToPet::BeginIteration(Robot& robot)
 //
 void BehaviorReactToPet::EndIteration(Robot& robot)
 {
-  const float currTime_s = GetCurrentTimeInSeconds();
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   PRINT_INFO("ReactToPet.EndIteration", "End iteration for petID %d at t=%f", _target, currTime_s);
   

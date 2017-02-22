@@ -63,10 +63,10 @@ DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot,
                              useManualSpeed,
                              maxTurnTowardsFaceAngle_rad,
                              sayName)
-, _flipBlockAction(new FlipBlockAction(robot, objectID))
 {
+  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot, objectID);
+
   SetName("DriveToAndFlipBlock");
-  SetProxyTag(_flipBlockAction->GetTag());
   
   DriveToObjectAction* driveToObjectAction = GetDriveToObjectAction();
   if(driveToObjectAction != nullptr)
@@ -78,15 +78,15 @@ DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot,
       if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
         bool withinThreshold = WithinPreActionThreshold(robot, possiblePoses, _minAlignThreshold_mm);
         alreadyInPosition = withinThreshold;
-        _flipBlockAction->SetShouldCheckPreActionPose(!withinThreshold);
+        static_cast<FlipBlockAction*>(_flipBlockAction.lock().get())->SetShouldCheckPreActionPose(!withinThreshold);
       }
       
       return GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
     });
   }
   
-  AddAction(_flipBlockAction);
-  SetProxyTag(_flipBlockAction->GetTag()); // Use flip action's completion info
+  _flipBlockAction = AddAction(flipBlockAction);
+  SetProxyTag(flipBlockAction->GetTag()); // Use flip action's completion info
 }
 
 void DriveAndFlipBlockAction::ShouldDriveToClosestPreActionPose(bool tf)
@@ -101,7 +101,7 @@ void DriveAndFlipBlockAction::ShouldDriveToClosestPreActionPose(bool tf)
       if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
         bool withinThreshold = WithinPreActionThreshold(_robot, possiblePoses, _minAlignThreshold_mm);
         alreadyInPosition = withinThreshold;
-        _flipBlockAction->SetShouldCheckPreActionPose(!withinThreshold);
+        static_cast<FlipBlockAction*>(_flipBlockAction.lock().get())->SetShouldCheckPreActionPose(!withinThreshold);
       }
       
       
@@ -276,6 +276,9 @@ void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
   
 ActionResult FlipBlockAction::Init()
 {
+  // Incase we are being retried
+  _compoundAction.ClearActions();
+  
   ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
   if(nullptr == object)
   {
@@ -315,7 +318,7 @@ ActionResult FlipBlockAction::Init()
   
   // Need to set the initial lift height to fit lift base into block corner edge
   MoveLiftToHeightAction* initialLift = new MoveLiftToHeightAction(_robot, kInitialLiftHeight_mm);
-  
+
   _compoundAction.AddAction(initialLift);
   _compoundAction.AddAction(drive);
   _compoundAction.Update();

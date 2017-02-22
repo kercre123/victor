@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPyramidThankYou.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -38,15 +39,17 @@ namespace Cozmo {
 namespace{
 using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
   
-const int kMinUprightBlocksForPyramid = 3;
+static const int kMinUprightBlocksForPyramid = 3;
+static const float kDelayAccountForPlacing_s = 3.0;
+static const float kDelayAccountForBaseCreation_s = 5.0;
 
 // Interval at which disconnected cube orientations are pulled from block world
 static const float kIntervalCheckCubeOrientation = 1.0;
   
 // Pyramid Light constants
 static const constexpr uint kBaseFormedTimeOn = 500;
-static const constexpr uint kPyramidDenouementBaseOff_ms = 875;
-static const constexpr uint kPyramidDenouementAdditionalOff_ms = 125;
+static const constexpr uint kPyramidDenouementBaseOff_ms = 650;
+static const constexpr uint kPyramidDenouementAdditionalOff_ms = 75;
 
   
 static const std::map<AxisName,UpAxis> kAxisNameMap = {
@@ -58,17 +61,7 @@ static const std::map<AxisName,UpAxis> kAxisNameMap = {
   {AxisName::X_NEG, UpAxis::XNegative}
 };
   
-static const std::vector<AnimationTrigger> kUprightAnims = {
-  AnimationTrigger::BuildPyramidFirstBlockUpright,
-  AnimationTrigger::BuildPyramidSecondBlockUpright,
-  AnimationTrigger::BuildPyramidThirdBlockUpright
-};
-  
-static const std::vector<AnimationTrigger> kOnSideAnims = {
-  AnimationTrigger::BuildPyramidFirstBlockOnSide,
-  AnimationTrigger::BuildPyramidSecondBlockOnSide,
-  AnimationTrigger::BuildPyramidThirdBlockOnSide
-};
+
 
 static ObjectLights kEmptyObjectLights = {};
 
@@ -108,7 +101,6 @@ public:
   void SetPyramidAssignment(PyramidBehaviorChooser::PyramidAssignment assignment)
          { _assignment = assignment;}
   void SetHasAcknowledgedPositively(bool hasAcknowledged) { _hasAcknowledgedPositively = hasAcknowledged;}
-  
   void SetHasEverBeenUpright(bool upright){ _hasEverBeenUpright = upright;}
 };
   
@@ -119,16 +111,17 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
 , _chooserPhase(ChooserPhase::None)
 , _lastUprightBlockCount(-1)
 , _pyramidObjectiveAchieved(false)
-, _nextTimeCheckBlockOrientations_s(0)
+, _nextTimeCheckBlockOrientations_s(-1)
 , _currentPyramidConstructionStage(PyramidConstructionStage::None)
+, _lastTimeConstructionStageChanged_s(0)
 , _lastCountBasesSeen(0)
 , _uprightAnimIndex(0)
 , _onSideAnimIndex(0)
+, _forceLightMusicUpdate(false)
 {
   ReloadFromConfig(robot, config);
 
-  SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, false);
-  SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, true);
+  UpdateActiveBehaviorGroup(_robot, true);
   
   /////////
   // Get pointers to all behaviors that must be manually called
@@ -238,8 +231,9 @@ void BuildPyramidBehaviorChooser::OnSelected()
   _onSideAnimIndex = 0;
   _lastUprightBlockCount = -1;
   _currentPyramidConstructionStage = PyramidConstructionStage::None;
-  SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, false);
-  SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, true);
+  _chooserPhase = ChooserPhase::None;
+  _nextTimeCheckBlockOrientations_s = -1;
+  UpdateActiveBehaviorGroup(_robot, true);
 
   _pyramidObjectiveAchieved = false;
   
@@ -249,6 +243,8 @@ void BuildPyramidBehaviorChooser::OnSelected()
     entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);
     entry.second.SetHasEverBeenUpright(UpAxis::ZPositive == entry.second.GetCurrentUpAxis());
   }
+  
+  _forceLightMusicUpdate = true;
   
   UpdateChooserPhase(_robot);
   Update(_robot);
@@ -269,7 +265,33 @@ void BuildPyramidBehaviorChooser::OnDeselected()
   // also mapped to another behavior group
   SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, true);
   SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, true);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
+                                                          ReactionTrigger::ObjectPositionUpdated,
+                                                          true);
 }
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BuildPyramidBehaviorChooser::UpdateActiveBehaviorGroup(Robot& robot, bool settingUpPyramid)
+{
+  // Order matters
+  if(settingUpPyramid){
+    SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, false);
+    SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, true);
+    // The setup phase has its own acknowledgments
+    robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
+                                                            ReactionTrigger::ObjectPositionUpdated,
+                                                            false);
+    
+  }else{
+    SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, true);
+    SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, true);
+    robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
+                                                            ReactionTrigger::ObjectPositionUpdated,
+                                                            true);
+  }
+}
+
 
 
 //////////////////////////////////////////////
@@ -398,7 +420,10 @@ void BuildPyramidBehaviorChooser::UpdateStateTrackerForUnrecognizedID(const Obje
 void BuildPyramidBehaviorChooser::UpdatePyramidAssignments(const BehaviorBuildPyramidBase* behavior)
 {
   for(auto& entry: _pyramidCubePropertiesTrackers){
-    entry.second.SetPyramidAssignment(PyramidBehaviorChooser::PyramidAssignment::None);
+    if(entry.second.GetPyramidAssignment() != PyramidBehaviorChooser::PyramidAssignment::None){
+      _forceLightMusicUpdate = true;
+      entry.second.SetPyramidAssignment(PyramidBehaviorChooser::PyramidAssignment::None);
+    }
   }
   
   // Allows assignments to be cleared out by passing in nullptr
@@ -444,9 +469,17 @@ void BuildPyramidBehaviorChooser::UpdatePyramidAssignments(const BehaviorBuildPy
 IBehavior* BuildPyramidBehaviorChooser::ChooseNextBehavior(Robot& robot,
                                                            const IBehavior* currentRunningBehavior)
 {
-  // If we can thank the user, we should - otherwise delegate to the chooser phase
+  UpdateTrackerPropertiesBasedOnCurrentRunningBehavior(currentRunningBehavior);
+
+  // Thank the user if possible
   IBehavior* bestBehavior = CheckForShouldThankUser(robot, currentRunningBehavior);
   
+  // Otherwise, see if we have to roll or respond to a block
+  if(bestBehavior == nullptr){
+    bestBehavior = CheckForResponsePossiblyRoll(robot, currentRunningBehavior);
+  }
+  
+  // Otherwise proceed to specific chooser phase
   if(bestBehavior == nullptr){
     switch(_chooserPhase){
       case ChooserPhase::SetupBlocks:
@@ -476,16 +509,6 @@ IBehavior* BuildPyramidBehaviorChooser::ChooseNextBehavior(Robot& robot,
 IBehavior*  BuildPyramidBehaviorChooser::ChooseNextBehaviorSetup(Robot& robot,
                                                                  const IBehavior* currentRunningBehavior)
 {
-  //  Priority of functions:
-  //  Acknowledge/Roll available blocks -> Phase specific behaviors
-  //
-  IBehavior* bestBehavior = nullptr;
-
-  bestBehavior = CheckForResponsePossiblyRoll(robot, currentRunningBehavior);
-  if(bestBehavior != nullptr){
-    return bestBehavior;
-  }
-  
   return BaseClass::ChooseNextBehavior(robot, currentRunningBehavior);
 }
 
@@ -546,20 +569,19 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForShouldThankUser(Robot& robot,
        pyramidCubeProperties != nullptr &&
        !pyramidCubeProperties->GetHasEverBeenUpright() &&
        pyramidCubeProperties->GetCurrentUpAxis() == UpAxis::ZPositive){
-      float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      AnimationTrigger placeHolder;
-      float completedTimestamp;
-      bool hadToRoll;
-      const float kMaxTimeSinceResponse = 1;
       
-      const bool didRecentlyRollCube =
-      _behaviorRespondPossiblyRoll->WasResponseSuccessful(placeHolder,
-                                                          completedTimestamp,
-                                                          hadToRoll) &&
-      FLT_LE(currentTime_s - completedTimestamp, kMaxTimeSinceResponse) &&
-      _behaviorRespondPossiblyRoll->GetTargetID() == objectID;
+      const bool runningRollCube =
+        currentRunningBehavior != nullptr &&
+        currentRunningBehavior->GetClass() == BehaviorClass::RespondPossiblyRoll &&
+        _behaviorRespondPossiblyRoll->GetResponseMetadata().GetObjectID() == objectID;
       
-      if(!didRecentlyRollCube){
+      bool rolledCubeHimself = false;
+      if(runningRollCube){
+        const auto& metadata = _behaviorRespondPossiblyRoll->GetResponseMetadata();
+        rolledCubeHimself = metadata.GetReachedPreDocRoll();
+      }
+      
+      if(!rolledCubeHimself){
         BehaviorPreReqAcknowledgeObject preReqObj(objectID);
         if(_behaviorPyramidThankYou->IsRunnable(preReqObj)){
           bestBehavior = _behaviorPyramidThankYou;
@@ -597,59 +619,73 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
     }
   }
   
-  // If the respond behavior has completed successfully, update the state tracker
-  {
-    float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    AnimationTrigger responseTrigger;
-    float completedTimestamp;
-    bool hadToRoll;
-    const float kMaxTimeSinceResponse = 1;
-    if(_behaviorRespondPossiblyRoll->WasResponseSuccessful(responseTrigger, completedTimestamp, hadToRoll)
-       && FLT_LE(currentTime_s - completedTimestamp, kMaxTimeSinceResponse)){
-      UpdateCurrentAnimationTrigger(responseTrigger);
-      
-      // Set acknowledged positevely if response was a positive response
-      const ObjectID& target = _behaviorRespondPossiblyRoll->GetTargetID();
-      PyramidCubePropertiesTracker* tracker = nullptr;
-      if(GetCubePropertiesTrackerByID(target, tracker) &&
-         !hadToRoll &&
-         tracker->GetCurrentUpAxis() == UpAxis::ZPositive){
-        tracker->SetHasAcknowledgedPositively(true);
-      }
-    }
-  }
-  
-  // Ensure the behavior's ID has been cleared
-  _behaviorRespondPossiblyRoll->ClearTarget();
-  
   IBehavior* bestBehavior = nullptr;
   BehaviorPreReqNone kNoPreReqs;
+  int numberOfCubesOnSide = 0;
   
   for(auto& entry: _pyramidCubePropertiesTrackers){
+    if(entry.second.GetCurrentUpAxis() != UpAxis::ZPositive){
+      numberOfCubesOnSide++;
+    }
+    
     ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(entry.second.GetObjectID());
     if(object != nullptr){
       if(entry.second.GetCurrentUpAxis() != UpAxis::ZPositive){
-        bestBehavior = _behaviorRespondPossiblyRoll;
-        _behaviorRespondPossiblyRoll->SetTarget(entry.second.GetObjectID());
-        _behaviorRespondPossiblyRoll->SetReactionAnimation(
-                                                           GetOnSideAnimationTrigger());
-        entry.second.SetHasAcknowledgedPositively(false);
+        BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
+                                                     _uprightAnimIndex,
+                                                     _onSideAnimIndex);
+        if(_behaviorRespondPossiblyRoll->IsRunnable(preReqData)){
+          bestBehavior = _behaviorRespondPossiblyRoll;
+        }
         break;
       }
       
       if(bestBehavior == nullptr && !entry.second.GetHasAcknowledgedPositively()){
-        _behaviorRespondPossiblyRoll->SetTarget(entry.second.GetObjectID());
-        _behaviorRespondPossiblyRoll->SetReactionAnimation(GetUprightAnimationTrigger());
-        if(_behaviorRespondPossiblyRoll->IsRunnable(kNoPreReqs)){
+        BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
+                                                     _uprightAnimIndex,
+                                                     _onSideAnimIndex);
+        if(_behaviorRespondPossiblyRoll->IsRunnable(preReqData)){
           bestBehavior = _behaviorRespondPossiblyRoll;
         }
       }
     }
   }
   
-  return bestBehavior;
+  // We don't want to acknowledge positively if all cubes are upright and we can start
+  // building
+  return  numberOfCubesOnSide != 0 ? bestBehavior : nullptr;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BuildPyramidBehaviorChooser::UpdateTrackerPropertiesBasedOnCurrentRunningBehavior(const IBehavior* currentRunningBehavior)
+{
+  // Update respondPossiblyRoll tracker info
+  if(currentRunningBehavior != nullptr &&
+     currentRunningBehavior->GetClass() == BehaviorClass::RespondPossiblyRoll){
+    
+    const auto& metadata =  _behaviorRespondPossiblyRoll->GetResponseMetadata();
+    
+    if(metadata.GetPlayedUprightAnim()){
+      _uprightAnimIndex = metadata.GetUprightAnimIndex() + 1;
+    }
+    
+    if(metadata.GetPlayedOnSideAnim()){
+      _onSideAnimIndex = metadata.GetOnSideAnimIndex() + 1;
+    }
+    
+    // Set acknowledged positevely if response was a positive response
+    const ObjectID& target = metadata.GetObjectID();
+    PyramidCubePropertiesTracker* tracker = nullptr;
+    ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(target);
+    if(GetCubePropertiesTrackerByID(target, tracker) &&
+       object != nullptr &&
+       tracker->GetCurrentUpAxis() == UpAxis::ZPositive){
+      tracker->SetHasAcknowledgedPositively(metadata.GetPlayedUprightAnim());
+    }
+  }
+  
+}
 
 //////////////////////////////////////////////
 //////////////////////////////////////////////
@@ -663,7 +699,7 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BuildPyramidBehaviorChooser::Update(Robot& robot)
 {
-  float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currentTime_s > _nextTimeCheckBlockOrientations_s){
     CheckBlockWorldCubeOrientations(robot);
     _nextTimeCheckBlockOrientations_s = currentTime_s + kIntervalCheckCubeOrientation;
@@ -672,6 +708,7 @@ Result BuildPyramidBehaviorChooser::Update(Robot& robot)
   if(_objectAxisChangeIDs.size() > 0 ||
      _chooserPhase == ChooserPhase::None){
     UpdateChooserPhase(robot);
+
   }
   
   PyramidConstructionStage desiredState = CheckLightAndPyramidConstructionStage(robot);
@@ -684,7 +721,8 @@ Result BuildPyramidBehaviorChooser::Update(Robot& robot)
   const auto& pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   const bool numberOfPyramidBasesChanged = pyramidBases.size() != _lastCountBasesSeen;
   
-  if(constructionStageChanged ||
+  if(_forceLightMusicUpdate ||
+     constructionStageChanged ||
      pyramidSetupStageChanged ||
      numberOfPyramidBasesChanged){
        UpdateMusic(robot, desiredState);
@@ -694,7 +732,13 @@ Result BuildPyramidBehaviorChooser::Update(Robot& robot)
   
   
   _lastCountBasesSeen = static_cast<int>(pyramidBases.size());
-  _currentPyramidConstructionStage = desiredState;
+  _forceLightMusicUpdate = false;
+  
+  if(_currentPyramidConstructionStage != desiredState){
+    _lastTimeConstructionStageChanged_s = currentTime_s;
+    _currentPyramidConstructionStage = desiredState;
+  }
+  
   
   return Result::RESULT_OK;
 }
@@ -740,14 +784,12 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
      countOfBlocksUpright == _pyramidCubePropertiesTrackers.size()){
     if(_chooserPhase != ChooserPhase::BuildingPyramid){
       _chooserPhase = ChooserPhase::BuildingPyramid;
-      SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, false);
-      SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, true);
+      UpdateActiveBehaviorGroup(_robot, false);
     }
   }else{
     if(_chooserPhase != ChooserPhase::SetupBlocks){
       _chooserPhase = ChooserPhase::SetupBlocks;
-      SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, false);
-      SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, true);
+      UpdateActiveBehaviorGroup(_robot, true);
     }
   }
   
@@ -758,6 +800,8 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BuildPyramidBehaviorChooser::PyramidConstructionStage BuildPyramidBehaviorChooser::CheckLightAndPyramidConstructionStage(Robot& robot) const
 {
+  float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   // Once we've started to play the success sequence, no going back
   if(_pyramidObjectiveAchieved){
     return PyramidConstructionStage::PyramidCompleteFlourish;
@@ -773,7 +817,14 @@ BuildPyramidBehaviorChooser::PyramidConstructionStage BuildPyramidBehaviorChoose
   const auto& pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   
   if((pyramidBases.size() == 0 && pyramids.size() == 0)){
-    if(robot.IsCarryingObject()){
+    // there is a range in which we don't want to cancel lights while placing blocks
+    const bool possiblyPlacingBase =
+      _currentPyramidConstructionStage == PyramidConstructionStage::InitialCubeCarry &&
+      (_behaviorBuildPyramid->IsRunning() || _behaviorBuildPyramidBase->IsRunning()) &&
+      (_lastTimeConstructionStageChanged_s + kDelayAccountForPlacing_s > currentTime_s ||
+       _lastTimeConstructionStageChanged_s + kDelayAccountForBaseCreation_s < currentTime_s);
+    
+    if(robot.IsCarryingObject() || possiblyPlacingBase){
       return PyramidConstructionStage::InitialCubeCarry;
     }else{
       return PyramidConstructionStage::SearchingForCube;
@@ -951,6 +1002,16 @@ void BuildPyramidBehaviorChooser::SetCubeLights()
                                                             nullptr,
                                                             true,
                                                             entry.second.GetDesiredLightModifier());
+        const ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(entry.second.GetObjectID());
+        if(obj != nullptr){
+        
+          PRINT_NAMED_ERROR("Setting Lights", "ObjID:%i, trigger:%i, modifier_x:%f, modifier_y:%f, obj_X:%f obj_y:%f",
+                            entry.second.GetObjectID().GetValue(), entry.second.GetCurrentLightTrigger(),
+                            entry.second.GetDesiredLightModifier().relativePoint.x(),
+                            entry.second.GetDesiredLightModifier().relativePoint.y(),
+                            obj->GetPose().GetTranslation().x(),
+                            obj->GetPose().GetTranslation().y());
+        }
       }
       else
       {
@@ -1060,9 +1121,13 @@ ObjectLights BuildPyramidBehaviorChooser::GetBaseFormedBaseLightsModifier(Robot&
   Pose3d baseMidpoint;
   PyramidBase::GetBaseInteriorMidpoint(robot, baseBlock, staticBlock, baseMidpoint);
   
+  PRINT_NAMED_ERROR("BASE MIDPOINT!!!!!", "x:%f, y:%f",
+                    baseMidpoint.GetTranslation().x(),
+                    baseMidpoint.GetTranslation().y());
+  
   baseBlockLights.relativePoint = {baseMidpoint.GetTranslation().x(),
     baseMidpoint.GetTranslation().y()};
-  baseBlockLights.offset = {{kBaseFormedTimeOn*4,0,kBaseFormedTimeOn*2,kBaseFormedTimeOn*3}};
+  baseBlockLights.offset = {{kBaseFormedTimeOn*2,0,kBaseFormedTimeOn*4,kBaseFormedTimeOn*3}};
   
   return baseBlockLights;
   
@@ -1087,6 +1152,11 @@ ObjectLights BuildPyramidBehaviorChooser::GetBaseFormedStaticLightsModifier(Robo
   Pose3d staticMidpoint;
   PyramidBase::GetBaseInteriorMidpoint(robot, staticBlock, baseBlock, staticMidpoint);
   
+  PRINT_NAMED_ERROR("STATIC MIDPOINT!!!!!", "x:%f, y:%f",
+                    staticMidpoint.GetTranslation().x(),
+                    staticMidpoint.GetTranslation().y());
+  
+  
   staticBlockLights.relativePoint = {staticMidpoint.GetTranslation().x(),
     staticMidpoint.GetTranslation().y()};
   
@@ -1107,52 +1177,6 @@ ObjectLights BuildPyramidBehaviorChooser::GetDenouementBottomLightsModifier() co
   
   return kFlourishTopLights;
   
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationTrigger BuildPyramidBehaviorChooser::GetUprightAnimationTrigger() const
-{
- 
-  return kUprightAnims[_uprightAnimIndex];
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationTrigger BuildPyramidBehaviorChooser::GetOnSideAnimationTrigger() const
-{
-  return kOnSideAnims[_onSideAnimIndex];
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BuildPyramidBehaviorChooser::UpdateCurrentAnimationTrigger(AnimationTrigger lastSuccess)
-{
-  switch(lastSuccess){
-    case(AnimationTrigger::BuildPyramidFirstBlockUpright):
-    case(AnimationTrigger::BuildPyramidSecondBlockUpright):
-    case(AnimationTrigger::BuildPyramidThirdBlockUpright):
-    {
-      if(_uprightAnimIndex < kUprightAnims.size() - 1){
-        _uprightAnimIndex++;
-      }
-      break;
-    }
-    case(AnimationTrigger::BuildPyramidFirstBlockOnSide):
-    case(AnimationTrigger::BuildPyramidSecondBlockOnSide):
-    case(AnimationTrigger::BuildPyramidThirdBlockOnSide):
-    {
-      if(_onSideAnimIndex < kOnSideAnims.size() - 1){
-        _onSideAnimIndex++;
-      }
-      break;
-    }
-    default:
-    {
-      DEV_ASSERT(false, "BuildPyramidBehaviorChooser.UpdateCurrentAnimationTrigger.UnknownAnimation %s");
-      break;
-    }
-  }
 }
 
 

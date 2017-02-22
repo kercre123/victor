@@ -1168,7 +1168,6 @@ namespace Anki {
     {
       if(nullptr != _visuallyVerifyAction) {
         _visuallyVerifyAction->PrepForCompletion();
-        Util::SafeDelete(_visuallyVerifyAction);
       }
     }
 
@@ -1339,7 +1338,7 @@ namespace Anki {
           }
           else if(_visuallyVerifyWhenDone)
           {
-            _visuallyVerifyAction = new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode);
+            _visuallyVerifyAction.reset(new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode));
             
             // Disable completion signals since this is inside another action
             _visuallyVerifyAction->ShouldEmitCompletionSignal(false);
@@ -1422,13 +1421,13 @@ namespace Anki {
           CrossBridgeAction* bridgeAction = new CrossBridgeAction(_robot, _objectID, _useManualSpeed);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
           bridgeAction->ShouldSuppressTrackLocking(true);
-          _chosenAction = bridgeAction;
+          _chosenAction.reset(bridgeAction);
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
           AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_robot, _objectID, _useManualSpeed);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
           rampAction->ShouldSuppressTrackLocking(true);
-          _chosenAction = rampAction;
+          _chosenAction.reset(rampAction);
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.CannotTraverseObjectType",
@@ -1640,9 +1639,8 @@ namespace Anki {
     {
       if(nullptr != _action) {
         _action->PrepForCompletion();
-        Util::SafeDelete(_action);
       }
-      _action = action;
+      _action.reset(action);
       if(nullptr != _action) {
         _action->ShouldEmitCompletionSignal(false);
         _action->ShouldSuppressTrackLocking(true);

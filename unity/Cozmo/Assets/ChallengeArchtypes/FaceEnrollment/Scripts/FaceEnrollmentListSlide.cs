@@ -38,16 +38,16 @@ namespace FaceEnrollment {
 
     }
 
-    private void HandleUnlockResults(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult message) {
+    private void HandleEnrolledFace(Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted message) {
       RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
     }
 
     private void Start() {
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleUnlockResults);
+      RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete += HandleEnrolledFace;
     }
 
     private void OnDestroy() {
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleUnlockResults);
+      RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete -= HandleEnrolledFace;
     }
 
     private void ClearList() {

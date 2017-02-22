@@ -409,11 +409,6 @@ void BehaviorLookAround::StopInternal(Robot& robot)
   
 void BehaviorLookAround::ResetBehavior(Robot& robot)
 {
-  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
-  // This is the last update before we stop running, so store off time
-  _lastLookAroundTime = currentTime_sec;
-      
   // Reset our number of destinations for next time we run this behavior
   _numDestinationsLeft = kDestinationsToReach;
 

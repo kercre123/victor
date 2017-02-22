@@ -18,6 +18,7 @@ namespace MemoryMatch {
       ScanCenter,
       Stopped,
       Error,
+      ScanCompleteSuccess
     }
 
     private Dictionary<int, ScannedSetupCubeState> _SetupCubeState;
@@ -65,7 +66,6 @@ namespace MemoryMatch {
       if (_ScanPhase == ScanPhase.NoCubesSeen) {
         int visibleCubeCount = _CurrentRobot.VisibleLightCubes.Count;
         if (visibleCubeCount > 0) {
-          PopIdleAnimation();
           UpdateScannedCubes();
           // If Cozmo can see all at once, we know it's too close
           int closeCubes = 0;
@@ -239,8 +239,12 @@ namespace MemoryMatch {
         SetScanPhase(ScanPhase.NoCubesSeen);
       }
       else {
-        base.HandleContinueButtonClicked();
+        SetScanPhase(ScanPhase.ScanCompleteSuccess);
       }
+    }
+
+    private void HandleSetupFinishedReactionFinished(bool success) {
+      base.HandleContinueButtonClicked();
     }
 
     private void InitShowCubesSlide() {
@@ -267,6 +271,14 @@ namespace MemoryMatch {
           }
         }
 
+        // set idle animation based on state
+        if (nextState == ScanPhase.NoCubesSeen) {
+          PushIdleAnimation();
+        }
+        else {
+          PopIdleAnimation();
+        }
+
         // setup next state...
         if (nextState == ScanPhase.NoCubesSeen) {
           _Game.CubeIdsForGame.Clear();
@@ -276,7 +288,7 @@ namespace MemoryMatch {
           _Game.SharedMinigameView.EnableContinueButton(false);
         }
         else if (nextState == ScanPhase.WaitForContinue) {
-          _Game.SharedMinigameView.EnableContinueButton(true);
+          _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupReaction, HandleReactionAnimationFinished);
         }
         else if (nextState == ScanPhase.ScanLeft || nextState == ScanPhase.ScanCenter) {
           _Game.SharedMinigameView.EnableContinueButton(false);
@@ -308,10 +320,11 @@ namespace MemoryMatch {
             _CurrentRobot.TurnTowardsObject(centerCube, false);
           }
           // Force an autocontinue now...
-          base.HandleContinueButtonClicked();
+          SetScanPhase(ScanPhase.ScanCompleteSuccess);
           //_Game.SharedMinigameView.EnableContinueButton(true);
         }
         else if (nextState == ScanPhase.Error) {
+          _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupGetOut);
           _ShowCozmoCubesSlide = null;
           _Game.SharedMinigameView.EnableContinueButton(true);
           LightCube centerCube = (_Game as MemoryMatchGame).GetCubeBySortedIndex(1);
@@ -341,10 +354,18 @@ namespace MemoryMatch {
           _Game.SharedMinigameView.ShowWideGameStateSlide(
                                                      MemoryMatchGameInstance.MemoryMatchSetupErrorPrefab.gameObject, "MemoryMatch_error_slide");
         }
+        else if (nextState == ScanPhase.ScanCompleteSuccess) {
+          _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupReaction, HandleSetupFinishedReactionFinished);
+          _Game.SharedMinigameView.EnableContinueButton(false);
+        }
 
         _ScanPhase = nextState;
         _Game.SharedMinigameView.SetContinueButtonSupplementText(GetWaitingForCubesText(_CubesRequired), Cozmo.UI.UIColorPalette.NeutralTextColor);
       }
+    }
+
+    private void HandleReactionAnimationFinished(bool success) {
+      _Game.SharedMinigameView.EnableContinueButton(true);
     }
 
     private void HandleTurnFinished(bool success) {

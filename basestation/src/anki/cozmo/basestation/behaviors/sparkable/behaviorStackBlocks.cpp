@@ -371,16 +371,24 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
     if(completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
     {
       // Use a different preAction pose if we failed because we couldn't see the block
-      action->GetDriveToObjectAction()->SetGetPossiblePosesFunc(
-        [this, action](ActionableObject* object,
-                       std::vector<Pose3d>& possiblePoses,
-                       bool& alreadyInPosition)
+      DriveToObjectAction* driveToObjectAction = action->GetDriveToObjectAction();
+      if(driveToObjectAction != nullptr)
+      {
+        driveToObjectAction->SetGetPossiblePosesFunc([this, action](ActionableObject* object,
+                                                                    std::vector<Pose3d>& possiblePoses,
+                                                                    bool& alreadyInPosition)
         {
           return IBehavior::UseSecondClosestPreActionPose(action->GetDriveToObjectAction(),
                                                           object,
                                                           possiblePoses,
                                                           alreadyInPosition);
         });
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("BehaviorStackBlocks.TransitionToPickingUpBlock.RetryCallback.NullDriveAction",
+                          "DriveToObjectAction in DriveToPickupObjectAction is null");
+      }
       return true;
     }
     

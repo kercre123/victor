@@ -283,6 +283,22 @@ public static class LocalizationEditorUtility {
     File.WriteAllText(kGeneratedLocalizationKeysFilePath, fileContents);
   }
 
+  [MenuItem("Cozmo/Localization/Copy Boot String Files")]
+  public static void CopyBootStringFiles() {
+    // Bootup strings need to be in resources, so Copy them in the event something has changed.
+    // TextAssets don't get called as a part of the AssetPostProcessor. So just manually copy them.
+    const string _kBootStringsFileName = "/BootStrings.json";
+    string[] supportedLocaleDirs = Localization.GetLocalizationAllLanguagesPaths();
+    foreach (string srcPath in supportedLocaleDirs) {
+      if (File.Exists(srcPath + _kBootStringsFileName)) {
+        string[] splitStr = srcPath.Split('/');
+        string combinedPath = Path.Combine(srcPath, "../../../Resources/bootstrap/LocalizedStrings/");
+        string destPath = combinedPath + splitStr[splitStr.Length - 1] + _kBootStringsFileName;
+        File.Copy(srcPath + _kBootStringsFileName, destPath, true);
+      }
+    }
+  }
+
   private static string VariableNameFromLocalizationKey(string localizationKey) {
     string variableName = "k";
     char[] delimiter = { '.', ' ' };

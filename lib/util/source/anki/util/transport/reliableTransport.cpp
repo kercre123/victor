@@ -750,8 +750,8 @@ void ReliableTransport::Update()
 #if ANKI_NET_MESSAGE_LOGGING_ENABLED
   if (kPrintNetworkStats)
   {
-    const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    static std::chrono::system_clock::time_point sLastPrintTime = now;
+    const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    static std::chrono::steady_clock::time_point sLastPrintTime = now;
     
     if (std::chrono::duration_cast<std::chrono::milliseconds>(now - sLastPrintTime).count() >= Util::kPrintNetworkStatsTimeSpacingMS)
     {

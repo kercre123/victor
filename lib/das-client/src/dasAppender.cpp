@@ -69,6 +69,9 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
                          const std::map<std::string,std::string>* globals,
                          const std::map<std::string,std::string>& data) {
 
+  if (DASNetworkingDisabled) { // reject logs if we've disabled DAS networking.
+    return;
+  }
   uint32_t curSequence = sDasSequenceNumber++;
 
   std::map<std::string, std::string> eventDictionary{*globals};
@@ -77,25 +80,27 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
 
   _syncQueue.Wake([this, eventDictionary = std::move(eventDictionary), curSequence]() mutable {
 
-    std::string logSequence = std::to_string(curSequence);
-    eventDictionary[kSequenceGlobalKey] = logSequence;
-    if( eventDictionary.end() == eventDictionary.find(kMessageVersionGlobalKey) ) {
-      eventDictionary[kMessageVersionGlobalKey] = kMessageVersionGlobalValue;
-    }
-
-    std::string logData = AnkiUtil::StringMapToJson(eventDictionary) + ",";
-
-    if (logData.size() <= _maxLogLength) {
-      if (_logFileAppender != nullptr) {
-        _logFileAppender->WriteDataToCurrentLogfile(logData);
+      if (eventDictionary.end() == eventDictionary.find(kSequenceGlobalKey)) {
+        std::string logSequence = std::to_string(curSequence);
+        eventDictionary[kSequenceGlobalKey] = logSequence;
       }
-      if (!DASNetworkingDisabled) {
-        SetTimedFlush();
+      if( eventDictionary.end() == eventDictionary.find(kMessageVersionGlobalKey) ) {
+        eventDictionary[kMessageVersionGlobalKey] = kMessageVersionGlobalValue;
       }
-    } else {
-      LOGD("Error! Dropping message of length %zd", logData.size());
-    }
-  });
+
+      std::string logData = AnkiUtil::StringMapToJson(eventDictionary) + ",";
+
+      if (logData.size() <= _maxLogLength) {
+        if (_logFileAppender != nullptr) {
+          _logFileAppender->WriteDataToCurrentLogfile(logData);
+        }
+        if (!DASNetworkingDisabled) {
+          SetTimedFlush();
+        }
+      } else {
+        LOGD("Error! Dropping message of length %zd", logData.size());
+      }
+    });
 }
 
 void DasAppender::SetTimedFlush()

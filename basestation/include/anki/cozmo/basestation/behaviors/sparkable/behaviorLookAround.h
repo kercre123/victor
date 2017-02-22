@@ -105,7 +105,6 @@ private:
   
   State _currentState = State::Inactive;
   Destination _currentDestination = Destination::North;
-  f32 _lastLookAroundTime = 0;
 
   // note that this is reset when the robot is put down, so no need to worry about origins
   Pose3d _moveAreaCenter;

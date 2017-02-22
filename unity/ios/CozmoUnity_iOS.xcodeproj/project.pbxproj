@@ -34,6 +34,7 @@
 		273EE5B9B92AC683D0CE786B /* CameraCapture.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2167B9C45B33ACBC132A8820 /* CameraCapture.mm */; };
 		29A2840A00D5FA9F2ED8D140 /* AppDelegateListener.mm in Sources */ = {isa = PBXBuildFile; fileRef = 57B55EC3DAD9586C8674C1B4 /* AppDelegateListener.mm */; };
 		2A272FACABEE862608C98C5C /* Bulk_Assembly-CSharp_8.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 919E007E74AB82E4BA1FCC0A /* Bulk_Assembly-CSharp_8.cpp */; };
+		2B76A5B91E4E102800990EC0 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2B76A5B81E4E102800990EC0 /* WebKit.framework */; };
 		2C94CF28DA5EBFAF3551D645 /* Il2CppOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8B3A03F713EA1F91C1572307 /* Il2CppOptions.cpp */; };
 		2DEF7E680BF4443E2AA36DC9 /* Il2CppCodeRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5807279BDAFC61155EBE73EF /* Il2CppCodeRegistration.cpp */; };
 		304CEFC93FA2C2DCFBE4A5CA /* DeviceSettings.mm in Sources */ = {isa = PBXBuildFile; fileRef = 54BF5D7D4068BA8F8EEC6287 /* DeviceSettings.mm */; };
@@ -146,6 +147,7 @@
 		B0E79F1301C53951C2DE6310 /* DisplayManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = C5A66AFCF70A4FAC3F5D6067 /* DisplayManager.mm */; };
 		B20B90800C31C7B1FB87E1A5 /* Bulk_Generics_6.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9EE5BA5AD59FE5DAA87E8340 /* Bulk_Generics_6.cpp */; };
 		B4BE576FA29A1C771F875973 /* VideoPlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = F0A4E509436FBFB63F42A329 /* VideoPlayer.mm */; };
+		B92377D9FC90ECA3D8AB5D74 /* WebView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4506769C2E1C900BDAEEAE47 /* WebView.mm */; };
 		BA7B36A3503B75D46E8E97F7 /* Bulk_UnityEngine_2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97956C945296A449F9EADDE0 /* Bulk_UnityEngine_2.cpp */; };
 		BC907339FB9EBE77E12B8F39 /* Bulk_Newtonsoft.Json_0.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E99EBF291183748F7D6AC230 /* Bulk_Newtonsoft.Json_0.cpp */; };
 		BF45663E47BAD18170AFAECF /* Bulk_mscorlib_7.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9DA876DCE18C216E1F371A3 /* Bulk_mscorlib_7.cpp */; };
@@ -234,6 +236,7 @@
 		254DD87AA17FE994467D003E /* Bulk_UnityDASDll_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_UnityDASDll_0.cpp; path = UnityBuild/Classes/Native/Bulk_UnityDASDll_0.cpp; sourceTree = "<group>"; };
 		2A3166D24BFA77F17A270795 /* Bulk_Assembly-CSharp_13.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_13.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_13.cpp"; sourceTree = "<group>"; };
 		2A63A3FAA2BE81B674403C63 /* Bulk_Assembly-CSharp_3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_3.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_3.cpp"; sourceTree = "<group>"; };
+		2B76A5B81E4E102800990EC0 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		2C45B2AF6726FF2E7C80FB13 /* VideoPlayerPlugin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = VideoPlayerPlugin.mm; path = UnityBuild/Libraries/Plugins/iOS/VideoPlayerPlugin.mm; sourceTree = "<group>"; };
 		2E7546E835001A0FCD1BC9B7 /* Bulk_mscorlib_4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_mscorlib_4.cpp; path = UnityBuild/Classes/Native/Bulk_mscorlib_4.cpp; sourceTree = "<group>"; };
 		2EB77C5F0930C4B0500EA413 /* Il2CppCompilerCalculateTypeValuesTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppCompilerCalculateTypeValuesTable.cpp; path = UnityBuild/Classes/Native/Il2CppCompilerCalculateTypeValuesTable.cpp; sourceTree = "<group>"; };
@@ -253,6 +256,7 @@
 		3AD557C56AF7D070796E9E0F /* Il2CppGenericClassTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppGenericClassTable.cpp; path = UnityBuild/Classes/Native/Il2CppGenericClassTable.cpp; sourceTree = "<group>"; };
 		3C08AD7227A21E355150ADE6 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "UnityBuild/Unity-iPhone/Images.xcassets"; sourceTree = "<group>"; };
 		4362874A55BD2944BDEEDC57 /* GlesHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GlesHelper.h; path = UnityBuild/Classes/Unity/GlesHelper.h; sourceTree = "<group>"; };
+		4506769C2E1C900BDAEEAE47 /* WebView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = WebView.mm; path = UnityBuild/Libraries/Plugins/iOS/WebView.mm; sourceTree = "<group>"; };
 		46014FD4AB8D41FD78CB6309 /* Il2CppAttributes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppAttributes.cpp; path = UnityBuild/Classes/Native/Il2CppAttributes.cpp; sourceTree = "<group>"; };
 		468C75E81A96C18D001011B7 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
 		46D2C2371B4F9D6B00FC7553 /* libcozmoEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcozmoEngine.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -432,6 +436,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2B76A5B91E4E102800990EC0 /* WebKit.framework in Frameworks */,
 				85C99FC81E3AF0FA00EA82E0 /* libaudioUtil.a in Frameworks */,
 				85DD01461CD2A17300F2EAD5 /* CoreBluetooth.framework in Frameworks */,
 				6F54323B1C8928C4006D3724 /* QuickLook.framework in Frameworks */,
@@ -583,6 +588,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2B76A5B81E4E102800990EC0 /* WebKit.framework */,
 				85C99FC71E3AF0FA00EA82E0 /* libaudioUtil.a */,
 				85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */,
 				85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */,
@@ -812,6 +818,7 @@
 				B703AB2167E4D819B2F4A410 /* CustomVideoPlayer.h */,
 				062F41386AB5234C14755576 /* CustomVideoPlayer.mm */,
 				2C45B2AF6726FF2E7C80FB13 /* VideoPlayerPlugin.mm */,
+				4506769C2E1C900BDAEEAE47 /* WebView.mm */,
 				6037C81DF5603D213C8B2533 /* cozmoAppController.mm */,
 			);
 			name = iOS;
@@ -868,7 +875,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -895,11 +902,11 @@
 			files = (
 				F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */,
 				85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */,
+				DA4CFCA31E3954CB00D56793 /* Settings.bundle in Resources */,
 				02B586D964836D51B9590340 /* Images.xcassets in Resources */,
 				17E2C07577A687C86B439BF7 /* LaunchScreen-iPhoneLandscape.png in Resources */,
 				8D061DB0D685A1DA6CA66039 /* LaunchScreen-iPhonePortrait.png in Resources */,
 				D688A0149C5A80EFB1884568 /* LaunchScreen-iPhone.xib in Resources */,
-				DA4CFCA31E3954CB00D56793 /* Settings.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1099,6 +1106,7 @@
 				93A4C14B1647E6526C7EB60B /* RegisterMonoModules.cpp in Sources */,
 				E13C1706991F4DAC1BDC122A /* CustomVideoPlayer.mm in Sources */,
 				7A0EA216753BA2A39C418664 /* VideoPlayerPlugin.mm in Sources */,
+				B92377D9FC90ECA3D8AB5D74 /* WebView.mm in Sources */,
 				428C6E6E29A8EDDD60E07CEE /* cozmoAppController.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1363,7 +1371,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF5008A954540054247B /* Release */,

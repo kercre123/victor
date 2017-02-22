@@ -16,6 +16,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_ReactionTriggerStrategyFistBump_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iFistBumpListener.h"
 #include "anki/common/basestation/jsonTools.h"
 #include <unordered_map>
 
@@ -23,15 +24,18 @@
 namespace Anki {
 namespace Cozmo {
 
-class ReactionTriggerStrategyFistBump : public IReactionTriggerStrategy{
+class ReactionTriggerStrategyFistBump : public IReactionTriggerStrategy, IFistBumpListener {
 public:
   ReactionTriggerStrategyFistBump(Robot& robot, const Json::Value& config);
 
   virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return false; }
+  virtual bool CanTriggerWhileTriggeredBehaviorRunning() const override { return false; }
+  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;  
   
 protected:
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void ResetTrigger(bool updateLastCompletionTime) override;
   
 private:
   

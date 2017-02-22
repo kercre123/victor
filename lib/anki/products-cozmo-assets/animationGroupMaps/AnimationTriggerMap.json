@@ -530,7 +530,7 @@
     },
     {
       "CladEvent": "MemoryMatchPlayerLoseHand",
-      "AnimName": "ag_memorymatch_successhand_cozmo"
+      "AnimName": "ag_memorymatch_failhand_player_01"
     },
     {
       "CladEvent": "MemoryMatchPlayerLoseHandSolo",
@@ -919,6 +919,10 @@
     {
       "CladEvent": "ReactToOnRightSide",
       "AnimName": "ag_reacttocliff_stuckrightside_01"
+    },
+    {
+      "CladEvent": "ReactToPerchedOnBlock",
+      "AnimName": "ag_reacttoblock_stuckonblock"
     },
     {
       "CladEvent": "ReactToPickup",

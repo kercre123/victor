@@ -212,10 +212,12 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
   return Status::Complete;
 }
   
-bool BehaviorRequestGameSimple::CheckRequestTimeout(){
-  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+bool BehaviorRequestGameSimple::CheckRequestTimeout()
+{
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float minDelayComplete_sec = GetRequestMinDelayComplete_s();
 
-  return (_state == State::Idle && GetRequestMinDelayComplete_s() >= 0.0f && currentTime_sec >= GetRequestMinDelayComplete_s());
+  return (_state == State::Idle && minDelayComplete_sec >= 0.0f && currentTime_sec >= minDelayComplete_sec);
 }
 
 void BehaviorRequestGameSimple::StopInternal(Robot& robot)
@@ -699,7 +701,7 @@ void BehaviorRequestGameSimple::HandleGameDeniedRequest(Robot& robot)
   
 f32 BehaviorRequestGameSimple::GetRequestMinDelayComplete_s() const
 {
-  if( _requestTime_s < 0.0f ) {
+  if (_requestTime_s < 0.0f) {
     return -1.0f;
   }
   

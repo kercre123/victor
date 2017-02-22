@@ -194,7 +194,7 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRo
   const float lastBeaconFailure = selectedBeacon->GetLastTimeFailedToFindLocation();
   const bool beaconEverFailed = !NEAR_ZERO(lastBeaconFailure);
   if ( beaconEverFailed ) {
-    const float curTime = Util::numeric_cast<float>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const float beaconTimeoutUntil = lastBeaconFailure + kRecentFailure_sec;
     const bool beaconIsInCooldown = FLT_LT(curTime, beaconTimeoutUntil);
     if ( beaconIsInCooldown ) {
@@ -265,7 +265,7 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
   if ( !IsActing() ) {
     const AIBeacon* activeBeacon = robot.GetAIComponent().GetWhiteboard().GetActiveBeacon();
     const float lastBeaconFailure = activeBeacon->GetLastTimeFailedToFindLocation();
-    const float curTime = Util::numeric_cast<float>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const bool beaconFlaggedFail = FLT_NEAR(curTime, lastBeaconFailure);
     shouldBeActing = !beaconFlaggedFail; // should be acting if the beacon is valid
   }

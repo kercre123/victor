@@ -19,6 +19,8 @@ public class MockRobot : IRobot {
 
   public event System.Action<int> OnNumBlocksConnectedChanged;
 
+  public event System.Action<FaceEnrollmentCompleted> OnEnrolledFaceComplete;
+
   public MockRobot(byte id) {
     ID = id;
     Rotation = Quaternion.identity;

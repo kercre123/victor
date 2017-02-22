@@ -330,7 +330,7 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
   
   // simulated robot will have special tag in json
   const bool robotIsPhysical = headerData["sim"].isNull();
-  
+
   PRINT_NAMED_INFO("RobotIsPhysical", "%d", robotIsPhysical);
   robot->SetPhysicalRobot(robotIsPhysical);
   
@@ -632,9 +632,9 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       PRINT_NAMED_INFO(MAKE_EVENT_NAME("Charger"), "Charger sending garbage move messages");
       return;
     }
-    
+  
     DEV_ASSERT(connectedObj->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
-    
+  
     PRINT_NAMED_INFO(MAKE_EVENT_NAME("ObjectMovedOrStopped"),
                      "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f, time: %d ms",
                      connectedObj->GetID().GetValue(), connectedObj->GetActiveID(),
@@ -711,7 +711,6 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
                          "ObjectID: %d (Active ID %d), type: %s",
                          object->GetID().GetValue(), object->GetActiveID(),
                          EnumToString(object->GetType()));
-        
 
         
         // If this is the object we were localized to, unset our localizedToID.
@@ -1141,7 +1140,7 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
   << payload.g.data()[0] << " "
   << payload.g.data()[1] << " "
   << payload.g.data()[2] << "\n";
-  
+
   // Close file when last chunk received
   if (payload.order == 2) {
     PRINT_NAMED_INFO("Robot.HandleImuRawData.ClosingLogFile", "");
@@ -1225,16 +1224,19 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   // Report to DAS if this is first event for this accessory or if appropriate interval has passed since last report
   const uint32_t now = Util::numeric_cast<uint32_t>(Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
   const uint32_t then = _lastPowerLevelSentTime[activeID];
-  
-  if (then == 0 || now - then >= POWER_LEVEL_INTERVAL_SEC) {
+  const uint32_t was = _lastMissedPacketCount[activeID];
+
+  if (then == 0 || now - then >= POWER_LEVEL_INTERVAL_SEC || missedPackets - was > 512) {
     PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Report",
                      "Sending DAS report for robotID %u activeID %u now %u then %u",
                      robotID, activeID, now, then);
     char ddata[BUFSIZ];
     snprintf(ddata, sizeof(ddata), "%.2f,%.2f", batteryVoltage, batteryPercent);
-    Anki::Util::sEventF("robot.accessory_powerlevel", {{DDATA, ddata}}, "%u", activeID);
-    
+    Anki::Util::sEventF("robot.accessory_powerlevel", {{DDATA, ddata}},
+      "%u %.2fV (%d lost)", activeID, batteryVoltage, missedPackets);
+
     _lastPowerLevelSentTime[activeID] = now;
+    _lastMissedPacketCount[activeID] = missedPackets;
   }
   
   // Forward to game
