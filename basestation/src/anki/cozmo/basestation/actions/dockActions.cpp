@@ -1507,8 +1507,11 @@ namespace Anki {
         
         if(actionResult != ActionResult::RUNNING && actionResult != ActionResult::SUCCESS) {
           PRINT_NAMED_WARNING("PlaceObjectOnGroundAction.CheckIfDone.FaceAndVerifyFailed",
-                              "FaceAndVerify action reported failure, just deleting object %d.",
+                              "FaceAndVerify action reported failure, just clearing object %d.",
                               _carryingObjectID.GetValue());
+          // rsam: it's arguably whether the action should do this. _carryingObjectID may
+          // no longer be equal robot.GetCarryingObject(), and be the reason why the actionResult
+          // is != Success, which would make this operation useless if the object doesn't exist anymore.
           _robot.GetBlockWorld().ClearLocatedObjectByIDInCurOrigin(_carryingObjectID);
         }
         
