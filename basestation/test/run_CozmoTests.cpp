@@ -1465,6 +1465,199 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   
 } // TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+TEST(Localization, LocalizationDistance)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  
+  // Fake a state message update for robot
+  RobotState stateMsg(1, // timestamp,
+                      0, // pose_frame_id,
+                      1, // pose_origin_id,
+                      RobotPose(0.f,0.f,0.f,0.f,0.f),
+                      0.f, // lwheel_speed_mmps,
+                      0.f, // rwheel_speed_mmps,
+                      0.f, // headAngle,
+                      0.f, // liftAngle,
+                      0.f, // liftHeight,
+                      AccelData(),
+                      GyroData(),
+                      0.f, // batteryVoltage,
+                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
+                      0, // lastPathID,
+                      0, // cliffDataRaw,
+                      0, // currPathSegment,
+                      0); // numFreeSegmentSlots)
+  
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // For faking observations of two blocks, one closer, one far
+  const ObjectType firstType = ObjectType::Block_LIGHTCUBE1;
+  const ObjectType secondType = ObjectType::Block_LIGHTCUBE2;
+  const Block_Cube1x1 firstCube(firstType);
+  const Block_Cube1x1 secondCube(secondType);
+  const Vision::Marker::Code firstCode  = firstCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  const Vision::Marker::Code secondCode = secondCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  
+  const Quad2f farCorners{
+    Point2f(159,109),  Point2f(158,129),  Point2f(178,109),  Point2f(178,129)
+  };
+  
+  const Quad2f closeCorners1{
+    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
+  };
+  
+  const Quad2f closeCorners2{
+    Point2f( 167,117),  Point2f( 170,185),  Point2f(236,116),  Point2f(237,184)
+  };
+  
+  const ObjectID firstID = robot.GetBlockWorld().AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  ASSERT_TRUE(firstID.IsSet());
+  
+  const ObjectID secondID = robot.GetBlockWorld().AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  ASSERT_TRUE(secondID.IsSet());
+  
+  // Camera calibration
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  
+  // Enable "vision while moving" so that we don't have to deal with trying to compute
+  // angular velocities, since we don't have real state history to do so.
+  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  
+  VisionProcessingResult procResult;
+  TimeStamp_t fakeTime = 10;
+  const s32 kNumObservations = 5;
+  f32 observedDistance_mm = -1.f;
+  bool success = false;
+  
+  // After first seeing three times, should be Known and localizable
+  lastResult = ObserveMarkerHelper(kNumObservations, {{firstCode, closeCorners1}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should have the first object present in block world now
+  filter.SetAllowedTypes({firstType});
+  const ObservableObject* matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  ASSERT_NE(nullptr, matchingObject);
+  
+  // Make sure we're seeing the first object from close enough to localize to it
+  success = ComputeDistanceBetween(robot.GetPose(), matchingObject->GetPose(), observedDistance_mm);
+  ASSERT_EQ(true, success);
+  ASSERT_LE(observedDistance_mm, matchingObject->GetMaxLocalizationDistance_mm());
+  
+  const ObjectID obsFirstID = matchingObject->GetID();
+  ASSERT_EQ(firstID, obsFirstID);
+  
+  // Should be localized to "first" object
+  ASSERT_EQ(firstID, robot.GetLocalizedTo());
+  
+  auto FakeMovement = [](RobotState& stateMsg, Robot& robot, TimeStamp_t& fakeTime) -> Result
+  {
+    // "Move" the robot with a fake state message indicating movement
+    stateMsg.status |= (s32)RobotStatusFlag::IS_MOVING;
+    stateMsg.timestamp = fakeTime;
+    fakeTime += 10;
+    Result lastResult = robot.UpdateFullRobotState(stateMsg);
+    if(RESULT_OK == lastResult)
+    {
+      
+      // Stop
+      stateMsg.status &= ~(s32)RobotStatusFlag::IS_MOVING;
+      stateMsg.timestamp = fakeTime;
+      fakeTime += 10;
+      lastResult = robot.UpdateFullRobotState(stateMsg);
+      
+    }
+    return lastResult;
+  };
+  
+  // Need to move and stop the robot so it's willing to localize again
+  lastResult = FakeMovement(stateMsg, robot, fakeTime);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // Now observe the second object in close position
+  lastResult = ObserveMarkerHelper(kNumObservations, {{secondCode, closeCorners2}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should have a the second object present in block world now
+  filter.SetAllowedTypes({secondType});
+  matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  ASSERT_NE(nullptr, matchingObject);
+  
+  // Make sure we're seeing the second object from close enough to localize to it
+  success = ComputeDistanceBetween(robot.GetPose(), matchingObject->GetPose(), observedDistance_mm);
+  ASSERT_EQ(true, success);
+  ASSERT_LE(observedDistance_mm, matchingObject->GetMaxLocalizationDistance_mm());
+  
+  const ObjectID obsSecondID = matchingObject->GetID();
+  ASSERT_EQ(secondID, obsSecondID);
+  
+  // Should be localized to "second" object
+  ASSERT_EQ(secondID, robot.GetLocalizedTo());
+  
+  // Need to move and stop the robot so it's willing to localize again
+  stateMsg.status |= (s32)RobotStatusFlag::IS_MOVING;
+  stateMsg.timestamp = fakeTime;
+  fakeTime += 10;
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Stop in a new pose
+  stateMsg.status &= ~(s32)RobotStatusFlag::IS_MOVING;
+  stateMsg.timestamp = fakeTime;
+  stateMsg.pose.angle = DEG_TO_RAD(90);
+  fakeTime += 10;
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Now observe the first object again, but from far away
+  lastResult = ObserveMarkerHelper(kNumObservations, {{firstCode, farCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Make sure the first object's pose is "far"
+  matchingObject = robot.GetBlockWorld().GetObjectByID(firstID);
+  ASSERT_NE(nullptr, matchingObject);
+  ASSERT_GE(matchingObject->GetLastObservedTime(), stateMsg.timestamp);
+  
+  // Note we can't check the object's new pose, because it will not update since it was Known before (from being seen
+  // from close). We refuse to update it to the new, likely inaccurate pose now.
+  //success = ComputeDistanceBetween(robot.GetPose(), matchingObject->GetPose(), observedDistance_mm);
+  //ASSERT_EQ(true, success);
+  //ASSERT_GT(observedDistance_mm, matchingObject->GetMaxLocalizationDistance_mm());
+  
+  // Should still be localized to the second object, since we see the first one from too far away
+  ASSERT_EQ(secondID, robot.GetLocalizedTo());
+  
+} // TEST(Localization, LocalizationDistance)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(BlockWorldTest, BlockConfigurationManager)

@@ -527,12 +527,42 @@ namespace Cozmo {
         
       case VisionMode::EstimatingFacialExpression:
       {
-        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableMode.NullFaceTracker");
+        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableEstimatingExpression.NullFaceTracker");
         
         PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableExpressionEstimation",
                       "Enabled=%c", (enabled ? 'Y' : 'N'));
 
         _faceTracker->EnableEmotionDetection(enabled);
+        break;
+      }
+        
+      case VisionMode::DetectingSmileAmount:
+      {
+        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableDetectingSmileAmount.NullFaceTracker");
+        
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableDetectingSmileAmount", "Enabled=%c", (enabled ? 'Y' : 'N'));
+        
+        _faceTracker->EnableSmileDetection(enabled);
+        break;
+      }
+        
+      case VisionMode::DetectingGaze:
+      {
+        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableDetectingGaze.NullFaceTracker");
+        
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableDetectingGaze", "Enabled=%c", (enabled ? 'Y' : 'N'));
+        
+        _faceTracker->EnableGazeDetection(enabled);
+        break;
+      }
+        
+      case VisionMode::DetectingBlinkAmount:
+      {
+        DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.EnableDetectingBlinkAmount.NullFaceTracker");
+        
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.DetectingBlinkAmount", "Enabled=%c", (enabled ? 'Y' : 'N'));
+        
+        _faceTracker->EnableBlinkDetection(enabled);
         break;
       }
         

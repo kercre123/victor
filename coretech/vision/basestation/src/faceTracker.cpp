@@ -129,6 +129,22 @@ namespace Vision {
     _pImpl->EnableEmotionDetection(enable);
   }
   
+  void FaceTracker::EnableSmileDetection(bool enable)
+  {
+    _pImpl->EnableSmileDetection(enable);
+  }
+  
+  void FaceTracker::EnableGazeDetection(bool enable)
+  {
+    _pImpl->EnableGazeDetection(enable);
+  }
+  
+  void FaceTracker::EnableBlinkDetection(bool enable)
+  {
+    _pImpl->EnableBlinkDetection(enable);
+  }
+  
+  
   Result FaceTracker::GetSerializedData(std::vector<u8>& albumData,
                                         std::vector<u8>& enrollData)
   {

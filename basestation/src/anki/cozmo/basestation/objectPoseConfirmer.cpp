@@ -43,9 +43,6 @@ CONSOLE_VAR_RANGED(s32, kMinTimesToObserveObject, "PoseConfirmation", 2, 1,10);
 // pose as unknkown.
 CONSOLE_VAR_RANGED(s32, kMinTimesToNotObserveDirtyObject, "PoseConfirmation", 2, 1,10);
 
-// Only localize to / identify active objects within this distance
-CONSOLE_VAR_RANGED(f32, kMaxLocalizationDistance_mm, "PoseConfirmation", 250.f, 50.f, 1000.f);
-
 // TODO: (Al) Remove once bryon fixes the timestamps
 // Disable the object is still moving check for visual observation entries due to incorrect
 // timestamps in object moved messages
@@ -97,7 +94,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   }
 
   const bool isRobotOnTreads = OffTreadsState::OnTreads == _robot.GetOffTreadsState();
-  const bool isFarAway  = Util::IsFltGT(obsDistance_mm,  kMaxLocalizationDistance_mm);
+  const bool isFarAway  = Util::IsFltGT(obsDistance_mm,  object->GetMaxLocalizationDistance_mm());
   const bool setAsKnown = isRobotOnTreads && !isFarAway && !robotWasMoving && !objectIsMoving;
 
   const bool updatePose = updateDueToObservingCarriedObject || setAsKnown || !object->IsPoseStateKnown() || updateNonLocalizableObject;

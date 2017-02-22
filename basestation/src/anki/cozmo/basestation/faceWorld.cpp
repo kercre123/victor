@@ -439,6 +439,15 @@ namespace Cozmo {
         }
       }
       
+      // This ugly static assert is not *totally* necessary since the RobotObservedFace constructor below will fail if
+      // this is not true, but (a) this might be a more obvious error, and (b) if somehow we change something about the
+      // constructor or how we broadcast this, this assert will still be valid.
+      // NOTE: This is not needed once CLAD supports setting array size from enum value.
+      auto const& expressionValues = face.GetExpressionValues();
+      static_assert(std::tuple_size<std::remove_reference<decltype(expressionValues)>::type>::value ==
+                    (size_t)Vision::FacialExpression::Count,
+                    "Size of expression values array must match FacialExpression::Count");
+      
       _robot.Broadcast(MessageEngineToGame(RobotObservedFace(knownFace->face.GetID(),
                                                              _robot.GetID(),
                                                              face.GetTimeStamp(),
@@ -449,6 +458,10 @@ namespace Cozmo {
                                                                       face.GetRect().GetHeight()),
                                                              knownFace->face.GetName(),
                                                              face.GetMaxExpression(),
+                                                             face.GetSmileAmount(),
+                                                             face.GetGaze(),
+                                                             face.GetBlinkAmount(),
+                                                             expressionValues,
                                                              leftEye, rightEye, nose, mouth)));
       
       /*
