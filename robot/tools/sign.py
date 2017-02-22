@@ -183,8 +183,7 @@ def make_header(key=None, iv=None, digestType=None, model=0):
         timestamp,
         ctime,
         git_sha(),
-        model
-        )
+        model)
 
     # Include OID for the hash algorithm used
     oid = digestType.new().oid if digestType else b''
