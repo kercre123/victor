@@ -1482,7 +1482,7 @@ TEST(Localization, LocalizationDistance)
   // There should be nothing in BlockWorld yet
   BlockWorldFilter filter;
   std::vector<ObservableObject*> objects;
-  blockWorld.FindMatchingObjects(filter, objects);
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
   ASSERT_TRUE(objects.empty());
   
   // Fake a state message update for robot
@@ -1527,10 +1527,10 @@ TEST(Localization, LocalizationDistance)
     Point2f( 167,117),  Point2f( 170,185),  Point2f(236,116),  Point2f(237,184)
   };
   
-  const ObjectID firstID = robot.GetBlockWorld().AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  const ObjectID firstID = robot.GetBlockWorld().AddConnectedActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
   ASSERT_TRUE(firstID.IsSet());
   
-  const ObjectID secondID = robot.GetBlockWorld().AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  const ObjectID secondID = robot.GetBlockWorld().AddConnectedActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
   ASSERT_TRUE(secondID.IsSet());
   
   // Camera calibration
@@ -1564,7 +1564,7 @@ TEST(Localization, LocalizationDistance)
   
   // Should have the first object present in block world now
   filter.SetAllowedTypes({firstType});
-  const ObservableObject* matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  const ObservableObject* matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
   ASSERT_NE(nullptr, matchingObject);
   
   // Make sure we're seeing the first object from close enough to localize to it
@@ -1609,7 +1609,7 @@ TEST(Localization, LocalizationDistance)
   
   // Should have a the second object present in block world now
   filter.SetAllowedTypes({secondType});
-  matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
   ASSERT_NE(nullptr, matchingObject);
   
   // Make sure we're seeing the second object from close enough to localize to it
@@ -1644,7 +1644,7 @@ TEST(Localization, LocalizationDistance)
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // Make sure the first object's pose is "far"
-  matchingObject = robot.GetBlockWorld().GetObjectByID(firstID);
+  matchingObject = robot.GetBlockWorld().GetLocatedObjectByID(firstID);
   ASSERT_NE(nullptr, matchingObject);
   ASSERT_GE(matchingObject->GetLastObservedTime(), stateMsg.timestamp);
   
