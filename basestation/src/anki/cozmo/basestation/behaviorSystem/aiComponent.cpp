@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
@@ -26,10 +27,11 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::AIComponent(Robot& robot)
-  : _robot(robot)
-  , _whiteboard( new AIWhiteboard(robot) )
-  , _workoutComponent( new WorkoutComponent(robot) )
-  , _aiInformationAnalyzer( new AIInformationAnalyzer() )
+: _robot(robot)
+, _whiteboard( new AIWhiteboard(robot) )
+, _workoutComponent( new WorkoutComponent(robot) )
+, _aiInformationAnalyzer( new AIInformationAnalyzer() )
+, _behaviorHelperComponent( new BehaviorHelperComponent())
 {
 }
 
@@ -74,7 +76,9 @@ Result AIComponent::Update()
   _aiInformationAnalyzer->Update(_robot);
 
   _whiteboard->Update();
-
+  
+  _behaviorHelperComponent->Update(_robot);
+ 
   return RESULT_OK;
 }
 

@@ -133,6 +133,14 @@ public static class Localization {
 #endif
   }
 
+  public static string[] GetLocalizationAllLanguagesPaths() {
+#if UNITY_EDITOR
+    return Directory.GetDirectories(Application.streamingAssetsPath + kLocalizationStreamingAssetsFolderPath);
+#else
+    return Directory.GetDirectories(PlatformUtil.GetResourcesBaseFolder() + kLocalizationStreamingAssetsFolderPath);
+#endif
+  }
+
   public static JSONObject GetJsonContentsFromLocalizationFile(string locale, string localizationFilePath) {
     string languageJson = File.ReadAllText(localizationFilePath);
     return new JSONObject(languageJson);

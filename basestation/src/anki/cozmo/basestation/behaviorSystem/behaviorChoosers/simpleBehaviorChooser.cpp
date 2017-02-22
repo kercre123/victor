@@ -226,7 +226,7 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
     {
       if (behavior->IsRunning())
       {
-        const float runningDuration = Util::numeric_cast<float>(behavior->GetRunningDuration());
+        const float runningDuration = behavior->GetRunningDuration();
         const float runningBonus = ScoreBonusForCurrentBehavior(runningDuration);
         
         scoreData.totalScore += runningBonus;

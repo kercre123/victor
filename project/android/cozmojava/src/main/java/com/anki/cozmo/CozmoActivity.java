@@ -1,14 +1,19 @@
 package com.anki.cozmo;
 
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
 import android.support.v4.app.ActivityCompat;
 
+import java.io.File;
+import java.util.UUID;
+
 import com.unity3d.player.UnityPlayer;
 import com.unity3d.player.UnityPlayerActivity;
 
+import com.anki.hockeyappandroid.NativeCrashManager;
 import com.anki.util.AnkitivityDispatcher;
 import com.anki.util.PermissionUtil;
 
@@ -20,10 +25,26 @@ public class CozmoActivity extends UnityPlayerActivity implements ActivityCompat
 
   private final AnkitivityDispatcher mDispatcher = new AnkitivityDispatcher();
 
+  public static String APP_RUN_ID;
+  public static String HOCKEY_APP_ID;
+
+  static {
+    System.loadLibrary("DAS");
+    System.loadLibrary("cozmoEngine");
+  }
+
   @Override
   protected void onCreate(final android.os.Bundle bundle) {
     PermissionUtil.initialize(this, mDispatcher);
     super.onCreate(bundle);
+
+    APP_RUN_ID = UUID.randomUUID().toString();
+    HOCKEY_APP_ID = getManifestProperty("HOCKEYAPP_APP_ID");
+
+    if (HOCKEY_APP_ID.length() > 0) {
+      installBreakpad(NativeCrashManager.getDumpsDirectory(this) + File.separator
+                      + APP_RUN_ID + NativeCrashManager.DMP_EXTENSION);
+    }
   }
 
   @Override
@@ -53,5 +74,18 @@ public class CozmoActivity extends UnityPlayerActivity implements ActivityCompat
     };
     PermissionUtil.askForPermission(permission, listener);
   }
+
+  private String getManifestProperty(String propertyName) {
+    try {
+      ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+      if (appInfo != null && appInfo.metaData != null) {
+        return appInfo.metaData.getString(propertyName);
+      }
+    } catch (Exception e) {}
+
+    return "";
+  }
+
+  private static native void installBreakpad(String path);
 
 }

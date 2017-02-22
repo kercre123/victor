@@ -25,13 +25,17 @@ public class FeatureGate {
   }
 
   public bool IsFeatureEnabled(FeatureType feature) {
+    return IsFeatureEnabled(feature.ToString());
+  }
+
+  public bool IsFeatureEnabled(string feature) {
     if (!_ReceivedData) {
       DAS.Error("FeatureGate.IsFeatureEnabled", "requesting feature flag when we haven't received data yet!");
       return false;
     }
 
     bool result;
-    if (_FeatureMap.TryGetValue(feature.ToString().ToLower(), out result)) {
+    if (_FeatureMap.TryGetValue(feature.ToLower(), out result)) {
       return result;
     }
     else {

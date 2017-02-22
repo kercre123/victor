@@ -782,7 +782,7 @@ namespace Anki {
           break;
           
         case ERobotDriveToPoseStatus::ComputingPath: {
-          float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           
           // handle aborting the plan. If we don't have a timeout set, set one now
           if( _timeToAbortPlanning < 0.0f ) {
@@ -800,7 +800,7 @@ namespace Anki {
         }
           
         case ERobotDriveToPoseStatus::Replanning: {
-          float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           
           // handle aborting the plan. If we don't have a timeout set, set one now
           if( _timeToAbortPlanning < 0.0f ) {
@@ -1299,7 +1299,8 @@ namespace Anki {
                                                          const f32 approachAngle_rad,
                                                          const bool useManualSpeed,
                                                          Radians maxTurnTowardsFaceAngle_rad,
-                                                         const bool sayName)
+                                                         const bool sayName,
+                                                         AnimationTrigger animBeforeDock)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::DOCKING,
@@ -1310,6 +1311,10 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
+      if(animBeforeDock != AnimationTrigger::Count){
+        AddAction(new TriggerAnimationAction(robot, animBeforeDock));
+      }
+      
       PickupObjectAction* rawPickup = new PickupObjectAction(robot, objectID, useManualSpeed);
       const u32 pickUpTag = rawPickup->GetTag();
       _pickupAction = AddDockAction(rawPickup);
@@ -1467,9 +1472,23 @@ namespace Anki {
                       Pose3d preActionPoseWRTObject;
                       fullIter->GetWithRespectTo(object->GetPose(), preActionPoseWRTObject);
                       
+                      
+                      // TODO: COZMO-9528 - Currently we are clipping pre-doc offsets so that
+                      // we can be sure we visually verify the docking cube.  However, long term
+                      // we need a smarter system for determining how far over we can place the pre-dock
+                      // pose before we lose site of the docking object.
+                      /**const float kClippingPreDocPoseOffset_mm = 20.f;
+                      const float clippedXOffset =
+                           placementOffsetX_mm > kClippingPreDocPoseOffset_mm ?
+                                 kClippingPreDocPoseOffset_mm : placementOffsetX_mm;
+                      
+                      const float clippedYOffset =
+                           placementOffsetY_mm > kClippingPreDocPoseOffset_mm ?
+                                 kClippingPreDocPoseOffset_mm : placementOffsetY_mm;**/
+                      
                       const auto& trans = preActionPoseWRTObject.GetTranslation();
-                      preActionPoseWRTObject.SetTranslation({trans.x() + placementOffsetX_mm,
-                                                             trans.y() + placementOffsetY_mm,
+                      preActionPoseWRTObject.SetTranslation({trans.x(), //+ clippedXOffset,
+                                                             trans.y(),// + clippedYOffset,
                                                              trans.z()});
 
                       preActionPoseWRTObject.GetWithRespectTo(_robot.GetPose().FindOrigin(), *fullIter);

@@ -19,8 +19,6 @@
 #ifndef BASESTATION_UTILS_TIMER_H_
 #define BASESTATION_UTILS_TIMER_H_
 
-//#include <queue>
-//#include <unistd.h>
 #include <string>
 #include <time.h>
 #include <sys/time.h>
@@ -31,22 +29,13 @@
 
 namespace Anki {
 
-// Returns current time in milliseconds (used for debug when BaseStation is not running)
-int getTimeInMilliSeconds();
-// Returns current time in seconds (used for debug when BaseStation is not running)
-float getTimeInSeconds();
-  
-  
-// Get current date/time, format is YYYY-MM-DD_HH-mm-ss
-const std::string GetCurrentDateTime();
-  
   
 /*
  * Keep track of system time. Provides easy way to get time since the start of program.
  */
 class BaseStationTimer : public Anki::Util::ITickTimeProvider
 {
-  public:
+public:
 
   // Method to fetch singleton instance.
   static BaseStationTimer* getInstance();
@@ -57,13 +46,14 @@ class BaseStationTimer : public Anki::Util::ITickTimeProvider
   // Destructor
   virtual ~BaseStationTimer() override;
 
+  // Updates the current system time used for tracking
+  void UpdateTime(BaseStationTime_t currTimeNanoSeconds);
+  
   // Gets time in seconds since the start of the program
   // WARNING: This value updates only once every tick! So measuring time differences within one update loop
   // will result in ZERO time passed.
-  double GetCurrentTimeInSeconds() const;
-
-  // Same as above, but return a float
-  float GetCurrentTimeInSeconds_f() const;
+  float  GetCurrentTimeInSeconds() const;
+  double GetCurrentTimeInSecondsDouble() const;
 
   // Gets time in nanoseconds since the start of the program
   // WARNING: This value updates only once every tick! So measuring time differences within one update loop
@@ -71,19 +61,12 @@ class BaseStationTimer : public Anki::Util::ITickTimeProvider
   BaseStationTime_t GetCurrentTimeInNanoSeconds() const;
 
   // Gets elapsed time since last tick in seconds
-  double GetTimeSinceLastTickInSeconds() const;
+  float GetTimeSinceLastTickInSeconds() const;
 
-  // Gets elapsed time since last tick in nanoseconds
-  BaseStationTime_t GetTimeSinceLastTickInNanoSeconds() const;
-
-  // Updates the current system time used for tracking
-  void UpdateTime(BaseStationTime_t currTime);
-  
-  // Gets current time in TimeStamp units
+  // Gets current time in TimeStamp units (ms)
   TimeStamp_t GetCurrentTimeStamp() const;
   
   virtual const size_t GetTickCount() const override;
-  virtual const float GetRunTime() const override;
   
 private:
   // Constructor
@@ -93,11 +76,12 @@ private:
   static BaseStationTimer* _instance;
 
   // Current system time used for tracking in all timer instances
-  double currentTimeInSeconds_;
-  BaseStationTime_t currentTimeInNanoSeconds_;
+  double currTimeSecondsDouble_;
+  float currTimeSecondsFloat_;
+  BaseStationTime_t currTimeNanoSeconds_;
 
-  double elapsedTimeInSeconds_;
-  BaseStationTime_t elapsedTimeInNanoSeconds_;
+  // How long the last tick took
+  float elapsedTimeSecondsFloat_;
   
   size_t tickCount_ = 0;
 };

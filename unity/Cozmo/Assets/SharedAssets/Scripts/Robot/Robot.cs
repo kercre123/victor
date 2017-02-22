@@ -318,6 +318,7 @@ public class Robot : IRobot {
 
   public event Action<ObservableObject> OnCarryingObjectSet;
   public event Action<int> OnNumBlocksConnectedChanged;
+  public event Action<FaceEnrollmentCompleted> OnEnrolledFaceComplete;
 
   private ObservableObject _HeadTrackingObject = null;
 
@@ -400,6 +401,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
 
     ObservableObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
@@ -431,6 +433,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
 
     ActiveObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
@@ -480,6 +483,32 @@ public class Robot : IRobot {
         callback.Invoke(success);
         break;
       }
+    }
+  }
+
+  private void HandleEnrolledFace(FaceEnrollmentCompleted message) {
+    if (message.result == Anki.Cozmo.FaceEnrollmentResult.Success) {
+      if (EnrolledFaces.ContainsKey(message.faceID)) {
+        DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + PrivacyGuard.HidePersonallyIdentifiableInfo(message.name));
+        EnrolledFaces[message.faceID] = message.name;
+        EnrolledFacesLastEnrolledTime[message.faceID] = Time.time;
+        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnReEnrollFace);
+      }
+      else {
+        EnrolledFaces.Add(message.faceID, message.name);
+        EnrolledFacesLastEnrolledTime.Add(message.faceID, 0);
+        EnrolledFacesLastSeenTime.Add(message.faceID, 0);
+        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
+        DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + PrivacyGuard.HidePersonallyIdentifiableInfo(message.name));
+
+        // log using up another face slot to das
+        DAS.Event("robot.face_slots_used", EnrolledFaces.Count.ToString(),
+          DASUtil.FormatExtraData("1"));
+      }
+    }
+
+    if (OnEnrolledFaceComplete != null) {
+      OnEnrolledFaceComplete(message);
     }
   }
 

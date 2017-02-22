@@ -5,6 +5,7 @@
 ../src/dasGameLogAppender.h
 ../src/dasGlobals.h
 ../src/dasLocalAppender.h
+../src/dasLocalAppenderFactory.h
 ../src/dasLogFileAppender.cpp
 ../src/dasLogFileAppender.h
 ../src/dasPostToServer.h

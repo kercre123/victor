@@ -1,0 +1,29 @@
+/** Clad types for "meta" information about faces (smile amount, gaze direciton, blink amount)
+ */
+
+
+namespace Anki {
+namespace Vision {
+
+structure SmileAmount {
+  bool      wasChecked,  // If false, degree and confidence are not valid (and will both be zero)
+  float_32  amount,      // Ranges from 0.0=Not Smiling to 1.0=Full Smile
+  float_32  confidence   // How confident in "degree", [0.0,1.0]
+}
+
+// Gaze angles are in the image plane and in the range +/- 90 degrees. Left/right are in the image, *not* face's left/right.
+structure Gaze {
+  bool      wasChecked,    // If false, angles will both be invalid (and set to zero)
+  float_32  leftRight_deg, // 0 = looking straight ahead, >0 = towards image right, <0 = towards image left
+  float_32  upDown_deg     // 0 = looking straightahead,  >0 = looking up,          <0 = looking down
+}
+
+// Left/right are as the eyes appear in the image to the viewer, not the face's left/right
+structure BlinkAmount {
+  bool      wasChecked,       // If false, both blink degrees will be invalid (and set to zero)
+  float_32  blinkAmountLeft,  // Ranges from 0.0=no blink (eye fully open) to 1.0=full blink (eye fully closed)
+  float_32  blinkAmountRight  // Left/right are as seen in the image, *not* the face's left and right
+}
+
+} // namespace Vision
+} // namespace Anki

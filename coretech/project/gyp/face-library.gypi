@@ -110,6 +110,9 @@
         'libeOkaoEx.a',    # Facial Expression estimation
         'libeOkaoFr.a',    # Face Recognition
         'libeOmcvPd.a',    # Pet Detection
+        'libeOkaoPc.a',    # Property Estimation (for Smile/Gaze/Blink?)
+        'libeOkaoSm.a',    # Smile Estimation
+        'libeOkaoGb.a',    # Gaze & Blink Estimation
       ],
     }],
     

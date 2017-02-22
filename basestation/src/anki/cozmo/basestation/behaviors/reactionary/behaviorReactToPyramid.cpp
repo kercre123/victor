@@ -38,7 +38,7 @@ bool BehaviorReactToPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preRe
   using namespace BlockConfigurations;
   auto allPyramids = preReqData.GetRobot().GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   if(allPyramids.size() > 0){
-    TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    const auto currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime > _nextValidReactionTime_s){
       return true;
     }
@@ -49,7 +49,7 @@ bool BehaviorReactToPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preRe
 
 Result BehaviorReactToPyramid::InitInternal(Robot& robot)
 {
-  _nextValidReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeStamp() + kTimeBetweenReactions_s;
+  _nextValidReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kTimeBetweenReactions_s;
   return Result::RESULT_OK;
 }
 

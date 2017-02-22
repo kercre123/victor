@@ -130,7 +130,7 @@ void BehaviorReactToPickup::StartAnim(Robot& robot)
   
   const double minTime = _repeatAnimatingMultiplier * kMinTimeBetweenPickupAnims_sec;
   const double maxTime = _repeatAnimatingMultiplier * kMaxTimeBetweenPickupAnims_sec;
-  const double nextInterval = GetRNG().RandDblInRange(minTime, maxTime);
+  const float nextInterval = Util::numeric_cast<float>(GetRNG().RandDblInRange(minTime, maxTime));
   _nextRepeatAnimationTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + nextInterval;
   _repeatAnimatingMultiplier += kRepeatAnimMultIncrease;
 }
@@ -149,7 +149,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
   // If we aren't acting, it might be time to play another reaction
   if (!isActing)
   {
-    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (currentTime > _nextRepeatAnimationTime)
     {
       if (robot.GetCliffDataRaw() < CLIFF_SENSOR_DROP_LEVEL) {

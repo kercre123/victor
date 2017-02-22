@@ -41,7 +41,7 @@ protected:
 
 private:
 
-  double _nextRepeatAnimationTime = 0;
+  float _nextRepeatAnimationTime = 0.0f;
   double _repeatAnimatingMultiplier = 1;
   
 }; // class BehaviorReactToPickup

@@ -95,6 +95,7 @@ namespace Cozmo.Minigame.CubePounce {
       _CubePounceGame.GetCubeTarget().StopAnim(_cubeAnim);
       _CubePounceGame.StartRoundBasedGameEnd();
       _CubePounceGame.UpdateUIForGameEnd();
+      _CurrentRobot.TryResetHeadAndLift(null);
     }
 
     public override void Exit() {

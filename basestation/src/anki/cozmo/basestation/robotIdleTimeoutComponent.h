@@ -27,7 +27,7 @@ class RobotIdleTimeoutComponent : protected Util::SignalHolder
 public:
   RobotIdleTimeoutComponent(Robot& robot);
   
-  void Update(double currentTime_s);
+  void Update(float currentTime_s);
   
   // Handle various message types
   template<typename T>
@@ -38,8 +38,8 @@ public:
 private:
   Robot& _robot;
   
-  double _faceOffTimeout_s = -1;
-  double _disconnectTimeout_s = -1;
+  float _faceOffTimeout_s = -1.0f;
+  float _disconnectTimeout_s = -1.0f;
   
 }; // class RobotIdleTimeoutComponent
 

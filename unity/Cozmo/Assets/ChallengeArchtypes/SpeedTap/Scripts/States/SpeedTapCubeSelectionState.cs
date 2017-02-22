@@ -68,7 +68,7 @@ namespace SpeedTap {
       // Selected everyone...
       if (_PlayerIndexSelecting >= _SpeedTapGame.GetPlayerCount()) {
         // if first round, and 3 player we want to do a 5 second hold
-        if (_SpeedTapGame.GetPlayerCount() >= 3 && _SpeedTapGame.CurrentRound == 1) {
+        if (_SpeedTapGame.GetPlayerCount() >= 3) {
           _SpeedTapGame.ShowPlayerTapConfirmSlide(-1);
           _WantsContinueTimeStamp = Time.time + _SpeedTapGame.GameConfig.MPTimeSetupHoldSec;
         }

@@ -92,6 +92,10 @@ namespace Cozmo {
     // Can we assume there is exactly one of these objects at a give time?
     virtual bool IsUnique()                     const { return false; }
     
+    // Get the distance within which we are allowed to localize to objects
+    // (This will probably need to be updated with COZMO-9672)
+    static f32 GetMaxLocalizationDistance_mm();
+    
   protected:
     
     // Make SetPose and SetPoseParent protected and friend ObjectPoseConfirmer so only it can

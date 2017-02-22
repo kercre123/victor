@@ -25,11 +25,15 @@ namespace Das
 {
 class DasLocalAppender {
 public:
-  void append(DASLogLevel level, const char* eventName, const char* eventValue,
-              ThreadId_t threadId, const char* file, const char* funct, int line,
-              const std::map<std::string,std::string>* globals,
-              const std::map<std::string,std::string>& data,
-              const char* globalsAndDataInfo);
+  virtual ~DasLocalAppender() {}
+  virtual void append(DASLogLevel level, const char* eventName, const char* eventValue,
+                      ThreadId_t threadId, const char* file, const char* funct, int line,
+              		  const std::map<std::string,std::string>* globals,
+              		  const std::map<std::string,std::string>& data,
+              		  const char* globalsAndDataInfo) = 0;
+
+  virtual void flush() = 0;
+
 };
 
 } // namespace Das

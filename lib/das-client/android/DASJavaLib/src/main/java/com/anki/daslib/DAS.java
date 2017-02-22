@@ -89,6 +89,8 @@ public class DAS {
 
     public static void println(int dasLogLevel, String eventName, String eventValue_format, Object ... args) {
         if (IsEventEnabledForLevel(eventName, dasLogLevel)) {
+            // The eventValue_format cannot have a single % without a valid format specifier following it. 
+            // Ex. "OnTextchanged %" is not valid and will cause a crash
             nativeLog(dasLogLevel, eventName, String.format(eventValue_format, (Object[]) args));
         }
     }

@@ -84,7 +84,7 @@ namespace Anki {
     
     void RobotManager::Init(const Json::Value& config)
     {
-      auto startTime = std::chrono::system_clock::now();
+      auto startTime = std::chrono::steady_clock::now();
     
       Anki::Util::Time::PushTimedStep("RobotManager::Init");
       _robotMessageHandler->Init(config, this, _context);
@@ -95,7 +95,7 @@ namespace Anki {
 
       BroadcastAvailableAnimations();
       
-      auto endTime = std::chrono::system_clock::now();
+      auto endTime = std::chrono::steady_clock::now();
       auto timeSpent_millis = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
       
       if (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS)

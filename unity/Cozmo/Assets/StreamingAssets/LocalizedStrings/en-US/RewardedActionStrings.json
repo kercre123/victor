@@ -126,11 +126,8 @@
   "reward.description.Explorer.Time.20": {
     "translation": "Played Explorer Mode for longer than 20 minutes"
   },
-  "reward.collect.CollectEnergy": {
-    "translation": "+{0} Energy!"
-  },
-  "reward.collect.Instruction": {
-    "translation": "Tap to Collect"
+  "reward.collect.CollectEnergyButton": {
+    "translation": "Collect Energy"
   },
   "reward.description.NewDifficulty": {
     "translation": "{0} Mode Unlocked!"

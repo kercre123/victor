@@ -67,7 +67,7 @@ TEST(DasAppenderTest, DasAppenderFlushWithCallback) {
   std::mutex mutex;
   std::unique_lock<std::mutex> lock{mutex};
   std::condition_variable cv;
-  auto completionFunc = [&finished, &cv, &mutex] {
+  auto const completionFunc = [&finished, &cv, &mutex](const bool lastFlushFailed) {
     {
       std::lock_guard<std::mutex> lg{mutex};
       finished = true;

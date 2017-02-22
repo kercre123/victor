@@ -81,7 +81,7 @@ public:
   Result Init(const Json::Value& config);
 
   // Hook this up to whatever is ticking the game "heartbeat"
-  Result Update(const float currTime_sec);
+  Result Update(const BaseStationTime_t currTime_nanosec);
 
   // Removing this now that robot availability emits a signal.
   // Get list of available robots

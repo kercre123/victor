@@ -459,8 +459,7 @@ public static class LocalizationKeys {
   public const string kRewardDescriptionExplorerTime10 = "reward.description.Explorer.Time.10";
   public const string kRewardDescriptionExplorerTime15 = "reward.description.Explorer.Time.15";
   public const string kRewardDescriptionExplorerTime20 = "reward.description.Explorer.Time.20";
-  public const string kRewardCollectCollectEnergy = "reward.collect.CollectEnergy";
-  public const string kRewardCollectInstruction = "reward.collect.Instruction";
+  public const string kRewardCollectCollectEnergyButton = "reward.collect.CollectEnergyButton";
   public const string kRewardDescriptionNewDifficulty = "reward.description.NewDifficulty";
   public const string kRewardDescriptionStartNewDay = "reward.description.StartNewDay";
   public const string kRewardDescriptionSkillUp = "reward.description.SkillUp";
