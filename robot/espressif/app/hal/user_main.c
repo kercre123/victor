@@ -31,10 +31,11 @@ u32  GetFirmwareNote(const u32 offset);
 void user_rf_pre_init(void)
 {
   crashHandlerInit(); // Set up our own crash handler, so we can record crashes in more detail
-  //system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
 }
 
-char wifiPsk[WIFI_PSK_LEN+1];
+char wifiPsk[DIGITDASH_WIFI_PSK_LEN+1];
+#define WIFI_PSK_BUFF_SZ (sizeof(wifiPsk))  //must follow declaration
+
 struct connection_record connections[AP_MAX_CONNECTIONS];
 
 /** Callback after all the chip system initalization is done.
@@ -218,6 +219,23 @@ static inline uint8_t selectWiFiChannel(void)
   return ((channel % 3) * 5) + 1;  //0,6,11
 }
 
+void SetWiFiPsk(void)
+{
+  static const char VALID_PSK_CHARS[] = "0123456789ACDEFGHIJKLMNPQRSTVWXYZ"; // excluding B, O, and U
+   if (getFactoryGeneratedPsk(wifiPsk, WIFI_PSK_BUFF_SZ) == false)
+   {
+      //pre 1.5 robot, generate pwd the old way
+      uint32_t randomPSKData[ALPHANUM_WIFI_PSK_LEN];
+      getFactoryRandomSeed(randomPSKData, ALPHANUM_WIFI_PSK_LEN);
+      char* randomPSKChars = (char*)randomPSKData;
+      int i;
+      for (i=0; i<ALPHANUM_WIFI_PSK_LEN; ++i)
+      {
+         wifiPsk[i] = VALID_PSK_CHARS[randomPSKChars[i] % (sizeof(VALID_PSK_CHARS)-1)]; // Sizeof string includes null which we don't want
+      }
+      wifiPsk[ALPHANUM_WIFI_PSK_LEN]=0;
+   }
+}
 
 /** User initialization function
  * This function is responsible for setting all the wireless parameters and
@@ -226,8 +244,6 @@ static inline uint8_t selectWiFiChannel(void)
  */
 void user_init(void)
 {
-  static const char VALID_PSK_CHARS[] = "0123456789ACDEFGHIJKLMNPQRSTVWXYZ"; // excluding B, O, and U
-  int i; 
   char ssid[65];
   int8 err;
 
@@ -250,9 +266,6 @@ void user_init(void)
   uint8 macaddr[6];
   wifi_get_macaddr(SOFTAP_IF, macaddr);
   
-  uint32 randomPSKData[WIFI_PSK_LEN];
-  getFactoryRandomSeed(randomPSKData, WIFI_PSK_LEN);
-  char* randomPSKChars = (char*)randomPSKData;
   
   if (getSerialNumber() == 0xFFFFffff)
   {
@@ -264,11 +277,8 @@ void user_init(void)
     os_sprintf(ssid, "Cozmo_%06X", getSSIDNumber());
   }
 
-  for (i=0; i<WIFI_PSK_LEN; ++i)
-  {
-    wifiPsk[i] = VALID_PSK_CHARS[randomPSKChars[i] % (sizeof(VALID_PSK_CHARS)-1)]; // Sizeof string includes null which we don't want
-  }
-  wifiPsk[WIFI_PSK_LEN]=0;
+  SetWiFiPsk();
+
 
   uint8_t channel = selectWiFiChannel();
   

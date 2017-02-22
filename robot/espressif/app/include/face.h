@@ -54,6 +54,8 @@ namespace Anki {
         bool NumberTiny(u64* frame, int digits, u32 value, int x, int y);
         bool Print(u64* frame, const char* text, const int characters, const int x, const int y);
         bool PrintSmall(u64* frame, const char* text, const int characters, int x, int y);
+        //print `text` upto null or min(`characters`,DIGITDASH_WIFI_PSK_LEN) in PSK font
+        bool PrintPsk(u64* frame, const char* text, const int characters, const int x, const int y);  
         void Flip(u64* frame);
       }
 

@@ -56,7 +56,7 @@ class CLI:
         if self.anim is None:
             self.anim = animationStreamer.ToneStreamer()
         if not self.anim.haveStarted:
-            self.anim.start(frequency)
+            self.anim.start(int(frequency))
         else:
             self.anim.stop()
 

@@ -11,6 +11,10 @@
 
 #define FACTORY_DATA_SIZE (8)
 
+#define FACTORY_PSK_LEN (20)
+#define FACTORY_PSK_OFFSET (0x48)
+
+
 int COZMO_VERSION_ID = 0;
 unsigned int COZMO_BUILD_DATE = 0;
 
@@ -65,4 +69,25 @@ bool ICACHE_FLASH_ATTR getFactoryRandomSeed(uint32_t* dest, const int len)
 {
   if (len > MAX_RANDOM_DATA) return false;
   else return (spi_flash_read(FACTORY_SECTOR * SECTOR_SIZE + RANDOM_DATA_OFFSET, dest, len) == SPI_FLASH_RESULT_OK);
+}
+
+//len must include room for null.
+bool getFactoryGeneratedPsk(char* dest, const int len)
+{
+   uint32_t stringbuf[FACTORY_PSK_LEN/sizeof(uint32_t)];
+   if (spi_flash_read(FACTORY_SECTOR * SECTOR_SIZE + FACTORY_PSK_OFFSET, stringbuf, sizeof(stringbuf)) == SPI_FLASH_RESULT_OK) {
+      if (dest[0]==0xFF) {
+         return false;
+      }
+      int lim = len<FACTORY_PSK_LEN? len : FACTORY_PSK_LEN;
+      int i;
+      for (i=0;i<lim;i++)
+      {
+         dest[i] = ((const char*)stringbuf)[i];
+      }
+      //must come already null terminated
+      if (dest[i-1]=='\0'){ return true; }
+
+   }
+   return false;
 }

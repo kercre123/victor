@@ -225,6 +225,23 @@ namespace Face {
     0x0105053f, // F
   };
 
+#define PSK_CHAR_WIDTH (8)
+#define PSK_BYTES_PER_DIGIT (12)
+#define PSK_DASH_OFFSET (10*PSK_BYTES_PER_DIGIT) //dash comes after 0..9
+static const uint8_t PSK_DIGITS[] ICACHE_RODATA_ATTR STORE_ATTR = {
+0x00,0xc0,0x1f,0xfe,0x73,0x70,0x03,0x76,0x70,0xfe,0xc3,0x1f,  // 0
+0x00,0x00,0x00,0x18,0xc0,0x00,0x06,0xf0,0x7f,0xff,0x07,0x00,  // 1
+0x00,0xc0,0x60,0x0e,0x37,0x78,0xc3,0x36,0x66,0x3f,0xe6,0x61,  // 2
+0x00,0x60,0x18,0x87,0x33,0x70,0x33,0x36,0x63,0xff,0xe3,0x1c,  // 3
+0x00,0x00,0x1c,0xe0,0x81,0x1b,0x8e,0xf1,0x7f,0xff,0x07,0x18,  // 4
+0x00,0x80,0x1b,0xbf,0xf3,0x71,0x1b,0xb6,0x61,0xf3,0x33,0x1e,  // 5
+0x00,0xc0,0x1f,0xfe,0x73,0x63,0x33,0x36,0x63,0xf7,0x63,0x1e,  // 6
+0x00,0x30,0x00,0x03,0x37,0x7e,0xfb,0xf0,0x01,0x07,0x30,0x00,  // 7
+0x00,0xc0,0x1c,0xfe,0x33,0x63,0x33,0x36,0x63,0xfe,0xc3,0x1c,  // 8
+0x00,0xc0,0x33,0x7e,0x37,0x66,0x63,0x36,0x76,0xfe,0xc3,0x1f,  // 9
+0x00,0x00,0x06,0x60,0x00,0x06,  //-
+};
+
   u64 m_frame[FRAME_ALLOC_COLS];
 
   ScreenRect STORE_ATTR m_rects[WORKING_RECTS]; // Extra rect for working
@@ -619,6 +636,57 @@ namespace Face {
         x += CHAR_WIDTH + 1;
       }
       
+      return true;
+    }
+
+    bool PrintPsk(u64* frame, const char* text, int text_len, const int x, const int y)
+    {
+      text_len = MIN(text_len, DIGITDASH_WIFI_PSK_LEN);
+      const int text_width = (text_len-1) * PSK_CHAR_WIDTH; //-1 b/c 2 half-width dashes
+      if (x + text_width > COLS)
+      {
+        AnkiWarn( 214, "Face.Draw.Print.TooWide", 520, "%d + %d > %d", 3, x, text_width, COLS);
+        return false;
+      }
+      
+      int frameCol = x;
+      uint8_t bits[PSK_BYTES_PER_DIGIT];  //we will copy font char into here to allow unaligned reads.
+      
+      for (int character = 0; character < text_len; ++character)
+      {
+        int digit = text[character];
+        if (digit == '\0')
+        {
+          break;   //stop early
+        }
+        else if (digit == '-') 
+        {
+          os_memcpy(bits, &PSK_DIGITS[PSK_DASH_OFFSET], PSK_BYTES_PER_DIGIT);
+        }
+        else if ( (digit >= '0') || (digit <= '9') )
+        {
+          os_memcpy(bits, &PSK_DIGITS[(digit-'0')*PSK_BYTES_PER_DIGIT], PSK_BYTES_PER_DIGIT);
+        }
+        else
+        {
+          os_memset(bits, 0x55, PSK_BYTES_PER_DIGIT); //Show horiz bars icon for bad chars.
+        }
+        
+        for (int byte = 0; byte < PSK_BYTES_PER_DIGIT; byte+=3)
+        {
+          if (digit=='-' && byte >= PSK_BYTES_PER_DIGIT/2)
+          {
+            break; //dashes are half-width
+          }
+          else  //unpack: 3 bytes -> 2 12-bit cols.
+          {
+            u64 line = bits[byte+0] | ( ((uint16_t)bits[byte+1]&0x0F) << 8 );
+            frame[frameCol++] |= line << y;
+            line = ( ((uint16_t)bits[byte+1] >> 4) & 0x0F ) | ((uint16_t)bits[byte+2] << 4);
+            frame[frameCol++] |= line << y;
+          }
+        }
+      }
       return true;
     }
 
