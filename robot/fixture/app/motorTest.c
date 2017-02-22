@@ -82,6 +82,175 @@ void TestLEDs(void)
     TestLED(i);
 }
 
+//LED Bitfield Defines.
+//Q: Where did these come from!??
+//A: Manually mapped to BPLED[] array in motorled.c - could break if that changes.
+#define LED_BF_D1_BLU     (1 << 0)
+#define LED_BF_D1_GRN     (1 << 1)
+#define LED_BF_D1_RED     (1 << 2)
+#define LED_BF_D1_MAGENTA (LED_BF_D1_BLU | LED_BF_D1_RED)
+#define LED_BF_D1_CYAN    (LED_BF_D1_BLU | LED_BF_D1_GRN)
+#define LED_BF_D1_YELLOW  (LED_BF_D1_RED | LED_BF_D1_GRN)
+#define LED_BF_D1_WHITE   (LED_BF_D1_BLU | LED_BF_D1_GRN | LED_BF_D1_RED)
+#define LED_BF_D2_BLU     (1 << 3)
+#define LED_BF_D2_GRN     (1 << 4)
+#define LED_BF_D2_RED     (1 << 5)
+#define LED_BF_D2_MAGENTA (LED_BF_D2_BLU | LED_BF_D2_RED)
+#define LED_BF_D2_CYAN    (LED_BF_D2_BLU | LED_BF_D2_GRN)
+#define LED_BF_D2_YELLOW  (LED_BF_D2_RED | LED_BF_D2_GRN)
+#define LED_BF_D2_WHITE   (LED_BF_D2_BLU | LED_BF_D2_GRN | LED_BF_D2_RED)
+#define LED_BF_D3_BLU     (1 << 6)
+#define LED_BF_D3_GRN     (1 << 7)
+#define LED_BF_D3_RED     (1 << 8)
+#define LED_BF_D3_MAGENTA (LED_BF_D3_BLU | LED_BF_D3_RED)
+#define LED_BF_D3_CYAN    (LED_BF_D3_BLU | LED_BF_D3_GRN)
+#define LED_BF_D3_YELLOW  (LED_BF_D3_RED | LED_BF_D3_GRN)
+#define LED_BF_D3_WHITE   (LED_BF_D3_BLU | LED_BF_D3_GRN | LED_BF_D3_RED)
+#define LED_BF_D4_RED     (1 << 9)
+#define LED_BF_D5_RED     (1 << 10)
+
+//our led state machine will cycle through this display pattern
+#define LED_BITFIELD_PATTERN_COUNT  sizeof(_led_bitfield_patterns)/sizeof(u32)
+static const u32 _led_bitfield_patterns[] = {
+  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
+  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
+  
+  LED_BF_D1_GRN   | LED_BF_D2_BLU   | LED_BF_D3_GRN,
+  
+  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
+  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
+  
+  LED_BF_D1_RED   | LED_BF_D2_GRN   | LED_BF_D3_RED,
+  
+  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
+  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
+  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
+  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
+  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
+  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
+  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
+  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
+  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
+  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
+  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
+  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
+  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
+  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
+  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
+  
+  LED_BF_D1_BLU   | LED_BF_D2_RED   | LED_BF_D3_BLU,
+};
+
+static void _LEDDisplay(u32 led_bitfield, u32 led_time_us) {
+  for (int i = 0; i < LEDCnt(); i++) {
+    LEDOn( led_bitfield & 1 ? i : 255 ); //display each enabled led
+    led_bitfield >>= 1;
+    MicroWait(led_time_us);
+  }
+  LEDOn(255); //all off
+}
+
+static void _LEDSequence(void)
+{
+  static int pattern = -1;
+  static u32 pattern_time = 0;
+  
+  //update state every Xms
+  if( pattern < 0 || getMicroCounter() - pattern_time > 100*1000 ) {
+    pattern_time = getMicroCounter();
+    if( ++pattern >= LED_BITFIELD_PATTERN_COUNT )
+      pattern = 0;
+  }
+  
+  _LEDDisplay( _led_bitfield_patterns[pattern], 150 );
+}
+
+void TestButton(void)
+{
+  const int BTN_DEBUG = 1;
+  const int idle_threshold_mv = 2600;
+  int btn_mv, lpf_press, threshold_violation;
+  u32 btn_start;
+  
+  ConsolePrintf("Waiting for button...");
+  
+  //wait for button press
+  lpf_press = 0; //reset low-pass filter
+  threshold_violation = 0;
+  btn_start = getMicroCounter();
+  while( lpf_press < 50 )
+  {
+    _LEDSequence(); //juice the LEDs
+    bool pressed = BPBtnGet(&btn_mv);
+    lpf_press = pressed ? lpf_press+1 : 0;
+    
+    //button signal voltage outside normal cmos input voltages
+    if( !pressed && btn_mv < idle_threshold_mv ) {
+      threshold_violation++;
+      if( BTN_DEBUG )
+        ConsolePrintf("\r\nviolation %d %d.%03dV...", threshold_violation, btn_mv/1000, btn_mv%1000);
+      if( threshold_violation >= 3 )
+        throw ERROR_BACKPACK_BTN_THRESH;
+    }
+    
+    if( getMicroCounter() - btn_start > 10*1000*1000 )
+      throw ERROR_BACKPACK_BTN_TIMEOUT;
+  }
+  
+  ConsolePrintf("pressed...");
+  
+  //wait for button release
+  lpf_press = 0; //reset low-pass filter
+  threshold_violation = 0;
+  btn_start = getMicroCounter();
+  while( lpf_press < 150 )
+  {
+    _LEDSequence(); //juice the LEDs
+    bool pressed = BPBtnGet(&btn_mv);
+    lpf_press = !pressed ? lpf_press+1 : 0;
+    
+    //button signal voltage outside normal cmos input voltages
+    if( !pressed && btn_mv < idle_threshold_mv ) {
+      threshold_violation++;
+      if( BTN_DEBUG )
+        ConsolePrintf("\r\nviolation %d %d.%03dV...", threshold_violation, btn_mv/1000, btn_mv%1000);
+      if( threshold_violation >= 3 )
+        throw ERROR_BACKPACK_BTN_THRESH;
+    }
+    
+    if( getMicroCounter() - btn_start > 5*1000*1000 )
+      throw ERROR_BACKPACK_BTN_TIMEOUT;
+  }
+  
+  ConsolePrintf("released\r\n");
+}
+
 // Test encoder (not motor)
 const int MIN_ENC_ON = 2310, MAX_ENC_OFF = 800;   // In millivolts (with padding) - must be 0.3x to 0.7x VDD
 const int ENC_SLOW_US = 1000;
@@ -278,6 +447,7 @@ TestFunction* GetMotor2HTestFunctions(void)
   {
     CheckFixtureCompatibility,
     TestLEDs,
+    TestButton,
     TestMotorH,
     NULL
   };
