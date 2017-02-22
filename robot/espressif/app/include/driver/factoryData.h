@@ -24,4 +24,8 @@ uint16_t getModelNumber(void);
 /// Retrieves the random seed populated in flash by the factory fixture
 bool getFactoryRandomSeed(uint32_t* dest, const int len);
 
+/// Retrieves the random string populated in flash by the factory fixture
+// dest_sz <= DIGITDASH_WIFI_PSK_LEN
+bool getFactoryGeneratedPsk(char dest[32], const int dest_sz);
+
 #endif
