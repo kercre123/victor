@@ -111,7 +111,7 @@ void PotentialObjectsForLocalizingTo::UseDiscardedObservation(ObservedAndMatched
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObject>& observedObject,
                                              ObservableObject* matchedObject,
-                                             f32 observedDistance_mm)
+                                             f32 observedDistance_mm,
                                              bool observationAlreadyUsed)
 {
 
