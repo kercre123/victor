@@ -35,6 +35,8 @@ inline const char* MessageTagToString(const RobotInterface::RobotToEngineTag& ta
 {
   return RobotToEngineTagToString(tag);
 }
+  
+ExternalInterface::MessageEngineToGameTag GetEToGMessageTypeFromString(const char* inString);
 
 }
 }
