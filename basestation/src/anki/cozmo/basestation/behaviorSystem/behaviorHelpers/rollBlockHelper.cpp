@@ -82,9 +82,8 @@ BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot,
 
   if( _shouldRoll ) {
     // If the block can't be accessed, pick it up and move it so it can be rolled
-    const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_targetID);
-    if(obj != nullptr &&
-       !obj->IsPoseStateUnknown()){
+    const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+    if(obj != nullptr){
       const bool canRoll = robot.GetAIComponent().GetWhiteboard().IsObjectValidForAction(
         AIWhiteboard::ObjectUseIntention::RollObjectNoAxisCheck,
         obj->GetID());

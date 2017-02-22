@@ -125,9 +125,8 @@ IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::DetermineNextResponse(Robot& robot)
 {
-  ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_metadata.GetObjectID());
-  if(nullptr != object &&
-     !object->IsPoseStateUnknown()){
+  ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
+  if(nullptr != object){
     if (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
     {
       TurnAndRespondNegatively(robot);

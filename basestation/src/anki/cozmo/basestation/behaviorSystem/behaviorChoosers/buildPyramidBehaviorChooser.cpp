@@ -677,7 +677,7 @@ void BuildPyramidBehaviorChooser::UpdateTrackerPropertiesBasedOnCurrentRunningBe
     // Set acknowledged positevely if response was a positive response
     const ObjectID& target = metadata.GetObjectID();
     PyramidCubePropertiesTracker* tracker = nullptr;
-    ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(target);
+    ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(target);
     if(GetCubePropertiesTrackerByID(target, tracker) &&
        object != nullptr &&
        tracker->GetCurrentUpAxis() == UpAxis::ZPositive){
@@ -1002,7 +1002,7 @@ void BuildPyramidBehaviorChooser::SetCubeLights()
                                                             nullptr,
                                                             true,
                                                             entry.second.GetDesiredLightModifier());
-        const ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(entry.second.GetObjectID());
+        const ObservableObject* obj = _robot.GetBlockWorld().GetLocatedObjectByID(entry.second.GetObjectID());
         if(obj != nullptr){
         
           PRINT_NAMED_ERROR("Setting Lights", "ObjID:%i, trigger:%i, modifier_x:%f, modifier_y:%f, obj_X:%f obj_y:%f",
