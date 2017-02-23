@@ -20,6 +20,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "json/json-forwards.h"
+#include "util/random/randomGenerator.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <set>
@@ -66,7 +67,10 @@ public:
   
   // Derived classes can override this function if they want to add listeners
   // to the behavior they will trigger
-  virtual void BehaviorThatStartegyWillTrigger(IBehavior* behavior) {};
+  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) {};
+  
+  // A random number generator all subclasses can share
+  Util::RandomGenerator& GetRNG() const;
   
 protected:
   using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
@@ -108,7 +112,7 @@ private:
   void HandleEvent(const EventType& event);
   
   // Handle tracking enable/disable requests
-  // Returns true if ids are updated (requsterID doesn't exist/exsits for enabling/disabling)
+  // Returns true if ids are updated (requesterID doesn't exist/exists for enabling/disabling)
   // false otherwise
   virtual bool UpdateDisableIDs(const std::string& requesterID, bool enable);
 

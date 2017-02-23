@@ -276,6 +276,13 @@ namespace Anki {
     
     void UiGameController::HandleObjectStatesBase(ExternalInterface::ObjectStates const& msg)
     {
+      PRINT_NAMED_INFO("HandleObjectStates", "Clearing all objects before updating with %zu new objects",
+                       msg.objects.size());
+      
+      _objectIDToPoseMap.clear();
+      _objectIDToFamilyTypeMap.clear();
+      _objectFamilyToTypeToIDMap.clear();
+      
       for(auto & objectState : msg.objects)
       {
         PRINT_NAMED_INFO("HandleObjectStates",
@@ -389,6 +396,11 @@ namespace Anki {
     void UiGameController::HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg)
     {
       _engineLoadedRatio = msg.ratioComplete;
+    }
+    
+    void UiGameController::HandleDefinedCustomObjectBase(const ExternalInterface::DefinedCustomObject& msg)
+    {
+      HandleDefinedCustomObject(msg);
     }
     
     // ===== End of message handler callbacks ====
@@ -551,7 +563,10 @@ namespace Anki {
             HandleEngineLoadingStatusBase(message.Get_EngineLoadingDataStatus());
             break;
           case ExternalInterface::MessageEngineToGameTag::FaceEnrollmentCompleted:
-            HandleFaceEnrollmentCompleted(message.Get_FaceEnrollmentCompleted());
+            HandleFaceEnrollmentCompletedBase(message.Get_FaceEnrollmentCompleted());
+            break;
+          case ExternalInterface::MessageEngineToGameTag::DefinedCustomObject:
+            HandleDefinedCustomObjectBase(message.Get_DefinedCustomObject());
             break;
           default:
             // ignore
@@ -870,17 +885,22 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendTurnInPlace(const f32 angle_rad, const f32 speed_radPerSec, const f32 accel_radPerSec2)
+    uint32_t UiGameController::SendTurnInPlace(const f32 angle_rad,
+                                               const f32 speed_radPerSec,
+                                               const f32 accel_radPerSec2,
+                                               const bool isAbsolute,
+                                               const QueueActionPosition queueActionPosition)
     {
-      ExternalInterface::TurnInPlace m;
+      ExternalInterface::QueueSingleAction m;
       m.robotID = 1;
-      m.angle_rad = angle_rad;
-      m.speed_rad_per_sec = speed_radPerSec;
-      m.accel_rad_per_sec2 = accel_radPerSec2;
-      m.isAbsolute = false;
+      m.idTag = ++_queueActionIdTag;
+      m.position = queueActionPosition;
+      m.numRetries = 1;
+      m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( angle_rad, speed_radPerSec, accel_radPerSec2, isAbsolute, 1 ));
       ExternalInterface::MessageGameToEngine message;
-      message.Set_TurnInPlace(m);
+      message.Set_QueueSingleAction(m);
       SendMessage(message);
+      return m.idTag;
     }
 
     void UiGameController::SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
@@ -1552,15 +1572,17 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
+    uint32_t UiGameController::SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
       ExternalInterface::QueueSingleAction msg;
       msg.robotID = 1;
+      msg.idTag = ++_queueActionIdTag;
       msg.position = pos;
       msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(msg.robotID, numLoops, animName));
 
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(msg);
       SendMessage(message);
+      return msg.idTag;
     }
     
     void UiGameController::SendCancelAction() {
@@ -2065,6 +2087,55 @@ namespace Anki {
       DEV_ASSERT_MSG(false, "UiGameController.GetLightCubeById",
                      "Can't find the light cube with id %d in the world", lightCubeId);
       return nullptr;
+    }
+    
+    bool UiGameController::RemoveLightCubeByType(ObjectType type)
+    {
+      int proto_type = static_cast<int>(type) - 1;
+      for (auto it = _lightCubes.begin(); it != _lightCubes.end(); ++it) {
+        webots::Field* id = (*it)->getField("ID");
+        if (id && id->getSFInt32() == proto_type) {
+          (*it)->remove();
+          _lightCubes.erase(it);
+          return true;
+        }
+      }
+      
+      DEV_ASSERT_MSG(false, "UiGameController.RemoveLightCubeById",
+                     "Can't find the light cube of ObjectType %d in the world", proto_type);
+      return false;
+
+    }
+    
+    bool UiGameController::AddLightCubeByType(ObjectType type, const Pose3d& p)
+    {
+      // Check if world already has a light cube with that ID
+      int proto_type = static_cast<int>(type) - 1;
+      for (auto lightCube : _lightCubes) {
+        webots::Field* id = lightCube->getField("ID");
+        if (id && id->getSFInt32() == proto_type) {
+          PRINT_NAMED_WARNING("UiGameController.AddLightCubeByType.ObjectTypeAlreadyExists", "%d", type);
+          return false;
+        }
+      }
+      
+      //
+      std::stringstream ss;
+      ss << "LightCube { "
+      << " ID " << proto_type
+      << " translation "
+      << 0.001f * p.GetTranslation().x() << " "
+      << 0.001f * p.GetTranslation().y() << " "
+      << 0.001f * p.GetTranslation().z() << " "
+      << " rotation "
+      << p.GetRotationAxis().x() << " " << p.GetRotationAxis().y() << " " << p.GetRotationAxis().z() << " "
+      << p.GetRotationAngle().ToFloat() << " }";
+      
+      webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
+      int numRootChildren = rootChildren->getCount();
+      rootChildren->importMFNodeFromString(numRootChildren, ss.str());
+      
+      return true;
     }
 
     const double UiGameController::GetSupervisorTime() const

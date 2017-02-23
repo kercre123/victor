@@ -370,13 +370,12 @@ namespace Anki {
                         Radians& angleDiff) const
   {
     
-    const std::vector<RotationMatrix3d> R_ambiguities;
+    const RotationAmbiguities kNoAmbiguities;
     
     return IsSameAs_WithAmbiguity(P_other,
-                                  R_ambiguities,
+                                  kNoAmbiguities,
                                   distThreshold,
                                   angleThreshold,
-                                  false, // doesn't really matter with no ambiguities
                                   T_diff,
                                   angleDiff);
     
@@ -384,10 +383,9 @@ namespace Anki {
   
   
   bool Pose3d::IsSameAs_WithAmbiguity(const Pose3d& P_other_in,
-                                      const std::vector<RotationMatrix3d>& R_ambiguities,
+                                      const RotationAmbiguities& R_ambiguities,
                                       const Point3f&   distThreshold,
                                       const Radians&   angleThreshold,
-                                      const bool       useAbsRotation,
                                       Vec3f& Tdiff,
                                       Radians& angleDiff) const
   {
@@ -543,29 +541,16 @@ namespace Anki {
       return true;
     }
     
-    if(!R_ambiguities.empty())
+    if(R_ambiguities.HasAmbiguities())
     {
-      // Need to consider ambiguities...
+      // Need to consider ambiguities. Compute the rotation difference between the two poses' rotations.
+      // See if that difference is one of the ambiguities we should ignore.
       Rotation3d Rdiff(this->GetRotation());
       Rdiff.Invert(); // Invert
       Rdiff *= P_other.GetRotation();
       
-      // TODO: Do this directly with quaternions instead of converting to RotationMatrix
-      RotationMatrix3d RdiffMat( Rdiff.GetRotationMatrix() );
-      
-      if(useAbsRotation) {
-        // The ambiguities are assumed to be defined up various sign flips
-        RdiffMat.Abs();
-      }
-      
-      // Check to see if the rotational part of the pose difference is
-      // similar enough to one of the rotational ambiguities
-      for(const auto& R_ambiguity : R_ambiguities) {
-        if(RdiffMat.GetAngleDiffFrom(R_ambiguity) < angleThreshold) {
-          return true;
-        }
-      }
-    } // if(!R_ambiguities.empty())
+      return R_ambiguities.IsRotationSame(Rdiff, angleThreshold);
+    }
     
     // If we get here, we didn't pass some check above, so poses are not the same
     return false;

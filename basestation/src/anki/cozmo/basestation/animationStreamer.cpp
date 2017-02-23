@@ -236,7 +236,6 @@ namespace Cozmo {
                           "Will start streaming '%s' animation %d times with tag=%d.",
                           _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
       }
-      Anki::Util::sEvent("robot.play_animation", {}, _streamingAnimation->GetName().c_str());
       
       return _tagCtr;
     }
@@ -1390,7 +1389,7 @@ namespace Cozmo {
     const bool haveStreamedAnything   = _lastStreamTime > 0.f;
     const bool usingLiveIdle          = _idleAnimation == &_liveAnimation;
     const bool haveIdleAnimation      = _idleAnimation != nullptr;
-    const bool longEnoughSinceStream  = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f;
+    const bool longEnoughSinceStream  = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime) > 0.5f;
     if(!haveStreamingAnimation &&
        haveStreamedAnything &&
        (usingLiveIdle || (!haveIdleAnimation && longEnoughSinceStream)))

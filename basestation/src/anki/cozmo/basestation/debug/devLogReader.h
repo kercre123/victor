@@ -55,6 +55,11 @@ public:
   // calculate the total time
   uint32_t GetFinalTime() const { return _finalTime_ms; }
 
+  // return the delta between current time and the next message, aka how much time we should advance to
+  // (hopefully) see another message. Note that this may return less than the given time (e.g. if it needs to
+  // read a new log file)
+  uint32_t GetNextMessageTimeDelta_ms() const;
+
 protected:
   virtual bool FillLogData(std::ifstream& fileHandle, LogData& logData_out) const = 0;
 

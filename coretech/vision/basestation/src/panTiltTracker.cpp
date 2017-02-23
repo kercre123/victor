@@ -88,10 +88,9 @@ namespace Anki {
       xCen = x;
       yCen = y;
       height = h;
-      
-      // Every time we update the tracked face, move the timeout time
-      // forward
-      timeoutTime_ms += BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      // Every time we update the tracked face, move the timeout time forward
+      // pterry 2017/02/16:  This used to be +=; I've 'fixed' but this code is not used
+      timeoutTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     }
     
     Result PanTiltTracker::Update(std::vector<Rectangle<s32> >& targets,

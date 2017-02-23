@@ -76,7 +76,11 @@ namespace Cozmo.HomeHub {
       // Destroy dialog if it exists
       if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
-        _HomeViewInstance.CloseDialogImmediately();
+
+        // Since HomeView is a BaseView, it will be closed the next time a view opens. 
+        // This is only called during robot disconnect so it should be closed right away by
+        // the opening of the CheckInRewardsFlow
+        // _HomeViewInstance.CloseDialogImmediately();
       }
       // Kill yourself HomeHub
       GameObject.Destroy(this.gameObject);

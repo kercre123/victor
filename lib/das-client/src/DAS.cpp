@@ -12,6 +12,7 @@
 #include "dasGameLogAppender.h"
 #include "dasGlobals.h"
 #include "dasLocalAppender.h"
+#include "dasLocalAppenderFactory.h"
 #include "dasAppender.h"
 #include "dasFilter.h"
 #include "stringUtils.h"
@@ -24,6 +25,7 @@
 #include <sstream>
 #include <pthread.h>
 #include <stdarg.h>
+#include <sys/stat.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,13 +46,15 @@ int DAS_AssertionEnabled = 0;
 #endif
 
 static bool DASNeedsInit = true;
+static bool sNeedToRotateGlobalsLogs = true;
 static std::string sGameLogDir;
-static std::string sLogDir;
+static std::string sDasLogDir;
 
 static DASLogLevel sLocalMinLogLevel = DASLogLevel_Info;
 static DASLogLevel sRemoteMinLogLevel = DASLogLevel_Event;
 static DASLogLevel sGameMinLogLevel = DASLogLevel_Info;
-static Anki::Das::DasLocalAppender sLocalAppender;
+static Anki::Das::DasLocalAppender* sLocalAppender =
+  Anki::Das::DasLocalAppenderFactory::CreateAppender(DASLogMode_Both);
 
 static std::unique_ptr<Anki::Das::DasAppender> sRemoteAppender = nullptr;
 static std::mutex sRemoteAppenderMutex;
@@ -72,6 +76,12 @@ static std::mutex sDASLevelOverrideMutex;
 // Thread tagging
 static std::atomic<Anki::Das::ThreadId_t> sDASThreadMax {0};
 static pthread_key_t sDASThreadIdKey;
+
+// Save the DAS globals for crash reporting
+static const std::string kLastRunDasGlobalsFileName = "lastRun.dasGlobals";
+static const std::string kThisRunDasGlobalsFileName = "thisRun.dasGlobals";
+static std::string pathToThisRunDasGlobalsFile;
+static std::string pathToLastRunDasGlobalsFile;
 
 
 void _setThreadLocalUInt32(pthread_key_t key, uint32_t value) {
@@ -208,8 +218,17 @@ void DASConfigure(const char* configurationJsonFilePath,
   if (nullptr != gameLogDirPath && '\0' != *gameLogDirPath) {
     sGameLogDir = gameLogDirPath;
   }
+
   if (nullptr != logDirPath && '\0' != *logDirPath) {
-    sLogDir = logDirPath;
+    sDasLogDir = logDirPath;
+    (void) mkdir(logDirPath, S_IRWXU);
+    pathToLastRunDasGlobalsFile = sDasLogDir + "/" + kLastRunDasGlobalsFileName;
+    pathToThisRunDasGlobalsFile = sDasLogDir + "/" + kThisRunDasGlobalsFileName;
+    if (sNeedToRotateGlobalsLogs) {
+      // Rotate the saved DAS globals for crash reporting
+      (void) rename(pathToThisRunDasGlobalsFile.c_str(), pathToLastRunDasGlobalsFile.c_str());
+      sNeedToRotateGlobalsLogs = false;
+    }
   }
 
   if (!DASNeedsInit) {
@@ -247,7 +266,7 @@ void DASConfigure(const char* configurationJsonFilePath,
         {
           flush_interval = root["dasConfig"].get("flushInterval", DASClient::Json::uintValue).asUInt();
         }
-        sRemoteAppender.reset(new Anki::Das::DasAppender(sLogDir, url,flush_interval));
+        sRemoteAppender.reset(new Anki::Das::DasAppender(sDasLogDir, url,flush_interval));
       }
     } else {
       LOGD("Failed to parse configuration: %s", reader.getFormattedErrorMessages().c_str());
@@ -264,17 +283,33 @@ void DASConfigure(const char* configurationJsonFilePath,
 
 const char* DASGetLogDir()
 {
-  return sLogDir.c_str();
+  return sDasLogDir.c_str();
 }
 
 static void _DAS_DestroyRemoteAppender() {
   std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
   sRemoteAppender.reset();
 }
-  
+
 static void _DAS_DestroyGameLogAppender() {
   std::lock_guard<std::mutex> lock(sGameLogAppenderMutex);
+  if (nullptr != sGameLogAppender) {
+    sGameLogAppender->flush();
+  }
   sGameLogAppender.reset();
+}
+
+void SetDASLocalLoggerMode(DASLocalLoggerMode logMode)
+{
+  Anki::Das::DasLocalAppender* appender;
+  appender = Anki::Das::DasLocalAppenderFactory::CreateAppender(logMode);
+
+  Anki::Das::DasLocalAppender* oldAppender = sLocalAppender;
+  sLocalAppender = appender;
+  if (nullptr != oldAppender) {
+    oldAppender->flush();
+    delete oldAppender;
+  }
 }
 
 void DASClose() {
@@ -337,17 +372,18 @@ void _DAS_LogInternal(DASLogLevel level, const char* eventName, const char* even
     data[Anki::Das::kTimeStampGlobalKey] = ts;
   }
 
-  if (level >= _DAS_GetLevel(eventName, sLocalMinLogLevel)) {
-    std::string trimmedEventValue = eventValue;
-    AnkiUtil::StringTrimWhitespaceFromEnd(trimmedEventValue);
-    std::string globalsAndData;
-    if (sPrintGlobalsAndData) {
-      getDASGlobalsAndDataString(globals, data, globalsAndData);
-    }
-    sLocalAppender.append(level, eventName, trimmedEventValue.c_str(),
+  {
+    if (level >= _DAS_GetLevel(eventName, sLocalMinLogLevel)) {
+      std::string trimmedEventValue = eventValue;
+      AnkiUtil::StringTrimWhitespaceFromEnd(trimmedEventValue);
+      std::string globalsAndData;
+      if (sPrintGlobalsAndData) {
+        getDASGlobalsAndDataString(globals, data, globalsAndData);
+      }
+      sLocalAppender->append(level, eventName, trimmedEventValue.c_str(),
                             threadId, file, funct, line, globals, data, globalsAndData.c_str());
+    }
   }
-  
   if (level >= sRemoteMinLogLevel) {
     std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
     if (nullptr != sRemoteAppender) {
@@ -355,7 +391,6 @@ void _DAS_LogInternal(DASLogLevel level, const char* eventName, const char* even
                               globals, data);
     }
   }
-  
   if (level >= sGameMinLogLevel) {
     std::lock_guard<std::mutex> lock(sGameLogAppenderMutex);
     if (nullptr != sGameLogAppender) {
@@ -372,6 +407,13 @@ void _DAS_LogKv(DASLogLevel level, const char* eventName, const char* eventValue
   for (const auto& keyValuePair : keyValues) {
     data.emplace(std::string(keyValuePair.first), std::string(keyValuePair.second));
   }
+  _DAS_LogInternal(level, eventName, eventValue, "", "", 0, data);
+}
+
+void _DAS_LogKvMap(DASLogLevel level, const char* eventName, const char* eventValue,
+  const std::map<std::string, std::string>& keyValues)
+{
+  std::map<std::string,std::string> data = keyValues;
   _DAS_LogInternal(level, eventName, eventValue, "", "", 0, data);
 }
 
@@ -413,6 +455,7 @@ void _DAS_SetGlobal(const char* key, const char* value) {
     sDASGlobals.emplace(key, value);
   }
   sDASGlobalsRevisionNumber++;
+  (void) AnkiUtil::StoreStringMapInFile(pathToThisRunDasGlobalsFile, sDASGlobals);
 }
 
 void _DAS_GetGlobal(const char* key, std::string& outValue) {
@@ -425,6 +468,68 @@ void _DAS_GetGlobal(const char* key, std::string& outValue) {
     outValue = "";
   }
 }
+void _DAS_GetGlobalsForThisRun(std::map<std::string, std::string>& dasGlobals) {
+  std::lock_guard<std::mutex> lock(sDASGlobalsMutex);
+  dasGlobals = sDASGlobals;
+}
+
+void _DAS_GetGlobalsForLastRun(std::map<std::string, std::string>& dasGlobals) {
+  dasGlobals.clear();
+  dasGlobals = AnkiUtil::JsonFileToStringMap(pathToLastRunDasGlobalsFile);
+}
+
+size_t _DAS_GetGlobalsForLastRunAsJsonString(char* buffer, size_t len) {
+  if (buffer && len) {
+    buffer[0] = '\0';
+  }
+  std::string dasGlobalsFromLastRunAsJson =
+    AnkiUtil::StringFromContentsOfFile(pathToLastRunDasGlobalsFile);
+  size_t requiredLen = dasGlobalsFromLastRunAsJson.size() + 1;
+  if (buffer && len >= requiredLen) {
+    std::copy(dasGlobalsFromLastRunAsJson.begin(), dasGlobalsFromLastRunAsJson.end(), buffer);
+    buffer[dasGlobalsFromLastRunAsJson.size()] = '\0';
+  }
+  return requiredLen;
+}
+
+
+void _DAS_ReportCrashForLastAppRun(const char* apprun) {
+  if (DASNetworkingDisabled) {
+    return;
+  }
+  DASGlobals dasGlobalsFromLastRun;
+  _DAS_GetGlobalsForLastRun(dasGlobalsFromLastRun);
+  auto search = dasGlobalsFromLastRun.find(Anki::Das::kApplicationRunGlobalKey);
+  if (search == dasGlobalsFromLastRun.end()) {
+    return;
+  }
+  if (apprun && *apprun && search->second != std::string(apprun)) {
+    return;
+  }
+
+  DASLogLevel level = DASLogLevel_Error;
+  std::string logLevel;
+  getDASLogLevelName(level, logLevel);
+  dasGlobalsFromLastRun[Anki::Das::kMessageLevelGlobalKey] = logLevel;
+
+  // Use a sequence number high enough that it will be after all of the DAS events that
+  // were reported during the apprun
+  dasGlobalsFromLastRun[Anki::Das::kSequenceGlobalKey] = "999999999";
+
+  // We don't know when the crash occurred, so just use the current time
+  std::chrono::milliseconds milliSecondsSince1970 =
+    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+  std::string ts = std::to_string(milliSecondsSince1970.count());
+  dasGlobalsFromLastRun[Anki::Das::kTimeStampGlobalKey] = ts;
+  {
+    std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
+    if (!sRemoteAppender) {
+      return;
+    }
+    sRemoteAppender->append(level, "crash", "", dasGlobalsFromLastRun);
+  }
+  DASEvent("reported_crash", "prior apprun = %s", (search->second).c_str());
+}
 
 void _DAS_ClearGlobals() {
   std::lock_guard<std::mutex> lock(sDASGlobalsMutex);
@@ -433,6 +538,12 @@ void _DAS_ClearGlobals() {
   _DAS_DestroyGameLogAppender();
 
   sDASGlobalsRevisionNumber++;
+  (void) AnkiUtil::StoreStringMapInFile(pathToThisRunDasGlobalsFile, sDASGlobals);
+}
+
+// _DAS_GetGameLogAppender is used by the unit tests. Don't delete!
+Anki::Das::DasGameLogAppender* _DAS_GetGameLogAppender() {
+  return sGameLogAppender.get();
 }
 
 void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue,

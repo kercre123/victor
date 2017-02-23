@@ -16,7 +16,6 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalPersistentUpdates/buildPyramidPersistentUpdate.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategies/iAIGoalStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
@@ -42,15 +41,12 @@ namespace {
 static const char* kBehaviorChooserConfigKey = "behaviorChooser";
 static const char* kStrategyConfigKey = "goalStrategy";
 static const char* kRequiresSparkKey = "requireSpark";
-static const char* kPersistentUpdateComponentKey = "persistentComponentID";
-static const char* kPyramidSparkUpdateFuncID = "pyramidSparkUpdate";
 static const char* kRequiresObjectTapped = "requireObjectTapped";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoal::AIGoal()
-: _persistentUpdateComponent(nullptr)
-, _priority(0)
+: _priority(0)
 , _driveStartAnimTrigger(AnimationTrigger::Count)
 , _driveLoopAnimTrigger(AnimationTrigger::Count)
 , _driveEndAnimTrigger(AnimationTrigger::Count)
@@ -64,7 +60,6 @@ AIGoal::AIGoal()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoal::~AIGoal()
 {
-  Util::SafeDelete(_persistentUpdateComponent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -124,12 +119,6 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
   IAIGoalStrategy* newStrategy = AIGoalStrategyFactory::CreateAIGoalStrategy(robot, strategyConfig);
   _strategy.reset( newStrategy );
   
-  // other params
-  std::string updateFuncID;
-  if ( JsonTools::GetValueOptional(config, kPersistentUpdateComponentKey, updateFuncID) ) {
-    _persistentUpdateComponent = PersistentUpdateComponentFactory(updateFuncID);
-    _persistentUpdateComponent->Init(robot);
-  }
   _priority = JsonTools::ParseUint8(config, "priority", "AIGoal.Init");
   _name = JsonTools::ParseString(config, "name", "AIGoal.Init");
   
@@ -162,12 +151,6 @@ void AIGoal::Enter(Robot& robot)
     robot.GetAIComponent().GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetName());
   }
   
-  // notify the persistant update function that the goal was entered
-  if(_persistentUpdateComponent != nullptr){
-    _persistentUpdateComponent->GoalEntered(robot);
-  }
-  
-  
   // log event to das
   Util::sEventF("robot.freeplay_goal_started", {}, "%s", _name.c_str());
 }
@@ -188,14 +171,15 @@ void AIGoal::Exit(Robot& robot)
   if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
     robot.GetAIComponent().GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetName());
   }
-
-  // notify the persistant update function that the goal is exiting
-  if(_persistentUpdateComponent != nullptr){
-    _persistentUpdateComponent->GoalExited(robot);
-  }
   
   // log event to das
-  const int nSecs = static_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs);
+  int nSecs = Util::numeric_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs);
+  if (nSecs < 0) { // Attempt to fix COZMO-7862
+    PRINT_NAMED_ERROR("AIGoal.Exit.NegativeDuration",
+                      "Negative duration (%i secs, started at %f and stopped at %f",
+                      nSecs, _lastTimeGoalStartedSecs, _lastTimeGoalStoppedSecs);
+    nSecs = 0;
+  }
   Util::sEventF("robot.freeplay_goal_ended",
                 {{DDATA, std::to_string(nSecs).c_str()}},
                 "%s", _name.c_str());
@@ -204,8 +188,8 @@ void AIGoal::Exit(Robot& robot)
   if(_requireObjectTapped)
   {
     // Don't know which light animation was being played so stop both
-    robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedKnown);
-    robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedUnsure);
+    robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
+    robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
     
     robot.GetBehaviorManager().RequestEnableReactionTrigger("ObjectTapInteraction", ReactionTrigger::CubeMoved, true);
     
@@ -221,10 +205,6 @@ Result AIGoal::Update(Robot& robot)
     result = _behaviorChooserPtr->Update(robot);
   }
   
-  if(_persistentUpdateComponent != nullptr){
-    _persistentUpdateComponent->Update(robot);
-  }
-  
   return result;
 }
   
@@ -236,16 +216,6 @@ IBehavior* AIGoal::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunn
   IBehavior* ret = _behaviorChooserPtr->ChooseNextBehavior(robot, currentRunningBehavior);
   return ret;
 }
-  
-IGoalPersistentUpdate* AIGoal::PersistentUpdateComponentFactory(const std::string& updateFuncID)
-{
-  if(updateFuncID == kPyramidSparkUpdateFuncID){
-    return new BuildPyramidPersistentUpdate;
-  }
-  
-  return nullptr;
-}
-
 
 
 } // namespace Cozmo

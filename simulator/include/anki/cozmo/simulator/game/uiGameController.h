@@ -124,12 +124,19 @@ protected:
   virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
+  virtual void HandleDefinedCustomObject(const ExternalInterface::DefinedCustomObject& msg) {};
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
   void SendPing();
   void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps, const f32 lwheel_accel_mmps2, const f32 rwheel_accel_mmps2);
-  void SendTurnInPlace(const f32 angle_rad, const f32 speed_radPerSec = 0.f, const f32 accel_radPerSec2 = 0.f);
+  // SendTurnInPlace returns the IdTag of the queued action:
+  uint32_t SendTurnInPlace(const f32 angle_rad,
+                           const f32 speed_radPerSec = 0.f,
+                           const f32 accel_radPerSec2 = 0.f,
+                           const bool isAbsolute = false,
+                           const QueueActionPosition queueActionPosition = QueueActionPosition::NOW);
+  
   void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2);
   void SendMoveHead(const f32 speed_rad_per_sec);
   void SendMoveLift(const f32 speed_rad_per_sec);
@@ -272,7 +279,7 @@ protected:
   void SendReadAnimationFile();
   void SendEnableVisionMode(VisionMode mode, bool enable);
   void SendSetIdleAnimation(const std::string &animName);
-  void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);
+  uint32_t SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);
   void SendCancelAction();
   void SendSaveCalibrationImage();
   void SendClearCalibrationImages();
@@ -389,6 +396,24 @@ protected:
   void SetLightCubePose(int lightCubeId, const Pose3d& pose);
   bool HasActualLightCubePose(int lightCubeId) const;
   
+  ///
+  // @brief      Iterates through _lightCubes and removes the one of the given ObjectType
+  //             (should be unique).
+  // @param[in]  type  Cube ObjectType
+  // @return     Whether or not it was successfully removed
+  //
+  bool RemoveLightCubeByType(ObjectType type);
+  
+  ///
+  // @brief      Adds a cube of the given ObjectType if doesn't already exist
+  //             (should be unique).
+  // @param[in]  type   Cube ObjectType
+  // @return     Whether or not it was successfully added
+  //
+  bool AddLightCubeByType(ObjectType type, const Pose3d& p);
+
+  
+  
   static size_t MakeWordAligned(size_t size);
   const std::string GetAnimationTestName() const;
   const double GetSupervisorTime() const;
@@ -434,6 +459,7 @@ protected:
   //
   void SendApplyForce(const std::string& defName, int xForce, int yForce, int zForce);
   
+  
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
   void HandleRobotDelocalizedBase(ExternalInterface::RobotDelocalized const& msg);
@@ -463,10 +489,11 @@ private:
   void HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg);
   void HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg);
   void HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg);
+  void HandleDefinedCustomObjectBase(const ExternalInterface::DefinedCustomObject& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
-
+  
   ///
   // @brief      Iterates through _lightCubes and returns the first light cube with the given ID
   //             (should be unique).
@@ -521,6 +548,8 @@ private:
   float _engineLoadedRatio = 0.0f;
   
   double _waitTimer = -1.0;
+  
+  uint32_t _queueActionIdTag = 0;
   
   // Seed used to start engine
   uint32_t _randomSeed = 0;

@@ -10,8 +10,11 @@
 #define __DAS_H__
 
 #ifdef __cplusplus
+
 #include <functional>
 #include <memory>
+#include <map>
+#include <string>
 #include <vector>
 
 namespace DAS {
@@ -37,6 +40,12 @@ typedef enum DASDisableNetworkReason {
     DASDisableNetworkReason_UserOptOut = (1 << 1),
     DASDisableNetworkReason_Shutdown = (1 << 2)
 } DASDisableNetworkReason;
+
+typedef enum DASLocalLoggerMode {
+  DASLogMode_Normal,
+  DASLogMode_System,
+  DASLogMode_Both,
+} DASLocalLoggerMode;
 
 
 #pragma mark DAS Macros
@@ -187,7 +196,9 @@ const DAS::IDASPlatform* DASGetPlatform() __attribute__((visibility("default")))
 using DASFlushCallback = std::function<void(bool)>; // passes in success/fail
 void DASForceFlushWithCallback(const DASFlushCallback& callback) __attribute((visibility("default")));
 #endif
-  
+
+void SetDASLocalLoggerMode(DASLocalLoggerMode logMode) __attribute__((visibility("default")));
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
@@ -207,9 +218,16 @@ void _DAS_SetLevel(const char* eventName, DASLogLevel level) __attribute__((visi
 DASLogLevel _DAS_GetLevel(const char* eventName, DASLogLevel defaultLevel) __attribute__((visibility("default")));
 void _DAS_ClearSetLevels() __attribute__((visibility("default")));
 
+void _DAS_ReportCrashForLastAppRun(const char* apprun) __attribute__((visibility("default")));
+size_t _DAS_GetGlobalsForLastRunAsJsonString(char* buffer, size_t len) __attribute__((visibility("default")));
+
 #ifdef __cplusplus
+void _DAS_GetGlobalsForLastRun(std::map<std::string, std::string>& dasGlobals) __attribute__((visibility("default")));
+void _DAS_GetGlobalsForThisRun(std::map<std::string, std::string>& dasGlobals) __attribute__((visibility("default")));
 void _DAS_LogKv(DASLogLevel level, const char* eventName, const char* eventValue,
   const std::vector< std::pair< const char*, const char* > > & keyValues) __attribute__((visibility("default")));
+void _DAS_LogKvMap(DASLogLevel level, const char* eventName, const char* eventValue,
+  const std::map<std::string, std::string>& keyValues) __attribute__((visibility("default")));
 #endif
 
 #ifdef __cplusplus

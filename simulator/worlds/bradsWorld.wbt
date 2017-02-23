@@ -47,7 +47,6 @@ BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
-  usbChannel 10
 }
 WebotsKeyboardController {
   translation 0.288125 0.0208444 0.08

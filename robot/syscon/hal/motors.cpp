@@ -22,10 +22,6 @@ extern "C" {
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-// Whether or not this is 1.5 body
-// TODO: Replace this with an actual check of BODY_VER indicative of 1.5 hardware
-#define COZMO_15 0
-
 // Whether or not to effectively halve the encoder res of 1.0 robots so that
 // performance matches with 1.5.
 #define USE_HALF_ENCODER_RES_FOR_COZMO_10 1
@@ -374,7 +370,7 @@ void Motors::init()
   
   // On 1.0 robots, encoders have 4-flags
   // On 1.5 robots, encoders have 2-flags
-  if (COZMO_15 != 0) {
+  if (BODY_VER == BODY_VER_1v5) {
     metersPerWheelTick <<= 1;
     radiansPerLiftTick <<= 1;
     radiansPerHeadTick <<= 1;
@@ -535,7 +531,7 @@ void Motors::manage()
   g_dataToHead.speeds[MOTOR_HEAD] = Motors::getSpeed(MOTOR_HEAD) * radiansPerHeadTick;
   
   // If this is a 1.0 body, fake it to have the same 2-flag encoder resolution as a 1.5 body
-  const s32 neg_mask = (USE_HALF_ENCODER_RES_FOR_COZMO_10 && (COZMO_15 == 0)) ? 1 : 0;
+  const s32 neg_mask = (USE_HALF_ENCODER_RES_FOR_COZMO_10 && (BODY_VER != BODY_VER_1v5)) ? 1 : 0;
   
   g_dataToHead.positions[MOTOR_LEFT_WHEEL] = FIXED_MUL(m_motors[MOTOR_LEFT_WHEEL].position & ~neg_mask, metersPerWheelTick);
   g_dataToHead.positions[MOTOR_RIGHT_WHEEL] = FIXED_MUL(m_motors[MOTOR_RIGHT_WHEEL].position & ~neg_mask, metersPerWheelTick);

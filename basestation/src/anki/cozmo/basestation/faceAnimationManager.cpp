@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "clad/types/animationKeyFrames.h"
+#include "util/console/consoleInterface.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
@@ -36,6 +37,13 @@
 
 namespace Anki {
 namespace Cozmo {
+
+  // Enable/disable automatic adding of scanlines (interlacing) to face images.
+  // Use with care (not using interlacing can result in face screen damage).
+  // Note that this only changes scanline behavior for any face images read or sent in _after_ it is set.
+  // For example, unless a re-read of the face animation dir is triggered, setting this will have no
+  // effect on face animations read from disk at startup.
+  CONSOLE_VAR(bool, kAddScanlinesToFaceImages, "FaceAnimation", true);
 
   FaceAnimationManager* FaceAnimationManager::_singletonInstance = nullptr;
   const std::string FaceAnimationManager::ProceduralAnimName("_PROCEDURAL_");
@@ -58,21 +66,30 @@ namespace Cozmo {
   
   static void AddScanlinesHelper(const Vision::Image& img, std::pair<std::vector<u8>,std::vector<u8>>& rleFrames)
   {
-    // Compress twice: once for each scanline version
-    Vision::Image imgWithScanlines;
-    img.CopyTo(imgWithScanlines);
-    for(s32 iScanline=0; iScanline<img.GetNumRows(); iScanline+=2)
+    if(kAddScanlinesToFaceImages)
     {
-      memset(imgWithScanlines.GetRow(iScanline), 0, img.GetNumCols()*sizeof(u8));
+      // Compress twice: once for each scanline version
+      Vision::Image imgWithScanlines;
+      img.CopyTo(imgWithScanlines);
+      for(s32 iScanline=0; iScanline<img.GetNumRows(); iScanline+=2)
+      {
+        memset(imgWithScanlines.GetRow(iScanline), 0, img.GetNumCols()*sizeof(u8));
+      }
+      FaceAnimationManager::CompressRLE(imgWithScanlines, rleFrames.first);
+      
+      img.CopyTo(imgWithScanlines);
+      for(s32 iScanline=1; iScanline<img.GetNumRows(); iScanline+=2)
+      {
+        memset(imgWithScanlines.GetRow(iScanline), 0, img.GetNumCols()*sizeof(u8));
+      }
+      FaceAnimationManager::CompressRLE(imgWithScanlines, rleFrames.second);
     }
-    FaceAnimationManager::CompressRLE(imgWithScanlines, rleFrames.first);
-    
-    img.CopyTo(imgWithScanlines);
-    for(s32 iScanline=1; iScanline<img.GetNumRows(); iScanline+=2)
+    else
     {
-      memset(imgWithScanlines.GetRow(iScanline), 0, img.GetNumCols()*sizeof(u8));
+      // Don't add scanlines. For simplicity, just make two copies of the same compressed image
+      FaceAnimationManager::CompressRLE(img, rleFrames.first);
+      rleFrames.second = rleFrames.first;
     }
-    FaceAnimationManager::CompressRLE(imgWithScanlines, rleFrames.second);
   }
   
   // Read the animations in a dir

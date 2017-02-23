@@ -53,14 +53,15 @@ const float kDistMaxCornerToCenter_mm_sqr = kDistMaxCornerToCenter_mm * kDistMax
 // ---------------------------------------------------------
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-PyramidBase::PyramidBase(const ObjectID& staticBlockID, const ObjectID& baseBlockID)
+PyramidBase::PyramidBase(const ObjectID& baseBlock1, const ObjectID& baseBlock2)
 : BlockConfiguration(ConfigurationType::PyramidBase)
 {
-  _staticBlockID = staticBlockID;
-  _baseBlockID = baseBlockID;
+  
+  _baseBlockID = baseBlock1 < baseBlock2 ? baseBlock1 : baseBlock2;
+  _staticBlockID = baseBlock1 < baseBlock2 ? baseBlock2 : baseBlock1;
   
   if(_staticBlockID == _baseBlockID){
-    PRINT_NAMED_WARNING("PyramidBase.PyramidBase.InvalidBlocksPassedIn","Attempted to create a base with two blocks with ID:%d", (int)_staticBlockID);
+    DEV_ASSERT(false, "PyramidBase.PyramidBase.StaticAndBaseBlockCantMatch");
     ClearBase();
   }
 }
@@ -69,10 +70,9 @@ PyramidBase::PyramidBase(const ObjectID& staticBlockID, const ObjectID& baseBloc
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool PyramidBase::operator==(const PyramidBase& other) const
 {
-  // base vs static distinction is arbitrary, so either one matching counts as the same PyramidBase
   return _staticBlockID != _baseBlockID &&
-        (GetStaticBlockID() == other.GetStaticBlockID() || GetStaticBlockID() == other.GetBaseBlockID()) &&
-        (GetBaseBlockID() == other.GetBaseBlockID() || GetBaseBlockID() == other.GetStaticBlockID());
+          GetStaticBlockID() == other.GetStaticBlockID() &&
+          GetBaseBlockID() == other.GetBaseBlockID();
 }
 
   
@@ -252,13 +252,9 @@ std::vector<ObjectID> PyramidBase::GetAllBlockIDsOrdered() const
   std::vector<ObjectID> allBlocks;
 
   // always order static vs block in value order for valid comparisons
-  if(_baseBlockID > _staticBlockID){
-    allBlocks.push_back(_staticBlockID);
-    allBlocks.push_back(_baseBlockID);
-  }else{
-    allBlocks.push_back(_baseBlockID);
-    allBlocks.push_back(_staticBlockID);
-  }
+  allBlocks.push_back(_baseBlockID);
+  allBlocks.push_back(_staticBlockID);
+
   
   return allBlocks;
 }
@@ -273,15 +269,21 @@ Pyramid::Pyramid(const PyramidBase& base, const ObjectID& topBlockID)
 , _base(base)
 , _topBlockID(topBlockID)
 {
+  if(base.GetBaseBlockID() == topBlockID || base.GetStaticBlockID() == topBlockID){
+    DEV_ASSERT(false, "Pyramid.PyramidBaseConstructor.StaticBaseAndTopBlockCantMatch");
+  }
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Pyramid::Pyramid(const ObjectID& staticBlockID, const ObjectID& baseBlockID, const ObjectID& topBlockID)
+Pyramid::Pyramid(const ObjectID& baseBlock1, const ObjectID& baseBlock2, const ObjectID& topBlockID)
 : BlockConfiguration(ConfigurationType::Pyramid)
-, _base(PyramidBase(staticBlockID, baseBlockID))
+, _base(PyramidBase(baseBlock1, baseBlock2))
 , _topBlockID(topBlockID)
 {
+  if(baseBlock1 == topBlockID || baseBlock2 == topBlockID){
+    DEV_ASSERT(false, "Pyramid.PyramidBlocksConstructor.StaticBaseAndTopBlockCantMatch");
+  }
 }
   
   

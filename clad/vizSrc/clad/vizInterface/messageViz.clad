@@ -116,6 +116,17 @@ message CameraQuad
   float_32 yLowerRight,
 }
 
+// VizCameraRect
+message CameraRect
+{
+  uint_32 color,
+  float_32 x,   // Upper left
+  float_32 y,   // Upper left
+  float_32 width,
+  float_32 height,
+  bool filled
+}
+
 // VizCameraLine
 message CameraLine
 {

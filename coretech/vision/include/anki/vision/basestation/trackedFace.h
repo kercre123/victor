@@ -23,6 +23,7 @@
 #include "anki/vision/basestation/faceIdTypes.h"
 
 #include "clad/types/facialExpressions.h"
+#include "clad/types/faceDetectionMetaData.h"
 
 namespace Anki {
 namespace Vision {
@@ -113,15 +114,28 @@ namespace Vision {
     // if fake eye centers (based on detection rectangle) were used.
     bool UpdateTranslation(const Vision::Camera& camera);
     
-    // Return the histogram over all expressions
-    using FacialExpressionValues = std::array<f32, (size_t)FacialExpression::Count>;
-    FacialExpressionValues GetExpressionValues() const;
+    // Return the histogram over all expressions (sums to 100)
+    using FacialExpressionValues = std::array<u8, (size_t)FacialExpression::Count>;
+    const FacialExpressionValues& GetExpressionValues() const;
     
-    // Return the expression with highest value
-    FacialExpression GetMaxExpression() const;
+    // Return the expression with highest value (and optionally, its score if valuePtr != nullptr)
+    // (If the returned expression is Unknown, the returned value will be -1.f) 
+    FacialExpression GetMaxExpression(s32* valuePtr = nullptr) const;
     
     // Set a particular expression value
     void SetExpressionValue(FacialExpression whichExpression, f32 newValue);
+    
+    // Smile information, if available
+    const SmileAmount& GetSmileAmount() const { return _smileAmount; }
+    void  SetSmileAmount(f32 degree, f32 confidence);
+    
+    // Gaze direction, if available
+    const Gaze& GetGaze() const { return _gaze; }
+    void  SetGaze(f32 leftRight_deg, f32 upDown_deg);
+    
+    // Blink detection, if known.
+    const BlinkAmount& GetBlinkAmount() const { return _blinkAmount; }
+    void  SetBlinkAmount(f32 leftAmount, f32 rightAmount);
     
     void SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info);
     const std::list<FaceRecognitionMatch>& GetRecognitionDebugInfo() const;
@@ -144,6 +158,11 @@ namespace Vision {
     
     std::array<Feature, NumFeatures> _features;
     FacialExpressionValues _expression{};
+    
+    // "Metadata" about the face
+    SmileAmount _smileAmount;
+    Gaze        _gaze;
+    BlinkAmount _blinkAmount;
     
     Radians _roll, _pitch, _yaw;
     
@@ -294,6 +313,24 @@ namespace Vision {
   
   inline const std::list<FaceRecognitionMatch>& TrackedFace::GetRecognitionDebugInfo() const {
     return _debugRecognitionInfo;
+  }
+  
+  inline void TrackedFace::SetSmileAmount(f32 amount, f32 confidence) {
+    _smileAmount.wasChecked = true;
+    _smileAmount.amount     = amount;
+    _smileAmount.confidence = confidence;
+  }
+  
+  inline void TrackedFace::SetGaze(f32 leftRight_deg, f32 upDown_deg) {
+    _gaze.wasChecked = true;
+    _gaze.leftRight_deg = leftRight_deg;
+    _gaze.upDown_deg = upDown_deg;
+  }
+  
+  inline void TrackedFace::SetBlinkAmount(f32 leftAmount, f32 rightAmount) {
+    _blinkAmount.wasChecked = true;
+    _blinkAmount.blinkAmountLeft  = leftAmount;
+    _blinkAmount.blinkAmountRight = rightAmount;
   }
   
 } // namespace Vision

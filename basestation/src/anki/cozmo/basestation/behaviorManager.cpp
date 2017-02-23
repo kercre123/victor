@@ -66,6 +66,11 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
+// these are defined as private within BehaviorManager, but are so ugly that I'm
+// including them namespaced here for return values
+using TriggerBehaviorMapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
+using TriggerMapIterator = std::vector<TriggerBehaviorMapEntry>::iterator;
+  
 static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
 static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
 static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig";
@@ -100,7 +105,7 @@ struct BehaviorRunningAndResumeInfo{
     _currentReactionType = trigger;
   }
   
-  ReactionTrigger GetCurrentReactionTrigger(){ return _currentReactionType;}
+  ReactionTrigger GetCurrentReactionTrigger() const{ return _currentReactionType;}
   
 private:
   // only one behavior should be active at a time
@@ -119,6 +124,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _defaultLiftHeight(kIgnoreDefaultHeadAndLiftState)
 , _runningAndResumeInfo(new BehaviorRunningAndResumeInfo())
 , _behaviorFactory(new BehaviorFactory())
+, _devCheckTriggerMapImmutableSize(0)
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
 {
@@ -177,15 +183,10 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
       const size_t eBT = (size_t)executableBehaviorType;
       if (eBT < (size_t)ExecutableBehaviorType::Count)
       {
-        const ExecutableBehaviorType executableBehaviorType = behaviorPtr->GetExecutableType();
-        const size_t eBT = (size_t)executableBehaviorType;
-        if (eBT < (size_t)ExecutableBehaviorType::Count)
-        {
-          DEV_ASSERT_MSG((numEntriesOfExecutableType[eBT] == 0), "ExecutableBehaviorType.NotUnique",
-                         "Multiple behaviors marked as %s including '%s'",
-                         EnumToString(executableBehaviorType), it.first.c_str());
-          ++numEntriesOfExecutableType[eBT];
-        }
+        DEV_ASSERT_MSG((numEntriesOfExecutableType[eBT] == 0), "ExecutableBehaviorType.NotUnique",
+                       "Multiple behaviors marked as %s including '%s'",
+                       EnumToString(executableBehaviorType), it.first.c_str());
+        ++numEntriesOfExecutableType[eBT];
       }
     }
     
@@ -200,7 +201,18 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     #endif
     
   }
-    
+  
+  // Populate our list of tapInteraction behaviors which should exist in the factory as
+  // InitConfiguration() is called after all behaviors have been loaded
+  const auto& behaviorMap = GetBehaviorFactory().GetBehaviorMap();
+  for(const auto& pair : behaviorMap)
+  {
+    if(pair.second->IsBehaviorGroup(BehaviorGroup::ObjectTapInteraction))
+    {
+      _tapInteractionBehaviors.push_back(pair.second);
+    }
+  }
+  
   if (_robot.HasExternalInterface())
   {
     IExternalInterface* externalInterface = _robot.GetExternalInterface();
@@ -221,7 +233,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                  {
                                    case BehaviorChooserType::Freeplay:
                                    {
-                                     if( _firstTimeFreeplayStarted < 0 ) {
+                                     if( _firstTimeFreeplayStarted < 0.0f ) {
                                        const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
                                        _firstTimeFreeplayStarted = currTime_s;
                                      }
@@ -246,6 +258,14 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                      break;
                                    }
                                  }
+                                 
+                                 // If we are leaving freeplay, ensure that sparks
+                                 // have been cleared out
+                                 if(chooserType != BehaviorChooserType::Freeplay){
+                                   _activeSpark = UnlockId::Count;
+                                   _lastRequestedSpark = UnlockId::Count;
+                                }
+                                 
                                }));
     
     _eventHandlers.push_back(externalInterface->Subscribe(
@@ -290,10 +310,19 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
                          "Strategy %s maps to behavior %s",
                          strategy->GetName().c_str(), behavior->GetName().c_str());
 
-        strategy->BehaviorThatStartegyWillTrigger(behavior);
+        strategy->BehaviorThatStrategyWillTrigger(behavior);
         _reactionTriggerMap.push_back(
             std::make_pair(std::unique_ptr<IReactionTriggerStrategy>(strategy), behavior));
       }
+    }
+    
+    std::set<TriggerMapIterator> reactToDoubleTapInfo = GetReactionInfoForTrigger(ReactionTrigger::DoubleTapDetected);
+    // this logic assumes there is only one react to double tap behavior
+    DEV_ASSERT(reactToDoubleTapInfo.size() == 1,
+               "BehaviorManager.UpdateBehaviorWithObjectTapInteraction.TooManyDoubleTapTriggers");
+    if(reactToDoubleTapInfo.size() == 1){
+      _cacheDoubleTapIter = *reactToDoubleTapInfo.begin();
+      _devCheckTriggerMapImmutableSize = static_cast<int>(_reactionTriggerMap.size());
     }
   }
   
@@ -313,19 +342,19 @@ Result BehaviorManager::CreateBehaviorFromConfiguration(const Json::Value& behav
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const IBehavior* BehaviorManager::GetCurrentBehavior() const{
-  return _runningAndResumeInfo->GetCurrentBehavior();
+  return GetRunningAndResumeInfo().GetCurrentBehavior();
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BehaviorManager::CurrentBehaviorTriggeredAsReaction() const
 {
-  return _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
+  return GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTrigger BehaviorManager::GetCurrentReactionTrigger() const
 {
-  return _runningAndResumeInfo->GetCurrentReactionTrigger();
+  return GetRunningAndResumeInfo().GetCurrentReactionTrigger();
 }
   
 
@@ -353,7 +382,7 @@ void BehaviorManager::SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo)
 {
-  BehaviorRunningAndResumeInfo oldInfo = *_runningAndResumeInfo;
+  BehaviorRunningAndResumeInfo oldInfo = GetRunningAndResumeInfo();
   IBehavior* nextBehavior = nextBehaviorInfo.GetCurrentBehavior();
 
   StopAndNullifyCurrentBehavior();
@@ -376,8 +405,8 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBeh
            VizInterface::NewBehaviorSelected( nextBehavior->GetName() )));
   }
   
-  *_runningAndResumeInfo = nextBehaviorInfo;
-  SendDasTransitionMessage(oldInfo, *_runningAndResumeInfo);
+  SetRunningAndResumeInfo(nextBehaviorInfo);
+  SendDasTransitionMessage(oldInfo, GetRunningAndResumeInfo());
   
   return initSuccess;
 }
@@ -407,8 +436,10 @@ void BehaviorManager::SendDasTransitionMessage(const BehaviorRunningAndResumeInf
   ExternalInterface::BehaviorTransition msg;
   msg.oldBehaviorName = oldBehaviorName;
   msg.oldBehaviorClass = nullptr != oldBehavior ? oldBehavior->GetClass() : BehaviorClass::NoneBehavior;
+  msg.oldBehaviorExecType = nullptr != oldBehavior ? oldBehavior->GetExecutableType() : ExecutableBehaviorType::NoneBehavior;
   msg.newBehaviorName = newBehaviorName;
   msg.newBehaviorClass = nullptr != newBehavior ? newBehavior->GetClass() : BehaviorClass::NoneBehavior;
+  msg.newBehaviorExecType = nullptr != newBehavior ? newBehavior->GetExecutableType() : ExecutableBehaviorType::NoneBehavior;
   msg.newBehaviorDisplayKey = newBehavior ? newBehavior->GetDisplayNameKey() : "";
   _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
 }
@@ -430,53 +461,70 @@ bool BehaviorManager::SwitchToReactionTrigger(IReactionTriggerStrategy& triggerS
   if(triggerStrategy.ShouldResumeLastBehavior()){
     // if this is the first reactionary behavior, set the current scored behavior as
     // the behavior to resume
-    if(nullptr == _runningAndResumeInfo->GetBehaviorToResume() &&
-       nullptr != _runningAndResumeInfo->GetCurrentBehavior()){
-      newBehaviorInfo.SetBehaviorToResume(_runningAndResumeInfo->GetCurrentBehavior());
+    if(nullptr == GetRunningAndResumeInfo().GetBehaviorToResume() &&
+       nullptr != GetRunningAndResumeInfo().GetCurrentBehavior()){
+      newBehaviorInfo.SetBehaviorToResume(GetRunningAndResumeInfo().GetCurrentBehavior());
     }
     
     // if this is after the first reaction, pass the behavior to resume along
-    if(nullptr != _runningAndResumeInfo->GetBehaviorToResume()){
-      newBehaviorInfo.SetBehaviorToResume(_runningAndResumeInfo->GetBehaviorToResume());
+    if(nullptr != GetRunningAndResumeInfo().GetBehaviorToResume()){
+      newBehaviorInfo.SetBehaviorToResume(GetRunningAndResumeInfo().GetBehaviorToResume());
     }
   }
   
   return SwitchToBehaviorBase(newBehaviorInfo);
 }
 
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::set<IBehavior*> BehaviorManager::GetBehaviorsForReactionTrigger(ReactionTrigger trigger)
+std::set<TriggerMapIterator> BehaviorManager::GetReactionInfoForTrigger(ReactionTrigger trigger)
 {
-  std::set<IBehavior*> allMappedTriggers;
-  for(const auto& mapEntry: _reactionTriggerMap){
-    if(mapEntry.first->GetReactionTrigger() == trigger){
-      allMappedTriggers.insert(mapEntry.second);
+  std::set<TriggerMapIterator> allMappedTriggers;
+  
+  for(auto mapIter = _reactionTriggerMap.begin(); mapIter < _reactionTriggerMap.end(); mapIter++){
+    if(mapIter->first->GetReactionTrigger() == trigger){
+      allMappedTriggers.insert(mapIter);
     }
   }
+  
   return allMappedTriggers;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorManager::GetReactToDoubleTapPair(TriggerMapIterator& reactIter)
+{
+  const bool triggerMapUnchanged = _devCheckTriggerMapImmutableSize == _reactionTriggerMap.size();
+  DEV_ASSERT(triggerMapUnchanged,"BehaviorManager.GetReactToDoubleTapPair.ReactionMapSizeChanged");
+  if(triggerMapUnchanged){
+    reactIter = _cacheDoubleTapIter;
+    return true;
+  }
+  
+  return false;
+}
+
+  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::ChooseNextScoredBehaviorAndSwitch()
 {
   // we can't call ChooseNextBehaviorAndSwitch while there's a behavior to resume pending. Call TryToResumeBehavior instead
-  DEV_ASSERT(_runningAndResumeInfo->GetBehaviorToResume() == nullptr,
+  DEV_ASSERT(GetRunningAndResumeInfo().GetBehaviorToResume() == nullptr,
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CalledWithResumeBehaviorPending");
 
   // shouldn't call ChooseNextBehaviorAndSwitch after a reactionary. Call TryToResumeBehavior instead
-  DEV_ASSERT(_runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger,
+  DEV_ASSERT(GetRunningAndResumeInfo().GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger,
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CantSelectAfterReactionary");
 
   // the current behavior has to be running. Otherwise current should be nullptr
-  DEV_ASSERT(_runningAndResumeInfo->GetCurrentBehavior() == nullptr ||
-             _runningAndResumeInfo->GetCurrentBehavior()->IsRunning(),
+  DEV_ASSERT(GetRunningAndResumeInfo().GetCurrentBehavior() == nullptr ||
+             GetRunningAndResumeInfo().GetCurrentBehavior()->IsRunning(),
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CurrentBehaviorIsNotRunning");
  
   // ask the current chooser for the next behavior
-  IBehavior* nextBehavior = _currentChooserPtr->ChooseNextBehavior(_robot, _runningAndResumeInfo->GetCurrentBehavior());
-  if(nextBehavior != _runningAndResumeInfo->GetCurrentBehavior()){
+  IBehavior* nextBehavior = _currentChooserPtr->ChooseNextBehavior(_robot, GetRunningAndResumeInfo().GetCurrentBehavior());
+  if(nextBehavior != GetRunningAndResumeInfo().GetCurrentBehavior()){
     BehaviorRunningAndResumeInfo scoredInfo;
     scoredInfo.SetCurrentBehavior(nextBehavior);
     SwitchToBehaviorBase(scoredInfo);
@@ -500,26 +548,15 @@ void BehaviorManager::TryToResumeBehavior()
     _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
                                        new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
   }
-  
-  // reset features disabled during reactions and update the game
-  _robot.GetExternalInterface()->BroadcastToGame<
-                                   ExternalInterface::ReactionaryBehaviorTransition>(
-                                    _runningAndResumeInfo->GetCurrentReactionTrigger(), false);
-  _robot.GetMoveComponent().IgnoreDirectDriveMessages(false);
-  _robot.SetIgnoreExternalActions(false);
-  
-  
     
-  if ( _runningAndResumeInfo->GetBehaviorToResume() != nullptr)
+  if ( GetRunningAndResumeInfo().GetBehaviorToResume() != nullptr)
   {
     StopAndNullifyCurrentBehavior();
     ReactionTrigger resumingFromTrigger = ReactionTrigger::NoneTrigger;
-    if(nullptr != _runningAndResumeInfo->GetCurrentBehavior()){
-      resumingFromTrigger = _runningAndResumeInfo->GetCurrentReactionTrigger();
-    }
+    resumingFromTrigger = GetRunningAndResumeInfo().GetCurrentReactionTrigger();
     
-    IBehavior* behaviorToResume = _runningAndResumeInfo->GetBehaviorToResume();
-    const Result resumeResult =  behaviorToResume->Init();//behaviorToResume->Resume(resumingFromType);
+    IBehavior* behaviorToResume = GetRunningAndResumeInfo().GetBehaviorToResume();
+    const Result resumeResult = behaviorToResume->Resume(resumingFromTrigger);
     if( resumeResult == RESULT_OK )
     {
       PRINT_CH_INFO("Behaviors", "BehaviorManager.ResumeBehavior", "Successfully resumed '%s'",
@@ -527,8 +564,8 @@ void BehaviorManager::TryToResumeBehavior()
       // the behavior can resume, set as current again
       BehaviorRunningAndResumeInfo newBehaviorInfo;
       newBehaviorInfo.SetCurrentBehavior(behaviorToResume);
-      SendDasTransitionMessage(*_runningAndResumeInfo, newBehaviorInfo);
-      *_runningAndResumeInfo = newBehaviorInfo;
+      SendDasTransitionMessage(GetRunningAndResumeInfo(), newBehaviorInfo);
+      SetRunningAndResumeInfo(newBehaviorInfo);
       // Successfully resumed the previous behavior, return here
       return;
     }
@@ -540,14 +577,31 @@ void BehaviorManager::TryToResumeBehavior()
   }
   
   // we didn't resume, clear the resume behavior because we won't want to resume it after the next behavior
-  _runningAndResumeInfo->SetBehaviorToResume(nullptr);
+  GetRunningAndResumeInfo().SetBehaviorToResume(nullptr);
   
   // we did not resume, clear current behavior
   BehaviorRunningAndResumeInfo nullInfo;
   SwitchToBehaviorBase( nullInfo );
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo& newInfo)
+{
+  // Switching to or from a reaction - update properties
+  if(newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger &&
+     _runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger)
+  {
+    UpdateRobotPropertiesForReaction(true, newInfo.GetCurrentReactionTrigger());
+  }else if(newInfo.GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger &&
+    _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
+  {
+    UpdateRobotPropertiesForReaction(false, _runningAndResumeInfo->GetCurrentReactionTrigger());
+  }
+  
+  *_runningAndResumeInfo = newInfo;
+}
+  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RequestEnableReactionTrigger(const std::string& requesterID, ReactionTrigger trigger, bool enable)
@@ -604,7 +658,7 @@ Result BehaviorManager::Update(Robot& robot)
   
 
   const bool currentBehaviorIsReactionary =
-                (_runningAndResumeInfo->GetCurrentReactionTrigger() !=
+                (GetRunningAndResumeInfo().GetCurrentReactionTrigger() !=
                  ReactionTrigger::NoneTrigger);
   if(!currentBehaviorIsReactionary)
   {
@@ -614,7 +668,7 @@ Result BehaviorManager::Update(Robot& robot)
   // Allow reactionary behaviors to request a switch without a message
   CheckReactionTriggerStrategies();
   
-  IBehavior* activeBehavior = _runningAndResumeInfo->GetCurrentBehavior();
+  IBehavior* activeBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
   if (activeBehavior !=  nullptr) {
     
     // We have a current behavior, update it.
@@ -688,11 +742,7 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
     SwitchToBehaviorBase(nullInfo);
   }
   
-  _runningAndResumeInfo->SetBehaviorToResume(nullptr);
-  
-  // ensure sparks are reset when the chooser changes
-  _activeSpark = UnlockId::Count;
-  _lastRequestedSpark = UnlockId::Count;
+  GetRunningAndResumeInfo().SetBehaviorToResume(nullptr);
 
   // channeled log and event
   LOG_EVENT("BehaviorManager.SetBehaviorChooser", "Switching behavior chooser from '%s' to '%s'",
@@ -709,7 +759,7 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   _currentChooserPtr->OnSelected();
   
   // mark the time at which the change happened (this is checked by behaviors)
-  _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
+  _lastChooserSwitchTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
   if(!currentIsReactionary){
@@ -733,13 +783,13 @@ void BehaviorManager::RequestCurrentBehaviorEndImmediately(const std::string& st
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::StopAndNullifyCurrentBehavior()
 {
-  IBehavior* currentBehavior = _runningAndResumeInfo->GetCurrentBehavior();
+  IBehavior* currentBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
   
   if ( nullptr != currentBehavior && currentBehavior->IsRunning() ) {
     currentBehavior->Stop();
   }
   
-  _runningAndResumeInfo->SetCurrentBehavior(nullptr);
+  GetRunningAndResumeInfo().SetCurrentBehavior(nullptr);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -753,7 +803,7 @@ void BehaviorManager::CheckReactionTriggerStrategies()
     
     
     const bool shouldCheckStrategy = !rBehavior->IsRunning() || strategy.CanInterruptSelf();
-    const bool canInterruptBehavior =  (_runningAndResumeInfo->GetCurrentReactionTrigger()
+    const bool canInterruptBehavior =  (GetRunningAndResumeInfo().GetCurrentReactionTrigger()
                                            == ReactionTrigger::NoneTrigger) ||
                                        strategy.CanTriggerWhileTriggeredBehaviorRunning();
 
@@ -762,7 +812,6 @@ void BehaviorManager::CheckReactionTriggerStrategies()
        strategy.IsReactionEnabled() &&
        strategy.ShouldTriggerBehavior(_robot, rBehavior)){
         
-        _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(strategy.GetReactionTrigger(), true);
         _robot.AbortAll();
         
         if(_robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&
@@ -772,12 +821,6 @@ void BehaviorManager::CheckReactionTriggerStrategies()
                               "Some tracks are locked, unlocking them");
           _robot.GetMoveComponent().CompletelyUnlockAllTracks();
         }
-        
-        // During reactions prevent DirectDrive messages and external action queueing messages
-        // from doing anything
-        _robot.GetMoveComponent().IgnoreDirectDriveMessages(true);
-        _robot.SetIgnoreExternalActions(true);
-      
       
         const bool successfulSwitch = SwitchToReactionTrigger(strategy, rBehavior);
    
@@ -800,6 +843,20 @@ void BehaviorManager::CheckReactionTriggerStrategies()
         hasAlreadySwitchedThisTick = true;
     }
   }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::UpdateRobotPropertiesForReaction(bool enablingReaction, ReactionTrigger triggerSwitching)
+{
+  // During reactions prevent DirectDrive messages and external action queueing messages
+  // from doing anything
+  _robot.GetExternalInterface()->BroadcastToGame<
+                                   ExternalInterface::ReactionaryBehaviorTransition>(
+                                    triggerSwitching, enablingReaction);
+  _robot.GetMoveComponent().IgnoreDirectDriveMessages(enablingReaction);
+  _robot.SetIgnoreExternalActions(enablingReaction);
+  
 }
 
 
@@ -896,6 +953,8 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
                 UnlockIdToString(_lastRequestedSpark));
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const UnlockId BehaviorManager::SwitchToRequestedSpark()
 {
   PRINT_CH_INFO("Behaviors", "BehaviorManager.SwitchToRequestedSpark",
@@ -905,7 +964,7 @@ const UnlockId BehaviorManager::SwitchToRequestedSpark()
                 _isSoftSpark ? "soft" : "hard",
                 _isRequestedSparkSoft ? "soft" : "hard");
 
-  _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
+  _lastChooserSwitchTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   _activeSpark = _lastRequestedSpark;
   _isSoftSpark = _isRequestedSparkSoft;
@@ -914,6 +973,8 @@ const UnlockId BehaviorManager::SwitchToRequestedSpark()
   return _activeSpark;
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::EnableAllReactionTriggers(const std::string& requesterID, bool isEnabled, bool stopCurrent)
 {
   PRINT_CH_INFO("ReactionTriggers",
@@ -926,7 +987,7 @@ void BehaviorManager::EnableAllReactionTriggers(const std::string& requesterID, 
     _robot.GetBehaviorManager().RequestEnableReactionTrigger(requesterID, type, isEnabled);
   }
   
-  const bool activeBehaviorIsReactionary = _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
+  const bool activeBehaviorIsReactionary = GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
   if(stopCurrent && !isEnabled && activeBehaviorIsReactionary)
   {
     PRINT_CH_INFO("ReactionTriggers",
@@ -937,14 +998,18 @@ void BehaviorManager::EnableAllReactionTriggers(const std::string& requesterID, 
   }
   
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RequestCurrentBehaviorEndOnNextActionComplete()
 {
-  if(nullptr != _runningAndResumeInfo->GetCurrentBehavior()){
-    _runningAndResumeInfo->GetCurrentBehavior()->StopOnNextActionComplete();
+  if(nullptr != GetRunningAndResumeInfo().GetCurrentBehavior()){
+    GetRunningAndResumeInfo().GetCurrentBehavior()->StopOnNextActionComplete();
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
 {
   // Have to be in freeplay and not picking or placing and flat on the ground
@@ -965,16 +1030,19 @@ void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
   }
   
   // We can only interrupt the react to double tap reactionary behavior
-  const bool activeBehaviorIsReactionary = _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
+  const bool activeBehaviorIsReactionary = GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
   if(activeBehaviorIsReactionary &&
-      _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected)
+      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected)
   {
     PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.InReaction",
                   "Currently in reaction not switching to double tap");
     return;
   }
 
-  if( !_tapInteractionDisabledIDs.empty() ) {
+  TriggerMapIterator doubleTapMapEntry;
+  const bool doubleTapExists = GetReactToDoubleTapPair(doubleTapMapEntry);
+
+  if(doubleTapExists && !doubleTapMapEntry->first->IsReactionEnabled()) {
     PRINT_CH_INFO("Behavior", "BehaviorManager.HandleObjectTapInteraction.Disabled",
                   "Object tap interaction disabled, ignoring tap");
     return;
@@ -985,6 +1053,8 @@ void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
   
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::LeaveObjectTapInteraction()
 {
   if(!_robot.GetAIComponent().GetWhiteboard().HasTapIntent())
@@ -1019,44 +1089,60 @@ void BehaviorManager::LeaveObjectTapInteraction()
   _currDoubleTappedObject.UnSet();
 }
 
-void BehaviorManager::RequestEnableTapInteraction(const std::string& requesterID, bool enable)
-{
-  if( enable ) {
-    size_t countRemoved = _tapInteractionDisabledIDs.erase(requesterID);
-    if( countRemoved == 0 ) {
-      PRINT_NAMED_WARNING("BehaviorManager.RequestEnableTapInteraction.IDNotFound",
-                          "Attempted to enable tap interaction with invalid id '%s'",
-                          requesterID.c_str());
-    }
-  }
-  else {
-    size_t countInList = _tapInteractionDisabledIDs.count(requesterID);
-    if( countInList > 0 ) {
-      PRINT_NAMED_WARNING("BehaviorManager.RequestEnableTapInteraction.DuplicateID",
-                          "Trying to disable tap interaction with ID previously registered: '%s'",
-                          requesterID.c_str());
-    }
-    _tapInteractionDisabledIDs.insert(requesterID);
-  }
-}
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::UpdateTappedObject()
 {
-  // If the tapped objects pose becomes unknown and we aren't currently in ReactToDoubleTap
-  // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running) then give up and
-  // leave object tap interaction
+  
+  TriggerMapIterator doubleTapMapEntry;
+  const bool doubleTapExists = GetReactToDoubleTapPair(doubleTapMapEntry);
+  
+  // If we have a tap intent and are not currently in ReactToDoubleTap
   if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent() &&
-     _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected &&
-     _tapInteractionDisabledIDs.empty())
+     GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected &&
+     doubleTapExists && doubleTapMapEntry->first->IsReactionEnabled())
   {
+    // If the tapped objects pose becomes unknown then give up and leave object tap interaction
+    // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running)
     const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_currDoubleTappedObject);
     if(object != nullptr && object->IsPoseStateUnknown())
     {
       LeaveObjectTapInteraction();
     }
+    // Otherwise if there is no behavior currently running but we have a tap interaction
+    // (One of the tap behaviors probably just ended because it realized it couldn't use the tapped object)
+    else if(_runningAndResumeInfo->GetCurrentBehavior() == nullptr)
+    {
+      bool canAnyTapBehaviorUseObject = false;
+      
+      // For each tapInteraction behavior check if its ObjectUseIntention(s) can still use the tapped object
+      const ObjectID& tappedObject = GetCurrTappedObject();
+      for(const auto& behavior : _tapInteractionBehaviors)
+      {
+        const auto& intentions = behavior->GetBehaviorObjectUseIntentions();
+        for(const auto& intent : intentions)
+        {
+          if(_robot.GetAIComponent().GetWhiteboard().IsObjectValidForAction(intent, tappedObject))
+          {
+            canAnyTapBehaviorUseObject = true;
+            break;
+          }
+        }
+      }
+      
+      // If no tap interation behavior can currently use the tapped object then leave object tap interaction
+      if(!canAnyTapBehaviorUseObject)
+      {
+        PRINT_CH_INFO("Behaviors", "BehaviorManager.UpdateTappedObject.NoDoubleTapBehaviorCanUseObject",
+                      "Tapped object is no longer valid for any double tap behavior, leaving tap interaction");
+        LeaveObjectTapInteraction();
+      }
+    }
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
 {
   // Copy pending object to be assigned to current double tapped object
@@ -1102,10 +1188,10 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
   // Otherwise we are already in the ObjectTapInteraction goal
   else
   {
-    bool currentBehaviorIsNoneBehavior = _runningAndResumeInfo->GetCurrentBehavior() == nullptr ||
-             _runningAndResumeInfo->GetCurrentBehavior()->GetClass() == BehaviorClass::NoneBehavior;
+    bool currentBehaviorIsNoneBehavior = GetRunningAndResumeInfo().GetCurrentBehavior() == nullptr ||
+             GetRunningAndResumeInfo().GetCurrentBehavior()->GetClass() == BehaviorClass::NoneBehavior;
     
-    IBehavior* activeBehavior = _runningAndResumeInfo->GetCurrentBehavior();
+    IBehavior* activeBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
     // The current behavior of the goal is not NoneBehavior
     if(nullptr != activeBehavior && !currentBehaviorIsNoneBehavior)
     {
@@ -1122,12 +1208,12 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
         
         // If the current behavior is a reactionary behavior (ReactToDoubleTap) then
         // make sure to update _runningReactionaryBehavior and try to resume the last behavior
-        if(_runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
+        if(GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
         {
           // The only possible reactionary behavior that can be interrupted with a double tap is
           // ReactToDouble
 
-          DEV_ASSERT(_runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::DoubleTapDetected,
+          DEV_ASSERT(GetRunningAndResumeInfo().GetCurrentReactionTrigger() == ReactionTrigger::DoubleTapDetected,
                      "Current reactionary behavior should only be ReactToDoubleTap");
 
           TryToResumeBehavior();
@@ -1160,16 +1246,18 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
         // This is necessary because otherwise the ObjectTapInteraction goal will exit due to not being able
         // to pick a behavior (all of the ObjectTapInteraction behaviors have similar requirements to run) so
         // if the current one can't run then the others probably won't be able to run either.
+        
+        TriggerMapIterator doubleTapMapEntry;
+        const bool doubleTapExists = GetReactToDoubleTapPair(doubleTapMapEntry);
 
-        std::set<IBehavior*> reactToDoubleTapBehaviors = GetBehaviorsForReactionTrigger(ReactionTrigger::DoubleTapDetected);
-        // this logic assumes there is only one react to double tap behavior
-        DEV_ASSERT(reactToDoubleTapBehaviors.size() == 1,
-                   "BehaviorManager.UpdateBehaviorWithObjectTapInteraction.TooManyDoubleTapTriggers");
-        if(reactToDoubleTapBehaviors.size() == 1){
-          IBehavior* reactToDoubleTap = *reactToDoubleTapBehaviors.begin();
+        if(doubleTapExists){
+          IBehavior* reactToDoubleTap = doubleTapMapEntry->second;
+          
+          const bool isReactionEnabled = doubleTapMapEntry->first->IsReactionEnabled();
+          const bool shouldTrigger = doubleTapMapEntry->first->ShouldTriggerBehavior(_robot, reactToDoubleTap);
 
           BehaviorPreReqRobot preReqRobot(_robot);
-          if(reactToDoubleTap->IsRunnable(preReqRobot))
+          if(isReactionEnabled && shouldTrigger)
           {
             PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.StartingReactToDoubleTap",
                           "Forcing ReactToDoubleTap to run because %s can't run with newly double tapped object",
@@ -1179,20 +1267,20 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
             BehaviorRunningAndResumeInfo reactionaryInfo;
             reactionaryInfo.SetCurrentBehavior(reactToDoubleTap);
             reactToDoubleTap->Init();
-            *_runningAndResumeInfo = reactionaryInfo;
+            SetRunningAndResumeInfo(reactionaryInfo);
             return;
           }
         }
         
         // This will cause the current tapInteraction behavior to end and a new one to be picked
         BehaviorRunningAndResumeInfo nullInfo;
-        *_runningAndResumeInfo = nullInfo;
+        SetRunningAndResumeInfo(nullInfo);
         return;
       }
     }
   }
-
 }
+
   
 } // namespace Cozmo
 } // namespace Anki

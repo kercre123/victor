@@ -99,7 +99,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DrivingTo, _objectID);
+        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
       }
       _compoundAction.PrepForCompletion();
     }
@@ -441,7 +441,7 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
       
       if(_robot.IsCarryingObject() == false) {
-        PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
+        PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
                           "Robot %d cannot place an object because it is not carrying anything.",
                           _robot.GetID());
         result = ActionResult::NOT_CARRYING_OBJECT_ABORT;
@@ -782,7 +782,7 @@ namespace Anki {
           break;
           
         case ERobotDriveToPoseStatus::ComputingPath: {
-          float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           
           // handle aborting the plan. If we don't have a timeout set, set one now
           if( _timeToAbortPlanning < 0.0f ) {
@@ -800,7 +800,7 @@ namespace Anki {
         }
           
         case ERobotDriveToPoseStatus::Replanning: {
-          float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           
           // handle aborting the plan. If we don't have a timeout set, set one now
           if( _timeToAbortPlanning < 0.0f ) {
@@ -946,13 +946,13 @@ namespace Anki {
         return;
       }
     
-      _driveToObjectAction = new DriveToObjectAction(robot,
-                                                     objectID,
-                                                     actionType,
-                                                     predockOffsetDistX_mm,
-                                                     useApproachAngle,
-                                                     approachAngle_rad,
-                                                     useManualSpeed);
+      IActionRunner* driveToObjectAction = new DriveToObjectAction(robot,
+                                                                   objectID,
+                                                                   actionType,
+                                                                   predockOffsetDistX_mm,
+                                                                   useApproachAngle,
+                                                                   approachAngle_rad,
+                                                                   useManualSpeed);
 
       // TODO: Use the function-based ShouldIgnoreFailure option for AddAction to catch some failures of DriveToObject earlier
       //  (Started to do this but it started to feel messy/dangerous right before ship)
@@ -1014,17 +1014,23 @@ namespace Anki {
         CompoundActionSequential* innerAction = new CompoundActionSequential(robot);
         // within innerAction, we do want to consider failures of driving (to prevent the lambda from running
         // if the drive fails)
-        innerAction->AddAction(_driveToObjectAction, false);
+        _driveToObjectAction = innerAction->AddAction(driveToObjectAction, false);
 
         auto waitLambda = [this](Robot& robot) {
           // Keep the cube lights set while the waitForLambda action is running
           robot.GetCubeLightComponent().PlayLightAnim(_objectID, CubeAnimationTrigger::DrivingTo);
         
           // if this lambda gets called, that means the drive to must have succeeded.
-          if( _dockAction ) {
+          if( !_dockAction.expired() ) {
             PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.DriveToSuccess",
                           "DriveTo action succeeded, telling dock action not to check predock pose distance");
-            _dockAction->SetDoNearPredockPoseCheck(false);
+            
+            // For debug builds do a dynamic cast for validity checks
+            DEV_ASSERT(dynamic_cast<IDockAction*>(_dockAction.lock().get()) != nullptr,
+                       "IDriveToInteractWithObjectAction.Constructor.DynamicCastFailed");
+                       
+            IDockAction* rawDockAction = static_cast<IDockAction*>(_dockAction.lock().get());
+            rawDockAction->SetDoNearPredockPoseCheck(false);
           }
           else {
             PRINT_NAMED_ERROR("IDriveToInteractWithObject.InnerAction.WaitLambda.NoDockAction",
@@ -1043,16 +1049,20 @@ namespace Anki {
         AddAction(innerAction, true);
       }
       else {
-        AddAction(_driveToObjectAction, true);
+        _driveToObjectAction = AddAction(driveToObjectAction, true);
       }
         
       if(maxTurnTowardsFaceAngle_rad > 0.f)
       {
-        _turnTowardsLastFacePoseAction = new TurnTowardsLastFacePoseAction(robot, maxTurnTowardsFaceAngle_rad, sayName);
-        _turnTowardsObjectAction = new TurnTowardsObjectAction(robot, objectID, maxTurnTowardsFaceAngle_rad);
-      
-        AddAction(_turnTowardsLastFacePoseAction, true);
-        AddAction(_turnTowardsObjectAction, true);
+        _turnTowardsLastFacePoseAction = AddAction(new TurnTowardsLastFacePoseAction(robot,
+                                                                                     maxTurnTowardsFaceAngle_rad,
+                                                                                     sayName),
+                                                   true);
+        
+        _turnTowardsObjectAction = AddAction(new TurnTowardsObjectAction(robot,
+                                                                         objectID,
+                                                                         maxTurnTowardsFaceAngle_rad),
+                                             true);
       }
     }
     
@@ -1071,15 +1081,15 @@ namespace Anki {
         return;
       }
       
-      _driveToObjectAction = new DriveToObjectAction(robot,
-                                                     objectID,
-                                                     distance,
-                                                     useManualSpeed);
-      
-      AddAction(_driveToObjectAction, true);
+      _driveToObjectAction = AddAction(new DriveToObjectAction(robot,
+                                                               objectID,
+                                                               distance,
+                                                               useManualSpeed),
+                                       true);
     }
     
-    void IDriveToInteractWithObject::AddDockAction(IDockAction* dockAction, bool ignoreFailure)
+    std::weak_ptr<IActionRunner> IDriveToInteractWithObject::AddDockAction(IDockAction* dockAction,
+                                                                           bool ignoreFailure)
     {
       // right before the dock action, we want to call the PreDock callback (if one was specified). TO achieve
       // this, we use a WaitForLambda action which always completes immediately.
@@ -1099,9 +1109,8 @@ namespace Anki {
       }
       
       dockAction->SetPreDockPoseDistOffset(_preDockPoseDistOffsetX_mm);
-      AddAction(dockAction, ignoreFailure);
-
-      _dockAction = dockAction;
+      _dockAction = AddAction(dockAction, ignoreFailure);
+      return _dockAction;
     }
 
     void IDriveToInteractWithObject::SetSayNameAnimationTrigger(AnimationTrigger trigger)
@@ -1111,8 +1120,8 @@ namespace Anki {
                           "Tried to update the animations after the action started, this isn't supported");
         return;
       }
-      if( nullptr != _turnTowardsLastFacePoseAction ) {
-        _turnTowardsLastFacePoseAction->SetSayNameAnimationTrigger(trigger);
+      if( !_turnTowardsLastFacePoseAction.expired() ) {
+        static_cast<TurnTowardsLastFacePoseAction*>(_turnTowardsLastFacePoseAction.lock().get())->SetSayNameAnimationTrigger(trigger);
       }
     }
       
@@ -1123,25 +1132,25 @@ namespace Anki {
                           "Tried to update the animations after the action started, this isn't supported");
         return;
       }
-      if( nullptr != _turnTowardsLastFacePoseAction ) {
-        _turnTowardsLastFacePoseAction->SetNoNameAnimationTrigger(trigger);
+      if(!_turnTowardsLastFacePoseAction.expired()) {
+        static_cast<TurnTowardsLastFacePoseAction*>(_turnTowardsLastFacePoseAction.lock().get())->SetNoNameAnimationTrigger(trigger);
       }
     }
     
     void IDriveToInteractWithObject::DontTurnTowardsFace()
     {
-      if(_turnTowardsObjectAction != nullptr &&
-         _turnTowardsLastFacePoseAction != nullptr)
+      if(!_turnTowardsObjectAction.expired() &&
+         !_turnTowardsLastFacePoseAction.expired())
       {
-        _turnTowardsLastFacePoseAction->ForceComplete();
-        _turnTowardsObjectAction->ForceComplete();
+        _turnTowardsLastFacePoseAction.lock()->ForceComplete();
+        _turnTowardsObjectAction.lock()->ForceComplete();
       }
     }
     
     void IDriveToInteractWithObject::SetMaxTurnTowardsFaceAngle(const Radians angle)
     {
-      if(_turnTowardsObjectAction == nullptr ||
-         _turnTowardsLastFacePoseAction == nullptr)
+      if(_turnTowardsObjectAction.expired() ||
+         _turnTowardsLastFacePoseAction.expired())
       {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetMaxTurnTowardsFaceAngle",
                             "Can not set angle of null actions (the action were originally constructed with an angle of zero)");
@@ -1149,14 +1158,14 @@ namespace Anki {
       }
       PRINT_NAMED_DEBUG("IDriveToInteractWithObject.SetMaxTurnTowardsFaceAngle",
                         "Setting maxTurnTowardsFaceAngle to %f degrees", angle.getDegrees());
-      _turnTowardsLastFacePoseAction->SetMaxTurnAngle(angle);
-      _turnTowardsObjectAction->SetMaxTurnAngle(angle);
+      static_cast<TurnTowardsLastFacePoseAction*>(_turnTowardsLastFacePoseAction.lock().get())->SetMaxTurnAngle(angle);
+      static_cast<TurnTowardsObjectAction*>(_turnTowardsObjectAction.lock().get())->SetMaxTurnAngle(angle);
     }
     
     void IDriveToInteractWithObject::SetTiltTolerance(const Radians tol)
     {
-      if(_turnTowardsObjectAction == nullptr ||
-         _turnTowardsLastFacePoseAction == nullptr)
+      if(_turnTowardsObjectAction.expired() ||
+         _turnTowardsLastFacePoseAction.expired())
       {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetTiltTolerance",
                             "Can not set angle of null actions (the action were originally constructed with an angle of zero)");
@@ -1164,8 +1173,8 @@ namespace Anki {
       }
       PRINT_NAMED_DEBUG("IDriveToInteractWithObject.SetTiltTolerance",
                         "Setting tilt tolerance to %f degrees", tol.getDegrees());
-      _turnTowardsLastFacePoseAction->SetTiltTolerance(tol);
-      _turnTowardsObjectAction->SetTiltTolerance(tol);
+      static_cast<TurnTowardsLastFacePoseAction*>(_turnTowardsLastFacePoseAction.lock().get())->SetTiltTolerance(tol);
+      static_cast<TurnTowardsObjectAction*>(_turnTowardsObjectAction.lock().get())->SetTiltTolerance(tol);
     }
 
     void IDriveToInteractWithObject::SetApproachAngle(const f32 angle_rad)
@@ -1176,13 +1185,13 @@ namespace Anki {
         return;
       }
 
-      if(nullptr != _driveToObjectAction) {
+      if(!_driveToObjectAction.expired()) {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetApproachingAngle",
                       "[%d] %f rad",
                       GetTag(),
                       angle_rad);
         
-        _driveToObjectAction->SetApproachAngle(angle_rad);
+        static_cast<DriveToObjectAction*>(_driveToObjectAction.lock().get())->SetApproachAngle(angle_rad);
       } else {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetApproachAngle.NullDriveToAction", "");
       }
@@ -1190,17 +1199,17 @@ namespace Anki {
     
     const bool IDriveToInteractWithObject::GetUseApproachAngle() const
     {
-      if(nullptr != _driveToObjectAction)
+      if(!_driveToObjectAction.expired())
       {
-        return _driveToObjectAction->GetUseApproachAngle();
+        return static_cast<DriveToObjectAction*>(_driveToObjectAction.lock().get())->GetUseApproachAngle();
       }
       return false;
     }
     
     void IDriveToInteractWithObject::SetMotionProfile(const PathMotionProfile& motionProfile)
     {
-      if(nullptr != _driveToObjectAction) {
-        _driveToObjectAction->SetMotionProfile(motionProfile);
+      if(!_driveToObjectAction.expired()) {
+        static_cast<DriveToObjectAction*>(_driveToObjectAction.lock().get())->SetMotionProfile(motionProfile);
       } else {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetMotionProfile.NullDriveToAction", "");
       }
@@ -1210,7 +1219,7 @@ namespace Anki {
       for(auto& action : GetActionList())
       {
         IDockAction* dockAction;
-        if((dockAction = dynamic_cast<IDockAction*>(action)) != nullptr)
+        if((dockAction = dynamic_cast<IDockAction*>(action.get())) != nullptr)
         {
           dockAction->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
         }
@@ -1219,9 +1228,9 @@ namespace Anki {
     
     void IDriveToInteractWithObject::SetShouldCheckForObjectOnTopOf(const bool b)
     {
-      if(nullptr != _dockAction)
+      if(!_dockAction.expired())
       {
-        _dockAction->SetShouldCheckForObjectOnTopOf(b);
+        static_cast<IDockAction*>(_dockAction.lock().get())->SetShouldCheckForObjectOnTopOf(b);
       }
       else
       {
@@ -1230,15 +1239,7 @@ namespace Anki {
     }
 
     Result IDriveToInteractWithObject::UpdateDerived()
-    {
-      // The only way the driveToObjectAction can be null is if it wasn't newed in the constructor
-      if(_driveToObjectAction == nullptr)
-      {
-        PRINT_NAMED_ERROR("IDriveToInteractWithObject.UpdateDerived.NullAction",
-                          "_driveToObjectAction is null, returning failure");
-        return RESULT_FAIL;
-      }
-      
+    {      
       if(!_lightsSet) {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
@@ -1255,7 +1256,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
                       _objectID.GetValue());
-        _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DrivingTo, _objectID);
+        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DrivingTo, _objectID);
         _lightsSet = false;
       }
     }
@@ -1298,7 +1299,8 @@ namespace Anki {
                                                          const f32 approachAngle_rad,
                                                          const bool useManualSpeed,
                                                          Radians maxTurnTowardsFaceAngle_rad,
-                                                         const bool sayName)
+                                                         const bool sayName,
+                                                         AnimationTrigger animBeforeDock)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::DOCKING,
@@ -1309,15 +1311,20 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      _pickupAction = new PickupObjectAction(robot, objectID, useManualSpeed);
-      AddDockAction(_pickupAction);
-      SetProxyTag(_pickupAction->GetTag());
+      if(animBeforeDock != AnimationTrigger::Count){
+        AddAction(new TriggerAnimationAction(robot, animBeforeDock));
+      }
+      
+      PickupObjectAction* rawPickup = new PickupObjectAction(robot, objectID, useManualSpeed);
+      const u32 pickUpTag = rawPickup->GetTag();
+      _pickupAction = AddDockAction(rawPickup);
+      SetProxyTag(pickUpTag);
     }
     
     void DriveToPickupObjectAction::SetDockingMethod(DockingMethod dockingMethod)
     {
-      if(nullptr != _pickupAction) {
-        _pickupAction->SetDockingMethod(dockingMethod);
+      if(!_pickupAction.expired()) {
+        static_cast<IDockAction*>(_pickupAction.lock().get())->SetDockingMethod(dockingMethod);
       } else {
         PRINT_NAMED_WARNING("DriveToPickupObjectAction.SetDockingMethod.NullPickupAction", "");
       }
@@ -1325,8 +1332,8 @@ namespace Anki {
     
     void DriveToPickupObjectAction::SetPostDockLiftMovingAnimation(Anki::Cozmo::AnimationTrigger trigger)
     {
-      if(nullptr != _pickupAction) {
-        _pickupAction->SetPostDockLiftMovingAnimation(trigger);
+      if(!_pickupAction.expired()) {
+        static_cast<IDockAction*>(_pickupAction.lock().get())->SetPostDockLiftMovingAnimation(trigger);
       } else {
         PRINT_NAMED_WARNING("DriveToPickupObjectAction.SetPostDockLiftMovingAnimation.NullPickupAction", "");
       }
@@ -1398,10 +1405,11 @@ namespace Anki {
       
       // when relative current marker all pre-dock poses are valid
       // otherwise, one pre-doc pose may be impossible to place at certain offsets
-      if(!relativeCurrentMarker){
+      if(!relativeCurrentMarker)
+      {
         DriveToObjectAction* driveToAction = GetDriveToObjectAction();
-        if(driveToAction != nullptr){
-        
+        if(driveToAction != nullptr)
+        {
           driveToAction->SetGetPossiblePosesFunc(
             [this, &robot, placementOffsetX_mm, placementOffsetY_mm](
                                               ActionableObject* object,
@@ -1410,31 +1418,40 @@ namespace Anki {
             {
               const ActionResult possiblePosesResult = GetDriveToObjectAction()->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
               
-              if(possiblePosesResult == ActionResult::SUCCESS){
+              if(possiblePosesResult == ActionResult::SUCCESS)
+              {
                 using PoseIter = std::vector<Pose3d>::iterator;
 
-                for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); ){
+                for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); )
+                {
                   const Pose3d& idealCenterPose = object->GetZRotatedPointAboveObjectCenter(0.f);
                   Pose3d preDocWRTBlock;
                   fullIter->GetWithRespectTo(idealCenterPose, preDocWRTBlock);
                   const float poseX = preDocWRTBlock.GetTranslation().x();
                   const float poseY = preDocWRTBlock.GetTranslation().y();
                   const float minIllegalOffset = 1.f;
+                  
                   const bool xOffsetRelevant =
                               !IN_RANGE(placementOffsetX_mm, -minIllegalOffset, minIllegalOffset) &&
                               !IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
+                  
                   const bool yOffsetRelevant =
                               !IN_RANGE(placementOffsetY_mm, -minIllegalOffset, minIllegalOffset) &&
                               !IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
+                  
                   const bool isPoseInvalid =
                               (xOffsetRelevant && (FLT_GT(poseX, 0) != FLT_GT(placementOffsetX_mm, 0)))||
                               (yOffsetRelevant && (FLT_GT(poseY, 0) != FLT_GT(placementOffsetY_mm, 0)));
-                  if(isPoseInvalid){
+                  
+                  if(isPoseInvalid)
+                  {
                     fullIter = possiblePoses.erase(fullIter);
                     PRINT_CH_INFO("Actions", "DriveToPlaceRelObjectAction.PossiblePosesFunc.RemovingInvalidPose",
                                   "Removing pose x:%f y:%f because Cozmo can't place at offset x:%f, y:%f, xRelevant:%d, yRelevant:%d",
                                   poseX, poseY, placementOffsetX_mm, placementOffsetY_mm, xOffsetRelevant, yOffsetRelevant);
-                  }else{
+                  }
+                  else
+                  {
                     // We need to visually verify placement since there are high odds
                     // that we will bump objects while placing relative to them, so if possible
                     // place using a y offset
@@ -1443,23 +1460,72 @@ namespace Anki {
                     const bool currentYPoseIdeal = yOffsetRelevant && IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
                     if(onlyOnePlacementDirection &&
                        possiblePoses.size() > 2 &&
-                       (currentXPoseIdeal || currentYPoseIdeal)){
+                       (currentXPoseIdeal || currentYPoseIdeal))
+                    {
                       fullIter = possiblePoses.erase(fullIter);
-                    }else{
+                    }
+                    else
+                    {
+                      // The placementOffsets are defined relative to the object so in order to move all
+                      // the preAction poses by the offsets we need to get them wrt the object, apply the offsets,
+                      // and then get them wrt the origin (as they originally were)
+                      Pose3d preActionPoseWRTObject;
+                      fullIter->GetWithRespectTo(object->GetPose(), preActionPoseWRTObject);
+                      
+                      
+                      // TODO: COZMO-9528 - Currently we are clipping pre-doc offsets so that
+                      // we can be sure we visually verify the docking cube.  However, long term
+                      // we need a smarter system for determining how far over we can place the pre-dock
+                      // pose before we lose site of the docking object.
+                      /**const float kClippingPreDocPoseOffset_mm = 20.f;
+                      const float clippedXOffset =
+                           placementOffsetX_mm > kClippingPreDocPoseOffset_mm ?
+                                 kClippingPreDocPoseOffset_mm : placementOffsetX_mm;
+                      
+                      const float clippedYOffset =
+                           placementOffsetY_mm > kClippingPreDocPoseOffset_mm ?
+                                 kClippingPreDocPoseOffset_mm : placementOffsetY_mm;**/
+                      
+                      const auto& trans = preActionPoseWRTObject.GetTranslation();
+                      preActionPoseWRTObject.SetTranslation({trans.x(), //+ clippedXOffset,
+                                                             trans.y(),// + clippedYOffset,
+                                                             trans.z()});
+
+                      preActionPoseWRTObject.GetWithRespectTo(_robot.GetPose().FindOrigin(), *fullIter);
+                      
+                      Point2f distThreshold = ComputePreActionPoseDistThreshold(*fullIter,
+                                                                                object->GetPose(),
+                                                                                DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
+                      
+                      // If the new preAction pose is close enough to the robot's current pose mark as
+                      // alreadyInPosition
+                      // Don't really care about z
+                      static const f32 kDontCareZThreshold = 100;
+                      if(robot.GetPose().IsSameAs(*fullIter,
+                                                  {distThreshold.x(), distThreshold.y(), kDontCareZThreshold},
+                                                  DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE))
+                      {
+                        alreadyInPosition = true;
+                      }
+
                       ++fullIter;
                     }
                   }
                 }// end for(PoseIter)
               }// end if(possiblePosesResult == ActionResult::Success)
-              else{
+              else
+              {
                 PRINT_CH_INFO("Actions",
                               "DriveToPlaceRelObjectAction.PossiblePosesFunc.PossiblePosesResultNotSuccess",
                               "Received possible psoses result:%u", possiblePosesResult);
               }
               
-              if(possiblePoses.size() > 0){
+              if(possiblePoses.size() > 0)
+              {
                 return possiblePosesResult;
-              }else{
+              }
+              else
+              {
                 PRINT_CH_INFO("Actions",
                               "PlaceRelObjectAction.PossiblePosesFunc.NoValidPoses",
                               "After filtering invalid pre-doc poses none remained for placement offset x:%f, y%f",
@@ -1468,7 +1534,8 @@ namespace Anki {
               }
             });
         }// end if(driveToAction != nullptr)
-        else{
+        else
+        {
           PRINT_CH_INFO("Actions",
                         "DriveToPlaceRelObjectAction.PossiblePosesFunction.NoDriveToAction",
                         "DriveToAction not set, possible invalid poses");
@@ -1496,9 +1563,8 @@ namespace Anki {
                                  sayName)
     , _objectID(objectID)
     {
-      _rollAction = new RollObjectAction(robot, objectID, useManualSpeed);
-      AddDockAction(_rollAction);
-      SetProxyTag(_rollAction->GetTag());
+      _rollAction = AddDockAction(new RollObjectAction(robot, objectID, useManualSpeed));
+      SetProxyTag(_rollAction.lock().get()->GetTag());
     }
 
     void DriveToRollObjectAction::RollToUpright()
@@ -1605,8 +1671,8 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      DEV_ASSERT(_rollAction != nullptr, "DriveToRollObjectAction.actionIsNull");
-      _rollAction->EnableDeepRoll(enable);
+      DEV_ASSERT(!_rollAction.expired(), "DriveToRollObjectAction.actionIsNull");
+      static_cast<RollObjectAction*>(_rollAction.lock().get())->EnableDeepRoll(enable);
       return RESULT_OK;
     }
     

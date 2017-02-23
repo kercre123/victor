@@ -25,20 +25,54 @@ namespace Anki {
 namespace Cozmo {
 
 enum class TestState {
-  Init,
-  WaitForCubeConnections,
-  VerifyObject1,
-  TurnAway,
-  WaitForDeloc,
-  VerifyObject2,
-  DontStartBehavior,
-  TurnBack,
-  PickingUp,
-  BehaviorShouldFail,
-  TurnToObject2,
-  Stacking,
+  Init,                         // Init everything
+  WaitForCubeConnections,       // Ensure 2 blocks are connected
+  VerifyObject1,                // Should see 1 block
+  TurnAway,                     // Turn away from the block and force delocalize
+  WaitForDeloc,                 //
+  VerifyObject2,                // Turn to see the second block
+  DontStartBehavior,            // Stack behavior shouldn't start yet (still delocalized)
+  TurnBack,                     // Turn back toward first block
+  PickingUp,                    // Stack behavior should begin
+  BehaviorShouldFail,           // Stack behavior should fail (since second block was kidnapped and moved across workspace)
+  TurnToObject2,                // Turn toward the second block's new location
+  Stacking,                     // Stacking should occur
+  VerifyStack,                  // Make sure stack was created
+  AttemptPickupHigh,            // Attempt to pick up the high block
+  PickupHighShouldFail,         // Should fail since block was pushed away at the last second
+  AttemptPickupLowOutOfView,    // Attempt to pick up the low block
+  PickupLowOutOfViewShouldFail, // Should fail since block was pushed away at the last second
+  MoveHeadUp,                   //
+  AttemptPickupLowInView,       // Attempt to pick up the low block again and push the block away at last second.
+  TeleportBlockInView,          // Teleport the block back into view of the robot.
+  PickupLowInViewShouldFail,    // Should fail since robot sees the block in front of it and not on its lift.
+  RemoveCube,                   // Pick up the cube again and make it vanish from the world after successful pickup
+  PlaceObjectShouldFail,        // Placing should fail since the cube is no longer on the lift.
   TestDone
 };
+  
+// Motion profile for test
+const f32 defaultPathSpeed_mmps = 60;
+const f32 defaultPathAccel_mmps2 = 200;
+const f32 defaultPathDecel_mmps2 = 500;
+const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
+const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
+const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
+const f32 defaultDockSpeed_mmps = 60;
+const f32 defaultDockAccel_mmps2 = 200;
+const f32 defaultDockDecel_mmps2 = 100;
+const f32 defaultReverseSpeed_mmps = 30;
+PathMotionProfile motionProfile (defaultPathSpeed_mmps,
+                     defaultPathAccel_mmps2,
+                     defaultPathDecel_mmps2,
+                     defaultPathPointTurnSpeed_rad_per_sec,
+                     defaultPathPointTurnAccel_rad_per_sec2,
+                     defaultPathPointTurnDecel_rad_per_sec2,
+                     defaultDockSpeed_mmps,
+                     defaultDockAccel_mmps2,
+                     defaultDockDecel_mmps2,
+                     defaultReverseSpeed_mmps,
+                     true);
 
 static const char* kBehaviorName = "StackBlocks";
 
@@ -52,20 +86,31 @@ class CST_StackBlockBehavior : public CozmoSimTestController {
 private:
       
   virtual s32 UpdateSimInternal() override;
-
+  
   virtual void HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg) override;
   virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
+  virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
   
+  // State:
   TestState _testState = TestState::Init;
 
-  bool _startedMoving = false;
+  // Parameters:
+  const float _kRobotNearBlockThreshold_mm = 65.f;
+  const float _kRobotNearBlockThresholdHigh_mm = 95.f;
+  int _cubeIdToMove = -1;
+  
+  // Status flags:
   int _startedBehavior = 0;
   int _stoppedBehavior = 0;
-
-  int _cubeIdToMove = -1;
-
-  double _behaviorCheckTime = 0.0;
   
+  ActionResult _moveHeadToAngleResult = ActionResult::RUNNING;;
+  ActionResult _turnInPlaceResult = ActionResult::RUNNING;;
+  ActionResult _pickupObjectResult = ActionResult::RUNNING;
+  ActionResult _placeObjectResult = ActionResult::RUNNING;
+
+  
+  Pose3d _robotPoseWhenBlockShoved;
+  double _behaviorCheckTime = 0.0;
   u32 _numObjectsConnected = 0;
 };
 
@@ -85,7 +130,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       StartMovieConditional("StackBlockBehavior");
       // TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
       
-      // make sure rolling is unlocked
+      // make sure stacking is unlocked
       UnlockId unlock = UnlockIdsFromString("StackTwoCubes");
       CST_ASSERT(unlock != UnlockId::Count, "couldn't get valid unlock id");
       SendMessage( ExternalInterface::MessageGameToEngine(
@@ -103,6 +148,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       break;
     }
 
+      
     case TestState::WaitForCubeConnections:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 2, 5)
@@ -111,6 +157,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       }
       break;
     }
+      
       
     case TestState::VerifyObject1:
     {
@@ -122,64 +169,41 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             GetNumObjects() == 1,
                                             IsLocalizedToObject())
       {
-        ExternalInterface::QueueSingleAction m;
-        m.robotID = 1;
-        m.position = QueueActionPosition::NOW;
-        m.idTag = 11;
-        m.numRetries = 1;
-        uint8_t isAbsolute = 0; // relative turn
-        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(45), M_PI_F, 500.0f, isAbsolute, 1 ));
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_QueueSingleAction(m);
-        SendMessage(message);
-        _startedMoving = false;
+        _turnInPlaceResult = ActionResult::RUNNING;
+        SendTurnInPlace(DEG_TO_RAD(45.f), M_PI_F, 500.f);
         SET_STATE(TurnAway);
       }
       break;
     }
 
+      
     case TestState::TurnAway:
     {
       CST_ASSERT( _startedBehavior == 0, "Behavior shouldnt start because we delocalized (should only have one block)" );
 
-      if( !_startedMoving ) {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(IsRobotStatus(RobotStatusFlag::IS_MOVING), DEFAULT_TIMEOUT) {
-          _startedMoving = true;
-        }
-      }
-      else {      
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING), 10) {
-          // Make sure we are still localized (to an object) before sending deloc
-          CST_ASSERT( IsLocalizedToObject(), "Should be localized to object before we deloc");
-          // deloc the robot so it doesn't see both cubes in the same frame
-          SendForceDeloc();
-          SET_STATE(WaitForDeloc);
-        }
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_turnInPlaceResult == ActionResult::SUCCESS, 10) {
+        // Make sure we are still localized (to an object) before sending deloc
+        CST_ASSERT( IsLocalizedToObject(), "Should be localized to object before we deloc");
+        // deloc the robot so it doesn't see both cubes in the same frame
+        SendForceDeloc();
+        SET_STATE(WaitForDeloc);
       }
       break;
     }
 
+      
     case TestState::WaitForDeloc:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), 2) {
-
         // Turn the robot to see the second cube
-        ExternalInterface::QueueSingleAction m;
-        m.robotID = 1;
-        m.position = QueueActionPosition::NEXT;
-        m.idTag = 16;
-        m.numRetries = 1;
-        uint8_t isAbsolute = 0; // relative turn
-        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(30), M_PI_F, 500.0f, isAbsolute, 1 ));
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_QueueSingleAction(m);
-        SendMessage(message);
-          
-        _startedMoving = false;
+        _turnInPlaceResult = ActionResult::RUNNING;
+        SendTurnInPlace(DEG_TO_RAD(30.f), M_PI_F, 500.0f);
+
         SET_STATE(VerifyObject2);
       }
       break;
     }
+      
     
     case TestState::VerifyObject2:
     {
@@ -188,9 +212,9 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       // NOTE: at some point in the future this might fail because GetNumObjects() might not return things not
       // in our current origin. In that case, the test will need to be updated
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
-                                            !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                            _turnInPlaceResult == ActionResult::SUCCESS,
                                             NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
-                                            GetNumObjects() == 2)
+                                            GetNumObjects() == 1)
       {
         _behaviorCheckTime = GetSupervisor()->getTime();
         SET_STATE(DontStartBehavior);        
@@ -198,6 +222,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       break;
     }
 
+      
     case TestState::DontStartBehavior:
     {
       CST_ASSERT( _startedBehavior == 0, "Behavior shouldnt start because we delocalized (should only have one block)" );
@@ -205,39 +230,26 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       const double timeToWait_s = 1.0;
       double currTime = GetSupervisor()->getTime();
       if( currTime - _behaviorCheckTime > timeToWait_s ) {
-        ExternalInterface::QueueSingleAction m;
-        m.robotID = 1;
-        m.position = QueueActionPosition::NOW;
-        m.idTag = 13;
-        m.numRetries = 1;
-        uint8_t isAbsolute = 0; // relative turn
-        m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( -DEG_TO_RAD(90), M_PI_F, 500.0f, isAbsolute, 1 ));
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_QueueSingleAction(m);
-        SendMessage(message);
-        _startedMoving = false;
+        _turnInPlaceResult = ActionResult::RUNNING;
+        SendTurnInPlace( DEG_TO_RAD(-90.f), M_PI_F, 500.f );
         SET_STATE(TurnBack);
       }
       break;
     }
 
+      
     case TestState::TurnBack:
     {
-      if( !_startedMoving ) {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(IsRobotStatus(RobotStatusFlag::IS_MOVING), DEFAULT_TIMEOUT) {
-          _startedMoving = true;
-        }
+      // at some point (possibly before we stop moving) the behavior should become runnable and start on it's own
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_startedBehavior == 1, 10) {
+        // behavior is running, wait for it to finish
+        SET_STATE(PickingUp)
       }
-      else {
-        // at some point (possibly before we stop moving) the behavior should become runnable and start on it's own
-        IF_CONDITION_WITH_TIMEOUT_ASSERT( _startedBehavior == 1, 10 ) {
-          // behavior is running, wait for it to finish
-          SET_STATE(PickingUp)
-        }
-      }
+      
       break;
     }
 
+      
     case TestState::PickingUp:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT( GetCarryingObjectID() >= 0, 20) {
@@ -254,6 +266,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       break;
     }
 
+      
     case TestState::BehaviorShouldFail:
     {
       CST_ASSERT( _startedBehavior == 1, "Behavior started wrong number of times: "<<_startedBehavior );
@@ -285,40 +298,29 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
           float robotAssumedAngle = GetRobotPose().GetRotation().GetAngleAroundZaxis().ToFloat();
           float robotAngleError = robotTrueAngle - robotAssumedAngle;
           targetAngle -= robotAngleError;
+
+          // queue turn in place after the move head down
+          _turnInPlaceResult = ActionResult::RUNNING;
+          SendTurnInPlace(targetAngle, M_PI_F, 500.0f, true, QueueActionPosition::AT_END); // Absolute turn, put at end of action queue.
           
-          ExternalInterface::QueueSingleAction m;
-          m.robotID = 1;
-          // queue after the move head down
-          m.position = QueueActionPosition::AT_END;
-          m.idTag = 19;
-          m.numRetries = 1;
-          uint8_t isAbsolute = 1;
-          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( targetAngle, M_PI_F, 500.0f, isAbsolute, 1 ));
-          ExternalInterface::MessageGameToEngine message;
-          message.Set_QueueSingleAction(m);
-          SendMessage(message);
-          _startedMoving = false;
           SET_STATE(TurnToObject2);
         }        
       }
       break;
     }
 
+      
     case TestState::TurnToObject2:
     {
-      // we already know about the object, so just wait a bit after we stop moving
-      if( !_startedMoving ) {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(IsRobotStatus(RobotStatusFlag::IS_MOVING), DEFAULT_TIMEOUT) {
-          _startedMoving = true;
-        }
-      }
-      else  {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT( _startedBehavior == 2, 10 ) {
-          SET_STATE(Stacking);
-        }
+      // Behavior should start right after seeing block (and so TurnInPlace may be cancelled)
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(10,
+                                            (_turnInPlaceResult == ActionResult::SUCCESS || _turnInPlaceResult == ActionResult::CANCELLED),
+                                            _startedBehavior == 2) {
+        SET_STATE(Stacking);
       }
       break;
     }
+      
     
     case TestState::Stacking:
     {
@@ -326,12 +328,13 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       
       IF_CONDITION_WITH_TIMEOUT_ASSERT( _stoppedBehavior == 2, 40 ) {
         // behavior should eventually stop
-        SET_STATE(TestDone)
+        SET_STATE(VerifyStack)
       }
       break;
     }
     
-    case TestState::TestDone:
+      
+    case TestState::VerifyStack:
     {
       // Verify robot has stacked the blocks
       // NOTE: actual poses are in meters
@@ -347,17 +350,223 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             NEAR(pose0.GetTranslation().x(), pose1.GetTranslation().x(), stackingTolerance_mm),
                                             NEAR(pose0.GetTranslation().y(), pose1.GetTranslation().y(), stackingTolerance_mm),
                                             // difference between z's is about a block height
-                                            NEAR( ABS(pose1.GetTranslation().z() - pose0.GetTranslation().z()), 44.0f, 10.0f))
-      {
-        StopMovie();
-        CST_EXIT();
+                                            NEAR( ABS(pose1.GetTranslation().z() - pose0.GetTranslation().z()), 44.0f, 10.0f)) {
+        // Cancel the stack behavior:
+        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("NoneBehavior")));
+        // Now attempt to pick up the top block:
+        _pickupObjectResult = ActionResult::RUNNING;
+        SendPickupObject(0, motionProfile, true);
+        SET_STATE(AttemptPickupHigh)
       }
+      break;
+    }
+      
+      
+    case TestState::AttemptPickupHigh:
+    {
+      const Pose3d robotPose = GetRobotPoseActual();
+      const Pose3d cubePose = GetLightCubePoseActual(0);
+      const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThresholdHigh_mm;
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
+        // Push the block out of view so that the pickup will fail.
+        SendApplyForce("cube0", -20, -5, 5);
+        SET_STATE(PickupHighShouldFail)
+      }
+      
+      break;
+    }
+      
+      
+    case TestState::PickupHighShouldFail:
+    {
+      // Keep applying a force ocassionally to keep the block 'moving', so that the pickup will
+      //  fail with PICKUP_OBJECT_UNEXPECTEDLY_MOVING.
+      static int cnt = 1;
+      if ((++cnt % 5) == 0) {
+        SendApplyForce("cube0", -5, 0, 0);
+      }
+      
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING, 15) {
+        // Pick up object 1:
+        _pickupObjectResult = ActionResult::RUNNING;
+        SendPickupObject(1, motionProfile, true);
+        SET_STATE(AttemptPickupLowOutOfView)
+      }
+      
+      break;
+    }
+      
+      
+    case TestState::AttemptPickupLowOutOfView:
+    {
+      Pose3d robotPose = GetRobotPoseActual();
+      Pose3d cubePose = GetLightCubePoseActual(1);
+      const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
+        // Push the block out of view:
+        SendApplyForce("cube1", 20, -7, 10);
+        SET_STATE(PickupLowOutOfViewShouldFail)
+      }
+      
+      break;
+    }
+    
+      
+    case TestState::PickupLowOutOfViewShouldFail:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING, DEFAULT_TIMEOUT) {
+        // move cube in front of robot and look at it:
+        Pose3d cubePose = GetRobotPoseActual();
+        Vec3f T = cubePose.GetTranslation();
+        cubePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 25));
+        SetLightCubePose(1, cubePose);
+        // move head up to see the cube:
+        _moveHeadToAngleResult = ActionResult::RUNNING;
+        SendMoveHeadToAngle(0, 100, 100);
+        SET_STATE(MoveHeadUp)
+      }
+      
+      break;
+    }
+      
+      
+    case TestState::MoveHeadUp:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_moveHeadToAngleResult == ActionResult::SUCCESS, 5) {
+        // pick up object 1:
+        _pickupObjectResult = ActionResult::RUNNING;
+        SendPickupObject(1, motionProfile, true);
+        SET_STATE(AttemptPickupLowInView)
+      }
+      
+      break;
+    }
+      
+      
+    case TestState::AttemptPickupLowInView:
+    {
+      Pose3d robotPose = GetRobotPoseActual();
+      Pose3d cubePose = GetLightCubePoseActual(1);
+      const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
+        // Push the block out of view:
+        SendApplyForce("cube1", 20, -7, 10);
+        // Keep track of where the robot was when the cube was first pushed.
+        _robotPoseWhenBlockShoved = GetRobotPoseActual();
+        SET_STATE(TeleportBlockInView)
+      }
+      
+      break;
+    }
+      
+      
+    case TestState::TeleportBlockInView:
+    {
+      // Keep applying a force ocassionally to keep the block moving,
+      //  to trick Cozmo into thinking it's moving as expected.
+      static int cnt = 0;
+      if ((++cnt % 5) == 0) {
+        SendApplyForce("cube1", -5, 0, 0);
+      }
+      
+      Pose3d robotPoseNow = GetRobotPoseActual();
+        
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(ComputeDistanceBetween(_robotPoseWhenBlockShoved, robotPoseNow) > 35.f, DEFAULT_TIMEOUT) {
+        // Teleport the cube to just in front of the robot:
+        Pose3d cubePose = GetRobotPoseActual();
+        Vec3f T = cubePose.GetTranslation();
+        cubePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 22));
+        SetLightCubePose(1, cubePose);
+        SET_STATE(PickupLowInViewShouldFail)
+      }
+      
+      break;
+    }
+
+      
+    case TestState::PickupLowInViewShouldFail:
+    {
+      // Cozmo should see the cube in front of him and realize he's not carrying it.
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::NOT_CARRYING_OBJECT_RETRY, DEFAULT_TIMEOUT) {
+        // Pick up the cube again:
+        _pickupObjectResult = ActionResult::RUNNING;
+        SendPickupObject(1, motionProfile, true);
+        
+        SET_STATE(RemoveCube)
+      }
+      
+      break;
+    }
+
+      
+    case TestState::RemoveCube:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::SUCCESS, DEFAULT_TIMEOUT) {
+        CST_ASSERT(GetCarryingObjectID() == 1, "robot should be carrying object at this point");
+        
+        // Remove the light cube from the world (as it someone has taken it off the lift)
+        CST_ASSERT(RemoveLightCubeByType(ObjectType::Block_LIGHTCUBE2), "LightCube removal failed");
+        
+        // Attempt to place the now-removed block:
+        Pose3d placePose = GetRobotPoseActual();
+        Vec3f T = placePose.GetTranslation();
+        placePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 22));
+        
+        _placeObjectResult = ActionResult::RUNNING;
+        SendPlaceObjectOnGroundSequence(placePose, motionProfile);
+        
+        SET_STATE(PlaceObjectShouldFail)
+      }
+      
+      break;
+    }
+
+      
+    case TestState::PlaceObjectShouldFail:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_placeObjectResult == ActionResult::NOT_CARRYING_OBJECT_ABORT, 10) {
+        SET_STATE(TestDone)
+      }
+      
+      break;
+    }
+    
+      
+    case TestState::TestDone:
+    {
+      // Since we deleted a node earlier, we have to save the world
+      //  to prevent a modal "Save Changes?" dialog from preventing
+      //  Webots from quitting. No biggie since it will just overwrite
+      //  __generated__.wbt.
+      GetSupervisor()->saveWorld();
+      
+      StopMovie();
+      CST_EXIT();
+
       break;
     }
   }
   return _result;
 }
 
+
+void CST_StackBlockBehavior::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg)
+{
+  PRINT_NAMED_INFO("CST_StackBlockBehavior.HandleRobotCompletedAction", "completed action %s, result %s", EnumToString(msg.actionType), EnumToString(msg.result));
+  
+  if(msg.actionType == RobotActionType::MOVE_HEAD_TO_ANGLE) {
+    _moveHeadToAngleResult = msg.result;
+  } else if(msg.actionType == RobotActionType::TURN_IN_PLACE) {
+    _turnInPlaceResult = msg.result;
+  } else if (msg.actionType == RobotActionType::PICKUP_OBJECT_HIGH
+             || msg.actionType == RobotActionType::PICKUP_OBJECT_LOW) {
+    _pickupObjectResult = msg.result;
+  } else if (msg.actionType == RobotActionType::PLACE_OBJECT_HIGH
+             || msg.actionType == RobotActionType::PLACE_OBJECT_LOW) {
+    _placeObjectResult = msg.result;
+  }
+}
+  
 void CST_StackBlockBehavior::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
   PRINT_NAMED_INFO("CST_StackBlockBehavior.transition", "%s -> %s",

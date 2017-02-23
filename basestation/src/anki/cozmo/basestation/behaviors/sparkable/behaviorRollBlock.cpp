@@ -173,6 +173,9 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   
     // Don't turn towards the face when retrying
     rollAction->DontTurnTowardsFace();
+    
+    // Try again to select a pre-action pose which will upright the block
+    rollAction->RollToUpright();
   
     // Only try to use another preAction pose if we aren't using an approach angle otherwise there is only
     // one preAction pose to roll the object upright and the roll action failed due to not seeing the object
@@ -180,12 +183,21 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
        completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
     {
       // Use a different preAction pose if we are retrying
-      rollAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, rollAction](ActionableObject* object,
-                                                                                       std::vector<Pose3d>& possiblePoses,
-                                                                                       bool& alreadyInPosition)
+      DriveToObjectAction* driveToObjectAction = rollAction->GetDriveToObjectAction();
+      if(driveToObjectAction != nullptr)
       {
-        return IBehavior::UseSecondClosestPreActionPose(rollAction->GetDriveToObjectAction(),object, possiblePoses, alreadyInPosition);
-      });
+        driveToObjectAction->SetGetPossiblePosesFunc([this, rollAction](ActionableObject* object,
+                                                                        std::vector<Pose3d>& possiblePoses,
+                                                                        bool& alreadyInPosition)
+        {
+          return IBehavior::UseSecondClosestPreActionPose(rollAction->GetDriveToObjectAction(),object, possiblePoses, alreadyInPosition);
+        });
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("BehaviorRollBlock.TransitionToPerformingAction.RetryCallback.NullDriveAction",
+                          "DriveToObjectAction in DriveToRollObjectAction is null");
+      }
     }
     
     switch(completion.result)

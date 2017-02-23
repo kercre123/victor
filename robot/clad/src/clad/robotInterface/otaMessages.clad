@@ -22,6 +22,7 @@ namespace OTA {
     ERR_ERASE_ERROR   = -21,
     ERR_ERASE_TIMEOUT = -20,
     ERR_FACT_RESET   = -10,
+    ERR_INCOMPATIBLE = -8,
     ERR_RTIP_TIMEOUT = -7,
     ERR_RTIP_NAK     = -6,
     ERR_I2SPI        = -5,
@@ -37,7 +38,7 @@ namespace OTA {
     NOT_ON_CHARGER   =  5,
     SUCCESS          =  10,
   }
-  
+
   message Ack
   {
     int_32 bytesProcessed, ///< Number of payload bytes that have been processed

@@ -24,7 +24,10 @@ namespace Vision {
   static const f32 MinDistBetweenEyes_pixels = 6;
   
   TrackedFace::TrackedFace()
-  : _headPose(M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f})
+  : _smileAmount(false, 0.f, 0.f)
+  , _gaze(false, 0.f, 0.f)
+  , _blinkAmount(false, 0.f, 0.f)
+  , _headPose(M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f})
   {
     
   }
@@ -97,24 +100,29 @@ namespace Vision {
     return usedRealCenters;
   }
   
-  TrackedFace::FacialExpressionValues TrackedFace::GetExpressionValues() const
+  const TrackedFace::FacialExpressionValues& TrackedFace::GetExpressionValues() const
   {
     return _expression;
   }
   
   // Return the expression with highest value
-  FacialExpression TrackedFace::GetMaxExpression() const
+  FacialExpression TrackedFace::GetMaxExpression(s32* valuePtr) const
   {
-    static_assert((s32)FacialExpression::Unknown == 0, "Expecting Unknown expression to be value 0");
+    static_assert((s32)FacialExpression::Unknown == -1, "Expecting Unknown expression to be value -1");
     
     FacialExpression maxExpression = FacialExpression::Unknown;
-    f32 maxValue = _expression[0];
-    for(s32 crntExpression = 1; crntExpression < (s32)FacialExpression::Count; ++crntExpression)
+    s32 maxValue = -1;
+    for(s32 crntExpression = 0; crntExpression < (s32)FacialExpression::Count; ++crntExpression)
     {
       if(_expression[crntExpression] > maxValue) {
         maxValue = _expression[crntExpression];
         maxExpression = (FacialExpression)crntExpression;
       }
+    }
+    
+    if(nullptr != valuePtr)
+    {
+      *valuePtr = maxValue;
     }
     return maxExpression;
   }

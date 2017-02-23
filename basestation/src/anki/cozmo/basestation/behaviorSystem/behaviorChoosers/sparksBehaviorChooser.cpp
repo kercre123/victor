@@ -11,22 +11,22 @@
  **/
 #include "SparksBehaviorChooser.h"
 
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyObjectPositionUpdated.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
+#include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/components/cubeLightComponent.h"
-#include "anki/cozmo/basestation/components/bodyLightComponent.h"
-#include "anki/cozmo/basestation/drivingAnimationHandler.h"
-#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
@@ -40,6 +40,8 @@ static const char* kBehaviorObjectiveConfigKey       = "behaviorObjective";
 static const char* ksoftSparkUpgradeTriggerConfigKey = "softSparkTrigger";
 static const char* kSparksSuccessTriggerKey          = "sparksSuccessTrigger";
 static const char* kSparksFailTriggerKey             = "sparksFailTrigger";
+static const char* kSimpleChooserDelegateKey         = "simpleChooserDelegate";
+
   
 static std::set<ReactionTrigger> kReactionsToDisable{
   ReactionTrigger::FacePositionUpdated,
@@ -52,16 +54,17 @@ static std::set<ReactionTrigger> kReactionsToDisable{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& config)
-  : SimpleBehaviorChooser(robot, config)
-  , _robot(robot)
-  , _state(ChooserState::ChooserSelected)
-  , _timeChooserStarted(0.f)
-  , _currentObjectiveCompletedCount(0)
-  , _minTimeSecs(-1.f)
-  , _maxTimeSecs(-1.f)
-  , _numberOfRepetitions(-1)
-  , _switchingToHardSpark(false)
-  , _idleAnimationsSet(false)
+: SimpleBehaviorChooser(robot, config)
+, _robot(robot)
+, _state(ChooserState::ChooserSelected)
+, _timeChooserStarted(0.f)
+, _currentObjectiveCompletedCount(0)
+, _minTimeSecs(-1.f)
+, _maxTimeSecs(-1.f)
+, _numberOfRepetitions(-1)
+, _switchingToHardSpark(false)
+, _idleAnimationsSet(false)
+, _simpleBehaviorChooserDelegate(nullptr)
 {
   ReloadFromConfig(robot, config);
 
@@ -124,7 +127,15 @@ Result SparksBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& 
                                                 "Failed to parse number of repetitions");
   
   _objectiveToListenFor = BehaviorObjectiveFromString(config.get(kBehaviorObjectiveConfigKey, EnumToString(BehaviorObjective::Unknown)).asCString());
-    
+  
+  // Construct the simple chooser delegate if one is specified
+  const Json::Value& chooserDelegateParams = config[kSimpleChooserDelegateKey];
+  if(!chooserDelegateParams.isNull()){
+    _simpleBehaviorChooserDelegate = std::unique_ptr<IBehaviorChooser>(
+            BehaviorChooserFactory::CreateBehaviorChooser(robot, chooserDelegateParams));
+  }
+  
+  
   //Ensures that these values have to be set in behavior_config for all sparks
   DEV_ASSERT(FLT_GE(_minTimeSecs, 0.f) && FLT_GE(_maxTimeSecs, 0.f)
              && _numberOfRepetitions >= 0 && _softSparkUpgradeTrigger != AnimationTrigger::Count
@@ -163,41 +174,72 @@ void SparksBehaviorChooser::OnSelected()
                                                                AnimationTrigger::SparkDrivingLoop,
                                                                AnimationTrigger::SparkDrivingStop});
     _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-    _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights);
+    _bodyLightDataLocator = _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights, BackpackLightSource::Behavior);
 
     _idleAnimationsSet = true;
   }
   
   // Turn off reactionary behaviors that could interrupt the spark
-  mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, false);
+  for(const auto& trigger: kReactionsToDisable){
+    SmartRequestEnableReactionTrigger(trigger, false);
+  }
 
-}
-  
-void SparksBehaviorChooser::OnDeselected()
-{
-  BehaviorManager& mngr = _robot.GetBehaviorManager();
-
-  if(_idleAnimationsSet){
-    ResetLightsAndAnimations();
+  // Notify the delegate chooser if it exists
+  if(_simpleBehaviorChooserDelegate != nullptr){
+    _simpleBehaviorChooserDelegate->OnSelected();
   }
   
-  mngr.RequestEnableReactionTrigger(GetName(), kReactionsToDisable, true);
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SparksBehaviorChooser::OnDeselected()
+{
+  ResetLightsAndAnimations();
+  
+  for(const auto& trigger: _reactionsDynamicallyDisabled){
+    _robot.GetBehaviorManager().RequestEnableReactionTrigger(
+                                     GetName(), trigger, true);
+  }
+  _reactionsDynamicallyDisabled.clear();
 
   // clear any custom light events set during the spark
+  
+  // Notify the delegate chooser if it exists
+  if(_simpleBehaviorChooserDelegate != nullptr){
+    _simpleBehaviorChooserDelegate->OnDeselected();
+  }
+  
   _robot.GetCubeLightComponent().StopAllAnims();
+  
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::ResetLightsAndAnimations()
 {
-  // Revert to driving anims
-  _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-  _robot.GetAnimationStreamer().PopIdleAnimation();
-  _idleAnimationsSet = false;
+  if(_idleAnimationsSet){
+    // Revert to driving anims
+    _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    _robot.GetAnimationStreamer().PopIdleAnimation();
+    _robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
+    _idleAnimationsSet = false;
+  }
   
-  _robot.GetBodyLightComponent().StopLoopingBackpackLights();
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SparksBehaviorChooser::SmartRequestEnableReactionTrigger(const ReactionTrigger& trigger, bool enable)
+{
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(
+                                      GetName(), trigger, enable);
+  if(enable){
+    _reactionsDynamicallyDisabled.erase(trigger);
+  }else{
+    _reactionsDynamicallyDisabled.insert(trigger);
+  }
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -248,7 +290,13 @@ Result SparksBehaviorChooser::Update(Robot& robot)
     }
   }
   
-  return Result::RESULT_OK;
+  Result result = Result::RESULT_OK;
+  
+  if(_simpleBehaviorChooserDelegate != nullptr){
+    result = _simpleBehaviorChooserDelegate->Update(robot);
+  }
+  
+  return result;
 }
 
   
@@ -284,14 +332,14 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
         bestBehavior = _behaviorPlayAnimation;
       }else{
         _state = ChooserState::UsingSimpleBehaviorChooser;
-        bestBehavior = BaseClass::ChooseNextBehavior(robot, currentRunningBehavior);
+        bestBehavior = SelectNextSparkInternalBehavior(robot, currentRunningBehavior);
       }
       break;
     }
 
     case ChooserState::UsingSimpleBehaviorChooser:
     {
-      bestBehavior = BaseClass::ChooseNextBehavior(robot, currentRunningBehavior);
+      bestBehavior = SelectNextSparkInternalBehavior(robot, currentRunningBehavior);
       break;
     }
     case ChooserState::WaitingForCurrentBehaviorToStop:
@@ -299,7 +347,7 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
       if(currentRunningBehavior != nullptr
          && currentRunningBehavior->IsRunning()){
         // wait for the current behavior to end
-        bestBehavior = BaseClass::ChooseNextBehavior(robot, currentRunningBehavior);
+        bestBehavior = SelectNextSparkInternalBehavior(robot, currentRunningBehavior);
         break;
       }else{
         const bool isSoftSpark = mngr.IsActiveSparkSoft();
@@ -354,6 +402,25 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
   return bestBehavior;
 }
  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehavior* SparksBehaviorChooser::SelectNextSparkInternalBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+{
+  IBehavior* bestBehavior = nullptr;
+  // If the spark has specified an alternate chooser, call
+  // its choose next behavior here
+  if(_simpleBehaviorChooserDelegate == nullptr){
+    bestBehavior = BaseClass::ChooseNextBehavior(robot, currentRunningBehavior);
+  }else{
+    bestBehavior = _simpleBehaviorChooserDelegate->
+                          ChooseNextBehavior(robot,currentRunningBehavior);
+  }
+  
+  return bestBehavior;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::CompleteSparkLogic()
 {
   BehaviorManager& mngr = _robot.GetBehaviorManager();
@@ -422,13 +489,14 @@ void SparksBehaviorChooser::CompleteSparkLogic()
   }
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SparksBehaviorChooser::CheckIfSparkShouldEnd()
 {
   BehaviorManager& mngr = _robot.GetBehaviorManager();
   const IBehavior* currentRunningBehavior = mngr.GetCurrentBehavior();
   
-  float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Behaviors with _numberOfRepetitions == 0 will always wait until max time and then play success outro
   const bool minTimeAndRepetitions = FLT_GE(currentTime_s, _timeChooserStarted + _minTimeSecs)
@@ -441,8 +509,12 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd()
   if(_state == ChooserState::UsingSimpleBehaviorChooser
      && (minTimeAndRepetitions || maxTimeout || gameRequestedSparkEnd))
   {
+    ResetLightsAndAnimations();
     mngr.RequestCurrentBehaviorEndOnNextActionComplete();
     _state = ChooserState::WaitingForCurrentBehaviorToStop;
+    
+    // Make sure we don't interrupt the final stage animation if we see a cube
+    SmartRequestEnableReactionTrigger(ReactionTrigger::ObjectPositionUpdated, false);
   }else{
     // Transitioning directly between sparks - end current spark immediately
     if(mngr.GetRequestedSpark() != UnlockId::Count){

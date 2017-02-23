@@ -79,6 +79,7 @@ public:
   const Json::Value& GetRobotVisionConfig() const { return _robotVisionConfig; }
   const Json::Value& GetReactionTriggerMap() const { return _reactionTriggerMap; }
 
+  bool IsCustomAnimLoadEnabled() const;
   
 private:
   void CollectAnimFiles();
@@ -131,6 +132,8 @@ private:
   std::unique_ptr<BackpackLightAnimationContainer>    _backpackLightAnimations;
   TimestampMap _animFileTimestamps;
   TimestampMap _groupAnimFileTimestamps;
+  TimestampMap _cubeLightAnimFileTimestamps;
+  TimestampMap _backpackLightAnimFileTimestamps;
 
   // robot configs
   Json::Value _robotMoodConfig;

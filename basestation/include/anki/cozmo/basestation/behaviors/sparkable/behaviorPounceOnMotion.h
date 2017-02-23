@@ -57,9 +57,9 @@ protected:
   Radians _cumulativeTurn_rad;
   
   // Overwritten by config.
-  float _maxTimeSinceNoMotion_running_sec = 30.0;
-  float _maxTimeSinceNoMotion_notRunning_sec = 30.0;
-  float _maxTimeBehaviorTimeout_sec = 30.0;
+  float _maxTimeSinceNoMotion_running_sec = 30.0f;
+  float _maxTimeSinceNoMotion_notRunning_sec = 30.0f;
+  float _maxTimeBehaviorTimeout_sec = 30.0f;
   float _boredomMultiplier = 0.8f;
   float _maxTimeBeforeRotate = 5.f;
   float _oddsOfPouncingOnTurn = 0.0f;
@@ -91,7 +91,7 @@ private:
 
   float _lastTimeRotate;
   float _lastMotionTime;
-  float _startedBehaviorTime_sec = 0;
+  float _startedBehaviorTime_sec = 0.0f;
   State _state = State::Inactive;
   bool  _relaxedLift = false;
   

@@ -181,6 +181,10 @@ namespace Anki {
 
           currDesiredAngle_ = currentAngle_.ToFloat();
           SetDesiredHeight(GetHeightMM());
+#ifdef SIMULATOR
+          // SetDesiredHeight might engage the gripper, but we don't want it engaged right now.
+          HAL::DisengageGripper();
+#endif
         }
       }
 
@@ -376,7 +380,7 @@ namespace Anki {
                                      const f32 accel_rad_per_sec2,
                                      bool useVPG)
       {
-        if (bracing_) {
+        if (!enable_ || bracing_) {
           return;
         }
         

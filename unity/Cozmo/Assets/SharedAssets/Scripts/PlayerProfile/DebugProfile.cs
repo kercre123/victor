@@ -12,6 +12,9 @@ namespace DataPersistence {
     public Dictionary<string, List<FakeTouch>> FakeTouchRecordings;
     public bool NoFreeplayOnStart;
     public bool ShowDroneModeDebugInfo;
+    public bool UseFastConnectivityFlow;
+    public bool OverrideLanguage;
+    public string LanguageSetting;
 
     public DebugProfile() {
       LatencyDisplayEnabled = false;
@@ -21,15 +24,48 @@ namespace DataPersistence {
       ShowDroneModeDebugInfo = false;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
+      DebugConsoleData.Instance.AddConsoleVar("UseFastConnectivityFlow", "QA", this);
+
+      DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
+        OverrideLanguage = false;
+        LanguageSetting = null;
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
+      DebugConsoleData.Instance.AddConsoleFunction("UseEnglish", "Language", (str) => {
+        OverrideLanguage = true;
+        LanguageSetting = "en-US";
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
+      DebugConsoleData.Instance.AddConsoleFunction("UseFrench", "Language", (str) => {
+        OverrideLanguage = true;
+        LanguageSetting = "fr-FR";
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
+      DebugConsoleData.Instance.AddConsoleFunction("UseGerman", "Language", (str) => {
+        OverrideLanguage = true;
+        LanguageSetting = "de-DE";
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
+      DebugConsoleData.Instance.AddConsoleFunction("UseJapanese", "Language", (str) => {
+        OverrideLanguage = true;
+        LanguageSetting = "ja-JP";
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      });
+
       DebugConsoleData.Instance.DebugConsoleVarUpdated += HandleDebugConsoleVarUpdated;
     }
 
     private void HandleDebugConsoleVarUpdated(string varName) {
-      if (varName == "NoFreeplayOnStart") {
+      switch (varName) {
+      case "NoFreeplayOnStart":
         DataPersistence.DataPersistenceManager.Instance.Save();
         if (RobotEngineManager.Instance != null && RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(!NoFreeplayOnStart);
         }
+        break;
+      case "UseFastConnectivityFlow":
+        DataPersistence.DataPersistenceManager.Instance.Save();
+        break;
       }
     }
   }

@@ -10,6 +10,12 @@ namespace FaceEnrollment {
     }
 
     [SerializeField]
+    private GameObject _FaceEnrollmentMultipleFacesErrorSlidePrefab;
+    public GameObject FaceEnrollmentMultipleFacesErrorSlidePrefab {
+      get { return _FaceEnrollmentMultipleFacesErrorSlidePrefab; }
+    }
+
+    [SerializeField]
     private EnterNameSlide _EnterNameSlidePrefab;
     public EnterNameSlide EnterNameSlidePrefab {
       get { return _EnterNameSlidePrefab; }
@@ -34,6 +40,10 @@ namespace FaceEnrollment {
     [SerializeField]
     private FaceDetailsShelfContent _FaceDetailsShelfContentPrefab;
     private FaceDetailsShelfContent _FaceDetailsShelfContentInstance;
+
+    [SerializeField]
+    private FaceMultipleFacesErrorShelfContent _FaceMultipleFacesErrorShelfContentPrefab;
+    private FaceMultipleFacesErrorShelfContent _FaceMultipleFacesErrorShelfContentInstance;
 
     private long _UpdateThresholdLastSeenSeconds;
     public long UpdateThresholdLastSeenSeconds {
@@ -61,12 +71,10 @@ namespace FaceEnrollment {
     }
 
     protected override void AddDisabledReactionaryBehaviors() {
-      // Meet Cozmo has special logic for this stuff so override the base class.
-      // Reactionary behavior and custom freeplay behavior inside of MeetCozmo is set in
-      // FaceSlideState class.
-
-      // Disable ReactToPet to avoid false positive disruptions
+      // Meet cozmo shouldn't use the GameBase reactionary behaviors because it is in a freeplay-like
+      // mode for the behavior chooser "MeetCozmoFindFaces"
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FistBump);
     }
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -123,6 +131,13 @@ namespace FaceEnrollment {
       SharedMinigameView.ShowShelf();
       _FaceDetailsShelfContentInstance = SharedMinigameView.ShelfWidget.SetShelfContent(_FaceDetailsShelfContentPrefab).GetComponent<FaceDetailsShelfContent>();
       _FaceDetailsShelfContentInstance.EraseFacePressed += onDeleteCallback;
+    }
+
+    public void ShowMultipleFacesErrorShelf(string nameForFace, System.Action tryAgainButtonCallback) {
+      SharedMinigameView.ShowShelf();
+      _FaceMultipleFacesErrorShelfContentInstance = SharedMinigameView.ShelfWidget.SetShelfContent(_FaceMultipleFacesErrorShelfContentPrefab).GetComponent<FaceMultipleFacesErrorShelfContent>();
+      _FaceMultipleFacesErrorShelfContentInstance.OnRetryButton += tryAgainButtonCallback;
+      _FaceMultipleFacesErrorShelfContentInstance.SetNameLabel(nameForFace);
     }
 
     public void HandleDetailsViewRequested(int faceID, string nameForFace) {

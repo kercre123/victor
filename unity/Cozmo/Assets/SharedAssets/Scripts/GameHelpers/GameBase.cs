@@ -164,6 +164,8 @@ public abstract class GameBase : MonoBehaviour {
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FacePositionUpdated);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.Frustration);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FistBump);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.RobotPlacedOnSlope);
   }
 
   private void ResetReactionaryBehaviorsForGameEnd() {
@@ -192,7 +194,7 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       CurrentRobot.SetEnableFreeplayLightStates(false);
 
-      if ((CurrentRobot.RobotStatus & RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
+      if (CurrentRobot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
         CurrentRobot.PlaceObjectOnGroundHere((success) => {
           PlayGetInAnimation();
         });
@@ -211,6 +213,12 @@ public abstract class GameBase : MonoBehaviour {
     // Clear Pending Rewards and Unlocks so ChallengeEndedDialog only displays things earned during this game
     RewardedActionManager.Instance.SendPendingRewardsToInventory();
     AddDefaultPlayers();
+  }
+
+  public void PopulateTitleWidget() {
+    ChallengeTitleWidget titleWidget = _SharedMinigameViewInstance.TitleWidget;
+    titleWidget.Text = Localization.Get(_ChallengeData.ChallengeTitleLocKey);
+    titleWidget.SubtitleText = null;
   }
 
   private void PlayGetInAnimation() {
@@ -284,9 +292,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private void InitializeMinigameView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    ChallengeTitleWidget titleWidget = newView.TitleWidget;
-    titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    titleWidget.SubtitleText = null;
+    PopulateTitleWidget();
     newView.ShowQuitButton();
 
     if (data.IsMinigame) {
@@ -309,7 +315,7 @@ public abstract class GameBase : MonoBehaviour {
     if (currentRobot == null) {
       return;
     }
-    if (currentRobot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING) {
+    if (currentRobot.Status(RobotStatusFlag.IS_PICKING_OR_PLACING)) {
       StartCoroutine(WaitForPickingUpOrPlacingFinish(currentRobot, Time.time));
     }
     else {
@@ -320,7 +326,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private IEnumerator WaitForPickingUpOrPlacingFinish(IRobot robot, float startTimestamp) {
-    while (robot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING
+    while (robot.Status(RobotStatusFlag.IS_PICKING_OR_PLACING)
            && (Time.time - startTimestamp) < kWaitForPickupOrPlaceTimeout_sec) {
       yield return new WaitForEndOfFrame();
     }
@@ -329,7 +335,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void CheckForCarryingBlock(IRobot robot) {
-    if (robot.RobotStatus == RobotStatusFlag.IS_CARRYING_BLOCK) {
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
       robot.PlaceObjectOnGroundHere(FinishPlaceObjectOnGround);
     }
     else {
@@ -430,25 +436,6 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Scoring
 
-
-  // Number of Errors made, Error being a player action
-  // that causes failure (not cozmo scoring a point)
-  private int _PlayerMistakeCount;
-  public int PlayerMistakeCount {
-    get {
-      return _PlayerMistakeCount;
-    }
-  }
-
-  // Number of Errors made by cozmo, error being a cozmo
-  // mistake that gives the player points.
-  private int _CozmoMistakeCount;
-  public int CozmoMistakeCount {
-    get {
-      return _CozmoMistakeCount;
-    }
-  }
-
   public int HumanScore {
     get {
       PlayerInfo player = GetFirstPlayerByType(PlayerType.Human);
@@ -487,33 +474,9 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  // The accuracy of the player's attempts to score points
-  public float PlayerAccuracy {
-    get {
-      // If the player didn't score any points without cozmo making a mistake
-      // then they have 0 % accuracy.
-      if (HumanScoreTotal - _CozmoMistakeCount <= 0) {
-        return 0.0f;
-      }
-      // If the player has scored points intentionally, then their accuracy is
-      // equal to their total points scored out of their attempts to score
-      // points.
-      float acc = ((float)HumanScoreTotal / (float)(HumanScoreTotal + _PlayerMistakeCount));
-      return acc;
-    }
-  }
-
   // Points needed to win Round
   [HideInInspector]
   public int MaxScorePerRound;
-
-  public virtual void PlayerMistake() {
-    _PlayerMistakeCount++;
-  }
-
-  public virtual void CozmoMistake() {
-    _CozmoMistakeCount++;
-  }
 
   public void ResetScore() {
     for (int i = 0; i < _PlayerInfo.Count; ++i) {
@@ -1000,7 +963,7 @@ public abstract class GameBase : MonoBehaviour {
     playerScoreboard.IsWinner = didPlayerWin;
   }
 
-  protected virtual void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "") {
+  protected virtual void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "", bool showWinnerTextInShelf = false) {
     SoftEndGameRobotReset();
     _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
@@ -1028,7 +991,12 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView.ShowWinnerStateSlide(DidHumanWin(), winnerText, footerText);
     }
     else {
-      SharedMinigameView.InfoTitleText = winnerText;
+      if (showWinnerTextInShelf) {
+        SharedMinigameView.ShelfWidget.SetWidgetText(winnerText);
+      }
+      else {
+        SharedMinigameView.InfoTitleText = winnerText;
+      }
     }
     _AutoAdvanceTimestamp = Time.time;
   }
@@ -1065,11 +1033,12 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView.HideCozmoScoreboard();
       RewardedActionManager.Instance.PendingActionRewards = RewardedActionManager.Instance.ResolveTagRewardCollisions(RewardedActionManager.Instance.PendingActionRewards);
       DASReportPendingActionRewards();
-      SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
-        Localization.GetWithArgs(LocalizationKeys.kRewardCollectCollectEnergy, RewardedActionManager.Instance.TotalPendingEnergy),
-        Localization.Get(LocalizationKeys.kRewardCollectInstruction),
+      SharedMinigameView.ShowContinueButtonReward(HandleChallengeResultViewClosed,
+        Localization.Get(LocalizationKeys.kRewardCollectCollectEnergyButton),
+        null,
         UIColorPalette.EnergyTextColor,
-        "game_results_continue_button");
+        "game_results_continue_button",
+        RewardedActionManager.Instance.TotalPendingEnergy);
       _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(_ChallengeData);
       _ChallengeEndViewInstance.DisplayRewards();
     }
@@ -1110,7 +1079,6 @@ public abstract class GameBase : MonoBehaviour {
       }
     }
 
-    DAS.Event("game.numplayers", _PlayerInfo.Count.ToString(), DASUtil.FormatExtraData(_ChallengeData.ChallengeID));
     int humanRoundsWon = 0;
     PlayerInfo humanPlayer = GetFirstPlayerByType(PlayerType.Human);
     if (humanPlayer != null) {
@@ -1122,6 +1090,13 @@ public abstract class GameBase : MonoBehaviour {
       humanRoundsWon = robotPlayer.playerRoundsWon;
     }
     DAS.Event("game.end.score", humanRoundsWon.ToString(), DASUtil.FormatExtraData(robotRoundsWon.ToString()));
+
+    if (GetPlayerCount() > 2) {
+      PlayerInfo info = GetPlayerMostRoundsWon();
+      int playerIndex = _PlayerInfo.IndexOf(info);
+      DAS.Event("game.end.MP.winnertype", info.playerType.ToString(), DASUtil.FormatExtraData(playerIndex.ToString()));
+      DAS.Event("game.end.MP.roundsTotal", TotalRounds.ToString());
+    }
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_End);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);

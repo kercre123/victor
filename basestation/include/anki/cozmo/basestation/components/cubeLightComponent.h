@@ -57,7 +57,12 @@ struct ObjectLights {
   u32 rotationPeriod_ms = 0;
   MakeRelativeMode makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   Point2f relativePoint;
+  
+  bool operator==(const ObjectLights& other) const;
+  bool operator!=(const ObjectLights& other) const { return !(*this == other);}
 };
+  
+
 
 // A single light pattern (multiple light patterns make up an animation)
 struct LightPattern
@@ -69,7 +74,7 @@ struct LightPattern
   ObjectLights lights;
   
   // How long this pattern should be played
-  u32 duration_ms;
+  u32 duration_ms = 0;
   
   // Whether or not this pattern can be overridden by another pattern
   bool canBeOverridden = true;
@@ -83,7 +88,10 @@ class CubeLightComponent : private Util::noncopyable
 public:
   CubeLightComponent(Robot& robot, const CozmoContext* context);
   
-  void Update();
+  // Updates the currently playing anims
+  // shouldPickNextAnim determines if we can immediately pick a default anim to
+  // start playing on the State layer should there be no Engine anims left
+  void Update(bool shouldPickNextAnim = true);
   
   using AnimCompletedCallback = std::function<void(void)>;
   
@@ -100,8 +108,21 @@ public:
                      const ObjectLights& modifier = {});
   
   // Stops the specified animation pointed to by the animTrigger on an optional object
+  // and resumes whatever animation was previously playing
   // By default the specified animation is stopped on all objects
-  void StopLightAnim(const CubeAnimationTrigger& animTrigger, const ObjectID& objectID = -1);
+  // Returns true if the animation was stopped
+  bool StopLightAnimAndResumePrevious(const CubeAnimationTrigger& animTrigger,
+                                      const ObjectID& objectID = -1);
+  
+  // Stops the specified animation and immediately plays the animTriggerToPlay without allowing
+  // whatever animation was previously playing from resuming
+  // Returns true if the animation was able to be played
+  bool StopAndPlayLightAnim(const ObjectID& objectID,
+                            const CubeAnimationTrigger& animTriggerToStop,
+                            const CubeAnimationTrigger& animTriggerToPlay,
+                            AnimCompletedCallback callback = {},
+                            bool hasModifier = false,
+                            const ObjectLights& modifier = {});
   
   // Stops all animations on all objects
   void StopAllAnims();
@@ -211,9 +232,13 @@ private:
                      const ObjectLights& modifier = {});
   
   // Stop an animation on a specific layer for an object (or all objects)
-  void StopLightAnim(const CubeAnimationTrigger& animTrigger,
+  // shouldPickNextAnimOnStop determines if we can immediately pick a default anim to
+  // start playing on the State layer should there be no Engine anims left
+  // Returns true if the animation was stopped
+  bool StopLightAnim(const CubeAnimationTrigger& animTrigger,
                      const AnimLayerEnum& layer,
-                     const ObjectID& objectID = -1);
+                     const ObjectID& objectID = -1,
+                     bool shouldPickNextAnim = true);
   
   // Stops all animations on a given layer for an object (or all objects)
   void StopAllAnimsOnLayer(const AnimLayerEnum& layer, const ObjectID& objectID = -1);
@@ -295,6 +320,9 @@ private:
   bool _robotDelocalized = false;
   
   bool _onlyGameLayerEnabledForAll = false;
+  
+  // Whether or not cube sleep is enabled
+  bool _enableCubeSleep = false;
   
 };
 

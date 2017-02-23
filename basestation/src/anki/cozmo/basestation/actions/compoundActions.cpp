@@ -7,6 +7,13 @@
  * Description: Implements compound actions, which are groups of IActions to be
  *              run together in series or in parallel.
  *
+ *              Note about inheriting from CompoundActions
+ *              If you are storing pointers to actions in the compound action
+ *              store them as weak_ptrs returned from AddAction. Once an action
+ *              is added to a compound action, the compound action completely manages
+ *              the action including deleting it
+ *              (see IDriveToInteractWithObject for examples)
+ *
  * Copyright: Anki, Inc. 2014
  **/
 
@@ -52,7 +59,9 @@ namespace Anki {
       }
     }
     
-    void ICompoundAction::AddAction(IActionRunner* action, bool ignoreFailure, bool emitCompletionSignal)
+    std::weak_ptr<IActionRunner> ICompoundAction::AddAction(IActionRunner* action,
+                                                            bool ignoreFailure,
+                                                            bool emitCompletionSignal)
     {
       ShouldIgnoreFailureFcn fcn = nullptr;
       if(ignoreFailure)
@@ -60,10 +69,12 @@ namespace Anki {
         fcn = [](ActionResult, const IActionRunner*) -> bool { return true; };
       }
       
-      AddAction(action, fcn, emitCompletionSignal);
+      return AddAction(action, fcn, emitCompletionSignal);
     }
     
-    void ICompoundAction::AddAction(IActionRunner* action, ShouldIgnoreFailureFcn fcn, bool emitCompletionSignal)
+    std::weak_ptr<IActionRunner> ICompoundAction::AddAction(IActionRunner* action,
+                                                            ShouldIgnoreFailureFcn fcn,
+                                                            bool emitCompletionSignal)
     {
       std::string name = GetName();
       if(_actions.empty()) {
@@ -83,7 +94,9 @@ namespace Anki {
       // compound action)
       action->ShouldEmitCompletionSignal(emitCompletionSignal);
       
-      _actions.emplace_back(action);
+      std::shared_ptr<IActionRunner> sharedPtr(action);
+      
+      _actions.emplace_back(sharedPtr);
       name += action->GetName();
       name += "]";
       
@@ -92,6 +105,8 @@ namespace Anki {
       if(fcn != nullptr) {
         _ignoreFailure[action] = fcn;
       }
+      
+      return std::weak_ptr<IActionRunner>(sharedPtr);
     }
     
     void ICompoundAction::ClearActions()
@@ -106,22 +121,30 @@ namespace Anki {
     {
       for(auto iter = _actions.begin(); iter != _actions.end();)
       {
+        // This will assert if someone is storing a shared_ptr to this action
+        // (locked the weak_ptr returned from AddAction) and has not yet released it
+        DEV_ASSERT(iter->unique(), "ICompoundAction.DeleteActions.ActionPtrHasMulipleOwners");
+        
+        std::shared_ptr<IActionRunner> action = *iter;
+        assert(action != nullptr);
+        
         // Because we need to unlock tracks when we would have normally deleted the action
         // (which unlocks the tracks) we now need to relock the tracks so that they can be unlocked
         // normally by the action destructor
         // Also, only lock tracks if they aren't already locked as we will get only one unlock from the action destructor
         if(!_deleteActionOnCompletion)
         {
-          if((*iter)->GetState() != ActionResult::NOT_STARTED &&
-             !(*iter)->IsSuppressingTrackLocking() &&  !_robot.GetMoveComponent().AreAllTracksLockedBy((*iter)->GetTracksToLock(), std::to_string((*iter)->GetTag())))
+          if(action->GetState() != ActionResult::NOT_STARTED &&
+             !action->IsSuppressingTrackLocking() &&
+             !_robot.GetMoveComponent().AreAllTracksLockedBy(action->GetTracksToLock(),
+                                                             std::to_string((*iter)->GetTag())))
           {
-            _robot.GetMoveComponent().LockTracks((*iter)->GetTracksToLock(), (*iter)->GetTag(), (*iter)->GetName());
+            _robot.GetMoveComponent().LockTracks(action->GetTracksToLock(), action->GetTag(), action->GetName());
           }
         }
-        assert((*iter) != nullptr);
+        
         // TODO: issue a warning when a group is deleted without all its actions completed?
-        (*iter)->PrepForCompletion();
-        Util::SafeDelete(*iter);
+        action->PrepForCompletion();
         iter = _actions.erase(iter);
       }
     }
@@ -131,9 +154,10 @@ namespace Anki {
       _deleteActionOnCompletion = deleteOnCompletion;
       
       // Need to go through all of our subactions and update _deleteOnCompletion for any compound actions
-      for(auto* action : _actions)
+      for(auto& action : _actions)
       {
-        ICompoundAction* compound = dynamic_cast<ICompoundAction*>(action);
+        // TODO (Al): Remove this and similar dynamic_casts with COZMO-9468
+        ICompoundAction* compound = dynamic_cast<ICompoundAction*>(action.get());
         if(compound != nullptr)
         {
           compound->SetDeleteActionOnCompletion(deleteOnCompletion);
@@ -141,8 +165,12 @@ namespace Anki {
       }
     }
     
-    void ICompoundAction::StoreUnionAndDelete(std::list<IActionRunner*>::iterator& currentAction)
+    void ICompoundAction::StoreUnionAndDelete(std::list<std::shared_ptr<IActionRunner>>::iterator& currentAction)
     {
+      // This will assert if someone is storing a shared_ptr to this action
+      // (locked the weak_ptr returned from AddAction) and has not yet released it
+      DEV_ASSERT(currentAction->unique(), "ICompoundAction.StoreUnionAndDelete.ActionPtrHasMulipleOwners");
+      
       // Store this actions completion union before deleting it
       ActionCompletedUnion actionUnion;
       (*currentAction)->GetCompletionUnion(actionUnion);
@@ -164,7 +192,6 @@ namespace Anki {
       
       if(_deleteActionOnCompletion)
       {
-        Util::SafeDelete(*currentAction);
         currentAction = _actions.erase(currentAction);
       }
       else
@@ -177,10 +204,11 @@ namespace Anki {
     }
 
     
-    bool ICompoundAction::ShouldIgnoreFailure(ActionResult result, const IActionRunner* action) const
+    bool ICompoundAction::ShouldIgnoreFailure(ActionResult result,
+                                              const std::shared_ptr<IActionRunner>& action) const
     {
       // We should ignore this action's failure if it's in our ignore set
-      auto fcnIter = _ignoreFailure.find(action);
+      auto fcnIter = _ignoreFailure.find(action.get());
       if(fcnIter == _ignoreFailure.end())
       {
         // There's no ignore function, so assume we should _not_ ignore failures
@@ -188,7 +216,7 @@ namespace Anki {
       }
       else
       {
-        return fcnIter->second(result, action);
+        return fcnIter->second(result, action.get());
       }
     }
     
@@ -255,14 +283,14 @@ namespace Anki {
       _wasJustReset = true;
     }
     
-    ActionResult CompoundActionSequential::MoveToNextAction(double currentTime)
+    ActionResult CompoundActionSequential::MoveToNextAction(float currentTime_secs)
     {
       ActionResult subResult = ActionResult::SUCCESS;
       
       if(_delayBetweenActionsInSeconds > 0.f) {
         // If there's a delay specified, figure out how long we need to
         // wait from now to start next action
-        _waitUntilTime = currentTime + _delayBetweenActionsInSeconds;
+        _waitUntilTime = currentTime_secs + _delayBetweenActionsInSeconds;
       }
       
       // Store this actions completion union and delete _currentActionPair
@@ -274,7 +302,7 @@ namespace Anki {
           RunCallbacks(ActionResult::SUCCESS);
         }
         return ActionResult::SUCCESS;
-      } else if(currentTime >= _waitUntilTime) {
+      } else if(currentTime_secs >= _waitUntilTime) {
         PRINT_NAMED_INFO("CompoundActionSequential.Update.NextAction",
                          "Moving to action %s [%d]",
                          (*_currentAction)->GetName().c_str(),
@@ -339,8 +367,8 @@ namespace Anki {
         // If the compound action is suppressing track locking then the constituent actions should too
         (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
         
-        double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
+        const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        if(_waitUntilTime < 0.0f || currentTime >= _waitUntilTime)
         {
           ActionResult subResult = (*_currentAction)->Update();
           SetStatus((*_currentAction)->GetStatus());

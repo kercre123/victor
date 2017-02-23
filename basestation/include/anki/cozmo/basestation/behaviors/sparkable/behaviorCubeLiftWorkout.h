@@ -69,6 +69,7 @@ protected:
   bool _shouldBeCarrying = false;
 
   ObjectID _targetBlockID;
+  unsigned int _failToPickupCount;
 };
 
 }

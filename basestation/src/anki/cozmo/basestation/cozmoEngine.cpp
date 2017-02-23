@@ -139,8 +139,8 @@ CozmoEngine::~CozmoEngine()
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
     Anki::Util::gTickTimeProvider = nullptr;
   }
-  
   BaseStationTimer::removeInstance();
+  
   _context->GetVizManager()->Disconnect();
 }
 
@@ -303,7 +303,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ResetFirmware& msg)
   }
 }
 
-Result CozmoEngine::Update(const float currTime_sec)
+Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 {
   ANKI_CPU_PROFILE("CozmoEngine::Update");
   
@@ -329,7 +329,7 @@ Result CozmoEngine::Update(const float currTime_sec)
   {
     static bool firstUpdate = true;
     static double lastUpdateTimeMs = 0.0;
-    //const double currentTimeMs = (double)currTime_sec * 1e+3;
+    //const double currentTimeMs = (double)currTime_nanosec / 1e+6;
     if (! firstUpdate)
     {
       const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
@@ -380,7 +380,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     case EngineState::Running:
     {
       // Update time
-      BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(currTime_sec));
+      BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
       
       _context->GetRobotManager()->UpdateRobotConnection();
       
@@ -389,7 +389,6 @@ Result CozmoEngine::Update(const float currTime_sec)
       _context->GetRobotManager()->UpdateAllRobots();
       
       UpdateLatencyInfo();
-
       break;
     }
     case EngineState::UpdatingFirmware:
@@ -398,12 +397,10 @@ Result CozmoEngine::Update(const float currTime_sec)
       _context->GetRobotManager()->UpdateRobotConnection();
       
       // Update the firmware updating, returns true when complete (error or success)
-      
       if (_context->GetRobotManager()->UpdateFirmware())
       {
         SetEngineState(EngineState::Running);
       }
-      
       break;
     }
     default:

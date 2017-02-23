@@ -31,16 +31,17 @@ namespace Cozmo {
 
 namespace{
 CONSOLE_VAR(f32, kBPW_ScoreIncreaseForAction, "Behavior.PopAWheelie", 0.8f);
-CONSOLE_VAR(f32, kBPW_MaxTowardFaceAngle_deg, "Behavior.PopAWheelie", 90.f);
 CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
  
 static std::set<ReactionTrigger> kReactionsToDisable = {
   ReactionTrigger::CliffDetected,
+  ReactionTrigger::FistBump,
   ReactionTrigger::RobotPickedUp,
   ReactionTrigger::RobotOnBack,
   ReactionTrigger::CubeMoved,
   ReactionTrigger::UnexpectedMovement,
-  ReactionTrigger::ReturnedToTreads
+  ReactionTrigger::ReturnedToTreads,
+  ReactionTrigger::DoubleTapDetected
 };
 
 }
@@ -136,10 +137,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   auto disableCliff = [this](Robot& robot) {
     // disable reactions we don't want
     this->SmartDisableReactionTrigger(kReactionsToDisable);
-    
-    // Wheelies (or the animation afterwards) sometimes cause false double tap events, so disable tap
-    // interaction until the behavior is complete
-    SmartDisableTapInteraction();
     
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;
@@ -254,6 +251,6 @@ void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
   }
 }
-
+  
 }
 }

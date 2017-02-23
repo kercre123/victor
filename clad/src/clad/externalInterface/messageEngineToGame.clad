@@ -15,6 +15,7 @@
 #include "clad/types/deviceDataTypes.clad"
 #include "clad/types/engineErrorCodes.clad"
 #include "clad/types/engineState.clad"
+#include "clad/types/faceDetectionMetaData.clad"
 #include "clad/types/faceEnrollmentResult.clad"
 #include "clad/types/facialExpressions.clad"
 #include "clad/types/factoryTestTypes.clad"
@@ -23,6 +24,7 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/loadedKnownFace.clad"
+#include "clad/types/logLevels.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/objectFamilies.clad"
@@ -284,7 +286,13 @@ message RobotObservedFace {
     CladRect      img_rect,       // position in image coords
     string        name,           // Empty if none assigned yet
 
-    Vision::FacialExpression expression,
+    Vision::FacialExpression  expression,
+    Vision::SmileAmount       smileAmount,
+    Vision::Gaze              gaze,
+    Vision::BlinkAmount       blinkAmount,
+
+    // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
+    uint_8        expressionValues[5], // One value for each of FacialExpression::Count enum types
 
     // Face landmarks
     CladPoint2d   leftEye[uint_8],
@@ -352,7 +360,8 @@ message CreatedFixedCustomObject {
 
 // DefinedCustomObject
 message DefinedCustomObject {
-    uint_32 robotID
+    uint_32 robotID,
+    bool success     // false if the last custom object definition failed (e.g. due to duplicate marker already in use)
 }
 
 // RobotMarkedObjectPoseUnknown
@@ -522,19 +531,20 @@ message JsonDasLogAllSentMessage {
 
 message VerifyDebugConsoleFuncMessage {
   string funcName,
-  string statusMessage,
+  string[uint_16] statusMessage,
   bool success
 }
 
 message VerifyDebugConsoleVarMessage {
   string varName,
-  string statusMessage,
+  string[uint_16] statusMessage,
   ConsoleVarUnion varValue,
   bool success
 }
 
 message DebugAppendConsoleLogLine {
-  string line
+  string[uint_16] line,
+  LogLevel logLevel
 }
 
 structure TimingInfo
@@ -687,7 +697,9 @@ message BehaviorTransition{
   string oldBehaviorName,
   string newBehaviorName,
   BehaviorClass oldBehaviorClass,
+  ExecutableBehaviorType oldBehaviorExecType,
   BehaviorClass newBehaviorClass,
+  ExecutableBehaviorType newBehaviorExecType,
   string newBehaviorDisplayKey
 }
 
@@ -705,6 +717,11 @@ message RespondEnabledBehaviorList{
 
 message BehaviorObjectiveAchieved{
   BehaviorObjective behaviorObjective
+}
+
+// notify game that build pyramid spark prerequisites have been met/not met
+message BuildPyramidPreReqsChanged{
+  bool areCubesUpright
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -725,7 +742,48 @@ enum uint_8 OnboardingStateEnum
 }
 
 message OnboardingState {
-OnboardingStateEnum stateNum
+  OnboardingStateEnum stateNum
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////  MEMORY MAP DATA  ///////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// We are about to send one or several messages with memory map info
+message MemoryMapMessageBegin
+{
+  uint_32  originId,
+  int_32   rootDepth,
+  float_32 rootSize_mm
+}
+
+enum uint_8 ENodeContentTypeEnum
+{
+  Unknown,
+  ClearOfObstacle,
+  ClearOfCliff,
+  ObstacleCube,
+  ObstacleCharger,
+  Cliff,
+  VisionBorder
+}
+
+// Info about an individual quad in the memory map
+structure MemoryMapQuadInfo
+{
+  ENodeContentTypeEnum content,
+  uint_8               depth
+}
+
+// A group of quad infos
+message MemoryMapMessage
+{
+  MemoryMapQuadInfo quadInfos[uint_16]
+}
+
+// We finished sending memory map messages
+message MemoryMapMessageEnd
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////

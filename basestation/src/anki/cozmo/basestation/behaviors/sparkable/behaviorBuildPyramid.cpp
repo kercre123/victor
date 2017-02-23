@@ -30,29 +30,36 @@
 namespace Anki {
 namespace Cozmo {
 const int kMaxSearchCount = 1;
-const float kWaitForDenouement_sec = 0.75;
-
+    
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace{
-  RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
-  {
-    animTrigger = AnimationTrigger::Count;
-    return true;
-  };
+RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
+{
+  animTrigger = AnimationTrigger::Count;
+  return true;
+};
   
 static const float kTimeObjectInvalidAfterAnyFailure_sec = 30.0f;
+static const float kBackupDistCheckTopBlock_mm = 20.0f;
+static const float kBackupSpeedCheckTopBlock_mm_s = 20.0f;
+static const float kHeadAngleCheckTopBlock_rad = DEG_TO_RAD(25);
+static const float kLiftHeightCheckTopBlock_mm = 0;
+static const float kWaitForVisualTopBlock_sec = 1;
+static const float kHeadBottomCheckTopBlock_rad = DEG_TO_RAD(15);
+
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& config)
 : BehaviorBuildPyramidBase(robot, config)
-, _searchingForNearbyBaseCount(0)
 , _searchingForTopBlockCount(0)
 {
   SetDefaultName("BuildPyramid");
   _continuePastBaseCallback =  std::bind(&BehaviorBuildPyramid::TransitionToDrivingToTopBlock, (this), std::placeholders::_1);
+  
 }
-
+    
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
@@ -100,7 +107,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
     
     allSetAndUsable = allSetAndUsable && !hasStaticFailed && !hasBaseFailed && !hasTopFailed;
   }
-  return allSetAndUsable && AreAllBlockIDsUnique();
+  return allSetAndUsable;
 }
 
   
@@ -118,21 +125,17 @@ Result BehaviorBuildPyramid::InitInternal(Robot& robot)
   }else{
     _checkForFullPyramidVisualVerifyFailure = false;
   }
-  
-  
+    
   const auto& pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   _lastBasesCount = 0;
-  _searchingForNearbyBaseCount = 0;
   _searchingForTopBlockCount = 0;
-  if(pyramidBases.size() > 0){
-    SetPyramidBaseLights();
+  if(!pyramidBases.empty() || !pyramids.empty()){
     if(!robot.IsCarryingObject()){
       TransitionToDrivingToTopBlock(robot);
     }else{
       TransitionToPlacingTopBlock(robot);
     }
   }else{
-    SetPickupInitialBlockLights();
     if(!robot.IsCarryingObject()){
       TransitionToDrivingToBaseBlock(robot);
     }else{
@@ -142,6 +145,8 @@ Result BehaviorBuildPyramid::InitInternal(Robot& robot)
   return Result::RESULT_OK;
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramid::StopInternal(Robot& robot)
 {
   ResetPyramidTargets(robot);
@@ -152,9 +157,11 @@ void BehaviorBuildPyramid::StopInternal(Robot& robot)
 void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 {
   SET_STATE(DrivingToTopBlock);
-  UpdateAudioState(std::underlying_type<MusicState>::type(MusicState::BaseFormed));
 
-  DriveToPickupObjectAction* driveAction = new DriveToPickupObjectAction(robot, _topBlockID);
+  DriveToPickupObjectAction* driveAction =
+     new DriveToPickupObjectAction(robot, _topBlockID,
+                                false, 0, false, 0, false, // default values
+                                AnimationTrigger::BuildPyramidThirdBlockUpright);
   
   StartActing(driveAction,
               [this, &robot](const ActionResult& result){
@@ -176,7 +183,6 @@ void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 {
   SET_STATE(PlacingTopBlock);
-  UpdateAudioState(std::underlying_type<MusicState>::type(MusicState::TopBlockCarry));
   SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
   
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
@@ -220,59 +226,37 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
                   [this, &robot](const ActionResult& result){
                     if (result == ActionResult::SUCCESS) {
                       TransitionToReactingToPyramid(robot);
-                    }else{
-                      if(_searchingForNearbyBaseCount < kMaxSearchCount){
-                        _searchingForNearbyBaseCount++;
-                        _checkForFullPyramidVisualVerifyFailure = true;
-                        TransitionToSearchingWithCallback(robot, _staticBlockID,
-                              &BehaviorBuildPyramid::TransitionToPlacingTopBlock);
-                      }
+                    }else if(!robot.IsCarryingObject()){
+                      _checkForFullPyramidVisualVerifyFailure = true;
+                      // This will be removed by a helper soon - hopefully....
+                      CompoundActionParallel* checkForTopBlock =
+                      new CompoundActionParallel(robot,{
+                        new DriveStraightAction(robot, -kBackupDistCheckTopBlock_mm,
+                                                kBackupSpeedCheckTopBlock_mm_s, false),
+                        new MoveHeadToAngleAction(robot, kHeadAngleCheckTopBlock_rad),
+                        new MoveLiftToHeightAction(robot, kLiftHeightCheckTopBlock_mm)
+                      });
+                      CompoundActionSequential* scanForPyramid = new CompoundActionSequential(robot);
+                      scanForPyramid->AddAction(checkForTopBlock);
+                      scanForPyramid->AddAction(new WaitAction(robot, kWaitForVisualTopBlock_sec));
+                      scanForPyramid->AddAction(new MoveHeadToAngleAction(robot, kHeadBottomCheckTopBlock_rad));
+                      StartActing(scanForPyramid);
                     }
                   });
     }
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramid::TransitionToReactingToPyramid(Robot& robot)
 {
   SET_STATE(ReactingToPyramid);
-  UpdateAudioState(static_cast<int>(MusicState::PyramidCompleteFlourish));
-  
-  SetFullPyramidLights();
-
-  StartActing( new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess),
-              [this, &robot](const ActionResult& result){
-                SetPyramidFlourishLights();
-                StartActing(new WaitAction(robot, kWaitForDenouement_sec));
-                BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);
-              });
-  
+  BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);
+  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess));
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID BehaviorBuildPyramid::GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const
-{
-  f32 shortestDistance = -1.f;
-  f32 currentDistance = -1.f;
-  ObjectID nearestObject;
-  
-  //Find nearest block to pickup
-  for(auto block: allBlocks){
-    auto blockPose = block->GetPose().GetWithRespectToOrigin();
-    ComputeDistanceBetween(pose, blockPose, currentDistance);
-    if(currentDistance < shortestDistance || shortestDistance < 0){
-      shortestDistance = currentDistance;
-      nearestObject = block->GetID();
-    }
-  }
-  
-  return nearestObject;
-}
-  
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
 void BehaviorBuildPyramid::TransitionToSearchingWithCallback(Robot& robot,
@@ -280,9 +264,12 @@ void BehaviorBuildPyramid::TransitionToSearchingWithCallback(Robot& robot,
                                                              void(T::*callback)(Robot&))
 {
   SET_STATE(SearchingForObject);
+  
+  auto searchNearby = new SearchForNearbyObjectAction(robot, objectID);
+  
   CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
   compoundAction->AddAction(new TurnTowardsObjectAction(robot, objectID, M_PI), true);
-  compoundAction->AddAction(new SearchForNearbyObjectAction(robot, objectID));
+  compoundAction->AddAction(searchNearby);
   StartActing(compoundAction, callback);
 }
 

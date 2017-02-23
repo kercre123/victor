@@ -44,98 +44,79 @@ static const std::set<ReactionTrigger> kBehaviorsToDisable = {ReactionTrigger::C
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _internalScore(0.0f)
 {
   SetDefaultName("DriveOffCharger");
   float extraDist_mm = config.get(kExtraDriveDistKey, 0.0f).asFloat();
   _distToDrive_mm = Charger::GetLength() + extraDist_mm;
-
-  SubscribeToTags({
-    EngineToGameTag::ChargerEvent,
-  });
   
-  PRINT_NAMED_DEBUG("BehaviorDriveOffCharger.DriveDist",
-                    "Driving %fmm off the charger (%f length + %f extra)",
-                    _distToDrive_mm,
-                    Charger::GetLength(),
-                    extraDist_mm);
+  PRINT_CH_DEBUG("Behaviors", "BehaviorDriveOffCharger.DriveDist",
+                 "Driving %fmm off the charger (%f length + %f extra)",
+                 _distToDrive_mm,
+                 Charger::GetLength(),
+                 extraDist_mm);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveOffCharger::IsRunnableInternal(const BehaviorPreReqRobot& preReqData ) const
 {
   // assumes it's not possible to be OnCharger without being OnChargerPlatform
-  //ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
-  //             "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
+  const Robot& robot = preReqData.GetRobot();
+  DEV_ASSERT(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
+             "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
+
+  // can run any time we are on the charger platform
   
-  // can run any time we are on the charger
-  // rsam: the reason why I changed from platform to onCharger is that because Cozmo can run onto the platform
-  // accidentaly while driving around in freeplay. This was causing him to sprint forward for no apparent reason
-  // since this behavior has high priority
-  const bool onCharger = preReqData.GetRobot().IsOnCharger();
-  return onCharger;
+  // bn: this used to be "on charger platform", but that caused weird issues when the robot thought it drove
+  // over the platform later due to mis-localization. Then this changed to "on charger" to avoid those issues,
+  // but that caused other issues (if the robot was bumped during wakeup, it wouldn't drive off the
+  // charger). Now, we've gone back to OnChargerPlatofrm but fixed it to work better (see the comments in
+  // robot.h)
+  const bool onChargerPlatform = robot.IsOnChargerPlatform();
+  return onChargerPlatform;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 {
-  TransitionToDrivingForward(robot);
-  _timesResumed = 0;
-  
   //Disable Cliff Reaction during behavior
   SmartDisableReactionTrigger(kBehaviorsToDisable);
 
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartLaunch,
+                                                            AnimationTrigger::DriveLoopLaunch,
+                                                            AnimationTrigger::DriveEndLaunch});
+
+  const bool onTreads = robot.GetOffTreadsState() == OffTreadsState::OnTreads;
+  if( onTreads ) {
+    TransitionToDrivingForward(robot);
+  }
+  else {
+    // otherwise we'll just wait in Update until we are on the treads (or removed from the charger)
+    DEBUG_SET_STATE(WaitForOnTreads);
+  }
+  
   return Result::RESULT_OK;
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::StopInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
 }
-
-
-Result BehaviorDriveOffCharger::ResumeInternal(Robot& robot)
-{
-  // We hit the end of the charger, just keep driving.
-  TransitionToDrivingForward(robot);
-  return Result::RESULT_OK;
-}
-
-  
+    
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveOffCharger::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
-{
-  bool onCharger;
-  
-  switch(event.GetData().GetTag()){
-    case EngineToGameTag::ChargerEvent:
-      onCharger = event.GetData().Get_ChargerEvent().onCharger;
-      if(onCharger){
-        _internalScore = 1000.0f;
-      }
-    default:
-      break;
-  }
-}
-  
-float BehaviorDriveOffCharger::EvaluateScoreInternal(const Robot& robot) const
-{
-  if(robot.GetOffTreadsState() != OffTreadsState::OnTreads){
-    return 0.f;
-  }
-  
-  return _internalScore;
-}
-
-
-  
 IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
 {
-  // Emergency counter for demo rare bug. Usually we just get the chargerplatform message.
-  // HACK: figure out why IsOnChargerPlatform might be incorrect.
-  if( robot.IsOnChargerPlatform() && _timesResumed <= 2)
-  {
-    if( ! IsActing() ) {
+
+  if( robot.IsOnChargerPlatform() ) {
+    const bool onTreads = robot.GetOffTreadsState() == OffTreadsState::OnTreads;
+    if( !onTreads ) {
+      // if we aren't on the treads anymore, but we are on the charger, then the user must be holding us
+      // inside the charger.... so just sit in this behavior doing nothing until we get put back down
+      StopActing(false);
+      DEBUG_SET_STATE(WaitForOnTreads);
+      // TODO:(bn) play an idle here?
+    }
+    else if( ! IsActing() ) {
       // if we finished the last action, but are still on the charger, queue another one
       TransitionToDrivingForward(robot);
     }
@@ -147,27 +128,22 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
     // let the action finish
     return Status::Running;
   }
-  else {
-  
+  else {  
     // store in whiteboard our success
-    const float curTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     robot.GetAIComponent().GetWhiteboard().GotOffChargerAtTime( curTime );
-    _internalScore = 0.0f;
 
     return Status::Complete;
   }
 }
+  
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
 {
   DEBUG_SET_STATE(DrivingForward);
   if( robot.IsOnChargerPlatform() )
   {
-    _timesResumed++;
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartLaunch,
-                                                              AnimationTrigger::DriveLoopLaunch,
-                                                              AnimationTrigger::DriveEndLaunch});
     // probably interrupted by getting off the charger platform
     DriveStraightAction* action = new DriveStraightAction(robot, _distToDrive_mm, kInitialDriveSpeed);
     action->SetAccel(kInitialDriveAccel);
@@ -178,7 +154,6 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
       }
     });
     // the Update function will transition back to this state (or out of the behavior) as appropriate
-
   }
 }
 

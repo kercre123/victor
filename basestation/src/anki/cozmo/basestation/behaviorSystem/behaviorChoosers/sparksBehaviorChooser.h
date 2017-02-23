@@ -10,10 +10,11 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_SparksBehaviorChooser_H__
-#define __Cozmo_Basestation_SparksBehaviorChooser_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SparksBehaviorChooser_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SparksBehaviorChooser_H__
 
 #include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
 #include "clad/types/behaviorObjectives.h"
 #include "json/json-forwards.h"
 #include "simpleBehaviorChooser.h"
@@ -70,6 +71,7 @@ private:
   void CheckIfSparkShouldEnd();
   void CompleteSparkLogic();
   void ResetLightsAndAnimations();
+  void SmartRequestEnableReactionTrigger(const ReactionTrigger& trigger, bool enable);
   
   enum class ChooserState{
     ChooserSelected,
@@ -84,7 +86,8 @@ private:
   
   ChooserState _state;
   std::vector<Signal::SmartHandle> _signalHandles;
-  
+  std::set<ReactionTrigger> _reactionsDynamicallyDisabled;
+
   // Created with factory
   BehaviorPlayArbitraryAnim* _behaviorPlayAnimation = nullptr;
   // To clear objects to be acknowledged when sparked
@@ -105,7 +108,6 @@ private:
   AnimationTrigger _sparksSuccessTrigger;
   AnimationTrigger _sparksFailTrigger;
 
-  
   // Special re-start indicator
   TimeStamp_t _timePlayingOutroStarted;
   bool _switchingToHardSpark;
@@ -115,6 +117,17 @@ private:
 
   // Track when we saw cubes to determine if we saw them during the spark
   std::set< ObjectID > _observedObjectsSinceStarted;
+  
+  // A behavior chooser that can be set by a spark to delegate selection
+  // to once the intro has finished as part of the sparksChooser
+  std::unique_ptr<IBehaviorChooser> _simpleBehaviorChooserDelegate;
+  
+  BackpackLightDataLocator  _bodyLightDataLocator{};
+  
+  IBehavior* SelectNextSparkInternalBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
+
+  
+  
   
 };
    

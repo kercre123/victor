@@ -97,27 +97,29 @@ void PotentialObjectsForLocalizingTo::UpdateMatchedObjectPose(ObservedAndMatched
 
 bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObject>& observedObject,
                                              ObservableObject* matchedObject,
-                                             f32 observedDistance)
+                                             f32 observedDistance_mm)
 {
   ObservedAndMatchedPair newPair{
     .observedObject = observedObject,
     .matchedObject  = matchedObject,
-    .distance       = observedDistance,
+    .distance       = observedDistance_mm,
   };
   
   const PoseOrigin* matchedOrigin = &newPair.matchedObject->GetPose().FindOrigin();
   
   // Don't bother if the matched object doesn't pass these up-front checks:
   const bool couldUseForLocalization = CouldUseObjectForLocalization(matchedObject);
-  if(!_kCanRobotLocalizeToObjects || !couldUseForLocalization)
+  const bool seeingFromTooFar = Util::IsFltGT(observedDistance_mm, observedObject->GetMaxLocalizationDistance_mm());
+  if(!_kCanRobotLocalizeToObjects || !couldUseForLocalization || seeingFromTooFar)
   {
     VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.NotUsing",
-                        "Matched %s %d at dist=%.1f. IsLocalizationToObjectsPossible=%d, CouldUsePair=%d",
+                        "Matched %s %d at dist=%.1f. IsLocalizationToObjectsPossible=%d, CouldUsePair=%d, TooFar=%d",
                         EnumToString(matchedObject->GetType()),
                         matchedObject->GetID().GetValue(),
-                        observedDistance,
+                        observedDistance_mm,
                         _kCanRobotLocalizeToObjects,
-                        couldUseForLocalization);
+                        couldUseForLocalization,
+                        seeingFromTooFar);
     
     // Since we're not storing this pair, update pose if in the current frame
     if(matchedOrigin == _currentWorldOrigin) {

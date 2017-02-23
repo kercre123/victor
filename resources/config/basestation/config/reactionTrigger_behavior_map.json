@@ -5,6 +5,51 @@
       "behaviorName": "AcknowledgeFace"
     },
     {
+      "reactionTrigger": "FistBump",
+      "behaviorName": "FistBump",
+      "behaviorObjectiveTriggerParams": [
+        {
+          // The behavior objective that can trigger a fist bump
+          "behaviorObjective": "StackedBlock",
+                                         
+          // Amount of time that must have passed since the last time a fist bump
+          // was completed before this trigger can cause another fist bump.
+          "triggerCooldownTime_s": 180.0,
+                                         
+          // Likelihood of the trigger causing fist bump once cooldown time has expired
+          "triggerProbability": 0.2,
+                                    
+          // If trigger is not able to start fist bump in this amount of time, it expires.
+          // It looks weird if fist bump starts too long after the event that was supposed to trigger it.
+          "triggerExpiration_s": 3.0
+        },
+        {
+          "behaviorObjective": "BuiltPyramid",
+          "triggerCooldownTime_s": 180.0,
+          "triggerProbability": 0.5,
+          "triggerExpiration_s": 3.0
+        },
+        {
+          "behaviorObjective": "InteractedWithFace",
+          "triggerCooldownTime_s": 300.0,
+          "triggerProbability": 0.2,
+          "triggerExpiration_s": 3.0
+        },
+        {
+          "behaviorObjective": "PerformedStrongWorkout",
+          "triggerCooldownTime_s": 180.0,
+          "triggerProbability": 0.5,
+          "triggerExpiration_s": 3.0
+        },
+        {
+          "behaviorObjective": "PoppedWheelie",
+          "triggerCooldownTime_s": 180.0,
+          "triggerProbability": 0.2,
+          "triggerExpiration_s": 6.0
+        }
+      ]
+    },
+    {
       "reactionTrigger": "ObjectPositionUpdated",
       "behaviorName": "AcknowledgeObject"
     },
@@ -50,6 +95,10 @@
     {
       "reactionTrigger": "RobotPickedUp",
       "behaviorName": "reactToPickup"
+    },
+    {
+      "reactionTrigger": "RobotPlacedOnSlope",
+      "behaviorName": "reactToPlacedOnSlope"
     },
     {
       "reactionTrigger": "PyramidInitialDetection",

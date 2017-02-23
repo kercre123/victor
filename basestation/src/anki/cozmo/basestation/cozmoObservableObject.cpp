@@ -1,0 +1,29 @@
+/**
+ * File: cozmoObservableObject.pp
+ *
+ * Author: Andrew Stein
+ * Date:   2/21/2017
+ *
+ * Description: 
+ *
+ * Copyright: Anki, Inc. 2017
+ **/
+
+#include "anki/cozmo/basestation/cozmoObservableObject.h"
+
+#include "util/console/consoleInterface.h"
+
+namespace Anki {
+namespace Cozmo {
+  
+// Only localize to / identify active objects within this distance
+CONSOLE_VAR_RANGED(f32, kMaxLocalizationDistance_mm, "PoseConfirmation", 250.f, 50.f, 1000.f);
+
+  
+f32 ObservableObject::GetMaxLocalizationDistance_mm()
+{
+  return kMaxLocalizationDistance_mm;
+}
+  
+} // namespace Cozmo
+} // namespace Anki

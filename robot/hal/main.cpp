@@ -127,7 +127,7 @@ int main (void)
   RCM_RPFW = 16;
 
   // Workaround a hardware bug (missing pull-down) until UARTInit gets called much later
-  SOURCE_SETUP(GPIO_BODY_UART_TX, SOURCE_BODY_UART_TX, SourceGPIO | SourcePullDown);
+  SOURCE_SETUP(BODY_UART_TX, SourceGPIO | SourcePullDown);
   
   Watchdog::init();
   Power::enableExternal();

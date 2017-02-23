@@ -102,6 +102,7 @@ namespace Cozmo.HomeHub {
     private GameObjectDataLink _LootViewPrefabData;
 
     private bool _LootSequenceActive = false;
+    private bool _RewardSequenceActive = false;
     private System.Diagnostics.Stopwatch _Stopwatch = null;
     private string _CurrentChallengeId = null;
 
@@ -255,6 +256,19 @@ namespace Cozmo.HomeHub {
 
       // Start listening for Battery Level popups now that HomeView is fully initialized
       PauseManager.Instance.ListeningForBatteryLevel = true;
+
+      DialogOpenAnimationFinished += HandleViewOpenFinished;
+    }
+
+    private void HandleViewOpenFinished() {
+      // Because the reward sequence before lootview isn't really a dialog
+      // and because DisableTouchEvents isn't ref counted we have a problem with a race condition
+      // if we realize they need to open loot in that the lootview needs full control as is pretty fragile
+      // Revist this when redoing lootview UI, so this just disables again since Finishing open animation re-enables input
+      // even though CheckForRewardSequence might have disabled it on purpose.
+      if (_RewardSequenceActive) {
+        UIManager.DisableTouchEvents();
+      }
     }
 
     private void HandleBlockConnectivityChanged(int blocksConnected) {
@@ -438,6 +452,12 @@ namespace Cozmo.HomeHub {
     }
 
     public void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
+      // This is still needed because if you click on a challenge after the rewards is finshed,
+      // but before the asset bundle is done loading the game dialog will come up before loot.
+      // and loot will be stuck.
+      if (_LootSequenceActive) {
+        return;
+      }
       if (OnUnlockedChallengeClicked != null) {
         OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
       }
@@ -466,7 +486,9 @@ namespace Cozmo.HomeHub {
           }
         }
 
-        goalProgressText = Localization.GetWithArgs(LocalizationKeys.kLabelFractionCount, goalsCompleted, totalGoals);
+        goalProgressText = Localization.GetWithArgs(LocalizationKeys.kLabelFractionCount,
+                                                    Localization.GetNumber(goalsCompleted),
+                                                    Localization.GetNumber(totalGoals));
       }
 
       foreach (AnkiTextLabel textLabel in _DailyGoalsCompletionTexts) {
@@ -545,6 +567,7 @@ namespace Cozmo.HomeHub {
         // If Rewards are pending, set sequence to active, shut down input until everything is done
         StartCoroutine(BurstEnergyAfterInit());
         UIManager.DisableTouchEvents();
+        _RewardSequenceActive = true;
       }
       else if (ChestRewardManager.Instance.ChestPending) {
         HandleCheckForLootView();
@@ -613,6 +636,7 @@ namespace Cozmo.HomeHub {
         DAS.Warn("HomeView.OpenLootview", "Attempted to Load LootView Twice");
         return;
       }
+      _RewardSequenceActive = false;
       _LootSequenceActive = true;
       _EmotionChipTag.gameObject.SetActive(false);
       EnableGameRequestsIfAllowed(false);
@@ -724,7 +748,9 @@ namespace Cozmo.HomeHub {
       if (ChestRewardManager.Instance.ChestPending == false) {
         EnableGameRequestsIfAllowed(true);
         UIManager.EnableTouchEvents();
+        _RewardSequenceActive = false;
       }
+      // This is the thing that eventually opens lootview via HandleCheckForLootView handler
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
 
@@ -936,6 +962,8 @@ namespace Cozmo.HomeHub {
       playerInventory.ItemRemoved -= HandleItemValueChanged;
       playerInventory.ItemCountSet -= HandleItemValueChanged;
       StopCoroutine(BurstEnergyAfterInit());
+
+      DialogOpenAnimationFinished -= HandleViewOpenFinished;
     }
 
     protected override void ConstructOpenAnimation(Sequence openAnimation) {

@@ -38,6 +38,7 @@ enum class TestState {
   NewEnroll,                              // Should succeed
   ReEnroll_SeeKnownFace,                  // Should fail
   NewEnroll_NoFace,                       // Should fail
+  ReEnroll_SeeMultipleFaces,              // Should fail
 };
 
 class CST_EnrollFace : public CozmoSimTestController
@@ -288,12 +289,10 @@ s32 CST_EnrollFace::UpdateSimInternal()
         LookDownAndTransition(TestState::NewEnroll,
                               [this]() {
                                 PRINT_NAMED_INFO("CST_EnrollFace.ReEnroll_FaceDisappearsAndReappears.SwapFaces",
-                                                 "Putting face 2 in enrollment pose, attempting enrollment of face 1");
+                                                 "Attempting to enroll face 2");
                                 
-                                // Move face 2 into view and move face 1 to the side
-                                // Seeing named face 1 again (next to face 2) partway through should
-                                // not mess things up
-                                SetNodePose(_face1, _nextToPose);
+                                // Move face 2 into view and move face 1 away
+                                SetNodePose(_face1, _poseOutsideFOV);
                                 SetNodePose(_face2, _enrollmentPose);
                                 
                                 // Now enroll face 2
@@ -333,10 +332,7 @@ s32 CST_EnrollFace::UpdateSimInternal()
         
         LookDownAndTransition(TestState::ReEnroll_SeeKnownFace,
                               [this]() {
-                                // Move face 1 out of the way
-                                SetNodePose(_face1, _poseOutsideFOV);
-                                
-                                // Try to enroll face 1 again. Should fail b/c now we know face 2
+                                // Try to enroll face 1 again. Should fail b/c now we know face 2 and are still seeing it
                                 StartEnrollment(_faceID1, "Face1");
                               });
       }
@@ -356,6 +352,29 @@ s32 CST_EnrollFace::UpdateSimInternal()
                          EnumToString(_faceEnrollmentCompletedMsg.result),
                          _faceEnrollmentCompletedMsg.faceID,
                          _faceEnrollmentCompletedMsg.name.c_str());
+        
+        LookDownAndTransition(TestState::ReEnroll_SeeMultipleFaces,
+                              [this]() {
+                                // Move face 1 back into FOV, next face 2
+                                SetNodePose(_face1, _nextToPose);
+                                
+                                // Try to enroll face 2 again. Should fail b/c we're seeing multiple faces.
+                                StartEnrollment(_faceID1, "Face1");
+                              });
+
+
+      }
+      break;
+    }
+      
+    case TestState::ReEnroll_SeeMultipleFaces:
+    {
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(kFaceEnrollmentTimeout_sec,
+                                            _faceEnrollmentCompleted,
+                                            _faceEnrollmentCompletedMsg.result == FaceEnrollmentResult::SawMultipleFaces)
+      {
+        PRINT_NAMED_INFO("CST_Enroll.ReEnroll_SeeMultipleFaces.Completed", "Result:%s",
+                         EnumToString(_faceEnrollmentCompletedMsg.result));
         
         CST_EXIT();
       }

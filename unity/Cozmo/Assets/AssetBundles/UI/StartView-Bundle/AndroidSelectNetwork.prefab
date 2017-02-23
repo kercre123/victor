@@ -1,5 +1,21 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &103350
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22460880}
+  - 114: {fileID: 11491770}
+  m_Layer: 5
+  m_Name: CloseButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &103924
 GameObject:
   m_ObjectHideFlags: 1
@@ -251,6 +267,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _InstructionsLabel: {fileID: 11439952}
   _ContinueButton: {fileID: 0}
+  _CancelButton: {fileID: 0}
   _NetworkCellPrefab: {fileID: 11491236, guid: 0790c1b5fe41b4674a86ad529e5d4901, type: 2}
   _ScrollViewContent: {fileID: 22487264}
 --- !u!114 &11460266
@@ -324,6 +341,27 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.ScrollRect+ScrollRectEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
+--- !u!114 &11491770
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 103350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    JsonValue: '"Play__Ui__Click_Back"'
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: AndroidSelectNetwork:_CancelButton
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!222 &22203804
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -370,7 +408,7 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 80}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 740}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22444118
@@ -388,8 +426,26 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -332, y: 541.99976}
+  m_AnchoredPosition: {x: -1215, y: 435}
   m_SizeDelta: {x: 1794, y: 200}
+  m_Pivot: {x: 0, y: 0.5}
+--- !u!224 &22460880
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 103350}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22479092}
+  m_RootOrder: 4
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -1226.9999, y: 584.4344}
+  m_SizeDelta: {x: -2558.9998, y: -1275.8688}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22479092
 RectTransform:
@@ -406,6 +462,7 @@ RectTransform:
   - {fileID: 22486400}
   - {fileID: 22444118}
   - {fileID: 22441300}
+  - {fileID: 22460880}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}

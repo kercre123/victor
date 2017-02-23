@@ -87,7 +87,14 @@ namespace Cozmo {
     FactoryID    GetFactoryID()                 const   { return _factoryID; }
 
     // Override in derived classes to allow them to exist co-located with robot
-    virtual bool CanIntersectWithRobot() const { return false; }
+    virtual bool CanIntersectWithRobot()        const { return false; }
+    
+    // Can we assume there is exactly one of these objects at a give time?
+    virtual bool IsUnique()                     const { return false; }
+    
+    // Get the distance within which we are allowed to localize to objects
+    // (This will probably need to be updated with COZMO-9672)
+    static f32 GetMaxLocalizationDistance_mm();
     
   protected:
     

@@ -22,7 +22,7 @@ public class ConnectionFlowController : MonoBehaviour {
 
   [SerializeField]
   private AndroidConnectionFlow _AndroidConnectionFlowPrefab;
-  private GameObject _AndroidConnectionFlowInstance;
+  private AndroidConnectionFlow _AndroidConnectionFlowInstance;
 
   [SerializeField]
   private SearchForCozmoFailedScreen _SearchForCozmoFailedScreenPrefab;
@@ -100,6 +100,14 @@ public class ConnectionFlowController : MonoBehaviour {
     RobotEngineManager.Instance.FlushChannelMessages();
   }
 
+  private void DestroyAndroidFlow() {
+    if (_AndroidConnectionFlowInstance != null) {
+      _AndroidConnectionFlowInstance.Disable();
+      GameObject.Destroy(_AndroidConnectionFlowInstance.gameObject);
+    }
+    _AndroidConnectionFlowInstance = null;
+  }
+
   private void Cleanup() {
     if (_PullCubeTabModalInstance != null) {
       _PullCubeTabModalInstance.DialogClosed -= HandlePullCubeTabsCompleted;
@@ -126,18 +134,19 @@ public class ConnectionFlowController : MonoBehaviour {
       GameObject.Destroy(_WakingUpCozmoScreenInstance.gameObject);
     }
 
-    if (_AndroidConnectionFlowInstance != null) {
-      GameObject.Destroy(_AndroidConnectionFlowInstance);
-    }
+    DestroyAndroidFlow();
   }
 
   public void StartConnectionFlow() {
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
       _CurrentRobotIP = RobotEngineManager.kSimRobotIP;
-      ConnectionFlowDelay = 0.25f;
+      ConnectionFlowDelay = 0.1f;
     }
     else {
       _CurrentRobotIP = RobotEngineManager.kRobotIP;
+    }
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseFastConnectivityFlow) {
+      ConnectionFlowDelay = 0.1f;
     }
     InitConnectionFlow();
   }
@@ -194,40 +203,44 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void ShowSearchForCozmoAndroid() {
     DAS.Info("ConnectionFlow.ShowAndroid", "Instantiating android flow");
-    var androidFlowInstance = GameObject.Instantiate(_AndroidConnectionFlowPrefab.gameObject).GetComponent<AndroidConnectionFlow>();
-    _AndroidConnectionFlowInstance = androidFlowInstance.gameObject;
+    _AndroidConnectionFlowInstance = GameObject.Instantiate(_AndroidConnectionFlowPrefab.gameObject).GetComponent<AndroidConnectionFlow>();
 
     // Set up event handlers for things the Android flow might tell us:
     // - if we want to start the flow over again
-    androidFlowInstance.OnRestartFlow += () => {
+    _AndroidConnectionFlowInstance.OnRestartFlow += () => {
       // explicitly unregister handlers before instantiating a new instance,
       // since OnDestroy() invocation is delayed until after frame
-      androidFlowInstance.Disable();
-      GameObject.Destroy(androidFlowInstance.gameObject);
+      DestroyAndroidFlow();
       ShowSearchForCozmoAndroid();
     };
     // - when the android flow starts connecting, transition to the normal search
     //   screen while still monitoring the connection
-    androidFlowInstance.OnStartConnect += () => {
+    _AndroidConnectionFlowInstance.OnStartConnect += () => {
       CreateConnectionFlowBackgroundWithCallback(() => {
         ShowSearchForCozmo();
-        androidFlowInstance.AddConnectingPrefab(_SearchForCozmoScreenInstance);
+        _AndroidConnectionFlowInstance.AddConnectingPrefab(_SearchForCozmoScreenInstance);
       });
     };
     // - when the screen finishes, either continue old connection flow accordingly
     //   or go to "search failed" screen
-    androidFlowInstance.OnScreenComplete += (success) => {
+    _AndroidConnectionFlowInstance.OnScreenComplete += (success) => {
       DAS.Info("ConnectionFlow.ShowAndroid", "OnComplete: " + success);
-      GameObject.Destroy(_AndroidConnectionFlowInstance);
-      _AndroidConnectionFlowInstance = null;
-      HandleSearchForCozmoScreenDone(success);
+      DestroyAndroidFlow();
+
+      // create background if it doesn't exist yet, then signal we're done
+      Action doneAction = () => HandleSearchForCozmoScreenDone(success);
+      if (_ConnectionFlowBackgroundModalInstance == null) {
+        CreateConnectionFlowBackgroundWithCallback(doneAction);
+      }
+      else {
+        doneAction();
+      }
     };
     // - if the old flow is requested, start it
-    androidFlowInstance.OnCancelFlow += () => {
+    _AndroidConnectionFlowInstance.OnCancelFlow += () => {
       DAS.Info("ConnectionFlow.ShowAndroid", "CancelAndroid");
       Action cancelFunc = () => {
-        GameObject.Destroy(_AndroidConnectionFlowInstance);
-        _AndroidConnectionFlowInstance = null;
+        DestroyAndroidFlow();
         HandleSearchForCozmoScreenDone(false);
       };
       // create background if not created yet
@@ -326,7 +339,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void ReplaceCozmoOnCharger() {
-    ModalPriorityData replaceCozmoPriorityData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalPrefab.PriorityData);
+    ModalPriorityData replaceCozmoPriorityData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_ReplaceCozmoOnChargerModalPrefab, replaceCozmoPriorityData, HandleReplaceCozmoOnChargerCreated);
   }
 
@@ -348,7 +361,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void ShowInvalidPinScreen() {
-    ModalPriorityData invalidPinModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalPrefab.PriorityData);
+    ModalPriorityData invalidPinModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_InvalidPinModalPrefab, invalidPinModalData, HandleInvalidPinModalCreated);
   }
 
@@ -359,7 +372,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void ShowPinScreen() {
-    ModalPriorityData pinSecurityModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalPrefab.PriorityData);
+    ModalPriorityData pinSecurityModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_PinSecurityModalPrefab, pinSecurityModalData, HandlePinSecurityViewCreated);
   }
 
@@ -370,7 +383,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void UpdateAppScreen() {
-    ModalPriorityData updateAppModalPrefab = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalPrefab.PriorityData);
+    ModalPriorityData updateAppModalPrefab = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_UpdateAppModalPrefab, updateAppModalPrefab, HandleUpdateAppViewCreated);
   }
 
@@ -442,6 +455,14 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void WakeupSequence() {
+
+    RobotEngineManager.Instance.CurrentRobot.EnableAllReactionTriggers(true);
+
+    //Disable reactionary behaviors during wakeup
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, false);
+
     _WakingUpCozmoScreenInstance = UIManager.CreateUIElement(_WakingUpCozmoScreenPrefab, _ConnectionFlowBackgroundModalInstance.transform);
     if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
       // just a quick animation to kick the eyes on in SDK mode, but not hold for seconds
@@ -493,7 +514,6 @@ public class ConnectionFlowController : MonoBehaviour {
 
     // explicitly enable charger behavior since it should be off by default in engine.
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("default_disabled", Anki.Cozmo.ReactionTrigger.PlacedOnCharger, true);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, true);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, true);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, true);
@@ -613,10 +633,7 @@ public class ConnectionFlowController : MonoBehaviour {
       RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
     }
 
-    //Disable reactionary behaviors during wakeup
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, false);
+    RobotEngineManager.Instance.CurrentRobot.EnableAllReactionTriggers(false);
   }
 
   public void HandleRobotDisconnect() {

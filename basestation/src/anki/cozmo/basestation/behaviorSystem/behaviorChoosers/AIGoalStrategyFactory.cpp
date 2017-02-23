@@ -14,6 +14,7 @@
 // AI Goal strategies
 #include "AIGoalStrategies/AIGoalStrategyFPPlayWithHumans.h"
 #include "AIGoalStrategies/AIGoalStrategyObjectTapInteraction.h"
+#include "AIGoalStrategies/AIGoalStrategyPyramid.h"
 #include "AIGoalStrategies/AIGoalStrategySpark.h"
 #include "AIGoalStrategies/AIGoalStrategySimple.h"
 
@@ -52,6 +53,9 @@ IAIGoalStrategy* CreateAIGoalStrategy(Robot& robot, const Json::Value& config)
   }
   else if ( typeStr == "object_tap_interaction" ) {
     newStrategy = new AIGoalStrategyObjectTapInteraction(robot, config);
+  }
+  else if ( typeStr == "pyramid"){
+    newStrategy = new AIGoalStrategyPyramid(robot, config);
   }
   else
   {

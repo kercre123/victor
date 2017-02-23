@@ -141,12 +141,12 @@ namespace Cozmo {
   static const std::string _kFWVersion = "F1.5.1";
   
   // If no change in behavior state for this long then trigger failure
-  static constexpr f32 _kWatchdogTimeout = 20;
+  static constexpr f32 _kWatchdogTimeout = 20.0f;
 
   
   // Rotation ambiguities for observed blocks.
   // We only care that the block is upright.
-  const std::vector<RotationMatrix3d> _kBlockRotationAmbiguities({
+  const RotationAmbiguities _kBlockRotationAmbiguities(true, {
     RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
     RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
   });
@@ -241,7 +241,7 @@ namespace Cozmo {
   
   Result BehaviorFactoryTest::InitInternal(Robot& robot)
   {
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
     Result lastResult = RESULT_OK;
     
@@ -691,7 +691,7 @@ namespace Cozmo {
       return Status::Complete;
     }
 
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
     // Check to see if we had any problems with any handlers
     if(_lastHandlerResult != RESULT_OK) {
@@ -957,7 +957,7 @@ namespace Cozmo {
           
           StartActing(compoundAction,
                       [this,&robot](ActionResult result){
-                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.f;
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.0f;
                       });
           SetCurrState(FactoryTestState::DriveToSlot);
         }
@@ -1439,7 +1439,6 @@ namespace Cozmo {
                                                        _kBlockRotationAmbiguities,
                                                        _kExpectedCubePoseDistThresh_mm,
                                                        _kExpectedCubePoseAngleThresh_rad,
-                                                       true,
                                                        Tdiff, angleDiff) ||
             (std::fabsf(oObject->GetPose().GetTranslation().z() - (0.5f*oObject->GetSize().z())) > _kExpectedCubePoseHeightThresh_mm) ) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",

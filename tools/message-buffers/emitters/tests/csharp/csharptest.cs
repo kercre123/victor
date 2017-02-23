@@ -483,6 +483,20 @@ public class HelloWorld {
     return true;
   }
 
+  public static bool Test_DefaultConstructor() {
+    // Test that HasDefaultConstructor has a constructor that takes no types (the empty type?)
+    Constructor.HasDefaultConstructor defaultConstructor = new Constructor.HasDefaultConstructor(4.2f, 3);
+    System.Type type1 = defaultConstructor.GetType();
+    if (type1.GetConstructor(System.Type.EmptyTypes) == null) return false;
+
+    // Test that HasNoDefaultConstructor does NOT have a constructor that takes no types
+    Constructor.HasNoDefaultConstructor noDefaultConstructor = new Constructor.HasNoDefaultConstructor(4.2f, 3);
+    System.Type type2 = noDefaultConstructor.GetType();
+    if (type2.GetConstructor(System.Type.EmptyTypes) != null) return false;
+
+    return true;
+  }
+
   public static void Main() {
     System.Console.Write("Test_Foo: ");
     System.Console.WriteLine(Test_Foo() ? "PASS" : "FAIL");
@@ -531,5 +545,8 @@ public class HelloWorld {
 
     System.Console.Write("Test_Enum_Complex: ");
     System.Console.WriteLine(Test_Enum_Complex() ? "PASS" : "FAIL");
+
+    System.Console.Write("Test_DefaultConstructor: ");
+    System.Console.WriteLine(Test_DefaultConstructor() ? "PASS" : "FAIL");
   }
 }

@@ -273,6 +273,9 @@ class YaccProduction:
         startpos = getattr(self.slice[n],"lexpos",0)
         endpos = getattr(self.slice[n],"endlexpos",startpos)
         return startpos,endpos
+    
+    def pop(self,n):
+        return self.slice.pop(n)
 
     def error(self):
        raise SyntaxError

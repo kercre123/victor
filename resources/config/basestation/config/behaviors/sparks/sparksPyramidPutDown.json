@@ -1,0 +1,10 @@
+{
+  "behaviorClass": "PutDownBlock",
+  "name": "sparksPyramidPutDownBlock",
+  "displayNameKey":"behavior.PrepareCubes",
+  "flatScore" : 10.0,
+  "behaviorGroups": [
+    "SetupBuildPyramid"
+  ]
+
+}

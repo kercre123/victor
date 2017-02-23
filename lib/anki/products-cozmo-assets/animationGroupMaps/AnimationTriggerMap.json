@@ -29,12 +29,44 @@
       "AnimName": "blockReact"
     },
     {
+      "CladEvent": "BuildPyramidFirstBlockOnSide",
+      "AnimName": "ag_pyramid_reacttocube_frustrated_low"
+    },
+    {
+      "CladEvent": "BuildPyramidFirstBlockUpright",
+      "AnimName": "ag_pyramid_reacttocube_happy_low"
+    },
+    {
+      "CladEvent": "BuildPyramidLookForFace",
+      "AnimName": "ag_pyramid_lookforface"
+    },
+    {
       "CladEvent": "BuildPyramidReactToBase",
       "AnimName": "ag_pyramid_rt2blocks"
     },
     {
+      "CladEvent": "BuildPyramidSecondBlockOnSide",
+      "AnimName": "ag_pyramid_reacttocube_frustrated_mid"
+    },
+    {
+      "CladEvent": "BuildPyramidSecondBlockUpright",
+      "AnimName": "ag_pyramid_reacttocube_happy_mid"
+    },
+    {
       "CladEvent": "BuildPyramidSuccess",
       "AnimName": "ag_pyramid_success"
+    },
+    {
+      "CladEvent": "BuildPyramidThankUser",
+      "AnimName": "ag_pyramid_thankyou"
+    },
+    {
+      "CladEvent": "BuildPyramidThirdBlockOnSide",
+      "AnimName": "ag_pyramid_reacttocube_frustrated_high"
+    },
+    {
+      "CladEvent": "BuildPyramidThirdBlockUpright",
+      "AnimName": "ag_pyramid_reacttocube_happy_high"
     },
     {
       "CladEvent": "CantHandleTallStack",
@@ -269,6 +301,26 @@
       "AnimName": "ag_reacttocliff_turtlerollfail_01"
     },
     {
+      "CladEvent": "FistBumpIdle",
+      "AnimName": "ag_fistbump_idle"
+    },
+    {
+      "CladEvent": "FistBumpRequestOnce",
+      "AnimName": "ag_fistbump_requestonce"
+    },
+    {
+      "CladEvent": "FistBumpRequestRetry",
+      "AnimName": "ag_fistbump_requesttwice"
+    },
+    {
+      "CladEvent": "FistBumpSuccess",
+      "AnimName": "ag_fistbump_success"
+    },
+    {
+      "CladEvent": "FistBumpLeftHanging",
+      "AnimName": "ag_fistbump_fail"
+    },
+    {
       "CladEvent": "FlipDownFromBack",
       "AnimName": "FlipDownFromBack"
     },
@@ -279,6 +331,22 @@
     {
       "CladEvent": "FrustratedByFailureMajor",
       "AnimName": "ag_reacttoblock_frustrated"
+    },
+    {
+      "CladEvent": "GameSetupGetIn",
+      "AnimName": "ag_gamesetup_getin"
+    },
+    {
+      "CladEvent": "GameSetupGetOut",
+      "AnimName": "ag_gamesetup_getout"
+    },
+    {
+      "CladEvent": "GameSetupIdle",
+      "AnimName": "ag_gamesetup_idle"
+    },
+    {
+      "CladEvent": "GameSetupReaction",
+      "AnimName": "ag_gamesetup_reaction"
     },
     {
       "CladEvent": "GoToSleepGetIn",
@@ -462,7 +530,7 @@
     },
     {
       "CladEvent": "MemoryMatchPlayerLoseHand",
-      "AnimName": "ag_memorymatch_successhand_cozmo"
+      "AnimName": "ag_memorymatch_failhand_player_01"
     },
     {
       "CladEvent": "MemoryMatchPlayerLoseHandSolo",
@@ -851,6 +919,10 @@
     {
       "CladEvent": "ReactToOnRightSide",
       "AnimName": "ag_reacttocliff_stuckrightside_01"
+    },
+    {
+      "CladEvent": "ReactToPerchedOnBlock",
+      "AnimName": "ag_reacttoblock_stuckonblock"
     },
     {
       "CladEvent": "ReactToPickup",

@@ -9,6 +9,9 @@ namespace SpeedTap {
 
     private PlayerInfo _Winner;
 
+    private bool _BannerAnimDone = false;
+    private bool _RobotAnimDone = false;
+
     public SpeedTapReactToRoundEnd(PlayerInfo winner) {
       _Winner = winner;
     }
@@ -24,25 +27,44 @@ namespace SpeedTap {
 
       // Show current winner
       Sprite winnerPortrait = null;
-      string winnerNameLocKey = null;
-      int roundsWinnerWon = 0;
+      string winnerName = _Winner.name;
+      int roundsWinnerWon = _Winner.playerRoundsWon;
+      Color winnerColor = ((SpeedTapPlayerInfo)_Winner).scoreWidget.PortraitColor;
       if (_Winner.playerType == PlayerType.Cozmo) {
         winnerPortrait = _SpeedTapGame.SharedMinigameView.CozmoPortrait;
-        winnerNameLocKey = LocalizationKeys.kNameCozmo;
       }
       else {
         winnerPortrait = _SpeedTapGame.SharedMinigameView.PlayerPortrait;
-        winnerNameLocKey = LocalizationKeys.kNamePlayer;
+        // In SinglePlayer we want it just to say "player" not the profile name because of how it was before.
+        if (_SpeedTapGame.GetPlayerCount() < 3) {
+          winnerName = Localization.Get(LocalizationKeys.kNamePlayer);
+        }
       }
-      roundsWinnerWon = _Winner.playerRoundsWon;
       int roundsNeeded = _SpeedTapGame.RoundsNeededToWin;
-      roundEndSlideScript.Initialize(winnerPortrait, winnerNameLocKey, roundsWinnerWon, roundsNeeded, _SpeedTapGame.RoundsPlayed);
+      roundEndSlideScript.Initialize(winnerPortrait, winnerName, roundsWinnerWon, roundsNeeded, _SpeedTapGame.RoundsPlayed, winnerColor);
 
       // Play banner animation with score
       string bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore,
                             _SpeedTapGame.HumanRoundsWon, _SpeedTapGame.CozmoRoundsWon);
-      _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, null,
-        roundEndSlideScript.BannerAnimationDurationSeconds);
+      if (_SpeedTapGame.GetPlayerCount() > 2) {
+        List<object> fillArgs = new List<object>();
+        int playerCount = _SpeedTapGame.GetPlayerCount();
+        for (int i = 0; i < playerCount; ++i) {
+          PlayerInfo playerInfo = _SpeedTapGame.GetPlayerByIndex(i);
+          fillArgs.Add(playerInfo.name);
+          fillArgs.Add(playerInfo.playerRoundsWon);
+        }
+        bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScoreMP, fillArgs.ToArray());
+        _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, HandleBannerAnimDone,
+                _SpeedTapGame.MPTimeBetweenRoundsSec);
+      }
+      else {
+        // we want single player to go fast, so don't care if the banner is done or not
+        _BannerAnimDone = true;
+        _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, null,
+                        roundEndSlideScript.BannerAnimationDurationSeconds);
+      }
+
 
       ContextManager.Instance.AppFlash(playChime: true);
       // Play cozmo animation
@@ -53,8 +75,7 @@ namespace SpeedTap {
       base.Exit();
 
       // re-enable react to pickup during the next round
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, true);
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, true);
+      EnableExtraReactions(true);
     }
 
     public override void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
@@ -62,11 +83,18 @@ namespace SpeedTap {
       // So in those cases don't show the "Cozmo Moved; Quit Game" dialog
       // Do nothing
     }
+    private void EnableExtraReactions(bool enabled) {
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, enabled);
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, enabled);
+      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.CliffDetected, enabled);
+      // breaking out the big hammer. This state make cozmo lift himself up and then he drives back within the animation
+      // so it's important we don't get a firmware stop.
+      _CurrentRobot.SetEnableCliffSensor(enabled);
+    }
 
     private void PlayReactToRoundAnimationAndSendEvent() {
       // Don't listen to pickup in case cozmo lifts himself on top of the cube for an animation
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, false);
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, false);
+      EnableExtraReactions(false);
 
       AnimationTrigger animEvent = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityRound();
@@ -82,14 +110,22 @@ namespace SpeedTap {
     }
 
     private void HandleRoundEndAnimDone(bool success) {
+      _RobotAnimDone = true;
+      MoveToNextState();
+    }
+
+    private void HandleBannerAnimDone() {
+      _BannerAnimDone = true;
       MoveToNextState();
     }
 
     private void MoveToNextState() {
-      _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
+      if (_BannerAnimDone && _RobotAnimDone) {
+        _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
 
-      _SpeedTapGame.ClearWinningLightPatterns();
-      _StateMachine.SetNextState(new SpeedTapCubeSelectionState());
+        _SpeedTapGame.ClearWinningLightPatterns();
+        _StateMachine.SetNextState(new SpeedTapCubeSelectionState());
+      }
     }
   }
 }

@@ -67,6 +67,8 @@ namespace Anki {
     static_assert(!kEnableSdkCommsAlways, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
 #endif
     
+CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
+    
 
 #define ANKI_ENABLE_SDK_OVER_TCP  1
     
@@ -358,6 +360,58 @@ namespace Anki {
     }
     
     
+    bool IgnoreMessageTypeForSdkConnection(ExternalInterface::MessageGameToEngine::Tag messageTag)
+    {
+      if (kAllowBannedSdkMessages)
+      {
+        return false;
+      }
+      
+      // Return true for any messages that we want to ignore (blacklist) from SDK usage
+      
+      using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
+      switch (messageTag)
+      {
+        case GameToEngineTag::CalibrateMotors:                  return true;
+        case GameToEngineTag::ReadToolCode:                     return true;
+        case GameToEngineTag::IMURequest:                       return true;
+        case GameToEngineTag::StartControllerTestMode:          return true;
+        case GameToEngineTag::RawPWM:                           return true;
+        case GameToEngineTag::ReliableTransportRunMode:         return true;
+        case GameToEngineTag::RequestFeatureToggles:            return true;
+        case GameToEngineTag::SetFeatureToggle:                 return true;
+        case GameToEngineTag::UpdateFirmware:                   return true;
+        case GameToEngineTag::ResetFirmware:                    return true;
+        case GameToEngineTag::ControllerGains:                  return true;
+        case GameToEngineTag::RestoreRobotFromBackup:           return true;
+        case GameToEngineTag::RequestRobotRestoreData:          return true;
+        case GameToEngineTag::WipeRobotGameData:                return true;
+        case GameToEngineTag::RequestUnlockDataFromBackup:      return true;
+        case GameToEngineTag::SetRobotImageSendMode:            return true;
+        case GameToEngineTag::SaveImages:                       return true;
+        case GameToEngineTag::SaveRobotState:                   return true;
+        case GameToEngineTag::ExecuteTestPlan:                  return true;
+        case GameToEngineTag::PlannerRunMode:                   return true;
+        case GameToEngineTag::SetObjectAdditionAndDeletion:     return true;
+        case GameToEngineTag::StartTestMode:                    return true;
+        case GameToEngineTag::TransitionToNextOnboardingState:  return true;
+        case GameToEngineTag::ProgressionMessage:               return true; // (SetFriendshipPoints + Level)
+        case GameToEngineTag::RequestSetUnlock:                 return true;
+        case GameToEngineTag::GetJsonDasLogsMessage:            return true;
+        case GameToEngineTag::SaveCalibrationImage:             return true;
+        case GameToEngineTag::ClearCalibrationImages:           return true;
+        case GameToEngineTag::ComputeCameraCalibration:         return true;
+        case GameToEngineTag::NVStorageEraseEntry:              return true;
+        case GameToEngineTag::NVStorageWipeAll:                 return true;
+        case GameToEngineTag::NVStorageWriteEntry:              return true;
+        case GameToEngineTag::NVStorageClearPartialPendingWriteEntry:  return true;
+        case GameToEngineTag::NVStorageReadEntry:               return true;
+        default:
+          return false;
+      }
+    }
+    
+    
     void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message,
                                 UiConnectionType connectionType, size_t messageSize, bool handleMessagesFromConnection)
     {
@@ -371,9 +425,17 @@ namespace Anki {
         }
       }
       
-      if (_sdkStatus.IsInSdkMode() && !IsSdkConnection(connectionType))
+      const bool isSdkConnection = IsSdkConnection(connectionType);
+      if (isSdkConnection && IgnoreMessageTypeForSdkConnection(messageTag))
       {
-        // Accept a limited set of messages (e.g. enter/exit mode)
+        // Ignore - this message type is blacklisted from SDK usage
+        PRINT_NAMED_WARNING("sdk.bannedmessage", "%s", MessageGameToEngineTagToString(messageTag));
+        return;
+      }
+      
+      if (_sdkStatus.IsInSdkMode() && !isSdkConnection)
+      {
+        // Accept only a limited set of messages (e.g. enter/exit mode)
         if (!AlwaysHandleMessageTypeForNonSdkConnection(messageTag))
         {
           return;
@@ -387,7 +449,7 @@ namespace Anki {
       }
       #endif
       
-      if (IsSdkConnection(connectionType))
+      if (isSdkConnection)
       {
         _sdkStatus.OnRecvMessage(message, messageSize);
       }

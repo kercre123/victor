@@ -42,9 +42,6 @@ CONSOLE_VAR_RANGED(s32, kMinTimesToObserveObject, "PoseConfirmation", 2, 1,10);
 // pose as unknkown.
 CONSOLE_VAR_RANGED(s32, kMinTimesToNotObserveDirtyObject, "PoseConfirmation", 2, 1,10);
 
-// Only localize to / identify active objects within this distance
-CONSOLE_VAR_RANGED(f32, kMaxLocalizationDistance_mm, "PoseConfirmation", 250.f, 50.f, 1000.f);
-
 // TODO: (Al) Remove once bryon fixes the timestamps
 // Disable the object is still moving check for visual observation entries due to incorrect
 // timestamps in object moved messages
@@ -74,7 +71,9 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   
   // Notify about the change we are about to make from old to new:
   _robot.GetBlockWorld().OnObjectPoseWillChange(object->GetID(), object->GetFamily(), newPose, newPoseState);
-  _robot.GetCubeLightComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newPoseState);
+  if(object->IsActive()) {
+    _robot.GetCubeLightComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newPoseState);
+  }
   
   // if state changed from unknown to known or dirty
   if (object->IsPoseStateUnknown() && newPoseState != PoseState::Unknown) {
@@ -180,7 +179,7 @@ Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const
         }
         
         const bool isRobotOnTreads = OffTreadsState::OnTreads == _robot.GetOffTreadsState();
-        const bool isFarAway = Util::IsFltGT(obsDistance_mm,  kMaxLocalizationDistance_mm);
+        const bool isFarAway = Util::IsFltGT(obsDistance_mm,  object->GetMaxLocalizationDistance_mm());
         const bool useDirty = !isRobotOnTreads || isFarAway || robotWasMoving || objectIsMoving;
         
         // Note that we never change a Known object to Dirty with a visual observation

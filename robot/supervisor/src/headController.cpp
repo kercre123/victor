@@ -323,7 +323,7 @@ namespace HeadController {
     void SetDesiredAngle_internal(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds,
                                   f32 speed_rad_per_sec, f32 accel_rad_per_sec2, bool useVPG)
     {
-      if (bracing_) {
+      if (!enable_ || bracing_) {
         return;
       }
       

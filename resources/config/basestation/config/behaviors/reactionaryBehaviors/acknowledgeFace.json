@@ -1,7 +1,7 @@
 {
   "behaviorClass": "AcknowledgeFace",
   "name": "AcknowledgeFace",
-  "displayNameKey":"behavior.AcknowledgeObject",
+  "displayNameKey":"behavior.AcknowledgeFace",
   "ReactionAnimGroup": "ReactToNewBlockSmall",
   "disableByDefault": false,
   "SamePoseDistThresh_mm": 300,

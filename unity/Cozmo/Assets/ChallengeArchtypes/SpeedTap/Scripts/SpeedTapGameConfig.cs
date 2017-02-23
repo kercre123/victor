@@ -30,6 +30,13 @@ public class SpeedTapGameConfig : MinigameConfigBase {
   [Range(0.0f, 1.0f)]
   public float CozmoFakeoutChance;
 
+  public Color CozmoTint;
+  public Color Player1Tint;
+  public Color Player2Tint;
+
+  public float MPTimeBetweenRoundsSec = 5.0f;
+  public float MPTimeSetupHoldSec = 5.0f;
+
   [SerializeField]
   protected MusicStateWrapper _BetweenRoundMusic;
 

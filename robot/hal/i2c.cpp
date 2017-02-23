@@ -95,21 +95,21 @@ extern "C" void I2C0_IRQHandler(void) __attribute__((section("CODERAM")));
 
 // Send a stop condition first thing to make sure perfs are not holding the bus
 static inline void SendEmergencyStop(void) {
-  GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);
+  GPIO_SET(I2C_SCL);
 
   // Drive PWDN and RESET to safe defaults
-  GPIO_OUT(GPIO_I2C_SCL, PIN_I2C_SCL);
-  SOURCE_SETUP(GPIO_I2C_SCL, SOURCE_I2C_SCL, SourceGPIO);
+  GPIO_OUT(I2C_SCL);
+  SOURCE_SETUP(I2C_SCL, SourceGPIO);
 
   // GPIO, High drive, open drain
-  GPIO_IN(GPIO_I2C_SDA, PIN_I2C_SDA);
-  SOURCE_SETUP(GPIO_I2C_SDA, PIN_I2C_SDA, SourceGPIO);
+  GPIO_IN(I2C_SDA);
+  SOURCE_SETUP(I2C_SDA, SourceGPIO);
   
   // Clock the output 100 times
   for (int i = 0; i < 100; i++) {
-    GPIO_RESET(GPIO_I2C_SCL, PIN_I2C_SCL);
+    GPIO_RESET(I2C_SCL);
     MicroWait(1);
-    GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);
+    GPIO_SET(I2C_SCL);
     MicroWait(1);
   }
 }

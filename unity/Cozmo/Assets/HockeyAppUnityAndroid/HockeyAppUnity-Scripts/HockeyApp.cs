@@ -72,7 +72,7 @@ public class HockeyApp : MonoBehaviour {
     // For iOS HockeyApp.mm, inits using UploadUnityCrashInfoIOS
 #if (UNITY_ANDROID)
 
-    _HockeyAppId = GetManifestProperty(CozmoBinding.GetCurrentActivity(), "HOCKEYAPP_APP_ID");
+    _HockeyAppId = CozmoBinding.GetCurrentActivity().GetStatic<string>("HOCKEY_APP_ID");
 
     if(exceptionLogging == true  && IsConnected() == true) {
       List<string> logFileDirs = GetLogFiles();
@@ -139,20 +139,15 @@ public class HockeyApp : MonoBehaviour {
     AndroidJavaClass hockeyAppConstants = new AndroidJavaClass("net.hockeyapp.android.Constants");
     hockeyAppConstants.CallStatic("loadFromContext", currentActivity);
 
-    // install google breakpad
-    AndroidJavaClass nativeCrashManagerClass = new AndroidJavaClass("com.anki.hockeyappandroid.NativeCrashManager");
-    string dumpsDirectory = nativeCrashManagerClass.CallStatic<string>("getDumpsDirectory", currentActivity);
-    string dumpsExtension = nativeCrashManagerClass.GetStatic<string>("DMP_EXTENSION");
-    string appRunId = CozmoBinding.AppRunId.ToString();
-    dumpsDirectory += "/" + appRunId + dumpsExtension;
-    CozmoBinding.cozmo_install_google_breakpad(dumpsDirectory);
-
     // initialize NativeCrashManager
+    AndroidJavaClass nativeCrashManagerClass = new AndroidJavaClass("com.anki.hockeyappandroid.NativeCrashManager");
+    string appRunId = CozmoBinding.AppRunId.ToString();
     AndroidJavaObject nativeCrashManager = nativeCrashManagerClass.CallStatic<AndroidJavaObject>("getInstance",
       currentActivity,
       appRunId,
       _HockeyAppId,
-      _DeviceId);
+      _DeviceId,
+      null);
     nativeCrashManager.Call("updateDescriptionFile", getCrashDescriptionJSON(appRunId, _DeviceId));
 
     AndroidJavaClass pluginClass = new AndroidJavaClass("net.hockeyapp.unity.HockeyUnityPlugin");
@@ -198,22 +193,6 @@ public class HockeyApp : MonoBehaviour {
     json.AddField("device", deviceId);
     return json.ToString();
   }
-
-#if (UNITY_ANDROID && !UNITY_EDITOR)
-  private string GetManifestProperty(AndroidJavaObject context, string name) {
-    int getMetaData = new AndroidJavaClass("android.content.pm.PackageManager").GetStatic<int>("GET_META_DATA");
-    AndroidJavaObject packageName = context.Call<AndroidJavaObject>("getPackageName");
-    AndroidJavaObject appInfo = context.Call<AndroidJavaObject>("getPackageManager")
-      .Call<AndroidJavaObject>("getApplicationInfo", packageName, getMetaData);
-    if (appInfo != null) {
-      AndroidJavaObject metaData = appInfo.Get<AndroidJavaObject>("metaData");
-      if (metaData != null) {
-        return metaData.Call<string>("getString", name);
-      }
-    }
-    return "";
-  }
-#endif
 
   /// <summary>
   /// Check for version update and present alert if newer version is available.
@@ -609,7 +588,7 @@ public class HockeyApp : MonoBehaviour {
   protected virtual void HandleException(string logString, string stackTrace) {
 #if (!UNITY_EDITOR)
     // Just print to the log, don't upload in production, thats what Hockeyapp is for.
-    DAS.Warn("unity.exception", logString, DASUtil.FormatExtraData(stackTrace));
+    DAS.Warn("exception", logString, DASUtil.FormatExtraData(stackTrace));
 
     // Stale touch exceptions occur during normal operation.
     // Don't report them as crashes.

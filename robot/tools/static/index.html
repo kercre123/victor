@@ -54,7 +54,7 @@
             img.onerror = read;
 
             var motors = { head:0, lift:0, left: 0, right: 0 }
-            var lights = { type: 'lights', red: 0, green: 0, blue: 0 }
+            var lights = { type: 'lights', red: 0, green: 0, blue: 0, left: 0, right: 0 }
 
             function calcSpeed(motors) {
             var left = 0, right = 0;
@@ -114,16 +114,24 @@
                     motors.right = true;
                     doMotor = true;
                     break ;
-                case 49:
+                case 49: //'1'
                     lights.red = 1;
                     doLight = true;
                     break ;
-                case 50:
+                case 50: //'2'
                     lights.green = 1;
                     doLight = true;
                     break ;
-                case 51:
+                case 51: //'3'
                     lights.blue = 1;
+                    doLight = true;
+                    break ;
+                case 90: //'Z'
+                    lights.left = 1;
+                    doLight = true;
+                    break ;
+                case 88: //'X'
+                    lights.right = 1;
                     doLight = true;
                     break ;
                 }
@@ -169,16 +177,24 @@
                     motors.right = false;
                     doMotor = true;
                     break ;
-                case 49:
+                case 49: //'1'
                     lights.red = 0;
                     doLight = true;
                     break ;
-                case 50:
+                case 50: //'2'
                     lights.green = 0;
                     doLight = true;
                     break ;
-                case 51:
+                case 51: //'3'
                     lights.blue = 0;
+                    doLight = true;
+                    break ;
+                case 90: //'Z'
+                    lights.left = 0;
+                    doLight = true;
+                    break ;
+                case 88: //'X'
+                    lights.right = 0;
                     doLight = true;
                     break ;
                 }

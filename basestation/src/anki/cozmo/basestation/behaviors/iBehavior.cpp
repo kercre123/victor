@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -68,8 +69,8 @@ static const float kCooldownFromCliffResumes_sec = 15.0;
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
   , _robot(robot)
-  , _lastRunTime_s(0.0)
-  , _startedRunningTime_s(0.0)
+  , _lastRunTime_s(0.0f)
+  , _startedRunningTime_s(0.0f)
   , _executableType(ExecutableBehaviorType::Count)
   , _requiredUnlockId( UnlockId::Count )
   , _requiredRecentDriveOffCharger_sec(-1.0f)
@@ -289,7 +290,7 @@ Result IBehavior::Init()
   }
   
   _isRunning = true;
-  _canStartActing = true;
+  _stopRequestedAfterAction = false;
   _actingCallback = nullptr;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = InitInternal(_robot);
@@ -361,13 +362,13 @@ Result IBehavior::Resume(ReactionTrigger resumingFromType)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status IBehavior::Update()
 {
-  DEV_ASSERT(IsRunning(), "IBehavior::UpdateNotRunning");
-  // Ensure that behaviors which have been requested to stop, stop
-  if(!_canStartActing && !IsActing()){
-    UpdateInternal(_robot);
+
+  if(_stopRequestedAfterAction && !IsActing()) {
+    // we've been asked to stop, don't bother ticking update
     return Status::Complete;
   }
   
+  DEV_ASSERT(IsRunning(), "IBehavior::UpdateNotRunning");  
   return UpdateInternal(_robot);
 }
 
@@ -377,6 +378,11 @@ void IBehavior::Stop()
 {
   PRINT_CH_INFO("Behaviors", (GetName() + ".Stop").c_str(), "Stopping...");
 
+  // If the behavior delegated off to a helper, stop that first
+  if(!_currentHelperHandle.expired()){
+    SmartStopHelper();
+  }
+  
   _isRunning = false;
   // If the behavior uses double tapped objects then call StopInternalFromDoubleTap in case
   // StopInternal() does things like fire mood events or sets failures to use
@@ -388,43 +394,40 @@ void IBehavior::Stop()
   // re-enable before stopping
   SmartReEnableReactionTrigger(_disabledReactionTriggers);
 
-  // re-enable tap interaction if needed
-  if( _tapInteractionDisabled ) {
-    SmartReEnableTapInteraction();
-  }
-  
   // Unlock any tracks which the behavior hasn't had a chance to unlock
   for(const auto& entry: _lockingNameToTracksMap){
     _robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
   }
+  
+  
   _lockingNameToTracksMap.clear();
-  
-  // Clear any light patterns which were set on cubes
-  _robot.GetCubeLightComponent().StopAllAnims();
-  
   _customLightObjects.clear();
   
   DEV_ASSERT(_disabledReactionTriggers.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
-  DEV_ASSERT(!_tapInteractionDisabled, "IBehavior.Stop.TapInteractionStillDisabled");
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::StopOnNextActionComplete()
 {
+  if( !_stopRequestedAfterAction ) {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".StopOnNextActionComplete").c_str(),
+                  "Behavior has been asked to stop on the next complete action");
+  }
+  
   // clear the callback and don't let any new actions start
-  _canStartActing = false;
+  _stopRequestedAfterAction = true;
   _actingCallback = nullptr;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::IsRunnableBase(const Robot& robot) const
+bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
 {
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
-  // DEV_ASSERT(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
-  if (IsRunning()) {
-    //PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetName().c_str());
+  DEV_ASSERT(allowWhileRunning || !IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
+  if (!allowWhileRunning && IsRunning()) {
+    PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetName().c_str());
     return true;
   }
   
@@ -465,7 +468,7 @@ bool IBehavior::IsRunnableBase(const Robot& robot) const
       return false;
     }
     
-    const bool isRecent = FLT_LE(curTime, (lastDriveOff+_requiredRecentDriveOffCharger_sec));
+    const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
     if ( !isRecent ) {
       // driven off, but not recently enough
       return false;
@@ -476,7 +479,6 @@ bool IBehavior::IsRunnableBase(const Robot& robot) const
   const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
   if ( requiresRecentParentSwitch ) {
     const float lastTime = robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
-    const float curTime  = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const float changedAgoSecs = curTime - lastTime;
     const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
     if ( !isSwitchRecent ) {
@@ -487,6 +489,12 @@ bool IBehavior::IsRunnableBase(const Robot& robot) const
   //check if the behavior runs while in the air
   if(robot.GetOffTreadsState() != OffTreadsState::OnTreads
      && !ShouldRunWhileOffTreads()){
+    return false;
+  }
+
+  //check if the behavior can run from the charger platform (don't want most to run because they could damage
+  //the robot by moving too much, and also will generally look dumb if they try to turn)
+  if(robot.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
     return false;
   }
   
@@ -540,15 +548,15 @@ IBehavior::Status IBehavior::UpdateInternal(Robot& robot)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-double IBehavior::GetRunningDuration() const
+float IBehavior::GetRunningDuration() const
 {  
   if (_isRunning)
   {
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const double timeSinceStarted = currentTime_sec - _startedRunningTime_s;
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float timeSinceStarted = currentTime_sec - _startedRunningTime_s;
     return timeSinceStarted;
   }
-  return 0.0;
+  return 0.0f;
 }
 
   
@@ -579,21 +587,22 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
 {
   // needed for StopOnNextActionComplete to work properly, don't allow starting new actions if we've requested
   // the behavior to stop
-  if( ! _canStartActing ) {
+  if( _stopRequestedAfterAction ) {
     return false;
   }
   
   if( !IsResuming() && !IsRunning() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotRunning",
-                        "Behavior '%s' can't start acting because it is not running",
-                        GetName().c_str());
+                        "Behavior '%s' can't start %s action because it is not running",
+                        GetName().c_str(), action->GetName().c_str());
     return false;
   }
 
   if( IsActing() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.AlreadyActing",
-                        "Behavior '%s' can't start acting because it is already running an action",
-                        GetName().c_str());
+                        "Behavior '%s' can't start %s action because it is already running an action in state %s",
+                        GetName().c_str(), action->GetName().c_str(),
+                        GetDebugStateName().c_str());
     return false;
   }
 
@@ -615,7 +624,17 @@ bool IBehavior::StartActing(IActionRunner* action, ActionResultCallback callback
                      });
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::StartActing(IActionRunner* action, ActionResultWithRobotCallback callback)
+{
+  return StartActing(action,
+                     [this, callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
+                       callback(msg.result, _robot);
+                     });
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::StartActing(IActionRunner* action, SimpleCallback callback)
 {
@@ -643,10 +662,20 @@ void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedActi
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::StopActing(bool allowCallback)
+bool IBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
 {
   ScoredActingStateChanged(false);
 
+  if( !allowHelperToContinue ) {
+    // stop the helper first. This is generally what we want, because if someone else is stopping an action,
+    // the helper likely won't know how to respond. Note that helpers can't call StopActing
+    if( !_currentHelperHandle.expired() ) {
+      PRINT_CH_INFO("Behaviors", (GetName() + ".StopActing.WithoutCallback.StopHelper").c_str(),
+                    "Stopping behavior helper because action stopped without callback");
+    }
+    SmartStopHelper();
+  }    
+  
   if( IsActing() ) {
     u32 tagToCancel = _lastActionTag;
       
@@ -666,6 +695,7 @@ bool IBehavior::StopActing(bool allowCallback)
     if( _lastActionTag == tagToCancel ) {
       _lastActionTag = ActionConstants::INVALID_TAG;
     }
+    
     return ret;
   }
 
@@ -674,9 +704,9 @@ bool IBehavior::StopActing(bool allowCallback)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved)
+void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame)
 {
-  if(_robot.HasExternalInterface()){
+  if(broadcastToGame && _robot.HasExternalInterface()){
     _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
   }
   PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetName().c_str(), EnumToString(objectiveAchieved));
@@ -725,30 +755,6 @@ void IBehavior::SmartReEnableReactionTrigger(const std::set<ReactionTrigger> tri
   for(auto triger: triggerList){
     SmartReEnableReactionTrigger(triger);
   }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartDisableTapInteraction()
-{
-  if( !_tapInteractionDisabled ) {
-    _robot.GetBehaviorManager().RequestEnableTapInteraction(GetName(), false);
-    _tapInteractionDisabled = true;
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartReEnableTapInteraction()
-{
-  if( _tapInteractionDisabled ) {
-    _robot.GetBehaviorManager().RequestEnableTapInteraction(GetName(), true);
-    _tapInteractionDisabled = false;
-  }
-  else {
-    PRINT_NAMED_WARNING("IBehavior.SmartReEnableTapInteraction.NotDisabled",
-                        "Attempted to re-enable tap interaction (manually), but it wasn't disabled");
-  }    
 }
 
   
@@ -814,7 +820,7 @@ bool IBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
   if(objectIter != _customLightObjects.end()){
     for(const auto& anim : anims)
     {
-      _robot.GetCubeLightComponent().StopLightAnim(anim, objectID);
+      _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(anim, objectID);
     }
     _customLightObjects.erase(objectIter);
     return true;
@@ -824,7 +830,55 @@ bool IBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
     return false;
   }
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::SmartDelegateToHelper(Robot& robot,
+                                      HelperHandle handleToRun,
+                                      SimpleCallbackWithRobot successCallback,
+                                      SimpleCallbackWithRobot failureCallback)
+{
+  PRINT_CH_INFO("Behaviors", (GetName() + ".SmartDelegateToHelper").c_str(),
+                "Behavior requesting to delegate to helper %s", handleToRun->GetName().c_str());
+
+  if(!_currentHelperHandle.expired()){
+   PRINT_NAMED_WARNING("IBehavior.SmartDelegateToHelper",
+                       "Attempted to start a handler while handle already running, stopping running helper");
+   SmartStopHelper();
+  }
+  const bool delegateSuccess = _robot.GetAIComponent().GetBehaviorHelperComponent().
+                               DelegateToHelper(robot,
+                                                handleToRun,
+                                                successCallback,
+                                                failureCallback);
+
+  if( delegateSuccess ) {
+    _currentHelperHandle = handleToRun;
+  }
+  else {
+    PRINT_CH_INFO("Behaviors", (GetName() + "SmartDelegateToHelper.Failed").c_str(),
+                  "Failed to delegate to helper");
+  }
+  
+  return delegateSuccess;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::SmartStopHelper()
+{
+  bool handleStopped = false;
+  auto handle = _currentHelperHandle.lock();
+  if( handle ) {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".SmartStopHelper").c_str(),
+                  "Behavior stopping it's helper");
+
+    handleStopped = _robot.GetAIComponent().GetBehaviorHelperComponent().StopHelper(handle);
+  }
+  
+  return handleStopped;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* action,
@@ -864,8 +918,9 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
   {
     const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
     
-    _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedKnown);
-    _robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::DoubleTappedUnsure);
+
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
     
     if(on)
     {
@@ -942,7 +997,7 @@ void IBehavior::StopWithoutImmediateRepetitionPenalty()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
+// EvaluateScoreInternal is virtual and can optionally be overridden by subclasses
 float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 {
   float score = _flatScore;
@@ -954,10 +1009,10 @@ float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
+// EvaluateScoreInternal is virtual and can optionally be overridden by subclasses
 float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 {
-  // unless specifically overriden it should mimic the non-running score
+  // unless specifically overridden it should mimic the non-running score
   const float nonRunningScore = EvaluateScoreInternal(robot);
   return nonRunningScore;
 }
@@ -966,10 +1021,10 @@ float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float IBehavior::EvaluateRepetitionPenalty() const
 {
-  if (_lastRunTime_s > 0.0)
+  if (_lastRunTime_s > 0.0f)
   {
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float timeSinceRun = Util::numeric_cast<float>(currentTime_sec - _lastRunTime_s);
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float timeSinceRun = currentTime_sec - _lastRunTime_s;
     const float repetitionPenalty = _repetitionPenalty.EvaluateY(timeSinceRun);
     return repetitionPenalty;
   }
@@ -981,10 +1036,10 @@ float IBehavior::EvaluateRepetitionPenalty() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float IBehavior::EvaluateRunningPenalty() const
 {
-  if (_startedRunningTime_s > 0.0)
+  if (_startedRunningTime_s > 0.0f)
   {
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float timeSinceStarted = Util::numeric_cast<float>(currentTime_sec - _startedRunningTime_s);
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float timeSinceStarted = currentTime_sec - _startedRunningTime_s;
     const float runningPenalty = _runningPenalty.EvaluateY(timeSinceStarted);
     return runningPenalty;
   }
@@ -1018,8 +1073,7 @@ float IBehavior::EvaluateScore(const Robot& robot) const
       const float runningPenalty = EvaluateRunningPenalty();
       score *= runningPenalty;
     }
-    
-    
+
     
     if (_enableRepetitionPenalty && !isRunning)
     {

@@ -15,11 +15,10 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorBuildPyramidBase_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorBuildPyramidBase_H__
 
-#include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/common/basestation/objectIDs.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
-
 
 namespace Anki {
 //forward declaration
@@ -33,8 +32,8 @@ struct ObjectLights;
 class BehaviorBuildPyramidBase : public IBehavior
 {
 protected:
+  friend class BuildPyramidBehaviorChooser;
   // Enforce creation through BehaviorFactory
-  friend class BuildPyramidPersistentUpdate;
   friend class BehaviorFactory;
   BehaviorBuildPyramidBase(Robot& robot, const Json::Value& config);
 
@@ -42,18 +41,12 @@ protected:
 public:
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   
-  // Match music Rounds to enum values - starts at 1 to match rounds set up
-  // in the current audio sound banks
-  enum class MusicState{
-    SearchingForCube = 1,
-    InitialCubeCarry,
-    BaseFormed,
-    TopBlockCarry,
-    PyramidCompleteFlourish
-  };
-  
   virtual bool CarryingObjectHandledInternally() const override {return true;}
-
+  
+  // returns false if the base block id has not been set
+  bool GetBaseBlockID(ObjectID& id) const;
+  bool GetStaticBlockID(ObjectID& id) const;
+  bool GetTopBlockID(ObjectID& id) const;
   
 protected:
   enum class State {
@@ -81,29 +74,13 @@ protected:
   void ResetPyramidTargets(const Robot& robot) const;
   
   void SetState_internal(State state, const std::string& stateName);
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   
   template<typename T>
   void TransitionToSearchingWithCallback(Robot& robot,  const ObjectID& objectID,  void(T::*callback)(Robot&));
   
-  /// Light functions
-  static void SetPyramidBaseLightsByID(Robot& robot,
-                                       const ObjectID& staticID,
-                                       const ObjectID& baseID);
-  static ObjectLights GetBaseFormedBaseLightsModifier(Robot& robot,
-                                                      const ObjectID& staticID,
-                                                      const ObjectID& baseID);
-  static ObjectLights GetBaseFormedStaticLightsModifier(Robot& robot,
-                                                        const ObjectID& staticID,
-                                                        const ObjectID& baseID);
-  
-  void SetPickupInitialBlockLights();
-  void SetPyramidBaseLights();
-  void SetFullPyramidLights();
-  void SetPyramidFlourishLights();
-  bool AreAllBlockIDsUnique() const;
-  
-  ObjectLights GetDenouementTopLightsModifier() const;
+  // Ensures that blocks IDs which become invalid are cleared out of
+  // the assigned ObjectIDs below - not actually const
+  void ClearInvalidBlockIDs(const Robot& robot) const;
   
   /// Attributes
   mutable ObjectID _staticBlockID;
@@ -113,6 +90,7 @@ protected:
   // track how many pyramid bases are known for updating the behavior when they are
   // created or destroyed
   int _lastBasesCount;
+  float _timeFirstBaseFormed;
   
   // track retrys with searches
   int _searchingForNearbyBaseBlockCount;
@@ -132,7 +110,11 @@ protected:
 private:
   typedef std::vector<const ObservableObject*> BlockList;
 
-  ObjectID GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const;
+  bool AreAllBlockIDsUnique() const;
+  ObjectID GetBestBaseBlock(const Robot& robot, const BlockList& availableBlocks) const;
+  ObjectID GetBestStaticBlock(const Robot& robot, const BlockList& availableBlocks) const;
+  ObjectID GetNearestBlockToPose(const Robot& robot, const Pose3d& pose, const BlockList& availableBlocks) const;
+  
   void SafeEraseBlockFromBlockList(const ObjectID& objectID, BlockList& blockList) const;
   
   // update the offsets for placing the block based on the nearest pose that
@@ -141,7 +123,6 @@ private:
   bool CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset) const;
   
   Robot& _robot;
-  MusicState _musicState;
 
   // offsets for placingBlock where the ground is clear
   mutable f32 _baseBlockOffsetX;

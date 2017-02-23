@@ -81,6 +81,10 @@ public:
   // If disabled, lift goes limp.
   Result EnableLiftPower(bool enable);
   
+  // Enables head power on the robot.
+  // If disabled, head goes limp.
+  Result EnableHeadPower(bool enable);
+  
   // Below are low-level actions to tell the robot to do something "now"
   // without using the ActionList system:
   

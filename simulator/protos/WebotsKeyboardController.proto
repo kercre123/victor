@@ -35,7 +35,7 @@ PROTO WebotsKeyboardController [
   field SFString sayString "Hello"
 
   # Unlock ID to unlock / lock
-  field SFString unlockName "CubeRollAction"
+  field SFString unlockName "BuildPyramid"
   
   # Factory IDs of objects to connect to (hex)
   field MFString activeObjectFactoryIDs ["0" "0" "0" "0" "0"]

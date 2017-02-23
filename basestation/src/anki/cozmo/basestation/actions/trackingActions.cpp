@@ -231,7 +231,7 @@ ActionResult ITrackAction::Init()
   
 bool ITrackAction::InterruptInternal()
 {
-  _lastUpdateTime = 0.f;
+  _lastUpdateTime = 0.0f;
   return true;
 }
 
@@ -250,7 +250,7 @@ ActionResult ITrackAction::CheckIfDone()
   
   Radians absPanAngle = 0, absTiltAngle = 0;
 
-  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // See if there are new absolute pan/tilt angles from the derived class
   if(GetAngles(absPanAngle, absTiltAngle))
@@ -261,7 +261,7 @@ ActionResult ITrackAction::CheckIfDone()
     }
     
     // Record latest update to avoid timing out
-    if(_updateTimeout_sec > 0.) {
+    if(_updateTimeout_sec > 0.0f) {
       _lastUpdateTime = currentTime;
     }
     
@@ -354,14 +354,14 @@ ActionResult ITrackAction::CheckIfDone()
     
     // Play sound if it's time and either angle was big enough
     const bool haveTurningSoundAnim = AnimationTrigger::Count != _turningSoundAnimTrigger;
-    if(haveTurningSoundAnim && currentTime > _nextSoundTime && angleLargeEnoughForSound)
+    if(haveTurningSoundAnim && (currentTime > _nextSoundTime) && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
       PlayAnimationAction* soundAction = new TriggerLiftSafeAnimationAction(_robot, _turningSoundAnimTrigger, 1, false);
       _soundAnimTag = soundAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, soundAction);
       
-      _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
+      _nextSoundTime = currentTime + Util::numeric_cast<float>(GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec));
     }
     
     // Move eyes if indicated
@@ -399,7 +399,7 @@ ActionResult ITrackAction::CheckIfDone()
       }
     } // if(_moveEyes)
     
-  } else if(_updateTimeout_sec > 0.) {
+  } else if(_updateTimeout_sec > 0.0f) {
     if(currentTime - _lastUpdateTime > _updateTimeout_sec) {
       PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.Timeout",
                     "No tracking angle update received in %f seconds, returning done.",

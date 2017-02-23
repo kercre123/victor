@@ -131,7 +131,11 @@ bool IReactionTriggerStrategy::UpdateDisableIDs(const std::string& requesterID, 
   return true;
 }
   
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Util::RandomGenerator& IReactionTriggerStrategy::GetRNG() const
+{
+  return _robot.GetRNG();
+}
   
 } // namespace Cozmo
 } // namespace Anki

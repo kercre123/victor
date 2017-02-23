@@ -26,6 +26,7 @@
 #include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include <fstream>
@@ -325,7 +326,7 @@ namespace Anki {
         }
       }
       
-      // Draw name & most likely expression
+      // Draw name
       std::string name;
       if(face.GetName().empty()) {
         if(face.GetID() > 0) {
@@ -333,11 +334,49 @@ namespace Anki {
         } else {
           name = "UnknownFace[";
         }
-        name += std::to_string(face.GetID()) + "]-";
+        name += std::to_string(face.GetID()) + "]";
       } else {
-        name = face.GetName() + "-";
+        name = face.GetName();
       }
-      name += EnumToString(face.GetMaxExpression());
+      
+      // For display bars (smile, blink, expression)
+      const f32 barAlpha = 1.f;
+      const f32 kBarFraction = 0.1f;
+      
+      // Add expression and score, if not Unknown
+      Vision::FacialExpression expression = face.GetMaxExpression();
+      if(Vision::FacialExpression::Unknown != expression)
+      {
+        auto const& expressionValues = face.GetExpressionValues();
+        const size_t kBufLength = 64;
+        char buffer[kBufLength];
+        snprintf(buffer, kBufLength, ", Ex:%s[%hhu]", EnumToString(expression),
+                 expressionValues[Util::EnumToUnderlying(expression)]);
+        name += buffer;
+        
+        // Draw expression score histogram (NOTE: sum of all OKAO expression scores is 100)
+        const f32 kTotalScoreSum = 100.f;
+        const ColorRGBA barColor(0.f,1.f,1.f,barAlpha);
+        const s32 barWidth = std::round((1.f - (2.f*kBarFraction)) *
+                                        (f32)face.GetRect().GetWidth() / (f32)expressionValues.size());
+        f32 xLeft = face.GetRect().GetBottomLeft().x() + kBarFraction * face.GetRect().GetWidth();
+        for(s32 iExp=0; iExp<expressionValues.size(); ++iExp)
+        {
+          const auto value = expressionValues[iExp];
+          const s32 barHeight = std::round((f32)value / kTotalScoreSum *
+                                           face.GetRect().GetHeight() * (0.5f-kBarFraction));
+          if(barHeight > 0)
+          {
+            const f32 yTop = face.GetRect().GetBottomLeft().y()-barHeight-kBarFraction*face.GetRect().GetHeight();
+            const Rectangle<s32> bar(xLeft, yTop, barWidth, barHeight);
+            DrawCameraRect(bar, barColor, true);
+            const std::string expStr = EnumToString((Vision::FacialExpression)iExp);
+            DrawCameraText(Point2f{xLeft,yTop}, expStr.substr(0,3), NamedColors::DARKGREEN);
+          }
+          xLeft += barWidth;
+        }
+        
+      }
       
       // Add score debugging info:
       auto debugScoreInfo = face.GetRecognitionDebugInfo();
@@ -357,6 +396,57 @@ namespace Anki {
       Quad2f quad;
       face.GetRect().GetQuad(quad);
       DrawCameraQuad(quad, color);
+      
+      // Draw smile amount bar along bottom of bounding quad for face. Thickness (height) of bar
+      // corresponds to confidence.
+      const Vision::SmileAmount& smile = face.GetSmileAmount();
+      if(smile.wasChecked) {
+        
+        const f32 barHeight = std::max(1.f, smile.confidence*kBarFraction*(quad.GetMaxY()-quad.GetMinY()));
+        const f32 barWidth = std::max(1.f, smile.amount * (quad.GetMaxX() - quad.GetMinX()));
+        
+        Rectangle<s32> smileBar(quad.GetBottomLeft().x(),
+                                quad.GetBottomLeft().y() - barHeight,
+                                barWidth, barHeight);
+        
+        DrawCameraRect(smileBar, ColorRGBA(0.f,0.f,1.f,barAlpha), true);
+      }
+      
+      // Draw L/R blink amount bars along sides of bounding quad for face
+      // Note: bars are bigger when eyes are more _open_
+      const Vision::BlinkAmount& blink = face.GetBlinkAmount();
+      if(blink.wasChecked) {
+        const f32 barWidth  = kBarFraction*face.GetRect().GetWidth();
+        
+        // Left
+        {
+          const f32 barHeight = (1.f-blink.blinkAmountLeft) * (quad.GetMaxY()-quad.GetMinY());
+          Rectangle<s32> blinkBar(quad.GetTopLeft().x(), quad.GetTopLeft().y(), barWidth, barHeight);
+          DrawCameraRect(blinkBar, ColorRGBA(0.f,.5f,0.f,barAlpha), true);
+        }
+
+        // Right
+        {
+          const f32 barHeight = (1.f-blink.blinkAmountRight) * (quad.GetMaxY()-quad.GetMinY());
+          Rectangle<s32> blinkBar(quad.GetTopRight().x()-barWidth, quad.GetTopRight().y(), barWidth, barHeight);
+          DrawCameraRect(blinkBar, ColorRGBA(1.f,0.f,0.f,barAlpha), true);
+        }
+      }
+      
+      // Draw gaze indicator as line from face center in the direction of the gaze
+      const Vision::Gaze& gaze = face.GetGaze();
+      if(gaze.wasChecked) {
+        const Point2f centerPt( face.GetRect().GetMidPoint() );
+        Point2f lineEnd(centerPt);
+        lineEnd.x() += face.GetRect().GetWidth() * 0.5f * std::sinf(DEG_TO_RAD(gaze.leftRight_deg));
+        
+        // Note that we subtract for y because positive y is down in the image
+        lineEnd.y() -= face.GetRect().GetHeight() * 0.5f * std::sinf(DEG_TO_RAD(gaze.upDown_deg));
+        
+        DrawCameraLine(centerPt, lineEnd, NamedColors::RED);
+        DrawCameraOval(centerPt, 1.f, 1.f, NamedColors::RED);
+      }
+      
     }
     
     void VizManager::EraseRobot(const u32 robotID)

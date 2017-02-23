@@ -87,8 +87,9 @@ namespace Anki {
       
     protected:
       virtual ActionResult Init() override;
-      
-      std::string   _animGroupName;
+
+      const AnimationTrigger _animTrigger;
+      std::string _animGroupName;
       
     }; // class TriggerAnimationAction
     

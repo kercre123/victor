@@ -39,6 +39,8 @@ static const uint32_t kMinAgeToPerformSearch_ms = 300;
 static const f32 kPostLiftDriveBackwardDist_mm = 20.f;
 static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;
   
+static const uint32_t kMaxReAlignsPickupFail = 1;
+  
 static   std::set<ReactionTrigger> kReactionsToDisable = {
     ReactionTrigger::ObjectPositionUpdated,
     ReactionTrigger::FacePositionUpdated,
@@ -52,6 +54,7 @@ static   std::set<ReactionTrigger> kReactionsToDisable = {
 
 BehaviorCubeLiftWorkout::BehaviorCubeLiftWorkout(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
+, _failToPickupCount(0)
 {
 }
 
@@ -78,6 +81,7 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
   const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
   _numStrongLiftsToDo = currWorkout.GetNumStrongLifts(robot);
   _numWeakLiftsToDo = currWorkout.GetNumWeakLifts(robot);
+  _failToPickupCount = 0;
 
   if( robot.IsCarryingObject() ) {
     _shouldBeCarrying = true;
@@ -99,6 +103,9 @@ void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
 {
   // restore previous idle
   robot.GetAnimationStreamer().PopIdleAnimation();
+  
+  // Ensure the cube workout lights are not set
+  robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
 }
 
 IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(Robot& robot)
@@ -150,6 +157,9 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
   static const u8 kNumRetries = 2;
   RetryWrapperAction* action = new RetryWrapperAction(robot, driveToBlockAction, retryCallback, kNumRetries);
 
+  // Set the cube lights to the workout lights
+  robot.GetCubeLightComponent().PlayLightAnim(_targetBlockID, CubeAnimationTrigger::Workout);
+
   StartActing(action, [this,&robot](const ExternalInterface::RobotCompletedAction& completion) {
       ActionResult res = completion.result;
       
@@ -191,20 +201,19 @@ void BehaviorCubeLiftWorkout::TransitionToPickingUpCube(Robot& robot)
     new DriveStraightAction(robot, -kPostLiftDriveBackwardDist_mm, kPostLiftDriveBackwardSpeed_mmps),
   });
   pickupAndDriveBackAction->SetProxyTag(pickupAction->GetTag());
-  
-  static const u8 kNumRetries = 2;
-  RetryWrapperAction* action = new RetryWrapperAction(robot,
-                                                      pickupAndDriveBackAction,
-                                                      AnimationTrigger::WorkoutPickupRetry,
-                                                      kNumRetries);
 
-  StartActing(action, [this, &robot](ActionResult res) {
+  StartActing(pickupAndDriveBackAction, [this, &robot](ActionResult res) {
       if( res == ActionResult::SUCCESS ) {
         TransitionToPostLiftAnim(robot);
       }
       else {
-        const bool countFailure = true;
-        TransitionToFailureRecovery(robot, countFailure);
+        if(_failToPickupCount < kMaxReAlignsPickupFail){
+          _failToPickupCount++;
+          TransitionToAligningToCube(robot);
+        }else{
+          const bool countFailure = true;
+          TransitionToFailureRecovery(robot, countFailure);
+        }
       }
     });
 }
@@ -285,6 +294,9 @@ void BehaviorCubeLiftWorkout::TransitionToPuttingDown(Robot& robot)
 
 void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(Robot& robot)
 {
+  // Stop the workout cube lights as soon as we think we have put the cube down
+  robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
+
   // if we still think we are carrying the object, see if we can find it
   if( robot.IsCarryingObject() ) {
 
@@ -327,6 +339,11 @@ void BehaviorCubeLiftWorkout::EndIteration(Robot& robot)
   }
 
   BehaviorObjectiveAchieved(BehaviorObjective::PerformedWorkout);
+  
+  BehaviorObjective additionalObjective = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout().GetAdditionalBehaviorObjectiveOnComplete();
+  if (additionalObjective != BehaviorObjective::Count) {
+    BehaviorObjectiveAchieved(additionalObjective);
+  }
 
   robot.GetAIComponent().GetWorkoutComponent().CompleteCurrentWorkout();
 }

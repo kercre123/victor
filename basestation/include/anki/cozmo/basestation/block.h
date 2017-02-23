@@ -228,7 +228,7 @@ namespace Anki {
         DEV_ASSERT(_size.y() == _size.z(), "Block_Cube1x1.Constructor.InvalidYZ");
       }
       
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
+      virtual RotationAmbiguities const& GetRotationAmbiguities() const override;
       
       virtual Block_Cube1x1* CloneType() const override
       {
@@ -267,7 +267,7 @@ namespace Anki {
         
       }
       
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
+      virtual RotationAmbiguities const& GetRotationAmbiguities() const override;
       
       virtual Block_2x1* CloneType() const override
       {

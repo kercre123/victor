@@ -11,18 +11,19 @@ using System.Linq;
 public class EngineDasTarget : IDASTarget {
 
   public void Event(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
-    #if USE_ENGINE_TARGET
+#if USE_ENGINE_TARGET
     if (keyValues != null) {
       Unity_DAS_Event(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
       Unity_DAS_Event(eventName, eventValue, null, null, 0);
     }
-    #endif
+#endif
   }
 
   public void Error(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
 
 #if USE_ENGINE_TARGET
+    eventName = "unity."+eventName;
     if (keyValues != null) {
       Unity_DAS_LogE(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
@@ -34,6 +35,7 @@ public class EngineDasTarget : IDASTarget {
   public void Warn(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
 
 #if USE_ENGINE_TARGET
+    eventName = "unity."+eventName;
     if (keyValues != null) {
       Unity_DAS_LogW(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
@@ -45,6 +47,7 @@ public class EngineDasTarget : IDASTarget {
   public void Info(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
 
 #if USE_ENGINE_TARGET
+    eventName = "unity."+eventName;
     if (keyValues != null) {
       Unity_DAS_LogI(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
@@ -56,6 +59,7 @@ public class EngineDasTarget : IDASTarget {
   public void Debug(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     
 #if USE_ENGINE_TARGET
+    eventName = "unity."+eventName;
     if (keyValues != null) {
       Unity_DAS_LogD(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
@@ -64,9 +68,9 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
-  public void Ch_Info(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null)
-  {
+  public void Ch_Info(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
 #if USE_ENGINE_TARGET
+    eventName = "unity."+eventName;
     if (keyValues != null) {
       Unity_DAS_Ch_LogI(channelName, eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
@@ -75,9 +79,9 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
-  public void Ch_Debug(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null)
-  {
+  public void Ch_Debug(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
 #if USE_ENGINE_TARGET
+    eventName = "unity."+eventName;
     if (keyValues != null) {
       Unity_DAS_Ch_LogD(channelName, eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
@@ -92,13 +96,13 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
-  #if (UNITY_IOS || UNITY_STANDALONE) && !UNITY_EDITOR
+#if (UNITY_IOS || UNITY_STANDALONE) && !UNITY_EDITOR
   const string EngineDllName = "__Internal";
-  #else
+#else
   const string EngineDllName = "cozmoEngine";
-  #endif
+#endif
 
-  #if USE_ENGINE_TARGET
+#if USE_ENGINE_TARGET
   // TODO: __Internal only works on certain platforms (iOS, but not Android, etc)
   [DllImport(EngineDllName)]
   private static extern void Unity_DAS_Event(string eventName, string eventValue, string[] keys, string[] values, uint keyValueCount);
@@ -123,5 +127,5 @@ public class EngineDasTarget : IDASTarget {
 
   [DllImport(EngineDllName)]
   private static extern void Unity_DAS_SetGlobal(string key, string value);
-  #endif
+#endif
 }

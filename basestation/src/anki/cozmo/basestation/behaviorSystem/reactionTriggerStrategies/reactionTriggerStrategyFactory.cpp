@@ -16,12 +16,14 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyCubeMoved.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyDoubleTapDetected.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFacePositionUpdated.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFistBump.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFrustration.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyMotorCalibration.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyObjectPositionUpdated.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPlacedOnCharger.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPetInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotPickedUp.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotPlacedOnSlope.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPyramidInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyReturnedToTreads.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotOnBack.h"
@@ -65,6 +67,11 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       strategy = new ReactionTriggerStrategyFacePositionUpdated(robot, config);
       break;
     }
+    case ReactionTrigger::FistBump:
+    {
+      strategy = new ReactionTriggerStrategyFistBump(robot, config);
+      break;
+    }
     case ReactionTrigger::Frustration:
     {
       strategy = new ReactionTriggerStrategyFrustration(robot, config);
@@ -93,6 +100,11 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotPickedUp:
     {
       strategy = new ReactionTriggerStrategyRobotPickedUp(robot, config);
+      break;
+    }
+    case ReactionTrigger::RobotPlacedOnSlope:
+    {
+      strategy = new ReactionTriggerStrategyRobotPlacedOnSlope(robot, config);
       break;
     }
     case ReactionTrigger::PyramidInitialDetection:

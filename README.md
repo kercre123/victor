@@ -2,6 +2,8 @@
 
 Cozmo Robot, Engine, and Unity UI/Game code. 
 
+If you are new to Anki please also see the [New Hire Onboarding](https://ankiinc.atlassian.net/wiki/pages/viewpage.action?pageId=72614010) page
+
 If you are contributing to the Unity/C# codebase, please read [Unity C# Coding Guidelines](https://github.com/anki/cozmo-one/wiki/Eng---Unity-C%23-Coding-Guidelines)
 and follow [Unity Best Practices](https://github.com/anki/cozmo-one/wiki/Eng-Unity-Best-Practices).
 

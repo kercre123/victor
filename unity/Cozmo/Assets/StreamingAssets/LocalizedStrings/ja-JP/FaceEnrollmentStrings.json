@@ -1,0 +1,84 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "faceEnrollment.instructions": {
+    "translation": "Cozmo needs to check you out! Look at Cozmo straight on, and hold still.\n\nWhen he's done, you'll hear a chime."
+  },
+  "faceEnrollment.enterName.placeholderText": {
+    "translation": "Enter your first name"
+  },
+  "faceEnrollment.faceEnrollmentList.description": {
+    "translation": "Teach Cozmo to recognize you, or someone else!"
+  },
+  "faceEnrollment.faceEnrollmentList.deleteConfirmTitle": {
+    "translation": "Delete {0}?"
+  },
+  "faceEnrollment.faceEnrollmentList.deleteConfirmButton": {
+    "translation": "Delete"
+  },
+  "faceEnrollment.instructions.top": {
+    "translation": "Look at Cozmo straight on, and hold still"
+  },
+  "faceEnrollment.instructions.bottom": {
+    "translation": "When Cozmo is done, he'll say your name"
+  },
+  "faceEnrollment.errors.neverSawValidFace.title": {
+    "translation": "Cozmo already knows you!"
+  },
+  "faceEnrollment.errors.neverSawValidFace.description": {
+    "translation": "Cozmo recognizes you as {0}"
+  },
+  "faceEnrollment.errors.timeOut.title": {
+    "translation": "Cozmo is having trouble seeing you"
+  },
+  "faceEnrollment.errors.timeOut.description": {
+    "translation": "Make sure you're in a well-lit room and are aligned with Cozmo's face. Cozmo should be on a flat, stable surface."
+  },
+  "faceEnrollment.condition.allChangesSaved": {
+    "translation": "All changes have been saved."
+  },
+  "faceEnrollment.firstTimeCompleteAlert.title": {
+    "translation": "Cozmo knows your name!"
+  },
+  "faceEnrollment.firstTimeCompleteAlert.description": {
+    "translation": "Cozmo has learned to recognize your face and may say your name when he sees you. Use Meet Cozmo again to introduce him to more friends."
+  },
+  "faceEnrollment.button.addNewPerson": {
+    "translation": "Add New Person"
+  },
+  "faceEnrollment.button.scanAgain": {
+    "translation": "Scan {0} Again"
+  },
+  "faceEnrollment.label.dayCount.singular": {
+    "translation": "Day Ago"
+  },
+  "faceEnrollment.label.dayCount.plural": {
+    "translation": "Days Ago"
+  },
+  "faceEnrollment.label.HelpCozmoRecognize": {
+    "translation": "Help Cozmo recognize you more easily"
+  },
+  "faceEnrollment.label.lastScanned": {
+    "translation": "Last Scanned:"
+  },
+  "faceEnrollment.label.today": {
+    "translation": "Today"
+  }
+}

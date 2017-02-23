@@ -118,8 +118,8 @@ CONSOLE_VAR(bool, kDoProgressiveThresholdAdjustOnSuspiciousCliff, "Robot", true)
 
 // timeToConsiderOfftreads is tuned based on the fact that we have to wait half a second from the time the cliff sensor detects
 // ground to when the robot state message updates to the fact that it is no longer picked up
-static const float kRobotTimeToConsiderOfftreads_ms = 250.0f;
-static const float kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 3.0f;
+static const TimeStamp_t kRobotTimeToConsiderOfftreads_ms = 250;
+static const TimeStamp_t kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 3;
 
 // Laying flat angles
 static const float kPitchAngleOntreads_rads = DEG_TO_RAD(0);
@@ -131,8 +131,8 @@ static const float kPitchAngleOnBack_sim_rads = DEG_TO_RAD(96.4f);
 static const float kPitchAngleOnBackTolerance_deg = 15.0f;
 
 //Constants for on side
-static const float kOnLeftSide_rawYAccel = -9000.0;
-static const float kOnRightSide_rawYAccel = 10500.0;
+static const float kOnLeftSide_rawYAccel = -9000.0f;
+static const float kOnRightSide_rawYAccel = 10500.0f;
 static const float kOnSideTolerance_rawYAccel =3000.0f;
 
 // On face angles
@@ -237,18 +237,22 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
       
   // Initializes _pose, _poseOrigins, and _worldOrigin:
   Delocalize(false);
-      
+  
+  // The call to Delocalize() will increment frameID, but we want it to be
+  // initialzied to 0, to match the physical robot's initialization
+  // It will also add to history so clear it
+  // It will also flag that a localization update is needed when it increments the frameID so set the flag
+  // to false
+  _frameId = 0;
+  _poseHistory->Clear();
+  _needToSendLocalizationUpdate = false;
+  
   // Delocalize will mark isLocalized as false, but we are going to consider
   // the robot localized (by odometry alone) to start, until he gets picked up.
   _isLocalized = true;
   SetLocalizedTo(nullptr);
 
   _robotToEngineImplMessaging->InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID, this);
-  
-  
-  // The call to Delocalize() will increment frameID, but we want it to be
-  // initialzied to 0, to match the physical robot's initialization
-  _frameId = 0;
       
   _lastDebugStringHash = 0;
       
@@ -373,6 +377,9 @@ void Robot::SetOnCharger(bool onCharger)
                           newObjID.GetValue());
       }
     }
+    
+    // if we are on the charger, we must also be on the charger platform.
+    SetOnChargerPlatform(true);
           
     LOG_EVENT("robot.on_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
@@ -390,6 +397,22 @@ void Robot::SetOnCharger(bool onCharger)
   }
       
   _isOnCharger = onCharger;
+}
+
+void Robot::SetOnChargerPlatform(bool onPlatform)
+{
+  // Can only not be on platform if not on charge contacts
+  onPlatform = onPlatform || IsOnCharger();
+  
+  const bool shouldBroadcast = _isOnChargerPlatform != onPlatform;
+  _isOnChargerPlatform = onPlatform;
+  
+  if( shouldBroadcast ) {
+    Broadcast(
+      ExternalInterface::MessageEngineToGame(
+        ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
+      );
+  }
 }
     
 ObjectID Robot::AddUnconnectedCharger()
@@ -528,9 +551,9 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     return false;
   }
   
-  const bool isOfftreads = IS_STATUS_FLAG_SET(IS_PICKED_UP);
+  const bool isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   const bool isFalling = IS_STATUS_FLAG_SET(IS_FALLING);
-  TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   //////////
   // Check the robot's orientation
@@ -603,7 +626,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   ////
   
   // Transition from ontreads to InAir - happens instantly
-  if(_awaitingConfirmationTreadState == OffTreadsState::OnTreads && isOfftreads == true) {
+  if(_awaitingConfirmationTreadState == OffTreadsState::OnTreads && isPickedUp == true) {
     // Robot is being picked up from not being picked up, notify systems
     _awaitingConfirmationTreadState = OffTreadsState::InAir;
     // Allows this to be called instantly
@@ -612,7 +635,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   
   // Transition from inAir to Ontreads
   // there is a delay for the cliff sensor to confirm the robot is no longer picked up
-  if (_awaitingConfirmationTreadState != OffTreadsState::OnTreads && isOfftreads != true
+  if (_awaitingConfirmationTreadState != OffTreadsState::OnTreads && isPickedUp != true
       && !currOnBack && !currOnSide && !currFacePlant) {
     _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
     // Allows this to be called instantly
@@ -689,10 +712,9 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     }
 
     // if the robot was on the charging platform and its state changes it's not on the platform anymore
-    if(_isOnChargerPlatform && _offTreadsState != OffTreadsState::OnTreads)
+    if(_offTreadsState != OffTreadsState::OnTreads)
     {
-      _isOnChargerPlatform = false;
-      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
+      SetOnChargerPlatform(false);
     }
     
     return true;
@@ -764,8 +786,11 @@ void Robot::Delocalize(bool isCarryingObject)
   // Create a new pose frame so that we can't get pose history entries with the same pose
   // frame that have different origins (Not 100% sure this is totally necessary but seems
   // like the cleaner / safer thing to do.)
-  AddVisionOnlyPoseToHistory(GetLastMsgTimestamp(), _pose, GetHeadAngle(), GetLiftAngle());
-  AddRawOdomPoseToHistory(GetLastMsgTimestamp(),GetPoseFrameID(), _pose, GetHeadAngle(), GetLiftAngle(), GetCliffDataRaw(), isCarryingObject);
+  Result res = SetNewPose(_pose);
+  if(res != RESULT_OK)
+  {
+    PRINT_NAMED_WARNING("Robot.Delocalize.SetNewPose", "Failed to set new pose");
+  }
   
   if(_timeSynced)
   {
@@ -820,15 +845,9 @@ void Robot::Delocalize(bool isCarryingObject)
     }
   }
 
-  // delete objects that have become useless since we delocalized last time
-  _blockWorld->DeleteObjectsFromZombieOrigins();
+  // notify blockworld
+  _blockWorld->OnRobotDelocalized(_worldOrigin);
   
-  // create a new memory map for this origin
-  _blockWorld->CreateLocalizedMemoryMap(_worldOrigin);
-  
-  // deselect blockworld's selected object, if it has one
-  _blockWorld->DeselectCurrentObject();
-      
   // notify behavior whiteboard
   _aiComponent->OnRobotDelocalized();
   
@@ -1025,12 +1044,16 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const bool isCarryingObject = IS_STATUS_FLAG_SET(IS_CARRYING_BLOCK);
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
+  _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
   SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   _isCliffSensorOn = IS_STATUS_FLAG_SET(CLIFF_DETECTED);
   _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
   _isBodyInAccessoryMode = IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE);
 
+  // Save the entire flag for sending to game
+  _lastStatusFlags = msg.status;
+  
   // If robot is not in accessary mode for some reason, send message to force it.
   // This shouldn't ever happen!
   if (!_isBodyInAccessoryMode && ++_setBodyModeTicDelay >= 16) {  // Triggers ~960ms (16 x 60ms engine tic) after syncTimeAck.
@@ -1381,14 +1404,14 @@ Result Robot::Update()
 {
   ANKI_CPU_PROFILE("Robot::Update");
   
-  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   _robotIdleTimeoutComponent->Update(currentTime);
   
   // Check for syncTimeAck taking too long to arrive
-  if (_syncTimeSentTime_sec > 0 && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
+  if (_syncTimeSentTime_sec > 0.0f && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
     PRINT_NAMED_WARNING("Robot.Update.SyncTimeAckNotReceived", "");
-    _syncTimeSentTime_sec = 0;
+    _syncTimeSentTime_sec = 0.0f;
   }
   
   if (!_gotStateMsgAfterTimeSync)
@@ -1404,12 +1427,12 @@ Result Robot::Update()
   GetContext()->GetVizManager()->SendStartRobotUpdate();
       
   /* DEBUG
-     const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-     static double lastUpdateTime = currentTime_sec;
+     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+     static float lastUpdateTime = currentTime_sec;
        
-     const double updateTimeDiff = currentTime_sec - lastUpdateTime;
-     if(updateTimeDiff > 1.0) {
-     PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
+     const float updateTimeDiff = currentTime_sec - lastUpdateTime;
+     if(updateTimeDiff > 1.0f) {
+       PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
      }
      lastUpdateTime = currentTime_sec;
   */
@@ -1437,24 +1460,25 @@ Result Robot::Update()
   // update the memory map based on the current's robot pose
   _blockWorld->UpdateRobotPoseInMemoryMap();
   
-  
-  
-  // Update ChargerPlatform - this has to happen before the behaviors which might need this information
-  ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-  if( nullptr != charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
-  {
-    // This state is useful for knowing not to play a cliff react when just driving off the charger.
-    bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
-    if( isOnChargerPlatform != _isOnChargerPlatform)
+  // Check if we have driven off the charger platform - this has to happen before the behaviors which might
+  // need this information. This state is useful for knowing not to play a cliff react when just driving off
+  // the charger.
+
+  if( _isOnChargerPlatform && _offTreadsState == OffTreadsState::OnTreads ) {  
+    ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
+    if( nullptr != charger && !charger->IsPoseStateUnknown() )
     {
-      _isOnChargerPlatform = isOnChargerPlatform;
-      Broadcast(
-         ExternalInterface::MessageEngineToGame(
-           ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
-                );
+      const bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
+      if( !isOnChargerPlatform )
+      {
+        SetOnChargerPlatform(false);
+      }
+    }
+    else {
+      // if we can't connect / talk to the charger, consider the robot to be off the platform
+      SetOnChargerPlatform(false);
     }
   }
-  
       
   ///////// Update the behavior manager ///////////
       
@@ -1758,6 +1782,9 @@ Result Robot::Update()
   
   // Connect to objects requested via ConnectToObjects
   ConnectToRequestedObjects();
+  
+  // Send nav memory map data
+  _blockWorld->BroadcastNavMemoryMap();
       
   /////////// Update visualization ////////////
       
@@ -1802,7 +1829,7 @@ Result Robot::Update()
   GetContext()->GetVizManager()->SendEndRobotUpdate();
 
   // update time since last image received
-  _timeSinceLastImage_s = std::max(0.0, currentTime - _robotToEngineImplMessaging->GetLastImageReceivedTime()); 
+  _timeSinceLastImage_s = std::max(0.0, currentTime - _robotToEngineImplMessaging->GetLastImageReceivedTime());
       
   // Sending debug string to game and viz
   char buffer [128];
@@ -1812,11 +1839,12 @@ Result Robot::Update()
   // So we can have an arbitrary number of data here that is likely to change want just hash it all
   // together if anything changes without spamming
   snprintf(buffer, sizeof(buffer),
-           "%c%c%c%c %2dHz %s%s ",
+           "%c%c%c%c%c %2dHz %s%s ",
            GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
            IsCarryingObject() ? 'C' : ' ',
+           IsOnChargerPlatform() ? 'P' : ' ',
            // SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
@@ -1905,10 +1933,9 @@ static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
 } // IsValidHeadAngle()
 
     
-void Robot::SetNewPose(const Pose3d& newPose)
+Result Robot::SetNewPose(const Pose3d& newPose)
 {
   SetPose(newPose.GetWithRespectToOrigin());
-  ++_frameId;
   
   // Note: using last message timestamp instead of newest timestamp in history
   //  because it's possible we did not put the last-received state message into
@@ -1916,15 +1943,7 @@ void Robot::SetNewPose(const Pose3d& newPose)
   //  can get.
   const TimeStamp_t timeStamp = GetLastMsgTimestamp();
   
-  Result addResult = AddRawOdomPoseToHistory(timeStamp, _frameId, _pose, GetHeadAngle(), GetLiftAngle(), GetCliffDataRaw(), IsCarryingObject());
-  if(RESULT_OK != addResult)
-  {
-    PRINT_NAMED_ERROR("Robot.SetNewPose.AddRawOdomPoseFailed",
-                      "t=%d FrameID=%d", timeStamp, _frameId);
-    return;
-  }
-    
-  SendAbsLocalizationUpdate(_pose, timeStamp, _frameId);
+  return AddVisionOnlyPoseToHistory(timeStamp, _pose, GetHeadAngle(), GetLiftAngle());
 }
     
 void Robot::SetPose(const Pose3d &newPose)
@@ -2860,17 +2879,18 @@ Result Robot::SetOnRamp(bool t)
                      _ID, ramp->GetID().GetValue(), _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
         
   } else {
+    Result res;
     // Just do an absolute pose update, setting the robot's position to
     // where we "know" he should be when he finishes ascending or
     // descending the ramp
     switch(_rampDirection)
     {
       case Ramp::ASCENDING:
-        SetPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
+        res = SetNewPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
         break;
             
       case Ramp::DESCENDING:
-        SetPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
+        res = SetNewPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
         break;
             
       default:
@@ -2878,6 +2898,12 @@ Result Robot::SetOnRamp(bool t)
                             "When transitioning on/off ramp, expecting the ramp direction to be either "
                             "ASCENDING or DESCENDING, not %d.", _rampDirection);
         return RESULT_FAIL;
+    }
+    
+    if(res != RESULT_OK) {
+      PRINT_NAMED_WARNING("Robot.SetOnRamp.SetNewPose",
+                          "Robot %d failed to set new pose", _ID);
+      return res;
     }
         
     _rampDirection = Ramp::UNKNOWN;
@@ -2890,19 +2916,6 @@ Result Robot::SetOnRamp(bool t)
                      _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
                      _pose.GetRotationAngle<'Z'>().getDegrees(),
                      timeStamp);
-        
-    // We are creating a new pose frame at the top of the ramp
-    //IncrementPoseFrameID();
-    ++_frameId;
-    Result lastResult = SendAbsLocalizationUpdate(_pose,
-                                                  timeStamp,
-                                                  _frameId);
-    if(lastResult != RESULT_OK) {
-      PRINT_NAMED_WARNING("Robot.SetOnRamp.SendAbsLocUpdateFailed",
-                          "Robot %d failed to send absolute localization update.", _ID);
-      return lastResult;
-    }
-
   } // if/else transitioning onto ramp
       
   _onRamp = t;
@@ -2926,7 +2939,12 @@ Result Robot::SetPoseOnCharger()
       
   // Just do an absolute pose update, setting the robot's position to
   // where we "know" he should be when he finishes ascending the charger.
-  SetPose(charger->GetDockedPose().GetWithRespectToOrigin());
+  Result lastResult = SetNewPose(charger->GetDockedPose().GetWithRespectToOrigin());
+  if(lastResult != RESULT_OK) {
+    PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.SetNewPose",
+                        "Robot %d failed to set new pose", _ID);
+    return lastResult;
+  }
 
   const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
     
@@ -2936,18 +2954,6 @@ Result Robot::SetPoseOnCharger()
                    _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
                    _pose.GetRotationAngle<'Z'>().getDegrees(),
                    timeStamp);
-      
-  // We are creating a new pose frame at the top of the ramp
-  //IncrementPoseFrameID();
-  ++_frameId;
-  Result lastResult = SendAbsLocalizationUpdate(_pose,
-                                                timeStamp,
-                                                _frameId);
-  if(lastResult != RESULT_OK) {
-    PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.SendAbsLocUpdateFailed",
-                        "Robot %d failed to send absolute localization update.", _ID);
-    return lastResult;
-  }
       
   return RESULT_OK;
       
@@ -3774,8 +3780,10 @@ Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                          const f32 lift_angle)
 {      
   // We have a new ("ground truth") key frame. Increment the pose frame!
-  //IncrementPoseFrameID();
   ++_frameId;
+  
+  // Set needToSendLocalizationUpdate to true so we send an update on the next tick
+  _needToSendLocalizationUpdate = true;
   
   // vision poses do not care about whether you are carrying an object. This field has no meaning here, so we
   // set to false always
@@ -3941,7 +3949,7 @@ void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, Obje
   RemoveDiscoveredObjects(factoryID);
   
   _connectedObjects[activeID].connectionState = ActiveObjectInfo::ConnectionState::Connected;
-  _connectedObjects[activeID].lastDisconnectionTime = 0;
+  _connectedObjects[activeID].lastDisconnectionTime = 0.0f;
 }
 
 void Robot::HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType)
@@ -4094,8 +4102,8 @@ void Robot::CheckDisconnectedObjects()
 {
   // Check for objects that have been disconnected long enough to consider them gone. Note the object has to be in
   // the Disconnected state which is the state we get when the disconnection wasn't requested.
-  double time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if ((_lastDiconnectedCheckTime <= 0) || (time >= (_lastDiconnectedCheckTime + kDiconnectedCheckDelay)))
+  const float time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if ((_lastDiconnectedCheckTime <= 0.0f) || (time >= (_lastDiconnectedCheckTime + kDiconnectedCheckDelay)))
   {
     for (int i = 0; i < _connectedObjects.size(); ++i)
     {
@@ -4282,25 +4290,17 @@ ExternalInterface::RobotState Robot::GetRobotState()
   msg.accel = GetHeadAccelData();
   msg.gyro = GetHeadGyroData();
   
-  msg.status = 0;
-  if(GetMoveComponent().IsMoving()) { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
-  if(IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
-  if(_offTreadsState != OffTreadsState::OnTreads) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
-  if(_offTreadsState == OffTreadsState::Falling)  { msg.status |= (uint32_t)RobotStatusFlag::IS_FALLING; }
+  msg.status = _lastStatusFlags;
   if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
   if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
-  if( IsOnCharger() )      { msg.status |= (uint32_t)RobotStatusFlag::IS_ON_CHARGER; }
   if(IsCarryingObject())   {
     msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
     msg.carryingObjectID = GetCarryingObject();
     msg.carryingObjectOnTopID = GetCarryingObjectOnTop();
   } else {
     msg.carryingObjectID = -1;
+    msg.carryingObjectOnTopID = -1;
   }
-  if(!GetActionList().IsEmpty()) {
-    msg.status |= (uint32_t)RobotStatusFlag::IS_PATHING;
-  }
-  if(_chargerOOS) { msg.status |= (uint32_t)RobotStatusFlag::IS_CHARGER_OOS; }
   
   msg.gameStatus = 0;
   if (IsLocalized() && _offTreadsState == OffTreadsState::OnTreads) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
@@ -4308,9 +4308,7 @@ ExternalInterface::RobotState Robot::GetRobotState()
   msg.headTrackingObjectID = GetMoveComponent().GetTrackToObject();
       
   msg.localizedToObjectID = GetLocalizedTo();
-      
-  // TODO: Add proximity sensor data to state message
-      
+
   msg.batteryVoltage = GetBatteryVoltage();
       
   msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();
@@ -4496,7 +4494,7 @@ void Robot::ActiveObjectInfo::Reset()
   connectionState = ConnectionState::Invalid;
   rssi = 0;
   lastDiscoveredTimeStamp = 0;
-  lastDisconnectionTime = 0;
+  lastDisconnectionTime = 0.0f;
 }
 
 } // namespace Cozmo

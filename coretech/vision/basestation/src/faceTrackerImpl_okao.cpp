@@ -231,6 +231,30 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
 
+    _okaoSmileDetectHandle = OKAO_SM_CreateHandle();
+    if(NULL == _okaoSmileDetectHandle) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSmileDetectionHandleAllocFail", "");
+      return RESULT_FAIL_MEMORY;
+    }
+    
+    _okaoSmileResultHandle = OKAO_SM_CreateResultHandle();
+    if(NULL == _okaoSmileResultHandle) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSmileResultHandleAllocFail", "");
+      return RESULT_FAIL_MEMORY;
+    }
+    
+    _okaoGazeBlinkDetectHandle = OKAO_GB_CreateHandle();
+    if(NULL == _okaoGazeBlinkDetectHandle) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoGazeBlinkDetectionHandleAllocFail", "");
+      return RESULT_FAIL_MEMORY;
+    }
+    
+    _okaoGazeBlinkResultHandle = OKAO_GB_CreateResultHandle();
+    if(NULL == _okaoGazeBlinkResultHandle) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoGazeBlinkResultHandleAllocFail", "");
+      return RESULT_FAIL_MEMORY;
+    }
+    
     Result recognizerInitResult = _recognizer.Init(_okaoCommonHandle);
     
     if(RESULT_OK == recognizerInitResult) {
@@ -250,7 +274,30 @@ namespace Vision {
   {
     //Util::SafeDeleteArray(_workingMemory);
     //Util::SafeDeleteArray(_backupMemory);
-
+    
+    if(NULL != _okaoSmileDetectHandle) {
+      if(OKAO_NORMAL != OKAO_SM_DeleteHandle(_okaoSmileDetectHandle)) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoSmileDetectHandleDeleteFail", "");
+      }
+    }
+    
+    if(NULL != _okaoSmileResultHandle) {
+      if(OKAO_NORMAL != OKAO_SM_DeleteResultHandle(_okaoSmileResultHandle)) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoSmileResultHandleDeleteFail", "");
+      }
+    }
+    
+    if(NULL != _okaoGazeBlinkDetectHandle) {
+      if(OKAO_NORMAL != OKAO_GB_DeleteHandle(_okaoGazeBlinkDetectHandle)) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoGazeBlinkDetectHandleDeleteFail", "");
+      }
+    }
+    
+    if(NULL != _okaoGazeBlinkResultHandle) {
+      if(OKAO_NORMAL != OKAO_GB_DeleteResultHandle(_okaoGazeBlinkResultHandle)) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoGazeBlinkResulttHandleDeleteFail", "");
+      }
+    }
     
     if(NULL != _okaoExpressionResultHandle) {
       if(OKAO_NORMAL != OKAO_EX_DeleteResultHandle(_okaoExpressionResultHandle)) {
@@ -479,6 +526,87 @@ namespace Vision {
     return RESULT_OK;
   } // EstimateExpression()
   
+  Result FaceTracker::Impl::DetectSmile(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                                        Vision::TrackedFace& face)
+  {
+    INT32 okaoResult = OKAO_SM_SetPointFromHandle(_okaoSmileDetectHandle, _okaoPartDetectionResultHandle);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.DetectSmile.SetPointFromHandleFailed",
+                          "OKAO Result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    okaoResult = OKAO_SM_Estimate(_okaoSmileDetectHandle, dataPtr, nWidth, nHeight, _okaoSmileResultHandle);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.DetectSmile.EstimateFailed",
+                          "OKAO Result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    INT32 smileDegree=0;
+    INT32 confidence=0;
+    okaoResult = OKAO_SM_GetResult(_okaoSmileResultHandle, &smileDegree, &confidence);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.DetectSmile.GetResultFailed",
+                          "OKAO Result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    // NOTE: smileDegree from OKAO is [0,100]. Convert to [0.0, 1.0].
+    // Confidence from OKAO is [0,1000]. Also convert to [0.0, 1.0]
+    face.SetSmileAmount(static_cast<f32>(smileDegree) * 0.01f, static_cast<f32>(confidence) * 0.001f);
+    
+    return RESULT_OK;
+  }
+  
+  Result FaceTracker::Impl::DetectGazeAndBlink(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
+                                               Vision::TrackedFace& face)
+  {
+    INT32 okaoResult = OKAO_GB_SetPointFromHandle(_okaoGazeBlinkDetectHandle, _okaoPartDetectionResultHandle);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.DetectGazeAndBlink.SetPointFromHandleFailed",
+                          "OKAO Result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    okaoResult = OKAO_GB_Estimate(_okaoGazeBlinkDetectHandle, dataPtr, nWidth, nHeight, _okaoGazeBlinkResultHandle);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.DetectGazeAndBlink.EstimateFailed",
+                          "OKAO Result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    if(_detectGaze)
+    {
+      INT32 gazeLeftRight_deg = 0;
+      INT32 gazeUpDown_deg    = 0;
+      okaoResult = OKAO_GB_GetGazeDirection(_okaoGazeBlinkResultHandle, &gazeLeftRight_deg, &gazeUpDown_deg);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_WARNING("FaceTrackerImpl.DetectGazeAndBlink.GetGazeDirectionFailed",
+                            "OKAO Result=%d", okaoResult);
+        return RESULT_FAIL;
+      }
+    
+      face.SetGaze(gazeLeftRight_deg, gazeUpDown_deg);
+    }
+    
+    if(_detectBlinks)
+    {
+      INT32 blinkDegreeLeft  = 0;
+      INT32 blinkDegreeRight = 0;
+      okaoResult = OKAO_GB_GetEyeCloseRatio(_okaoGazeBlinkResultHandle, &blinkDegreeLeft, &blinkDegreeRight);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_WARNING("FaceTrackerImpl.DetectGazeAndBlink.GetEyeCloseRatioFailed",
+                            "OKAO Result=%d", okaoResult);
+        return RESULT_FAIL;
+      }
+      
+      // NOTE: blinkDegree from OKAO is [0,1000]. Convert to [0.0, 1.0]
+      face.SetBlinkAmount(static_cast<f32>(blinkDegreeLeft) * 0.001f, static_cast<f32>(blinkDegreeRight) * 0.001f);
+    }
+    
+    return RESULT_OK;
+  }
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
                                    std::list<TrackedFace>& faces,
@@ -601,25 +729,53 @@ namespace Vision {
       
       // Try finding face parts
       Tic("FacePartDetection");
-      bool facePartsFound = DetectFaceParts(nWidth, nHeight, dataPtr, detectionIndex, face);
+      const bool facePartsFound = DetectFaceParts(nWidth, nHeight, dataPtr, detectionIndex, face);
       Toc("FacePartDetection");
       
-      if(_detectEmotion && facePartsFound)
-      {
-        // Expression detection
-        Tic("ExpressionRecognition");
-        Result expResult = EstimateExpression(nWidth, nHeight, dataPtr, face);
-        Toc("ExpressionRecognition");
-        if(RESULT_OK != expResult) {
-          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.EstimateExpressiongFailed",
-                              "Detection index %d of %d.",
-                              detectionIndex, numDetections);
-        }
-      } // if(_detectEmotion)
-      
-      // Face Recognition:
       if(facePartsFound)
       {
+        if(_detectEmotion)
+        {
+          // Expression detection
+          Tic("ExpressionRecognition");
+          Result expResult = EstimateExpression(nWidth, nHeight, dataPtr, face);
+          Toc("ExpressionRecognition");
+          if(RESULT_OK != expResult) {
+            PRINT_NAMED_WARNING("FaceTrackerImpl.Update.EstimateExpressiongFailed",
+                                "Detection index %d of %d.",
+                                detectionIndex, numDetections);
+          }
+        } // if(_detectEmotion)
+        
+        if(_detectSmiling)
+        {
+          Tic("SmileDetection");
+          Result smileResult = DetectSmile(nWidth, nHeight, dataPtr, face);
+          Toc("SmileDetection");
+          
+          if(RESULT_OK != smileResult) {
+            PRINT_NAMED_WARNING("FaceTrackerImpl.Update.DetectSmileFailed",
+                                "Detection index %d of %d.",
+                                detectionIndex, numDetections);
+          }
+        }
+        
+        if(_detectGaze || _detectBlinks) // In OKAO, gaze and blink are part of the same detector
+        {
+          Tic("GazeAndBlinkDetection");
+          Result gbResult = DetectGazeAndBlink(nWidth, nHeight, dataPtr, face);
+          Toc("GazeAndBlinkDetection");
+          
+          if(RESULT_OK != gbResult) {
+            PRINT_NAMED_WARNING("FaceTrackerImpl.Update.DetectGazeAndBlinkFailed",
+                                "Detection index %d of %d.",
+                                detectionIndex, numDetections);
+          }
+        }
+        
+        //
+        // Face Recognition:
+        //
         const bool enableEnrollment = IsEnrollable(detectionInfo, face);
         
         // Very Verbose:
@@ -647,7 +803,8 @@ namespace Vision {
         //                            "TrackingID %d already known and there are %d faces detected",
         //                            -detectionInfo.nID, numDetections);
         //        }
-      }
+        
+      } // if(facePartsFound)
       
       // Get whatever is the latest recognition information for the current tracker ID
       s32 enrollmentCompleted = 0;

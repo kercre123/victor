@@ -596,7 +596,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
             int maxSize = (int)Anki.Cozmo.ExternalInterface.CommsConstants.kDirectCommsBufferSize;
             if ((_BytesReceived + messageSize) >= maxSize) {
-              DAS.Error("Unity.UdpChannel.TooManyBytesTooQuickly", "Too many bytes received too quickly. (" + maxSize.ToString() + " bytes allowed.)");
+              DAS.Error("UdpChannel.TooManyBytesTooQuickly", "Too many bytes received too quickly. (" + maxSize.ToString() + " bytes allowed.)");
               Destroy(DisconnectionReason.ConnectionThrottled);
               return;
             }

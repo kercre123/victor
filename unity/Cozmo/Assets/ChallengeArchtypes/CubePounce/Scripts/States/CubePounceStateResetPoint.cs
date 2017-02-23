@@ -46,6 +46,7 @@ namespace Cozmo.Minigame.CubePounce {
 
       if (_CubeInActiveRange) {
         float idealHeadAngle_rad = CozmoUtil.HeadAngleFactorToRadians(CozmoUtil.kIdealBlockViewHeadValue, useExactAngle: false);
+        _CurrentRobot.SetLiftHeight(0.0f, null, Anki.Cozmo.QueueActionPosition.IN_PARALLEL);
         _CurrentRobot.SearchForNearbyObject(_CubePounceGame.GetCubeTarget().ID, HandleLookForCube, headAngle_rad: idealHeadAngle_rad);
         _LookForCubeInProgress = true;
       }

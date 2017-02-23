@@ -2,17 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>cozmo</string>
-			</array>
-			<key>CFBundleURLName</key>
-			<string>com.anki.cozmo</string>
-		</dict>
-	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -38,9 +27,22 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.2.0</string>
+	<string>1.3.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.anki.cozmo</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>cozmo</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>0.1</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -51,26 +53,24 @@
 		<dict>
 			<key>amazonaws.com</key>
 			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
 				<key>NSThirdPartyExceptionMinimumTLSVersion</key>
 				<string>TLSv1.0</string>
 				<key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
 				<false/>
-				<key>NSIncludesSubdomains</key>
-				<true/>
 			</dict>
 			<key>amazonaws.com.cn</key>
 			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
 				<key>NSThirdPartyExceptionMinimumTLSVersion</key>
 				<string>TLSv1.0</string>
 				<key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
 				<false/>
-				<key>NSIncludesSubdomains</key>
-				<true/>
 			</dict>
 		</dict>
 	</dict>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UIApplicationExitsOnSuspend</key>
@@ -94,9 +94,9 @@
 		<string>accelerometer</string>
 		<string>bluetooth-le</string>
 	</array>
-	<key>UIRequiresPersistentWiFi</key>
-	<true/>
 	<key>UIRequiresFullScreen</key>
+	<string>YES</string>
+	<key>UIRequiresPersistentWiFi</key>
 	<true/>
 	<key>UIStatusBarHidden</key>
 	<true/>
@@ -110,8 +110,6 @@
 	<array>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-        <key>UIRequiresFullScreen</key>
-        <string>YES</string>
 	<key>Unity_LoadingActivityIndicatorStyle</key>
 	<integer>-1</integer>
 	<key>com.anki.das.version</key>

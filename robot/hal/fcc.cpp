@@ -287,9 +287,9 @@ static bool sendWifiCommand(int test) {
   const u32 DIVISOR = (32768*2560)/(115200);   // K02 weird RC clock / ESP baud rate
   
   // Send some start bits before the string
-  GPIO_SET(GPIO_MISO, PIN_MISO);
-  GPIO_OUT(GPIO_MISO, PIN_MISO);
-  SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+  GPIO_SET(MISO);
+  GPIO_OUT(MISO);
+  SOURCE_SETUP(MISO, SourceGPIO);
   Anki::Cozmo::HAL::MicroWait(50);  
   while (*s)
   {
@@ -304,9 +304,9 @@ static bool sendWifiCommand(int test) {
         ;
       last = now;
       if (c & (1<<i))
-        GPIO_SET(GPIO_MISO, PIN_MISO);
+        GPIO_SET(MISO);
       else
-        GPIO_RESET(GPIO_MISO, PIN_MISO);      
+        GPIO_RESET(MISO);      
     }
   }
   return true;

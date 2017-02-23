@@ -81,6 +81,7 @@ private:
   void ProcessVizDockingErrorSignalMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizVisionMarkerMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizCameraRectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraOvalMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraTextMessage(const AnkiEvent<VizInterface::MessageViz>& msg);

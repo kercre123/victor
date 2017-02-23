@@ -52,20 +52,20 @@ StaticMoodData& MoodManager::GetStaticMoodData()
 }
   
 
-double MoodManager::GetCurrentTimeInSeconds()
+float MoodManager::GetCurrentTimeInSeconds()
 {
-  const double currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   return currentTimeInSeconds;
 }
   
   
 MoodManager::MoodManager(Robot* inRobot)
   : _robot(inRobot)
-  , _lastUpdateTime(0.0)
+  , _lastUpdateTime(0.0f)
 {
 }
-  
-  
+
+
 void MoodManager::Init(const Json::Value& inJson)
 {
   GetStaticMoodData().Init(inJson);
@@ -132,16 +132,16 @@ void MoodManager::Reset()
   {
     GetEmotionByIndex(i).Reset();
   }
-  _lastUpdateTime = 0.0;
+  _lastUpdateTime = 0.0f;
 }
 
 
-void MoodManager::Update(double currentTime)
+void MoodManager::Update(const float currentTime)
 {
   ANKI_CPU_PROFILE("MoodManager::Update");
   
   const float kMinTimeStep = 0.0001f; // minimal sensible timestep, should be at least > epsilon
-  float timeDelta = (_lastUpdateTime != 0.0) ? float(currentTime - _lastUpdateTime) : kMinTimeStep;
+  float timeDelta = (_lastUpdateTime != 0.0f) ? (currentTime - _lastUpdateTime) : kMinTimeStep;
   if (timeDelta < kMinTimeStep)
   {
     PRINT_NAMED_WARNING("MoodManager.BadTimeStep", "TimeStep %f (%f-%f) is < %f - clamping!", timeDelta, currentTime, _lastUpdateTime, kMinTimeStep);
@@ -261,7 +261,7 @@ void MoodManager::SendEmotionsToGame()
   
 // updates the most recent time this event was triggered, and returns how long it's been since the event was last seen
 // returns FLT_MAX if this is the first time the event has been seen
-float MoodManager::UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::string& eventName, double currentTimeInSeconds)
+float MoodManager::UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::string& eventName, float currentTimeInSeconds)
 {
   auto newEntry = _moodEventTimes.insert( MoodEventTimes::value_type(eventName, currentTimeInSeconds) );
   
@@ -274,7 +274,7 @@ float MoodManager::UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::st
   {
     // event has happened before - calculate time since it last occured and the matching penalty, then update the time
     
-    double& timeEventLastOccured = newEntry.first->second;
+    float& timeEventLastOccured = newEntry.first->second;
     const float timeSinceLastOccurence = Util::numeric_cast<float>(currentTimeInSeconds - timeEventLastOccured);
     
     timeEventLastOccured = currentTimeInSeconds;
@@ -284,7 +284,7 @@ float MoodManager::UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::st
 }
 
 
-float MoodManager::UpdateEventTimeAndCalculateRepetitionPenalty(const std::string& eventName, double currentTimeInSeconds)
+float MoodManager::UpdateEventTimeAndCalculateRepetitionPenalty(const std::string& eventName, float currentTimeInSeconds)
 {
   const float timeSinceLastOccurence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
   
@@ -305,7 +305,7 @@ float MoodManager::UpdateEventTimeAndCalculateRepetitionPenalty(const std::strin
 }
 
 
-void MoodManager::TriggerEmotionEvent(const std::string& eventName, double currentTimeInSeconds)
+void MoodManager::TriggerEmotionEvent(const std::string& eventName, float currentTimeInSeconds)
 {
   const EmotionEvent* emotionEvent = GetStaticMoodData().GetEmotionEventMapper().FindEvent(eventName);
   if (emotionEvent)
@@ -337,7 +337,7 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, double curre
 }
 
 
-void MoodManager::AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString, double currentTimeInSeconds)
+void MoodManager::AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString, float currentTimeInSeconds)
 {
   const float repetitionPenalty = UpdateEventTimeAndCalculateRepetitionPenalty(uniqueIdString, currentTimeInSeconds);
   const float penalizedDeltaValue = baseValue * repetitionPenalty;
@@ -347,7 +347,7 @@ void MoodManager::AddToEmotion(EmotionType emotionType, float baseValue, const c
 
 
 void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
-                                EmotionType emotionType2, float baseValue2, const char* uniqueIdString, double currentTimeInSeconds)
+                                EmotionType emotionType2, float baseValue2, const char* uniqueIdString, float currentTimeInSeconds)
 {
   const float repetitionPenalty = UpdateEventTimeAndCalculateRepetitionPenalty(uniqueIdString, currentTimeInSeconds);
   const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;
@@ -362,7 +362,7 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
   
 void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
                                 EmotionType emotionType2, float baseValue2,
-                                EmotionType emotionType3, float baseValue3, const char* uniqueIdString, double currentTimeInSeconds)
+                                EmotionType emotionType3, float baseValue3, const char* uniqueIdString, float currentTimeInSeconds)
 {
   const float repetitionPenalty = UpdateEventTimeAndCalculateRepetitionPenalty(uniqueIdString, currentTimeInSeconds);
   const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;

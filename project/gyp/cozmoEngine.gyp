@@ -417,6 +417,7 @@
                     '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_ios)',
+                    '<@(flatbuffers_lib_search_path_ios)',
                 ],
                  'FRAMEWORK_SEARCH_PATHS': [
                   '../../lib/HockeySDK-iOS/HockeySDK.framework',
@@ -1359,6 +1360,7 @@
       ],
       'dependencies': [
         '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):audioUtil',
         '<(ce-cti_gyp_path):ctiCommon',
         '<(ce-cti_gyp_path):ctiMessaging',
         '<(ce-cti_gyp_path):ctiPlanning',
@@ -1396,16 +1398,20 @@
               '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a',
             ],
 
-            'libraries': [ # why is this in #if android? shouldn't mac and ios have same libs to link against?
+            # why does android have to be special? These should already be set by face-library.gypi and opencv.gypi
+            'libraries': [
               '-Wl,--whole-archive',
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkao.a',      # Common
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoCo.a',    #
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoPc.a',    # Property Estimation (for Smile/Gaze/Blink?)
               '-Wl,--no-whole-archive',
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoDt.a',    # Face Detection
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoPt.a',    # Face Parts Detection
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoEx.a',    # Facial Expression estimation
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoFr.a',    # Face Recognition
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOmcvPd.a',    # Pet Detection
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoSm.a',    # Smile Estimation
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoGb.a',    # Gaze & Blink Estimation
               '<(coretech_external_path)/libarchive/project/android/DerivedData/libarchive.a',
               '<(crash_path)/Breakpad/libs/armeabi-v7a/libbreakpad_client.a',   # Google Breakpad
               # does not work with ninja?!?!

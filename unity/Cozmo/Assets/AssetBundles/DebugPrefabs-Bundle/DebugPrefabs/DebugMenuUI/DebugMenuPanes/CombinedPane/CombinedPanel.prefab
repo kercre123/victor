@@ -186,8 +186,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ChildPanels:
   - {fileID: 148378, guid: 2d18fd0066a89493487b8970da08ddc2, type: 2}
-  - {fileID: 113112, guid: 69c14fed52e2f4774aa9f99538c997a2, type: 2}
   - {fileID: 196276, guid: 3c9e457c41fb04e09b78daa814646eb1, type: 2}
+  - {fileID: 113112, guid: 69c14fed52e2f4774aa9f99538c997a2, type: 2}
   _ContentPanel: {fileID: 22448652}
 --- !u!114 &11454486
 MonoBehaviour:

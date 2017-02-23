@@ -17,6 +17,7 @@
 
     public override void Enter() {
       base.Enter();
+      IsPauseable = false;
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
 
       _EnterNameSlideInstance = _FaceEnrollmentGame.SharedMinigameView.ShowWideGameStateSlide(

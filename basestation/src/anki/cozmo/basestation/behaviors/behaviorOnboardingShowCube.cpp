@@ -91,7 +91,7 @@ void BehaviorOnboardingShowCube::StopInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   EnableSpecificReactionaryBehavior(robot, true);
-  robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Onboarding);
+  robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }
 
@@ -160,12 +160,12 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const GameToEngineEvent& eve
   }
 }
 
-// This  Behavior is killed by unity switching to none
+// This behavior is killed by unity switching to none
 IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal(Robot& robot)
 {
   if( !IsActing() && !IsSequenceComplete() )
   {
-    double timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s();
+    float timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s();
     if( timeRunning > _maxTimeBeforeTimeout_Sec )
     {
       SET_STATE(ErrorFinal,robot);
@@ -358,7 +358,7 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
   StartActing(action,
               [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
               {
-                robot.GetCubeLightComponent().StopLightAnim(CubeAnimationTrigger::Onboarding);
+                robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
                 SET_STATE(WaitForFinalContinue,robot);
               });
 }

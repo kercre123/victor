@@ -164,7 +164,7 @@ public:
   bool HasReceivedRobotState() const;
 
   const bool GetTimeSynced() const {return _timeSynced;}
-  void       SetTimeSynced()       {_timeSynced = true; _syncTimeSentTime_sec = 0; }
+  void       SetTimeSynced()       {_timeSynced = true; _syncTimeSentTime_sec = 0.0f; }
 
   Result SyncTime();  // TODO:(bn) only for robot event handler, move out of this header...
 
@@ -285,8 +285,8 @@ public:
   void Delocalize(bool isCarryingObject);
 
   // Updates the pose of the robot.
-  // Sends new pose down to robot.
-  void SetNewPose(const Pose3d& newPose);
+  // Sends new pose down to robot (on next tick).
+  Result SetNewPose(const Pose3d& newPose);
       
   // Get the ID of the object we are localized to
   const ObjectID& GetLocalizedTo() const {return _localizedToID;}
@@ -319,8 +319,13 @@ public:
 
   // True if robot is on charger
   bool   IsOnCharger()         const { return _isOnCharger; }
-  // True if we know we're on a connected charger, but not the contacts
+
+  // True if we think the robot is on a charger. This becomes true only when the robot touches the charger
+  // contacts, and remains true until we think the robot has driven off the charger. It will not become true
+  // based on localization or observing the charger marker, only based on feeling the charger. A robot on the
+  // charger contacts is always on the platform( NOTE: even if it thinks it's in the air or on it's side)
   bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
+  
   // True if robot is charging
   bool   IsCharging()          const { return _isCharging; }
   // True if charger is out of spec
@@ -597,6 +602,8 @@ public:
   bool IsCliffDetected() const { return _isCliffDetected; }
   bool IsCliffSensorOn() const { return _isCliffSensorOn; }
   
+  bool IsPickedUp() const { return _isPickedUp; }
+  
   u16  GetCliffDataRaw() const { return _cliffDataRaw; }
   
   // sets distance detected by forward proximity sensor
@@ -714,7 +721,9 @@ public:
   
   RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
   const RobotPoseHistory* GetPoseHistory() const { return _poseHistory; }
-    
+  
+  // Adds a raw odom pose to history
+  // Only state updates should be calling this, however, it is exposed for unit tests
   Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                  const PoseFrameID_t frameID,
                                  const Pose3d& pose,
@@ -723,6 +732,8 @@ public:
                                  const u16 cliff_data,
                                  const bool isCarryingObject);
   
+  // Increments frameID and adds a vision only pose to history
+  // Sets a flag to send a localization update on the next tick
   Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                     const Pose3d& pose, 
                                     const f32 head_angle,
@@ -991,6 +1002,7 @@ protected:
   bool             _enableCliffSensor     = true;
   u32              _lastSentImageID       = 0;
   u8               _enabledAnimTracks     = (u8)AnimTrackFlag::ALL_TRACKS;
+  bool             _isPickedUp            = false;
   bool             _isCliffDetected       = false;
   bool             _isCliffSensorOn       = false;
   u16              _cliffDataRaw          = std::numeric_limits<u16>::max();
@@ -1004,6 +1016,8 @@ protected:
   u32              _suspiciousCliffCnt = 0;
   u16              _cliffDetectThreshold;
   u32              _cliffStartTimestamp = 0;
+  
+  u32              _lastStatusFlags       = 0;
   
   // Increments count of suspicious cliff. (i.e. Cliff was detected but data looks like maybe it's not real.)
   void IncrementSuspiciousCliffCount();
@@ -1091,6 +1105,7 @@ protected:
   void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
   void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
   void SetOnCharger(bool onCharger);
+  void SetOnChargerPlatform(bool onPlatform);
   void SetIsCharging(bool isCharging)     {_isCharging = isCharging;}
   
   // returns whether the tread state was updated or not
@@ -1139,7 +1154,7 @@ protected:
     ConnectionState connectionState;
     uint8_t         rssi;
     TimeStamp_t     lastDiscoveredTimeStamp;
-    double          lastDisconnectionTime;
+    float           lastDisconnectionTime;
       
     ActiveObjectInfo() {
       Reset();
@@ -1186,8 +1201,8 @@ protected:
   // Sync time with physical robot and trigger it robot to send back camera
   // calibration
   Result SendSyncTime() const;
-  double _syncTimeSentTime_sec = 0;
-  constexpr static double kMaxSyncTimeAckDelay_sec = 5;
+  float _syncTimeSentTime_sec = 0.0f;
+  constexpr static float kMaxSyncTimeAckDelay_sec = 5.0f;
   
   // Send's robot's current pose
   Result SendAbsLocalizationUpdate() const;

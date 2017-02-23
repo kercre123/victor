@@ -31,6 +31,11 @@ TaskExecutor::TaskExecutor()
 
 TaskExecutor::~TaskExecutor()
 {
+  StopExecution();
+}
+
+void TaskExecutor::StopExecution()
+{
   // Cause Execute and ProcessDeferredQueue to break out of their while loops
   _executing = false;
 
@@ -52,8 +57,12 @@ TaskExecutor::~TaskExecutor()
   // Join the background threads.  We created the threads in the constructor, so they
   // should be cleaned up in our destructor.
   try {
-    _taskExecuteThread.join();
-    _taskDeferredThread.join();
+    if (_taskExecuteThread.joinable()) {
+      _taskExecuteThread.join();
+    }
+    if (_taskDeferredThread.joinable()) {
+      _taskDeferredThread.join();
+    }
   } catch ( ... )
   {
     // Suppress exceptions
@@ -62,12 +71,25 @@ TaskExecutor::~TaskExecutor()
 
 void TaskExecutor::Wake(std::function<void()> task)
 {
+  if (!_executing) {
+    return;
+  }
   WakeAfter(std::move(task), std::chrono::time_point<std::chrono::system_clock>::min());
 }
 
 void TaskExecutor::WakeSync(std::function<void()> task)
 {
+  if (!_executing) {
+    return;
+  }
+  if (std::this_thread::get_id() == _taskExecuteThread.get_id()) {
+    task();
+    return;
+  }
   std::lock_guard<std::mutex> lock(_addSyncTaskMutex);
+  if (!_executing) {
+    return;
+  }
 
   TaskHolder taskHolder;
   taskHolder.sync = true;
@@ -84,6 +106,9 @@ void TaskExecutor::WakeSync(std::function<void()> task)
 
 void TaskExecutor::WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::system_clock> when)
 {
+  if (!_executing) {
+    return;
+  }
   TaskHolder taskHolder;
   taskHolder.sync = false;
   taskHolder.task = std::move(task);
@@ -100,6 +125,9 @@ void TaskExecutor::WakeAfter(std::function<void()> task, std::chrono::time_point
 void TaskExecutor::AddTaskHolder(TaskHolder taskHolder)
 {
   std::lock_guard<std::mutex> lock(_taskQueueMutex);
+  if (!_executing) {
+    return;
+  }
   _taskQueue.push_back(std::move(taskHolder));
   _taskQueueCondition.notify_one();
 }
@@ -107,6 +135,9 @@ void TaskExecutor::AddTaskHolder(TaskHolder taskHolder)
 void TaskExecutor::AddTaskHolderToDeferredQueue(TaskHolder taskHolder)
 {
   std::lock_guard<std::mutex> lock(_taskDeferredQueueMutex);
+  if (!_executing) {
+    return;
+  }
   _deferredTaskQueue.push_back(std::move(taskHolder));
   // Sort the tasks so that the next one due is at the back of the queue
   std::sort(_deferredTaskQueue.begin(), _deferredTaskQueue.end());

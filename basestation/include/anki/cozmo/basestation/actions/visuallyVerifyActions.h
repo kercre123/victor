@@ -63,7 +63,7 @@ namespace Cozmo {
     
     VisionMode            _imageTypeToWaitFor = VisionMode::Count;
     LiftPreset            _liftPreset = MoveLiftToHeightAction::Preset::LOW_DOCK;
-    ICompoundAction*      _compoundAction = nullptr;
+    std::unique_ptr<ICompoundAction> _compoundAction = nullptr;
     Signal::SmartHandle   _observationHandle;
     int                   _numImagesToWaitFor = 10;
 
@@ -125,8 +125,8 @@ namespace Cozmo {
     virtual ActionResult CheckIfDone() override;
     
   private:
-    ICompoundAction*      _turnTowardsPoseAction = nullptr;
-    IAction*              _waitForImagesAction   = nullptr;
+    std::unique_ptr<ICompoundAction> _turnTowardsPoseAction = nullptr;
+    std::unique_ptr<IAction>         _waitForImagesAction   = nullptr;
     Pose3d                _pose;
     Point3f               _thresholds_mm;
     int                   _numImagesToWaitFor = 10;

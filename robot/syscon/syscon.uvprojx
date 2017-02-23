@@ -423,11 +423,6 @@
               <FilePath>.\hal\storage.cpp</FilePath>
             </File>
             <File>
-              <FileName>temp.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\temp.cpp</FilePath>
-            </File>
-            <File>
               <FileName>watchdog.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\watchdog.cpp</FilePath>

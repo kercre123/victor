@@ -670,12 +670,32 @@ namespace Anki {
         LiftController::CheckForLoad();
       }
 
-      void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)
+      void Process_enableMotorPower(const RobotInterface::EnableMotorPower& msg)
       {
-        if (msg.enable) {
-          LiftController::Enable();
-        } else {
-          LiftController::Disable();
+        switch(msg.motorID) {
+          case MOTOR_HEAD:
+          {
+            if (msg.enable) {
+              HeadController::Enable();
+            } else {
+              HeadController::Disable();
+            }
+            break;
+          }
+          case MOTOR_LIFT:
+          {
+            if (msg.enable) {
+              LiftController::Enable();
+            } else {
+              LiftController::Disable();
+            }
+            break;
+          }
+          default:
+          {
+            AnkiWarn( 1195, "Messages.enableMotorPower.UnhandledMotorID", 347, "%d", 1, msg.motorID);
+            break;
+          }
         }
       }
 

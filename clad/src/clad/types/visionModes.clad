@@ -18,6 +18,9 @@ namespace Cozmo {
     CheckingQuality,
     DetectingPets,
     EstimatingFacialExpression,  // No effect if DetectingFaces not enabled
+    DetectingSmileAmount,        //  "
+    DetectingGaze,               //  "
+    DetectingBlinkAmount,        //  "
     LimitedExposure,
     Count
   }

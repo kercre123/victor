@@ -54,9 +54,12 @@ namespace Vision {
     
     void SetFaceEnrollmentMode(FaceEnrollmentPose pose,
                                FaceID_t forFaceID = UnknownFaceID,
-															 s32 numEnrollments = -1);
+                               s32 numEnrollments = -1);
     
     void EnableEmotionDetection(bool enable);
+    void EnableSmileDetection(bool enable);
+    void EnableGazeDetection(bool enable);
+    void EnableBlinkDetection(bool enable);
     
     // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();

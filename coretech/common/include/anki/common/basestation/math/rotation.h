@@ -38,9 +38,6 @@ namespace Anki {
   class RotationMatrixBase : public SmallSquareMatrix<DIM, float>
   {
   public:
-    RotationMatrixBase(); // init to identity matrix
-    RotationMatrixBase(const SmallSquareMatrix<DIM, float> &matrix);
-    RotationMatrixBase(std::initializer_list<float> initValues);
     
     // Matrix multiplication operations just call base class functions but then
     // also make sure things stay normalized
@@ -48,19 +45,22 @@ namespace Anki {
     RotationMatrixBase<DIM>& operator*=(const RotationMatrixBase<DIM>& R_other);
     RotationMatrixBase<DIM>& PreMultiplyBy(const RotationMatrixBase<DIM>& R_other);
     
-    // Matrix inversion and transpose just negate the change the sign of the
-    // rotation angle
-    RotationMatrixBase<DIM>& Transpose(void);
-    void              GetTranspose(RotationMatrixBase<DIM>& outTransposed) const;
-    RotationMatrixBase<DIM>& Invert(void); // same as transpose
-    void              GetInverse(RotationMatrixBase<DIM>& outInverted) const;
+    // Note that inverting a rotation is equivalent to transposing it
+    RotationMatrixBase<DIM>& Invert(void);
+    void                     GetInverse(RotationMatrixBase<DIM>& outInverted) const;
 
     
     bool IsValid(const float tolerance = 1e-6f) const;
     
   protected:
+    
     constexpr static const float OrthogonalityToleranceLow  = 1e-6f;
     constexpr static const float OrthogonalityToleranceHigh = 1e-2f;
+    
+    // NOTE: RotationMatrixBase is not directly instantiable
+    RotationMatrixBase(); // init to identity matrix
+    RotationMatrixBase(const SmallSquareMatrix<DIM, float> &matrix);
+    RotationMatrixBase(std::initializer_list<float> initValues);
     
     // Keep this an orthogonal matrix.  Throw exception if things get too
     // far from orthogonal, i.e. if any of the rows' norms are more than
@@ -274,6 +274,29 @@ namespace Anki {
   void Rodrigues(const RotationMatrix3d &Rmat_in,
                        RotationVector3d &Rvec_out);
 
+  
+  // Stores a vector of rotations to consider as ambiguous and thus the same.
+  // useAbsoluteValue=true is a shortcut to reduce the number of rotations stored by ignoring sign when comparing.
+  class RotationAmbiguities
+  {
+  public:
+    
+    // Default constructor: no ambiguities
+    RotationAmbiguities();
+    
+    RotationAmbiguities(bool useAbsoluteValue, std::vector<RotationMatrix3d>&& rotations);
+    
+    // Returns true if the given rotation is within threshold of any ambiguous rotation stored here
+    bool IsRotationSame(const Rotation3d& R, const Radians& angleThreshold) const;
+    
+    bool HasAmbiguities() const { return !_rotations.empty(); }
+    
+  private:
+    
+    std::vector<RotationMatrix3d> _rotations;
+    bool _useAbsoluteValue;
+    
+  }; // class RotationAmbiguities
   
 #pragma mark --- Inlined / Templated Implementations ---
   

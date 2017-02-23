@@ -162,7 +162,8 @@ public class ShowCozmoVideo : MonoBehaviour {
     _TapCount++;
     if (_TapCount >= kDevSkipVideoTapCount) {
       DAS.Info("ShowCozmoVideo.OnTapVideo", "Stopping video...");
-      _MediaPlayerCtrl.SeekTo(_MediaPlayerCtrl.GetDuration());
+      _MediaPlayerCtrl.Stop();
+      _MediaPlayerCtrl.OnEnd.Invoke();
     }
   }
 #endif

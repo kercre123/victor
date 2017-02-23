@@ -44,7 +44,7 @@ namespace SpeedTap {
         }
       }
 
-      _SpeedTapGame.AddPoint(pointPlayers);
+      _SpeedTapGame.AddPoint(pointPlayers, _WasMistakeMade);
       // Debug mode for Sudden Death
 #if ANKI_DEV_CHEATS
       if (_SpeedTapGame.GetPlayerCount() > 2) {
@@ -70,54 +70,25 @@ namespace SpeedTap {
       }
 #endif
 
-      // Count towards player mistake if cozmo wins a point off of the player tapping wrong.
-      // Don't count mistakes in MP mode, just a daily goals thing.
-      if (_SpeedTapGame.GetPlayerCount() == 2) {
-        if (_WasMistakeMade) {
-          if (_FirstTapper.playerType == PlayerType.Cozmo) {
-            _SpeedTapGame.PlayerMistake();
-          }
-          else {
-            _SpeedTapGame.CozmoMistake();
-          }
-        }
-      }
       // Depends on points being scored first
       _SpeedTapGame.UpdateUI();
 
       if (_SpeedTapGame.IsRoundComplete()) {
-        SpeedTapPlayerInfo wantsSuddenDeathPlayer = _SpeedTapGame.WantsSuddenDeath();
-        // It's just a normal round end with one winner.
-        if (wantsSuddenDeathPlayer == null) {
-          GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
-          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
+        GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
 
-          _SpeedTapGame.EndCurrentRound();
-          // Hide Current Round in between rounds
-          _SpeedTapGame.SharedMinigameView.InfoTitleText = string.Empty;
+        _SpeedTapGame.EndCurrentRound();
+        // Hide Current Round in between rounds
+        _SpeedTapGame.SharedMinigameView.InfoTitleText = string.Empty;
 
-          if (_SpeedTapGame.IsGameComplete()) {
-            UpdateBlockLights(false);
-            _SpeedTapGame.UpdateUIForGameEnd();
-            PlayReactToGameAnimationAndSendEvent();
-          }
-          else {
-            UpdateBlockLights(_WasMistakeMade);
-            _StateMachine.SetNextState(new SpeedTapReactToRoundEnd(_SpeedTapGame.GetPlayerMostPointsWon()));
-          }
-        }
-        // two players have one, go into a knockout phase...
-        else {
-          // Dim out players scoreboard, set them to spectator
-          // If out player is cozmo, play an animation...
-          wantsSuddenDeathPlayer.playerRole = PlayerRole.Spectator;
-          if (wantsSuddenDeathPlayer.scoreWidget != null) {
-            wantsSuddenDeathPlayer.scoreWidget.Dim = true;
-          }
-          // Also probably want a banner animation here...
-          // Other two players need to keep playing though.
+        if (_SpeedTapGame.IsGameComplete()) {
           UpdateBlockLights(_WasMistakeMade);
-          PlayReactToHandAnimation();
+          _SpeedTapGame.UpdateUIForGameEnd();
+          PlayReactToGameAnimationAndSendEvent();
+        }
+        else {
+          UpdateBlockLights(_WasMistakeMade);
+          _StateMachine.SetNextState(new SpeedTapReactToRoundEnd(_SpeedTapGame.GetPlayerMostPointsWon()));
         }
       }
       else {
@@ -166,11 +137,15 @@ namespace SpeedTap {
 
       if (wasMistakeMade) {
         for (int i = 0; i < _WinningCubes.Count; ++i) {
-          _WinningCubes[i].SetLEDsOff();
+          if (_WinningCubes[i] != null) {
+            _WinningCubes[i].SetLEDsOff();
+          }
         }
         for (int i = 0; i < losingBlocks.Count; ++i) {
-          _CurrentRobot.PlayCubeAnimationTrigger(losingBlocks[i], CubeAnimationTrigger.SpeedTapLose,
-                                                  (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+          if (losingBlocks[i] != null) {
+            _CurrentRobot.PlayCubeAnimationTrigger(losingBlocks[i], CubeAnimationTrigger.SpeedTapLose,
+                                                    (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+          }
 
         }
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);

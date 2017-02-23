@@ -13,9 +13,15 @@ namespace SpeedTap {
     public float LastTapTimeStamp { get; set; }
     public readonly Color[] PlayerWinColors = new Color[4];
     public Cozmo.MinigameWidgets.ScoreWidget scoreWidget;
-    public SpeedTapPlayerInfo(PlayerType playerType, string name) : base(playerType, name) {
+    public int MistakeTapsTotal { get; set; }
+    public int CorrectTapsTotal { get; set; }
+    public Color ScoreboardColor { get; private set; }
+    public SpeedTapPlayerInfo(PlayerType playerType, string name, Color color) : base(playerType, name) {
       CubeID = -1;
       LastTapTimeStamp = -1;
+      MistakeTapsTotal = 0;
+      CorrectTapsTotal = 0;
+      ScoreboardColor = color;
     }
     public Color PlayerWinColor {
       get {
@@ -63,6 +69,10 @@ namespace SpeedTap {
     public float CozmoFakeoutChance { get; private set; }
 
     public float TapResolutionDelay { get; private set; }
+
+    public float MPTimeBetweenRoundsSec { get { return _GameConfig.MPTimeBetweenRoundsSec; } }
+    public SpeedTapGameConfig GameConfig { get { return _GameConfig; } }
+    private SpeedTapGameConfig _GameConfig;
 
     #endregion
 
@@ -119,8 +129,14 @@ namespace SpeedTap {
     public static bool sWantsSuddenDeathHumanHuman = false;
     public static bool sWantsSuddenDeathHumanCozmo = false;
 #endif
+
+    // Used by baseclass default if we skipped the num players screen.
     public override PlayerInfo AddPlayer(PlayerType playerType, string playerName) {
-      SpeedTapPlayerInfo info = new SpeedTapPlayerInfo(playerType, playerName);
+      return AddPlayer(playerType, playerName, Color.white);
+    }
+
+    public virtual PlayerInfo AddPlayer(PlayerType playerType, string playerName, Color color) {
+      SpeedTapPlayerInfo info = new SpeedTapPlayerInfo(playerType, playerName, color);
       _PlayerInfo.Add(info);
       // As a special case, Cozmo always grabs the first cube because it was shown first
       if (playerType == PlayerType.Cozmo && CubeIdsForGame.Count >= 1) {
@@ -148,6 +164,7 @@ namespace SpeedTap {
       MaxIdleInterval_percent = speedTapConfig.MaxIdleInterval_percent;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
       TapResolutionDelay = speedTapConfig.TapResolutionDelay;
+      _GameConfig = speedTapConfig;
 
       CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
       MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
@@ -232,9 +249,16 @@ namespace SpeedTap {
       int playerCount = GetPlayerCount();
       for (int i = 0; i < playerCount; ++i) {
         SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        playerInfo.scoreWidget.Dim = false;
+        // portrait colors mean something specific in MP
+        if (playerCount <= 2) {
+          playerInfo.scoreWidget.Dim = playerInfo != winner;
+        }
         playerInfo.scoreWidget.IsWinner = playerInfo == winner;
       }
+    }
+
+    protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "", bool showWinnerTextInShelf = false) {
+      base.ShowWinnerState(currentEndIndex, overrideWinnerText, footerText, GetPlayerCount() > 2);
     }
 
     public override void UpdateUI() {
@@ -256,9 +280,15 @@ namespace SpeedTap {
           }
           else if (numHumans >= 2) {
             playerInfo.scoreWidget = SharedMinigameView.Player2Scoreboard;
+            playerInfo.scoreWidget.PortraitColor = _GameConfig.Player2Tint;
+            playerInfo.scoreWidget.SetNameLabelText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextMPScorePlayer, playerInfo.name));
           }
           else {
             playerInfo.scoreWidget = SharedMinigameView.PlayerScoreboard;
+            if (playerCount >= 3) {
+              playerInfo.scoreWidget.PortraitColor = _GameConfig.Player1Tint;
+              playerInfo.scoreWidget.SetNameLabelText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextMPScorePlayer, playerInfo.name));
+            }
           }
         }
         playerInfo.scoreWidget.Score = playerInfo.playerScoreRound;
@@ -266,63 +296,50 @@ namespace SpeedTap {
         playerInfo.scoreWidget.RoundsWon = playerInfo.playerRoundsWon;
         roundsPlayedTotal += playerInfo.playerRoundsWon;
       }
-
-
-
-      // Display the current round
-      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1);
-    }
-
-    // Will return the player that is not in the sudden death
-    public SpeedTapPlayerInfo WantsSuddenDeath() {
-      SpeedTapPlayerInfo playerOut = null;
-      int playerCount = GetPlayerCount();
-      int playersAtMaxScore = 0;
-
-      // We only care when two players are at the exact same score.
-      // Anything else and the tie will be broken.
-      for (int i = 0; i < playerCount; ++i) {
-        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        if (playerInfo.playerScoreRound == MaxScorePerRound) {
-          playersAtMaxScore++;
+      if (GetPlayerCount() > 2) {
+        // Display the current round
+        if (IsOvertime()) {
+          SharedMinigameView.ShelfWidget.SetWidgetText(Localization.Get(LocalizationKeys.kSpeedTapMultiplayerOverTime));
         }
         else {
-          playerOut = playerInfo;
+          SharedMinigameView.ShelfWidget.SetWidgetText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1));
         }
       }
-      // We only had one winner, so no one is out. Players are only knocked out if there
-      // is a tie for first.
-      if (playersAtMaxScore <= 1) {
-        playerOut = null;
+      else {
+        SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1);
       }
-      return playerOut;
+    }
+
+    private List<PlayerInfo> GetPlayersMostPointsWon() {
+      List<PlayerInfo> maxScorers = new List<PlayerInfo>();
+      int mostPoints = 0;
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        if (_PlayerInfo[i].playerScoreRound > mostPoints) {
+          maxScorers.Clear();
+          maxScorers.Add(_PlayerInfo[i]);
+          mostPoints = _PlayerInfo[i].playerScoreRound;
+        }
+        else if (_PlayerInfo[i].playerScoreRound == mostPoints) {
+          maxScorers.Add(_PlayerInfo[i]);
+        }
+      }
+      return maxScorers;
+    }
+
+    private bool IsOvertime() {
+      if (base.IsRoundComplete()) {
+        List<PlayerInfo> maxScorers = GetPlayersMostPointsWon();
+        // If multiple people have a high score, we need to keep playing until there is only one winner.
+        if (maxScorers.Count > 1) {
+          return true;
+        }
+      }
+      return false;
     }
 
     public override bool IsRoundComplete() {
-      bool complete = false;
-      int playerCount = GetPlayerCount();
-      for (int i = 0; i < playerCount; ++i) {
-        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        complete = complete || playerInfo.playerScoreRound >= MaxScorePerRound;
-      }
-      return complete;
-    }
-    public override void EndCurrentRound() {
-      bool playerWon = false;
-      int playerCount = GetPlayerCount();
-      for (int i = 0; i < playerCount; ++i) {
-        SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        if (playerInfo.playerScoreRound >= MaxScorePerRound) {
-          if (playerInfo.playerType != PlayerType.Cozmo) {
-            playerWon = true;
-          }
-          playerInfo.playerRoundsWon++;
-        }
-      }
-      if (_PlayerInfo.Count < 3) {
-        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeRoundEnd, _ChallengeData.ChallengeID, CurrentDifficulty, playerWon, HumanScore, CozmoScore, IsHighIntensityRound()));
-      }
-      UpdateUI();
+      // Some extra logic to account for overtime when multiple people have top score.
+      return base.IsRoundComplete() && !IsOvertime();
     }
 
     public override void UpdateUIForGameEnd() {
@@ -346,8 +363,11 @@ namespace SpeedTap {
       return new DefaultSpeedTapRules(numLights);
     }
 
-    public void ShowPlayerTapConfirmSlide() {
-      SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapConfirmSlide");
+    public void ShowPlayerTapConfirmSlide(int playerIndex) {
+      SpeedTapPlayerTapConfirmSlide slide = SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapConfirmSlide").GetComponent<SpeedTapPlayerTapConfirmSlide>();
+      if (slide != null) {
+        slide.Init(_PlayerInfo.Count, playerIndex);
+      }
     }
 
     public void ShowPlayerTapNewRoundSlide() {
@@ -428,5 +448,42 @@ namespace SpeedTap {
         }
       }
     }
+
+    public virtual void AddPoint(List<PlayerInfo> playersScored, bool wasMistakeMade) {
+      base.AddPoint(playersScored);
+      // extra bookkeeping for if a mistake was made accuracy goal
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        SpeedTapPlayerInfo speedTapPlayer = (SpeedTapPlayerInfo)_PlayerInfo[i];
+        if (wasMistakeMade && !playersScored.Contains(_PlayerInfo[i])) {
+          speedTapPlayer.MistakeTapsTotal = speedTapPlayer.MistakeTapsTotal + 1;
+        }
+        else if (!wasMistakeMade && playersScored.Contains(_PlayerInfo[i])) {
+          speedTapPlayer.CorrectTapsTotal = speedTapPlayer.CorrectTapsTotal + 1;
+        }
+      }
+    }
+
+    // event values to add on game completion
+    protected override Dictionary<string, float> GetGameSpecificEventValues() {
+      Dictionary<string, float> ret = new Dictionary<string, float>();
+      float minAccuracy = 1.0f;
+      // CorrectScoreTotalCount / TotalScore;
+      for (int i = 0; i < _PlayerInfo.Count; ++i) {
+        SpeedTapPlayerInfo speedTapPlayer = (SpeedTapPlayerInfo)_PlayerInfo[i];
+        if (speedTapPlayer.playerType != PlayerType.Cozmo) {
+          float total_taps = (float)(speedTapPlayer.CorrectTapsTotal + speedTapPlayer.MistakeTapsTotal);
+          float accuracy = 0.0f;
+          // never tapping counts as 0
+          if (total_taps > 0) {
+            accuracy = ((float)speedTapPlayer.CorrectTapsTotal) / total_taps;
+          }
+          minAccuracy = Mathf.Min(minAccuracy, accuracy);
+        }
+      }
+      // in MP with take the lowest human score
+      ret.Add(ChallengeAccuracyCondition.kConditionKey, minAccuracy);
+      return ret;
+    }
+
   }
 }

@@ -19,6 +19,9 @@ namespace Cozmo {
       [SerializeField]
       private AnkiTextLabel _ShelfTextLabel;
 
+      [SerializeField]
+      private AnkiTextLabel _AmountTextLabel;
+
       private ContinueButtonClickHandler _OnClickCallback;
 
       public string DASEventViewController {
@@ -46,6 +49,12 @@ namespace Cozmo {
         }
       }
 
+      public void SetAmountText(int amount) {
+        if (_AmountTextLabel != null) {
+          _AmountTextLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelPlusCount, Localization.GetNumber(amount));
+        }
+      }
+
       private void HandleContinueButtonClicked() {
         if (_OnClickCallback != null) {
           _OnClickCallback();
@@ -54,18 +63,6 @@ namespace Cozmo {
 
       public void SetButtonInteractivity(bool enableButton) {
         _ContinueButton.Interactable = enableButton;
-      }
-
-      public void GrowShelfBackground() {
-      }
-
-      public void ShrinkShelfBackground() {
-      }
-
-      public void HideCaratOffscreen() {
-      }
-
-      public void MoveCarat(float xPos) {
       }
 
       #region IMinigameWidget

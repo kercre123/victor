@@ -45,16 +45,12 @@
             "AnimName": "pyramidBaseBottom"
         },
         {
-            "CladEvent": "PyramidBaseTop",
-            "AnimName": "pyramidBaseTop"
-        },
-        {
-            "CladEvent": "PyramidDenouement",
-            "AnimName": "pyramidDenouement"
-        },
-        {
             "CladEvent": "PyramidFlourish",
             "AnimName": "pyramidFlourish"
+        },
+        {
+            "CladEvent": "PyramidOnSide",
+            "AnimName": "pyramidOnSide"
         },
         {
             "CladEvent": "PyramidPickup",
@@ -83,6 +79,10 @@
         {
             "CladEvent": "WakeUp",
             "AnimName": "wakeUp"
+        },
+        {
+            "CladEvent": "Workout",
+            "AnimName": "workout"
         }
     ]
 }

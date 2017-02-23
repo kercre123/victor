@@ -185,7 +185,7 @@ namespace Vision {
     
     const bool isSame = _pose.IsSameAs_WithAmbiguity(otherObject.GetPose(),
                                                      GetRotationAmbiguities(),
-                                                     distThreshold, angleThreshold, true,
+                                                     distThreshold, angleThreshold,
                                                      Tdiff, angleDiff);
     
     return isSame;
@@ -229,11 +229,11 @@ namespace Vision {
   }
    */
   
-  
-  std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
+  RotationAmbiguities const& ObservableObject::GetRotationAmbiguities() const
   {
-    static const std::vector<RotationMatrix3d> RotationAmbiguities; // default is empty
-    return RotationAmbiguities;
+    static const RotationAmbiguities kUnambiguous;
+    
+    return kUnambiguous;
   }
   
   

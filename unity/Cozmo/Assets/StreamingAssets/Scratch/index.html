@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+            
+        <!-- Blockly -->
+        <script src="./lib/blocks/blockly_uncompressed_horizontal.js"></script>
+        <script src="./lib/blocks/msg/messages.js"></script>
+        <script src="./lib/blocks/blocks_common/math.js"></script>
+        <script src="./lib/blocks/blocks_common/text.js"></script>
+        <script src="./lib/blocks/blocks_horizontal/control.js"></script>
+        <script src="./lib/blocks/blocks_horizontal/event.js"></script>
+        <script src="./lib/blocks/blocks_horizontal/wedo.js"></script>
+        <script src="./lib/blocks/blocks_horizontal/default_toolbox.js"></script>
+        
+        <!-- CSS Styles -->
+        <link rel="stylesheet" href="./css/normalize.css">
+        <link rel="stylesheet" href="./css/common.css">
+	</head>
+
+	<body>
+        <!-- Toolbox -->
+        <xml id="toolbox">
+            <block type="event_whenflagclicked"></block>
+            <block type="cozmo_setbackpackcolor">
+                <value name="CHOICE">
+                    <shadow type="dropdown_wedo_setcolor">
+                        <field name="CHOICE">mystery</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_drive">
+                <value name="DURATION">
+                    <shadow type="math_positive_number">
+                        <field name="NUM">1</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_turn"></block>
+            <block type="cozmo_animation"></block>
+            <block type="cozmo_liftheight">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_liftheight">
+                        <field name="CHOICE">low</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_says">
+                <value name="STRING">
+                    <shadow type="text">
+                        <field name="TEXT">Hi</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_wait_for_face"></block>
+            <block type="cozmo_wait_for_cube"></block>
+            <block type="control_repeat">
+                <value name="TIMES">
+                    <shadow type="math_whole_number">
+                        <field name="NUM">4</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="control_forever"></block>
+            <block type="cozmo_headangle">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_headangle">
+                        <field name="CHOICE">high</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="event_whenbroadcastreceived">
+                <value name="CHOICE">
+                    <shadow type="dropdown_whenbroadcast">
+                        <field name="CHOICE">blue</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="event_broadcast">
+                <value name="CHOICE">
+                    <shadow type="dropdown_broadcast">
+                        <field name="CHOICE">blue</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="control_stop"></block>
+        </xml>
+        
+        <!-- Blocks -->
+        <div id="blocks"></div>
+        
+        <!-- Navigation -->
+        <div id="navigation">
+            <div class="primary">
+                <button id="greenflag">
+                    <img src="./images/ui/greenflag.svg" />
+                </button>
+                
+                <button id="stop">
+                    <img src="./images/ui/stop.svg" />
+                </button>
+            </div>
+        </div>
+        
+        <!-- Scripts -->
+        <script src="./lib/vm/vm.js"></script>
+        <script src="./lib/blocks/media/sounds.js"></script>
+        <script src="./js/common.js"></script>
+        <script src="./js/webAudioPlayer.js"></script>
+	</body>
+</html>

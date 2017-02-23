@@ -161,6 +161,9 @@ public:
   virtual void Draw(size_t mapIdxHint) const = 0;
   virtual void ClearDraw() const = 0;
   
+  // Broadcast memory map
+  virtual void Broadcast(uint32_t originID) const = 0;
+  
 protected:
 
   // add a quad with the specified content type and empty additional content

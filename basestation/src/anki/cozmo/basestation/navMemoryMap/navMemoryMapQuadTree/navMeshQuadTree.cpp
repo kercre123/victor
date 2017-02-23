@@ -1,5 +1,5 @@
 /**
- * File: navMeshQuadTree.h
+ * File: navMeshQuadTree.cpp
  *
  * Author: Raul
  * Date:   12/09/2015
@@ -12,9 +12,14 @@
 #include "navMeshQuadTreeTypes.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
+
+#include "anki/messaging/basestation/IComms.h"
+
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -26,6 +31,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+class Robot;
 
 CONSOLE_VAR(bool, kRenderNavMeshQuadTree         , "NavMeshQuadTree", true);
 CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
@@ -42,11 +49,12 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager)
+NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager, Robot* robot)
 : _gfxDirty(true)
 , _processor(vizManager)
 , _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
 , _vizManager(vizManager)
+, _robot(robot)
 {
   _processor.SetRoot( &_root );
 }
@@ -557,6 +565,54 @@ void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover, int shiftAllowed
   _gfxDirty = true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::Broadcast(uint32_t originID) const
+{
+  ANKI_CPU_PROFILE("NavMeshQuadTree::Broadcast");
+  
+  using namespace ExternalInterface;
+  
+  // Create and send the start (header) message
+  MemoryMapMessageBegin msgBegin(originID, _root.GetLevel(), _root.GetSideLen());
+  _robot->Broadcast(MessageEngineToGame(std::move(msgBegin)));
+
+  // Ask root to add quad info to be sent (do a DFS of entire tree)
+  NavMeshQuadTreeNode::QuadInfoVector quadInfoVector;
+  _root.AddQuadsToSend(quadInfoVector);
+
+  // Now send these packets in clad message(s), respecting the clad message size limit
+  const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
+  const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
+  const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
+  size_t quadsPerMessage = kMaxBufferForQuads / sizeof(NavMeshQuadTreeNode::QuadInfoVector::value_type);
+  size_t remainingQuads = quadInfoVector.size();
+  
+  DEV_ASSERT(quadsPerMessage > 0, "NavMeshQuadTree.Broadcast.InvalidQuadsPerMessage");
+  
+  // We can't initialize messages with a range of vectors, so we have to create copies
+  NavMeshQuadTreeNode::QuadInfoVector partQuadInfos;
+  partQuadInfos.reserve( quadsPerMessage );
+  
+  // while we have quads to send
+  while ( remainingQuads > 0 )
+  {
+    // how many are we sending in this message?
+    quadsPerMessage = Anki::Util::Min(quadsPerMessage, remainingQuads);
+    
+    // clear the destination vector and insert as many as we are sending, from where we left off
+    partQuadInfos.clear();
+    partQuadInfos.insert( partQuadInfos.end(), quadInfoVector.end() - remainingQuads, quadInfoVector.end() - remainingQuads + quadsPerMessage );
+    
+    remainingQuads -= quadsPerMessage;
+    
+    // send message
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::MemoryMapMessage(partQuadInfos)));
+  }
+  
+  // Send the end message
+  _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::MemoryMapMessageEnd()));
+}
+  
 
 } // namespace Cozmo
 } // namespace Anki

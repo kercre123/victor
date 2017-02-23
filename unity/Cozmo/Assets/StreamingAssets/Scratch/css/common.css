@@ -1,0 +1,117 @@
+/**
+ * Global
+ */
+html {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+body {
+    background: #334771;
+}
+
+button {
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:focus {
+    outline: none;
+}
+
+/**
+ * Toolbox
+ */
+#toolbox {
+    display: none;
+}
+
+/**
+ * Blockly
+ */
+#blocks {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    font-family: "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.blocklyMainBackground {
+    stroke: none !important;
+}
+
+.blocklyScrollbarHorizontal {
+    display: none !important;
+}
+
+.blocklyScrollbarVertical {
+    display: none !important;
+}
+
+/**
+ * Navigation
+ */
+#navigation {
+    display: block;
+    position: absolute;
+    top: calc(100% - 300px);
+    left: 0;
+    width: 100%;
+    height: 200px;
+    z-index: 2147483647;
+    pointer-events: none;
+}
+
+#navigation .device {
+    display: block;
+    position: absolute;
+    top: 100px;
+}
+
+#navigation .device button {
+    width: 36px;
+    height: 58px;
+    border: 1px solid #334B68;
+    margin-left: -1px;
+    border-radius: 0 16px 16px 0;
+    background-color: #EC5858;
+    background-image: url('../images/ui/bluetooth-off.svg');
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    background-size: 75%;
+    transition: background-color 100ms;
+}
+
+#navigation .device button.connected {
+    background-color: #283856;
+    background-image: url('../images/ui/bluetooth-on.svg');
+}
+
+#navigation .primary {
+    display: block;
+    position: absolute;
+    left: calc(100% - 110px);
+}
+
+#navigation .primary button {
+    display: block;
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    margin-bottom: 20px;
+    background-color: #BECDE5;
+    border: 1px solid #334B68;
+    pointer-events: auto;
+}
+
+#navigation .primary button:active {
+    background-color: #768CA5;
+}
+
+#navigation .primary button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}

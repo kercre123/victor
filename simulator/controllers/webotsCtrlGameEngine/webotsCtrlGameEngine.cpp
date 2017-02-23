@@ -15,6 +15,7 @@
 #include "json/json.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "util/console/consoleInterface.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/console/consoleSystem.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -85,6 +86,10 @@ const u8 forcedRobotId = 1;
 const char* forcedRobotIP = "172.31.1.1";     // cozmo3
 */
 
+namespace Anki { namespace Cozmo {
+  CONSOLE_VAR_EXTERN(bool, kEnableCladLogger);
+} }
+
 using namespace Anki;
 using namespace Anki::Cozmo;
 
@@ -111,7 +116,7 @@ int main(int argc, char **argv)
   Anki::Util::MultiFormattedLoggerProvider loggerProvider({
     printfLoggerProvider
 #if ANKI_DEV_CHEATS
-    ,unityLoggerProvider
+    , unityLoggerProvider
     , new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
             Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
@@ -145,10 +150,19 @@ int main(int argc, char **argv)
     
     // also parse additional info for providers
     printfLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
-#if ANKI_DEV_CHEATS
-    unityLoggerProvider->SetFilter(filterPtr);
-    unityLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
-#endif
+    
+    #if ANKI_DEV_CHEATS
+    {
+      // Disable the Clad logger by default - prevents it sending the log messages,
+      // otherwise anyone with a config set to spam every message could run into issues
+      // with the amount of messages overwhelming the socket on engine startup/load.
+      // Anyone who needs the log messages can enable it afterwards via Unity, SDK or Webots
+      Anki::Cozmo::kEnableCladLogger = false;
+
+      unityLoggerProvider->SetFilter(filterPtr);
+      unityLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+    }
+    #endif // ANKI_DEV_CHEATS
   }
   else
   {
@@ -192,14 +206,20 @@ int main(int argc, char **argv)
   }
   
   int numUIDevicesToWaitFor = 1;
-#ifndef NO_WEBOTS
   webots::Field* numUIsField = basestationController.getSelf()->getField("numUIDevicesToWaitFor");
   if (numUIsField) {
     numUIDevicesToWaitFor = numUIsField->getSFInt32();
   } else {
-    PRINT_NAMED_INFO("webotsCtrlGameEngine.main.MissingField", "numUIDevicesToWaitFor not found in BlockworldComms");
+    PRINT_NAMED_WARNING("webotsCtrlGameEngine.main.MissingField", "numUIDevicesToWaitFor not found in BlockworldComms");
   }
-#endif
+  
+  bool sleepUntilEndOfTic = false;
+  webots::Field* sleepUntilEndOfTicField = basestationController.getSelf()->getField("sleepUntilEndOfTic");
+  if (sleepUntilEndOfTicField) {
+    sleepUntilEndOfTic = sleepUntilEndOfTicField->getSFBool();
+  } else {
+    PRINT_NAMED_WARNING("webotsCtrlGameEngine.main.MissingSleepField", "sleepUntilEndOfTic not found in BlockworldComms");
+  }
   
   
   config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
@@ -233,14 +253,13 @@ int main(int argc, char **argv)
   //
   // Main Execution loop: step the world forward forever
   //
+  auto tick_start = std::chrono::steady_clock::now();
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
-#ifdef NO_WEBOTS
-    auto tick_start = std::chrono::system_clock::now();
-#endif
     stopWatch.Start();
 
-    myCozmo.Update(basestationController.getTime());
+    double currTimeNanoseconds = Util::SecToNanoSec(basestationController.getTime());
+    myCozmo.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
 
     double timeMS = stopWatch.Stop();
 
@@ -251,13 +270,23 @@ int main(int argc, char **argv)
       PRINT_NAMED_INFO("EngineHeartbeat.SlowTick", "Update took %f ms (tick heartbeat is %dms)", timeMS, BS_TIME_STEP);
     }
     
-#ifdef NO_WEBOTS
-    auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tick_start);
-    if (ms_left < std::chrono::milliseconds(0)) {
-      PRINT_NAMED_WARNING("EngineHeartbeat.overtime", "over by " << std::chrono::duration_cast<std::chrono::seconds>(-ms_left).count() << "ms");
+    if (sleepUntilEndOfTicField) {
+      auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::steady_clock::now() - tick_start);
+      
+      // ms_left is almost always negative when connected to a sim robot. The amount of time that step() takes depends
+      // on what all controllers in the sim world are doing so this while loop usually takes more than 60 real milliseconds per iteration.
+      // Occurs less frequently when connected to physical robot, since there's no robot controller,
+      // but still enough to be annoying so commenting this out and using for debug only.
+//      if (ms_left < std::chrono::milliseconds(0)) {
+//        PRINT_NAMED_WARNING("EngineHeartbeat.total_tic_overtime", "over by %lld ms (BSTime: %f)",
+//                            std::chrono::duration_cast<std::chrono::milliseconds>(-ms_left).count(),
+//                             basestationController.getTime());
+//      }
+      
+      std::this_thread::sleep_for(ms_left);
     }
-    std::this_thread::sleep_for(ms_left);
-#endif
+
+    tick_start = std::chrono::steady_clock::now();
     
   } // while still stepping
 #if ANKI_DEV_CHEATS

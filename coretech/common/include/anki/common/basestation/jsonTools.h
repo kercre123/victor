@@ -89,7 +89,8 @@ namespace Anki
     template<size_t N>
     bool GetColorValuesToArrayOptional(const Json::Value& jsonRoot,
                                        const std::string& key,
-                                       std::array<u32, N>& arr);
+                                       std::array<u32, N>& arr,
+                                       bool parseAsFloat = false);
     
     // Dump the json to the selected output (pretty-printed). The depth argument limits
     // the depth of the tree that is printed. It is 0 by default, which
@@ -166,7 +167,8 @@ namespace Anki
     template<size_t N>
     bool GetColorValuesToArrayOptional(const Json::Value& jsonRoot,
                                        const std::string& key,
-                                       std::array<u32, N>& arr)
+                                       std::array<u32, N>& arr,
+                                       bool parseAsFloat)
     {
       if(jsonRoot.isMember(key))
       {
@@ -181,11 +183,21 @@ namespace Anki
         
         for(u8 i = 0; i < (int)arr.size(); ++i)
         {
-          ColorRGBA color(values[i][0].asFloat(),
-                          values[i][1].asFloat(),
-                          values[i][2].asFloat(),
-                          values[i][3].asFloat());
-          arr[i] = color.AsRGBA();
+          if(parseAsFloat){
+            ColorRGBA color(values[i][0].asFloat(),
+                            values[i][1].asFloat(),
+                            values[i][2].asFloat(),
+                            values[i][3].asFloat()
+                            );
+            arr[i] = color.AsRGBA();
+          }else{
+            ColorRGBA color(static_cast<u8>(values[i][0].asUInt()),
+                            static_cast<u8>(values[i][1].asUInt()),
+                            static_cast<u8>(values[i][2].asUInt()),
+                            static_cast<u8>(values[i][3].asUInt())
+                            );
+            arr[i] = color.AsRGBA();
+          }
         }
         return true;
       }

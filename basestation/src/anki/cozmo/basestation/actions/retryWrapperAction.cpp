@@ -97,13 +97,11 @@ namespace Cozmo {
     if(_subAction != nullptr)
     {
       _subAction->PrepForCompletion();
-      Util::SafeDelete(_subAction);
     }
     
     if(_animationAction != nullptr)
     {
       _animationAction->PrepForCompletion();
-      Util::SafeDelete(_animationAction);
     }
   }
   
@@ -128,6 +126,10 @@ namespace Cozmo {
     if(_animationAction == nullptr)
     {
       ActionResult res = _subAction->Update();
+      
+      // Update the retryWrapperAction's type to match the subAction's type in case
+      // it is changing at runtime
+      SetType(_subAction->GetType());
       
       // Only attempt to retry on failure results
       if(res != ActionResult::RUNNING &&
@@ -179,7 +181,7 @@ namespace Cozmo {
         }
         else
         {
-          _animationAction = new TriggerLiftSafeAnimationAction(_robot, animTrigger);
+          _animationAction.reset(new TriggerLiftSafeAnimationAction(_robot, animTrigger));
         }
       }
       else
@@ -198,7 +200,7 @@ namespace Cozmo {
       {
         PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone", "Retry animation finished");
         _animationAction->PrepForCompletion();
-        Util::SafeDelete(_animationAction);
+        _animationAction.reset();
         
         // Check retry count here so that if we end up reaching our max number of retries
         // this action ends when the animation does

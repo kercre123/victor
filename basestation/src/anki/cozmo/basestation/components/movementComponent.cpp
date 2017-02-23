@@ -301,7 +301,12 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
         // to the physical robot.
         Pose3d newPose(poseStamp.GetPose());
         newPose.SetRotation(_robot.GetPose().GetRotation());
-        _robot.SetNewPose(newPose);
+        Result res = _robot.SetNewPose(newPose);
+        if(res != RESULT_OK)
+        {
+          PRINT_NAMED_WARNING("MovementComponent.CheckForUnexpectedMovement.SetNewPose",
+                              "Failed to set new pose");
+        }
         
         // Create obstacle relative to robot at its new pose
         obstaclePoseWrtRobot.SetParent(&_robot.GetPose());
@@ -561,9 +566,14 @@ Result MovementComponent::CalibrateMotors(bool head, bool lift)
 
 Result MovementComponent::EnableLiftPower(bool enable)
 {
-  return _robot.SendRobotMessage<RobotInterface::EnableLiftPower>(enable);
+  return _robot.SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_LIFT, enable);
 }
 
+Result MovementComponent::EnableHeadPower(bool enable)
+{
+  return _robot.SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_HEAD, enable);
+}
+  
 // Sends a message to the robot to move the lift to the specified height
 Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 max_speed_rad_per_sec,

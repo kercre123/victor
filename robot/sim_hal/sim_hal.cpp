@@ -76,7 +76,6 @@ namespace Anki {
       // Motors
       webots::Motor* leftWheelMotor_;
       webots::Motor* rightWheelMotor_;
-      bool usingTreads_ = false;
 
       webots::Motor* headMotor_;
       webots::Motor* liftMotor_;
@@ -188,13 +187,8 @@ namespace Anki {
         // Inverse of speed-power formula in WheelController
         float speed_mm_per_s = power / 0.004f;
 
-        if (usingTreads_) {
-          // Return linear speed m/s when usingTreads
-          return -speed_mm_per_s / 1000.f;
-        }
-
-        // Convert mm/s to rad/s
-        return speed_mm_per_s / WHEEL_RAD_TO_MM;
+        // Return linear speed m/s when usingTreads
+        return -speed_mm_per_s / 1000.f;
       }
 
       // Approximate open-loop conversion of lift power to angular lift speed
@@ -220,10 +214,8 @@ namespace Anki {
         {
           if (motors_[i]) {
             f32 pos = motorPosSensors_[i]->getValue();
-            if (usingTreads_) {
-              if (i == MOTOR_LEFT_WHEEL || i == MOTOR_RIGHT_WHEEL) {
-                pos = motorPosSensors_[i]->getValue() * -1000.f;
-              }
+            if (i == MOTOR_LEFT_WHEEL || i == MOTOR_RIGHT_WHEEL) {
+              pos = motorPosSensors_[i]->getValue() * -1000.f;
             }
 
             posDelta = pos - motorPrevPositions_[i];
@@ -295,7 +287,6 @@ namespace Anki {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
 
       webots::Node* robotNode = webotRobot_.getSelf();
-      usingTreads_ = robotNode->getField("useTreads")->getSFBool();
 
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
@@ -612,10 +603,7 @@ namespace Anki {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
         case MOTOR_RIGHT_WHEEL:
-          if (!usingTreads_) {
-            return motorSpeeds_[motor] * WHEEL_RAD_TO_MM;
-          }
-          // else if usingTreads, fall through to just returning motorSpeeds_ since
+          // if usingTreads, fall through to just returning motorSpeeds_ since
           // it is already stored in mm/s
 
         case MOTOR_LIFT:
@@ -636,10 +624,7 @@ namespace Anki {
       switch(motor) {
         case MOTOR_RIGHT_WHEEL:
         case MOTOR_LEFT_WHEEL:
-          if (!usingTreads_) {
-            return motorPositions_[motor] * WHEEL_RAD_TO_MM;
-          }
-          // else if usingTreads, fall through to just returning motorSpeeds_ since
+          // if usingTreads, fall through to just returning motorSpeeds_ since
           // it is already stored in mm
 
         case MOTOR_LIFT:

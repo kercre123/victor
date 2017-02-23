@@ -309,7 +309,14 @@ class HStructEmitter(BaseEmitter):
     def emitConstructors(self, node, globals):
         self.output.write(textwrap.dedent('''\
             /**** Constructors ****/
-            {message_name}() = default;
+            '''))
+            
+        if node.default_constructor:
+            self.output.write(textwrap.dedent('''\
+                {message_name}() = default;
+                '''.format(**globals)))
+                
+        self.output.write(textwrap.dedent('''\
             {message_name}(const {message_name}& other) = default;
             {message_name}({message_name}& other) = default;
             {message_name}({message_name}&& other) noexcept = default;
