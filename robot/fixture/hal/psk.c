@@ -5,10 +5,10 @@ typedef uint32_t u32;
 #define COZ15_PW_STRLEN 17
 #define COZ15_PW_BUF_SZ (20) //20 bytes reserved
 
-#define MIN_SEP 2  //dashes must be at least this many digits apart
-#define MAX_CONSEC 8  //no more than this many digits between dashes
+#define MIN_SEP 2
+#define MAX_STR 8
 
-#define MIDDLE_LEN (COZ15_PW_STRLEN-2*MIN_SEP-1) //The number of positions where dashes may lie (10)
+#define MIDDLE_LEN (COZ15_PW_STRLEN-2*MIN_SEP-1) //10
 
 uint8_t getRandomDigit(void)
 {
@@ -17,8 +17,8 @@ uint8_t getRandomDigit(void)
    uint32_t result;
    if (digit==0) {
       do {
-         pool = GetRandom()*0x3FFFFFFF;  //rand bits in range 0..1.07e9
-      } while (pool > (int)1e9);  //resample if above 1e9 to ensure even distribution.
+         pool = GetRandom();
+      } while (pool > (int)1e9);
    }
    result = pool%10;
    pool/=10;
@@ -31,57 +31,53 @@ uint8_t getRandomDigit(void)
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define MAX(a,b) ((a)>(b)?(a):(b))
 
-//ensure no more than MAX_CONSEC chars between r1 and r2,
-// and no more than MAX_CONSEC-MIN_SEP before r1, or after r2.
-#define READABLE(r1,r2) ( ((r2)-(r1)<=MAX_CONSEC+1) && ((r1)<=MAX_CONSEC-MIN_SEP) && (MIDDLE_LEN-(r2)<=MAX_CONSEC-MIN_SEP))
+#define READABLE(r1,r2) ( ((r2)-(r1)<=MAX_STR+1) && ((r1)<=MAX_STR-MIN_SEP) && ((r2)>=MIDDLE_LEN+MIN_SEP-MAX_STR))
 
-//This selects 2 random values in the range [0..COZ15_PW_STRLEN) with at least MIN_SEP digits separating them
-//Returns the selected values in v1 and v2;
+
+
 void getDashLocs(int* v1, int* v2)
 {
   uint8_t r1,r2;
-  uint8_t separation = MIN_SEP;
-  uint8_t range_max = MIDDLE_LEN; //subtract MIN_SEP chars from each end, dashes will never be there.
   int i;
   while (1) {
-      uint32_t rand_bits = GetRandom();
+      uint32_t v = GetRandom();
      
       for (i=0;i<4;i++) {
-         //extract 2 4-bit numbers from the entropy stream
-         r1 = rand_bits&0xF;
-         r2 = (rand_bits>>4)&0xF;
-         rand_bits>>=8;  //discard used bits.
-         
-         // ensure r1<=r2
+         r1 = v&0xF;
+         r2 = (v>>4&0xF);
          if (r2<r1) { uint8_t t = r2;r2=r1;r1=t; }
-         // select this pair iff constraints met
-         if ((r1<=range_max) &&
-             (r2<=range_max) &&
-             READABLE(r1,r2) && 
-             (r1 < r2-separation ))
+         if ((r1<=*v1) &&
+             (r2<=*v1) &&
+             READABLE(r1,r2) &&
+             (r1 < r2-*v2 || r2 > r1+*v2))
          {
-            *v1 = r1 + MIN_SEP;
-            *v2 = r2 + MIN_SEP;
+            *v1 = r1;
+            *v2 = r2;
             return;
          }
+         v>>=8;
       }
    }
 }
 
-int generateCozmoPassword(char* pwOut, int len)
+
+
+int  generateCozmoPassword(char* pwOut, int len)
 {
-   int dash1, dash2, i;
+   int dash1  = MIDDLE_LEN, dash2 = MIN_SEP;
+   int i=0;
    if (len<COZ15_PW_BUF_SZ) {
       return -1;
    }
    getDashLocs(&dash1, &dash2);
+   dash1+=MIN_SEP;dash2+=MIN_SEP;
    for (i=0;i<COZ15_PW_STRLEN;i++)
    {
       if (i==dash1 || i==dash2) {
          pwOut[i]='-';
       }
       else {
-         pwOut[i]='0' + getRandomDigit();
+         pwOut[i]='0'+getRandomDigit();
       }
    }
    //pad the rest with zeros

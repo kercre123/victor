@@ -140,7 +140,6 @@ void RadioProcess()
 // Put the radio into a specific test mode
 void SetRadioMode(char mode)
 {
-  static bool isRadioOK = false;
   bool forceupdate = (mode == 'U');
   
   InitRadio();
@@ -148,7 +147,7 @@ void SetRadioMode(char mode)
   for (int i = 5; i >= 0; i--)
     try {
       GetChar();
-      isRadioOK = UpdateNRF(forceupdate || i == 0);   // Always force-update on last attempt
+      bool isRadioOK = UpdateNRF(forceupdate || i == 0);   // Always force-update on last attempt
       // Wait for sign-on message
       int c;
       do {

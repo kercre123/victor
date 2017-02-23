@@ -14,6 +14,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include "../app/app.h"
+#include "../app/nvReset.h"
+#include "stdlib.h"
 
 // Which character to escape into command code
 #define ESCAPE_CODE 27
@@ -21,10 +24,6 @@
 #define CONSOLE_TIMEOUT 50000   // Allow 50ms of typing before dropping out of command mode
 
 #define BAUD_RATE   1000000
-
-extern BOOL g_isDevicePresent;
-extern FixtureType g_fixtureType;
-extern char* FIXTYPES[];
 
 extern void SetFixtureText(void);
 extern void SetOKText(void);
@@ -102,14 +101,15 @@ int ConsoleGetCharWait(u32 timeout)
   return value;
 }
 
-void ConsolePrintf(const char* format, ...)
+int ConsolePrintf(const char* format, ...)
 {
-  char dest[64];
+  char dest[128];
   va_list argptr;
   va_start(argptr, format);
-  vsnprintf(dest, 64, format, argptr);
+  int len = vsnprintf(dest, sizeof(dest), format, argptr);
   va_end(argptr);
   ConsoleWrite(dest);
+  return len;
 }
 
 void ConsolePutChar(char c)
@@ -119,14 +119,18 @@ void ConsolePutChar(char c)
     ;
 }
 
-void ConsoleWrite(char* s)
+int ConsoleWrite(char* s)
 {
+  int len = 0;
   while (*s)
   {
     UART4->DR = *s++;
     while (!(UART4->SR & USART_FLAG_TXE))
       ;
+    len++;
   }
+  
+  return len;
 }
 
 char ConsoleGetChar()
@@ -226,6 +230,9 @@ void InitConsole(void)
   DMA_Cmd(DMA1_Stream2, ENABLE);
   
   SlowPutString("Console Initialized\r\n");
+  
+  //restore console mode from reset data
+  m_isInConsoleMode = g_app_reset.valid && g_app_reset.console.isInConsoleMode;
 }
 
 // The fixture bootloader uses just the hardware driver above, not the command parser below
@@ -366,6 +373,19 @@ static void DumpFixtureSerials(void)
   ConsoleWriteHex(serials, 0x400);
 }
 
+static void BinVersionCmd(void)
+{
+  bool format_csv = true;
+  try {
+    char* arg = GetArgument(1);
+    format_csv = false; //format for console view if user provided an arg.
+  }
+  catch (int e) {
+  }
+  
+  binPrintInfo(format_csv);
+}
+
 #if 0
 // Cozmo doesn't know how to do this, yet
 static void Charge(void)
@@ -436,6 +456,7 @@ static CommandFunction m_functions[] =
   {"AllowOutdated", AllowOutdated, FALSE},
   {"Drop", DropSensor, FALSE},
   {"GetSerial", GetSerialCmd, FALSE},
+  {"BinVersion", BinVersionCmd, FALSE},
   {"RedoTest", RedoTest, FALSE},
   {"SetDateCode", SetDateCode, FALSE},
   {"SetLotCode", SetLotCode, FALSE},
@@ -457,19 +478,36 @@ static void ParseCommand(void)
 {
   u32 i;
   char* buffer = m_parseBuffer;
-  if (!strcasecmp(buffer, "exit"))
+  
+  if(!strcasecmp(buffer, "reset"))
+  {
+    ConsoleWrite((char*)"\r\n");
+    MicroWait(10000);
+    
+    //save console state and issue soft reset
+    g_app_reset.console.isInConsoleMode = 1;
+    nvReset((u8*)&g_app_reset, sizeof(g_app_reset));
+  }
+  else if (!strcasecmp(buffer, "exit"))
   {
     m_isInConsoleMode = 0;
     return;
-  } else if (!strcasecmp(buffer, "help") || !strcasecmp(buffer, "?")) {
-    ConsoleWrite("Available commands:\r\n");
+  }
+  else if (!strcasecmp(buffer, "help") || !strcasecmp(buffer, "?")) 
+  {
+    ConsoleWrite((char*)"Available commands:\r\n");
     for (i = 0; i < sizeof(m_functions) / sizeof(CommandFunction); i++)
     {
+      ConsoleWrite((char*)"  ");
       ConsoleWrite((char*)m_functions[i].command);
-      ConsoleWrite("\r\n");
+      ConsoleWrite((char*)"\r\n");
     }
-    ConsoleWrite("\r\n");
-  } else {
+    ConsoleWrite((char*)"  reset\r\n");
+    ConsoleWrite((char*)"  exit\r\n");
+    ConsoleWrite((char*)"\r\n");
+  }
+  else
+  {
     // Tokenize by spaces
     m_numberOfArguments = 1;
     char* b = buffer;
@@ -542,27 +580,34 @@ void ConsoleUpdate(void)
 
     if (m_isInConsoleMode)
     {
+      //single button "again" key
+      if( !m_index && c == '`' ) { //<-- 0x60, that little tick mark on the tilde key...
+          ConsolePutChar('a'); m_parseBuffer[m_index++] = 'a';
+          ConsolePutChar('g'); m_parseBuffer[m_index++] = 'g';
+          ConsolePutChar('a'); m_parseBuffer[m_index++] = 'a';
+          ConsolePutChar('i'); m_parseBuffer[m_index++] = 'i';
+          ConsolePutChar('n'); m_parseBuffer[m_index++] = 'n';
+          c = '\r'; //Enter
+      }
+      
       // Echo legal ASCII back to the console
       if (c >= 32 && c <= 126)
       {
-        ConsolePutChar(c);
-        // Prevent overflows...
-        if (m_index + 1 >= sizeof(m_parseBuffer))
-        {
-          m_index = 0;
+        //Ignore chars if buffer is full
+        if (m_index < sizeof(m_parseBuffer) - 1) { //leave 1 byte at end for NULL terminator
+            ConsolePutChar(c);
+            m_parseBuffer[m_index++] = c;
         }
-        m_parseBuffer[m_index++] = c;
       } else if (c == 27) {  // Check for escape
         ConsoleWrite("<ANKI>\r\n");
         m_index = 0;
-      } else if (c == 0x7F || c == 8) {  // Check for delete
-        ConsolePutChar(c);
-        m_index -= 1;
-        if (m_index < 0)
-        {
-          m_index = 0;
+      } else if (c == 0x7F || c == 8) {  // Check for delete or backspace keys
+        if( m_index > 0 ) {
+            ConsolePutChar(c);      //overwrite the onscreen char with a space
+            ConsolePutChar(' ');    //"
+            ConsolePutChar(c);      //"
+            m_parseBuffer[--m_index] = 0;
         }
-        m_parseBuffer[m_index] = 0;
       } else if (c == '\r' || c == '\n') {
         ConsoleWrite("\r\n");
         m_parseBuffer[m_index] = 0;

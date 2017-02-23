@@ -5,6 +5,7 @@
 #include "hal/testport.h"
 #include "hal/display.h"
 #include "hal/timers.h"
+#include "../app/app.h"
 #include "../app/fixture.h"
 #include "hal/cube.h"
 #include "hal/flash.h"
@@ -13,9 +14,75 @@
 
 #define MOTOR_PWM_MAXVAL 3000
 
-// Set motor speed between 0 and 5000 millivolts
-void MotorMV(int millivolts)
+//1/2 HBridge config.
+typedef enum { HBC_OFF /*high Z*/, HBC_GND, HBC_VCC } HBridgeHalfCfg;
+
+//Configure the motor H-Bridge circuit (control lines)
+static void m_motor_set_cfg( HBridgeHalfCfg MOTA, HBridgeHalfCfg MOTB )
 {
+  //config motor controller pins on first use
+  static int init_motordrv_pins = 0;
+  if( !init_motordrv_pins ) {
+    init_motordrv_pins = 1;
+    PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
+    PIN_OUT(GPIOB, PINB_MOTDRV_IN1);
+    PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
+    PIN_OUT(GPIOB, PINB_MOTDRV_EN1);
+    
+    PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
+    PIN_OUT(GPIOB, PINB_MOTDRV_IN2);
+    PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
+    PIN_OUT(GPIOB, PINB_MOTDRV_EN2);
+  }
+  
+  switch( MOTA ) {
+    case HBC_OFF:
+      PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
+      break;
+    case HBC_GND:
+      PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
+      PIN_SET(GPIOB, PINB_MOTDRV_EN1);
+      break;
+    case HBC_VCC:
+      PIN_SET(GPIOB, PINB_MOTDRV_IN1);
+      PIN_SET(GPIOB, PINB_MOTDRV_EN1);
+      break;
+  }
+  
+  switch( MOTB ) {
+    case HBC_OFF:
+      PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
+      break;
+    case HBC_GND:
+      PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
+      PIN_SET(GPIOB, PINB_MOTDRV_EN2);
+      break;
+    case HBC_VCC:
+      PIN_SET(GPIOB, PINB_MOTDRV_IN2);
+      PIN_SET(GPIOB, PINB_MOTDRV_EN2);
+      break;
+  }
+}
+
+// Set motor speed between 0 and 5000 millivolts
+void MotorMV(int millivolts, bool reverse_nForward )
+{
+  //v1.5 has motor driver IC. Need to configure additional control signals
+  if( g_fixtureRev >= BOARD_REV_1_5_0 )
+  {
+    if( millivolts < 0 )
+      m_motor_set_cfg(HBC_GND, HBC_GND); //electrical motor brake
+    else if( !millivolts )
+      m_motor_set_cfg(HBC_OFF, HBC_OFF);
+    else if( !reverse_nForward )
+      m_motor_set_cfg(HBC_VCC, HBC_GND); //MOTA=Vcc, MOTB=Gnd
+    else
+      m_motor_set_cfg(HBC_GND, HBC_VCC); //MOTA=Gnd, MOTB=Vcc
+  }
+  
+  if( millivolts < 0 )
+    millivolts = 0;
+  
   TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
   TIM_OCInitTypeDef  TIM_OCInitStructure;
 
@@ -144,53 +211,113 @@ void ReadEncoder(bool light, int usDelay, int& a, int& b, bool skipa)
   b = QuickADC(ADC_ENCB);
 }
 
-static const int LED_COUNT = 4, MAP_COUNT = 12;
-static const int LEDA[LED_COUNT] = { PINA_BPLED0, PINA_BPLED1, PINA_BPLED2, PINA_BPLED3 };
-static const int LEDMAP[MAP_COUNT] = { 0+1, 0+2, 0+3,  4+0, 4+2, 4+3,  8+0, 8+1, 8+3, 12+0, 12+1, 12+2 };
+//====================================================================================
+//    Backpack: LEDs + Button
+//====================================================================================
 
-// Turn on one of 12 LEDs
+//map pin defines from board.h to schematic signal names for clarity
+#define D1  PINA_BPLED0   /*A.2*/
+#define D2  PINA_BPLED2   /*A.6*/
+#define D3  PINA_BPLED1   /*A.3*/
+#define D4  PINA_BPLED3   /*A.7*/
+
+typedef struct {
+  u8  pinhigh;    //LED +Anode, pull-up side of Btns
+  u8  pinlow;     //LED -Cathode, gnd side of Btns
+  u16 getMv;      //LEDGetExpectedMv()
+} bp_led_cfg_t; //backpack led(+btn) config
+
+//backpack expected voltage levels
+#define LED_SHORT_MV  0
+#define LED_RED_MV    1500
+#define LED_GRN_MV    2000
+#define LED_BLU_MV    2400
+#define LED_OPEN_MV   2800
+
+static const bp_led_cfg_t BPLED[] = {
+  {D1,D2,LED_BLU_MV},  {D1,D3,LED_GRN_MV},  {D1,D4,LED_RED_MV},  //D1.B,G,R
+  {D2,D1,LED_BLU_MV},  {D2,D3,LED_GRN_MV},  {D2,D4,LED_RED_MV},  //D2.B,G,R  
+  {D3,D1,LED_BLU_MV},  {D3,D2,LED_GRN_MV},  {D3,D4,LED_RED_MV},  //D3.B,G,R
+  {D4,D1,LED_RED_MV},  {D4,D2,LED_RED_MV},  {D4,D3,LED_OPEN_MV}  //D4,D5,{BPv1.0=NC, BPv1.5=Btn}
+};
+#define BP_LED_COUNT  (sizeof(BPLED)/sizeof(bp_led_cfg_t))
+#define BPLED_BTN_IDX (BP_LED_COUNT-1) /*index of the button cfg*/
+
+static void _bp_signal_float(void)
+{
+  PIN_PULL_NONE(GPIOA,D1);  PIN_IN(GPIOA,D1);
+  PIN_PULL_NONE(GPIOA,D2);  PIN_IN(GPIOA,D2);
+  PIN_PULL_NONE(GPIOA,D3);  PIN_IN(GPIOA,D3);
+  PIN_PULL_NONE(GPIOA,D4);  PIN_IN(GPIOA,D4);
+}
+
+int LEDCnt(void) {
+  return BP_LED_COUNT;
+}
+
 void LEDOn(u8 led)
 {
-  led = LEDMAP[led];
-  int pinlow = led & 3;
-  int pinhigh = (led >> 2) & 3;
-
-  // Float everything
-  for (int i = 0; i < LED_COUNT; i++)
-  {
-    PIN_PULL_NONE(GPIOA, LEDA[i]);
-    PIN_IN(GPIOA, LEDA[i]);
-  }
+  _bp_signal_float(); //all backpack signals -> input Z
+  if( led >= BP_LED_COUNT )
+    return;
   
-  PIN_RESET(GPIOA, LEDA[pinlow]);
-  PIN_OUT(GPIOA, LEDA[pinlow]);
-  PIN_SET(GPIOA, LEDA[pinhigh]);
-  PIN_OUT(GPIOA, LEDA[pinhigh]);
+  PIN_RESET(GPIOA, BPLED[led].pinlow);
+  PIN_OUT(GPIOA, BPLED[led].pinlow);
+  PIN_SET(GPIOA, BPLED[led].pinhigh);
+  PIN_OUT(GPIOA, BPLED[led].pinhigh);
 }
-  
-// Drive one of 12 LEDs on the backpack, then measure voltage on ADC
-int LEDTest(u8 led)
+
+//PU LED high side and measure led anode voltage [mV]
+int LEDGetHighSideMv(u8 led)
 {
-  if (led >= MAP_COUNT)
+  _bp_signal_float(); //all backpack signals -> input Z
+  if( led >= BP_LED_COUNT )
     throw ERROR_OUT_OF_RANGE;
   
-  led = LEDMAP[led];
-  int pinlow = led & 3;
-  int pinhigh = (led >> 2) & 3;
-  
-  // Float everything
-  for (int i = 0; i < LED_COUNT; i++)
-  {
-    PIN_PULL_NONE(GPIOA, LEDA[i]);
-    PIN_IN(GPIOA, LEDA[i]);
-  }
-  
   // Now set the requested LED and wait to settle down
-  PIN_RESET(GPIOA, LEDA[pinlow]);
-  PIN_OUT(GPIOA, LEDA[pinlow]);
-  PIN_PULL_UP(GPIOA, LEDA[pinhigh]);
+  PIN_RESET(GPIOA, BPLED[led].pinlow);
+  PIN_OUT(GPIOA, BPLED[led].pinlow);
+  PIN_PULL_UP(GPIOA, BPLED[led].pinhigh);
  
   // Now grab the voltage
-  return GrabADC(LEDA[pinhigh]);
+  return GrabADC( BPLED[led].pinhigh );
+}
+
+//expected value from LEDGetHighSideMv(), if circuit is working correctly.
+int LEDGetExpectedMv(u8 led)
+{
+  if( led >= BP_LED_COUNT )
+    throw ERROR_OUT_OF_RANGE;
+  return BPLED[led].getMv;
+}
+
+//return button state (true=pressed)
+bool BPBtnGet(int *out_mv) {
+  //backpack btn has 10k series + 100k pull-up.
+  //Worst case (highest) pressed threshold is 11/(90+11)*Vcc -- assuming 10% tolerance resistors
+  //-> ~305mV @ Vcc=2.8V.
+  int btn_mv = BPBtnGetMv();
+  if( out_mv != NULL )
+    *out_mv = btn_mv;
+  return btn_mv < 310;
+}
+
+//return button input voltage [mV]
+int BPBtnGetMv(void)
+{
+  _bp_signal_float(); //all backpack signals -> input Z
+  
+  //Drive Gnd-side low
+  PIN_RESET(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
+  PIN_OUT(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
+
+  if( g_fixtureRev <= BOARD_REV_1_0_REV3 ) //v1.0 doesn't support backpack button. pull high to always read as open
+    PIN_PULL_UP(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
+  else //v1.5+
+    PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
+  
+  // Now grab the voltage
+  MicroWait(100); //wait for voltages to stabilize
+  return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
 }
 

@@ -16,7 +16,7 @@ void SlowPutInt(int i);
 void SlowPutLong(int i);
 void SlowPutHex(int i);
 void SlowPutLongHex(int i);
-//void SlowPrintf(const char* format, ...);
+//int SlowPrintf(const char* format, ...);
 #define SlowPrintf ConsolePrintf
 #else
 #define InitUART()

@@ -9,11 +9,17 @@
 #include "hal/espressif.h"
 #include "hal/board.h"
 
+#include "app/app.h"
 #include "app/binaries.h"
 #include "app/fixture.h"
 #include "hal/monitor.h"
 
 #include "hal/motorled.h"
+
+//Debug hack. We sometimes want to update head firmware through the face, without
+//connecting the spine cable (e.g. VBAT). We can instead use a charge base powered
+//by our VEXT source so we can still cycle power as needed.
+#define DEBUG_SPINELESS 1
 
 // Return true if device is detected on contacts
 bool HeadDetect(void)
@@ -21,6 +27,8 @@ bool HeadDetect(void)
   // HORRIBLE PERMANENT HACK TIME - if we leave battery power enabled, the CPU will pull SWD high
   // Main problem is that power is always enabled, not exactly what we want
   EnableBAT();
+  if( DEBUG_SPINELESS )
+    EnableVEXT();
   
   // First drive SWD low for 1uS to remove any charge from the pin
   GPIO_InitTypeDef  GPIO_InitStructure;
@@ -79,6 +87,8 @@ void BootK02Test(void)
   // Turn off and let power drain out
   DeinitEspressif();  // XXX - would be better to ensure it was like this up-front
   SWDDeinit();
+  if( DEBUG_SPINELESS )
+    DisableVEXT();
   DisableBAT();     // This has a built-in delay while battery power leaches out
   /*
   // Let head discharge (this takes a while)
@@ -90,11 +100,18 @@ void BootK02Test(void)
   */
   InitEspressif();
   EnableBAT();
+  if( DEBUG_SPINELESS )
+    EnableVEXT();
 }
 
 // Connect to and flash the Espressif
 void HeadESP(void)
 {
+  EraseEspressif();
+  
+  //power cycle before we can reprogram the erased pages (ESP limitation?)
+  BootK02Test();
+  
   // Program espressif, which will start up, following the program
   ProgramEspressif(serial_);
 }
@@ -127,7 +144,6 @@ void HeadQ1Test(void)
   }
   sum >>= OVERSAMPLE;
   ConsolePrintf("q1-mv,%d\r\n", sum);
-  
   if (sum > SAFE_THRESHOLD)
     throw ERROR_HEAD_Q1;
 }

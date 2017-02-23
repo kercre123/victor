@@ -10,6 +10,7 @@
 #include "hal/radio.h"
 #include "hal/flash.h"
 
+#include "app/app.h"
 #include "app/fixture.h"
 #include "app/binaries.h"
 
@@ -24,8 +25,6 @@ using namespace Anki::Cozmo::RobotInterface;
 // Robot is up and running - usually around 48K, rebooting at 32K - what a mess!
 #define BOOTED_CURRENT  40000
 #define PRESENT_CURRENT 1000
-
-extern BOOL g_isDevicePresent;
 
 // Return true if device is detected on contacts
 bool RobotDetect(void)
@@ -57,13 +56,19 @@ void InfoTest(void)
   unsigned int version[2];
   
   // Pump the comm-link 4 times before trying to send
-  for (int i = 0; i < 4; i++)
+  ConsolePrintf("warming up the com port...");
+  int n = 0;
+  for (int i = 0; i < 4; i++) {
     try {
       SendTestChar(-1);
-    } catch (int e) { }
+    } catch (int e) { n++; }
+  }
+  ConsolePrintf("%d missed pulses\r\n", n);
+  
   // Let Espressif finish booting
   MicroWait(300000); 
   
+  ConsolePrintf("read robot version:\r\n");
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
   SendCommand(TEST_GETVER, 0, sizeof(version), (u8*)version);
 
@@ -378,6 +383,39 @@ void LifeTest(void)
   SendCommand(TEST_MOTORSLAM, 0, 0, 0);
 }
 
+//Send a command up to the ESP to force factory revert
+void FactoryRevert(void)
+{
+  //Make sure charge comms are established (watch for robot pulses)
+  SendTestChar(-1);
+  SendTestChar(-1);
+  SendTestChar(-1);
+  
+  ConsolePrintf("SendCommand(21) factory revert\n");
+  SendCommand(21, 0, 0, 0);
+  
+  //Wait for comms to fail...indicates things are resetting
+  u32 start_time_us = getMicroCounter();
+  bool resetting = false;
+  while( getMicroCounter() - start_time_us < 3000000 )
+  {
+    try { 
+      SendTestChar(-1);
+    } catch(int e) { 
+      resetting = true;
+    }
+    
+    if( resetting )
+      break;
+  }
+  
+  u32 time_us = getMicroCounter() - start_time_us;
+  if( resetting )
+    ConsolePrintf("Robot in reset %u.%03ums\r\n", time_us/1000, time_us%1000 );
+  else
+    ConsolePrintf("Could not detect reset\r\n");
+}
+
 TestFunction* GetRechargeTestFunctions(void)
 {
   static TestFunction functions[] =
@@ -423,6 +461,18 @@ TestFunction* GetSoundTestFunctions(void)
   {
     InfoTest,
     SpeakerTest,
+    NULL
+  };
+
+  return functions;
+}
+
+TestFunction* GetFacRevertTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    FactoryRevert,
     NULL
   };
 
