@@ -16,8 +16,8 @@ MonoBehaviour:
     _EnumValue: 3
   UnlockableType: 1
   Prerequisites:
-  - _EnumValueAsString: Workout
-    _EnumValue: 29
+  - _EnumValueAsString: FistBump
+    _EnumValue: 35
   AnyPrereqUnlock: 0
   _ComingSoon: 0
   _HideInUI: 0
@@ -28,7 +28,7 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 797712787
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 8
+  UpgradeCostAmountNeeded: 10
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
@@ -46,9 +46,9 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
-  RequestTrickCostAmountNeededMin: 2
+  RequestTrickCostAmountNeededMin: 3
   RequestTrickCostAmountNeededMaxTimes: 10
-  RequestTrickCostAmountNeededMax: 4
+  RequestTrickCostAmountNeededMax: 5
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: 9971eb00f732c4741aa2817f8acfe166, type: 3}
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 9971eb00f732c4741aa2817f8acfe166,
