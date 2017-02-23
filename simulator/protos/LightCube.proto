@@ -7,6 +7,10 @@ PROTO LightCube [
   field SFInt32    ID           0
   field MFVec3f    ledColors    [ 0 0 0, 0 0 0, 0 0 0, 0 0 0 ]
   field SFBool     filterLogs FALSE
+  
+  # If <= 0, factoryID defaults to ID
+  # See activeBlock.cpp
+  field SFInt32    factoryID    0
 ]
 {
   Block1x1 {
