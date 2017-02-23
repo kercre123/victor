@@ -1,3 +1,5 @@
+# FOR TESTING ONLY
+japanese
 # English
 # Last updated: 20.09.2016
 ass(-|\s)*hole#asshole
