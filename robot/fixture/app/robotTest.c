@@ -16,9 +16,10 @@
 
 #include "../syscon/hal/tests.h"
 #include "../syscon/hal/hardware.h"
-#include "../syscon/hal/motors.h"
+#include "../generated/clad/robot/clad/types/motorTypes.h"
 #include "../generated/clad/robot/clad/types/fwTestMessages.h"
 
+using namespace Anki::Cozmo;
 using namespace Anki::Cozmo::RobotInterface;
 
 // XXX: Fix this if you ever fix current monitoring units

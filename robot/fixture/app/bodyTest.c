@@ -13,8 +13,9 @@
 #include <string.h>
 
 #include "../syscon/hal/tests.h"
-#include "../syscon/hal/motors.h"
+#include "../generated/clad/robot/clad/types/motorTypes.h"
 
+using namespace Anki::Cozmo;
 using namespace Anki::Cozmo::RobotInterface;
 
 //debug flag: set 1 to enable verbose prints for debugging
