@@ -607,8 +607,9 @@ class CLADParser(PLYParser):
 
     def p_message_fixed_array_member(self, p):
         """ message_fixed_array_member : type ID LSQ int_constant RSQ
+                                       | type ID LSQ string_constant RSQ
         """
-        if p[4].value < 0:
+        if not isinstance(p[4].value, str) and p[4].value < 0:
             self._parse_error("Array index must be positive, got {0}".format(p[4].value),
                               self.production_to_coord(p, 1))
         type = ast.FixedArrayType(p[1].type, p[4].value, self.production_to_coord(p, 1))

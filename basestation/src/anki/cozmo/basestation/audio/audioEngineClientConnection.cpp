@@ -4,7 +4,7 @@
  * Author: Jordan Rivas
  * Created: 11/09/2015
  *
- * Description: This is a sub-class of AudioClientConnection which provides communication between its self and an
+ * Description: This is a subclass of AudioClientConnection which provides communication between itself and an
  *              AudioEngineClient by means of AudioEngineMessageHandler.
  *
  * Copyright: Anki, Inc. 2015

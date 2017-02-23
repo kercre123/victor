@@ -191,7 +191,12 @@ namespace Anki {
         case ActiveObjectType::OBJECT_CUBE3:
           objType = ObjectType::Block_LIGHTCUBE3;
           break;
-        default:
+        case ActiveObjectType::OBJECT_UNKNOWN:
+          // Ghost objects don't have valid active object type.
+          // ActiveObjectType is used by firmware code, so better not to even expose the concept/name there.
+          objType = ObjectType::Block_LIGHTCUBE_GHOST;
+          break;
+        case ActiveObjectType::OBJECT_OTA_FAIL:
           break;
       }
       
@@ -212,6 +217,11 @@ namespace Anki {
           break;
         case ObjectType::Block_LIGHTCUBE3:
           objType = ActiveObjectType::OBJECT_CUBE3;
+          break;
+        case ObjectType::Block_LIGHTCUBE_GHOST:
+          // Ghost objects don't have valid active object type.
+          // ActiveObjectType is used by firmware code, so better not to even expose the concept/name there.
+          objType = ActiveObjectType::OBJECT_UNKNOWN;
           break;
         default:
           break;

@@ -2125,7 +2125,7 @@ namespace Anki {
 
     }
     
-    bool UiGameController::AddLightCubeByType(ObjectType type, const Pose3d& p)
+    bool UiGameController::AddLightCubeByType(ObjectType type, const Pose3d& p, const u32 factoryID)
     {
       // Check if world already has a light cube with that ID
       int proto_type = static_cast<int>(type) - 1;
@@ -2137,10 +2137,11 @@ namespace Anki {
         }
       }
       
-      //
+      // Import light cube proto instance into scene tree
       std::stringstream ss;
       ss << "LightCube { "
       << " ID " << proto_type
+      << " factoryID " << factoryID
       << " translation "
       << 0.001f * p.GetTranslation().x() << " "
       << 0.001f * p.GetTranslation().y() << " "
@@ -2152,6 +2153,10 @@ namespace Anki {
       webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
       int numRootChildren = rootChildren->getCount();
       rootChildren->importMFNodeFromString(numRootChildren, ss.str());
+      
+      // Find node and add it to _lightCubes
+      webots::Node* lightCubeNode = rootChildren->getMFNode(numRootChildren);
+      _lightCubes.emplace_back(lightCubeNode);
       
       return true;
     }

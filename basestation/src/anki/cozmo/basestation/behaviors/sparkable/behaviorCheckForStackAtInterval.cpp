@@ -39,7 +39,7 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(Robot& robot, c
 , _knownBlockIndex(-1)
 , _ghostStackedObject(new ActiveCube(ObservableObject::InvalidActiveID,
                                      ObservableObject::InvalidFactoryID,
-                                     ActiveObjectType::OBJECT_CUBE1))
+                                     ActiveObjectType::OBJECT_UNKNOWN)) // Ghost cubes do not have valid active object type
 {
   SetDefaultName("CheckForStackAtInterval");
   

@@ -2747,6 +2747,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         object->SetFactoryID( connectedObj->GetFactoryID() );
       }
     }
+	
+    if(ObjectType::Block_LIGHTCUBE_GHOST == object->GetType())
+    {
+      PRINT_NAMED_ERROR("BlockWorld.AddLocatedObject.AddingGhostObject",
+                        "Adding ghost objects to BlockWorld is not permitted");
+      return ObjectID{};
+    }	
 
     // grab the current pointer and check it's empty (do not expect overwriting)
     std::shared_ptr<ObservableObject>& objectLocation =

@@ -1,7 +1,7 @@
 README
 
 Michelle Sintov
-February 10, 2017
+February 21, 2017
 
 blocks/build.py is run to generate the following files:
     msg/js/en.js
@@ -42,7 +42,7 @@ https://github.com/LLK/scratch-blocks/wiki
 By following the instructions, you will create a folder named closure-library (over 80 MB in size) that is a sibling to the blocks/ folder.
 
 The current steps for me are as follows:
-  cd cozmo-one/scratchPrototype/cozmoScratch/Resources/scratch/lib
+  cd cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib
   rm -rf closure-library
   cd blocks
   ln -s $(npm root)/google-closure-library ../closure-library

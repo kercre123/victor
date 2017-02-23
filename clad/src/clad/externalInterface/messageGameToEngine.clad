@@ -947,6 +947,7 @@ message EnableDroneMode {
 ///////////////////////////////////////////////////////////////////////////////
 
 message EnterSdkMode {
+  bool isExternalSdkMode = 1
 }
 
 message ExitSdkMode {

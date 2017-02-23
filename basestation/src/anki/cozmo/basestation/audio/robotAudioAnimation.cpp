@@ -44,7 +44,7 @@ RobotAudioAnimation::RobotAudioAnimation( GameObjectType gameObject, Util::Rando
 : _gameObj( gameObject )
 , _randomGenerator( randomGenerator )
 {
-  // This base class is not intended to be used, use a sub-class
+  // This base class is not intended to be used, use a subclass
   SetAnimationState( AnimationState::AnimationError );
 }
 
@@ -244,7 +244,7 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   // Setup Dispatch
   _postEventTimerQueue = Util::Dispatch::Create( "BotAudioAnimation" );
   
-  // Call sub-class specific code
+  // Call subclass specific code
   PrepareAnimation();
 }
 

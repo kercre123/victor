@@ -105,7 +105,7 @@ namespace Anki {
       // or active blocks that have not moved since last localization)
       virtual bool CanBeUsedForLocalization() const { return false; }
       
-      virtual bool IsMoveable() const { return true; }
+      virtual bool IsMoveable()               const { return true; }
       
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this
@@ -165,7 +165,7 @@ namespace Anki {
       //virtual float GetMinDim() const = 0;
       
       // Auto-set ID to unique value
-      void SetID();
+      virtual void SetID();
       
       // For special situations where automatic unique ID is not desired, use this
       // method to deliberately copy the ID from another object

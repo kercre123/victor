@@ -33,15 +33,19 @@ namespace Anki {
       _activeID = -1;
       _factoryID = 0;
       
-      // For now, assume 6 different markers, so we can avoid rotation ambiguities
-      // Verify that here by making sure a set of markers has as many elements
-      // as the original list:
-      std::list<Vision::KnownMarker> const& markerList = GetMarkers();
-      std::set<Vision::Marker::Code> uniqueCodes;
-      for(auto & marker : markerList) {
-        uniqueCodes.insert(marker.GetCode());
+      // Skip the check for ghost objects, which are a special case (they have 6 unknown markers)
+      if(ANKI_DEVELOPER_CODE && (type != ObjectType::Block_LIGHTCUBE_GHOST))
+      {
+        // For now, assume 6 different markers, so we can avoid rotation ambiguities
+        // Verify that here by making sure a set of markers has as many elements
+        // as the original list:
+        std::list<Vision::KnownMarker> const& markerList = GetMarkers();
+        std::set<Vision::Marker::Code> uniqueCodes;
+        for(auto & marker : markerList) {
+          uniqueCodes.insert(marker.GetCode());
+        }
+        DEV_ASSERT(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
       }
-      DEV_ASSERT(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
     }
     
     ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
@@ -51,7 +55,8 @@ namespace Anki {
       ObjectType objType = GetTypeFromActiveObjectType(activeObjectType);
       DEV_ASSERT(objType == ObjectType::Block_LIGHTCUBE1 ||
                  objType == ObjectType::Block_LIGHTCUBE2 ||
-                 objType == ObjectType::Block_LIGHTCUBE3,
+                 objType == ObjectType::Block_LIGHTCUBE3 ||
+                 objType == ObjectType::Block_LIGHTCUBE_GHOST,
                  "ActiveCube.InvalidFactoryID");
       
       _activeID = activeID;

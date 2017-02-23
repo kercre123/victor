@@ -64,7 +64,7 @@ enum class ERobotDriveToPoseStatus {
   // There was an internal error while planning
   Error,
 
-  // computing the inital path (the robot is not moving)
+  // computing the initial path (the robot is not moving)
   ComputingPath,
 
   // replanning based on an environment change. The robot is likely following the old path while this is
@@ -323,7 +323,7 @@ public:
   // True if we think the robot is on a charger. This becomes true only when the robot touches the charger
   // contacts, and remains true until we think the robot has driven off the charger. It will not become true
   // based on localization or observing the charger marker, only based on feeling the charger. A robot on the
-  // charger contacts is always on the platform( NOTE: even if it thinks it's in the air or on it's side)
+  // charger contacts is always on the platform (NOTE: even if it thinks it's in the air or on it's side)
   bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
   
   // True if robot is charging
@@ -442,7 +442,7 @@ public:
   // will immediately start following it, and will replan (e.g. to avoid new obstacles) automatically If
   // useManualSpeed is set to true, the robot will plan a path to the goal, but won't actually execute any
   // speed changes, so the user (or some other system) will have control of the speed along the "rails" of
-  // the path. If specified, the maxReplanTime arguments specifies the maximum nyum
+  // the path.
   Result StartDrivingToPose(const Pose3d& pose,
                             const PathMotionProfile motionProfile,
                             bool useManualSpeed = false);
@@ -507,7 +507,7 @@ public:
   // If pixel_radius == std::numeric_limits<u8>::max(), the marker can be seen anywhere in the image,
   // otherwise the marker's center must be seen within pixel_radius of the
   // specified image coordinates.
-  // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
+  // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indicate
   // the expected marker on the end of the bridge. Otherwise, it is ignored.
   Result DockWithObject(const ObjectID objectID,
                         const f32 speed_mmps,
@@ -575,12 +575,12 @@ public:
   // for example if we think that block has something on top or it's too high to reach
   bool CanStackOnTopOfObject(const ObservableObject& object) const;
 
-  // let's the robot decide if we should try to pick up the given object (assuming it is flat, not picking up
+  // lets the robot decide if we should try to pick up the given object (assuming it is flat, not picking up
   // out of someone's hand). Checks that object is flat, not moving, no unknown pose, etc.
   bool CanPickUpObject(const ObservableObject& object) const;
 
   // same as above, but check that the block is on the ground (as opposed to stacked, on top of a notebook or
-  // something, or in someones hand
+  // something, or in someone's hand
   bool CanPickUpObjectFromGround(const ObservableObject& object) const;
     
   /*
@@ -613,7 +613,7 @@ public:
   // actually rises while it's stopping in reaction to the supposed cliff.
   void EvaluateCliffSuspiciousnessWhenStopped();
   
-  // Returns true if floor is suspciously cliff-y looking based on variance of cliff readings
+  // Returns true if floor is suspiciously cliff-y looking based on variance of cliff readings
   bool IsFloorSuspiciouslyCliffy() const;
   
   // Returns current threshold for cliff detection
@@ -731,7 +731,7 @@ public:
                                  const u16 cliff_data,
                                  const bool isCarryingObject);
   
-  // Increments frameID and adds a vision only pose to history
+  // Increments frameID and adds a vision-only pose to history
   // Sets a flag to send a localization update on the next tick
   Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                     const Pose3d& pose, 
@@ -1167,8 +1167,8 @@ protected:
   // Vector of currently connected objects by active slot index
   std::array<ActiveObjectInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> _connectedObjects;
   
-  double _lastDiconnectedCheckTime;
-  constexpr static double kDiconnectedCheckDelay = 2.0f;  // How often do we check for disconnected objects
+  double _lastDisconnectedCheckTime;
+  constexpr static double kDisconnectedCheckDelay = 2.0f; // How often do we check for disconnected objects
   constexpr static double kDisconnectedDelay = 2.0f;      // How long must be the object disconnected before we really remove it from the list of connected objects
 
   // Called in Update(), checks if there are objectsToConnectTo that
@@ -1197,13 +1197,13 @@ protected:
   // Sends a path to the robot to be immediately executed
   Result SendExecutePath(const Planning::Path& path, const bool useManualSpeed) const;
     
-  // Sync time with physical robot and trigger it robot to send back camera
-  // calibration
+  // Sync time with physical robot and trigger it to send back camera calibration
   Result SendSyncTime() const;
+  
   float _syncTimeSentTime_sec = 0.0f;
   constexpr static float kMaxSyncTimeAckDelay_sec = 5.0f;
   
-  // Send's robot's current pose
+  // Send robot's current pose
   Result SendAbsLocalizationUpdate() const;
     
   // Update the head angle on the robot

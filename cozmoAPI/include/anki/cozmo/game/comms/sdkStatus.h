@@ -50,7 +50,7 @@ public:
   
   static double GetCurrentTime_s();
   
-  void EnterMode();
+  void EnterMode(bool isExternalSdkMode);
   void ExitMode();
   
   void OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionSuccess& message);
@@ -70,7 +70,10 @@ public:
   uint32_t NumTimesConnected() const { return _numTimesConnected; }
   uint32_t NumCommandsOverConnection() const { return _numCommandsSentOverConnection; }
   
-  bool IsInSdkMode() const { return _isInSdkMode; }
+  bool IsInExternalSdkMode() const { return _isInExternalSdkMode; }
+  bool IsInInternalSdkMode() const { return _isInInternalSdkMode; }
+  bool IsInAnySdkMode() const { return (_isInExternalSdkMode || _isInInternalSdkMode); }
+    
   bool IsConnected() const { return _isConnected; }
   
   static constexpr const double kInvalidTime_s = -1.0;
@@ -116,7 +119,10 @@ private:
   uint32_t  _numTimesConnected  = 0;
   uint32_t  _numCommandsSentOverConnection = 0;
   bool      _isConnected = false;
-  bool      _isInSdkMode = false;
+    
+  bool      _isInExternalSdkMode = false;
+  bool      _isInInternalSdkMode = false;
+    
   bool      _isWrongSdkVersion = false;
   bool      _stopRobotOnDisconnect = true;
 };

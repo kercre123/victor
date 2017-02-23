@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define FCC_VERSION "c85"   // This must match fixture version, to help the factory keep in sync
+#define FCC_VERSION "b86.202"   // This must match fixture version, to help the factory keep in sync
 
 #include "fcc.h"
 #include "i2c.h"
@@ -9,7 +9,7 @@
 #include "uart.h"
 #include "watchdog.h"
 #include "anki/cozmo/robot/hal.h"
-
+#include "anki/cozmo/robot/buildTypes.h"
 #include "anki/cozmo/robot/spineData.h"
 
 #include "hal/portable.h"
@@ -287,9 +287,9 @@ static bool sendWifiCommand(int test) {
   const u32 DIVISOR = (32768*2560)/(115200);   // K02 weird RC clock / ESP baud rate
   
   // Send some start bits before the string
-  GPIO_SET(GPIO_MISO, PIN_MISO);
-  GPIO_OUT(GPIO_MISO, PIN_MISO);
-  SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+  GPIO_SET(MISO);
+  GPIO_OUT(MISO);
+  SOURCE_SETUP(MISO, SourceGPIO);
   Anki::Cozmo::HAL::MicroWait(50);  
   while (*s)
   {
@@ -304,9 +304,9 @@ static bool sendWifiCommand(int test) {
         ;
       last = now;
       if (c & (1<<i))
-        GPIO_SET(GPIO_MISO, PIN_MISO);
+        GPIO_SET(MISO);
       else
-        GPIO_RESET(GPIO_MISO, PIN_MISO);      
+        GPIO_RESET(MISO);      
     }
   }
   return true;
@@ -332,15 +332,31 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void)
   int righttread = g_dataToHead.positions[0] >> 10;
 
   // Duty cycle correction - transmit one packet per 7
-  static u8 toggle = 0;
-  if (toggle == 6) {
-    configureTest(current_mode, 1);
-    toggle = 0;
-  } else {
-    configureTest(0, 0);    // Listen the rest of the time
-    toggle++;
+  #define DUTY_CYCLE_EN 0
+  {
+    static u8 toggle = 0;
+    static int previous_mode = -1;
+    bool is_carrier_test = DTM_MODE[current_mode].command == LE_TRANSMITTER_TEST && DTM_MODE[current_mode].length == CARRIER_TEST;
+    
+    if( (DUTY_CYCLE_EN < 1) && is_carrier_test ) {
+      //limit sending of mode commands in carrier mode - causes interruption in carrier wave
+      if( ++toggle >= 200 || previous_mode != current_mode ) {
+        configureTest(current_mode, 1); //send cmd on mode change, but also periodically to correct PLL drift
+        toggle = 0;
+      }
+    } else {
+      if( (DUTY_CYCLE_EN < 1) || toggle >= 6 || previous_mode != current_mode ) {
+        configureTest(current_mode, 1);
+        toggle = 0;
+      } else {
+        configureTest(0, 0);    // Listen the rest of the time
+        toggle++;
+      }
+    }
+    
+    previous_mode = current_mode;
   }
-
+  
   // If we sent a wifi command, no time for running tests - just return
   if (sendWifiCommand((current_mode < WIFI_MODE) ? 0 : current_mode-(WIFI_MODE-1)))  // Wifi test modes start at 10
     return;

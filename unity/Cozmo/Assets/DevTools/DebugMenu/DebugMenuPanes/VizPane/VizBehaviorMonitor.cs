@@ -26,7 +26,7 @@ namespace Anki.Cozmo.Viz {
     }
 
     private void Awake() {
-      for(int i = 0; i < _kMaxBars; i++) {
+      for (int i = 0; i < _kMaxBars; i++) {
         var bar = UIManager.CreateUIElement(_BarPrefab, _BarTray).GetComponent<VizBehaviorBar>();
         _BehaviorBars.Add(bar);
       }
@@ -66,21 +66,23 @@ namespace Anki.Cozmo.Viz {
     }
 
     // Update is called once per frame
-    private void Update () {
+    private void Update() {
       var behaviors = VizManager.Instance.BehaviorScoreData;
 
       if (behaviors != null) {
         UpdateOrder(behaviors);
 
         for (int i = 0; i < _kMaxBars; i++) {
-          if (i < behaviors.Length) {
+          if (i < _BehaviorBars.Count && i < _Order.Count) {
             var index = _Order[i];
-            var behavior = behaviors[index];
-            _BehaviorBars[i].SetLabel(behavior.name);
-            _BehaviorBars[i].SetValue(behavior.behaviorScore, behavior.totalScore);  
-            var color = GetColorForBehavior(behavior.name);
+            if (index < behaviors.Length) {
+              var behavior = behaviors[index];
+              _BehaviorBars[i].SetLabel(behavior.name);
+              _BehaviorBars[i].SetValue(behavior.behaviorScore, behavior.totalScore);
+              var color = GetColorForBehavior(behavior.name);
 
-            _BehaviorBars[i].SetColor(color, color - new Color(0.1f,0.1f,0.1f, 0f));
+              _BehaviorBars[i].SetColor(color, color - new Color(0.1f, 0.1f, 0.1f, 0f));
+            }
           }
           else {
             _BehaviorBars[i].SetValue(0, 0);

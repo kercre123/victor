@@ -57,7 +57,7 @@ BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::V
 : IBehavior(robot, config)
 , _ghostStackedObject(new ActiveCube(ObservableObject::InvalidActiveID,
                                      ObservableObject::InvalidFactoryID,
-                                     ActiveObjectType::OBJECT_CUBE1))
+                                     ActiveObjectType::OBJECT_UNKNOWN)) // Ghost cubes do not have valid active object type
 , _shouldCheckBelowTarget(true)
 {
   SetDefaultName("AcknowledgeObject");

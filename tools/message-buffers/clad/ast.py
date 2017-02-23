@@ -268,21 +268,35 @@ class MessageDecl(Decl):
         else:
             return 1
 
-    def max_message_size(self):
-        "The maximum size that the transmitted message can possibly be."
+    def __message_size_helper(self, accumulator):
         if self.members():
-            return sum(member.type.max_message_size() for member in self.members())
+            sumList = []
+            sum = 0
+            for member in self.members():
+                size = getattr(member.type, accumulator)()
+                if isinstance(size, list):
+                    sumList += size
+                else:
+                    sum += size
+        
+            if len(sumList) > 0:
+                sumList.append(sum)
+                return sumList
+            return sum
         else:
             return 0
+
+    def max_message_size(self):
+        """The maximum size that the transmitted message can possibly be.
+        Returns a number or a list of elements that when summed represent the max message size"""
+        return self.__message_size_helper("max_message_size");
 
     def min_message_size(self):
         """The minimum size that the transmitted message could possibly be.
-        I.e. the number of bytes that must be read in order to know how big the structure will be."""
-        if self.members():
-            return sum(member.type.min_message_size() for member in self.members())
-        else:
-            return 0
-
+        I.e. the number of bytes that must be read in order to know how big the structure will be.
+        Returns a number or a list of elements that when summed represent the min message size"""
+        return self.__message_size_helper("min_message_size")
+    
     def is_message_size_fixed(self):
         "Returns true if the transmitted message will always be the same size."
         if self.members():
@@ -613,7 +627,10 @@ class PascalStringType(VariableArrayType):
 
 class FixedArrayType(Type):
     def __init__(self, member_type, length, coord):
-        super(FixedArrayType, self).__init__('%s[%d]' % (member_type.name, length), coord)
+        if isinstance(length, str):
+            super(FixedArrayType, self).__init__('%s[%s]' % (member_type.name, length), coord)
+        else:
+            super(FixedArrayType, self).__init__('%s[%d]' % (member_type.name, length), coord)
         self.member_type = member_type
         self.length = length
 
@@ -633,10 +650,22 @@ class FixedArrayType(Type):
             return self.member_type.alignment()
 
     def max_message_size(self):
-        return self.member_type.max_message_size() * self.length
+        """Returns either a number or a list of elements that when summed represent the max message size"""
+        max_message_size = self.member_type.max_message_size()
+        if isinstance(self.length, str):
+            # A list where all the elements are self.length and there will be max_message_size
+            # occurences
+            return [self.length] * max_message_size
+        return max_message_size * self.length
 
     def min_message_size(self):
-        return self.member_type.min_message_size() * self.length
+        """Returns either a number or a list of elements that when summed represent the min message size"""
+        min_message_size = self.member_type.min_message_size()
+        if isinstance(self.length, str):
+            # A a list where all the elements are self.length and there will be min_message_size
+            # occurences
+            return [self.length] * min_message_size
+        return min_message_size * self.length
 
     def is_message_size_fixed(self):
         if self.length == 0:

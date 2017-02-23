@@ -271,32 +271,18 @@ Result Init()
     return RESULT_FAIL;
   }
   
-  
-  
-  // Get index of this block in the children list to get a globally unique identifier
-  s32 nodeIndex = -1;
-  webots::Node* rootNode = active_object_controller.getRoot();
-  webots::Field* rootChildren = rootNode->getField("children");
-  int numRootChildren = rootChildren->getCount();
-  for (int n = 0 ; n<numRootChildren; ++n) {
-    webots::Node* nd = rootChildren->getMFNode(n);
-    if (nd == selfNode) {
-      nodeIndex = n;
-      break;
+  // Generate a factory ID
+  // If PROTO factoryID is > 0, use that.
+  // Otherwise use blockID as factoryID.
+  webots::Field* factoryIdField = selfNode->getField("factoryID");
+  if (factoryIdField) {
+    s32 fID = factoryIdField->getSFInt32();
+    if (fID > 0) {
+      factoryID_ = fID;
+    } else {
+      factoryID_ = blockID_ + 1;
     }
   }
-  
-  if (nodeIndex < 0) {
-    printf("Could not find node in scene\n");
-    return RESULT_FAIL;
-  }
-  
-  
-  // Use current time to make globally unique identifier robust to the scene tree changing due to dynamically added objects
-  u32 currTime_ms = static_cast<u32>(1000 * active_object_controller.getTime());
-  
-  // Generate a factory ID
-  factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + blockID_;
   factoryID_ &= 0x7FFFFFFF; // Make sure it doesn't get mistaken for a charger
   PRINT_NAMED_INFO("ActiveBlock", "Starting active object %d (factoryID %d)", blockID_, factoryID_);
   

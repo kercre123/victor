@@ -51,11 +51,14 @@ namespace Cozmo {
       
     }
     
-    virtual ObservableObject* CloneType() const = 0;
+    virtual ObservableObject* CloneType() const override = 0;
     
     // Can only be called once and only before SetPose is called. Will assert otherwise,
     // since this indicates programmer error.
     void InitPose(const Pose3d& pose, PoseState poseState);
+    
+    // Override base class SetID to use unique ID for each type (base class has no concept of ObjectType)
+    virtual void SetID() override;
     
     ObjectFamily  GetFamily()  const { return _family; }
     ObjectType    GetType()    const { return _type; }
@@ -87,11 +90,11 @@ namespace Cozmo {
     FactoryID    GetFactoryID()                 const   { return _factoryID; }
 
     // Override in derived classes to allow them to exist co-located with robot
-    virtual bool CanIntersectWithRobot()        const { return false; }
+    virtual bool CanIntersectWithRobot()        const   { return false; }
     
     // Can we assume there is exactly one of these objects at a give time?
-    virtual bool IsUnique()                     const { return false; }
-    
+    virtual bool IsUnique()                     const   { return false; }
+
     // Get the distance within which we are allowed to localize to objects
     // (This will probably need to be updated with COZMO-9672)
     static f32 GetMaxLocalizationDistance_mm();

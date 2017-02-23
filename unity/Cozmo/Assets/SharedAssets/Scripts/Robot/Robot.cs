@@ -2186,8 +2186,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void EnterSDKMode() {
-    RobotEngineManager.Instance.Message.EnterSdkMode = Singleton<EnterSdkMode>.Instance;
+  public void EnterSDKMode(bool isExternalSdkMode) {
+    RobotEngineManager.Instance.Message.EnterSdkMode = Singleton<EnterSdkMode>.Instance.Initialize(isExternalSdkMode);
     RobotEngineManager.Instance.SendMessage();
   }
 

@@ -276,9 +276,15 @@ static inline void ShowSSIDAndPwd(const bool highPos)
   Draw::Copy(frame, WIFI_COZMO_IMG, sizeof(WIFI_COZMO_IMG)/sizeof(WIFI_COZMO_IMG[0]), highPos*64, 0);
   Draw::NumberTiny(frame, 6, getSSIDNumber(), 35 + 64*highPos, 0);
   Draw::Copy(frame, WIFI_PASSWORD_IMG, sizeof(WIFI_PASSWORD_IMG)/sizeof(WIFI_PASSWORD_IMG[0]), 0, y);
-  Draw::Print(frame, wifiPsk + 0, 4,  2, 16 + y);
-  Draw::Print(frame, wifiPsk + 4, 4, 44, 16 + y);
-  Draw::Print(frame, wifiPsk + 8, 4, 86, 16 + y);
+  if (wifiPsk[ALPHANUM_WIFI_PSK_LEN]=='\0') //it's old school
+  {
+    Draw::Print(frame, wifiPsk + 0, 4,  2, 16 + y);
+    Draw::Print(frame, wifiPsk + 4, 4, 44, 16 + y);
+    Draw::Print(frame, wifiPsk + 8, 4, 86, 16 + y);
+  }
+  else {
+    Draw::PrintPsk(frame, wifiPsk, DIGITDASH_WIFI_PSK_LEN, 0, 16+y);
+  }
   Draw::Flip(frame);
 }
 
@@ -298,7 +304,7 @@ static inline void ShowFAC(const bool highPos)
 
 static void ShowWiFiInfo(uint8_t battVolt10x) {
   static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
-    "PSK:  %s\n"
+    "PSK:%s\n"
     "Chan: %d  Stas: %d\n"
     "Ver:  %d%c\n"
     "Time: %d\n"

@@ -27,7 +27,7 @@ import sys
 
 import unittest
 
-from SimpleTest import AnkiTypes, Foo, Bar, Baz, Cat, SoManyStrings, Constructor
+from SimpleTest import AnkiTypes, Foo, Bar, Baz, Cat, SoManyStrings, Constructor, Arrays
 from SimpleTest import ExplicitlyTaggedUnion, AnInt, AFloat, AListOfDoubles, AFixedListOfBytes
 from SimpleTest import ExplicitlyTaggedAutoUnion, AnIntMessage, AFloatMessage, AListOfDoublesMessage, AFixedListOfBytesMessage, ABoolMessage
 from aligned.AutoUnionTest import FunkyMessage, Funky, Monkey, Music
@@ -304,6 +304,18 @@ class TestDefaultConstructor(unittest.TestCase):
     def test_defaultConstructor(self):
       self.assertEqual(Constructor.HasDefaultConstructor.__init__.__defaults__, (0.0,0))
       self.assertEqual(Constructor.HasNoDefaultConstructor.__init__.__defaults__, None)
+
+class TestFixedArray(unittest.TestCase):
+    def test_fixedArray(self):
+      s = Arrays.s()
+      self.assertEqual(len(s.arr8) == Arrays.ArrSize.sizeTen, True)
+      self.assertEqual(len(s.arr16) == Arrays.ArrSize.sizeTwenty, True)
+      self.assertEqual(len(s) == Arrays.ArrSize.sizeTen*1 + Arrays.ArrSize.sizeTwenty*2, True)
+
+      m = Arrays.m()
+      self.assertEqual(len(m.arr8) == Arrays.ArrSize.sizeTen, True)
+      self.assertEqual(len(m.arr16) == Arrays.ArrSize.sizeTwenty, True)
+      self.assertEqual(len(m) == Arrays.ArrSize.sizeTen*1 + Arrays.ArrSize.sizeTwenty*2, True)
 
 # Required unittest.main
 if __name__ == '__main__':

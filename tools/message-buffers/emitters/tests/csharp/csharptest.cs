@@ -497,6 +497,20 @@ public class HelloWorld {
     return true;
   }
 
+  public static bool Test_FixedArray() {
+    Arrays.s s = new Arrays.s();
+    if(s.arr8.Length != (int)Arrays.ArrSize.sizeTen) return false;
+    if(s.arr16.Length != (int)Arrays.ArrSize.sizeTwenty) return false;
+    if(s.Size != ((int)Arrays.ArrSize.sizeTen*sizeof(byte) + (int)Arrays.ArrSize.sizeTwenty*sizeof(ushort))) return false;
+
+    Arrays.m m = new Arrays.m();
+    if(m.arr8.Length != (int)Arrays.ArrSize.sizeTen) return false;
+    if(m.arr16.Length != (int)Arrays.ArrSize.sizeTwenty) return false;
+    if(m.Size != ((int)Arrays.ArrSize.sizeTen*sizeof(byte) + (int)Arrays.ArrSize.sizeTwenty*sizeof(ushort))) return false;
+
+    return true;
+  }
+
   public static void Main() {
     System.Console.Write("Test_Foo: ");
     System.Console.WriteLine(Test_Foo() ? "PASS" : "FAIL");
@@ -548,5 +562,8 @@ public class HelloWorld {
 
     System.Console.Write("Test_DefaultConstructor: ");
     System.Console.WriteLine(Test_DefaultConstructor() ? "PASS" : "FAIL");
+
+    System.Console.Write("Test_FixedArray: ");
+    System.Console.WriteLine(Test_FixedArray() ? "PASS" : "FAIL");
   }
 }

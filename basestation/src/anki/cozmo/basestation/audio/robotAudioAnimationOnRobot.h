@@ -4,7 +4,7 @@
  * Author: Jordan Rivas
  * Created: 02/29/16
  *
- * Description: Robot Audio Animation On Robot is a sub-class of RobotAudioAnimation, it provides robot audio messages
+ * Description: Robot Audio Animation On Robot is a subclass of RobotAudioAnimation. It provides robot audio messages
  *              which are attached to Animation Frames. Each frame contains the synced audio data for that frame.
  *
  * Copyright: Anki, Inc. 2016

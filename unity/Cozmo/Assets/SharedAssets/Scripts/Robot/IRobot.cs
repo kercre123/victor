@@ -376,7 +376,7 @@ public interface IRobot : IDisposable {
 
   void EnableLift(bool enable);
 
-  void EnterSDKMode();
+  void EnterSDKMode(bool isExternalSdkMode);
 
   void ExitSDKMode();
 

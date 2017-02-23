@@ -4,7 +4,7 @@
  * Author: Jordan Rivas
  * Created: 11/09/2015
  *
- * Description: This Connection is specific to communicating with the Unity Message Interface. It is a sub-class of
+ * Description: This Connection is specific to communicating with the Unity Message Interface. It is a subclass of
  *              AudioClientConnection.
  *
  * Copyright: Anki, Inc. 2015

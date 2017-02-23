@@ -67,6 +67,9 @@ private:
   webots::Node* _cube3     = nullptr;
   webots::Node* _lightCube = nullptr;
   
+  ObjectID _wallID;
+  ObjectID _lightCubeID;
+  
   const Pose3d kPoseOrigin;
   const Pose3d kKidnappedRobotPose;
   
@@ -429,8 +432,18 @@ void CST_CustomObjects::CheckPoses()
     
     customObj->InitPose(*whichWallPose, PoseState::Known);
     
-    const ObjectID wallID(wallIDs.front());
-    CheckPoseHelper(customObj, wallID);
+    if(_wallID.IsUnknown())
+    {
+      // First time set _wallID
+      _wallID = wallIDs.front();
+    }
+    else
+    {
+      // Remaining times, verify the ID has remained consistent, since it is marked unique
+      CST_ASSERT(_wallID == wallIDs.front(), "CST_CustomObject.CheckPoses.WallIDChanged");
+    }
+    
+    CheckPoseHelper(customObj, _wallID);
     Util::SafeDelete(customObj);
   }
   
@@ -478,7 +491,19 @@ void CST_CustomObjects::CheckPoses()
     
     ActiveCube* activeCube = new ActiveCube(ObjectType::Block_LIGHTCUBE1);
     activeCube->InitPose(_lightCubePose, PoseState::Known);
-    CheckPoseHelper(activeCube, lightcubeIDs.front());
+    
+    if(_lightCubeID.IsUnknown())
+    {
+      // First time set _lightCubeID
+      _lightCubeID = lightcubeIDs.front();
+    }
+    else
+    {
+      // Remaining times, verify the ID has remained consistent, since it is unique
+      CST_ASSERT(_lightCubeID == lightcubeIDs.front(), "CST_CustomObject.CheckPoses.LightCubeIDChanged");
+    }
+    
+    CheckPoseHelper(activeCube, _lightCubeID);
     Util::SafeDelete(activeCube);
   }
 }

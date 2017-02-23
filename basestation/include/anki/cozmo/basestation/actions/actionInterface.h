@@ -105,7 +105,7 @@ namespace Anki {
       // can safely be re-queued using "NOW_AND_RESUME", and will pick back up safely
       // after the newly-queued action completes. Otherwise, this action will just
       // be cancelled when NOW_AND_RESUME is used. Note that this relies on
-      // sub-classes implementing InterruptInternal() and Reset().
+      // subclasses implementing InterruptInternal() and Reset().
       bool Interrupt();
       
       // Override this to take care of anything that needs to be done on Retry/Interrupt.

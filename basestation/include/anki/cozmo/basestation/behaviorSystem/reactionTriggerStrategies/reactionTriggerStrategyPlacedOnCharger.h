@@ -30,10 +30,10 @@ protected:
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   
   virtual void EnabledStateChanged(bool enabled) override
-                 {_shouldComputationallySwitch = false;}
+                 {_shouldTrigger = false;}
   
 private:
-  bool _shouldComputationallySwitch = false;
+  bool _shouldTrigger = false;
   
   // prevent Cozmo from asking to go to sleep for a period of time after connection
   mutable float _dontRunUntilTime_sec;

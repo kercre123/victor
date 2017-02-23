@@ -48,7 +48,7 @@ namespace Cozmo.Settings {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       // Send EnterSDKMode to engine as we enter this view
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.EnterSDKMode();
+        RobotEngineManager.Instance.CurrentRobot.EnterSDKMode(true);
       }
 
 #if SDK_ONLY
