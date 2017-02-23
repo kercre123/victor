@@ -27,7 +27,6 @@ extern "C" {
 #include "bluetooth.h"
 #include "messages.h"
 #include "watchdog.h"
-#include "temp.h"
 #include "tests.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -63,7 +62,6 @@ int main(void)
   Lights::init();
 
   // Setup all tasks
-  Temp::init();
   Motors::init();
   Radio::init();
   Head::init();
@@ -72,7 +70,15 @@ int main(void)
   Timer::init();
 
   // Startup the system
+  #ifdef FACTORY
+  if (*FIXTURE_HOOK != 0xDEADFACE) {
+    Battery::setOperatingMode(BODY_STARTUP);
+  } else {
+    Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
+  }
+  #else
   Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
+  #endif
 
   // NOTE: HERE DOWN SOFTDEVICE ACCESS IS NOT GUARANTEED
   // Run forever, because we are awesome.
@@ -83,7 +89,6 @@ int main(void)
     Tasks::manage();
     Radio::rotate(Lights::manage());
     Backpack::manage();
-    Temp::manage();
 
     #ifdef FACTORY
     TestFixtures::manage();

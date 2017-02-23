@@ -25,9 +25,9 @@ static uint16_t audioVolume = 0;
 
 void Anki::Cozmo::HAL::DAC::Init(void) {
   #ifdef EP1_HEADBOARD
-  SOURCE_SETUP(GPIO_AUDIO_STANDBY, SOURCE_AUDIO_STANDBY, SourceGPIO);
-  GPIO_RESET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
-  GPIO_OUT(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
+  SOURCE_SETUP(AUDIO_STANDBY, SourceGPIO);
+  GPIO_RESET(AUDIO_STANDBY);
+  GPIO_OUT(AUDIO_STANDBY);
   #endif
   
   // Enable PDB, PIT and DAC0
@@ -64,9 +64,9 @@ void Anki::Cozmo::HAL::DAC::Init(void) {
 
 void Anki::Cozmo::HAL::DAC::EnableAudio(bool enable) {
   if (enable) {
-    GPIO_SET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
+    GPIO_SET(AUDIO_STANDBY);
   } else {
-    GPIO_RESET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
+    GPIO_RESET(AUDIO_STANDBY);
   }
 }
 
@@ -146,7 +146,7 @@ void GenerateTestTone(void) {
   using namespace Anki::Cozmo::HAL;
    
   __disable_irq();
-  GPIO_RESET(GPIO_POWEREN, PIN_POWEREN);
+  GPIO_RESET(POWEREN);
   MCG_C1 |= MCG_C1_IREFS_MASK;
   
   // THIS ALL NEEDS TO BE ADJUSTED

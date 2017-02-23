@@ -16,7 +16,6 @@
 #include "cubes.h"
 #include "backpack.h"
 #include "motors.h"
-#include "temp.h"
 #include "head.h"
 #include "tasks.h"
 #include "ota.h"
@@ -71,6 +70,7 @@ static CurrentChargeState charge_state = CHARGE_OFF_CHARGER;
 AnalogInput m_pinIndex;
 
 extern GlobalDataToHead g_dataToHead;
+extern bool motorOverride;
 
 static inline void startADCsample(AnalogInput channel)
 {
@@ -123,7 +123,7 @@ static inline void sendPowerStateUpdate()
   msg.operatingMode = active_operating_mode;
   msg.VBatFixed = vBat;
   msg.VExtFixed = vExt;
-  msg.BodyTemp = Temp::getTemp();
+  msg.BodyTemp = 0;
   msg.batteryLevel = Battery::getLevel();
   msg.onCharger  = ContactTime > MinContactTime;
   msg.isCharging = isCharging;
@@ -218,6 +218,10 @@ void Battery::updateOperatingMode() {
     case BODY_ACCESSORY_OPERATING_MODE:
       Backpack::detachTimer();
       Radio::shutdown();
+      break ;
+
+    case BODY_STARTUP:
+      motorOverride = false;
       break ;
 
     case BODY_DTM_OPERATING_MODE:
@@ -355,6 +359,20 @@ void Battery::updateOperatingMode() {
 
       Backpack::useTimer();
 
+      break ;
+
+    case BODY_STARTUP:
+      motorOverride = true;
+
+      Battery::powerOn();
+
+      Motors::disable(false);
+
+      for (int i = 0; i < MOTOR_COUNT; i++) {
+        Motors::setPower(i, 0);
+      }
+      
+      Motors::setPower(MOTOR_HEAD, 0x2800);
       break ;
 
     case BODY_ACCESSORY_OPERATING_MODE:
@@ -504,6 +522,13 @@ void Battery::manage()
   using namespace Battery;
   static const int LOW_BAT_TIME = CYCLES_MS(60*1000); // 1 minute
 
+  // Startup heads up check
+  #ifdef FACTORY
+  if (current_operating_mode == BODY_STARTUP && GetCounter() > CYCLES_MS(500)) {
+    Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
+  }
+  #endif
+  
   if (!NRF_ADC->EVENTS_END) {
     return ;
   }

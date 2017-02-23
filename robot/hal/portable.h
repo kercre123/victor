@@ -3,13 +3,13 @@
 #define PORTABLE_H
 
 // Basic abstractions for low level I/O on our processor
-#define GPIO_SET(gp, pin)                (gp)->PSOR = (pin)
-#define GPIO_RESET(gp, pin)              (gp)->PCOR = (pin)
-#define GPIO_READ(gp)                    (gp)->PDIR
+#define GPIO_SET(name)                (GPIO_##name)->PSOR = (PIN_##name)
+#define GPIO_RESET(name)              (GPIO_##name)->PCOR = (PIN_##name)
+#define GPIO_READ(name)               ((GPIO_##name)->PDIR & (PIN_##name))
 
 // Note:  These are not interrupt-safe, so do not use in main thead except during init()
-#define GPIO_IN(gp, pin)                 (gp)->PDDR &= ~(pin)
-#define GPIO_OUT(gp, pin)                (gp)->PDDR |= (pin)
+#define GPIO_IN(name)                    (GPIO_##name)->PDDR &= ~(PIN_##name)
+#define GPIO_OUT(name)                   (GPIO_##name)->PDDR |= (PIN_##name)
 
 #include <stdint.h>
 typedef int8_t s8;
@@ -23,7 +23,7 @@ typedef uint64_t u64;
 
 // This sets up everything about the pin in one call - pull-up/pull-down, open-drain, altmux, etc
 // OR together the bits you want from enum SourceSetup_t into setup
-#define SOURCE_SETUP(gp, src, setup)    ((PORT_Type *)(PORTA_BASE + PORT_INDEX(gp)*0x1000))->PCR[(src)] = (setup)
+#define SOURCE_SETUP(name, setup)    ((PORT_Type *)(PORTA_BASE + PORT_INDEX(GPIO_##name )*0x1000))->PCR[(SOURCE_##name )] = (setup)
 typedef enum {
   SourcePullDown = 2,
   SourcePullUp = 3,

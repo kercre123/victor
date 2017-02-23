@@ -621,6 +621,25 @@ namespace UpgradeController {
             os_printf("OTA header block: %s\r\n", head->c_time);
             #endif
 
+            const int max_model = 
+              (head->fileVersion >= CURRENT_FILE_VERSION) ? head->max_model : PRODUCTION_V1;
+
+            if ((getModelNumber() & 0xFF) > max_model) {
+              #if DEBUG_OTA
+              os_printf("\tInvalid model version detected\r\n");
+              #endif
+
+              ack.bytesProcessed = self.bytesProcessed;
+              ack.result = ERR_INCOMPATIBLE;
+              RobotInterface::SendMessage(ack);
+  
+              self.phase = OTAT_Flash_Verify;
+              self.counter = 0;
+              self.timer = 0;
+
+              return ;
+            }
+
             self.receivedIV = 1;
             memcpy(aes_iv, head->aes_iv, AES_KEY_LENGTH);
 
