@@ -701,11 +701,10 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   robot.GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
   ASSERT_EQ(1, matchingObjects.size());
 
-// COZMO-6171 this is not supported in this PR, but will be with andrew's
-//  // Close object should now be Known pose state
-//  matchingObject = robot.GetBlockWorld().GetLocatedObjectByID(blockObjectID);
-//  ASSERT_NE(nullptr, matchingObject);
-//  ASSERT_TRUE(matchingObject->IsPoseStateKnown());
+  // Close object should now be Known pose state
+  matchingObject = robot.GetBlockWorld().GetLocatedObjectByID(blockObjectID);
+  ASSERT_NE(nullptr, matchingObject);
+  ASSERT_TRUE(matchingObject->IsPoseStateKnown());
   
   // "Move" the robot so it will relocalize
   lastResult = FakeRobotMovement(robot, stateMsg, fakeTime);
@@ -717,9 +716,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // Should end up localized to the close object
-  // ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
-// COZMO-6171 this is not supported in this PR, but will be with andrew's
-  ASSERT_NE(-1, robot.GetLocalizedTo()); // we can't guarantee this in this PR
+  ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -736,7 +733,7 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ActiveObjectType act
   Anki::Cozmo::ObservableObject* objectPtr = blockWorld.CreateActiveObject(activeObjectType, activeID, factoryID);
   DEV_ASSERT(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull");
   
-  // n
+  // check it currently doesn't exist in BlockWorld
   {
     BlockWorldFilter filter;
     filter.SetFilterFcn(nullptr); // TODO Should not be needed by default
@@ -750,7 +747,7 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ActiveObjectType act
   DEV_ASSERT(!objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDSet");
   DEV_ASSERT(!objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.HasValidPose");
   objectPtr->SetID();
-  Anki::Pose3d originPose(0,{0,1,0},{0,0,0});
+  Anki::Pose3d originPose;
   originPose.SetParent( robot.GetWorldOrigin() );
   objectPtr->InitPose( originPose, Anki::PoseState::Known); // posestate could be something else
   
@@ -758,7 +755,7 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ActiveObjectType act
   blockWorld.AddLocatedObject(std::shared_ptr<ObservableObject>(objectPtr));
 
   // need to pretend we observed this object
-  robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr); // this requies to be called after AddLocated just because
+  robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr); // this has to be called after AddLocated just because
   
   // verify they are there now
   DEV_ASSERT(objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDNotset");
@@ -1676,7 +1673,6 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   //// Helper Functions
   //////////
   auto setPoseHelper = [&robot](ObservableObject* object, Pose3d& pose) {
-    // robot.GetObjectPoseConfirmer().SetPoseState(object, PoseState::Known); rsam: Should not be needed
     object->SetIsMoving(false, 0);
     object->SetLastObservedTime(10);
     pose.SetParent(robot.GetPose().GetParent());

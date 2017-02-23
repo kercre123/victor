@@ -283,11 +283,7 @@ namespace Anki {
                          objectState.objectID,
                          EnumToString(objectState.objectType));
 
-// TODO: should these add at 0?
-//        AddOrUpdateObject(objectState.objectID,
-//                          objectState.objectType,
-//                          objectState.objectFamily,
-//                          objectState.pose);
+        // TODO How do we visualize connected only objects since they don't have a pose?
       }
       
       HandleConnectedObjectStates(msg);

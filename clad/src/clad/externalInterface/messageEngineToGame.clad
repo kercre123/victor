@@ -345,12 +345,6 @@ message RobotDeletedLocatedObject {
     uint_32 objectID
 }
 
-// RobotDeletedAllObjects: deprecated in favor of LocatedObjectStates, which already notifies
-// of the current state of objects.
-//message RobotDeletedAllObjects {
-//    uint_32 robotID
-//}
-
 // RobotDeletedAllCustomObjects
 message RobotDeletedAllCustomObjects {
     uint_32 robotID

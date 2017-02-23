@@ -690,7 +690,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
                          object->GetID().GetValue(), object->GetActiveID(),
                          EnumToString(object->GetType()));
 
-        
+        // TODO: should this go inside MarkObjectDirty?
         // If this is the object we were localized to, unset our localizedToID.
         // Note we are still "localized" by odometry, however.
         if(robot->GetLocalizedTo() == object->GetID())
@@ -806,7 +806,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
 
   if(matchingObjects.empty())
   {
-    #if ANKI_DEVELOPER_CODE
+    if(ANKI_DEVELOPER_CODE)
     {
       // maybe we do not have located instances, there should be a connected one though
       ActiveID activeID = payload.objectID;
@@ -816,7 +816,6 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
                             "Could not find match for active object ID %d", payload.objectID);
       }
     }
-    #endif
   
     return;
   }

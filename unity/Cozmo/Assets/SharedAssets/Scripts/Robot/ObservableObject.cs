@@ -27,6 +27,7 @@ public class ObservableObject : IVisibleInCamera {
   public const int kInvalidObjectID = -1;
   private const uint _kFindCubesTimeoutFrames = 1;
 
+  // TODO: We shouldn't need to duplicate the enum from CLAD to here.
   // Copy the enum from CLAD to keep properly synchronized
   public enum PoseState {
     Invalid = Anki.PoseState.Invalid,
