@@ -83,7 +83,7 @@ namespace Anki {
       
       virtual void OnRobotDisconnected(uint32_t robotID) override;
       
-      virtual bool IsInSdkMode() const override { return _sdkStatus.IsInSdkMode(); }
+      virtual bool IsInSdkMode() const override { return _sdkStatus.IsInAnySdkMode(); }
       
       virtual void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) override
       {

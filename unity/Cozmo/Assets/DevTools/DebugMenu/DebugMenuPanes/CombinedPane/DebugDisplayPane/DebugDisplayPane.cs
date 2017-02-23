@@ -1,9 +1,13 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
+using Newtonsoft.Json;
+
+public class ScratchRequest {
+  public string command { get; set; }
+  public int argument { get; set; }
+}
 
 public class DebugDisplayPane : MonoBehaviour {
-
   [SerializeField]
   private Button _ToggleDebugStringButton;
 
@@ -68,8 +72,7 @@ public class DebugDisplayPane : MonoBehaviour {
   private void OnDestroy() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
 
-    if (_WebViewObject != null)
-    {
+    if (_WebViewObject != null) {
       GameObject.Destroy(_WebViewObject);
       _WebViewObject = null;
     }
@@ -161,10 +164,15 @@ public class DebugDisplayPane : MonoBehaviour {
   }
 #endif
 
-  private void HandleLoadWebView()
-  {
-    if (_WebViewObject == null)
-    {
+  private void HandleLoadWebView() {
+    // Turn off music
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+    // Send EnterSDKMode to engine as we enter this view
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.EnterSDKMode(false);
+    }
+
+    if (_WebViewObject == null) {
       _WebViewObject = new GameObject("WebView", typeof(WebViewObject));
       WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
       webViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
@@ -178,22 +186,60 @@ public class DebugDisplayPane : MonoBehaviour {
       Debug.Log("Index file = " + indexFile);
       webViewObjectComponent.LoadURL(indexFile);
     }
+
+    /*
+    // TODO Consider using when close webview
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
+    RobotEngineManager.Instance.CurrentRobot.ExitSDKMode();
+    */
   }
 
-  private void WebViewCallback(string text)
-  {
-    Debug.Log("WebViewCallback: " + text);
+  private void WebViewCallback(string text) {
+    string jsonStringFromJS = string.Format("{0}", text);
+    Debug.Log("JSON from JavaScript: " + jsonStringFromJS);
+    ScratchRequest scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
+
+    if (scratchRequest.command == "cozmoDriveForward") {
+      const float speed_mmps = 30.0f;
+      float dist_mm = 30.0f;
+
+      float distMultiplier = scratchRequest.argument;
+      if (distMultiplier < 1.0f) {
+        distMultiplier = 1.0f;
+      }
+      dist_mm *= distMultiplier;
+
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(speed_mmps, dist_mm, false);
+    }
+    else {
+      Debug.LogError("Scratch: no match for command");
+    }
+
+    return;
   }
 
-  private void WebViewError(string text)
-  {
-    Debug.LogError("WebViewError: " + text);
+  private void WebViewError(string text) {
+    Debug.LogError(string.Format("CallOnError[{0}]", text));
   }
 
-  private void WebViewLoaded(string text)
-  {
-    Debug.Log("WebViewLoaded: " + text);
+  private void WebViewLoaded(string text) {
+    Debug.Log(string.Format("CallOnLoaded[{0}]", text));
     WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
     webViewObjectComponent.SetVisibility(true);
+
+#if !UNITY_ANDROID
+    webViewObjectComponent.EvaluateJS(@"
+              window.Unity = {
+                call: function(msg) {
+                  var iframe = document.createElement('IFRAME');
+                  iframe.setAttribute('src', 'unity:' + msg);
+                  document.documentElement.appendChild(iframe);
+                  iframe.parentNode.removeChild(iframe);
+                  iframe = null;
+                }
+              }
+            ");
+#endif
+
   }
 }

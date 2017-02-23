@@ -82,7 +82,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     CONSOLE_VAR(uint32_t, kSdkStatusSendFreq, "UiComms", 1); // 0 = never
     
     
-    bool IsSdkConnection(UiConnectionType type)
+    bool IsExternalSdkConnection(UiConnectionType type)
     {
       switch(type)
       {
@@ -218,7 +218,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     bool UiMessageHandler::IsSdkCommunicationEnabled() const
     {
-      return (_sdkStatus.IsInSdkMode() || kEnableSdkCommsAlways);
+      return (_sdkStatus.IsInExternalSdkMode() || kEnableSdkCommsAlways);
     }
     
 
@@ -425,15 +425,15 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         }
       }
       
-      const bool isSdkConnection = IsSdkConnection(connectionType);
-      if (isSdkConnection && IgnoreMessageTypeForSdkConnection(messageTag))
+      const bool isExternalSdkConnection = IsExternalSdkConnection(connectionType);
+      if (isExternalSdkConnection && IgnoreMessageTypeForSdkConnection(messageTag))
       {
         // Ignore - this message type is blacklisted from SDK usage
         PRINT_NAMED_WARNING("sdk.bannedmessage", "%s", MessageGameToEngineTagToString(messageTag));
         return;
       }
       
-      if (_sdkStatus.IsInSdkMode() && !isSdkConnection)
+      if (_sdkStatus.IsInExternalSdkMode() && !isExternalSdkConnection)
       {
         // Accept only a limited set of messages (e.g. enter/exit mode)
         if (!AlwaysHandleMessageTypeForNonSdkConnection(messageTag))
@@ -449,7 +449,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       }
       #endif
       
-      if (isSdkConnection)
+      if (isExternalSdkConnection || _sdkStatus.IsInInternalSdkMode())
       {
         _sdkStatus.OnRecvMessage(message, messageSize);
       }
@@ -732,7 +732,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     void UiMessageHandler::UpdateSdk()
     {
-      if (_sdkStatus.IsInSdkMode())
+      if (_sdkStatus.IsInExternalSdkMode())
       {
         const ISocketComms* sdkSocketComms = GetSdkSocketComms();
         DEV_ASSERT(sdkSocketComms, "Sdk.InModeButNoComms");
@@ -843,7 +843,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion:
         {
           const ExternalInterface::UiDeviceConnectionWrongVersion& msg = event.GetData().Get_UiDeviceConnectionWrongVersion();
-          if (IsSdkConnection(msg.connectionType))
+          if (IsExternalSdkConnection(msg.connectionType))
           {
             _sdkStatus.OnWrongVersion(msg);
             ISocketComms* socketComms = GetSocketComms(msg.connectionType);
@@ -857,7 +857,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionSuccess:
         {
           const ExternalInterface::UiDeviceConnectionSuccess& msg = event.GetData().Get_UiDeviceConnectionSuccess();
-          if (IsSdkConnection(msg.connectionType))
+          if (IsExternalSdkConnection(msg.connectionType))
           {
             _sdkStatus.OnConnectionSuccess(msg);
             
@@ -913,8 +913,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     void UiMessageHandler::OnEnterSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
-      _sdkStatus.EnterMode();
-      UpdateIsSdkCommunicationEnabled();
+      const ExternalInterface::EnterSdkMode& msg = event.GetData().Get_EnterSdkMode();
+      _sdkStatus.EnterMode(msg.isExternalSdkMode);
+      
+      if (msg.isExternalSdkMode) {
+        UpdateIsSdkCommunicationEnabled();
+      }
     }
     
     
@@ -939,7 +943,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        if (IsSdkConnection(i))
+        if (IsExternalSdkConnection(i))
         {
           ISocketComms* socketComms = GetSocketComms(i);
           if (socketComms)
@@ -968,7 +972,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     void UiMessageHandler::OnRobotDisconnected(uint32_t robotID)
     {
-      if (_sdkStatus.IsInSdkMode())
+      if (_sdkStatus.IsInAnySdkMode())
       {
         DoExitSdkMode();
       }

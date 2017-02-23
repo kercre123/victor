@@ -16882,22 +16882,11 @@ module.exports =
 
 	Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
 	    if (!util.stackFrame.timer) {
-	       function callNativeApp(msg) {
-	           try {
-	               webkit.messageHandlers.callbackHandler.postMessage(msg);
-	           } catch(err) {
-	               console.log("Native context is missing.");
-	           }
-	       }
-
-	       // The dist_multiplier will be between 1 and 9 (as set by the parameter
+	       // The distMultiplier will be between 1 and 9 (as set by the parameter
 	       // number under the block) and will be used as a multiplier against the
 	       // base dist_mm of 30.0f.
-	       var jsonValues = {
-	           "command": "cozmoDriveForward",
-	           "dist_multiplier": Cast.toNumber(args.DURATION)
-	       };
-	       callNativeApp(jsonValues);
+	       var distMultiplier = Cast.toNumber(args.DISTANCE);
+	       window.Unity.call('{"command": "cozmoDriveForward","dist_multiplier": ' + distMultiplier + '}');
 
 	        // Yield
 	        util.stackFrame.timer = new Timer();

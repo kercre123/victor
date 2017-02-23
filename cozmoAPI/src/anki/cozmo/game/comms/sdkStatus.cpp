@@ -74,26 +74,33 @@ void SdkStatus::StopRobotDoingAnything()
 }
 
 
-void SdkStatus::EnterMode()
+void SdkStatus::EnterMode(bool isExternalSdkMode)
 {
-  DEV_ASSERT(!_isInSdkMode, "SdkStatus.EnterMode.AlreadyInMode");
+  DEV_ASSERT(!IsInAnySdkMode(), "SdkStatus.EnterMode.AlreadyInMode");
   Util::sEventF("robot.sdk_mode_on", {}, "");
   
   StopRobotDoingAnything();
   
-  _isInSdkMode = true;
+  if (isExternalSdkMode) {
+    _isInExternalSdkMode = true;
+  }
+  else {
+    _isInInternalSdkMode = true;
+  }
+
   _enterSdkModeTime_s = GetCurrentTime_s();
 }
 
 
 void SdkStatus::ExitMode()
 {
-  DEV_ASSERT(_isInSdkMode, "SdkStatus.ExitMode.NotInMode");
+  DEV_ASSERT(IsInAnySdkMode(), "SdkStatus.ExitMode.NotInMode");
   const double timeInSdkMode = TimeInMode_s(GetCurrentTime_s());
   Util::sEventF("robot.sdk_mode_off", {{DDATA, std::to_string(timeInSdkMode).c_str()}}, "%d", _numTimesConnected);
   
   OnDisconnect();
-  _isInSdkMode = false;
+  _isInExternalSdkMode = false;
+  _isInInternalSdkMode = false;
 }
 
 
@@ -192,7 +199,7 @@ void SdkStatus::UpdateConnectionStatus(const ISocketComms* sdkSocketComms)
   
 double SdkStatus::TimeInMode_s(double timeNow_s) const
 {
-  if (_isInSdkMode)
+  if (IsInAnySdkMode())
   {
     return GetTimeBetween_s(_enterSdkModeTime_s, timeNow_s);
   }
