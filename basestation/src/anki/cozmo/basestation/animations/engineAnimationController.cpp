@@ -166,7 +166,7 @@ void EngineAnimationController::HandleMessage(const ExternalInterface::PlayAnima
   Animation* anim = _animationContainer.GetAnimation(msg.animationName);
   if (anim != nullptr) {
     
-    // Buffer and store animtion
+    // Buffer and store animation
     _animationSelector->BufferStreamingAnimation(anim);
     StreamingAnimation* streamingAnimPtr = _animationSelector->GetStreamingAnimation(anim->GetName());
     

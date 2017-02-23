@@ -4,9 +4,9 @@
  * Author: Jordan Rivas
  * Created: 02/29/16
  *
- * Description: Robot Audio Animation On Device is a sub-class of RobotAudioAnimation, it post Audio events when the
+ * Description: Robot Audio Animation On Device is a subclass of RobotAudioAnimation. It posts Audio events when the
  *              corresponding frame is being buffered. This is not synced to the animation due to the reality we don’t
- *              when the robot is playing this frame, in the future we hope to fix this. It is intend to use when
+ *              know when the robot is playing this frame, in the future we hope to fix this. It is intended to use when
  *              working with Webots as your simulated robot.
  *
  * Copyright: Anki, Inc. 2016

@@ -49,14 +49,14 @@ protected:
   using FaceID_t = Vision::FaceID_t;
   
   // --------------------------------------------------------------------------------
-  // Functions to be overridden by sub classes
+  // Functions to be overridden by subclasses
   
   virtual Result RequestGame_InitInternal(Robot& robot) = 0;
   virtual Status RequestGame_UpdateInternal(Robot& robot) = 0;
   virtual void HandleGameDeniedRequest(Robot& robot) = 0;
 
   // --------------------------------------------------------------------------------
-  // Utility functions for sub-classes
+  // Utility functions for subclasses
   
   // these send the message (don't do anything with animations)
   void SendRequest(Robot& robot, bool initialRequest);

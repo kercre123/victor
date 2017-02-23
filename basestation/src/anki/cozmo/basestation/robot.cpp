@@ -225,7 +225,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _speedChooser(new SpeedChooser(*this))
   , _blockFilter(new BlockFilter(this, context->GetExternalInterface()))
   , _tapFilterComponent(new BlockTapFilterComponent(*this))
-  , _lastDiconnectedCheckTime(0)
+  , _lastDisconnectedCheckTime(0)
   , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
   , _robotIdleTimeoutComponent(new RobotIdleTimeoutComponent(*this))
 {
@@ -4103,7 +4103,7 @@ void Robot::CheckDisconnectedObjects()
   // Check for objects that have been disconnected long enough to consider them gone. Note the object has to be in
   // the Disconnected state which is the state we get when the disconnection wasn't requested.
   const float time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if ((_lastDiconnectedCheckTime <= 0.0f) || (time >= (_lastDiconnectedCheckTime + kDiconnectedCheckDelay)))
+  if ((_lastDisconnectedCheckTime <= 0.0f) || (time >= (_lastDisconnectedCheckTime + kDisconnectedCheckDelay)))
   {
     for (int i = 0; i < _connectedObjects.size(); ++i)
     {
@@ -4117,7 +4117,7 @@ void Robot::CheckDisconnectedObjects()
       }
     }
     
-    _lastDiconnectedCheckTime = time;
+    _lastDisconnectedCheckTime = time;
   }
 }
 

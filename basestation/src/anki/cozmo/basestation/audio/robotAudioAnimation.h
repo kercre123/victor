@@ -65,7 +65,7 @@ public:
     AnimationStateCount   // Number of Animation States
   };
   
-  // Use sub-class constructor, this class will return an invalid animation
+  // Use subclass constructor, this class will return an invalid animation
   explicit RobotAudioAnimation( GameObjectType gameObject, Util::RandomGenerator* randomGenerator );
   
   virtual ~RobotAudioAnimation();
@@ -169,13 +169,13 @@ protected:
   // All the animations events have and completed
   virtual bool IsAnimationDone() const;
   
-  // Call this from constructor in sub-class to prepare for animation
+  // Call this from constructor in subclass to prepare for animation
   void InitAnimation( Animation* anAnimation, RobotAudioClient* audioClient );
   
-  // Override this in sub-class to perform specific preparation to animation
+  // Override this in subclass to perform specific preparation to animation
   virtual void PrepareAnimation() {};
 
-  // Handle AudioClient's PostCozmo() callbacks from audio engine (Wwise)s
+  // Handle AudioClient's PostCozmo() callbacks from audio engine (Wwise)
   void HandleCozmoEventCallback( AnimationEvent* animationEvent, const AudioEngine::AudioCallbackInfo& callbackInfo );
 
   // Track what game obj to use for animation

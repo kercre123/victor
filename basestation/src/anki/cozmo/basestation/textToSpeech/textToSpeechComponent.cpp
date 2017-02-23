@@ -80,7 +80,7 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
     PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "OperationId %d already in cache", opId);
     return kInvalidOperationId;
   }
-  // Set inital state
+  // Set initial state
   it.first->second.state = AudioCreationState::Preparing;
   // Dispatch work onto another thread
   Util::Dispatch::Async(_dispatchQueue, [this, text, durationScalar, opId]

@@ -33,12 +33,12 @@ public:
   
   AnimationAudioInputSource( Audio::AudioMixingConsole& mixingConsole );
   
-  // Nothing happens in update for this sub-class
+  // Nothing happens in update for this subclass
   virtual BufferState Update() override;
   
   
-  // Method sub-class usess to set audio frame data
-  // This Needs to be called before Update() & PopFrame()
+  // Method subclass uses to set audio frame data
+  // This needs to be called before Update() & PopFrame()
   void SetNextFrame(const Audio::AudioFrameData* audioFrame);
   
   
