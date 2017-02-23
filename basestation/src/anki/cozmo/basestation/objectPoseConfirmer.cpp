@@ -64,10 +64,20 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
                                                bool robotWasMoving,
                                                f32 obsDistance_mm)
 {
+  // andrew/rsam: KnownIssueLostAccuracy
+  // We always update poses and poseStates of unconfirmed observations. We also do not keep history
+  // of observations for confirmed matches, only the last one that confirms at the reference pose. For those two
+  // reasons, in a scenario where we have: Known, Known, Dirty, Dirty observations, where we
+  // need 4 observations to confirm, the last one (Dirty) is the one that we will set in the object.
+  // This is not ideal, but simplifies reasoning and code greatly, and it's arguable whether it's not the right thing
+  // to do (eg: should all 4 confirmations be Known, for the pose to be Known?)
+  // The accuracy lost is due to Known not being overridden by Dirty.
+
   // if we are updating an object that we are carrying, we always want to update, so that we can correct the
   // fact that it's not in the lift, it's where the observation happens
-  const bool updateDueToObservingCarriedObject = (nullptr != confirmedMatch) && _robot.IsCarryingObject( confirmedMatch->GetID() );
-  const bool updateNonLocalizableObject = !object->CanBeUsedForLocalization();
+  const bool isCarriedObject = (nullptr != confirmedMatch) && _robot.IsCarryingObject( confirmedMatch->GetID() );
+  const bool isNonLocalizableObject = !object->CanBeUsedForLocalization();
+  const bool isConfirmedMatch = (object == confirmedMatch);
   
   // now calculate what posestate we should set and if that poseState overrides the current one (we still need
   // to calculate which one we are going to set, even if forceUpdate is already true)
@@ -97,18 +107,21 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   const bool isFarAway  = Util::IsFltGT(obsDistance_mm,  object->GetMaxLocalizationDistance_mm());
   const bool setAsKnown = isRobotOnTreads && !isFarAway && !robotWasMoving && !objectIsMoving;
 
-  const bool updatePose = updateDueToObservingCarriedObject || setAsKnown || !object->IsPoseStateKnown() || updateNonLocalizableObject;
+  const bool updatePose = isCarriedObject ||
+                          isNonLocalizableObject ||
+                          !isConfirmedMatch ||
+                          setAsKnown ||
+                          !object->IsPoseStateKnown();
   if( updatePose )
   {
     const PoseState newPoseState = (setAsKnown ? PoseState::Known : PoseState::Dirty);
     
-    const bool isConfirmedMatch = (object == confirmedMatch);
     if ( isConfirmedMatch ) {
       SetPoseHelper(object, newPose, obsDistance_mm, newPoseState, "ObjectPoseConfirmer.UpdatePoseInInstace");
       
       // when we set the pose for an object we were carrying, we also unset it from the lift, tell the robot
       // we are not carrying it anymore
-      if ( updateDueToObservingCarriedObject )
+      if ( isCarriedObject )
       {
         PRINT_CH_INFO("PoseConfirmer", "ObjectPoseConfirmer.AddVisualObservation.SeeingCarriedObject",
                       "We changed the pose of %d, we must not be carrying it anymore. Unsetting as carried object.",
@@ -116,6 +129,8 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
         _robot.UnSetCarryObject(object->GetID());
       }
     } else {
+      DEV_ASSERT( !isCarriedObject, "ObjectPoseConfirmer.AddVisualObservation.CantCarryUnconfirmedObjects");
+      
       // currently we use UpdatePoseInInstance for both unconfirmed and confirmed objects. If we are changing the
       // pose of the unconfirmedInstance, do not notify anyone about it yet, only if we are modifying the pose
       // of an actual object in BlockWorld
@@ -511,12 +526,7 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
           }
           else
           {
-            // KnownIssue: we do not store unconfirmed poses for objects that are already confirmed. However we do not
-            // update their pose until they become confirmed. This means that only the last pose and pose state
-            // are actually considered. In a scenario where we have: Known, Known, Dirty, Dirty observations, where we
-            // need 4 observations to confirm, the last one (Dirty) is the one that we would set here. Note this is not
-            // a problem before the first confirmation, since the Unconfirmed pointer updates continuously before
-            // confirmation, and stores the most accurate. Search below (in this function) for KnownIssueLostAccuracy
+            // update the pose of the confirmed object due to this observation
             UpdatePoseInInstance(confirmedMatch, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
           }
           
@@ -530,7 +540,6 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
           if ( unconfirmedObjectPtr ) {
             UpdatePoseInInstance(unconfirmedObjectPtr, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
           }
-          // else KnownIssueLostAccuracy
         }
       }
       else
@@ -543,7 +552,6 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
         if ( unconfirmedObjectPtr ) {
           UpdatePoseInInstance(unconfirmedObjectPtr, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
         }
-        // else KnownIssueLostAccuracy
       }
       
       // Set regardless of whether pose is same
@@ -742,7 +750,7 @@ void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObservableObject& obj
   const ObjectID& objectID = object.GetID();
 
   // Sanity checks. These are guaranteed before we call the listeners, so they don't have to check
-  #if ANKI_DEVELOPER_CODE
+  if(ANKI_DEVELOPER_CODE)
   {
     const PoseState newPoseState = object.GetPoseState();
     // Check: objectID is valid
@@ -765,14 +773,12 @@ void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObservableObject& obj
     DEV_ASSERT(newStateInvalid || (&object.GetPose().FindOrigin() == _robot.GetWorldOrigin()),
               "ObjectPoseConfirmer.BroadcastObjectPoseChanged.BroadcastNotInCurrentOrigin");
   }
-  #endif
 
   // note we don't check if the Pose or PoseState actually changes. We assume something has changed if we called
   // this Broadcast
 
   // listeners
   _robot.GetBlockWorld().OnObjectPoseChanged(object, oldPose, oldPoseState);
-  _robot.GetBlockWorld().NotifyBlockConfigurationManagerObjectPoseChanged(objectID);
   
   // notify poseState changes if it changed
   BroadcastObjectPoseStateChanged(object, oldPoseState);

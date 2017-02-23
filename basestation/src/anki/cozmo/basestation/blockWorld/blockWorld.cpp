@@ -2898,6 +2898,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                           "Object %d changing from Invalid to Invalid", objectID.GetValue());
       }
     }
+    
+    // notify the block configuration manager
+    _blockConfigurationManager->SetObjectPoseChanged(objectID, newPoseState);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -5025,12 +5028,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     } // if selected object is set
 
   } // DrawAllObjects()
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::NotifyBlockConfigurationManagerObjectPoseChanged(const ObjectID& objectID) const
-  {
-    _blockConfigurationManager->SetObjectPoseChanged(objectID);
-  }
-  
+    
 } // namespace Cozmo
 } // namespace Anki

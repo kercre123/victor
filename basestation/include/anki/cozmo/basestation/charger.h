@@ -60,10 +60,6 @@ namespace Anki {
       // Return pose of charger wrt robot when the robot is on the charger
       static Pose3d GetDockPoseRelativeToRobot(const Robot& robot);
       
-      // set pose to robot's pose and notify blockworld once done
-      //void SetPoseRelativeToRobot(Robot& robot);
-      
-      
       //
       // Inherited Virtual Methods
       //

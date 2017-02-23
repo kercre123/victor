@@ -389,7 +389,6 @@ namespace Anki
       
       BlockConfigurations::BlockConfigurationManager& GetBlockConfigurationManager() { assert(_blockConfigurationManager); return *_blockConfigurationManager;}
       const BlockConfigurations::BlockConfigurationManager& GetBlockConfigurationManager() const { assert(_blockConfigurationManager); return *_blockConfigurationManager;}
-      void NotifyBlockConfigurationManagerObjectPoseChanged(const ObjectID& objectID) const;
       
     private:
 

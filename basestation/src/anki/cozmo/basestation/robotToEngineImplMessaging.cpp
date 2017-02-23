@@ -526,28 +526,6 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
                        "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx)",
                        objID.GetValue(), payload.objectID, payload.factoryID, payload.device_type);
       
-      // rsam: I don't think this should be needed here, we already update the charger pose from SetOnCharger,
-      // which should happen when we place Cozmo on the charger at the new origin. Why do we update the pose
-      // here just because we hear the connection?
-// Bold decision to remove this, but I think it makes sense to not support another path to change charger poses.
-//      // if a charger, and robot is on the charger, add a pose for the charger in the current origin
-//      if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER )
-//      {
-//        robot->SetCharger(objID);
-//        if( robot->IsOnCharger() )
-//        {
-//          Charger* charger = dynamic_cast<Charger*>(robot->GetBlockWorld().GetLocatedObjectByID(objID, ObjectFamily::Charger));
-//          if( nullptr != charger )
-//          {
-//            charger->SetPoseRelativeToRobot(*robot);
-//          }
-//          else
-//          {
-//            todo_add_first_observation;
-//          }
-//        }
-//      }
-      
       // do bookkeeping in robot
       robot->HandleConnectedToObject(payload.objectID, payload.factoryID, objType);
     }
@@ -680,7 +658,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   {
     assert(object != nullptr); // FindMatchingObjects should not return nullptrs
     
-    if(object->GetID() != matchingObjects.front()->GetID())
+    if(object->GetID() != matchedObjectID)
     {
       PRINT_NAMED_WARNING(MAKE_EVENT_NAME("ActiveObjectInDifferentFramesWithDifferentIDs"),
                           "First object=%d in '%s'. This object=%d in '%s'.",

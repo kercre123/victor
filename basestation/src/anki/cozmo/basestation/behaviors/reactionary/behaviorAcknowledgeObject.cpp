@@ -284,7 +284,7 @@ inline bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, co
 bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset, bool& shouldRetry)
 {
   // store the current ghost pose so that it can be restored after the check
-  Pose3d currentGhostPose = _ghostStackedObject->GetPose();
+  const Pose3d currentGhostPose = _ghostStackedObject->GetPose();
   
   SetGhostBlockPoseRelObject(robot, obj, zOffset);
   

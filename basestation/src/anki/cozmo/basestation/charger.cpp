@@ -106,17 +106,6 @@ namespace Anki {
                     "ChargerDockPose");
     }
     
-//    void Charger::SetPoseRelativeToRobot(Robot& robot) // const Pose3d& robotPose, BlockWorld& blockWorld)
-//    {
-//      Pose3d relPose(-M_PI_F, Z_AXIS_3D(),
-//                     Point3f{RobotToChargerDistWhenDocked, 0, 0},
-//                     &robot.GetPose(),
-//                     "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
-//      
-//      robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(this, relPose, PoseState::Known);
-//    }
-    
-    
 #if 0
 #pragma mark --- Virtual Method Implementations ---
 #endif

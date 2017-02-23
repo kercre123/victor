@@ -62,6 +62,16 @@ bool BlockConfigurationManager::CheckForPyramidBaseBelowObject(const ObservableO
   return false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BlockConfigurationManager::SetObjectPoseChanged(const ObjectID& objectID, const PoseState newPoseState)
+{
+  _objectsPoseChangedThisTick.insert(objectID);
+  
+  // if the object becomes unknown, forget its last known pose
+  if ( !ObservableObject::IsValidPoseState(newPoseState) ) {
+    _objectIDToLastPoseConfigurationUpdateMap.erase(objectID);
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlockConfigurationManager::Update()
@@ -112,7 +122,7 @@ bool BlockConfigurationManager::DidAnyObjectsMovePastThreshold()
     auto lastPoseMapIter = _objectIDToLastPoseConfigurationUpdateMap.find(objectID);
     if(lastPoseMapIter != _objectIDToLastPoseConfigurationUpdateMap.end()){
       // the blocks pose is known, so check if it moved past our threshold
-      const auto newBlockPose = blockMoved->GetPose();
+      const auto& newBlockPose = blockMoved->GetPose();
       const bool isBlockWithinTolerence = lastPoseMapIter->second.IsSameAs(newBlockPose, kMinBlockMoveUpdateThreshold_mm, kMinBlockRotationUpdateThreshold_rad);
       if(!isBlockWithinTolerence){
         anyObjectMovedPastThreshold = true;
@@ -204,9 +214,6 @@ bool BlockConfigurationManager::IsObjectPartOfConfigurationType(ConfigurationTyp
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlockConfigurationManager::UpdateLastConfigCheckBlockPoses()
 {
-  // TODO rsam: we are not removing IDs for objects that become Invalid/(old Unknown). We think it's not a big
-  // issue at the moment (other than having a handful of stale IDs)
-
   BlockWorldFilter blockFilter;
   blockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
   std::vector<const ObservableObject*> allBlocks;

@@ -200,17 +200,6 @@ void BehaviorCheckForStackAtInterval::UpdateTargetBlocks(const Robot& robot) con
   
   BlockWorldFilter knownBlockFilter;
   knownBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-//  knownBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
-//                                 {
-//                                  // originally we had !known, but if cubes are not at localizable distance, Cozmo
-//                                  // never checks back on them, or if you build a tower and doing so they become
-//                                  // dirty. Trying Unknown instead
-//                                   if(blockPtr->IsPoseStateUnknown()){
-//                                     return false;
-//                                   }
-//                                   
-//                                   return true;
-//                                 });
  
   std::vector<const ObservableObject*> objectList;
   robot.GetBlockWorld().FindLocatedMatchingObjects(knownBlockFilter, objectList);
