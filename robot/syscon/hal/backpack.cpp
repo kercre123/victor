@@ -96,7 +96,11 @@ void Backpack::init()
 }
 
 void Backpack::testLight(int channel) {
-  if (channel > 0) {
+  if (channel > LIGHT_COUNT) {
+    for (int i = 1; i < LIGHT_COUNT; i++) {
+      setting[i].value = 0;
+    }
+  } else if (channel > 0) {
     setting[channel].value = 0xFFFF >> TIMER_DIVIDE;
     override = true;
   } else {
