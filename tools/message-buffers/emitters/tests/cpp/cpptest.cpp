@@ -599,6 +599,20 @@ TEST DefaultConstructor() {
   PASS();
 }
 
+TEST FixedArray() {
+  Arrays::s s;
+  ASSERT_EQ(s.arr8.size() == Arrays::ArrSize::sizeTen, true);
+  ASSERT_EQ(s.arr16.size() == Arrays::ArrSize::sizeTwenty, true);
+  ASSERT_EQ(s.Size() == (Arrays::ArrSize::sizeTen * sizeof(uint8_t) + Arrays::ArrSize::sizeTwenty * sizeof(uint16_t)), true);
+  
+  Arrays::m m;
+  ASSERT_EQ(m.arr8.size() == Arrays::ArrSize::sizeTen, true);
+  ASSERT_EQ(m.arr16.size() == Arrays::ArrSize::sizeTwenty, true);
+  ASSERT_EQ(m.Size() == (Arrays::ArrSize::sizeTen * sizeof(uint8_t) + Arrays::ArrSize::sizeTwenty * sizeof(uint16_t)), true);
+  
+  PASS();
+}
+
 SUITE(CPP_Emitter) {
 
   // Enum Tests
@@ -642,6 +656,8 @@ SUITE(CPP_Emitter) {
   
   // Default constructor generation
   RUN_TEST(DefaultConstructor);
+  
+  RUN_TEST(FixedArray);
 }
 
 /* Add definitions that need to be in the test runner's main file. */

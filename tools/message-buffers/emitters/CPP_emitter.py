@@ -64,9 +64,14 @@ def cpp_value_type(type):
             return 'std::vector<{member_type}>'.format(
                 member_type=cpp_value_type(type.member_type))
         else:
-            return 'std::array<{member_type}, {length}>'.format(
-                member_type=cpp_value_type(type.member_type),
-                length=type.length)
+            if isinstance(type.length, str):
+                 return 'std::array<{member_type}, static_cast<size_t>({length})>'.format(
+                    member_type=cpp_value_type(type.member_type),
+                    length=type.length)
+            else:
+                return 'std::array<{member_type}, {length}>'.format(
+                    member_type=cpp_value_type(type.member_type),
+                    length=type.length)
     else:
         return type.fully_qualified_name()
 
@@ -1221,11 +1226,17 @@ class CPPPackStatementEmitter(BaseEmitter):
                 ''').format(member_name=member_name,
                     parameter_type=cpp_parameter_type(node.member_type)))
         else:
-            self.output.write('buffer.WriteFArray<{member_type}, {length}>(this->{member_name});\n'.format(
-                length=node.length,
-                member_type=cpp_value_type(node.member_type),
-                member_name=member_name))            
-    
+            if isinstance(node.length, str):
+                self.output.write('buffer.WriteFArray<{member_type}, static_cast<size_t>({length})>(this->{member_name});\n'.format(
+                    length=node.length,
+                    member_type=cpp_value_type(node.member_type),
+                    member_name=member_name))
+            else:
+                self.output.write('buffer.WriteFArray<{member_type}, {length}>(this->{member_name});\n'.format(
+                    length=node.length,
+                    member_type=cpp_value_type(node.member_type),
+                    member_name=member_name))            
+
     def visit_VariableArrayType(self, node, member_name):
         if isinstance(node.member_type, ast.PascalStringType):
             self.output.write('buffer.WritePStringVArray<{array_length_type}, {string_length_type}>(this->{member_name});\n'.format(
@@ -1276,10 +1287,16 @@ class CPPUnpackStatementEmitter(BaseEmitter):
                  length=node.length,
                  member_name=member_name))
         else:
-            self.output.write('buffer.ReadFArray<{member_type}, {length}>(this->{member_name});\n'.format(
-                length=node.length,
-                member_type=cpp_value_type(node.member_type),
-                member_name=member_name))            
+            if isinstance(node.length, str):
+                self.output.write('buffer.ReadFArray<{member_type}, static_cast<size_t>({length})>(this->{member_name});\n'.format(
+                    length=node.length,
+                    member_type=cpp_value_type(node.member_type),
+                    member_name=member_name))
+            else:
+                self.output.write('buffer.ReadFArray<{member_type}, {length}>(this->{member_name});\n'.format(
+                    length=node.length,
+                    member_type=cpp_value_type(node.member_type),
+                    member_name=member_name))            
     
     def visit_VariableArrayType(self, node, member_name):
         if isinstance(node.member_type, ast.PascalStringType):
@@ -1332,11 +1349,17 @@ class CPPSizeStatementEmitter(BaseEmitter):
         elif isinstance(node.member_type, ast.CompoundType):
             self.emitRecursiveSize(node, member_name)
         else:
-            self.output.write('result += {member_size} * {length}; // {member_type} * {length}\n'.format(
-                member_size=node.member_type.size,
-                member_type=node.member_type.name,
-                length=node.length))
-    
+            if isinstance(node.length, str):
+                self.output.write('result += {member_size} * static_cast<size_t>({length}); // {member_type} * {length}\n'.format(
+                    member_size=node.member_type.size,
+                    member_type=node.member_type.name,
+                    length=node.length))
+            else:
+                self.output.write('result += {member_size} * {length}; // {member_type} * {length}\n'.format(
+                    member_size=node.member_type.size,
+                    member_type=node.member_type.name,
+                    length=node.length))
+
     def visit_VariableArrayType(self, node, member_name):
         self.output.write('result += {length_size}; // {length_type} (array length)\n'.format(
             length_size=node.length_type.size,
