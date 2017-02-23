@@ -292,7 +292,7 @@ message RobotObservedFace {
     Vision::BlinkAmount       blinkAmount,
 
     // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
-    uint_8        expressionValues[5], // One value for each of FacialExpression::Count enum types
+    uint_8        expressionValues[verbatim Anki::Vision::FacialExpression::Count],
 
     // Face landmarks
     CladPoint2d   leftEye[uint_8],

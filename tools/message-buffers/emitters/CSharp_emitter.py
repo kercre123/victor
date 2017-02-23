@@ -872,7 +872,7 @@ class SizeVisitor(ast.NodeVisitor):
                 length = "(int)" + length
             self.output.write('{indent}result += {length} * {element_size};\n'.format(
                 indent='\t' * depth,
-                length=node.length,
+                length=length,
                 element_size=node.member_type.max_message_size()))
         else:
             index_variable = self.get_index_variable(depth)
