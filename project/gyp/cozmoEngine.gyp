@@ -300,7 +300,7 @@
                     '<@(flite_lib_search_path_ios)',
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
-                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                  '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
                 ],
               },
             }],
@@ -340,7 +340,7 @@
                     '<@(flite_lib_search_path_ios)',
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
-                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                  '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
                 ],
               },
             }],
@@ -380,7 +380,7 @@
                     '<@(flite_lib_search_path_ios)',
                 ],
                  'FRAMEWORK_SEARCH_PATHS': [
-                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                  '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
                 ],
               },
             }],
@@ -420,7 +420,7 @@
                     '<@(flatbuffers_lib_search_path_ios)',
                 ],
                  'FRAMEWORK_SEARCH_PATHS': [
-                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                  '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
                 ],
              },
             }],
@@ -1503,7 +1503,7 @@
             ['exclude', '(android|linux)']
           ],
           'libraries': [
-              '../../lib/HockeySDK-iOS/HockeySDK.framework',
+              '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework/HockeySDK.framework',
           ]
         }],
         ['OS=="mac"',{
