@@ -41,6 +41,7 @@ namespace Cozmo {
     Block_LIGHTCUBE2,
     Block_LIGHTCUBE3,
 
+    Block_LIGHTCUBE_GHOST,
     
     //////////////////////////////////////////////////////////////////////////
     // Mat Pieces

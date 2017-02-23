@@ -1400,6 +1400,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       return ObjectID();
     }
     
+    if(ObjectType::Block_LIGHTCUBE_GHOST == object->GetType())
+    {
+      PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObject.AddingGhostObject",
+                        "Adding ghost objects to BlockWorld is not permitted");
+      return ObjectID{};
+    }
+    
     if(objectToCopyID != nullptr)
     {
       object->CopyID(objectToCopyID);

@@ -182,8 +182,8 @@ Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const
         const bool isFarAway = Util::IsFltGT(obsDistance_mm,  object->GetMaxLocalizationDistance_mm());
         const bool useDirty = !isRobotOnTreads || isFarAway || robotWasMoving || objectIsMoving;
         
-        // Note that we never change a Known object to Dirty with a visual observation
-        if(!useDirty || !object->IsPoseStateKnown())
+        // Note that we never change a Known localizable object to Dirty with a visual observation
+        if(!useDirty || !object->IsPoseStateKnown() || !object->CanBeUsedForLocalization())
         {
           const PoseState newPoseState = (useDirty ? PoseState::Dirty : PoseState::Known);
           SetPoseHelper(object, newPose, obsDistance_mm, newPoseState, "AddVisualObservation.Update");
