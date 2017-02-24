@@ -2748,11 +2748,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
     }
 	
+    // not asserting in case SDK tries to do this, but do not add it to the BlockWorld
     if(ObjectType::Block_LIGHTCUBE_GHOST == object->GetType())
     {
       PRINT_NAMED_ERROR("BlockWorld.AddLocatedObject.AddingGhostObject",
                         "Adding ghost objects to BlockWorld is not permitted");
-      return ObjectID{};
+      return;
     }	
 
     // grab the current pointer and check it's empty (do not expect overwriting)
