@@ -341,7 +341,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     BlockWorldFilter filter;
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
     filter.AddAllowedType(objType);
-    ObservableObject* objWithType = FindMatchingObject(filter);
+    ObservableObject* objWithType = FindLocatedMatchingObject(filter);
     const bool redefiningExistingType = (objWithType != nullptr);
     
     const Result addResult = _objectLibrary[objFamily].AddObject(std::move(object));
@@ -356,7 +356,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         PRINT_NAMED_WARNING("BlockWorld.DefineObject.RemovingObjectsWithPreviousDefinition",
                             "Type %s was already defined, removing object(s) with old definition",
                             EnumToString(objType));
-        DeleteObjectsByType(objType);
+        DeleteLocatedObjectsByType(objType);
       }
     }
     else
