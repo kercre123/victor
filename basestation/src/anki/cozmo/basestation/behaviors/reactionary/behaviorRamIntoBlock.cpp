@@ -97,7 +97,7 @@ void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(Robot& robot)
 {
   SmartDisableReactionTrigger(kReactionsToDisable);
   
-  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_targetID);
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){
     const f32 distToObj = ComputeDistanceBetween(robot.GetPose(), obj->GetPose());
     

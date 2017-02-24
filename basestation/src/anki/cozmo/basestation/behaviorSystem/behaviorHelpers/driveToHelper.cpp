@@ -142,9 +142,8 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
 void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
 {
   
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_targetID);
-  if(staticBlock != nullptr &&
-     !staticBlock->IsPoseStateUnknown()){
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(staticBlock != nullptr){
     // Check if block observed since last search
     const TimeStamp_t lastObserved = staticBlock->GetLastObservedTime();
     if(lastObserved > _lastSearchRun_ts){
@@ -182,7 +181,7 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
         if(staticBlock->IsPoseStateKnown()){
           PRINT_NAMED_ERROR("DriveToHelper.SearchForBlock.GoingNuclear",
                               "Failed to find known block - wiping");
-          robot.GetBlockWorld().ClearAllExistingObjects();
+          robot.GetBlockWorld().DeleteLocatedObjectsByOrigin(robot.GetWorldOrigin());
         }
         _status = BehaviorStatus::Failure;
       }

@@ -200,7 +200,7 @@ HelperHandle IHelper::CreatePlaceRelObjectHelper(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult IHelper::IsAtPreActionPose(Robot& robot, const ObjectID& targetID, PreActionPose::ActionType actionType)
 {
-  ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(targetID);
+  ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(targetID);
   // TMP - should check cast here
   ActionableObject* object = dynamic_cast<ActionableObject*>(staticBlock);
   const IDockAction::PreActionPoseInput preActionPoseInput(object,

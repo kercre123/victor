@@ -180,10 +180,10 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::DelegateToRollHelper(Robot& robot)
 {
-  ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_metadata.GetObjectID());
-  if (nullptr != object &&
-      !object->IsPoseStateUnknown() &&
-      object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
+  ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
+  if ((nullptr != object) &&
+      (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
+      )
   {
     auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
     const bool upright = true;
