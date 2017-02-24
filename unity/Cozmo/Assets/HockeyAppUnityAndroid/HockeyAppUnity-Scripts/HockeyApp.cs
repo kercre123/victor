@@ -16,6 +16,12 @@ public class HockeyApp : MonoBehaviour {
     DAS.Info("test.crash", "test.crash");
   }
 
+  private void HandleDebugConsoleCrashFromJavaButton(string str) {
+    DAS.Event("HockeyApp.ForceDebugCrashFromJava", "HockeyApp.ForceDebugCrashFromJava");
+    CozmoBinding.GetCurrentActivity().Call("Crash");
+    DAS.Info("test.java.crash", "test.java.crash");
+  }
+
   protected const string HOCKEYAPP_BASEURL = "https://rink.hockeyapp.net/";
   protected const string HOCKEYAPP_CRASHESPATH = "api/2/apps/[APPID]/crashes/upload";
   protected const int MAX_CHARS = 199800;
@@ -95,6 +101,11 @@ public class HockeyApp : MonoBehaviour {
     }
 #endif
     Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Unity Exception", "Debug", HandleDebugConsoleCrashFromUnityButton);
+#if (UNITY_ANDROID && !UNITY_EDITOR)
+    Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Java Exception",
+                                                            "Debug",
+                                                            HandleDebugConsoleCrashFromJavaButton);
+#endif
   }
 
   void OnDisable() {

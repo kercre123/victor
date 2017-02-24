@@ -86,6 +86,19 @@ public class CozmoActivity extends UnityPlayerActivity implements ActivityCompat
     return "";
   }
 
+  public void ThrowNullPointerException() {
+    throw new NullPointerException();
+  }
+
+  public void Crash() {
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          ThrowNullPointerException();
+        }
+    });
+  }
+
   private static native void installBreakpad(String path);
 
 }
