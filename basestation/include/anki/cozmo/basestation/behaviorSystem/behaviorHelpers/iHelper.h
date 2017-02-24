@@ -103,7 +103,10 @@ protected:
   /// Convenience functions
   //////
   
-  ActionResult IsAtPreActionPose(Robot& robot, const ObjectID& targetID, PreActionPose::ActionType actionType);
+  ActionResult IsAtPreActionPoseWithVisualVerification(Robot& robot,
+                                                       const ObjectID& targetID,
+                                                       PreActionPose::ActionType actionType);
+  
   void DelegateAfterUpdate(const DelegateProperties& properties){ _delegateAfterUpdate = properties;}
   
   // Use the set behavior's start acting to perform an action

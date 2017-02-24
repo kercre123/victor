@@ -64,7 +64,9 @@ bool PlaceRelObjectHelper::ShouldCancelDelegates(const Robot& robot) const
 BehaviorStatus PlaceRelObjectHelper::Init(Robot& robot)
 {
   _tmpRetryCounter = 0;
-  if(IsAtPreActionPose(robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE) != ActionResult::SUCCESS){
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
+                    robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE);
+  if(isAtPreAction != ActionResult::SUCCESS){
     DelegateProperties delegateProperties;
     delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE));
     delegateProperties.SetOnSuccessFunction([this](Robot& robot){StartPlaceRelObject(robot); return _status;});
@@ -93,8 +95,9 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
   }
   _tmpRetryCounter++;
 
-  
-  if(IsAtPreActionPose(robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE) != ActionResult::SUCCESS){
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
+                   robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE);
+  if(isAtPreAction != ActionResult::SUCCESS){
     DelegateProperties properties;
     properties.SetDelegateToSet(CreateDriveToHelper(robot,
                                                     _targetID,

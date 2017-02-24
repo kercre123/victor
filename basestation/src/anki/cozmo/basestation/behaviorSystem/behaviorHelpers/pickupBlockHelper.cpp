@@ -79,7 +79,12 @@ void PickupBlockHelper::StartPickupAction(Robot& robot)
   }
   _tmpRetryCounter++;
   
-  if(IsAtPreActionPose(robot, _targetID, PreActionPose::ActionType::DOCKING) != ActionResult::SUCCESS){
+  
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
+                                              robot,
+                                              _targetID,
+                                              PreActionPose::ActionType::DOCKING);
+  if(isAtPreAction != ActionResult::SUCCESS){
     DelegateProperties properties;
     properties.SetDelegateToSet(CreateDriveToHelper(robot,
                                                     _targetID,

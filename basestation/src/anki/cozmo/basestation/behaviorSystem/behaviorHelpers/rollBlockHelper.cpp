@@ -92,7 +92,10 @@ BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot)
         obj->GetID());
       if(canRoll){
         PRINT_CH_INFO("Behaviors", "RollBlockHelper.Update.Rolling", "Doing roll action");
-        if(IsAtPreActionPose(robot, _targetID, PreActionPose::ActionType::ROLLING) != ActionResult::SUCCESS){
+        const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
+                          robot, _targetID, PreActionPose::ActionType::ROLLING);
+        
+        if(isAtPreAction != ActionResult::SUCCESS){
           DelegateProperties delegateProperties;
           delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, PreActionPose::ActionType::ROLLING));
           delegateProperties.SetOnSuccessFunction([this](Robot& robot){StartRollingAction(robot); return _status;});
