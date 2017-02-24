@@ -886,6 +886,18 @@ namespace Anki {
       return;
 
     } // HAL::CameraSetParameters()
+    
+    void HAL::CameraSetColorEnabled(bool enable)
+    {
+      // Does nothing
+    }
+    
+    
+    bool HAL::CameraGetColorEnabled()
+    {
+      // Sim camera is always in color
+      return true;
+    }
 
 
     u32 HAL::GetCameraStartTime()

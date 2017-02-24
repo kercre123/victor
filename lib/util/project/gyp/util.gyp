@@ -518,6 +518,9 @@
       'include_dirs': [
         '../../source/anki/audioUtil',
       ],
+      'dependencies': [
+        'util'
+      ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../source/anki/audioUtil',

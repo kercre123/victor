@@ -251,6 +251,13 @@ message ImageRequest
   ImageResolution resolution,
 }
 
+// Enable/disable the streaming of colored images
+// TODO (Al): Could probably be merged into the SetCameraParams message if needed
+message EnableColorImages
+{
+  bool enable
+}
+
 message ControllerGains
 {
   float_32 kp,
@@ -484,12 +491,19 @@ union EngineToRobot
   SetCameraParams               setCameraParams             = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
   RollActionParams              rollActionParams            = 0x59,
+  //          FREE SLOT!!!                                  = 0x5A,
+  //          FREE SLOT!!!                                  = 0x5B,
+  //          FREE SLOT!!!                                  = 0x5C,
+  //          FREE SLOT!!!                                  = 0x5D,
+  //          FREE SLOT!!!                                  = 0x5E,
+  //          FREE SLOT!!!                                  = 0x5F,
   EnableStopOnCliff             enableStopOnCliff           = 0x60,
   ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x61, // Used for simulation only, no-op for physical
   ObjectConnectionStateToRobot  objectConnectionStateToRobot = 0x62,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x63,
   SetAudioVolume                setAudioVolume              = 0x64,
   GenerateTestTone              generateTestTone            = 0x65,
+  EnableColorImages             enableColorImages           = 0x66,
 
   
   // 0x80 to 0xAF: To WiFi
@@ -502,6 +516,12 @@ union EngineToRobot
   //          FREE SLOT!!!                                  = 0x86,
   //          FREE SLOT!!!                                  = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
+  //          FREE SLOT!!!                                  = 0x8A,
+  //          FREE SLOT!!!                                  = 0x8B,
+  //          FREE SLOT!!!                                  = 0x8C,
+  //          FREE SLOT!!!                                  = 0x8D,
+  //          FREE SLOT!!!                                  = 0x8E,
+  //          FREE SLOT!!!                                  = 0x8F,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,
@@ -525,13 +545,12 @@ union EngineToRobot
   BodyStorageContents           bodyStorageContents         = 0xA4,
 
   ShutdownRobot                 shutdownRobot               = 0xA9,
-  OTA::Write                    otaWrite                    = 0xAF,
-
   AppConnectConfigString        appConCfgString             = 0xAA,
   AppConnectConfigFlags         appConCfgFlags              = 0xAB,
   AppConnectConfigIPInfo        appConCfgIPInfo             = 0xAC,
   AppConnectGetRobotIP          appConGetRobotIP            = 0xAD,
-  WiFiOff                       wifiOff                     = 0xAE
+  WiFiOff                       wifiOff                     = 0xAE,
+  OTA::Write                    otaWrite                    = 0xAF,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

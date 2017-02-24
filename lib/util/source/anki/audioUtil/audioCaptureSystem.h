@@ -28,7 +28,8 @@ class AudioCaptureSystem
 {
 public:
   AudioCaptureSystem();
-  virtual ~AudioCaptureSystem();
+  ~AudioCaptureSystem();
+  bool IsValid() const { return _impl != nullptr; }
   
   using DataCallback = std::function<void(const AudioSample* ,uint32_t)>;
   void SetCallback(DataCallback newCallback);

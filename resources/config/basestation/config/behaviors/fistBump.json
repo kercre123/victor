@@ -4,7 +4,6 @@
   "name": "FistBump",
   "displayNameKey": "behavior.FistBump",
   "requiredUnlockId": "FistBump",
-  "disableByDefault": false,
 
   "maxTimeToLookForFace_s": 3.0,
   "abortIfNoFaceFound": true,

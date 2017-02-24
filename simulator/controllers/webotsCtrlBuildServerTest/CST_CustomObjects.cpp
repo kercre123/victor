@@ -38,7 +38,8 @@ enum class TestState {
   NotifyKidnap,
   Kidnap,
   SeeCubeInNewOrigin,
-  Rejigger
+  Rejigger,
+  Redefine
 };
 
 
@@ -301,9 +302,34 @@ s32 CST_CustomObjects::UpdateSimInternal()
         // Make sure poses are still correct after re-localizing to the light cube
         CheckPoses();
         
+        // Redefine CustomObject00 (the cube) differently. That should delete all existing objects of that type.
+        using namespace ExternalInterface;
+        
+        DefineCustomCube defineCube(ObjectType::CustomType00,
+                                    CustomObjectMarker::Hexagons4,
+                                    2.f*_cubeSize_mm,
+                                    .5f*_cubeMarkerSize_mm, .5f*_cubeMarkerSize_mm,
+                                    false);
+        
+        SendMessage(MessageGameToEngine(std::move(defineCube)));
+        
+        // Also look down, just so we stop seeing the Circles2 markers on the old redefined cubes, which will produce
+        // warnings in the log that might look suspicious but are in fact red herrings (they are expected after we
+        // redefine the marker). We may still see a few while the head goes down, but at least they won't spam.
+        SendMoveHeadToAngle(MIN_HEAD_ANGLE, 100.f, 100.f);
+        
+        _testState = TestState::Redefine;
+      }
+      break;
+    }
+      
+    case TestState::Redefine:
+    {
+      // Wait for the three cubes to be deleted thanks to the redefinition of their type
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(GetNumObjects()==2, kDefaultTimeout_sec)
+      {
         StopMovie();
         CST_EXIT();
-
       }
       break;
     }

@@ -364,9 +364,11 @@ namespace SpeedTap {
     }
 
     public void ShowPlayerTapConfirmSlide(int playerIndex) {
-      SpeedTapPlayerTapConfirmSlide slide = SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapConfirmSlide").GetComponent<SpeedTapPlayerTapConfirmSlide>();
-      if (slide != null) {
-        slide.Init(_PlayerInfo.Count, playerIndex);
+      if (SharedMinigameView != null) {
+        SpeedTapPlayerTapConfirmSlide slide = SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapConfirmSlide").GetComponent<SpeedTapPlayerTapConfirmSlide>();
+        if (slide != null) {
+          slide.Init(_PlayerInfo.Count, playerIndex);
+        }
       }
     }
 

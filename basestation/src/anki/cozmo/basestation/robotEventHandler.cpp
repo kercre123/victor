@@ -1072,6 +1072,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ComputeCameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCliffSensor>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableColorImages>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLiftPower>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
@@ -1663,6 +1664,24 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
   else
   {
     robot->AbortAll();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::EnableColorImages& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleEnableColorImages.InvalidRobotID", "Failed to find robot.");
+  }
+  else
+  {
+    // Forward to robot
+    robot->SendRobotMessage<RobotInterface::EnableColorImages>(msg.enable);
   }
 }
 

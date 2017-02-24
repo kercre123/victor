@@ -38,6 +38,7 @@ using BehaviorActionResultCallback = std::function<void(ActionResult)>;
 using BehaviorActionResultWithRobotCallback = std::function<void(ActionResult, Robot&)>;
 using BehaviorSimpleCallback = std::function<void(void)>;
 using BehaviorSimpleCallbackWithRobot = std::function<void(Robot& robot)>;
+using BehaviorStatusCallbackWithRobot = std::function<BehaviorStatus(Robot& robot)>;
 
 
 }

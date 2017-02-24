@@ -36,6 +36,7 @@ public:
   AudioRecognizerProcessor& operator=(AudioRecognizerProcessor&& other) = delete;
   AudioRecognizerProcessor(const AudioRecognizerProcessor& other) = delete;
   AudioRecognizerProcessor& operator=(const AudioRecognizerProcessor& other) = delete;
+  bool IsValid() const { return _captureSystem != nullptr; }
   
   void SetSpeechRecognizer(SpeechRecognizer* newRecog);
   void Start();

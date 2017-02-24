@@ -388,6 +388,9 @@ namespace Anki
       
       // Get the number of scan lines of delay due to current exposure settings
       u16 CameraGetExposureDelay();
+      
+      void CameraSetColorEnabled(bool enable);
+      bool CameraGetColorEnabled();
 
 #     ifdef SIMULATOR
       u32 GetCameraStartTime();

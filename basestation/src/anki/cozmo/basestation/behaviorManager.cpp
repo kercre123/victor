@@ -127,6 +127,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _devCheckTriggerMapImmutableSize(0)
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
+, _behaviorStateLightsPersistOnReaction(false)
 {
 }
 
@@ -589,14 +590,33 @@ void BehaviorManager::TryToResumeBehavior()
 void BehaviorManager::SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo& newInfo)
 {
   // Switching to or from a reaction - update properties
-  if(newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger &&
-     _runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger)
+  if((newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) &&
+     (_runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger))
   {
     UpdateRobotPropertiesForReaction(true, newInfo.GetCurrentReactionTrigger());
-  }else if(newInfo.GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger &&
-    _runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
+  }else if((newInfo.GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger) &&
+    (_runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger))
   {
     UpdateRobotPropertiesForReaction(false, _runningAndResumeInfo->GetCurrentReactionTrigger());
+  }
+  
+  //Update behavior light states if appropriate
+  if(!_behaviorStateLights.empty()){
+    const bool switchingToReaction =
+          (newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) &&
+          (_runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger);
+    const bool switchingBetweenBehaviors =
+          (newInfo.GetCurrentBehavior() != _runningAndResumeInfo->GetCurrentBehavior()) &&
+          (newInfo.GetCurrentBehavior() != _runningAndResumeInfo->GetBehaviorToResume());
+    
+    if(switchingBetweenBehaviors ||
+       (switchingToReaction && !_behaviorStateLightsPersistOnReaction)){
+      for(const auto& entry: _behaviorStateLights){
+        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(
+                    entry.GetAnimationTrigger(), entry.GetObjectID());
+      }
+      _behaviorStateLights.clear();
+    }
   }
   
   *_runningAndResumeInfo = newInfo;
@@ -1006,6 +1026,66 @@ void BehaviorManager::RequestCurrentBehaviorEndOnNextActionComplete()
   if(nullptr != GetRunningAndResumeInfo().GetCurrentBehavior()){
     GetRunningAndResumeInfo().GetCurrentBehavior()->StopOnNextActionComplete();
   }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction)
+{
+  _behaviorStateLightsPersistOnReaction = persistOnReaction;
+  PRINT_CH_INFO("Behaviors", "SetBehaviorStateLights.UpdatingStateLights",
+                "Updating behavior state lights");
+  // If there are current light states, either transition cleanly between
+  // the old light state and the new light state, or stop the old light state
+  std::set<u32> objectsSet;
+  for(const auto& old: _behaviorStateLights){
+    bool lightsStopped = false;
+    for(const auto& newStruct : structToSet){
+      if(old.GetObjectID() == newStruct.GetObjectID()){
+        ObjectLights lightModifier;
+        const bool hasModifier = newStruct.GetLightModifier(lightModifier);
+        if(!_robot.GetCubeLightComponent().
+             StopAndPlayLightAnim(newStruct.GetObjectID(),
+                                  old.GetAnimationTrigger(),
+                                  newStruct.GetAnimationTrigger(),
+                                  nullptr,
+                                  hasModifier,
+                                  lightModifier)){
+          PRINT_CH_INFO("Behaviors", "SetBehaviorStateLights.UpdatingStateLights.FailedToPlayLights",
+                        "Failed to play light trigger %d on cube %d",
+                        newStruct.GetAnimationTrigger(), newStruct.GetObjectID().GetValue());
+        }
+        lightsStopped = true;
+        objectsSet.insert(newStruct.GetObjectID());
+        break;
+      }
+    }
+    
+    if(!lightsStopped){
+      _robot.GetCubeLightComponent().
+        StopLightAnimAndResumePrevious(old.GetAnimationTrigger(), old.GetObjectID());
+    }
+  }
+  
+  _behaviorStateLights.clear();
+  
+  // Start the lights playing on any remaining cubes
+  for(const auto& entry: structToSet){
+    if(objectsSet.find(entry.GetObjectID()) == objectsSet.end()){
+      ObjectLights lightModifier;
+      const bool hasModifier = entry.GetLightModifier(lightModifier);
+      if(!_robot.GetCubeLightComponent().PlayLightAnim(entry.GetObjectID(),
+                                                       entry.GetAnimationTrigger(),
+                                                       nullptr,
+                                                       hasModifier,
+                                                       lightModifier)){
+        PRINT_CH_INFO("Behaviors", "SetBehaviorStateLights.UpdatingStateLights.FailedToPlayLights",
+                      "Failed to play light trigger %d on cube %d",
+                      entry.GetAnimationTrigger(), entry.GetObjectID().GetValue());
+      }
+    }
+  }
+  
 }
 
   

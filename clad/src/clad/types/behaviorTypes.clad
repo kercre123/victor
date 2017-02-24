@@ -65,6 +65,7 @@ enum uint_8 BehaviorClass {
   // Behaviors mapped to reaction triggers
   AcknowledgeFace,
   AcknowledgeObject,
+  RamIntoBlock,
   ReactToCliff,
   ReactToCubeMoved,
   ReactToDoubleTap,
@@ -97,6 +98,7 @@ enum uint_8 ReactionTrigger {
   FistBump,
   Frustration,
   MotorCalibration,
+  NoPreDockPoses,
   ObjectPositionUpdated,
   PlacedOnCharger,
   PetInitialDetection,

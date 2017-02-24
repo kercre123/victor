@@ -31,7 +31,7 @@ public:
     _targets = targets;
   }
   
-  std::set<s32> GetTargets() const { return _targets;}
+  const std::set<s32>& GetTargets() const { return _targets;}
   
 private:
   std::set<s32> _targets;

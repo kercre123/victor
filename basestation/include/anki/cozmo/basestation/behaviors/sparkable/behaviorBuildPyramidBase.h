@@ -75,9 +75,6 @@ protected:
   
   void SetState_internal(State state, const std::string& stateName);
   
-  template<typename T>
-  void TransitionToSearchingWithCallback(Robot& robot,  const ObjectID& objectID,  void(T::*callback)(Robot&));
-  
   // Ensures that blocks IDs which become invalid are cleared out of
   // the assigned ObjectIDs below - not actually const
   void ClearInvalidBlockIDs(const Robot& robot) const;
@@ -91,11 +88,7 @@ protected:
   // created or destroyed
   int _lastBasesCount;
   float _timeFirstBaseFormed;
-  
-  // track retrys with searches
-  int _searchingForNearbyBaseBlockCount;
-  int _searchingForNearbyStaticBlockCount;
-
+  float _timeLastBaseDestroyed;
   
   // callback set by derived classes to continue performing actions after the base is built
   SimpleCallbackWithRobot _continuePastBaseCallback;

@@ -70,12 +70,12 @@ private:
   // Match music Rounds to enum values - starts at 1 to match rounds set up
   // in the current audio sound banks
   enum class PyramidConstructionStage{
+    None = 0, // used for canceling lights
     SearchingForCube = 1,
     InitialCubeCarry,
     BaseFormed,
     TopBlockCarry,
-    PyramidCompleteFlourish,
-    None // used for canceling lights
+    PyramidCompleteFlourish
   };
   
   enum class ChooserPhase{
@@ -118,6 +118,7 @@ private:
   ///////
   
   PyramidConstructionStage _currentPyramidConstructionStage;
+  PyramidConstructionStage _highestAudioStageReached;
   float _lastTimeConstructionStageChanged_s;
   int _lastCountBasesSeen;
   // For tracking the number of times cozmo has had to roll blocks to get
@@ -125,6 +126,7 @@ private:
   int _uprightAnimIndex;
   int _onSideAnimIndex;
   bool _forceLightMusicUpdate;
+  bool _lightsShouldMessageCubeOnSide;
   
   
   void UpdateActiveBehaviorGroup(Robot& robot, bool settingUpPyramid);
@@ -164,7 +166,7 @@ private:
   PyramidConstructionStage CheckLightAndPyramidConstructionStage(Robot& robot) const;
   void UpdateMusic(Robot& robot, const PyramidConstructionStage& desiredState);
   void UpdateDesiredLights(Robot& robot, const PyramidConstructionStage& desiredState);
-  void SetCubeLights();
+  void SetCubeLights(Robot& robot);
   
   
   // Contains logic for maintaining base lights across multiple states

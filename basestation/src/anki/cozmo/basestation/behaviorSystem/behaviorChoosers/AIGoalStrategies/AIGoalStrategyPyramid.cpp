@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategies/AIGoalStrategyPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -49,6 +50,10 @@ AIGoalStrategyPyramid::AIGoalStrategyPyramid(Robot& robot, const Json::Value& co
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIGoalStrategyPyramid::WantsToStartInternal(const Robot& robot, float lastTimeGoalRanSec) const
 {
+  if(!robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::BuildPyramid)){
+    return false;
+  }
+  
   typedef std::vector<const ObservableObject*> BlockList;
   
   BlockList knownOrDirtyBlocks;

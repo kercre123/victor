@@ -385,7 +385,7 @@ class GamePlatformConfiguration(object):
             for sl in self.symlink_keys:
                 self.unity_symlink[sl] = os.path.join(self.unity_xcode_project_dir, sl)
             self.unity_target['opencv'] = os.path.join(CTE_ROOT, 'build', 'opencv-ios')
-            self.unity_target['HockeyApp'] = os.path.join(GAME_ROOT, 'lib/HockeySDK-iOS')
+            self.unity_target['HockeyApp'] = os.path.join(GAME_ROOT, 'lib/HockeySDK-iOS/HockeySDK.embeddedframework')
 
             self.artifact_dir = os.path.join(self.platform_build_dir, 'app-{0}'.format(self.platform))
             self.artifact_path = os.path.join(self.artifact_dir, '{0}.app'.format(PRODUCT_NAME.lower()))

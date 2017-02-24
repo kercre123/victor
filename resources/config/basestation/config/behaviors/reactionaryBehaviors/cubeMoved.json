@@ -1,5 +1,4 @@
 {
   "behaviorClass": "ReactToCubeMoved",
-  "name": "reactToCubeMoved",
-  "disableByDefault": false
+  "name": "reactToCubeMoved"
 }

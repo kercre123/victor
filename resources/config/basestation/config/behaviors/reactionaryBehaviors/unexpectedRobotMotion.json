@@ -1,6 +1,5 @@
 {
   "behaviorClass": "ReactToUnexpectedMovement",
   "name": "reactToUnexpectedMovement",
-  "displayNameKey":"behavior.ReactToUnexpectedMovement",
-  "disableByDefault": false
+  "displayNameKey":"behavior.ReactToUnexpectedMovement"
 }

@@ -340,7 +340,6 @@ namespace Anki {
         printf("              Clear known blocks:  c\n");
         printf("         Clear all known objects:  Alt+c\n");
         printf("         Select behavior by type:  Shift+c\n");
-        printf("         Select behavior by name:  Alt+Shift+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
@@ -376,6 +375,7 @@ namespace Anki {
         printf("             Flip selected block:  y\n");
         printf("                Set robot volume:  v\n");
         printf("      Toggle vision while moving:  V\n");
+        printf("             Toggle color images:  Alt+Shift+c\n");
         printf("       Realign with block action:  _\n");
         printf("Toggle accel from streamObjectID: |\n");
         printf("               Toggle headlights: ,\n");
@@ -1118,7 +1118,14 @@ namespace Anki {
                 
               case (s32)'C':
               {
-                if(shiftKeyPressed) {
+                if(shiftKeyPressed && altKeyPressed)
+                {
+                  static bool enable = true;
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableColorImages(enable)));
+                  enable = !enable;
+                }
+                else if(shiftKeyPressed)
+                {
                
                   // Send whatever animation is specified in the animationToSendName field
                   webots::Field* behaviorNameField = root_->getField("behaviorName");
@@ -1154,16 +1161,16 @@ namespace Anki {
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                 ExternalInterface::ExecuteBehaviorByName(behaviorName)));
                 }
-                else if(altKeyPressed) {
-                
+                else if(altKeyPressed)
+                {
                   // rsam: Clear and Delete have change its meaning. Removing until someone complains that it's gone,
                   // at which point we can evaluate what they need. Sorry if this causes interruptions, unfortunately
                   // I can't keep supporting all current features in the refactor.
                   
                   // SendClearAllObjects();
                 }
-                else {
-                
+                else
+                {
                   // rsam: Clear and Delete have change its meaning. Removing until someone complains that it's gone,
                   // at which point we can evaluate what they need. Sorry if this causes interruptions, unfortunately
                   // I can't keep supporting all current features in the refactor.

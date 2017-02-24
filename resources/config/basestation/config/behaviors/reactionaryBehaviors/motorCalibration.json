@@ -1,5 +1,4 @@
 {
   "behaviorClass": "ReactToMotorCalibration",
-  "name": "reactToMotorCalibration",
-  "disableByDefault": false
+  "name": "reactToMotorCalibration"
 }

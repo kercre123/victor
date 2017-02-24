@@ -22,16 +22,14 @@ namespace Cozmo {
 
 class PlaceBlockHelper : public IHelper{
 public:
-  PlaceBlockHelper(Robot& robot, IBehavior* behavior, BehaviorHelperFactory& helperFactory);
+  PlaceBlockHelper(Robot& robot, IBehavior& behavior, BehaviorHelperFactory& helperFactory);
   virtual ~PlaceBlockHelper();
 
 protected:
   // IHelper functions
   virtual bool ShouldCancelDelegates(const Robot& robot) const override;
-  virtual BehaviorStatus Init(Robot& robot,
-                              DelegateProperties& delegateProperties) override;
-  virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot,
-                                                   DelegateProperties& delegateProperties) override;
+  virtual BehaviorStatus Init(Robot& robot) override;
+  virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot) override;
   
   void RespondToTurnAction(ActionResult result, Robot& robot);
   void RespondToPlacedAction(ActionResult result, Robot& robot);

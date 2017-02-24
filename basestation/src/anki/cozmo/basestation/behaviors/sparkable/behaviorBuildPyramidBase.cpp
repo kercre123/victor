@@ -19,7 +19,11 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -37,7 +41,6 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-const int kMaxSearchCount = 1;
 const int kCubeSizeBuffer_mm = 12;
 const float kDriveBackDistance_mm = 40.f;
 const float kDriveBackSpeed_mm_s = 40.f;
@@ -55,8 +58,8 @@ RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::Ro
 BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _lastBasesCount(0)
-, _searchingForNearbyBaseBlockCount(0)
-, _searchingForNearbyStaticBlockCount(0)
+, _timeFirstBaseFormed(-1.f)
+, _timeLastBaseDestroyed(-1.f)
 , _continuePastBaseCallback(nullptr)
 , _behaviorState(State::DrivingToBaseBlock)
 , _checkForFullPyramidVisualVerifyFailure(false)
@@ -89,8 +92,9 @@ bool BehaviorBuildPyramidBase::IsRunnableInternal(const BehaviorPreReqRobot& pre
 Result BehaviorBuildPyramidBase::InitInternal(Robot& robot)
 {
   _lastBasesCount = 0;
-  _searchingForNearbyBaseBlockCount = 0;
-  _searchingForNearbyStaticBlockCount = 0;
+  _timeFirstBaseFormed = -1.f;
+  _timeLastBaseDestroyed = -1.f;
+  
   if(!robot.IsCarryingObject()){
     TransitionToDrivingToBaseBlock(robot);
   }else{
@@ -115,39 +119,29 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
   const auto& pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   
   // We need a slight delay from when a configuration is made and we respond to it
-  if(_lastBasesCount == 0 && !pyramidBases.empty()){
+  if((_lastBasesCount == 0) && !pyramidBases.empty()){
     _timeFirstBaseFormed = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+  
+  if((_lastBasesCount > 0) && pyramidBases.empty() && pyramids.empty()){
+    _timeLastBaseDestroyed = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
   
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   const bool baseAppearedWhileNotPlacing =
                         !pyramidBases.empty() &&
-                        _behaviorState < State::ObservingBase &&
-                        (_timeFirstBaseFormed + kTimeUntilRespondToBase_s < currentTime_s);
-
-  if(baseAppearedWhileNotPlacing){
-    StopWithoutImmediateRepetitionPenalty();
-    return IBehavior::Status::Complete;
-  }
+                        (_behaviorState < State::ObservingBase) &&
+                        FLT_GT(_timeFirstBaseFormed + kTimeUntilRespondToBase_s, currentTime_s);
   
   // if a pyramid base was destroyed, stop the behavior to build the base again
-  const bool baseDestroyed = pyramidBases.empty() &&
-                             pyramids.empty() &&
-                             _lastBasesCount > 0;
-  
-  // We don't want to cancel the action if cozmo is in the middle of reacting to
-  // a confirmed pyramid or is commited to placing a block
-  const bool placingOrReacting = robot.GetMoveComponent().IsMoving() ||
-                                  _behaviorState == State::ReactingToPyramid;
-  
-  // we may want to react to the base being destroyed once the movement is over
-  // so don't update this just now
-  if(!placingOrReacting){
-    _lastBasesCount = static_cast<int>(pyramidBases.size());
-  }
-  
-  if(baseDestroyed && !placingOrReacting){
+  const bool baseDestroyedWhileNotPlacing =
+                        pyramidBases.empty() &&
+                        pyramids.empty() &&
+                        FLT_GT(_timeLastBaseDestroyed, 0) &&
+                        FLT_GT(_timeLastBaseDestroyed + kTimeUntilRespondToBase_s, currentTime_s);
+
+  if(baseAppearedWhileNotPlacing || baseDestroyedWhileNotPlacing){
     StopWithoutImmediateRepetitionPenalty();
     return IBehavior::Status::Complete;
   }
@@ -160,9 +154,9 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
     }
   }
   
+  _lastBasesCount = Util::numeric_cast<int>(pyramidBases.size());
   
   IBehavior::Status ret = IBehavior::UpdateInternal(robot);
-  
   return ret;
 }
   
@@ -170,23 +164,20 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
 void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(Robot& robot)
 {
   SET_STATE(DrivingToBaseBlock);
-  DriveToPickupObjectAction* driveAction =
-     new DriveToPickupObjectAction(robot, _baseBlockID,
-                                   false, 0, false, 0, false, // default values
-                                   AnimationTrigger::BuildPyramidSecondBlockUpright);
+  std::vector<BehaviorStateLightInfo> basePersistantLight;
+  basePersistantLight.push_back(
+    BehaviorStateLightInfo(_baseBlockID, CubeAnimationTrigger::PyramidSingle)
+  );
+  SetBehaviorStateLights(basePersistantLight, false);
   
-  StartActing(driveAction,
-              [this, &robot](const ActionResult& result){
-                if(result == ActionResult::SUCCESS)
-                {
-                  TransitionToPlacingBaseBlock(robot);
-                }else if(!robot.IsCarryingObject()){
-                  if(_searchingForNearbyBaseBlockCount < kMaxSearchCount){
-                    _searchingForNearbyBaseBlockCount++;
-                    TransitionToSearchingWithCallback(robot, _baseBlockID, &BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock);
-                  }
-                }
-              });
+  auto success = [this](Robot& robot){
+    TransitionToPlacingBaseBlock(robot);
+  };
+
+  auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(robot, *this,
+                      _baseBlockID, AnimationTrigger::BuildPyramidSecondBlockUpright);
+  SmartDelegateToHelper(robot, pickupHelper, success);
   
 }
   
@@ -194,6 +185,8 @@ void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(Robot& robot)
 void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
 {
   SET_STATE(PlacingBaseBlock);
+  std::vector<BehaviorStateLightInfo> basePersistantLight;
+  SetBehaviorStateLights(basePersistantLight, false);
   
   // if a block has moved into the area we want to place the block, update where we are going to place the block
   if(!CheckBaseBlockPoseIsFree(_baseBlockOffsetX, _baseBlockOffsetY)){
@@ -210,21 +203,15 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
   }
   
   const bool relativeCurrentMarker = false;
-  DriveToPlaceRelObjectAction* driveAction = new DriveToPlaceRelObjectAction(robot, _staticBlockID, true, _baseBlockOffsetX, _baseBlockOffsetY, false, 0, false, 0.f, false, relativeCurrentMarker);
   
-  StartActing(driveAction,
-              [this, &robot](const ActionResult& result){
-                if(result == ActionResult::SUCCESS)
-                {
-                  TransitionToObservingBase(robot);
-                }else{
-                  if(_searchingForNearbyStaticBlockCount < kMaxSearchCount){
-                    _searchingForNearbyStaticBlockCount++;
-                    TransitionToSearchingWithCallback(robot, _staticBlockID, &BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock);
-                  }
-                }
-              });
-
+  auto success = [this](Robot& robot){
+    TransitionToObservingBase(robot);
+  };
+  
+  auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  HelperHandle placeRelHelper = factory.CreatePlaceRelObjectHelper(robot, *this, _staticBlockID, true,
+                                                                 _baseBlockOffsetX, _baseBlockOffsetY, relativeCurrentMarker);
+  SmartDelegateToHelper(robot, placeRelHelper, success);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -273,19 +260,6 @@ bool BehaviorBuildPyramidBase::GetTopBlockID(ObjectID& id) const
   }
   
   return _topBlockID.IsSet();
-}
-  
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<typename T>
-void BehaviorBuildPyramidBase::TransitionToSearchingWithCallback(Robot& robot,  const ObjectID& objectID,  void(T::*callback)(Robot&))
-{
-  SET_STATE(SearchingForObject);
-  CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
-  compoundAction->AddAction(new TurnTowardsObjectAction(robot, objectID, M_PI), true);
-  compoundAction->AddAction(new SearchForNearbyObjectAction(robot, objectID));
-  StartActing(compoundAction, callback);
 }
   
 

@@ -147,6 +147,9 @@ namespace Anki {
       bool ConnectToUiDevice(ISocketComms::DeviceId deviceId, UiConnectionType connectionType);
       void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
       
+      // Some events need to be sent from Unity -> SDK or from SDK -> Unity
+      void HandleGameToGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+      
       // ============================== Private Types ==============================
       
       using MessageEngineToGame = ExternalInterface::MessageEngineToGame;

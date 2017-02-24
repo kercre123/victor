@@ -26,6 +26,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -39,16 +40,18 @@ namespace Cozmo {
 namespace{
 using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
   
-static const int kMinUprightBlocksForPyramid = 3;
-static const float kDelayAccountForPlacing_s = 3.0;
+static const char* kLightsShouldMessageCubeOnSideKey = "shouldCubeMessageOnSide";
+
+static const int kMinUprightBlocksForPyramid      = 3;
+static const float kDelayAccountForPlacing_s      = 3.0;
 static const float kDelayAccountForBaseCreation_s = 5.0;
 
 // Interval at which disconnected cube orientations are pulled from block world
 static const float kIntervalCheckCubeOrientation = 1.0;
   
 // Pyramid Light constants
-static const constexpr uint kBaseFormedTimeOn = 500;
-static const constexpr uint kPyramidDenouementBaseOff_ms = 650;
+static const constexpr uint kBaseFormedTimeOn                  = 500;
+static const constexpr uint kPyramidDenouementBaseOff_ms       = 650;
 static const constexpr uint kPyramidDenouementAdditionalOff_ms = 75;
 
   
@@ -113,15 +116,19 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
 , _pyramidObjectiveAchieved(false)
 , _nextTimeCheckBlockOrientations_s(-1)
 , _currentPyramidConstructionStage(PyramidConstructionStage::None)
+, _highestAudioStageReached(PyramidConstructionStage::None)
 , _lastTimeConstructionStageChanged_s(0)
 , _lastCountBasesSeen(0)
 , _uprightAnimIndex(0)
 , _onSideAnimIndex(0)
 , _forceLightMusicUpdate(false)
+, _lightsShouldMessageCubeOnSide(false)
 {
-  ReloadFromConfig(robot, config);
-
   UpdateActiveBehaviorGroup(_robot, true);
+  
+  JsonTools::GetValueOptional(config,
+                              kLightsShouldMessageCubeOnSideKey,
+                              _lightsShouldMessageCubeOnSide);
   
   /////////
   // Get pointers to all behaviors that must be manually called
@@ -172,6 +179,7 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
   _behaviorPyramidThankYou = dynamic_cast<BehaviorPyramidThankYou*>(pyramidThankYou);
   DEV_ASSERT(_behaviorRespondPossiblyRoll,
              "BuildPyramidBehaviorChooser.PyramidThankYou.PointerNotSet");
+  
   
   /////////
   // Setup callbacks to update cube light patterns/phase
@@ -231,6 +239,7 @@ void BuildPyramidBehaviorChooser::OnSelected()
   _onSideAnimIndex = 0;
   _lastUprightBlockCount = -1;
   _currentPyramidConstructionStage = PyramidConstructionStage::None;
+  _highestAudioStageReached = PyramidConstructionStage::None;
   _chooserPhase = ChooserPhase::None;
   _nextTimeCheckBlockOrientations_s = -1;
   UpdateActiveBehaviorGroup(_robot, true);
@@ -243,6 +252,10 @@ void BuildPyramidBehaviorChooser::OnSelected()
     entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);
     entry.second.SetHasEverBeenUpright(UpAxis::ZPositive == entry.second.GetCurrentUpAxis());
   }
+  
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
+                                                           ReactionTrigger::FistBump,
+                                                           false);
   
   _forceLightMusicUpdate = true;
   
@@ -259,7 +272,7 @@ void BuildPyramidBehaviorChooser::OnDeselected()
   for(auto& entry: _pyramidCubePropertiesTrackers){
     entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);
   }
-  SetCubeLights();
+  SetCubeLights(_robot);
   
   // Make sure no behaviors are deactivated on leaving pyramid in case they're
   // also mapped to another behavior group
@@ -268,6 +281,10 @@ void BuildPyramidBehaviorChooser::OnDeselected()
   _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
                                                           ReactionTrigger::ObjectPositionUpdated,
                                                           true);
+  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
+                                                           ReactionTrigger::FistBump,
+                                                           true);
+
 }
   
   
@@ -284,7 +301,7 @@ void BuildPyramidBehaviorChooser::UpdateActiveBehaviorGroup(Robot& robot, bool s
                                                             false);
     
   }else{
-    SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, true);
+    SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, false);
     SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, true);
     robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
                                                             ReactionTrigger::ObjectPositionUpdated,
@@ -641,9 +658,14 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
       }
       
       if(bestBehavior == nullptr && !entry.second.GetHasAcknowledgedPositively()){
+        const bool isSoftSpark = robot.GetBehaviorManager().IsActiveSparkSoft();
+
+        const int onSideIdx = (_lightsShouldMessageCubeOnSide && !isSoftSpark) ?
+                                                 _onSideAnimIndex : -1;
+        
         BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
                                                      _uprightAnimIndex,
-                                                     _onSideAnimIndex);
+                                                     onSideIdx);
         if(_behaviorRespondPossiblyRoll->IsRunnable(preReqData)){
           bestBehavior = _behaviorRespondPossiblyRoll;
         }
@@ -727,7 +749,7 @@ Result BuildPyramidBehaviorChooser::Update(Robot& robot)
      numberOfPyramidBasesChanged){
        UpdateMusic(robot, desiredState);
        UpdateDesiredLights(robot, desiredState);
-       SetCubeLights();
+       SetCubeLights(robot);
    }
   
   
@@ -765,15 +787,19 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
   const bool uprightCountChanged = _lastUprightBlockCount != countOfBlocksUpright;
   if(uprightCountChanged && _robot.HasExternalInterface()){
     const bool minimumUprightCountReached =
-    countOfBlocksUpright >= kMinUprightBlocksForPyramid;
+      countOfBlocksUpright >= kMinUprightBlocksForPyramid;
     const bool fellBelowMinimumUprightCount =
-    _lastUprightBlockCount >= kMinUprightBlocksForPyramid &&
-    countOfBlocksUpright < kMinUprightBlocksForPyramid;
+      (_lastUprightBlockCount >= kMinUprightBlocksForPyramid) &&
+      (countOfBlocksUpright < kMinUprightBlocksForPyramid);
     
-    if(minimumUprightCountReached){
+    const bool isSoftSpark = robot.GetBehaviorManager().IsActiveSparkSoft();
+    const bool didUserRequestSparkEnd = robot.GetBehaviorManager().DidGameRequestSparkEnd();
+
+    
+    if(minimumUprightCountReached && !isSoftSpark && !didUserRequestSparkEnd){
       _robot.GetExternalInterface()->BroadcastToGame<
       ExternalInterface::BuildPyramidPreReqsChanged>(true);
-    }else if(fellBelowMinimumUprightCount){
+    }else if(fellBelowMinimumUprightCount && !isSoftSpark && !didUserRequestSparkEnd){
       _robot.GetExternalInterface()->BroadcastToGame<
       ExternalInterface::BuildPyramidPreReqsChanged>(false);
     }
@@ -847,13 +873,15 @@ BuildPyramidBehaviorChooser::PyramidConstructionStage BuildPyramidBehaviorChoose
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BuildPyramidBehaviorChooser::UpdateMusic(Robot& robot, const PyramidConstructionStage& desiredState)
 {
-  
-  if(desiredState == PyramidConstructionStage::None){
-    robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
-            UnlockId::BuildPyramid, Util::EnumToUnderlying(PyramidConstructionStage::SearchingForCube));
-  }else{
-    robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
-            UnlockId::BuildPyramid, Util::EnumToUnderlying(desiredState));
+  if(desiredState > _highestAudioStageReached){
+    _highestAudioStageReached = desiredState;
+    if(desiredState == PyramidConstructionStage::None){
+      robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
+              UnlockId::BuildPyramid, Util::EnumToUnderlying(PyramidConstructionStage::SearchingForCube));
+    }else{
+      robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
+              UnlockId::BuildPyramid, Util::EnumToUnderlying(desiredState));
+    }
   }
 }
 
@@ -987,14 +1015,19 @@ void BuildPyramidBehaviorChooser::UpdateDesiredLights(Robot& robot, const Pyrami
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BuildPyramidBehaviorChooser::SetCubeLights()
+void BuildPyramidBehaviorChooser::SetCubeLights(Robot& robot)
 {
   // Remove any lights that are currently set
   for(auto& entry: _pyramidCubePropertiesTrackers){
     if(entry.second.GetCurrentLightTrigger() != entry.second.GetDesiredLightTrigger() ||
        entry.second.GetDesiredLightModifier() != kEmptyObjectLights)
     {
-      if(entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count)
+      const bool isSoftSpark = robot.GetBehaviorManager().IsActiveSparkSoft();
+      const bool shouldSetForOnSide = (_lightsShouldMessageCubeOnSide && !isSoftSpark) ||
+            entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::PyramidOnSide;
+      
+      if(entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count &&
+         shouldSetForOnSide)
       {
         _robot.GetCubeLightComponent().StopAndPlayLightAnim(entry.second.GetObjectID(),
                                                             entry.second.GetCurrentLightTrigger(),
@@ -1002,16 +1035,6 @@ void BuildPyramidBehaviorChooser::SetCubeLights()
                                                             nullptr,
                                                             true,
                                                             entry.second.GetDesiredLightModifier());
-        const ObservableObject* obj = _robot.GetBlockWorld().GetLocatedObjectByID(entry.second.GetObjectID());
-        if(obj != nullptr){
-        
-          PRINT_NAMED_ERROR("Setting Lights", "ObjID:%i, trigger:%i, modifier_x:%f, modifier_y:%f, obj_X:%f obj_y:%f",
-                            entry.second.GetObjectID().GetValue(), entry.second.GetCurrentLightTrigger(),
-                            entry.second.GetDesiredLightModifier().relativePoint.x(),
-                            entry.second.GetDesiredLightModifier().relativePoint.y(),
-                            obj->GetPose().GetTranslation().x(),
-                            obj->GetPose().GetTranslation().y());
-        }
       }
       else
       {
@@ -1023,10 +1046,6 @@ void BuildPyramidBehaviorChooser::SetCubeLights()
     }
   }
 }
-
-
-
-
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1121,10 +1140,6 @@ ObjectLights BuildPyramidBehaviorChooser::GetBaseFormedBaseLightsModifier(Robot&
   Pose3d baseMidpoint;
   PyramidBase::GetBaseInteriorMidpoint(robot, baseBlock, staticBlock, baseMidpoint);
   
-  PRINT_NAMED_ERROR("BASE MIDPOINT!!!!!", "x:%f, y:%f",
-                    baseMidpoint.GetTranslation().x(),
-                    baseMidpoint.GetTranslation().y());
-  
   baseBlockLights.relativePoint = {baseMidpoint.GetTranslation().x(),
     baseMidpoint.GetTranslation().y()};
   baseBlockLights.offset = {{kBaseFormedTimeOn*2,0,kBaseFormedTimeOn*4,kBaseFormedTimeOn*3}};
@@ -1151,11 +1166,6 @@ ObjectLights BuildPyramidBehaviorChooser::GetBaseFormedStaticLightsModifier(Robo
   using namespace BlockConfigurations;
   Pose3d staticMidpoint;
   PyramidBase::GetBaseInteriorMidpoint(robot, staticBlock, baseBlock, staticMidpoint);
-  
-  PRINT_NAMED_ERROR("STATIC MIDPOINT!!!!!", "x:%f, y:%f",
-                    staticMidpoint.GetTranslation().x(),
-                    staticMidpoint.GetTranslation().y());
-  
   
   staticBlockLights.relativePoint = {staticMidpoint.GetTranslation().x(),
     staticMidpoint.GetTranslation().y()};

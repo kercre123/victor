@@ -99,6 +99,10 @@
       }
     },
     {
+      "reactionTrigger": "NoPreDockPoses",
+      "behaviorName": "pyramidRamIntoBlock"
+    },
+    {
       "reactionTrigger": "PlacedOnCharger",
       "behaviorName": "reactToOnCharger"
     },

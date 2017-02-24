@@ -17,9 +17,12 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -29,8 +32,7 @@
 
 namespace Anki {
 namespace Cozmo {
-const int kMaxSearchCount = 1;
-    
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace{
 RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
@@ -53,7 +55,6 @@ static const float kHeadBottomCheckTopBlock_rad = DEG_TO_RAD(15);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& config)
 : BehaviorBuildPyramidBase(robot, config)
-, _searchingForTopBlockCount(0)
 {
   SetDefaultName("BuildPyramid");
   _continuePastBaseCallback =  std::bind(&BehaviorBuildPyramid::TransitionToDrivingToTopBlock, (this), std::placeholders::_1);
@@ -68,7 +69,8 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
   UpdatePyramidTargets(robot);
   
   bool allSetAndUsable = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
-  if(allSetAndUsable && !_shouldStreamline){
+  const bool notInSpark = robot.GetBehaviorManager().GetActiveSpark() == UnlockId::Count;
+  if(allSetAndUsable && notInSpark){
     // Pyramid is a complicated behavior with a lot of driving around. If we've
     // failed to use any of the blocks and we're not sparked don't bother attempting
     // this behavior - it will probably end poorly
@@ -107,6 +109,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
     
     allSetAndUsable = allSetAndUsable && !hasStaticFailed && !hasBaseFailed && !hasTopFailed;
   }
+  
   return allSetAndUsable;
 }
 
@@ -128,7 +131,6 @@ Result BehaviorBuildPyramid::InitInternal(Robot& robot)
     
   const auto& pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   _lastBasesCount = 0;
-  _searchingForTopBlockCount = 0;
   if(!pyramidBases.empty() || !pyramids.empty()){
     if(!robot.IsCarryingObject()){
       TransitionToDrivingToTopBlock(robot);
@@ -157,25 +159,15 @@ void BehaviorBuildPyramid::StopInternal(Robot& robot)
 void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 {
   SET_STATE(DrivingToTopBlock);
-
-  DriveToPickupObjectAction* driveAction =
-     new DriveToPickupObjectAction(robot, _topBlockID,
-                                false, 0, false, 0, false, // default values
-                                AnimationTrigger::BuildPyramidThirdBlockUpright);
   
-  StartActing(driveAction,
-              [this, &robot](const ActionResult& result){
-                if(result == ActionResult::SUCCESS)
-                {
-                  TransitionToPlacingTopBlock(robot);
-                }else{
-                  if(_searchingForTopBlockCount < kMaxSearchCount){
-                    _searchingForTopBlockCount++;
-                    TransitionToSearchingWithCallback(robot, _topBlockID,
-                          &BehaviorBuildPyramid::TransitionToDrivingToTopBlock);
-                  }
-                }
-              });
+  auto success = [this](Robot& robot){
+    TransitionToPlacingTopBlock(robot);
+  };
+  
+  auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(robot, *this,
+                                _topBlockID, AnimationTrigger::BuildPyramidThirdBlockUpright);
+  SmartDelegateToHelper(robot, pickupHelper, success);
 }
   
   
@@ -213,36 +205,40 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
       if(!idealTopPlacementWRTWorld.GetWithRespectTo(idealUnrotatedPose, idealPlacementWRTUnrotatedStatic)){
         return;
       }
-      
 
       // if we've already tried to place the block, see if we can visually verify it now
       const bool relativeCurrentMarker = false;
-      DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot, _staticBlockID, false,
-                                                  idealPlacementWRTUnrotatedStatic.GetTranslation().x(),
-                                                  idealPlacementWRTUnrotatedStatic.GetTranslation().y(),
-                                                  false, 0, false, 0.f, false, relativeCurrentMarker);
       
-      StartActing(action,
-                  [this, &robot](const ActionResult& result){
-                    if (result == ActionResult::SUCCESS) {
-                      TransitionToReactingToPyramid(robot);
-                    }else if(!robot.IsCarryingObject()){
-                      _checkForFullPyramidVisualVerifyFailure = true;
-                      // This will be removed by a helper soon - hopefully....
-                      CompoundActionParallel* checkForTopBlock =
-                      new CompoundActionParallel(robot,{
-                        new DriveStraightAction(robot, -kBackupDistCheckTopBlock_mm,
-                                                kBackupSpeedCheckTopBlock_mm_s, false),
-                        new MoveHeadToAngleAction(robot, kHeadAngleCheckTopBlock_rad),
-                        new MoveLiftToHeightAction(robot, kLiftHeightCheckTopBlock_mm)
-                      });
-                      CompoundActionSequential* scanForPyramid = new CompoundActionSequential(robot);
-                      scanForPyramid->AddAction(checkForTopBlock);
-                      scanForPyramid->AddAction(new WaitAction(robot, kWaitForVisualTopBlock_sec));
-                      scanForPyramid->AddAction(new MoveHeadToAngleAction(robot, kHeadBottomCheckTopBlock_rad));
-                      StartActing(scanForPyramid);
-                    }
-                  });
+      auto removeSoonFailure = [this](Robot& robot){
+        if(!robot.IsCarryingObject()){
+          _checkForFullPyramidVisualVerifyFailure = true;
+          // This will be removed by a helper soon - hopefully....
+          CompoundActionParallel* checkForTopBlock =
+          new CompoundActionParallel(robot,{
+            new DriveStraightAction(robot, -kBackupDistCheckTopBlock_mm,
+                                    kBackupSpeedCheckTopBlock_mm_s, false),
+            new MoveHeadToAngleAction(robot, kHeadAngleCheckTopBlock_rad),
+            new MoveLiftToHeightAction(robot, kLiftHeightCheckTopBlock_mm)
+          });
+          CompoundActionSequential* scanForPyramid = new CompoundActionSequential(robot);
+          scanForPyramid->AddAction(checkForTopBlock);
+          scanForPyramid->AddAction(new WaitAction(robot, kWaitForVisualTopBlock_sec));
+          scanForPyramid->AddAction(new MoveHeadToAngleAction(robot, kHeadBottomCheckTopBlock_rad));
+          StartActing(scanForPyramid);
+        }
+      };
+      
+      auto success = [this](Robot& robot){
+        TransitionToReactingToPyramid(robot);
+      };
+      
+      auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+      HelperHandle placeRelHelper = factory.CreatePlaceRelObjectHelper(
+                           robot, *this, _staticBlockID, false,
+                           idealPlacementWRTUnrotatedStatic.GetTranslation().x(),
+                           idealPlacementWRTUnrotatedStatic.GetTranslation().y(),
+                           relativeCurrentMarker);
+      SmartDelegateToHelper(robot, placeRelHelper, success, removeSoonFailure);
     }
   }
 }
@@ -254,23 +250,6 @@ void BehaviorBuildPyramid::TransitionToReactingToPyramid(Robot& robot)
   SET_STATE(ReactingToPyramid);
   BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess));
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<typename T>
-void BehaviorBuildPyramid::TransitionToSearchingWithCallback(Robot& robot,
-                                                             const ObjectID& objectID,
-                                                             void(T::*callback)(Robot&))
-{
-  SET_STATE(SearchingForObject);
-  
-  auto searchNearby = new SearchForNearbyObjectAction(robot, objectID);
-  
-  CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
-  compoundAction->AddAction(new TurnTowardsObjectAction(robot, objectID, M_PI), true);
-  compoundAction->AddAction(searchNearby);
-  StartActing(compoundAction, callback);
 }
 
 

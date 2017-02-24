@@ -1,6 +1,5 @@
 {
   "behaviorClass": "ReactToRobotOnFace",
   "name": "reactToRobotOnFace",
-  "displayNameKey":"behavior.ReactToOnFace",
-  "disableByDefault": false
+  "displayNameKey":"behavior.ReactToOnFace"
 }

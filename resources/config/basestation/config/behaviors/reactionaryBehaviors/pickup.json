@@ -1,6 +1,5 @@
 {
   "behaviorClass": "ReactToPickup",
   "name": "reactToPickup",
-  "displayNameKey":"behavior.ReactToPickup",
-  "disableByDefault": false
+  "displayNameKey":"behavior.ReactToPickup"
 }

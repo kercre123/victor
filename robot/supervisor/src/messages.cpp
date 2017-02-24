@@ -547,6 +547,11 @@ namespace Anki {
         HAL::SetImageSendMode(msg.sendMode, msg.resolution);
       }
       
+      void Process_enableColorImages(const RobotInterface::EnableColorImages& msg)
+      {
+        HAL::CameraSetColorEnabled(msg.enable);
+      }
+      
       void Process_setCameraParams(const SetCameraParams& msg)
       {
         if(msg.requestDefaultParams)

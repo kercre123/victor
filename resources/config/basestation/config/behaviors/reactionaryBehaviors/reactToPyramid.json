@@ -1,5 +1,4 @@
 {
   "behaviorClass": "ReactToPyramid",
-  "name": "reactToPyramid",
-  "disableByDefault": true
+  "name": "reactToPyramid"
 }

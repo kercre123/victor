@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/reactionary/BehaviorAcknowledgeCubeMoved.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeCubeMoved.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -23,15 +23,17 @@
 #include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
-
-const float kDelayForUserPresentBlock_s = 1.0;
-const float kDelayToRecognizeBlock_s = 0.5;
+namespace{
+const float kDelayForUserPresentBlock_s = 1.0f;
+const float kDelayToRecognizeBlock_s = 0.5f;
+}
 
 namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAcknowledgeCubeMoved::BehaviorAcknowledgeCubeMoved(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _robot(robot)
@@ -45,6 +47,8 @@ BehaviorAcknowledgeCubeMoved::BehaviorAcknowledgeCubeMoved(Robot& robot, const J
   });
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAcknowledgeCubeMoved::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const
 {
   const int targetCount = static_cast<int>(preReqData.GetTargets().size());
@@ -58,6 +62,8 @@ bool BehaviorAcknowledgeCubeMoved::IsRunnableInternal(const BehaviorPreReqAcknow
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorAcknowledgeCubeMoved::InitInternal(Robot& robot)
 {
   SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
@@ -74,7 +80,9 @@ Result BehaviorAcknowledgeCubeMoved::InitInternal(Robot& robot)
   
   return Result::RESULT_OK;
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal(Robot& robot)
 {
   // object seen - cancel turn and play response
@@ -89,12 +97,15 @@ IBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal(Robot& robot)
   return IBehavior::UpdateInternal(robot);
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeCubeMoved::StopInternal(Robot& robot)
 {  
   _activeObjectID.UnSet();
 }
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(Robot& robot)
 {
   SET_STATE(PlayingSenseReaction);
@@ -105,6 +116,8 @@ void BehaviorAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(Robot& robot
   
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Robot& robot)
 {
   SET_STATE(TurningToLastLocationOfBlock);
@@ -125,7 +138,8 @@ void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Robo
               &BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence);
 }
   
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(Robot& robot)
 {
   SET_STATE(ReactingToBlockAbsence);
@@ -135,6 +149,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(Robot& rob
 }
   
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeCubeMoved::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
@@ -142,6 +157,8 @@ void BehaviorAcknowledgeCubeMoved::SetState_internal(State state, const std::str
   SetDebugStateName(stateName);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeCubeMoved::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
     switch(event.GetData().GetTag()){
@@ -155,16 +172,14 @@ void BehaviorAcknowledgeCubeMoved::HandleWhileRunning(const EngineToGameEvent& e
     }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeCubeMoved::HandleObservedObject(const Robot& robot, const ExternalInterface::RobotObservedObject& msg)
 {
   if(_activeObjectID.IsSet() && msg.objectID == _activeObjectID){
     _activeObjectSeen = true;
   }
 }
-
-  
-  
-
 
   
 } // namespace Cozmo
