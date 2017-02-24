@@ -71,6 +71,9 @@ void SdkStatus::StopRobotDoingAnything()
   
   // Stop everything else
   _externalInterface->Broadcast( GToE(ExternalInterface::StopRobotForSdk()) );
+  
+  // Disable color images from camera
+  _externalInterface->Broadcast( GToE(ExternalInterface::EnableColorImages(false)) );
 }
 
 
