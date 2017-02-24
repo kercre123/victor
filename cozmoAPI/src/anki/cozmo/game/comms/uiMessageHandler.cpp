@@ -184,13 +184,24 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       // We'll use this callback for simple events we care about
       auto commonCallback = std::bind(&UiMessageHandler::HandleEvents, this, std::placeholders::_1);
       
-      // Subscribe to desired events
+      // Subscribe to desired simple events
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionSuccess, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetStopRobotOnSdkDisconnect, commonCallback));
       
+      // We'll use this callback for game to game events we care about (SDK to Unity or vice versa)
+      auto gameToGameCallback = std::bind(&UiMessageHandler::HandleGameToGameEvents, this, std::placeholders::_1);
+      
+      // Subscribe to desired game to game events
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesRaw, gameToGameCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesUser, gameToGameCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DeviceGyroValues, gameToGameCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::EnableDeviceIMUData, gameToGameCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::IsDeviceIMUSupported, gameToGameCallback));
+      
+      // Subscribe to specific events
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::EnterSdkMode,
                                          std::bind(&UiMessageHandler::OnEnterSdkMode, this, std::placeholders::_1)));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ExitSdkMode,
@@ -354,6 +365,11 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::GetAllDebugConsoleVarMessage: return true;
         case GameToEngineTag::EnterSdkMode:                 return true;
         case GameToEngineTag::ExitSdkMode:                  return true;
+        case GameToEngineTag::DeviceAccelerometerValuesRaw: return true;
+        case GameToEngineTag::DeviceAccelerometerValuesUser: return true;
+        case GameToEngineTag::DeviceGyroValues:             return true;
+        case GameToEngineTag::IsDeviceIMUSupported:         return true;
+
         default:
           return false;
       }
@@ -910,6 +926,49 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       }
     }
     
+    void UiMessageHandler::HandleGameToGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    {
+      // Note we have to copy msg to a non-const temporary as MessageEngineToGame constructor only takes r-values
+      switch (event.GetData().GetTag())
+      {
+        case ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesRaw:
+        {
+          ExternalInterface::DeviceAccelerometerValuesRaw msg = event.GetData().Get_DeviceAccelerometerValuesRaw();
+          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesUser:
+        {
+          ExternalInterface::DeviceAccelerometerValuesUser msg = event.GetData().Get_DeviceAccelerometerValuesUser();
+          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::DeviceGyroValues:
+        {
+          ExternalInterface::DeviceGyroValues msg = event.GetData().Get_DeviceGyroValues();
+          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::EnableDeviceIMUData:
+        {
+          ExternalInterface::EnableDeviceIMUData msg = event.GetData().Get_EnableDeviceIMUData();
+          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::IsDeviceIMUSupported:
+        {
+          ExternalInterface::IsDeviceIMUSupported msg = event.GetData().Get_IsDeviceIMUSupported();
+          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          break;
+        }
+        default:
+        {
+          PRINT_STREAM_ERROR("HandleGameToGameEvents",
+                             "Subscribed to unhandled event of type "
+                             << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
+        }
+      }
+    }
     
     void UiMessageHandler::OnEnterSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
