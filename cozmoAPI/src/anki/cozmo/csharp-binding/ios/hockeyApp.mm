@@ -77,7 +77,7 @@ BOOL gWaitingForCrashUpload = NO;
 
 - (BOOL)didCrashInLastSessionOnStartup {
   return ([[BITHockeyManager sharedHockeyManager].crashManager didCrashInLastSession] &&
-          [[BITHockeyManager sharedHockeyManager].crashManager timeintervalCrashInLastSessionOccured] < 5);
+          [[BITHockeyManager sharedHockeyManager].crashManager timeIntervalCrashInLastSessionOccurred] < 5);
 }
 
 - (void)activateHockeyApp {
@@ -99,6 +99,8 @@ BOOL gWaitingForCrashUpload = NO;
   [[BITHockeyManager sharedHockeyManager] configureWithBetaIdentifier:hockeyAppId
                                                        liveIdentifier:hockeyAppId
                                                              delegate:self];
+
+  [[BITHockeyManager sharedHockeyManager].crashManager setCrashManagerStatus: BITCrashManagerStatusAutoSend];
 
 #if !defined(ACTIVATE_HOCKEYAPP_UPDATENOTIFICATION)
   [BITHockeyManager sharedHockeyManager].disableUpdateManager = YES;
