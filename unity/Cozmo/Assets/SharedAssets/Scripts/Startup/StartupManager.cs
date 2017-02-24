@@ -97,6 +97,12 @@ public class StartupManager : MonoBehaviour {
 
     Screen.orientation = ScreenOrientation.LandscapeLeft;
 
+    string languageOverride = null;
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage) {
+      languageOverride = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSetting;
+    }
+    Localization.LoadLocaleAndCultureInfo(languageOverride);
+
 #if UNITY_ANDROID && !UNITY_EDITOR
     bool needPermission = false;
     using (var permissionUtil = new AndroidJavaClass("com.anki.util.PermissionUtil")) {
@@ -177,11 +183,7 @@ public class StartupManager : MonoBehaviour {
     // platform dependent only (usually prefabs)
     assetBundleManager.AddActiveVariant(GetVariantBasedOnPlatform());
 
-    string languageOverride = null;
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage) {
-      languageOverride = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSetting;
-    }
-    string localeVariant = Localization.LoadLocaleAndCultureInfo(languageOverride);
+    string localeVariant = Localization.GetStringsLocale();
     assetBundleManager.AddActiveVariant(localeVariant.ToLower());
 
     yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
@@ -198,7 +200,6 @@ public class StartupManager : MonoBehaviour {
 
     // Set up localization files and add managers
     if (Application.isPlaying) {
-      // TODO Load strings based on variants?
       Localization.LoadStrings();
 
       AddComponents();
@@ -513,7 +514,7 @@ public class StartupManager : MonoBehaviour {
     string stringOut = "";
     if (_BootStrings == null) {
       // Copied over from a build process.
-      string loadFromPath = "bootstrap/LocalizedStrings/" + Localization.LoadLocaleAndCultureInfo() + "/BootStrings";
+      string loadFromPath = "bootstrap/LocalizedStrings/" + Localization.GetStringsLocale() + "/BootStrings";
       TextAsset jsonfile = Resources.Load<TextAsset>(loadFromPath);
       _BootStrings = JSONObject.Create(jsonfile.text);
     }
