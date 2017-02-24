@@ -112,6 +112,7 @@ enum uint_8 ReactionTrigger {
   Sparked,
   StackOfCubesInitialDetection,
   UnexpectedMovement,
+  VoiceCommand,
 
   Count
 }

@@ -1,0 +1,34 @@
+// Voice Commands message definition file
+//  for the C-Like Abstract Data language
+// Author: Lee Crippen
+// Copyright: Anki Inc (c) 2017
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 VoiceCommandType {
+  HEY_COZMO,
+  LOOK_AT_ME,
+  LETS_PLAY
+}
+
+structure CommandHeardEvent {
+  VoiceCommandType            voiceCommandType,
+}
+
+structure DummyEvent {
+
+}
+
+// Use tag to determine what struct to use
+union VoiceCommandEventUnion {
+  CommandHeardEvent           commandHeardEvent,
+  DummyEvent                  dummyEvent,
+}
+
+message VoiceCommandEvent {
+  VoiceCommandEventUnion      voiceCommandEvent
+}
+
+} // namespace Cozmo
+} // namespace Anki

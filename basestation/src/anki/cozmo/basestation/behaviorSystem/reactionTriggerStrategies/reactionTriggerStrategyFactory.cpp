@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPyramidInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategySparked.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyStackOfCubesInitialDetection.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "clad/types/behaviorTypes.h"
@@ -199,6 +200,11 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       };
       genericStrategy->ConfigureRelevantEvents(relevantTypes);
       strategy = genericStrategy;
+      break;
+    }
+    case ReactionTrigger::VoiceCommand:
+    {
+      strategy = new ReactionTriggerStrategyVoiceCommand(robot, config);
       break;
     }
     case ReactionTrigger::Count:
