@@ -665,7 +665,7 @@ message RequestGameStart {
   bool firstRequest
 }
 
-message SparkEnded {
+message HardSparkEndedByEngine {
   bool success
 }
 

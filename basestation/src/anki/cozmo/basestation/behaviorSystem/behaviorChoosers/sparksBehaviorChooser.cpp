@@ -482,9 +482,9 @@ void SparksBehaviorChooser::CompleteSparkLogic()
     
     if(!mngr.IsActiveSparkSoft()){
       // Notify the game that the spark ended with some success state
-      ExternalInterface::SparkEnded sparkEnded;
+      ExternalInterface::HardSparkEndedByEngine sparkEnded;
       sparkEnded.success = completedObjectives;
-      _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>(sparkEnded);
+      _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::HardSparkEndedByEngine>(sparkEnded);
     }
   }
 }
