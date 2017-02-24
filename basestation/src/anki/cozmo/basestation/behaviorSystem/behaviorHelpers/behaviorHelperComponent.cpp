@@ -60,8 +60,8 @@ HelperHandle BehaviorHelperComponent::AddHelperToComponent(IHelper*& helper)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorHelperComponent::DelegateToHelper(Robot& robot,
                                                HelperHandle handleToRun,
-                                               IHelper::SimpleCallbackWithRobot successCallback,
-                                               IHelper::SimpleCallbackWithRobot failureCallback)
+                                               BehaviorSimpleCallbackWithRobot successCallback,
+                                               BehaviorSimpleCallbackWithRobot failureCallback)
 {
   ClearStackVars();
   _behaviorSuccessCallback = successCallback;
@@ -79,7 +79,7 @@ bool BehaviorHelperComponent::DelegateToHelper(Robot& robot,
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorHelperComponent::StopHelper(const HelperHandle& helperToStop)
+bool BehaviorHelperComponent::StopHelperWithoutCallback(const HelperHandle& helperToStop)
 {
   auto stackBegin = _helperStack.begin();
   if(helperToStop == *stackBegin){
@@ -189,15 +189,25 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
 
   // If the helpers have just completed, notify the behavior appropriately
   if(_helperStack.empty() && helperStatus != IBehavior::Status::Running){
+    // Copy the callback function so that it can be called after
+    // this helper stack has been cleared in case it wants to set up a
+    // new helper stack/callbacks
+    BehaviorSimpleCallbackWithRobot behaviorCallbackToRun = nullptr;
+    
     if(helperStatus == IBehavior::Status::Complete &&
        _behaviorSuccessCallback != nullptr){
-      _behaviorSuccessCallback(robot);
+      behaviorCallbackToRun = _behaviorSuccessCallback;
     }else if(helperStatus == IBehavior::Status::Failure &&
              _behaviorFailureCallback != nullptr){
-      _behaviorFailureCallback(robot);
+      behaviorCallbackToRun = _behaviorFailureCallback;
     }
     
+    // Clear the current callbacks and then call the local callback copy
+    // in case the callback wants to set up helpers/callbacks of its own
     ClearStackVars();
+    if(behaviorCallbackToRun != nullptr){
+      behaviorCallbackToRun(robot);
+    }
   }
 }
   

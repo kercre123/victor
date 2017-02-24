@@ -380,7 +380,7 @@ void IBehavior::Stop()
 
   // If the behavior delegated off to a helper, stop that first
   if(!_currentHelperHandle.expired()){
-    SmartStopHelper();
+    StopHelperWithoutCallback();
   }
   
   _isRunning = false;
@@ -673,7 +673,7 @@ bool IBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
       PRINT_CH_INFO("Behaviors", (GetName() + ".StopActing.WithoutCallback.StopHelper").c_str(),
                     "Stopping behavior helper because action stopped without callback");
     }
-    SmartStopHelper();
+    StopHelperWithoutCallback();
   }    
   
   if( IsActing() ) {
@@ -844,7 +844,7 @@ bool IBehavior::SmartDelegateToHelper(Robot& robot,
   if(!_currentHelperHandle.expired()){
    PRINT_NAMED_WARNING("IBehavior.SmartDelegateToHelper",
                        "Attempted to start a handler while handle already running, stopping running helper");
-   SmartStopHelper();
+   StopHelperWithoutCallback();
   }
   const bool delegateSuccess = _robot.GetAIComponent().GetBehaviorHelperComponent().
                                DelegateToHelper(robot,
@@ -865,7 +865,14 @@ bool IBehavior::SmartDelegateToHelper(Robot& robot,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::SmartStopHelper()
+void IBehavior::SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction)
+{
+  _robot.GetBehaviorManager().SetBehaviorStateLights(structToSet, persistOnReaction);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::StopHelperWithoutCallback()
 {
   bool handleStopped = false;
   auto handle = _currentHelperHandle.lock();
@@ -873,7 +880,7 @@ bool IBehavior::SmartStopHelper()
     PRINT_CH_INFO("Behaviors", (GetName() + ".SmartStopHelper").c_str(),
                   "Behavior stopping it's helper");
 
-    handleStopped = _robot.GetAIComponent().GetBehaviorHelperComponent().StopHelper(handle);
+    handleStopped = _robot.GetAIComponent().GetBehaviorHelperComponent().StopHelperWithoutCallback(handle);
   }
   
   return handleStopped;

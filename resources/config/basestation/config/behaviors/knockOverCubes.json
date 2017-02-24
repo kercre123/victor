@@ -12,7 +12,6 @@
     "FP_NothingToDo"
   ],
   "minimumStackHeight": 3,
-  "disableByDefault": false,
   "reachForBlockTrigger" : "KnockOverGrabAttempt",
   "knockOverEyesTrigger" : "KnockOverEyes",
   "knockOverSuccessTrigger" : "KnockOverSuccess",

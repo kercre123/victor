@@ -14,7 +14,6 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/rollBlockHelper.h"
 
-#include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
@@ -28,15 +27,18 @@ namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RollBlockHelper::RollBlockHelper(Robot& robot,
-                                 IBehavior* behavior,
+                                 IBehavior& behavior,
                                  BehaviorHelperFactory& helperFactory,
                                  const ObjectID& targetID,
-                                 bool rollToUpright)
+                                 bool rollToUpright,
+                                 DriveToAlignWithObjectAction::PreDockCallback callback)
 : IHelper("RollBlock", robot, behavior, helperFactory)
 , _targetID(targetID)
 , _shouldUpright(rollToUpright)
 {
-  
+  if(callback != nullptr){
+    SetPreDockCallback(callback);
+  }
 }
 
 
@@ -54,21 +56,20 @@ bool RollBlockHelper::ShouldCancelDelegates(const Robot& robot) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus RollBlockHelper::Init(Robot& robot,
-                                     DelegateProperties& delegateProperties)
+BehaviorStatus RollBlockHelper::Init(Robot& robot)
 {
   // do first update immediately
   _shouldRoll = true;
-  return UpdateWhileActiveInternal(robot, delegateProperties);
+  return UpdateWhileActiveInternal(robot);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot,
-                                                          DelegateProperties& delegateProperties)
+BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot)
 {
   // If the robot is carrying a block, put it down
   if(robot.IsCarryingObject()){
+    DelegateProperties delegateProperties;
     delegateProperties.SetDelegateToSet(CreatePlaceBlockHelper(robot));
     delegateProperties.SetOnSuccessFunction(
       [this](Robot& robot) {
@@ -77,6 +78,7 @@ BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot,
       });
     delegateProperties.SetOnFailureFunction([](Robot& robot)
                       { return BehaviorStatus::Failure;});
+    DelegateAfterUpdate(delegateProperties);
     return BehaviorStatus::Running;
   }
 
@@ -90,13 +92,22 @@ BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot,
         obj->GetID());
       if(canRoll){
         PRINT_CH_INFO("Behaviors", "RollBlockHelper.Update.Rolling", "Doing roll action");
-        StartRollingAction(robot);
+        if(IsAtPreActionPose(robot, _targetID, PreActionPose::ActionType::ROLLING) != ActionResult::SUCCESS){
+          DelegateProperties delegateProperties;
+          delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, PreActionPose::ActionType::ROLLING));
+          delegateProperties.SetOnSuccessFunction([this](Robot& robot){StartRollingAction(robot); return _status;});
+          DelegateAfterUpdate(delegateProperties);
+        }else{
+          StartRollingAction(robot);
+        }
       }else{
         // If we can't roll the cube, pick it up so we can put it somewhere we can roll it
-        auto pickupHelper = CreatePickupBlockHelper(robot, _targetID);
+        auto pickupHelper = CreatePickupBlockHelper(robot, _targetID, AnimationTrigger::Count);
+        DelegateProperties delegateProperties;
         delegateProperties.SetDelegateToSet(pickupHelper);
         delegateProperties.SetOnFailureFunction( [](Robot& robot)
                                                  {return BehaviorStatus::Failure;});
+        DelegateAfterUpdate(delegateProperties);
       }
       
     }else{
@@ -117,6 +128,9 @@ void RollBlockHelper::StartRollingAction(Robot& robot)
   DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetID);
   if( _shouldUpright ) {
     rollAction->RollToUpright();
+  }
+  if(_preDockCallback != nullptr){
+    rollAction->SetPreDockCallback(_preDockCallback);
   }
 
   StartActing(rollAction, &RollBlockHelper::RespondToRollingResult);

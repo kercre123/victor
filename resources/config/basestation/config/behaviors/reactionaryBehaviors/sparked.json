@@ -1,5 +1,4 @@
 {
   "behaviorClass": "ReactToSparked",
-  "name": "reactToSparked",
-  "disableByDefault": false
+  "name": "reactToSparked"
 }

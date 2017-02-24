@@ -1418,6 +1418,11 @@ namespace Anki {
             {
               const ActionResult possiblePosesResult = GetDriveToObjectAction()->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
               
+              // Guilty until proven innocent - since we might clear some pre-dock poses
+              // we should not assume we're in position b/c it returned true above
+              // instead we should prove we're in a valid pose below
+              alreadyInPosition = false;
+              
               if(possiblePosesResult == ActionResult::SUCCESS)
               {
                 using PoseIter = std::vector<Pose3d>::iterator;

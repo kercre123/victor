@@ -17,6 +17,7 @@
 #define COZMO_BEHAVIOR_MANAGER_H
 
 #include "anki/common/types.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/common/basestation/objectIDs.h"
 
 #include "clad/types/behaviorTypes.h"
@@ -61,6 +62,35 @@ class BehaviorManagerMessageUnion;
 }
 
 static const f32 kIgnoreDefaultHeadAndLiftState = FLT_MAX;
+  
+  
+// struct for mapping light info to specific cubes during behavior state
+struct BehaviorStateLightInfo{
+public:
+  BehaviorStateLightInfo(const ObjectID& objectID,
+                         const CubeAnimationTrigger& animTrigger,
+                         bool hasModifier = false,
+                         const ObjectLights& modifier = ObjectLights{})
+  : _objectID(objectID)
+  , _animTrigger(animTrigger)
+  , _hasModifier(hasModifier)
+  , _modifier(modifier)
+  {}
+  
+  const ObjectID& GetObjectID() const { return _objectID;}
+  CubeAnimationTrigger GetAnimationTrigger() const { return _animTrigger; }
+  bool GetLightModifier(ObjectLights& lights) const {
+    if(_hasModifier) { lights = _modifier; return true;}
+    else{ return false;}
+  };
+    
+private:
+  ObjectID _objectID;
+  CubeAnimationTrigger _animTrigger;
+  bool _hasModifier;
+  ObjectLights _modifier;
+};
+  
   
 class BehaviorManager
 {
@@ -141,6 +171,8 @@ public:
   void EnableAllReactionTriggers(const std::string& requesterID, bool isEnabled, bool stopCurrent = false);
   void RequestCurrentBehaviorEndOnNextActionComplete();
   
+  // Have behavior manager maintain light state on blocks
+  void SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Freeplay - specific
@@ -186,6 +218,7 @@ public:
   
   const ObjectID& GetLastTappedObject() const { return _lastDoubleTappedObject; }
   const ObjectID& GetCurrTappedObject() const { return _currDoubleTappedObject; }
+  
   
 private:
   using TriggerBehaviorMapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
@@ -330,6 +363,9 @@ private:
   
   // List of all behaviors belonging to the tap interaction behavior group
   std::list<IBehavior*> _tapInteractionBehaviors;
+  
+  std::vector<BehaviorStateLightInfo> _behaviorStateLights;
+  bool _behaviorStateLightsPersistOnReaction;
   
 }; // class BehaviorManager
 

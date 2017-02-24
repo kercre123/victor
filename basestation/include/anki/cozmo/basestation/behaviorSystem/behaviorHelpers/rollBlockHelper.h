@@ -20,22 +20,28 @@
 namespace Anki {
 namespace Cozmo {
 
+  
 class RollBlockHelper : public IHelper{
+protected:
+  using PreDockCallback = std::function<void(Robot&)>;
+
 public:
   RollBlockHelper(Robot& robot,
-                  IBehavior* behavior,
+                  IBehavior& behavior,
                   BehaviorHelperFactory& helperFactory,
                   const ObjectID& targetID,
-                  bool rollToUpright);
+                  bool rollToUpright,
+                  PreDockCallback callback);
   virtual ~RollBlockHelper();
+
+  void SetPreDockCallback(PreDockCallback callback)
+                  { _preDockCallback = callback; }
 
 protected:
   // IHelper functions
   virtual bool ShouldCancelDelegates(const Robot& robot) const override;
-  virtual BehaviorStatus Init(Robot& robot,
-                              DelegateProperties& delegateProperties) override;
-  virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot,
-                                                   DelegateProperties& delegateProperties) override;
+  virtual BehaviorStatus Init(Robot& robot) override;
+  virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot) override;
 private:
   ObjectID _targetID;
   
@@ -44,7 +50,7 @@ private:
 
   bool _shouldRoll = true;
   const bool _shouldUpright;
-
+  PreDockCallback _preDockCallback = nullptr;
 };
 
 } // namespace Cozmo

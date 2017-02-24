@@ -41,6 +41,7 @@ public:
   ////////////////////////////////////////////////////////////////////////////////
 
   inline const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
+  inline AIWhiteboard& GetNonConstWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
   inline AIWhiteboard&       GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
   
   inline const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }

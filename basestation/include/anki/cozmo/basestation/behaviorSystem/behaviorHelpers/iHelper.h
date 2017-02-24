@@ -17,7 +17,9 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/helperHandle.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior_fwd.h"
+#include "anki/cozmo/basestation/preActionPose.h"
 #include "clad/types/actionResults.h"
+#include "clad/types/animationTrigger.h"
 #include <functional>
 
 namespace Anki {
@@ -39,30 +41,27 @@ public:
   const std::string& GetName() const { return _name; }
   
 protected:
-  
-  using SimpleCallbackWithRobot = std::function<void(Robot& robot)>;
-  using StatusCallbackWithRobot = std::function<BehaviorStatus(Robot& robot)>;
-  
   struct DelegateProperties{
   public:
     HelperHandle GetDelegateToSet() const { return _delegateToSet;}
-    StatusCallbackWithRobot GetOnSuccessFunction() const {return _onSuccessFunction;}
-    StatusCallbackWithRobot GetOnFailureFunction() const {return _onFailureFunction;}
+    BehaviorStatusCallbackWithRobot GetOnSuccessFunction() const {return _onSuccessFunction;}
+    BehaviorStatusCallbackWithRobot GetOnFailureFunction() const {return _onFailureFunction;}
     
     void SetDelegateToSet(HelperHandle delegate){ _delegateToSet = delegate;}
-    void SetOnSuccessFunction(StatusCallbackWithRobot onSuccess){_onSuccessFunction = onSuccess;}
-    void SetOnFailureFunction(StatusCallbackWithRobot onFailure){_onFailureFunction = onFailure;}
-
+    void SetOnSuccessFunction(BehaviorStatusCallbackWithRobot onSuccess){_onSuccessFunction = onSuccess;}
+    void SetOnFailureFunction(BehaviorStatusCallbackWithRobot onFailure){_onFailureFunction = onFailure;}
+    
+    void ClearDelegateProperties();
     
   private:
     HelperHandle _delegateToSet;
-    StatusCallbackWithRobot _onSuccessFunction;
-    StatusCallbackWithRobot _onFailureFunction;
+    BehaviorStatusCallbackWithRobot _onSuccessFunction = nullptr;
+    BehaviorStatusCallbackWithRobot _onFailureFunction = nullptr;
   };
   
   // Initialize the helper with the behavior to start actions on, and a reference to the factory to delegate
   // out to new helpers
-  IHelper(const std::string& name, Robot& robot, IBehavior* behavior, BehaviorHelperFactory& _helperFactory);
+  IHelper(const std::string& name, Robot& robot, IBehavior& behavior, BehaviorHelperFactory& _helperFactory);
 
   void SetName(const std::string& name) { _name = name; }
   
@@ -92,15 +91,20 @@ protected:
   // Called on the first time a helper is ticked while active
   // UpdateWhileActive will be called immediately after on the same tick if no
   // delegate is set
-  virtual BehaviorStatus Init(Robot& robot,
-                              DelegateProperties& delegateProperties) = 0;
+  virtual BehaviorStatus Init(Robot& robot) = 0;
   
   // Allows sub classes to pass back a delegate, success and failure function for IHelper to manage. If a
   // delegate is set in the delegate properties, then it will be pushed onto the stack, and the callbacks from
   // the properties will be used
-  virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot,
-                                                   DelegateProperties& delegateProperties) = 0;
+  virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot) = 0;
 
+  
+  ///////
+  /// Convenience functions
+  //////
+  
+  ActionResult IsAtPreActionPose(Robot& robot, const ObjectID& targetID, PreActionPose::ActionType actionType);
+  void DelegateAfterUpdate(const DelegateProperties& properties){ _delegateAfterUpdate = properties;}
   
   // Use the set behavior's start acting to perform an action
   template <typename T>
@@ -109,20 +113,30 @@ protected:
   bool StartActing(IActionRunner* action, BehaviorActionResultWithRobotCallback callback);
 
   // Helpers to access the HelperFactory without needing access to the underlying behavior
-  HelperHandle CreatePickupBlockHelper(Robot& robot, const ObjectID& targetID);
+  HelperHandle CreatePickupBlockHelper(Robot& robot, const ObjectID& targetID, AnimationTrigger animBeforeDock);
   HelperHandle CreatePlaceBlockHelper(Robot& robot);
   HelperHandle CreateRollBlockHelper(Robot& robot, const ObjectID& targetID, bool rollToUpright);
+  HelperHandle CreateDriveToHelper(Robot& robot,
+                                   const ObjectID& targetID,
+                                   const PreActionPose::ActionType& actionType);
+  HelperHandle CreatePlaceRelObjectHelper(Robot& robot,
+                                          const ObjectID& targetID,
+                                          const bool placingOnGround,
+                                          const f32 placementOffsetX_mm,
+                                          const f32 placementOffsetY_mm,
+                                          const bool relativeCurrentMarker);
 
   
   BehaviorStatus _status;
   
 private:
-  bool _hasStarted;
-  StatusCallbackWithRobot _onSuccessFunction;
-  StatusCallbackWithRobot _onFailureFunction;
   std::string _name;
+  bool _hasStarted;
+  BehaviorStatusCallbackWithRobot _onSuccessFunction;
+  BehaviorStatusCallbackWithRobot _onFailureFunction;
+  DelegateProperties _delegateAfterUpdate;
 
-  IBehavior* _behaviorToCallActionsOn;
+  IBehavior& _behaviorToCallActionsOn;
   BehaviorHelperFactory& _helperFactory;
 };
 

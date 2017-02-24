@@ -14,7 +14,9 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -98,6 +100,7 @@ Result BehaviorRespondPossiblyRoll::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRespondPossiblyRoll::ResumeInternal(Robot& robot)
 {
+  _metadata.SetPlayedOnSideAnim();
   return InitInternal(robot);
 }
 
@@ -147,7 +150,10 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(Robot& robot)
                                          _metadata.GetUprightAnimIndex() : kUprightAnims.size() - 1;
   turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kUprightAnims[animIndex]));
   StartActing(turnAndReact, [this](ActionResult result){
-    if(result == ActionResult::SUCCESS){
+    // TO DO - until we have a helper to search on a turn, just set as acknowledged
+    // if can't see
+    if((result == ActionResult::SUCCESS) ||
+       (result == ActionResult::VISUAL_OBSERVATION_FAILED)){
       _metadata.SetPlayedUprightAnim();
     }
   });
@@ -157,20 +163,40 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(Robot& robot)
 {
-  DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _metadata.GetObjectID());
-  rollAction->SetPreDockCallback([this](Robot& robot){_metadata.SetReachedPreDocRoll();});
-  rollAction->RollToUpright();
   
   CompoundActionSequential* turnAndReact = new CompoundActionSequential(robot);
   turnAndReact->AddAction(new TurnTowardsObjectAction(robot, _metadata.GetObjectID(), Radians(M_PI_F), true));
-  if(!_metadata.GetPlayedOnSideAnim()){
+  if((!_metadata.GetPlayedOnSideAnim()) &&
+     (_metadata.GetOnSideAnimIndex() >= 0)){
     const unsigned long animIndex =  _metadata.GetOnSideAnimIndex() < kOnSideAnims.size() ?
                                           _metadata.GetOnSideAnimIndex() : kOnSideAnims.size() - 1;
     turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kOnSideAnims[animIndex]));
     _metadata.SetPlayedOnSideAnim();
   }
-  turnAndReact->AddAction(rollAction);
-  StartActing(turnAndReact, &BehaviorRespondPossiblyRoll::DetermineNextResponse);
+  
+  StartActing(turnAndReact, &BehaviorRespondPossiblyRoll::DelegateToRollHelper);
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRespondPossiblyRoll::DelegateToRollHelper(Robot& robot)
+{
+  ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_metadata.GetObjectID());
+  if (nullptr != object &&
+      !object->IsPoseStateUnknown() &&
+      object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
+  {
+    auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+    const bool upright = true;
+    auto PreDockRollLambda = [this](Robot& robot){_metadata.SetReachedPreDockRoll();};
+    HelperHandle rollHelper = factory.CreateRollBlockHelper(robot,
+                                                            *this,
+                                                            _metadata.GetObjectID(),
+                                                            upright,
+                                                            PreDockRollLambda);
+    
+    SmartDelegateToHelper(robot, rollHelper, [this](Robot& robot){DetermineNextResponse(robot);}, nullptr);
+  }
 }
 
 } // namespace Cozmo

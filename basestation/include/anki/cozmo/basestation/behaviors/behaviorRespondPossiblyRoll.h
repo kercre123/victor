@@ -28,37 +28,37 @@ struct RespondPossiblyRollMetadata{
 public:
   RespondPossiblyRollMetadata(){};
   RespondPossiblyRollMetadata(const ObjectID& objID,
-                              u32 uprightAnimIndex,
-                              u32  onSideAnimIndex)
+                              s32 uprightAnimIndex,
+                              s32  onSideAnimIndex)
   : _objID(objID)
   , _uprightAnimIndex(uprightAnimIndex)
   , _playedUpright(false)
   , _onSideAnimIndex(onSideAnimIndex)
   , _playedOnSide(false)
-  , _reachedPreDocRoll(false)
+  , _reachedPreDockRoll(false)
   {
   }
   
   const ObjectID& GetObjectID() const { return _objID;}
-  u32 GetUprightAnimIndex()     const { return _uprightAnimIndex;}
+  s32 GetUprightAnimIndex()     const { return _uprightAnimIndex;}
   bool GetPlayedUprightAnim()   const { return _playedUpright;}
-  u32 GetOnSideAnimIndex()      const { return _onSideAnimIndex;}
+  s32 GetOnSideAnimIndex()      const { return _onSideAnimIndex;}
   bool GetPlayedOnSideAnim()    const { return _playedOnSide;}
-  bool GetReachedPreDocRoll()   const { return _reachedPreDocRoll;}
+  bool GetReachedPreDocRoll()   const { return _reachedPreDockRoll;}
   
 protected:
   friend class BehaviorRespondPossiblyRoll;
   void SetPlayedUprightAnim() { _playedUpright = true;}
   void SetPlayedOnSideAnim() { _playedOnSide = true;}
-  void SetReachedPreDocRoll() { _reachedPreDocRoll = true;}
+  void SetReachedPreDockRoll() { _reachedPreDockRoll = true;}
 
 private:
   ObjectID _objID;
-  u32 _uprightAnimIndex = 0;
+  s32 _uprightAnimIndex = 0;
   bool _playedUpright = false;
-  u32 _onSideAnimIndex = 0;
+  s32 _onSideAnimIndex = 0;
   bool _playedOnSide = false;
-  bool _reachedPreDocRoll = false;
+  bool _reachedPreDockRoll = false;
 };
   
 
@@ -95,6 +95,7 @@ private:
   void DetermineNextResponse(Robot& robot);
   void TurnAndRespondPositively(Robot& robot);
   void TurnAndRespondNegatively(Robot& robot);
+  void DelegateToRollHelper(Robot& robot);
   void RollBlock(Robot& robot);
 
 };

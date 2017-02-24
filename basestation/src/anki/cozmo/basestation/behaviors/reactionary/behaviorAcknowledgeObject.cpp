@@ -52,6 +52,8 @@ static const char * const kTiltToleranceKey       = "TiltTolerance_deg";
 static const char * const kNumImagesToWaitForKey  = "NumImagesToWaitFor";
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _ghostStackedObject(new ActiveCube(ObservableObject::InvalidActiveID,
@@ -67,6 +69,7 @@ BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::V
 }
   
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorAcknowledgeObject::InitInternal(Robot& robot)
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
@@ -84,6 +87,8 @@ Result BehaviorAcknowledgeObject::InitInternal(Robot& robot)
   return Result::RESULT_OK;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorAcknowledgeObject::UpdateInternal(Robot& robot)
 {
   if( _shouldStart ) {
@@ -95,7 +100,8 @@ IBehavior::Status BehaviorAcknowledgeObject::UpdateInternal(Robot& robot)
   return super::UpdateInternal(robot);
 }
   
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
@@ -124,6 +130,7 @@ void BehaviorAcknowledgeObject::LoadConfig(const Json::Value& config)
 } // LoadConfig()
   
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
 {
   _currTarget.UnSet();
@@ -194,7 +201,9 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
                 }
               });
 }
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
 {
   ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_currTarget);
@@ -270,6 +279,8 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
   FinishIteration(robot);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const ObservableObject* obj, float zOffset)
 {
   Pose3d ghostPose = obj->GetPose().GetWithRespectToOrigin();
@@ -281,12 +292,16 @@ void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const O
   robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset)
 {
   bool temp = false;
   return CheckIfGhostBlockVisible(robot, obj, zOffset, temp);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset, bool& shouldRetry)
 {
   // store the current ghost pose so that it can be restored after the check
@@ -334,7 +349,8 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const Obs
   }
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
 void BehaviorAcknowledgeObject::LookAtGhostBlock(Robot& robot, bool backupFirst, void(T::*callback)(Robot&))
 {
@@ -357,7 +373,8 @@ void BehaviorAcknowledgeObject::LookAtGhostBlock(Robot& robot, bool backupFirst,
   StartActing(compoundAction, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
 }
   
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
 {
   // notify about the id being done and decide what to do next
@@ -390,6 +407,8 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
   }
 }
  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::StopInternal(Robot& robot)
 {
   // if we get interrupted for any reason, kill the queue. We don't want to back up a bunch of stuff in here,
@@ -402,13 +421,17 @@ void BehaviorAcknowledgeObject::StopInternal(Robot& robot)
   _shouldStart = false;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAcknowledgeObject::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const
 {
   _targets = preReqData.GetTargets();
   
   return !_targets.empty();
 }
-
+ 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::AddListener(IReactToObjectListener* listener)
 {
   _objectListeners.insert(listener);

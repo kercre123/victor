@@ -58,7 +58,7 @@
         },
         {
             "CladEvent": "PyramidSingle",
-            "AnimName": "interacting"
+            "AnimName": "pyramidSingle"
         },
         {
             "CladEvent": "Sleep",
