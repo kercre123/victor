@@ -118,7 +118,7 @@
     "translation": "Are you sure? Without Location Permissions, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap \"Allow\" when asked to allow the Cozmo App to connect for you, or tap \"Cancel\" to connect yourself."
   },
   "wifi.enableLocation": {
-    "translation": "Tap \"Yes\" when asked to turn on Location, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
+    "translation": "Tap \"OK\" when asked to turn on Location, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
   },
   "wifi.pleaseEnableLocation": {
     "translation": "Are you sure? Without Location, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap \"Yes\" when asked to allow the Cozmo App to connect for you, or tap \"Cancel\" to connect yourself."
