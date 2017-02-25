@@ -2,13 +2,9 @@
 
 # Java generated files
 *.class
-*.jar
-*.aar
 
 .gradle/
 
-obj/
-SharedLib/libs
 HockeyAppAndroid/build
 
 # Intellij project files
