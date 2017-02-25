@@ -1076,11 +1076,32 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                       T_old.x(), T_old.y(), T_old.z(),
                       T_new.x(), T_new.y(), T_new.z());
         
+        // if the ID changes, re-add in the origin
+        const ObjectID& newIDInNewOrigin = oldObject->GetID();
+        const ObjectID prevIDInNewOrigin = newObject->GetID(); // make copy because we are going to change its value
+        
         // we also want to keep the MOST recent objectID, rather than the one we used to have for this object, because
         // if clients are bookkeeping IDs, the know about the new one (for example, if an action is already going
         // to pick up that objectID, it should not change by virtue of rejiggering)
         // Note: despite the name, oldObject is the most recent instance of this match. Thanks, Andrew.
         newObject->CopyID( oldObject );
+        
+        // update parent container to match the inherited ID to the key we use to store it
+        if ( newIDInNewOrigin != prevIDInNewOrigin )
+        {
+          const ObjectFamily inFamily = oldObject->GetFamily();
+          const ObjectType withType   = oldObject->GetType();
+          ObjectsMapByID_t& mapByID = _locatedObjects.at(newOrigin).at(inFamily).at(withType);
+          // copy smart pointer to increment reference
+          mapByID[newIDInNewOrigin] = mapByID.at(prevIDInNewOrigin);
+          mapByID.erase(prevIDInNewOrigin);
+          // log this crazyness
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.MovedSharedPointerDueToIDChange",
+                        "Object with ID %d in new origin (%s) has inherited ID %d",
+                        prevIDInNewOrigin.GetValue(),
+                        newOrigin->GetName().c_str(),
+                        newIDInNewOrigin.GetValue());
+        }
       }
       
       // Use all of oldObject's time bookkeeping, then update the pose and pose state
