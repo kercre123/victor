@@ -103,6 +103,7 @@ private:
   int _lastUprightBlockCount;
   bool _pyramidObjectiveAchieved;
   float _nextTimeCheckBlockOrientations_s;
+  float _nextTimeForceUpdateLightMusic_s;
   // For tracking which cubes rotated this tick for thanking user/updating phase
   std::set<ObjectID> _objectAxisChangeIDs;
   
@@ -167,6 +168,10 @@ private:
   void UpdateMusic(Robot& robot, const PyramidConstructionStage& desiredState);
   void UpdateDesiredLights(Robot& robot, const PyramidConstructionStage& desiredState);
   void SetCubeLights(Robot& robot);
+  
+  bool IsAnOnSideCubeLight(CubeAnimationTrigger anim);
+  CubeAnimationTrigger GetAppropriateOnSideAnimation(Robot& robot,
+                                                     const ObjectID& staticID);
   
   
   // Contains logic for maintaining base lights across multiple states

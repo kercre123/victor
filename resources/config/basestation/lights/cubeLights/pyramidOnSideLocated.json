@@ -1,5 +1,5 @@
 {
-  "pyramidOnSide": [
+  "pyramidOnSideLocated": [
     {
       "pattern" : {
         "onColors"                 : [[255, 0, 0, 255], [255, 0, 0, 255], [255, 0, 0, 255], [255, 0, 0, 255]],

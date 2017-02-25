@@ -43,12 +43,13 @@ using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
 static const char* kLightsShouldMessageCubeOnSideKey = "shouldCubeMessageOnSide";
 
 static const int kMinUprightBlocksForPyramid      = 3;
-static const float kDelayAccountForPlacing_s      = 3.0;
-static const float kDelayAccountForBaseCreation_s = 5.0;
+static const float kDelayAccountForPlacing_s      = 3.0f;
+static const float kDelayAccountForBaseCreation_s = 5.0f;
 
 // Interval at which disconnected cube orientations are pulled from block world
-static const float kIntervalCheckCubeOrientation = 1.0;
-  
+static const float kIntervalCheckCubeOrientation = 1.0f;
+static const float kIntervalForceUpdateLightMusicState = 1.0f;
+
 // Pyramid Light constants
 static const constexpr uint kBaseFormedTimeOn                  = 500;
 static const constexpr uint kPyramidDenouementBaseOff_ms       = 650;
@@ -114,10 +115,11 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
 , _chooserPhase(ChooserPhase::None)
 , _lastUprightBlockCount(-1)
 , _pyramidObjectiveAchieved(false)
-, _nextTimeCheckBlockOrientations_s(-1)
+, _nextTimeCheckBlockOrientations_s(-1.0f)
+, _nextTimeForceUpdateLightMusic_s(-1.0f)
 , _currentPyramidConstructionStage(PyramidConstructionStage::None)
 , _highestAudioStageReached(PyramidConstructionStage::None)
-, _lastTimeConstructionStageChanged_s(0)
+, _lastTimeConstructionStageChanged_s(0.0f)
 , _lastCountBasesSeen(0)
 , _uprightAnimIndex(0)
 , _onSideAnimIndex(0)
@@ -242,6 +244,7 @@ void BuildPyramidBehaviorChooser::OnSelected()
   _highestAudioStageReached = PyramidConstructionStage::None;
   _chooserPhase = ChooserPhase::None;
   _nextTimeCheckBlockOrientations_s = -1;
+  _nextTimeForceUpdateLightMusic_s = -1;
   UpdateActiveBehaviorGroup(_robot, true);
 
   _pyramidObjectiveAchieved = false;
@@ -727,6 +730,11 @@ Result BuildPyramidBehaviorChooser::Update(Robot& robot)
     _nextTimeCheckBlockOrientations_s = currentTime_s + kIntervalCheckCubeOrientation;
   }
   
+  if(currentTime_s > _nextTimeForceUpdateLightMusic_s){
+    _forceLightMusicUpdate = true;
+    _nextTimeForceUpdateLightMusic_s = currentTime_s + kIntervalForceUpdateLightMusicState;
+  }
+  
   if(_objectAxisChangeIDs.size() > 0 ||
      _chooserPhase == ChooserPhase::None){
     UpdateChooserPhase(robot);
@@ -889,6 +897,16 @@ void BuildPyramidBehaviorChooser::UpdateMusic(Robot& robot, const PyramidConstru
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BuildPyramidBehaviorChooser::UpdateDesiredLights(Robot& robot, const PyramidConstructionStage& desiredState)
 {
+  // If the user canceled out of the spark, we want to clear all
+  // pyramid related lights since we may still sit in this goal for a while
+  if(robot.GetBehaviorManager().DidGameRequestSparkEnd()){
+    for(auto& entry: _pyramidCubePropertiesTrackers){
+      entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);
+    }
+    return;
+  }
+  
+  
   CubeAnimationTrigger triggerForBase = CubeAnimationTrigger::Count;
   CubeAnimationTrigger triggerForStatic = CubeAnimationTrigger::Count;
   CubeAnimationTrigger triggerForTop = CubeAnimationTrigger::Count;
@@ -956,9 +974,13 @@ void BuildPyramidBehaviorChooser::UpdateDesiredLights(Robot& robot, const Pyrami
     {
       // Update "onSide" lights based on block current state
       for(auto& entry: _pyramidCubePropertiesTrackers){
-        if(entry.second.GetCurrentUpAxis() != UpAxis::ZPositive &&
-           entry.second.GetCurrentLightTrigger() != CubeAnimationTrigger::PyramidOnSide){
-          entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::PyramidOnSide);
+        
+        if(entry.second.GetCurrentUpAxis() != UpAxis::ZPositive){
+          auto animTrigger = GetAppropriateOnSideAnimation(robot,
+                                                           entry.second.GetObjectID());
+          if(entry.second.GetCurrentLightTrigger() != animTrigger){
+            entry.second.SetDesiredLightTrigger(animTrigger);
+          }
         }else if(entry.second.GetCurrentUpAxis() == UpAxis::ZPositive &&
                  entry.second.GetCurrentLightTrigger() != CubeAnimationTrigger::Count){
           entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);
@@ -973,7 +995,7 @@ void BuildPyramidBehaviorChooser::UpdateDesiredLights(Robot& robot, const Pyrami
   if(_currentPyramidConstructionStage == PyramidConstructionStage::None &&
      desiredState != PyramidConstructionStage::None){
     for(auto& entry:_pyramidCubePropertiesTrackers){
-      if(entry.second.GetCurrentLightTrigger() == CubeAnimationTrigger::PyramidOnSide){
+      if(IsAnOnSideCubeLight( entry.second.GetCurrentLightTrigger())){
         entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);
       }
     }
@@ -1024,7 +1046,7 @@ void BuildPyramidBehaviorChooser::SetCubeLights(Robot& robot)
     {
       const bool isSoftSpark = robot.GetBehaviorManager().IsActiveSparkSoft();
       const bool shouldSetForOnSide = (_lightsShouldMessageCubeOnSide && !isSoftSpark) ||
-            entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::PyramidOnSide;
+                !IsAnOnSideCubeLight(entry.second.GetDesiredLightTrigger());
       
       if(entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count &&
          shouldSetForOnSide)
@@ -1047,7 +1069,31 @@ void BuildPyramidBehaviorChooser::SetCubeLights(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BuildPyramidBehaviorChooser::IsAnOnSideCubeLight(CubeAnimationTrigger anim)
+{
+  return (anim == CubeAnimationTrigger::PyramidOnSideLocated) ||
+           (anim == CubeAnimationTrigger::PyramidOnSideNotLocated);
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CubeAnimationTrigger BuildPyramidBehaviorChooser::GetAppropriateOnSideAnimation(Robot& robot, const ObjectID& staticID)
+{
+  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(staticID);
+  if(obj != nullptr){
+    if(obj->IsPoseStateKnown()){
+      return CubeAnimationTrigger::PyramidOnSideLocated;
+    }else{
+      return CubeAnimationTrigger::PyramidOnSideNotLocated;
+    }
+  }
+  
+  return CubeAnimationTrigger::PyramidOnSideNotLocated;
+}
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BuildPyramidBehaviorChooser::SetPyramidBaseLights(Robot& robot)
 {

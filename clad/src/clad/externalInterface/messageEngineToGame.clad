@@ -42,6 +42,7 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
+#include "clad/types/voiceCommandTypes.clad"
 #include "clad/types/ledTypes.clad"
 
 namespace Anki {
@@ -672,7 +673,7 @@ message RequestGameStart {
   bool firstRequest
 }
 
-message SparkEnded {
+message HardSparkEndedByEngine {
   bool success
 }
 

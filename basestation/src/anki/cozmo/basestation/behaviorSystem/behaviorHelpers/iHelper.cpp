@@ -17,9 +17,14 @@
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/common/basestation/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace{
+const float kLastObservedTimestampTolerence_ms = 1000.0f;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::DelegateProperties::ClearDelegateProperties()
@@ -198,11 +203,22 @@ HelperHandle IHelper::CreatePlaceRelObjectHelper(Robot& robot,
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActionResult IHelper::IsAtPreActionPose(Robot& robot, const ObjectID& targetID, PreActionPose::ActionType actionType)
+ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
+                                                              const ObjectID& targetID,
+                                                              PreActionPose::ActionType actionType)
 {
-  ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(targetID);
-  // TMP - should check cast here
-  ActionableObject* object = dynamic_cast<ActionableObject*>(staticBlock);
+  ActionableObject* object = dynamic_cast<ActionableObject*>(
+                                robot.GetBlockWorld().GetLocatedObjectByID(targetID));
+  if(object == nullptr){
+    return ActionResult::BAD_OBJECT;
+  }
+  
+  // Check that the object has been visually verified within the last second
+  const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  if(object->GetLastObservedTime() + kLastObservedTimestampTolerence_ms < currentTimestamp){
+    return ActionResult::VISUAL_OBSERVATION_FAILED;
+  }
+  
   const IDockAction::PreActionPoseInput preActionPoseInput(object,
                                                            actionType,
                                                            false,

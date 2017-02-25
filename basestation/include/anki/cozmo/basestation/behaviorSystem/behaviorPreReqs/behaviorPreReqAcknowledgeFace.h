@@ -15,6 +15,9 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorPreReqAcknowledgeFace_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorPreReqAcknowledgeFace_H__
 
+#include "anki/vision/basestation/faceIdTypes.h"
+
+#include <set>
 
 namespace Anki {
 namespace Cozmo {

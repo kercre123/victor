@@ -1086,6 +1086,7 @@ void BehaviorManager::SetBehaviorStateLights(const std::vector<BehaviorStateLigh
     }
   }
   
+  _behaviorStateLights = structToSet;
 }
 
   

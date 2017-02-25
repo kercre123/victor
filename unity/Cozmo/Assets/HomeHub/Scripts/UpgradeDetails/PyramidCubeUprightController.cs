@@ -18,14 +18,14 @@ namespace Cozmo.Upgrades {
 
     private void Start() {
       RobotEngineManager.Instance.AddCallback<BuildPyramidPreReqsChanged>(HandleBuildPyramidPreReqsChanged);
-      RobotEngineManager.Instance.AddCallback<SparkEnded>(HandleSparkComplete);
+      RobotEngineManager.Instance.AddCallback<HardSparkEndedByEngine>(HandleSparkComplete);
       _ReopenModalCooldownStartTimestamp = -1;
     }
 
     private void OnDestroy() {
       CloseCubeShouldBeUprightModal();
       RobotEngineManager.Instance.RemoveCallback<BuildPyramidPreReqsChanged>(HandleBuildPyramidPreReqsChanged);
-      RobotEngineManager.Instance.RemoveCallback<SparkEnded>(HandleSparkComplete);
+      RobotEngineManager.Instance.RemoveCallback<HardSparkEndedByEngine>(HandleSparkComplete);
     }
 
     private void OnApplicationPause(bool pauseStatus) {
@@ -72,7 +72,7 @@ namespace Cozmo.Upgrades {
                           });
     }
 
-    private void HandleSparkComplete(SparkEnded message) {
+    private void HandleSparkComplete(HardSparkEndedByEngine message) {
       CloseCubeShouldBeUprightModal();
     }
 

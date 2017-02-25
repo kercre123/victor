@@ -155,7 +155,7 @@ namespace Cozmo.Upgrades {
                       unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
 
           _SparkButtonCostLabel.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmountNeeded);
-          RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
+          RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
         }
       }
       else if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
@@ -435,7 +435,7 @@ namespace Cozmo.Upgrades {
                                             Localization.GetNumber(playerInventory.GetItemAmount(itemId)));
     }
 
-    private void HandleSparkEnded(Anki.Cozmo.ExternalInterface.SparkEnded message) {
+    private void HandleSparkEnded(Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine message) {
       // Only fire the game event when we receive the spark ended message, rewards are only applied
       // when COMPLETING a sparked action (or timing out). View includes a warning dialog for exiting.
 
@@ -520,7 +520,7 @@ namespace Cozmo.Upgrades {
     }
 
     protected override void CleanUp() {
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
       StopSparkUnlock();
       // Because of a bug within DOTween Fades don't release even after being killed, so clean up
       if (_DimBackgroundInstance != null) {
