@@ -1081,7 +1081,7 @@ bool BuildPyramidBehaviorChooser::IsAnOnSideCubeLight(CubeAnimationTrigger anim)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CubeAnimationTrigger BuildPyramidBehaviorChooser::GetAppropriateOnSideAnimation(Robot& robot, const ObjectID& staticID)
 {
-  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(staticID);
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(staticID);
   if(obj != nullptr){
     if(obj->IsPoseStateKnown()){
       return CubeAnimationTrigger::PyramidOnSideLocated;
