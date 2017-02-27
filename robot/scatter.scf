@@ -1,4 +1,4 @@
-#! armcc -E
+#! armcc -E --cpu Cortex-M4.fp
 #define m_text_start                   0x00001000
 #define m_text_size                    (0x10000 - m_text_start)
 
