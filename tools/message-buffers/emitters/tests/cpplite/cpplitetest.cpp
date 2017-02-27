@@ -32,11 +32,22 @@ int test_Foo()
   foo1.myFloat = 1.0f;
   foo1.myNormal = 0x0eadbeef;
   foo1.myFoo = d2;
+  foo1.myVariable_length = 255;
   //foo1.myString = "Blah Blah Blah";
 
   if (!foo1.IsValid()) {
     printf("INVALID MESSAGE\n");
-    return 1;
+    return 0;
+  }
+  
+  if(foo1.Size() != 269) {
+    printf("FAIL Foo incorrect size\n");
+    return 0;
+  }
+  
+  if(foo1.MIN_SIZE != 14 || foo1.MAX_SIZE != 269) {
+    printf("FAIL Foo incorrect min or max size\n");
+    return 0;
   }
 
   Foo foo2;
@@ -45,7 +56,7 @@ int test_Foo()
 
   if (!foo2.IsValid() || foo1.Size() != foo2.Size()) {
     printf("INVALID COPY\n");
-    return 1;
+    return 0;
   }
 
   if (foo1.isFoo == foo2.isFoo &&
@@ -77,7 +88,16 @@ int test_MyMessage()
 
   if (!message.IsValid()) {
     printf("INVALID MESSAGE 1\n");
-    return 1;
+    return 0;
+  }
+  
+  // MyMessage is a union where Bar is the largest member
+  // Bar's max size is (8*1)+(2*1)+(2*3)+8+(8*3)+(4*1)+(2*20)+(257*2) = 606 +
+  //    sizeof(generated member varuableBuff_length) = 608
+  // MyMessage has a generated Tag variable bringing its max size to 608 + 1 = 609
+  if(message.MIN_SIZE != 1 || message.MAX_SIZE != 609) {
+    printf("FAIL MyMessage incorrect min or max size\n");
+    return 0;
   }
 
   MyMessage message2;
@@ -85,7 +105,7 @@ int test_MyMessage()
 
   if (!message2.IsValid() || message2.Size() != message.Size()) {
     printf("INVALID COPY 1\n");
-    return 1;
+    return 0;
   }
 
   if (message.foo.isFoo == message.foo.isFoo &&
@@ -117,14 +137,14 @@ int test_MyMessage()
 
   if (!message.IsValid()) {
     printf("INVALID MESSAGE 2\n");
-    return 1;
+    return 0;
   }
 
   memcpy(message2.GetBuffer(), message.GetBuffer(), message.Size());
 
   if (!message2.IsValid() || message2.Size() != message.Size()) {
     printf("INVALID COPY 2\n");
-    return 1;
+    return 0;
   }
 
   if (memcmp(&message.bar.byteBuff, &message2.bar.byteBuff, sizeof(message.bar.byteBuff)) == 0 &&

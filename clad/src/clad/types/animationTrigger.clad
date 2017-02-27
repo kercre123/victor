@@ -137,7 +137,7 @@ enum int_32 AnimationTrigger
   MeetCozmoLookFaceGetOut,              // 3. Transition out of the "scanning" of player's face
   MeetCozmoScanningIdle,                // 2. Looping animation while "scanning"
   MeetCozmoFirstEnrollmentSayName,      // 3a. First-time enrollment, say player's name
-  MeetCozmoFirstEnrollmentRepeatName,   // 4. Fist-time enrollment, confirm player's name
+  MeetCozmoFirstEnrollmentRepeatName,   // 4. First-time enrollment, confirm player's name
   MeetCozmoFirstEnrollmentCelebration,  // 5. First-time enrollment, big special celebration for new name
   MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
@@ -306,6 +306,7 @@ enum int_32 AnimationTrigger
   SoundOnlyLiftEffortPlaceHigh,
   SoundOnlyLiftEffortPlaceLow,
   SoundOnlyLiftEffortPlaceRoll,
+  SoundOnlyRamIntoBlock,
   SoundOnlyTurnSmall,
   SparkDrivingLoop,
   SparkDrivingStart,
@@ -372,7 +373,8 @@ enum int_32 CubeAnimationTrigger
   Onboarding,
   PyramidBaseBottom,
   PyramidFlourish,
-  PyramidOnSide,
+  PyramidOnSideLocated,
+  PyramidOnSideNotLocated,
   PyramidPickup,
   PyramidSingle,
   Sleep,

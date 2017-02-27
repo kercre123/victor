@@ -77,3 +77,20 @@ namespace Constructor {
     int_32 bar
   }
 }
+
+namespace Arrays {
+  enum no_cpp_class uint_32 ArrSize {
+    sizeTen = 10,
+    sizeTwenty = 20
+  }
+
+  structure s {
+    uint_8 arr8[verbatim ArrSize::sizeTen],
+    uint_16 arr16[verbatim ArrSize::sizeTwenty]
+  }
+
+  message m {
+    uint_8 arr8[verbatim ArrSize::sizeTen],
+    uint_16 arr16[verbatim ArrSize::sizeTwenty]
+  }
+}

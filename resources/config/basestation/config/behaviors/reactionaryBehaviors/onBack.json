@@ -1,6 +1,5 @@
 {
   "behaviorClass": "ReactToRobotOnBack",
   "name": "reactToRobotOnBack",
-  "displayNameKey":"behavior.ReactToOnBack",
-  "disableByDefault": false
+  "displayNameKey":"behavior.ReactToOnBack"
 }

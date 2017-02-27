@@ -310,6 +310,11 @@ message SaveImages {
     string        path
 }
 
+// Enable/disable the streaming of colored images
+message EnableColorImages {
+  bool enable
+}
+
 // SaveRobotState (via VizController)
 message SaveRobotState {
     bool    enabled,
@@ -966,6 +971,7 @@ message EnableDroneMode {
 ///////////////////////////////////////////////////////////////////////////////
 
 message EnterSdkMode {
+  bool isExternalSdkMode = 1
 }
 
 message ExitSdkMode {

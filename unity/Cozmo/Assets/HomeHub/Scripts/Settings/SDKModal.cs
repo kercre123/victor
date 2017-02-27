@@ -3,9 +3,14 @@ using DataPersistence;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
+using Anki.Cozmo.ExternalInterface;
 
 namespace Cozmo.Settings {
   public class SDKModal : BaseModal {
+    // Engine only processes messages at best every 60 ms so there is no need
+    // to do it faster than that
+    private const float _kCalculateSteeringInputInterval_ms = 60f;
 
     [SerializeField]
     private CozmoButton _DisableSDKButton;
@@ -33,6 +38,11 @@ namespace Cozmo.Settings {
 
     private bool _BackgroundTimeoutSent = false;
 
+    private Coroutine _IMUDataCoroutine = null;
+    private bool _SendRawAccelerometerData = false;
+    private bool _SendUserAccelerometerData = false;
+    private bool _SendGyroScopeData = false;
+
     private void Awake() {
       _DisableSDKButton.Initialize(HandleDisableSDKButtonTapped, "disable_sdk_button", "sdk_view");
 
@@ -48,7 +58,7 @@ namespace Cozmo.Settings {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       // Send EnterSDKMode to engine as we enter this view
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.EnterSDKMode();
+        RobotEngineManager.Instance.CurrentRobot.EnterSDKMode(true);
       }
 
 #if SDK_ONLY
@@ -61,9 +71,24 @@ namespace Cozmo.Settings {
 
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SdkStatus>(HandleSDKMessageReceived);
+      RobotEngineManager.Instance.AddCallback<EnableDeviceIMUData>(HandleEnableIMUData);
     }
 
+    protected override void CleanUp() {
+      base.CleanUp();
+      // Send ExitSDKMode to engine as we clean up this view
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.ExitSDKMode();
+      }
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SdkStatus>(HandleSDKMessageReceived);
+      RobotEngineManager.Instance.RemoveCallback<EnableDeviceIMUData>(HandleEnableIMUData);
 
+      if (_IMUDataCoroutine != null) {
+        StopCoroutine(_IMUDataCoroutine);
+        _IMUDataCoroutine = null;
+      }
+    }
 
     private void HandleDisableSDKButtonTapped() {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
@@ -172,17 +197,69 @@ namespace Cozmo.Settings {
       CloseDialogImmediately();
     }
 
-    protected override void CleanUp() {
-      base.CleanUp();
-      // Send ExitSDKMode to engine as we clean up this view
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.ExitSDKMode();
+    #region HandleIMUData
+    private void HandleEnableIMUData(EnableDeviceIMUData enableIMUMessage) {
+      _SendRawAccelerometerData = enableIMUMessage.enableAccelerometerRaw;
+      _SendUserAccelerometerData = enableIMUMessage.enableAccelerometerUser;
+      _SendGyroScopeData = enableIMUMessage.enableGyro;
+
+      // Use the Singleton construct to avoid creation overhead
+      RobotEngineManager.Instance.Message.IsDeviceIMUSupported = Singleton<IsDeviceIMUSupported>.Instance.Initialize(
+                          isAccelerometerSupported: SystemInfo.supportsAccelerometer,
+                          isGyroSupported: SystemInfo.supportsGyroscope);
+      RobotEngineManager.Instance.SendMessage();
+
+      if (_SendRawAccelerometerData || _SendUserAccelerometerData || _SendGyroScopeData) {
+        if (_IMUDataCoroutine == null) {
+          _IMUDataCoroutine = StartCoroutine(SendIMUData());
+        }
       }
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SdkStatus>(HandleSDKMessageReceived);
+      else {
+        if (_IMUDataCoroutine != null) {
+          StopCoroutine(_IMUDataCoroutine);
+          _IMUDataCoroutine = null;
+        }
+      }
     }
 
-    // TODO: STRETCH GOAL/DEC FEATURE: Use COZMO's Viz Debug Screen and camera feed here?
+    private IEnumerator SendIMUData() {
+      while (true) {
+        if (_SendRawAccelerometerData) {
+          // Use the Singleton construct to avoid having to create a new message every 60 ms
+          RobotEngineManager.Instance.Message.DeviceAccelerometerValuesRaw
+                            = Singleton<DeviceAccelerometerValuesRaw>.Instance.Initialize(
+                              x_gForce: Input.acceleration.x,
+                              y_gForce: Input.acceleration.y,
+                              z_gForce: Input.acceleration.z);
+          RobotEngineManager.Instance.SendMessage();
+        }
 
+        if (_SendUserAccelerometerData) {
+          // Use the Singleton construct to avoid having to create a new message every 60 ms
+          RobotEngineManager.Instance.Message.DeviceAccelerometerValuesUser
+                            = Singleton<DeviceAccelerometerValuesUser>.Instance.Initialize(
+                              x_gForce: Input.gyro.userAcceleration.x,
+                              y_gForce: Input.gyro.userAcceleration.y,
+                              z_gForce: Input.gyro.userAcceleration.z);
+          RobotEngineManager.Instance.SendMessage();
+        }
+
+        if (_SendGyroScopeData) {
+          // Use the Singleton construct to avoid having to create a new message every 60 ms
+          RobotEngineManager.Instance.Message.DeviceGyroValues
+                            = Singleton<DeviceGyroValues>.Instance.Initialize(
+                              w: Input.gyro.attitude.w,
+                              x: Input.gyro.attitude.x,
+                              y: Input.gyro.attitude.y,
+                              z: Input.gyro.attitude.z);
+          RobotEngineManager.Instance.SendMessage();
+        }
+
+        yield return new WaitForSeconds(_kCalculateSteeringInputInterval_ms / 1000.0f);
+      }
+    }
+    #endregion // HandleIMUData
+
+    // TODO: STRETCH GOAL/DEC FEATURE: Use COZMO's Viz Debug Screen and camera feed here?
   }
 }

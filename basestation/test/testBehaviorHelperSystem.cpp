@@ -83,7 +83,7 @@ public:
 
     if( _stopHelper ) {
       _stopHelper = false;
-      SmartStopHelper();
+      StopHelperWithoutCallback();
     }
 
     if( _helperHandleToDelegate ) {
@@ -149,7 +149,7 @@ class TestHelper : public IHelper
 {
 public:
 
-  TestHelper(Robot& robot, IBehavior* behavior, const std::string& name = "")
+  TestHelper(Robot& robot, IBehavior& behavior, const std::string& name = "")
     : IHelper("", robot, behavior, robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory())
     , _name(name)
     , _behavior(behavior)
@@ -198,8 +198,7 @@ public:
     return ret;
   }
 
-  virtual IBehavior::Status Init(Robot& robot,
-                                 DelegateProperties& delegateProperties) override {
+  virtual IBehavior::Status Init(Robot& robot) override {
     _initCount++;
 
     printf("%s: Init. Action=%p\n", _name.c_str(), _nextActionToRun);
@@ -209,8 +208,7 @@ public:
     return IBehavior::Status::Running;
   }
 
-  virtual IBehavior::Status UpdateWhileActiveInternal(Robot& robot,
-                                                      DelegateProperties& delegateProperties) override {
+  virtual IBehavior::Status UpdateWhileActiveInternal(Robot& robot) override {
     _updateCount++;
 
     printf("%s: Update. IsActing:%d, _delegateAfter:%d\n",
@@ -226,6 +224,7 @@ public:
       _subHelperRaw->StartAutoAction(robot);
       auto newHelperHandle = std::shared_ptr<IHelper>(_subHelperRaw);
       _subHelper = newHelperHandle;
+      DelegateProperties delegateProperties;
       delegateProperties.SetDelegateToSet(newHelperHandle);
       delegateProperties.SetOnSuccessFunction([this](Robot& robot) {
           if( _immediateCompleteOnSubSuccess ) {
@@ -236,7 +235,8 @@ public:
             return IBehavior::Status::Running;
           }
         });
-
+      
+      DelegateAfterUpdate(delegateProperties);
       return IBehavior::Status::Running;
     }      
     
@@ -282,7 +282,7 @@ private:
 
   bool _selfActionDone = false;
 
-  IBehavior* _behavior = nullptr;
+  IBehavior& _behavior;
 
   WeakHelperHandle _subHelper;
   TestHelper* _subHelperRaw = nullptr;
@@ -409,7 +409,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   TestHelper* rawPtr = nullptr;
 
   {
-    rawPtr = new TestHelper(robot, &b);
+    rawPtr = new TestHelper(robot, b);
     auto testHelper = std::shared_ptr<IHelper>( rawPtr );
     weak = testHelper;
     ASSERT_FALSE(weak.expired());
@@ -449,7 +449,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   helperFailed = false;
   
   {
-    rawPtr = new TestHelper(robot, &b);
+    rawPtr = new TestHelper(robot, b);
     auto testHelper = std::shared_ptr<IHelper>( rawPtr );
     weak = testHelper;
     ASSERT_FALSE(weak.expired());
@@ -506,7 +506,7 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
   TestHelper* rawPtr = nullptr;
 
   {
-    rawPtr = new TestHelper(robot, &b);
+    rawPtr = new TestHelper(robot, b);
     rawPtr->SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopAction, &actionChecks](Robot& r){
           printf("action: %d\n", stopAction);
           actionChecks++;
@@ -599,7 +599,7 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
   TestHelper* rawPtr = nullptr;
 
   {
-    rawPtr = new TestHelper(robot, &b);
+    rawPtr = new TestHelper(robot, b);
     rawPtr->SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopHelperAction](Robot& r){
           printf("helper action: %d\n", stopHelperAction);
           return stopHelperAction;
@@ -814,7 +814,7 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
   bool stopBehaviorAction = false;
   
   {
-    ptrs[0].raw = new TestHelper(robot, &b);
+    ptrs[0].raw = new TestHelper(robot, b);
     auto strong = std::shared_ptr<IHelper>( ptrs[0].raw );
     ptrs[0].weak = strong; // store weak pointer
     
@@ -915,7 +915,7 @@ TEST(BehaviorHelperSystem, CancelDelegates)
   bool stopBehaviorAction = false;
   
   {
-    ptrs[0].raw = new TestHelper(robot, &b);
+    ptrs[0].raw = new TestHelper(robot, b);
     auto strong = std::shared_ptr<IHelper>( ptrs[0].raw );
     ptrs[0].weak = strong; // store weak pointer
     
@@ -1077,7 +1077,7 @@ TEST(BehaviorHelperSystem, StopBehavior)
   bool stopBehaviorAction = false;
   
   {
-    ptrs[0].raw = new TestHelper(robot, &b);
+    ptrs[0].raw = new TestHelper(robot, b);
     auto strong = std::shared_ptr<IHelper>( ptrs[0].raw );
     ptrs[0].weak = strong; // store weak pointer
     

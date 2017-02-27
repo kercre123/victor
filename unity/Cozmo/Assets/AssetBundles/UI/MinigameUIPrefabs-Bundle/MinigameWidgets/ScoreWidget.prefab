@@ -315,6 +315,9 @@ MonoBehaviour:
   Prefab: {fileID: 194676, guid: c70aa1a8748ed4243b6c6e28fe4e5223, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
     JsonValue: 1.0
   - ObjectPath: 
@@ -353,6 +356,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SegmentPrefab: {fileID: 11499218, guid: 64aa4931b274a42758cbfe256299eba1, type: 2}
   _SegmentContainer: {fileID: 11403964}
+  _OffImage: {fileID: 0}
 --- !u!114 &11427152
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -393,6 +397,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
@@ -476,6 +483,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 128000, guid: 21eaa812bf61341d6b38cb96ad3eae79, type: 2}
   ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
     JsonValue: 1.0
@@ -2179,7 +2189,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -35}
+  m_AnchoredPosition: {x: 0, y: 19}
   m_SizeDelta: {x: 0, y: -70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22442240
@@ -2199,7 +2209,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.5, y: 0}
+  m_AnchoredPosition: {x: 259.5, y: 54}
   m_SizeDelta: {x: 519, y: 500}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22449878
@@ -2237,7 +2247,7 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.5, y: -752}
+  m_AnchoredPosition: {x: 259.5, y: -698}
   m_SizeDelta: {x: 519, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22461906
@@ -2314,7 +2324,7 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.5, y: -504}
+  m_AnchoredPosition: {x: 259.5, y: -450}
   m_SizeDelta: {x: 519, y: 142}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22486990

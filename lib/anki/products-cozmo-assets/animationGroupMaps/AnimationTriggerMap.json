@@ -1161,6 +1161,10 @@
       "AnimName": "LiftEffortRoll"
     },
     {
+      "CladEvent": "SoundOnlyRamIntoBlock",
+      "AnimName": "LiftEffortRoll"
+    },
+    {
       "CladEvent": "SoundOnlyTurnSmall",
       "AnimName": "ag_soundOnlyTurnSmall"
     },

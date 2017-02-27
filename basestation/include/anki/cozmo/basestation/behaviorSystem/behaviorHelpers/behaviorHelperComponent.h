@@ -42,11 +42,11 @@ public:
   
   bool DelegateToHelper(Robot& robot,
                         HelperHandle handleToRun,
-                        IHelper::SimpleCallbackWithRobot successCallback,
-                        IHelper::SimpleCallbackWithRobot failureCallback);
+                        BehaviorSimpleCallbackWithRobot successCallback,
+                        BehaviorSimpleCallbackWithRobot failureCallback);
   
   
-  bool StopHelper(const HelperHandle& helperToStop);
+  bool StopHelperWithoutCallback(const HelperHandle& helperToStop);
   
 protected:
   friend class AIComponent;
@@ -62,8 +62,8 @@ private:
   using HelperIter = HelperStack::iterator;
   
   HelperStack _helperStack;
-  IHelper::SimpleCallbackWithRobot _behaviorSuccessCallback;
-  IHelper::SimpleCallbackWithRobot _behaviorFailureCallback;
+  BehaviorSimpleCallbackWithRobot _behaviorSuccessCallback;
+  BehaviorSimpleCallbackWithRobot _behaviorFailureCallback;
     
   void CheckInactiveStackHelpers(const Robot& robot);
   void UpdateActiveHelper(Robot& robot);

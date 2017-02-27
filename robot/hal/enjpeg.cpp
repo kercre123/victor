@@ -43,13 +43,16 @@ const int BLOCKS_LINE = WIDTH / BLOCKW / BLOCKH;    // Number of blocks we can c
 #define BLOCK_SKIP 5     // Set to 5 for QVGA, 0 for VGA
 const int SLICEW = (BLOCKS_LINE-BLOCK_SKIP)*BLOCKW;  // A slice is 1/8th of a line (since slices are 8 lines high)
 
+uint32_t lastDC_;     // Last DC value from last encoder run
+uint8_t dc_[4];
+
 // This is for JPEG state that must be laid out in a specific order due to DMA/CPU limitations
 // There is no need to add to this structure unless you're doing DMA stuff - just use member variables
 CAMRAM struct JPEGState {
 // This section must be 768 bytes - see .sct file if you need to change that
   uint32_t bitBuf;     // Leftover bits from last encoder run
   int8_t   bitCnt;     // Number of bits still free in bitBuf
-  uint8_t  lastDC;     // Last DC value from last encoder run
+  uint8_t  res1; 
   int16_t  reserved;
   
   int8_t   dct[DCT_SIZE * BLOCKS_LINE];  // Holds DCT results for safe access in 40% time
@@ -195,13 +198,32 @@ static void unrowB2(s8* dct)
   
 // This uses DMA to de-interleave Y data to the left side of the buffer
 // This makes it much faster for the CPU to work with and frees space for coefficient storage
-static void DMACrunch()
+static void DMACrunch(bool color)
 {
   // TODO: DMA not working yet
+if (!color)
+{
   // Note: Compiler already optimizes this 
   uint8_t *src = state.row, *dst = (state.row) - 8;
   for (int i = 0; i < SLICEW*BLOCKH; i++)
     *src++ = *(dst+=8);
+} else {
+  // 4 bytes per 640x pixel = 2560 bytes
+  // We want 10 MCUs, 4 8-wide blocks per MCU, for 160x (16 bytes apart)
+  uint8_t *src = state.row, *dst = (state.row);
+  for (int i = 0; i < 10; i++)
+  {
+    for (int j = 0; j < 8; j++) // Build one MCU - 16x Y, 8x U, 8x V
+    {
+      src[j<<1]     = dst[0];    // Y
+      src[1+(j<<1)] = dst[16];   // Y
+      src[16+j]     = dst[6];    // Cb
+      src[24+j]     = dst[2];    // Cr
+      dst += 32;          // Next pixel
+    }
+    src += 32;
+  }
+}
 }
 
 const int EOB_SIZE = 4;   // EOB is 0xA, 4-bits long
@@ -263,7 +285,7 @@ static uint8_t* emit(__packed uint8_t* outp)
   uint32_t* outchop = out + (DROP_LIMIT/4 - ((BLOCKS_LINE-BLOCK_SKIP)-1)*2);  // Point where rate limiting must happen
   
   int8_t* dct = state.dct + BLOCK_SKIP*DCT_SIZE;
-  int lastDC;     // DC delta (saves ten bytes of RAM to do this here, and we have regs)
+  uint32_t lastDC;     // DC delta (saves ten bytes of RAM to do this here, and we have regs)
   
   // Store any tricky constants in registers, since loading them is too slow
   intptr_t actable = ((intptr_t)YHT) + 4*(8-24);     // +8*4 to skip DC table, -24*4 since we encode 8 (of 32) CLZ bits
@@ -272,7 +294,7 @@ static uint8_t* emit(__packed uint8_t* outp)
   // Load bit encoder state
   bitBuf = state.bitBuf;
   bitCnt = state.bitCnt;
-  lastDC = state.lastDC;
+  lastDC = lastDC_;
 
   // Start coding the first DC term
   goto startdc;
@@ -346,9 +368,12 @@ chopblock:
 startdc:
   qp = (intptr_t)dct;
   hufftable = actable - 32; // DC table is just before the AC tables (which are 32 bytes apart)
-  tmp = *(int8_t*)qp++;
-  val = tmp - lastDC;       // DC values are delta coded
-  lastDC = tmp;
+  tmp = *(uint8_t*)qp++;
+
+  lastDC = (lastDC << 8) | (lastDC >> 24);
+  val = tmp - dc_[lastDC & 3];
+  dc_[lastDC & 3] = tmp;
+
   goto writeval;
 
 // Write out 32-bits - +14 cycles 18% of the time, or 2.5 cycles/code overhead
@@ -387,7 +412,7 @@ stop:
   // Store bit buffer state
   state.bitBuf = bitBuf;
   state.bitCnt = bitCnt;
-  state.lastDC = lastDC;
+  lastDC_ = lastDC;
 
   return (uint8_t*)out;
 }
@@ -396,12 +421,13 @@ stop:
 // 'line' should be the line number of the current frame and 'height' is the total number of lines
 // To allow time for EOF, there must be a vblank of 1 or more lines (where line >= height)
 // Note there is an 8-line latency, because JPEG works in 8x8 blocks
-void JPEGCompress(int line, int height)
+void JPEGCompress(int line, int height, bool doColor)
 {
   static uint32_t frameNumber;
   // Current state of the encoder for this frame
   static uint16_t readline = 0;       // Pointer to next line to compress (lags by 8 lines)
   static uint16_t xpitch = SLICEW;    // To put lines in and pull blocks out, slice pitch changes every 8 lines
+  static bool color = false;
   
   int ypitch = xpitch ^ (SLICEW^(SLICEW*BLOCKH));   // ypitch is always orthogonal to xpitch
   uint8_t *out = spi_write_buff->payload;           // Pointer to destination
@@ -421,7 +447,7 @@ void JPEGCompress(int line, int height)
   {
     // Start DMA-moving Y data out of the way - needs 320 cycles before coeff[0] is free, 1280 total
     START(timeDMA);
-    DMACrunch();
+    DMACrunch(color);
     STOP(timeDMA);
 
     // TODO COLOR: In camera.cpp ISR start color DMACrunch, 160+160 U+V bytes to 640 dct bytes: 0u0v
@@ -464,6 +490,8 @@ void JPEGCompress(int line, int height)
       STOP(timeRow);
       START(timeEmit);
       buflen = emit(out) - out;
+      if (!readline)
+        out[0] = color;   // First byte of minipeg is 'image type' - right now, we just send color bool
       if (buflen > DROP_LIMIT)
         buflen = DROP_LIMIT;
       STOP(timeEmit);
@@ -486,8 +514,13 @@ void JPEGCompress(int line, int height)
       }
       
       // Since nothing to compress, reset encoder state for next time 
+      color = doColor;
       state.bitCnt = 32-EOB_SIZE; // Just enough to cut off the first EOB
-      state.lastDC = DC_START;
+      *(uint32_t*)dc_ = DC_START | (DC_START << 8) | (DC_START << 16) | (DC_START << 24);
+      if (color)
+        lastDC_ = 0x00000102;
+      else
+        lastDC_ = 0x00000000;
     }
         
     // On the last line of each block, reverse the slice pitch

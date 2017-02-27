@@ -231,6 +231,11 @@ public:
   void SetSuppressReactToDoubleTap(const bool b) { _suppressReactToDoubleTap = b; }
   
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Impossible States handling
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void SetNoPreDockPosesOnObject(const ObjectID& objectID) { _objectIDWithoutPreDock = objectID; }
+  const ObjectID& GetNoPreDockPosesOnObject() const { return _objectIDWithoutPreDock;}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -376,6 +381,9 @@ private:
   
   // Whether or not ReactToDoubleTap can run
   bool _suppressReactToDoubleTap = false;
+    
+  // Track objects without pre-doc poses - currently used for pyramid
+  ObjectID _objectIDWithoutPreDock;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

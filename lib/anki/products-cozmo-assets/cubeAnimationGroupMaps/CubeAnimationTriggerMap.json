@@ -49,8 +49,12 @@
             "AnimName": "pyramidFlourish"
         },
         {
-            "CladEvent": "PyramidOnSide",
-            "AnimName": "pyramidOnSide"
+            "CladEvent": "PyramidOnSideLocated",
+            "AnimName": "pyramidOnSideLocated"
+        },
+        {
+            "CladEvent": "PyramidOnSideNotLocated",
+            "AnimName": "pyramidOnSideNotLocated"
         },
         {
             "CladEvent": "PyramidPickup",
@@ -58,7 +62,7 @@
         },
         {
             "CladEvent": "PyramidSingle",
-            "AnimName": "interacting"
+            "AnimName": "pyramidSingle"
         },
         {
             "CladEvent": "Sleep",

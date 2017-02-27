@@ -771,8 +771,11 @@ class SetterVisitor(PythonMemberVisitor):
     def visit_FixedArrayType(self, node, name, value):
         self.output.write("{support_module}.validate_farray(\n".format(support_module=support_module))
         self.output.write('\t' * (self.depth + 1))
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
         self.output.write("{name}, {value}, {length},\n".format(
-            name=name, value=value, length=node.length))
+            name=name, value=value, length=length))
         self.output.write('\t' * (self.depth + 1))
         inner = '{value}_inner'.format(value=value)
         self.output.write('lambda name, {inner}: '.format(inner=inner))
@@ -843,7 +846,10 @@ class DefaultValueVisitor(PythonMemberVisitor):
     def visit_FixedArrayType(self, node):
         self.output.write('(')
         self.visit(node.member_type)
-        self.output.write(',) * {length}'.format(length=node.length))
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+        self.output.write(',) * {length}'.format(length=length))
 
     def visit_VariableArrayType(self, node):
         self.output.write('()')
@@ -919,7 +925,10 @@ class ReadVisitor(PythonMemberVisitor):
             reader=reader, format=type_translations[node.length_type.name]))
 
     def visit_FixedArrayType(self, node, reader):
-        self.fixed_visitor.visit(node.member_type, reader=reader, length=node.length)
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+        self.fixed_visitor.visit(node.member_type, reader=reader, length=length)
 
     def visit_VariableArrayType(self, node, reader):
         self.variable_visitor.visit(node.member_type, reader=reader, length_type=node.length_type)
@@ -991,7 +1000,10 @@ class WriteVisitor(PythonMemberVisitor):
             writer=writer, value=value, format=type_translations[node.length_type.name], support_module=support_module))
 
     def visit_FixedArrayType(self, node, writer, value):
-        self.fixed_visitor.visit(node.member_type, writer=writer, value=value, length=node.length)
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+        self.fixed_visitor.visit(node.member_type, writer=writer, value=value, length=length)
 
     def visit_VariableArrayType(self, node, writer, value):
         self.variable_visitor.visit(node.member_type, writer=writer, value=value, length_type=node.length_type)
@@ -1057,7 +1069,10 @@ class SizeVisitor(PythonMemberVisitor):
             value=value, length_format=type_translations[node.length_type.name], support_module=support_module))
 
     def visit_FixedArrayType(self, node, value):
-        self.fixed_visitor.visit(node.member_type, value=value, length=node.length)
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+        self.fixed_visitor.visit(node.member_type, value=value, length=length)
 
     def visit_VariableArrayType(self, node, value):
         self.variable_visitor.visit(node.member_type, value=value, length_type=node.length_type)

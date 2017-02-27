@@ -45,6 +45,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeCubeMoved.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorRamIntoBlock.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/BehaviorReactToDoubleTap.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToFrustration.h"
@@ -311,6 +312,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::LiftLoadTest:
     {
       newBehavior = new BehaviorLiftLoadTest(robot, config);
+      break;
+    }
+    case BehaviorClass::RamIntoBlock:
+    {
+      newBehavior = new BehaviorRamIntoBlock(robot, config);
       break;
     }
     case BehaviorClass::RespondPossiblyRoll:

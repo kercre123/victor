@@ -20,8 +20,12 @@ namespace AudioUtil {
   
 
 AudioRecognizerProcessor::AudioRecognizerProcessor()
-  : _captureSystem(new AudioCaptureSystem())
+: _captureSystem(new AudioCaptureSystem())
 {
+  if (!_captureSystem->IsValid())
+  {
+    _captureSystem.reset();
+  }
 }
 
 AudioRecognizerProcessor::~AudioRecognizerProcessor()
@@ -45,7 +49,7 @@ void AudioRecognizerProcessor::SetSpeechRecognizer(SpeechRecognizer* newRecog)
 
 void AudioRecognizerProcessor::Start()
 {
-  if (_capturingAudio)
+  if (!_captureSystem || _capturingAudio)
   {
     return;
   }
@@ -66,7 +70,7 @@ void AudioRecognizerProcessor::AudioSamplesCallback(const AudioSample* buffer, u
 
 void AudioRecognizerProcessor::Stop()
 {
-  if (!_capturingAudio)
+  if (!_captureSystem || !_capturingAudio)
   {
     return;
   }

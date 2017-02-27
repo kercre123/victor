@@ -55,7 +55,11 @@
     },
     {
       "reactionTrigger": "CliffDetected",
-      "behaviorName": "reactToCliff"
+      "behaviorName": "reactToCliff",
+      "genericStrategyParams": {
+        "shouldResumeLast": true,
+        "debugStrategyName": "Trigger Strategy React To Cliff"
+      }
     },
     {
       "reactionTrigger": "CubeMoved",
@@ -63,7 +67,13 @@
     },
     {
       "reactionTrigger": "DoubleTapDetected",
-      "behaviorName": "reactToDoubleTap"
+      "behaviorName": "reactToDoubleTap",
+      "genericStrategyParams": {
+        "shouldResumeLast": true,
+        "canTriggerWhileTriggered": false,
+        "needsRobotPreReq": true,
+        "debugStrategyName": "Trigger Strategy Double Tap"
+      }
     },
     {
       "reactionTrigger": "Frustration",
@@ -82,7 +92,15 @@
     },
     {
       "reactionTrigger": "MotorCalibration",
-      "behaviorName": "reactToMotorCalibration"
+      "behaviorName": "reactToMotorCalibration",
+      "genericStrategyParams": {
+        "shouldResumeLast": true,
+        "debugStrategyName": "Trigger Strategy Motor Calibration"
+      }
+    },
+    {
+      "reactionTrigger": "NoPreDockPoses",
+      "behaviorName": "pyramidRamIntoBlock"
     },
     {
       "reactionTrigger": "PlacedOnCharger",
@@ -94,7 +112,11 @@
     },
     {
       "reactionTrigger": "RobotPickedUp",
-      "behaviorName": "reactToPickup"
+      "behaviorName": "reactToPickup",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Pickup"
+      }
     },
     {
       "reactionTrigger": "RobotPlacedOnSlope",
@@ -106,19 +128,35 @@
     },
     {
       "reactionTrigger": "ReturnedToTreads",
-      "behaviorName": "ReactToReturnedToTreads"
+      "behaviorName": "ReactToReturnedToTreads",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Returned to Treads"
+      }
     },
     {
       "reactionTrigger": "RobotOnBack",
-      "behaviorName": "reactToRobotOnBack"
+      "behaviorName": "reactToRobotOnBack",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Robot On Back"
+      }
     },
     {
       "reactionTrigger": "RobotOnFace",
-      "behaviorName": "reactToRobotOnFace"
+      "behaviorName": "reactToRobotOnFace",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Robot On Face"
+      }
     },
     {
       "reactionTrigger": "RobotOnSide",
-      "behaviorName": "reactToRobotOnSide"
+      "behaviorName": "reactToRobotOnSide",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Robot On Side"
+      }
     },
     {
       "reactionTrigger": "Sparked",
@@ -130,7 +168,15 @@
     },
     {
       "reactionTrigger": "UnexpectedMovement",
-      "behaviorName": "reactToUnexpectedMovement"
+      "behaviorName": "reactToUnexpectedMovement",
+      "genericStrategyParams": {
+        "shouldResumeLast": true,
+        "debugStrategyName": "Trigger Strategy Unexpected Movement"
+      }
+    },
+    {
+      "reactionTrigger": "VoiceCommand",
+      "behaviorName": "AcknowledgeFace"
     }
   ]
 }

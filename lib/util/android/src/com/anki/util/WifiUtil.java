@@ -327,6 +327,19 @@ public final class WifiUtil {
     }
   }
 
+  /**
+   * If we're passed a null NetworkInfo in wifi state updates, try to find it from other sources
+   */
+  public static NetworkInfo findWifiNetworkInfo() {
+    for (final Network network : mConnectivityManager.getAllNetworks()) {
+      final NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
+      if (info != null && info.getType() == ConnectivityManager.TYPE_WIFI) {
+        return info;
+      }
+    }
+    return null;
+  }
+
   private static boolean attemptNetworkBind(final Network network) {
     boolean result = false;
     if (isVersionAtLeast(Build.VERSION_CODES.M)) {
@@ -498,7 +511,15 @@ public final class WifiUtil {
     }
   }
 
-  private static void handleNetworkUpdate(final NetworkInfo info, final UpdateType type) {
+  private static void handleNetworkUpdate(NetworkInfo info, final UpdateType type) {
+    if (info == null) {
+      if (type == UpdateType.WIFI) {
+        info = findWifiNetworkInfo();
+      }
+      if (info == null) {
+        return;
+      }
+    }
     Log.v(TAG, type.toString() + " update: " + info.toString());
     if (type == UpdateType.CONNECTIVITY) {
       // wifi state updates seem to be more reliable indicators of wifi connections;

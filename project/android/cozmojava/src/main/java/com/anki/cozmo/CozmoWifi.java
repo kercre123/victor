@@ -78,7 +78,13 @@ public final class CozmoWifi {
   }
 
   private static void handleNetworkUpdate(final Intent intent) {
-    final NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+    NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+    if (info == null) {
+      info = WifiUtil.findWifiNetworkInfo();
+      if (info == null) {
+        return;
+      }
+    }
     boolean isWifiNetwork = info.getType() == ConnectivityManager.TYPE_WIFI;
     if (isWifiNetwork) {
 

@@ -21,6 +21,12 @@
                 useWebAudioAPI = false;
             }
         }
+        else if ( ua.indexOf("iPhone OS 7") >= 0 ) {
+            // Turn sound off for Unity Editor WebView, otherwise webview content
+            // will fail to load, as apparently the Unity Editor WebView
+            // doesn't support the sound code in our simpleWebAudioPlayer.
+            useWebAudioAPI = false;
+        }
 
         if (useWebAudioAPI) {
             window.player = simpleWebAudioPlayer();

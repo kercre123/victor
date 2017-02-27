@@ -407,10 +407,12 @@ protected:
   ///
   // @brief      Adds a cube of the given ObjectType if doesn't already exist
   //             (should be unique).
-  // @param[in]  type   Cube ObjectType
+  // @param[in]  type       Cube ObjectType
+  // @param[in]  p          Pose at which cube should be added
+  // @param[in]  factoryID  FactoryID of cube to be added. (If 0, then factoryID is auto-generated based on ObjectType)
   // @return     Whether or not it was successfully added
   //
-  bool AddLightCubeByType(ObjectType type, const Pose3d& p);
+  bool AddLightCubeByType(ObjectType type, const Pose3d& p, const u32 factoryID = 0);
 
   
   

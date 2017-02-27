@@ -117,7 +117,7 @@ Blockly.Blocks['cozmo_drive'] = {
         },
         {
           "type": "input_value",
-          "name": "DURATION",
+          "name": "DISTANCE",
           "check": "Number"
         }
       ],

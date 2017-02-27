@@ -43,20 +43,13 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   void StopInternal(Robot& robot) override;
   
-  template<typename T>
-  void TransitionToSearchingWithCallback(Robot& robot,
-                                         const ObjectID& objectID,
-                                         void(T::*callback)(Robot&));
-  
 private:
   typedef std::vector<const ObservableObject*> BlockList;
   
   void TransitionToDrivingToTopBlock(Robot& robot);
   void TransitionToPlacingTopBlock(Robot& robot);
   void TransitionToReactingToPyramid(Robot& robot);
-      
-  int _searchingForTopBlockCount;
-  
+        
 }; //class BehaviorBuildPyramid
 
 }//namespace Cozmo

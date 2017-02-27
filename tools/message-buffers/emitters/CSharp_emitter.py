@@ -310,10 +310,14 @@ class StructEmitter(ast.NodeVisitor):
         self.output.write('\tpublic {message_name}()\n\t{{\n'.format(**globals))
         for member in node.members():
             if isinstance(member.type, ast.FixedArrayType):
+                length = member.type.length
+                if isinstance(length, str) and "::" in length:
+                    length = length.replace("::", ".")
+                    length = "(int)" + length
                 self.output.write('\t\tthis.{member_name} = new {element_type}[{length}];\n'.format(
                     member_name=member.name,
                     element_type=cast_type(member.type.member_type),
-                    length=member.type.length))
+                    length=length))
             elif isinstance(member.type, ast.CompoundType):
                 self.output.write('\t\tthis.{member_name} = new {member_type}();\n'.format(
                     member_name=member.name,
@@ -484,7 +488,28 @@ class StructEmitter(ast.NodeVisitor):
             #''')[:-1].format(**globals))
 
         if node.is_message_size_fixed():
-            self.output.write('\t\t\treturn {size};\n'.format(size=node.max_message_size()))
+            max_size = node.max_message_size()
+            size = 0
+            if isinstance(max_size, list):
+                size = ""
+                # For every unique element in max_size
+                for s in set(max_size):
+                    # If it is a string then generate code that casts it to an int and multiplies it by the number
+                    # of occurences there are in max_size
+                    if isinstance(s, str):
+                        s_count = max_size.count(s)
+                        s = "((int)" + s + ")"
+                        if s_count > 1:
+                            s += "*" + str(s_count)
+                        size += (s.replace("::", "."))
+                    else:
+                        size += str(s)
+                    size += "+"
+                # remove last '+' that was added
+                size = size[:-1]
+            else:
+                size = max_size
+            self.output.write('\t\t\treturn {size};\n'.format(size=size))
         else:
             self.output.write('\t\t\tint result = 0;\n')
             visitor = SizeVisitor(self.output)
@@ -595,6 +620,10 @@ class PropertyVisitor(ast.NodeVisitor):
                 #''')[:-1].format(member_name=member_name, max_length=max_length))
 
     def visit_FixedArrayType(self, node, member_name):
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+            length = "(int)" + length
         self.visit_Verbose(node, member_name,
             check_body=textwrap.dedent('''\
             \t\t\tif (value == null) {{
@@ -603,7 +632,7 @@ class PropertyVisitor(ast.NodeVisitor):
             \t\t\tif (value.Length != {length}) {{
             \t\t\t\tthrow new System.ArgumentException("{member_name} fixed-length array is the wrong size. Must have a length of {length}.", "value");
             \t\t\t}}
-            #''')[:-1].format(member_name=member_name, length=node.length))
+            #''')[:-1].format(member_name=member_name, length=length))
 
 class UnpackVisitor(ast.NodeVisitor):
 
@@ -667,6 +696,10 @@ class UnpackVisitor(ast.NodeVisitor):
 
     def visit_FixedArrayType(self, node, destination, depth):
         index_variable = self.get_index_variable(depth)
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+            length = "(int)" + length
         self.output.write(textwrap.dedent('''\
             {indent}{destination} = new {element_type}[{length}];
             {indent}for (int {index} = 0; {index} < {length}; ++{index}) {{
@@ -674,7 +707,7 @@ class UnpackVisitor(ast.NodeVisitor):
             indent='\t' * depth,
             destination=destination,
             element_type=cast_type(node.member_type),
-            length=node.length,
+            length=length,
             index=index_variable))
         self.visit(node.member_type, '{old}[{index}]'.format(old=destination, index=index_variable), depth + 1)
         self.output.write('{indent}}}\n'.format(indent='\t' * depth))
@@ -751,11 +784,15 @@ class PackVisitor(ast.NodeVisitor):
 
     def visit_FixedArrayType(self, node, value, depth):
         index_variable = self.get_index_variable(depth)
+        length=node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+            length = "(int)" + length
         self.output.write(textwrap.dedent('''\
             {indent}for (int {index} = 0; {index} < {length}; ++{index}) {{
             ''').format(
             indent='\t' * depth,
-            length=node.length,
+            length=length,
             index=index_variable))
         self.visit(node.member_type, '{old}[{index}]'.format(old=value, index=index_variable), depth + 1)
         self.output.write('{indent}}}\n'.format(indent='\t' * depth))
@@ -829,9 +866,13 @@ class SizeVisitor(ast.NodeVisitor):
 
     def visit_FixedArrayType(self, node, value, depth):
         if node.is_message_size_fixed():
+            length = node.length
+            if isinstance(length, str) and "::" in length:
+                length = length.replace("::", ".")
+                length = "(int)" + length
             self.output.write('{indent}result += {length} * {element_size};\n'.format(
                 indent='\t' * depth,
-                length=node.length,
+                length=length,
                 element_size=node.member_type.max_message_size()))
         else:
             index_variable = self.get_index_variable(depth)

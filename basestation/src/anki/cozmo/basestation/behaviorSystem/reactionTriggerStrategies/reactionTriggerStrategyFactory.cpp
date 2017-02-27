@@ -12,26 +12,21 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
 
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyCliffDetected.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyCubeMoved.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyDoubleTapDetected.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFacePositionUpdated.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFistBump.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFrustration.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyMotorCalibration.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyGeneric.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyNoPreDockPoses.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyObjectPositionUpdated.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPlacedOnCharger.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPetInitialDetection.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotPickedUp.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotPlacedOnSlope.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPyramidInitialDetection.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyReturnedToTreads.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotOnBack.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotOnFace.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotOnSide.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategySparked.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyStackOfCubesInitialDetection.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyUnexpectedMovement.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "clad/types/behaviorTypes.h"
 #include "util/logging/logging.h"
@@ -39,6 +34,8 @@
 
 namespace Anki {
 namespace Cozmo {
+
+using namespace ExternalInterface;
 
 IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
                              CreateReactionTriggerStrategy(Robot& robot,
@@ -49,7 +46,14 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
   switch (trigger) {
     case ReactionTrigger::CliffDetected:
     {
-      strategy = new ReactionTriggerStrategyCliffDetected(robot, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
+      std::set<MessageEngineToGameTag> relevantTypes =
+      {
+        MessageEngineToGameTag::CliffEvent,
+        MessageEngineToGameTag::RobotStopped
+      };
+      genericStrategy->ConfigureRelevantEvents(relevantTypes);
+      strategy = genericStrategy;
       break;
     }
     case ReactionTrigger::CubeMoved:
@@ -59,7 +63,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::DoubleTapDetected:
     {
-      strategy = new ReactionTriggerStrategyDoubleTapDetected(robot, config);
+      strategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
       break;
     }
     case ReactionTrigger::FacePositionUpdated:
@@ -79,7 +83,22 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::MotorCalibration:
     {
-      strategy = new ReactionTriggerStrategyMotorCalibration(robot, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
+      std::set<MessageEngineToGameTag> relevantTypes =
+      {
+        MessageEngineToGameTag::MotorCalibration
+      };
+      genericStrategy->ConfigureRelevantEvents(relevantTypes, [] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) {
+        const MotorCalibration& msg = event.GetData().Get_MotorCalibration();
+        return (msg.autoStarted && msg.calibStarted);
+      });
+                                              
+      strategy = genericStrategy;
+      break;
+    }
+    case ReactionTrigger::NoPreDockPoses:
+    {
+      strategy = new ReactionTriggerStrategyNoPreDockPoses(robot, config);
       break;
     }
     case ReactionTrigger::ObjectPositionUpdated:
@@ -99,7 +118,12 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::RobotPickedUp:
     {
-      strategy = new ReactionTriggerStrategyRobotPickedUp(robot, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehavior* behavior) -> bool {
+        return robot.GetOffTreadsState() == OffTreadsState::InAir;
+      });
+      
+      strategy = genericStrategy;
       break;
     }
     case ReactionTrigger::RobotPlacedOnSlope:
@@ -114,21 +138,47 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::ReturnedToTreads:
     {
-      strategy = new ReactionTriggerStrategyReturnedToTreads(robot, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
+      std::set<MessageEngineToGameTag> relevantTypes =
+      {
+        MessageEngineToGameTag::RobotOffTreadsStateChanged
+      };
+      genericStrategy->ConfigureRelevantEvents(relevantTypes, [] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) {
+        return (event.GetData().Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads);
+      });
+      
+      strategy = genericStrategy;
       break;
-    }    case ReactionTrigger::RobotOnBack:
+    }
+    case ReactionTrigger::RobotOnBack:
     {
-      strategy = new ReactionTriggerStrategyRobotOnBack(robot, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehavior* behavior) -> bool {
+        return robot.GetOffTreadsState() == OffTreadsState::OnBack;
+      });
+      
+      strategy = genericStrategy;
       break;
     }
     case ReactionTrigger::RobotOnFace:
     {
-      strategy = new ReactionTriggerStrategyRobotOnFace(robot, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehavior* behavior) -> bool {
+        return robot.GetOffTreadsState() == OffTreadsState::OnFace;
+      });
+      
+      strategy = genericStrategy;
       break;
     }
     case ReactionTrigger::RobotOnSide:
     {
-      strategy = new ReactionTriggerStrategyRobotOnSide(robot, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehavior* behavior) -> bool {
+        return robot.GetOffTreadsState() == OffTreadsState::OnLeftSide
+            || robot.GetOffTreadsState() == OffTreadsState::OnRightSide;
+      });
+      
+      strategy = genericStrategy;
       break;
     }
     case ReactionTrigger::Sparked:
@@ -143,7 +193,18 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::UnexpectedMovement:
     {
-      strategy = new ReactionTriggerStrategyUnexpectedMovement(robot, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
+      std::set<MessageEngineToGameTag> relevantTypes =
+      {
+        MessageEngineToGameTag::UnexpectedMovement
+      };
+      genericStrategy->ConfigureRelevantEvents(relevantTypes);
+      strategy = genericStrategy;
+      break;
+    }
+    case ReactionTrigger::VoiceCommand:
+    {
+      strategy = new ReactionTriggerStrategyVoiceCommand(robot, config);
       break;
     }
     case ReactionTrigger::Count:

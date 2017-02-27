@@ -42,7 +42,8 @@
       { "channel": "CubeLightComponent", "enabled": false },
       { "channel": "BodyLightComponent", "enabled": false },
       { "channel": "ReactionTriggers","enabled": false },
-      { "channel": "Loading",         "enabled": false }
+      { "channel": "Loading",         "enabled": false },
+      { "channel": "VoiceCommands",   "enabled": false }
     ],
     "levels":
     [
@@ -85,7 +86,8 @@
       { "channel": "Animations",      "enabled": false },
       { "channel": "CubeLightComponent", "enabled": false },
       { "channel": "BodyLightComponent", "enabled": false },
-      { "channel": "ReactionTriggers","enabled": false }
+      { "channel": "ReactionTriggers","enabled": false },
+      { "channel": "VoiceCommands",   "enabled": false }
     ],
     "levels":
     [
@@ -128,7 +130,8 @@
       { "channel": "Animations",      "enabled": false },
       { "channel": "CubeLightComponent", "enabled": false },
       { "channel": "BodyLightComponent", "enabled": false },
-      { "channel": "ReactionTriggers","enabled": false }
+      { "channel": "ReactionTriggers","enabled": false },
+      { "channel": "VoiceCommands",   "enabled": false }
     ],
     "levels":
     [

@@ -3,6 +3,7 @@
     '../../coretech/project/gyp/face-library.gypi',
     '../../coretech/project/gyp/opencv.gypi',
     'build-variables.gypi',
+    'voice-recognition.gypi',
   ],
   
   'variables': {
@@ -121,6 +122,7 @@
       '<(coretech_external_path)/flite-2.0.0/generated/ios/DerivedData/Release-iphoneos',
     ],
 
+    # Begin libarchive related variables
     'libarchive_libs': [
       'libarchive.a',
     ],
@@ -298,9 +300,10 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_ios)',
                     '<@(flite_lib_search_path_ios)',
+                    '<@(voice_recog_library_lib_path)',
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
-                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                  '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
                 ],
               },
             }],
@@ -312,6 +315,7 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_mac)',
                     '<@(flite_lib_search_path_mac)',
+                    '<@(voice_recog_library_lib_path)',
                 ],
               },
             }],
@@ -338,9 +342,10 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_ios)',
                     '<@(flite_lib_search_path_ios)',
+                    '<@(voice_recog_library_lib_path)',
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
-                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                  '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
                 ],
               },
             }],
@@ -352,6 +357,7 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_mac)',
                     '<@(flite_lib_search_path_mac)',
+                    '<@(voice_recog_library_lib_path)',
                 ],
               },
             }],
@@ -378,9 +384,10 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_ios)',
                     '<@(flite_lib_search_path_ios)',
+                    '<@(voice_recog_library_lib_path)',
                 ],
                  'FRAMEWORK_SEARCH_PATHS': [
-                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                  '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
                 ],
               },
             }],
@@ -392,6 +399,7 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_mac)',
                     '<@(flite_lib_search_path_mac)',
+                    '<@(voice_recog_library_lib_path)',
                 ],
               },
             }],
@@ -418,9 +426,10 @@
                     '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_ios)',
                     '<@(flatbuffers_lib_search_path_ios)',
+                    '<@(voice_recog_library_lib_path)',
                 ],
                  'FRAMEWORK_SEARCH_PATHS': [
-                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                  '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
                 ],
              },
             }],
@@ -431,6 +440,7 @@
                     '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_mac)',
+                    '<@(voice_recog_library_lib_path)',
                 ],
               },
             }],
@@ -705,6 +715,7 @@
               '<@(flatbuffers_include)',
               '<@(flite_includes)',
               '<@(routing_http_server_include)',
+              '<@(voice_recog_library_includes)',
             ],
             'dependencies': [
               'cozmoEngine',
@@ -733,6 +744,7 @@
               '<@(opencv_libs)',
               '<@(face_library_libs)',
               '<@(routing_http_server_libs)',
+              '<@(voice_recog_library_libs)',
             ],
 
             #Force linked due to objective-C categories.
@@ -1340,6 +1352,7 @@
         '../../generated/clad/game',
         '<@(libarchive_include)',
         '<@(das_include)',
+        '<@(voice_recog_library_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
@@ -1384,6 +1397,7 @@
               '<@(flite_libs)',
               '<@(routing_http_server_libs)',
               '<@(libarchive_libs)',
+              '<@(voice_recog_library_libs)',
             ],
           },
       	  'OS=="android"',
@@ -1419,6 +1433,7 @@
               # '<@(opencv_libs)',
               '<@(flatbuffers_libs_android)',
               '<@(flite_libs_android)',
+              '<@(voice_recog_library_libs)',
               '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/libIlmImf.a',
               '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjasper.a',
               #'<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjpeg.a',
@@ -1503,7 +1518,7 @@
             ['exclude', '(android|linux)']
           ],
           'libraries': [
-              '../../lib/HockeySDK-iOS/HockeySDK.framework',
+              '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework/HockeySDK.framework',
           ]
         }],
         ['OS=="mac"',{

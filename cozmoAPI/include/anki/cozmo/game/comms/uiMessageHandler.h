@@ -83,7 +83,7 @@ namespace Anki {
       
       virtual void OnRobotDisconnected(uint32_t robotID) override;
       
-      virtual bool IsInSdkMode() const override { return _sdkStatus.IsInSdkMode(); }
+      virtual bool IsInSdkMode() const override { return _sdkStatus.IsInAnySdkMode(); }
       
       virtual void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) override
       {
@@ -146,6 +146,9 @@ namespace Anki {
       
       bool ConnectToUiDevice(ISocketComms::DeviceId deviceId, UiConnectionType connectionType);
       void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+      
+      // Some events need to be sent from Unity -> SDK or from SDK -> Unity
+      void HandleGameToGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
       
       // ============================== Private Types ==============================
       

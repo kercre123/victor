@@ -16,7 +16,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/iHelper.h"
 #include "anki/common/basestation/objectIDs.h"
-
+#include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -24,19 +24,22 @@ namespace Cozmo {
 
 class PickupBlockHelper : public IHelper{
 public:
-  PickupBlockHelper(Robot& robot, IBehavior* behavior, BehaviorHelperFactory& helperFactory, const ObjectID& targetID);
+  PickupBlockHelper(Robot& robot, IBehavior& behavior,
+                    BehaviorHelperFactory& helperFactory,
+                    const ObjectID& targetID,
+                    AnimationTrigger animBeforeDock);
   virtual ~PickupBlockHelper();
 
 protected:
   // IHelper functions
   virtual bool ShouldCancelDelegates(const Robot& robot) const override;
-  virtual BehaviorStatus Init(Robot& robot,
-                              DelegateProperties& delegateProperties) override;
-  virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot,
-                                                   DelegateProperties& delegateProperties) override;
+  virtual BehaviorStatus Init(Robot& robot) override;
+  virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot) override;
   
 private:
   ObjectID _targetID;
+  AnimationTrigger _animBeforeDock;
+  u32 _tmpRetryCounter;
   
   void StartPickupAction(Robot& robot);
   void RespondToPickupResult(ActionResult result, Robot& robot);

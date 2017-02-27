@@ -46,12 +46,12 @@ bool ReactionTriggerStrategyPlacedOnCharger::ShouldTriggerBehavior(const Robot& 
   }
 
   if(_dontRunUntilTime_sec <= currentTime_sec &&
-     _shouldComputationallySwitch){
-    _shouldComputationallySwitch = false;
+     _shouldTrigger){
+    _shouldTrigger = false;
     return behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
   }
   
-  _shouldComputationallySwitch = false;
+  _shouldTrigger = false;
   return false;
 }
 
@@ -61,7 +61,7 @@ void ReactionTriggerStrategyPlacedOnCharger::AlwaysHandleInternal(const EngineTo
   if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::ChargerEvent &&
      event.GetData().Get_ChargerEvent().onCharger)
   {
-    _shouldComputationallySwitch = true;
+    _shouldTrigger = true;
   }
 }
   

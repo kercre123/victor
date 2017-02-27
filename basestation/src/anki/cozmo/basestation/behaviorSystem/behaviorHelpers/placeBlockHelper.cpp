@@ -24,7 +24,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PlaceBlockHelper::PlaceBlockHelper(Robot& robot,
-                                   IBehavior* behavior,
+                                   IBehavior& behavior,
                                    BehaviorHelperFactory& helperFactory)
 : IHelper("PlaceBlock", robot, behavior, helperFactory)
 {
@@ -46,8 +46,7 @@ bool PlaceBlockHelper::ShouldCancelDelegates(const Robot& robot) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceBlockHelper::Init(Robot& robot,
-                                      DelegateProperties& delegateProperties)
+BehaviorStatus PlaceBlockHelper::Init(Robot& robot)
 {
   double turn_rad = robot.GetRNG().RandDblInRange(M_PI_4 ,M_PI_2);
   if( robot.GetRNG().RandDbl() < 0.5 )
@@ -63,8 +62,7 @@ BehaviorStatus PlaceBlockHelper::Init(Robot& robot,
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PlaceBlockHelper::UpdateWhileActiveInternal(Robot& robot,
-                                                           DelegateProperties& delegateProperties)
+BehaviorStatus PlaceBlockHelper::UpdateWhileActiveInternal(Robot& robot)
 {
   return _status;
 }

@@ -192,7 +192,8 @@
           "simpleChooserDelegate":
           {
             "type":"pyramid",
-            "behaviorGroups" : [ "SetupBuildPyramid", "BuildPyramid" ]
+            "behaviorGroups" : [ "SetupBuildPyramid", "BuildPyramid" ],
+            "shouldCubeMessageOnSide" : true
           },
           // these are the behaviors that are allowed in this behavior chooser
           // no behavior groups are set here since this chooser delegates to the pyramid
@@ -311,7 +312,8 @@
         "behaviorChooser" :
         {
           "type" : "pyramid",
-          "behaviorGroups" : [ "SetupBuildPyramid", "BuildPyramid"  ]
+          "behaviorGroups" : [ "SetupBuildPyramid", "BuildPyramid"  ],
+          "shouldCubeMessageOnSide" : false
         },
         "goalStrategy":
         {

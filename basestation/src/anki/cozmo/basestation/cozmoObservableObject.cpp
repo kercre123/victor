@@ -25,5 +25,33 @@ f32 ObservableObject::GetMaxLocalizationDistance_mm()
   return kMaxLocalizationDistance_mm;
 }
   
+void ObservableObject::SetID()
+{
+  if(IsUnique())
+  {
+    static std::map<ObjectType, ObjectID> typeToUniqueID;
+    
+    const ObjectType objType = GetType();
+    
+    auto iter = typeToUniqueID.find(objType);
+    if(iter == typeToUniqueID.end())
+    {
+      // First instance with this type. Add new entry.
+      Vision::ObservableObject::SetID();
+      const ObjectID& newID = GetID();
+      typeToUniqueID.emplace(objType, newID);
+    }
+    else
+    {
+      // Use existing ID for this type
+      _ID = iter->second;
+    }
+  }
+  else
+  {
+    Vision::ObservableObject::SetID();
+  }
+}
+  
 } // namespace Cozmo
 } // namespace Anki

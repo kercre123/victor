@@ -1,6 +1,5 @@
 {
   "behaviorClass": "ReactToDoubleTap",
   "name": "reactToDoubleTap",
-  "requireObjectTapped" : true,
-  "disableByDefault": false
+  "requireObjectTapped" : true
 }

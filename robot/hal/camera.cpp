@@ -54,6 +54,9 @@ namespace Anki
       const u16 MAX_EXPOSURE_LINES = 500;
       // Gain is a byte so max gain is fixed point 255 converted to float
       const f32 MAX_GAIN = FIXED_POINT_TO_GAIN(255);
+      // Whether or not color images is enabled
+      bool colorEnabled_ = false;
+      
       volatile bool timingSynced_ = false;
 
       // For self-test purposes only.
@@ -130,7 +133,7 @@ namespace Anki
       void HALInit(void);
 
       u8* const dmaBuff_ = (u8*)0x20000000;       // Start of RAM buffer
-      void JPEGCompress(int line, int height);
+      void JPEGCompress(int line, int height, bool color);
         
       static void InitDMA();
 
@@ -222,6 +225,9 @@ namespace Anki
         
         // Exposure as defined in gc0329.h
         exposure_lines_ = (CAM_SCRIPT[29] << 8) | CAM_SCRIPT[31];
+        
+        // Start with color disabled
+        colorEnabled_ = false;
       }
       
       // Start streaming data from the camera - after this point, the main thread can't touch registers
@@ -304,6 +310,16 @@ namespace Anki
       u16 CameraGetExposureDelay()
       {
         return exposure_lines_;
+      }
+      
+      void CameraSetColorEnabled(bool enable)
+      {
+        colorEnabled_ = enable;
+      }
+      
+      bool CameraGetColorEnabled()
+      {
+        return colorEnabled_;
       }
     }
   }
@@ -422,8 +438,9 @@ void PendSV_Handler(void)
   
   // Run the JPEG encoder for all of the remaining time
 #if defined(ENABLE_JPEG)
+  bool color = CameraGetColorEnabled();
   if (line < 498 && IsVideoEnabled())   // XXX: This is apparently compensating for a JPEGCompress bug
-    JPEGCompress(line, TOTAL_ROWS);
+    JPEGCompress(line, TOTAL_ROWS, color);
   else
     Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0, 0);
 #else

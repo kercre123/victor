@@ -1026,7 +1026,7 @@ public class MockRobot : IRobot {
   public void EnableLift(bool enable) {
   }
 
-  public void EnterSDKMode() {
+  public void EnterSDKMode(bool isExternalSdkMode) {
   }
 
   public void ExitSDKMode() {

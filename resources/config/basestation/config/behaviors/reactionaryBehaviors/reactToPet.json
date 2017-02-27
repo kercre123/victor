@@ -1,6 +1,5 @@
 {
   "behaviorClass": "ReactToPet",
   "name": "ReactToPet",
-  "displayNameKey":"behavior.ReactToPet",
-  "disableByDefault": false
+  "displayNameKey":"behavior.ReactToPet"
 }

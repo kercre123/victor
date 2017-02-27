@@ -340,12 +340,28 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     const ObjectFamily objFamily = object->GetFamily(); // Remove with COZMO-9319
     const ObjectType objType = object->GetType(); // Store due to std::move
+    
+    // Find objects that already exist with this type
+    BlockWorldFilter filter;
+    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+    filter.AddAllowedType(objType);
+    ObservableObject* objWithType = FindMatchingObject(filter);
+    const bool redefiningExistingType = (objWithType != nullptr);
+    
     const Result addResult = _objectLibrary[objFamily].AddObject(std::move(object));
     
     if(RESULT_OK == addResult)
     {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.DefineObject.AddedObjectDefinition",
                     "Defined %s in Object Library", EnumToString(objType));
+      
+      if(redefiningExistingType)
+      {
+        PRINT_NAMED_WARNING("BlockWorld.DefineObject.RemovingObjectsWithPreviousDefinition",
+                            "Type %s was already defined, removing object(s) with old definition",
+                            EnumToString(objType));
+        DeleteObjectsByType(objType);
+      }
     }
     else
     {
@@ -1398,6 +1414,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       
       // Keep looking through objects we saw
       return ObjectID();
+    }
+    
+    if(ObjectType::Block_LIGHTCUBE_GHOST == object->GetType())
+    {
+      PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObject.AddingGhostObject",
+                        "Adding ghost objects to BlockWorld is not permitted");
+      return ObjectID{};
     }
     
     if(objectToCopyID != nullptr)
@@ -5024,9 +5047,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             }
             
             objectsByFamily.second.erase(typeIter);
-            
-            // Types are unique.  No need to keep looking
-            return;
           }
         }
       }

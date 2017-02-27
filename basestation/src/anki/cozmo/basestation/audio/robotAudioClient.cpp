@@ -4,7 +4,7 @@
  * Author: Jordan Rivas
  * Created: 11/09/2015
  *
- * Description: This Client handles the Robot’s specific audio needs. It is a sub-class of AudioEngineClient.
+ * Description: This Client handles the Robot’s specific audio needs. It is a subclass of AudioEngineClient.
  *
  * Copyright: Anki, Inc. 2015
  */
@@ -196,7 +196,7 @@ void RobotAudioClient::FlushAudioCallbackQueue()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// vvvvvvvvvvvv Depercated vvvvvvvvvvvvvvvv
+// vvvvvvvvvvvv Deprecated vvvvvvvvvvvvvvvv
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -329,7 +329,7 @@ bool RobotAudioClient::AnimationIsComplete()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// ^^^^^^^^^^^^ Depercated ^^^^^^^^^^^^^
+// ^^^^^^^^^^^^ Deprecated ^^^^^^^^^^^^^
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -38,7 +38,8 @@ enum class TestState {
   NotifyKidnap,
   Kidnap,
   SeeCubeInNewOrigin,
-  Rejigger
+  Rejigger,
+  Redefine
 };
 
 
@@ -66,6 +67,9 @@ private:
   webots::Node* _cube2     = nullptr;
   webots::Node* _cube3     = nullptr;
   webots::Node* _lightCube = nullptr;
+  
+  ObjectID _wallID;
+  ObjectID _lightCubeID;
   
   const Pose3d kPoseOrigin;
   const Pose3d kKidnappedRobotPose;
@@ -298,9 +302,34 @@ s32 CST_CustomObjects::UpdateSimInternal()
         // Make sure poses are still correct after re-localizing to the light cube
         CheckPoses();
         
+        // Redefine CustomObject00 (the cube) differently. That should delete all existing objects of that type.
+        using namespace ExternalInterface;
+        
+        DefineCustomCube defineCube(ObjectType::CustomType00,
+                                    CustomObjectMarker::Hexagons4,
+                                    2.f*_cubeSize_mm,
+                                    .5f*_cubeMarkerSize_mm, .5f*_cubeMarkerSize_mm,
+                                    false);
+        
+        SendMessage(MessageGameToEngine(std::move(defineCube)));
+        
+        // Also look down, just so we stop seeing the Circles2 markers on the old redefined cubes, which will produce
+        // warnings in the log that might look suspicious but are in fact red herrings (they are expected after we
+        // redefine the marker). We may still see a few while the head goes down, but at least they won't spam.
+        SendMoveHeadToAngle(MIN_HEAD_ANGLE, 100.f, 100.f);
+        
+        _testState = TestState::Redefine;
+      }
+      break;
+    }
+      
+    case TestState::Redefine:
+    {
+      // Wait for the three cubes to be deleted thanks to the redefinition of their type
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(GetNumObjects()==2, kDefaultTimeout_sec)
+      {
         StopMovie();
         CST_EXIT();
-
       }
       break;
     }
@@ -429,8 +458,18 @@ void CST_CustomObjects::CheckPoses()
     
     customObj->InitPose(*whichWallPose, PoseState::Known);
     
-    const ObjectID wallID(wallIDs.front());
-    CheckPoseHelper(customObj, wallID);
+    if(_wallID.IsUnknown())
+    {
+      // First time set _wallID
+      _wallID = wallIDs.front();
+    }
+    else
+    {
+      // Remaining times, verify the ID has remained consistent, since it is marked unique
+      CST_ASSERT(_wallID == wallIDs.front(), "CST_CustomObject.CheckPoses.WallIDChanged");
+    }
+    
+    CheckPoseHelper(customObj, _wallID);
     Util::SafeDelete(customObj);
   }
   
@@ -478,7 +517,19 @@ void CST_CustomObjects::CheckPoses()
     
     ActiveCube* activeCube = new ActiveCube(ObjectType::Block_LIGHTCUBE1);
     activeCube->InitPose(_lightCubePose, PoseState::Known);
-    CheckPoseHelper(activeCube, lightcubeIDs.front());
+    
+    if(_lightCubeID.IsUnknown())
+    {
+      // First time set _lightCubeID
+      _lightCubeID = lightcubeIDs.front();
+    }
+    else
+    {
+      // Remaining times, verify the ID has remained consistent, since it is unique
+      CST_ASSERT(_lightCubeID == lightcubeIDs.front(), "CST_CustomObject.CheckPoses.LightCubeIDChanged");
+    }
+    
+    CheckPoseHelper(activeCube, _lightCubeID);
     Util::SafeDelete(activeCube);
   }
 }

@@ -2,7 +2,6 @@
   "behaviorClass": "ReactToOnCharger",
   "name": "reactToOnCharger",
   "displayNameKey":"behavior.ReactToOnCharger",
-  "disableByDefault": true,
   "timeTilSleepAnimation_s": 300.0,
   "timeTilDisconnection_s": 330.0
 }

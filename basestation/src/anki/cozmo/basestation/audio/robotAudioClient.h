@@ -4,7 +4,7 @@
  * Author: Jordan Rivas
  * Created: 11/09/2015
  *
- * Description: This Client handles the Robot’s specific audio needs. It is a sub-class of AudioEngineClient.
+ * Description: This Client handles the Robot’s specific audio needs. It is a subclass of AudioEngineClient.
  *
  * Copyright: Anki, Inc. 2015
  */
@@ -56,7 +56,7 @@ public:
   // Destructor
   ~RobotAudioClient();
     
-  // The the audio buffer for the corresponding Game Object
+  // Audio buffer for the corresponding Game Object
   virtual RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject );
 
   // Post Cozmo specific Audio events
@@ -81,34 +81,34 @@ public:
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// vvvvvvvvvvvv Depercated vvvvvvvvvvvvvvvv
+// vvvvvvvvvvvv Deprecated vvvvvvvvvvvvvvvv
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-   // Create an Audio Animation for a specific animation. Only one animation can be played at a time
-  // FIXME: Remove after new animtion code goes in
+  // Create an Audio Animation for a specific animation. Only one animation can be played at a time.
+  // FIXME: Remove after new animation code goes in
   void CreateAudioAnimation( Animation* anAnimation );
 
-  // FIXME: Remove after new animtion code goes in
+  // FIXME: Remove after new animation code goes in
   RobotAudioAnimation* GetCurrentAnimation() { return _currentAnimation; }
 
   // Delete audio animation
   // Note: This Does not Abort the animation
-  // FIXME: Remove after new animtion code goes in
+  // FIXME: Remove after new animation code goes in
   void ClearCurrentAnimation();
 
-  // FIXME: Remove after new animtion code goes in
+  // FIXME: Remove after new animation code goes in
   bool HasAnimation() const { return _currentAnimation != nullptr; }
 
   // Return true if there is no animation or animation is ready
-  // FIXME: Remove after new animtion code goes in
+  // FIXME: Remove after new animation code goes in
   bool UpdateAnimationIsReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
 
   // Check Animation States to see if it's completed
-  // FIXME: Remove after new animtion code goes in
+  // FIXME: Remove after new animation code goes in
   bool AnimationIsComplete();
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// ^^^^^^^^^^^^ Depercated ^^^^^^^^^^^^^
+// ^^^^^^^^^^^^ Deprecated ^^^^^^^^^^^^^
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Robot Volume Value is between ( 0.0 - 1.0 )

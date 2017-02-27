@@ -65,6 +65,7 @@ class IReactToPetListener;
 class IFistBumpListener;
 
 enum class CubeAnimationTrigger;
+struct BehaviorStateLightInfo;
 
 namespace ExternalInterface {
 class MessageEngineToGame;
@@ -345,6 +346,15 @@ protected:
   // in order to log das events and notify goal strategies if they listen for the message
   void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true);
   
+  
+  /////////////
+  /// "Smart" helpers - Behaviors can call these functions to set properties that
+  /// need to be cleared when the behavior stops.  IBehavior will hold the reference
+  /// and clear it appropriately.  Functions also exist to clear these properties
+  /// before the behavior stops.
+  ////////////////
+  
+  
   // Allows the behavior to disable and enable reaction triggers without having to worry about re-enabling them
   // these triggers will be automatically re-enabled when the behavior stops
   void SmartDisableReactionTrigger(ReactionTrigger trigger);
@@ -371,9 +381,14 @@ protected:
   // Ensures that a handle is stopped if the behavior is stopped
   bool SmartDelegateToHelper(Robot& robot,
                              HelperHandle handleToRun,
-                             SimpleCallbackWithRobot successCallback,
-                             SimpleCallbackWithRobot failureCallback);
-  bool SmartStopHelper();
+                             SimpleCallbackWithRobot successCallback = nullptr,
+                             SimpleCallbackWithRobot failureCallback = nullptr);
+
+  // Stop a helper delegated with SmartDelegateToHelper
+  bool StopHelperWithoutCallback();
+  
+  // Convenience function for seting behavior state lights in the behavior manager
+  void SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction);
   
 
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const {};

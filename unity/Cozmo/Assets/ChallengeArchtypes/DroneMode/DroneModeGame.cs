@@ -7,7 +7,6 @@ namespace Cozmo {
     namespace DroneMode {
       public class DroneModeGame : GameBase {
         private const float _kCalculateSteeringInputInterval_ms = 100f;
-        private const float _kChangedTurnDirectionThreshold = 0.0001f;
 
         public delegate void TurnDirectionChangedHandler(float newNormalizedPitch);
         public event System.Action<float> OnTurnDirectionChanged;
