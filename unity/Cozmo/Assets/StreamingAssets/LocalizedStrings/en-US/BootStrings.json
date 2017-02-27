@@ -19,7 +19,7 @@
     ]
   },
   "boot.errorDiskFull": {
-    "translation": "The Cozmo App could not load because your device's storage is too full. Try removing media or unused apps from your phone, and try again. D"
+    "translation": "The Cozmo App could not load because your device's storage is too full. Try removing media or unused apps from your phone, and try again."
   },
   "boot.errorReadingFiles": {
     "translation": "The Cozmo App could not read files. Error: {0}"
