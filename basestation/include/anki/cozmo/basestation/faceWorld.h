@@ -41,8 +41,7 @@ namespace Cozmo {
     Result Update(std::list<Vision::TrackedFace>& observedFaces);
     Result AddOrUpdateFace(Vision::TrackedFace& face);
   
-    Result ChangeFaceID(Vision::FaceID_t oldID,
-                        Vision::FaceID_t newID);
+    Result ChangeFaceID(const Vision::UpdatedFaceID& update);
     
     // Returns nullptr if not found
     const Vision::TrackedFace* GetFace(Vision::FaceID_t faceID) const;

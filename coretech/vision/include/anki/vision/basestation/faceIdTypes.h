@@ -25,8 +25,9 @@ namespace Vision {
   
   struct UpdatedFaceID
   {
-    FaceID_t oldID;
-    FaceID_t newID;
+    FaceID_t    oldID;
+    FaceID_t    newID;
+    std::string newName;
   };
   
   struct FaceRecognitionMatch

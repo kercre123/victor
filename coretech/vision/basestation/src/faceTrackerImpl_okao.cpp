@@ -815,8 +815,10 @@ namespace Vision {
         // We either just assigned a recognition ID to a tracker ID or we updated
         // the recognition ID (e.g. due to merging)
         UpdatedFaceID update{
-          .oldID = (recognitionData.GetPreviousFaceID() == UnknownFaceID ? -detectionInfo.nID : recognitionData.GetPreviousFaceID()),
-          .newID = recognitionData.GetFaceID()
+          .oldID   = (recognitionData.GetPreviousFaceID() == UnknownFaceID ?
+                      -detectionInfo.nID : recognitionData.GetPreviousFaceID()),
+          .newID   = recognitionData.GetFaceID(),
+          .newName = recognitionData.GetName()
         };
         
         updatedIDs.push_back(std::move(update));
@@ -829,8 +831,9 @@ namespace Vision {
         // So we should notify listeners that tracking ID is now
         // associated with this recognized ID.
         UpdatedFaceID update{
-          .oldID = -recognitionData.GetTrackingID(),
-          .newID = recognitionData.GetFaceID()
+          .oldID   = -recognitionData.GetTrackingID(),
+          .newID   = recognitionData.GetFaceID(),
+          .newName = recognitionData.GetName()
         };
         
         // Don't send this update if it turns out to contain the same info as
