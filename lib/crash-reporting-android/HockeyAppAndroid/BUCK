@@ -16,6 +16,6 @@ android_library(
   manifest = 'src/main/AndroidManifest.xml',
   source = '1.6',
   target = '1.6',
-  deps = jar_deps,
+  exported_deps = jar_deps,
   visibility = ['PUBLIC'],
 )

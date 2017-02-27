@@ -161,8 +161,16 @@ public class HockeyApp : MonoBehaviour {
       null);
     nativeCrashManager.Call("updateDescriptionFile", getCrashDescriptionJSON(appRunId, _DeviceId));
 
-    AndroidJavaClass pluginClass = new AndroidJavaClass("net.hockeyapp.unity.HockeyUnityPlugin");
-    pluginClass.CallStatic("startHockeyAppManager", currentActivity, urlString, _HockeyAppId, secret, authType, updateManagerEnabled, userMetricsEnabled, autoSendEnabled);
+    currentActivity.Call("startHockeyAppManager",
+                         urlString,
+                         _HockeyAppId,
+                         secret,
+                         authType,
+                         updateManagerEnabled,
+                         userMetricsEnabled,
+                         autoSendEnabled,
+                         _DeviceId,
+                         getCrashDescriptionJSON(appRunId, _DeviceId));
 
 #endif
   }
@@ -202,7 +210,7 @@ public class HockeyApp : MonoBehaviour {
     JSONObject json = new JSONObject();
     json.AddField("apprun", appRunId);
     json.AddField("device", deviceId);
-    return json.ToString();
+    return json.ToString(true);
   }
 
   /// <summary>

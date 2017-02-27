@@ -17,6 +17,13 @@ import com.anki.hockeyappandroid.NativeCrashManager;
 import com.anki.util.AnkitivityDispatcher;
 import com.anki.util.PermissionUtil;
 
+import net.hockeyapp.android.CrashManager;
+import net.hockeyapp.android.CrashManagerListener;
+import net.hockeyapp.android.FeedbackManager;
+import net.hockeyapp.android.LoginManager;
+import net.hockeyapp.android.UpdateManager;
+import net.hockeyapp.android.metrics.MetricsManager;
+
 /**
  * Custom Activity implementation designed to work with AnkitivityDispatcher, so that results of permission requests
  * and other activities can be dispatched to code in the anki-util repository that doesn't know about CozmoActivity
@@ -95,6 +102,103 @@ public class CozmoActivity extends UnityPlayerActivity implements ActivityCompat
         @Override
         public void run() {
           ThrowNullPointerException();
+        }
+    });
+  }
+
+  public void startHockeyAppManager(final String serverURL,
+                                    final String appID,
+                                    final String secret,
+                                    final int loginMode,
+                                    final boolean updateManagerEnabled,
+                                    final boolean userMetricsEnabled,
+                                    final boolean autoSendEnabled,
+                                    final String userId,
+                                    final String crashDescription) {
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          if (updateManagerEnabled) {
+            registerUpdateManager(serverURL, appID);
+          }
+          if (userMetricsEnabled) {
+            registerMetricsManager(appID);
+          }
+          registerCrashManager(serverURL, appID, autoSendEnabled, userId, crashDescription);
+          registerFeedbackManager(serverURL, appID);
+          registerLoginManager(serverURL, appID, secret, loginMode);
+        }
+    });
+  }
+
+  public void registerUpdateManager(final String serverURL,
+                                    final String appID)
+  {
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          UpdateManager.register(CozmoActivity.this, serverURL, appID, null, true);
+        }
+    });
+  }
+
+  public void registerMetricsManager(final String appID)
+  {
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          MetricsManager.register(CozmoActivity.this, CozmoActivity.this.getApplication(), appID);
+        }
+    });
+  }
+
+  public void registerFeedbackManager(final String serverURL,
+                                      final String appID)
+  {
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          FeedbackManager.register(CozmoActivity.this, serverURL, appID, null);
+        }
+    });
+  }
+
+  public void registerLoginManager(final String serverURL,
+                                   final String appID,
+                                   final String secret,
+                                   final int loginMode)
+  {
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          LoginManager.register(CozmoActivity.this, appID, secret, serverURL,
+                                loginMode, CozmoActivity.this.getClass());
+          LoginManager.verifyLogin(CozmoActivity.this, CozmoActivity.this.getIntent());
+        }
+    });
+  }
+
+  public void registerCrashManager(final String serverURL,
+                                   final String appID,
+                                   final boolean autoSendEnabled,
+                                   final String userId,
+                                   final String crashDescription)
+  {
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          CrashManager.register(CozmoActivity.this, serverURL, appID,
+                                new CrashManagerListener() {
+                                  public String getUserID() {
+                                    return userId;
+                                  }
+                                  public String getDescription() {
+                                    return crashDescription;
+                                  }
+                                  public boolean shouldAutoUploadCrashes() {
+                                    return autoSendEnabled;
+                                  }
+                                });
         }
     });
   }
