@@ -103,8 +103,8 @@ private:
   int _startedBehavior = 0;
   int _stoppedBehavior = 0;
   
-  ActionResult _moveHeadToAngleResult = ActionResult::RUNNING;;
-  ActionResult _turnInPlaceResult = ActionResult::RUNNING;;
+  ActionResult _moveHeadToAngleResult = ActionResult::RUNNING;
+  ActionResult _turnInPlaceResult = ActionResult::RUNNING;
   ActionResult _pickupObjectResult = ActionResult::RUNNING;
   ActionResult _placeObjectResult = ActionResult::RUNNING;
 

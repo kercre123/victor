@@ -497,8 +497,7 @@ namespace Anki {
       const f32 y_end = y_start + _dist_mm * std::sin(heading.ToFloat());
       
       Planning::Path path;
-      // TODO: does matID matter? I'm just using 0 below
-      if(false  == path.AppendLine(0, x_start, y_start, x_end, y_end,
+      if(false  == path.AppendLine(x_start, y_start, x_end, y_end,
                                    _speed_mmps, _accel_mmps2, _decel_mmps2))
       {
         PRINT_NAMED_ERROR("DriveStraightAction.Init.AppendLineFailed", "");

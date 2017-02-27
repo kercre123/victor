@@ -529,8 +529,7 @@ namespace Anki {
 
       for(size_t i=0; i<numPts; ++i) {
         size_t j = (i + 1) % numPts;
-        polyPath.AppendLine(0,
-                            poly[i].x(), poly[i].y(),
+        polyPath.AppendLine(poly[i].x(), poly[i].y(),
                             poly[j].x(), poly[j].y(),
                             1.0, 1.0, 1.0);
       }

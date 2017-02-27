@@ -59,7 +59,7 @@ Pose3d RelativePathLine::ExtendPath(const Pose3d& pose, Planning::Path& path) co
   f32 x_end = endPositionOrigin.GetTranslation().x();
   f32 y_end = endPositionOrigin.GetTranslation().y();
   
-  path.AppendLine(0, x_start, y_start, x_end, y_end, _targetSpeed, _accel, _decel);
+  path.AppendLine(x_start, y_start, x_end, y_end, _targetSpeed, _accel, _decel);
   
   //Create Ending Pose
   return endPositionOrigin;
@@ -101,7 +101,7 @@ Pose3d RelativePathArc::ExtendPath(const Pose3d& pose, Planning::Path& path) con
   f32 x_center = arcCenterOrigin.GetTranslation().x();
   f32 y_center = arcCenterOrigin.GetTranslation().y();
 
-  path.AppendArc(0, x_center, y_center, fabs(radius), startAngle.ToFloat(), sweep, _targetSpeed, _accel, _decel);
+  path.AppendArc(x_center, y_center, fabs(radius), startAngle.ToFloat(), sweep, _targetSpeed, _accel, _decel);
   
   //Calculate new translation
   Pose3d newRobotRotated = Pose3d(Radians(sweep), Z_AXIS_3D(), {0.f, 0.f, 0.f}, &arcCenterRobot);
@@ -149,7 +149,7 @@ Pose3d RelativePathTurn::ExtendPath(const Pose3d& pose, Planning::Path& path) co
     useShortestDistance = false;
   }
   
-  path.AppendPointTurn(0, x_start, y_start, zAxisRotation.ToFloat(), _targetRotSpeed, _rotAccel, _rotDecel, _angleTolerence, useShortestDistance);
+  path.AppendPointTurn(x_start, y_start, zAxisRotation.ToFloat(), _targetRotSpeed, _rotAccel, _rotDecel, _angleTolerence, useShortestDistance);
   
   //Create Ending Pose
   Pose3d newRobotRotated = Pose3d(rotRadians, Z_AXIS_3D(), {0.f, 0.f, 0.f}, &pose);

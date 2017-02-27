@@ -395,7 +395,7 @@ MonoBehaviour:
     JsonValue: false
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"Okay"'
+    JsonValue: '"#button.continue"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: AndroidGetPermissions:_ExecuteButton
