@@ -15,6 +15,11 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#define SET_STATE(s) {                                          \
+  PRINT_NAMED_INFO("CST_BasicActions.TransitionTestState",      \
+                   "%s", #s);                                   \
+  _testState = TestState::s;                                    \
+}
 
 namespace Anki {
   namespace Cozmo {
@@ -45,7 +50,12 @@ namespace Anki {
       
       TestState _testState = TestState::MoveLiftUp;
       
+      // Used to keep track of action results:
+      RobotActionType _lastActionType = RobotActionType::UNKNOWN;
       ActionResult _lastActionResult = ActionResult::RUNNING;
+      // StartingAction() sets _lastActionResult to RUNNING and sets
+      //  _lastActionType to the supplied actionType:
+      void StartingAction(const RobotActionType& actionType);
       
       const Point3f _poseToVerify = {190, 0, 22};
       
@@ -67,54 +77,64 @@ namespace Anki {
           MakeSynchronous();
           StartMovieConditional("BasicActions");
           // TakeScreenshotsAtInterval("BasicActions", 1.f);
-
+          
+          StartingAction(RobotActionType::MOVE_LIFT_TO_HEIGHT);
           SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, 100, 100);
-          _testState = TestState::MoveLiftDown;
+          SET_STATE(MoveLiftDown);
           break;
         }
         case TestState::MoveLiftDown:
         {
           // Verify that lift is in up position
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetLiftHeight_mm(),
-                                                LIFT_HEIGHT_HIGHDOCK,
-                                                5), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetLiftHeight_mm(), LIFT_HEIGHT_HIGHDOCK, 5))
           {
+            StartingAction(RobotActionType::MOVE_LIFT_TO_HEIGHT);
             SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, 100, 100);
-            _testState = TestState::MoveHeadUp;
+            SET_STATE(MoveHeadUp);
           }
           break;
         }
         case TestState::MoveHeadUp:
         {
           // Verify that lift is in down position
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetLiftHeight_mm(),
-                                                LIFT_HEIGHT_LOWDOCK,
-                                                5), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetLiftHeight_mm(), LIFT_HEIGHT_LOWDOCK, 5))
           {
+            StartingAction(RobotActionType::MOVE_HEAD_TO_ANGLE);
             SendMoveHeadToAngle(MAX_HEAD_ANGLE, 100, 100);
-            _testState = TestState::MoveHeadDown;
+            SET_STATE(MoveHeadDown);
           }
           break;
         }
         case TestState::MoveHeadDown:
         {
           // Verify head is up
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL))
           {
+            StartingAction(RobotActionType::MOVE_HEAD_TO_ANGLE);
             SendMoveHeadToAngle(0, 100, 100);
-            _testState = TestState::DriveForwards;
+            SET_STATE(DriveForwards);
           }
           break;
         }
         case TestState::DriveForwards:
         {
           // Verify head is down
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL))
           {
+            StartingAction(RobotActionType::DRIVE_STRAIGHT);
+            
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
@@ -124,16 +144,20 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
           
-            _testState = TestState::DriveBackwards;
+            SET_STATE(DriveBackwards);
           }
           break;
         }
         case TestState::DriveBackwards:
         {
           // Verify robot is 50 mm forwards
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 50, 10), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetTranslation().x(), 50, 10))
           {
+            StartingAction(RobotActionType::DRIVE_STRAIGHT);
+            
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
@@ -143,55 +167,49 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
             
-            _testState = TestState::TurnLeft;
+            SET_STATE(TurnLeft);
           }
           break;
         }
         case TestState::TurnLeft:
         {
           // Verify robot is at starting point
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 10) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetTranslation().x(), 0, 10),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10))
           {
-            ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
-            m.position = QueueActionPosition::NOW;
-            m.idTag = 4;
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(M_PI_F/2, DEG_TO_RAD(100), 0, false, 1));
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_QueueSingleAction(m);
-            SendMessage(message);
-            
-            _testState = TestState::TurnRight;
+            StartingAction(RobotActionType::TURN_IN_PLACE);
+            SendTurnInPlace(M_PI_F/2, DEG_TO_RAD(100), 0);
+            SET_STATE(TurnRight);
           }
           break;
         }
         case TestState::TurnRight:
         {
           // Verify robot turned to 90 degrees
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 90, 10), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 90, 10))
           {
-            ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
-            m.position = QueueActionPosition::NOW;
-            m.idTag = 5;
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, false, 1));
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_QueueSingleAction(m);
-            SendMessage(message);
-            
-            _testState = TestState::PanAndTilt;
+            StartingAction(RobotActionType::TURN_IN_PLACE);
+            SendTurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0);
+            SET_STATE(PanAndTilt);
           }
           break;
         }
         case TestState::PanAndTilt:
         {
           // Verify robot turned back to 0 degrees
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10))
           {
+            StartingAction(RobotActionType::PAN_AND_TILT);
+            
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
@@ -201,18 +219,21 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
             
-            _testState = TestState::FacePose;
+            SET_STATE(FacePose);
           }
           break;
         }
         case TestState::FacePose:
         {
           // Verify robot turned 180 degrees and head is at right angle
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           (NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 10) ||
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -180, 10)) &&
-                                           NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetRobotPose().GetRotation().GetAngleAroundZaxis().IsNear(DEG_TO_RAD(180.f), DEG_TO_RAD(10.f)),
+                                                NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL))
           {
+            StartingAction(RobotActionType::TURN_TOWARDS_POSE);
+            
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
@@ -224,17 +245,21 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::FaceObject;
+            SET_STATE(FaceObject);
           }
           break;
         }
         case TestState::FaceObject:
         {
           // Verify robot is facing pose
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 20) &&
-                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(4.f), HEAD_ANGLE_TOL), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 20),
+                                                NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(4.f), HEAD_ANGLE_TOL))
           {
+            StartingAction(RobotActionType::TURN_TOWARDS_OBJECT);
+            
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
@@ -244,17 +269,21 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::VisuallyVerifyNoObjectAtPose;
+            SET_STATE(VisuallyVerifyNoObjectAtPose);
           }
           break;
         }
         case TestState::VisuallyVerifyNoObjectAtPose:
         {
           // Verify robot is facing the object
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 30), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10),
+                                                NEAR(GetRobotPose().GetTranslation().x(), 0, 30))
           {
+            StartingAction(RobotActionType::VISUALLY_VERIFY_NO_OBJECT_AT_POSE);
+            
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
@@ -263,8 +292,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::VisuallyVerifyObjectAtPose;
-            _lastActionResult = ActionResult::RUNNING;
+            SET_STATE(VisuallyVerifyObjectAtPose);
           }
           break;
         }
@@ -273,10 +301,12 @@ namespace Anki {
           // Verify robot is not seeing any objects at pose ~(0,100,0) which means the VisuallyVerifyNoObjectAtPose
           // succeeded
           IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
-                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 90, 20),
-                                                _lastActionResult == ActionResult::SUCCESS)
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 90, 20))
           {
+            StartingAction(RobotActionType::VISUALLY_VERIFY_NO_OBJECT_AT_POSE);
+            
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
@@ -285,8 +315,7 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::TestDone;
-            _lastActionResult = ActionResult::RUNNING;
+            SET_STATE(TestDone);
           }
           break;
         }
@@ -309,11 +338,32 @@ namespace Anki {
       return _result;
     }
     
+    void CST_BasicActions::StartingAction(const RobotActionType& actionType)
+    {
+      // Ensure that HandleRobotCompletedAction has reset _lastActionType to UNKNOWN. Otherwise
+      //  we may be trying to start an action before the previous one's completion was handled.
+      CST_ASSERT(_lastActionType == RobotActionType::UNKNOWN, "_lastActionType was never reset to UNKNOWN!");
+
+      _lastActionType = actionType;
+      _lastActionResult = ActionResult::RUNNING;
+    }
+    
     
     // ================ Message handler callbacks ==================
     void CST_BasicActions::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
     {
-      _lastActionResult = msg.result;
+      PRINT_NAMED_INFO("CST_BasicActions.HandleRobotCompletedAction", "completed action %s, result %s", EnumToString(msg.actionType), EnumToString(msg.result));
+      
+      if (msg.actionType == _lastActionType) {
+        _lastActionResult = msg.result;
+        // Reset _lastActionType to unknown
+        _lastActionType = RobotActionType::UNKNOWN;
+      } else {
+        PRINT_NAMED_WARNING("CST_BasicActions.HandleRobotCompletedAction",
+                            "An unexpected action completed. msg.actionType = %s, _lastActionType = %s",
+                            EnumToString(msg.actionType),
+                            EnumToString(_lastActionType));
+      }
     }
     
     // ================ End of message handler callbacks ==================
