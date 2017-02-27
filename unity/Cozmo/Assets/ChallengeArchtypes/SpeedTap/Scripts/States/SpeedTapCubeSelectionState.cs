@@ -34,11 +34,13 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      _SpeedTapGame.SharedMinigameView.HideMiddleBackground();
+      if (_SpeedTapGame != null) {
+        _SpeedTapGame.SharedMinigameView.HideMiddleBackground();
 
-      // Clear lights on all cubes
-      foreach (var kvp in _CurrentRobot.LightCubes) {
-        _SpeedTapGame.SetLEDs(kvp.Value.ID, Color.black);
+        // Clear lights on all cubes
+        foreach (var kvp in _CurrentRobot.LightCubes) {
+          _SpeedTapGame.SetLEDs(kvp.Value.ID, Color.black);
+        }
       }
     }
 
