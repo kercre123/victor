@@ -246,26 +246,29 @@ void user_init(void)
 {
   char ssid[65];
   int8 err;
+  int8 db_mod;
 
   wifi_status_led_uninstall();
-  //system_phy_set_tpw_via_vdd33(system_get_vdd33());
-  system_phy_set_max_tpw(MAX_TPW);
-  
+
+  //find correct dB reduction:
+  db_mod = ((getModelNumber() & 0xFF) >= COZMO_MODEL_1_5) ? TPW_MODIFICATION_V1_5 : TPW_MODIFICATION_V1_0;
+  system_phy_set_max_tpw(MAX_TPW + db_mod);
+
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
   err = system_update_cpu_freq(160);
-
+ 
   uart_init(BIT_RATE_3000000, BIT_RATE_115200);
 
   gpio_init();
 
   os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
+  os_printf("Hardware model 1.%d, %dB\r\n",getModelNumber()&0xFF, db_mod);
 
   // Setup factory data access methods
   factoryDataInit();
 
   uint8 macaddr[6];
   wifi_get_macaddr(SOFTAP_IF, macaddr);
-  
   
   if (getSerialNumber() == 0xFFFFffff)
   {
@@ -278,7 +281,6 @@ void user_init(void)
   }
 
   SetWiFiPsk();
-
 
   uint8_t channel = selectWiFiChannel();
   
