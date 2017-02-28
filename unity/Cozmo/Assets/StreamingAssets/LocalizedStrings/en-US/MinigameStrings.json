@@ -350,5 +350,8 @@
   },
   "sayCozmo.button.say": {
     "translation": "Say"
+  },
+  "speedTap.SelectGameType": {
+    "translation": "Select Game Type"
   }
 }
