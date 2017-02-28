@@ -36,20 +36,8 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
 
 Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
     if (!util.stackFrame.timer) {
-        function callNativeApp(msg) {
-            try {
-                webkit.messageHandlers.callbackHandler.postMessage(msg);
-            } catch(err) {
-                console.log("Native context is missing.");
-            }
-        }
-
-        var colorIndex = this._getColor(Cast.toString(args.CHOICE));
-        var jsonValues = {
-            "command": "cozmoSetBackpackColor",
-            "color": colorIndex
-        };
-        callNativeApp(jsonValues);
+        var colorHexValue = this._getColor(Cast.toString(args.CHOICE));
+        window.Unity.call('{"command": "cozmoSetBackpackColor","argUInt": "' + colorHexValue + '"}');
         
         // Yield
         util.stackFrame.timer = new Timer();
@@ -68,7 +56,7 @@ Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
        // number under the block) and will be used as a multiplier against the
        // base dist_mm of 30.0f.
        var distMultiplier = Cast.toNumber(args.DISTANCE);
-       window.Unity.call('{"command": "cozmoDriveForward","dist_multiplier": ' + distMultiplier + '}');
+       window.Unity.call('{"command": "cozmoDriveForward","argFloat": ' + distMultiplier + '}');
 
         // Yield
         util.stackFrame.timer = new Timer();
@@ -84,18 +72,8 @@ Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
 
 Scratch3CozmoBlocks.prototype.playAnimation = function(args, util) {
     if (!util.stackFrame.timer) {
-        function callNativeApp(msg) {
-            try {
-                webkit.messageHandlers.callbackHandler.postMessage(msg);
-            } catch(err) {
-                console.log("Native context is missing.");
-            }
-        }
-
-        var jsonValues = {
-            "command": "cozmoPlayAnimation"
-        };
-        callNativeApp(jsonValues);
+       // TODO animation arg is a placeholder until we add a dropdown of options
+       window.Unity.call('{"command": "cozmoPlayAnimation","argInt": ' + 1 + '}');
 
         // Yield
         util.stackFrame.timer = new Timer();
@@ -111,19 +89,8 @@ Scratch3CozmoBlocks.prototype.playAnimation = function(args, util) {
 
 Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
     if (!util.stackFrame.timer) {
-       function callNativeApp(msg) {
-           try {
-               webkit.messageHandlers.callbackHandler.postMessage(msg);
-           } catch(err) {
-               console.log("Native context is missing.");
-           }
-       }
-
-       var jsonValues = {
-           "command": "cozmoForklift",
-           "liftHeight": Cast.toString(args.CHOICE)
-        };
-        callNativeApp(jsonValues);
+        var liftHeight = Cast.toString(args.CHOICE);
+        window.Unity.call('{"command": "cozmoForklift","argString": "' + liftHeight + '"}');
 
         // Yield
         util.stackFrame.timer = new Timer();
@@ -137,29 +104,38 @@ Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
 };    
 
 /**
- * Convert a color name to a WeDo color index.
+ * Convert a color name to a Cozmo color index.
  * Supports 'mystery' for a random hue.
  * @param colorName The color to retrieve.
- * @returns {number} The WeDo color index.
+ * @returns {number} The Cozmo color index.
  * @private
  */
 Scratch3CozmoBlocks.prototype._getColor = function(colorName) {
-    var colors = {
-        'yellow': 7,
-        'orange': 8,
-        'coral': 9,
-        'magenta': 1,
-        'purple': 2,
-        'blue': 3,
-        'green': 6,
-        'white': 10
-    };
+    var colorNameToHexTable = [
+        {colorName: 'yellow', colorHex: 0xffff00ff},
+        {colorName: 'orange', colorHex: 0xffA500ff},
+        {colorName: 'coral', colorHex: 0xff0000ff},
+        {colorName: 'magenta', colorHex: 0xff00ffff},
+        {colorName: 'purple', colorHex: 0xff00ffff},
+        {colorName: 'blue', colorHex: 0x0000ffff},
+        {colorName: 'green', colorHex: 0x00ff00ff},
+        {colorName: 'white', colorHex: 0xffffffff}
+    ];
 
     if (colorName == 'mystery') {
-        return Math.floor((Math.random() * 10) + 1);
+        var randomValue = Math.floor(Math.random() * 8);
+        return colorNameToHexTable[randomValue].colorHex;
     }
 
-    return colors[colorName];
+    var colorHexToReturn;
+    for (var i = 0; i < colorNameToHexTable.length; i++) {
+        if (colorNameToHexTable[i].colorName == colorName)
+        {
+            colorHexToReturn = colorNameToHexTable[i].colorHex;
+        }
+    }
+
+    return colorHexToReturn;
 };
 
 /**
@@ -217,19 +193,8 @@ Scratch3CozmoBlocks.prototype.waitForCube = function (args, util) {
 
 Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
     if (!util.stackFrame.timer) {
-        function callNativeApp(msg) {
-            try {
-                webkit.messageHandlers.callbackHandler.postMessage(msg);
-            } catch(err) {
-                console.log("Native context is missing.");
-            }
-        }
-   
-        var jsonValues = {
-            "command": "cozmoHeadAngle",
-            "headAngle": Cast.toString(args.CHOICE)
-        };
-        callNativeApp(jsonValues);
+        var headAngle = Cast.toString(args.CHOICE);
+        window.Unity.call('{"command": "cozmoHeadAngle","argString": "' + headAngle + '"}');
 
         // Yield
         util.stackFrame.timer = new Timer();
@@ -244,18 +209,7 @@ Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
                                        
 Scratch3CozmoBlocks.prototype.turn = function(args, util) {
     if (!util.stackFrame.timer) {
-        function callNativeApp(msg) {
-            try {
-                webkit.messageHandlers.callbackHandler.postMessage(msg);
-            } catch(err) {
-                console.log("Native context is missing.");
-            }
-        }
-
-        var jsonValues = {
-            "command": "cozmoTurn"
-        };
-        callNativeApp(jsonValues);
+        window.Unity.call('{"command": "cozmoTurn"}');
 
         // Yield
         util.stackFrame.timer = new Timer();
@@ -270,19 +224,8 @@ Scratch3CozmoBlocks.prototype.turn = function(args, util) {
 
 Scratch3CozmoBlocks.prototype.speak = function(args, util) {
     if (!util.stackFrame.timer) {
-        function callNativeApp(msg) {
-            try {
-                webkit.messageHandlers.callbackHandler.postMessage(msg);
-            } catch(err) {
-                console.log("Native context is missing.");
-            }
-        }
-                                       
-        var jsonValues = {
-            "command": "cozmoSays",
-            "text": Cast.toString(args.STRING)
-        };
-        callNativeApp(jsonValues);
+        var textToSay = Cast.toString(args.STRING);
+        window.Unity.call('{"command": "cozmoSays","argString": "' + textToSay + '"}');
 
         // Yield
         util.stackFrame.timer = new Timer();

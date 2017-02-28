@@ -4,7 +4,10 @@ using Newtonsoft.Json;
 
 public class ScratchRequest {
   public string command { get; set; }
-  public int argument { get; set; }
+  public string argString { get; set; }
+  public int argInt { get; set; }
+  public uint argUInt { get; set; }
+  public float argFloat { get; set; }
 }
 
 public class DebugDisplayPane : MonoBehaviour {
@@ -203,13 +206,50 @@ public class DebugDisplayPane : MonoBehaviour {
       const float speed_mmps = 30.0f;
       float dist_mm = 30.0f;
 
-      float distMultiplier = scratchRequest.argument;
-      if (distMultiplier < 1.0f) {
-        distMultiplier = 1.0f;
-      }
-      dist_mm *= distMultiplier;
+      // Here, argFloat represents the number selected from the dropdown under the "drive forward" block
+      dist_mm *= scratchRequest.argFloat;
 
       RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(speed_mmps, dist_mm, false);
+    }
+    else if (scratchRequest.command == "cozmoPlayAnimation") {
+      // TODO Use ScratchRequest arg to select one of ~15 animations
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration);
+    }
+    else if (scratchRequest.command == "cozmoTurn") {
+      // Turn 90 degrees to the left
+      // TODO We will also want a block that turns 90 degrees to the right
+      const float degrees_to_radians = Mathf.PI / 180.0f;
+      const float angle = 90.0f;
+      RobotEngineManager.Instance.CurrentRobot.TurnInPlace(angle * degrees_to_radians, 0.0f, 0.0f);
+    }
+    else if (scratchRequest.command == "cozmoSays") {
+      // TODO Add profanity filter
+      RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(scratchRequest.argString, Anki.Cozmo.AnimationTrigger.Count);
+    }
+    else if (scratchRequest.command == "cozmoHeadAngle") {
+      float headAngle = (CozmoUtil.kIdealBlockViewHeadValue + CozmoUtil.kIdealFaceViewHeadValue) * 0.5f; // medium setting
+      if (scratchRequest.argString == "low") {
+        headAngle = CozmoUtil.kIdealBlockViewHeadValue;
+      }
+      else if (scratchRequest.argString == "high") {
+        headAngle = CozmoUtil.kIdealFaceViewHeadValue;
+      }
+
+      RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(headAngle);
+    }
+    else if (scratchRequest.command == "cozmoForklift") {
+      float liftHeight = 0.5f; // medium setting
+      if (scratchRequest.argString == "low") {
+        liftHeight = 0.0f;
+      }
+      else if (scratchRequest.argString == "high") {
+        liftHeight = 1.0f;
+      }
+
+      RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(liftHeight);
+    }
+    else if (scratchRequest.command == "cozmoSetBackpackColor") {
+      RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
     }
     else {
       Debug.LogError("Scratch: no match for command");
