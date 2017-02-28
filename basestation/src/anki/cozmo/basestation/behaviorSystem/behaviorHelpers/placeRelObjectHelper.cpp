@@ -32,15 +32,11 @@ PlaceRelObjectHelper::PlaceRelObjectHelper(Robot& robot,
                                            BehaviorHelperFactory& helperFactory,
                                            const ObjectID& targetID,
                                            const bool placingOnGround,
-                                           const f32 placementOffsetX_mm,
-                                           const f32 placementOffsetY_mm,
-                                           const bool relativeCurrentMarker)
+                                           const PlaceRelObjectParameters& parameters)
 : IHelper("PlaceRelObject", robot, behavior, helperFactory)
 , _targetID(targetID)
 , _placingOnGround(placingOnGround)
-, _placementOffsetX_mm(placementOffsetX_mm)
-, _placementOffsetY_mm(placementOffsetY_mm)
-, _relativeCurrentMarker(relativeCurrentMarker)
+, _params(parameters)
 , _tmpRetryCounter(0)
 {
   
@@ -67,8 +63,10 @@ BehaviorStatus PlaceRelObjectHelper::Init(Robot& robot)
   const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
                     robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE);
   if(isAtPreAction != ActionResult::SUCCESS){
+    DriveToParameters params;
+    params.actionType = PreActionPose::ActionType::PLACE_RELATIVE;
     DelegateProperties delegateProperties;
-    delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE));
+    delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, params));
     delegateProperties.SetOnSuccessFunction([this](Robot& robot){StartPlaceRelObject(robot); return _status;});
     DelegateAfterUpdate(delegateProperties);
   }else{
@@ -98,19 +96,23 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
   const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
                    robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE);
   if(isAtPreAction != ActionResult::SUCCESS){
+    DriveToParameters params;
+    params.actionType = PreActionPose::ActionType::PLACE_RELATIVE;
     DelegateProperties properties;
     properties.SetDelegateToSet(CreateDriveToHelper(robot,
                                                     _targetID,
-                                                    PreActionPose::ActionType::PLACE_RELATIVE));
+                                                    params));
     properties.SetOnSuccessFunction([this](Robot& robot){
                                       StartPlaceRelObject(robot); return _status;
                                     });
     DelegateAfterUpdate(properties);
   }else{
-    DriveToPlaceRelObjectAction* driveTo = new DriveToPlaceRelObjectAction(robot, _targetID, _placingOnGround,
-                                                                           _placementOffsetX_mm, _placementOffsetY_mm,
-                                                                           false, 0, false, 0, false,
-                                                                           _relativeCurrentMarker);
+    DriveToPlaceRelObjectAction* driveTo =
+            new DriveToPlaceRelObjectAction(robot, _targetID, _placingOnGround,
+                                                   _params.placementOffsetX_mm,
+                                                   _params.placementOffsetY_mm,
+                                                   false, 0, false, 0, false,
+                                                   _params.relativeCurrentMarker);
     
     StartActing(driveTo, &PlaceRelObjectHelper::RespondToPlaceRelResult);
   }

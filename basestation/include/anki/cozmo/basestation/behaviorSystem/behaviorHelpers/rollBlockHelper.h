@@ -30,12 +30,9 @@ public:
                   IBehavior& behavior,
                   BehaviorHelperFactory& helperFactory,
                   const ObjectID& targetID,
-                  bool rollToUpright,
-                  PreDockCallback callback);
+                  bool rollToUpright = true,
+                  const RollBlockParameters& parameters = {});
   virtual ~RollBlockHelper();
-
-  void SetPreDockCallback(PreDockCallback callback)
-                  { _preDockCallback = callback; }
 
 protected:
   // IHelper functions
@@ -44,13 +41,14 @@ protected:
   virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot) override;
 private:
   ObjectID _targetID;
-  
+  RollBlockParameters _params;
+
   void StartRollingAction(Robot& robot);
   void RespondToRollingResult(ActionResult result, Robot& robot);
 
   bool _shouldRoll = true;
   const bool _shouldUpright;
-  PreDockCallback _preDockCallback = nullptr;
+
 };
 
 } // namespace Cozmo

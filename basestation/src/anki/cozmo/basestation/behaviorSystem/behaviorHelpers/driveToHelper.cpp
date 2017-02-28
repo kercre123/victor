@@ -35,10 +35,10 @@ DriveToHelper::DriveToHelper(Robot& robot,
                                    IBehavior& behavior,
                                    BehaviorHelperFactory& helperFactory,
                                    const ObjectID& targetID,
-                                   const PreActionPose::ActionType& actionType)
+                                   const DriveToParameters& params)
 : IHelper("DriveToHelper", robot, behavior, helperFactory)
 , _targetID(targetID)
-, _actionType(actionType)
+, _params(params)
 , _searchLevel(0)
 , _lastSearchRun_ts(0)
 , _tmpRetryCounter(0)
@@ -85,7 +85,7 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
   }
   _tmpRetryCounter++;
   
-  StartActing(new DriveToObjectAction(robot, _targetID, _actionType),
+  StartActing(new DriveToObjectAction(robot, _targetID, _params.actionType),
               &DriveToHelper::RespondToDriveResult);
 }
   

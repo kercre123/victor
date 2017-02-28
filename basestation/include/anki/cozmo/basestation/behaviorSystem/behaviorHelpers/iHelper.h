@@ -15,9 +15,9 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_IHelper_H__
 
 #include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperParameters.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/helperHandle.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior_fwd.h"
-#include "anki/cozmo/basestation/preActionPose.h"
 #include "clad/types/actionResults.h"
 #include "clad/types/animationTrigger.h"
 #include <functional>
@@ -116,18 +116,18 @@ protected:
   bool StartActing(IActionRunner* action, BehaviorActionResultWithRobotCallback callback);
 
   // Helpers to access the HelperFactory without needing access to the underlying behavior
-  HelperHandle CreatePickupBlockHelper(Robot& robot, const ObjectID& targetID, AnimationTrigger animBeforeDock);
+  HelperHandle CreatePickupBlockHelper(Robot& robot, const ObjectID& targetID,
+                                       const PickupBlockParamaters& parameters = {});
   HelperHandle CreatePlaceBlockHelper(Robot& robot);
-  HelperHandle CreateRollBlockHelper(Robot& robot, const ObjectID& targetID, bool rollToUpright);
+  HelperHandle CreateRollBlockHelper(Robot& robot, const ObjectID& targetID,
+                                     bool rollToUpright, const RollBlockParameters& parameters = {});
   HelperHandle CreateDriveToHelper(Robot& robot,
                                    const ObjectID& targetID,
-                                   const PreActionPose::ActionType& actionType);
+                                   const DriveToParameters& parameters = {});
   HelperHandle CreatePlaceRelObjectHelper(Robot& robot,
                                           const ObjectID& targetID,
-                                          const bool placingOnGround,
-                                          const f32 placementOffsetX_mm,
-                                          const f32 placementOffsetY_mm,
-                                          const bool relativeCurrentMarker);
+                                          const bool placingOnGround = false,
+                                          const PlaceRelObjectParameters& parameters = {});
 
   
   BehaviorStatus _status;

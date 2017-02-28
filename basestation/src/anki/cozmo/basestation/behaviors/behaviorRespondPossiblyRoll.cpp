@@ -188,12 +188,13 @@ void BehaviorRespondPossiblyRoll::DelegateToRollHelper(Robot& robot)
   {
     auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
     const bool upright = true;
-    auto PreDockRollLambda = [this](Robot& robot){_metadata.SetReachedPreDockRoll();};
+    RollBlockParameters parameters;
+    parameters.preDockCallback = [this](Robot& robot){_metadata.SetReachedPreDockRoll();};
     HelperHandle rollHelper = factory.CreateRollBlockHelper(robot,
                                                             *this,
                                                             _metadata.GetObjectID(),
                                                             upright,
-                                                            PreDockRollLambda);
+                                                            parameters);
     
     SmartDelegateToHelper(robot, rollHelper, [this](Robot& robot){DetermineNextResponse(robot);}, nullptr);
   }
