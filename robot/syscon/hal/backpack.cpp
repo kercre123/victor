@@ -67,7 +67,7 @@ static CurrentChargeState chargeState = CHARGE_OFF_CHARGER;
 
 static bool isBatteryLow = false;
 static bool override = false;
-static bool button_pressed = false;
+bool Backpack::button_pressed = false;
 static bool lights_enabled = false;
 static BackpackLight* currentChannel;
 
@@ -96,7 +96,7 @@ void Backpack::init()
 }
 
 void Backpack::testLight(int channel) {
-  if (channel > LIGHT_COUNT) {
+  if (channel >= LIGHT_COUNT) {
     for (int i = 1; i < LIGHT_COUNT; i++) {
       setting[i].value = 0;
     }

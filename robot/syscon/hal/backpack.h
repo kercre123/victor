@@ -22,6 +22,8 @@ enum DefaultBackpackPattern {
 };
 
 namespace Backpack {
+  extern bool button_pressed;
+  
   void init();
   void manage();
   void trigger();

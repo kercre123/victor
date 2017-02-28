@@ -196,6 +196,13 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       SendDown(sizeof(data), (u8*)data);
       return;   // Already replied
     }
+    
+    case TEST_BACKBUTTON:
+    {
+      u8 data = Backpack::button_pressed;
+      SendDown(sizeof(data), (u8*)&data);
+      return;   // Already replied
+    }
   }
   
   // By default, send down an "OK" message
