@@ -123,7 +123,7 @@ Scratch3CozmoBlocks.prototype._getColor = function(colorName) {
     ];
 
     if (colorName == 'mystery') {
-        var randomValue = Math.floor(Math.random() * 8);
+        var randomValue = Math.floor(Math.random() * colorNameToHexTable.length);
         return colorNameToHexTable[randomValue].colorHex;
     }
 

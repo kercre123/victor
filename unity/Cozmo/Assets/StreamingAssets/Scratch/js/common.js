@@ -105,11 +105,14 @@
         stop.addEventListener('click', function () {
             vm.stopAll();
             if (typeof window.extensions !== 'undefined') {
+                /*
+                // Turned off. - msintov, 2/28/17
                 window.extensions.postMessage({
                     extension: 'wedo',
                     method: 'motorStop',
                     args: []
                 });
+                */
             }
         });
         stop.addEventListener('touchmove', function (e) {

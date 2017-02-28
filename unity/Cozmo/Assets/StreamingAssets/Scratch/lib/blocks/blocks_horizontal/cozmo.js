@@ -24,13 +24,13 @@
  */
 'use strict';
 
-goog.provide('Blockly.Blocks.wedo');
+goog.provide('Blockly.Blocks.cozmo');
 
 goog.require('Blockly.Blocks');
 
 goog.require('Blockly.Colours');
 
-Blockly.Blocks['dropdown_wedo_setcolor'] = {
+Blockly.Blocks['dropdown_cozmo_setcolor'] = {
   /**
    * Block for set color drop-down (used for shadow).
    * @this Blockly.Block
@@ -219,126 +219,6 @@ Blockly.Blocks['cozmo_liftheight'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-  }
-};
-
-Blockly.Blocks['wedo_motorcounterclockwise'] = {
-  /**
-   * Block to spin motor counter-clockwise.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "wedo_motorcounterclockwise",
-      "message0": "%1 %2",
-      "args0": [
-        {
-          "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/wedo_motor-counterclockwise.svg",
-          "width": 40,
-          "height": 40,
-          "alt": "Turn motor counter-clockwise"
-        },
-        {
-          "type": "input_value",
-          "name": "DURATION",
-          "check": "Number"
-        }
-      ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['dropdown_wedo_motorspeed'] = {
-  /**
-   * Block for motor speed drop-down (used for shadow).
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldIconMenu([
-            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/wedo_motor-speed_slow.svg',
-              value: 'slow', width: 48, height: 48, alt: 'Slow'},
-            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/wedo_motor-speed_med.svg',
-              value: 'medium', width: 48, height: 48, alt: 'Medium'},
-            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/wedo_motor-speed_fast.svg',
-              value: 'fast', width: 48, height: 48, alt: 'Fast'}
-        ]), 'CHOICE');
-    this.setOutput(true);
-    this.setColour(Blockly.Colours.motion.primary,
-      Blockly.Colours.motion.secondary,
-      Blockly.Colours.motion.tertiary
-    );
-  }
-};
-
-Blockly.Blocks['wedo_motorspeed'] = {
-  /**
-   * Block to set motor speed.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "wedo_motorspeed",
-      "message0": "%1 %2",
-      "args0": [
-        {
-          "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/wedo_motor-speed_fast.svg",
-          "width": 40,
-          "height": 40,
-          "alt": "Motor Speed"
-        },
-        {
-          "type": "input_value",
-          "name": "CHOICE"
-        }
-      ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['dropdown_wedo_whentilt'] = {
-  /**
-   * Block for when tilt drop-down (used for shadow).
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldIconMenu([
-            {type: 'placeholder', width: 48, height: 48},
-            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/wedo_when-tilt-forward.svg',
-              value: 'forward', width: 48, height: 48, alt: 'Tilt forward'},
-            {type: 'placeholder', width: 48, height: 48},
-            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/wedo_when-tilt-left.svg',
-              value: 'left', width: 48, height: 48, alt: 'Tilt left'},
-            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/wedo_when-tilt.svg',
-              value: 'any', width: 48, height: 48, alt: 'Tilt any'},
-            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/wedo_when-tilt-right.svg',
-                value: 'right', width: 48, height: 48, alt: 'Tilt right'},
-            {type: 'placeholder', width: 48, height: 48},
-            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/wedo_when-tilt-backward.svg',
-                value: 'backward', width: 48, height: 48, alt: 'Tilt backward'}
-        ]), 'CHOICE');
-    this.setOutput(true);
-    this.setColour(Blockly.Colours.event.primary,
-      Blockly.Colours.event.secondary,
-      Blockly.Colours.event.tertiary
-    );
   }
 };
 
