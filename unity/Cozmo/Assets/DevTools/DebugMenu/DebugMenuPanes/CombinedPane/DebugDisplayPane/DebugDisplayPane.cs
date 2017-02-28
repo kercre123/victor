@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
+using Anki.Cozmo.ExternalInterface;
+using System;
 
 public class ScratchRequest {
   public string command { get; set; }
@@ -49,6 +51,8 @@ public class DebugDisplayPane : MonoBehaviour {
   [SerializeField]
   private Button _LoadWebViewButton;
   private GameObject _WebViewObject;
+  private float _TimeLastObservedFace;
+  private float _TimeLastObservedCube;
 
   private void Start() {
 
@@ -68,6 +72,10 @@ public class DebugDisplayPane : MonoBehaviour {
 
     _LoadWebViewButton.onClick.AddListener(HandleLoadWebView);
 
+    // TODO Check that this initialization doesn't cause unwanted behavior if have to turn on/off vision system for Scratch.
+    _TimeLastObservedFace = float.MinValue;
+    _TimeLastObservedCube = float.MinValue;
+
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
     RobotEngineManager.Instance.SendRequestDeviceData();
   }
@@ -76,6 +84,9 @@ public class DebugDisplayPane : MonoBehaviour {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
 
     if (_WebViewObject != null) {
+      RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(HandleRobotObservedFace);
+      RobotEngineManager.Instance.RemoveCallback<RobotObservedObject>(HandleRobotObservedObject);
+
       GameObject.Destroy(_WebViewObject);
       _WebViewObject = null;
     }
@@ -186,6 +197,9 @@ public class DebugDisplayPane : MonoBehaviour {
       string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
 #endif
 
+      RobotEngineManager.Instance.AddCallback<RobotObservedFace>(HandleRobotObservedFace);
+      RobotEngineManager.Instance.AddCallback<RobotObservedObject>(HandleRobotObservedObject);
+
       Debug.Log("Index file = " + indexFile);
       webViewObjectComponent.LoadURL(indexFile);
     }
@@ -195,6 +209,28 @@ public class DebugDisplayPane : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
     RobotEngineManager.Instance.CurrentRobot.ExitSDKMode();
     */
+  }
+
+  private void HandleRobotObservedFace(RobotObservedFace message) {
+    //Debug.Log("HandleRobotObservedFace");
+
+    // If Cozmo sees a face (and hasn't seen a face for 2.0 seconds), resume the face block.
+    if (Time.time - _TimeLastObservedFace > 2.0f) {
+      WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+      webViewObjectComponent.EvaluateJS(@"window.vm.runtime.onCozmoSawFace();");
+      _TimeLastObservedFace = Time.time;
+    }
+  }
+
+  private void HandleRobotObservedObject(RobotObservedObject message) {
+    //Debug.Log("HandleRobotObservedObject");
+
+    // If Cozmo sees a cube (and hasn't seen a cube for 2.0 seconds), resume the cube block.
+    if (Time.time - _TimeLastObservedCube > 2.0f) {
+      WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+      webViewObjectComponent.EvaluateJS(@"window.vm.runtime.onCozmoSawCube();");
+      _TimeLastObservedCube = Time.time;
+    }
   }
 
   private void WebViewCallback(string text) {
@@ -280,6 +316,5 @@ public class DebugDisplayPane : MonoBehaviour {
               }
             ");
 #endif
-
   }
 }
