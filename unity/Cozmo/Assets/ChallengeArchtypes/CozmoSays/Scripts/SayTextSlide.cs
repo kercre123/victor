@@ -60,7 +60,7 @@ public class SayTextSlide : MonoBehaviour {
     _TextInput.onValidateInput += HandleInputValidation;
     _TextInput.GetComponent<InputFieldEventListeners>().onSelect += OnSelect;
 
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
     SetButtonInteractivity();
   }
 
@@ -69,7 +69,7 @@ public class SayTextSlide : MonoBehaviour {
     _TextInput.onValidateInput -= HandleInputValidation;
     _TextInput.GetComponent<InputFieldEventListeners>().onSelect -= OnSelect;
 
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
   }
 
   private void OnSelect(BaseEventData data) {
@@ -206,8 +206,8 @@ public class SayTextSlide : MonoBehaviour {
     }
   }
 
-  private void HandleRobotReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
-    _PlayingReactionaryBehavior = message.behaviorStarted;
+  private void HandleRobotReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionTriggerTransition message) {
+    _PlayingReactionaryBehavior = message.newTrigger != Anki.Cozmo.ReactionTrigger.NoneTrigger;
     SetButtonInteractivity();
   }
 }
