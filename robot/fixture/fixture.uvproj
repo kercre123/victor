@@ -603,6 +603,11 @@
               <FileType>8</FileType>
               <FilePath>.\app\debugTest.c</FilePath>
             </File>
+            <File>
+              <FileName>buttonTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\buttonTest.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1270,6 +1275,11 @@
               <FileName>debugTest.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\app\debugTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>buttonTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\buttonTest.c</FilePath>
             </File>
           </Files>
         </Group>

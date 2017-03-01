@@ -27,6 +27,9 @@ using namespace Anki::Cozmo::RobotInterface;
 #define BOOTED_CURRENT  40000
 #define PRESENT_CURRENT 1000
 
+//buttonTest.c
+extern void ButtonTest(void);
+
 // Return true if device is detected on contacts
 bool RobotDetect(void)
 {
@@ -360,6 +363,8 @@ TestFunction* GetRobotTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
+    #warning "skip Button Test (ROBOT)"
+    //ButtonTest,
     SlowMotors,
     FastMotors,
     RobotFixtureDropSensor,
@@ -479,3 +484,4 @@ TestFunction* GetFacRevertTestFunctions(void)
 
   return functions;
 }
+
