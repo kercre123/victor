@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <string>
 #include <ostream>
+#include <netinet/in.h>
 
 namespace Anki {
 namespace Util {
@@ -25,23 +26,28 @@ class TransportAddress {
 public:
   TransportAddress();
   // Specify port in host order
+  TransportAddress(const struct sockaddr_storage& sockaddr);
   TransportAddress(uint32_t ipAddress, uint16_t port);
+  TransportAddress(const struct in6_addr& ipv6Address, uint16_t port);
   TransportAddress(const char* addressAsString, int32_t port);
   TransportAddress(const std::string& addressAsString, int32_t port);
   explicit TransportAddress(uint64_t bleId);
 
   // Specify port in host order
   void SetIPAddress(uint32_t address, uint16_t port);
+  void SetIPv6Address(const struct in6_addr& ipv6Address, uint16_t port);
   void SetIPAddressFromString(const char* addressAsString, int32_t port);
   void SetIPAddressFromString(const std::string& addressAsString, int32_t port);
   void SetVirtualAddress(uint32_t id);
   void SetBLEEndpointAddress(uint64_t id);
 
   bool IsIPAddress() const;
+  bool IsIPv6Address() const;
   bool IsVirtualAddress() const;
   bool IsBLEAddress() const;
 
   uint32_t GetIPAddress() const;
+  struct in6_addr GetIPv6Address() const;
   uint16_t GetIPPort() const;
   uint32_t GetVirtualAddress() const;
   uint64_t GetBLEAddress() const;
@@ -49,9 +55,6 @@ public:
   constexpr static unsigned int GetSerializedSize();
 
   std::string ToString() const;
-  
-  static uint32_t IPAddressStringToU32(const char* addressAsString);
-  static uint32_t IPAddressStringToU32(const std::string& addressAsString);
   
   // simple comparison operator
   bool operator==(const TransportAddress& rhs) const;
@@ -69,6 +72,7 @@ private:
   enum class Type : char {
       None = 'n'
     , IP = 'i'
+    , IPv6 = '6'
     , Virtual = 'v'
     , BLE = 'b'
   };
@@ -79,6 +83,10 @@ private:
       uint32_t addr;
       uint16_t port;
     } ip;
+    struct {
+      struct in6_addr addr;
+      uint16_t port;
+    } ipv6;
     struct {
       uint32_t id;
     } virt;

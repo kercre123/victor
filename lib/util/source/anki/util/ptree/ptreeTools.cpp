@@ -17,7 +17,6 @@
 #include "util/ptree/ptreeKey.h"
 #include "util/ptree/ptreeTraverser.h"
 #include "util/logging/logging.h"
-#include "util/parsingConstants/parsingConstants.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/ptree/includePtree.h"
 #include "util/global/globalDefinitions.h"
@@ -34,6 +33,11 @@ using namespace std;
 using namespace boost::property_tree;
 
 namespace Anki{ namespace Util {
+
+static const char* const kP_ID = "id";
+static const char* const kP_EXTENDS = "extends";
+static const char* const kP_PREPROCESSED = "preprocessed";
+
 namespace PtreeTools {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

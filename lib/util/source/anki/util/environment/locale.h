@@ -5,8 +5,8 @@
 //  Copyright (c) 2016 Anki, Inc. All rights reserved.
 //
 
-#ifndef __driveEngine_rushHourAdapters_locale_H__
-#define __driveEngine_rushHourAdapters_locale_H__
+#ifndef __util_environment_locale_H__
+#define __util_environment_locale_H__
 
 #include <string>
 
@@ -463,8 +463,8 @@ public:
   static Locale GetNativeLocale();
   static Locale LocaleFromString(const std::string& localeString);
 
-  static const Language kDefaultLanguage = Language::hr; // non en-US defualt for easy testing
-  static const CountryISO2 kDefaultCountry = CountryISO2::RS; // non en-US defualt for easy testing
+  static const Language kDefaultLanguage = Language::en; // non en-US defualt for easy testing
+  static const CountryISO2 kDefaultCountry = CountryISO2::US; // non en-US defualt for easy testing
   static const Locale kDefaultLocale;
 
   Locale() : Locale(kDefaultLanguage, kDefaultCountry) { }

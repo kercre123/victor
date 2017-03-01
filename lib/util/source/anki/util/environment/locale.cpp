@@ -915,7 +915,7 @@ Locale::CountryISO2 Locale::CountryISO2FromString(const std::string& countryStri
   if (search != sStringToCountry.end()) {
     return search->second;
   }
-  return Locale::CountryISO2::US;
+  return kDefaultCountry;
 }
 
 std::string Locale::LanguageToString(const Locale::Language languageCode)
@@ -930,7 +930,7 @@ Locale::Language Locale::LanguageFromString(const std::string& languageString)
   if (search != sStringToLanguage.end()) {
     return search->second;
   }
-  return Locale::Language::en;
+  return kDefaultLanguage;
 }
 
 const Locale Locale::kDefaultLocale = Locale::Locale(kDefaultLanguage, kDefaultCountry);
