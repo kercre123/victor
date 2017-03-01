@@ -26,7 +26,7 @@ MultiAction::MultiAction(const std::vector<AbstractAction*>& actions)
 
 MultiAction::~MultiAction()
 {
-  for (auto it : _actions) {
+  for (auto* it : _actions) {
     delete it;
   }
 }

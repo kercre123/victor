@@ -1,0 +1,27 @@
+android_prebuilt_aar(
+  name = 'android-support-v4-23-aar',
+  aar = 'libs/support-v4-23.4.0.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'play-services-location',
+  aar = 'libs/play-services-location-7.0.0.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'play-services-base',
+  aar = 'libs/play-services-base-7.0.0.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_library(
+  name = 'util',
+  srcs = glob(['src/**/*.java']),
+  manifest = 'src/AndroidManifest.xml',
+  source = '1.6',
+  target = '1.6',
+  exported_deps = [':android-support-v4-23-aar', ':play-services-location', ':play-services-base'],
+  visibility = ['PUBLIC'],
+)

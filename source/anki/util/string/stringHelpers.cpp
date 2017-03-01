@@ -15,11 +15,11 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <sstream>
 
 
 namespace Anki {
 namespace Util {
-
   
 int stricmp(const char* string1, const char* string2)
 {
@@ -44,6 +44,17 @@ int stricmp(const char* string1, const char* string2)
       ++string2;
     }
   }
+}
+
+std::vector<std::string> SplitString(const std::string& s, char delim) {
+  std::vector<std::string> elems;
+  std::istringstream is(s);
+  std::string item;
+  while (getline(is, item, delim)) {
+    elems.push_back(item);
+  }
+
+  return elems;
 }
 
 

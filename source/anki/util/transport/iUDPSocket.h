@@ -16,6 +16,7 @@
 
 
 #include <sys/socket.h> // for socklen_t
+#include <netinet/in.h>
 #include <stdint.h>
 
 
@@ -43,6 +44,7 @@ namespace Util {
     virtual ssize_t SendTo(int socketId, const void* messageData, size_t messageDataSize, int flags, const sockaddr* destSockAddress, socklen_t destSockAddressLength) = 0;
     virtual ssize_t ReceiveMessage(int socketId, msghdr* messageHeader, int flags) = 0;
     virtual uint32_t GetLocalIpAddress() = 0;
+    virtual struct in6_addr GetLocalIpv6LinkLocalAddress() = 0;
     
     virtual bool IsEmulator() const { return false; }
   };

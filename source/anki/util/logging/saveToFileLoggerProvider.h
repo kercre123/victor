@@ -13,6 +13,7 @@
 #define __Util_Logging_SaveToFileLoggerProvider_H_
 
 #include "util/logging/iFormattedLoggerProvider.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 
 #include <cstdlib>
 #include <string>
@@ -27,12 +28,14 @@ class SaveToFileLoggerProvider : public IFormattedLoggerProvider {
 public:
   static constexpr std::size_t kDefaultMaxFileSize = 1024 * 1024 * 20;
   
-  SaveToFileLoggerProvider(const std::string& baseDirectory, std::size_t maxFileSize = kDefaultMaxFileSize);
-  ~SaveToFileLoggerProvider();
+  SaveToFileLoggerProvider(Dispatch::Queue* queue, const std::string& baseDirectory, std::size_t maxFileSize = kDefaultMaxFileSize);
+  virtual ~SaveToFileLoggerProvider();
   
   void Log(ILoggerProvider::LogLevel logLevel, const std::string& message) override;
   
-private:
+  void Flush() override;
+  
+protected:
   
   // Don't want this to be copyable
   SaveToFileLoggerProvider( const SaveToFileLoggerProvider& ) = delete;

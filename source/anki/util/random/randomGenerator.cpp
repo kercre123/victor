@@ -9,22 +9,34 @@
  **/
 #include "randomGenerator.h"
 
+#include "util/logging/logging.h"
+
 namespace Anki{ namespace Util {
 
 
 RandomGenerator::RandomGenerator(uint32_t seed)
 : uniDbl(0, 1)
 {
-  if ( 0 == seed ) {
-    std::random_device rd;
-    rng.seed(rd());
-  } else{
-    rng.seed(seed);
-  }
+  SetSeed("", seed);
 }
 
-
-double RandomGenerator::GetNextDbl()
+void RandomGenerator::SetSeed(const std::string& who, uint32_t seed)
+{
+  if ( 0 == seed ) {
+    std::random_device rd;
+    seed = rd();
+  }
+  
+  rng.seed(seed);
+  
+  if(!who.empty())
+  {
+    // Log the actual random seed used and who set it
+    Util::sEventF("app.random_seed", {{DDATA, who.c_str()}}, "%u", seed);
+  }
+}
+  
+double RandomGenerator::GetNextDbl() const
 {
   double r = uniDbl(rng);
 
@@ -34,7 +46,7 @@ double RandomGenerator::GetNextDbl()
 // Return a random floating point number in the range [0,maxVal).  This is much
 // better than any sort of mod-based rand because that only focuses on the lower
 // bits which are not as random as the higher bits.
-double RandomGenerator::RandDbl(double maxVal) 
+double RandomGenerator::RandDbl(double maxVal) const
 {
   return maxVal * GetNextDbl();
 }

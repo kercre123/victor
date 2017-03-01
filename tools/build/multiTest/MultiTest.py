@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # script which runs all tests in the given gtest executable in multiple processes
 

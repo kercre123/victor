@@ -14,6 +14,7 @@
 #define __NetworkService_ReliableTransport_H__
 
 #include "util/dispatchQueue/dispatchQueue.h"
+#include "util/global/globalDefinitions.h"
 #include "util/stats/recentStatsAccumulator.h"
 #include "util/transport/iNetTransport.h"
 #include "util/transport/iNetTransportDataReceiver.h"
@@ -26,9 +27,13 @@
 #include <mutex>
 
 
-#define ENABLE_RT_UPDATE_TIME_DIAGNOSTICS 1
-#define ENABLE_RUN_TIME_PROFILING 0
-
+#if ANKI_PROFILING_ENABLED
+  #define ENABLE_RT_UPDATE_TIME_DIAGNOSTICS 1
+  #define ENABLE_RUN_TIME_PROFILING 0
+#else
+  #define ENABLE_RT_UPDATE_TIME_DIAGNOSTICS 0
+  #define ENABLE_RUN_TIME_PROFILING 0
+#endif
 
 namespace Anki {
 namespace Util {
@@ -62,9 +67,11 @@ public:
 
   void ReSendReliableMessage(ReliableConnection* connectionInfo, const uint8_t* buffer, unsigned int bufferSize, EReliableMessageType messageType, ReliableSequenceId seqIdMin, ReliableSequenceId seqIdMax);
 
-  void QueueMessage(bool reliable, const TransportAddress& destAddress, const uint8_t* buffer, unsigned int bufferSize, EReliableMessageType messageType, bool flushPacket); // threadsafe equivalent of SendMessage, queue is processed safely later
+  void QueueMessage(bool reliable, const TransportAddress& destAddress, const uint8_t* buffer, unsigned int bufferSize,
+                    EReliableMessageType messageType, bool flushPacket); // threadsafe equivalent of SendMessage, queue is processed safely later
 
-  void SendMessage(bool reliable, const TransportAddress& destAddress, const uint8_t* buffer, unsigned int bufferSize, EReliableMessageType messageType, bool flushPacket);
+  void SendMessage(bool reliable, const TransportAddress& destAddress, const uint8_t* buffer, unsigned int bufferSize,
+                   EReliableMessageType messageType, bool flushPacket, NetTimeStamp queuedTime=kNetTimeStampZero);
 
   void KillThread();
   void Update();
@@ -92,6 +99,8 @@ public:
   bool IsSynchronous() const { return _runSynchronous; }
 
 private:
+  
+  void UpdateNetStats();
 
   void StopClientInternal();
   void StopHostInternal();
@@ -135,6 +144,7 @@ private:
 #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   Stats::RecentStatsAccumulator _timesBetweenUpdates;
   NetTimeStamp                  _lastUpdateTime;
+  NetTimeStamp                  _lastReportOfSlowUpdate;
 #endif // ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   
   bool                    _runSynchronous;

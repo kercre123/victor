@@ -34,6 +34,9 @@ public:
   
   virtual bool IsTTYLoggingEnabled() const = 0;
   virtual void SetTTYLoggingEnabled(bool newVal) = 0;
+  
+  virtual const char* GetChannelName() const = 0;
+  virtual void SetChannelName(const char* newName) = 0;
 };
 
 } }

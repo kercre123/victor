@@ -599,6 +599,11 @@ uint32_t FakeUDPSocket::GetLocalIpAddress()
   return _localIpAddress;
 }
 
+struct in6_addr FakeUDPSocket::GetLocalIpv6LinkLocalAddress()
+{
+  return {};
+}
+
 
 } // end namespace Util
 } // end namespace Anki

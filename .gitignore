@@ -13,6 +13,7 @@ project/gyp/util.lst
 project/gyp/networkApp.lst
 project/gyp/utilUnitTestExe.lst
 project/gyp/utilEmbedded.lst
+project/gyp/audioUtil.lst
 
 #build artifacts
 *.pyc

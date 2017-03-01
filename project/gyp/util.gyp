@@ -5,11 +5,16 @@
     'utilunittest_source_file_name': 'utilUnitTest.lst',
     'jsoncpp_source_file_name': 'jsoncpp.lst',
     'kazmath_source_file_name': 'kazmath.lst',
+    'audioutil_source_file_name': 'audioUtil.lst',
+    'folly_source_file_name': 'folly.lst',
     'networkApp_source_file_name': 'networkApp.lst',
 
     'build_flavor%': 'dev',
+    'clad_dir%': '../../tools/message-buffers',
+    'has_shipping%': 1,
     
     'compiler_flags': [
+      '-DJSONCPP_USING_SECURE_MEMORY=0',
       '-fdiagnostics-show-category=name',
       '-Wall',
       '-Woverloaded-virtual',
@@ -32,7 +37,7 @@
       '<@(compiler_flags)',
     ],
     'compiler_cpp_flags' : [
-      '-std=c++11',
+      '-std=c++14',
       '-stdlib=libc++',
       '<@(compiler_flags)'
     ],
@@ -71,7 +76,8 @@
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
-          '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
+          '-DNO_LOCALE_SUPPORT=1',
+          '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
           '-fpic',
           '-ffunction-sections',
           '-funwind-tables',
@@ -86,14 +92,14 @@
           '-fomit-frame-pointer',
           '-fno-strict-aliasing',
           '-Wa,--noexecstack',
-          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/libcxx/include',
-          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/../llvm-libc++abi/libcxxabi/include',
-          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/../../android/support/include',
+          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/include',
+          '-I<(ndk_root)/sources/cxx-stl/llvm-libc++abi/include',
+          '-I<(ndk_root)/sources/android/support/include',
           '-I<(ndk_root)/platforms/android-18/arch-arm/usr/include',
         ],
         'linker_flags': [
             '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
-            '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
+            '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
             '-no-canonical-prefixes',
             '-target armv7-none-linux-androideabi',
             '-Wl,--fix-cortex-a8',
@@ -123,7 +129,7 @@
       }],
       ['OS=="ios" or OS=="mac" or OS=="linux"', {
         'linker_flags': [
-          '-std=c++11',
+          '-std=c++14',
           '-stdlib=libc++',
           '-lpthread',
         ]
@@ -140,11 +146,13 @@
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
       'FRAMEWORK_SEARCH_PATHS':'../../libs/framework/',
-      'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
+      'CLANG_CXX_LANGUAGE_STANDARD':'c++14',
       'CLANG_CXX_LIBRARY':'libc++',
       'DEBUG_INFORMATION_FORMAT': 'dwarf',
       'GCC_DEBUGGING_SYMBOLS': 'full',
-      'GENERATE_MASTER_OBJECT_FILE': 'YES',      
+      'GENERATE_MASTER_OBJECT_FILE': 'YES',
+      'ENABLE_BITCODE': 'NO',
+      'SKIP_INSTALL': 'YES',
     },
     'target_conditions': [
     ['OS!="cmake"', {
@@ -201,6 +209,23 @@
           '.': {}
         }
       }
+    ],
+    ['<(has_shipping)==1', {
+      'configurations': {
+        'Shipping': {
+              'cflags': ['-Os'],
+              'cflags_cc': ['-Os'],
+              'xcode_settings': {
+                'OTHER_CFLAGS': ['-Os'],
+                'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+               },
+              'defines': [
+                'NDEBUG=1',
+                'SHIPPING=1',
+              ],
+          },
+      }
+    }
     ]],
   },
 
@@ -261,14 +286,20 @@
             'target_name': 'util_UnitTest',
             'sources': [
               "<!@(cat <(util_source_file_name))",
-              '../../tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp',
+              '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
+            ],
+            'conditions': [
+              ['OS!="mac"',     {'sources/': [['exclude', '_osx\\.']]}],
+              ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
+              ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
+              ['OS!="linux"',   {'sources/': [['exclude', '_linux\\.']]}],
             ],
             'include_dirs': [
               '../../source/anki',
               '../../libs/packaged/include',
               '../../source/3rd',
               '../../libs/framework/gtest-linux/include',
-              '../../tools/message-buffers/support/cpp/include',
+              '<(clad_dir)/support/cpp/include',
             ],
             'direct_dependent_settings': {
               'include_dirs': [
@@ -276,7 +307,7 @@
               '../../libs/packaged/include',
               '../../source/3rd',
               '../../libs/framework/gtest-linux/include',
-              '../../tools/message-buffers/support/cpp/include',
+              '<(clad_dir)/support/cpp/include',
               ],
             },
             'defines': [
@@ -358,20 +389,26 @@
             'target_name': 'util_UnitTest',
             'sources': [ 
               "<!@(cat <(util_source_file_name))",
-              '../../tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp',
+              '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
+            ],
+            'conditions': [
+              ['OS!="mac"',     {'sources/': [['exclude', '_osx\\.']]}],
+              ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
+              ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
+              ['OS!="linux"',   {'sources/': [['exclude', '_linux\\.']]}],
             ],
             'include_dirs': [
               '../../source/anki',
               '../../libs/packaged/include',
               '../../source/3rd',
-              '../../tools/message-buffers/support/cpp/include',
+              '<(clad_dir)/support/cpp/include',
             ],
             'direct_dependent_settings': {
               'include_dirs': [
               '../../source/anki',
               '../../libs/packaged/include',
               '../../source/3rd',
-              '../../tools/message-buffers/support/cpp/include',
+              '<(clad_dir)/support/cpp/include',
               ],
             },
             'export_dependent_settings': [
@@ -385,6 +422,9 @@
               'jsoncpp',
               'kazmath',
             ],
+            'xcode_settings': {
+              'LD_DYLIB_INSTALL_NAME': '@rpath/$(EXECUTABLE_PATH)'
+            },
             'type': '<(util_library_type)',
           },
 
@@ -396,6 +436,7 @@
               'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
             },
             'xcode_settings': {
+              'LD_RUNPATH_SEARCH_PATHS': '@loader_path',
             },
             'include_dirs': [
               '../../source/anki',
@@ -492,23 +533,63 @@
     },
 
     {
+      'target_name': 'audioUtil',
+      'sources': [ '<!@(cat <(audioutil_source_file_name))' ],
+      'include_dirs': [
+        '../../source/anki/audioUtil',
+      ],
+      'dependencies': [
+        'util'
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../source/anki/audioUtil',
+        ],
+      },
+      'type': '<(audioutil_library_type)',
+      'conditions': [
+        ['OS!="mac"',               {'sources/': [['exclude', '_osx\\.']]}],
+        ['OS!="ios"',               {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
+        ['OS!="ios" and OS!="mac"', {'sources/': [['exclude', '_iososx\\.|_osxios\\.']]}],
+        ['OS!="android"',           {'sources/': [['exclude', '_android\\.']]}],
+        ['OS!="linux"',             {'sources/': [['exclude', '_linux\\.']]}],
+        ['OS=="ios" or OS=="mac"',
+          {
+            'libraries': [
+              '$(SDKROOT)/System/Library/Frameworks/CoreFoundation.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework'
+            ],
+          }
+        ],
+        ['OS=="ios"', { 'libraries': [ '$(SDKROOT)/System/Library/Frameworks/AVFoundation.framework' ] } ],
+      ],
+    },
+
+    {
       'target_name': 'util',
       'sources': [
         '<!@(cat <(util_source_file_name))',
-        '../../tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp',
+        '<!@(cat <(folly_source_file_name))',
+        '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
+      ],
+      'conditions': [
+        ['OS!="mac"',     {'sources/': [['exclude', '_osx\\.']]}],
+        ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
+        ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
+        ['OS!="linux"',   {'sources/': [['exclude', '_linux\\.']]}],
       ],
       'include_dirs': [
         '../../source/anki',
         '../../libs/packaged/include',
         '../../source/3rd',
-        '../../tools/message-buffers/support/cpp/include',
+        '<(clad_dir)/support/cpp/include',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../source/anki',
           '../../libs/packaged/include',
           '../../source/3rd',
-          '../../tools/message-buffers/support/cpp/include',
+          '<(clad_dir)/support/cpp/include',
         ],
       },
       'export_dependent_settings': [

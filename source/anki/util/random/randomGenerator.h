@@ -27,10 +27,14 @@ public:
 
   RandomGenerator(uint32_t seed = 0);
 
+  // Updates the seed and logs who did it as a DAS event. Use seed=0 to get a
+  // randomly chosen new seed.
+  void SetSeed(const std::string& who, uint32_t seed);
+  
   // Return a random floating point number in the range [0,maxVal).  This is much
   // better than any sort of mod-based rand because that only focuses on the lower
   // bits which are not as random as the higher bits.
-  double RandDbl(double maxVal = 1.0);
+  double RandDbl(double maxVal = 1.0) const;
 
   // Returns a random floating point number in the range [minVal, maxVal]
   double RandDblInRange(double minVal, double maxVal);
@@ -48,13 +52,13 @@ public:
 private:
 
   // Returns the next double in [0,1)
-  double GetNextDbl();
+  double GetNextDbl() const;
 
   // Instance of random number generator
-  std::mt19937 rng;
+  mutable std::mt19937 rng;
 
   // Define a random variate generator using our base generator and distribution
-  std::uniform_real_distribution<> uniDbl;
+  mutable std::uniform_real_distribution<> uniDbl;
 
 };
 

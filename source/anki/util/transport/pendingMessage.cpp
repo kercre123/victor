@@ -21,7 +21,9 @@ namespace Anki {
 namespace Util {
 
 PendingMessage::PendingMessage()
-  : _firstSentTime(kNetTimeStampZero)
+  : _externalQueuedTime(kNetTimeStampZero)
+  , _queuedTime(kNetTimeStampZero)
+  , _firstSentTime(kNetTimeStampZero)
   , _lastSentTime(kNetTimeStampZero)
   , _message(nullptr)
   , _messageSize(0)
@@ -38,11 +40,14 @@ PendingMessage::~PendingMessage()
 }
 
   
-void PendingMessage::Set(const SrcBufferSet& srcBuffers, EReliableMessageType messageType, ReliableSequenceId seqId, bool flushPacket)
+void PendingMessage::Set(const SrcBufferSet& srcBuffers, EReliableMessageType messageType, ReliableSequenceId seqId,
+                         bool flushPacket, NetTimeStamp externalQueuedTime)
 {
   assert(_message == nullptr);
   DestroyMessage();
 
+  _externalQueuedTime = externalQueuedTime;
+  _queuedTime     = GetCurrentNetTimeStamp();
   _firstSentTime  = kNetTimeStampZero;
   _lastSentTime   = kNetTimeStampZero;
   _message        = srcBuffers.CreateCombinedBuffer();

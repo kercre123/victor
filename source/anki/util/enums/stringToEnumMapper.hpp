@@ -133,17 +133,32 @@ public:
   {
     for (T i = T(0); i < T::Count; ++i)
     {
-      _stringToEnumMap[EnumToString(i)] = i;
+      const char* s = EnumToString(i);
+      if(s != nullptr)
+      {
+        _stringToEnumMap[s] = i;
+      }
     }
   }
   
-  T GetTypeFromString(const char* inString) const
+  bool HasType(const char* inString) const
+  {
+    const auto& it = _stringToEnumMap.find(inString);
+    return it != _stringToEnumMap.end();
+  }
+  
+  T GetTypeFromString(const char* inString, bool assertOnInvalidEnum = false) const
   {
     const auto& it = _stringToEnumMap.find(inString);
     if (it != _stringToEnumMap.end())
     {
       return it->second;
     }
+    
+    DEV_ASSERT_MSG(!assertOnInvalidEnum,
+                   "StringToEnumMapper.GetTypeFromString.NotFound",
+                   "No match found for '%s'",
+                   inString);
     
     PRINT_NAMED_WARNING("StringToEnumMapper.GetTypeFromString.NotFound", "No match found for '%s'", inString);
     

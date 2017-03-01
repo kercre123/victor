@@ -17,9 +17,11 @@
 #include "util/transport/netTimeStamp.h"
 #include "util/transport/transportStats.h"
 #include <assert.h>
+#include <sys/socket.h>
 
 struct sockaddr;
 struct sockaddr_in;
+struct sockaddr_in6;
 
 
 namespace Anki {
@@ -31,8 +33,11 @@ class IUDPSocket;
 class UDPTransport : public IUnreliableTransport {
 
 public:
+  static constexpr const char* const kDefaultIPv6MulticastAddress = "ff02::1";
   // only necessary to pass in IP retriever running on Android
-  UDPTransport();
+  UDPTransport()
+  : UDPTransport(AF_INET) { }
+  UDPTransport(sa_family_t family);
   virtual ~UDPTransport();
 
   // from IUnreliableTransport
@@ -47,9 +52,12 @@ public:
   virtual void Update() override;
   virtual void Print() const override;
 
+  void ResetSocket();
+
   void    SetSocketImpl(IUDPSocket* udpSocketImpl, bool ownsSocketImpl = false);
 
   bool    IsConnected() const { return (_socketId >= 0); }
+  int     GetSocketId() const { return _socketId; }
   int     GetPort() const { return _port; }
   void    SetPort(int inPort) { assert(!IsConnected()); _port = inPort; }
 
@@ -101,6 +109,10 @@ private:
   {
     return SendDataToSockAddress(reinterpret_cast<const sockaddr&>(destSockAddress), destSockAddressLength, srcBuffers);
   }
+  ssize_t SendDataToSockAddress(const sockaddr_in6& destSockAddress, uint32_t destSockAddressLength, const SrcBufferSet& srcBuffers)
+  {
+    return SendDataToSockAddress(reinterpret_cast<const sockaddr&>(destSockAddress), destSockAddressLength, srcBuffers);
+  }
   ssize_t SendDataToSockAddress(const sockaddr& destSockAddress, uint32_t destSockAddressLength, const SrcBufferSet& srcBuffers);
 
   bool    OpenSocket(int port);
@@ -108,6 +120,8 @@ private:
 
   void    HandleReceivedMessage(const uint8_t* buffer, uint32_t bufferLength, const TransportAddress& sourceAddress, bool wasTruncated);
   bool    TryToReadMessage();
+
+  unsigned int GetWifiInterfaceIndex() const;
 
   // ============================== Static Member Vars ==============================
 
@@ -121,9 +135,11 @@ private:
   IUDPSocket*     _udpSocketImpl;
   NetTimeStamp    _lastSendErrorPrinted;
 
+  const sa_family_t _family;
   int             _socketId;
   int             _port;
   bool            _ownsSocketImpl;
+  bool            _reset;
 };
 
 } // end namespace Util

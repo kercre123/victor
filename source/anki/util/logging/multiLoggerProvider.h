@@ -57,27 +57,37 @@ namespace Anki {
           provider->PrintLogW(eventName, keyValues, eventValue);
         }
       };
-      inline void PrintLogI(const char* eventName,
+      inline void PrintLogI(const char* channel,
+                            const char* eventName,
                             const std::vector<std::pair<const char*, const char*>>& keyValues,
                             const char* eventValue) override {
         for(ILoggerProvider* provider : _providers) {
-          provider->PrintLogI(eventName, keyValues, eventValue);
+          provider->PrintChanneledLogI(channel, eventName, keyValues, eventValue);
         }
       };
-      inline void PrintLogD(const char* eventName,
+      inline void PrintLogD(const char* channel,
+                            const char* eventName,
                             const std::vector<std::pair<const char*, const char*>>& keyValues,
                             const char* eventValue) override {
         for(ILoggerProvider* provider : _providers) {
-          provider->PrintLogD(eventName, keyValues, eventValue);
+          provider->PrintChanneledLogD(channel, eventName, keyValues, eventValue);
+        }
+      }
+      
+      inline void Flush() override {
+        for (ILoggerProvider* provider : _providers) {
+          provider->Flush();
         }
       }
       
       inline ILoggerProvider* GetProvider(int index) {
         return _providers[index];
       }
+      
       inline const std::vector<ILoggerProvider*>& GetProviders() {
         return _providers;
       }
+      
     protected:
       std::vector<ILoggerProvider*> _providers;
       

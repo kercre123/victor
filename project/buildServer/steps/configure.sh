@@ -12,7 +12,8 @@ if [ -z $GIT ];then
   echo git not found
   exit 1
 fi
-TOPLEVEL=`$GIT rev-parse --show-toplevel`
+UTIL_TOPLEVEL="${DIR}/../../.."
+REPO_TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
-cd $TOPLEVEL/project/gyp
-./configure.py
+cd $UTIL_TOPLEVEL/project/gyp
+./configure.py --buildTools $REPO_TOPLEVEL/tools/build --with-clad $REPO_TOPLEVEL/tools/message-buffers --with-gyp $REPO_TOPLEVEL/tools/gyp --projectRoot  $UTIL_TOPLEVEL/

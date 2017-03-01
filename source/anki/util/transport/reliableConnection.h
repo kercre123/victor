@@ -15,6 +15,7 @@
 
 
 #include <vector>
+#include "util/global/globalDefinitions.h"
 #include "util/transport/netTimeStamp.h"
 #include "util/transport/pendingMultiPartMessage.h"
 #include "util/transport/reliableMessageTypes.h"
@@ -31,8 +32,12 @@ class ReliableTransport;
 class SrcBufferSet;
 class TransportAddress;
 
-#define ENABLE_RC_PACKET_TIME_DIAGNOSTICS 1
-
+#if ANKI_PROFILING_ENABLED
+  #define ENABLE_RC_PACKET_TIME_DIAGNOSTICS 1
+#else
+  #define ENABLE_RC_PACKET_TIME_DIAGNOSTICS 0
+#endif
+  
 class ReliableConnection
 {
 public:
@@ -40,7 +45,8 @@ public:
   ReliableConnection(const TransportAddress& inTransportAddress);
   ~ReliableConnection();
 
-  void AddMessage(const SrcBufferSet& srcBuffers, EReliableMessageType messageType, ReliableSequenceId seqId, bool flushPacket);
+  void AddMessage(const SrcBufferSet& srcBuffers, EReliableMessageType messageType, ReliableSequenceId seqId,
+                  bool flushPacket, NetTimeStamp queuedTime);
 
   PendingMultiPartMessage& GetPendingMultiPartMessage();
 
@@ -107,6 +113,9 @@ public:
   // Percentage of the pings the other side says they sent towards us that we've received
   float GetPingArrivedPercentage() const { return (_numPingsSentTowardsUs > 0) ? (100.0f * float(_numPingsReceived       ) / float(_numPingsSentTowardsUs)) : 0.0f; }
 
+  const Stats::StatsAccumulator& GetExternalQueuedTimeStats() const { return _externalQueuedTimes_ms.GetPrimaryAccumulator(); }
+  const Stats::StatsAccumulator& GetQueuedTimeStats() const { return _queuedTimes_ms.GetPrimaryAccumulator(); }
+  
   const Stats::StatsAccumulator& GetPingRoundTripStats() const { return _pingRoundTripTimes.GetPrimaryAccumulator(); }
   const Stats::StatsAccumulator& GetAckRoundTripStats() const { return _ackRoundTripTimes.GetPrimaryAccumulator(); }
 
@@ -195,9 +204,11 @@ private:
   uint32_t                    _numPingsSentThatArrived; // pings we sent that the other side received
   uint32_t                    _numPingsSentTowardsUs;   // pings the other side claims to have sent
 
-  Stats::RecentStatsAccumulator _pingRoundTripTimes;
-  
-  Stats::RecentStatsAccumulator _ackRoundTripTimes;
+  Stats::RecentStatsAccumulator _externalQueuedTimes_ms; // Time between external Async queue request, and message being queued in connection
+  Stats::RecentStatsAccumulator _queuedTimes_ms;         // Time between queued in connection, and message first being sent
+
+  Stats::RecentStatsAccumulator _pingRoundTripTimes;     // Round trip times for a ping to be sent and bounced back
+  Stats::RecentStatsAccumulator _ackRoundTripTimes;      // Time between first sending a message over a socket, and it being acknowledged by other end
   
 #if ENABLE_RC_PACKET_TIME_DIAGNOSTICS
   Stats::RecentStatsAccumulator _timesBetweenIncomingPackets;    // times between _any_ incoming packets

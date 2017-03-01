@@ -32,6 +32,7 @@ void FeatureGate::Init(const std::string& jsonContents)
 
   for (const Json::Value& value : root) {
     std::string featureName = value["feature"].asString();
+    std::transform(featureName.begin(), featureName.end(), featureName.begin(), ::tolower);
     bool enabled = value["enabled"].asBool();
     if (_features.find(featureName) != _features.end()) {
       PRINT_NAMED_ERROR("FeatureGate.Init", "Feature '%s' is defined more than once", featureName.c_str());

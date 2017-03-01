@@ -441,7 +441,11 @@ uint32_t NetEmulatorUDPSocket::GetLocalIpAddress()
 {
   return _udpSocketImpl->GetLocalIpAddress();
 }
-  
+
+struct in6_addr NetEmulatorUDPSocket::GetLocalIpv6LinkLocalAddress()
+{
+  return _udpSocketImpl->GetLocalIpv6LinkLocalAddress();
+}
   
 float NetEmulatorUDPSocket::GetRandomPacketLossPercentage() const
 {

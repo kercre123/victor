@@ -1,6 +1,0 @@
-[submodule "tools/build-tools"]
-	path = tools/build-tools
-	url = ../build-tools.git
-[submodule "tools/message-buffers"]
-	path = tools/message-buffers
-	url = ../message-buffers.git

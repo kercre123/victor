@@ -32,7 +32,7 @@ public:
   using FeatureList = std::vector<FeaturePair>;
   FeatureList GetFeatures() const;
 
-private:
+protected:
   std::map<std::string, bool> _features;
 };
 

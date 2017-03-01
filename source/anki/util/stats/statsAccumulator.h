@@ -53,6 +53,8 @@ public:
   double GetVariance() const {return qk_/num_; };
   double GetMin() const {return min_;};
   double GetMax() const {return max_;};
+  double GetMinSafe() const {return (num_ > 0.0) ? min_ : 0.0;}; // otherwise it'll be +DBL_MAX
+  double GetMaxSafe() const {return (num_ > 0.0) ? max_ : 0.0;}; // otherwise it'll be -DBL_MAX
   double GetNumDbl() const { return num_; }
   
   int GetNum() const {return (int)round(num_);};
@@ -62,7 +64,7 @@ public:
 
   void Clear() {
     val_ = 0.0;
-    max_ = DBL_MIN;
+    max_ = -DBL_MAX;
     min_ = DBL_MAX;
     num_ = 0;
     ak_ = 0;

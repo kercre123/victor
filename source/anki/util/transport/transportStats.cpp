@@ -109,12 +109,12 @@ void MessageStats::Print(const char* inName) const
   if (_numMessages > 0)
   {
     double averageBytes = (double)_numBytes / (double)_numMessages;
-    PRINT_CHANNELED_INFO("Network", "MessageStats", "[%s][%s] %u messages, %llu bytes, avg = %2.2f bytes (%u..%u)", inName, _name, _numMessages, _numBytes, averageBytes, _smallestMessage, _largestMessage);
+    PRINT_CH_INFO("Network", "MessageStats", "[%s][%s] %u messages, %llu bytes, avg = %2.2f bytes (%u..%u)", inName, _name, _numMessages, _numBytes, averageBytes, _smallestMessage, _largestMessage);
     for (int i=0; i < eME_Count; ++i)
     {
       if (_errorCounts[i] > 0)
       {
-        PRINT_CHANNELED_INFO("Network", "MessageStats", "  ErrorCount %s = %u", MessageErrorToString(EMessageError(i)), _errorCounts[i] );
+        PRINT_CH_INFO("Network", "MessageStats", "  ErrorCount %s = %u", MessageErrorToString(EMessageError(i)), _errorCounts[i] );
       }
     }
   }

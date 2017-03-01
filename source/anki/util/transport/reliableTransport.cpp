@@ -15,6 +15,7 @@
 #include "util/debug/messageDebugging.h"
 #include "util/helpers/assertHelpers.h"
 #include "util/logging/logging.h"
+#include "util/transport/connectionStats.h"
 #include "util/transport/iUnreliableTransport.h"
 #include "util/transport/reliableConnection.h"
 #include "util/transport/srcBufferSet.h"
@@ -27,18 +28,6 @@ namespace Util {
   
 CONSOLE_VAR(bool,      kPrintNetworkStats,              "Network", false);
 CONSOLE_VAR(uint32_t,  kPrintNetworkStatsTimeSpacingMS, "Network", 1000);
-  
-#if REMOTE_CONSOLE_ENABLED
-  const char* kNetworkStatsSection = "Network.Stats";
-  CONSOLE_VAR(bool,   kNetConnStatsUpdate, kNetworkStatsSection, false);
-  // Stats are written into console vars so they can be live viewed from console menu
-  CONSOLE_VAR(int,    gNetStat1NumConnections, kNetworkStatsSection, 0);
-  CONSOLE_VAR(float,  gNetStat2LatencyAvg,     kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat3LatencySD,      kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat4LatencyMin,     kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat5LatencyMax,     kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat6PingArrivedPC,  kNetworkStatsSection, 0.0f);
-#endif // REMOTE_CONSOLE_ENABLED
 
 
 // ============================== Packet Headers ========================================
@@ -136,6 +125,7 @@ ReliableTransport::ReliableTransport(IUnreliableTransport* unreliableTransport, 
 #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   , _timesBetweenUpdates(1000)
   , _lastUpdateTime(kNetTimeStampZero)
+  , _lastReportOfSlowUpdate(kNetTimeStampZero)
 #endif // ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   , _runSynchronous(true)
 {
@@ -195,9 +185,10 @@ void ReliableTransport::QueueMessage(bool reliable, const TransportAddress& dest
   {
     uint8_t* newBuffer = new uint8_t[bufferSize];
     memcpy(newBuffer, buffer, bufferSize);
+    const NetTimeStamp queuedTime = GetCurrentNetTimeStamp();
     
-    QueueAction([this, reliable, destAddress, newBuffer, bufferSize, messageType, flushPacket] {
-      SendMessage(reliable, destAddress, newBuffer, bufferSize, messageType, flushPacket);
+    QueueAction([this, reliable, destAddress, newBuffer, bufferSize, messageType, flushPacket, queuedTime] {
+      SendMessage(reliable, destAddress, newBuffer, bufferSize, messageType, flushPacket, queuedTime);
       delete[] newBuffer;
     });
   }
@@ -206,14 +197,15 @@ void ReliableTransport::QueueMessage(bool reliable, const TransportAddress& dest
 
 void ReliableTransport::QueueAction(std::function<void ()> action)
 {
-  Dispatch::Async(_queue, [this, action] {
+  Dispatch::Async(_queue, [this, action = std::move(action)] {
     std::lock_guard<std::mutex> lock(_mutex);
     action();
   });
 }
 
 
-void ReliableTransport::SendMessage(bool reliable, const TransportAddress& destAddress, const uint8_t* buffer, unsigned int bufferSize, EReliableMessageType messageType, bool flushPacket)
+void ReliableTransport::SendMessage(bool reliable, const TransportAddress& destAddress, const uint8_t* buffer,
+                                    unsigned int bufferSize, EReliableMessageType messageType, bool flushPacket, NetTimeStamp queuedTime)
 {
   assert((buffer != nullptr) || (bufferSize == 0));
   
@@ -239,7 +231,7 @@ void ReliableTransport::SendMessage(bool reliable, const TransportAddress& destA
   
   if (isMultiPartMessage && !reliable)
   {
-    PRINT_NAMED_WARNING("ReliableTransport.SendMessage.UnreliableMultiPart", "Had to split %u byte unreliable message (> %u bytes) - forcing it to be reliable so it can be reassembled!\n", bufferSize, maxPayloadPerMessage);
+    PRINT_NAMED_WARNING("ReliableTransport.SendMessage.UnreliableMultiPart", "Had to split %u byte unreliable message (> %u bytes) - forcing it to be reliable so it can be reassembled!", bufferSize, maxPayloadPerMessage);
     reliable = true;
   }
   
@@ -301,7 +293,7 @@ void ReliableTransport::SendMessage(bool reliable, const TransportAddress& destA
     else
     {
       // Store message (incase it needs to re-send it later) (without header, but with any multi part info)
-      connectionInfo->AddMessage(srcBuffers, messageType, seqId, flushPacket);
+      connectionInfo->AddMessage(srcBuffers, messageType, seqId, flushPacket, queuedTime);
     }
     
     bufferSizeSent += messageBufferSize;
@@ -349,7 +341,7 @@ void ReliableTransport::Disconnect(const TransportAddress& destAddress)
 
 void ReliableTransport::StartClient()
 {
-  _unreliable->StartClient();
+  QueueAction([this] { _unreliable->StartClient(); });
 }
 
 
@@ -369,7 +361,7 @@ void ReliableTransport::StopClient()
   
 void ReliableTransport::StartHost()
 {
-  _unreliable->StartHost();
+  QueueAction( [this] { _unreliable->StartHost(); });
 }
 
 
@@ -553,7 +545,7 @@ void ReliableTransport::ReceiveData(const uint8_t* buffer, unsigned int size, co
           else
           {
             _transportStats.AddRecvError(eME_OutOfOrder);
-            ANKI_NET_PRINT_VERBOSE("ReliableTransport.Recv.OutOfOrder", "ReceiveData - Ignoring out of order messages %u..%u (waiting for %u)\n", minSeqId, maxSeqId, connectionInfo->GetNextInSequenceId() );
+            ANKI_NET_PRINT_VERBOSE("ReliableTransport.Recv.OutOfOrder", "ReceiveData - Ignoring out of order messages %u..%u (waiting for %u)", minSeqId, maxSeqId, connectionInfo->GetNextInSequenceId() );
             
             #if !ENABLE_RC_PACKET_TIME_DIAGNOSTICS
             {
@@ -647,7 +639,7 @@ void ReliableTransport::ReceiveData(const uint8_t* buffer, unsigned int size, co
   {
     _transportStats.AddRecvError(eME_BadType);
     
-    PRINT_NAMED_WARNING("ReliableTransport.Recv.Unhandled", "Unknown/Unhandled type of message!\n");
+    PRINT_NAMED_WARNING("ReliableTransport.Recv.Unhandled", "Unknown/Unhandled type of message!");
     
     ANKI_NET_MESSAGE_VERBOSE(("Rel Unhandled", "Message...", buffer, size));
     
@@ -685,13 +677,13 @@ void DumpUpdateStats(const Stats::StatsAccumulator& timesBetweenUpdates)
     const double min = timesBetweenUpdates.GetMin();
     const double max = timesBetweenUpdates.GetMax();
     
-    PRINT_CHANNELED_INFO("Network", "ReliableTransport.UpdateStats",
+    PRINT_CH_INFO("Network", "ReliableTransport.UpdateStats",
                          "UpdateTimes: %.1f samples, %.2f ms avg (%.2f sd) (%.2f..%.2f ms)", num, avg, sd, min, max);
 
   }
   else
   {
-    PRINT_CHANNELED_INFO("Network", "ReliableTransport.UpdateStats", "UpdateTimes: NO SAMPLES!");
+    PRINT_CH_INFO("Network", "ReliableTransport.UpdateStats", "UpdateTimes: NO SAMPLES!");
   }
 }
 #endif //ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
@@ -711,10 +703,15 @@ void ReliableTransport::Update()
       _timesBetweenUpdates.AddStat(timeSinceLastUpdate);
       
       // We expect ~2ms, but it's only a big issue if it seriously impacts our ability to read and ack packets in a timely manner
-      if (timeSinceLastUpdate > 15.0)
+      if (timeSinceLastUpdate > 15.0 && !_reliableConnectionMap.empty())
       {
-        //PRINT_NAMED_WARNING("ReliableTransport.Update.Slow", "Unusually long between updates: %.2f ms (expect ~2ms)", timeSinceLastUpdate);
-        Anki::Util::sEventF("reliable_transport.update.sleep.slow", {{DDATA,"2"}}, "%.2f", timeSinceLastUpdate);
+        const double timeSinceLastReport = updateStartTimeMs - _lastReportOfSlowUpdate;
+        const double kMinTimeBetweenSlowSleepReports_ms = 60000.0;
+        if (timeSinceLastReport > kMinTimeBetweenSlowSleepReports_ms) {
+          Anki::Util::sChanneledInfoF("Network", "reliable_transport.update.sleep.slow",
+                                      {{DDATA,"2"}}, "%.2f", timeSinceLastUpdate);
+          _lastReportOfSlowUpdate = updateStartTimeMs;
+        }
       }
     }
     _lastUpdateTime = updateStartTimeMs;
@@ -733,7 +730,7 @@ void ReliableTransport::Update()
       const bool disconnectOnTimeout = true;
       if (disconnectOnTimeout)
       {
-        PRINT_CHANNELED_INFO("Network", "ReliableTransport.Update.ConnectionTimedOut", "Disconnecting TimedOut Connection to '%s'!\n", existingConnection->GetAddress().ToString().c_str());
+        PRINT_CH_INFO("Network", "ReliableTransport.Update.ConnectionTimedOut", "Disconnecting TimedOut Connection to '%s'!", existingConnection->GetAddress().ToString().c_str());
         
         #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
         {
@@ -759,8 +756,8 @@ void ReliableTransport::Update()
 #if ANKI_NET_MESSAGE_LOGGING_ENABLED
   if (kPrintNetworkStats)
   {
-    const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    static std::chrono::system_clock::time_point sLastPrintTime = now;
+    const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    static std::chrono::steady_clock::time_point sLastPrintTime = now;
     
     if (std::chrono::duration_cast<std::chrono::milliseconds>(now - sLastPrintTime).count() >= Util::kPrintNetworkStatsTimeSpacingMS)
     {
@@ -770,46 +767,12 @@ void ReliableTransport::Update()
   }
 #endif // #if ANKI_NET_MESSAGE_LOGGING_ENABLED
   
-#if REMOTE_CONSOLE_ENABLED
+  #if REMOTE_CONSOLE_ENABLED
   if (kNetConnStatsUpdate)
   {
-    gNetStat1NumConnections = 0;
-    gNetStat2LatencyAvg    = 0.0f;
-    gNetStat3LatencySD     = 0.0f;
-    gNetStat4LatencyMin    = 0.0f;
-    gNetStat5LatencyMax    = 0.0f;
-    gNetStat6PingArrivedPC = 0.0f;
-    uint32_t numPingStatsAdded = 0;
-    
-    for (ReliableConnectionMap::const_iterator it = _reliableConnectionMap.begin(); it != _reliableConnectionMap.end(); ++it)
-    {
-      ++gNetStat1NumConnections;
-      const ReliableConnection* existingConnection = it->second;
-      
-      const Stats::StatsAccumulator& pingRoundTripStats = sTrackAckLatency ? existingConnection->GetAckRoundTripStats() : existingConnection->GetPingRoundTripStats();
-      if (pingRoundTripStats.GetNum() > 0)
-      {
-        gNetStat2LatencyAvg += pingRoundTripStats.GetMean();
-        gNetStat3LatencySD  += pingRoundTripStats.GetStd();
-        const float latencyMin = pingRoundTripStats.GetMin();
-        const float latencyMax = pingRoundTripStats.GetMax();
-        gNetStat4LatencyMin = (numPingStatsAdded == 0) ? latencyMin : Min(gNetStat4LatencyMin, latencyMin);
-        gNetStat5LatencyMax = (numPingStatsAdded == 0) ? latencyMax : Max(gNetStat5LatencyMax, latencyMax);
-        gNetStat6PingArrivedPC += existingConnection->GetPingArrivedPercentage();
-        ++numPingStatsAdded;
-      }
-    }
-    
-    // averaging the stats isn't ideal (especially SD...), but better than just showing one value
-    if (numPingStatsAdded > 1)
-    {
-      const float statMult = 1.0f / float(numPingStatsAdded);
-      gNetStat2LatencyAvg    *= statMult;
-      gNetStat3LatencySD     *= statMult;
-      gNetStat6PingArrivedPC *= statMult;
-    }
+    UpdateNetStats();
   }
-#endif
+  #endif
   
   
 #if ENABLE_RUN_TIME_PROFILING
@@ -829,10 +792,109 @@ void ReliableTransport::Update()
 }
 
 
+void ReliableTransport::UpdateNetStats()
+{
+#if REMOTE_CONSOLE_ENABLED
+  uint32_t numConnections = 0;
+  float latencyAvg    = 0.0f;
+  float latencySD     = 0.0f;
+  float latencyMin    = 0.0;
+  float latencyMax    = 0.0;
+  float pingArrivedPC = 0.0f;
+  float queuedAvg_ms  = 0.0f;
+  float queuedMin_ms  = 0.0f;
+  float queuedMax_ms  = 0.0f;
+  float extQueuedAvg_ms  = 0.0f;
+  float extQueuedMin_ms  = 0.0f;
+  float extQueuedMax_ms  = 0.0f;
+  
+  uint32_t numPingStatsAdded   = 0;
+  uint32_t numExtQueuedStatsAdded = 0;
+  uint32_t numQueuedStatsAdded = 0;
+  
+  for (ReliableConnectionMap::const_iterator it = _reliableConnectionMap.begin(); it != _reliableConnectionMap.end(); ++it)
+  {
+    ++numConnections;
+    const ReliableConnection* existingConnection = it->second;
+    
+    {
+      const Stats::StatsAccumulator& pingRoundTripStats = sTrackAckLatency ? existingConnection->GetAckRoundTripStats()
+                                                                           : existingConnection->GetPingRoundTripStats();
+      if (pingRoundTripStats.GetNum() > 0)
+      {
+        latencyAvg += pingRoundTripStats.GetMean();
+        latencySD  += pingRoundTripStats.GetStd();
+        latencyMin = (numPingStatsAdded == 0) ? pingRoundTripStats.GetMin() : Min(latencyMin, (float)pingRoundTripStats.GetMin());
+        latencyMax = (numPingStatsAdded == 0) ? pingRoundTripStats.GetMax() : Max(latencyMax, (float)pingRoundTripStats.GetMax());
+        pingArrivedPC += existingConnection->GetPingArrivedPercentage();
+        ++numPingStatsAdded;
+      }
+    }
+    
+    {
+      const Stats::StatsAccumulator& extQueuedTimeStats = existingConnection->GetExternalQueuedTimeStats();
+      if (extQueuedTimeStats.GetNum() > 0)
+      {
+        extQueuedAvg_ms += extQueuedTimeStats.GetMean();
+        extQueuedMin_ms = (numExtQueuedStatsAdded == 0) ? extQueuedTimeStats.GetMin() : Min(extQueuedMin_ms, (float)extQueuedTimeStats.GetMin());
+        extQueuedMax_ms = (numExtQueuedStatsAdded == 0) ? extQueuedTimeStats.GetMax() : Max(extQueuedMax_ms, (float)extQueuedTimeStats.GetMax());
+        ++numExtQueuedStatsAdded;
+      }
+    }
+    
+    {
+      const Stats::StatsAccumulator& queuedTimeStats = existingConnection->GetQueuedTimeStats();
+      if (queuedTimeStats.GetNum() > 0)
+      {
+        queuedAvg_ms += queuedTimeStats.GetMean();
+        queuedMin_ms = (numQueuedStatsAdded == 0) ? queuedTimeStats.GetMin() : Min(queuedMin_ms, (float)queuedTimeStats.GetMin());
+        queuedMax_ms = (numQueuedStatsAdded == 0) ? queuedTimeStats.GetMax() : Max(queuedMax_ms, (float)queuedTimeStats.GetMax());
+        ++numQueuedStatsAdded;
+      }
+    }
+  }
+  
+  // averaging the stats isn't ideal (especially SD...), but better than just showing one value
+  if (numPingStatsAdded > 1)
+  {
+    const float statMult = 1.0f / float(numPingStatsAdded);
+    latencyAvg    *= statMult;
+    latencySD     *= statMult;
+    pingArrivedPC *= statMult;
+  }
+  
+  if (numExtQueuedStatsAdded > 1)
+  {
+    const float statMult = 1.0f / float(numExtQueuedStatsAdded);
+    extQueuedAvg_ms *= statMult;
+  }
+
+  if (numQueuedStatsAdded > 1)
+  {
+    const float statMult = 1.0f / float(numQueuedStatsAdded);
+    queuedAvg_ms *= statMult;
+  }
+  
+  gNetStat1NumConnections  = numConnections;
+  gNetStat2LatencyAvg      = latencyAvg;
+  gNetStat3LatencySD       = latencySD;
+  gNetStat4LatencyMin      = latencyMin;
+  gNetStat5LatencyMax      = latencyMax;
+  gNetStat6PingArrivedPC   = pingArrivedPC;
+  gNetStat7ExtQueuedAvg_ms = extQueuedAvg_ms;
+  gNetStat8ExtQueuedMin_ms = extQueuedMin_ms;
+  gNetStat9ExtQueuedMax_ms = extQueuedMax_ms;
+  gNetStatAQueuedAvg_ms    = queuedAvg_ms;
+  gNetStatBQueuedMin_ms    = queuedMin_ms;
+  gNetStatCQueuedMax_ms    = queuedMax_ms;
+#endif // REMOTE_CONSOLE_ENABLED
+}
+
+
 void ReliableTransport::Print() const
 {
 #if ANKI_NET_MESSAGE_LOGGING_ENABLED
-  PRINT_CHANNELED_INFO("Network", "ReliableTransport.Print", "NumConnections: %zu", _reliableConnectionMap.size());
+  PRINT_CH_INFO("Network", "ReliableTransport.Print", "NumConnections: %zu", _reliableConnectionMap.size());
   _transportStats.Print();
   _unreliable->Print();
   for (auto& it : _reliableConnectionMap)

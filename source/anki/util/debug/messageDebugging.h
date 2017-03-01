@@ -30,7 +30,7 @@ namespace Anki { namespace Util {
 
 #if ANKI_NET_MESSAGE_LOGGING_ENABLED
   #define ANKI_NET_MESSAGE_VERBOSE( expr )               if (kEnableVerboseNetworkLogging) { Anki::Util::LogVerboseMessage  expr; }
-  #define ANKI_NET_PRINT_VERBOSE( name, format, ... )    if (kEnableVerboseNetworkLogging) { PRINT_CHANNELED_INFO("Network", name, format, ##__VA_ARGS__); }
+  #define ANKI_NET_PRINT_VERBOSE( name, format, ... )    if (kEnableVerboseNetworkLogging) { PRINT_CH_INFO("Network", name, format, ##__VA_ARGS__); }
   #define ANKI_NET_MESSAGE_LOGGING_ENABLED_ONLY( expr )  expr
 #else
   #define ANKI_NET_MESSAGE_VERBOSE( expr )
@@ -57,7 +57,8 @@ namespace Util {
   char NibbleToHexChar(uint32_t inVal); // assumes a value in 0..15 range returns char in '0'..'9''A'..'F' range
   
   
-  std::string ConvertMessageBufferToString(const uint8_t* buffer, uint32_t bufferLength, EBytesToTextType printType, bool addLeadingSpace = true);
+  std::string ConvertMessageBufferToString(const uint8_t* buffer, uint32_t bufferLength, EBytesToTextType printType,
+                                           bool addLeadingSpace = true, uint32_t maxStringLength=256);
   
   
   void LogVerboseMessage(const char* name, const char* columnLabels, const uint8_t* buffer, uint32_t bufferLength, const SrcBufferSet* srcBuffers = nullptr);

@@ -48,7 +48,7 @@ bool PendingMultiPartMessage::AddMessagePart(const uint8_t* message, uint32_t me
       if ((messageIndex == 1) && (_nextExpectedPart == 1))
       {
         // start new
-        ANKI_NET_PRINT_VERBOSE("MultiPartMessage", "new message %d of %d\n", messageIndex, messageCount);
+        ANKI_NET_PRINT_VERBOSE("MultiPartMessage", "new message %d of %d", messageIndex, messageCount);
         _lastExpectedPart = messageCount;
       }
       
@@ -59,7 +59,7 @@ bool PendingMultiPartMessage::AddMessagePart(const uint8_t* message, uint32_t me
         //return false;
       }
       
-      ANKI_NET_PRINT_VERBOSE("MultiPartMessage", "Message part %d of %d - adding %u bytes to %u existing\n", messageIndex, messageCount, messageSize, (uint32_t)_bytes.size());
+      ANKI_NET_PRINT_VERBOSE("MultiPartMessage", "Message part %d of %d - adding %u bytes to %u existing", messageIndex, messageCount, messageSize, (uint32_t)_bytes.size());
       
       // Resize the buffer and copy all the bytes in one go
       const size_t oldSize = _bytes.size();

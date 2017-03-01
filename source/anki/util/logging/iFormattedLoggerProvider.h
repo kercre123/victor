@@ -14,6 +14,7 @@
 #ifndef __Util_Logging_IFormattedLoggerProvider_H_
 #define __Util_Logging_IFormattedLoggerProvider_H_
 #include "util/logging/iLoggerProvider.h"
+#include "json/json-forwards.h"
 #include <string>
 
 namespace Anki {
@@ -22,55 +23,67 @@ namespace Anki {
     class IFormattedLoggerProvider : public ILoggerProvider {
       
     public:
-      IFormattedLoggerProvider() : minLogLevel(LOG_LEVEL_DEBUG) {};
+      IFormattedLoggerProvider();
       
       inline void PrintLogE(const char* eventName,
                             const std::vector<std::pair<const char*, const char*>>& keyValues,
                             const char* eventValue) override {
-        if (minLogLevel > LOG_LEVEL_ERROR) {return;}
+        if ( !IsLogLevelEnabled(LOG_LEVEL_ERROR) ) { return; }
         FormatAndLog(LOG_LEVEL_ERROR, eventName, keyValues, eventValue);
       }
       inline void PrintLogW(const char* eventName,
                             const std::vector<std::pair<const char*, const char*>>& keyValues,
                             const char* eventValue) override {
-        if (minLogLevel > LOG_LEVEL_WARN) {return;}
+        if (!IsLogLevelEnabled(LOG_LEVEL_WARN)) {return;}
         FormatAndLog(LOG_LEVEL_WARN, eventName, keyValues, eventValue);
       };
       inline void PrintEvent(const char* eventName,
                              const std::vector<std::pair<const char*, const char*>>& keyValues,
                              const char* eventValue) override {
-        if (minLogLevel > LOG_LEVEL_EVENT) {return;}
+        if (!IsLogLevelEnabled(LOG_LEVEL_EVENT)) {return;}
         FormatAndLog(LOG_LEVEL_EVENT, eventName, keyValues, eventValue);
       };
-      inline void PrintLogI(const char* eventName,
+      inline void PrintLogI(const char* channelName,
+                            const char* eventName,
                             const std::vector<std::pair<const char*, const char*>>& keyValues,
                             const char* eventValue) override {
-        if (minLogLevel > LOG_LEVEL_INFO) {return;}
-        FormatAndLog(LOG_LEVEL_INFO, eventName, keyValues, eventValue);
+        if (!IsLogLevelEnabled(LOG_LEVEL_INFO)) {return;}
+        FormatAndLogChanneled(LOG_LEVEL_INFO, channelName, eventName, keyValues, eventValue);
       };
-      inline void PrintLogD(const char* eventName,
+      inline void PrintLogD(const char* channelName,
+                            const char* eventName,
                             const std::vector<std::pair<const char*, const char*>>& keyValues,
                             const char* eventValue) override {
-        if (minLogLevel > LOG_LEVEL_DEBUG) {return;}
-        FormatAndLog(LOG_LEVEL_DEBUG, eventName, keyValues, eventValue);
+        if (!IsLogLevelEnabled(LOG_LEVEL_DEBUG)) {return;}
+        FormatAndLogChanneled(LOG_LEVEL_DEBUG, channelName, eventName, keyValues, eventValue);
       }
       
-      // debug == 1
-      // info == 2
-      // event == 3
-      // warning == 4
-      // error == 5
-      inline void SetMinLogLevel(int logLevel) {minLogLevel = logLevel; };
+      // sets the minimum log level that is enabled. Levels above this one will also be enabled
+      void SetMinLogLevel(LogLevel logLevel);
+      // sets whether one specific log level is enabled
+      void SetLogLevelEnabled(LogLevel logLevel, bool enabled);
+      
+      // reads which levels are enabled from json file
+      void ParseLogLevelSettings(const Json::Value& config);
       
       // This has to be public for MultiFormattedLoggerProvider to work.
       virtual void Log(ILoggerProvider::LogLevel logLevel, const std::string& message) = 0;
 
     private:
+    
+      // returns true if the given log level is enabled, false otherwise
+      bool IsLogLevelEnabled(LogLevel logLevel) const;
+    
       void FormatAndLog(ILoggerProvider::LogLevel logLevel, const char* eventName,
                   const std::vector<std::pair<const char*, const char*>>& keyValues,
                   const char* eventValue);
+      void FormatAndLogChanneled(ILoggerProvider::LogLevel logLevel, const char* channel,
+                  const char* eventName,
+                  const std::vector<std::pair<const char*, const char*>>& keyValues,
+                  const char* eventValue);
       
-      int minLogLevel;
+      // whether specific log levels are enabled
+      std::vector<bool> _logLevelEnabledFlags;
     };
     
   } // end namespace Util
