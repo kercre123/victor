@@ -26,6 +26,10 @@ namespace Cozmo {
 
 struct DriveToParameters{
   PreActionPose::ActionType actionType = PreActionPose::ActionType::NONE;
+  
+  // PLACE_RELATIVE parameters
+  f32 placeRelOffsetX_mm = 0;
+  f32 placeRelOffsetY_mm = 0;
 };
   
 struct PickupBlockParamaters{

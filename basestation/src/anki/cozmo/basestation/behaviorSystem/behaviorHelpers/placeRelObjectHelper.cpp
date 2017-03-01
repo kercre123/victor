@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/placeRelObjectHelper.h"
 
-#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -98,6 +98,8 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
   if(isAtPreAction != ActionResult::SUCCESS){
     DriveToParameters params;
     params.actionType = PreActionPose::ActionType::PLACE_RELATIVE;
+    params.placeRelOffsetX_mm = _params.placementOffsetX_mm;
+    params.placeRelOffsetY_mm = _params.placementOffsetY_mm;
     DelegateProperties properties;
     properties.SetDelegateToSet(CreateDriveToHelper(robot,
                                                     _targetID,
@@ -107,12 +109,11 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
                                     });
     DelegateAfterUpdate(properties);
   }else{
-    DriveToPlaceRelObjectAction* driveTo =
-            new DriveToPlaceRelObjectAction(robot, _targetID, _placingOnGround,
-                                                   _params.placementOffsetX_mm,
-                                                   _params.placementOffsetY_mm,
-                                                   false, 0, false, 0, false,
-                                                   _params.relativeCurrentMarker);
+    PlaceRelObjectAction* driveTo =
+            new PlaceRelObjectAction(robot, _targetID, _placingOnGround,
+                                     _params.placementOffsetX_mm,
+                                     _params.placementOffsetY_mm,
+                                     false, _params.relativeCurrentMarker);
     
     StartActing(driveTo, &PlaceRelObjectHelper::RespondToPlaceRelResult);
   }
