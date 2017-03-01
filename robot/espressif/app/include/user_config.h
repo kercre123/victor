@@ -44,8 +44,11 @@ extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_si
 #define ISR_STACK_LEFT(...)
 #endif
 
-/// Must drop 6dBm below max for FCC
-#define MAX_TPW (82-24)
+// TPW is in 0.25dB units
+#define MAX_TPW (82)
+#define TPW_MODIFICATION_V1_0 (-24)  /// Must drop 6dBm below max for FCC
+#define TPW_MODIFICATION_V1_5 (0)  /// No reduction for V1.5 antenna
+
 
 #define AP_MAX_CONNECTIONS 4
 #define AP_IP       "172.31.1.1"
