@@ -386,6 +386,7 @@ enum int_32 CubeAnimationTrigger
   PyramidPickup,
   PyramidSingle,
   Sleep,
+  SleepNoFade,
   SpeedTapWin,
   SpeedTapLose,
   Visible,

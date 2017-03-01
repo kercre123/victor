@@ -774,7 +774,8 @@ message EnableLightStates {
 }
 
 message EnableCubeSleep {
-  bool enable
+  bool enable,
+  bool skipAnimation = 0 // If true will skip the fadeout part of the sleep anim
 }
 
 // Whether or not engine should be sending CubeLightsStateTransition messages to game
