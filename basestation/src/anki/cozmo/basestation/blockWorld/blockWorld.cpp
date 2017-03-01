@@ -986,6 +986,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       return RESULT_FAIL;
     }
     
+    // COZMO-9797
+    // lengthy discussion between Andrew and Raul. Ideally we would keep unconfirmed observations when
+    // we rejigger. However, because we move from current to a previously known origin, the code is more
+    // complicated that way. Since we plan on refactoring PoseConfirmer in the future, for now we are ok with
+    // losing information. Clear PoseConfirmer here and let the originUpdater and addToPoseConfirmer modifiers
+    // later re-add kosher information.
+    _robot->GetObjectPoseConfirmer().Clear();
+    
     // Look for objects in the old origin
     BlockWorldFilter filterOld;
     filterOld.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
