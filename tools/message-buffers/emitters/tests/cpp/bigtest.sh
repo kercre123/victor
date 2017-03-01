@@ -69,7 +69,7 @@ time $OUTPUT_DIR/cpptest_clang.out
 echo "*********"
 echo ""
 
-if [ -n `which valgrind` ]; then
+if `which valgrind`; then
    echo "Memcheck"
    valgrind --suppressions=./fprintf.supp --leak-check=full $OUTPUT_DIR/cpptest_clang.out
    valgrind --suppressions=./fprintf.supp --leak-check=full $OUTPUT_DIR/cpptest_gnu.out
