@@ -21,45 +21,50 @@ typedef enum { HBC_OFF /*high Z*/, HBC_GND, HBC_VCC } HBridgeHalfCfg;
 static void m_motor_set_cfg( HBridgeHalfCfg MOTA, HBridgeHalfCfg MOTB )
 {
   //config motor controller pins on first use
-  static int init_motordrv_pins = 0;
-  if( !init_motordrv_pins ) {
-    init_motordrv_pins = 1;
+  //static int init_motordrv_pins = 0;
+  //if( !init_motordrv_pins ) {
+  //  init_motordrv_pins = 1;
     PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
-    PIN_OUT(GPIOB, PINB_MOTDRV_IN1);
+    PIN_OUT(  GPIOB, PINB_MOTDRV_IN1);
     PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
-    PIN_OUT(GPIOB, PINB_MOTDRV_EN1);
-    
+    PIN_OUT(  GPIOB, PINB_MOTDRV_EN1);
     PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
-    PIN_OUT(GPIOB, PINB_MOTDRV_IN2);
+    PIN_OUT(  GPIOB, PINB_MOTDRV_IN2);
     PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
-    PIN_OUT(GPIOB, PINB_MOTDRV_EN2);
-  }
+    PIN_OUT(  GPIOB, PINB_MOTDRV_EN2);
+  //}
+  
+  //disable both channels
+  //PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
+  //PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
   
   switch( MOTA ) {
-    case HBC_OFF:
-      PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
-      break;
     case HBC_GND:
-      PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
-      PIN_SET(GPIOB, PINB_MOTDRV_EN1);
+      //PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
+      PIN_SET(  GPIOB, PINB_MOTDRV_EN1);
       break;
     case HBC_VCC:
       PIN_SET(GPIOB, PINB_MOTDRV_IN1);
       PIN_SET(GPIOB, PINB_MOTDRV_EN1);
       break;
+    default: //HBC_OFF:
+      //PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
+      //PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
+      break;
   }
   
   switch( MOTB ) {
-    case HBC_OFF:
-      PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
-      break;
     case HBC_GND:
-      PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
-      PIN_SET(GPIOB, PINB_MOTDRV_EN2);
+      //PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
+      PIN_SET(  GPIOB, PINB_MOTDRV_EN2);
       break;
     case HBC_VCC:
       PIN_SET(GPIOB, PINB_MOTDRV_IN2);
       PIN_SET(GPIOB, PINB_MOTDRV_EN2);
+      break;
+    default: //HBC_OFF:
+      //PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
+      //PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
       break;
   }
 }
