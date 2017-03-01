@@ -61,7 +61,7 @@ namespace Cozmo {
       private GameObject _ContentObject = null;
 
       [SerializeField]
-      private Anki.UI.AnkiTextLabel _ShelfText;
+      private Anki.UI.AnkiTextLegacy _ShelfText;
 
       private void Awake() {
         Color transparent = Color.white;

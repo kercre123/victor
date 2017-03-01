@@ -17,7 +17,7 @@ namespace Cozmo {
       private const float kAnimDur = 0.25f;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _HowToPlayButtonInstance;
+      private Cozmo.UI.CozmoButtonLegacy _HowToPlayButtonInstance;
 
       private void Awake() {
         _HowToPlayButtonInstance.Initialize(() => {

@@ -5,7 +5,7 @@ namespace FaceEnrollment {
     public System.Action EraseFacePressed;
 
     [SerializeField]
-    private Cozmo.UI.CozmoButton _EraseFaceButton;
+    private Cozmo.UI.CozmoButtonLegacy _EraseFaceButton;
 
     private void Awake() {
       _EraseFaceButton.Initialize(() => {

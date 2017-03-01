@@ -5,15 +5,15 @@ using System.Collections;
 public class FirmwarePane : MonoBehaviour {
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _OutputText;
+  private Anki.UI.AnkiTextLegacy _OutputText;
   [SerializeField]
-  private Anki.UI.AnkiButton _UpgradeButton;
+  private Anki.UI.AnkiButtonLegacy _UpgradeButton;
   [SerializeField]
-  private Anki.UI.AnkiButton _DowngradeButton;
+  private Anki.UI.AnkiButtonLegacy _DowngradeButton;
   [SerializeField]
-  private Anki.UI.AnkiButton _ResetButton;
+  private Anki.UI.AnkiButtonLegacy _ResetButton;
   [SerializeField]
-  private Anki.UI.AnkiButton _PrepareButton;
+  private Anki.UI.AnkiButtonLegacy _PrepareButton;
 
   void Awake() {
     _UpgradeButton.Initialize(() => RobotEngineManager.Instance.UpdateFirmware(FirmwareType.Current, 0), "debug_upgrade_firmware_button", "debug_firmware_view");

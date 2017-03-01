@@ -7,10 +7,10 @@ namespace Cozmo {
     public class AnimationSlide : MonoBehaviour {
 
       [SerializeField]
-      private Anki.UI.AnkiTextLabel _HeaderTextLabel;
+      private Anki.UI.AnkiTextLegacy _HeaderTextLabel;
 
       [SerializeField]
-      private Anki.UI.AnkiTextLabel _InfoTextLabel;
+      private Anki.UI.AnkiTextLegacy _InfoTextLabel;
 
       [SerializeField]
       private RectTransform _AnimationContainer;

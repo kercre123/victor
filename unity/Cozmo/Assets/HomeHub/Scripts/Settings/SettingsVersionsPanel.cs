@@ -7,22 +7,22 @@ namespace Cozmo.Settings {
   public class SettingsVersionsPanel : MonoBehaviour {
 
     [SerializeField]
-    private AnkiTextLabel _AppVersionLabel;
+    private AnkiTextLegacy _AppVersionLabel;
 
     [SerializeField]
-    private AnkiTextLabel _CozmoVersionLabel;
+    private AnkiTextLegacy _CozmoVersionLabel;
 
     [SerializeField]
-    private AnkiTextLabel _SerialNumberLabel;
+    private AnkiTextLegacy _SerialNumberLabel;
 
     [SerializeField]
-    private AnkiTextLabel _DeviceIDLabel;
+    private AnkiTextLegacy _DeviceIDLabel;
 
     [SerializeField]
-    private AnkiTextLabel _AppRunLabel;
+    private AnkiTextLegacy _AppRunLabel;
 
     [SerializeField]
-    private CozmoButton _SupportButton;
+    private CozmoButtonLegacy _SupportButton;
 
     [SerializeField]
     private SettingsSupportInfoModal _SupportInfoModalPrefab;
@@ -30,7 +30,7 @@ namespace Cozmo.Settings {
     private SettingsSupportInfoModal _SupportInfoModalInstance;
 
     [SerializeField]
-    private CozmoButton _EraseCozmoButton;
+    private CozmoButtonLegacy _EraseCozmoButton;
 
     [SerializeField]
     private float _SecondsToConfirmEraseCozmo = 5f;

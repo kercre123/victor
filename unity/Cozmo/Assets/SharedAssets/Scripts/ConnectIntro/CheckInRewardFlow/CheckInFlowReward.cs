@@ -11,8 +11,8 @@ namespace Cozmo.CheckInFlow.UI {
     }
 
     [SerializeField]
-    private AnkiTextLabel _RewardCount;
-    public AnkiTextLabel RewardCount {
+    private AnkiTextLegacy _RewardCount;
+    public AnkiTextLegacy RewardCount {
       get { return _RewardCount; }
     }
 

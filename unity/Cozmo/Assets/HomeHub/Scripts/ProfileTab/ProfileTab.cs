@@ -5,19 +5,19 @@ using Cozmo.UI;
 public class ProfileTab : MonoBehaviour {
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _PlayerName;
+  private Anki.UI.AnkiTextLegacy _PlayerName;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _TimeWithCozmoCountValueLabel;
+  private Anki.UI.AnkiTextLegacy _TimeWithCozmoCountValueLabel;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _DailyGoalsCompletedCount;
+  private Anki.UI.AnkiTextLegacy _DailyGoalsCompletedCount;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _StreaksCountValueLabel;
+  private Anki.UI.AnkiTextLegacy _StreaksCountValueLabel;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _EditNameButton;
+  private Cozmo.UI.CozmoButtonLegacy _EditNameButton;
 
   [SerializeField]
   private Cozmo.UI.BaseModal _ProfileEditNameModalPrefab;

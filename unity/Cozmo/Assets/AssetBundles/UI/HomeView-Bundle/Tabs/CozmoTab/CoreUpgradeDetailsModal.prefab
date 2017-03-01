@@ -915,22 +915,22 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    FieldName: Cozmo.UI.CozmoButtonLegacy:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:a
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:disabledColor:a
     JsonValue: 0.3137255
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:disabledColor:b
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:disabledColor:g
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:disabledColor:r
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:a
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:a
     JsonValue: 0.5882353
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -1096,25 +1096,25 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 100
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"Paragraph Text"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
@@ -1162,19 +1162,19 @@ MonoBehaviour:
   Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MinSize
     JsonValue: 0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 66
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"Use 3 Bits to Unlock"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
@@ -1182,7 +1182,7 @@ MonoBehaviour:
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Font
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Font
     Reference: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
 --- !u!114 &11442860
 MonoBehaviour:
@@ -1252,31 +1252,31 @@ MonoBehaviour:
   Prefab: {fileID: 194676, guid: c70aa1a8748ed4243b6c6e28fe4e5223, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.8313726
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.5686275
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.117647067
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 100
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MinSize
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 100
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"Available:"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
@@ -1478,19 +1478,19 @@ MonoBehaviour:
   Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MinSize
     JsonValue: 0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 66
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"Use 3 Bits to Unlock"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
@@ -1498,7 +1498,7 @@ MonoBehaviour:
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Font
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Font
     Reference: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
 --- !u!114 &11469206
 MonoBehaviour:
@@ -1595,31 +1595,31 @@ MonoBehaviour:
   Prefab: {fileID: 194676, guid: c70aa1a8748ed4243b6c6e28fe4e5223, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.101960786
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.882352948
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 100
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MinSize
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 100
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"Available:"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
@@ -1640,28 +1640,28 @@ MonoBehaviour:
   Prefab: {fileID: 111598, guid: 6c199a31aa3af4bab8ff78a73ac57fb1, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 6
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 130
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 130
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"Knock Over Stacks"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
@@ -1682,10 +1682,10 @@ MonoBehaviour:
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 3
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
@@ -1870,52 +1870,52 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 1.0
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 1.0
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 1.0
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"Sparks"'
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:a
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:disabledColor:a
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:a
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:a
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:b
     JsonValue: 0.852941155
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:g
     JsonValue: 0.806983
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:r
     JsonValue: 0.671064
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:b
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:g
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:r
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextEnabledColor:b
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextEnabledColor:g
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextEnabledColor:r
     JsonValue: 1.0
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
@@ -1929,7 +1929,7 @@ MonoBehaviour:
     FieldName: UnityEngine.UI.Image:m_Sprite
     Reference: {fileID: 21300000, guid: b2cceb8b225484e4dac8687f352791c8, type: 3}
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedSprite
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedSprite
     Reference: {fileID: 21300000, guid: 8bea84bf556d1499da2ef38d235f8987, type: 3}
 --- !u!114 &11499144
 MonoBehaviour:

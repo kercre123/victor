@@ -6,7 +6,7 @@ namespace Onboarding {
   public class ShowContinueStage : OnboardingBaseStage {
 
     [SerializeField]
-    private CozmoButton _ContinueButtonInstance;
+    private CozmoButtonLegacy _ContinueButtonInstance;
 
     [SerializeField]
     private bool _FreeplayEnabledOnEnter = false;

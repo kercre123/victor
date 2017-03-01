@@ -5,7 +5,7 @@ namespace Cozmo.Settings {
   public class SettingsSleepCozmoButton : MonoBehaviour {
 
     [SerializeField]
-    private CozmoButton _SleepCozmoButton;
+    private CozmoButtonLegacy _SleepCozmoButton;
 
     // Use this for initialization
     private void Awake() {

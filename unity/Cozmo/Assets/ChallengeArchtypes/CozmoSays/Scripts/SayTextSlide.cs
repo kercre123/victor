@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 public class SayTextSlide : MonoBehaviour {
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _SayTextButton;
+  private Cozmo.UI.CozmoButtonLegacy _SayTextButton;
 
   [SerializeField]
   private UnityEngine.UI.InputField _TextInput;
@@ -18,7 +18,7 @@ public class SayTextSlide : MonoBehaviour {
   private Color _TextFieldActiveColor;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _TotalSparksLabel;
+  private Anki.UI.AnkiTextLegacy _TotalSparksLabel;
 
   [SerializeField]
   [Cozmo.ItemId]
@@ -28,7 +28,7 @@ public class SayTextSlide : MonoBehaviour {
   private int _SayCost;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _CostLabel;
+  private Anki.UI.AnkiTextLegacy _CostLabel;
 
   [SerializeField]
   private GameObject _ActiveContentContainer;

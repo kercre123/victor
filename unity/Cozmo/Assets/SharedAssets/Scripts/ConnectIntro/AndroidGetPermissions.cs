@@ -16,13 +16,13 @@ using System;
 public class AndroidGetPermissions : AndroidConnectionFlowStage {
 
   [SerializeField]
-  private AnkiTextLabel _Instructions;
+  private AnkiTextLegacy _Instructions;
 
   [SerializeField]
-  private CozmoButton _ExecuteButton;
+  private CozmoButtonLegacy _ExecuteButton;
 
   [SerializeField]
-  private CozmoButton _CancelButton;
+  private CozmoButtonLegacy _CancelButton;
 
   private void Start() {
     _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "cancel_button", "android_get_permissions");

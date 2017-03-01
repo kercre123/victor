@@ -110,7 +110,7 @@ GameObject:
   - 224: {fileID: 22474660}
   - 114: {fileID: 11472432}
   m_Layer: 5
-  m_Name: OpenRestoreCozmoButtonProxy
+  m_Name: OpenRestoreCozmoButtonLegacyProxy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -214,19 +214,19 @@ MonoBehaviour:
   Prefab: {fileID: 112842, guid: e48611878db304fb1a8a34ac88e4682e, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 66
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.supportView.label.restoreCozmoClarification"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -323,16 +323,16 @@ MonoBehaviour:
   Prefab: {fileID: 176160, guid: 10f33d59217b548c690367d9dbad1e40, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.supportView.label.title"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
@@ -462,7 +462,7 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    FieldName: Cozmo.UI.CozmoButtonLegacy:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
@@ -483,10 +483,10 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.supportView.button.restoreCozmo"'
   ModifiedLocalReferences:
   - ObjectPath: ../../

@@ -5,10 +5,10 @@ using UnityEngine;
 public class AndroidNetworkCell : MonoBehaviour {
 
   [SerializeField]
-  private AnkiTextLabel _Label;
+  private AnkiTextLegacy _Label;
 
   [SerializeField]
-  private AnkiButton _Button;
+  private AnkiButtonLegacy _Button;
 
   [SerializeField]
   private GameObject _SelectedHighlight;

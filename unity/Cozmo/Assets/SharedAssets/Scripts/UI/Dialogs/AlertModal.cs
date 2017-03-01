@@ -10,16 +10,16 @@ namespace Cozmo {
     public class AlertModal : BaseModal {
 
       [SerializeField]
-      private AnkiTextLabel _AlertTitleText;
+      private AnkiTextLegacy _AlertTitleText;
 
       [SerializeField]
-      private AnkiTextLabel _AlertMessageText;
+      private AnkiTextLegacy _AlertMessageText;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _PrimaryButton;
+      private Cozmo.UI.CozmoButtonLegacy _PrimaryButton;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _SecondaryButton;
+      private Cozmo.UI.CozmoButtonLegacy _SecondaryButton;
 
       [SerializeField]
       private LayoutElement _SecondaryButtonLayoutElement;
@@ -147,7 +147,7 @@ namespace Cozmo {
         _SecondaryButton.Interactable = false;
       }
 
-      private void SetupButton(Cozmo.UI.CozmoButton button, string dasEventButtonName, string titleKey, Action action,
+      private void SetupButton(Cozmo.UI.CozmoButtonLegacy button, string dasEventButtonName, string titleKey, Action action,
                                Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         if (button != null) {
           string title = Localization.Get(titleKey);

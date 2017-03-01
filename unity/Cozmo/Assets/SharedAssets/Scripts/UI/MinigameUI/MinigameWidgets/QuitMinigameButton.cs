@@ -19,7 +19,7 @@ namespace Cozmo {
       public event QuitButtonHandler QuitGameConfirmed;
 
       [SerializeField]
-      private CozmoButton _QuitButtonInstance;
+      private CozmoButtonLegacy _QuitButtonInstance;
 
       private AlertModal _QuitPopupInstance;
 

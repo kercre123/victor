@@ -27,7 +27,7 @@ namespace Cozmo.CheckInFlow.UI {
     private Anki.Cozmo.Audio.AudioEventParameter _RewardCollectSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
 
     [SerializeField]
-    private Cozmo.UI.CozmoButton _EnvelopeButton;
+    private Cozmo.UI.CozmoButtonLegacy _EnvelopeButton;
 
     [SerializeField]
     private GameObject _EnvelopeContainer;
@@ -86,7 +86,7 @@ namespace Cozmo.CheckInFlow.UI {
     [SerializeField]
     private CanvasGroup _ConnectCanvas;
     [SerializeField]
-    private Cozmo.UI.CozmoButton _ConnectButton;
+    private Cozmo.UI.CozmoButtonLegacy _ConnectButton;
 
     [SerializeField]
     private Transform _FinalExpTarget;

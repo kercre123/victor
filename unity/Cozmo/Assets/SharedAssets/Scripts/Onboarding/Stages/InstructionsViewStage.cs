@@ -8,10 +8,10 @@ namespace Onboarding {
     private Transform _RedTableOutline;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLabel _TextfieldHeader;
+    private Anki.UI.AnkiTextLegacy _TextfieldHeader;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLabel _TextfieldFooter;
+    private Anki.UI.AnkiTextLegacy _TextfieldFooter;
 
     private int _Step = 0;
 

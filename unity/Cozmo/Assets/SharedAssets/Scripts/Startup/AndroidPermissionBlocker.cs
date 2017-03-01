@@ -8,10 +8,10 @@ public class AndroidPermissionBlocker : MonoBehaviour {
   public const string kPermission = "android.permission.READ_EXTERNAL_STORAGE";
 
   [SerializeField]
-  private AnkiTextLabel _Label;
+  private AnkiTextLegacy _Label;
 
   [SerializeField]
-  private AnkiButton _Button;
+  private AnkiButtonLegacy _Button;
 
   private AndroidJavaObject _Activity;
   private AndroidJavaObject _PermissionUtil;

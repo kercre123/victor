@@ -34,10 +34,10 @@ namespace Cozmo {
       private GameObject _ScoreContainer;
 
       [SerializeField]
-      private AnkiTextLabel _ScoreNameLabel;
+      private AnkiTextLegacy _ScoreNameLabel;
 
       [SerializeField]
-      private AnkiTextLabel _ScoreCountLabel;
+      private AnkiTextLegacy _ScoreCountLabel;
 
       [SerializeField]
       private GameObject _RoundContainer;

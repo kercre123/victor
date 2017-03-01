@@ -5,7 +5,7 @@ namespace Cozmo {
   namespace UI {
     public class ItemDataLabel : MonoBehaviour {
       [SerializeField]
-      private Anki.UI.AnkiTextLabel _CountLabel;
+      private Anki.UI.AnkiTextLegacy _CountLabel;
 
       [SerializeField]
       private UnityEngine.UI.Image _ItemIcon;

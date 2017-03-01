@@ -7,19 +7,19 @@ public class SoundCheckModal : Cozmo.UI.BaseModal {
   public System.Action OnSoundCheckComplete;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _PlayButton;
+  private Cozmo.UI.CozmoButtonLegacy _PlayButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _PlayAgainButton;
+  private Cozmo.UI.CozmoButtonLegacy _PlayAgainButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _SoundsGoodButton;
+  private Cozmo.UI.CozmoButtonLegacy _SoundsGoodButton;
 
   [SerializeField]
   private UnityEngine.UI.Image[] _SoundFillImages;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _SoundTextConfirm;
+  private Anki.UI.AnkiTextLegacy _SoundTextConfirm;
 
   [SerializeField]
   private float _SoundCheckAudioDuration = 4.216f;

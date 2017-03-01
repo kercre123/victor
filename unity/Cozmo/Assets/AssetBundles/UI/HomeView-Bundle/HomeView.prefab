@@ -60,7 +60,7 @@ GameObject:
   - 224: {fileID: 22404648}
   - 114: {fileID: 11454982}
   m_Layer: 5
-  m_Name: CozmoButtonProfileDown
+  m_Name: CozmoButtonLegacyProfileDown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -125,7 +125,7 @@ GameObject:
   - 224: {fileID: 22415908}
   - 114: {fileID: 11433342}
   m_Layer: 5
-  m_Name: CozmoButtonSettingsDown
+  m_Name: CozmoButtonLegacySettingsDown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -176,7 +176,7 @@ GameObject:
   - 224: {fileID: 22413786}
   - 114: {fileID: 11473696}
   m_Layer: 5
-  m_Name: CozmoButtonPlayDown
+  m_Name: CozmoButtonLegacyPlayDown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1164,7 +1164,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22420712}
   m_Layer: 5
-  m_Name: CozmoButtonDown
+  m_Name: CozmoButtonLegacyDown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2004,22 +2004,22 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 8
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 77
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 77
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#label.emptyWithArg"'
   ModifiedLocalReferences:
   - ObjectPath: ../
@@ -2943,22 +2943,22 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 8
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 77
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 77
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#label.emptyWithArg"'
   ModifiedLocalReferences:
   - ObjectPath: ../
@@ -3545,10 +3545,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DASEventDialogName: home_view
-  _DASEventDialogType: 0
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
+  _AlphaController: {fileID: 0}
   _BadLightAlertPrefab: {fileID: 11497196, guid: c0f4aad8d980c4533bc2aa6874374a65,
     type: 2}
   _CozmoTabPrefab: {fileID: 11439446, guid: f0483806736fc4eea837be77327845c6, type: 2}
@@ -3590,7 +3590,6 @@ MonoBehaviour:
       _EnumValueAsString: loot_view_prefabs
       _EnumValue: 10
     _AssetDataName: LootView
-  RewardSequenceActive: 0
   _EnergyRewardParticlePrefab: {fileID: 125416, guid: c146a460a04b54d96920707c6edba121,
     type: 2}
   _EnergyRewardStart_PlayTab: {fileID: 22438686}

@@ -9,7 +9,7 @@ namespace Onboarding {
     [SerializeField]
     private UnityEngine.UI.Text[] _TextFields;
     [SerializeField]
-    private CozmoButton _ContinueButtonInstance;
+    private CozmoButtonLegacy _ContinueButtonInstance;
 
     [SerializeField]
     private float _RevealTime = 2.5f;

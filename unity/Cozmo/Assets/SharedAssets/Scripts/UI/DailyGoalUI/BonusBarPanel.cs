@@ -12,7 +12,7 @@ public class BonusBarPanel : MonoBehaviour {
   [SerializeField]
   private GameObject _InactiveBonusContainer;
   [SerializeField]
-  private AnkiTextLabel _BonusMultText;
+  private AnkiTextLegacy _BonusMultText;
   [SerializeField]
   private ProgressBar _BonusProgressBar;
   [SerializeField]

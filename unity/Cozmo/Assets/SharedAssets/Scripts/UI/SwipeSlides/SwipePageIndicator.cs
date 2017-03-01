@@ -19,10 +19,10 @@ public class SwipePageIndicator : MonoBehaviour {
   private Sprite _InactiveSprite;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _NextButton;
+  private Cozmo.UI.CozmoButtonLegacy _NextButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _BackButton;
+  private Cozmo.UI.CozmoButtonLegacy _BackButton;
 
   private List<UnityEngine.UI.Image> _PageIndicators = new List<UnityEngine.UI.Image>();
 

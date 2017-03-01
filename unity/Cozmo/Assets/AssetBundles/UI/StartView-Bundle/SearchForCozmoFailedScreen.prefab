@@ -150,7 +150,7 @@ GameObject:
   - 114: {fileID: 11461732}
   - 114: {fileID: 11418264}
   m_Layer: 5
-  m_Name: GetACozmoButton
+  m_Name: GetACozmoButtonLegacy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -455,31 +455,31 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#connectivity.moreInfo"'
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:a
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:a
     JsonValue: 0.333333343
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:b
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:g
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:r
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:b
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:g
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:r
     JsonValue: 0.498039216
   ModifiedLocalReferences:
   - ObjectPath: ../

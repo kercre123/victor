@@ -4,7 +4,7 @@ using System.Collections;
 public class UpdateAppModal : Cozmo.UI.BaseModal {
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _UpdateAppButton;
+  private Cozmo.UI.CozmoButtonLegacy _UpdateAppButton;
 
   [SerializeField]
   private UnityEngine.UI.Image _ButtonImage;

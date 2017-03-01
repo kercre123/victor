@@ -11,10 +11,10 @@ public class PinSecurityModal : Cozmo.UI.BaseModal {
   private bool _PinFilled = false;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _PinFeedbackLabel;
+  private Anki.UI.AnkiTextLegacy _PinFeedbackLabel;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton[] _NumPadButtons;
+  private Cozmo.UI.CozmoButtonLegacy[] _NumPadButtons;
 
   private void Awake() {
     for (int i = 0; i < _NumPadButtons.Length; ++i) {

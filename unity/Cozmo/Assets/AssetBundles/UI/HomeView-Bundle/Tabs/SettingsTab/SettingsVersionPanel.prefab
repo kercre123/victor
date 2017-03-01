@@ -10,7 +10,7 @@ GameObject:
   - 224: {fileID: 22495716}
   - 114: {fileID: 11421862}
   m_Layer: 5
-  m_Name: ResetCozmoButton
+  m_Name: ResetCozmoButtonLegacy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -231,7 +231,10 @@ MonoBehaviour:
   Prefab: {fileID: 184674, guid: 26848cf14046a4e3ba741e5da54ae400, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.versionPanel.button.eraseCozmo"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -252,25 +255,28 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 60
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.versionPanel.label.serialNumber"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -291,25 +297,28 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 60
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.versionPanel.label.appVersion"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -330,25 +339,28 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 60
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.versionPanel.label.deviceId"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -368,7 +380,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -444,7 +456,10 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.versionPanel.button.support"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -483,25 +498,28 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 60
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.versionPanel.label.cozmoVersion"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -522,25 +540,28 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 60
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#settings.versionPanel.label.appRun"'
   ModifiedLocalReferences:
   - ObjectPath: ../../

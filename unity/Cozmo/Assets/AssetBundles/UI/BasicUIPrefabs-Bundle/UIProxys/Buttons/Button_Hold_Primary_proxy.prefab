@@ -44,7 +44,7 @@ GameObject:
   - 224: {fileID: 22406076}
   - 114: {fileID: 11414000}
   m_Layer: 5
-  m_Name: HoldCozmoButton
+  m_Name: HoldCozmoButtonLegacy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

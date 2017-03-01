@@ -183,10 +183,10 @@ MonoBehaviour:
   Prefab: {fileID: 176160, guid: 10f33d59217b548c690367d9dbad1e40, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 110
   ModifiedLocalReferences:
   - ObjectPath: ../
@@ -244,7 +244,7 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    FieldName: Cozmo.UI.CozmoButtonLegacy:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences:
   - ObjectPath: ../

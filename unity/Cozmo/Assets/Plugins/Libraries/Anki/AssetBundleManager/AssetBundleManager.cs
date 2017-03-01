@@ -182,6 +182,31 @@ namespace Anki {
         UnloadAssetBundleInternal(variantAssetBundleName, destroyObjectsCreatedFromBundle);
       }
 
+      public AssetType LoadAsset<AssetType>(string assetBundleName, string assetName) where AssetType : UnityEngine.Object {
+#if UNITY_EDITOR
+        if (SimulateAssetBundleInEditor) {
+          string[] assetPaths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(assetBundleName, assetName);
+
+          if (assetPaths.Length == 0) {
+            Log(LogType.Error, "Couldn't find asset " + assetName + " in asset bundle " + assetBundleName);
+            return null;
+          }
+
+          if (assetPaths.Length > 1) {
+            Log(LogType.Warning, "This case in LoadAssets needs to be implemented");
+            return null;
+          }
+          return AssetDatabase.LoadMainAssetAtPath(assetPaths[0]) as AssetType;
+
+        }
+        else
+#endif
+        {
+
+        }
+        return null;
+      }
+
       // Loads an asset asynchronously from the given asset bundle. The asset bundle must have been loaded previously.
       // When the operation  is completed, the callback will be called with the asset or a null refrence if it wasn't found.
       public void LoadAssetAsync<AssetType>(string assetBundleName, string assetName, Action<AssetType> callback) where AssetType : UnityEngine.Object {

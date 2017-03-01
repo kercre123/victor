@@ -279,10 +279,10 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    FieldName: Cozmo.UI.CozmoButtonLegacy:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:a
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:a
     JsonValue: 0.549019635
   ModifiedLocalReferences:
   - ObjectPath: ../
@@ -290,10 +290,10 @@ MonoBehaviour:
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledSprite
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:disabledSprite
     Reference: {fileID: 21300000, guid: a06872b4ef1ea433698eaa1f0c3dd771, type: 3}
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedSprite
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedSprite
     Reference: {fileID: 21300000, guid: a06872b4ef1ea433698eaa1f0c3dd771, type: 3}
 --- !u!114 &11459964
 MonoBehaviour:

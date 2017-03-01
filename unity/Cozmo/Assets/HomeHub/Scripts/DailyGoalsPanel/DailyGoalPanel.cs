@@ -39,7 +39,7 @@ public class DailyGoalPanel : MonoBehaviour {
   private AnimationCurve _TitleScaleCurve;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _CompletedText;
+  private Anki.UI.AnkiTextLegacy _CompletedText;
 
   void Start() {
     UpdateDailySession();
