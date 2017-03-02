@@ -7,10 +7,10 @@ namespace SpeedTap {
   public class SpeedTapRoundBeginSlide : MonoBehaviour {
 
     [SerializeField]
-    private AnkiTextLabel _RoundHeaderLabel;
+    private AnkiTextLegacy _RoundHeaderLabel;
 
     [SerializeField]
-    private AnkiTextLabel _RoundSubtitleLabel;
+    private AnkiTextLegacy _RoundSubtitleLabel;
 
     public void SetText(int currentRound, int totalRounds, int playerCount) {
       _RoundHeaderLabel.text = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, currentRound);

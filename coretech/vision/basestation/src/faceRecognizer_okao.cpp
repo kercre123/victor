@@ -185,19 +185,19 @@ namespace Vision {
     
     if(NULL != _okaoFaceAlbum) {
       if(OKAO_NORMAL != OKAO_FR_DeleteAlbumHandle(_okaoFaceAlbum)) {
-        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.OkaoAlbumHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.FaceLibAlbumHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoRecogMergeFeatureHandle) {
       if(OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecogMergeFeatureHandle)) {
-        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.OkaoRecognitionMergeFeatureHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.FaceLibRecognitionMergeFeatureHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoRecognitionFeatureHandle) {
       if(OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecognitionFeatureHandle)) {
-        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.OkaoRecognitionFeatureHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.FaceLibRecognitionFeatureHandleDeleteFail", "");
       }
     }
   }
@@ -213,19 +213,19 @@ namespace Vision {
     
     _okaoRecognitionFeatureHandle = OKAO_FR_CreateFeatureHandle(_okaoCommonHandle);
     if(NULL == _okaoRecognitionFeatureHandle) {
-      PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoFeatureHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.Init.FaceLibFeatureHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoRecogMergeFeatureHandle = OKAO_FR_CreateFeatureHandle(_okaoCommonHandle);
     if(NULL == _okaoRecogMergeFeatureHandle) {
-      PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoMergeFeatureHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.Init.FaceLibMergeFeatureHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoFaceAlbum = OKAO_FR_CreateAlbumHandle(_okaoCommonHandle, kMaxTotalAlbumEntries, kMaxEnrollDataPerAlbumEntry);
     if(NULL == _okaoFaceAlbum) {
-      PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoAlbumHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.Init.FaceLibAlbumHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
@@ -300,7 +300,7 @@ namespace Vision {
     OKAO_FR_GetRegisteredUserNum(okaoFaceAlbum, &numEntries);
     if(numEntries != albumEntryToFaceID.size()) {
       PRINT_NAMED_ERROR("FaceRecognizer.SanityCheckBookkeeping.NumAlbumEntriesMismatch",
-                          "OkaoNumEntries=%d, AlbumEntryToFaceIDSize=%zu",
+                          "FaceLibNumEntries=%d, AlbumEntryToFaceIDSize=%zu",
                           numEntries, albumEntryToFaceID.size());
       return RESULT_FAIL;
     }
@@ -721,8 +721,8 @@ namespace Vision {
     ProcessingState newState = ProcessingState::FeaturesReady;
     
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceRecognizer.ExtractFeatures.OkaoFailure",
-                          "Going back to Idle state. Okao Result=%d", okaoResult);
+      PRINT_NAMED_WARNING("FaceRecognizer.ExtractFeatures.FaceLibFailure",
+                          "Going back to Idle state. FaceLib Result=%d", okaoResult);
       newState = ProcessingState::Idle;
     }
     
@@ -739,7 +739,7 @@ namespace Vision {
     AlbumEntryID_t numEntriesInAlbum = 0;
     OkaoResult okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numEntriesInAlbum);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.OkaoGetNumUsersInAlbumFailed", "");
+      PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.FaceLibGetNumUsersInAlbumFailed", "");
       return failureEntry;
     }
     
@@ -781,7 +781,7 @@ namespace Vision {
         okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _nextAlbumEntry, 0, &isStillRegistered);
         if(OKAO_NORMAL != okaoResult) {
           PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.CouldNotCheckIfStillRegistered",
-                              "Using anyway. Entry:%d OKAO Result:%d", _nextAlbumEntry, okaoResult);
+                              "Using anyway. Entry:%d FaceLib Result:%d", _nextAlbumEntry, okaoResult);
         }
           
         if(isStillRegistered)
@@ -807,7 +807,7 @@ namespace Vision {
         
         if(OKAO_NORMAL != okaoResult) {
           PRINT_NAMED_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.IsRegisteredCheckFailed",
-                              "Failed to determine if albumEntry %d is already registered. OKAO result=%d",
+                              "Failed to determine if albumEntry %d is already registered. FaceLib result=%d",
                               _nextAlbumEntry, okaoResult);
           return failureEntry;
         }
@@ -1011,7 +1011,7 @@ namespace Vision {
     OkaoResult okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, albumEntry, &numDataStored);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.GetRegisteredUserDataFailed",
-                        "albumEntry:%d dataEntry:%d OKAO result=%d",
+                        "albumEntry:%d dataEntry:%d FaceLib result=%d",
                         albumEntry, numDataStored, okaoResult);
       return RESULT_FAIL;
     }
@@ -1043,7 +1043,7 @@ namespace Vision {
         if(OKAO_NORMAL != okaoResult)
         {
           PRINT_NAMED_WARNING("FaceRecognizer.UpdateExistingUser.FailedToRegisterNewEntry",
-                              "AlbumEntry:%d Data:%d for FaceID:%d, OKAO result %d",
+                              "AlbumEntry:%d Data:%d for FaceID:%d, FaceLib result %d",
                               albumEntry, entryToReplace, faceID, okaoResult);
           return RESULT_FAIL;
         }
@@ -1060,7 +1060,7 @@ namespace Vision {
         OkaoResult okaoResult = OKAO_FR_Verify(hFeature, _okaoFaceAlbum, albumEntry, &newEntryScore);
         if(OKAO_NORMAL != okaoResult) {
           PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.VerifyNewFeatureFailed",
-                            "albumEntry:%d OKAO result=%d",
+                            "albumEntry:%d FaceLib result=%d",
                             albumEntry, okaoResult);
           return RESULT_FAIL;
         }
@@ -1076,7 +1076,7 @@ namespace Vision {
           okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, albumEntry, iData, _okaoRecogMergeFeatureHandle);
           if(OKAO_NORMAL != okaoResult) {
             PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.GetFeatureFailed",
-                              "albumEntry:%d dataEntry:%d OKAO result=%d",
+                              "albumEntry:%d dataEntry:%d FaceLib result=%d",
                               albumEntry, iData, okaoResult);
             return RESULT_FAIL;
           }
@@ -1085,7 +1085,7 @@ namespace Vision {
           okaoResult = OKAO_FR_ClearData(_okaoFaceAlbum, albumEntry, iData);
           if(OKAO_NORMAL != okaoResult) {
             PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.ClearDataFailed",
-                              "albumEntry:%d dataEntry:%d OKAO result=%d",
+                              "albumEntry:%d dataEntry:%d FaceLib result=%d",
                               albumEntry, iData, okaoResult);
             return RESULT_FAIL;
           }
@@ -1094,7 +1094,7 @@ namespace Vision {
           okaoResult = OKAO_FR_Verify(_okaoRecogMergeFeatureHandle, _okaoFaceAlbum, albumEntry, &currentEntryScore);
           if(OKAO_NORMAL != okaoResult) {
             PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.VerifyExistingFeatureFailed",
-                              "albumEntry:%d OKAO result=%d",
+                              "albumEntry:%d FaceLib result=%d",
                               albumEntry, okaoResult);
             return RESULT_FAIL;
           }
@@ -1108,7 +1108,7 @@ namespace Vision {
           okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, _okaoRecogMergeFeatureHandle, albumEntry, iData);
           if(OKAO_NORMAL != okaoResult) {
             PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.ReRegisterDataFailed",
-                              "albumEntry:%d dataEntry:%d OKAO result=%d",
+                              "albumEntry:%d dataEntry:%d FaceLib result=%d",
                               albumEntry, iData, okaoResult);
             return RESULT_FAIL;
           }
@@ -1125,7 +1125,7 @@ namespace Vision {
           okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, albumEntry, entryToReplace);
           if(OKAO_NORMAL != okaoResult) {
             PRINT_NAMED_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.RegisterReplacementDataFailed",
-                              "albumEntry:%d dataEntry:%d OKAO result=%d",
+                              "albumEntry:%d dataEntry:%d FaceLib result=%d",
                               albumEntry, entryToReplace, okaoResult);
             return RESULT_FAIL;
           }
@@ -1334,7 +1334,7 @@ namespace Vision {
       OkaoResult okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, albumEntry);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_WARNING("FaceRecognizer.RemoveUser.ClearUserFailed",
-                            "AlbumEntry:%d FaceID:%d OKAO result:%d",
+                            "AlbumEntry:%d FaceID:%d FaceLib result:%d",
                             albumEntry, faceID, okaoResult);
       }
       
@@ -1431,7 +1431,7 @@ namespace Vision {
     INT32 numUsersInAlbum = 0;
     OkaoResult okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.OkaoGetNumUsersInAlbumFailed", "");
+      PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.FaceLibGetNumUsersInAlbumFailed", "");
       return RESULT_FAIL;
     }
     
@@ -1470,14 +1470,14 @@ namespace Vision {
     
     if(resultNum > kMaxFacesInAlbum)
     {
-      PRINT_NAMED_ERROR("FaceRecognizer.RecognizeFace.OkaoReturnedBadResultNum",
+      PRINT_NAMED_ERROR("FaceRecognizer.RecognizeFace.FaceLibReturnedBadResultNum",
                         "%d > %d", resultNum, kMaxFacesInAlbum);
       resultNum = kMaxFacesInAlbum;
     }
     
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.OkaoFaceRecognitionIdentifyFailed",
-                          "maxResults:%d, hFeature:%p, hAlbum:%p, OKAO Result Code=%d",
+      PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.FaceLibFaceRecognitionIdentifyFailed",
+                          "maxResults:%d, hFeature:%p, hAlbum:%p, FaceLib Result Code=%d",
                           kMaxFacesInAlbum, _okaoRecognitionFeatureHandle, _okaoFaceAlbum, okaoResult);
       // Sometimes this happens (bad features?), so just warn and return "OK"
       return RESULT_OK;
@@ -1992,7 +1992,7 @@ namespace Vision {
       okaoResult = OKAO_FR_GetSerializedAlbumSize(tempAlbumHandle, &albumSize);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_WARNING("FaceRecognizer.GetSerializedAlbum.GetSizeFail",
-                            "OKAO Result=%d", okaoResult);
+                            "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
       
@@ -2000,7 +2000,7 @@ namespace Vision {
       okaoResult = OKAO_FR_SerializeAlbum(tempAlbumHandle, &(serializedAlbum[0]), albumSize);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_WARNING("FaceRecognizer.GetSerializedAlbum.SerializeFail",
-                            "OKAO Result=%d", okaoResult);
+                            "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
 
@@ -2021,7 +2021,7 @@ namespace Vision {
   Result FaceRecognizer::SetSerializedAlbum(HCOMMON okaoCommonHandle, const std::vector<u8>&serializedAlbum, HALBUM& album)
   {
     if(NULL == okaoCommonHandle) {
-      PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedAlbum.NullOkaoCommonHandle", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedAlbum.NullFaceLibCommonHandle", "");
       return RESULT_FAIL;
     }
     
@@ -2035,7 +2035,7 @@ namespace Vision {
     album = OKAO_FR_RestoreAlbum(okaoCommonHandle, const_cast<UINT8*>(serializedAlbum.data()), (UINT32)serializedAlbum.size(), &error);
     if(NULL == album) {
       PRINT_NAMED_WARNING("FaceRecognizer.SetSerializedAlbum.RestoreFail",
-                          "OKAO Result=%d", error);
+                          "FaceLib Result=%d", error);
       return RESULT_FAIL;
     }
     
@@ -2043,7 +2043,7 @@ namespace Vision {
     OkaoResult okaoResult = OKAO_FR_GetRegisteredUserNum(album, &numAlbumEntries);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceRecognizer.SetSerializedAlbum.GetNumEntriesFailed",
-                          "OKAO result=%d", okaoResult);
+                          "FaceLib result=%d", okaoResult);
       return RESULT_FAIL;
     }
     
@@ -2051,12 +2051,12 @@ namespace Vision {
     okaoResult = OKAO_FR_GetRegisteredAllDataNum(album, &numDataEntries);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceRecognizer.SetSerializedAlbum.GetNumDataFailed",
-                          "OKAO result=%d", okaoResult);
+                          "FaceLib result=%d", okaoResult);
       return RESULT_FAIL;
     }
     
     PRINT_CH_INFO("FaceRecognizer", "SetSerializedAlbum.RestoredAlbum",
-                  "Restored OKAO album with %d album entries and %d data entries from %zu-byte serialized album",
+                  "Restored FaceLib album with %d album entries and %d data entries from %zu-byte serialized album",
                   numAlbumEntries, numDataEntries, serializedAlbum.size());
    
     return RESULT_OK;
@@ -2158,8 +2158,8 @@ namespace Vision {
     _albumEntryToFaceID.clear();
     OkaoResult okaoResult = OKAO_FR_ClearAlbum(_okaoFaceAlbum);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceRecognizer.EraseAllFaces.OkaoClearAlbumFailed",
-                          "OKAO Result=%d", okaoResult);
+      PRINT_NAMED_WARNING("FaceRecognizer.EraseAllFaces.FaceLibClearAlbumFailed",
+                          "FaceLib Result=%d", okaoResult);
     }
     
     PRINT_CH_INFO("FaceRecognizer", "EraseAllFaces.Complete", "");
@@ -2228,7 +2228,7 @@ namespace Vision {
                                            std::list<LoadedKnownFace>& loadedFaces)
   {
     if(NULL == _okaoCommonHandle) {
-      PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedData.NullOkaoCommonHandle", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedData.NullFaceLibCommonHandle", "");
       return RESULT_FAIL;
     }
     
@@ -2313,14 +2313,14 @@ namespace Vision {
       OkaoResult okaoResult = OKAO_FR_GetAlbumMaxNum(_okaoFaceAlbum, &currentMaxAlbumEntries, &currentMaxDataEntries);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_WARNING("FaceRecognizer.UseLoadedAlbumAndEnrollData.GetCurrentMaxNumFailed",
-                            "OKAO Result=%d", okaoResult);
+                            "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
       
       okaoResult = OKAO_FR_GetAlbumMaxNum(loadedAlbumData, &loadedMaxAlbumEntries, &loadedMaxDataEntries);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_WARNING("FaceRecognizer.UseLoadedAlbumAndEnrollData.GetLoadedMaxNumFailed",
-                            "OKAO Result=%d", okaoResult);
+                            "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
       
@@ -2348,7 +2348,7 @@ namespace Vision {
         okaoResult = OKAO_FR_ClearAlbum(_okaoFaceAlbum);
         if(OKAO_NORMAL != okaoResult) {
           PRINT_NAMED_WARNING("FaceRecognizer.UserLoadedAlbumAndEnrollmentData.ClearAlbumFailed",
-                              "OKAO Result=%d", okaoResult);
+                              "FaceLib Result=%d", okaoResult);
           return RESULT_FAIL;
         }
         
@@ -2366,7 +2366,7 @@ namespace Vision {
             okaoResult = OKAO_FR_IsRegistered(loadedAlbumData, iAlbumEntry, iData, &isRegistered);
             if(OKAO_NORMAL != okaoResult) {
               PRINT_NAMED_WARNING("FaceRecognizer.UserLoadedAlbumAndEnrollmentData.IsRegisteredFailed",
-                                  "AlbumEntry:%d DataEntry:%d OKAO Result=%d",
+                                  "AlbumEntry:%d DataEntry:%d FaceLib Result=%d",
                                   iAlbumEntry, iData, okaoResult);
               return RESULT_FAIL;
             }
@@ -2376,7 +2376,7 @@ namespace Vision {
               okaoResult = OKAO_FR_GetFeatureFromAlbum(loadedAlbumData, iAlbumEntry, iData, _okaoRecogMergeFeatureHandle);
               if(OKAO_NORMAL != okaoResult) {
                 PRINT_NAMED_WARNING("FaceRecognizer.UserLoadedAlbumAndEnrollmentData.GetFeatureFailed",
-                                    "AlbumEntry:%d DataEntry:%d OKAO Result=%d",
+                                    "AlbumEntry:%d DataEntry:%d FaceLib Result=%d",
                                     iAlbumEntry, iData, okaoResult);
                 return RESULT_FAIL;
               }
@@ -2384,7 +2384,7 @@ namespace Vision {
               okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, _okaoRecogMergeFeatureHandle, iAlbumEntry, iData);
               if(OKAO_NORMAL != okaoResult) {
                 PRINT_NAMED_WARNING("FaceRecognizer.UserLoadedAlbumAndEnrollmentData.RegisterDataFailed",
-                                    "AlbumEntry:%d DataEntry:%d OKAO Result=%d",
+                                    "AlbumEntry:%d DataEntry:%d FaceLib Result=%d",
                                     iAlbumEntry, iData, okaoResult);
                 return RESULT_FAIL;
               }
@@ -2580,7 +2580,7 @@ namespace Vision {
     }
     
     if(NULL == _okaoCommonHandle) {
-      PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.NullOkaoCommonHandle", "");
+      PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.NullFaceLibCommonHandle", "");
       return RESULT_FAIL;
     }
     
@@ -2733,7 +2733,7 @@ namespace Vision {
   //        okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, combinedEntries[iComp], iData, &isRegistered);
   //        if(OKAO_NORMAL != okaoResult) {
   //          PRINT_NAMED_ERROR("FaceRecognizer.SelectiveMergeHelper.IsRegisteredCheckFailed",
-  //                            "OKAO result=%d", okaoResult);
+  //                            "FaceLib result=%d", okaoResult);
   //          return RESULT_FAIL;
   //        }
   //
@@ -2744,7 +2744,7 @@ namespace Vision {
   //        okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, combinedEntries[iComp], iData, _okaoRecogMergeFeatureHandle);
   //        if(OKAO_NORMAL != okaoResult) {
   //          PRINT_NAMED_ERROR("FaceRecognizer.SelectiveMergeHelper.GetFeatureFromMergeAlbumFailed",
-  //                            "AlbumEntry:%d Data:%d OKAO result=%d", combinedEntries[iComp], iData, okaoResult);
+  //                            "AlbumEntry:%d Data:%d FaceLib result=%d", combinedEntries[iComp], iData, okaoResult);
   //          return RESULT_FAIL;
   //        }
   //
@@ -2760,7 +2760,7 @@ namespace Vision {
   //                                      combinedEntries[jComp], &currentScore);
   //          if(OKAO_NORMAL != okaoResult) {
   //            PRINT_NAMED_ERROR("FaceRecognizer.SelectiveMergeHelper.VerifyFailed",
-  //                              "Comparing AlbumEntry %d and %d. OKAO result=%d",
+  //                              "Comparing AlbumEntry %d and %d. FaceLib result=%d",
   //                              combinedEntries[iComp], combinedEntries[jComp], okaoResult);
   //            return RESULT_FAIL;
   //          }
@@ -2856,7 +2856,7 @@ namespace Vision {
   //      okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, albumEntry);
   //      if(OKAO_NORMAL != okaoResult) {
   //        PRINT_NAMED_ERROR("FaceRecognizer.SelectiveMergeHelper.ClearFailed",
-  //                          "Clearing AlbumEntry:%d. OKAO result=%d",
+  //                          "Clearing AlbumEntry:%d. FaceLib result=%d",
   //                          albumEntry, okaoResult);
   //        return RESULT_FAIL;
   //      }

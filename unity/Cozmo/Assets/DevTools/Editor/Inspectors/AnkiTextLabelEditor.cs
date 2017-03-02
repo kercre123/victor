@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Anki.Editor.UI {
 
-  [CustomEditor(typeof(Anki.UI.AnkiTextLabel), true)]
+  [CustomEditor(typeof(Anki.UI.AnkiTextLegacy), true)]
   [CanEditMultipleObjects]
   public class AnkiTextEditor : GraphicEditor {
     private SerializedProperty _Text;

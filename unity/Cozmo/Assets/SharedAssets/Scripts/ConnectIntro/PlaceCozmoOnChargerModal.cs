@@ -10,7 +10,7 @@ public class PlaceCozmoOnChargerModal : BaseModal {
   private SimpleConnectModal _KeepCozmoOnChargerConnectModalInstance;
 
   [SerializeField]
-  private CozmoButton _ContinueButton;
+  private CozmoButtonLegacy _ContinueButton;
 
   private void Awake() {
     System.Action<BaseModal> keepOnChargerModalCreated = (newSimpleConnectModal) => {

@@ -13,7 +13,7 @@ namespace Cozmo.Settings {
     private const float _kCalculateSteeringInputInterval_ms = 60f;
 
     [SerializeField]
-    private CozmoButton _DisableSDKButton;
+    private CozmoButtonLegacy _DisableSDKButton;
 
     [SerializeField]
     private Text _SDKMessageOutput;
@@ -28,10 +28,10 @@ namespace Cozmo.Settings {
     // Allow this setting for "screensaver mode"
     // We can't use Unity's Screen.sleepTimeout because it makes the app disconnect
     [SerializeField]
-    private CozmoButton _HideScreenButton;
+    private CozmoButtonLegacy _HideScreenButton;
 
     [SerializeField]
-    private CozmoButton _ShowScreenButton;
+    private CozmoButtonLegacy _ShowScreenButton;
 
     [SerializeField]
     private GameObject _ParentScreenElements;

@@ -62,6 +62,7 @@ namespace Cozmo {
   {
     // Only true for non-tracking faces which are named or have been seen enough
     // times from the front
+    DEV_ASSERT(!IsNamed() || face.GetID() > 0, "FaceWorld.KnownFace.HasStableID.NamedFaceWithNonPositiveID");
     return face.GetID() > 0 && (IsNamed() || numTimesObservedFacingCamera >= kNumTimesToSeeFrontalToBeStable);
   }
   
@@ -120,26 +121,41 @@ namespace Cozmo {
     }
   }
   
-  Result FaceWorld::ChangeFaceID(Vision::FaceID_t oldID,
-                                 Vision::FaceID_t newID)
+  Result FaceWorld::ChangeFaceID(const Vision::UpdatedFaceID& update)
   {
+    const Vision::FaceID_t oldID   = update.oldID;
+    const Vision::FaceID_t newID   = update.newID;
+    const std::string&     newName = update.newName;
+    
     auto knownFaceIter = _knownFaces.find(oldID);
-    if(knownFaceIter != _knownFaces.end()) {
-      
+    if(knownFaceIter != _knownFaces.end())
+    {
       Vision::TrackedFace& face = knownFaceIter->second.face;
+     
+      PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.ChangeFaceID.Success",
+                    "Updating old face %d (%s) to new ID %d (%s)",
+                    oldID, face.HasName() ? Util::HidePersonallyIdentifiableInfo(face.GetName().c_str()) : "<NoName>",
+                    newID, newName.empty() ? "<NoName>" : Util::HidePersonallyIdentifiableInfo(newName.c_str()));
+      
+      const bool existingFaceHasDifferentName = face.HasName() && (newName != face.GetName());
+      if(existingFaceHasDifferentName)
+      {
+        PRINT_NAMED_WARNING("FaceWorld.ChangeFaceID.ChangingName",
+                            "OldID:%d OldName:%s, NewID:%d NewName:%s",
+                            oldID, Util::HidePersonallyIdentifiableInfo(face.GetName().c_str()),
+                            newID, Util::HidePersonallyIdentifiableInfo(newName.c_str()));
+      }
+      
+      face.SetID(newID);
+      face.SetName(newName);
       
       // TODO: Is there a more efficient move operation I could do here?
-      face.SetID(newID);
       auto result = _knownFaces.insert({newID, face});
       RemoveFace(knownFaceIter, false); // NOTE: don't broadcast the deletion
       
       // Re-draw the face and update the viz handle
       DrawFace(result.first->second);
-      
-      PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.ChangeFaceID.Success",
-                    "Updating old face %d to new ID %d",
-                    oldID, newID);
-      
+
       // Log ID changes to DAS when they are not tracking IDs and the new face is
       // either named or a "stable" session-only face.
       // Store old ID in DDATA and new ID in s_val.

@@ -34,8 +34,8 @@ public class DebugMenuDialog : MonoBehaviour {
   private GameObject _ContentPaneWrapper = null;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _BackButtonPrefab;
-  private Cozmo.UI.CozmoButton _BackButtonInstance = null;
+  private Cozmo.UI.CozmoButtonLegacy _BackButtonPrefab;
+  private Cozmo.UI.CozmoButtonLegacy _BackButtonInstance = null;
 
   private int _CurrentTab;
   private GameObject _CurrentPaneObject;
@@ -74,7 +74,7 @@ public class DebugMenuDialog : MonoBehaviour {
       _CurrentTab = tabNumber;
       _ContentPaneWrapper = CreateUI(_ContentPaneWrapperPrefab, _ContentPaneContainer.transform);
       _CurrentPaneObject = CreateUI(_DebugContentPaneData[tabNumber].panePrefab, _ContentPaneContainer.transform);
-      _BackButtonInstance = CreateUI(_BackButtonPrefab.gameObject, _ContentPaneContainer.transform).GetComponent<Cozmo.UI.CozmoButton>();
+      _BackButtonInstance = CreateUI(_BackButtonPrefab.gameObject, _ContentPaneContainer.transform).GetComponent<Cozmo.UI.CozmoButtonLegacy>();
       _BackButtonInstance.Initialize(CloseTab, "debug_menu_back_button", "debug_menu");
     }
   }

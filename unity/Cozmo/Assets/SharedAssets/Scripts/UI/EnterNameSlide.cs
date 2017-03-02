@@ -7,7 +7,7 @@ public class EnterNameSlide : MonoBehaviour {
   public System.Action<string> OnNameEntered;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _SubmitName;
+  private Cozmo.UI.CozmoButtonLegacy _SubmitName;
 
   [SerializeField]
   private UnityEngine.UI.InputField _NameInputField;

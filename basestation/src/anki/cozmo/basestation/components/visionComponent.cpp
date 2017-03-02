@@ -1043,7 +1043,7 @@ namespace Cozmo {
 
     for(auto & updatedID : procResult.updatedFaceIDs)
     {
-      _robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
+      _robot.GetFaceWorld().ChangeFaceID(updatedID);
     }
     
     std::list<Vision::TrackedFace> facesToUpdate;

@@ -31,14 +31,13 @@ RollBlockHelper::RollBlockHelper(Robot& robot,
                                  BehaviorHelperFactory& helperFactory,
                                  const ObjectID& targetID,
                                  bool rollToUpright,
-                                 DriveToAlignWithObjectAction::PreDockCallback callback)
+                                 const RollBlockParameters& parameters)
 : IHelper("RollBlock", robot, behavior, helperFactory)
 , _targetID(targetID)
+, _params(parameters)
 , _shouldUpright(rollToUpright)
 {
-  if(callback != nullptr){
-    SetPreDockCallback(callback);
-  }
+
 }
 
 
@@ -95,8 +94,10 @@ BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot)
                           robot, _targetID, PreActionPose::ActionType::ROLLING);
         
         if(isAtPreAction != ActionResult::SUCCESS){
+          DriveToParameters params;
+          params.actionType = PreActionPose::ActionType::ROLLING;
           DelegateProperties delegateProperties;
-          delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, PreActionPose::ActionType::ROLLING));
+          delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, params));
           delegateProperties.SetOnSuccessFunction([this](Robot& robot){StartRollingAction(robot); return _status;});
           DelegateAfterUpdate(delegateProperties);
         }else{
@@ -104,7 +105,7 @@ BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot)
         }
       }else{
         // If we can't roll the cube, pick it up so we can put it somewhere we can roll it
-        auto pickupHelper = CreatePickupBlockHelper(robot, _targetID, AnimationTrigger::Count);
+        auto pickupHelper = CreatePickupBlockHelper(robot, _targetID);
         DelegateProperties delegateProperties;
         delegateProperties.SetDelegateToSet(pickupHelper);
         delegateProperties.SetOnFailureFunction( [](Robot& robot)
@@ -131,8 +132,8 @@ void RollBlockHelper::StartRollingAction(Robot& robot)
   if( _shouldUpright ) {
     rollAction->RollToUpright();
   }
-  if(_preDockCallback != nullptr){
-    rollAction->SetPreDockCallback(_preDockCallback);
+  if(_params.preDockCallback != nullptr){
+    rollAction->SetPreDockCallback(_params.preDockCallback);
   }
 
   StartActing(rollAction, &RollBlockHelper::RespondToRollingResult);

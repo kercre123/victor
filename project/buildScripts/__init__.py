@@ -1,3 +1,4 @@
 __all__ = [
-    'dependencies'
+    'dependencies',
+    'anki_github'
 ]

@@ -5,13 +5,13 @@ using System;
 
 namespace Cozmo {
   namespace UI {
-    [RequireComponent(typeof(Cozmo.UI.CozmoButton))]
+    [RequireComponent(typeof(Cozmo.UI.CozmoButtonLegacy))]
     public class TouchCatcher : MonoBehaviour {
 
       public event Action OnTouch;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _FullScreenButton;
+      private Cozmo.UI.CozmoButtonLegacy _FullScreenButton;
 
       public string DASEventButtonName {
         get { return _FullScreenButton.DASEventButtonName; }

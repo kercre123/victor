@@ -712,9 +712,9 @@ message BehaviorTransition{
 }
 
 
-message ReactionaryBehaviorTransition{
-  ReactionTrigger reactionaryBehaviorTrigger,
-  bool behaviorStarted
+message ReactionTriggerTransition{
+  ReactionTrigger oldTrigger,
+  ReactionTrigger newTrigger
 }
 
 //respond with the list of freeplay behavior

@@ -1296,15 +1296,15 @@ public abstract class GameBase : MonoBehaviour {
 
   protected void RegisterRobotReactionaryBehaviorEvents() {
     DeregisterRobotReactionaryBehaviorEvents();
-    RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+    RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
   }
 
   protected void DeregisterRobotReactionaryBehaviorEvents() {
-    RobotEngineManager.Instance.RemoveCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+    RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
   }
 
   protected void HandleRobotReactionaryBehavior(object messageObject) {
-    ReactionaryBehaviorTransition behaviorTransition = messageObject as ReactionaryBehaviorTransition;
+    ReactionTriggerTransition behaviorTransition = messageObject as ReactionTriggerTransition;
 
     // log das event
     string currentStateString = "";
@@ -1312,13 +1312,14 @@ public abstract class GameBase : MonoBehaviour {
     if (currState != null) {
       currentStateString = currState.GetType().ToString();
     }
-    DAS.Event("robot.interrupt", currentStateString, DASUtil.FormatExtraData(behaviorTransition.reactionaryBehaviorTrigger.ToString()));
+    DAS.Event("robot.interrupt", currentStateString, DASUtil.FormatExtraData(behaviorTransition.newTrigger.ToString()));
 
-    if (behaviorTransition.behaviorStarted) {
-      PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorTrigger);
+    if ((behaviorTransition.newTrigger != ReactionTrigger.NoneTrigger) && 
+        (behaviorTransition.oldTrigger == ReactionTrigger.NoneTrigger)) {
+      PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.newTrigger);
     }
-    else {
-      ResumeStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorTrigger);
+    else if(behaviorTransition.newTrigger == ReactionTrigger.NoneTrigger) {
+      ResumeStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.oldTrigger);
     }
   }
 

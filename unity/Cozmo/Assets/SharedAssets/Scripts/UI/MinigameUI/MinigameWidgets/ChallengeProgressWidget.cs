@@ -17,7 +17,7 @@ namespace Cozmo {
       private ProgressBar _ChallengeProgressBar;
 
       [SerializeField]
-      private AnkiTextLabel _ProgressBarLabel;
+      private AnkiTextLegacy _ProgressBarLabel;
 
       [SerializeField]
       private HorizontalOrVerticalLayoutGroup _ProgressBarSegmentsContainer;

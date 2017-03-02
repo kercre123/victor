@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/helperHandle.h"
 
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperParameters.h"
 #include "anki/common/basestation/objectIDs.h"
 
 namespace Anki {
@@ -33,12 +34,12 @@ public:
   HelperHandle CreateDriveToHelper(Robot& robot,
                                    IBehavior& behavior,
                                    const ObjectID& targetID,
-                                   const PreActionPose::ActionType& actionType);
+                                   const DriveToParameters& parameters = {});
   
   HelperHandle CreatePickupBlockHelper(Robot& robot,
                                        IBehavior& behavior,
                                        const ObjectID& targetID,
-                                       AnimationTrigger animBeforeDock);
+                                       const PickupBlockParamaters& parameters = {});
   
   HelperHandle CreatePlaceBlockHelper(Robot& robot,
                                       IBehavior& behavior);
@@ -46,17 +47,15 @@ public:
   HelperHandle CreatePlaceRelObjectHelper(Robot& robot,
                                           IBehavior& behavior,
                                           const ObjectID& targetID,
-                                          const bool placingOnGround,
-                                          const f32 placementOffsetX_mm,
-                                          const f32 placementOffsetY_mm,
-                                          const bool relativeCurrentMarker);
+                                          const bool placingOnGround = false,
+                                          const PlaceRelObjectParameters& parameters = {});
   
   
   HelperHandle CreateRollBlockHelper(Robot& robot,
                                      IBehavior& behavior,
                                      const ObjectID& targetID,
-                                     bool rollToUpright,
-                                     DriveToAlignWithObjectAction::PreDockCallback preDockCallback = nullptr);
+                                     bool rollToUpright = true,
+                                     const RollBlockParameters& parameters = {});
   
 private:
   BehaviorHelperComponent& _helperComponent;

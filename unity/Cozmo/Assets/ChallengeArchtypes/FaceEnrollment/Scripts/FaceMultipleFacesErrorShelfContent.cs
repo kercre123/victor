@@ -6,10 +6,10 @@ public class FaceMultipleFacesErrorShelfContent : MonoBehaviour {
   public System.Action OnRetryButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _RetryButton;
+  private Cozmo.UI.CozmoButtonLegacy _RetryButton;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _NameLabel;
+  private Anki.UI.AnkiTextLegacy _NameLabel;
 
   public void SetNameLabel(string name) {
     _NameLabel.text = name;

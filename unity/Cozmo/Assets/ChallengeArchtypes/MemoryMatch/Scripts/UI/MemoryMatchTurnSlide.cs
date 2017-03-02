@@ -11,10 +11,10 @@ namespace MemoryMatch {
     private Image _CenterImage;
 
     [SerializeField]
-    private AnkiTextLabel _StatusTextLabel;
+    private AnkiTextLegacy _StatusTextLabel;
 
     [SerializeField]
-    private AnkiTextLabel _CenterTextLabel;
+    private AnkiTextLegacy _CenterTextLabel;
 
     [SerializeField]
     private Sprite _CorrectSprite;
@@ -27,7 +27,7 @@ namespace MemoryMatch {
     private MemoryMatchLivesWidget _CozmoWidget;
 
     [SerializeField]
-    private CozmoButton _ButtonPlayPattern;
+    private CozmoButtonLegacy _ButtonPlayPattern;
 
     private UnityEngine.Events.UnityAction _ClickHandler = null;
 

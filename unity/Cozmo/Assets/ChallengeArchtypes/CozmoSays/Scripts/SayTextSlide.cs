@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 public class SayTextSlide : MonoBehaviour {
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _SayTextButton;
+  private Cozmo.UI.CozmoButtonLegacy _SayTextButton;
 
   [SerializeField]
   private UnityEngine.UI.InputField _TextInput;
@@ -18,7 +18,7 @@ public class SayTextSlide : MonoBehaviour {
   private Color _TextFieldActiveColor;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _TotalSparksLabel;
+  private Anki.UI.AnkiTextLegacy _TotalSparksLabel;
 
   [SerializeField]
   [Cozmo.ItemId]
@@ -28,7 +28,7 @@ public class SayTextSlide : MonoBehaviour {
   private int _SayCost;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _CostLabel;
+  private Anki.UI.AnkiTextLegacy _CostLabel;
 
   [SerializeField]
   private GameObject _ActiveContentContainer;
@@ -60,7 +60,7 @@ public class SayTextSlide : MonoBehaviour {
     _TextInput.onValidateInput += HandleInputValidation;
     _TextInput.GetComponent<InputFieldEventListeners>().onSelect += OnSelect;
 
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
     SetButtonInteractivity();
   }
 
@@ -69,7 +69,7 @@ public class SayTextSlide : MonoBehaviour {
     _TextInput.onValidateInput -= HandleInputValidation;
     _TextInput.GetComponent<InputFieldEventListeners>().onSelect -= OnSelect;
 
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
   }
 
   private void OnSelect(BaseEventData data) {
@@ -206,8 +206,8 @@ public class SayTextSlide : MonoBehaviour {
     }
   }
 
-  private void HandleRobotReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
-    _PlayingReactionaryBehavior = message.behaviorStarted;
+  private void HandleRobotReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionTriggerTransition message) {
+    _PlayingReactionaryBehavior = message.newTrigger != Anki.Cozmo.ReactionTrigger.NoneTrigger;
     SetButtonInteractivity();
   }
 }

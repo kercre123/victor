@@ -424,6 +424,7 @@ namespace Anki {
                                   const bool relativeCurrentMarker = true);
       
       virtual ~DriveToPlaceRelObjectAction() { }
+      
     };
     
     

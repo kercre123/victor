@@ -105,19 +105,19 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.628
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.016
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 3
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#memoryMatchGame.label.tooCloseError"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []

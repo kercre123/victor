@@ -32,6 +32,7 @@ _modify_path()
 
 from clad import clad
 from clad import ast
+from clad import emitterutil
 
 class PythonQualifiedNamer(object):
 
@@ -295,11 +296,18 @@ class MessageEmitter(BaseEmitter):
     def emitConstructor(self, node, globals):
         default_value_visitor = DefaultValueVisitor(output=self.output)
         self.output.write('\tdef __init__(self')
+        
+        all_members_have_default_constructor = emitterutil._do_all_members_have_default_constructor(node) and node.default_constructor
+        
         for member in node.members():
             self.output.write(', {member_name}'.format(member_name=member.name))
-            if node.default_constructor:
-              self.output.write('=')
-              default_value_visitor.visit(member)
+            
+            # If any members do not have a default constructor then don't generate the assignment
+            if not all_members_have_default_constructor:
+                continue
+            
+            self.output.write('=')
+            default_value_visitor.visit(member)
         self.output.write('):\n')
 
         if node.members():

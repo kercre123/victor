@@ -318,7 +318,7 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    FieldName: Cozmo.UI.CozmoButtonLegacy:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
@@ -474,10 +474,10 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"No"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
@@ -498,10 +498,10 @@ MonoBehaviour:
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"Play"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../../

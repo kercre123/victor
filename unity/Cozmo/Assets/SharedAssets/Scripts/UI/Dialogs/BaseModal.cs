@@ -25,7 +25,7 @@ namespace Cozmo {
       private bool _CloseDialogOnTapOutside;
 
       [SerializeField]
-      protected CozmoButton _OptionalCloseDialogButton;
+      protected CozmoButtonLegacy _OptionalCloseDialogButton;
 
       [SerializeField]
       private bool _PreventForceClose = false;

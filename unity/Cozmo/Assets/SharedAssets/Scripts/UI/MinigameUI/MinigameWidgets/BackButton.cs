@@ -17,7 +17,7 @@ namespace Cozmo {
       public BackButtonHandler HandleBackTapped;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _BackButtonInstance;
+      private Cozmo.UI.CozmoButtonLegacy _BackButtonInstance;
 
       public string DASEventViewController {
         get { return _BackButtonInstance.DASEventViewController; }

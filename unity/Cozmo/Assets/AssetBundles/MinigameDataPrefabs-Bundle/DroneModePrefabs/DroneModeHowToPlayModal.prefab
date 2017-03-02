@@ -1166,10 +1166,10 @@ MonoBehaviour:
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#button.back"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -1352,10 +1352,10 @@ MonoBehaviour:
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#button.next"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -1457,13 +1457,13 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#droneMode.text.howToPlaySteering"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
@@ -1589,19 +1589,19 @@ MonoBehaviour:
   Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.988235354
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.752941251
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#droneMode.cubeReticleLabel"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
@@ -1673,13 +1673,13 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 3
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#droneMode.text.toggleNightVision"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
@@ -1805,13 +1805,13 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#droneMode.text.reticleOutlineDescrip"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
@@ -1883,13 +1883,13 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#droneMode.text.raiseLowerHead"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
@@ -2051,13 +2051,13 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#droneMode.text.switchHeadOrLift"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
@@ -2129,13 +2129,13 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 3
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#droneMode.text.cozmoInteractionChoice"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
@@ -2189,13 +2189,13 @@ MonoBehaviour:
     FieldName: UnityEngine.UI.Image:m_Color:r
     JsonValue: 0.141176477
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:b
     JsonValue: 0.909804
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:g
     JsonValue: 0.882353
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:r
     JsonValue: 0.141176477
   ModifiedLocalReferences:
   - ObjectPath: ../
@@ -2219,13 +2219,13 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 3
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#droneMode.text.howToPlaySpeed"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
@@ -2351,13 +2351,13 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 3
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#droneMode.text.cozmoReticleHeader"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []

@@ -21,7 +21,7 @@ namespace Cozmo {
       public Action<GoalCell> OnProgChanged;
 
       [SerializeField]
-      private AnkiTextLabel _GoalLabel;
+      private AnkiTextLegacy _GoalLabel;
 
       [SerializeField]
       private Image _CompletedBackground;
@@ -30,7 +30,7 @@ namespace Cozmo {
       private Image _BoltMark;
 
       [SerializeField]
-      private AnkiTextLabel _RewardTextLabel;
+      private AnkiTextLegacy _RewardTextLabel;
 
       [SerializeField]
       private CanvasGroup _CanvasGroup;
@@ -38,7 +38,7 @@ namespace Cozmo {
         get { return _CanvasGroup; }
       }
 
-      public AnkiTextLabel GoalLabel {
+      public AnkiTextLegacy GoalLabel {
         get {
           return _GoalLabel;
         }

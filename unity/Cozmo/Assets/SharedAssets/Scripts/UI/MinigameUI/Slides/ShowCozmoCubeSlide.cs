@@ -15,7 +15,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   private IconProxy _CubePrefab;
 
   [SerializeField]
-  private AnkiTextLabel _ShowCozmoCubesLabel;
+  private AnkiTextLegacy _ShowCozmoCubesLabel;
 
   [SerializeField]
   private RectTransform _TransparentCubeContainer;

@@ -494,19 +494,51 @@ public class HelloWorld {
     System.Type type2 = noDefaultConstructor.GetType();
     if (type2.GetConstructor(System.Type.EmptyTypes) != null) return false;
 
+    Constructor.NoDefaultConstructorComplex noDefaultConstructorComplex = new Constructor.NoDefaultConstructorComplex(defaultConstructor, "wow", new byte[20]);
+    System.Type type3 = noDefaultConstructorComplex.GetType();
+    if (type3.GetConstructor(System.Type.EmptyTypes) != null) return false;
+
+    Constructor.MessageWithStruct messageWithStruct = new Constructor.MessageWithStruct(noDefaultConstructor, 4, 3.5f, defaultConstructor);
+    System.Type type4 = messageWithStruct.GetType();
+    if (type4.GetConstructor(System.Type.EmptyTypes) != null) return false;
+
+    Constructor.OtherMessageWithStruct otherMessageWithStruct = new Constructor.OtherMessageWithStruct(noDefaultConstructorComplex, defaultConstructor);
+    System.Type type5 = otherMessageWithStruct.GetType();
+    if (type5.GetConstructor(System.Type.EmptyTypes) != null) return false;
+
+    Constructor.NestedNoDefaults nestedNoDefaults = new Constructor.NestedNoDefaults(noDefaultConstructorComplex, defaultConstructor, new byte[20], noDefaultConstructor, "bye");
+    System.Type type6 = nestedNoDefaults.GetType();
+    if (type6.GetConstructor(System.Type.EmptyTypes) != null) return false;
+
+    Constructor.SuperComplex superComplex = new Constructor.SuperComplex(nestedNoDefaults, defaultConstructor, noDefaultConstructorComplex);
+    System.Type type7 = superComplex.GetType();
+    if (type7.GetConstructor(System.Type.EmptyTypes) != null) return false;
+
+    Constructor.Nest1 nest1 = new Constructor.Nest1(noDefaultConstructor);
+    System.Type type8 = nest1.GetType();
+    if (type8.GetConstructor(System.Type.EmptyTypes) != null) return false;
+
+    Constructor.Nest2 nest2 = new Constructor.Nest2(nest1);
+    System.Type type9 = nest2.GetType();
+    if (type9.GetConstructor(System.Type.EmptyTypes) != null) return false;
+
+    Constructor.Nest3 nest3 = new Constructor.Nest3(nest2);
+    System.Type type10 = nest3.GetType();
+    if (type10.GetConstructor(System.Type.EmptyTypes) != null) return false;
+
     return true;
   }
 
   public static bool Test_FixedArray() {
     Arrays.s s = new Arrays.s();
-    if(s.arr8.Length != (int)Arrays.ArrSize.sizeTen) return false;
-    if(s.arr16.Length != (int)Arrays.ArrSize.sizeTwenty) return false;
-    if(s.Size != ((int)Arrays.ArrSize.sizeTen*sizeof(byte) + (int)Arrays.ArrSize.sizeTwenty*sizeof(ushort))) return false;
+    if (s.arr8.Length != (int)Arrays.ArrSize.sizeTen) return false;
+    if (s.arr16.Length != (int)Arrays.ArrSize.sizeTwenty) return false;
+    if (s.Size != ((int)Arrays.ArrSize.sizeTen * sizeof(byte) + (int)Arrays.ArrSize.sizeTwenty * sizeof(ushort))) return false;
 
     Arrays.m m = new Arrays.m();
-    if(m.arr8.Length != (int)Arrays.ArrSize.sizeTen) return false;
-    if(m.arr16.Length != (int)Arrays.ArrSize.sizeTwenty) return false;
-    if(m.Size != ((int)Arrays.ArrSize.sizeTen*sizeof(byte) + (int)Arrays.ArrSize.sizeTwenty*sizeof(ushort))) return false;
+    if (m.arr8.Length != (int)Arrays.ArrSize.sizeTen) return false;
+    if (m.arr16.Length != (int)Arrays.ArrSize.sizeTwenty) return false;
+    if (m.Size != ((int)Arrays.ArrSize.sizeTen * sizeof(byte) + (int)Arrays.ArrSize.sizeTwenty * sizeof(ushort))) return false;
 
     return true;
   }

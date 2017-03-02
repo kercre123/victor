@@ -41,9 +41,9 @@ BehaviorHelperFactory::BehaviorHelperFactory(BehaviorHelperComponent& component)
 HelperHandle BehaviorHelperFactory::CreateDriveToHelper(Robot& robot,
                                                         IBehavior& behavior,
                                                         const ObjectID& targetID,
-                                                        const PreActionPose::ActionType& actionType)
+                                                        const DriveToParameters& parameters)
 {
-  IHelper* helper = new DriveToHelper(robot, behavior, *this, targetID, actionType);
+  IHelper* helper = new DriveToHelper(robot, behavior, *this, targetID, parameters);
   return _helperComponent.AddHelperToComponent(helper);
 }
   
@@ -52,9 +52,9 @@ HelperHandle BehaviorHelperFactory::CreateDriveToHelper(Robot& robot,
 HelperHandle BehaviorHelperFactory::CreatePickupBlockHelper(Robot& robot,
                                                             IBehavior& behavior,
                                                             const ObjectID& targetID,
-                                                            AnimationTrigger animBeforeDock)
+                                                            const PickupBlockParamaters& parameters)
 {
-  IHelper* helper = new PickupBlockHelper(robot, behavior, *this, targetID, animBeforeDock);
+  IHelper* helper = new PickupBlockHelper(robot, behavior, *this, targetID, parameters);
   return _helperComponent.AddHelperToComponent(helper);
 }
 
@@ -73,16 +73,12 @@ HelperHandle BehaviorHelperFactory::CreatePlaceRelObjectHelper(Robot& robot,
                                                                IBehavior& behavior,
                                                                const ObjectID& targetID,
                                                                const bool placingOnGround,
-                                                               const f32 placementOffsetX_mm,
-                                                               const f32 placementOffsetY_mm,
-                                                               const bool relativeCurrentMarker)
+                                                               const PlaceRelObjectParameters& parameters)
 {
   IHelper* helper = new PlaceRelObjectHelper(robot, behavior, *this,
                                              targetID,
                                              placingOnGround,
-                                             placementOffsetX_mm,
-                                             placementOffsetY_mm,
-                                             relativeCurrentMarker);
+                                             parameters);
   return _helperComponent.AddHelperToComponent(helper);
 }
 
@@ -92,9 +88,9 @@ HelperHandle BehaviorHelperFactory::CreateRollBlockHelper(Robot& robot,
                                                           IBehavior& behavior,
                                                           const ObjectID& targetID,
                                                           bool rollToUpright,
-                                                          DriveToAlignWithObjectAction::PreDockCallback preDockCallback)
+                                                          const RollBlockParameters& parameters)
 {
-  IHelper* helper = new RollBlockHelper(robot, behavior, *this, targetID, rollToUpright, preDockCallback);
+  IHelper* helper = new RollBlockHelper(robot, behavior, *this, targetID, rollToUpright, parameters);
   return _helperComponent.AddHelperToComponent(helper);
 }
 

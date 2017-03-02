@@ -525,28 +525,28 @@ MonoBehaviour:
   Prefab: {fileID: 176160, guid: 10f33d59217b548c690367d9dbad1e40, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 120
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_BestFit
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_BestFit
     JsonValue: true
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 120
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"WWWWWWWWWWWW\nWINS!"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
@@ -554,7 +554,7 @@ MonoBehaviour:
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Font
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Font
     Reference: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
 --- !u!114 &11492476
 MonoBehaviour:

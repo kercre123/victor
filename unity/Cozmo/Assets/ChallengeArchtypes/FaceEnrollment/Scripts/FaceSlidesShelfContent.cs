@@ -7,13 +7,13 @@ namespace FaceEnrollment {
     public System.Action GameDoneButtonPressed;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLabel _ShelfText;
+    private Anki.UI.AnkiTextLegacy _ShelfText;
 
     [SerializeField]
-    private Cozmo.UI.CozmoButton _AddNewPersonButton;
+    private Cozmo.UI.CozmoButtonLegacy _AddNewPersonButton;
 
     [SerializeField]
-    private Cozmo.UI.CozmoButton _DoneButton;
+    private Cozmo.UI.CozmoButtonLegacy _DoneButton;
 
     private void Awake() {
       _AddNewPersonButton.Initialize(() => {

@@ -175,8 +175,11 @@ void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(Robot& robot)
   };
 
   auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  PickupBlockParamaters params;
+  params.animBeforeDock = AnimationTrigger::BuildPyramidSecondBlockUpright;
+  
   HelperHandle pickupHelper = factory.CreatePickupBlockHelper(robot, *this,
-                      _baseBlockID, AnimationTrigger::BuildPyramidSecondBlockUpright);
+                                                              _baseBlockID, params);
   SmartDelegateToHelper(robot, pickupHelper, success);
   
 }
@@ -209,8 +212,14 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
   };
   
   auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
-  HelperHandle placeRelHelper = factory.CreatePlaceRelObjectHelper(robot, *this, _staticBlockID, true,
-                                                                 _baseBlockOffsetX, _baseBlockOffsetY, relativeCurrentMarker);
+  PlaceRelObjectParameters params;
+  params.placementOffsetX_mm = _baseBlockOffsetX;
+  params.placementOffsetY_mm = _baseBlockOffsetY;
+  params.relativeCurrentMarker = relativeCurrentMarker;
+  
+  HelperHandle placeRelHelper = factory.CreatePlaceRelObjectHelper(robot, *this,
+                                                                   _staticBlockID,
+                                                                   true, params);
   SmartDelegateToHelper(robot, placeRelHelper, success);
 }
   

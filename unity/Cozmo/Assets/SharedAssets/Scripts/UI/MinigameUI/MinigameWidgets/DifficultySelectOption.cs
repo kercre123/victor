@@ -24,7 +24,7 @@ public class DifficultySelectOption : MonoBehaviour {
   private Cozmo.UI.CozmoRadioButton _Button;
 
   [SerializeField]
-  private AnkiTextLabel _Label;
+  private AnkiTextLegacy _Label;
 
   [SerializeField]
   private GameObject _DisabledIcon;

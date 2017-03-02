@@ -5,7 +5,7 @@ using Anki.UI;
 public class RobotStateTextField : MonoBehaviour {
 
   [SerializeField]
-  private AnkiTextLabel _RobotStateLabel;
+  private AnkiTextLegacy _RobotStateLabel;
 
   // static can be toggled when textfield doesn't exist.
   private static bool _sUseAnimString = false;

@@ -16,6 +16,12 @@ public class HockeyApp : MonoBehaviour {
     DAS.Info("test.crash", "test.crash");
   }
 
+  private void HandleDebugConsoleCrashFromJavaButton(string str) {
+    DAS.Event("HockeyApp.ForceDebugCrashFromJava", "HockeyApp.ForceDebugCrashFromJava");
+    CozmoBinding.GetCurrentActivity().Call("Crash");
+    DAS.Info("test.java.crash", "test.java.crash");
+  }
+
   protected const string HOCKEYAPP_BASEURL = "https://rink.hockeyapp.net/";
   protected const string HOCKEYAPP_CRASHESPATH = "api/2/apps/[APPID]/crashes/upload";
   protected const int MAX_CHARS = 199800;
@@ -95,6 +101,11 @@ public class HockeyApp : MonoBehaviour {
     }
 #endif
     Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Unity Exception", "Debug", HandleDebugConsoleCrashFromUnityButton);
+#if (UNITY_ANDROID && !UNITY_EDITOR)
+    Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Java Exception",
+                                                            "Debug",
+                                                            HandleDebugConsoleCrashFromJavaButton);
+#endif
   }
 
   void OnDisable() {
@@ -150,8 +161,16 @@ public class HockeyApp : MonoBehaviour {
       null);
     nativeCrashManager.Call("updateDescriptionFile", getCrashDescriptionJSON(appRunId, _DeviceId));
 
-    AndroidJavaClass pluginClass = new AndroidJavaClass("net.hockeyapp.unity.HockeyUnityPlugin");
-    pluginClass.CallStatic("startHockeyAppManager", currentActivity, urlString, _HockeyAppId, secret, authType, updateManagerEnabled, userMetricsEnabled, autoSendEnabled);
+    currentActivity.Call("startHockeyAppManager",
+                         urlString,
+                         _HockeyAppId,
+                         secret,
+                         authType,
+                         updateManagerEnabled,
+                         userMetricsEnabled,
+                         autoSendEnabled,
+                         _DeviceId,
+                         getCrashDescriptionJSON(appRunId, _DeviceId));
 
 #endif
   }
@@ -191,7 +210,7 @@ public class HockeyApp : MonoBehaviour {
     JSONObject json = new JSONObject();
     json.AddField("apprun", appRunId);
     json.AddField("device", deviceId);
-    return json.ToString();
+    return json.ToString(true);
   }
 
   /// <summary>

@@ -14,7 +14,7 @@ namespace Conversations {
     private Image _SpeakerImage;
 
     [SerializeField]
-    private AnkiTextLabel _Text;
+    private AnkiTextLegacy _Text;
 
     // Initializes this SpeechBubble with the specified line data
     public void Initialize(ConversationLine line) {

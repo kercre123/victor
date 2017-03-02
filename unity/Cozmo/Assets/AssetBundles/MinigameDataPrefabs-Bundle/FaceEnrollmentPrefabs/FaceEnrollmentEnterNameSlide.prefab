@@ -135,16 +135,16 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 100
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MinSize
     JsonValue: 1
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 100
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#button.done"'
   ModifiedLocalReferences:
   - ObjectPath: ../

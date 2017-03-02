@@ -1755,16 +1755,16 @@ MonoBehaviour:
     FieldName: UnityEngine.UI.Image:m_Color:r
     JsonValue: 0.141176477
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    FieldName: Cozmo.UI.CozmoButtonLegacy:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:b
     JsonValue: 0.9098039
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:g
     JsonValue: 0.882352948
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:r
     JsonValue: 0.141176477
   ModifiedLocalReferences:
   - ObjectPath: ../
@@ -2626,13 +2626,13 @@ MonoBehaviour:
     FieldName: UnityEngine.UI.Image:m_Color:r
     JsonValue: 0.141176477
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:b
     JsonValue: 0.909804
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:g
     JsonValue: 0.882353
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedColor:r
     JsonValue: 0.141176477
   ModifiedLocalReferences:
   - ObjectPath: ../

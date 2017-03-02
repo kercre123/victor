@@ -1855,19 +1855,19 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 8
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 77
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 77
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#label.emptyWithArg"'
   ModifiedLocalReferences:
   - ObjectPath: ../
@@ -2006,19 +2006,19 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
     JsonValue: false
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 8
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_MaxSize
     JsonValue: 77
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 77
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#label.emptyWithArg"'
   ModifiedLocalReferences:
   - ObjectPath: ../

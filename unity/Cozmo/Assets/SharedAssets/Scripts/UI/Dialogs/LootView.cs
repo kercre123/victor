@@ -188,7 +188,7 @@ namespace Cozmo.UI {
     }
 
     [SerializeField]
-    private AnkiTextLabel _LootText;
+    private AnkiTextLegacy _LootText;
 
     [SerializeField]
     private Button _LootButton;
@@ -230,9 +230,9 @@ namespace Cozmo.UI {
 
     #region Onboarding
     [SerializeField]
-    private AnkiTextLabel _LootTextInstructions1;
+    private AnkiTextLegacy _LootTextInstructions1;
     [SerializeField]
-    private AnkiTextLabel _LootTextInstructions2;
+    private AnkiTextLegacy _LootTextInstructions2;
     // Very special pause and sorting
     [SerializeField]
     private List<Transform> _OnboardingRewardTransforms1;
@@ -241,7 +241,7 @@ namespace Cozmo.UI {
     [SerializeField]
     private Transform _OnboardingRewardStart;
     [SerializeField]
-    private CozmoButton _ContinueButtonInstance;
+    private CozmoButtonLegacy _ContinueButtonInstance;
     #endregion
 
     private bool _BoxOpened;

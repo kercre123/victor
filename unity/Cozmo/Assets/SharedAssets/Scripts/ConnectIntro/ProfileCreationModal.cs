@@ -7,19 +7,19 @@ public class ProfileCreationModal : Cozmo.UI.BaseModal {
   private UnityEngine.UI.InputField _NameField;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _NameDoneButton;
+  private Cozmo.UI.CozmoButtonLegacy _NameDoneButton;
 
   [SerializeField]
   private WheelDatePicker _BirthDatePicker;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _ContinueButton;
+  private Cozmo.UI.CozmoButtonLegacy _ContinueButton;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _NameLabel;
+  private Anki.UI.AnkiTextLegacy _NameLabel;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _BirthdateLabel;
+  private Anki.UI.AnkiTextLegacy _BirthdateLabel;
 
   private void Awake() {
     DAS.Debug("ProfileCreationView.Awake", "Enter Awake");
