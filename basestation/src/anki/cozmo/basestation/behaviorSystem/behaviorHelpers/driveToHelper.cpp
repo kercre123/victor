@@ -148,7 +148,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
     }
     case ActionResult::CANCELLED:
     {
-      _status = BehaviorStatus::Failure;
+      // leave the helper running, since it's about to be canceled
       break;
     }
     case ActionResult::NO_PREACTION_POSES:

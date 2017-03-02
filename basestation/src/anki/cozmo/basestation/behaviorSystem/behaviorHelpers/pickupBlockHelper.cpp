@@ -139,6 +139,10 @@ void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
       break;
     }
     case ActionResult::CANCELLED:
+    {
+      // leave the helper running, since it's about to be canceled
+      break;
+    }
     case ActionResult::BAD_OBJECT:
     {
       _status = BehaviorStatus::Failure;
@@ -164,6 +168,9 @@ void PickupBlockHelper::RespondToSearchResult(ActionResult result, Robot& robot)
       StartPickupAction(robot);
       break;
     }
+    case ActionResult::CANCELLED:
+      // leave the helper running, since it's about to be canceled
+      break;
     default:
     {
       _status = BehaviorStatus::Failure;

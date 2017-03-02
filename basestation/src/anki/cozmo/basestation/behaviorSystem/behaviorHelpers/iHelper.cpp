@@ -58,9 +58,11 @@ IBehavior::Status IHelper::UpdateWhileActive(Robot& robot, HelperHandle& delegat
   
   bool tickUpdate = true;
   if(!_hasStarted){
+    Util::sEventF("robot.behavior_helper.start", {}, "%s", GetName().c_str());
     PRINT_CH_INFO("Behaviors", "IHelper.Init", "%s", GetName().c_str());
 
     _hasStarted = true;
+    _timeStarted_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     _status = Init(robot);
     // If a delegate has been set, don't tick update while active
     if(_status != IBehavior::Status::Running ||
@@ -108,6 +110,8 @@ void IHelper::Stop(bool isActive)
                 GetName().c_str(),
                 isActive,
                 IsActing());
+
+  LogStopEvent(isActive);
   
   // assumption: if the behavior is acting, and we are active, then we must have started the action, so we
   // should stop it
@@ -118,6 +122,52 @@ void IHelper::Stop(bool isActive)
   }
 
   StopInternal(isActive);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IHelper::LogStopEvent(bool isActive)
+{
+  auto logEventWithName = [this](const std::string& event) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    int nSecs = Util::numeric_cast<int>(currTime_s - _timeStarted_s);
+    if( nSecs < 0 ) {
+      PRINT_NAMED_ERROR("IHelper.Stop.InvalidTime",
+                        "%s: Negative duration %i secs (started %f, stopped %f)",
+                        GetName().c_str(),
+                        nSecs,
+                        _timeStarted_s,
+                        currTime_s);
+      nSecs = 0;
+    }
+
+    Util::sEventF(event.c_str(),
+                  {{DDATA, std::to_string(nSecs).c_str()}},
+                  "%s", GetName().c_str());
+  };    
+
+  switch( _status ) {
+    case IBehavior::Status::Complete: {
+      logEventWithName("robot.behavior_helper.success");
+      break;
+    }
+
+    case IBehavior::Status::Failure: {
+      logEventWithName("robot.behavior_helper.failure");
+      break;
+    }
+
+    case IBehavior::Status::Running:
+      // if we were running, then we must have been canceled. If we were active, then we were canceled
+      // directly, if we are not active, we were canceled as part of the stack being cleared
+      if( isActive ) {
+        logEventWithName("robot.behavior_helper.cancel");
+      }
+      else {
+        logEventWithName("robot.behavior_helper.inactive_stop");
+      }
+      
+      break;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

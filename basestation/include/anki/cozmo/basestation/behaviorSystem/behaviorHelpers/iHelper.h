@@ -133,11 +133,15 @@ protected:
   BehaviorStatus _status;
   
 private:
+
+  void LogStopEvent(bool isActive);
+  
   std::string _name;
   bool _hasStarted;
   BehaviorStatusCallbackWithRobot _onSuccessFunction;
   BehaviorStatusCallbackWithRobot _onFailureFunction;
   DelegateProperties _delegateAfterUpdate;
+  float _timeStarted_s = 0.0f;
 
   IBehavior& _behaviorToCallActionsOn;
   BehaviorHelperFactory& _helperFactory;
