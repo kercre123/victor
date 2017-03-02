@@ -12,7 +12,10 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorEventAnimResponseDirector.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/iHelper.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -289,6 +292,36 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
     return ActionResult::DID_NOT_REACH_PREACTION_POSE;
   }
 
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IHelper::RespondToResultWithAnim(ActionResult result, Robot& robot)
+{
+  if(_actionResultMapFunc != nullptr){
+    UserFacingActionResult userResult = _actionResultMapFunc(result);
+    if(userResult != UserFacingActionResult::Count){
+      AnimationTrigger responseAnim = AnimationResponseToActionResult(robot, userResult);
+      if(responseAnim != AnimationTrigger::Count){
+        StartActing(new TriggerAnimationAction(robot, responseAnim), _callbackAfterResponseAnim);
+        _callbackAfterResponseAnim = nullptr;
+        _actionResultMapFunc = nullptr;
+        return;
+      }
+    }
+  }
+  BehaviorActionResultWithRobotCallback tmpCallback = _callbackAfterResponseAnim;
+  _callbackAfterResponseAnim = nullptr;
+  _actionResultMapFunc = nullptr;
+  tmpCallback(result, robot);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AnimationTrigger IHelper::AnimationResponseToActionResult(Robot& robot, UserFacingActionResult result)
+{
+  return robot.GetAIComponent().GetBehaviorEventAnimResponseDirector().
+                           GetAnimationToPlayForActionResult(result);
 }
 
   

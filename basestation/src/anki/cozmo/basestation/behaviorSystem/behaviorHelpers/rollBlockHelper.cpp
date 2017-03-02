@@ -137,7 +137,7 @@ void RollBlockHelper::StartRollingAction(Robot& robot)
     rollAction->SetPreDockCallback(_params.preDockCallback);
   }
 
-  StartActing(rollAction, &RollBlockHelper::RespondToRollingResult);
+  StartActingWithResponseAnim(rollAction, &RollBlockHelper::RespondToRollingResult);
 }
 
   

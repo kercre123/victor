@@ -104,7 +104,7 @@ void PickupBlockHelper::StartPickupAction(Robot& robot)
       _params.animBeforeDock = AnimationTrigger::Count;
     }
     action->AddAction(new PickupObjectAction(robot, _targetID));
-    StartActing(action, &PickupBlockHelper::RespondToPickupResult);
+    StartActingWithResponseAnim(action, &PickupBlockHelper::RespondToPickupResult);
   }
 }
   
@@ -112,7 +112,6 @@ void PickupBlockHelper::StartPickupAction(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
 {
-  
   switch(result){
     case ActionResult::SUCCESS:
     {

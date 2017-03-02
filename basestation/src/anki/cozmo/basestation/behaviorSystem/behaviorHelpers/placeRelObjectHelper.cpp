@@ -115,7 +115,7 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
                                      _params.placementOffsetY_mm,
                                      false, _params.relativeCurrentMarker);
     
-    StartActing(driveTo, &PlaceRelObjectHelper::RespondToPlaceRelResult);
+    StartActingWithResponseAnim(driveTo, &PlaceRelObjectHelper::RespondToPlaceRelResult);
   }
 }
 
