@@ -14,6 +14,9 @@
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -54,6 +57,7 @@ CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 CONSOLE_VAR(float, kFaceTracking_HeadAngleDistFactor, "AIWhiteboard", 1.0);
 CONSOLE_VAR(float, kFaceTracking_BodyAngleDistFactor, "AIWhiteboard", 3.0);
 
+const int kMaxStackHeightReach = 2;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectUseActionToString(AIWhiteboard::ObjectUseAction action)
@@ -129,6 +133,7 @@ bool AIWhiteboard::CanPickupHelper(const ObservableObject* object) const
   return !recentlyFailed && canPickUp;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::CanPopAWheelieHelper(const ObservableObject* object) const
 {
   const bool hasFailedToPopAWheelie = DidFailToUse(object->GetID(),
@@ -141,6 +146,8 @@ bool AIWhiteboard::CanPopAWheelieHelper(const ObservableObject* object) const
   return (!hasFailedToPopAWheelie && _robot.CanPickUpObjectFromGround(*object));
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::CanRollHelper(const ObservableObject* object) const
 {
   const bool hasFailedToRoll = DidFailToUse(object->GetID(),
@@ -153,6 +160,8 @@ bool AIWhiteboard::CanRollHelper(const ObservableObject* object) const
   return (!hasFailedToRoll && _robot.CanPickUpObjectFromGround(*object));
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::CanRollRotationImportantHelper(const ObservableObject* object) const
 {
   const Pose3d p = object->GetPose().GetWithRespectToOrigin();
@@ -160,6 +169,124 @@ bool AIWhiteboard::CanRollRotationImportantHelper(const ObservableObject* object
           (p.GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) const
+{
+  const auto& pyramidBases = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
+  const auto& pyramids = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+  
+  for(const auto& pyramid: pyramids){
+    if(object->GetID() == pyramid->GetPyramidBase().GetBaseBlockID()){
+      return true;
+    }
+  }
+
+  for(const auto& pyramidBase: pyramidBases){
+    if(object->GetID() == pyramidBase->GetBaseBlockID()){
+      return true;
+    }
+  }
+  
+  // If a pyramid or base exists and this object doesn't match the base, wait to assign that object
+  if(!(pyramids.empty() && pyramidBases.empty())){
+    return false;
+  }
+  
+  
+  // If there is a stack of 2, the middle block should be selected as the base of the pyramid
+  const auto& stacks = _robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
+  for(const auto& stack: stacks){
+    if(stack->GetStackHeight() == kMaxStackHeightReach &&
+       stack->GetMiddleBlockID() == object->GetID()){
+      return _robot.CanPickUpObject(*object);
+    }
+  }
+  
+  if(!stacks.empty()){
+    return false;
+  }
+  
+  
+  // If the robot is carrying a block, make that the static block
+  if(_robot.IsCarryingObject()){
+    return _robot.GetCarryingObject() == object->GetID();
+  }
+  
+  // So long as we can pick the object up, it's a valid base block
+  return _robot.CanPickUpObject(*object);
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::CanUseAsPyramidStaticBlock(const ObservableObject* object) const
+{
+  // Base block must be set before static block can be set
+  auto bestBaseBlock = GetBestObjectForAction(ObjectUseIntention::PyramidBaseObject);
+  if(!bestBaseBlock.IsSet() || (bestBaseBlock == object->GetID())){
+    return false;
+  }
+  
+  const auto& pyramidBases = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
+  const auto& pyramids = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+  
+  for(const auto& pyramid: pyramids){
+    if((object->GetID() == pyramid->GetPyramidBase().GetStaticBlockID()) &&
+       (bestBaseBlock == pyramid->GetPyramidBase().GetBaseBlockID())){
+      return true;
+    }
+  }
+
+  for(const auto& pyramidBase: pyramidBases){
+    if((object->GetID() == pyramidBase->GetStaticBlockID()) &&
+       (bestBaseBlock == pyramidBase->GetBaseBlockID())){
+      return true;
+    }
+  }
+
+  // If a pyramid or base exists and this object doesn't match the base, wait to assign that object
+  if(!(pyramids.empty() && pyramidBases.empty())){
+    return false;
+  }
+  
+  
+  
+  
+  if(!object->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerence)){
+    return false;
+  }
+  
+  const ObservableObject* onTop = _robot.GetBlockWorld().FindObjectOnTopOf(
+                                           *object,
+                                           BlockWorld::kOnCubeStackHeightTolerence);
+  
+  if(onTop != nullptr){
+    return false;
+  }
+
+  return true;
+}
+  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::CanUseAsPyramidTopBlock(const ObservableObject* object) const
+{
+  // Base and static blocks must be set before top block can be set
+  auto bestBaseBlock = GetBestObjectForAction(ObjectUseIntention::PyramidBaseObject);
+  auto bestStaticBlock = GetBestObjectForAction(ObjectUseIntention::PyramidStaticObject);
+
+  if(!bestBaseBlock.IsSet() ||
+     !bestStaticBlock.IsSet() ||
+     (bestBaseBlock == object->GetID()) ||
+     (bestStaticBlock == object->GetID())){
+    return false;
+  }
+  
+  return _robot.CanPickUpObject(*object);
+}
+  
+  
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::CreateBlockWorldFilters()
 {
@@ -218,6 +345,31 @@ void AIWhiteboard::CreateBlockWorldFilters()
     popFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanPopAWheelieHelper, this, std::placeholders::_1));
     _filtersPerAction[ObjectUseIntention::PopAWheelieOnObject].reset(popFilter);
   }
+  
+  // Pyramid Base object
+  {
+    BlockWorldFilter *baseFilter = new BlockWorldFilter;
+    baseFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    baseFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsPyramidBaseBlock, this, std::placeholders::_1));
+    _filtersPerAction[ObjectUseIntention::PyramidBaseObject].reset(baseFilter);
+  }
+  
+  // Pyramid Static object
+  {
+    BlockWorldFilter *staticFilter = new BlockWorldFilter;
+    staticFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    staticFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsPyramidStaticBlock, this, std::placeholders::_1));
+    _filtersPerAction[ObjectUseIntention::PyramidStaticObject].reset(staticFilter);
+  }
+  
+  // Pyramid Top object
+  {
+    BlockWorldFilter *topFilter = new BlockWorldFilter;
+    topFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    topFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsPyramidTopBlock, this, std::placeholders::_1));
+    _filtersPerAction[ObjectUseIntention::PyramidTopObject].reset(topFilter);
+  }
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1216,7 +1368,8 @@ void AIWhiteboard::UpdateBeaconRender()
   }
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
 {
   const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
@@ -1258,6 +1411,8 @@ void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
   _haveTapIntentionObject = true;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ClearObjectTapInteraction()
 {
   _haveTapIntentionObject = false;

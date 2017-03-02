@@ -41,7 +41,6 @@ RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::Ro
   return true;
 };
   
-static const float kTimeObjectInvalidAfterAnyFailure_sec = 30.0f;
 static const float kBackupDistCheckTopBlock_mm = 20.0f;
 static const float kBackupSpeedCheckTopBlock_mm_s = 20.0f;
 static const float kHeadAngleCheckTopBlock_rad = DEG_TO_RAD(25);
@@ -66,51 +65,13 @@ BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& conf
 bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const Robot& robot = preReqData.GetRobot();
-  UpdatePyramidTargets(robot);
+  _staticBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidStaticObject);
+  _baseBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidBaseObject);
+  _topBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidTopObject);
   
-  bool allSetAndUsable = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
-  const bool notInSpark = robot.GetBehaviorManager().GetActiveSpark() == UnlockId::Count;
-  if(allSetAndUsable && notInSpark){
-    // Pyramid is a complicated behavior with a lot of driving around. If we've
-    // failed to use any of the blocks and we're not sparked don't bother attempting
-    // this behavior - it will probably end poorly
-    auto staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-    auto baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
-    auto topBlock = robot.GetBlockWorld().GetObjectByID(_topBlockID);
-    
-    std::set<AIWhiteboard::ObjectUseAction> failToUseReasons =
-                 {{AIWhiteboard::ObjectUseAction::StackOnObject,
-                   AIWhiteboard::ObjectUseAction::PickUpObject,
-                   AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}};
-    
-    const bool hasStaticFailed = robot.GetAIComponent().GetWhiteboard().
-                 DidFailToUse(_staticBlockID,
-                              failToUseReasons,
-                              kTimeObjectInvalidAfterAnyFailure_sec,
-                              staticBlock->GetPose(),
-                              DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                              DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
-    
-    const bool hasBaseFailed = robot.GetAIComponent().GetWhiteboard().
-    DidFailToUse(_baseBlockID,
-                 failToUseReasons,
-                 kTimeObjectInvalidAfterAnyFailure_sec,
-                 baseBlock->GetPose(),
-                 DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                 DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
-    
-    const bool hasTopFailed = robot.GetAIComponent().GetWhiteboard().
-    DidFailToUse(_topBlockID,
-                 failToUseReasons,
-                 kTimeObjectInvalidAfterAnyFailure_sec,
-                 topBlock->GetPose(),
-                 DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                 DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
-    
-    allSetAndUsable = allSetAndUsable && !hasStaticFailed && !hasBaseFailed && !hasTopFailed;
-  }
-  
-  return allSetAndUsable;
+  bool allSet= _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
+
+  return allSet;
 }
 
   
