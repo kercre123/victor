@@ -99,7 +99,7 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
   }else{
     // Calculate the pre-dock pose directly for PLACE_RELATIVE and drive to that pose
     ActionableObject* obj = dynamic_cast<ActionableObject*>(
-                           robot.GetBlockWorld().GetObjectByID(_targetID));
+                           robot.GetBlockWorld().GetLocatedObjectByID(_targetID));
     if(obj != nullptr){
       std::vector<Pose3d> possiblePoses;
       bool alreadyInPosition;
