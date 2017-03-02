@@ -388,6 +388,8 @@ void Robot::SetOnCharger(bool onCharger)
       ActiveObject* connectedInstance = GetBlockWorld().FindConnectedActiveMatchingObject(filter);
       if ( nullptr != connectedInstance ) {
         chargerInstance->CopyID(connectedInstance);
+      } else {
+        chargerInstance->SetID();
       }
     }
 
