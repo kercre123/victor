@@ -150,6 +150,7 @@ int main (void)
   HALInit();
   I2C::Enable();
 
+  MicroWait(1000000);
   FCC::start();
   for(;;) {
     UART::Transmit();
