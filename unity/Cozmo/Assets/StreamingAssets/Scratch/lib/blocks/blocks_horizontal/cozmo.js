@@ -46,8 +46,6 @@ Blockly.Blocks['dropdown_cozmo_setcolor'] = {
             value: 'orange', width: 48, height: 48, alt: 'Orange'},
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_coral.svg',
             value: 'coral', width: 48, height: 48, alt: 'Coral'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_magenta.svg',
-            value: 'magenta', width: 48, height: 48, alt: 'Magenta'},
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_purple.svg',
             value: 'purple', width: 48, height: 48, alt: 'Purple'},
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_blue.svg',
@@ -55,7 +53,9 @@ Blockly.Blocks['dropdown_cozmo_setcolor'] = {
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_green.svg',
             value: 'green', width: 48, height: 48, alt: 'Green'},
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_white.svg',
-              value: 'white', width: 48, height: 48, alt: 'White'}
+              value: 'white', width: 48, height: 48, alt: 'White'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_black.svg',
+              value: 'off', width: 48, height: 48, alt: 'Off'}
         ]), 'CHOICE');
     this.setOutput(true);
     this.setColour(Blockly.Colours.looks.primary,

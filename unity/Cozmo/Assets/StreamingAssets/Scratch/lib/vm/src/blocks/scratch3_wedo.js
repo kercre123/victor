@@ -142,11 +142,11 @@ Scratch3CozmoBlocks.prototype._getColor = function(colorName) {
         {colorName: 'yellow', colorHex: 0xffff00ff},
         {colorName: 'orange', colorHex: 0xffA500ff},
         {colorName: 'coral', colorHex: 0xff0000ff},
-        {colorName: 'magenta', colorHex: 0xff00ffff},
         {colorName: 'purple', colorHex: 0xff00ffff},
         {colorName: 'blue', colorHex: 0x0000ffff},
         {colorName: 'green', colorHex: 0x00ff00ff},
-        {colorName: 'white', colorHex: 0xffffffff}
+        {colorName: 'white', colorHex: 0xffffffff},
+        {colorName: 'off', colorHex: 0x00000000}
     ];
 
     if (colorName == 'mystery') {
