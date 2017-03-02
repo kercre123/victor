@@ -21,7 +21,7 @@
 #include "app/tests.h"
 #include "nvReset.h"
 
-u8 g_fixtureReleaseVersion = 88;
+u8 g_fixtureReleaseVersion = 89;
 #define BUILD_INFO "EP2 v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
