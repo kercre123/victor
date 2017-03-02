@@ -46,7 +46,13 @@
             </block>
             <block type="cozmo_turn_left"></block>
             <block type="cozmo_turn_right"></block>
-            <block type="cozmo_animation"></block>
+            <block type="cozmo_animation">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_setanimation">
+                        <field name="CHOICE">happy</field>
+                    </shadow>
+                </value>
+            </block>
             <block type="cozmo_liftheight">
                 <value name="CHOICE">
                     <shadow type="dropdown_cozmo_liftheight">

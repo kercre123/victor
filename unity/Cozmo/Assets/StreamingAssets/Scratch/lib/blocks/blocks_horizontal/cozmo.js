@@ -166,6 +166,54 @@ Blockly.Blocks['cozmo_drive_backward'] = {
   }
 };
 
+
+Blockly.Blocks['dropdown_cozmo_setanimation'] = {
+  /**
+   * Block for set animation drop-down.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldIconMenu([
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-happy.svg',
+              value: 'happy', width: 48, height: 48, alt: 'Happy'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-victory.svg',
+            value: 'victory', width: 48, height: 48, alt: 'Victory'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-unhappy.svg',
+            value: 'unhappy', width: 48, height: 48, alt: 'Unhappy'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-surprise.svg',
+            value: 'surprise', width: 48, height: 48, alt: 'Surprise'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-dog.svg',
+            value: 'dog', width: 48, height: 48, alt: 'Dog'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-cat.svg',
+            value: 'cat', width: 48, height: 48, alt: 'Cat'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-sneeze.svg',
+            value: 'sneeze', width: 48, height: 48, alt: 'Sneeze'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-excited.svg',
+              value: 'excited', width: 48, height: 48, alt: 'Excited'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-thinking.svg',
+              value: 'thinking', width: 48, height: 48, alt: 'Thinking'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-bored.svg',
+            value: 'bored', width: 48, height: 48, alt: 'Bored'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-frustrated.svg',
+            value: 'frustrated', width: 48, height: 48, alt: 'Frustrated'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-chatty.svg',
+            value: 'chatty', width: 48, height: 48, alt: 'Chatty'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-dejected.svg',
+            value: 'dejected', width: 48, height: 48, alt: 'Dejected'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-sleep.svg',
+              value: 'sleep', width: 48, height: 48, alt: 'Sleep'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-mystery.svg',
+              value: 'mystery', width: 48, height: 48, alt: 'Mystery'}
+        ]), 'CHOICE');
+    this.setOutput(true);
+    this.setColour(Blockly.Colours.looks.primary,
+      Blockly.Colours.looks.secondary,
+      Blockly.Colours.looks.tertiary
+    );
+  }
+};
+
 Blockly.Blocks['cozmo_animation'] = {
   /**
    * Block to play an animation.
@@ -185,17 +233,16 @@ Blockly.Blocks['cozmo_animation'] = {
         },
         {
           "type": "input_value",
-          "name": "DURATION",
-          "check": "Number"
+          "name": "CHOICE"
         }
       ],
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary
     });
   }
 };

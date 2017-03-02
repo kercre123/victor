@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using Newtonsoft.Json;
 using Anki.Cozmo.ExternalInterface;
-using System;
 
 public class ScratchRequest {
   public string command { get; set; }
@@ -254,8 +253,8 @@ public class DebugDisplayPane : MonoBehaviour {
       RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(-kDriveSpeed_mmps, -dist_mm, false);
     }
     else if (scratchRequest.command == "cozmoPlayAnimation") {
-      // TODO Use ScratchRequest arg to select one of ~15 animations
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration);
+      Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger);
     }
     else if (scratchRequest.command == "cozmoTurnLeft") {
       // Turn 90 degrees to the left
@@ -299,6 +298,55 @@ public class DebugDisplayPane : MonoBehaviour {
     }
 
     return;
+  }
+
+  private Anki.Cozmo.AnimationTrigger GetAnimationTriggerForScratchName(string scratchAnimationName) {
+    if (scratchAnimationName == "happy") {
+      return Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration;
+    }
+    else if (scratchAnimationName == "victory") {
+      return Anki.Cozmo.AnimationTrigger.BuildPyramidSuccess;
+    }
+    else if (scratchAnimationName == "unhappy") {
+      return Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor;
+    }
+    else if (scratchAnimationName == "surprise") {
+      return Anki.Cozmo.AnimationTrigger.DroneModeTurboDrivingStart;
+    }
+    else if (scratchAnimationName == "dog") {
+      return Anki.Cozmo.AnimationTrigger.PetDetectionDog;
+    }
+    else if (scratchAnimationName == "cat") {
+      return Anki.Cozmo.AnimationTrigger.PetDetectionCat;
+    }
+    else if (scratchAnimationName == "sneeze") {
+      return Anki.Cozmo.AnimationTrigger.PetDetectionSneeze;
+    }
+    else if (scratchAnimationName == "excited") {
+      return Anki.Cozmo.AnimationTrigger.SuccessfulWheelie;
+    }
+    else if (scratchAnimationName == "thinking") {
+      return Anki.Cozmo.AnimationTrigger.HikingReactToPossibleMarker;
+    }
+    else if (scratchAnimationName == "bored") {
+      return Anki.Cozmo.AnimationTrigger.NothingToDoBoredEvent;
+    }
+    else if (scratchAnimationName == "frustrated") {
+      return Anki.Cozmo.AnimationTrigger.AskToBeRightedRight;
+    }
+    else if (scratchAnimationName == "chatty") {
+      return Anki.Cozmo.AnimationTrigger.BuildPyramidReactToBase;
+    }
+    else if (scratchAnimationName == "dejected") {
+      return Anki.Cozmo.AnimationTrigger.FistBumpLeftHanging;
+    }
+    else if (scratchAnimationName == "sleep") {
+      return Anki.Cozmo.AnimationTrigger.Sleeping;
+    }
+
+    // TODO Error: Shouldn't get here.
+    DAS.Error("Scratch.BadTriggerName", "Unexpected name '" + scratchAnimationName + "'");
+    return Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration;
   }
 
   private void WebViewError(string text) {
