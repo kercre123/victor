@@ -596,6 +596,50 @@ TEST DefaultConstructor() {
   ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructor>::value), false);
   ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructor, double, int>::value), true);
   
+  ASSERT_EQ((std::is_constructible<Constructor::NoDefaultConstructorComplex>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::NoDefaultConstructorComplex,
+                                   Constructor::HasDefaultConstructor,
+                                   std::string,
+                                   std::array<unsigned char, 20>>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::MessageWithStruct>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::MessageWithStruct,
+                                   Constructor::HasNoDefaultConstructor,
+                                   int,
+                                   float,
+                                   Constructor::HasDefaultConstructor>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::OtherMessageWithStruct>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::OtherMessageWithStruct,
+                                   Constructor::NoDefaultConstructorComplex,
+                                   Constructor::HasDefaultConstructor>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::NestedNoDefaults>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::NestedNoDefaults,
+                                   Constructor::NoDefaultConstructorComplex,
+                                   Constructor::HasDefaultConstructor,
+                                   std::array<unsigned char, 20>,
+                                   Constructor::HasNoDefaultConstructor,
+                                   std::string>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::SuperComplex>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::SuperComplex,
+                                   Constructor::NestedNoDefaults,
+                                   Constructor::HasDefaultConstructor,
+                                   Constructor::NoDefaultConstructorComplex>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::Nest1>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::Nest1,
+             Constructor::HasNoDefaultConstructor>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::Nest2>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::Nest2,
+             Constructor::Nest1>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::Nest3>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::Nest3,
+             Constructor::Nest2>::value), true);
+  
   PASS();
 }
 

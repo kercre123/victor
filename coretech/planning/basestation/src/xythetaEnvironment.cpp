@@ -1361,8 +1361,7 @@ bool MotionPrimitive::Create(const Json::Value& config, StateTheta startingAngle
     float signedLength = config["straight_length_mm"].asFloat();
     
     if(std::abs(signedLength) > 0.001) {
-      pathSegments_.AppendLine(0,
-                               0.0,
+      pathSegments_.AppendLine(0.0,
                                0.0,
                                signedLength * cos(env.GetTheta_c(startingAngle)),
                                signedLength * sin(env.GetTheta_c(startingAngle)),
@@ -1392,8 +1391,7 @@ bool MotionPrimitive::Create(const Json::Value& config, StateTheta startingAngle
     arcSpeed = HACK_USE_FIXED_SPEED;
 #endif
 
-    pathSegments_.AppendArc(0,
-                            config["arc"]["centerPt_x_mm"].asFloat(),
+    pathSegments_.AppendArc(config["arc"]["centerPt_x_mm"].asFloat(),
                             config["arc"]["centerPt_y_mm"].asFloat(),
                             config["arc"]["radius_mm"].asFloat(),
                             config["arc"]["startRad"].asFloat(),
@@ -1414,8 +1412,7 @@ bool MotionPrimitive::Create(const Json::Value& config, StateTheta startingAngle
 
     float rotSpeed = deltaTheta / turnTime;
 
-    pathSegments_.AppendPointTurn(0,
-                                  0.0,
+    pathSegments_.AppendPointTurn(0.0,
                                   0.0,
                                   env.GetTheta_c(endStateOffset.theta),
                                   rotSpeed,

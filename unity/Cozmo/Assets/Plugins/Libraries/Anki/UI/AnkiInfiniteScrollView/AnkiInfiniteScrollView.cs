@@ -10,7 +10,7 @@ public class AnkiInfiniteScrollView : MonoBehaviour {
   private RectTransform _ContentContainer;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _AnkiInfiniteScrollTextCellPrefab;
+  private Anki.UI.AnkiTextLegacy _AnkiInfiniteScrollTextCellPrefab;
 
   private string[] _StringsToDisplay;
   private Coroutine _CurrentRoutine;
@@ -39,7 +39,7 @@ public class AnkiInfiniteScrollView : MonoBehaviour {
       int targetIndex = System.Math.Min(currentSubString + _kStringsToProcessPerFrame, _StringsToDisplay.Length);
 
       while (currentSubString < targetIndex) {
-        Anki.UI.AnkiTextLabel scrollTextCell = GameObject.Instantiate(_AnkiInfiniteScrollTextCellPrefab.gameObject).GetComponent<Anki.UI.AnkiTextLabel>();
+        Anki.UI.AnkiTextLegacy scrollTextCell = GameObject.Instantiate(_AnkiInfiniteScrollTextCellPrefab.gameObject).GetComponent<Anki.UI.AnkiTextLegacy>();
         scrollTextCell.transform.SetParent(_ContentContainer, false);
 
         // Calculate start and length of the substring

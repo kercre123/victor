@@ -12,7 +12,7 @@ namespace Conversations {
 
     [SerializeField]
     private Image _Background;
-    public AnkiButton NextButton;
+    public AnkiButtonLegacy NextButton;
 
     public void InitButtonText(string locKey) {
       NextButton.Text = Localization.Get(locKey);

@@ -29,25 +29,25 @@ public class ChallengeDetailsModal : BaseModal {
   /// Name of the Challenge.
   /// </summary>
   [SerializeField]
-  private AnkiTextLabel _TitleTextLabel;
+  private AnkiTextLegacy _TitleTextLabel;
 
   /// <summary>
   /// Description of the Challenge.
   /// </summary>
   [SerializeField]
-  private AnkiTextLabel _DescriptionTextLabel;
+  private AnkiTextLegacy _DescriptionTextLabel;
 
   /// <summary>
   /// Label of number of Bits Required.
   /// </summary>
   [SerializeField]
-  private AnkiTextLabel _CurrentCostLabel;
+  private AnkiTextLegacy _CurrentCostLabel;
 
   /// <summary>
   /// Costx Label next to Fragment Icon
   /// </summary>
   [SerializeField]
-  private AnkiTextLabel _CostButtonLabel;
+  private AnkiTextLegacy _CostButtonLabel;
 
   [SerializeField]
   private IconProxy _ChallengeIcon;
@@ -68,13 +68,13 @@ public class ChallengeDetailsModal : BaseModal {
   private GameObject _CostContainer;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _UnlockButton;
+  private Cozmo.UI.CozmoButtonLegacy _UnlockButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _StartChallengeButton;
+  private Cozmo.UI.CozmoButtonLegacy _StartChallengeButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _ViewPreReqButton;
+  private Cozmo.UI.CozmoButtonLegacy _ViewPreReqButton;
 
   [SerializeField]
   private Vector3 _CenteredIconViewportPos;

@@ -2141,7 +2141,7 @@ public class Robot : IRobot {
   }
 
   public void EnableCubeSleep(bool enable) {
-    RobotEngineManager.Instance.Message.EnableCubeSleep = Singleton<EnableCubeSleep>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.Message.EnableCubeSleep = Singleton<EnableCubeSleep>.Instance.Initialize(enable, false);
     RobotEngineManager.Instance.SendMessage();
   }
 

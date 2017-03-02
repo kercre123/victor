@@ -255,14 +255,14 @@ def parse_game_arguments():
             required=False,
             default=EXTERNALS_ROOT,
             metavar='path',
-            help='Use this flag to specify a non defaul external dependency location.')
+            help='Use this flag to specify a non default external dependency location.')
 
     parser.add_argument(
             '--use-cte',
             required=False,
             default=None,
             metavar='path',
-            help='Use this flag to specify a non default location for Coretech Eternal(absolute path).')
+            help='Use this flag to specify a non default location for Coretech External (absolute path).')
 
     parser.add_argument(
             '-l', '--logcat',
@@ -317,7 +317,7 @@ class GamePlatformConfiguration(object):
         self.processors = ["armeabi-v7a"]
         self.engine_generated = os.path.join(ENGINE_ROOT, "generated", self.platform)
 
-        #because these is being deleted no matter what it must exist for all configurations.
+        # because this is being deleted no matter what it must exist for all configurations.
         self.android_unity_plugin_dir = os.path.join(self.unity_plugin_dir, 'Android', 'libs', 'generated')
         self.android_lib_dir = os.path.join(self.platform_build_dir, 'libs')
         ankibuild.util.File.mkdir_p(self.android_lib_dir)
@@ -542,6 +542,7 @@ class GamePlatformConfiguration(object):
             print_status('Building project for platform {0}...'.format(self.platform))
 
         if self.platform == 'android':
+            # Calls the configure_engine.py script to do the android build
             self.call_engine(buildaction)
             # move files.
             # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
@@ -684,7 +685,10 @@ class GamePlatformConfiguration(object):
         elif self.platform == 'android':
             device = get_android_device()
             if len(device) > 0:
-                subprocess.call("adb install -r -d ./build/android/Cozmo.apk", shell=True)
+                if self.options.features is not None and 'standalone' in self.options.features[0]:
+                    subprocess.call("buck install :cozmoengine_standalone_app", shell=True)
+                else:
+                    subprocess.call("adb install -r -d ./build/android/Cozmo.apk", shell=True)
             else:
                 print('{0}: No attached devices found via adb'.format(self.options.command))
 
@@ -707,7 +711,10 @@ class GamePlatformConfiguration(object):
         elif self.platform == 'android':
             device = get_android_device()
             if len(device) > 0:
-                activity = "com.anki.cozmo/com.anki.cozmo.CozmoActivity"
+                if self.options.features is not None and 'standalone' in self.options.features[0]:
+                    activity = "com.anki.cozmoengine/com.anki.cozmoengine.MainActivity"
+                else:
+                    activity = "com.anki.cozmo/com.anki.cozmo.CozmoActivity"
                 cmd = "adb -s {0} shell am start -n {1}".format(device, activity)
                 subprocess.call(cmd, shell=True)
             else:

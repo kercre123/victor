@@ -22,6 +22,13 @@
 
 #define DEBUG_ROBOT_AUDIO_BUFFER_LOG  0
 
+// This value is not specific, it is based off data from game play logs.
+// The timeout is intended to catch a race condition when an audio event has been posted then immediately stopped. This
+// situation will sometimes produce some audio buffer data, however in the circumstance that it doesn't we need to
+// timeout and reset the buffer so the next animation can use it.
+#define BUFFER_RESET_TIMEOUT_MILLISEC  250
+#define BUFFER_RESET_TIMEOUT_NANOSEC   BUFFER_RESET_TIMEOUT_MILLISEC * 1000000
+
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
@@ -56,11 +63,13 @@ void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sa
     if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
       PRINT_NAMED_WARNING("RobotAudioBuffer.UpdateBuffer", "Ignore buffer update!");
     }
+    // Clear timeout after receiving data from audio engine, if data is received it will eventually close the buffer.
+    _beginResetTimeVal = kInvalidResetTimeVal;
     return;
   }
   
   DEV_ASSERT(!_streamQueue.empty(), "RobotAudioBuffer.UpdateBuffer._streamQueue.IsEmpty");
-  if (_streamQueue.empty()) {
+  if ( _streamQueue.empty() ) {
     return;
   }
   
@@ -84,14 +93,38 @@ void RobotAudioBuffer::CloseAudioBuffer()
   }
 
   // Mark the last stream in the queue completed
-  if (!_streamQueue.empty()) {
+  if ( !_streamQueue.empty() ) {
     _streamQueue.back().SetIsComplete();
   }
   
   _isActive = false;
   _isWaitingForReset = false;
+  _beginResetTimeVal = kInvalidResetTimeVal;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool RobotAudioBuffer::IsWaitingForReset() const
+{
+  // Test if reset flag has been set and RobotAudioBuffer has not received any data from audio engine since
+  if ( _isWaitingForReset && _beginResetTimeVal != kInvalidResetTimeVal ) {
+    const auto elapsed_ns = Util::Time::UniversalTime::GetNanosecondsElapsedSince(_beginResetTimeVal);
+    
+    if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+      PRINT_NAMED_WARNING("RobotAudioBuffer.IsWaitingForReset", "_isWaitingForReset is True - Elapsed ns: %llu > %d is %c",
+                          elapsed_ns, BUFFER_RESET_TIMEOUT_NANOSEC,
+                          (elapsed_ns > (BUFFER_RESET_TIMEOUT_NANOSEC) ? 'T' : 'F'));
+    }
+    
+    if ( elapsed_ns > BUFFER_RESET_TIMEOUT_NANOSEC ) {
+      // Reset flag after timeout duration has elapsed
+      _isWaitingForReset = false;
+      _beginResetTimeVal = kInvalidResetTimeVal;
+      PRINT_NAMED_WARNING( "RobotAudioBuffer.IsWaitingForReset", "IsWaitingForReset flag has timed out" );
+    }
+  }
+  return _isWaitingForReset;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool RobotAudioBuffer::HasAudioBufferStream() const
 {
@@ -120,7 +153,7 @@ void RobotAudioBuffer::PopAudioBufferStream()
                        Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
   }
   
-  if (_streamQueue.empty()) {
+  if ( _streamQueue.empty() ) {
     PRINT_NAMED_ERROR("RobotAudioBuffer.PopAudioBufferStream.EmptyQueue", "Tried to pop from an empty stream queue.");
     return;
   }
@@ -150,6 +183,10 @@ void RobotAudioBuffer::ResetAudioBufferAnimationCompleted( bool completed )
   std::lock_guard<std::mutex> lock( _lock );
   
   _isWaitingForReset = ( _isActive || !completed );
+  
+  if ( _isWaitingForReset ) {
+    _beginResetTimeVal = Util::Time::UniversalTime::GetCurrentTimeValue();
+  }
   
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
     PRINT_NAMED_ERROR( "RobotAudioBuffer.ResetAudioBufferAnimationCompleted",

@@ -11,7 +11,7 @@ namespace Cozmo.Settings {
     private float _AlphaWhenNoBlockFound = 0.5f;
 
     [SerializeField]
-    private CozmoButton _LightUpCubeButton;
+    private CozmoButtonLegacy _LightUpCubeButton;
 
     [SerializeField]
     private LightCubeSprite _LightCubeSprite;

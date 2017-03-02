@@ -162,6 +162,8 @@ namespace SpeedTap {
       }
     }
 
+    // This will return true if cozmo got a point that hand.
+    // Which in MP he might not have won the game if that extra point was from a different players mistake
     private bool IsCozmoHandWinner() {
       bool cozmoWon = true;
 
@@ -180,14 +182,18 @@ namespace SpeedTap {
     }
 
     private void PlayReactToGameAnimationAndSendEvent() {
+      // IsCozmoHandWinner just returns if he got a point that hand, this checks the whole game.
+      // to cover the case where the final point can be given to two people and brings one person to game point.
+      PlayerInfo winnerInfo = _SpeedTapGame.GetPlayerMostPointsWon();
+      bool cozmoWonGame = winnerInfo.playerType == PlayerType.Cozmo;
       AnimationTrigger animationEventToSend = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityGame();
       if (DebugMenuManager.Instance.DemoMode) {
-        animationEventToSend = !IsCozmoHandWinner() ?
+        animationEventToSend = !cozmoWonGame ?
                             AnimationTrigger.DemoSpeedTapCozmoLose : AnimationTrigger.DemoSpeedTapCozmoWin;
       }
       else {
-        if (!IsCozmoHandWinner()) {
+        if (!cozmoWonGame) {
           animationEventToSend = (highIntensity) ?
                     AnimationTrigger.OnSpeedtapGamePlayerWinHighIntensity : AnimationTrigger.OnSpeedtapGamePlayerWinLowIntensity;
         }

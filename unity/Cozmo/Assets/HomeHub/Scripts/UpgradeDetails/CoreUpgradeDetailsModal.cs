@@ -16,10 +16,10 @@ namespace Cozmo.Upgrades {
     private GameObject _ContentContainer;
 
     [SerializeField]
-    private AnkiTextLabel _UnlockableNameLabel;
+    private AnkiTextLegacy _UnlockableNameLabel;
 
     [SerializeField]
-    private AnkiTextLabel _UnlockableDescriptionLabel;
+    private AnkiTextLegacy _UnlockableDescriptionLabel;
 
     [SerializeField]
     private GameObject _ButtonPromptContainer;
@@ -28,19 +28,19 @@ namespace Cozmo.Upgrades {
     private GameObject _AffordableHighlightContainer;
 
     [SerializeField]
-    private AnkiTextLabel _ButtonPromptTitle;
+    private AnkiTextLegacy _ButtonPromptTitle;
 
     [SerializeField]
-    private AnkiTextLabel _ButtonPromptDescription;
+    private AnkiTextLegacy _ButtonPromptDescription;
 
     [SerializeField]
     private GameObject _LockedPromptContainer;
 
     [SerializeField]
-    private AnkiTextLabel _LockedPromptTitle;
+    private AnkiTextLegacy _LockedPromptTitle;
 
     [SerializeField]
-    private AnkiTextLabel _LockedPromptDescription;
+    private AnkiTextLegacy _LockedPromptDescription;
 
     [SerializeField]
     private Text _SparkButtonCostLabel;
@@ -49,7 +49,7 @@ namespace Cozmo.Upgrades {
     private Text _UnlockButtonCostLabel;
 
     [SerializeField]
-    private AnkiTextLabel _RequestTrickButtonLabel;
+    private AnkiTextLegacy _RequestTrickButtonLabel;
 
     [SerializeField]
     private GameObject _RequestTrickButtonIcons;
@@ -58,16 +58,16 @@ namespace Cozmo.Upgrades {
     private Image _UnlockableIcon;
 
     [SerializeField]
-    private AnkiTextLabel _CubesRequiredLabel;
+    private AnkiTextLegacy _CubesRequiredLabel;
 
     [SerializeField]
     private GameObject _UnlockUpgradeButtonContainer;
 
     [SerializeField]
-    private CozmoButton _UnlockUpgradeButton;
+    private CozmoButtonLegacy _UnlockUpgradeButton;
 
     [SerializeField]
-    private AnkiTextLabel _FragmentInventoryLabel;
+    private AnkiTextLegacy _FragmentInventoryLabel;
     [SerializeField]
     private GameObject _FragmentInventoryContainer;
 
@@ -75,10 +75,10 @@ namespace Cozmo.Upgrades {
     private GameObject _RequestTrickButtonContainer;
 
     [SerializeField]
-    private CozmoButton _RequestTrickButton;
+    private CozmoButtonLegacy _RequestTrickButton;
 
     [SerializeField]
-    private AnkiTextLabel _SparksInventoryLabel;
+    private AnkiTextLegacy _SparksInventoryLabel;
     [SerializeField]
     private GameObject _SparksInventoryContainer;
 
@@ -93,7 +93,7 @@ namespace Cozmo.Upgrades {
     [SerializeField]
     private GameObject _DimmerPrefab;
     [SerializeField]
-    private AnkiTextLabel _SparksButtonDescriptionLabel;
+    private AnkiTextLegacy _SparksButtonDescriptionLabel;
 
     private CanvasGroup _DimBackgroundInstance = null;
 
@@ -228,8 +228,8 @@ namespace Cozmo.Upgrades {
 
     }
 
-    private void SetupButton(CozmoButton button, UnityEngine.Events.UnityAction buttonCallback,
-                             string dasButtonName, string costItemId, int costAmount, AnkiTextLabel inventoryLabel, bool spark) {
+    private void SetupButton(CozmoButtonLegacy button, UnityEngine.Events.UnityAction buttonCallback,
+                             string dasButtonName, string costItemId, int costAmount, AnkiTextLegacy inventoryLabel, bool spark) {
       button.Initialize(buttonCallback, dasButtonName, this.DASEventDialogName);
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
@@ -427,7 +427,7 @@ namespace Cozmo.Upgrades {
 
     }
 
-    private void UpdateInventoryLabel(string itemId, AnkiTextLabel label) {
+    private void UpdateInventoryLabel(string itemId, AnkiTextLegacy label) {
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       ItemData itemData = ItemDataConfig.GetData(itemId);
       label.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,

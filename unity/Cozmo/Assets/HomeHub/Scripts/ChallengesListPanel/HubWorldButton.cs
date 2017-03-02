@@ -10,7 +10,7 @@ namespace Cozmo.HubWorld {
     public event ButtonClickedHandler OnButtonClicked;
 
     [SerializeField]
-    private Cozmo.UI.CozmoButton _ButtonScript;
+    private Cozmo.UI.CozmoButtonLegacy _ButtonScript;
 
     [SerializeField]
     private Cozmo.UI.IconProxy _IconProxy;
@@ -19,7 +19,7 @@ namespace Cozmo.HubWorld {
     private Transform _IconContainer;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLabel _ChallengeTitle;
+    private Anki.UI.AnkiTextLegacy _ChallengeTitle;
 
     private string _ChallengeId;
 

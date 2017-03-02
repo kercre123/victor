@@ -89,10 +89,10 @@ namespace Cozmo.Minigame.DroneMode {
     private Cozmo.MinigameWidgets.QuitMinigameButton _QuitDroneModeButton;
 
     [SerializeField]
-    private CozmoButton _QuitDroneModeButtonImage;
+    private CozmoButtonLegacy _QuitDroneModeButtonImage;
 
     [SerializeField]
-    private CozmoButton _HowToPlayButton;
+    private CozmoButtonLegacy _HowToPlayButton;
 
     [SerializeField]
     private DroneModeHowToPlayModal _HowToPlayModalPrefab;
@@ -152,12 +152,12 @@ namespace Cozmo.Minigame.DroneMode {
     private bool _IsNightVisionEnabled = false;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLabel _TiltText;
-    public Anki.UI.AnkiTextLabel TiltText { get { return _TiltText; } }
+    private Anki.UI.AnkiTextLegacy _TiltText;
+    public Anki.UI.AnkiTextLegacy TiltText { get { return _TiltText; } }
 
     [SerializeField]
-    private Anki.UI.AnkiTextLabel _DebugText;
-    public Anki.UI.AnkiTextLabel DebugText { get { return _DebugText; } }
+    private Anki.UI.AnkiTextLegacy _DebugText;
+    public Anki.UI.AnkiTextLegacy DebugText { get { return _DebugText; } }
 
     [SerializeField]
     private GameObject _DroneModeRobotCameraPrefab;

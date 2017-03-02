@@ -1,10 +1,15 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
+using Anki.Cozmo.ExternalInterface;
+using System;
 
 public class ScratchRequest {
   public string command { get; set; }
-  public int argument { get; set; }
+  public string argString { get; set; }
+  public int argInt { get; set; }
+  public uint argUInt { get; set; }
+  public float argFloat { get; set; }
 }
 
 public class DebugDisplayPane : MonoBehaviour {
@@ -46,6 +51,8 @@ public class DebugDisplayPane : MonoBehaviour {
   [SerializeField]
   private Button _LoadWebViewButton;
   private GameObject _WebViewObject;
+  private float _TimeLastObservedFace;
+  private float _TimeLastObservedCube;
 
   private void Start() {
 
@@ -65,6 +72,10 @@ public class DebugDisplayPane : MonoBehaviour {
 
     _LoadWebViewButton.onClick.AddListener(HandleLoadWebView);
 
+    // TODO Check that this initialization doesn't cause unwanted behavior if have to turn on/off vision system for Scratch.
+    _TimeLastObservedFace = float.MinValue;
+    _TimeLastObservedCube = float.MinValue;
+
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
     RobotEngineManager.Instance.SendRequestDeviceData();
   }
@@ -73,6 +84,9 @@ public class DebugDisplayPane : MonoBehaviour {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
 
     if (_WebViewObject != null) {
+      RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(HandleRobotObservedFace);
+      RobotEngineManager.Instance.RemoveCallback<RobotObservedObject>(HandleRobotObservedObject);
+
       GameObject.Destroy(_WebViewObject);
       _WebViewObject = null;
     }
@@ -183,6 +197,9 @@ public class DebugDisplayPane : MonoBehaviour {
       string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
 #endif
 
+      RobotEngineManager.Instance.AddCallback<RobotObservedFace>(HandleRobotObservedFace);
+      RobotEngineManager.Instance.AddCallback<RobotObservedObject>(HandleRobotObservedObject);
+
       Debug.Log("Index file = " + indexFile);
       webViewObjectComponent.LoadURL(indexFile);
     }
@@ -194,6 +211,28 @@ public class DebugDisplayPane : MonoBehaviour {
     */
   }
 
+  private void HandleRobotObservedFace(RobotObservedFace message) {
+    //Debug.Log("HandleRobotObservedFace");
+
+    // If Cozmo sees a face (and hasn't seen a face for 2.0 seconds), resume the face block.
+    if (Time.time - _TimeLastObservedFace > 2.0f) {
+      WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+      webViewObjectComponent.EvaluateJS(@"window.vm.runtime.onCozmoSawFace();");
+      _TimeLastObservedFace = Time.time;
+    }
+  }
+
+  private void HandleRobotObservedObject(RobotObservedObject message) {
+    //Debug.Log("HandleRobotObservedObject");
+
+    // If Cozmo sees a cube (and hasn't seen a cube for 2.0 seconds), resume the cube block.
+    if (Time.time - _TimeLastObservedCube > 2.0f) {
+      WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+      webViewObjectComponent.EvaluateJS(@"window.vm.runtime.onCozmoSawCube();");
+      _TimeLastObservedCube = Time.time;
+    }
+  }
+
   private void WebViewCallback(string text) {
     string jsonStringFromJS = string.Format("{0}", text);
     Debug.Log("JSON from JavaScript: " + jsonStringFromJS);
@@ -203,13 +242,50 @@ public class DebugDisplayPane : MonoBehaviour {
       const float speed_mmps = 30.0f;
       float dist_mm = 30.0f;
 
-      float distMultiplier = scratchRequest.argument;
-      if (distMultiplier < 1.0f) {
-        distMultiplier = 1.0f;
-      }
-      dist_mm *= distMultiplier;
+      // Here, argFloat represents the number selected from the dropdown under the "drive forward" block
+      dist_mm *= scratchRequest.argFloat;
 
       RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(speed_mmps, dist_mm, false);
+    }
+    else if (scratchRequest.command == "cozmoPlayAnimation") {
+      // TODO Use ScratchRequest arg to select one of ~15 animations
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration);
+    }
+    else if (scratchRequest.command == "cozmoTurn") {
+      // Turn 90 degrees to the left
+      // TODO We will also want a block that turns 90 degrees to the right
+      const float degrees_to_radians = Mathf.PI / 180.0f;
+      const float angle = 90.0f;
+      RobotEngineManager.Instance.CurrentRobot.TurnInPlace(angle * degrees_to_radians, 0.0f, 0.0f);
+    }
+    else if (scratchRequest.command == "cozmoSays") {
+      // TODO Add profanity filter
+      RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(scratchRequest.argString, Anki.Cozmo.AnimationTrigger.Count);
+    }
+    else if (scratchRequest.command == "cozmoHeadAngle") {
+      float headAngle = (CozmoUtil.kIdealBlockViewHeadValue + CozmoUtil.kIdealFaceViewHeadValue) * 0.5f; // medium setting
+      if (scratchRequest.argString == "low") {
+        headAngle = CozmoUtil.kIdealBlockViewHeadValue;
+      }
+      else if (scratchRequest.argString == "high") {
+        headAngle = CozmoUtil.kIdealFaceViewHeadValue;
+      }
+
+      RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(headAngle);
+    }
+    else if (scratchRequest.command == "cozmoForklift") {
+      float liftHeight = 0.5f; // medium setting
+      if (scratchRequest.argString == "low") {
+        liftHeight = 0.0f;
+      }
+      else if (scratchRequest.argString == "high") {
+        liftHeight = 1.0f;
+      }
+
+      RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(liftHeight);
+    }
+    else if (scratchRequest.command == "cozmoSetBackpackColor") {
+      RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
     }
     else {
       Debug.LogError("Scratch: no match for command");
@@ -240,6 +316,5 @@ public class DebugDisplayPane : MonoBehaviour {
               }
             ");
 #endif
-
   }
 }

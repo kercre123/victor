@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 [ExecuteInEditMode]
 public class PrefabProxy : MonoBehaviour {
-  
+
   [System.Serializable]
   public abstract class ModifiedField {
     // Path relative to the prefab proxy object using delimiter '/'
@@ -33,7 +33,7 @@ public class PrefabProxy : MonoBehaviour {
         }
       }
       else {
-        DAS.Error(this, string.Format("Couldn't find a GameObject with path: '{0}' on GameObject: '{1}'!", 
+        DAS.Error(this, string.Format("Couldn't find a GameObject with path: '{0}' on GameObject: '{1}'!",
           path, gameObject.name));
       }
       return go;
@@ -112,7 +112,7 @@ public class PrefabProxy : MonoBehaviour {
 
       Type type;
       if (!_TypeCache.TryGetValue(typeName, out type)) {
-        
+
         type = Type.GetType(typeName);
         if (type == null) {
           var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -127,7 +127,7 @@ public class PrefabProxy : MonoBehaviour {
       }
 
       if (type == null) {
-        DAS.Error(this, "Could not find type " + typeName);
+        DAS.Error(this, "Could not find type " + typeName + " in " + instance.name);
         return false;
       }
 
@@ -200,7 +200,7 @@ public class PrefabProxy : MonoBehaviour {
         return null;
       }
       type = field.FieldType;
-      newGetter = (o) => field.GetValue(o); 
+      newGetter = (o) => field.GetValue(o);
       if (typeof(UnityEngine.Object).IsAssignableFrom(type)) {
         newSetter = (o, v) => {
           // because unity does weird things with null
@@ -221,7 +221,7 @@ public class PrefabProxy : MonoBehaviour {
           return o;
         };
       }
-    } 
+    }
 
     if (i + 1 < typeSplit.Length) {
       var inner = BuildSetter(typeSplit, i + 1, ref type);
@@ -242,7 +242,7 @@ public class PrefabProxy : MonoBehaviour {
 
   [System.Serializable]
   public class ModifiedLocalReferenceField : ModifiedField {
-    
+
     public string ReferencePath;
 
     public object GetReferencedObject(GameObject instance, Type type) {
@@ -334,7 +334,7 @@ public class PrefabProxy : MonoBehaviour {
     }
 
     if (Application.isPlaying) {
-      
+
       _Instance = (GameObject)GameObject.Instantiate(Prefab);
 
       _Instance.name = name;

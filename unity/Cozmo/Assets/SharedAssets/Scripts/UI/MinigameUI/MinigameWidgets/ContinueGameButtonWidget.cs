@@ -14,13 +14,13 @@ namespace Cozmo {
       public delegate void ContinueButtonClickHandler();
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _ContinueButton;
+      private Cozmo.UI.CozmoButtonLegacy _ContinueButton;
 
       [SerializeField]
-      private AnkiTextLabel _ShelfTextLabel;
+      private AnkiTextLegacy _ShelfTextLabel;
 
       [SerializeField]
-      private AnkiTextLabel _AmountTextLabel;
+      private AnkiTextLegacy _AmountTextLabel;
 
       private ContinueButtonClickHandler _OnClickCallback;
 

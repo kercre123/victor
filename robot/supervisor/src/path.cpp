@@ -178,7 +178,7 @@ namespace Anki
       switch(type_) {
         case PST_LINE:
         {
-          AnkiInfo(257, "Path.Print.Line", 538, "(%f, %f) to (%f, %f), speed/accel/decel = (%f, %f, %f)", 7,
+          AnkiInfo( 257, "Path.Print.Line", 538, "(%f, %f) to (%f, %f), speed/accel/decel = (%f, %f, %f)", 7,
                    def_.line.startPt_x,
                    def_.line.startPt_y,
                    def_.line.endPt_x,
@@ -190,7 +190,7 @@ namespace Anki
         }
         case PST_ARC:
         {
-          AnkiInfo(258, "Path.Print.Arc", 539, "centerPt (%f, %f), radius %f, startAng %f, sweep %f, speed/accel/decel = (%f, %f, %f)", 8,
+          AnkiInfo( 258, "Path.Print.Arc", 539, "centerPt (%f, %f), radius %f, startAng %f, sweep %f, speed/accel/decel = (%f, %f, %f)", 8,
                    def_.arc.centerPt_x,
                    def_.arc.centerPt_y,
                    def_.arc.radius,
@@ -203,7 +203,7 @@ namespace Anki
         }
         case PST_POINT_TURN:
         {
-          AnkiInfo(259, "Path.Print.Turn", 540, "x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)", 6,
+          AnkiInfo( 259, "Path.Print.Turn", 540, "x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)", 6,
                    def_.turn.x,
                    def_.turn.y,
                    def_.turn.targetAngle,
@@ -413,78 +413,20 @@ namespace Anki
       // Line formed by arc center and robot pose
       f32 dy = y - y_center;
       f32 dx = x - x_center;
-      f32 m = dy / dx;
-      f32 b = y - m*x;
-
 
       // Find error between current robot heading and the expected heading at the closest point on the arc
       bool movingCCW = seg->sweepRad >= 0;
       Anki::Radians theta_line = ATAN2_FAST(dy,dx); // angle of line from circle center to robot
       Anki::Radians theta_tangent = theta_line + Anki::Radians((movingCCW ? 1 : -1 ) * M_PI_2_F);
-
       radDiff = (theta_tangent - angle).ToFloat();
-
-      // If the line is nearly vertical (within 0.5deg), approximate it
-      // with true vertical so we don't take sqrts of -ve numbers.
-      f32 x_intersect, y_intersect;
-      if (NEAR(ABS(theta_line.ToFloat()), M_PI_2_F, 0.01f)) {
-        shortestDistanceToPath = ABS(dy) - r;
-        x_intersect = x_center;
-        y_intersect = y_center + r * (dx > 0 ? 1 : -1);
-
-      } else {
-
-        // Where does circle (x - x_center)^2 + (y - y_center)^2 = r^2 and y=mx+b intersect,
-        // where y=mx+b represents the line between the circle center and the robot?
-        // (y - y_center)^2 == r^2 - (x - x_center)^2
-        // y = sqrt(r^2 - (x - x_center)^2) + y_center
-        //   = mx + b
-        // (mx + b - y_center)^2 == r^2 - (x - x_center)^2
-        // m^2*x^2 + 2*m*(b - y_center)*x + (b - y_center)^2 == r^2 - x^2 + 2*x_center*x - x_center^2
-        // (m^2+1) * x^2 + (2*m*(b - y_center) - 2*x_center) * x + (b - y_center)^2 - r^2 + x_center^2 == 0
-        //
-        // Use quadratic formula to solve
-
-        // Quadratic formula coefficients
-        f32 A = m*m + 1;
-        f32 B = 2*m*(b-y_center) - 2*x_center;
-        f32 C = (b - y_center)*(b - y_center) - r*r + x_center*x_center;
-        f32 sqrtPart = sqrtf(B*B - 4*A*C);
-
-        f32 x_intersect_1 = (-B + sqrtPart) / (2*A);
-        f32 x_intersect_2 = (-B - sqrtPart) / (2*A);
-
-
-        // Now we have 2 roots.
-        // Select the one that's on the same side of the circle center as the robot is.
-        x_intersect = x_intersect_2;
-        if (signbit(dx) == signbit(x_intersect_1 - x_center)) {
-          x_intersect = x_intersect_1;
-        }
-
-        // Find y value of intersection
-        f32 dx_intersect = x_intersect - x_center;
-        if (ABS(dx_intersect) > r) {
-          // This can sometimes happen if we're at the right-most or left-most side of the circle
-          y_intersect = y_center;
-        } else {
-          y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf((r*r) - (dx_intersect * dx_intersect));
-        }
-
-        // Compute distance to intersection point (i.e. shortest distance to arc)
-        shortestDistanceToPath = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
-
-#if(DEBUG_PATH)
-        AnkiDebug( 262, "Path.GetDistToArcSegment", 549, "A: %f, B: %f, C: %f, sqrt: %f", 4, A, B, C, sqrtPart);
-        AnkiDebug( 262, "Path.GetDistToArcSegment", 550, "x_intersects: (%f %f)", 2, x_intersect_1, x_intersect_2);
-#endif
-
-
-      }
-
-      // Figure out sign of distance according to robot orientation and whether it's inside or outside the circle.
-      bool robotInsideCircle = ABS(dx) < ABS(x_intersect - x_center);
-      if ((robotInsideCircle && !movingCCW) || (!robotInsideCircle && movingCCW)) {
+      
+      // Compute shortest distance to arc
+      shortestDistanceToPath = sqrtf((x-x_center)*(x-x_center) + (y-y_center)*(y-y_center)) - r;
+      
+      // Compute sign of shortest distance
+      // TODO: This method assumes that the robot is already mostly aligned with `theta_tangent`.
+      //       Makes more sense to make the sign depend on `angle` as well.
+      if (movingCCW) {
         shortestDistanceToPath *= -1;
       }
 
@@ -498,12 +440,6 @@ namespace Anki
       // ever exceeds a conservative half the distance if PI was approached from the opposite direction.
       SegmentRangeStatus segStatus = IN_SEGMENT_RANGE;
       f32 angDiff = (theta_line - startRad).ToFloat();
-      if ( (movingCCW && (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*M_PI_F-seg->sweepRad))) ||
-          (!movingCCW && (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*M_PI_F+seg->sweepRad))) ){
-        distToEnd = -distToEnd;
-        segStatus = OOR_NEAR_END;
-      }
-
 
       if (movingCCW) {
         if (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*M_PI_F-seg->sweepRad)) {
@@ -526,7 +462,7 @@ namespace Anki
       if (distAlongSegmentFromClosestPointToEnd) {
         *distAlongSegmentFromClosestPointToEnd = distToEnd;
       }
-
+      
 #if(DEBUG_PATH)
       AnkiDebug( 262, "Path.GetDistToArcSegment", 551, "x: %f, y: %f, m: %f, b: %f\n", 4, x,y,m,b);
       AnkiDebug( 262, "Path.GetDistToArcSegment", 552, "x_center: %f, y_center: %f\n", 2, x_center, y_center);
@@ -888,13 +824,13 @@ namespace Anki
             case PST_LINE:
             {
               const PathSegmentDef::s_line *l = &(csc_path[shortestPathType][j].GetDef().line);
-              path.AppendLine(0, l->startPt_x, l->startPt_y, l->endPt_x, l->endPt_y, targetSpeed, accel, decel);
+              path.AppendLine(l->startPt_x, l->startPt_y, l->endPt_x, l->endPt_y, targetSpeed, accel, decel);
               break;
             }
             case PST_ARC:
             {
               const PathSegmentDef::s_arc *a = &(csc_path[shortestPathType][j].GetDef().arc);
-              path.AppendArc(0, a->centerPt_x, a->centerPt_y, a->radius, a->startRad, a->sweepRad, targetSpeed, accel, decel);
+              path.AppendArc(a->centerPt_x, a->centerPt_y, a->radius, a->startRad, a->sweepRad, targetSpeed, accel, decel);
               break;
             }
             default:
@@ -906,7 +842,7 @@ namespace Anki
 
         // Optionally, append a 4th straight line segment
         if (final_straight_approach_length != 0) {
-          path.AppendLine(0, preStraightApproach_x, preStraightApproach_y, end_x, end_y, targetSpeed, accel, decel);
+          path.AppendLine(preStraightApproach_x, preStraightApproach_y, end_x, end_y, targetSpeed, accel, decel);
           shortestPathLength += final_straight_approach_length;
         }
 
@@ -1010,7 +946,7 @@ namespace Anki
 
     // Add path segment
     // tODO: Change units to meters
-    bool Path::AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end,
+    bool Path::AppendLine(f32 x_start, f32 y_start, f32 x_end, f32 y_end,
                           f32 targetSpeed, f32 accel, f32 decel)
     {
       AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
@@ -1056,7 +992,7 @@ namespace Anki
     }
 
 
-    bool Path::AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
+    bool Path::AppendArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                          f32 targetSpeed, f32 accel, f32 decel)
     {
       AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
@@ -1130,7 +1066,7 @@ namespace Anki
       return true;
     }
 
-    bool Path::AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
+    bool Path::AppendPointTurn(f32 x, f32 y, f32 targetAngle,
                                f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                                f32 angleTolerance,
                                bool useShortestDir)

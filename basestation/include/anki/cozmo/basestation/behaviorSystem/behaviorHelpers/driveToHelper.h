@@ -20,13 +20,15 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+
 
 class DriveToHelper : public IHelper{
 public:
   DriveToHelper(Robot& robot, IBehavior& behavior,
                 BehaviorHelperFactory& helperFactory,
                 const ObjectID& targetID,
-                const PreActionPose::ActionType& actionType);
+                const DriveToParameters& params = {});
   virtual ~DriveToHelper();
 
 protected:
@@ -37,7 +39,8 @@ protected:
   
 private:
   ObjectID _targetID;
-  PreActionPose::ActionType _actionType;
+  DriveToParameters _params;
+  
   u32 _searchLevel;
   TimeStamp_t _lastSearchRun_ts;
   u32 _tmpRetryCounter;

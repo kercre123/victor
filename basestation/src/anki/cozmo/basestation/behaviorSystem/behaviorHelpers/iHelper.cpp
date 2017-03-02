@@ -160,9 +160,9 @@ bool IHelper::StartActing(IActionRunner* action, IBehavior::ActionResultWithRobo
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle IHelper::CreatePickupBlockHelper(Robot& robot, const ObjectID& targetID, AnimationTrigger animBeforeDock)
+HelperHandle IHelper::CreatePickupBlockHelper(Robot& robot, const ObjectID& targetID, const PickupBlockParamaters& parameters)
 {
-  return _helperFactory.CreatePickupBlockHelper(robot, _behaviorToCallActionsOn, targetID, animBeforeDock);
+  return _helperFactory.CreatePickupBlockHelper(robot, _behaviorToCallActionsOn, targetID, parameters);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -172,33 +172,29 @@ HelperHandle IHelper::CreatePlaceBlockHelper(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle IHelper::CreateRollBlockHelper(Robot& robot, const ObjectID& targetID, bool rollToUpright)
+HelperHandle IHelper::CreateRollBlockHelper(Robot& robot, const ObjectID& targetID, bool rollToUpright, const RollBlockParameters& parameters)
 {
-  return _helperFactory.CreateRollBlockHelper(robot, _behaviorToCallActionsOn, targetID, rollToUpright);
+  return _helperFactory.CreateRollBlockHelper(robot, _behaviorToCallActionsOn, targetID, rollToUpright, parameters);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle IHelper::CreateDriveToHelper(Robot& robot,
                                  const ObjectID& targetID,
-                                 const PreActionPose::ActionType& actionType)
+                                 const DriveToParameters& parameters)
 {
-  return _helperFactory.CreateDriveToHelper(robot, _behaviorToCallActionsOn, targetID, actionType);
+  return _helperFactory.CreateDriveToHelper(robot, _behaviorToCallActionsOn, targetID, parameters);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle IHelper::CreatePlaceRelObjectHelper(Robot& robot,
                                         const ObjectID& targetID,
                                         const bool placingOnGround,
-                                        const f32 placementOffsetX_mm,
-                                        const f32 placementOffsetY_mm,
-                                        const bool relativeCurrentMarker)
+                                        const PlaceRelObjectParameters& parameters)
 {
   return _helperFactory.CreatePlaceRelObjectHelper(robot, _behaviorToCallActionsOn,
                                                    targetID, placingOnGround,
-                                                   placementOffsetX_mm,
-                                                   placementOffsetY_mm,
-                                                   relativeCurrentMarker);
+                                                   parameters);
 }
   
 

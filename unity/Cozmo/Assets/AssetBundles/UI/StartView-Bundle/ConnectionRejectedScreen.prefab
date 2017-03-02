@@ -80,28 +80,28 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#button.cancel"'
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:a
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:a
     JsonValue: 0.333333343
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:b
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:g
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:r
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:b
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:g
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:r
     JsonValue: 0.498039216
   ModifiedLocalReferences:
   - ObjectPath: ../
@@ -170,28 +170,28 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#button.retry"'
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:a
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:a
     JsonValue: 0.333333343
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:b
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:g
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:r
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:b
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:b
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:g
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:g
     JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:r
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:r
     JsonValue: 0.498039216
   ModifiedLocalReferences:
   - ObjectPath: ../

@@ -129,8 +129,7 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
       backup = true;
     }
 
-    _path.AppendPointTurn(0,
-                          startVec.x(), startVec.y(), intermediateTargetAngle.ToFloat(),
+    _path.AppendPointTurn(startVec.x(), startVec.y(), intermediateTargetAngle.ToFloat(),
                           deltaTheta < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
                           FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
                           FACE_AND_APPROACH_PLANNER_ROT_DECEL,
@@ -139,8 +138,7 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
   }
 
   if(doStraight) {
-    _path.AppendLine(0,
-                     startVec.x(), startVec.y(),
+    _path.AppendLine(startVec.x(), startVec.y(),
                      _targetVec.x(), _targetVec.y(),
                      backup ? -FACE_AND_APPROACH_TARGET_SPEED : FACE_AND_APPROACH_TARGET_SPEED,
                      FACE_AND_APPROACH_PLANNER_ACCEL,
@@ -148,8 +146,7 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
   }
 
   if(doTurn1) {
-    _path.AppendPointTurn(0,
-                          _targetVec.x(), _targetVec.y(), _finalTargetAngle,
+    _path.AppendPointTurn(_targetVec.x(), _targetVec.y(), _finalTargetAngle,
                           deltaTheta1 < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
                           FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
                           FACE_AND_APPROACH_PLANNER_ROT_DECEL,

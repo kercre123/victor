@@ -434,6 +434,15 @@ namespace Anki {
       
       virtual ActionResult InitInternal() override;
       
+      // placement offsets are relative to the object's coordinate system, not marker
+      static ActionResult ComputePlaceRelObjectOffsetPoses(ActionableObject* object,
+                                                           const f32 placementOffsetX_mm,
+                                                           const f32 placementOffsetY_mm,
+                                                           Robot& robot,
+                                                           std::vector<Pose3d>& possiblePoses,
+                                                           bool& alreadyInPosition);
+      
+      
     protected:
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;

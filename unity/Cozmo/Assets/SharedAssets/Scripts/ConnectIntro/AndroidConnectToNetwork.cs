@@ -15,13 +15,13 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
   private const double kAutoFailureTimeSeconds = 30.0;
 
   [SerializeField]
-  private AnkiTextLabel _SSIDLabel;
+  private AnkiTextLegacy _SSIDLabel;
 
   [SerializeField]
-  private AnkiTextLabel _StatusLabel;
+  private AnkiTextLegacy _StatusLabel;
 
   [SerializeField]
-  private AnkiButton _CancelButton;
+  private AnkiButtonLegacy _CancelButton;
 
   private int _ConnectCount = 1;
   private DateTime _StartTime;

@@ -12,10 +12,10 @@ namespace Cozmo.Minigame.DroneMode {
     private int _SlideIndexToAlwaysAnimate = 0;
 
     [SerializeField]
-    private CozmoButton _PreviousSlideButton;
+    private CozmoButtonLegacy _PreviousSlideButton;
 
     [SerializeField]
-    private CozmoButton _NextSlideButton;
+    private CozmoButtonLegacy _NextSlideButton;
 
     private int _CurrentSlideIndex;
     private bool _IsPlayingAnimations = false;

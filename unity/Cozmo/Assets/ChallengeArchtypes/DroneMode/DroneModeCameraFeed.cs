@@ -22,7 +22,7 @@ namespace Cozmo.Minigame.DroneMode {
     private Image _FocusedObjectFrameImage;
 
     [SerializeField]
-    private AnkiTextLabel _FocusedObjectTextLabel;
+    private AnkiTextLegacy _FocusedObjectTextLabel;
 
     [SerializeField]
     private Image[] _TopFrameImages;
@@ -48,8 +48,8 @@ namespace Cozmo.Minigame.DroneMode {
     public bool AllowChangeFocus { get; set; }
 
     [SerializeField]
-    private AnkiTextLabel _DebugTextField;
-    public AnkiTextLabel DebugTextField { get { return _DebugTextField; } }
+    private AnkiTextLegacy _DebugTextField;
+    public AnkiTextLegacy DebugTextField { get { return _DebugTextField; } }
 
     private DroneModeColorSet _CurrentColorSet;
 

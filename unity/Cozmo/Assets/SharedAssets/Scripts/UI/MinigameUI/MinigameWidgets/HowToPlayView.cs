@@ -15,7 +15,7 @@ namespace Cozmo {
       private Transform _ContentsContainer;
 
       [SerializeField]
-      private Anki.UI.AnkiTextLabel _ContentsTextLabel;
+      private Anki.UI.AnkiTextLegacy _ContentsTextLabel;
 
       public void Initialize(string contentsLocKey, GameObject contentsPrefab) {
         if (!string.IsNullOrEmpty(contentsLocKey)) {

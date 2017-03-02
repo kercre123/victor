@@ -32,6 +32,7 @@ _modify_path()
 
 from clad import ast
 from clad import clad
+from clad import emitterutil
 
 class CSharpQualifiedNamer(object):
 
@@ -300,7 +301,7 @@ class StructEmitter(ast.NodeVisitor):
     def emitConstructors(self, node, globals):
         self.output.write('\t/**** Constructors ****/\n\n')
 
-        if(node.default_constructor):
+        if(node.default_constructor and emitterutil._do_all_members_have_default_constructor(node)):
             self.emitDefaultConstructor(node, globals)
         if node.members():
             self.emitValueConstructor(node, globals)

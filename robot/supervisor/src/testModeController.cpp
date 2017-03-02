@@ -401,8 +401,8 @@ namespace Anki {
           Localization::SetDriveCenterPose(0, 0, M_PI_2_F);
           f32 speed = 20;
           f32 radius = WHEEL_DIST_HALF_MM;
-          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, 0,    M_PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
-          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, M_PI_F, M_PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Arc(-radius, 0, radius, 0,    M_PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Arc(-radius, 0, radius, M_PI_F, M_PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
           PathFollower::StartPathTraversal();
           pathStarted_ = true;
@@ -414,12 +414,12 @@ namespace Anki {
 #if(PATH_FOLLOW_ALIGNED_START)
           Localization::SetDriveCenterPose(0, 0, M_PI_2_F * (PATH_FOLLOW_BACKWARDS ? 1 : -1));
 
-          //PathFollower::AppendPathSegment_PointTurn(0, 0, 0, -M_PI_2_F, -1.5f, 2.f, 2.f);
+          //PathFollower::AppendPathSegment_PointTurn(0, 0, -M_PI_2_F, -1.5f, 2.f, 2.f);
 
           float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
           f32 sweepAng = atan_fast((350-arc1_radius)/250);
 
-          PathFollower::AppendPathSegment_Arc(0, arc1_radius, 0, arc1_radius, -PI, sweepAng,
+          PathFollower::AppendPathSegment_Arc(arc1_radius, 0, arc1_radius, -PI, sweepAng,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
           f32 firstConnectionPt_x = arc1_radius - arc1_radius*cos(sweepAng);
@@ -427,31 +427,31 @@ namespace Anki {
           f32 secondConnectionPt_x = firstConnectionPt_x + (350 - arc1_radius);
           f32 secondConnectionPt_y = firstConnectionPt_y - 250;
 
-          PathFollower::AppendPathSegment_Line(0, firstConnectionPt_x, firstConnectionPt_y, secondConnectionPt_x, secondConnectionPt_y,
+          PathFollower::AppendPathSegment_Line(firstConnectionPt_x, firstConnectionPt_y, secondConnectionPt_x, secondConnectionPt_y,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
-          PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -PI + sweepAng, PI - sweepAng,
+          PathFollower::AppendPathSegment_Arc(350, -250, arc1_radius, -PI + sweepAng, PI - sweepAng,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 #else
-          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 300, -300,
+          PathFollower::AppendPathSegment_Line(0.0, 0.0, 300, -300,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
-          PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -0.75f*PI, 0.75f*PI,
+          PathFollower::AppendPathSegment_Arc(350, -250, arc1_radius, -0.75f*PI, 0.75f*PI,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 #endif
-          PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius, -250, 350 + arc1_radius, 200,
+          PathFollower::AppendPathSegment_Line(350 + arc1_radius, -250, 350 + arc1_radius, 200,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc2_radius = sqrt((float)20000); // Radius of sqrt(100^2 + 100^2)
-          //PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
-          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200, arc2_radius, 0, 3*PIDIV2,
+          //PathFollower::AppendPathSegment_Arc(0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
+          PathFollower::AppendPathSegment_Arc(350 + arc1_radius - arc2_radius, 200, arc2_radius, 0, 3*PIDIV2,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
-          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, PIDIV2, -3*PIDIV2,
+          PathFollower::AppendPathSegment_Arc(350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, PIDIV2, -3*PIDIV2,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
-          PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius - 2*arc2_radius, 200 - 2*arc2_radius, 350 + arc1_radius - 2*arc2_radius, 0,
+          PathFollower::AppendPathSegment_Line(350 + arc1_radius - 2*arc2_radius, 200 - 2*arc2_radius, 350 + arc1_radius - 2*arc2_radius, 0,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc3_radius = 0.5f * (350 + arc1_radius - 2*arc2_radius);
-          PathFollower::AppendPathSegment_Arc(0, arc3_radius, 0, arc3_radius, 0, M_PI_F,
+          PathFollower::AppendPathSegment_Arc(arc3_radius, 0, arc3_radius, 0, M_PI_F,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
 

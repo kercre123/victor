@@ -9,7 +9,7 @@ namespace Cozmo.Minigame.DroneMode {
     private RectTransform _ReticleContainer;
 
     [SerializeField]
-    private AnkiTextLabel _ReticleLabel;
+    private AnkiTextLegacy _ReticleLabel;
 
     [SerializeField]
     private Image _ReticleStrokeImage;

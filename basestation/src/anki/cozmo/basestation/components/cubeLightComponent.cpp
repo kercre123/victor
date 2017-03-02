@@ -643,7 +643,9 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
   // If CubeSleep is enabled then play the sleep animation
   if(_enableCubeSleep)
   {
-    PlayLightAnim(objectID, CubeAnimationTrigger::Sleep, AnimLayerEnum::State);
+    PlayLightAnim(objectID,
+                  (_skipSleepAnim ? CubeAnimationTrigger::SleepNoFade : CubeAnimationTrigger::Sleep),
+                  AnimLayerEnum::State);
     return;
   }
   
@@ -991,6 +993,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::EnableCubeSleep&
                 "%s cube sleep", (msg.enable ? "Enabling" : "Disabling"));
   
   _enableCubeSleep = msg.enable;
+  _skipSleepAnim = msg.skipAnimation;
   
   static const ObjectID kAllObjects{};
   
@@ -998,6 +1001,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::EnableCubeSleep&
   if(!_enableCubeSleep)
   {
     StopLightAnim(CubeAnimationTrigger::Sleep, AnimLayerEnum::State, kAllObjects);
+    StopLightAnim(CubeAnimationTrigger::SleepNoFade, AnimLayerEnum::State, kAllObjects);
   }
   
   // Force game layer to be disabled, this will stop any game layer animations

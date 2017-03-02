@@ -53,13 +53,13 @@ namespace Cozmo.HomeHub {
     private GameObject _AnyUpgradeAffordableIndicator;
 
     [SerializeField]
-    private CozmoButton[] _CozmoTabButtons;
+    private CozmoButtonLegacy[] _CozmoTabButtons;
 
     [SerializeField]
-    private CozmoButton[] _PlayTabButtons;
+    private CozmoButtonLegacy[] _PlayTabButtons;
 
     [SerializeField]
-    private CozmoButton[] _ProfileTabButtons;
+    private CozmoButtonLegacy[] _ProfileTabButtons;
 
     [SerializeField]
     private GameObject _SettingsSelectedTabs;
@@ -74,7 +74,7 @@ namespace Cozmo.HomeHub {
     private GameObject _ProfileSelectedTabs;
 
     [SerializeField]
-    private CozmoButton _SettingsButton;
+    private CozmoButtonLegacy _SettingsButton;
 
     [SerializeField]
     private UnityEngine.UI.Image _SettingsAlertImage;
@@ -120,7 +120,7 @@ namespace Cozmo.HomeHub {
     private List<Transform> _EnergyRewardsList = new List<Transform>();
 
     [SerializeField]
-    private AnkiTextLabel[] _DailyGoalsCompletionTexts;
+    private AnkiTextLegacy[] _DailyGoalsCompletionTexts;
 
     [SerializeField]
     private ParticleSystem _EnergyBarEmitter;
@@ -148,7 +148,7 @@ namespace Cozmo.HomeHub {
 
 
     [SerializeField]
-    private Anki.UI.AnkiTextLabel _HexLabel;
+    private Anki.UI.AnkiTextLegacy _HexLabel;
 
     [SerializeField]
     private float _TopBarAnimationYOriginOffset;
@@ -160,7 +160,7 @@ namespace Cozmo.HomeHub {
     private Ease _TopBarCloseEase = Ease.InBack;
 
     [SerializeField]
-    private Cozmo.UI.CozmoButton _HelpButton;
+    private Cozmo.UI.CozmoButtonLegacy _HelpButton;
 
     [SerializeField]
     private BaseModal _HelpTipsModalPrefab;
@@ -275,8 +275,8 @@ namespace Cozmo.HomeHub {
       _SettingsAlertImage.gameObject.SetActive(blocksConnected != kCubesCount);
     }
 
-    private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
-      foreach (CozmoButton button in buttons) {
+    private void InitializeButtons(CozmoButtonLegacy[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
+      foreach (CozmoButtonLegacy button in buttons) {
         button.Initialize(callback, dasButtonName, DASEventDialogName);
       }
     }
@@ -491,7 +491,7 @@ namespace Cozmo.HomeHub {
                                                     Localization.GetNumber(totalGoals));
       }
 
-      foreach (AnkiTextLabel textLabel in _DailyGoalsCompletionTexts) {
+      foreach (AnkiTextLegacy textLabel in _DailyGoalsCompletionTexts) {
         textLabel.text = goalProgressText;
       }
     }

@@ -3,7 +3,6 @@ android_library(
   srcs = glob(['*.java']),
   deps = [
     '//:cozmojava_lib',
-    '//:android-support',
     '//standalone-apk/resources:res',
     '//:native_libs_for_standalone',
   ],

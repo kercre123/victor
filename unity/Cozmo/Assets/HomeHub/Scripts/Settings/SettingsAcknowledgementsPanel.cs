@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Cozmo.Settings {
   public class SettingsAcknowledgementsPanel : MonoBehaviour {
     [SerializeField]
-    private CozmoButton _AcknowledgementsLinkButton;
+    private CozmoButtonLegacy _AcknowledgementsLinkButton;
 
     private ScrollingTextModal _AcknowledgementsModalInstance;
 
@@ -14,7 +14,7 @@ namespace Cozmo.Settings {
     private string _AcknowledgementsTextFileName;
 
     [SerializeField]
-    private CozmoButton _PrivacyPolicyLinkButton;
+    private CozmoButtonLegacy _PrivacyPolicyLinkButton;
 
     private ScrollingTextModal _PrivacyPolicyModalInstance;
 
@@ -22,7 +22,7 @@ namespace Cozmo.Settings {
     private string _PrivacyPolicyTextFileName;
 
     [SerializeField]
-    private CozmoButton _TermsOfUseButton;
+    private CozmoButtonLegacy _TermsOfUseButton;
 
     private ScrollingTextModal _TermsOfUseModalInstance;
 

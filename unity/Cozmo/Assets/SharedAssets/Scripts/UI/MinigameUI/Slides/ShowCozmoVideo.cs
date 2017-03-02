@@ -17,13 +17,13 @@ public class ShowCozmoVideo : MonoBehaviour {
   private RawImage _RawImage;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _ReplayButton;
+  private Cozmo.UI.CozmoButtonLegacy _ReplayButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _ContinueButton;
+  private Cozmo.UI.CozmoButtonLegacy _ContinueButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _SkipButton;
+  private Cozmo.UI.CozmoButtonLegacy _SkipButton;
 
   [SerializeField, Range(0f, 1f), Tooltip("Volume level (linear scalar) to which music should fade when video plays")]
   private float _MusicDuckingLevel = 0.5f; // 0.5 volume scalar is about -6dBFS

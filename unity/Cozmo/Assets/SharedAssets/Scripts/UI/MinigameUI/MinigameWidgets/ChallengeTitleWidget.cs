@@ -11,10 +11,10 @@ namespace Cozmo {
       private const float kAnimDur = 0.25f;
 
       [SerializeField]
-      private Anki.UI.AnkiTextLabel _ChallengeTitleLabel;
+      private Anki.UI.AnkiTextLegacy _ChallengeTitleLabel;
 
       [SerializeField]
-      private Anki.UI.AnkiTextLabel _ChallengeSubtitleLabel;
+      private Anki.UI.AnkiTextLegacy _ChallengeSubtitleLabel;
 
       public string Text {
         set {

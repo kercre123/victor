@@ -383,19 +383,19 @@ namespace Anki {
       }
 
       void Process_appendPathSegArc(const RobotInterface::AppendPathSegmentArc& msg) {
-        PathFollower::AppendPathSegment_Arc(0, msg.x_center_mm, msg.y_center_mm,
+        PathFollower::AppendPathSegment_Arc(msg.x_center_mm, msg.y_center_mm,
                                             msg.radius_mm, msg.startRad, msg.sweepRad,
                                             msg.speed.target, msg.speed.accel, msg.speed.decel);
       }
 
       void Process_appendPathSegLine(const RobotInterface::AppendPathSegmentLine& msg) {
-        PathFollower::AppendPathSegment_Line(0, msg.x_start_mm, msg.y_start_mm,
+        PathFollower::AppendPathSegment_Line(msg.x_start_mm, msg.y_start_mm,
                                              msg.x_end_mm, msg.y_end_mm,
                                              msg.speed.target, msg.speed.accel, msg.speed.decel);
       }
 
       void Process_appendPathSegPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
-        PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
+        PathFollower::AppendPathSegment_PointTurn(msg.x_center_mm, msg.y_center_mm, msg.targetRad,
                                                   msg.speed.target, msg.speed.accel, msg.speed.decel,
                                                   msg.angleTolerance, msg.useShortestDir);
       }

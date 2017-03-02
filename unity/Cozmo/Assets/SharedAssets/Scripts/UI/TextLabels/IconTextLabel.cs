@@ -11,10 +11,10 @@ namespace Cozmo {
       private Image _Icon;
 
       [SerializeField]
-      private AnkiTextLabel _TextLabel;
+      private AnkiTextLegacy _TextLabel;
 
       [SerializeField]
-      private AnkiTextLabel _DescLabel;
+      private AnkiTextLegacy _DescLabel;
 
       public void SetIcon(Sprite sprite) {
         if (_Icon != null) {

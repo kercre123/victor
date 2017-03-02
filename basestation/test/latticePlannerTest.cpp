@@ -337,9 +337,9 @@ TEST_F(LatticePlannerTest, MotionProfileSimple1)
   motionProfile.decel_mmps2 = 10;
   
   Planning::Path path;
-  path.AppendLine(0, 0, 0, 50, 0, 50, 10, 10);
-  path.AppendLine(0, 50, 0, 100, 0, 50, 10, 10);
-  path.AppendLine(0, 100, 0, 140, 0, 50, 10, 10);
+  path.AppendLine(0, 0, 50, 0, 50, 10, 10);
+  path.AppendLine(50, 0, 100, 0, 50, 10, 10);
+  path.AppendLine(100, 0, 140, 0, 50, 10, 10);
   
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   
@@ -363,9 +363,9 @@ TEST_F(LatticePlannerTest, MotionProfileSimple2)
   motionProfile.pointTurnSpeed_rad_per_sec = 2;
   
   Planning::Path path;
-  path.AppendLine(0, 0, 0, 50, 0, 50, 10, 10);
-  path.AppendPointTurn(0, 50, 0, DEG_TO_RAD(20), 1, 1, 1, DEG_TO_RAD(1), true);
-  path.AppendLine(0, 50, 0, 90, 0, 50, 10, 10);
+  path.AppendLine(0, 0, 50, 0, 50, 10, 10);
+  path.AppendPointTurn(50, 0, DEG_TO_RAD(20), 1, 1, 1, DEG_TO_RAD(1), true);
+  path.AppendLine(50, 0, 90, 0, 50, 10, 10);
   
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   
@@ -388,12 +388,12 @@ TEST_F(LatticePlannerTest, MotionProfileMedium1)
   motionProfile.decel_mmps2 = 10;
   
   Planning::Path path;
-  path.AppendLine(0, 0, 0, 50, 0, 50, 10, 10);
-  path.AppendLine(0, 50, 0, 80, 0, 50, 10, 10);
-  path.AppendPointTurn(0, 80, 0, DEG_TO_RAD(20), 1, 1, 1, DEG_TO_RAD(1), true);
-  path.AppendLine(0, 80, 0, 120, 0, 50, 10, 10);
-  path.AppendPointTurn(0, 120, 0, DEG_TO_RAD(20), 1, 1, 1, DEG_TO_RAD(1), true);
-  path.AppendLine(0, 120, 0, 140, 0, 50, 10, 10);
+  path.AppendLine(0, 0, 50, 0, 50, 10, 10);
+  path.AppendLine(50, 0, 80, 0, 50, 10, 10);
+  path.AppendPointTurn(80, 0, DEG_TO_RAD(20), 1, 1, 1, DEG_TO_RAD(1), true);
+  path.AppendLine(80, 0, 120, 0, 50, 10, 10);
+  path.AppendPointTurn(120, 0, DEG_TO_RAD(20), 1, 1, 1, DEG_TO_RAD(1), true);
+  path.AppendLine(120, 0, 140, 0, 50, 10, 10);
   
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   
@@ -416,7 +416,7 @@ TEST_F(LatticePlannerTest, MotionProfileSimple3)
   motionProfile.decel_mmps2 = 10;
   
   Planning::Path path;
-  path.AppendLine(0, 0, 0, 50, 0, 50, 10, 10);
+  path.AppendLine(0, 0, 50, 0, 50, 10, 10);
   
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   
@@ -441,9 +441,9 @@ TEST_F(LatticePlannerTest, MotionProfileMedium3)
   motionProfile.decel_mmps2 = 10;
   
   Planning::Path path;
-  path.AppendLine(0, 0, 0, 50, 0, 50, 10, 10);
-  path.AppendArc(0, -20, 50, 20, DEG_TO_RAD(180), DEG_TO_RAD(90), 1, 1, 1);
-  path.AppendLine(0, -20, 70, -50, 70, 50, 10, 10);
+  path.AppendLine(0, 0, 50, 0, 50, 10, 10);
+  path.AppendArc(-20, 50, 20, DEG_TO_RAD(180), DEG_TO_RAD(90), 1, 1, 1);
+  path.AppendLine(-20, 70, -50, 70, 50, 10, 10);
   
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   
@@ -466,8 +466,8 @@ TEST_F(LatticePlannerTest, MotionProfileSplitLine)
   motionProfile.decel_mmps2 = 10;
   
   Planning::Path path;
-  path.AppendLine(0, 0, 0, 50, 0, 50, 10, 10);
-  path.AppendLine(0, 50, 0, 200, 0, 50, 10, 10);
+  path.AppendLine(0, 0, 50, 0, 50, 10, 10);
+  path.AppendLine(50, 0, 200, 0, 50, 10, 10);
   
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   
@@ -492,10 +492,10 @@ TEST_F(LatticePlannerTest, MotionProfileMedium2)
   motionProfile.decel_mmps2 = 20;
   
   Planning::Path path;
-  path.AppendLine(0, -140.000000f, 340.000000f, -122.360680f, 340.000000f, 100, 200, 20);
-  path.AppendArc(0, -122.360680f, 245.278641f, 94.721359f, 1.570796f, -0.463648f, 100, 200, 20);
-  path.AppendLine(0, -80.000000f, 330.000000f, 262.111450f, 158.944275f, 100, 200, 20);
-  path.AppendArc(0, 300.000000f, 234.721359f, 84.721359f, -2.034444f, 0.463648f, 100, 200, 20);
+  path.AppendLine(-140.000000f, 340.000000f, -122.360680f, 340.000000f, 100, 200, 20);
+  path.AppendArc(-122.360680f, 245.278641f, 94.721359f, 1.570796f, -0.463648f, 100, 200, 20);
+  path.AppendLine(-80.000000f, 330.000000f, 262.111450f, 158.944275f, 100, 200, 20);
+  path.AppendArc(300.000000f, 234.721359f, 84.721359f, -2.034444f, 0.463648f, 100, 200, 20);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
@@ -516,13 +516,13 @@ TEST_F(LatticePlannerTest, MotionProfileComplex1)
   motionProfile.decel_mmps2 = 20;
   
   Planning::Path path;
-  path.AppendPointTurn(0, 250, -80, -2.03444f, -2.5, 100, 100, DEG_TO_RAD(1), true);
-  path.AppendArc(0, 210.000000f, -60.000000, 44.721359f, -0.463648f, -0.643501f, 100, 200, 20);
-  path.AppendLine(0, 230, -100, -210, -320, 100, 200, 20);
-  path.AppendPointTurn(0, -210, -320, -2.356194f, 2.5, 100, 100, DEG_TO_RAD(1), true);
-  path.AppendLine(0, -210, -320, -212.928925f, -322.928925f, 100, 200, 20);
-  path.AppendArc(0, -195.857864f, -340, 24.142136f, 2.356194f, 0.785398f, 100, 200, 20);
-  path.AppendPointTurn(0, -220, -340, 0, 2.5, 100, 100, DEG_TO_RAD(1), true);
+  path.AppendPointTurn(250, -80, -2.03444f, -2.5, 100, 100, DEG_TO_RAD(1), true);
+  path.AppendArc(210.000000f, -60.000000, 44.721359f, -0.463648f, -0.643501f, 100, 200, 20);
+  path.AppendLine(230, -100, -210, -320, 100, 200, 20);
+  path.AppendPointTurn(-210, -320, -2.356194f, 2.5, 100, 100, DEG_TO_RAD(1), true);
+  path.AppendLine(-210, -320, -212.928925f, -322.928925f, 100, 200, 20);
+  path.AppendArc(-195.857864f, -340, 24.142136f, 2.356194f, 0.785398f, 100, 200, 20);
+  path.AppendPointTurn(-220, -340, 0, 2.5, 100, 100, DEG_TO_RAD(1), true);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
@@ -546,14 +546,14 @@ TEST_F(LatticePlannerTest, MotionProfileComplex2)
   motionProfile.decel_mmps2 = 20;
   
   Planning::Path path;
-  path.AppendPointTurn(0, -80, -410, 0.463648f, 2, 100, 100, DEG_TO_RAD(1), true);
-  path.AppendArc(0, -100.000000, -370.000000, 44.721359f, -1.107149f, 0.643501f, 100, 200, 20);
-  path.AppendLine(0, -60.000000, -390.000000, 171.055725f, 72.111458f, 100, 200, 20);
-  path.AppendArc(0, 95.278641f, 110.000000, 84.721359f, -0.463648f, 0.463648f, 100, 200, 20);
-  path.AppendLine(0, 180.000000, 110.000000, 180.000000, 245.857864f, 100, 200, 20);
-  path.AppendArc(0, 214.142136f, 245.857864f, 34.142136f, 3.141593f, -0.785398f, 100, 200, 20);
-  path.AppendLine(0, 190.000000, 270.000000, 192.928925f, 272.928925f, 100, 200, 20);
-  path.AppendArc(0, 210.000000, 255.857864f, 24.142136f, 2.356194f, -0.785398f, 100, 200, 20);
+  path.AppendPointTurn(-80, -410, 0.463648f, 2, 100, 100, DEG_TO_RAD(1), true);
+  path.AppendArc(-100.000000, -370.000000, 44.721359f, -1.107149f, 0.643501f, 100, 200, 20);
+  path.AppendLine(-60.000000, -390.000000, 171.055725f, 72.111458f, 100, 200, 20);
+  path.AppendArc(95.278641f, 110.000000, 84.721359f, -0.463648f, 0.463648f, 100, 200, 20);
+  path.AppendLine(180.000000, 110.000000, 180.000000, 245.857864f, 100, 200, 20);
+  path.AppendArc(214.142136f, 245.857864f, 34.142136f, 3.141593f, -0.785398f, 100, 200, 20);
+  path.AppendLine(190.000000, 270.000000, 192.928925f, 272.928925f, 100, 200, 20);
+  path.AppendArc(210.000000, 255.857864f, 24.142136f, 2.356194f, -0.785398f, 100, 200, 20);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
@@ -576,9 +576,9 @@ TEST_F(LatticePlannerTest, MotionProfileZeroLengthSeg)
   motionProfile.decel_mmps2 = 500;
   
   Planning::Path path;
-  path.AppendLine(0, 178.592758f, -99.807365f, 176.896408f, -80.959740f, 100, 200, 500);
-  path.AppendLine(0, 176.896408f, -80.959740f, 176.000000, -71.000000, 100, 200, 500);
-  path.AppendPointTurn(0, 176.000000, -71.000000, 1.570796f, -2, 100, 500, DEG_TO_RAD(2.f), true);
+  path.AppendLine(178.592758f, -99.807365f, 176.896408f, -80.959740f, 100, 200, 500);
+  path.AppendLine(176.896408f, -80.959740f, 176.000000, -71.000000, 100, 200, 500);
+  path.AppendPointTurn(176.000000, -71.000000, 1.570796f, -2, 100, 500, DEG_TO_RAD(2.f), true);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
@@ -599,11 +599,11 @@ TEST_F(LatticePlannerTest, MotionProfileBackwardsForwards)
   motionProfile.decel_mmps2 = 500;
   
   Planning::Path path;
-  path.AppendLine(0, 0, 0, -10, 0, -100, 200, 500);
-  path.AppendPointTurn(0, -10, 0, -0.463648f, -2, 100, 500, DEG_TO_RAD(2.f), true);
-  path.AppendLine(0, -10, 0, -30, 9.999996f, -100, 200, 500);
-  path.AppendArc(0, 10, 10, 40, DEG_TO_RAD(180), DEG_TO_RAD(40), 100, 200, 500);
-  path.AppendLine(0, -20.641773f, -15.711510f, -33.541773f, -31.01151f, 100, 200, 500);
+  path.AppendLine(0, 0, -10, 0, -100, 200, 500);
+  path.AppendPointTurn(-10, 0, -0.463648f, -2, 100, 500, DEG_TO_RAD(2.f), true);
+  path.AppendLine(-10, 0, -30, 9.999996f, -100, 200, 500);
+  path.AppendArc(10, 10, 40, DEG_TO_RAD(180), DEG_TO_RAD(40), 100, 200, 500);
+  path.AppendLine(-20.641773f, -15.711510f, -33.541773f, -31.01151f, 100, 200, 500);
   
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);

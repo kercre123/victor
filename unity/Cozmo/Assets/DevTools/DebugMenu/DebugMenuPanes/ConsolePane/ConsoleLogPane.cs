@@ -53,13 +53,13 @@ public class ConsoleLogPane : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Toggle _LatencyToggle;
 
-  private SimpleObjectPool<AnkiTextLabel> _TextLabelPool;
-  private List<AnkiTextLabel> _TextLabelsUsed;
-  private AnkiTextLabel _NewestTextLabel;
+  private SimpleObjectPool<AnkiTextLegacy> _TextLabelPool;
+  private List<AnkiTextLegacy> _TextLabelsUsed;
+  private AnkiTextLegacy _NewestTextLabel;
 
   // Use this for initialization
   private void Start() {
-    _TextLabelsUsed = new List<AnkiTextLabel>();
+    _TextLabelsUsed = new List<AnkiTextLegacy>();
 
     RaiseConsoleLogPaneOpened(this);
 
@@ -103,7 +103,7 @@ public class ConsoleLogPane : MonoBehaviour {
     DataPersistence.DataPersistenceManager.Instance.Save();
   }
 
-  public void Initialize(List<string> consoleText, SimpleObjectPool<AnkiTextLabel> textLabelPool) {
+  public void Initialize(List<string> consoleText, SimpleObjectPool<AnkiTextLegacy> textLabelPool) {
     _TextLabelPool = textLabelPool;
     CreateLabelsForText(consoleText);
 
@@ -148,7 +148,7 @@ public class ConsoleLogPane : MonoBehaviour {
   }
 
   private void ReturnLabelsToPool() {
-    foreach (AnkiTextLabel label in _TextLabelsUsed) {
+    foreach (AnkiTextLegacy label in _TextLabelsUsed) {
       _TextLabelPool.ReturnToPool(label);
     }
     _TextLabelsUsed.Clear();
@@ -157,7 +157,7 @@ public class ConsoleLogPane : MonoBehaviour {
 
   private void CreateLabelsForText(List<string> consoleText) {
     // Create a text label for each string
-    AnkiTextLabel newTextLabel = null;
+    AnkiTextLegacy newTextLabel = null;
     foreach (string logChunk in consoleText) {
       newTextLabel = CreateNewTextLabel(logChunk);
     }
@@ -166,8 +166,8 @@ public class ConsoleLogPane : MonoBehaviour {
     _NewestTextLabel = newTextLabel;
   }
 
-  private AnkiTextLabel CreateNewTextLabel(string labelText) {
-    AnkiTextLabel newTextLabel = _TextLabelPool.GetObjectFromPool();
+  private AnkiTextLegacy CreateNewTextLabel(string labelText) {
+    AnkiTextLegacy newTextLabel = _TextLabelPool.GetObjectFromPool();
     newTextLabel.text = labelText;
     newTextLabel.gameObject.transform.SetParent(_ScrollRectLayoutTextContainer, false);
     newTextLabel.gameObject.SetActive(true);

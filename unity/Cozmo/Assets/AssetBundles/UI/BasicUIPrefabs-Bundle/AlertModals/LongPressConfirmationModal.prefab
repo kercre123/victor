@@ -522,49 +522,49 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 147252, guid: 542e216de6df14868abe6ffa97ca9911, type: 2}
   ModifiedValues:
-  - ObjectPath: HoldCozmoButton/ProgressBarMask/ProgressBarFill
+  - ObjectPath: HoldCozmoButtonLegacy/ProgressBarMask/ProgressBarFill
     FieldName: UnityEngine.UI.Image:m_Color:b
     JsonValue: 0.0
-  - ObjectPath: HoldCozmoButton/ProgressBarMask/ProgressBarFill
+  - ObjectPath: HoldCozmoButtonLegacy/ProgressBarMask/ProgressBarFill
     FieldName: UnityEngine.UI.Image:m_Color:g
     JsonValue: 0.7254902
-  - ObjectPath: HoldCozmoButton/ProgressBarMask/ProgressBarFill
+  - ObjectPath: HoldCozmoButtonLegacy/ProgressBarMask/ProgressBarFill
     FieldName: UnityEngine.UI.Image:m_Color:r
     JsonValue: 0.980392158
-  - ObjectPath: HoldCozmoButton
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:a
+  - ObjectPath: HoldCozmoButtonLegacy
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:a
     JsonValue: 0.541
-  - ObjectPath: HoldCozmoButton
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:b
+  - ObjectPath: HoldCozmoButtonLegacy
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:b
     JsonValue: 0.400000036
-  - ObjectPath: HoldCozmoButton
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:g
+  - ObjectPath: HoldCozmoButtonLegacy
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:g
     JsonValue: 0.400000036
-  - ObjectPath: HoldCozmoButton
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:r
+  - ObjectPath: HoldCozmoButtonLegacy
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextDisabledColor:r
     JsonValue: 0.400000036
-  - ObjectPath: HoldCozmoButton
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:b
+  - ObjectPath: HoldCozmoButtonLegacy
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:b
     JsonValue: 1.0
-  - ObjectPath: HoldCozmoButton
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:g
+  - ObjectPath: HoldCozmoButtonLegacy
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:g
     JsonValue: 1.0
-  - ObjectPath: HoldCozmoButton
-    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:r
+  - ObjectPath: HoldCozmoButtonLegacy
+    FieldName: Cozmo.UI.CozmoButtonLegacy:TextPressedColor:r
     JsonValue: 1.0
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: Cozmo.UI.LongPressConfirmationModal:_ConfirmHoldButton
     ReferencePath: 
   ModifiedGlobalReferences:
-  - ObjectPath: HoldCozmoButton/ButtonBackground
+  - ObjectPath: HoldCozmoButtonLegacy/ButtonBackground
     FieldName: UnityEngine.UI.Image:m_Sprite
     Reference: {fileID: 21300000, guid: 5c87a7d642dec440e9f1b9f5ed7bb12e, type: 3}
-  - ObjectPath: HoldCozmoButton
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledSprite
+  - ObjectPath: HoldCozmoButtonLegacy
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:disabledSprite
     Reference: {fileID: 21300000, guid: cd8652dcb3b244500a6bf0e4a70cb22a, type: 3}
-  - ObjectPath: HoldCozmoButton
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedSprite
+  - ObjectPath: HoldCozmoButtonLegacy
+    FieldName: Cozmo.UI.CozmoButtonLegacy:ButtonGraphics:0:pressedSprite
     Reference: {fileID: 21300000, guid: 219af1906737042ffbefe4725844f9d2, type: 3}
 --- !u!114 &11451390
 MonoBehaviour:
@@ -636,13 +636,13 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.07450981
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
     JsonValue: 0.172549024
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
     JsonValue: 0.709803939
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -721,7 +721,7 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"No"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
@@ -801,7 +801,7 @@ MonoBehaviour:
   Prefab: {fileID: 176160, guid: 10f33d59217b548c690367d9dbad1e40, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_FontSize
     JsonValue: 120
   ModifiedLocalReferences:
   - ObjectPath: ../../../

@@ -5,7 +5,7 @@ namespace Cozmo.UI {
   public class ChallengeDetailsUnlock : MonoBehaviour {
 
     [SerializeField]
-    private AnkiTextLabel _DescriptionLabel;
+    private AnkiTextLegacy _DescriptionLabel;
 
     [SerializeField]
     private RectTransform _UnlockGameContainer;

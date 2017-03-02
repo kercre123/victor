@@ -29,7 +29,7 @@
 #include <mutex>
 
 #define DEBUG_ROBOT_ANIMATION_AUDIO 0
-#define DEBUG_ROBOT_ANIMATION_AUDIO_LEVEL 0
+
 
 namespace Anki {
 namespace Cozmo {
@@ -61,7 +61,8 @@ public:
   bool IsActive() const { return _isActive; }
 
   // Check if the buffer is in the reset audio buffer state
-  bool IsWaitingForReset() const { return _isWaitingForReset; }
+  // Note: Will update state if the internal timeout period has expired
+  bool IsWaitingForReset() const;
 
   // Check if buffer stream has an audio streams
   bool HasAudioBufferStream() const;
@@ -95,8 +96,12 @@ protected:
   bool _isActive = false;
   
   // Flag to identify we are waiting for current update buffer session to complete
-  bool _isWaitingForReset = false;
+  mutable bool _isWaitingForReset = false;
   
+  // When _isWaitingForReset flag is set true begin timeout
+  // Note: If data is received from audio engine after reset flag is set clear timeout
+  enum { kInvalidResetTimeVal = 0 };
+  mutable unsigned long long int _beginResetTimeVal = kInvalidResetTimeVal;
 };
 
 

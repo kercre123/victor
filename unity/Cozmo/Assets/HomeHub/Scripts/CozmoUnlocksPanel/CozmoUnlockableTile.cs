@@ -28,7 +28,7 @@ namespace Cozmo.Upgrades {
     public GameObject _AffordableIndicator;
 
     [SerializeField]
-    public CozmoButton _TileButton;
+    public CozmoButtonLegacy _TileButton;
 
     private UnlockableInfo _UnlockData;
 

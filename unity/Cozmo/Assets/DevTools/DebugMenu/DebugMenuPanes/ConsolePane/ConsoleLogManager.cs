@@ -32,9 +32,9 @@ public class ConsoleLogManager : MonoBehaviour {
   public const int kUnityTextFieldCharLimit = 14000;
 
   [SerializeField]
-  private AnkiTextLabel _ConsoleTextLabelPrefab;
+  private AnkiTextLegacy _ConsoleTextLabelPrefab;
 
-  private SimpleObjectPool<AnkiTextLabel> _TextLabelPool;
+  private SimpleObjectPool<AnkiTextLegacy> _TextLabelPool;
 
   [SerializeField]
   private int numberCachedLogMaximum = 100;
@@ -50,7 +50,7 @@ public class ConsoleLogManager : MonoBehaviour {
   private void Awake() {
     Instance = this;
 
-    _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
+    _TextLabelPool = new SimpleObjectPool<AnkiTextLegacy>(CreateTextLabel, ResetTextLabel, 3);
     _ConsoleLogPaneView = null;
 
     _LastToggleValues = new Dictionary<LogPacket.ELogKind, bool>();
@@ -183,16 +183,16 @@ public class ConsoleLogManager : MonoBehaviour {
 
   #region Text Label Pooling
 
-  private AnkiTextLabel CreateTextLabel() {
+  private AnkiTextLegacy CreateTextLabel() {
     // Create the text label as a child under the parent container for the pool
     GameObject newLabelObject = UIManager.CreateUIElement(_ConsoleTextLabelPrefab.gameObject, this.transform);
     newLabelObject.SetActive(false);
-    AnkiTextLabel textScript = newLabelObject.GetComponent<AnkiTextLabel>();
+    AnkiTextLegacy textScript = newLabelObject.GetComponent<AnkiTextLegacy>();
 
     return textScript;
   }
 
-  private void ResetTextLabel(AnkiTextLabel toReset, bool spawned) {
+  private void ResetTextLabel(AnkiTextLegacy toReset, bool spawned) {
     if (!spawned) {
       // Add the text label as a child under the parent container for the pool
       toReset.transform.SetParent(this.transform, false);
