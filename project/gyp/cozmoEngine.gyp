@@ -2,7 +2,6 @@
   'includes': [
     '../../coretech/project/gyp/face-library.gypi',
     '../../coretech/project/gyp/opencv.gypi',
-    'build-variables.gypi',
     'voice-recognition.gypi',
   ],
   

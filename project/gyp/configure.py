@@ -31,6 +31,10 @@ def gypHelp():
   print "echo PATH=$HOME/your_workspace/gyp:$PATH >> ~/.bash_profile"
   print ". ~/.bash_profile"
 
+def _getGypArgs(format, outputFolder, gypFile):
+  return ['--check', '--depth', '.', '-f', format, '--toplevel-dir', '../..', \
+    '--generator-output', outputFolder, '--include', '../../project/gyp/build-variables.gypi', gypFile]
+
 def _readConfigFile(configFile):
   configData = None
   if os.path.isfile(configFile):
@@ -461,7 +465,7 @@ def main(scriptArgs):
                                     ceBLECozmoProjectPath,
                                     clad_dir_rel,
                                   )
-      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
+      gypArgs = _getGypArgs('xcode', '../../generated/mac', gypFile)
       gyp.main(gypArgs)
 
 
@@ -533,7 +537,7 @@ def main(scriptArgs):
                                   ceBLECozmoProjectPath,
                                   clad_dir_rel,
                                 )
-    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
+    gypArgs = _getGypArgs('xcode', '../../generated/ios', gypFile)
     gyp.main(gypArgs)
 
   if 'android' in options.platforms:
@@ -640,7 +644,7 @@ def main(scriptArgs):
     os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
     os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
     os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
-    gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
+    gypArgs = _getGypArgs('ninja-android', 'generated/android', gypFile)
     gyp.main(gypArgs)
 
   # Configure Anki Audio project
