@@ -16847,7 +16847,8 @@ module.exports =
 	        cozmo_wait_for_face: this.waitForFace,
 	        cozmo_wait_for_cube: this.waitForCube,
 	        cozmo_headangle: this.setHeadAngle,
-	        cozmo_turn: this.turn,
+	        cozmo_turn_left: this.turnLeft,
+	        cozmo_turn_right: this.turnRight,
 	        cozmo_says: this.speak
 	    };
 	};
@@ -16941,7 +16942,7 @@ module.exports =
 	    ];
 
 	    if (colorName == 'mystery') {
-	        var randomValue = Math.floor(Math.random() * 8);
+	        var randomValue = Math.floor(Math.random() * colorNameToHexTable.length);
 	        return colorNameToHexTable[randomValue].colorHex;
 	    }
 
@@ -17025,9 +17026,24 @@ module.exports =
 	    }
 	};
 	                                       
-	Scratch3CozmoBlocks.prototype.turn = function(args, util) {
+	Scratch3CozmoBlocks.prototype.turnLeft = function(args, util) {
 	    if (!util.stackFrame.timer) {
-	        window.Unity.call('{"command": "cozmoTurn"}');
+	        window.Unity.call('{"command": "cozmoTurnLeft"}');
+
+	        // Yield
+	        util.stackFrame.timer = new Timer();
+	        util.stackFrame.timer.start();
+	        util.yield();
+	    } else {
+	        if (util.stackFrame.timer.timeElapsed() < 1000) {
+	            util.yield();
+	        }
+	    }
+	};
+
+	Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
+	    if (!util.stackFrame.timer) {
+	        window.Unity.call('{"command": "cozmoTurnRight"}');
 
 	        // Yield
 	        util.stackFrame.timer = new Timer();

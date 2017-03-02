@@ -312,9 +312,9 @@ init: function() {
   }
 };
 
-Blockly.Blocks['cozmo_turn'] = {
+Blockly.Blocks['cozmo_turn_left'] = {
   /**
-   * Block to turn Cozmo 90 degrees.
+   * Block to turn Cozmo 90 degrees left.
    * @this Blockly.Block
   */
   init: function() {
@@ -324,10 +324,39 @@ Blockly.Blocks['cozmo_turn'] = {
       "args0": [
         {
           "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-turn.svg",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-turn-left.svg",
           "width": 40,
           "height": 40,
-          "alt": "Make robot turn"
+          "alt": "Turn left"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.motion,
+      "colour": Blockly.Colours.motion.primary,
+      "colourSecondary": Blockly.Colours.motion.secondary,
+      "colourTertiary": Blockly.Colours.motion.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_turn_right'] = {
+  /**
+   * Block to turn Cozmo 90 degrees right.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_turn",
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-turn-right.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Turn right"
         }
       ],
       "inputsInline": true,

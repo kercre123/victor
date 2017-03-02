@@ -13,6 +13,9 @@ public class ScratchRequest {
 }
 
 public class DebugDisplayPane : MonoBehaviour {
+  private const float kDegreesToRadians = Mathf.PI / 180.0f;
+  private const float kTurnAngle = 90.0f * kDegreesToRadians;
+
   [SerializeField]
   private Button _ToggleDebugStringButton;
 
@@ -251,12 +254,13 @@ public class DebugDisplayPane : MonoBehaviour {
       // TODO Use ScratchRequest arg to select one of ~15 animations
       RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration);
     }
-    else if (scratchRequest.command == "cozmoTurn") {
+    else if (scratchRequest.command == "cozmoTurnLeft") {
       // Turn 90 degrees to the left
-      // TODO We will also want a block that turns 90 degrees to the right
-      const float degrees_to_radians = Mathf.PI / 180.0f;
-      const float angle = 90.0f;
-      RobotEngineManager.Instance.CurrentRobot.TurnInPlace(angle * degrees_to_radians, 0.0f, 0.0f);
+      RobotEngineManager.Instance.CurrentRobot.TurnInPlace(kTurnAngle, 0.0f, 0.0f);
+    }
+    else if (scratchRequest.command == "cozmoTurnRight") {
+      // Turn 90 degrees to the right
+      RobotEngineManager.Instance.CurrentRobot.TurnInPlace(-kTurnAngle, 0.0f, 0.0f);
     }
     else if (scratchRequest.command == "cozmoSays") {
       // TODO Add profanity filter
