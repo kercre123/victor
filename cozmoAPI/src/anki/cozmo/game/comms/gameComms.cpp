@@ -13,7 +13,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/logging/logging.h"
-#include "anki/common/basestation/utils/helpers/printByteArray.h"
+#include "util/helpers/printByteArray.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
 // For strcpy

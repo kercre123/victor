@@ -144,6 +144,7 @@
     ],
 
     'compiler_flags': [
+      '-DJSONCPP_USING_SECURE_MEMORY=0',
       '-Wno-deprecated-declarations', # Suppressed until system() usage is removed
       '-fdiagnostics-show-category=name',
       '-Wall',
