@@ -13,6 +13,8 @@ public class ScratchRequest {
 }
 
 public class DebugDisplayPane : MonoBehaviour {
+  private const float kDriveSpeed_mmps = 30.0f;
+  private const float kDriveDist_mm = 30.0f;
   private const float kDegreesToRadians = Mathf.PI / 180.0f;
   private const float kTurnAngle = 90.0f * kDegreesToRadians;
 
@@ -242,13 +244,14 @@ public class DebugDisplayPane : MonoBehaviour {
     ScratchRequest scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
 
     if (scratchRequest.command == "cozmoDriveForward") {
-      const float speed_mmps = 30.0f;
-      float dist_mm = 30.0f;
-
       // Here, argFloat represents the number selected from the dropdown under the "drive forward" block
-      dist_mm *= scratchRequest.argFloat;
-
-      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(speed_mmps, dist_mm, false);
+      float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kDriveSpeed_mmps, dist_mm, false);
+    }
+    else if (scratchRequest.command == "cozmoDriveBackward") {
+      // Here, argFloat represents the number selected from the dropdown under the "drive backward" block
+      float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(-kDriveSpeed_mmps, -dist_mm, false);
     }
     else if (scratchRequest.command == "cozmoPlayAnimation") {
       // TODO Use ScratchRequest arg to select one of ~15 animations

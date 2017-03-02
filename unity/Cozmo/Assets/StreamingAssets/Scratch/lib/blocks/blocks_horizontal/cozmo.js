@@ -98,14 +98,14 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
   }
 };
 
-Blockly.Blocks['cozmo_drive'] = {
+Blockly.Blocks['cozmo_drive_forward'] = {
   /**
    * Block to drive forward.
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "id": "cozmo_drive",
+      "id": "cozmo_drive_forward",
       "message0": "%1 %2",
       "args0": [
         {
@@ -113,7 +113,41 @@ Blockly.Blocks['cozmo_drive'] = {
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-forward.svg",
           "width": 40,
           "height": 40,
-          "alt": "Drive robot straight"
+          "alt": "Drive forward"
+        },
+        {
+          "type": "input_value",
+          "name": "DISTANCE",
+          "check": "Number"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.motion,
+      "colour": Blockly.Colours.motion.primary,
+      "colourSecondary": Blockly.Colours.motion.secondary,
+      "colourTertiary": Blockly.Colours.motion.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_drive_backward'] = {
+  /**
+   * Block to drive backward.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_drive_backward",
+      "message0": "%1 %2",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-backward.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Drive backward"
         },
         {
           "type": "input_value",
