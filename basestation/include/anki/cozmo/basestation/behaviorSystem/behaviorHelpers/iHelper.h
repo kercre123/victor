@@ -109,7 +109,9 @@ protected:
   
   ActionResult IsAtPreActionPoseWithVisualVerification(Robot& robot,
                                                        const ObjectID& targetID,
-                                                       PreActionPose::ActionType actionType);
+                                                       PreActionPose::ActionType actionType,
+                                                       const f32 offsetX_mm = 0,
+                                                       const f32 offsetY_mm = 0);
   
   void DelegateAfterUpdate(const DelegateProperties& properties){ _delegateAfterUpdate = properties;}
   

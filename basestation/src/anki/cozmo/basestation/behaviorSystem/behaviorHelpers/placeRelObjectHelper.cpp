@@ -60,11 +60,18 @@ bool PlaceRelObjectHelper::ShouldCancelDelegates(const Robot& robot) const
 BehaviorStatus PlaceRelObjectHelper::Init(Robot& robot)
 {
   _tmpRetryCounter = 0;
-  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
-                    robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE);
+  
+  const PreActionPose::ActionType actionType = PreActionPose::PreActionPose::PLACE_RELATIVE;
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(robot,
+                                                                             _targetID,
+                                                                             actionType,
+                                                                             _params.placementOffsetX_mm,
+                                                                             _params.placementOffsetY_mm);
   if(isAtPreAction != ActionResult::SUCCESS){
     DriveToParameters params;
     params.actionType = PreActionPose::ActionType::PLACE_RELATIVE;
+    params.placeRelOffsetX_mm = _params.placementOffsetX_mm;
+    params.placeRelOffsetY_mm = _params.placementOffsetY_mm;
     DelegateProperties delegateProperties;
     delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, params));
     delegateProperties.SetOnSuccessFunction([this](Robot& robot){StartPlaceRelObject(robot); return _status;});
@@ -93,8 +100,12 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
   }
   _tmpRetryCounter++;
 
-  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
-                   robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE);
+  const PreActionPose::ActionType actionType = PreActionPose::PreActionPose::PLACE_RELATIVE;
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(robot,
+                                                                             _targetID,
+                                                                             actionType,
+                                                                             _params.placementOffsetX_mm,
+                                                                             _params.placementOffsetY_mm);
   if(isAtPreAction != ActionResult::SUCCESS){
     DriveToParameters params;
     params.actionType = PreActionPose::ActionType::PLACE_RELATIVE;

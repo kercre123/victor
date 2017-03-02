@@ -254,7 +254,9 @@ HelperHandle IHelper::CreatePlaceRelObjectHelper(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
                                                               const ObjectID& targetID,
-                                                              PreActionPose::ActionType actionType)
+                                                              PreActionPose::ActionType actionType,
+                                                              const f32 offsetX_mm,
+                                                              const f32 offsetY_mm)
 {
   ActionableObject* object = dynamic_cast<ActionableObject*>(
                                 robot.GetBlockWorld().GetObjectByID(targetID));
@@ -268,24 +270,40 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
     return ActionResult::VISUAL_OBSERVATION_FAILED;
   }
   
-  const IDockAction::PreActionPoseInput preActionPoseInput(object,
-                                                           actionType,
-                                                           false,
-                                                           0,
-                                                           DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE,
-                                                           false,
-                                                           0);
+  bool alreadyInPosition = false;
   
-  IDockAction::PreActionPoseOutput preActionPoseOutput;
-  
-  IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
-  
-  if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
+  if(actionType == PreActionPose::ActionType::PLACE_RELATIVE)
   {
-    return preActionPoseOutput.actionResult;
+    std::vector<Pose3d> possiblePoses_unused;
+    PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(object,
+                                                           offsetX_mm,
+                                                           offsetY_mm,
+                                                           robot,
+                                                           possiblePoses_unused,
+                                                           alreadyInPosition);
+  }
+  else
+  {
+    const IDockAction::PreActionPoseInput preActionPoseInput(object,
+                                                             actionType,
+                                                             false,
+                                                             0,
+                                                             DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE,
+                                                             false,
+                                                             0);
+    
+    IDockAction::PreActionPoseOutput preActionPoseOutput;
+    
+    IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
+    
+    if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
+    {
+      return preActionPoseOutput.actionResult;
+    }
+    
+    alreadyInPosition = preActionPoseOutput.robotAtClosestPreActionPose;
   }
   
-  bool alreadyInPosition = preActionPoseOutput.robotAtClosestPreActionPose;
   if(alreadyInPosition){
     return ActionResult::SUCCESS;
   }else{
