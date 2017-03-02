@@ -7,25 +7,25 @@ namespace Cozmo.UI {
   public class LongPressConfirmationModal : BaseModal {
 
     [SerializeField]
-    private AnkiTextLabel _TitleTextLabel;
+    private AnkiTextLegacy _TitleTextLabel;
 
     [SerializeField]
-    private AnkiTextLabel _WarningTextLabel;
+    private AnkiTextLegacy _WarningTextLabel;
 
     [SerializeField]
     private RectTransform _InstructionTextContainer;
 
     [SerializeField]
-    private AnkiTextLabel _InstructionTextLabel;
+    private AnkiTextLegacy _InstructionTextLabel;
 
     [SerializeField]
     private RectTransform _InProgressTextContainer;
 
     [SerializeField]
-    private AnkiTextLabel _InProgressTextLabel;
+    private AnkiTextLegacy _InProgressTextLabel;
 
     [SerializeField]
-    private CozmoButton _CancelButton;
+    private CozmoButtonLegacy _CancelButton;
 
     [SerializeField]
     private CozmoHoldButton _ConfirmHoldButton;

@@ -7,22 +7,22 @@ using UnityEngine.UI;
 public class AndroidEnterPassword : AndroidConnectionFlowStage {
 
   [SerializeField]
-  private AnkiTextLabel _InstructionsLabel;
+  private AnkiTextLegacy _InstructionsLabel;
 
   [SerializeField]
   private InputField _PasswordField;
 
   [SerializeField]
-  private AnkiTextLabel _ErrorLabel;
+  private AnkiTextLegacy _ErrorLabel;
 
   [SerializeField]
-  private CozmoButton _ContinueButton;
+  private CozmoButtonLegacy _ContinueButton;
 
   [SerializeField]
-  private CozmoButton _WrongCozmoButton;
+  private CozmoButtonLegacy _WrongCozmoButton;
 
   [SerializeField]
-  private AnkiTextLabel _WrongPasswordLabel;
+  private AnkiTextLegacy _WrongPasswordLabel;
 
   public bool WrongPassword { set { _WrongPasswordLabel.gameObject.SetActive(value); } }
 

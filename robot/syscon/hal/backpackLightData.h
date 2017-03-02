@@ -22,6 +22,12 @@ namespace BackpackLights {
     { 0x01E0, 0x01E0 }
   };
 
+  static const LightState button_pressed[] = {
+    { 0x3de0, 0x3de0 },
+    { 0x3de0, 0x3de0 },
+    { 0x3de0, 0x3de0 }
+  };
+
   static const LightState low_battery[] = {
     { 0x0000, 0x0000 },
     { 0x0000, 0x0000 },

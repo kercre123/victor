@@ -8,10 +8,10 @@ namespace Cozmo.Settings {
     public event System.Action OnOpenRestoreCozmoViewButtonTapped;
 
     [SerializeField]
-    private CozmoButton _OpenRestoreCozmoDialogButton;
+    private CozmoButtonLegacy _OpenRestoreCozmoDialogButton;
 
     [SerializeField]
-    private AnkiTextLabel _ClarificationText;
+    private AnkiTextLegacy _ClarificationText;
 
     private void Awake() {
       _OpenRestoreCozmoDialogButton.Initialize(HandleOpenRestoreCozmoViewButtonTapped, "open_restore_cozmo_view_button", this.DASEventDialogName);

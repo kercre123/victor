@@ -315,8 +315,10 @@ class HStructEmitter(BaseEmitter):
         self.output.write(textwrap.dedent('''\
             /**** Constructors ****/
             '''))
-            
-        if node.default_constructor:
+        
+        all_members_have_default_constructor = emitterutil._do_all_members_have_default_constructor(node)
+        
+        if node.default_constructor and all_members_have_default_constructor:
             self.output.write(textwrap.dedent('''\
                 {message_name}() = default;
                 '''.format(**globals)))
@@ -409,21 +411,57 @@ class CPPStructEmitter(HStructEmitter):
     
     def emitMembers(self, node, globals):
         pass
-
+    
+    # recursively goes through all members of the node and generates code to explicitly initialize
+    # each member
+    def __init_explicit_members(self, node):
+        arg_list = '('
+        for member in node.members():
+            member_dict = member.__dict__['type'].__dict__
+            if 'type_decl' in member_dict:
+                arg_list += ' ' + member_dict['type_decl'].name + self.__init_explicit_members(member_dict['type_decl']) + ','
+            else:
+                if isinstance(member.type, ast.VariableArrayType) or isinstance(member.type, ast.FixedArrayType):
+                    arg_list += ' {},'
+                else:
+                    arg_list += ' 0,'
+        arg_list = arg_list[:-1]
+        arg_list += ')'
+        return arg_list
+    
     def emitConstructors(self, node, globals):
+        all_members_have_default_constructor = emitterutil._do_all_members_have_default_constructor(node)
+      
+        explicit_members = ''
+        
+        if not all_members_have_default_constructor:
+            # at least one of the members does not have a default constructor so go through all of them
+            # and genertate code to explicitly initialize each member
+            for member in node.members():
+                member_dict = member.__dict__['type'].__dict__
+                if 'type_decl' in member_dict:
+                    arg_list = self.__init_explicit_members(member_dict['type_decl'])
+                    if explicit_members is '':
+                        explicit_members += ': {member_name}{arg_list}'.format(member_name = member.name,
+                                                                               arg_list = arg_list)
+                    else:
+                        explicit_members += ', {member_name}{arg_list}'.format(member_name = member.name,
+                                                                           arg_list = arg_list)
+    
+    
         self.output.write(textwrap.dedent('''\
-            {message_name}::{message_name}(const uint8_t* buff, size_t len)
-            {{
-            \tconst CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
-            \tUnpack(buffer);
-            }}
-            
             {message_name}::{message_name}(const CLAD::SafeMessageBuffer& buffer)
+            {explicit_constructors}
             {{
             \tUnpack(buffer);
             }}
+          
+            {message_name}::{message_name}(const uint8_t* buff, size_t len)
+            : {message_name}::{message_name}({{const_cast<uint8_t*>(buff), len, false}})
+            {{
+            }}
             
-            '''.format(**globals)))
+            '''.format(explicit_constructors = explicit_members, **globals)))
 
     def emitInvoke(self, node, globals):
         pass

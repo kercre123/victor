@@ -13,7 +13,7 @@ namespace Onboarding {
     private GameObject _SoftSparkInstructions;
 
     [SerializeField]
-    private CozmoButton _ContinueButtonInstance;
+    private CozmoButtonLegacy _ContinueButtonInstance;
 
     private CoreUpgradeDetailsModal _UpgradeDetailsModal = null;
 

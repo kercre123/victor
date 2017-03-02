@@ -104,6 +104,7 @@ public class RobotDirectChannel : ChannelBase<RobotMessageIn, RobotMessageOut> {
     case "RobotObservedObject":
     case "ImageChunk":
     case "DebugString":
+    case "DebugAppendConsoleLogLine":
     case "RobotState":
     case "MoodState":
     case "ObjectProjectsIntoFOV":

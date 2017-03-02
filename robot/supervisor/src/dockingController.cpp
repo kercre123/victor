@@ -871,15 +871,14 @@ namespace Anki {
                       turnAngle = (rel_horz_dist_block >= 0 ? HM_TURN_ANGLE_RAD : -HM_TURN_ANGLE_RAD);
                     }
                     
-                    PathFollower::AppendPathSegment_PointTurn(0, x, y,
+                    PathFollower::AppendPathSegment_PointTurn(x, y,
                                                               a.ToFloat()-turnAngle,
                                                               HM_ROT_SPEED_RADPS,
                                                               HM_ROT_ACCEL_MMPS2,
                                                               HM_ROT_ACCEL_MMPS2,
                                                               0.1f, true);
                     
-                    PathFollower::AppendPathSegment_Line(0,
-                                                         x,
+                    PathFollower::AppendPathSegment_Line(x,
                                                          y,
                                                          x+(HM_DIST_MM)*cosf(a.ToFloat()-turnAngle/2.f),
                                                          y+(HM_DIST_MM)*sinf(a.ToFloat()-turnAngle/2.f),
@@ -1263,8 +1262,7 @@ namespace Anki {
             }
             
             PathFollower::ClearPath();
-            PathFollower::AppendPathSegment_Line(0,
-                                                 x_start_mm,
+            PathFollower::AppendPathSegment_Line(x_start_mm,
                                                  y_start_mm,
                                                  dockPose_.x() + distIntoBlock_mm*dockPoseCos,
                                                  dockPose_.y() + distIntoBlock_mm*dockPoseSin,

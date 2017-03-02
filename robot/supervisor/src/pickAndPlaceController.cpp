@@ -517,8 +517,7 @@ namespace Anki {
                 Radians a;
                 Localization::GetDriveCenterPose(x, y, a);
                 
-                PathFollower::AppendPathSegment_Line(0,
-                                                     x-(PICKUP_ANIM_STARTING_DIST_MM)*cosf(a.ToFloat()),
+                PathFollower::AppendPathSegment_Line(x-(PICKUP_ANIM_STARTING_DIST_MM)*cosf(a.ToFloat()),
                                                      y-(PICKUP_ANIM_STARTING_DIST_MM)*sinf(a.ToFloat()),
                                                      x+(PICKUP_ANIM_DIST_MM)*cosf(a.ToFloat()),
                                                      y+(PICKUP_ANIM_DIST_MM)*sinf(a.ToFloat()),

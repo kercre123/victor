@@ -11,10 +11,10 @@ namespace SpeedTap {
     private Image _PortraitImage;
 
     [SerializeField]
-    private AnkiTextLabel _WinnerNameTextLabel;
+    private AnkiTextLegacy _WinnerNameTextLabel;
 
     [SerializeField]
-    private AnkiTextLabel _CurrentRoundTextLabel;
+    private AnkiTextLegacy _CurrentRoundTextLabel;
 
     [SerializeField]
     private SegmentedBar _RoundCountBar;

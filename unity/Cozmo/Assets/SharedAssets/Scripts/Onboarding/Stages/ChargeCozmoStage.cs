@@ -10,10 +10,10 @@ namespace Onboarding {
   public class ChargeCozmoStage : ShowContinueStage {
 
     [SerializeField]
-    private AnkiTextLabel _CounterLabel;
+    private AnkiTextLegacy _CounterLabel;
 
     [SerializeField]
-    private AnkiTextLabel _KeepOnChargerText;
+    private AnkiTextLegacy _KeepOnChargerText;
 
 
     [SerializeField]

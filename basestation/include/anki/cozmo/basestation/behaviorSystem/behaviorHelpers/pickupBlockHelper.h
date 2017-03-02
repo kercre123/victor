@@ -27,7 +27,7 @@ public:
   PickupBlockHelper(Robot& robot, IBehavior& behavior,
                     BehaviorHelperFactory& helperFactory,
                     const ObjectID& targetID,
-                    AnimationTrigger animBeforeDock);
+                    const PickupBlockParamaters& parameters = {});
   virtual ~PickupBlockHelper();
 
 protected:
@@ -38,7 +38,8 @@ protected:
   
 private:
   ObjectID _targetID;
-  AnimationTrigger _animBeforeDock;
+  PickupBlockParamaters _params;
+  
   u32 _tmpRetryCounter;
   
   void StartPickupAction(Robot& robot);

@@ -9,10 +9,10 @@ namespace Onboarding {
   public class SkipOrContinueStage : ShowContinueStage {
 
     [SerializeField]
-    private CozmoButton _SkipButtonInstance;
+    private CozmoButtonLegacy _SkipButtonInstance;
 
     [SerializeField]
-    private CozmoButton _OldRobotContinueButtonInstance;
+    private CozmoButtonLegacy _OldRobotContinueButtonInstance;
 
     [SerializeField]
     private GameObject _OldRobotViewInstance;

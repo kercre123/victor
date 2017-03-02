@@ -25,10 +25,8 @@ public:
   PlaceRelObjectHelper(Robot& robot, IBehavior& behavior,
                        BehaviorHelperFactory& helperFactory,
                        const ObjectID& targetID,
-                       const bool placingOnGround,
-                       const f32 placementOffsetX_mm,
-                       const f32 placementOffsetY_mm,
-                       const bool relativeCurrentMarker);
+                       const bool placingOnGround = false,
+                       const PlaceRelObjectParameters& parameters = {});
   virtual ~PlaceRelObjectHelper();
 
 protected:
@@ -39,9 +37,7 @@ protected:
 private:
   ObjectID _targetID;
   bool _placingOnGround;
-  f32 _placementOffsetX_mm;
-  f32 _placementOffsetY_mm;
-  bool _relativeCurrentMarker;
+  PlaceRelObjectParameters _params;
   u32 _tmpRetryCounter;
 
   

@@ -119,6 +119,16 @@ namespace Anki
       
       void Print() const;
 
+      // Computes the shortest distance to the path segment from a given test point.
+      //
+      // @param            x, y, angle: Pose of the test point
+      // @param shortestDistanceToPath: The distance to the closest point on the path segment.
+      //                                +ve means the closest point is to the right of the robot assuming that
+      //                                the robot is aligned with the direction of the path. (i.e. Ignores `angle` parameter)
+      // @param radDiff                 The angular difference between the angle of the test point and that of the
+      //                                tangent of the closest point on the path segment
+      // @param distAlongSegmentFromClosestPointToEnd: Distance to end of segment from closest point on segment.
+      //                                -ve means you've gone past the end of the segment
       SegmentRangeStatus GetDistToSegment(const f32 x, const f32 y, const f32 angle,
                                          f32 &shortestDistanceToPath, f32 &radDiff,
                                          f32 *distAlongSegmentFromClosestPointToEnd = NULL) const;
@@ -174,15 +184,15 @@ namespace Anki
       void PrintSegment(u8 segment) const;
       
       // Add path segment
-      bool AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end,
+      bool AppendLine(f32 x_start, f32 y_start, f32 x_end, f32 y_end,
                       f32 targetSpeed, f32 accel, f32 decel);
       
       // Add one or more arcs. The arc may get split up into multiple
       // arcs so the robot can handle them more easily
-      bool AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
+      bool AppendArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                      f32 targetSpeed, f32 accel, f32 decel);
       
-      bool AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
+      bool AppendPointTurn(f32 x, f32 y, f32 targetAngle,
                            f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                            f32 angleTolerance,
                            bool useShortestDir);

@@ -22,7 +22,7 @@ public class DailySummaryPanel : BaseModal {
   private Color _LockedLevelColor;
 
   [SerializeField]
-  private AnkiTextLabel _Title;
+  private AnkiTextLegacy _Title;
 
   [SerializeField]
   private Image _FriendBar;
@@ -43,10 +43,10 @@ public class DailySummaryPanel : BaseModal {
   private GameObject _ChallengePrefab;
 
   [SerializeField]
-  private AnkiTextLabel _CurrentFriendshipLevel;
+  private AnkiTextLegacy _CurrentFriendshipLevel;
 
   [SerializeField]
-  private AnkiTextLabel _NextFriendshipLevel;
+  private AnkiTextLegacy _NextFriendshipLevel;
 
   [SerializeField]
   private Transform _BonusBarContainer;

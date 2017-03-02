@@ -99,7 +99,7 @@ public final class CozmoWifi {
       }
       else if (!mNetworkBound && !mNetworkBinding && WifiUtil.isConnectedState(info.getDetailedState())) {
         WifiInfo wifiInfo = intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
-        if (isCozmoSSID(wifiInfo.getSSID())) {
+        if (wifiInfo != null && isCozmoSSID(wifiInfo.getSSID())) {
           mNetworkBinding = true;
           WifiUtil.bindToNetwork(info, new WifiUtil.BindCallback() {
             @Override public void run (boolean success) {

@@ -10,19 +10,19 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   private const int kAppVerCharsToDisplay = 5;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _ShowMeButton;
+  private Cozmo.UI.CozmoButtonLegacy _ShowMeButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _GetACozmoButton;
+  private Cozmo.UI.CozmoButtonLegacy _GetACozmoButton;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _LastCozmoLabel;
+  private Anki.UI.AnkiTextLegacy _LastCozmoLabel;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _DeviceIdLabel;
+  private Anki.UI.AnkiTextLegacy _DeviceIdLabel;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _AppVerLabel;
+  private Anki.UI.AnkiTextLegacy _AppVerLabel;
 
   [SerializeField]
   private WifiInstructionsModal _WifiInstructionsModalPrefab;

@@ -16,7 +16,7 @@ namespace Cozmo {
       private RectTransform _BannerContainer;
 
       [SerializeField]
-      private AnkiTextLabel _BannerTextLabel;
+      private AnkiTextLegacy _BannerTextLabel;
 
       [SerializeField]
       private float _BannerInOutAnimationDurationSeconds = 0.3f;

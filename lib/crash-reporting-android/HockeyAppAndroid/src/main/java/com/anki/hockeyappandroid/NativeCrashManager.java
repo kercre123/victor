@@ -7,22 +7,22 @@ import android.os.Looper;
 import android.util.Log;
 
 import net.hockeyapp.android.Constants;
-
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.HttpStatus;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
+import net.hockeyapp.android.CrashManager;
+import net.hockeyapp.android.objects.CrashDetails;
+import net.hockeyapp.android.utils.HockeyLog;
+import net.hockeyapp.android.utils.HttpURLConnectionBuilder;
+import net.hockeyapp.android.utils.SimpleMultipartEntity;
 
 import java.io.BufferedWriter;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Date;
-import java.util.UUID;
 
 public class NativeCrashManager {
     public static final String DUMPS_DIR = "dmps";
@@ -38,7 +38,7 @@ public class NativeCrashManager {
     private final Handler mHandler;
     private final String mDumpsDir;
     private final String mAppRun;
-    private final String mIdentifier;
+    private final String mUrlString;
     private final String mUser;
 
     private Runnable mUpdateLogRunnable = new Runnable() {
@@ -85,7 +85,7 @@ public class NativeCrashManager {
         mListener = listener;
         mActivity = activity;
         mAppRun = appRun;
-        mIdentifier = identifier;
+        mUrlString = "https://rink.hockeyapp.net/api/2/apps/" + identifier + "/crashes/upload";
         mUser = user;
         mHandler = new Handler(Looper.getMainLooper());
         mDumpsDir = getDumpsDirectory(mActivity);
@@ -105,6 +105,30 @@ public class NativeCrashManager {
     private boolean deleteFile(final String filename) {
         File file = new File(mDumpsDir, filename);
         return file.delete();
+    }
+
+    private boolean moveFile(final String oldPath, final String newPath) {
+        boolean result = true;
+        File newFile = new File(newPath);
+        newFile.delete();
+        File oldFile = new File(oldPath);
+        try {
+            FileInputStream in = new FileInputStream(oldFile);
+            FileOutputStream out = new FileOutputStream(newFile);
+            byte[] buf = new byte[4096];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            in.close();
+            out.close();
+            oldFile.delete();
+        } catch (IOException e) {
+            Log.d(HockeyLog.HOCKEY_TAG,
+                  "Error moving file from '" + oldPath + "' to '" + newPath + "', e = " + e);
+            result = false;
+        }
+        return result;
     }
 
     private String[] searchForOrphanedFiles() {
@@ -145,7 +169,7 @@ public class NativeCrashManager {
             };
             return dir.list(filter);
         } else {
-            Log.d("HockeyApp", "Can't search for files as file path is null.");
+            Log.d(HockeyLog.HOCKEY_TAG, "Can't search for files as file path is null.");
             return new String[0];
         }
     }
@@ -159,26 +183,41 @@ public class NativeCrashManager {
 
     private String createLogFile(final String appRun) {
         final Date now = new Date();
+        long initializeTimestamp = CrashManager.getInitializeTimestamp();
+        if (initializeTimestamp == 0) {
+            initializeTimestamp = System.currentTimeMillis();
+        }
+        final Date startDate = new Date(initializeTimestamp);
+
+        CrashDetails crashDetails = new CrashDetails(appRun);
+        crashDetails.setIsXamarinException(false);
+        crashDetails.setAppPackage(Constants.APP_PACKAGE);
+        crashDetails.setAppVersionCode(Constants.APP_VERSION);
+        crashDetails.setAppVersionName(Constants.APP_VERSION_NAME);
+        crashDetails.setAppStartDate(startDate);
+        crashDetails.setAppCrashDate(now);
+        crashDetails.setOsVersion(Constants.ANDROID_VERSION);
+        crashDetails.setOsBuild(Constants.ANDROID_BUILD);
+        crashDetails.setDeviceManufacturer(Constants.PHONE_MANUFACTURER);
+        crashDetails.setDeviceModel(Constants.PHONE_MODEL);
+        if (Constants.CRASH_IDENTIFIER != null) {
+            crashDetails.setReporterKey(Constants.CRASH_IDENTIFIER);
+        }
+        crashDetails.setThrowableStackTrace("MinidumpContainer");
+        crashDetails.writeCrashReport();
+
+        // crashDetails.writeCrashReport() will save the report in a file on the internal
+        // storage. We need to move it to the directory where we are storing dumps, which
+        // is like on the external storage (aka the sd card).  The moveFile method will copy
+        // the file instead of calling File.renameTo, which can fail while trying to cross mount
+        // point boundaries.
+
+        final String oldPath = Constants.FILES_PATH + "/" + appRun + ".stacktrace";
         final String filename = appRun + LOG_EXTENSION;
-        final String path = mDumpsDir + File.separator + filename;
-
-        try {
-            // Write the faketrace to disk
-            final BufferedWriter write = new BufferedWriter(new FileWriter(path));
-            write.write("Package: " + Constants.APP_PACKAGE + "\n");
-            write.write("Version: " + Constants.APP_VERSION + "\n");
-            write.write("Android: " + Constants.ANDROID_VERSION + "\n");
-            write.write("Manufacturer: " + Constants.PHONE_MANUFACTURER + "\n");
-            write.write("Model: " + Constants.PHONE_MODEL + "\n");
-            write.write("Date: " + now + "\n");
-            write.write("\n");
-            write.write("MinidumpContainer");
-            write.flush();
-            write.close();
-
+        final String newPath = mDumpsDir + File.separator + filename;
+        boolean result = moveFile(oldPath, newPath);
+        if (result) {
             return filename;
-        } catch (final Exception e) {
-            Log.d("HockeyApp", "Error creating trace file: " + path + " e = " + e);
         }
 
         return null;
@@ -197,7 +236,7 @@ public class NativeCrashManager {
 
             return filename;
         } catch (final Exception e) {
-            Log.d("HockeyApp", "Error creating description file: " + path + " e = " + e);
+            Log.d(HockeyLog.HOCKEY_TAG, "Error creating description file: " + path + " e = " + e);
         }
 
         return null;
@@ -242,57 +281,55 @@ public class NativeCrashManager {
             @Override
             public void run() {
                 try {
-                    final DefaultHttpClient httpClient = new DefaultHttpClient();
-                    final HttpPost httpPost =
-                        new HttpPost("https://rink.hockeyapp.net/api/2/apps/" + mIdentifier
-                                     + "/crashes/upload");
-
-                    final MultipartEntity entity = new MultipartEntity();
-
                     if (mListener != null) {
                         final String appRunID = dumpFilename.split("\\.(?=[^\\.]+$)")[0];
                         mListener.onUploadCrash(appRunID);
                     }
 
-                    final File dumpFile = new File(mDumpsDir, dumpFilename);
-                    entity.addPart("attachment0", new FileBody(dumpFile));
+                    SimpleMultipartEntity entity = new SimpleMultipartEntity();
+                    entity.writeFirstBoundaryIfNeeds();
 
+                    entity.addPart("userID", mUser);
+                    final File dumpFile = new File(mDumpsDir, dumpFilename);
+                    entity.addPart("attachment0", dumpFile, false);
                     final File logFile = new File(mDumpsDir, logFilename);
-                    entity.addPart("log", new FileBody(logFile));
 
                     final File descriptionFile = new File(mDumpsDir, descriptionFilename);
-                    if (descriptionFile.exists() && descriptionFile.length() > 0) {
-                        entity.addPart("description", new FileBody(descriptionFile));
+                    boolean haveDescriptionFile =
+                        descriptionFile.exists() && descriptionFile.length() > 0;
+                    entity.addPart("log", logFile, !haveDescriptionFile);
+                    if (haveDescriptionFile) {
+                        entity.addPart("description", descriptionFile, true);
                     }
+                    entity.writeLastBoundaryIfNeeds();
 
-                    entity.addPart("userID", new StringBody(mUser));
+                    HttpURLConnection urlConnection = new HttpURLConnectionBuilder(mUrlString)
+                        .setRequestMethod("POST")
+                        .setHeader("Content-Type", entity.getContentType())
+                        .build();
+                    urlConnection.setRequestProperty("Content-Length", String.valueOf(entity.getContentLength()));
+                    BufferedOutputStream outputStream = new BufferedOutputStream(urlConnection.getOutputStream());
+                    outputStream.write(entity.getOutputStream().toByteArray());
+                    outputStream.flush();
+                    outputStream.close();
 
-                    httpPost.setEntity(entity);
-
-                    final HttpResponse httpResponse = httpClient.execute(httpPost);
-                    final StatusLine statusLine = httpResponse.getStatusLine();
-                    if (statusLine != null) {
-                        int statusCode = statusLine.getStatusCode();
-                        if (statusCode >= HttpStatus.SC_OK
-                            && statusCode < HttpStatus.SC_MULTIPLE_CHOICES) {
-                            Log.v("HockeyApp",
-                                  "Successfully uploaded dump file: " + dumpFilename
-                                  + ", statusCode = " + statusCode);
-                            deleteFile(logFilename);
-                            deleteFile(dumpFilename);
-                            deleteFile(descriptionFilename);
-                        } else {
-                            Log.d("HockeyApp",
-                                  "Error uploading dump file: " + dumpFilename
-                                  + ", statusCode = " + statusCode);
-                        }
+                    int statusCode = urlConnection.getResponseCode();
+                    boolean successful = (statusCode == HttpURLConnection.HTTP_ACCEPTED
+                                          || statusCode == HttpURLConnection.HTTP_CREATED);
+                    if (successful) {
+                        Log.v(HockeyLog.HOCKEY_TAG,
+                              "Successfully uploaded dump file: " + dumpFilename
+                              + ", statusCode = " + statusCode);
+                        deleteFile(logFilename);
+                        deleteFile(dumpFilename);
+                        deleteFile(descriptionFilename);
                     } else {
-                        Log.d("HockeyApp",
+                        Log.d(HockeyLog.HOCKEY_TAG,
                               "Error uploading dump file: " + dumpFilename
-                              + ", no statusLine in response");
+                              + ", statusCode = " + statusCode);
                     }
                 } catch (final Exception e) {
-                    Log.d("HockeyApp", "Error uploading dump file: " + dumpFilename + ", e = " + e);
+                    Log.d(HockeyLog.HOCKEY_TAG, "Error uploading dump file: " + dumpFilename + ", e = " + e);
                     e.printStackTrace();
                 }
             }
@@ -317,7 +354,7 @@ public class NativeCrashManager {
             };
             return dir.list(filter);
         } else {
-            Log.d("HockeyApp", "Can't search for dump files as file path is null.");
+            Log.d(HockeyLog.HOCKEY_TAG, "Can't search for dump files as file path is null.");
             return new String[0];
         }
     }

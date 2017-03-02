@@ -33,7 +33,7 @@ public class StartupManager : MonoBehaviour {
   private Cozmo.UI.ProgressBar _LoadingBar;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _LoadingBarLabel;
+  private Anki.UI.AnkiTextLegacy _LoadingBarLabel;
 
   private float _CurrentProgress;
 
@@ -66,10 +66,10 @@ public class StartupManager : MonoBehaviour {
   private GameObject _AndroidPermissionInstance;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _LoadingVersionLabel;
+  private Anki.UI.AnkiTextLegacy _LoadingVersionLabel;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _LoadingDeviceIdLabel;
+  private Anki.UI.AnkiTextLegacy _LoadingDeviceIdLabel;
 
   private JSONObject _BootStrings = null;
 
@@ -490,6 +490,7 @@ public class StartupManager : MonoBehaviour {
     Cozmo.UI.CubePalette.LoadCubePalette(_BasicUIPrefabAssetBundleName);
 
     SkillSystem.Instance.Initialize();
+    CozmoThemeSystemUtils.Initialize();
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {

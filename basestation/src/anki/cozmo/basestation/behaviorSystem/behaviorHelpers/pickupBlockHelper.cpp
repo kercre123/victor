@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperParameters.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -32,10 +33,10 @@ PickupBlockHelper::PickupBlockHelper(Robot& robot,
                                      IBehavior& behavior,
                                      BehaviorHelperFactory& helperFactory,
                                      const ObjectID& targetID,
-                                     AnimationTrigger animBeforeDock)
+                                     const PickupBlockParamaters& parameters)
 : IHelper("PickupBlock", robot, behavior, helperFactory)
 , _targetID(targetID)
-, _animBeforeDock(animBeforeDock)
+, _params(parameters)
 , _tmpRetryCounter(0)
 {
   
@@ -85,20 +86,22 @@ void PickupBlockHelper::StartPickupAction(Robot& robot)
                                               _targetID,
                                               PreActionPose::ActionType::DOCKING);
   if(isAtPreAction != ActionResult::SUCCESS){
+    DriveToParameters params;
+    params.actionType = PreActionPose::ActionType::DOCKING;
     DelegateProperties properties;
     properties.SetDelegateToSet(CreateDriveToHelper(robot,
                                                     _targetID,
-                                                    PreActionPose::ActionType::DOCKING));
+                                                    params));
     properties.SetOnSuccessFunction([this](Robot& robot){
                                       StartPickupAction(robot); return _status;
                                    });
     DelegateAfterUpdate(properties);
   }else{
     CompoundActionSequential* action = new CompoundActionSequential(robot);
-    if(_animBeforeDock != AnimationTrigger::Count){
-      action->AddAction(new TriggerAnimationAction(robot, _animBeforeDock));
+    if(_params.animBeforeDock != AnimationTrigger::Count){
+      action->AddAction(new TriggerAnimationAction(robot, _params.animBeforeDock));
       // In case we repeat, null out anim
-      _animBeforeDock = AnimationTrigger::Count;
+      _params.animBeforeDock = AnimationTrigger::Count;
     }
     action->AddAction(new PickupObjectAction(robot, _targetID));
     StartActing(action, &PickupBlockHelper::RespondToPickupResult);

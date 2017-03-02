@@ -304,6 +304,14 @@ class TestDefaultConstructor(unittest.TestCase):
     def test_defaultConstructor(self):
       self.assertEqual(Constructor.HasDefaultConstructor.__init__.__defaults__, (0.0,0))
       self.assertEqual(Constructor.HasNoDefaultConstructor.__init__.__defaults__, None)
+      self.assertEqual(Constructor.NoDefaultConstructorComplex.__init__.__defaults__, None)
+      self.assertEqual(Constructor.MessageWithStruct.__init__.__defaults__, None)
+      self.assertEqual(Constructor.OtherMessageWithStruct.__init__.__defaults__, None)
+      self.assertEqual(Constructor.NestedNoDefaults.__init__.__defaults__, None)
+      self.assertEqual(Constructor.SuperComplex.__init__.__defaults__, None)
+      self.assertEqual(Constructor.Nest1.__init__.__defaults__, None)
+      self.assertEqual(Constructor.Nest2.__init__.__defaults__, None)
+      self.assertEqual(Constructor.Nest3.__init__.__defaults__, None)
 
 class TestFixedArray(unittest.TestCase):
     def test_fixedArray(self):

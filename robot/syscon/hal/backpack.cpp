@@ -108,20 +108,13 @@ void Backpack::testLight(int channel) {
   }
 }
 
-void Backpack::manage() {
-  static bool was_button_pressed = false;
-
-  if (was_button_pressed != button_pressed) {
-    RobotInterface::BackpackButton msg;
-    msg.depressed = button_pressed;
-    RobotInterface::SendMessage(msg);
-
-    was_button_pressed = button_pressed;
-  }
-}
-
 static void setImpulsePattern(void) {
   using namespace Backpack;
+
+  if (button_pressed) {
+    setLightsMiddle(BPL_IMPULSE, BackpackLights::button_pressed);
+    return ;
+  }
 
   switch (chargeState) {
     case CHARGE_OFF_CHARGER:
@@ -139,6 +132,20 @@ static void setImpulsePattern(void) {
     case CHARGE_CHARGER_OUT_OF_SPEC:
       setLightsMiddle(BPL_IMPULSE, BackpackLights::low_battery);
       break ;
+  }
+}
+
+void Backpack::manage() {
+  static bool was_button_pressed = false;
+
+  if (was_button_pressed != button_pressed) {
+    RobotInterface::BackpackButton msg;
+    msg.depressed = button_pressed;
+    RobotInterface::SendMessage(msg);
+
+    was_button_pressed = button_pressed;
+    
+    setImpulsePattern();
   }
 }
 

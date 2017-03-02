@@ -45,7 +45,7 @@ MonoBehaviour:
   MinSequenceLength: 2
   MaxSequenceLength: 30
   TimeWaitFirstBeat: 1
-  MinDistBetweenCubesMM: 50
+  MinDistBetweenCubesMM: 55
   RotateSecScan: 2
   ScanTimeoutSec: 30
   CountDownTimeSec: 2.25

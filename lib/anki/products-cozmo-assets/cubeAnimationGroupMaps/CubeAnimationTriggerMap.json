@@ -69,6 +69,10 @@
             "AnimName": "sleep"
         },
         {
+            "CladEvent": "SleepNoFade",
+            "AnimName": "sleepNoFade"
+        },
+        {
             "CladEvent": "SpeedTapWin",
             "AnimName": "speedTapWin"
         },

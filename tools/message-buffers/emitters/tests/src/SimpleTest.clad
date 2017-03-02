@@ -92,6 +92,50 @@ namespace Constructor {
     float_32 foo,
     int_32 bar
   }
+
+  no_default_constructor structure NoDefaultConstructorComplex {
+    HasDefaultConstructor c,
+    string s,
+    uint_8 arr[20]
+  }
+
+  message MessageWithStruct {
+    HasNoDefaultConstructor c1234,
+    int_32 i,
+    float_32 f,
+    HasDefaultConstructor c4321
+  }
+
+  message OtherMessageWithStruct {
+    NoDefaultConstructorComplex complex,
+    HasDefaultConstructor c
+  }
+
+  no_default_constructor structure NestedNoDefaults {
+    NoDefaultConstructorComplex c,
+    HasDefaultConstructor c1,
+    uint_8 arr[20],
+    HasNoDefaultConstructor c2,
+    string s
+  }
+
+  message SuperComplex {
+    NestedNoDefaults n,
+    HasDefaultConstructor d,
+    NoDefaultConstructorComplex c
+  }
+
+  structure Nest1 {
+    HasNoDefaultConstructor c
+  }
+
+  structure Nest2 {
+    Nest1 c
+  }
+
+  structure Nest3 {
+    Nest2 c
+  }
 }
 
 namespace Arrays {

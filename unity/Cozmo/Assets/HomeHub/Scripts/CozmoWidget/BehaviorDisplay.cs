@@ -10,7 +10,7 @@ public class BehaviorDisplay : MonoBehaviour {
   private Color _BehaviorRewardColor;
 
   [SerializeField]
-  private AnkiTextLabel _BehaviorLabel;
+  private AnkiTextLegacy _BehaviorLabel;
   // So we don't flicker in a one state frame, must be in state for a bit before we want to change to it.
   [SerializeField]
   private float _MinTimeInStateBeforeChange_Sec = 0.5f;

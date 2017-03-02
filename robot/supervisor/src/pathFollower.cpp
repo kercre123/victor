@@ -104,31 +104,31 @@ namespace Anki
 
 
       // Add path segment
-      bool AppendPathSegment_Line(u32 matID, f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm,
+      bool AppendPathSegment_Line(f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm,
                                   f32 targetSpeed, f32 accel, f32 decel)
       {
         TrimPath();
-        return path_.AppendLine(matID, x_start_mm, y_start_mm, x_end_mm, y_end_mm,
+        return path_.AppendLine(x_start_mm, y_start_mm, x_end_mm, y_end_mm,
                                 targetSpeed, accel, decel);
       }
 
 
-      bool AppendPathSegment_Arc(u32 matID, f32 x_center_mm, f32 y_center_mm, f32 radius_mm, f32 startRad, f32 sweepRad,
+      bool AppendPathSegment_Arc(f32 x_center_mm, f32 y_center_mm, f32 radius_mm, f32 startRad, f32 sweepRad,
                                  f32 targetSpeed, f32 accel, f32 decel)
       {
         TrimPath();
-        return path_.AppendArc(matID, x_center_mm, y_center_mm, radius_mm, startRad, sweepRad,
+        return path_.AppendArc(x_center_mm, y_center_mm, radius_mm, startRad, sweepRad,
                                targetSpeed, accel, decel);
       }
 
 
-      bool AppendPathSegment_PointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
+      bool AppendPathSegment_PointTurn(f32 x, f32 y, f32 targetAngle,
                                        f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
                                        f32 angleTolerance,
                                        bool useShortestDir)
       {
         TrimPath();
-        return path_.AppendPointTurn(matID, x, y, targetAngle,
+        return path_.AppendPointTurn(x, y, targetAngle,
                                      targetRotSpeed, rotAccel, rotDecel,
                                      angleTolerance,
                                      useShortestDir);
@@ -593,9 +593,9 @@ namespace Anki
         AnkiDebug( 356, "PathFollower.DriveStraight.Accels", 596, "start %f, end %f, vel %f\n", 3, startAccel, endAccel, maxReachableVel);
         AnkiDebug( 357, "PathFollower.DriveStraight.Points", 597, "(%f, %f) to (%f, %f) to (%f, %f) to (%f, %f)\n", 8, curr_x, curr_y, int_x1, int_y1, int_x2, int_y2, dest_x, dest_y);
         ClearPath();
-        AppendPathSegment_Line(0, curr_x, curr_y, int_x1, int_y1, maxReachableVel, startAccel, startAccel);
-        AppendPathSegment_Line(0, int_x1, int_y1, int_x2, int_y2, maxReachableVel, startAccel, startAccel);
-        AppendPathSegment_Line(0, int_x2, int_y2, dest_x, dest_y, dist_mm > 0 ? COAST_VELOCITY_MMPS : -COAST_VELOCITY_MMPS, endAccel, endAccel);
+        AppendPathSegment_Line(curr_x, curr_y, int_x1, int_y1, maxReachableVel, startAccel, startAccel);
+        AppendPathSegment_Line(int_x1, int_y1, int_x2, int_y2, maxReachableVel, startAccel, startAccel);
+        AppendPathSegment_Line(int_x2, int_y2, dest_x, dest_y, dist_mm > 0 ? COAST_VELOCITY_MMPS : -COAST_VELOCITY_MMPS, endAccel, endAccel);
         StartPathTraversal();
 
         return true;
@@ -667,9 +667,9 @@ namespace Anki
 
         // Create 3-segment path
         ClearPath();
-        AppendPathSegment_Arc(0, x_center, y_center, absRadius, startRad, startAccelSweep, targetSpeed, startAccel, startAccel);
-        AppendPathSegment_Arc(0, x_center, y_center, absRadius, int_ang1, int_ang2-int_ang1, targetSpeed, startAccel, startAccel);
-        AppendPathSegment_Arc(0, x_center, y_center, absRadius, int_ang2, endAccelSweep, drivingFwd > 0 ? COAST_VELOCITY_MMPS : -COAST_VELOCITY_MMPS, endAccel, endAccel);
+        AppendPathSegment_Arc(x_center, y_center, absRadius, startRad, startAccelSweep, targetSpeed, startAccel, startAccel);
+        AppendPathSegment_Arc(x_center, y_center, absRadius, int_ang1, int_ang2-int_ang1, targetSpeed, startAccel, startAccel);
+        AppendPathSegment_Arc(x_center, y_center, absRadius, int_ang2, endAccelSweep, drivingFwd > 0 ? COAST_VELOCITY_MMPS : -COAST_VELOCITY_MMPS, endAccel, endAccel);
 
         StartPathTraversal();
 
@@ -720,9 +720,9 @@ namespace Anki
 
         // Create 3-segment path
         ClearPath();
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel, angleTolerance, false);
+        AppendPathSegment_PointTurn(curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
+        AppendPathSegment_PointTurn(curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
+        AppendPathSegment_PointTurn(curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel, angleTolerance, false);
 
         StartPathTraversal();
 
