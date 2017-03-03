@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -111,9 +112,11 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
           // Already in pose, no drive to necessary
           _status = BehaviorStatus::Complete;
         }else{
-          // Drive to the nearest pose
-          StartActing(new DriveToPoseAction(robot, possiblePoses),
-                      &DriveToHelper::RespondToDriveResult);
+          // Drive to the nearest allowed pose, and then perform a visual verify
+          CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+          compoundAction->AddAction(new DriveToPoseAction(robot, possiblePoses));
+          compoundAction->AddAction(new VisuallyVerifyObjectAction(robot, _targetID));
+          StartActing(compoundAction, &DriveToHelper::RespondToDriveResult);
         }
       }else{
         PRINT_NAMED_INFO("DriveToHelper.DriveToPreActionPose.NoPreDockPoses",

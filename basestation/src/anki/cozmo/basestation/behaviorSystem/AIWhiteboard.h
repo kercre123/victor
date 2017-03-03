@@ -92,8 +92,8 @@ public:
     
     PopAWheelieOnObject,
     
-    PyramidStaticObject,
     PyramidBaseObject,
+    PyramidStaticObject,
     PyramidTopObject
    };
   

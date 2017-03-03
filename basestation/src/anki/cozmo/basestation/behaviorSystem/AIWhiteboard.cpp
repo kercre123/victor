@@ -282,6 +282,12 @@ bool AIWhiteboard::CanUseAsPyramidTopBlock(const ObservableObject* object) const
     return false;
   }
   
+  // If the robot is carrying a block, which is not needed for the base
+  // make that the TopBlock
+  if(_robot.IsCarryingObject()){
+    return _robot.GetCarryingObject() == object->GetID();
+  }
+  
   return _robot.CanPickUpObject(*object);
 }
   

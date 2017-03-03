@@ -68,9 +68,10 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
   _staticBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidStaticObject);
   _baseBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidBaseObject);
   _topBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidTopObject);
+  DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramid.IsRunnable.AllBlocksNotUnique");
   
-  bool allSet= _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
-
+  bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
+  
   return allSet;
 }
 

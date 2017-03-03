@@ -64,8 +64,6 @@ BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(Robot& robot, const Json::Val
 , _behaviorState(State::DrivingToBaseBlock)
 , _checkForFullPyramidVisualVerifyFailure(false)
 , _robot(robot)
-, _baseBlockOffsetX(0)
-, _baseBlockOffsetY(0)
 {
   SetDefaultName("BuildPyramidBase");
   
@@ -78,7 +76,7 @@ bool BehaviorBuildPyramidBase::IsRunnableInternal(const BehaviorPreReqRobot& pre
   _staticBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidStaticObject);
   _baseBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidBaseObject);
   _topBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidTopObject);
-  
+  DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramidBase.IsRunnable.AllBlocksNotUnique");
   
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && !_topBlockID.IsSet();
   if(allSet){
@@ -194,11 +192,6 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
   std::vector<BehaviorStateLightInfo> basePersistantLight;
   SetBehaviorStateLights(basePersistantLight, false);
   
-  // if a block has moved into the area we want to place the block, update where we are going to place the block
-  if(!CheckBaseBlockPoseIsFree(_baseBlockOffsetX, _baseBlockOffsetY)){
-    UpdateBlockPlacementOffsets();
-  }
-  
   const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
   if(nullptr == object)
   {
@@ -216,8 +209,9 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
   
   auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   PlaceRelObjectParameters params;
-  params.placementOffsetX_mm = _baseBlockOffsetX;
-  params.placementOffsetY_mm = _baseBlockOffsetY;
+  
+  UpdateBlockPlacementOffsets(params.placementOffsetX_mm,
+                              params.placementOffsetY_mm);
   params.relativeCurrentMarker = relativeCurrentMarker;
   
   HelperHandle placeRelHelper = factory.CreatePlaceRelObjectHelper(robot, *this,
@@ -276,7 +270,7 @@ bool BehaviorBuildPyramidBase::GetTopBlockID(ObjectID& id) const
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
+void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(f32& xOffset, f32& yOffset) const
 {
   const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_staticBlockID);
   if(nullptr == object)
@@ -300,8 +294,8 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
   offsetList.emplace_back(-blockXSize, 0);
   
   // assign default values, just in case
-  _baseBlockOffsetX = offsetList[0].first;
-  _baseBlockOffsetY = offsetList[0].second;
+  xOffset = offsetList[0].first;
+  yOffset = offsetList[0].second;
 
   for(const auto& entry: offsetList){
     if(CheckBaseBlockPoseIsFree(entry.first, entry.second)){
@@ -314,8 +308,8 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
       
       if(newDistSquared < nearestDistanceSQ){
         nearestDistanceSQ = newDistSquared;
-        _baseBlockOffsetX = entry.first;
-        _baseBlockOffsetY = entry.second;
+        xOffset = entry.first;
+        yOffset = entry.second;
       }
     }
   }
@@ -361,6 +355,23 @@ void BehaviorBuildPyramidBase::ResetPyramidTargets(const Robot& robot) const
 void BehaviorBuildPyramidBase::SetState_internal(State state, const std::string& stateName){
   _behaviorState = state;
   SetDebugStateName(stateName);
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorBuildPyramidBase::AreAllBlockIDsUnique() const
+{
+  if(_staticBlockID.IsSet() && _baseBlockID.IsSet()){
+    const bool baseIDsUnique = _staticBlockID != _baseBlockID;
+    if(_topBlockID.IsSet()){
+      const bool topIDUnique = _topBlockID != _staticBlockID &&
+                                _topBlockID != _baseBlockID;
+      return baseIDsUnique && topIDUnique;
+    }
+    return baseIDsUnique;
+  }
+  
+  return true;
 }
 
 } //namespace Cozmo

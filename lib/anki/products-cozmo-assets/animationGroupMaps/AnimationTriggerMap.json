@@ -1194,7 +1194,7 @@
     },
     {
       "CladEvent": "SoundOnlyRamIntoBlock",
-      "AnimName": "LiftEffortRoll"
+      "AnimName": "ag_reacttoblock_audioblockcrash"
     },
     {
       "CladEvent": "SoundOnlyTurnSmall",

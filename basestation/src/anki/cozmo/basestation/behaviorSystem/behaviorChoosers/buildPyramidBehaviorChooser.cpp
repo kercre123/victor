@@ -136,7 +136,7 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
   ///////
   
   // Get the build pyramid base behavior
-  IBehavior* baseRaw = robot.GetBehaviorFactory().FindBehaviorByName("sparksBuildPyramidBase");
+  IBehavior* baseRaw = robot.GetBehaviorFactory().FindBehaviorByName("buildPyramidBase");
   DEV_ASSERT(baseRaw != nullptr &&
              baseRaw->GetClass() == BehaviorClass::BuildPyramidBase,
              "BuildPyramidBehaviorChooser.BuildPyramidBase.ImproperClassRetrievedForName");
@@ -146,7 +146,7 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
              "BuildPyramidBehaviorChooser.BehaviorBuildBase.PointerNotSet");
   
   // Get the build pyramid behavior
-  IBehavior* pyramidRaw = robot.GetBehaviorFactory().FindBehaviorByName("sparksBuildPyramid");
+  IBehavior* pyramidRaw = robot.GetBehaviorFactory().FindBehaviorByName("buildPyramid");
   DEV_ASSERT(pyramidRaw != nullptr &&
              pyramidRaw->GetClass() == BehaviorClass::BuildPyramid,
              "BuildPyramidBehaviorChooser.BuildPyramid.ImproperClassRetrievedForName");
@@ -803,7 +803,7 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
       ExternalInterface::BuildPyramidPreReqsChanged>(true);
     }else if(fellBelowMinimumUprightCount && !isSoftSpark && !didUserRequestSparkEnd){
       _robot.GetExternalInterface()->BroadcastToGame<
-      ExternalInterface::BuildPyramidPreReqsChanged>(false);
+        ExternalInterface::BuildPyramidPreReqsChanged>(false);
     }
   }
   

@@ -71,8 +71,10 @@ protected:
 
   // utility functions
   void ResetPyramidTargets(const Robot& robot) const;
-  
   void SetState_internal(State state, const std::string& stateName);
+  bool AreAllBlockIDsUnique() const;
+  
+
   
   // Ensures that blocks IDs which become invalid are cleared out of
   // the assigned ObjectIDs below - not actually const
@@ -100,20 +102,12 @@ protected:
   bool _checkForFullPyramidVisualVerifyFailure;
   
 private:
-  typedef std::vector<const ObservableObject*> BlockList;
-  
-  void SafeEraseBlockFromBlockList(const ObjectID& objectID, BlockList& blockList) const;
-  
   // update the offsets for placing the block based on the nearest pose that
   // doesn't have a block in the way
-  void UpdateBlockPlacementOffsets() const;
+  void UpdateBlockPlacementOffsets(f32& xOffset, f32& yOffset) const;
   bool CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset) const;
   
   Robot& _robot;
-
-  // offsets for placingBlock where the ground is clear
-  mutable f32 _baseBlockOffsetX;
-  mutable f32 _baseBlockOffsetY;
   
 }; //class BehaviorBuildPyramidBase
 
