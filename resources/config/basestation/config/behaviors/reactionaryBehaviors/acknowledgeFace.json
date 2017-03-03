@@ -2,8 +2,11 @@
   "behaviorClass": "AcknowledgeFace",
   "name": "AcknowledgeFace",
   "displayNameKey":"behavior.AcknowledgeFace",
-  "ReactionAnimGroup": "ReactToNewBlockSmall",
-  "SamePoseDistThresh_mm": 300,
-  "SamePoseDistThresh_sparked_mm": 300,
-  "NumImagesToWaitFor": 4
+  "ReactionAnimGroup": "ReactToNewBlockSmall"
+
+  // "SamePoseDistThresh_mm": 300,
+  // "SamePoseDistThresh_sparked_mm": 300,
+  // "NumImagesToWaitFor": 4
+  // No longer used / functional  (see COZMO-9862)
+
 }
