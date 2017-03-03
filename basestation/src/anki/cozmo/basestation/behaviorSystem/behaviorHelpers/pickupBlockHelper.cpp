@@ -104,7 +104,7 @@ void PickupBlockHelper::StartPickupAction(Robot& robot)
       _params.animBeforeDock = AnimationTrigger::Count;
     }
     action->AddAction(new PickupObjectAction(robot, _targetID));
-    StartActing(action, &PickupBlockHelper::RespondToPickupResult);
+    StartActingWithResponseAnim(action, &PickupBlockHelper::RespondToPickupResult);
   }
 }
   
@@ -112,7 +112,6 @@ void PickupBlockHelper::StartPickupAction(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
 {
-  
   switch(result){
     case ActionResult::SUCCESS:
     {
@@ -139,6 +138,10 @@ void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
       break;
     }
     case ActionResult::CANCELLED:
+    {
+      // leave the helper running, since it's about to be canceled
+      break;
+    }
     case ActionResult::BAD_OBJECT:
     {
       _status = BehaviorStatus::Failure;
@@ -164,6 +167,9 @@ void PickupBlockHelper::RespondToSearchResult(ActionResult result, Robot& robot)
       StartPickupAction(robot);
       break;
     }
+    case ActionResult::CANCELLED:
+      // leave the helper running, since it's about to be canceled
+      break;
     default:
     {
       _status = BehaviorStatus::Failure;

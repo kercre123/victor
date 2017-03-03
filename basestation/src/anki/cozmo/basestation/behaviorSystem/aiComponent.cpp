@@ -15,8 +15,9 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorEventAnimResponseDirector.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
@@ -31,6 +32,7 @@ AIComponent::AIComponent(Robot& robot)
 , _whiteboard( new AIWhiteboard(robot) )
 , _workoutComponent( new WorkoutComponent(robot) )
 , _aiInformationAnalyzer( new AIInformationAnalyzer() )
+, _behaviorEventAnimResponseDirector(new BehaviorEventAnimResponseDirector())
 , _behaviorHelperComponent( new BehaviorHelperComponent())
 {
 }

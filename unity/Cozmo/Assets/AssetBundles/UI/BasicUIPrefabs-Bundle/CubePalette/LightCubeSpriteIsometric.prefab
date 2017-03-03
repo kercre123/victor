@@ -220,7 +220,7 @@ MonoBehaviour:
   _AlphaController: {fileID: 22532848}
   _LightCubeOneSprite: {fileID: 21300000, guid: 96f4f910a03ca4714b1c71d683d3753d,
     type: 3}
-  _LightCubeTwoSprite: {fileID: 21300000, guid: 96f4f910a03ca4714b1c71d683d3753d,
+  _LightCubeTwoSprite: {fileID: 21300000, guid: 3ba1e40d429cc486390b367f9e869368,
     type: 3}
   _LightCubeThreeSprite: {fileID: 21300000, guid: 9d7990672be4f4585857c298aed13ba3,
     type: 3}

@@ -50,10 +50,8 @@ namespace Anki {
     {
       Vision::MarkerType leftMarkerType = Vision::MARKER_UNKNOWN, rightMarkerType = Vision::MARKER_UNKNOWN, middleMarkerType = Vision::MARKER_UNKNOWN;
       f32 markerSize = 0.f;
-      f32 length = 0.f;
       
       if(Type::Bridge_LONG == type) {
-        length = 212.f;
         markerSize = 30.f;
         
         //leftMarkerType   = Vision::MARKER_BRIDGESUNLEFT;
@@ -61,7 +59,6 @@ namespace Anki {
         //middleMarkerType = Vision::MARKER_BRIDGESUNMIDDLE;
       }
       else if(Type::Bridge_SHORT == type) {
-        length = 112.f;
         markerSize = 30.f;
         
         //leftMarkerType   = Vision::MARKER_BRIDGEMOONLEFT;

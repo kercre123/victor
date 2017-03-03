@@ -16916,8 +16916,8 @@ module.exports =
 	Scratch3CozmoBlocks.prototype.playAnimation = function(args, util) {
 	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
-	       // TODO animation arg is a placeholder until we add a dropdown of options
-	       window.Unity.call('{"command": "cozmoPlayAnimation","argInt": ' + 1 + '}');
+	        var animationName = this._getAnimation(Cast.toString(args.CHOICE));
+	        window.Unity.call('{"command": "cozmoPlayAnimation","argString": "' + animationName + '"}');
 
 	        // Yield
 	        util.stackFrame.timer = new Timer();
@@ -16981,6 +16981,39 @@ module.exports =
 	    }
 
 	    return colorHexToReturn;
+	};
+
+	/**
+	 * Convert a string to a Cozmo animation trigger index.
+	 * Supports 'mystery' for a random animation.
+	 * @param animationName The animation to retrieve.
+	 * @returns {number} The Cozmo animation trigger index.
+	 * @private
+	 */
+	Scratch3CozmoBlocks.prototype._getAnimation = function(animationName) {
+	    var animationTable = [
+	        'happy',
+	        'victory',
+	        'unhappy',
+	        'surprise',
+	        'dog',
+	        'cat',
+	        'sneeze',
+	        'excited',
+	        'thinking',
+	        'bored',
+	        'frustrated',
+	        'chatty',
+	        'dejected',
+	        'sleep'
+	    ];
+
+	    if (animationName == 'mystery') {
+	        var randomValue = Math.floor(Math.random() * animationTable.length);
+	        return animationTable[randomValue];
+	    }
+
+	    return animationName;
 	};
 
 	/**
