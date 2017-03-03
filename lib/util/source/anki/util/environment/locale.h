@@ -463,8 +463,8 @@ public:
   static Locale GetNativeLocale();
   static Locale LocaleFromString(const std::string& localeString);
 
-  static const Language kDefaultLanguage = Language::en; // non en-US defualt for easy testing
-  static const CountryISO2 kDefaultCountry = CountryISO2::US; // non en-US defualt for easy testing
+  static const Language kDefaultLanguage = Language::en;
+  static const CountryISO2 kDefaultCountry = CountryISO2::US;
   static const Locale kDefaultLocale;
 
   Locale() : Locale(kDefaultLanguage, kDefaultCountry) { }
