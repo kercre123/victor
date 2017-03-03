@@ -153,3 +153,7 @@ ios-deploy does not seem to be 100% reliable, nor does it have great error messa
 5. If none of the above apply, it's likely it won't work in Xcode either and Xcode has better error messages, so try running it from there.
 
 6. ios-deploy is a popular enough program that google can usually lead you to an answer.
+
+### standalone cozmo engine android apk
+
+Refer to [standalone-apk/README.md](standalone-apk/README.md) for instructions on building and running the standalone cozmo engine android apk, the beginnings of Cozmo 2.0 engine

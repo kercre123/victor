@@ -70,7 +70,6 @@ protected:
   void TransitionToObservingBase(Robot& robot);
 
   // utility functions
-  void UpdatePyramidTargets(const Robot& robot) const;
   void ResetPyramidTargets(const Robot& robot) const;
   
   void SetState_internal(State state, const std::string& stateName);
@@ -102,11 +101,6 @@ protected:
   
 private:
   typedef std::vector<const ObservableObject*> BlockList;
-
-  bool AreAllBlockIDsUnique() const;
-  ObjectID GetBestBaseBlock(const Robot& robot, const BlockList& availableBlocks) const;
-  ObjectID GetBestStaticBlock(const Robot& robot, const BlockList& availableBlocks) const;
-  ObjectID GetNearestBlockToPose(const Robot& robot, const Pose3d& pose, const BlockList& availableBlocks) const;
   
   void SafeEraseBlockFromBlockList(const ObjectID& objectID, BlockList& blockList) const;
   

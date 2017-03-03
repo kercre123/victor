@@ -12,7 +12,10 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorEventAnimResponseDirector.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/iHelper.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -58,9 +61,11 @@ IBehavior::Status IHelper::UpdateWhileActive(Robot& robot, HelperHandle& delegat
   
   bool tickUpdate = true;
   if(!_hasStarted){
+    Util::sEventF("robot.behavior_helper.start", {}, "%s", GetName().c_str());
     PRINT_CH_INFO("Behaviors", "IHelper.Init", "%s", GetName().c_str());
 
     _hasStarted = true;
+    _timeStarted_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     _status = Init(robot);
     // If a delegate has been set, don't tick update while active
     if(_status != IBehavior::Status::Running ||
@@ -108,6 +113,8 @@ void IHelper::Stop(bool isActive)
                 GetName().c_str(),
                 isActive,
                 IsActing());
+
+  LogStopEvent(isActive);
   
   // assumption: if the behavior is acting, and we are active, then we must have started the action, so we
   // should stop it
@@ -118,6 +125,52 @@ void IHelper::Stop(bool isActive)
   }
 
   StopInternal(isActive);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IHelper::LogStopEvent(bool isActive)
+{
+  auto logEventWithName = [this](const std::string& event) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    int nSecs = Util::numeric_cast<int>(currTime_s - _timeStarted_s);
+    if( nSecs < 0 ) {
+      PRINT_NAMED_ERROR("IHelper.Stop.InvalidTime",
+                        "%s: Negative duration %i secs (started %f, stopped %f)",
+                        GetName().c_str(),
+                        nSecs,
+                        _timeStarted_s,
+                        currTime_s);
+      nSecs = 0;
+    }
+
+    Util::sEventF(event.c_str(),
+                  {{DDATA, std::to_string(nSecs).c_str()}},
+                  "%s", GetName().c_str());
+  };    
+
+  switch( _status ) {
+    case IBehavior::Status::Complete: {
+      logEventWithName("robot.behavior_helper.success");
+      break;
+    }
+
+    case IBehavior::Status::Failure: {
+      logEventWithName("robot.behavior_helper.failure");
+      break;
+    }
+
+    case IBehavior::Status::Running:
+      // if we were running, then we must have been canceled. If we were active, then we were canceled
+      // directly, if we are not active, we were canceled as part of the stack being cleared
+      if( isActive ) {
+        logEventWithName("robot.behavior_helper.cancel");
+      }
+      else {
+        logEventWithName("robot.behavior_helper.inactive_stop");
+      }
+      
+      break;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -201,7 +254,9 @@ HelperHandle IHelper::CreatePlaceRelObjectHelper(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
                                                               const ObjectID& targetID,
-                                                              PreActionPose::ActionType actionType)
+                                                              PreActionPose::ActionType actionType,
+                                                              const f32 offsetX_mm,
+                                                              const f32 offsetY_mm)
 {
   ActionableObject* object = dynamic_cast<ActionableObject*>(
                                 robot.GetBlockWorld().GetObjectByID(targetID));
@@ -215,30 +270,76 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
     return ActionResult::VISUAL_OBSERVATION_FAILED;
   }
   
-  const IDockAction::PreActionPoseInput preActionPoseInput(object,
-                                                           actionType,
-                                                           false,
-                                                           0,
-                                                           DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE,
-                                                           false,
-                                                           0);
+  bool alreadyInPosition = false;
   
-  IDockAction::PreActionPoseOutput preActionPoseOutput;
-  
-  IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
-  
-  if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
+  if(actionType == PreActionPose::ActionType::PLACE_RELATIVE)
   {
-    return preActionPoseOutput.actionResult;
+    std::vector<Pose3d> possiblePoses_unused;
+    PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(object,
+                                                           offsetX_mm,
+                                                           offsetY_mm,
+                                                           robot,
+                                                           possiblePoses_unused,
+                                                           alreadyInPosition);
+  }
+  else
+  {
+    const IDockAction::PreActionPoseInput preActionPoseInput(object,
+                                                             actionType,
+                                                             false,
+                                                             0,
+                                                             DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE,
+                                                             false,
+                                                             0);
+    
+    IDockAction::PreActionPoseOutput preActionPoseOutput;
+    
+    IDockAction::GetPreActionPoses(robot, preActionPoseInput, preActionPoseOutput);
+    
+    if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
+    {
+      return preActionPoseOutput.actionResult;
+    }
+    
+    alreadyInPosition = preActionPoseOutput.robotAtClosestPreActionPose;
   }
   
-  bool alreadyInPosition = preActionPoseOutput.robotAtClosestPreActionPose;
   if(alreadyInPosition){
     return ActionResult::SUCCESS;
   }else{
     return ActionResult::DID_NOT_REACH_PREACTION_POSE;
   }
 
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IHelper::RespondToResultWithAnim(ActionResult result, Robot& robot)
+{
+  if(_actionResultMapFunc != nullptr){
+    UserFacingActionResult userResult = _actionResultMapFunc(result);
+    if(userResult != UserFacingActionResult::Count){
+      AnimationTrigger responseAnim = AnimationResponseToActionResult(robot, userResult);
+      if(responseAnim != AnimationTrigger::Count){
+        StartActing(new TriggerAnimationAction(robot, responseAnim), _callbackAfterResponseAnim);
+        _callbackAfterResponseAnim = nullptr;
+        _actionResultMapFunc = nullptr;
+        return;
+      }
+    }
+  }
+  BehaviorActionResultWithRobotCallback tmpCallback = _callbackAfterResponseAnim;
+  _callbackAfterResponseAnim = nullptr;
+  _actionResultMapFunc = nullptr;
+  tmpCallback(result, robot);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AnimationTrigger IHelper::AnimationResponseToActionResult(Robot& robot, UserFacingActionResult result)
+{
+  return robot.GetAIComponent().GetBehaviorEventAnimResponseDirector().
+                           GetAnimationToPlayForActionResult(result);
 }
 
   

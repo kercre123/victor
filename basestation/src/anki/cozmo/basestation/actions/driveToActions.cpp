@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -1371,6 +1372,7 @@ namespace Anki {
     }
     
 #pragma mark ---- DriveToPlaceRelObjectAction ----
+
     
     DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(Robot& robot,
                                                              const ObjectID& objectID,
@@ -1411,142 +1413,27 @@ namespace Anki {
         if(driveToAction != nullptr)
         {
           driveToAction->SetGetPossiblePosesFunc(
-            [this, &robot, placementOffsetX_mm, placementOffsetY_mm](
-                                              ActionableObject* object,
-                                              std::vector<Pose3d>& possiblePoses,
-                                              bool& alreadyInPosition)
+            [this, &robot, placementOffsetX_mm, placementOffsetY_mm](ActionableObject* object,
+                                                                     std::vector<Pose3d>& possiblePoses,
+                                                                     bool& alreadyInPosition)
             {
-              const ActionResult possiblePosesResult = GetDriveToObjectAction()->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
-              
-              // Guilty until proven innocent - since we might clear some pre-dock poses
-              // we should not assume we're in position b/c it returned true above
-              // instead we should prove we're in a valid pose below
-              alreadyInPosition = false;
-              
-              if(possiblePosesResult == ActionResult::SUCCESS)
-              {
-                using PoseIter = std::vector<Pose3d>::iterator;
-
-                for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); )
-                {
-                  const Pose3d& idealCenterPose = object->GetZRotatedPointAboveObjectCenter(0.f);
-                  Pose3d preDocWRTBlock;
-                  fullIter->GetWithRespectTo(idealCenterPose, preDocWRTBlock);
-                  const float poseX = preDocWRTBlock.GetTranslation().x();
-                  const float poseY = preDocWRTBlock.GetTranslation().y();
-                  const float minIllegalOffset = 1.f;
-                  
-                  const bool xOffsetRelevant =
-                              !IN_RANGE(placementOffsetX_mm, -minIllegalOffset, minIllegalOffset) &&
-                              !IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
-                  
-                  const bool yOffsetRelevant =
-                              !IN_RANGE(placementOffsetY_mm, -minIllegalOffset, minIllegalOffset) &&
-                              !IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
-                  
-                  const bool isPoseInvalid =
-                              (xOffsetRelevant && (FLT_GT(poseX, 0) != FLT_GT(placementOffsetX_mm, 0)))||
-                              (yOffsetRelevant && (FLT_GT(poseY, 0) != FLT_GT(placementOffsetY_mm, 0)));
-                  
-                  if(isPoseInvalid)
-                  {
-                    fullIter = possiblePoses.erase(fullIter);
-                    PRINT_CH_INFO("Actions", "DriveToPlaceRelObjectAction.PossiblePosesFunc.RemovingInvalidPose",
-                                  "Removing pose x:%f y:%f because Cozmo can't place at offset x:%f, y:%f, xRelevant:%d, yRelevant:%d",
-                                  poseX, poseY, placementOffsetX_mm, placementOffsetY_mm, xOffsetRelevant, yOffsetRelevant);
-                  }
-                  else
-                  {
-                    // We need to visually verify placement since there are high odds
-                    // that we will bump objects while placing relative to them, so if possible
-                    // place using a y offset
-                    const bool onlyOnePlacementDirection = xOffsetRelevant != yOffsetRelevant;
-                    const bool currentXPoseIdeal = xOffsetRelevant && IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
-                    const bool currentYPoseIdeal = yOffsetRelevant && IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
-                    if(onlyOnePlacementDirection &&
-                       possiblePoses.size() > 2 &&
-                       (currentXPoseIdeal || currentYPoseIdeal))
-                    {
-                      fullIter = possiblePoses.erase(fullIter);
-                    }
-                    else
-                    {
-                      // The placementOffsets are defined relative to the object so in order to move all
-                      // the preAction poses by the offsets we need to get them wrt the object, apply the offsets,
-                      // and then get them wrt the origin (as they originally were)
-                      Pose3d preActionPoseWRTObject;
-                      fullIter->GetWithRespectTo(object->GetPose(), preActionPoseWRTObject);
-                      
-                      
-                      // TODO: COZMO-9528 - Currently we are clipping pre-doc offsets so that
-                      // we can be sure we visually verify the docking cube.  However, long term
-                      // we need a smarter system for determining how far over we can place the pre-dock
-                      // pose before we lose site of the docking object.
-                      /**const float kClippingPreDocPoseOffset_mm = 20.f;
-                      const float clippedXOffset =
-                           placementOffsetX_mm > kClippingPreDocPoseOffset_mm ?
-                                 kClippingPreDocPoseOffset_mm : placementOffsetX_mm;
-                      
-                      const float clippedYOffset =
-                           placementOffsetY_mm > kClippingPreDocPoseOffset_mm ?
-                                 kClippingPreDocPoseOffset_mm : placementOffsetY_mm;**/
-                      
-                      const auto& trans = preActionPoseWRTObject.GetTranslation();
-                      preActionPoseWRTObject.SetTranslation({trans.x(), //+ clippedXOffset,
-                                                             trans.y(),// + clippedYOffset,
-                                                             trans.z()});
-
-                      preActionPoseWRTObject.GetWithRespectTo(_robot.GetPose().FindOrigin(), *fullIter);
-                      
-                      Point2f distThreshold = ComputePreActionPoseDistThreshold(*fullIter,
-                                                                                object->GetPose(),
-                                                                                DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
-                      
-                      // If the new preAction pose is close enough to the robot's current pose mark as
-                      // alreadyInPosition
-                      // Don't really care about z
-                      static const f32 kDontCareZThreshold = 100;
-                      if(robot.GetPose().IsSameAs(*fullIter,
-                                                  {distThreshold.x(), distThreshold.y(), kDontCareZThreshold},
-                                                  DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE))
-                      {
-                        alreadyInPosition = true;
-                      }
-
-                      ++fullIter;
-                    }
-                  }
-                }// end for(PoseIter)
-              }// end if(possiblePosesResult == ActionResult::Success)
-              else
-              {
-                PRINT_CH_INFO("Actions",
-                              "DriveToPlaceRelObjectAction.PossiblePosesFunc.PossiblePosesResultNotSuccess",
-                              "Received possible psoses result:%u", possiblePosesResult);
-              }
-              
-              if(possiblePoses.size() > 0)
-              {
-                return possiblePosesResult;
-              }
-              else
-              {
-                PRINT_CH_INFO("Actions",
-                              "PlaceRelObjectAction.PossiblePosesFunc.NoValidPoses",
-                              "After filtering invalid pre-doc poses none remained for placement offset x:%f, y%f",
-                              placementOffsetX_mm, placementOffsetY_mm);
-                return ActionResult::NO_PREACTION_POSES;
-              }
+              return PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(object,
+                                                                            placementOffsetX_mm,
+                                                                            placementOffsetY_mm,
+                                                                            robot,
+                                                                            possiblePoses,
+                                                                            alreadyInPosition);
             });
-        }// end if(driveToAction != nullptr)
+        }
         else
         {
           PRINT_CH_INFO("Actions",
                         "DriveToPlaceRelObjectAction.PossiblePosesFunction.NoDriveToAction",
                         "DriveToAction not set, possible invalid poses");
         }
-      } // end if(!relativeCurrentMarkre)
+      }
     }
+ 
     
 #pragma mark ---- DriveToRollObjectAction ----
     

@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/driveToHelper.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
@@ -43,6 +44,12 @@ DriveToHelper::DriveToHelper(Robot& robot,
 , _lastSearchRun_ts(0)
 , _tmpRetryCounter(0)
 {
+  const bool invalidPlaceRelParams =
+                (_params.actionType != PreActionPose::PLACE_RELATIVE) &&
+                 !(FLT_NEAR(_params.placeRelOffsetY_mm, 0.f) &&
+                   FLT_NEAR(_params.placeRelOffsetX_mm, 0.f));
+  
+  DEV_ASSERT(!invalidPlaceRelParams,"DriveToHelper.InvalidPlaceRelParams");
 }
 
 
@@ -85,8 +92,42 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
   }
   _tmpRetryCounter++;
   
-  StartActing(new DriveToObjectAction(robot, _targetID, _params.actionType),
-              &DriveToHelper::RespondToDriveResult);
+  if((_params.actionType != PreActionPose::PLACE_RELATIVE) ||
+     ((_params.placeRelOffsetX_mm == 0) && (_params.placeRelOffsetY_mm == 0))){
+    StartActing(new DriveToObjectAction(robot, _targetID, _params.actionType),
+                &DriveToHelper::RespondToDriveResult);
+  }else{
+    // Calculate the pre-dock pose directly for PLACE_RELATIVE and drive to that pose
+    ActionableObject* obj = dynamic_cast<ActionableObject*>(
+                           robot.GetBlockWorld().GetObjectByID(_targetID));
+    if(obj != nullptr){
+      std::vector<Pose3d> possiblePoses;
+      bool alreadyInPosition;
+      PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(
+                              obj, _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm,
+                              robot, possiblePoses, alreadyInPosition);
+      if(possiblePoses.size() > 0){
+        if(alreadyInPosition){
+          // Already in pose, no drive to necessary
+          _status = BehaviorStatus::Complete;
+        }else{
+          // Drive to the nearest pose
+          StartActing(new DriveToPoseAction(robot, possiblePoses),
+                      &DriveToHelper::RespondToDriveResult);
+        }
+      }else{
+        PRINT_NAMED_INFO("DriveToHelper.DriveToPreActionPose.NoPreDockPoses",
+                         "No valid predock poses for objectID: %d with offsets x:%f y:%f",
+                         _targetID.GetValue(),
+                         _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm);
+        _status = BehaviorStatus::Failure;
+      }
+    }else{
+      PRINT_NAMED_WARNING("DriveToHelper.DriveToPreActionPose.TargetBlockNull",
+                          "Failed to get ActionableObject for id:%d", _targetID.GetValue());
+      _status = BehaviorStatus::Failure;
+    }
+  }
 }
   
   
@@ -107,7 +148,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
     }
     case ActionResult::CANCELLED:
     {
-      _status = BehaviorStatus::Failure;
+      // leave the helper running, since it's about to be canceled
       break;
     }
     case ActionResult::NO_PREACTION_POSES:

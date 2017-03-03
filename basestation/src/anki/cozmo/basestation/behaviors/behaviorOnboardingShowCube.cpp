@@ -51,7 +51,7 @@ BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json:
     MessageGameToEngineTag::TransitionToNextOnboardingState
   });
   SubscribeToTags({{
-    EngineToGameTag::ReactionaryBehaviorTransition,
+    EngineToGameTag::ReactionTriggerTransition,
     EngineToGameTag::RobotObservedObject,
   }});
   
@@ -97,13 +97,15 @@ void BehaviorOnboardingShowCube::StopInternal(Robot& robot)
 
 void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
-  if( event.GetData().GetTag() == MessageEngineToGameTag::ReactionaryBehaviorTransition )
+  if( event.GetData().GetTag() == MessageEngineToGameTag::ReactionTriggerTransition )
   {
     // Only react when the behavior is running ( not inactive )
-    const ExternalInterface::ReactionaryBehaviorTransition& msg = event.GetData().Get_ReactionaryBehaviorTransition();
-    if( msg.behaviorStarted &&  _state != State::ErrorCozmo && _state != State::Inactive && _state != State::ErrorFinal)
+    const ExternalInterface::ReactionTriggerTransition& msg = event.GetData().Get_ReactionTriggerTransition();
+    const bool startingFirstReaction =  msg.newTrigger != ReactionTrigger::NoneTrigger &&
+                                        msg.oldTrigger == ReactionTrigger::NoneTrigger;
+    if(startingFirstReaction &&  (_state != State::ErrorCozmo) && (_state != State::Inactive) && (_state != State::ErrorFinal))
     {
-      switch (msg.reactionaryBehaviorTrigger)
+      switch (msg.newTrigger)
       {
         case ReactionTrigger::CliffDetected:
         case ReactionTrigger::RobotPickedUp:
@@ -132,7 +134,7 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const EngineToGameEvent& eve
       HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
       break;
     }
-    case MessageEngineToGameTag::ReactionaryBehaviorTransition:
+    case MessageEngineToGameTag::ReactionTriggerTransition:
       // Handled by AlwaysHandle, but don't want error printing...
     break;
     default: {

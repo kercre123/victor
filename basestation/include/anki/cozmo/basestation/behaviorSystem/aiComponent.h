@@ -28,7 +28,8 @@ class AIWhiteboard;
 class BehaviorHelperComponent;
 class Robot;
 class WorkoutComponent;
-
+class BehaviorEventAnimResponseDirector;
+  
 class AIComponent : private Util::noncopyable
 {
 public:
@@ -55,6 +56,11 @@ public:
     assert(_aiInformationAnalyzer);
     return *_aiInformationAnalyzer;
   }
+  
+  inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
+    { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
+  inline BehaviorEventAnimResponseDirector&       GetBehaviorEventAnimResponseDirector()
+    { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
   
   inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
   inline BehaviorHelperComponent&       GetBehaviorHelperComponent()       { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
@@ -87,6 +93,10 @@ private:
   // module to analyze information for the AI in processes common to more than one behavior, for example
   // border calculation
   std::unique_ptr<AIInformationAnalyzer>   _aiInformationAnalyzer;
+  
+  // Component which behaviors and helpers can query to find out the appropriate animation
+  // to play in response to a user facing action result
+  std::unique_ptr<BehaviorEventAnimResponseDirector> _behaviorEventAnimResponseDirector;
   
   // component which behaviors can delegate to for automatic action error handling
   std::unique_ptr<BehaviorHelperComponent> _behaviorHelperComponent;

@@ -589,15 +589,26 @@ void BehaviorManager::TryToResumeBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo& newInfo)
 {
-  // Switching to or from a reaction - update properties
+  
+  // On any reaction trigger transition, let the game know
+  if(_runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger ||
+     newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger){
+    _robot.GetExternalInterface()->BroadcastToGame<
+      ExternalInterface::ReactionTriggerTransition>(
+         _runningAndResumeInfo->GetCurrentReactionTrigger(),
+         newInfo.GetCurrentReactionTrigger()
+      );
+  }
+  
+  // If switching into or out of reactions fully enable/disable robot properties
   if((newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) &&
      (_runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger))
   {
-    UpdateRobotPropertiesForReaction(true, newInfo.GetCurrentReactionTrigger());
+    UpdateRobotPropertiesForReaction(true);
   }else if((newInfo.GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger) &&
     (_runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger))
   {
-    UpdateRobotPropertiesForReaction(false, _runningAndResumeInfo->GetCurrentReactionTrigger());
+    UpdateRobotPropertiesForReaction(false);
   }
   
   //Update behavior light states if appropriate
@@ -867,13 +878,10 @@ void BehaviorManager::CheckReactionTriggerStrategies()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::UpdateRobotPropertiesForReaction(bool enablingReaction, ReactionTrigger triggerSwitching)
+void BehaviorManager::UpdateRobotPropertiesForReaction(bool enablingReaction)
 {
   // During reactions prevent DirectDrive messages and external action queueing messages
   // from doing anything
-  _robot.GetExternalInterface()->BroadcastToGame<
-                                   ExternalInterface::ReactionaryBehaviorTransition>(
-                                    triggerSwitching, enablingReaction);
   _robot.GetMoveComponent().IgnoreDirectDriveMessages(enablingReaction);
   _robot.SetIgnoreExternalActions(enablingReaction);
   

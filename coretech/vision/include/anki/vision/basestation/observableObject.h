@@ -87,6 +87,9 @@ namespace Anki {
       // match, then RESULT_FAIL_ORIGIN_MISMATCH is returned.
       Result GetClosestMarkerPose(const Pose3d& referencePose, const bool ignoreZ,
                                   Pose3d& closestPoseWrtReference) const;
+      Result GetClosestMarkerPose(const Pose3d& referencePose, const bool ignoreZ,
+                                  Pose3d& closestPoseWrtReference,
+                                  Marker& closestMarker) const;
       
       // Updates the observation times of this object's markers with the newer
       // of the current times and the times of the corresponding markers on the

@@ -75,8 +75,11 @@ BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(Robot& robot, const Json::Val
 bool BehaviorBuildPyramidBase::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const Robot& robot = preReqData.GetRobot();
-  UpdatePyramidTargets(robot);
-
+  _staticBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidStaticObject);
+  _baseBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidBaseObject);
+  _topBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidTopObject);
+  
+  
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && !_topBlockID.IsSet();
   if(allSet){
     // Ensure a base does not already exist in the world
@@ -271,89 +274,6 @@ bool BehaviorBuildPyramidBase::GetTopBlockID(ObjectID& id) const
   return _topBlockID.IsSet();
 }
   
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
-{
-  ClearInvalidBlockIDs(robot);
-  
-  using namespace BlockConfigurations;
-  
-  /// Check block config caches for pyramids and bases for fast forwarding
-  
-  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-  auto pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
-  
-  if(pyramids.size() > 0){
-    auto pyramid = pyramids[0];
-    _baseBlockID = pyramid->GetPyramidBase().GetBaseBlockID();
-    _staticBlockID = pyramid->GetPyramidBase().GetStaticBlockID();
-    _topBlockID = pyramid->GetTopBlockID();
-    return;
-  }
-  
-  if(pyramidBases.size() > 0){
-    auto pyramidBase = pyramidBases[0];
-    _baseBlockID = pyramidBase->GetBaseBlockID();
-    _staticBlockID = pyramidBase->GetStaticBlockID();
-    _topBlockID.UnSet();
-  }
-
-  
-  BlockList allBlocks;
-  BlockWorldFilter bottomBlockFilter;
-  bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  robot.GetBlockWorld().FindMatchingObjects(bottomBlockFilter, allBlocks);
-  
-  // set the base blocks for either pyramid base or full pyramid
-  if(allBlocks.size() < 2){
-    ResetPyramidTargets(robot);
-  }else if(!_baseBlockID.IsSet() ||
-           !_staticBlockID.IsSet()){
-    
-    _baseBlockID = GetBestBaseBlock(robot, allBlocks);
-    
-    const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
-    if(nullptr == baseBlock)
-    {
-      PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.UpdatePyramidTargets.BaseBlockNull",
-                          "BaseBlockID=%d", _baseBlockID.GetValue());
-      _baseBlockID.UnSet();
-      return;
-    }
-    SafeEraseBlockFromBlockList(_baseBlockID, allBlocks);
-    
-    
-    _staticBlockID = GetBestStaticBlock(robot, allBlocks);
-    const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-    if(nullptr == staticBlock)
-    {
-      PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.UpdatePyramidTargets.StaticBlockNull",
-                          "StaticBlockID=%d", _staticBlockID.GetValue());
-      _staticBlockID.UnSet();
-      return;
-    }
-    UpdateBlockPlacementOffsets();
-    
-  }
-  
-  // If the base blocks are set, remove them as possibilites for the top block
-  if(_baseBlockID.IsSet() && _staticBlockID.IsSet()){
-    SafeEraseBlockFromBlockList(_baseBlockID, allBlocks);
-    SafeEraseBlockFromBlockList(_staticBlockID, allBlocks);
-  }
-  
-  // find the top block so the full pyramid construction can run
-  if(!allBlocks.empty() && !_topBlockID.IsSet()){
-    const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-    if(staticBlock){
-      auto staticBlockPose = staticBlock->GetPose().GetWithRespectToOrigin();
-      _topBlockID = GetNearestBlockToPose(robot, staticBlockPose, allBlocks);
-    }
-  }
-  
-  DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramidBase.UpdatePyramidTargets.BlockIDsNotUnique");
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets() const
@@ -434,146 +354,6 @@ void BehaviorBuildPyramidBase::ResetPyramidTargets(const Robot& robot) const
   _staticBlockID.UnSet();
   _baseBlockID.UnSet();
   _topBlockID.UnSet();
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID BehaviorBuildPyramidBase::GetBestBaseBlock(const Robot& robot, const BlockList& availableBlocks) const
-{
-  const Pose3d& robotPose = robot.GetPose().GetWithRespectToOrigin();
-  
-  // If there's a stacked block it looks good to remove that and place it as the base
-  // of the new pyramid
-  for(auto& block: availableBlocks){
-    const ObservableObject* onTop = robot.GetBlockWorld().FindObjectOnTopOf(*block, BlockWorld::kOnCubeStackHeightTolerence);
-    if(onTop != nullptr){
-      return onTop->GetID();
-    }
-  }
-  
-  if(robot.IsCarryingObject()){
-    return robot.GetCarryingObject();
-  }else{
-    return GetNearestBlockToPose(robot, robotPose, availableBlocks);
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID BehaviorBuildPyramidBase::GetBestStaticBlock(const Robot& robot, const BlockList& availableBlocks) const
-{
-  const Pose3d& robotPose = robot.GetPose().GetWithRespectToOrigin();
-  
-  // Static blocks shouldn't have any blocks on top of them and should be on the ground
-  BlockList validStaticBlocks;
-  for(auto& block: availableBlocks){
-    const ObservableObject* onTop = robot.GetBlockWorld().FindObjectOnTopOf(*block, BlockWorld::kOnCubeStackHeightTolerence);
-
-    if(onTop == nullptr &&
-       block->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerence)){
-      validStaticBlocks.push_back(block);
-    }
-  }
-  
-  if(validStaticBlocks.size() > 0){
-    return GetNearestBlockToPose(robot, robotPose, validStaticBlocks);
-  }else{
-    return GetNearestBlockToPose(robot, robotPose, availableBlocks);
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID BehaviorBuildPyramidBase::GetNearestBlockToPose(const Robot& robot, const Pose3d& pose, const BlockList& availableBlocks) const
-{
-  f32 shortestDistanceSQ = -1.f;
-  f32 currentDistance = -1.f;
-  ObjectID nearestObject;
-  
-  //Find nearest block to pickup
-  for(auto block: availableBlocks){
-    auto blockPose = block->GetPose().GetWithRespectToOrigin();
-    f32 newDistSquared;
-    ComputeDistanceSQBetween(pose, blockPose, newDistSquared);
-
-    if(currentDistance < shortestDistanceSQ || shortestDistanceSQ < 0){
-      shortestDistanceSQ = currentDistance;
-      nearestObject = block->GetID();
-    }
-  }
-  
-  return nearestObject;
-}
- 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::SafeEraseBlockFromBlockList(const ObjectID& objectID, BlockList& blockList) const
-{
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
-  auto iter = std::find(blockList.begin(), blockList.end(), object);
-  if(iter != blockList.end()){
-    iter = blockList.erase(iter);
-  }
-}
- 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::ClearInvalidBlockIDs(const Robot& robot) const
-{
-  BlockList allBlocks;
-  BlockWorldFilter allBlocksFilter;
-  allBlocksFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  robot.GetBlockWorld().FindMatchingObjects(allBlocksFilter, allBlocks);
-  
-  bool baseIsValid = false;
-  bool staticIsValid = false;
-  bool topIsValid = false;
-  
-  for(const auto& entry: allBlocks){
-    if(_baseBlockID.IsSet() &&
-       entry->GetID() == _baseBlockID){
-      baseIsValid = true;
-    }
-    
-    if(_staticBlockID.IsSet() &&
-       entry->GetID() == _staticBlockID){
-      staticIsValid = true;
-    }
-    
-    if(_topBlockID.IsSet() &&
-       entry->GetID() == _topBlockID){
-      topIsValid = true;
-    }
-  }
-  
-  if(_baseBlockID.IsSet() && !baseIsValid){
-    _baseBlockID.UnSet();
-  }
-  
-  if(_staticBlockID.IsSet() && !staticIsValid){
-    _staticBlockID.UnSet();
-  }
-  
-  if(_topBlockID.IsSet() && !topIsValid){
-    _topBlockID.UnSet();
-  }
-  
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramidBase::AreAllBlockIDsUnique() const
-{
-  if(_staticBlockID.IsSet() && _baseBlockID.IsSet()){
-    const bool baseIDsUnique = _staticBlockID != _baseBlockID;
-    if(_topBlockID.IsSet()){
-      const bool topIDUnique = _topBlockID != _staticBlockID &&
-                                _topBlockID != _baseBlockID;
-      return baseIDsUnique && topIDUnique;
-    }
-    return baseIDsUnique;
-  }
-  
-  return true;
 }
 
 

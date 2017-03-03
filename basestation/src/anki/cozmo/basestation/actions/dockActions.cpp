@@ -10,10 +10,11 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/cozmo/basestation/actions/dockActions.h"
+
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
@@ -49,6 +50,9 @@ namespace Anki {
     CONSOLE_VAR(u32, kPickupDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING);
     CONSOLE_VAR(u32, kRollDockingMethod,   "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
     CONSOLE_VAR(u32, kStackDockingMethod,  "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
+    
+    // Whether or not to calculate the max preDock pose offset for PlaceRelObjectAction
+    CONSOLE_VAR(bool, kPlaceRelUseMaxOffset, "PlaceRelObjectAction", true);
     
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far preActionPose is from actionObject
@@ -1853,7 +1857,278 @@ namespace Anki {
 
       return ActionResult::SUCCESS;
     }
-
+    
+    // The max lateral offset an object at a given distance from a pose can be such that it is still
+    // visible by the camera with x and y offsets applied
+    // maxOffset is a lateral distance from pose relative to object
+    static Result GetMaxOffsetObjectStillVisible(const Vision::Camera& camera,
+                                                 const ObservableObject* object,
+                                                 const f32 distanceToObject,
+                                                 const f32 desiredOffsetX_mm,
+                                                 const f32 desiredOffsetY_mm,
+                                                 const Pose3d& pose,
+                                                 f32& maxOffset)
+    {
+      // Find the width of the closest marker to pose
+      Pose3d objectPoseWrtRobot_unused;
+      Vision::Marker closestMarker(Vision::Marker::ANY_CODE);
+      const Result res = object->GetClosestMarkerPose(pose, true, objectPoseWrtRobot_unused, closestMarker);
+      if(res != RESULT_OK)
+      {
+        PRINT_NAMED_WARNING("GetMaxOffsetObjectStillVisible.GetClosestMarkerPose",
+                            "Could not get closest marker pose");
+        return RESULT_FAIL;
+      }
+      
+      const auto markers = object->GetMarkersWithCode(closestMarker.GetCode());
+      if(markers.size() != 1)
+      {
+        // This should not happen we just found this marker by calling GetClosestMarkerPose
+        PRINT_NAMED_WARNING("GetMaxOffsetObjectStillVisible.GetMarkersWithCode",
+                            "No markers with code %s found on object %s",
+                            closestMarker.GetCodeName(),
+                            EnumToString(object->GetType()));
+        return RESULT_FAIL;
+      }
+    
+      const f32     markerSize = markers.back()->GetSize().x();
+      const Radians fov        = camera.GetCalibration()->ComputeHorizontalFOV();
+      const f32     tanHalfFov = tanf(fov.ToFloat()*0.5f);
+      const f32     distance   = fabsf(distanceToObject) + desiredOffsetX_mm;
+      
+      const f32 minDistance = markerSize / tanHalfFov;
+      if(distance < minDistance)
+      {
+        PRINT_NAMED_WARNING("GetMaxOffsetObjectStillVisible.InvalidDistance",
+                            "Total distance to object %f < min possible distance %f to see the object",
+                            distance,
+                            minDistance);
+        return RESULT_FAIL;
+      }
+      
+      // Find the distance between the center of the camera's fov and the edge of it at the given
+      // distance + x_offset
+      const f32 y = tanHalfFov * distance;
+      
+      // Subtract the width of the marker so that it will be completely visible
+      maxOffset = y - markers.back()->GetSize().x();
+      
+      return RESULT_OK;
+    }
+    
+    ActionResult PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(ActionableObject* object,
+                                                                        const f32 placementOffsetX_mm,
+                                                                        const f32 placementOffsetY_mm,
+                                                                        Robot& robot,
+                                                                        std::vector<Pose3d>& possiblePoses,
+                                                                        bool& alreadyInPosition)
+    {
+      // Guilty until proven innocent - since we might clear some pre-dock poses
+      // we should not assume we're in position b/c it returned true above
+      // instead we should prove we're in a valid pose below
+      alreadyInPosition = false;
+      possiblePoses.clear();
+      
+      const IDockAction::PreActionPoseInput preActionPoseInput(object,
+                                                               PreActionPose::ActionType::PLACE_RELATIVE,
+                                                               false,
+                                                               0,
+                                                               DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE,
+                                                               false,
+                                                               0);
+      IDockAction::PreActionPoseOutput preActionPoseOutput;
+      
+      IDockAction::GetPreActionPoses(robot,
+                                     preActionPoseInput,
+                                     preActionPoseOutput);
+      
+      if(preActionPoseOutput.actionResult == ActionResult::SUCCESS)
+      {
+        // Add the pre-action poses to the possible poses list
+        for(const auto& preActPose: preActionPoseOutput.preActionPoses){
+          possiblePoses.push_back(preActPose.GetPose());
+        }
+        
+        // Now determine if any of those are invalid and remove them
+        using PoseIter = std::vector<Pose3d>::iterator;
+        
+        for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); )
+        {
+          const Pose3d& idealCenterPose = object->GetZRotatedPointAboveObjectCenter(0.f);
+          Pose3d preDocWRTBlock;
+          fullIter->GetWithRespectTo(idealCenterPose, preDocWRTBlock);
+          
+          const float poseX = preDocWRTBlock.GetTranslation().x();
+          const float poseY = preDocWRTBlock.GetTranslation().y();
+          const float minIllegalOffset = 1.f;
+          
+          const bool xOffsetRelevant =
+            !IN_RANGE(placementOffsetX_mm, -minIllegalOffset, minIllegalOffset) &&
+            !IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
+          
+          const bool yOffsetRelevant =
+            !IN_RANGE(placementOffsetY_mm, -minIllegalOffset, minIllegalOffset) &&
+            !IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
+          
+          const bool isPoseInvalid =
+            (xOffsetRelevant && (FLT_GT(poseX, 0) != FLT_GT(placementOffsetX_mm, 0))) ||
+            (yOffsetRelevant && (FLT_GT(poseY, 0) != FLT_GT(placementOffsetY_mm, 0)));
+          
+          if(isPoseInvalid)
+          {
+            fullIter = possiblePoses.erase(fullIter);
+            
+            PRINT_CH_INFO("Actions", "DriveToPlaceRelObjectAction.PossiblePosesFunc.RemovingInvalidPose",
+                          "Removing pose x:%f y:%f because Cozmo can't place at offset x:%f, y:%f, xRelevant:%d, yRelevant:%d",
+                          poseX, poseY,
+                          placementOffsetX_mm, placementOffsetY_mm,
+                          xOffsetRelevant, yOffsetRelevant);
+          }
+          else
+          {
+            // We need to visually verify placement since there are high odds
+            // that we will bump objects while placing relative to them, so if possible
+            // place using a y offset
+            const bool onlyOnePlacementDirection = xOffsetRelevant != yOffsetRelevant;
+            const bool currentXPoseIdeal = xOffsetRelevant && IN_RANGE(poseY, -minIllegalOffset, minIllegalOffset);
+            const bool currentYPoseIdeal = yOffsetRelevant && IN_RANGE(poseX, -minIllegalOffset, minIllegalOffset);
+            
+            if(onlyOnePlacementDirection &&
+               possiblePoses.size() > 2 &&
+               (currentXPoseIdeal || currentYPoseIdeal))
+            {
+              fullIter = possiblePoses.erase(fullIter);
+            }
+            else
+            {
+              // The placementOffsets are defined relative to the object so in order to move all
+              // the preAction poses by the offsets we need to get them wrt the object, apply the offsets,
+              // and then get them wrt the origin (as they originally were)
+              Pose3d preActionPoseWRTObject;
+              fullIter->GetWithRespectTo(object->GetPose(), preActionPoseWRTObject);
+              const auto& trans = preActionPoseWRTObject.GetTranslation();
+              
+              const Radians angle = preActionPoseWRTObject.GetRotation().GetAngleAroundZaxis();
+              f32 preDockOffsetX = placementOffsetX_mm;
+              f32 preDockOffsetY = placementOffsetY_mm;
+              f32 distanceToObject = trans.x();
+              
+              const bool isAlignedWithYAxis = angle == DEG_TO_RAD(90) || angle == DEG_TO_RAD(270);
+              
+              // Flip the x and y offset and use the y translation should this preDock pose
+              // be at 90 or 270 degrees relative to the object
+              if(isAlignedWithYAxis)
+              {
+                preDockOffsetX = placementOffsetY_mm;
+                preDockOffsetY = placementOffsetX_mm;
+                distanceToObject = trans.y();
+              }
+              
+              // Find the max lateral offset from the preDock pose that the object will still be visible
+              // This is to ensure we will be seeing the object when we are at the preDock pose
+              f32 maxOffset_mm = 0;
+              const Result res = GetMaxOffsetObjectStillVisible(robot.GetVisionComponent().GetCamera(),
+                                                                object,
+                                                                distanceToObject,
+                                                                preDockOffsetX,
+                                                                preDockOffsetY,
+                                                                *fullIter,
+                                                                maxOffset_mm);
+              if(res != RESULT_OK)
+              {
+                PRINT_NAMED_WARNING("DriveToPlaceRelObjectAction.GetPossiblePosesFunc.GetMaxYOffset",
+                                    "Failed to get max offset where %s is still visible from distance %f with placement offsets (%f, %f)",
+                                    EnumToString(object->GetType()),
+                                    trans.x(),
+                                    placementOffsetX_mm,
+                                    placementOffsetY_mm);
+                
+                fullIter = possiblePoses.erase(fullIter);
+                continue;
+              }
+              
+              // Subtract a bit of padding from maxOffset to account for errors in path following should
+              // we actually decide to drive to this predock pose
+              // Still doesn't guarantee that we will be seeing the object once we get to the preDock pose
+              // but greatly increases our chances
+              const static f32 padding_mm = 20;
+              if(maxOffset_mm > padding_mm)
+              {
+                maxOffset_mm -= padding_mm;
+              }
+              
+              // Depending on which preDock pose this is, either the x or y placementOffset
+              // (whichever correpsonds to horizontal distance relative to the preDock pose) will need
+              // to be clipped to the maxOffset
+              f32 clipX_mm = placementOffsetX_mm;
+              f32 clipY_mm = placementOffsetY_mm;
+              if(isAlignedWithYAxis)
+              {
+                clipX_mm = CLIP(placementOffsetX_mm, -maxOffset_mm, maxOffset_mm);
+              }
+              else
+              {
+                clipY_mm = CLIP(placementOffsetY_mm, -maxOffset_mm, maxOffset_mm);
+              }
+              
+              // If we don't want to use the maxOffset then set clipX/Y to 0
+              if(!kPlaceRelUseMaxOffset)
+              {
+                clipX_mm = 0;
+                clipY_mm = 0;
+              }
+              
+              PRINT_NAMED_INFO("", "moving preDock pose by x:%f y:%f",
+                               clipX_mm, clipY_mm);
+              
+              preActionPoseWRTObject.SetTranslation({trans.x() + clipX_mm,
+                                                     trans.y() + clipY_mm,
+                                                     trans.z()});
+              
+              preActionPoseWRTObject.GetWithRespectTo(robot.GetPose().FindOrigin(), *fullIter);
+              
+              Point2f distThreshold = ComputePreActionPoseDistThreshold(*fullIter,
+                                                                        object->GetPose(),
+                                                                        DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
+              
+              // If the new preAction pose is close enough to the robot's current pose mark as
+              // alreadyInPosition
+              // Don't really care about z
+              static const f32 kDontCareZThreshold = 100;
+              if(robot.GetPose().IsSameAs(*fullIter,
+                                          {distThreshold.x(), distThreshold.y(), kDontCareZThreshold},
+                                          DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE))
+              {
+                alreadyInPosition = true;
+              }
+              
+              ++fullIter;
+            }
+          }
+        }// end for(PoseIter)
+      }// end if(possiblePosesResult == ActionResult::Success)
+      else
+      {
+        PRINT_CH_INFO("Actions",
+                      "DriveToPlaceRelObjectAction.PossiblePosesFunc.PossiblePosesResultNotSuccess",
+                      "Received possible psoses result:%u", preActionPoseOutput.actionResult);
+      }
+      
+      if(possiblePoses.size() > 0)
+      {
+        return preActionPoseOutput.actionResult;
+      }
+      else
+      {
+        PRINT_CH_INFO("Actions",
+                      "PlaceRelObjectAction.PossiblePosesFunc.NoValidPoses",
+                      "After filtering invalid pre-doc poses none remained for placement offset x:%f, y%f",
+                      placementOffsetX_mm, placementOffsetY_mm);
+        
+        return ActionResult::NO_PREACTION_POSES;
+      }
+    }
+    
     
 #pragma mark ---- RollObjectAction ----
     

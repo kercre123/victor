@@ -59,7 +59,7 @@ done
 echo "*********"
 echo ""
 
-if [ -n `which valgrind` ]; then
+if `which valgrind`; then
     echo "Memcheck"
     for std in $STDS; do
         COMMAND="valgrind $OUTPUT_DIR/ctest_$std.out"

@@ -16847,18 +16847,21 @@
 	Scratch3CozmoBlocks.prototype.getPrimitives = function () {
 	    return {
 	        cozmo_setbackpackcolor: this.setBackpackColor,
-	        cozmo_drive: this.driveForward,
+	        cozmo_drive_forward: this.driveForward,
+	        cozmo_drive_backward: this.driveBackward,
 	        cozmo_animation: this.playAnimation,
 	        cozmo_liftheight: this.setLiftHeight,
 	        cozmo_wait_for_face: this.waitForFace,
 	        cozmo_wait_for_cube: this.waitForCube,
 	        cozmo_headangle: this.setHeadAngle,
-	        cozmo_turn: this.turn,
+	        cozmo_turn_left: this.turnLeft,
+	        cozmo_turn_right: this.turnRight,
 	        cozmo_says: this.speak
 	    };
 	};
 
 	Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
+	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
 	        var colorHexValue = this._getColor(Cast.toString(args.CHOICE));
 	        window.Unity.call('{"command": "cozmoSetBackpackColor","argUInt": "' + colorHexValue + '"}');
@@ -16875,6 +16878,7 @@
 	};
 
 	Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
+	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
 	       // The distMultiplier will be between 1 and 9 (as set by the parameter
 	       // number under the block) and will be used as a multiplier against the
@@ -16894,10 +16898,32 @@
 	    }
 	};
 
-	Scratch3CozmoBlocks.prototype.playAnimation = function(args, util) {
+	Scratch3CozmoBlocks.prototype.driveBackward = function(args, util) {
+	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
-	       // TODO animation arg is a placeholder until we add a dropdown of options
-	       window.Unity.call('{"command": "cozmoPlayAnimation","argInt": ' + 1 + '}');
+	       // The distMultiplier will be between 1 and 9 (as set by the parameter
+	       // number under the block) and will be used as a multiplier against the
+	       // base dist_mm of 30.0f.
+	       var distMultiplier = Cast.toNumber(args.DISTANCE);
+	       window.Unity.call('{"command": "cozmoDriveBackward","argFloat": ' + distMultiplier + '}');
+
+	        // Yield
+	        util.stackFrame.timer = new Timer();
+	        util.stackFrame.timer.start();
+	        util.yield();
+	    } else {
+	        // TODO Add distance as multiplier to the time below
+	        if (util.stackFrame.timer.timeElapsed() < 1000) {
+	            util.yield();
+	        }
+	    }
+	};
+
+	Scratch3CozmoBlocks.prototype.playAnimation = function(args, util) {
+	    // TODO Wait for RobotCompletedAction instead of using timer.
+	    if (!util.stackFrame.timer) {
+	        var animationName = this._getAnimation(Cast.toString(args.CHOICE));
+	        window.Unity.call('{"command": "cozmoPlayAnimation","argString": "' + animationName + '"}');
 
 	        // Yield
 	        util.stackFrame.timer = new Timer();
@@ -16912,6 +16938,7 @@
 	};
 
 	Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
+	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
 	        var liftHeight = Cast.toString(args.CHOICE);
 	        window.Unity.call('{"command": "cozmoForklift","argString": "' + liftHeight + '"}');
@@ -16939,11 +16966,11 @@
 	        {colorName: 'yellow', colorHex: 0xffff00ff},
 	        {colorName: 'orange', colorHex: 0xffA500ff},
 	        {colorName: 'coral', colorHex: 0xff0000ff},
-	        {colorName: 'magenta', colorHex: 0xff00ffff},
 	        {colorName: 'purple', colorHex: 0xff00ffff},
 	        {colorName: 'blue', colorHex: 0x0000ffff},
 	        {colorName: 'green', colorHex: 0x00ff00ff},
-	        {colorName: 'white', colorHex: 0xffffffff}
+	        {colorName: 'white', colorHex: 0xffffffff},
+	        {colorName: 'off', colorHex: 0x00000000}
 	    ];
 
 	    if (colorName == 'mystery') {
@@ -16960,6 +16987,39 @@
 	    }
 
 	    return colorHexToReturn;
+	};
+
+	/**
+	 * Convert a string to a Cozmo animation trigger index.
+	 * Supports 'mystery' for a random animation.
+	 * @param animationName The animation to retrieve.
+	 * @returns {number} The Cozmo animation trigger index.
+	 * @private
+	 */
+	Scratch3CozmoBlocks.prototype._getAnimation = function(animationName) {
+	    var animationTable = [
+	        'happy',
+	        'victory',
+	        'unhappy',
+	        'surprise',
+	        'dog',
+	        'cat',
+	        'sneeze',
+	        'excited',
+	        'thinking',
+	        'bored',
+	        'frustrated',
+	        'chatty',
+	        'dejected',
+	        'sleep'
+	    ];
+
+	    if (animationName == 'mystery') {
+	        var randomValue = Math.floor(Math.random() * animationTable.length);
+	        return animationTable[randomValue];
+	    }
+
+	    return animationName;
 	};
 
 	/**
@@ -17016,6 +17076,7 @@
 	};
 
 	Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
+	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
 	        var headAngle = Cast.toString(args.CHOICE);
 	        window.Unity.call('{"command": "cozmoHeadAngle","argString": "' + headAngle + '"}');
@@ -17031,9 +17092,26 @@
 	    }
 	};
 	                                       
-	Scratch3CozmoBlocks.prototype.turn = function(args, util) {
+	Scratch3CozmoBlocks.prototype.turnLeft = function(args, util) {
+	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
-	        window.Unity.call('{"command": "cozmoTurn"}');
+	        window.Unity.call('{"command": "cozmoTurnLeft"}');
+
+	        // Yield
+	        util.stackFrame.timer = new Timer();
+	        util.stackFrame.timer.start();
+	        util.yield();
+	    } else {
+	        if (util.stackFrame.timer.timeElapsed() < 1000) {
+	            util.yield();
+	        }
+	    }
+	};
+
+	Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
+	    // TODO Wait for RobotCompletedAction instead of using timer.
+	    if (!util.stackFrame.timer) {
+	        window.Unity.call('{"command": "cozmoTurnRight"}');
 
 	        // Yield
 	        util.stackFrame.timer = new Timer();
@@ -17047,6 +17125,7 @@
 	};
 
 	Scratch3CozmoBlocks.prototype.speak = function(args, util) {
+	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
 	        var textToSay = Cast.toString(args.STRING);
 	        window.Unity.call('{"command": "cozmoSays","argString": "' + textToSay + '"}');

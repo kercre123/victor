@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/placeRelObjectHelper.h"
 
-#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -60,11 +60,18 @@ bool PlaceRelObjectHelper::ShouldCancelDelegates(const Robot& robot) const
 BehaviorStatus PlaceRelObjectHelper::Init(Robot& robot)
 {
   _tmpRetryCounter = 0;
-  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
-                    robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE);
+  
+  const PreActionPose::ActionType actionType = PreActionPose::PreActionPose::PLACE_RELATIVE;
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(robot,
+                                                                             _targetID,
+                                                                             actionType,
+                                                                             _params.placementOffsetX_mm,
+                                                                             _params.placementOffsetY_mm);
   if(isAtPreAction != ActionResult::SUCCESS){
     DriveToParameters params;
     params.actionType = PreActionPose::ActionType::PLACE_RELATIVE;
+    params.placeRelOffsetX_mm = _params.placementOffsetX_mm;
+    params.placeRelOffsetY_mm = _params.placementOffsetY_mm;
     DelegateProperties delegateProperties;
     delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, params));
     delegateProperties.SetOnSuccessFunction([this](Robot& robot){StartPlaceRelObject(robot); return _status;});
@@ -93,11 +100,17 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
   }
   _tmpRetryCounter++;
 
-  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
-                   robot, _targetID, PreActionPose::ActionType::PLACE_RELATIVE);
+  const PreActionPose::ActionType actionType = PreActionPose::PreActionPose::PLACE_RELATIVE;
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(robot,
+                                                                             _targetID,
+                                                                             actionType,
+                                                                             _params.placementOffsetX_mm,
+                                                                             _params.placementOffsetY_mm);
   if(isAtPreAction != ActionResult::SUCCESS){
     DriveToParameters params;
     params.actionType = PreActionPose::ActionType::PLACE_RELATIVE;
+    params.placeRelOffsetX_mm = _params.placementOffsetX_mm;
+    params.placeRelOffsetY_mm = _params.placementOffsetY_mm;
     DelegateProperties properties;
     properties.SetDelegateToSet(CreateDriveToHelper(robot,
                                                     _targetID,
@@ -107,14 +120,13 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
                                     });
     DelegateAfterUpdate(properties);
   }else{
-    DriveToPlaceRelObjectAction* driveTo =
-            new DriveToPlaceRelObjectAction(robot, _targetID, _placingOnGround,
-                                                   _params.placementOffsetX_mm,
-                                                   _params.placementOffsetY_mm,
-                                                   false, 0, false, 0, false,
-                                                   _params.relativeCurrentMarker);
+    PlaceRelObjectAction* driveTo =
+            new PlaceRelObjectAction(robot, _targetID, _placingOnGround,
+                                     _params.placementOffsetX_mm,
+                                     _params.placementOffsetY_mm,
+                                     false, _params.relativeCurrentMarker);
     
-    StartActing(driveTo, &PlaceRelObjectHelper::RespondToPlaceRelResult);
+    StartActingWithResponseAnim(driveTo, &PlaceRelObjectHelper::RespondToPlaceRelResult);
   }
 }
 
@@ -140,8 +152,11 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Robot& r
       StartPlaceRelObject(robot);
       break;
     }
-    case ActionResult::ABORT:
     case ActionResult::CANCELLED:
+      // leave the helper running, since it's about to be canceled
+      break;
+
+    case ActionResult::ABORT:
     case ActionResult::BAD_OBJECT:
     {
       _status = BehaviorStatus::Failure;

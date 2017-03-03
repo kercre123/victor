@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviors/iBehavior_fwd.h"
 #include "clad/types/actionResults.h"
 #include "clad/types/animationTrigger.h"
+#include "clad/types/userFacingResults.h"
 #include <functional>
 
 namespace Anki {
@@ -41,6 +42,8 @@ public:
   const std::string& GetName() const { return _name; }
   
 protected:
+  using UserFacingActionResultMapFunc = std::function<UserFacingActionResult(ActionResult)>;
+  
   struct DelegateProperties{
   public:
     HelperHandle GetDelegateToSet() const { return _delegateToSet;}
@@ -97,6 +100,7 @@ protected:
   // delegate is set in the delegate properties, then it will be pushed onto the stack, and the callbacks from
   // the properties will be used
   virtual BehaviorStatus UpdateWhileActiveInternal(Robot& robot) = 0;
+  
 
   
   ///////
@@ -105,13 +109,26 @@ protected:
   
   ActionResult IsAtPreActionPoseWithVisualVerification(Robot& robot,
                                                        const ObjectID& targetID,
-                                                       PreActionPose::ActionType actionType);
+                                                       PreActionPose::ActionType actionType,
+                                                       const f32 offsetX_mm = 0,
+                                                       const f32 offsetY_mm = 0);
   
   void DelegateAfterUpdate(const DelegateProperties& properties){ _delegateAfterUpdate = properties;}
+  
+  
   
   // Use the set behavior's start acting to perform an action
   template <typename T>
   bool StartActing(IActionRunner* action, void(T::*callback)(ActionResult,Robot&));
+  
+  // Pass in a function that maps action results to UserFacingACtionResults so that the
+  // BehaviorEventAnimationResponseDirector knows how to respond to the failure with the
+  // appropriate animation
+  template <typename T>
+  bool StartActingWithResponseAnim(
+            IActionRunner* action,
+            void(T::*callback)(ActionResult,Robot&),
+            UserFacingActionResultMapFunc mapFunc = nullptr);
 
   bool StartActing(IActionRunner* action, BehaviorActionResultWithRobotCallback callback);
 
@@ -133,14 +150,27 @@ protected:
   BehaviorStatus _status;
   
 private:
+
+  void LogStopEvent(bool isActive);
+  
   std::string _name;
   bool _hasStarted;
   BehaviorStatusCallbackWithRobot _onSuccessFunction;
   BehaviorStatusCallbackWithRobot _onFailureFunction;
   DelegateProperties _delegateAfterUpdate;
+  float _timeStarted_s = 0.0f;
+
 
   IBehavior& _behaviorToCallActionsOn;
   BehaviorHelperFactory& _helperFactory;
+  
+  // Functions for responding to action results with StartActingWithResponseAnim
+  UserFacingActionResultMapFunc _actionResultMapFunc = nullptr;
+  BehaviorActionResultWithRobotCallback _callbackAfterResponseAnim = nullptr;
+  
+  AnimationTrigger AnimationResponseToActionResult(Robot& robot, UserFacingActionResult result);
+  void RespondToResultWithAnim(ActionResult result, Robot& robot);
+
 };
 
   
@@ -151,6 +181,20 @@ bool IHelper::StartActing(IActionRunner* action, void(T::*callback)(ActionResult
           std::bind(callback, static_cast<T*>(this), std::placeholders::_1,
                                                      std::placeholders::_2));
 }
+  
+template<typename T>
+bool IHelper::StartActingWithResponseAnim(
+            IActionRunner* action,
+            void(T::*callback)(ActionResult,Robot&),
+            UserFacingActionResultMapFunc mapFunc)
+{
+  _callbackAfterResponseAnim = std::bind(callback, static_cast<T*>(this), std::placeholders::_1,
+                                         std::placeholders::_2);
+  _actionResultMapFunc = mapFunc;
+  
+  return StartActing(action, &IHelper::RespondToResultWithAnim);
+}
+  
   
 
 } // namespace Cozmo

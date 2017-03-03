@@ -39,7 +39,6 @@ private:
   bool _placingOnGround;
   PlaceRelObjectParameters _params;
   u32 _tmpRetryCounter;
-
   
   void StartPlaceRelObject(Robot& robot);
   void RespondToPlaceRelResult(ActionResult result, Robot& robot);

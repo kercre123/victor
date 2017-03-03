@@ -137,9 +137,9 @@ static const float kOnSideTolerance_rawYAccel =3000.0f;
 
 // On face angles
 static const float kPitchAngleOnFacePlantMin_rads = DEG_TO_RAD(110.f);
-static const float kPitchAngleOnFacePlantMax_rads = DEG_TO_RAD(-110.f);
+static const float kPitchAngleOnFacePlantMax_rads = DEG_TO_RAD(-80.f);
 static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //This has not been tested
-static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-110.f); //This has not been tested
+static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //This has not been tested
 
 // For gyro drift check
 static const float kDriftCheckMaxRate_rad_per_sec = DEG_TO_RAD(10.f);

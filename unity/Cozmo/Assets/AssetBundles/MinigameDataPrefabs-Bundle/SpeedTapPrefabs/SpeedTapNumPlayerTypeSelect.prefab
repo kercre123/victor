@@ -1236,7 +1236,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: '#speedTap.title'
+  m_Text: '#speedTap.SelectGameType'
   _AllUppercase: 0
   GlowText: 0
   IsRaycastBlocker: 0

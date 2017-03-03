@@ -74,7 +74,7 @@ namespace Cozmo {
     private void Start() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleReactionaryBehavior);
       DasTracker.Instance.TrackAppStartup();
     }
 
@@ -100,7 +100,7 @@ namespace Cozmo {
     private void OnDestroy() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleReactionaryBehavior);
     }
 
     private void OnApplicationFocus(bool focusStatus) {
@@ -122,7 +122,7 @@ namespace Cozmo {
       DasTracker.Instance.TrackAppQuit();
     }
 
-    private void HandleReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
+    private void HandleReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionTriggerTransition message) {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
       }
@@ -132,7 +132,7 @@ namespace Cozmo {
         CloseGoToSleepDialog();
         CloseConfirmSleepDialog();
 
-        DAS.Debug("PauseManager.HandleReactionaryBehavior.StopSleep", "Transition to: " + message.reactionaryBehaviorTrigger.ToString());
+        DAS.Debug("PauseManager.HandleReactionaryBehavior.StopSleep", "Transition to: " + message.newTrigger.ToString() + " Transitioning From: " + message.oldTrigger.ToString());
       }
     }
 
