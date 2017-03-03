@@ -197,33 +197,44 @@ int MeasureMotor(int speed, bool fast, bool reverse = false )
 }
 
 // MotorL: Lift motor with encoders
-const int MOTOR_LOW_MV = 1000, MOTOR_FULL_MV = 5000;   // In millivolts
+const int MOTOR_LOW_MV = 1200, MOTOR_FULL_MV = 5000;   // In millivolts
 void TestMotorL(void)
 {
   const int TICKS_SLOW = 10 / 2;  //adjust for reduced flag cnt on new motors
   const int TICKS_FAST = 80 / 2;  //"
+  int mm_fwd_low, mm_fwd_full, mm_rev_low, mm_rev_full;
   
-  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)       //Forward slow
-    throw ERROR_MOTOR_SLOW;
-  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)       //Forward fast
-    throw ERROR_MOTOR_FAST;
+  mm_fwd_low  = MeasureMotor(MOTOR_LOW_MV, false);
+  mm_fwd_full = MeasureMotor(MOTOR_FULL_MV, true);
   
-  if( g_fixtureRev < BOARD_REV_1_5_0 )
+  if( g_fixtureRev >= BOARD_REV_1_5_0 )
   {
-    #warning "SKIP REVERSE DIRECTION MOTOR TESTS DURING EP2 TRANSITION-------------"
-    ConsolePrintf("WARNING: Skipping motor reverse direction testing\r\n");
-  }
-  else
-  {
+    ConsolePrintf("motor brake...");
     MotorMV(-1); //motor brake before reverse direction
     MicroWait(100*1000);
     MotorMV(0);
+    MicroWait(250*1000);
+    ConsolePrintf("release\r\n");
     
-    if (-MeasureMotor(MOTOR_LOW_MV, false, true) < TICKS_SLOW) //Reverse slow
-      throw ERROR_MOTOR_SLOW;
-    if (-MeasureMotor(MOTOR_FULL_MV, true, true) < TICKS_FAST) //Reverse fast
-      throw ERROR_MOTOR_FAST;
+    mm_rev_low = MeasureMotor(MOTOR_LOW_MV, false, true);
+    mm_rev_full = MeasureMotor(MOTOR_FULL_MV, true, true);
+  } 
+  else 
+  {
+    #warning "SKIP REVERSE DIRECTION MOTOR TESTS DURING EP2 TRANSITION-------------"
+    ConsolePrintf("WARNING: Skipping motor reverse direction testing\r\n");
+    mm_rev_low = -TICKS_SLOW;
+    mm_rev_full = -TICKS_FAST;
   }
+  
+  if (mm_fwd_low < TICKS_SLOW)    //Forward slow
+    throw ERROR_MOTOR_SLOW;
+  if (mm_fwd_full < TICKS_FAST)   //Forward fast
+    throw ERROR_MOTOR_FAST;
+  if (-mm_rev_low < TICKS_SLOW)   //Reverse slow
+    throw ERROR_MOTOR_SLOW;
+  if (-mm_rev_full < TICKS_FAST)  //Reverse fast
+    throw ERROR_MOTOR_FAST;
 }
 
 // MotorH (head motor) makes about same number of ticks
