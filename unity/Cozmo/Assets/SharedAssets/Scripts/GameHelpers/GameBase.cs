@@ -788,6 +788,11 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.SetEnableFreeplayLightStates(true);
     }
 
+    // Destroy any active player goals
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      _PlayerInfo[i].SetGoal(null);
+    }
+
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
 
