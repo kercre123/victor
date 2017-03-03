@@ -351,7 +351,16 @@
   "sayCozmo.button.say": {
     "translation": "Say"
   },
+  "speedTap.playerTwo": {
+    "translation": "Player 2:"
+  },
   "speedTap.SelectGameType": {
     "translation": "Select Game Type"
+  },
+  "speedTap.playerOne": {
+    "translation": "Player 1:"
+  },
+  "speedTap.tapBlock2": {
+    "translation": "Tap the flashing Cube"
   }
 }

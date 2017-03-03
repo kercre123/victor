@@ -23,6 +23,7 @@ public static class LocalizationKeys {
   public const string kBehaviorReactToPickup = "behavior.ReactToPickup";
   public const string kBehaviorReactToOnSide = "behavior.ReactToOnSide";
   public const string kBehaviorReactToPet = "behavior.ReactToPet";
+  public const string kBehaviorReactToPlacedOnSlope = "behavior.ReactToPlacedOnSlope";
   public const string kBehaviorRequestToPlay = "behavior.RequestToPlay";
   public const string kBehaviorAcknowledgeObject = "behavior.AcknowledgeObject";
   public const string kBehaviorAcknowledgeFace = "behavior.AcknowledgeFace";
@@ -40,6 +41,19 @@ public static class LocalizationKeys {
   public const string kBehaviorPrepareCubes = "behavior.PrepareCubes";
   public const string kBehaviorLookInPlaceForCube = "behavior.LookInPlaceForCube";
   public const string kButtonClearThisSlot = "button.clearThisSlot";
+
+  #endregion
+
+  #region BootStrings
+
+  public const string kBootErrorDiskFull = "boot.errorDiskFull";
+  public const string kBootErrorReadingFiles = "boot.errorReadingFiles";
+  public const string kBootNeedStoragePermission = "boot.needStoragePermission";
+  public const string kBootAppSettingsPermission = "boot.appSettingsPermission";
+  public const string kBootContinue = "boot.continue";
+  public const string kBootSettings = "boot.settings";
+  public const string kBootAppVersion = "boot.appVersion";
+  public const string kBootDeviceId = "boot.deviceId";
 
   #endregion
 
@@ -365,6 +379,10 @@ public static class LocalizationKeys {
   public const string kSpeedTapGameModeHvHvC = "speedTapGame.mode.HvHvC";
   public const string kCozmoSaysInstructionsLabel = "cozmoSays.instructions.label";
   public const string kSayCozmoButtonSay = "sayCozmo.button.say";
+  public const string kSpeedTapPlayerTwo = "speedTap.playerTwo";
+  public const string kSpeedTapSelectGameType = "speedTap.SelectGameType";
+  public const string kSpeedTapPlayerOne = "speedTap.playerOne";
+  public const string kSpeedTapTapBlock2 = "speedTap.tapBlock2";
 
   #endregion
 

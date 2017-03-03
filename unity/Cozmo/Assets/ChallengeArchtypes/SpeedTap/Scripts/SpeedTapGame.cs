@@ -249,10 +249,7 @@ namespace SpeedTap {
       int playerCount = GetPlayerCount();
       for (int i = 0; i < playerCount; ++i) {
         SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
-        // portrait colors mean something specific in MP
-        if (playerCount <= 2) {
-          playerInfo.scoreWidget.Dim = playerInfo != winner;
-        }
+        playerInfo.scoreWidget.Dim = playerInfo != winner;
         playerInfo.scoreWidget.IsWinner = playerInfo == winner;
       }
     }
@@ -280,13 +277,20 @@ namespace SpeedTap {
           }
           else if (numHumans >= 2) {
             playerInfo.scoreWidget = SharedMinigameView.Player2Scoreboard;
-            playerInfo.scoreWidget.PortraitColor = _GameConfig.Player2Tint;
+            playerInfo.scoreWidget.DimPortaitTintColor = _GameConfig.Player2TintDim;
+            playerInfo.scoreWidget.UnDimmedPortaitTintColor = _GameConfig.Player2Tint;
+            // Tech debt for profiles, When profiles are in more than SpeedTap init scoreboard with info earlier
+            // and set colors internally.
+            // The setters don't actually set the color, Dim is the thing that actually changes state
+            playerInfo.scoreWidget.Dim = false;
             playerInfo.scoreWidget.SetNameLabelText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextMPScorePlayer, playerInfo.name));
           }
           else {
             playerInfo.scoreWidget = SharedMinigameView.PlayerScoreboard;
             if (playerCount >= 3) {
-              playerInfo.scoreWidget.PortraitColor = _GameConfig.Player1Tint;
+              playerInfo.scoreWidget.DimPortaitTintColor = _GameConfig.Player1TintDim;
+              playerInfo.scoreWidget.UnDimmedPortaitTintColor = _GameConfig.Player1Tint;
+              playerInfo.scoreWidget.Dim = false;
               playerInfo.scoreWidget.SetNameLabelText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextMPScorePlayer, playerInfo.name));
             }
           }
@@ -344,8 +348,11 @@ namespace SpeedTap {
 
     public override void UpdateUIForGameEnd() {
       base.UpdateUIForGameEnd();
-      // Hide Current Round at end
+      // Hide Current Round at end we show the winner when cozmo is done with his animaitons
       SharedMinigameView.InfoTitleText = string.Empty;
+      if (GetPlayerCount() > 2) {
+        SharedMinigameView.ShelfWidget.SetWidgetText(string.Empty);
+      }
     }
 
     private void LightCubeRemoved(LightCube cube) {
@@ -367,7 +374,7 @@ namespace SpeedTap {
       if (SharedMinigameView != null) {
         SpeedTapPlayerTapConfirmSlide slide = SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapConfirmSlide").GetComponent<SpeedTapPlayerTapConfirmSlide>();
         if (slide != null) {
-          slide.Init(_PlayerInfo.Count, playerIndex);
+          slide.Init(_PlayerInfo.Count, playerIndex, RoundsPlayed);
         }
       }
     }

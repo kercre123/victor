@@ -29,7 +29,7 @@ namespace SpeedTap {
       Sprite winnerPortrait = null;
       string winnerName = _Winner.name;
       int roundsWinnerWon = _Winner.playerRoundsWon;
-      Color winnerColor = ((SpeedTapPlayerInfo)_Winner).scoreWidget.PortraitColor;
+      Color winnerColor = ((SpeedTapPlayerInfo)_Winner).scoreWidget.UnDimmedPortaitTintColor;
       if (_Winner.playerType == PlayerType.Cozmo) {
         winnerPortrait = _SpeedTapGame.SharedMinigameView.CozmoPortrait;
       }
