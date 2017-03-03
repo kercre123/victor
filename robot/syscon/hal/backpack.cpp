@@ -19,6 +19,8 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
+extern GlobalDataToHead g_dataToHead;
+
 //#define DISABLE_LIGHTS
 
 using namespace Anki::Cozmo;
@@ -108,11 +110,24 @@ void Backpack::testLight(int channel) {
   }
 }
 
+static int total_handshakes = 0;
+
 static void setImpulsePattern(void) {
   using namespace Backpack;
 
   if (button_pressed) {
-    setLightsMiddle(BPL_IMPULSE, BackpackLights::button_pressed);
+    switch (total_handshakes) {
+      case 0:
+      case 1:
+      case 2:
+      case 3:
+        setLightsMiddle(BPL_IMPULSE, BackpackLights::button_pressed[total_handshakes >> 1]);
+        break ;
+      default:
+        setLightsMiddle(BPL_IMPULSE, BackpackLights::button_pressed[2]);
+        break ;
+    }
+    
     return ;
   }
 
@@ -132,20 +147,6 @@ static void setImpulsePattern(void) {
     case CHARGE_CHARGER_OUT_OF_SPEC:
       setLightsMiddle(BPL_IMPULSE, BackpackLights::low_battery);
       break ;
-  }
-}
-
-void Backpack::manage() {
-  static bool was_button_pressed = false;
-
-  if (was_button_pressed != button_pressed) {
-    RobotInterface::BackpackButton msg;
-    msg.depressed = button_pressed;
-    RobotInterface::SendMessage(msg);
-
-    was_button_pressed = button_pressed;
-    
-    setImpulsePattern();
   }
 }
 
@@ -265,6 +266,47 @@ void Backpack::detachTimer() {
   lights_enabled = false;
 }
 
+static void HandShakeLift(bool pressed) {
+  static const Fixed HANDSHAKE_THRESHOLD = 45000;
+  static Fixed previous;
+  static Fixed change;
+  static int sign;
+  static bool triggered;
+
+  Fixed current = g_dataToHead.positions[MOTOR_LIFT];
+  Fixed delta = (current - previous) * sign;
+  previous = current;
+
+  if (!pressed) {
+    triggered = false;
+    sign = -1;
+    change = 0;
+    total_handshakes = 0;
+  } else if (delta < 0) {
+    triggered = false;
+    change = 0;
+    sign = -sign;
+  } else {
+    change += delta;
+
+    if (!triggered && change > HANDSHAKE_THRESHOLD) {
+      if (++total_handshakes > 4) {
+        // This will destroy the first sector in the application layer
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos;
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+        NRF_NVMC->ERASEPAGE = 0x18000;
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+        NVIC_SystemReset();
+      }
+
+      setImpulsePattern();
+      triggered = true;
+    }
+  }
+}
+
 void Backpack::trigger() {
   static int countdown = 0;
 
@@ -278,10 +320,28 @@ void Backpack::trigger() {
     nrf_gpio_pin_clear(PIN_BUTTON_DRIVE);
     nrf_gpio_cfg_output(PIN_BUTTON_DRIVE);
     MicroWait(10);
-    button_pressed = !nrf_gpio_pin_read(PIN_BUTTON_SENSE);
+    bool pressed = !nrf_gpio_pin_read(PIN_BUTTON_SENSE);
     nrf_gpio_cfg_input(PIN_BUTTON_DRIVE, NRF_GPIO_PIN_NOPULL);
 
-    Battery::hookButton(button_pressed);
+    static bool was_button_pressed = false;
+    static bool has_released = false;
+
+    if (has_released || !pressed) {
+      button_pressed = pressed;
+      has_released = true;
+
+      HandShakeLift(pressed);
+      Battery::hookButton(pressed);
+
+      if (was_button_pressed != button_pressed) {
+        RobotInterface::BackpackButton msg;
+        msg.depressed = button_pressed;
+        RobotInterface::SendMessage(msg);
+
+        was_button_pressed = button_pressed;
+        setImpulsePattern();
+      }
+    }
   }
 
   // Light timer disabled, don't run
