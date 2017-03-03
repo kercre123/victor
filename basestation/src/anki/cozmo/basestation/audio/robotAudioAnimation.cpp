@@ -75,7 +75,7 @@ void RobotAudioAnimation::AbortAnimation()
   
   // Always stop other events from posting to Audio Client
   if ( _postEventTimerQueue != nullptr ) {
-    Util::Dispatch::Stop(_postEventTimerQueue );
+    Util::Dispatch::Stop( _postEventTimerQueue );
   }
   
   // Notify buffer
@@ -84,7 +84,8 @@ void RobotAudioAnimation::AbortAnimation()
     _audioClient->FlushAudioCallbackQueue();
     // Check if all posted events have been completed
     const bool isComplete = ( GetPostedEventCount() <= GetCompletedEventCount() );
-    _audioBuffer->ResetAudioBufferAnimationCompleted(isComplete);
+    _audioBuffer->ResetAudioBufferAnimationCompleted( isComplete );
+    _currentBufferStream = nullptr;
   }
   
   // Stop all animation audio events being played

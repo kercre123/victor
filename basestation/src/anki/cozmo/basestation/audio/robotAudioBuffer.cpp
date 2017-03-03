@@ -180,13 +180,18 @@ void RobotAudioBuffer::ClearBufferStreams()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::ResetAudioBufferAnimationCompleted( bool completed )
 {
-  std::lock_guard<std::mutex> lock( _lock );
-  
-  _isWaitingForReset = ( _isActive || !completed );
-  
-  if ( _isWaitingForReset ) {
-    _beginResetTimeVal = Util::Time::UniversalTime::GetCurrentTimeValue();
+  // Set waiting for reset flag
+  {
+    std::lock_guard<std::mutex> lock( _lock );
+    
+    _isWaitingForReset = ( _isActive || !completed );
+    
+    if ( _isWaitingForReset ) {
+      _beginResetTimeVal = Util::Time::UniversalTime::GetCurrentTimeValue();
+    }
   }
+  
+  ClearBufferStreams();
   
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
     PRINT_NAMED_ERROR( "RobotAudioBuffer.ResetAudioBufferAnimationCompleted",
