@@ -1200,11 +1200,12 @@ void AIWhiteboard::UpdateBeaconRender()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
 {
-  const ObservableObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
+  const ObservableObject* connectedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
+  const ObservableObject* locatedObject   = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
   
   // We still want to do something with this double tapped object even if it doesn't exist in the
   // current frame
-  if(object != nullptr)
+  if(connectedObject != nullptr)
   {
     bool filterCanUseObject = false;
     
@@ -1217,8 +1218,9 @@ void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
       
       _bestObjectForAction[actionIntent].UnSet();
       
-      if(filterPtr &&
-         filterPtr->ConsiderObject(object))
+      // consider located instance only, if we don't know where it is we can't use it
+      if(filterPtr && (nullptr != locatedObject) &&
+         filterPtr->ConsiderObject(locatedObject))
       {
         _bestObjectForAction[actionIntent] = objectID;
         filterCanUseObject = true;
@@ -1234,6 +1236,11 @@ void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
                           "No actionIntent filter can currently use object %u",
                           objectID.GetValue());
     }
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("AIWhiteboard.SetObjectTapInteraction",
+                        "There's no connected instance but we are setting tap interaction for '%d'.", objectID.GetValue());
   }
 
   _haveTapIntentionObject = true;
