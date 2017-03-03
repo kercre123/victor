@@ -11,7 +11,7 @@ enum WatchdogChannels {
   WDOG_TOTAL_CHANNELS
 };
 
-static const uint32_t MAXIMUM_RESET_COUNT = 5;
+static const uint32_t MAXIMUM_RESET_COUNT = 3;
 
 namespace Anki {
   namespace Cozmo {

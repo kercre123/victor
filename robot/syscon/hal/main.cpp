@@ -88,7 +88,6 @@ int main(void)
     // This means that if the crypto engine is running, the lights will stop pulsing.
     Tasks::manage();
     Radio::rotate(Lights::manage());
-    Backpack::manage();
 
     #ifdef FACTORY
     TestFixtures::manage();
