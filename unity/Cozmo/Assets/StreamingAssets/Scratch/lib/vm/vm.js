@@ -1689,11 +1689,7 @@
 	     */
 	    this.redrawRequested = false;
 
-	    this.stackIsWaitingForFace = false;
-	    this.stackIsWaitingForCube = false;
-
-	    this.cozmoSawFace = false;
-	    this.cozmoSawCube = false;
+	    this._resetCozmoVariables();
 
 	    // Register all given block packages.
 	    this._registerBlockPackages();
@@ -2030,6 +2026,7 @@
 	 */
 	Runtime.prototype.dispose = function () {
 	    this.stopAll();
+	    this._resetCozmoVariables();
 	    this.targets.map(this.disposeTarget, this);
 	};
 
@@ -2076,6 +2073,18 @@
 	        this.targets[i].onGreenFlag();
 	    }
 	    this.startHats('event_whenflagclicked');
+	};
+
+	/**
+	 * Reset Cozmo variables. Must be reset for each script.
+	 * @private
+	 */
+	Runtime.prototype._resetCozmoVariables = function () {
+	    this.stackIsWaitingForFace = false;
+	    this.stackIsWaitingForCube = false;
+	    this.cozmoSawFace = false;
+	    this.cozmoSawCube = false;
+	    this.cozmoDriveSpeed = "slow";
 	};
 
 	/**
@@ -2536,6 +2545,7 @@
 	            if (thread.stack.length === 0) {
 	                // No more stack to run!
 	                thread.status = Thread.STATUS_DONE;
+	                this.runtime._resetCozmoVariables();
 	                return;
 	            }
 	            if (thread.peekStackFrame().isLoop) {
@@ -16856,6 +16866,7 @@
 	        cozmo_headangle: this.setHeadAngle,
 	        cozmo_turn_left: this.turnLeft,
 	        cozmo_turn_right: this.turnRight,
+	        cozmo_drive_speed: this.driveSpeed,
 	        cozmo_says: this.speak
 	    };
 	};
@@ -16880,11 +16891,11 @@
 	Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
 	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
-	       // The distMultiplier will be between 1 and 9 (as set by the parameter
-	       // number under the block) and will be used as a multiplier against the
-	       // base dist_mm of 30.0f.
-	       var distMultiplier = Cast.toNumber(args.DISTANCE);
-	       window.Unity.call('{"command": "cozmoDriveForward","argFloat": ' + distMultiplier + '}');
+	        // The distMultiplier will be between 1 and 9 (as set by the parameter
+	        // number under the block) and will be used as a multiplier against the
+	        // base dist_mm of 30.0f.
+	        var distMultiplier = Cast.toNumber(args.DISTANCE);
+	        window.Unity.call('{"command": "cozmoDriveForward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
 
 	        // Yield
 	        util.stackFrame.timer = new Timer();
@@ -16901,11 +16912,11 @@
 	Scratch3CozmoBlocks.prototype.driveBackward = function(args, util) {
 	    // TODO Wait for RobotCompletedAction instead of using timer.
 	    if (!util.stackFrame.timer) {
-	       // The distMultiplier will be between 1 and 9 (as set by the parameter
-	       // number under the block) and will be used as a multiplier against the
-	       // base dist_mm of 30.0f.
-	       var distMultiplier = Cast.toNumber(args.DISTANCE);
-	       window.Unity.call('{"command": "cozmoDriveBackward","argFloat": ' + distMultiplier + '}');
+	        // The distMultiplier will be between 1 and 9 (as set by the parameter
+	        // number under the block) and will be used as a multiplier against the
+	        // base dist_mm of 30.0f.
+	        var distMultiplier = Cast.toNumber(args.DISTANCE);
+	        window.Unity.call('{"command": "cozmoDriveBackward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
 
 	        // Yield
 	        util.stackFrame.timer = new Timer();
@@ -17122,6 +17133,10 @@
 	            util.yield();
 	        }
 	    }
+	};
+
+	Scratch3CozmoBlocks.prototype.driveSpeed = function(args, util) {
+	    this.runtime.cozmoDriveSpeed = Cast.toString(args.CHOICE);
 	};
 
 	Scratch3CozmoBlocks.prototype.speak = function(args, util) {

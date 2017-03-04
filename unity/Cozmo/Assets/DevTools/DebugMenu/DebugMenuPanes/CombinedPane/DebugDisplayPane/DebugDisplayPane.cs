@@ -12,7 +12,9 @@ public class ScratchRequest {
 }
 
 public class DebugDisplayPane : MonoBehaviour {
-  private const float kDriveSpeed_mmps = 30.0f;
+  private const float kSlowDriveSpeed_mmps = 30.0f;
+  private const float kMediumDriveSpeed_mmps = 45.0f;
+  private const float kFastDriveSpeed_mmps = 60.0f;
   private const float kDriveDist_mm = 30.0f;
   private const float kDegreesToRadians = Mathf.PI / 180.0f;
   private const float kTurnAngle = 90.0f * kDegreesToRadians;
@@ -245,12 +247,12 @@ public class DebugDisplayPane : MonoBehaviour {
     if (scratchRequest.command == "cozmoDriveForward") {
       // Here, argFloat represents the number selected from the dropdown under the "drive forward" block
       float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
-      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kDriveSpeed_mmps, dist_mm, false);
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(getDriveSpeed(scratchRequest), dist_mm, false);
     }
     else if (scratchRequest.command == "cozmoDriveBackward") {
       // Here, argFloat represents the number selected from the dropdown under the "drive backward" block
       float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
-      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(-kDriveSpeed_mmps, -dist_mm, false);
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(-getDriveSpeed(scratchRequest), -dist_mm, false);
     }
     else if (scratchRequest.command == "cozmoPlayAnimation") {
       Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
@@ -298,6 +300,19 @@ public class DebugDisplayPane : MonoBehaviour {
     }
 
     return;
+  }
+
+  // Check if cozmoDriveFaster JavaScript bool arg is set by checking ScratchRequest.argBool and set speed appropriately.
+  private float getDriveSpeed(ScratchRequest scratchRequest) {
+    float driveSpeed_mmps = kSlowDriveSpeed_mmps;
+    if (scratchRequest.argString == "medium") {
+      driveSpeed_mmps = kMediumDriveSpeed_mmps;
+    }
+    else if (scratchRequest.argString == "fast") {
+      driveSpeed_mmps = kFastDriveSpeed_mmps;
+    }
+
+    return driveSpeed_mmps;
   }
 
   private Anki.Cozmo.AnimationTrigger GetAnimationTriggerForScratchName(string scratchAnimationName) {
