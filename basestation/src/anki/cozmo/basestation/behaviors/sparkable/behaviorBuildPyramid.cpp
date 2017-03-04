@@ -65,13 +65,9 @@ BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& conf
 bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const Robot& robot = preReqData.GetRobot();
-  _staticBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidStaticObject);
-  _baseBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidBaseObject);
-  _topBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidTopObject);
-  DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramid.IsRunnable.AllBlocksNotUnique");
-  
-  bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
-  
+  UpdatePyramidTargets(robot);
+
+  bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();  
   return allSet;
 }
 
@@ -80,6 +76,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
 Result BehaviorBuildPyramid::InitInternal(Robot& robot)
 {
   using namespace BlockConfigurations;
+  ResetMemberVars();
   
   // check to see if a pyramid was built but failed to visually verify
   auto& pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
@@ -92,7 +89,6 @@ Result BehaviorBuildPyramid::InitInternal(Robot& robot)
   }
     
   const auto& pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-  _lastBasesCount = 0;
   if(!pyramidBases.empty() || !pyramids.empty()){
     if(!robot.IsCarryingObject()){
       TransitionToDrivingToTopBlock(robot);
@@ -106,14 +102,8 @@ Result BehaviorBuildPyramid::InitInternal(Robot& robot)
       TransitionToPlacingBaseBlock(robot);
     }
   }
+  
   return Result::RESULT_OK;
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramid::StopInternal(Robot& robot)
-{
-  ResetPyramidTargets(robot);
 }
 
   

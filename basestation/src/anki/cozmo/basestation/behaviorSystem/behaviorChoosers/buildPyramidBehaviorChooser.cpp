@@ -956,8 +956,8 @@ void BuildPyramidBehaviorChooser::UpdateDesiredLights(Robot& robot, const Pyrami
       triggerForBase = CubeAnimationTrigger::PyramidFlourish;
       triggerForStatic = CubeAnimationTrigger::PyramidFlourish;
       triggerForTop = CubeAnimationTrigger::PyramidFlourish;
-      baseModifier = GetDenouementBottomLightsModifier();
-      staticModifier = GetDenouementBottomLightsModifier();
+      //baseModifier = GetDenouementBottomLightsModifier();
+      //staticModifier = GetDenouementBottomLightsModifier();
       
       baseLightsSet = true;
       staticLightsSet = true;

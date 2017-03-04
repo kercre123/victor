@@ -76,6 +76,7 @@ BehaviorStatus PickupBlockHelper::UpdateWhileActiveInternal(Robot& robot)
 void PickupBlockHelper::StartPickupAction(Robot& robot)
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
+    _status = BehaviorStatus::Failure;
     return;
   }
   _tmpRetryCounter++;

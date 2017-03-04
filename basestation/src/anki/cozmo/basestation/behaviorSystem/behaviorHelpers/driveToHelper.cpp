@@ -89,6 +89,7 @@ BehaviorStatus DriveToHelper::UpdateWhileActiveInternal(Robot& robot)
 void DriveToHelper::DriveToPreActionPose(Robot& robot)
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
+    _status = BehaviorStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -114,7 +115,7 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
         }else{
           // Drive to the nearest allowed pose, and then perform a visual verify
           CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
-          compoundAction->AddAction(new DriveToPoseAction(robot, possiblePoses));
+          compoundAction->AddAction(new DriveToPoseAction(robot, possiblePoses), true);
           compoundAction->AddAction(new VisuallyVerifyObjectAction(robot, _targetID));
           StartActing(compoundAction, &DriveToHelper::RespondToDriveResult);
         }

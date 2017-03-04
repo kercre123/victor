@@ -96,6 +96,7 @@ BehaviorStatus PlaceRelObjectHelper::UpdateWhileActiveInternal(Robot& robot)
 void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
+    _status = BehaviorStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -120,13 +121,13 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
                                     });
     DelegateAfterUpdate(properties);
   }else{
-    PlaceRelObjectAction* driveTo =
+    PlaceRelObjectAction* placeObj =
             new PlaceRelObjectAction(robot, _targetID, _placingOnGround,
                                      _params.placementOffsetX_mm,
                                      _params.placementOffsetY_mm,
                                      false, _params.relativeCurrentMarker);
     
-    StartActingWithResponseAnim(driveTo, &PlaceRelObjectHelper::RespondToPlaceRelResult);
+    StartActingWithResponseAnim(placeObj, &PlaceRelObjectHelper::RespondToPlaceRelResult);
   }
 }
 

@@ -127,6 +127,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _devCheckTriggerMapImmutableSize(0)
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
+, _behaviorThatSetLights(BehaviorClass::NoneBehavior)
 , _behaviorStateLightsPersistOnReaction(false)
 {
 }
@@ -612,7 +613,9 @@ void BehaviorManager::SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo
   }
   
   //Update behavior light states if appropriate
-  if(!_behaviorStateLights.empty()){
+  if(!_behaviorStateLights.empty() &&
+     (newInfo.GetCurrentBehavior() != nullptr) &&
+     (newInfo.GetCurrentBehavior()->GetClass() != _behaviorThatSetLights)){
     const bool switchingToReaction =
           (newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) &&
           (_runningAndResumeInfo->GetCurrentReactionTrigger() == ReactionTrigger::NoneTrigger);
@@ -1038,7 +1041,9 @@ void BehaviorManager::RequestCurrentBehaviorEndOnNextActionComplete()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction)
+void BehaviorManager::SetBehaviorStateLights(BehaviorClass classSettingLights,
+                                             const std::vector<BehaviorStateLightInfo>& structToSet,
+                                             bool persistOnReaction)
 {
   _behaviorStateLightsPersistOnReaction = persistOnReaction;
   PRINT_CH_INFO("Behaviors", "SetBehaviorStateLights.UpdatingStateLights",
@@ -1075,7 +1080,6 @@ void BehaviorManager::SetBehaviorStateLights(const std::vector<BehaviorStateLigh
     }
   }
   
-  _behaviorStateLights.clear();
   
   // Start the lights playing on any remaining cubes
   for(const auto& entry: structToSet){
@@ -1095,6 +1099,7 @@ void BehaviorManager::SetBehaviorStateLights(const std::vector<BehaviorStateLigh
   }
   
   _behaviorStateLights = structToSet;
+  _behaviorThatSetLights = classSettingLights;
 }
 
   

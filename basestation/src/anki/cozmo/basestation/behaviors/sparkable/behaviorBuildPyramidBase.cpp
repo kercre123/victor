@@ -72,11 +72,8 @@ BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(Robot& robot, const Json::Val
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBuildPyramidBase::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
-  const Robot& robot = preReqData.GetRobot();
-  _staticBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidStaticObject);
-  _baseBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidBaseObject);
-  _topBlockID = robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PyramidTopObject);
-  DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramidBase.IsRunnable.AllBlocksNotUnique");
+  const Robot& robot = preReqData.GetRobot();  
+  UpdatePyramidTargets(robot);
   
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && !_topBlockID.IsSet();
   if(allSet){
@@ -92,9 +89,7 @@ bool BehaviorBuildPyramidBase::IsRunnableInternal(const BehaviorPreReqRobot& pre
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorBuildPyramidBase::InitInternal(Robot& robot)
 {
-  _lastBasesCount = 0;
-  _timeFirstBaseFormed = -1.f;
-  _timeLastBaseDestroyed = -1.f;
+  ResetMemberVars();
   
   if(!robot.IsCarryingObject()){
     TransitionToDrivingToBaseBlock(robot);
@@ -103,12 +98,6 @@ Result BehaviorBuildPyramidBase::InitInternal(Robot& robot)
   }
   
   return Result::RESULT_OK;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::StopInternal(Robot& robot)
-{
-  ResetPyramidTargets(robot);
 }
   
   
@@ -133,14 +122,14 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
   const bool baseAppearedWhileNotPlacing =
                         !pyramidBases.empty() &&
                         (_behaviorState < State::ObservingBase) &&
-                        FLT_GT(_timeFirstBaseFormed + kTimeUntilRespondToBase_s, currentTime_s);
+                        FLT_GT(currentTime_s, _timeFirstBaseFormed + kTimeUntilRespondToBase_s);
   
   // if a pyramid base was destroyed, stop the behavior to build the base again
   const bool baseDestroyedWhileNotPlacing =
                         pyramidBases.empty() &&
                         pyramids.empty() &&
                         FLT_GT(_timeLastBaseDestroyed, 0) &&
-                        FLT_GT(_timeLastBaseDestroyed + kTimeUntilRespondToBase_s, currentTime_s);
+                        FLT_GT(currentTime_s, _timeLastBaseDestroyed + kTimeUntilRespondToBase_s);
 
   if(baseAppearedWhileNotPlacing || baseDestroyedWhileNotPlacing){
     StopWithoutImmediateRepetitionPenalty();
@@ -342,12 +331,19 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
   return (closestObject == nullptr);
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::ResetPyramidTargets(const Robot& robot) const
+void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
 {
-  _staticBlockID.UnSet();
-  _baseBlockID.UnSet();
-  _topBlockID.UnSet();
+  using Intention = AIWhiteboard::ObjectUseIntention;
+  _baseBlockID = robot.GetAIComponent().GetWhiteboard().
+                       GetBestObjectForAction(Intention::PyramidBaseObject);
+  _staticBlockID = robot.GetAIComponent().GetWhiteboard().
+                       GetBestObjectForAction(Intention::PyramidStaticObject);
+  _topBlockID = robot.GetAIComponent().GetWhiteboard().
+                       GetBestObjectForAction(Intention::PyramidTopObject);
+  
+  DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramidBase.IsRunnable.AllBlocksNotUnique");
 }
 
 
@@ -372,6 +368,16 @@ bool BehaviorBuildPyramidBase::AreAllBlockIDsUnique() const
   }
   
   return true;
+}
+  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBuildPyramidBase::ResetMemberVars()
+{
+  _lastBasesCount = 0;
+  _timeFirstBaseFormed = -1.f;
+  _timeLastBaseDestroyed = -1.f;
+  
 }
 
 } //namespace Cozmo

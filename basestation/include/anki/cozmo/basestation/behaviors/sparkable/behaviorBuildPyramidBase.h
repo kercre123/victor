@@ -63,18 +63,15 @@ protected:
   
   virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
-  void StopInternal(Robot& robot) override;
 
   void TransitionToDrivingToBaseBlock(Robot& robot);
   void TransitionToPlacingBaseBlock(Robot& robot);
   void TransitionToObservingBase(Robot& robot);
 
   // utility functions
-  void ResetPyramidTargets(const Robot& robot) const;
   void SetState_internal(State state, const std::string& stateName);
-  bool AreAllBlockIDsUnique() const;
-  
-
+  void ResetMemberVars();
+  void UpdatePyramidTargets(const Robot& robot) const;
   
   // Ensures that blocks IDs which become invalid are cleared out of
   // the assigned ObjectIDs below - not actually const
@@ -106,6 +103,8 @@ private:
   // doesn't have a block in the way
   void UpdateBlockPlacementOffsets(f32& xOffset, f32& yOffset) const;
   bool CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset) const;
+  bool AreAllBlockIDsUnique() const;
+
   
   Robot& _robot;
   

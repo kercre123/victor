@@ -1292,18 +1292,27 @@ void AIWhiteboard::UpdateValidObjects()
         }
       }
     }
-
+    
+    
+    bool bestIsStillValid = true;
+    if(actionIntent == ObjectUseIntention::PyramidBaseObject ||
+       actionIntent == ObjectUseIntention::PyramidStaticObject ||
+       actionIntent == ObjectUseIntention::PyramidTopObject){
+      const auto& validObjs = _validObjectsForAction[actionIntent];
+      bestIsStillValid = validObjs.find(_bestObjectForAction[actionIntent]) != validObjs.end();
+    }
+    
     // Only update _bestObjectForAction as long as we do not have a tap intended object
-    if(!_haveTapIntentionObject)
+    if(!_haveTapIntentionObject || !bestIsStillValid)
     {
       // select best object
       const ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(_robot.GetPose(),
                                                                                          * filterPair.second);
       if( closestObject != nullptr ) {
-        _bestObjectForAction[ filterPair.first ] = closestObject->GetID();
+        _bestObjectForAction[ actionIntent ] = closestObject->GetID();
       }
       else {
-        _bestObjectForAction[ filterPair.first ].UnSet();
+        _bestObjectForAction[ actionIntent ].UnSet();
       }
     }
   }

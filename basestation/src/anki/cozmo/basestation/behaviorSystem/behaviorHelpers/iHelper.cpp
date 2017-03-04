@@ -267,6 +267,10 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
   // Check that the object has been visually verified within the last second
   const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   if(object->GetLastObservedTime() + kLastObservedTimestampTolerence_ms < currentTimestamp){
+    PRINT_CH_INFO("BehaviorHelpers",
+                  "IHelper.IsAtPreActionPoseWithVisualVerification.VisualVerifyFailed",
+                  "Helper %s failed to visually verify object %d",
+                  GetName().c_str(), targetID.GetValue());
     return ActionResult::VISUAL_OBSERVATION_FAILED;
   }
   
@@ -321,17 +325,26 @@ void IHelper::RespondToResultWithAnim(ActionResult result, Robot& robot)
     if(userResult != UserFacingActionResult::Count){
       AnimationTrigger responseAnim = AnimationResponseToActionResult(robot, userResult);
       if(responseAnim != AnimationTrigger::Count){
-        StartActing(new TriggerAnimationAction(robot, responseAnim), _callbackAfterResponseAnim);
-        _callbackAfterResponseAnim = nullptr;
+        StartActing(new TriggerAnimationAction(robot, responseAnim),
+                    [this, &result](ActionResult animPlayed, Robot& robot){
+          // Pass through the true action result, not the played animation result
+          if(_callbackAfterResponseAnim != nullptr){
+            _callbackAfterResponseAnim(result, robot);
+          }
+          _callbackAfterResponseAnim = nullptr;
+        });
         _actionResultMapFunc = nullptr;
         return;
       }
     }
   }
+  
   BehaviorActionResultWithRobotCallback tmpCallback = _callbackAfterResponseAnim;
   _callbackAfterResponseAnim = nullptr;
   _actionResultMapFunc = nullptr;
-  tmpCallback(result, robot);
+  if(tmpCallback != nullptr){
+    tmpCallback(result, robot);
+  }
 }
 
 
