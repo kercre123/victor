@@ -151,11 +151,17 @@ public class ConnectionFlowController : MonoBehaviour {
     InitConnectionFlow();
   }
 
+  private void DestroyBackgroundModal() {
+    if (_ConnectionFlowBackgroundModalInstance) {
+      UIManager.CloseModal(_ConnectionFlowBackgroundModalInstance);
+      _ConnectionFlowBackgroundModalInstance = null;
+    }
+  }
+
   private void ReturnToTitle() {
     if (_ConnectionFlowBackgroundModalInstance != null) {
       _ConnectionFlowBackgroundModalInstance.DialogClosed += QuitConnectionFlow;
-      UIManager.CloseModal(_ConnectionFlowBackgroundModalInstance);
-      _ConnectionFlowBackgroundModalInstance = null;
+      DestroyBackgroundModal();
     }
     else {
       QuitConnectionFlow();
@@ -175,14 +181,21 @@ public class ConnectionFlowController : MonoBehaviour {
     ShowSearchForCozmo();
   }
 
-  private void InitConnectionFlow() {
+  private bool StartAndroidFlowIfApplicable() {
     if (FeatureGate.Instance.IsFeatureEnabled(FeatureType.AndroidConnectionFlow)) {
-#if UNITY_ANDROID && !UNITY_EDITOR
+      #if UNITY_ANDROID && !UNITY_EDITOR
       if (AndroidConnectionFlow.IsAvailable() && !AndroidConnectionFlow.HandleAlreadyOnCozmoWifi()) {
         ShowSearchForCozmoAndroid();
-        return;
+        return true;
       }
-#endif
+      #endif
+    }
+    return false;
+  }
+
+  private void InitConnectionFlow() {
+    if (StartAndroidFlowIfApplicable()) {
+      return;
     }
     // fall-thru from not selecting android flow
     CreateConnectionFlowBackground();
@@ -202,6 +215,8 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void ShowSearchForCozmoAndroid() {
+    DestroyBackgroundModal();
+
     DAS.Info("ConnectionFlow.ShowAndroid", "Instantiating android flow");
     _AndroidConnectionFlowInstance = GameObject.Instantiate(_AndroidConnectionFlowPrefab.gameObject).GetComponent<AndroidConnectionFlow>();
 
@@ -335,7 +350,10 @@ public class ConnectionFlowController : MonoBehaviour {
     }
 
     GameObject.Destroy(_UpdateFirmwareScreenInstance.gameObject);
-    ReturnToSearch();
+    bool started = StartAndroidFlowIfApplicable();
+    if (!started) {
+      ReturnToSearch();
+    }
   }
 
   private void ReplaceCozmoOnCharger() {
@@ -488,8 +506,7 @@ public class ConnectionFlowController : MonoBehaviour {
       GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
       _SecuringConnectionScreenInstance = null;
       ModalPriorityData pullCubePriorityData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
-      UIManager.CloseModal(_ConnectionFlowBackgroundModalInstance);
-      _ConnectionFlowBackgroundModalInstance = null;
+      DestroyBackgroundModal();
       UIManager.OpenModal(_PullCubeTabModalPrefab, pullCubePriorityData, HandlePullCubeTabViewCreated);
     }
     else {
@@ -507,10 +524,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void FinishConnectionFlow() {
-    if (_ConnectionFlowBackgroundModalInstance != null) {
-      UIManager.CloseModal(_ConnectionFlowBackgroundModalInstance);
-      _ConnectionFlowBackgroundModalInstance = null;
-    }
+    DestroyBackgroundModal();
 
     // explicitly enable charger behavior since it should be off by default in engine.
     if (RobotEngineManager.Instance.CurrentRobot != null) {
