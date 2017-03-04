@@ -1026,14 +1026,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _Interactable: 1
-  _TextLabel: {fileID: 11473780}
+  _TextLabel: {fileID: 11425778}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 0.1254902, g: 0.4, b: 0.65882355, a: 1}
   TextPressedColor: {r: 0.1254902, g: 0.4, b: 0.65882355, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
-  - targetImage: {fileID: 11499304}
+  - targetImage: {fileID: 11468528}
     ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 0d05400c965d2429dbf74afacb813d9d, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
