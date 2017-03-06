@@ -137,6 +137,7 @@ def main(scriptArgs):
     return False
   audioProjectPath = options.audioPath
   audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioEngine.gyp')
+  audioGeneratedCladPath=os.path.join(projectRoot, 'generated', 'clad', 'engine')
 
   if not options.bleCozmoPath:
     options.bleCozmoPath = os.path.join(options.projectRoot, 'lib/BLECozmo')
@@ -277,6 +278,7 @@ def main(scriptArgs):
   ctiGtestPath = os.path.relpath(gtestPath, coretechInternalConfigurePath)
   ankiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, configurePath)
   ctiAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, coretechInternalConfigurePath)
+  audioAnkiUtilProjectPath = ctiAnkiUtilProjectPath
   coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
   audioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
   #audioProjectPath = os.path.relpath(options.audioPath, configurePath)
@@ -315,6 +317,7 @@ def main(scriptArgs):
                                   ce-ble_cozmo_path={12}
                                   ce-das_path={13}
                                   clad_dir={14}
+                                  util_gyp_path={15}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -331,6 +334,8 @@ def main(scriptArgs):
                                     bleCozmoProjectPath,
                                     dasProjectPath,
                                     clad_dir_rel,
+                                    audioAnkiUtilProjectPath,
+                                    audioGeneratedCladPath,
                                   )
       gypArgs = _getGypArgs('xcode', '../../generated/mac', gypFile)
       gyp.main(gypArgs)
@@ -369,6 +374,7 @@ def main(scriptArgs):
                                 ce-ble_cozmo_path={12}
                                 ce-das_path={13}
                                 clad_dir={14}
+                                util_gyp_path={15}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -385,6 +391,8 @@ def main(scriptArgs):
                                   bleCozmoProjectPath,
                                   dasProjectPath,
                                   clad_dir_rel,
+                                  audioAnkiUtilProjectPath,
+                                  audioGeneratedCladPath,
                                 )
     gypArgs = _getGypArgs('xcode', '../../generated/ios', gypFile)
     gyp.main(gypArgs)
@@ -418,6 +426,7 @@ def main(scriptArgs):
                                   ce-ble_cozmo_path={11}
                                   ce-das_path={12}
                                   clad_dir={13}
+                                  generated_clad_path={14}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mex'),
@@ -433,6 +442,7 @@ def main(scriptArgs):
                                     bleCozmoProjectPath,
                                     dasProjectPath,
                                     clad_dir_rel,
+                                    audioGeneratedCladPath,
                                   )
       gypArgs = _getGypArgs('xcode', '../../generated/mex', gypFile)
       gyp.main(gypArgs)
@@ -503,6 +513,8 @@ def main(scriptArgs):
                                 ce-das_path={14}
                                 clad_dir={15}
                                 crash_path={16}
+                                util_gyp_path={17}
+                                generated_clad_path={18}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -521,6 +533,8 @@ def main(scriptArgs):
                                   dasProjectPath,
                                   clad_dir_rel,
                                   crashPath,
+                                  ctiAnkiUtilProjectPath,
+                                  audioGeneratedCladPath,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
@@ -561,6 +575,7 @@ def main(scriptArgs):
                                   ce-audio_path={10}
                                   ce-ble_cozmo_path={11}
                                   ce-das_path={12}
+                                  generated_clad_path={13}
                                   """.format(
                                     options.arch,
                                     os.path.join(options.projectRoot, 'generated/linux'),
@@ -575,6 +590,7 @@ def main(scriptArgs):
                                     audioProjectGypPath,
                                     bleCozmoProjectPath,
                                     dasProjectPath,
+                                    audioGeneratedCladPath,
                                   )
       os.environ['CC_target'] = '/usr/bin/clang'
       os.environ['CXX_target'] = '/usr/bin/clang++'
