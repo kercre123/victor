@@ -103,8 +103,10 @@ namespace Cozmo {
 
     private:
       CompoundActionSequential _compoundAction;
-      ObjectID _desiredObjectID;
-      TimeStamp_t _desiredObjectLastObsTime = 0;
+      ObjectID                 _desiredObjectID;
+      bool                     _objectObservedDuringSearch;
+      std::vector<Signal::SmartHandle> _eventHalders;
+
       
       f32 _minWaitTime_s = 0.8f;
       f32 _maxWaitTime_s = 1.2f;
