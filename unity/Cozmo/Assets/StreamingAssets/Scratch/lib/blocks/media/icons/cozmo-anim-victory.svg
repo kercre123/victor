@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg4376" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" sodipodi:docname="face-grin.svg" xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd" height="48px" sodipodi:version="0.32" width="48px" xmlns:cc="http://web.resource.org/cc/" xmlns:xlink="http://www.w3.org/1999/xlink" sodipodi:docbase="/home/jimmac/src/cvs/tango-icon-theme/scalable/emotes" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <defs id="defs3">
+  <linearGradient id="linearGradient2102">
+   <stop id="stop2104" offset="0"/>
+   <stop id="stop2106" stop-opacity="0" offset="1"/>
+  </linearGradient>
+  <radialGradient id="radialGradient1360" gradientUnits="userSpaceOnUse" cy="38.571" cx="24.714" gradientTransform="matrix(1 0 0 .33333 0 25.714)" r="19.714">
+   <stop id="stop4567" offset="0"/>
+   <stop id="stop4569" stop-opacity="0" offset="1"/>
+  </radialGradient>
+  <radialGradient id="radialGradient1362" fx="29.158" fy="15.756" gradientUnits="userSpaceOnUse" cy="15.721" cx="29.288" r="8.9021">
+   <stop id="stop3292" stop-color="#fffcde" offset="0"/>
+   <stop id="stop3294" stop-color="#f6e76a" offset=".64486"/>
+   <stop id="stop3296" stop-color="#ffb738" offset="1"/>
+  </radialGradient>
+  <linearGradient id="linearGradient2112" y2="34.306" xlink:href="#linearGradient2102" gradientUnits="userSpaceOnUse" x2="14" gradientTransform="matrix(1 0 0 1.4045 10.5 -7.9663)" y1="21.062" x1="14"/>
+  <linearGradient id="linearGradient2116" y2="33.427" xlink:href="#linearGradient2102" gradientUnits="userSpaceOnUse" x2="13.5" gradientTransform="matrix(1 0 0 1.1719 2.5 -3.1412)" y1="21.062" x1="14"/>
+  <linearGradient id="linearGradient2120" y2="33.431" xlink:href="#linearGradient2102" gradientUnits="userSpaceOnUse" x2="14.5" gradientTransform="matrix(1 0 0 1.1598 18.5 -2.815)" y1="21.062" x1="14"/>
+  <linearGradient id="linearGradient2132" y2="29.629" gradientUnits="userSpaceOnUse" x2="38.391" gradientTransform="matrix(1.0489 0 0 1 -1.2679 0)" y1="29.629" x1="9.7893">
+   <stop id="stop3070" stop-color="#ccc" offset="0"/>
+   <stop id="stop3076" stop-color="#fff" offset=".34579"/>
+   <stop id="stop3078" stop-color="#fff" offset=".72487"/>
+   <stop id="stop3072" stop-color="#cecece" offset="1"/>
+  </linearGradient>
+ </defs>
+ <sodipodi:namedview id="base" bordercolor="#666666" stroke="#8f5902" pagecolor="#ffffff" showgrid="false" borderopacity="0.19607843" fill="#a40000"/>
+ <metadata id="metadata4">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title>Face - Laughing</dc:title>
+    <dc:subject>
+     <rdf:Bag>
+      <rdf:li>emoticon</rdf:li>
+      <rdf:li>emote</rdf:li>
+      <rdf:li>smiley</rdf:li>
+      <rdf:li>laughing</rdf:li>
+      <rdf:li>:-D</rdf:li>
+      <rdf:li>:D</rdf:li>
+     </rdf:Bag>
+    </dc:subject>
+    <cc:license rdf:resource="http://creativecommons.org/licenses/by-sa/2.0/"/>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Jakub Steiner</dc:title>
+     </cc:Agent>
+    </dc:creator>
+    <dc:source>http://jimmac.musichall.cz</dc:source>
+    <dc:contributor>
+     <cc:Agent>
+      <dc:title>Tuomas Kuosmanen</dc:title>
+     </cc:Agent>
+    </dc:contributor>
+   </cc:Work>
+   <cc:License rdf:about="http://creativecommons.org/licenses/by-sa/2.0/">
+    <cc:permits rdf:resource="http://web.resource.org/cc/Reproduction"/>
+    <cc:permits rdf:resource="http://web.resource.org/cc/Distribution"/>
+    <cc:requires rdf:resource="http://web.resource.org/cc/Notice"/>
+    <cc:requires rdf:resource="http://web.resource.org/cc/Attribution"/>
+    <cc:permits rdf:resource="http://web.resource.org/cc/DerivativeWorks"/>
+    <cc:requires rdf:resource="http://web.resource.org/cc/ShareAlike"/>
+   </cc:License>
+  </rdf:RDF>
+ </metadata>
+ <g id="layer1">
+  <path id="path4563" sodipodi:rx="19.714285" sodipodi:ry="6.5714288" style="color:#000000" sodipodi:type="arc" d="m44.429 38.571a19.714 6.5714 0 1 1 -39.429 0 19.714 6.5714 0 1 1 39.429 0z" fill-rule="evenodd" opacity=".53165" sodipodi:cy="38.571430" sodipodi:cx="24.714285" fill="url(#radialGradient1360)"/>
+  <path id="path4320" sodipodi:rx="8.6620579" sodipodi:ry="8.6620579" stroke="#9c8c0a" stroke-linecap="round" stroke-width=".48004" fill="url(#radialGradient1362)" style="color:#000000" fill-rule="evenodd" transform="matrix(2.0831 0 0 2.0831 -40.547 -16.492)" sodipodi:type="arc" d="m39.775 19.009a8.6621 8.6621 0 1 1 -17.324 0 8.6621 8.6621 0 1 1 17.324 0z" stroke-linejoin="round" sodipodi:cy="19.008621" sodipodi:cx="31.112698"/>
+  <path id="path4322" sodipodi:rx="8.6620579" sodipodi:ry="8.6620579" stroke="#fff" stroke-linecap="round" stroke-width=".50511" fill="none" style="color:#000000" transform="matrix(1.9798 0 0 1.9798 -37.331 -14.527)" opacity=".67722" sodipodi:type="arc" d="m39.775 19.009a8.6621 8.6621 0 1 1 -17.324 0 8.6621 8.6621 0 1 1 17.324 0z" stroke-linejoin="round" sodipodi:cy="19.008621" sodipodi:cx="31.112698"/>
+  <path id="path1364" sodipodi:rx="2.9375000" sodipodi:ry="2.8750000" sodipodi:type="arc" d="m-0.875 1.875a2.9375 2.875 0 0 1 -5.4814 1.4375" sodipodi:open="true" transform="matrix(-.96593 -.25882 .25882 -.96593 24.534 17.201)" stroke="#555753" sodipodi:cy="1.8750000" sodipodi:cx="-3.8125000" fill="none" sodipodi:end="2.6179939" sodipodi:start="0.0000000"/>
+  <path id="path2094" sodipodi:rx="2.9375000" sodipodi:ry="2.8750000" sodipodi:type="arc" d="m-0.875 1.875a2.9375 2.875 0 0 1 -5.4814 1.4375" sodipodi:open="true" transform="matrix(-.96593 -.25882 .25882 -.96593 15.784 17.201)" stroke="#555753" sodipodi:cy="1.8750000" sodipodi:cx="-3.8125000" fill="none" sodipodi:end="2.6179939" sodipodi:start="0.0000000"/>
+  <path id="path2096" style="color:#000000" d="m9.1875 21.045c-1.5389 7.567 4.6925 17.167 14.852 17.167 10.246 0 16.504-8.43 14.719-17.105l-29.572-0.062z" sodipodi:nodetypes="czcc" fill="url(#linearGradient2132)"/>
+  <path id="path2110" opacity=".18182" d="m24.5 21.529v16.854" stroke="url(#linearGradient2112)" stroke-linecap="square" stroke-width="1px" fill="none"/>
+  <path id="path2114" opacity=".18182" d="m16.5 21.469v14.062" stroke="url(#linearGradient2116)" stroke-linecap="square" stroke-width="1px" fill="none"/>
+  <path id="path2118" opacity=".18182" d="m32.5 21.541v13.918" stroke="url(#linearGradient2120)" stroke-linecap="square" stroke-width="1px" fill="none"/>
+  <path id="path2756" style="color:#000000" d="m9.4409 20.616c-1.7806 8.822 5.1591 18.088 14.809 18.088 10.004 0 16.652-9.579 14.372-18.151l-29.181 0.063z" sodipodi:nodetypes="czcc" stroke="#8f5902" fill="none"/>
+ </g>
+</svg>

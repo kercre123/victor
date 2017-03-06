@@ -136,7 +136,7 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
   ///////
   
   // Get the build pyramid base behavior
-  IBehavior* baseRaw = robot.GetBehaviorFactory().FindBehaviorByName("sparksBuildPyramidBase");
+  IBehavior* baseRaw = robot.GetBehaviorFactory().FindBehaviorByName("buildPyramidBase");
   DEV_ASSERT(baseRaw != nullptr &&
              baseRaw->GetClass() == BehaviorClass::BuildPyramidBase,
              "BuildPyramidBehaviorChooser.BuildPyramidBase.ImproperClassRetrievedForName");
@@ -146,7 +146,7 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
              "BuildPyramidBehaviorChooser.BehaviorBuildBase.PointerNotSet");
   
   // Get the build pyramid behavior
-  IBehavior* pyramidRaw = robot.GetBehaviorFactory().FindBehaviorByName("sparksBuildPyramid");
+  IBehavior* pyramidRaw = robot.GetBehaviorFactory().FindBehaviorByName("buildPyramid");
   DEV_ASSERT(pyramidRaw != nullptr &&
              pyramidRaw->GetClass() == BehaviorClass::BuildPyramid,
              "BuildPyramidBehaviorChooser.BuildPyramid.ImproperClassRetrievedForName");
@@ -312,6 +312,20 @@ void BuildPyramidBehaviorChooser::UpdateActiveBehaviorGroup(Robot& robot, bool s
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BuildPyramidBehaviorChooser::IsPyramidSoftSpark(Robot& robot)
+{
+  const bool isRequestSoft = robot.GetBehaviorManager().IsRequestedSparkSoft() &&
+              (robot.GetBehaviorManager().GetRequestedSpark() == UnlockId::BuildPyramid);
+  const bool isActiveSparkSoft = robot.GetBehaviorManager().IsActiveSparkSoft() &&
+              (robot.GetBehaviorManager().GetActiveSpark() == UnlockId::BuildPyramid);
+  const bool isRequestedSparkHard = robot.GetBehaviorManager().IsRequestedSparkHard() &&
+              (robot.GetBehaviorManager().GetRequestedSpark() == UnlockId::BuildPyramid);
+  
+  return !isRequestedSparkHard && (isActiveSparkSoft || isRequestSoft);
+}
+
+  
 
 //////////////////////////////////////////////
 //////////////////////////////////////////////
@@ -655,7 +669,7 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
       }
       
       if(bestBehavior == nullptr && !entry.second.GetHasAcknowledgedPositively()){
-        const bool isSoftSpark = robot.GetBehaviorManager().IsActiveSparkSoft();
+        const bool isSoftSpark = IsPyramidSoftSpark(robot);
 
         const int onSideIdx = (_lightsShouldMessageCubeOnSide && !isSoftSpark) ?
                                                  _onSideAnimIndex : -1;
@@ -794,16 +808,16 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
       (_lastUprightBlockCount >= kMinUprightBlocksForPyramid) &&
       (countOfBlocksUpright < kMinUprightBlocksForPyramid);
     
-    const bool isSoftSpark = robot.GetBehaviorManager().IsActiveSparkSoft();
+    const bool isSoftSpark = IsPyramidSoftSpark(robot);
     const bool didUserRequestSparkEnd = robot.GetBehaviorManager().DidGameRequestSparkEnd();
 
     
     if(minimumUprightCountReached && !isSoftSpark && !didUserRequestSparkEnd){
       _robot.GetExternalInterface()->BroadcastToGame<
-      ExternalInterface::BuildPyramidPreReqsChanged>(true);
+        ExternalInterface::BuildPyramidPreReqsChanged>(true);
     }else if(fellBelowMinimumUprightCount && !isSoftSpark && !didUserRequestSparkEnd){
       _robot.GetExternalInterface()->BroadcastToGame<
-      ExternalInterface::BuildPyramidPreReqsChanged>(false);
+        ExternalInterface::BuildPyramidPreReqsChanged>(false);
     }
   }
   
@@ -956,8 +970,8 @@ void BuildPyramidBehaviorChooser::UpdateDesiredLights(Robot& robot, const Pyrami
       triggerForBase = CubeAnimationTrigger::PyramidFlourish;
       triggerForStatic = CubeAnimationTrigger::PyramidFlourish;
       triggerForTop = CubeAnimationTrigger::PyramidFlourish;
-      baseModifier = GetDenouementBottomLightsModifier();
-      staticModifier = GetDenouementBottomLightsModifier();
+      //baseModifier = GetDenouementBottomLightsModifier();
+      //staticModifier = GetDenouementBottomLightsModifier();
       
       baseLightsSet = true;
       staticLightsSet = true;
@@ -1038,7 +1052,7 @@ void BuildPyramidBehaviorChooser::SetCubeLights(Robot& robot)
     if(entry.second.GetCurrentLightTrigger() != entry.second.GetDesiredLightTrigger() ||
        entry.second.GetDesiredLightModifier() != kEmptyObjectLights)
     {
-      const bool isSoftSpark = robot.GetBehaviorManager().IsActiveSparkSoft();
+      const bool isSoftSpark = IsPyramidSoftSpark(robot);
       const bool shouldSetForOnSide = (_lightsShouldMessageCubeOnSide && !isSoftSpark) ||
                 !IsAnOnSideCubeLight(entry.second.GetDesiredLightTrigger());
       

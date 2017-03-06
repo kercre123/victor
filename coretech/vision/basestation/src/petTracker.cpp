@@ -93,7 +93,7 @@ Result PetTracker::Init(const Json::Value& config)
     return RESULT_FAIL;
   }
   PRINT_NAMED_INFO("PetTracker.OmcvVersion",
-                   "Initializing with OkaoVision version %d.%d",
+                   "Initializing with FaceLibVision version %d.%d",
                    omcvVersionMajor, omcvVersionMinor);
   
   //
@@ -135,7 +135,7 @@ Result PetTracker::Init(const Json::Value& config)
   
   _handles->omcvPetDetector = OMCV_PD_CreateHandle(DETECTION_MODE_MOVIE, parameters[JsonKey::MaxPets]);
   if(NULL == _handles->omcvPetDetector) {
-    PRINT_NAMED_ERROR("PetTracker.Init.OkaoCommonHandleAllocFail", "");
+    PRINT_NAMED_ERROR("PetTracker.Init.FaceLibCommonHandleAllocFail", "");
     return RESULT_FAIL_MEMORY;
   }
   
@@ -170,7 +170,7 @@ Result PetTracker::Init(const Json::Value& config)
   
   omcvResult = OMCV_PD_SetThreshold(_handles->omcvPetDetector, parameters[JsonKey::DetectionThreshold]);
   if(OMCV_NORMAL != omcvResult) {
-    PRINT_NAMED_ERROR("PetTracker.Init.OkaoSetThresholdFailed", "OMCV Result=%d", omcvResult);
+    PRINT_NAMED_ERROR("PetTracker.Init.FaceLibSetThresholdFailed", "OMCV Result=%d", omcvResult);
     return RESULT_FAIL_INVALID_PARAMETER;
   }
   
@@ -178,7 +178,7 @@ Result PetTracker::Init(const Json::Value& config)
                                        parameters[JsonKey::TrackRetryCount],
                                        parameters[JsonKey::TrackHoldCount]);
   if(OMCV_NORMAL != omcvResult) {
-    PRINT_NAMED_ERROR("PetTracker.Init.OkaoSetLostParamFailed", "OMCV Result=%d", omcvResult);
+    PRINT_NAMED_ERROR("PetTracker.Init.FaceLibSetLostParamFailed", "OMCV Result=%d", omcvResult);
     return RESULT_FAIL_INVALID_PARAMETER;
   }
   
@@ -187,7 +187,7 @@ Result PetTracker::Init(const Json::Value& config)
                                              parameters[JsonKey::TrackSteadiness],
                                              parameters[JsonKey::TrackSteadiness]);
   if(OMCV_NORMAL != omcvResult) {
-    PRINT_NAMED_ERROR("PetTracker.Init.OkaoSetSteadinessFailed", "OMCV Result=%d", omcvResult);
+    PRINT_NAMED_ERROR("PetTracker.Init.FaceLibSetSteadinessFailed", "OMCV Result=%d", omcvResult);
     return RESULT_FAIL_INVALID_PARAMETER;
   }
   
@@ -235,7 +235,7 @@ Result PetTracker::Update(const Vision::Image&       frameOrig,
     
     INT32 omcvResult = OMCV_PD_SetThreshold(_handles->omcvPetDetector, _runtimeDetectionThreshold);
     if(OMCV_NORMAL != omcvResult) {
-      PRINT_NAMED_ERROR("PetTracker.Update.OkaoSetThresholdFailed", "OMCV Result=%d", omcvResult);
+      PRINT_NAMED_ERROR("PetTracker.Update.FaceLibSetThresholdFailed", "OMCV Result=%d", omcvResult);
       return RESULT_FAIL_INVALID_PARAMETER;
     }
   }

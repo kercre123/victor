@@ -21,7 +21,8 @@
 
 #define PRINT_TID 1
 #define PRINT_DAS_EXTRAS_BEFORE_EVENT 0
-#define PRINT_DAS_EXTRAS_AFTER_EVENT 0
+#define PRINT_DAS_EXTRAS_AFTER_EVENT 1
+#define PRINT_DAS_EXTRAS_FOR_EVENT_LEVEL_ONLY 1
 
 #if (PRINT_TID)
 #include <stdarg.h>
@@ -134,10 +135,14 @@ void IFormattedLoggerProvider::FormatAndLogChanneled(ILoggerProvider::LogLevel l
   #endif
       
   #if (PRINT_DAS_EXTRAS_BEFORE_EVENT || PRINT_DAS_EXTRAS_AFTER_EVENT)
+    const bool printDasExtras = !PRINT_DAS_EXTRAS_FOR_EVENT_LEVEL_ONLY ||
+                                logLevel == ILoggerProvider::LogLevel::LOG_LEVEL_EVENT;
     const size_t kMaxStringBufferSize = 1024;
     char logString[kMaxStringBufferSize]{0};
-    for (const auto& keyValuePair : keyValues) {
-      snprintf(logString, kMaxStringBufferSize, "%s[%s: %s] ", logString, keyValuePair.first, keyValuePair.second);
+    if(printDasExtras) {
+      for (const auto& keyValuePair : keyValues) {
+        snprintf(logString, kMaxStringBufferSize, "%s[%s: %s] ", logString, keyValuePair.first, keyValuePair.second);
+      }
     }
   #endif
   
@@ -150,7 +155,9 @@ void IFormattedLoggerProvider::FormatAndLogChanneled(ILoggerProvider::LogLevel l
   stream << "[" << GetLogLevelString(logLevel) << "]";
       
   #if (PRINT_DAS_EXTRAS_BEFORE_EVENT)
-    stream << " " << logString;
+    if(printDasExtras) {
+      stream << " " << logString;
+    }
   #endif
 
   std::string channelStr(channel);
@@ -161,7 +168,9 @@ void IFormattedLoggerProvider::FormatAndLogChanneled(ILoggerProvider::LogLevel l
   }
 
   #if (PRINT_DAS_EXTRAS_AFTER_EVENT)
-    stream << " " << logString;
+    if(printDasExtras) {
+      stream << " " << logString;
+    }
   #endif
       
   stream << std::endl;

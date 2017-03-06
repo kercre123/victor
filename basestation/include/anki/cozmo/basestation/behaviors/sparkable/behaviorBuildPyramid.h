@@ -41,7 +41,6 @@ public:
 protected:
   
   virtual Result InitInternal(Robot& robot) override;
-  void StopInternal(Robot& robot) override;
   
 private:
   typedef std::vector<const ObservableObject*> BlockList;

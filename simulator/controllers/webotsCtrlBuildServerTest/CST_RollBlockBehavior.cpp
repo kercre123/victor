@@ -173,7 +173,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
     case TestState::Rolling:
     {
       // Verify that the behavior has stopped and that the cube has been flipped.
-      Pose3d pose = GetLightCubePoseActual(0);
+      Pose3d pose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(25,
                                             _stoppedBehavior,
                                             !IsRobotStatus(RobotStatusFlag::IS_MOVING),
@@ -197,7 +197,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       // Wait for robot to restart the behavior, get close to block, and
       //  stop driving, then give it a shove backward but still in view.
       Pose3d robotPose = GetRobotPoseActual();
-      Pose3d cubePose = GetLightCubePoseActual(0);
+      Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
       const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
       
       // Still driving?
@@ -225,7 +225,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       
       // Wait for robot to get close to block, then give it a shove to the side such that it is out of view.
       Pose3d robotPose = GetRobotPoseActual();
-      Pose3d cubePose = GetLightCubePoseActual(0);
+      Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
       const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
       
       // wait a bit for the block to move away after the previous push.

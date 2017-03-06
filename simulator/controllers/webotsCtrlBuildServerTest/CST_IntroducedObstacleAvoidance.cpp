@@ -26,7 +26,7 @@ private:
   s32 _result = 0;
 
   bool _observedLightCube = false;
-  int _lightCubeId = -1;
+  ObjectType _lightCubeType = ObjectType::Invalid;
   bool _driveToPoseSucceeded = false;
 
   // Motion profile for test
@@ -86,11 +86,11 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(NEAR(GetRobotHeadAngle_rad(), kHeadLookupAngle_rad,
                                             kHeadAngleTolerance_rad) &&
                                        _observedLightCube &&
-                                       _lightCubeId != -1, 5) {
+                                       _lightCubeType != ObjectType::Invalid, 5) {
         // Move cube out of the way before path planning.
         _testState = TestState::WaitOneSecond;
         // Additional Z height to drop the cube and force a cube delocalization.
-        SetLightCubePose(_lightCubeId, {0, {0, 0, 1}, {0, 500, kCubeHeight_mm + 10}});
+        SetLightCubePose(_lightCubeType, {0, {0, 0, 1}, {0, 500, kCubeHeight_mm + 10}});
       }
       break;
     }
@@ -120,7 +120,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
       // of the original path but still leave enough room to introduce the obstacle.
       IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1.8), 3){
         // Put the cube in the way of the robot path.
-        SetLightCubePose(_lightCubeId, kCubeObstructingPose);
+        SetLightCubePose(_lightCubeType, kCubeObstructingPose);
         _driveToPoseSucceeded = false;  // reset var just before we check for it in the next stage just in case
         _testState = TestState::VerifyDriveToPoseCompleted;
       }
@@ -141,7 +141,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
       const Point3f kDistanceThreshold = {5, 5, 5};
       const Radians kAngleThreshold = DEG_TO_RAD(1);
 
-      const Pose3d lightCubePoseActual = GetLightCubePoseActual(_lightCubeId);
+      const Pose3d lightCubePoseActual = GetLightCubePoseActual(_lightCubeType);
       Pose3d cubeObstructingPose(kCubeObstructingPose);
       cubeObstructingPose.SetParent(&lightCubePoseActual);
 
@@ -181,7 +181,7 @@ void CST_IntroducedObstacleAvoidance::HandleRobotCompletedAction(const ExternalI
 void CST_IntroducedObstacleAvoidance::HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg)
 {
   if (!_observedLightCube){
-    _lightCubeId = msg.objectID;
+    _lightCubeType = msg.objectType;
     _observedLightCube = true;
   }
 }

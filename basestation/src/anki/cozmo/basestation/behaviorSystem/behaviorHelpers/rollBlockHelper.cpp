@@ -137,7 +137,25 @@ void RollBlockHelper::StartRollingAction(Robot& robot)
     rollAction->SetPreDockCallback(_params.preDockCallback);
   }
 
-  StartActing(rollAction, &RollBlockHelper::RespondToRollingResult);
+  StartActingWithResponseAnim(rollAction, &RollBlockHelper::RespondToRollingResult, [] (ActionResult result){
+    switch(result){
+      case ActionResult::SUCCESS:
+      {
+        return UserFacingActionResult::Success;
+        break;
+      }
+      case ActionResult::LAST_PICK_AND_PLACE_FAILED:
+      {
+        return UserFacingActionResult::InteractWithBlockDockingIssue;
+        break;
+      }
+      default:
+      {
+        return UserFacingActionResult::DriveToBlockIssue;
+        break;
+      }
+    }
+  });
 }
 
   
@@ -150,6 +168,9 @@ void RollBlockHelper::RespondToRollingResult(ActionResult result, Robot& robot)
       _status = BehaviorStatus::Complete;
       break;
     }
+    case ActionResult::CANCELLED:
+      // leave the helper running, since it's about to be canceled
+      break;
     default:
     {
       _status = BehaviorStatus::Failure;

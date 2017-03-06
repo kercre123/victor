@@ -35,7 +35,15 @@
           "value" : -0.1
         }
       ]
+    },
+    {
+      "name": "GreetingSayName",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.6
+        }
+      ]
     }
-    
   ]
 }

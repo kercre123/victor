@@ -274,37 +274,42 @@ namespace Anki {
 
         for( const auto& objPair : GetObjectPoseMap() ) {
           const auto& objId = objPair.first;
+          const auto& estPose = objPair.second;
 
-          {
-            const auto& pose = objPair.second;
+          PRINT_NAMED_INFO("CozmoSimTest.BlockDebug.Known",
+                           "object %d: (%f, %f, %f) theta_z=%fdeg, upAxis=%s%s",
+                           objId,
+                           estPose.GetTranslation().x(),
+                           estPose.GetTranslation().y(),
+                           estPose.GetTranslation().z(),
+                           estPose.GetRotationAngle<'Z'>().getDegrees(),
+                           AxisToCString( estPose.GetRotationMatrix().GetRotatedParentAxis<'Z'>() ),
+                           GetCarryingObjectID() == objId ? " CARRIED" : "");
 
-            PRINT_NAMED_INFO("CozmoSimTest.BlockDebug.Known",
-                             "object %d: (%f, %f, %f) theta_z=%fdeg, upAxis=%s%s",
-                             objId,
-                             pose.GetTranslation().x(),
-                             pose.GetTranslation().y(),
-                             pose.GetTranslation().z(),
-                             pose.GetRotationAngle<'Z'>().getDegrees(),
-                             AxisToCString( pose.GetRotationMatrix().GetRotatedParentAxis<'Z'>() ),
-                             GetCarryingObjectID() == objId ? " CARRIED" : "");
+          ObjectType objType;
+          if (GetObjectType(objId, objType) != RESULT_OK) {
+            PRINT_NAMED_WARNING("CozmoSimTest.BlockDebug.Actual",
+                                "Could not get object type for objId = %d",
+                                objId);
+          } else {
+            if( HasActualLightCubePose(objType) ) {
+              const Pose3d pose = GetLightCubePoseActual(objType);
+              PRINT_NAMED_INFO("CozmoSimTest.BlockDebug.Actual",
+                               "object %d: (%f, %f, %f) theta_z=%fdeg, upAxis=%s%s",
+                               objId,
+                               pose.GetTranslation().x(),
+                               pose.GetTranslation().y(),
+                               pose.GetTranslation().z(),
+                               pose.GetRotationAngle<'Z'>().getDegrees(),
+                               AxisToCString( pose.GetRotationMatrix().GetRotatedParentAxis<'Z'>() ),
+                               GetCarryingObjectID() == objId ? " CARRIED" : "");
+            }
+            else {
+              // TODO:(bn) warning. Could be a non-lightcube though
+            }
           }
-
-          if( HasActualLightCubePose(objId) ){
-            const Pose3d pose = GetLightCubePoseActual(objId);
-            PRINT_NAMED_INFO("CozmoSimTest.BlockDebug.Actual",
-                             "object %d: (%f, %f, %f) theta_z=%fdeg, upAxis=%s%s",
-                             objId,
-                             pose.GetTranslation().x(),
-                             pose.GetTranslation().y(),
-                             pose.GetTranslation().z(),
-                             pose.GetRotationAngle<'Z'>().getDegrees(),
-                             AxisToCString( pose.GetRotationMatrix().GetRotatedParentAxis<'Z'>() ),
-                             GetCarryingObjectID() == objId ? " CARRIED" : "");
-
-          }
-          else {
-            // TODO:(bn) warning. Could be a non-ligthcube though
-          }
+          
+          
         }
       }
     }

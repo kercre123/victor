@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -1371,6 +1372,7 @@ namespace Anki {
     }
     
 #pragma mark ---- DriveToPlaceRelObjectAction ----
+
     
     DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(Robot& robot,
                                                              const ObjectID& objectID,
@@ -1411,23 +1413,25 @@ namespace Anki {
         if(driveToAction != nullptr)
         {
           driveToAction->SetGetPossiblePosesFunc(
-            [this, &robot, placementOffsetX_mm, placementOffsetY_mm](
-                                              ActionableObject* object,
-                                              std::vector<Pose3d>& possiblePoses,
-                                              bool& alreadyInPosition)
+            [this, &robot, placementOffsetX_mm, placementOffsetY_mm](ActionableObject* object,
+                                                                     std::vector<Pose3d>& possiblePoses,
+                                                                     bool& alreadyInPosition)
             {
-              return PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(
-                                              object, placementOffsetX_mm, placementOffsetY_mm,
-                                              robot, possiblePoses, alreadyInPosition);
+              return PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(object,
+                                                                            placementOffsetX_mm,
+                                                                            placementOffsetY_mm,
+                                                                            robot,
+                                                                            possiblePoses,
+                                                                            alreadyInPosition);
             });
-        }// end if(driveToAction != nullptr)
+        }
         else
         {
           PRINT_CH_INFO("Actions",
                         "DriveToPlaceRelObjectAction.PossiblePosesFunction.NoDriveToAction",
                         "DriveToAction not set, possible invalid poses");
         }
-      } // end if(!relativeCurrentMarkre)
+      }
     }
  
     

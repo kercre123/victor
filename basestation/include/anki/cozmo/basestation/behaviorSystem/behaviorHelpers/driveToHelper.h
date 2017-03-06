@@ -42,8 +42,9 @@ private:
   DriveToParameters _params;
   
   u32 _searchLevel;
-  TimeStamp_t _lastSearchRun_ts;
   u32 _tmpRetryCounter;
+  bool _objectObservedDuringSearch;
+  std::vector<Signal::SmartHandle> _eventHalders;
   
   void DriveToPreActionPose(Robot& robot);
   void RespondToDriveResult(ActionResult result, Robot& robot);

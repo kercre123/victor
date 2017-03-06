@@ -95,16 +95,16 @@ namespace Vision {
     UINT8 okaoVersionMajor=0, okaoVersionMinor = 0;
     INT32 okaoResult = OKAO_CO_GetVersion(&okaoVersionMajor, &okaoVersionMinor);
     if(okaoResult != OKAO_NORMAL) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoVersionFail", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibVersionFail", "");
       return RESULT_FAIL;
     }
-    PRINT_NAMED_INFO("FaceTrackerImpl.Init.OkaoVersion",
-                     "Initializing with OkaoVision version %d.%d",
+    PRINT_NAMED_INFO("FaceTrackerImpl.Init.FaceLibVersion",
+                     "Initializing with FaceLibVision version %d.%d",
                      okaoVersionMajor, okaoVersionMinor);
     
     _okaoCommonHandle = OKAO_CO_CreateHandle();
     if(NULL == _okaoCommonHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoCommonHandleNull", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibCommonHandleNull", "");
       return RESULT_FAIL_MEMORY;
     }
 
@@ -115,7 +115,7 @@ namespace Vision {
       {
         _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_MOVIE, MaxFaces);
         if(NULL == _okaoDetectorHandle) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoDetectionHandleAllocFail.VideoMode", "");
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibDetectionHandleAllocFail.VideoMode", "");
           return RESULT_FAIL_MEMORY;
         }
         
@@ -123,31 +123,31 @@ namespace Vision {
         // TODO: Expose these for setting at runtime
         okaoResult = OKAO_DT_MV_SetDelayCount(_okaoDetectorHandle, 1); // have to see faces for more than one frame
         if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetDelayCountFailed", "");
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetDelayCountFailed", "");
           return RESULT_FAIL_INVALID_PARAMETER;
         }
         
         okaoResult = OKAO_DT_MV_SetSearchCycle(_okaoDetectorHandle, 2, 2, 5);
         if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetSearchCycleFailed", "");
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetSearchCycleFailed", "");
           return RESULT_FAIL_INVALID_PARAMETER;
         }
 
         okaoResult = OKAO_DT_MV_SetDirectionMask(_okaoDetectorHandle, false);
         if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetDirectionMaskFailed", "");
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetDirectionMaskFailed", "");
           return RESULT_FAIL_INVALID_PARAMETER;
         }
         
         okaoResult = OKAO_DT_MV_SetPoseExtension(_okaoDetectorHandle, true, true);
         if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetPoseExtensionFailed", "");
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetPoseExtensionFailed", "");
           return RESULT_FAIL_INVALID_PARAMETER;
         }
         
         okaoResult = OKAO_DT_MV_SetAccuracy(_okaoDetectorHandle, TRACKING_ACCURACY_HIGH);
         if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetAccuracyFailed", "");
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetAccuracyFailed", "");
           return RESULT_FAIL_INVALID_PARAMETER;
         }
       }
@@ -156,7 +156,7 @@ namespace Vision {
       {
         _okaoDetectorHandle = OKAO_DT_CreateHandle(_okaoCommonHandle, DETECTION_MODE_STILL, MaxFaces);
         if(NULL == _okaoDetectorHandle) {
-          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoDetectionHandleAllocFail.StillMode", "");
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibDetectionHandleAllocFail.StillMode", "");
           return RESULT_FAIL_MEMORY;
         }
       }
@@ -172,7 +172,7 @@ namespace Vision {
     //                              ROLL_ANGLE_U45 | ROLL_ANGLE_2 | ROLL_ANGLE_10);
     okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_FRONT, ROLL_ANGLE_U45);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetAngleFailed", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetAngleFailed", "");
       return RESULT_FAIL_INVALID_PARAMETER;
     }
     
@@ -183,7 +183,7 @@ namespace Vision {
 
     okaoResult = OKAO_DT_SetSizeRange(_okaoDetectorHandle, minFaceSize, maxFaceSize);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetSizeRangeFailed", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetSizeRangeFailed", "");
       return RESULT_FAIL_INVALID_PARAMETER;
     }
     
@@ -191,67 +191,67 @@ namespace Vision {
     SetParamHelper(_config, "detectionThreshold", detectionThreshold);
     okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, detectionThreshold);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetThresholdFailed", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetThresholdFailed", "");
       return RESULT_FAIL_INVALID_PARAMETER;
     }
     
     _okaoDetectionResultHandle = OKAO_DT_CreateResultHandle(_okaoCommonHandle);
     if(NULL == _okaoDetectionResultHandle) {
-      PRINT_NAMED_ERROR("FacetrackerImpl.Init.OkaoDetectionResultHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FacetrackerImpl.Init.FaceLibDetectionResultHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoPartDetectorHandle = OKAO_PT_CreateHandle(_okaoCommonHandle);
     if(NULL == _okaoPartDetectorHandle) {
-      PRINT_NAMED_ERROR("FacetrackerImpl.Init.OkaoPartDetectorHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FacetrackerImpl.Init.FaceLibPartDetectorHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoPartDetectionResultHandle = OKAO_PT_CreateResultHandle(_okaoCommonHandle);
     if(NULL == _okaoPartDetectionResultHandle) {
-      PRINT_NAMED_ERROR("FacetrackerImpl.Init.OkaoPartDetectionResultHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FacetrackerImpl.Init.FaceLibPartDetectionResultHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
 
     _okaoPartDetectionResultHandle2 = OKAO_PT_CreateResultHandle(_okaoCommonHandle);
     if(NULL == _okaoPartDetectionResultHandle2) {
-      PRINT_NAMED_ERROR("FacetrackerImpl.Init.OkaoPartDetectionResultHandle2AllocFail", "");
+      PRINT_NAMED_ERROR("FacetrackerImpl.Init.FaceLibPartDetectionResultHandle2AllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoEstimateExpressionHandle = OKAO_EX_CreateHandle(_okaoCommonHandle);
     if(NULL == _okaoEstimateExpressionHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoEstimateExpressionHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibEstimateExpressionHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoExpressionResultHandle = OKAO_EX_CreateResultHandle(_okaoCommonHandle);
     if(NULL == _okaoExpressionResultHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoExpressionResultHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibExpressionResultHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
 
     _okaoSmileDetectHandle = OKAO_SM_CreateHandle();
     if(NULL == _okaoSmileDetectHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSmileDetectionHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSmileDetectionHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoSmileResultHandle = OKAO_SM_CreateResultHandle();
     if(NULL == _okaoSmileResultHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSmileResultHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSmileResultHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoGazeBlinkDetectHandle = OKAO_GB_CreateHandle();
     if(NULL == _okaoGazeBlinkDetectHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoGazeBlinkDetectionHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibGazeBlinkDetectionHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
     _okaoGazeBlinkResultHandle = OKAO_GB_CreateResultHandle();
     if(NULL == _okaoGazeBlinkResultHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoGazeBlinkResultHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibGazeBlinkResultHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
@@ -262,7 +262,7 @@ namespace Vision {
       _isInitialized = true;
       
       PRINT_NAMED_INFO("FaceTrackerImpl.Init.Success",
-                       "OKAO Vision handles created successfully.");
+                       "FaceLib Vision handles created successfully.");
     }
     
     return recognizerInitResult;
@@ -277,74 +277,74 @@ namespace Vision {
     
     if(NULL != _okaoSmileDetectHandle) {
       if(OKAO_NORMAL != OKAO_SM_DeleteHandle(_okaoSmileDetectHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoSmileDetectHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibSmileDetectHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoSmileResultHandle) {
       if(OKAO_NORMAL != OKAO_SM_DeleteResultHandle(_okaoSmileResultHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoSmileResultHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibSmileResultHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoGazeBlinkDetectHandle) {
       if(OKAO_NORMAL != OKAO_GB_DeleteHandle(_okaoGazeBlinkDetectHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoGazeBlinkDetectHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibGazeBlinkDetectHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoGazeBlinkResultHandle) {
       if(OKAO_NORMAL != OKAO_GB_DeleteResultHandle(_okaoGazeBlinkResultHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoGazeBlinkResulttHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibGazeBlinkResulttHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoExpressionResultHandle) {
       if(OKAO_NORMAL != OKAO_EX_DeleteResultHandle(_okaoExpressionResultHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoExpressionResultHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibExpressionResultHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoEstimateExpressionHandle) {
       if(OKAO_NORMAL != OKAO_EX_DeleteHandle(_okaoEstimateExpressionHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoEstimateExpressionHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibEstimateExpressionHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoPartDetectionResultHandle) {
       if(OKAO_NORMAL != OKAO_PT_DeleteResultHandle(_okaoPartDetectionResultHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoPartDetectionResultHandle1DeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibPartDetectionResultHandle1DeleteFail", "");
       }
     }
     
     if(NULL != _okaoPartDetectionResultHandle2) {
       if(OKAO_NORMAL != OKAO_PT_DeleteResultHandle(_okaoPartDetectionResultHandle2)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoPartDetectionResultHandle2DeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibPartDetectionResultHandle2DeleteFail", "");
       }
     }
     
     if(NULL != _okaoPartDetectorHandle) {
       if(OKAO_NORMAL != OKAO_PT_DeleteHandle(_okaoPartDetectorHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoPartDetectorHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibPartDetectorHandleDeleteFail", "");
       }
     }
 
     if(NULL != _okaoDetectionResultHandle) {
       if(OKAO_NORMAL != OKAO_DT_DeleteResultHandle(_okaoDetectionResultHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoDetectionResultHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibDetectionResultHandleDeleteFail", "");
       }
     }
     
     if(NULL != _okaoDetectorHandle) {
       if(OKAO_NORMAL != OKAO_DT_DeleteHandle(_okaoDetectorHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoDetectorHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibDetectorHandleDeleteFail", "");
       }
       _okaoDetectorHandle = NULL;
     }
     
     if(NULL != _okaoCommonHandle) {
       if(OKAO_NORMAL != OKAO_CO_DeleteHandle(_okaoCommonHandle)) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoCommonHandleDeleteFail", "");
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibCommonHandleDeleteFail", "");
       }
       _okaoCommonHandle = NULL;
     }
@@ -357,8 +357,8 @@ namespace Vision {
     INT32 result = OKAO_DT_MV_ResetTracking(_okaoDetectorHandle);
     if(OKAO_NORMAL != result)
     {
-      PRINT_NAMED_WARNING("FaceTrackerImpl.Reset.OkaoResetFailure",
-                          "OKAO result=%d", result);
+      PRINT_NAMED_WARNING("FaceTrackerImpl.Reset.FaceLibResetFailure",
+                          "FaceLib result=%d", result);
     }
     
     _recognizer.ClearAllTrackingData();
@@ -398,8 +398,8 @@ namespace Vision {
     INT32 okaoResult = OKAO_PT_SetPositionFromHandle(_okaoPartDetectorHandle, _okaoDetectionResultHandle, detectionIndex);
     
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoSetPositionFail",
-                          "OKAO Result Code=%d", okaoResult);
+      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibSetPositionFail",
+                          "FaceLib Result Code=%d", okaoResult);
       return false;
     }
     okaoResult = OKAO_PT_DetectPoint_GRAY(_okaoPartDetectorHandle, dataPtr,
@@ -407,8 +407,8 @@ namespace Vision {
     
     if(OKAO_NORMAL != okaoResult) {
       if(OKAO_ERR_PROCESSCONDITION != okaoResult) {
-        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoPartDetectionFail",
-                            "OKAO Result Code=%d", okaoResult);
+        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibPartDetectionFail",
+                            "FaceLib Result Code=%d", okaoResult);
       }
       return false;
     }
@@ -416,8 +416,8 @@ namespace Vision {
     okaoResult = OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX,
                                    _facialParts, _facialPartConfs);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoGetFacePartResultFail",
-                          "OKAO Result Code=%d", okaoResult);
+      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibGetFacePartResultFail",
+                          "FaceLib Result Code=%d", okaoResult);
       return false;
     }
     
@@ -450,8 +450,8 @@ namespace Vision {
     INT32 roll_deg=0, pitch_deg=0, yaw_deg=0;
     okaoResult = OKAO_PT_GetFaceDirection(_okaoPartDetectionResultHandle, &pitch_deg, &yaw_deg, &roll_deg);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoGetFaceDirectionFail",
-                          "OKAO Result Code=%d", okaoResult);
+      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibGetFaceDirectionFail",
+                          "FaceLib Result Code=%d", okaoResult);
       return RESULT_FAIL;
     }
     
@@ -482,8 +482,8 @@ namespace Vision {
   {
     INT32 okaoResult = OKAO_EX_SetPointFromHandle(_okaoEstimateExpressionHandle, _okaoPartDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoSetExpressionPointFail",
-                          "OKAO Result Code=%d", okaoResult);
+      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibSetExpressionPointFail",
+                          "FaceLib Result Code=%d", okaoResult);
       return RESULT_FAIL;
     }
     
@@ -492,19 +492,19 @@ namespace Vision {
     if(OKAO_NORMAL != okaoResult) {
       if(OKAO_ERR_PROCESSCONDITION == okaoResult) {
         // This might happen, depending on face parts
-        PRINT_NAMED_INFO("FaceTrackerImpl.Update.OkaoEstimateExpressionNotPossible", "");
+        PRINT_NAMED_INFO("FaceTrackerImpl.Update.FaceLibEstimateExpressionNotPossible", "");
       } else {
         // This should not happen
-        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoEstimateExpressionFail",
-                            "OKAO Result Code=%d", okaoResult);
+        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibEstimateExpressionFail",
+                            "FaceLib Result Code=%d", okaoResult);
         return RESULT_FAIL;
       }
     } else {
       
       okaoResult = OKAO_EX_GetResult(_okaoExpressionResultHandle, EX_EXPRESSION_KIND_MAX, _expressionValues);
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoGetExpressionResultFail",
-                            "OKAO Result Code=%d", okaoResult);
+        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibGetExpressionResultFail",
+                            "FaceLib Result Code=%d", okaoResult);
         return RESULT_FAIL;
       }
       
@@ -532,14 +532,14 @@ namespace Vision {
     INT32 okaoResult = OKAO_SM_SetPointFromHandle(_okaoSmileDetectHandle, _okaoPartDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceTrackerImpl.DetectSmile.SetPointFromHandleFailed",
-                          "OKAO Result=%d", okaoResult);
+                          "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
     
     okaoResult = OKAO_SM_Estimate(_okaoSmileDetectHandle, dataPtr, nWidth, nHeight, _okaoSmileResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceTrackerImpl.DetectSmile.EstimateFailed",
-                          "OKAO Result=%d", okaoResult);
+                          "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
     
@@ -548,7 +548,7 @@ namespace Vision {
     okaoResult = OKAO_SM_GetResult(_okaoSmileResultHandle, &smileDegree, &confidence);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceTrackerImpl.DetectSmile.GetResultFailed",
-                          "OKAO Result=%d", okaoResult);
+                          "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
     
@@ -565,14 +565,14 @@ namespace Vision {
     INT32 okaoResult = OKAO_GB_SetPointFromHandle(_okaoGazeBlinkDetectHandle, _okaoPartDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceTrackerImpl.DetectGazeAndBlink.SetPointFromHandleFailed",
-                          "OKAO Result=%d", okaoResult);
+                          "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
     
     okaoResult = OKAO_GB_Estimate(_okaoGazeBlinkDetectHandle, dataPtr, nWidth, nHeight, _okaoGazeBlinkResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceTrackerImpl.DetectGazeAndBlink.EstimateFailed",
-                          "OKAO Result=%d", okaoResult);
+                          "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
     
@@ -583,7 +583,7 @@ namespace Vision {
       okaoResult = OKAO_GB_GetGazeDirection(_okaoGazeBlinkResultHandle, &gazeLeftRight_deg, &gazeUpDown_deg);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_WARNING("FaceTrackerImpl.DetectGazeAndBlink.GetGazeDirectionFailed",
-                            "OKAO Result=%d", okaoResult);
+                            "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
     
@@ -597,7 +597,7 @@ namespace Vision {
       okaoResult = OKAO_GB_GetEyeCloseRatio(_okaoGazeBlinkResultHandle, &blinkDegreeLeft, &blinkDegreeRight);
       if(OKAO_NORMAL != okaoResult) {
         PRINT_NAMED_WARNING("FaceTrackerImpl.DetectGazeAndBlink.GetEyeCloseRatioFailed",
-                            "OKAO Result=%d", okaoResult);
+                            "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
       
@@ -628,16 +628,16 @@ namespace Vision {
     okaoResult = OKAO_DT_Detect_GRAY(_okaoDetectorHandle, dataPtr, nWidth, nHeight,
                                      GRAY_ORDER_Y0Y1Y2Y3, _okaoDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoDetectFail", "OKAO Result Code=%d",
-                          okaoResult);
+      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibDetectFail",
+                          "FaceLib Result Code=%d", okaoResult);
       return RESULT_FAIL;
     }
     
     INT32 numDetections = 0;
     okaoResult = OKAO_DT_GetResultCount(_okaoDetectionResultHandle, &numDetections);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoGetResultCountFail",
-                          "OKAO Result Code=%d", okaoResult);
+      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibGetResultCountFail",
+                          "FaceLib Result Code=%d", okaoResult);
       return RESULT_FAIL;
     }
     Toc("FaceDetect");
@@ -662,8 +662,8 @@ namespace Vision {
                                               &detectionInfo);
         
         if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoGetResultInfoFail1",
-                              "Detection index %d of %d. OKAO Result Code=%d",
+          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibGetResultInfoFail1",
+                              "Detection index %d of %d. FaceLib Result Code=%d",
                               detectionIndex, numDetections, okaoResult);
           return RESULT_FAIL;
         }
@@ -696,8 +696,8 @@ namespace Vision {
                                             &detectionInfo);
       
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoGetResultInfoFail2",
-                            "Detection index %d of %d. OKAO Result Code=%d",
+        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibGetResultInfoFail2",
+                            "Detection index %d of %d. FaceLib Result Code=%d",
                             detectionIndex, numDetections, okaoResult);
         return RESULT_FAIL;
       }
@@ -715,8 +715,8 @@ namespace Vision {
                                                  0, &ptLeftTop, &ptRightTop,
                                                  &ptLeftBottom, &ptRightBottom);
       if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.OkaoCenterToSquareFail",
-                            "Detection index %d of %d. OKAO Result Code=%d",
+        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibCenterToSquareFail",
+                            "Detection index %d of %d. FaceLib Result Code=%d",
                             detectionIndex, numDetections, okaoResult);
         return RESULT_FAIL;
       }
@@ -898,7 +898,7 @@ namespace Vision {
     }
     
     if(NULL == _okaoCommonHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.LoadAlbum.NullOkaoCommonHandle", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.LoadAlbum.NullFaceLibCommonHandle", "");
       return RESULT_FAIL;
     }
     

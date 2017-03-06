@@ -65,7 +65,7 @@ private:
 
   // sets _targetFace to the best face to look at from _desiredTargets. Returns true if it found one to react
   // to, false otherwise
-  bool GetBestTarget(const Robot& robot);
+  bool UpdateBestTarget(const Robot& robot);
 
   // current target
   Vision::FaceID_t _targetFace = Vision::UnknownFaceID;

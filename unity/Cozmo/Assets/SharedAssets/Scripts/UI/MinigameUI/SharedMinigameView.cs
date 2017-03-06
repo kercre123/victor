@@ -754,6 +754,9 @@ namespace Cozmo {
         }
         CreateWidgetIfNull<ContinueGameButtonWidget>(ref _ContinueButtonInstance, _ContinueButtonRewardPrefab);
         _ContinueButtonState = ContinueButtonState.Reward;
+        // Much like we have to hide the InfoText mid screen when showing new slides, Hide the shelf.
+        // The shelf text now can conflict with this screen.
+        HideShelf();
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
         _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfTextColor, dasButtonName, dasViewControllerName);
         _ContinueButtonInstance.SetAmountText(rewardAmount);
