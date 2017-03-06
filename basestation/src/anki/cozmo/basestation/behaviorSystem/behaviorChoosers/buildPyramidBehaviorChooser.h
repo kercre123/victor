@@ -131,7 +131,8 @@ private:
   
   
   void UpdateActiveBehaviorGroup(Robot& robot, bool settingUpPyramid);
-  
+  bool IsPyramidSoftSpark(Robot& robot);
+
   ////////
   /// General Chooser functions
   ///////
