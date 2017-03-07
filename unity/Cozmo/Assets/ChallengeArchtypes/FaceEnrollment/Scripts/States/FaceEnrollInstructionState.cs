@@ -176,7 +176,7 @@ namespace FaceEnrollment {
     private void HandleSuccessfulEnrollment(Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted faceEnrollmentCompleted) {
       _FaceEnrollmentGame.ShowDoneShelf = true;
 
-      if (_CurrentRobot.EnrolledFaces.ContainsKey(faceEnrollmentCompleted.faceID)) {
+      if (IsReEnrollment) {
         ReturnToFaceSlide();
       }
       else {
