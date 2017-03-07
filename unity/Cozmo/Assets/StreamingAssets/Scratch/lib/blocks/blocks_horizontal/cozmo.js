@@ -359,6 +359,35 @@ Blockly.Blocks['cozmo_headangle'] = {
   }
 };
 
+Blockly.Blocks['cozmo_dock_with_cube'] = {
+  /**
+   * Block to tell Cozmo to dock with a cube that he can see, if any.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_dock_with_cube",
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-dock-with-cube.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Dock with cube"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.motion,
+      "colour": Blockly.Colours.motion.primary,
+      "colourSecondary": Blockly.Colours.motion.secondary,
+      "colourTertiary": Blockly.Colours.motion.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_says'] = {
   /**
     * Block to make Cozmo speak text
@@ -550,6 +579,34 @@ Blockly.Blocks['cozmo_wait_for_cube'] = {
           "width": 40,
           "height": 40,
           "alt": "Wait until Cozmo sees a cube"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.control,
+      "colour": Blockly.Colours.control.primary,
+      "colourSecondary": Blockly.Colours.control.secondary,
+      "colourTertiary": Blockly.Colours.control.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
+  /**
+   * Block to wait until a cube that Cozmo can see is tapped.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-cube-tap.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Wait for cube tap"
         }
       ],
       "inputsInline": true,

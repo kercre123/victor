@@ -74,8 +74,17 @@
                     </shadow>
                 </value>
             </block>
+            <block type="cozmo_headangle">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_headangle">
+                        <field name="CHOICE">high</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_dock_with_cube"></block>
             <block type="cozmo_wait_for_face"></block>
             <block type="cozmo_wait_for_cube"></block>
+            <block type="cozmo_wait_for_cube_tap"></block>
             <block type="control_repeat">
                 <value name="TIMES">
                     <shadow type="math_whole_number">
@@ -84,13 +93,6 @@
                 </value>
             </block>
             <block type="control_forever"></block>
-            <block type="cozmo_headangle">
-                <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_headangle">
-                        <field name="CHOICE">high</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="event_whenbroadcastreceived">
                 <value name="CHOICE">
                     <shadow type="dropdown_whenbroadcast">
