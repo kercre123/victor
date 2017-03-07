@@ -28,6 +28,7 @@ enum int_32 BehaviorObjective {
   PerformedWorkout,
   PerformedStrongWorkout,
   PickedupBlock,
+  PickedUpAndPutDownBlock,
   PoppedWheelie,
   PouncedAndCaught,
   PutDownBlock,

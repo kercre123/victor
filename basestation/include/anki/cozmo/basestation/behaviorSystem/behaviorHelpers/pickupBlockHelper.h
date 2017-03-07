@@ -40,9 +40,10 @@ private:
   ObjectID _targetID;
   PickupBlockParamaters _params;
   
-  u32 _tmpRetryCounter;
+  u32 _dockAttemptCount;
+  bool _hasTriedOtherPose;
   
-  void StartPickupAction(Robot& robot);
+  void StartPickupAction(Robot& robot, bool ignoreCurrentPredockPose = false);
   void RespondToPickupResult(ActionResult result, Robot& robot);
   void RespondToSearchResult(ActionResult result, Robot& robot);
 

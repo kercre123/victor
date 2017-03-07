@@ -491,9 +491,6 @@ private:
   bool _isResuming;
   bool _isOwnedByFactory;
   
-  const f32 kSamePreactionPoseDistThresh_mm = 30.f;
-  const f32 kSamePreactionPoseAngleThresh_deg = 45.f;
-  
   // A set of the locks that a behavior has used to disable reactions
   // these will be automatically re-enabled on behavior stop
   std::set<std::string> _smartLockIDs;

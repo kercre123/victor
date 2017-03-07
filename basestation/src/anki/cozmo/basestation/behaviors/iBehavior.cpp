@@ -931,19 +931,11 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
   if (result != ActionResult::SUCCESS) {
     return result;
   }
-  
-  for(auto iter = possiblePoses.begin(); iter != possiblePoses.end(); )
-  {
-    if(possiblePoses.size() > 1 && iter->IsSameAs(_robot.GetPose(), kSamePreactionPoseDistThresh_mm,
-                                                  DEG_TO_RAD(kSamePreactionPoseAngleThresh_deg)))
-    {
-      iter = possiblePoses.erase(iter);
-      alreadyInPosition = false;
-    } else {
-      ++iter;
-    }
+
+  if( possiblePoses.size() > 1 && IDockAction::RemoveMatchingPredockPose( _robot.GetPose(), possiblePoses ) ) {
+    alreadyInPosition = false;
   }
-  
+    
   return ActionResult::SUCCESS;
 }
 

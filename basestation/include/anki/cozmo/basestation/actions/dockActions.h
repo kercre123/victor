@@ -161,6 +161,10 @@ namespace Anki {
                                                         f32& approachAngle_rad);
       
       static void GetPreActionPoses(Robot& robot, const PreActionPoseInput& input, PreActionPoseOutput& output);
+
+      // Common function for filtering a list of possible predock poses by removing any "matching" the given
+      // pose. Returns true if one or more elements were removed from the vector, false otherwise
+      static bool RemoveMatchingPredockPose(const Pose3d& pose, std::vector<Pose3d>& possiblePoses);
       
       // Whether or not the lift is believed to be carrying something based on liftLoadCheck
       // at the end of a pickup action.

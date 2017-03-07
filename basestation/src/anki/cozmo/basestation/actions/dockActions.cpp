@@ -37,10 +37,13 @@
 
 
 namespace{
-const float kMaxNegativeXPlacementOffset = 1.f;
+static const float kMaxNegativeXPlacementOffset = 1.f;
 static const char* kDisableReactionsID = "dockActions";
 static const char* kPlaceOnGroundDisableID = "placeOnGroundAction";
 
+// use a fairly large distance offset and tighter angle to try to rule out current pose
+static const f32 kSamePreactionPoseDistThresh_mm = 100.f;
+static const f32 kSamePreactionPoseAngleThresh_deg = 30.f; 
 }
 
 
@@ -491,6 +494,25 @@ namespace Anki {
       }
       
       output.actionResult = ActionResult::SUCCESS;
+    }
+
+    bool IDockAction::RemoveMatchingPredockPose(const Pose3d& pose, std::vector<Pose3d>& possiblePoses)
+    {
+      bool removed = false;
+      for(auto iter = possiblePoses.begin(); iter != possiblePoses.end(); )
+      {
+        if(iter->IsSameAs(pose,
+                          kSamePreactionPoseDistThresh_mm,
+                          DEG_TO_RAD(kSamePreactionPoseAngleThresh_deg))) {
+          iter = possiblePoses.erase(iter);
+          removed = true;
+        }
+        else {
+          ++iter;
+        }
+      }
+
+      return removed;
     }
 
     ActionResult IDockAction::Init()

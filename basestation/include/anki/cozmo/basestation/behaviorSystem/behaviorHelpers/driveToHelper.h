@@ -21,8 +21,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-
 
 class DriveToHelper : public IHelper{
 public:
@@ -51,6 +49,7 @@ private:
   u32 _searchLevel;
   bool _searchStarted;
   bool _searchShouldEnd;
+  Pose3d _initialRobotPose;
   Vision::Camera _robotCameraAtSearchStart;
   std::set<ObjectID> _objectsSeenDuringSearch;
   

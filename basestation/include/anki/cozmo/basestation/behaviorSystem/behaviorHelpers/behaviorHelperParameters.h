@@ -26,6 +26,9 @@ namespace Cozmo {
 
 struct DriveToParameters{
   PreActionPose::ActionType actionType = PreActionPose::ActionType::NONE;
+
+  // if true, force the robot to drive to a different predock pose if it is already near one
+  bool ignoreCurrentPredockPose = false;
   
   f32 approachAngle_rad = DEG_TO_RAD(0);
   bool useApproachAngle = false;
@@ -37,6 +40,11 @@ struct DriveToParameters{
   
 struct PickupBlockParamaters{
   AnimationTrigger animBeforeDock = AnimationTrigger::Count;
+
+  // If true, allow this helper to try to approach the cube from different faces if the pickup fails. This
+  // defaults to false so that the helper will fail and allow the behavior to decide what to do next (e.g. try
+  // again with another block).
+  bool allowedToRetryFromDifferentPose = false;
 };
 
 struct PlaceRelObjectParameters{

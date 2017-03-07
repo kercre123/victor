@@ -174,7 +174,7 @@
          "minTimeSecs": 0,
          "maxTimeSecs": 60,
          "numberOfRepetitions": 1,
-         "behaviorObjective": "PickedupBlock",
+         "behaviorObjective": "PickedUpAndPutDownBlock",
          "softSparkTrigger": "SoftSparkUpgradeLift",
           // these groups are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksPickUpCube" ]

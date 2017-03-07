@@ -49,6 +49,7 @@ enum uint_8 BehaviorClass {
   OnboardingShowCube,
   PeekABoo,
   PickUpCube,
+  PickUpAndPutDownCube,
   PlayAnim,
   PlayArbitraryAnim,
   PopAWheelie,

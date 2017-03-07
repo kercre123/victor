@@ -80,8 +80,6 @@ public:
     PlaceObjectAt,   // place object at location
     RollOrPopAWheelie // roll or pop a wheelie on a block
   };
-
-
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/destruction

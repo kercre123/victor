@@ -101,10 +101,12 @@ bool DriveToHelper::ShouldCancelDelegates(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStatus DriveToHelper::Init(Robot& robot)
 {
+  _initialRobotPose = robot.GetPose();
   _tmpRetryCounter = 0;
   _searchStarted = false;
   ResetSearchVariables(robot);
   DriveToPreActionPose(robot);
+
   return _status;
 }
 
@@ -135,9 +137,32 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
     DriveToObjectAction* driveToAction = new DriveToObjectAction(robot,
                                                                  _targetID,
                                                                  _params.actionType);
+
     if(_params.useApproachAngle){
       driveToAction->SetApproachAngle(_params.approachAngle_rad);
     }
+
+    // TODO:(bn) use shared pointers here. This is ok for now because the action must still exist while it's
+    // GetPossiblePoses function is called. Even better, make GetPossiblePoses not a member of DriveTo
+    if( _params.ignoreCurrentPredockPose ) {
+      auto secondClosestPredockFunc = [this,driveToAction](ActionableObject* object,
+                                                           std::vector<Pose3d>& possiblePoses,
+                                                           bool& alreadyInPosition) {
+
+        ActionResult result = driveToAction->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
+        if( result != ActionResult::SUCCESS ) {
+          return result;
+        }
+
+        if( IDockAction::RemoveMatchingPredockPose(_initialRobotPose, possiblePoses) ) {
+          alreadyInPosition = false;
+        }
+        return ActionResult::SUCCESS;
+      };
+      
+      driveToAction->SetGetPossiblePosesFunc(secondClosestPredockFunc);
+    }
+
     StartActing(driveToAction, &DriveToHelper::RespondToDriveResult);
   }else{
     // Calculate the pre-dock pose directly for PLACE_RELATIVE and drive to that pose
@@ -200,18 +225,21 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
     }
     case ActionResult::NO_PREACTION_POSES:
     {
-      robot.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+      if( !_params.ignoreCurrentPredockPose ) {
+        robot.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+      }
+      _status = BehaviorStatus::Failure;
       break;
     }
     case ActionResult::DID_NOT_REACH_PREACTION_POSE:
     case ActionResult::MOTOR_STOPPED_MAKING_PROGRESS:
+    case ActionResult::FAILED_TRAVERSING_PATH:
     {
       DriveToPreActionPose(robot);
       break;
     }
     case ActionResult::NOT_STARTED:
     case ActionResult::BAD_OBJECT:
-    case ActionResult::FAILED_TRAVERSING_PATH:
     {
       _status = BehaviorStatus::Failure;
       break;
@@ -219,7 +247,12 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
     default:
     {
       //DEV_ASSERT(false, "HANDLE CASE!");
-      DriveToPreActionPose(robot);
+      if( IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY ) {
+        DriveToPreActionPose(robot);
+      }
+      else {
+        _status = BehaviorStatus::Failure;
+      }
       break;
     }
   }

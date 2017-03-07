@@ -24,7 +24,6 @@
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorCantHandleTallStack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
-#include "anki/cozmo/basestation/behaviors/behaviorLiftLoadTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
 #include "anki/cozmo/basestation/behaviors/behaviorEnrollFace.h"
@@ -33,18 +32,19 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFistBump.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
+#include "anki/cozmo/basestation/behaviors/behaviorLiftLoadTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
-#include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOnConfigSeen.h"
+#include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondToRenameFace.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
-#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorRamIntoBlock.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToDoubleTap.h"
@@ -71,6 +71,7 @@
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorKnockOverCubes.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPeekABoo.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickUpAndPutDownCube.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickupCube.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPopAWheelie.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPounceOnMotion.h"
@@ -265,6 +266,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::PickUpCube:
     {
       newBehavior = new BehaviorPickUpCube(robot, config);
+      break;
+    }
+    case BehaviorClass::PickUpAndPutDownCube:
+    {
+      newBehavior = new BehaviorPickUpAndPutDownCube(robot, config);
       break;
     }
     case BehaviorClass::KnockOverCubes:

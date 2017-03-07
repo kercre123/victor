@@ -28,13 +28,26 @@ namespace Cozmo {
 namespace{
 const float kLastObservedTimestampTolerance_ms = 1000.0f;
 }
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::DelegateProperties::ClearDelegateProperties()
 {
   _delegateToSet.reset();
   _onSuccessFunction = nullptr;
   _onFailureFunction = nullptr;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IHelper::DelegateProperties::SucceedImmediatelyOnDelegateFailure()
+{
+  SetOnSuccessFunction( [](Robot& robot) { return IBehavior::Status::Complete; } );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IHelper::DelegateProperties::FailImmediatelyOnDelegateFailure()
+{
+  SetOnFailureFunction( [](Robot& robot) { return IBehavior::Status::Failure; } );
 }
 
 
@@ -62,7 +75,7 @@ IBehavior::Status IHelper::UpdateWhileActive(Robot& robot, HelperHandle& delegat
   bool tickUpdate = true;
   if(!_hasStarted){
     Util::sEventF("robot.behavior_helper.start", {}, "%s", GetName().c_str());
-    PRINT_CH_INFO("Behaviors", "IHelper.Init", "%s", GetName().c_str());
+    PRINT_CH_INFO("BehaviorHelpers", "IHelper.Init", "%s", GetName().c_str());
 
     _hasStarted = true;
     _timeStarted_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -109,7 +122,7 @@ bool IHelper::IsActing()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::Stop(bool isActive)
 {
-  PRINT_CH_INFO("Behaviors", "IHelper.Stop", "%s isActive=%d, IsActing=%d",
+  PRINT_CH_INFO("BehaviorHelpers", "IHelper.Stop", "%s isActive=%d, IsActing=%d",
                 GetName().c_str(),
                 isActive,
                 IsActing());
@@ -176,8 +189,8 @@ void IHelper::LogStopEvent(bool isActive)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status IHelper::OnDelegateSuccess(Robot& robot)
 {
-  PRINT_CH_INFO("Behaviors", "IHelper.OnDelegateSuccess", "%s",
-                GetName().c_str());
+  PRINT_CH_DEBUG("BehaviorHelpers", "IHelper.OnDelegateSuccess", "%s",
+                 GetName().c_str());
 
   if(_onSuccessFunction != nullptr){
     _status = _onSuccessFunction(robot);
@@ -193,7 +206,7 @@ IBehavior::Status IHelper::OnDelegateSuccess(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status IHelper::OnDelegateFailure(Robot& robot)
 {
-  PRINT_CH_INFO("Behaviors", "IHelper.OnDelegateFailure", "%s",
+  PRINT_CH_INFO("BehaviorHelpers", "IHelper.OnDelegateFailure", "%s",
                 GetName().c_str());
 
   if(_onFailureFunction != nullptr) {

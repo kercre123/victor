@@ -30,7 +30,7 @@ namespace Cozmo {
 class Robot;
 class IActionRunner;
 class BehaviorHelperFactory;
-  
+
 class IHelper{
   // Enforce creation/interaction through HelperComponent
   friend class BehaviorHelperComponent;
@@ -53,6 +53,10 @@ protected:
     void SetDelegateToSet(HelperHandle delegate){ _delegateToSet = delegate;}
     void SetOnSuccessFunction(BehaviorStatusCallbackWithRobot onSuccess){_onSuccessFunction = onSuccess;}
     void SetOnFailureFunction(BehaviorStatusCallbackWithRobot onFailure){_onFailureFunction = onFailure;}
+
+    // utility functions to automatically pass or fail when the delegate does
+    void FailImmediatelyOnDelegateFailure();
+    void SucceedImmediatelyOnDelegateFailure();
     
     void ClearDelegateProperties();
     
