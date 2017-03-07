@@ -34,5 +34,5 @@ $_SMARTLING_PUSH_SCRIPT || exit_status=$?
 if [ $exit_status -eq 0 ]; then
     send_slack_message "Smartling cozmo-one *.json were sent successfully." "good" $exit_status
 else
-    send_slack_message "There was a problem uploading *-strings.json to Smartling. Check build log!" "danger" $exit_status
+    send_slack_message "There was a problem uploading en-US/*.json to Smartling. Check build log!" "danger" $exit_status
 fi
