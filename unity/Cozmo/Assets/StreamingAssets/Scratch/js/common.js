@@ -42,9 +42,10 @@
         var workspace = window.Blockly.inject('blocks', {
             media: './lib/blocks/media/',
             scrollbars: false,
-            trashcan: true,
+            trashcan: false,
             horizontalLayout: true,
             toolbox: window.toolbox,
+            toolboxPosition: 'end',
             sounds: true,
             zoom: {
                 controls: false,
