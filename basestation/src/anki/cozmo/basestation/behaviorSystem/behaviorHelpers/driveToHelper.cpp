@@ -162,6 +162,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     {
+      _objectObservedDuringSearch = false;
       SearchForBlock(result, robot);
       break;
     }
