@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyGeneric.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/messageHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/logging/logging.h"
@@ -104,6 +105,14 @@ bool ReactionTriggerStrategyGeneric::ShouldTriggerBehavior(const Robot& robot, c
 // should occur whenever a relevant event is handled.
 void ReactionTriggerStrategyGeneric::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
+  // Don't do anything if this trigger can't interrupt itself and this reaction trigger
+  //  caused the current behavior to run.
+  if (!CanInterruptSelf() &&
+      robot.GetBehaviorManager().GetCurrentReactionTrigger() == GetReactionTrigger())
+  {
+    return;
+  }
+  
   if (_relevantEvents.find(event.GetData().GetTag()) == _relevantEvents.end())
   {
     PRINT_NAMED_ERROR("ReactionTriggerStrategyGeneric.AlwaysHandleInternal.BadEventType",
