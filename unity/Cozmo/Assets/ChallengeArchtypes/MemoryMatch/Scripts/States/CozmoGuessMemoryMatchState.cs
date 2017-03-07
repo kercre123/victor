@@ -1,6 +1,5 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
-using Anki.Cozmo;
 
 namespace MemoryMatch {
   public class CozmoGuessMemoryMatchState : State {
@@ -12,27 +11,6 @@ namespace MemoryMatch {
     private int _LastTargetID;
     private bool _IsAnimating = false;
     private bool _CubeLost = false;
-
-    class MemoryMatchTurnTrigger {
-      public AnimationTrigger left;
-      public AnimationTrigger right;
-      public int maxDegreeTurn;
-      public MemoryMatchTurnTrigger(int setMaxDegree, AnimationTrigger setLeft, AnimationTrigger setRight) {
-        left = setLeft;
-        right = setRight;
-        maxDegreeTurn = setMaxDegree;
-      }
-    }
-
-    // Tweaking to look right in context.
-    MemoryMatchTurnTrigger[] _Thresholds = new MemoryMatchTurnTrigger[] {
-                  new MemoryMatchTurnTrigger(10,AnimationTrigger.MemoryMatchPointLeftSmallFast,AnimationTrigger.MemoryMatchPointRightSmallFast),
-                  new MemoryMatchTurnTrigger(15,AnimationTrigger.MemoryMatchPointLeft1,AnimationTrigger.MemoryMatchPointRight1),
-                  new MemoryMatchTurnTrigger(30,AnimationTrigger.MemoryMatchPointLeft2,AnimationTrigger.MemoryMatchPointRight2),
-                  new MemoryMatchTurnTrigger(45,AnimationTrigger.MemoryMatchPointLeft3,AnimationTrigger.MemoryMatchPointRight3),
-                  new MemoryMatchTurnTrigger(60,AnimationTrigger.MemoryMatchPointLeft4,AnimationTrigger.MemoryMatchPointRight4),
-                  new MemoryMatchTurnTrigger(75,AnimationTrigger.MemoryMatchPointLeftBigFast,AnimationTrigger.MemoryMatchPointRightBigFast),
-        };
 
     public override void Enter() {
       base.Enter();
@@ -119,34 +97,20 @@ namespace MemoryMatch {
       if (_CurrentSequenceIndex > 0) {
         fromIndex = _GameInstance.CubeIdsForGame.IndexOf(_CurrentSequence[_CurrentSequenceIndex - 1]);
       }
-
-      LightCube fromCube = _CurrentRobot.LightCubes[_GameInstance.CubeIdsForGame[fromIndex]];
-
-      // Because we let them set up at different degrees and animators want cozmo to look different
-      // based on distance.
-      AnimationTrigger animTrigger = AnimationTrigger.MemoryMatchPointCenterFast;
-      if (goingToIndex != fromIndex) {
-        Vector3 toFrom = fromCube.WorldPosition - _CurrentRobot.WorldPosition;
-        Vector3 toTarget = target.WorldPosition - _CurrentRobot.WorldPosition;
-        float angleBetween = Vector3.Angle(toFrom, toTarget);
-        // unsigned selectIndex gets degrees we want. Each threshold has a left and right variation.
-        // direction determined by sign of goingToIndex - fromIndex
-        int selectIndex = _Thresholds.Length - 1;
-        for (int i = 0; i < _Thresholds.Length; ++i) {
-          if (angleBetween < _Thresholds[i].maxDegreeTurn) {
-            selectIndex = i;
-            break;
-          }
-        }
-        // moving to cozmo's left
-        if (goingToIndex - fromIndex > 0) {
-          animTrigger = _Thresholds[selectIndex].left;
-        }
-        else {
-          // moving to cozmo's right.
-          animTrigger = _Thresholds[selectIndex].right;
-        }
+      Anki.Cozmo.AnimationTrigger animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointCenterFast;
+      if (goingToIndex - fromIndex == 1) {
+        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointLeftSmallFast;
       }
+      else if (goingToIndex - fromIndex == -1) {
+        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointRightSmallFast;
+      }
+      if (goingToIndex - fromIndex >= 2) {
+        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointLeftBigFast;
+      }
+      else if (goingToIndex - fromIndex <= -2) {
+        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointRightBigFast;
+      }
+
       _StateMachine.PushSubState(new CozmoBlinkLightsMemoryMatchState(target, animTrigger, isCorrect));
     }
 

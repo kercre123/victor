@@ -3,7 +3,7 @@
 // your new parameters will not be used.
 {
   "behaviorClass": "BuildPyramid",
-  "name": "sparksBuildPyramid",
+  "name": "buildPyramid",
   "requiredUnlockId": "BuildPyramid",
   "displayNameKey":"behavior.BuildPyramid",
   "behaviorGroups": [

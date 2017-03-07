@@ -47,26 +47,31 @@ namespace Cozmo {
 namespace {
 
 // how far forward to check and ideally drive
-CONSOLE_VAR_RANGED(f32, kDriveForwardIdealDist_mm, CONSOLE_GROUP, 60.0f, 0.0f, 200.0f);
+CONSOLE_VAR_RANGED(f32, kInteractWithFaces_DriveForwardIdealDist_mm, CONSOLE_GROUP, 40.0f, 0.0f, 200.0f);
 
 // how far forward to move in case the check fails
-CONSOLE_VAR_RANGED(f32, kDriveForwardMinDist_mm, CONSOLE_GROUP, -15.0f, -100.0f, 100.0f);
+CONSOLE_VAR_RANGED(f32, kInteractWithFaces_DriveForwardMinDist_mm, CONSOLE_GROUP, -15.0f, -100.0f, 100.0f);
 
 // if true, do a glance down before the memory map check (only valid if we are doing the check)
 // TODO:(bn) could check memory map for Unknown, and only glance down in that case
-CONSOLE_VAR(bool, kDoGlanceDown, CONSOLE_GROUP, false);
+CONSOLE_VAR(bool, kInteractWithFaces_DoGlanceDown, CONSOLE_GROUP, false);
 
 // if false, always drive the "ideal" distance without checking anything. If true, check memory map to
 // determine which distance to drive
-CONSOLE_VAR(bool, kDoMemoryMapCheckForDriveForward, CONSOLE_GROUP, true);
+CONSOLE_VAR(bool, kInteractWithFaces_DoMemoryMapCheckForDriveForward, CONSOLE_GROUP, true);
 
-CONSOLE_VAR(bool, kVizMemoryMapCheck, CONSOLE_GROUP, false);
+CONSOLE_VAR(bool, kInteractWithFaces_VizMemoryMapCheck, CONSOLE_GROUP, false);
 
-CONSOLE_VAR_RANGED(f32, kDriveForwardSpeed_mmps, CONSOLE_GROUP, 40.0f, 0.0f, 200.0f);
+CONSOLE_VAR_RANGED(f32, kInteractWithFaces_DriveForwardSpeed_mmps, CONSOLE_GROUP, 40.0f, 0.0f, 200.0f);
 
 // Track face for a random amount of time between min and max
-CONSOLE_VAR_RANGED(f32, kMinTimeToTrackFace_s, CONSOLE_GROUP, 2.0f, 0.0f, 30.0f);
-CONSOLE_VAR_RANGED(f32, kMaxTimeToTrackFace_s, CONSOLE_GROUP, 5.0f, 0.0f, 30.0f);
+CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MinTimeToTrackFace_s, CONSOLE_GROUP, 8.0f, 0.0f, 30.0f);
+CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MaxTimeToTrackFace_s, CONSOLE_GROUP, 15.0f, 0.0f, 30.0f);
+
+// Minimum angles to turn during tracking to keep the robot moving and looking alive
+CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MinTrackingPanAngle_deg,  CONSOLE_GROUP, 4.0f, 0.0f, 30.0f);
+CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MinTrackingTiltAngle_deg, CONSOLE_GROUP, 4.0f, 0.0f, 30.0f);
+CONSOLE_VAR(bool,       kInteractWithFaces_ClampSmallTrackingAngles, CONSOLE_GROUP, true);
 
 
 // If we are doing the memory map check, these are the types which will prevent us from driving the ideal
@@ -148,19 +153,19 @@ void BehaviorInteractWithFaces::StopInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward(const Robot& robot)
 {
-  if( kDoMemoryMapCheckForDriveForward ) {
+  if( kInteractWithFaces_DoMemoryMapCheckForDriveForward ) {
 
     const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
     DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
 
     const Vec3f& fromRobot = robot.GetPose().GetTranslation();
 
-    const Vec3f ray{kDriveForwardIdealDist_mm, 0.0f, 0.0f};
+    const Vec3f ray{kInteractWithFaces_DriveForwardIdealDist_mm, 0.0f, 0.0f};
     const Vec3f toGoal = robot.GetPose() * ray;
     
     const bool hasCollision = memoryMap->HasCollisionRayWithTypes(fromRobot, toGoal, typesToBlockDriving);
 
-    if( kVizMemoryMapCheck ) {
+    if( kInteractWithFaces_VizMemoryMapCheck ) {
       const char* vizID = "BehaviorInteractWithFaces.MemMapCheck";
       const float zOffset_mm = 15.0f;
       robot.GetContext()->GetVizManager()->EraseSegments(vizID);
@@ -237,7 +242,7 @@ void BehaviorInteractWithFaces::TransitionToGlancingDown(Robot& robot)
 {
   DEBUG_SET_STATE(GlancingDown);
 
-  if( kDoGlanceDown && kDoMemoryMapCheckForDriveForward ) {
+  if( kInteractWithFaces_DoGlanceDown && kInteractWithFaces_DoMemoryMapCheckForDriveForward ) {
     // TODO:(bn) get a better measurement for this and put it in cozmo config
     const float kLowHeadAngle_rads = DEG_TO_RAD(-10.0f);
     StartActing(new MoveHeadToAngleAction(robot, kLowHeadAngle_rads),
@@ -255,7 +260,9 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(Robot& robot)
   
   // check if we should do the long or short distance
   const bool doLongDrive = CanDriveIdealDistanceForward(robot);
-  const float distToDrive_mm = doLongDrive ? kDriveForwardIdealDist_mm : kDriveForwardMinDist_mm;
+  const float distToDrive_mm = doLongDrive ?
+    kInteractWithFaces_DriveForwardIdealDist_mm :
+    kInteractWithFaces_DriveForwardMinDist_mm;
 
   // drive straight while keeping the head tracking the (players) face
   CompoundActionParallel* action = new CompoundActionParallel(robot);
@@ -268,7 +275,10 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(Robot& robot)
   {
     // don't play driving animations (to avoid sounds which don't make sense here)
     // TODO:(bn) custom driving animations for this action?
-    DriveStraightAction* driveAction = new DriveStraightAction(robot, distToDrive_mm, kDriveForwardSpeed_mmps, false);
+    DriveStraightAction* driveAction = new DriveStraightAction(robot,
+                                                               distToDrive_mm,
+                                                               kInteractWithFaces_DriveForwardSpeed_mmps,
+                                                               false);
     const bool ignoreFailure = false;
     const bool emitCompletionSignal = true;
     action->AddAction( driveAction, ignoreFailure, emitCompletionSignal );
@@ -279,6 +289,10 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(Robot& robot)
     TrackFaceAction* trackWithHeadAction = new TrackFaceAction(robot, _targetFace);
     trackWithHeadAction->SetMode(ITrackAction::Mode::HeadOnly);
     trackWithHeadAction->StopTrackingWhenOtherActionCompleted( driveActionTag );
+    trackWithHeadAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
+    trackWithHeadAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
+    trackWithHeadAction->SetClampSmallAnglesToTolerances(kInteractWithFaces_ClampSmallTrackingAngles);
+
     action->AddAction( trackWithHeadAction );
   }
   
@@ -291,12 +305,21 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace(Robot& robot)
 {
   DEBUG_SET_STATE(TrackingFace);
 
-  const float randomTimeToTrack_s = Util::numeric_cast<float>(GetRNG().RandDblInRange(kMinTimeToTrackFace_s, kMaxTimeToTrackFace_s));
+  const float randomTimeToTrack_s = Util::numeric_cast<float>(
+    GetRNG().RandDblInRange(kInteractWithFaces_MinTimeToTrackFace_s, kInteractWithFaces_MaxTimeToTrackFace_s));
   PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TrackTime", "will track for %f seconds", randomTimeToTrack_s);
   _trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + randomTimeToTrack_s;
 
   CompoundActionParallel* action = new CompoundActionParallel(robot);
-  action->AddAction(new TrackFaceAction(robot, _targetFace));
+
+  {
+    TrackFaceAction* trackAction = new TrackFaceAction(robot, _targetFace);
+    trackAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
+    trackAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
+    trackAction->SetClampSmallAnglesToTolerances(kInteractWithFaces_ClampSmallTrackingAngles);
+    action->AddAction(trackAction);
+  }
+  
   // loop animation forever to keep the eyes moving
   action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::InteractWithFaceTrackingIdle, 0));
   

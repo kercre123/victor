@@ -441,9 +441,17 @@ namespace Vision {
     UpdateMarkerObservationTimes(*otherObject);
   }
 
-  
   Result ObservableObject::GetClosestMarkerPose(const Pose3d& referencePose, const bool ignoreZ,
                                                 Pose3d& closestPoseWrtReference) const
+  {
+    Marker marker(Marker::ANY_CODE);
+    return GetClosestMarkerPose(referencePose, ignoreZ, closestPoseWrtReference, marker);
+  }
+  
+  
+  Result ObservableObject::GetClosestMarkerPose(const Pose3d& referencePose, const bool ignoreZ,
+                                                Pose3d& closestPoseWrtReference,
+                                                Marker& closestMarker) const
   {
     Result result = RESULT_FAIL_ORIGIN_MISMATCH;
     
@@ -463,6 +471,7 @@ namespace Vision {
         {
           minDistSq = distSq;
           closestPoseWrtReference = markerPoseWrtRef;
+          closestMarker = marker;
           result = RESULT_OK;
         }
       }

@@ -26,6 +26,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
@@ -80,7 +81,7 @@ IBehavior::Status BehaviorAcknowledgeFace::UpdateInternal(Robot& robot)
   return super::UpdateInternal(robot);
 }
 
-bool BehaviorAcknowledgeFace::GetBestTarget(const Robot& robot)
+bool BehaviorAcknowledgeFace::UpdateBestTarget(const Robot& robot)
 {
   const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   const bool preferName = false;  
@@ -98,7 +99,7 @@ bool BehaviorAcknowledgeFace::GetBestTarget(const Robot& robot)
 void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
 {
   _targetFace = Vision::UnknownFaceID;
-  if( !GetBestTarget(robot) ) {
+  if( !UpdateBestTarget(robot) ) {
     return;
   }
 
@@ -122,11 +123,13 @@ void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
                 shouldPlayInitialGreeting ? 1 : 0);
   
   if( shouldPlayInitialGreeting ) {
-    turnAction->SetSayNameTriggerCallback([this](const Robot& robot, Vision::FaceID_t faceID){
+    auto& moodManager = robot.GetMoodManager();
+    turnAction->SetSayNameTriggerCallback([this, &moodManager](const Robot& robot, Vision::FaceID_t faceID){
         // only play the initial greeting once, so if we are going to use it, mark that here
         _hasPlayedInitialGreeting = true;
+        moodManager.TriggerEmotionEvent("GreetingSayName", MoodManager::GetCurrentTimeInSeconds());
         return AnimationTrigger::NamedFaceInitialGreeting;
-      });      
+      });
   }
   else {
     turnAction->SetSayNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed);

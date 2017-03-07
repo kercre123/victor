@@ -91,6 +91,10 @@ public:
     RollObjectNoAxisCheck,
     
     PopAWheelieOnObject,
+    
+    PyramidBaseObject,
+    PyramidStaticObject,
+    PyramidTopObject
    };
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -313,6 +317,11 @@ private:
   bool CanPopAWheelieHelper(const ObservableObject* object) const;
   bool CanRollHelper(const ObservableObject* object) const;
   bool CanRollRotationImportantHelper(const ObservableObject* object) const;
+  
+  bool CanUseAsPyramidBaseBlock(const ObservableObject* object) const;
+  bool CanUseAsPyramidStaticBlock(const ObservableObject* object) const;
+  bool CanUseAsPyramidTopBlock(const ObservableObject* object) const;
+  
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Failures

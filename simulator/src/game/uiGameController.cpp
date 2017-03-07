@@ -2008,18 +2008,18 @@ namespace Anki {
       transField->setSFVec3f(translation);
     }
     
-    void UiGameController::SetLightCubePose(int lightCubeId, const Pose3d& newPose)
+    void UiGameController::SetLightCubePose(ObjectType lightCubeType, const Pose3d& newPose)
     {
-      webots::Node* lightCube = GetLightCubeById(lightCubeId);
+      webots::Node* lightCube = GetLightCubeByType(lightCubeType);
 
       assert(lightCube != nullptr);
       
       SetNodePose(lightCube, newPose);
     }
   
-    const Pose3d UiGameController::GetLightCubePoseActual(int lightCubeId)
+    const Pose3d UiGameController::GetLightCubePoseActual(ObjectType lightCubeType)
     {
-      webots::Node* lightCube = GetLightCubeById(lightCubeId);
+      webots::Node* lightCube = GetLightCubeByType(lightCubeType);
       return GetPose3dOfNode(lightCube);
     }
 
@@ -2064,28 +2064,30 @@ namespace Anki {
       return pose;
     }
 
-    bool UiGameController::HasActualLightCubePose(int lightCubeId) const
+    bool UiGameController::HasActualLightCubePose(ObjectType lightCubeType) const
     {
+      int proto_type = static_cast<int>(lightCubeType) - 1;
       for (auto lightCube : _lightCubes) {
         webots::Field* id = lightCube->getField("ID");
-        if (id && id->getSFInt32() == lightCubeId) {
+        if (id && id->getSFInt32() == proto_type) {
           return true;
         }
       }
       return false;
     }
 
-    webots::Node* UiGameController::GetLightCubeById(int lightCubeId) const
+    webots::Node* UiGameController::GetLightCubeByType(ObjectType type) const
     {
+      int proto_type = static_cast<int>(type) - 1;
       for (auto lightCube : _lightCubes) {
         webots::Field* id = lightCube->getField("ID");
-        if (id && id->getSFInt32() == lightCubeId) {
+        if (id && id->getSFInt32() == proto_type) {
           return lightCube;
         }
       }
 
-      DEV_ASSERT_MSG(false, "UiGameController.GetLightCubeById",
-                     "Can't find the light cube with id %d in the world", lightCubeId);
+      DEV_ASSERT_MSG(false, "UiGameController.GetLightCubeByType",
+                     "Can't find the light cube with type '%s' in the world", ObjectTypeToString(type));
       return nullptr;
     }
     

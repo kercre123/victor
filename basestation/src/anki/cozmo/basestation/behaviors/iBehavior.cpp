@@ -867,7 +867,7 @@ bool IBehavior::SmartDelegateToHelper(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction)
 {
-  _robot.GetBehaviorManager().SetBehaviorStateLights(structToSet, persistOnReaction);
+  _robot.GetBehaviorManager().SetBehaviorStateLights(GetClass(), structToSet, persistOnReaction);
 }
 
 

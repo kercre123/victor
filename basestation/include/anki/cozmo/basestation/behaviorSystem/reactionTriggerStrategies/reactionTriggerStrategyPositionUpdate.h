@@ -44,7 +44,7 @@ protected:
     float       samePoseDistThreshold_sparked_mm   = 30.f;
   } _params;
   
-  void LoadConfig(const Json::Value& config);
+  // void LoadConfig(const Json::Value& config);
   
   struct ReactionData
   {

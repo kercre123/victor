@@ -46,8 +46,6 @@ Blockly.Blocks['dropdown_cozmo_setcolor'] = {
             value: 'orange', width: 48, height: 48, alt: 'Orange'},
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_coral.svg',
             value: 'coral', width: 48, height: 48, alt: 'Coral'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_magenta.svg',
-            value: 'magenta', width: 48, height: 48, alt: 'Magenta'},
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_purple.svg',
             value: 'purple', width: 48, height: 48, alt: 'Purple'},
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_blue.svg',
@@ -55,7 +53,9 @@ Blockly.Blocks['dropdown_cozmo_setcolor'] = {
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_green.svg',
             value: 'green', width: 48, height: 48, alt: 'Green'},
           {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_white.svg',
-              value: 'white', width: 48, height: 48, alt: 'White'}
+              value: 'white', width: 48, height: 48, alt: 'White'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_black.svg',
+              value: 'off', width: 48, height: 48, alt: 'Off'}
         ]), 'CHOICE');
     this.setOutput(true);
     this.setColour(Blockly.Colours.looks.primary,
@@ -98,14 +98,14 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
   }
 };
 
-Blockly.Blocks['cozmo_drive'] = {
+Blockly.Blocks['cozmo_drive_forward'] = {
   /**
    * Block to drive forward.
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "id": "cozmo_drive",
+      "id": "cozmo_drive_forward",
       "message0": "%1 %2",
       "args0": [
         {
@@ -113,7 +113,7 @@ Blockly.Blocks['cozmo_drive'] = {
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-forward.svg",
           "width": 40,
           "height": 40,
-          "alt": "Drive robot straight"
+          "alt": "Drive forward"
         },
         {
           "type": "input_value",
@@ -129,6 +129,88 @@ Blockly.Blocks['cozmo_drive'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
+  }
+};
+
+Blockly.Blocks['cozmo_drive_backward'] = {
+  /**
+   * Block to drive backward.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_drive_backward",
+      "message0": "%1 %2",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-backward.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Drive backward"
+        },
+        {
+          "type": "input_value",
+          "name": "DISTANCE",
+          "check": "Number"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.motion,
+      "colour": Blockly.Colours.motion.primary,
+      "colourSecondary": Blockly.Colours.motion.secondary,
+      "colourTertiary": Blockly.Colours.motion.tertiary
+    });
+  }
+};
+
+
+Blockly.Blocks['dropdown_cozmo_setanimation'] = {
+  /**
+   * Block for set animation drop-down.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldIconMenu([
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-happy.svg',
+              value: 'happy', width: 48, height: 48, alt: 'Happy'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-victory.svg',
+            value: 'victory', width: 48, height: 48, alt: 'Victory'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-unhappy.svg',
+            value: 'unhappy', width: 48, height: 48, alt: 'Unhappy'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-surprise.svg',
+            value: 'surprise', width: 48, height: 48, alt: 'Surprise'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-dog.svg',
+            value: 'dog', width: 48, height: 48, alt: 'Dog'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-cat.svg',
+            value: 'cat', width: 48, height: 48, alt: 'Cat'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-sneeze.svg',
+            value: 'sneeze', width: 48, height: 48, alt: 'Sneeze'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-excited.svg',
+              value: 'excited', width: 48, height: 48, alt: 'Excited'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-thinking.svg',
+              value: 'thinking', width: 48, height: 48, alt: 'Thinking'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-bored.svg',
+            value: 'bored', width: 48, height: 48, alt: 'Bored'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-frustrated.svg',
+            value: 'frustrated', width: 48, height: 48, alt: 'Frustrated'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-chatty.svg',
+            value: 'chatty', width: 48, height: 48, alt: 'Chatty'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-dejected.svg',
+            value: 'dejected', width: 48, height: 48, alt: 'Dejected'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-sleep.svg',
+              value: 'sleep', width: 48, height: 48, alt: 'Sleep'},
+          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-anim-mystery.svg',
+              value: 'mystery', width: 48, height: 48, alt: 'Mystery'}
+        ]), 'CHOICE');
+    this.setOutput(true);
+    this.setColour(Blockly.Colours.looks.primary,
+      Blockly.Colours.looks.secondary,
+      Blockly.Colours.looks.tertiary
+    );
   }
 };
 
@@ -151,17 +233,16 @@ Blockly.Blocks['cozmo_animation'] = {
         },
         {
           "type": "input_value",
-          "name": "DURATION",
-          "check": "Number"
+          "name": "CHOICE"
         }
       ],
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary
     });
   }
 };
@@ -204,7 +285,7 @@ Blockly.Blocks['cozmo_liftheight'] = {
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-forklift-medium.svg",
           "width": 40,
           "height": 40,
-          "alt": "Motor Speed"
+          "alt": "Move lift"
         },
         {
           "type": "input_value",
@@ -260,7 +341,7 @@ Blockly.Blocks['cozmo_headangle'] = {
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-head-angle-high.svg",
           "width": 40,
           "height": 40,
-          "alt": "Motor Speed"
+          "alt": "Move head"
         },
         {
           "type": "input_value",
@@ -305,6 +386,91 @@ init: function() {
       "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['dropdown_cozmo_drive_speed'] = {
+  /**
+   * Block to set speed for Cozmo drive forward and backward.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldIconMenu([
+            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-drive-slow.svg',
+              value: 'slow', width: 48, height: 48, alt: 'Slow'},
+            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-drive-medium.svg',
+              value: 'medium', width: 48, height: 48, alt: 'Medium'},
+            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-drive-fast.svg',
+              value: 'fast', width: 48, height: 48, alt: 'Fast'}
+        ]), 'CHOICE');
+    this.setOutput(true);
+    this.setColour(Blockly.Colours.control.primary,
+      Blockly.Colours.control.secondary,
+      Blockly.Colours.control.tertiary
+    );
+  }
+};
+
+Blockly.Blocks['cozmo_drive_speed'] = {
+  /**
+   * Block to make Cozmo drive forward or backward faster.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo__drive_speed",
+      "message0": "%1 %2",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-drive-slow.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Set drive speed"
+        },
+        {
+          "type": "input_value",
+          "name": "CHOICE"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.control,
+      "colour": Blockly.Colours.control.primary,
+      "colourSecondary": Blockly.Colours.control.secondary,
+      "colourTertiary": Blockly.Colours.control.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_turn_left'] = {
+  /**
+   * Block to turn Cozmo 90 degrees left.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_turn_left",
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-turn-left.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Turn left"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.motion,
       "colour": Blockly.Colours.motion.primary,
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
@@ -312,22 +478,22 @@ init: function() {
   }
 };
 
-Blockly.Blocks['cozmo_turn'] = {
+Blockly.Blocks['cozmo_turn_right'] = {
   /**
-   * Block to turn Cozmo 90 degrees.
+   * Block to turn Cozmo 90 degrees right.
    * @this Blockly.Block
   */
   init: function() {
     this.jsonInit({
-      "id": "cozmo_turn",
+      "id": "cozmo_turn_right",
       "message0": "%1",
       "args0": [
         {
           "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-turn.svg",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-turn-right.svg",
           "width": 40,
           "height": 40,
-          "alt": "Make robot turn"
+          "alt": "Turn right"
         }
       ],
       "inputsInline": true,

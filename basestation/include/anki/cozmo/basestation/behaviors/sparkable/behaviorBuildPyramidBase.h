@@ -63,17 +63,15 @@ protected:
   
   virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
-  void StopInternal(Robot& robot) override;
 
   void TransitionToDrivingToBaseBlock(Robot& robot);
   void TransitionToPlacingBaseBlock(Robot& robot);
   void TransitionToObservingBase(Robot& robot);
 
   // utility functions
-  void UpdatePyramidTargets(const Robot& robot) const;
-  void ResetPyramidTargets(const Robot& robot) const;
-  
   void SetState_internal(State state, const std::string& stateName);
+  void ResetMemberVars();
+  void UpdatePyramidTargets(const Robot& robot) const;
   
   // Ensures that blocks IDs which become invalid are cleared out of
   // the assigned ObjectIDs below - not actually const
@@ -101,25 +99,14 @@ protected:
   bool _checkForFullPyramidVisualVerifyFailure;
   
 private:
-  typedef std::vector<const ObservableObject*> BlockList;
-
-  bool AreAllBlockIDsUnique() const;
-  ObjectID GetBestBaseBlock(const Robot& robot, const BlockList& availableBlocks) const;
-  ObjectID GetBestStaticBlock(const Robot& robot, const BlockList& availableBlocks) const;
-  ObjectID GetNearestBlockToPose(const Robot& robot, const Pose3d& pose, const BlockList& availableBlocks) const;
-  
-  void SafeEraseBlockFromBlockList(const ObjectID& objectID, BlockList& blockList) const;
-  
   // update the offsets for placing the block based on the nearest pose that
   // doesn't have a block in the way
-  void UpdateBlockPlacementOffsets() const;
+  void UpdateBlockPlacementOffsets(f32& xOffset, f32& yOffset) const;
   bool CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset) const;
+  bool AreAllBlockIDsUnique() const;
+
   
   Robot& _robot;
-
-  // offsets for placingBlock where the ground is clear
-  mutable f32 _baseBlockOffsetX;
-  mutable f32 _baseBlockOffsetY;
   
 }; //class BehaviorBuildPyramidBase
 

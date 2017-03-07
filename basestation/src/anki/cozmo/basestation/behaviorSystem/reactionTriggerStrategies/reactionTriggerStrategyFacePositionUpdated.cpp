@@ -34,7 +34,8 @@ CONSOLE_VAR(bool, kEnableFaceAcknowledgeReact, "AcknowledgeFaceBehavior", true);
 static const char* kTriggerStrategyName = "Strategy React To Face Position Updated";
 }
   
-ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionUpdated(Robot& robot, const Json::Value& config)
+ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionUpdated(Robot& robot,
+                                                                                       const Json::Value& config)
 : ReactionTriggerStrategyPositionUpdate(robot, config, kTriggerStrategyName)
 {
   SubscribeToTags({
@@ -56,7 +57,8 @@ bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehavior(const Rob
 }
 
 
-void ReactionTriggerStrategyFacePositionUpdated::HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg)
+void ReactionTriggerStrategyFacePositionUpdated::HandleFaceObserved(const Robot& robot,
+                                                                    const ExternalInterface::RobotObservedFace& msg)
 {
   if( msg.faceID < 0 ) {
     // ignore temporary tracking-only ids
@@ -138,9 +140,6 @@ bool ReactionTriggerStrategyFacePositionUpdated::AddDesiredFace(Vision::FaceID_t
     return res.second;
   }
   else {
-    // we aren't allowed to react, so we don't want to react to this face later. Add it to the list of things
-    // we've reacted to, but return false, since we won't react now
-    _hasReactedToFace.insert(faceID);
     return false;
   }
 }

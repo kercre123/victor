@@ -3,8 +3,5 @@
   "name": "AcknowledgeObject",
   "displayNameKey":"behavior.AcknowledgeObject",
   "ReactionAnimGroup": "AcknowledgeObject",
-  "SamePoseDistThresh_mm": 80,
-  "SamePoseDistThresh_sparked_mm": 30,
-  "CoolDownDuration_ms": 600000,
   "NumImagesToWaitFor": 2
 }

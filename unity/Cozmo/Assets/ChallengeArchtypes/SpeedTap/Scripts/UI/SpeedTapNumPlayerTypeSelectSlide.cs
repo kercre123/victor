@@ -8,10 +8,10 @@ namespace SpeedTap {
   public class SpeedTapNumPlayerTypeSelectSlide : MonoBehaviour {
 
     [SerializeField]
-    private Button _HumanVCozmoBtn;
+    private CozmoButtonLegacy _HumanVCozmoBtn;
 
     [SerializeField]
-    private Button _HumanVHumanVCozmoBtn;
+    private CozmoButtonLegacy _HumanVHumanVCozmoBtn;
 
     [SerializeField]
     private GameObject _LockOverlay;
@@ -24,9 +24,9 @@ namespace SpeedTap {
       _Callback = callback;
       _Game = game;
       game.ClearPlayers(); // Clears the defaults
-      _HumanVCozmoBtn.onClick.AddListener(Handle2PlayerClicked);
+      _HumanVCozmoBtn.Initialize(Handle2PlayerClicked, "btn_speedtap_single_player", _Game.ChallengeID);
+      _HumanVHumanVCozmoBtn.Initialize(HandleMPClicked, "btn_speedtap_multi_player", _Game.ChallengeID);
 
-      _HumanVHumanVCozmoBtn.onClick.AddListener(HandleMPClicked);
 
       if (_LockOverlay != null) {
         _LockOverlay.SetActive(!IsMPModeUnlocked());

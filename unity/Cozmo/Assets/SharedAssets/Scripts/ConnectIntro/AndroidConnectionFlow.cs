@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class AndroidConnectionFlowStage : JavaMessageReceiver.JavaBehaviour {
   public Action OnStageComplete;
+
+  public void Destroy() {
+    // unregister java message listeners immediately
+    ClearJavaListeners();
+    GameObject.Destroy(this.gameObject);
+  }
 }
 
 /*
@@ -160,8 +166,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     StopPingTest();
     StopCoroutine("CheckConnectivity");
     if (_StageInstance != null) {
-      GameObject.Destroy(_StageInstance.gameObject);
-      _StageInstance = null;
+      DestroyStage();
     }
     if (Instance == this) {
       Instance = null;
@@ -193,14 +198,19 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     }
   }
 
+  private void DestroyStage() {
+    DAS.Event("android.stage.end", _Stage.ToString());
+    _StageInstance.Destroy();
+    _StageInstance = null;
+  }
+
   private void SelectNextStage() {
     bool isSkipping = true;
     int numStages = Enum.GetNames(typeof(Stage)).Length;
 
     // destroy existing stage instance before creating new one
     if (_StageInstance != null) {
-      GameObject.Destroy(_StageInstance.gameObject);
-      _StageInstance = null;
+      DestroyStage();
     }
 
     // increment stage until we arrive at the one we want to use next
@@ -222,7 +232,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     // instantiate new stage prefab
     var stagePrefab = _StagePrefabs[(int)_Stage];
     if (stagePrefab != null) {
-      DAS.Info("AndroidConnectionFlow.NextStage", "instantiating prefab for stage " + _Stage.ToString());
+      DAS.Event("android.stage.begin", _Stage.ToString());
       _StageInstance = UIManager.CreateUIElement(stagePrefab).GetComponent<AndroidConnectionFlowStage>();
       _StageInstance.OnStageComplete += HandleStageComplete;
     }

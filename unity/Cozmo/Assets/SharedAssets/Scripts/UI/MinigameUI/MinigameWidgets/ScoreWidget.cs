@@ -54,6 +54,8 @@ namespace Cozmo {
       [SerializeField]
       private Image _Background;
 
+      private Color _UndimmedTintColor = Color.white;
+
       public int MaxRounds {
         set {
           _RoundContainer.SetActive(true);
@@ -68,14 +70,15 @@ namespace Cozmo {
         }
       }
 
-      public Color PortraitColor {
+      public Color UnDimmedPortaitTintColor {
         set {
-          _PortraitImage.color = value;
+          _UndimmedTintColor = value;
         }
         get {
-          return _PortraitImage.color;
+          return _UndimmedTintColor;
         }
       }
+      public Color DimPortaitTintColor { get; set; }
 
       public int Score {
         set {
@@ -117,7 +120,7 @@ namespace Cozmo {
 
       public bool Dim {
         set {
-          _PortraitImage.color = value ? Color.gray : Color.white;
+          _PortraitImage.color = value ? DimPortaitTintColor : _UndimmedTintColor;
         }
       }
 
@@ -125,6 +128,7 @@ namespace Cozmo {
         _ScoreContainer.SetActive(false);
         _RoundContainer.SetActive(false);
         _WinnerContainer.gameObject.SetActive(false);
+        DimPortaitTintColor = Color.gray;
       }
 
       private void Update() {
