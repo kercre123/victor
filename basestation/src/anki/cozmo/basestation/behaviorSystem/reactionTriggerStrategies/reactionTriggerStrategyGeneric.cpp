@@ -23,7 +23,7 @@
 namespace{
 static const char* kReactionConfigKey = "genericStrategyParams";
 static const char* kShouldResumeLastKey = "shouldResumeLast";
-static const char* kCanTriggerWhileTriggeredKey = "canTriggerWhileTriggered";
+static const char* kCanInterruptOtherTriggeredBehaviorKey = "canInterruptOtherTriggeredBehavior";
 static const char* kTriggerStrategyNameKey = "debugStrategyName";
 static const char* kNeedsRobotPreReqKey = "needsRobotPreReq";
 }
@@ -56,14 +56,14 @@ ReactionTriggerStrategyGeneric::ReactionTriggerStrategyGeneric(Robot& robot,
                                                                std::string strategyName)
 : IReactionTriggerStrategy(robot, config, strategyName)
 , _strategyName(std::move(strategyName))
-, _canTriggerWhileTriggered(IReactionTriggerStrategy::CanTriggerWhileTriggeredBehaviorRunning())
+, _canInterruptOtherTriggeredBehavior(IReactionTriggerStrategy::CanInterruptOtherTriggeredBehavior())
 {
   // Pull out config values from the Json
   const Json::Value& genericParams = config[kReactionConfigKey];
   if(!genericParams.isNull())
   {
     JsonTools::GetValueOptional(genericParams, kShouldResumeLastKey, _shouldResumeLast);
-    JsonTools::GetValueOptional(genericParams, kCanTriggerWhileTriggeredKey, _canTriggerWhileTriggered);
+    JsonTools::GetValueOptional(genericParams, kCanInterruptOtherTriggeredBehaviorKey, _canInterruptOtherTriggeredBehavior);
     JsonTools::GetValueOptional(genericParams, kNeedsRobotPreReqKey, _needsRobotPreReq);
   }
   else

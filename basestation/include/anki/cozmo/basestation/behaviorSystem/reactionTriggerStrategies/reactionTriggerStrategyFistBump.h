@@ -30,7 +30,7 @@ public:
 
   virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return false; }
-  virtual bool CanTriggerWhileTriggeredBehaviorRunning() const override { return false; }
+  virtual bool CanInterruptOtherTriggeredBehavior() const override { return false; }
   virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;  
   
 protected:
