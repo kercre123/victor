@@ -75,14 +75,29 @@ void TestLED(int i)
     throw ERROR_BACKPACK_LED;
 }
 
-// Test LEDs if present - if not wired up, maybe pass anyway?
-static void TestLEDs(void)
+static void m_TestLEDs(void)
 {
   // Check the LEDs forward and backward for faults
   for (int i = 0; i < LEDCnt(); i++)
     TestLED(i);
   for (int i = LEDCnt()-1; i >= 0; i--)
     TestLED(i);
+}
+
+// Test LEDs if present - if not wired up, maybe pass anyway?
+static void TestLEDs(void)
+{
+  //x attempts before fail
+  int x=5;
+  while(1) {
+    try { m_TestLEDs(); break; }
+    catch(int e) {
+      if(--x <= 0)
+        throw e;
+      ConsolePrintf("error %d\r\n", e);
+      MicroWait(100*1000);
+    }
+  }
 }
 
 // Test encoder (not motor)
