@@ -196,9 +196,8 @@ int MeasureMotor(int speed, bool fast, bool reverse = false )
   return a_norm;
 }
 
-// MotorL: Lift motor with encoders
 const int MOTOR_LOW_MV = 1200, MOTOR_FULL_MV = 5000;   // In millivolts
-void TestMotorL(void)
+void TestMotor(void)
 {
   const int TICKS_SLOW = 10 / 2;  //adjust for reduced flag cnt on new motors
   const int TICKS_FAST = 80 / 2;  //"
@@ -207,25 +206,15 @@ void TestMotorL(void)
   mm_fwd_low  = MeasureMotor(MOTOR_LOW_MV, false);
   mm_fwd_full = MeasureMotor(MOTOR_FULL_MV, true);
   
-  if( g_fixtureRev >= BOARD_REV_1_5_0 )
-  {
-    ConsolePrintf("motor brake...");
-    MotorMV(-1); //motor brake before reverse direction
-    MicroWait(100*1000);
-    MotorMV(0);
-    MicroWait(250*1000);
-    ConsolePrintf("release\r\n");
-    
-    mm_rev_low = MeasureMotor(MOTOR_LOW_MV, false, true);
-    mm_rev_full = MeasureMotor(MOTOR_FULL_MV, true, true);
-  } 
-  else 
-  {
-    #warning "SKIP REVERSE DIRECTION MOTOR TESTS DURING EP2 TRANSITION-------------"
-    ConsolePrintf("WARNING: Skipping motor reverse direction testing\r\n");
-    mm_rev_low = -TICKS_SLOW;
-    mm_rev_full = -TICKS_FAST;
-  }
+  ConsolePrintf("motor brake...");
+  MotorMV(-1); //motor brake before reverse direction
+  MicroWait(100*1000);
+  MotorMV(0); //high-Z. allow motor to float for bit
+  MicroWait(250*1000);
+  ConsolePrintf("release\r\n");
+  
+  mm_rev_low = MeasureMotor(MOTOR_LOW_MV, false, true);
+  mm_rev_full = MeasureMotor(MOTOR_FULL_MV, true, true);
   
   if (mm_fwd_low < TICKS_SLOW)    //Forward slow
     throw ERROR_MOTOR_SLOW;
@@ -235,6 +224,24 @@ void TestMotorL(void)
     throw ERROR_MOTOR_SLOW;
   if (-mm_rev_full < TICKS_FAST)  //Reverse fast
     throw ERROR_MOTOR_FAST;
+}
+
+// MotorL: Lift motor with encoders
+void TestMotorL(void)
+{
+  //x attempts before fail
+  int x=1;
+  while(1) {
+    try { 
+      TestMotor(); 
+      break;
+    } catch(int e) { 
+      if(--x <= 0)
+        throw e;
+      else
+        MicroWait(350*1000);
+    }
+  }
 }
 
 // MotorH (head motor) makes about same number of ticks
@@ -249,9 +256,8 @@ static void CheckFixtureCompatibility(void)
   ConsolePrintf("fixture rev %s\r\n", GetBoardRevStr());
   
   //new tests require v1.5 hardware w/ H-Bridge driver
-  #warning "WHITELISTING FIXTURE COMPATIBILITY DURING EP2 TRANSITION-------------"
   if( g_fixtureRev < BOARD_REV_1_5_0 )
-    ConsolePrintf("WARNING: Fixture Rev 1.0 is incompatible with this test\r\n"); //throw ERROR_INCOMPATIBLE_FIX_REV;
+    throw ERROR_INCOMPATIBLE_FIX_REV;
 }
 
 // List of all functions invoked by the test, in order
