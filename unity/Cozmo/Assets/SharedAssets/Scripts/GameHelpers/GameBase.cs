@@ -1069,6 +1069,9 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     // Close minigame UI
+    if (_ChallengeEndViewInstance != null) {
+      _ChallengeEndViewInstance.HideScrollRectGradients();
+    }
     CloseMinigame();
 
     if (DidHumanWin()) {
@@ -1323,11 +1326,11 @@ public abstract class GameBase : MonoBehaviour {
     }
     DAS.Event("robot.interrupt", currentStateString, DASUtil.FormatExtraData(behaviorTransition.newTrigger.ToString()));
 
-    if ((behaviorTransition.newTrigger != ReactionTrigger.NoneTrigger) && 
+    if ((behaviorTransition.newTrigger != ReactionTrigger.NoneTrigger) &&
         (behaviorTransition.oldTrigger == ReactionTrigger.NoneTrigger)) {
       PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.newTrigger);
     }
-    else if(behaviorTransition.newTrigger == ReactionTrigger.NoneTrigger) {
+    else if (behaviorTransition.newTrigger == ReactionTrigger.NoneTrigger) {
       ResumeStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.oldTrigger);
     }
   }

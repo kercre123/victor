@@ -1,8 +1,11 @@
 ﻿using UnityEngine;
-using Anki.UI;
+using UnityEngine.UI;
 
 namespace Cozmo.UI {
   public class ChallengeEndedDialog : MonoBehaviour {
+
+    [SerializeField]
+    private int _MaxNumRewards = 3;
 
     [SerializeField]
     private Transform _CenterContainer;
@@ -25,9 +28,15 @@ namespace Cozmo.UI {
     [SerializeField]
     private ChallengeDetailsUnlock _UnlockIconPrefab;
 
+    [SerializeField]
+    private ScrollRect[] _RewardIconScrollRects;
+
     private bool _DualLists = false;
 
     private ChallengeData _ChallengeConfig;
+
+    [SerializeField]
+    private GameObject[] _ScrollRectGradiants;
 
     public void SetupDialog(ChallengeData config) {
       _ChallengeConfig = config;
@@ -66,13 +75,26 @@ namespace Cozmo.UI {
       if (RewardedActionManager.Instance.NewSkillChangePending) {
         AddSkillChange(RewardedActionManager.Instance.NewSkillChange);
       }
-      foreach (RewardedActionData earnedReward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
 
+      foreach (RewardedActionData earnedReward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
         int count = 0;
         if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(earnedReward, out count)) {
           AddEnergyReward(earnedReward, count);
         }
       }
+
+      bool moreThanMaxRewards = RewardedActionManager.Instance.PendingActionRewards.Count > _MaxNumRewards;
+      foreach (ScrollRect rect in _RewardIconScrollRects) {
+        rect.enabled = moreThanMaxRewards;
+        if (moreThanMaxRewards) {
+          // Scroll to the top of the rect
+          rect.verticalNormalizedPosition = 1f;
+        }
+      }
+      foreach (GameObject go in _ScrollRectGradiants) {
+        go.SetActive(moreThanMaxRewards);
+      }
+
       RewardedActionManager.Instance.NewDifficultyUnlock = -1;
       RewardedActionManager.Instance.NewSkillChange = 0;
 
@@ -117,6 +139,12 @@ namespace Cozmo.UI {
       unlockCell.Text = (Localization.GetWithArgs(descKey, Localization.Get(_ChallengeConfig.ChallengeTitleLocKey)));
       unlockCell.UnlockGameContainerEnabled = false;
       unlockCell.UnlockSkillContainerEnabled = true;
+    }
+
+    public void HideScrollRectGradients() {
+      foreach (GameObject go in _ScrollRectGradiants) {
+        go.SetActive(false);
+      }
     }
   }
 }
