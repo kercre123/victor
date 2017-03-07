@@ -141,8 +141,8 @@ void SetFixtureText(void)
   DisplayPutString(BUILD_INFO);
   DisplayMoveCursor(55, fcc ? 108 : 110 );
   DisplayPutChar(fcc ? 'c' : 'v');
-  DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
-  DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + ((g_fixtureReleaseVersion / 10) % 10));
+  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + (g_fixtureReleaseVersion % 10));
   DisplayFlip();
 }
 
