@@ -10,8 +10,8 @@
  * Copyright: Anki, Inc. 2015
  */
 
-#ifndef __Basestation_Audio_AudioUnityClientCunnection_H__
-#define __Basestation_Audio_AudioUnityClientCunnection_H__
+#ifndef __Basestation_Audio_AudioUnityClientConnection_H__
+#define __Basestation_Audio_AudioUnityClientConnection_H__
 
 #include "anki/cozmo/basestation/audio/audioClientConnection.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -54,4 +54,4 @@ private:
 } // Cozmo
 } // Anki
 
-#endif /* __Basestation_Audio_AudioUnityClientCunnection_H__ */
+#endif /* __Basestation_Audio_AudioUnityClientConnection_H__ */
