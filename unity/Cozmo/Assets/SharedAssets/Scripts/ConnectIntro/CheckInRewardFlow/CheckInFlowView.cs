@@ -203,11 +203,7 @@ namespace Cozmo.CheckInFlow.UI {
     // On tap play animation (crunch down slightly, then pop up and switch to open sprite)
     // On open, release rewards and transition to TimelineReviewContainer.
     private void HandleEnvelopeButton() {
-      int numDays = 0;
-      if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions != null) {
-        numDays = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count;
-      }
-      DAS.Event("meta.open_goal_envelope", numDays.ToString());
+      DAS.Event("meta.open_goal_envelope", DataPersistenceManager.Instance.Data.DefaultProfile.TotalSessions.ToString());
 
       _EnvelopeButton.Interactable = false;
 
@@ -246,7 +242,7 @@ namespace Cozmo.CheckInFlow.UI {
         DeregisterOpenEnvelopeAnimationEvents();
         _EnvelopeButton.gameObject.SetActive(false);
 
-        bool playerHasStreak = (DataPersistence.DataPersistenceManager.Instance.CurrentStreak > 1);
+        bool playerHasStreak = (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CurrentStreak > 1);
         if (playerHasStreak) {
           PlayTimelineEnterAnimation();
         }
@@ -532,7 +528,7 @@ namespace Cozmo.CheckInFlow.UI {
       }
       _CheckInTimelineCells.AddRange(newCells);
 
-      int currentStreakDays = DataPersistence.DataPersistenceManager.Instance.CurrentStreak;
+      int currentStreakDays = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CurrentStreak;
       int firstTimelineCell = 1;
       if (currentStreakDays > _kMaxTimelineCells) {
         // Offset First Day based on max streak cells to fix off by 1 bug
@@ -814,15 +810,10 @@ namespace Cozmo.CheckInFlow.UI {
     }
 
     private void StartConnectionFlow() {
-      int daysWithCozmo = 0;
-      foreach (DataPersistence.TimelineEntryData sessionEntry in DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions) {
-        if (sessionEntry.HasConnectedToCozmo) {
-          daysWithCozmo++;
-        }
-      }
+      int daysWithCozmo = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DaysWithCozmo;
       DAS.Event("meta.time_with_cozmo", daysWithCozmo.ToString());
       DAS.Event("meta.games_played", DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.Count.ToString());
-      DAS.Event("meta.current_streak", DataPersistence.DataPersistenceManager.Instance.CurrentStreak.ToString());
+      DAS.Event("meta.current_streak", DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CurrentStreak.ToString());
 
       _ConnectionFlowInstance = GameObject.Instantiate(_ConnectionFlowPrefab.gameObject).GetComponent<ConnectionFlowController>();
       _ConnectionFlowInstance.ConnectionFlowComplete += HandleConnectionFlowComplete;

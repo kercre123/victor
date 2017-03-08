@@ -49,12 +49,67 @@ namespace DataPersistence {
       }
     }
 
+    // This is only called right after the save file is read in, and checks that the read in save file matches code.
+    // if they don't a conversion is done.
+    private void CheckSaveVersionUpdates() {
+      PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
+
+      // In version 0 we let sessions grow infinitely in StartNewSession.
+      // This chunk of code converts that into just storing a series of ints so the size is manageable
+      if (profile.SaveVersion == 0 && PlayerProfile.kSaveVersionCurrent > 0) {
+        // This likely only happens when we're first switching over to the creation of total sessions
+        if (profile.Sessions.Count > profile.TotalSessions) {
+          profile.TotalSessions = profile.Sessions.Count;
+        }
+
+        foreach (DataPersistence.TimelineEntryData sessionEntry in DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions) {
+          foreach (Cozmo.UI.DailyGoal goal in sessionEntry.DailyGoals) {
+            if (goal.GoalComplete) {
+              profile.TotalDailyGoalsCompleted++;
+            }
+          }
+          if (sessionEntry.HasConnectedToCozmo) {
+            profile.DaysWithCozmo++;
+          }
+        }
+
+        if (Data.DefaultProfile.Sessions.LastOrDefault() == null) {
+          profile.CurrentStreak = 0;
+        }
+        else if (Data.DefaultProfile.Sessions.Count < 2) {
+          profile.CurrentStreak = 1;
+        }
+        else {
+          int streakCount = 1;
+          int currentIndex = Data.DefaultProfile.Sessions.Count - 1;
+          int previousIndex = Data.DefaultProfile.Sessions.Count - 2;
+          while (previousIndex >= 0) {
+            Date currentDate = Data.DefaultProfile.Sessions[currentIndex].Date;
+            Date previousDate = Data.DefaultProfile.Sessions[previousIndex].Date;
+            if (previousDate.OffsetDays(1).Equals(currentDate)) {
+              streakCount++;
+            }
+            else {
+              break;
+            }
+            currentIndex--;
+            previousIndex--;
+          }
+          profile.CurrentStreak = streakCount;
+        }
+
+        profile.SaveVersion = PlayerProfile.kSaveVersionCurrent;
+      }
+    }
+
     private static DataPersistenceManager _Instance;
 
     public static DataPersistenceManager Instance {
       get {
         if (_Instance == null) {
           _Instance = new DataPersistenceManager();
+
+          _Instance.CheckSaveVersionUpdates();
         }
         return _Instance;
       }
@@ -95,36 +150,12 @@ namespace DataPersistence {
       }
     }
 
-    public int CurrentStreak {
-      get {
-        if (Data.DefaultProfile.Sessions.LastOrDefault() == null) {
-          return 0;
+    public void SetHasConnectedWithCozmo(bool connected = true) {
+      if (DataPersistenceManager.Instance.CurrentSession != null) {
+        if (!DataPersistenceManager.Instance.CurrentSession.HasConnectedToCozmo) {
+          DataPersistenceManager.Instance.Data.DefaultProfile.DaysWithCozmo++;
         }
-        if (Data.DefaultProfile.Sessions.Count < 2) {
-          return 1;
-        }
-
-        int streakCount = 1;
-
-        int currentIndex = Data.DefaultProfile.Sessions.Count - 1;
-        int previousIndex = Data.DefaultProfile.Sessions.Count - 2;
-
-        while (previousIndex >= 0) {
-          Date currentDate = Data.DefaultProfile.Sessions[currentIndex].Date;
-          Date previousDate = Data.DefaultProfile.Sessions[previousIndex].Date;
-
-          if (previousDate.OffsetDays(1).Equals(currentDate)) {
-            streakCount++;
-          }
-          else {
-            return streakCount;
-          }
-
-          currentIndex--;
-          previousIndex--;
-        }
-
-        return streakCount;
+        DataPersistenceManager.Instance.CurrentSession.HasConnectedToCozmo = connected;
       }
     }
 
@@ -134,17 +165,41 @@ namespace DataPersistence {
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
       int numDays = 0;
       TimelineEntryData lastSession = null;
+      PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
       if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions != null) {
-        numDays = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count;
+        numDays = DataPersistenceManager.Instance.Data.DefaultProfile.TotalSessions;
         if (numDays > 0) {
-          lastSession = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions[numDays - 1];
+          lastSession = profile.Sessions[profile.Sessions.Count - 1];
           // If this is not the first day, consider onboarding complete so we generate new goals
           if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals)) {
             OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
           }
         }
       }
-      DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
+
+      profile.Sessions.Add(newSession);
+      profile.TotalSessions++;
+
+      // update streaks...
+      if (lastSession != null) {
+        Date currentDate = newSession.Date;
+        Date previousDate = lastSession.Date;
+        if (previousDate.OffsetDays(1).Equals(currentDate)) {
+          profile.CurrentStreak++;
+        }
+        else {
+          profile.CurrentStreak = 1;
+        }
+      }
+      else {
+        profile.CurrentStreak = 1;
+      }
+
+      const int kMaxDaysStored = 3;
+      // Pop off sessions we're not going to need anymore. We still look at a few recent sessions for different daily goal gen.
+      if (profile.Sessions.Count > kMaxDaysStored) {
+        profile.Sessions.RemoveRange(0, profile.Sessions.Count - kMaxDaysStored);
+      }
 
       if (lastSession != null && !lastSession.GoalsFinished) {
         Cozmo.UI.DailyGoal goal = lastSession.DailyGoals.FirstOrDefault();
@@ -169,11 +224,12 @@ namespace DataPersistence {
         DailyGoalManager.Instance.OnRefreshDailyGoals.Invoke();
       }
 
-      if (CurrentStreak > Data.DefaultProfile.MaximumStreak) {
-        Data.DefaultProfile.MaximumStreak = CurrentStreak;
+      if (Data.DefaultProfile.CurrentStreak >= Data.DefaultProfile.MaximumStreak) {
+        Data.DefaultProfile.MaximumStreak = Data.DefaultProfile.CurrentStreak;
       }
+
       if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
-        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnNewDayStarted, CurrentStreak));
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnNewDayStarted, Data.DefaultProfile.CurrentStreak));
       }
       DataPersistenceManager.Instance.Save();
 
