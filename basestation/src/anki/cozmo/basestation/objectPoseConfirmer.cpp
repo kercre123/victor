@@ -91,6 +91,11 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
     _robot.GetBlockWorld().ClearObject(object);
   }
   
+  if(newPoseState != PoseState::Known)
+  {
+    DelocalizeRobotFromObject(object->GetID());
+  }
+  
   object->SetPose(newPose, distance, newPoseState);
   
   _robot.GetBlockWorld().NotifyBlockConfigurationManagerObjectPoseChanged(object->GetID());
@@ -113,6 +118,11 @@ Result ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject* object) const
 void ObjectPoseConfirmer::SetPoseState(ObservableObject* object, PoseState newState) const
 {
   _robot.GetCubeLightComponent().OnObjectPoseStateWillChange(object->GetID(), object->GetPoseState(), newState);
+  
+  if(newState != PoseState::Known)
+  {
+    DelocalizeRobotFromObject(object->GetID());
+  }
   
   object->SetPoseState(newState);
 }
@@ -368,6 +378,14 @@ TimeStamp_t ObjectPoseConfirmer::GetLastPoseUpdatedTime(const ObjectID& id) cons
   }
   
   return 0;
+}
+
+void ObjectPoseConfirmer::DelocalizeRobotFromObject(const ObjectID& objectID) const
+{
+  if(_robot.GetLocalizedTo() == objectID)
+  {
+    _robot.SetLocalizedTo(nullptr);
+  }
 }
   
 } // namespace Cozmo
