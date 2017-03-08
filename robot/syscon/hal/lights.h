@@ -15,6 +15,10 @@ using namespace Anki::Cozmo;
   UNPACK_GREEN(w), \
   UNPACK_BLUE(w)
 
+#define FIELD_RED(w)      ((w >> 7) & 0xF8)
+#define FIELD_GREEN(w)    ((w >> 2) & 0xF8)
+#define FIELD_BLUE(w)     ((w << 3) & 0xF8)
+
 #define UNPACK_RED(w)     ((((w >> 10) & 0x1F) * 0x21) >> 2)
 #define UNPACK_GREEN(w)   ((((w >>  5) & 0x1F) * 0x21) >> 2)
 #define UNPACK_BLUE(w)    ((((w >>  0) & 0x1F) * 0x21) >> 2)
@@ -82,7 +86,7 @@ extern ControllerLights lightController;
 
 namespace Lights {
   void init();
-  int manage();
+  void manage();
   void update(LightValues& light, const LightState* ledParams);
   void setHeadlight(bool status);
 };

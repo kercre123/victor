@@ -36,7 +36,7 @@ const ble_gap_adv_params_t adv_params = {
   .type        = BLE_GAP_ADV_TYPE_ADV_IND,
   .p_peer_addr = NULL,
   .fp          = BLE_GAP_ADV_FP_ANY,
-  .interval    = BLE_GAP_ADV_INTERVAL_MIN,
+  .interval    = 3380,  // 211.25ms (625us units)
   .timeout     = 0
 };
 

@@ -96,7 +96,7 @@ enum int_8 BodyRadioMode
 {
   BODY_BLUETOOTH_OPERATING_MODE = 0x0,
   BODY_ACCESSORY_OPERATING_MODE = 0x1,
-  BODY_IDLE_OPERATING_MODE      = 0x2,
+  BODY_LOW_POWER_OPERATING_MODE = 0x2,
   BODY_FORCE_RECOVERY           = 0x3,
   BODY_STARTUP                  = 0x4,
   BODY_DTM_OPERATING_MODE       = 0x20,
@@ -114,7 +114,7 @@ structure PowerState
 {
   int_32        VBatFixed,
   int_32        VExtFixed,
-  int_32        BodyTemp,
+  int_32        _unused,
   uint_8        batteryLevel,
   bool          onCharger,
   bool          isCharging,

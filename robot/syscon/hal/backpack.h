@@ -23,15 +23,15 @@ enum DefaultBackpackPattern {
 
 namespace Backpack {
   extern bool button_pressed;
-  
+
   void init();
-  void trigger();
-  
+  void manage();
+
   void setLayer(BackpackLayer);
 
   void useTimer();
   void detachTimer();
-  
+
   void lightsOff();
   void setLowBattery(bool batteryLow);
   void setChargeState(CurrentChargeState state);

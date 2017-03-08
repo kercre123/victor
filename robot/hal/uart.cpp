@@ -148,7 +148,7 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
           // Shifty header
           rx_source = (rx_source >> 8) | (data << 24);
           continue ;
-        }	else {
+        } else {
           txRxBuffer[txRxIndex++] = data;
         }
 

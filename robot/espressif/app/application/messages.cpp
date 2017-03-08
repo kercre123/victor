@@ -12,7 +12,7 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "animationController.h"
 #include "rtip.h"
 #include "face.h"
-#include "dhTask.h"
+#include "bluetoothTask.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
 #include "wifi_configuration.h"
@@ -42,6 +42,16 @@ namespace Anki {
       {
         switch(msg.tag)
         {
+          case RobotInterface::EngineToRobot::Tag_bleConnectionState:
+          {
+            Bluetooth::ConnectionState(msg.bleConnectionState.state);
+            break ;
+          }
+          case RobotInterface::EngineToRobot::Tag_bleDataReceived:
+          {
+            Bluetooth::Receive(msg.bleDataReceived.frame);
+            break ;
+          }
           case RobotInterface::EngineToRobot::Tag_otaWrite:
           {
             UpgradeController::Write(msg.otaWrite);
@@ -72,11 +82,6 @@ namespace Anki {
           {
             AnimationController::Clear();
             break;
-          }
-          case RobotInterface::EngineToRobot::Tag_calculateDiffieHellman:
-          {
-            DiffieHellman::Start(msg.calculateDiffieHellman.local, msg.calculateDiffieHellman.remote);
-            break ;
           }
           case RobotInterface::EngineToRobot::Tag_disableAnimTracks:
           {
@@ -127,16 +132,6 @@ namespace Anki {
             WiFiConfiguration::ProcessConfigFlags(msg.appConCfgFlags);
             break;
           }
-          case RobotInterface::EngineToRobot::Tag_appConCfgIPInfo:
-          {
-            WiFiConfiguration::ProcessConfigIPInfo(msg.appConCfgIPInfo);
-            break;
-          }
-          case RobotInterface::EngineToRobot::Tag_appConGetRobotIP:
-          {
-            WiFiConfiguration::SendRobotIpInfo(msg.appConGetRobotIP.ifId);
-            break;
-          }
           case RobotInterface::EngineToRobot::Tag_wifiOff:
           {
             WiFiConfiguration::Off(msg.wifiOff.sleep);
@@ -156,7 +151,7 @@ namespace Anki {
           {
             RobotInterface::EngineToRobot msgToRTIP;
             msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-            msg.setBodyRadioMode.radioMode = BODY_IDLE_OPERATING_MODE;
+            msg.setBodyRadioMode.radioMode = BODY_LOW_POWER_OPERATING_MODE;
             RTIP::SendMessage(msg);
             break;
           }

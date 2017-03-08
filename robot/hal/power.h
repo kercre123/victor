@@ -6,7 +6,7 @@ namespace Anki {
     namespace HAL {
       namespace Power {
         void enableExternal(void);
-        void disableExternal(void);
+        void enterSleepMode(void);
       }
     }
   }

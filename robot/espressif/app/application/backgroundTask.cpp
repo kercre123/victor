@@ -15,7 +15,7 @@ extern "C" {
 }
 #include "rtip.h"
 #include "face.h"
-#include "dhTask.h"
+#include "bluetoothTask.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
 #include "wifi_configuration.h"
@@ -311,7 +311,7 @@ enum BackgroundTaskError
 {
   BTE_ok = 0,
   BTE_exec_task = -1,
-  BTE_dh_init = -2,
+  BTE_ble_init = -2,
   BTE_rtip_init = -3,
   BTE_anim_init = -4,
   BTE_bg_post = -5,
@@ -332,10 +332,10 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't register background OS task\r\n");
     result =  BTE_exec_task;
   }
-  else if (DiffieHellman::Init() != true)
+  else if (Bluetooth::Init() != true)
   {
-    os_printf("\tCouldn't initalize Diffie Hellman module\r\n");
-    result =  BTE_dh_init;
+    os_printf("\tCouldn't initalize BLE module\r\n");
+    result =  BTE_ble_init;
   }
   else if (Anki::Cozmo::RTIP::Init() != true)
   {

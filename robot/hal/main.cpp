@@ -114,7 +114,7 @@ int main (void)
   using namespace Anki::Cozmo::HAL;
 
   // Force recovery mode if watchdog count gets too high
-  #ifndef FCC_TEST  // THIS IS NOT THE FINAL
+  #ifndef FCC_TEST
   if (RCM_SRS0 & RCM_SRS0_WDOG_MASK) {
     if (WDOG_RSTCNT >= MAXIMUM_RESET_COUNT) {
       Anki::Cozmo::HAL::SPI::EnterRecoveryMode();

@@ -7,12 +7,14 @@
 #include "lights.h"
 #include "storage.h"
 #include "anki/cozmo/robot/crashLogs.h"
+#include "anki/cozmo/robot/rec_protocol.h"
 
 #include "cubes.h"
 #include "watchdog.h"
 #include "hardware.h"
 #include "backpack.h"
 #include "bluetooth.h"
+#include "battery.h"
 #include "tests.h"
 
 #include "anki/cozmo/robot/spineData.h"
@@ -26,7 +28,8 @@
 
 using namespace Anki::Cozmo;
 
-uint8_t txRxBuffer[MAX(MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead)), SPINE_CRASH_LOG_SIZE)];
+uint8_t txBuffer[sizeof(GlobalDataToHead)];
+uint8_t rxBuffer[MAX(sizeof(GlobalDataToBody), SPINE_CRASH_LOG_SIZE)];
 
 enum TRANSMIT_MODE {
   TRANSMIT_UNKNOWN,
@@ -42,7 +45,7 @@ static TRANSMIT_MODE uart_mode;
 
 bool Head::spokenTo;
 bool Head::synced;
-bool lowPowerMode;
+static bool lowPowerMode;
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -96,6 +99,79 @@ void Head::init()
   nrf_gpio_pin_set(PIN_TX_HEAD);
 }
 
+static bool sync_to_head() {
+  int timeout = GetCounter() + CYCLES_MS(1.0f);
+  
+  // Transmit the head sync pattern
+  setTransmitMode(TRANSMIT_SEND);
+
+  for (int i = 0; i < 4; i++) {
+    NRF_UART0->TXD = BODY_RECOVERY_NOTICE >> (i * 8);
+    while (!NRF_UART0->EVENTS_TXDRDY) ;
+    NRF_UART0->EVENTS_TXDRDY = 0;
+  }
+
+  // Wait for the head to reply
+  setTransmitMode(TRANSMIT_RECEIVE);
+  int word = 0;
+
+  while(word != HEAD_RECOVERY_NOTICE) {
+    // Timeout
+    while (!NRF_UART0->EVENTS_RXDRDY) {
+      if (timeout - GetCounter() <= 0) return false;
+    }
+    NRF_UART0->EVENTS_RXDRDY = 0;
+    word = (word >> 8) | (NRF_UART0->RXD << 24);
+  }
+
+  // Fake boot commands (break on done)
+  bool running = true;
+  while(running) {
+    setTransmitMode(TRANSMIT_RECEIVE);
+    while (!NRF_UART0->EVENTS_RXDRDY) ;
+    NRF_UART0->EVENTS_RXDRDY = 0;
+    uint8_t cmd = NRF_UART0->RXD;
+
+    MicroWait(1000);
+
+    switch (cmd) {
+    case COMMAND_DONE:   
+      running = false;
+    case COMMAND_BOOT_READY:
+      setTransmitMode(TRANSMIT_SEND);
+      NRF_UART0->TXD = STATE_ACK;
+      while (!NRF_UART0->EVENTS_TXDRDY) ;
+      NRF_UART0->EVENTS_TXDRDY = 0;
+      MicroWait(10);
+      
+      break ;
+    }
+  }
+
+  // Wait for 0.5 second before we resume speaking to the head
+  for (int i = 0; i < 100; i++) {
+    Watchdog::kick(WDOG_ROOT_LOOP);
+    MicroWait(5000);
+  }
+
+  return true;
+}
+
+void Head::leaveLowPowerMode(void) {
+  // If we are on charge contacts, simply reset
+  // as it puts the processor back in a known state
+  if (Battery::onContacts) {
+    NVIC_SystemReset();
+  }
+  NVIC_DisableIRQ(UART0_IRQn);
+  // Attempt to syncronize to the head
+  while (!sync_to_head()) ;
+
+  NVIC_EnableIRQ(UART0_IRQn);
+
+  lowPowerMode = false;
+}
+
 void Head::enterLowPowerMode(void) {
   using namespace Anki::Cozmo;
   
@@ -103,10 +179,6 @@ void Head::enterLowPowerMode(void) {
   RobotInterface::SendMessage(msg);
   
   lowPowerMode = true;
-}
-
-void Head::leaveLowPowerMode(void) {
-  // TODO: THIS IS INCOMPLETE
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -175,7 +247,7 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
 
 static inline void transmitByte() { 
   NVIC_DisableIRQ(UART0_IRQn);
-  NRF_UART0->TXD = txRxBuffer[txRxIndex++];
+  NRF_UART0->TXD = txBuffer[txRxIndex++];
   NVIC_EnableIRQ(UART0_IRQn);
 }
 
@@ -196,14 +268,22 @@ void Head::manage() {
   #endif
 
   // Head has powered off: Ignore lack of comms
+  // Does not communicate while in low power mode
   if (lowPowerMode && !Head::spokenTo) {
     Watchdog::kick(WDOG_UART);
+    return ;
   }
 
-  Head::spokenTo = false;
+  if (Head::spokenTo) {
+    memcpy(&g_dataToBody, rxBuffer, sizeof(GlobalDataToBody));
+
+    Spine::processMessages(g_dataToBody.cladData);
+    Spine::dequeue(g_dataToHead.cladData);
+    Head::spokenTo = false;
+  }
 
   // Head body sync is disabled, so just kick the watchdog
-  memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
+  memcpy(txBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   txRxIndex = 0;
   
   setTransmitMode(TRANSMIT_SEND);
@@ -257,15 +337,15 @@ void UART0_IRQHandler()
           return ;
         }
       } else {
-        txRxBuffer[txRxIndex] = data;
+        rxBuffer[txRxIndex] = data;
       }
 
       // Looks like the head crashed, log and reset
       if (header_shift == SPI_SOURCE_CRASHLOG) {
-        txRxBuffer[txRxIndex++ - 4] = data;
+        rxBuffer[txRxIndex++ - 4] = data;
 
         if (txRxIndex - 4 >= SPINE_CRASH_LOG_SIZE) {
-          Storage::set(STORAGE_CRASH_LOG_K02, txRxBuffer, SPINE_CRASH_LOG_SIZE);
+          Storage::set(STORAGE_CRASH_LOG_K02, rxBuffer, SPINE_CRASH_LOG_SIZE);
           NVIC_SystemReset();
         }
         return ;
@@ -273,11 +353,6 @@ void UART0_IRQHandler()
       
       // We received a full packet
       if (++txRxIndex >= sizeof(GlobalDataToBody)) {
-        memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
-
-        Spine::processMessages(g_dataToBody.cladData);
-        Spine::dequeue(g_dataToHead.cladData);
-
         Head::synced = true;
         Head::spokenTo = true;
         Watchdog::kick(WDOG_UART);
@@ -306,7 +381,7 @@ void UART0_IRQHandler()
           setTransmitMode(TRANSMIT_RECEIVE);
           header_shift = 0;
         } else {
-          NRF_UART0->TXD = txRxBuffer[txRxIndex++];
+          NRF_UART0->TXD = txBuffer[txRxIndex++];
         }
     }
   }
