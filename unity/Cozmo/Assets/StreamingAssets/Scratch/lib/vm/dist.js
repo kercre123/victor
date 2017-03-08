@@ -17066,6 +17066,8 @@ module.exports =
 	 * @private
 	 */
 	Scratch3CozmoBlocks.prototype.waitForFace = function (args, util) {
+	    window.Unity.call('{"command": "cozmoHeadAngle","argString": "high"}');
+
 	    this.runtime.stackIsWaitingForFace = true;
 	    if (!this.runtime.cozmoSawFace) {
 	        util.yield();
@@ -17084,6 +17086,8 @@ module.exports =
 	 * @private
 	 */
 	Scratch3CozmoBlocks.prototype.waitForCube = function (args, util) {
+	    window.Unity.call('{"command": "cozmoHeadAngle","argString": "low"}');
+
 	    this.runtime.stackIsWaitingForCube = true;
 	    if (!this.runtime.cozmoSawCube) {
 	        util.yield();
