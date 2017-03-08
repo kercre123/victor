@@ -765,7 +765,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     }
     
     
-    if(GetIsMoving<PayloadType>() && object->IsPoseStateKnown())
+    if(object->IsPoseStateKnown())
     {
       // Once an object moves, we can no longer use it for localization because
       // we don't know where it is anymore. Next time we see it, relocalize it

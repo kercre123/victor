@@ -103,6 +103,10 @@ protected:
   Robot& _robot;
   PoseConfirmations _poseConfirmations;
   
+private:
+  
+  void DelocalizeRobotFromObject(const ObjectID& object) const;
+  
   
 }; // class ObjectPoseConfirmer
   

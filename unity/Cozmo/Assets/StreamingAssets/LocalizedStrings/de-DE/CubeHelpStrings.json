@@ -1,48 +1,36 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "cubeHelpStrings.Instructions.Slide0": {
-    "translation": "Cozmo can't hear all of the Power Cubes. Place them near him."
+  "cubeHelpStrings.Instructions.Slide0" : {
+    "translation" : "Cozmo kann nicht die gesamte Leistung Cubes hören. Legen Sie sie in der Nähe von ihm."
   },
-  "cubeHelpStrings.Instructions.Slide0altCopy": {
-    "translation": "Tap Next if you're still having trouble"
+  "cubeHelpStrings.Instructions.Slide0altCopy" : {
+    "translation" : "Tippen Sie auf Weiter, wenn Sie immer noch Schwierigkeiten haben"
   },
-  "cubeHelpStrings.Instructions.SlideACopy": {
-    "translation": "First, go to Settings\nThen, tap Refresh Cubes"
+  "cubeHelpStrings.Instructions.SlideACopy" : {
+    "translation" : "Zunächst gehen Sie dann auf Einstellungen, tippen Sie Refresh Cubes"
   },
-  "cubeHelpStrings.Instructions.Slide1": {
-    "translation": "Next, let's try changing your Cube's battery"
+  "cubeHelpStrings.Instructions.Slide1" : {
+    "translation" : "Als nächstes wollen wir versuchen, Ihren Cube Batteriewechsel"
   },
-  "cubeHelpStrings.Instructions.Slide1altCopy": {
-    "translation": "Place it upside down and unscrew the cover"
+  "cubeHelpStrings.Instructions.Slide1altCopy" : {
+    "translation" : "Legen Sie es auf den Kopf nach unten und schrauben Sie den Deckel"
   },
-  "cubeHelpStrings.Instructions.Slide2": {
-    "translation": "Replace the battery with a fresh N cell"
+  "cubeHelpStrings.Instructions.Slide2" : {
+    "translation" : "Ersetzen Sie die Batterie mit einer neuen N-Zelle"
   },
-  "cubeHelpStrings.Instructions.Slide2altCopy": {
-    "translation": "Insert the new battery positive (+) end up"
+  "cubeHelpStrings.Instructions.Slide2altCopy" : {
+    "translation" : "Setzen Sie die neue Batterie Plus (+) am Ende"
   },
-  "cubeHelpStrings.Instructions.Slide3": {
-    "translation": "Replace the cover and fasten it gently"
+  "cubeHelpStrings.Instructions.Slide3" : {
+    "translation" : "Bringen Sie die Abdeckung und befestigen Sie ihn sanft"
   },
-  "cubeHelpStrings.Instructions.Slide3altCopy": {
-    "translation": "Make sure the cover matches the Cube. It should now light up!"
+  "cubeHelpStrings.Instructions.Slide3altCopy" : {
+    "translation" : "Achten Sie darauf, die Abdeckung den Cube passt. Es sollte nun leuchten!"
   }
 }

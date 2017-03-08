@@ -839,7 +839,7 @@ void BehaviorManager::CheckReactionTriggerStrategies()
     const bool shouldCheckStrategy = !rBehavior->IsRunning() || strategy.CanInterruptSelf();
     const bool canInterruptBehavior =  (GetRunningAndResumeInfo().GetCurrentReactionTrigger()
                                            == ReactionTrigger::NoneTrigger) ||
-                                       strategy.CanTriggerWhileTriggeredBehaviorRunning();
+                                       strategy.CanInterruptOtherTriggeredBehavior();
 
     if(shouldCheckStrategy &&
        canInterruptBehavior &&

@@ -29,6 +29,7 @@ namespace Cozmo {
 
 using namespace ExternalInterface;
 
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 namespace{
 static const char* kTriggerStrategyName = "Trigger Strategy Voice Command";
 }
@@ -104,5 +105,6 @@ void ReactionTriggerStrategyVoiceCommand::AlwaysHandleInternal(const EngineToGam
   }
 }
   
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 } // namespace Cozmo
 } // namespace Anki

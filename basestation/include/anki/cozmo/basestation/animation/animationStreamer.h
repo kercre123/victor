@@ -87,8 +87,8 @@ namespace Cozmo {
     Result AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms = 0);
     
     // Add a procedural face "layer" that is applied and then has its final
-    // adjustemtn "held" until removed.
-    // A handle/tag for the layer i s returned, which is needed for removal.
+    // adjustment "held" until removed.
+    // A handle/tag for the layer is returned, which is needed for removal.
     Tag AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack);
     
     // Remove a previously-added persistent face layer using its tag.
@@ -136,7 +136,7 @@ namespace Cozmo {
     // Actually stream the animation (called each tick)
     Result UpdateStream(Robot& robot, Animation* anim, bool storeFace);
     
-    // This is performs the test cases for the animation while loop
+    // This performs the test cases for the animation while loop
     bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
     
     Result SendStartOfAnimation();

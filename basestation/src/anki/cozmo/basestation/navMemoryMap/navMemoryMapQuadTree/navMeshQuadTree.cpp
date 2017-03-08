@@ -573,7 +573,8 @@ void NavMeshQuadTree::Broadcast(uint32_t originID) const
   using namespace ExternalInterface;
   
   // Create and send the start (header) message
-  MemoryMapMessageBegin msgBegin(originID, _root.GetLevel(), _root.GetSideLen());
+  const Point3f& rootCenter = _root.GetCenter();
+  MemoryMapMessageBegin msgBegin(originID, _root.GetLevel(), _root.GetSideLen(), rootCenter.x(), rootCenter.y());
   _robot->Broadcast(MessageEngineToGame(std::move(msgBegin)));
 
   // Ask root to add quad info to be sent (do a DFS of entire tree)

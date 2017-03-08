@@ -1,33 +1,21 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "progStat.Bond": {
-    "translation": "Bond"
+  "progStat.Bond" : {
+    "translation" : "ボンド"
   },
-  "progStat.Excitement": {
-    "translation": "Excitement"
+  "progStat.Excitement" : {
+    "translation" : "興奮"
   },
-  "progStat.Novelty": {
-    "translation": "Novelty"
+  "progStat.Novelty" : {
+    "translation" : "ノベルティ"
   },
-  "progStat.Default": {
-    "translation": "DEFAULT"
+  "progStat.Default" : {
+    "translation" : "デフォルト"
   }
 }

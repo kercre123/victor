@@ -30,7 +30,7 @@ public:
   ReactionTriggerStrategyPositionUpdate(Robot& robot, const Json::Value& config, const std::string& strategyName);
 
   virtual bool ShouldResumeLastBehavior() const override final { return true;}
-  virtual bool CanTriggerWhileTriggeredBehaviorRunning() const override { return true; }
+  virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
 
   // Allow a behavior chooser to reset reaction data for objects
   void ResetReactionData();

@@ -67,6 +67,7 @@ private:
     // The time we should stop ignoring move messages for the objectID this DoubleTapInfo
     // maps to
     TimeStamp_t ignoreNextMoveTime = 0;
+    bool isIgnoringMoveMessages = false;
   };
   
   std::map<ObjectID, DoubleTapInfo> _doubleTapObjects;

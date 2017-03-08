@@ -1,84 +1,72 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "faceEnrollment.instructions": {
-    "translation": "Cozmo needs to check you out! Look at Cozmo straight on, and hold still.\n\nWhen he's done, you'll hear a chime."
+  "faceEnrollment.instructions" : {
+    "translation" : "コズモはあなたをチェックアウトする必要があります！まっすぐにコズモを見て、まだホールド。彼が終了したとき、あなたはチャイムが聞こえます。"
   },
-  "faceEnrollment.enterName.placeholderText": {
-    "translation": "Enter your first name"
+  "faceEnrollment.enterName.placeholderText" : {
+    "translation" : "あなたの最初の名前を入力します。"
   },
-  "faceEnrollment.faceEnrollmentList.description": {
-    "translation": "Teach Cozmo to recognize you, or someone else!"
+  "faceEnrollment.faceEnrollmentList.description" : {
+    "translation" : "コズモがあなたを認識するように教える、または他の誰か！"
   },
-  "faceEnrollment.faceEnrollmentList.deleteConfirmTitle": {
-    "translation": "Delete {0}?"
+  "faceEnrollment.faceEnrollmentList.deleteConfirmTitle" : {
+    "translation" : "削除{0} ？"
   },
-  "faceEnrollment.faceEnrollmentList.deleteConfirmButton": {
-    "translation": "Delete"
+  "faceEnrollment.faceEnrollmentList.deleteConfirmButton" : {
+    "translation" : "削除"
   },
-  "faceEnrollment.instructions.top": {
-    "translation": "Look at Cozmo straight on, and hold still"
+  "faceEnrollment.instructions.top" : {
+    "translation" : "まっすぐにコズモを見て、まだホールド"
   },
-  "faceEnrollment.instructions.bottom": {
-    "translation": "When Cozmo is done, he'll say your name"
+  "faceEnrollment.instructions.bottom" : {
+    "translation" : "コズモが完了すると、彼は自分の名前を言いますよ"
   },
-  "faceEnrollment.errors.neverSawValidFace.title": {
-    "translation": "Cozmo already knows you!"
+  "faceEnrollment.errors.neverSawValidFace.title" : {
+    "translation" : "コズモはすでに知っています！"
   },
-  "faceEnrollment.errors.neverSawValidFace.description": {
-    "translation": "Cozmo recognizes you as {0}"
+  "faceEnrollment.errors.neverSawValidFace.description" : {
+    "translation" : "コズモは、としてあなたを認識し、 {0}"
   },
-  "faceEnrollment.errors.timeOut.title": {
-    "translation": "Cozmo is having trouble seeing you"
+  "faceEnrollment.errors.timeOut.title" : {
+    "translation" : "コズモはトラブルあなたを見てをしています"
   },
-  "faceEnrollment.errors.timeOut.description": {
-    "translation": "Make sure you're in a well-lit room and are aligned with Cozmo's face. Cozmo should be on a flat, stable surface."
+  "faceEnrollment.errors.timeOut.description" : {
+    "translation" : "あなたは明るい部屋にいるとコズモの顔と整合していることを確認します。コズモは平らで安定した面にする必要があります。"
   },
-  "faceEnrollment.condition.allChangesSaved": {
-    "translation": "All changes have been saved."
+  "faceEnrollment.condition.allChangesSaved" : {
+    "translation" : "すべての変更が保存されました。"
   },
-  "faceEnrollment.firstTimeCompleteAlert.title": {
-    "translation": "Cozmo knows your name!"
+  "faceEnrollment.firstTimeCompleteAlert.title" : {
+    "translation" : "コズモは、あなたの名前を知っています！"
   },
-  "faceEnrollment.firstTimeCompleteAlert.description": {
-    "translation": "Cozmo has learned to recognize your face and may say your name when he sees you. Use Meet Cozmo again to introduce him to more friends."
+  "faceEnrollment.firstTimeCompleteAlert.description" : {
+    "translation" : "コズモはあなたの顔を認識するように学習していると、彼はあなたを見ているときに自分の名前を言うかもしれません。より多くの友人に彼を紹介するために再び会うコズモを使用してください。"
   },
-  "faceEnrollment.button.addNewPerson": {
-    "translation": "Add New Person"
+  "faceEnrollment.button.addNewPerson" : {
+    "translation" : "新しい人を追加"
   },
-  "faceEnrollment.button.scanAgain": {
-    "translation": "Scan {0} Again"
+  "faceEnrollment.button.scanAgain" : {
+    "translation" : "スキャン{0}再び"
   },
-  "faceEnrollment.label.dayCount.singular": {
-    "translation": "Day Ago"
+  "faceEnrollment.label.dayCount.singular" : {
+    "translation" : "日前"
   },
-  "faceEnrollment.label.dayCount.plural": {
-    "translation": "Days Ago"
+  "faceEnrollment.label.dayCount.plural" : {
+    "translation" : "数日前"
   },
-  "faceEnrollment.label.HelpCozmoRecognize": {
-    "translation": "Help Cozmo recognize you more easily"
+  "faceEnrollment.label.HelpCozmoRecognize" : {
+    "translation" : "コズモがより簡単にあなたを認識しやすく"
   },
-  "faceEnrollment.label.lastScanned": {
-    "translation": "Last Scanned:"
+  "faceEnrollment.label.lastScanned" : {
+    "translation" : "最終スキャン："
   },
-  "faceEnrollment.label.today": {
-    "translation": "Today"
+  "faceEnrollment.label.today" : {
+    "translation" : "今日"
   }
 }

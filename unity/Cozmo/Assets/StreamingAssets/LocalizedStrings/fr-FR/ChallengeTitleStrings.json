@@ -1,78 +1,66 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "challengeDetails.needsMoreCubesModal.title": {
-    "translation": "Not Enough Cubes"
+  "challengeDetails.needsMoreCubesModal.title" : {
+    "translation" : "Cubes Not Enough"
   },
-  "challengeDetails.needsMoreCubesModal.description": {
-    "translation": "Cozmo needs {0} more {1} to start {2}."
+  "challengeDetails.needsMoreCubesModal.description" : {
+    "translation" : "besoins Cozmo {0} plus {1} commencer {2} ."
   },
-  "challengeDetails.cozmoNotOnTreads.title": {
-    "translation": "Cozmo is not ready"
+  "challengeDetails.cozmoNotOnTreads.title" : {
+    "translation" : "Cozmo est pas prêt"
   },
-  "challengeDetails.cozmoNotOnTreads.description": {
-    "translation": "Please help Cozmo get upright and ready to play."
+  "challengeDetails.cozmoNotOnTreads.description" : {
+    "translation" : "S'il vous plaît aider Cozmo obtenir debout et prêt à jouer."
   },
-  "challengeDetails.cozmoIsStillWakingUpModal.title": {
-    "translation": "Cozmo is Waking Up"
+  "challengeDetails.cozmoIsStillWakingUpModal.title" : {
+    "translation" : "Cozmo se réveille"
   },
-  "challengeDetails.cozmoIsStillWakingUpModal.description": {
-    "translation": "Please wait for Cozmo to wake up and drive off of his charger."
+  "challengeDetails.cozmoIsStillWakingUpModal.description" : {
+    "translation" : "S'il vous plaît attendre Cozmo de se réveiller et chasser de son chargeur."
   },
-  "challengeDetails.needsMoreCubesModal.button": {
-    "translation": "Show Me How"
+  "challengeDetails.needsMoreCubesModal.button" : {
+    "translation" : "Me montrer comment"
   },
-  "cubeSlap.title": {
-    "translation": "Keepaway"
+  "cubeSlap.title" : {
+    "translation" : "Tenir à l'écart"
   },
-  "cubeSlap.description": {
-    "translation": "Tempt Cozmo to pounce on a Cube, then pull it away before he can!"
+  "cubeSlap.description" : {
+    "translation" : "Allécher Cozmo à bondir sur un cube, puis retirez-le avant qu'il peut!"
   },
-  "droneMode.title": {
-    "translation": "Explorer Mode"
+  "droneMode.title" : {
+    "translation" : "Mode Explorateur"
   },
-  "droneMode.description": {
-    "translation": "Cozmo allows you to take control and explore the world through his eyes."
+  "droneMode.description" : {
+    "translation" : "Cozmo vous permet de prendre le contrôle et d'explorer le monde à travers ses yeux."
   },
-  "faceEnrollment.title": {
-    "translation": "Meet Cozmo"
+  "faceEnrollment.title" : {
+    "translation" : "Rencontrez Cozmo"
   },
-  "faceEnrollment.description": {
-    "translation": "Introduce Cozmo to new people so he can learn to say their name."
+  "faceEnrollment.description" : {
+    "translation" : "Introduire Cozmo à de nouvelles personnes afin qu'il puisse apprendre à dire leur nom."
   },
-  "memoryMatchGame.title": {
-    "translation": "Memory Match"
+  "memoryMatchGame.title" : {
+    "translation" : "Memory match"
   },
-  "memoryMatchGame.description": {
-    "translation": "A pattern game that tests your memory. Watch the cubes and listen carefully!"
+  "memoryMatchGame.description" : {
+    "translation" : "Un jeu de motif qui teste votre mémoire. Regardez les cubes et écoutez attentivement!"
   },
-  "speedTap.title": {
-    "translation": "Quick Tap"
+  "speedTap.title" : {
+    "translation" : "Quick Tap"
   },
-  "speedTap.description": {
-    "translation": "A color matching game of fast reflexes and sharp wits."
+  "speedTap.description" : {
+    "translation" : "Un jeu de correspondance des couleurs des réflexes rapides et esprits pointus."
   },
-  "cozmoSays.title": {
-    "translation": "Cozmo Says"
+  "cozmoSays.title" : {
+    "translation" : "Cozmo Says"
   },
-  "cozmoSays.description": {
-    "translation": "In exchange for a Spark, Cozmo will try to say a word or phrase!"
+  "cozmoSays.description" : {
+    "translation" : "En échange d'une Spark, Cozmo va essayer de dire un mot ou une phrase!"
   }
 }

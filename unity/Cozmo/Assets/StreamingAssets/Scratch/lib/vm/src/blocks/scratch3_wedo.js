@@ -29,7 +29,9 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_liftheight: this.setLiftHeight,
         cozmo_wait_for_face: this.waitForFace,
         cozmo_wait_for_cube: this.waitForCube,
+        cozmo_wait_for_cube_tap: this.waitForCubeTap,
         cozmo_headangle: this.setHeadAngle,
+        cozmo_dock_with_cube: this.dockWithCube,
         cozmo_turn_left: this.turnLeft,
         cozmo_turn_right: this.turnRight,
         cozmo_drive_speed: this.driveSpeed,
@@ -224,6 +226,8 @@ Scratch3CozmoBlocks.prototype._getAnimation = function(animationName) {
  * @private
  */
 Scratch3CozmoBlocks.prototype.waitForFace = function (args, util) {
+    window.Unity.call('{"command": "cozmoHeadAngle","argString": "high"}');
+
     this.runtime.stackIsWaitingForFace = true;
     if (!this.runtime.cozmoSawFace) {
         util.yield();
@@ -242,6 +246,8 @@ Scratch3CozmoBlocks.prototype.waitForFace = function (args, util) {
  * @private
  */
 Scratch3CozmoBlocks.prototype.waitForCube = function (args, util) {
+    window.Unity.call('{"command": "cozmoHeadAngle","argString": "low"}');
+
     this.runtime.stackIsWaitingForCube = true;
     if (!this.runtime.cozmoSawCube) {
         util.yield();
@@ -249,6 +255,24 @@ Scratch3CozmoBlocks.prototype.waitForCube = function (args, util) {
     else {
         this.runtime.cozmoSawCube = false;
         this.runtime.stackIsWaitingForCube = false;
+    }
+};
+
+/**
+ * See waitForFace docs above.
+ *
+ * @param argValues Parameters passed with the block.
+ * @param util The util instance to use for yielding and finishing.
+ * @private
+ */
+Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
+    this.runtime.stackIsWaitingForCubeTap = true;
+    if (!this.runtime.cozmoCubeWasTapped) {
+        util.yield();
+    }
+    else {
+        this.runtime.cozmoCubeWasTapped = false;
+        this.runtime.stackIsWaitingForCubeTap = false;
     }
 };
 
@@ -264,6 +288,23 @@ Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
         util.yield();
     } else {
         if (util.stackFrame.timer.timeElapsed() < 1000) {
+            util.yield();
+        }
+    }
+};
+
+Scratch3CozmoBlocks.prototype.dockWithCube = function(args, util) {
+    // TODO Wait for RobotCompletedAction instead of using timer.
+    if (!util.stackFrame.timer) {
+        window.Unity.call('{"command": "cozmoDockWithCube"}');
+
+        // Yield
+        util.stackFrame.timer = new Timer();
+        util.stackFrame.timer.start();
+        util.yield();
+    } else {
+        // TODO Add distance as multiplier to the time below
+        if (util.stackFrame.timer.timeElapsed() < 3000) {
             util.yield();
         }
     }

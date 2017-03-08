@@ -13,7 +13,7 @@ class DependencyInstaller(object):
 
   def __init__(self, options):
     if options.verbose:
-      print('Initializing paths for platform {0}...'.format(platform))
+      print('Initializing DependencyInstaller')
     self.options = options
 
   def isInstalled(self, dep):

@@ -140,6 +140,7 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
                          "No valid predock poses for objectID: %d with offsets x:%f y:%f",
                          _targetID.GetValue(),
                          _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm);
+        robot.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
         _status = BehaviorStatus::Failure;
       }
     }else{
@@ -162,6 +163,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     {
+      _objectObservedDuringSearch = false;
       SearchForBlock(result, robot);
       break;
     }
