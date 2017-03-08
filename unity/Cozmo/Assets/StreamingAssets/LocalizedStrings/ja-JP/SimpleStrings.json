@@ -1,213 +1,201 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "name.cozmo": {
-    "translation": "Cozmo"
+  "name.cozmo" : {
+    "translation" : "コズモ"
   },
-  "name.player": {
-    "translation": "Player"
+  "name.player" : {
+    "translation" : "プレーヤー"
   },
-  "button.quit": {
-    "translation": "Quit"
+  "button.quit" : {
+    "translation" : "終了する"
   },
-  "button.cancel": {
-    "translation": "Cancel"
+  "button.cancel" : {
+    "translation" : "キャンセル"
   },
-  "button.yes": {
-    "translation": "Yes"
+  "button.yes" : {
+    "translation" : "はい"
   },
-  "button.no": {
-    "translation": "No"
+  "button.no" : {
+    "translation" : "いいえ"
   },
-  "button.continue": {
-    "translation": "Continue"
+  "button.continue" : {
+    "translation" : "持続する"
   },
-  "button.okay": {
-    "translation": "Okay"
+  "button.okay" : {
+    "translation" : "はい"
   },
-  "button.again": {
-    "translation": "Play Again"
+  "button.again" : {
+    "translation" : "再びプレー"
   },
-  "button.refresh": {
-    "translation": "Refresh"
+  "button.refresh" : {
+    "translation" : "リフレッシュ"
   },
-  "button.close": {
-    "translation": "Close"
+  "button.close" : {
+    "translation" : "閉じる"
   },
-  "button.done": {
-    "translation": "Done"
+  "button.done" : {
+    "translation" : "終わりました"
   },
-  "button.play": {
-    "translation": "Play"
+  "button.play" : {
+    "translation" : "遊びます"
   },
-  "button.leave": {
-    "translation": "Leave"
+  "button.leave" : {
+    "translation" : "残します"
   },
-  "button.back": {
-    "translation": "Back"
+  "button.back" : {
+    "translation" : "バック"
   },
-  "button.next": {
-    "translation": "Next"
+  "button.next" : {
+    "translation" : "次"
   },
-  "button.staySparked": {
-    "translation": "Stay Sparked"
+  "button.staySparked" : {
+    "translation" : "滞在きっかけ"
   },
-  "button.soundsGood": {
-    "translation": "Sounds Good"
+  "button.soundsGood" : {
+    "translation" : "いいですね"
   },
-  "label.plusCount": {
-    "translation": "+{0}"
+  "label.plusCount" : {
+    "translation" : "+ {0}"
   },
-  "label.xCount": {
-    "translation": "x{0}"
+  "label.xCount" : {
+    "translation" : "バツ{0}"
   },
-  "label.totalCount": {
-    "translation": "Your {0}: {1}"
+  "label.totalCount" : {
+    "translation" : "きみの{0} ： {1}"
   },
-  "label.fractionCount": {
-    "translation": "{0}/{1}"
+  "label.fractionCount" : {
+    "translation" : "{0} / {1}"
   },
-  "label.dayCount": {
-    "translation": "Day {0}"
+  "label.dayCount" : {
+    "translation" : "日{0}"
   },
-  "label.waiting": {
-    "translation": "Waiting..."
+  "label.waiting" : {
+    "translation" : "待っています..."
   },
-  "requestGame.title": {
-    "translation": "{0}!"
+  "requestGame.title" : {
+    "translation" : "{0} ！"
   },
-  "requestGame.description": {
-    "translation": "Cozmo wants to play"
+  "requestGame.description" : {
+    "translation" : "コズモは、再生したいです"
   },
-  "dailyGoal.title": {
-    "translation": "Today's Goals"
+  "dailyGoal.title" : {
+    "translation" : "今日の目標"
   },
-  "dailyGoal.FriendBonus": {
-    "translation": "Friend Bonus"
+  "dailyGoal.FriendBonus" : {
+    "translation" : "フレンドボーナス"
   },
-  "label.connect": {
-    "translation": "Connect"
+  "label.connect" : {
+    "translation" : "接続します"
   },
-  "label.start": {
-    "translation": "Start"
+  "label.start" : {
+    "translation" : "開始"
   },
-  "cozmoTab.title": {
-    "translation": "Upgrades"
+  "cozmoTab.title" : {
+    "translation" : "アップグレード"
   },
-  "cozmoTab.subTitle": {
-    "translation": ": Expand Cozmo's abilities"
+  "cozmoTab.subTitle" : {
+    "translation" : "：コズモの能力を拡大"
   },
-  "coreUpgradeDetailsDialog.cubesNeeded": {
-    "translation": "{0} {1} Required"
+  "coreUpgradeDetailsDialog.cubesNeeded" : {
+    "translation" : "{0}{1}必須"
   },
-  "loot.Start": {
-    "translation": "Tap Repeatedly!"
+  "loot.Start" : {
+    "translation" : "繰り返しタップします！"
   },
-  "loot.Mid": {
-    "translation": "Keep Going!"
+  "loot.Mid" : {
+    "translation" : "立ち止まるな！"
   },
-  "loot.Almost": {
-    "translation": "Almost There!"
+  "loot.Almost" : {
+    "translation" : "ほとんどそこに！"
   },
-  "loot.Announce": {
-    "translation": "Emotion Chip Charged!"
+  "loot.Announce" : {
+    "translation" : "感情チップは荷電します！"
   },
-  "label.emptyWithArg": {
-    "translation": "{0}"
+  "label.emptyWithArg" : {
+    "translation" : "{0}"
   },
-  "title.soundCheck": {
-    "translation": "Sound Check"
+  "title.soundCheck" : {
+    "translation" : "音量チェック"
   },
-  "button.GetACozmo": {
-    "translation": "Get A Cozmo"
+  "button.GetACozmo" : {
+    "translation" : "コズモを取得"
   },
-  "button.start": {
-    "translation": "Start"
+  "button.start" : {
+    "translation" : "開始"
   },
-  "button.begin": {
-    "translation": "Let's Begin"
+  "button.begin" : {
+    "translation" : "さぁ、始めよう"
   },
-  "soundcheck.description": {
-    "translation": "Please make sure your device's sound is turned on"
+  "soundcheck.description" : {
+    "translation" : "お使いのデバイスのサウンドがオンになっていることを確認してください"
   },
-  "refreshCubesPrompt.description": {
-    "translation": "Put one of each Cube next to Cozmo and tap 'Refresh'. Cozmo will Connect to the 3 that he thinks are closest."
+  "refreshCubesPrompt.description" : {
+    "translation" : "コズモに次の各キューブの1を入れて、「更新」をタップします。コズモは、彼が最も近いと考えて3に接続します。"
   },
-  "label.available": {
-    "translation": "Available!"
+  "label.available" : {
+    "translation" : "利用可能！"
   },
-  "button.replay": {
-    "translation": "Replay"
+  "button.replay" : {
+    "translation" : "リプレイ"
   },
-  "label.to": {
-    "translation": "To:"
+  "label.to" : {
+    "translation" : "に："
   },
-  "button.skip": {
-    "translation": "Skip"
+  "button.skip" : {
+    "translation" : "スキップ"
   },
-  "soundcheck.description.confirm": {
-    "translation": "Did you hear the sound?"
+  "soundcheck.description.confirm" : {
+    "translation" : "あなたは音を聞きましたか？"
   },
-  "error.badLight.Top": {
-    "translation": "Cozmo is having trouble seeing"
+  "error.badLight.Top" : {
+    "translation" : "コズモトラブル見をしています"
   },
-  "error.badLight.Bottom": {
-    "translation": "Avoid bright lights and dimly lit spaces"
+  "error.badLight.Bottom" : {
+    "translation" : "明るい光と薄暗いスペースを避けます"
   },
-  "label.cozmo.serial": {
-    "translation": "Cozmo ID: {0}"
+  "label.cozmo.serial" : {
+    "translation" : "コズモID： {0}"
   },
-  "label.deviceid": {
-    "translation": "Device ID: {0}"
+  "label.deviceid" : {
+    "translation" : "デバイスID： {0}"
   },
-  "label.privacyPolicy": {
-    "translation": "Privacy Policy"
+  "label.privacyPolicy" : {
+    "translation" : "個人情報保護方針"
   },
-  "button.openEnvelope": {
-    "translation": "TAP TO OPEN"
+  "button.openEnvelope" : {
+    "translation" : "開くにはTAP"
   },
-  "label.pressAndHoldInstruction": {
-    "translation": "Press and hold {0} to confirm"
+  "label.pressAndHoldInstruction" : {
+    "translation" : "押したまま{0}確認するために"
   },
-  "label.activePlayer": {
-    "translation": "Active Player:"
+  "label.activePlayer" : {
+    "translation" : "アクティブプレーヤー："
   },
-  "label.streaksCount": {
-    "translation": "Longest Daily Streak:"
+  "label.streaksCount" : {
+    "translation" : "最長デイリーストリーク："
   },
-  "label.goalsCompleted": {
-    "translation": "Goals Completed:"
+  "label.goalsCompleted" : {
+    "translation" : "完成目標："
   },
-  "label.daysWithCozmo": {
-    "translation": "Days Played With Cozmo:"
+  "label.daysWithCozmo" : {
+    "translation" : "コズモと遊ん日："
   },
-  "label.termsOfUse": {
-    "translation": "Terms of Use"
+  "label.termsOfUse" : {
+    "translation" : "利用規約"
   },
-  "label.totalSparks": {
-    "translation": "Total Sparks: {0}"
+  "label.totalSparks" : {
+    "translation" : "合計スパークス： {0}"
   },
-  "label.termsInstructions": {
-    "translation": "By tapping \"Start\", you agree to the terms below:"
+  "label.termsInstructions" : {
+    "translation" : "「スタート」をタップすると、あなたは以下の条件に同意します："
   },
-  "label.simpleCount": {
-    "translation": "{0} {1}"
+  "label.simpleCount" : {
+    "translation" : "{0} {1}"
   }
 }

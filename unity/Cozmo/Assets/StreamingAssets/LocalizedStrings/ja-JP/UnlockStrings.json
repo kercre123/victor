@@ -1,237 +1,225 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "unlockable.Unlock": {
-    "translation": "Unlock"
+  "unlockable.Unlock" : {
+    "translation" : "アンロック"
   },
-  "unlockable.Locked": {
-    "translation": "Locked"
+  "unlockable.Locked" : {
+    "translation" : "ロック"
   },
-  "unlockable.App": {
-    "translation": "App"
+  "unlockable.App" : {
+    "translation" : "アプリ"
   },
-  "unlockable.Upgrade": {
-    "translation": "Upgrade"
+  "unlockable.Upgrade" : {
+    "translation" : "アップグレード"
   },
-  "unlockable.Available": {
-    "translation": "Available:"
+  "unlockable.Available" : {
+    "translation" : "利用可能："
   },
-  "unlockable.PreReqNeeded.Description": {
-    "translation": "You need to unlock the {0} {1} first!"
+  "unlockable.PreReqNeeded.Description" : {
+    "translation" : "あなたがロックを解除する必要があります{0}{1}最初！"
   },
-  "unlockable.BitsRequired.Title": {
-    "translation": "Not Enough Bits"
+  "unlockable.BitsRequired.Title" : {
+    "translation" : "十分ではないビット"
   },
-  "unlockable.CurrencyRequired": {
-    "translation": "Not Enough {0}"
+  "unlockable.CurrencyRequired" : {
+    "translation" : "十分ではない{0}"
   },
-  "unlockable.BitsRequired.Description": {
-    "translation": "Use {0} {1} to Unlock"
+  "unlockable.BitsRequired.Description" : {
+    "translation" : "つかいます{0}{1}ロックを解除します"
   },
-  "unlockable.BitsRequired.EarnMore": {
-    "translation": "Earn more by completing Daily Goals"
+  "unlockable.BitsRequired.EarnMore" : {
+    "translation" : "毎日の目標を完了することによって、よりを獲得"
   },
-  "unlockable.Mystery.Title": {
-    "translation": "????"
+  "unlockable.Mystery.Title" : {
+    "translation" : "????"
   },
-  "unlockable.Mystery.Description": {
-    "translation": "More great Upgrades coming soon!"
+  "unlockable.Mystery.Description" : {
+    "translation" : "すぐに来るより多くの偉大なアップグレード！"
   },
-  "unlockable.FistBump.Title": {
-    "translation": "Fist Bump"
+  "unlockable.FistBump.Title" : {
+    "translation" : "拳バンプ"
   },
-  "unlockable.FistBump.Description": {
-    "translation": "Want to show Cozmo that you're proud of him? Give him a little fist bump! With this upgrade, Cozmo will hold his lift in the air and wait for you to bump it."
+  "unlockable.FistBump.Description" : {
+    "translation" : "あなたは彼の誇りに思っていることコズモを表示したいですか？彼は少し拳バンプ与えます！このアップグレードにより、コズモは、空気中の彼のリフトを保持し、あなたがそれをバンプするのを待ちます。"
   },
-  "unlockable.FistBump.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to fist bump"
+  "unlockable.FistBump.SparkButtonDescription" : {
+    "translation" : "バンプの拳するコズモを依頼するタップ"
   },
-  "unlockable.FistBump.SparkedStateDescription": {
-    "translation": "When he's ready, fist bump Cozmo"
+  "unlockable.FistBump.SparkedStateDescription" : {
+    "translation" : "彼は準備ができたとき、拳はコズモバンプ"
   },
-  "unlockable.Workout.Title": {
-    "translation": "Workout with Cubes"
+  "unlockable.Workout.Title" : {
+    "translation" : "キューブとのワークアウト"
   },
-  "unlockable.Workout.Description": {
-    "translation": "Even robots need exercise! With this upgrade, Cozmo learns to workout with a Cube to stay in top shape."
+  "unlockable.Workout.Description" : {
+    "translation" : "でもロボットが行使する必要があります！このアップグレードにより、コズモは上の形に滞在するキューブでワークアウトに学習します。"
   },
-  "unlockable.Workout.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to workout"
+  "unlockable.Workout.SparkButtonDescription" : {
+    "translation" : "ワークアウトにコズモを依頼するタップ"
   },
-  "unlockable.Workout.SparkedStateDescription": {
-    "translation": "Watch Cozmo find a Cube and workout"
+  "unlockable.Workout.SparkedStateDescription" : {
+    "translation" : "ウォッチコズモは、キューブやワークアウトを見つけます"
   },
-  "unlockable.CubePounce.Title": {
-    "translation": "Keepaway"
+  "unlockable.CubePounce.Title" : {
+    "translation" : "遠ざける"
   },
-  "unlockable.CubePounce.Description": {
-    "translation": "With this Upgrade, Cozmo learns how to play Keepaway, a game of reflexes and reaction time."
+  "unlockable.CubePounce.Description" : {
+    "translation" : "このアップグレードにより、コズモはキープアウエー、反射神経と反応時間のゲームをプレイする方法を学習します。"
   },
-  "unlockable.FaceEnrollment.Title": {
-    "translation": "Meet Cozmo"
+  "unlockable.FaceEnrollment.Title" : {
+    "translation" : "ミートコズモ"
   },
-  "unlockable.FaceEnrollment.Description": {
-    "translation": "With this Upgrade, Cozmo learns to remember faces and speak names.\n\nFind this in the Meet Cozmo activity."
+  "unlockable.FaceEnrollment.Description" : {
+    "translation" : "このアップグレードにより、コズモは顔を覚えていると名前を話すことを学習します。ミートコズモ活動でこれを見つけます。"
   },
-  "unlockable.MemoryMatch.Title": {
-    "translation": "Memory Match"
+  "unlockable.MemoryMatch.Title" : {
+    "translation" : "メモリマッチ"
   },
-  "unlockable.MemoryMatch.Description": {
-    "translation": "With this Upgrade, Cozmo learns how to play the Memory Match game."
+  "unlockable.MemoryMatch.Description" : {
+    "translation" : "このアップグレードにより、コズモはメモリマッチゲームをプレイする方法を学習します。"
   },
-  "unlockable.SpeedTap.Title": {
-    "translation": "Quick Tap"
+  "unlockable.SpeedTap.Title" : {
+    "translation" : "クイックタップ"
   },
-  "unlockable.SpeedTap.Description": {
-    "translation": "With this Upgrade, Cozmo learns how to play the game Quick Tap. Over time, his skills will improve!"
+  "unlockable.SpeedTap.Description" : {
+    "translation" : "このアップグレードにより、コズモはゲームクイックタップを再生する方法を学習します。時間が経つにつれて、彼のスキルが改善されます！"
   },
-  "unlockable.cozmoSays.Title": {
-    "translation": "Cozmo Says"
+  "unlockable.cozmoSays.Title" : {
+    "translation" : "コズモは言います"
   },
-  "unlockable.CubeRollAction.Title": {
-    "translation": "Roll a Cube"
+  "unlockable.CubeRollAction.Title" : {
+    "translation" : "キューブを転がし"
   },
-  "unlockable.CubeRollAction.Description": {
-    "translation": "Cozmo prefers Cubes to be right side up. This Upgrade allows him to roll Cubes, especially when they are on their side."
+  "unlockable.CubeRollAction.Description" : {
+    "translation" : "コズモは右サイドアップであるとキューブを好みます。このアップグレードは、彼らが彼らの側にある場合は特に、彼はキューブをロールバックすることができます。"
   },
-  "unlockable.CubeRollAction.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to roll a Cube"
+  "unlockable.CubeRollAction.SparkButtonDescription" : {
+    "translation" : "キューブをロールコズモを依頼するタップ"
   },
-  "unlockable.CubeRollAction.SparkedStateDescription": {
-    "translation": "Watch Cozmo roll the first Cube he sees"
+  "unlockable.CubeRollAction.SparkedStateDescription" : {
+    "translation" : "コズモロールに彼が見た最初のキューブを見ます"
   },
-  "unlockable.DroneMode.Title": {
-    "translation": "Explorer Mode"
+  "unlockable.DroneMode.Title" : {
+    "translation" : "エクスプローラモード"
   },
-  "unlockable.DroneMode.Description": {
-    "translation": "With this Upgrade, Cozmo will allow you to pilot him in Explorer Mode."
+  "unlockable.DroneMode.Description" : {
+    "translation" : "このアップグレードにより、コズモはエクスプローラモードで彼を操縦することができます。"
   },
-  "unlockable.CubeStackAction.Title": {
-    "translation": "Stack Cubes"
+  "unlockable.CubeStackAction.Title" : {
+    "translation" : "スタックキューブ"
   },
-  "unlockable.CubeStackAction.Description": {
-    "translation": "With this Upgrade, Cozmo gains the ability to create a stack of two Power Cubes."
+  "unlockable.CubeStackAction.Description" : {
+    "translation" : "このアップグレードにより、コズモは2パワーキューブのスタックを作成する能力を得ます。"
   },
-  "unlockable.CubeStackAction.SparkedStateDescription": {
-    "translation": "Watch Cozmo create a stack of Cubes"
+  "unlockable.CubeStackAction.SparkedStateDescription" : {
+    "translation" : "ウォッチコズモは、キューブのスタックを作成します"
   },
-  "unlockable.CubeStackAction.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to stack two Cubes"
+  "unlockable.CubeStackAction.SparkButtonDescription" : {
+    "translation" : "2キューブを積み重ねることコズモを依頼するタップ"
   },
-  "unlockable.PounceOnMotionAction.Title": {
-    "translation": "Pounce On Fingers"
+  "unlockable.PounceOnMotionAction.Title" : {
+    "translation" : "指に襲い掛かります"
   },
-  "unlockable.PounceOnMotionAction.Description": {
-    "translation": "With this Upgrade, when Cozmo sees movement on the ground in front of him, such as a finger, he will playfully pounce on it!"
+  "unlockable.PounceOnMotionAction.Description" : {
+    "translation" : "コズモが指など、彼の前に地面に動きを見て、このアップグレード、で、彼はふざけて、それに襲い掛かるでしょう！"
   },
-  "unlockable.PounceOnMotionAction.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to pounce on fingers"
+  "unlockable.PounceOnMotionAction.SparkButtonDescription" : {
+    "translation" : "指に襲い掛かるためにコズモを依頼するタップ"
   },
-  "unlockable.PounceOnMotionAction.SparkedStateDescription": {
-    "translation": "Cozmo will pounce on any movement he sees"
+  "unlockable.PounceOnMotionAction.SparkedStateDescription" : {
+    "translation" : "コズモは、彼が見ている任意の動きに襲い掛かるだろう"
   },
-  "unlockable.BuildPyramid.Title": {
-    "translation": "Build a Pyramid"
+  "unlockable.BuildPyramid.Title" : {
+    "translation" : "ピラミッドを構築"
   },
-  "unlockable.BuildPyramid.Description": {
-    "translation": "With this Upgrade, Cozmo gains the ability to build a pyramid out of three upright Cubes."
+  "unlockable.BuildPyramid.Description" : {
+    "translation" : "このアップグレードにより、コズモは3直立キューブのうちピラミッドを構築する能力を得ます。"
   },
-  "unlockable.BuildPyramid.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to build a pyramid"
+  "unlockable.BuildPyramid.SparkButtonDescription" : {
+    "translation" : "ピラミッドを構築するためにコズモを依頼するタップ"
   },
-  "unlockable.BuildPyramid.SparkedStateDescription": {
-    "translation": "Watch Cozmo build a pyramid out of 3 Cubes"
+  "unlockable.BuildPyramid.SparkedStateDescription" : {
+    "translation" : "ウォッチコズモは3キューブの外にピラミッドを構築します"
   },
-  "unlockable.PopAWheelieAction.Title": {
-    "translation": "Pop a Wheelie"
+  "unlockable.PopAWheelieAction.Title" : {
+    "translation" : "ウイリーポップ"
   },
-  "unlockable.PopAWheelieAction.Description": {
-    "translation": "Cozmo gains a new trick! With this Upgrade he can use a Cube to boost himself up, and pop a wheelie."
+  "unlockable.PopAWheelieAction.Description" : {
+    "translation" : "コズモは新しいトリックを獲得します！このアップグレードで、彼は自分自身を後押しするためにキューブを使用して、ウイリーを開くことができます。"
   },
-  "unlockable.PopAWheelieAction.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to pop a wheelie"
+  "unlockable.PopAWheelieAction.SparkButtonDescription" : {
+    "translation" : "ウイリーをポップするコズモを依頼するタップ"
   },
-  "unlockable.PopAWheelieAction.SparkedStateDescription": {
-    "translation": "Watch Cozmo pop a wheelie off a Cube"
+  "unlockable.PopAWheelieAction.SparkedStateDescription" : {
+    "translation" : "ウォッチコズモはキューブからウイリーをポップ"
   },
-  "unlockable.KnockOverThreeCubeStack.Title": {
-    "translation": "Knock Over Stacks"
+  "unlockable.KnockOverThreeCubeStack.Title" : {
+    "translation" : "スタックひっくり返します"
   },
-  "unlockable.KnockOverThreeCubeStack.Description": {
-    "translation": "With this Upgrade, any time Cozmo sees a stack of Power Cubes, he may decide to knock them over."
+  "unlockable.KnockOverThreeCubeStack.Description" : {
+    "translation" : "このアップグレードにより、コズモはパワーキューブのスタックを見て、任意の時間が、彼はそれをひっくり返すことを決定することができます。"
   },
-  "unlockable.KnockOverThreeCubeStack.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to knock over a stack"
+  "unlockable.KnockOverThreeCubeStack.SparkButtonDescription" : {
+    "translation" : "スタックをひっくり返すためにコズモを依頼するタップ"
   },
-  "unlockable.KnockOverThreeCubeStack.SparkedStateDescription": {
-    "translation": "Build a stack of Cubes for Cozmo to tip over"
+  "unlockable.KnockOverThreeCubeStack.SparkedStateDescription" : {
+    "translation" : "コズモが転倒するキューブのスタックを構築します"
   },
-  "unlockable.PickupCube.Title": {
-    "translation": "Pick Up Cube"
+  "unlockable.PickupCube.Title" : {
+    "translation" : "キューブをピックアップ"
   },
-  "unlockable.PickupCube.Description": {
-    "translation": "With this Upgrade, Cozmo gains the ability to pick up Power Cubes and carry them around."
+  "unlockable.PickupCube.Description" : {
+    "translation" : "このアップグレードにより、コズモはパワーキューブをピックアップし、それらを持ち歩くする能力を得ます。"
   },
-  "unlockable.PickupCube.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to pick up a Cube"
+  "unlockable.PickupCube.SparkButtonDescription" : {
+    "translation" : "キューブをピックアップするコズモを依頼するタップ"
   },
-  "unlockable.PickupCube.SparkedStateDescription": {
-    "translation": "Watch Cozmo pick up a Cube"
+  "unlockable.PickupCube.SparkedStateDescription" : {
+    "translation" : "ウォッチコズモは、キューブを拾います"
   },
-  "unlockable.ComingSoon.Title": {
-    "translation": "Coming Soon!"
+  "unlockable.ComingSoon.Title" : {
+    "translation" : "近日公開！"
   },
-  "unlockable.ComingSoon.Description": {
-    "translation": "Check back for more great Upgrades, Apps, and fun Cozmo features"
+  "unlockable.ComingSoon.Description" : {
+    "translation" : "さらにお得なアップグレード、アプリ、および楽しいコズモの機能のために戻って確認してください"
   },
-  "sparks.Sparked": {
-    "translation": "Cozmo is sparked:"
+  "sparks.Sparked" : {
+    "translation" : "コズモがきっかけされています。"
   },
-  "sparks.SparkCozmo": {
-    "translation": "Spark Cozmo"
+  "sparks.SparkCozmo" : {
+    "translation" : "コズモスパーク"
   },
-  "sparks.Spark": {
-    "translation": "Spark"
+  "sparks.Spark" : {
+    "translation" : "スパーク"
   },
-  "sparks.Spark.plural": {
-    "translation": "Sparks"
+  "sparks.Spark.plural" : {
+    "translation" : "スパークス"
   },
-  "unlockable.Unavailable.Description": {
-    "translation": "Unlock more upgrades before you can unlock {0}."
+  "unlockable.Unavailable.Description" : {
+    "translation" : "あなたがロックを解除することができます前に、より多くのアップグレードのロックを解除{0} 。"
   },
-  "sparks.Spark.ConfirmQuit": {
-    "translation": "Cozmo is Sparked!"
+  "sparks.Spark.ConfirmQuit" : {
+    "translation" : "コズモがきっかけです！"
   },
-  "sparks.Spark.ConfirmQuit.Description": {
-    "translation": "If you leave before he is done, Cozmo will no longer be Sparked."
+  "sparks.Spark.ConfirmQuit.Description" : {
+    "translation" : "彼が行われる前にあなたがままにしておくと、コズモはもはやきっかけません。"
   },
-  "sparks.NotEnoughSparks.Title": {
-    "translation": "Not enough Sparks"
+  "sparks.NotEnoughSparks.Title" : {
+    "translation" : "十分ではありませんスパークス"
   },
-  "sparks.NotEnoughSparks.Desc": {
-    "translation": "Earn more by completing Daily Goals"
+  "sparks.NotEnoughSparks.Desc" : {
+    "translation" : "毎日の目標を完了することによって、よりを獲得"
   },
-  "sparks.CubesNeedUpright.Title":{
-    "translation": "Make Sure Cubes are Upright"
+  "sparks.CubesNeedUpright.Title" : {
+    "translation" : "キューブが直立していることを確認します"
   },
-  "sparks.CubesNeedUpright.Desc": {
-    "translation": "When the cubes are upright with their lights up, Cozmo can build more quickly."
+  "sparks.CubesNeedUpright.Desc" : {
+    "translation" : "キューブがアップ彼らのライトで直立している場合、コズモは、より迅速に構築することができます。"
   }
 }

@@ -1,213 +1,201 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "name.cozmo": {
-    "translation": "Cozmo"
+  "name.cozmo" : {
+    "translation" : "Cozmo"
   },
-  "name.player": {
-    "translation": "Player"
+  "name.player" : {
+    "translation" : "Joueur"
   },
-  "button.quit": {
-    "translation": "Quit"
+  "button.quit" : {
+    "translation" : "Quitter"
   },
-  "button.cancel": {
-    "translation": "Cancel"
+  "button.cancel" : {
+    "translation" : "Annuler"
   },
-  "button.yes": {
-    "translation": "Yes"
+  "button.yes" : {
+    "translation" : "Oui"
   },
-  "button.no": {
-    "translation": "No"
+  "button.no" : {
+    "translation" : "Non"
   },
-  "button.continue": {
-    "translation": "Continue"
+  "button.continue" : {
+    "translation" : "Continuer"
   },
-  "button.okay": {
-    "translation": "Okay"
+  "button.okay" : {
+    "translation" : "d'accord"
   },
-  "button.again": {
-    "translation": "Play Again"
+  "button.again" : {
+    "translation" : "Rejouer"
   },
-  "button.refresh": {
-    "translation": "Refresh"
+  "button.refresh" : {
+    "translation" : "Rafraîchir"
   },
-  "button.close": {
-    "translation": "Close"
+  "button.close" : {
+    "translation" : "Fermer"
   },
-  "button.done": {
-    "translation": "Done"
+  "button.done" : {
+    "translation" : "Terminé"
   },
-  "button.play": {
-    "translation": "Play"
+  "button.play" : {
+    "translation" : "Jouer"
   },
-  "button.leave": {
-    "translation": "Leave"
+  "button.leave" : {
+    "translation" : "Laisser"
   },
-  "button.back": {
-    "translation": "Back"
+  "button.back" : {
+    "translation" : "Arrière"
   },
-  "button.next": {
-    "translation": "Next"
+  "button.next" : {
+    "translation" : "Prochain"
   },
-  "button.staySparked": {
-    "translation": "Stay Sparked"
+  "button.staySparked" : {
+    "translation" : "Restez Stimulée"
   },
-  "button.soundsGood": {
-    "translation": "Sounds Good"
+  "button.soundsGood" : {
+    "translation" : "Ça m'a l'air bien"
   },
-  "label.plusCount": {
-    "translation": "+{0}"
+  "label.plusCount" : {
+    "translation" : "+ {0}"
   },
-  "label.xCount": {
-    "translation": "x{0}"
+  "label.xCount" : {
+    "translation" : "X {0}"
   },
-  "label.totalCount": {
-    "translation": "Your {0}: {1}"
+  "label.totalCount" : {
+    "translation" : "Votre {0} : {1}"
   },
-  "label.fractionCount": {
-    "translation": "{0}/{1}"
+  "label.fractionCount" : {
+    "translation" : "{0} / {1}"
   },
-  "label.dayCount": {
-    "translation": "Day {0}"
+  "label.dayCount" : {
+    "translation" : "journée {0}"
   },
-  "label.waiting": {
-    "translation": "Waiting..."
+  "label.waiting" : {
+    "translation" : "Attendre..."
   },
-  "requestGame.title": {
-    "translation": "{0}!"
+  "requestGame.title" : {
+    "translation" : "{0} !"
   },
-  "requestGame.description": {
-    "translation": "Cozmo wants to play"
+  "requestGame.description" : {
+    "translation" : "Cozmo veut jouer"
   },
-  "dailyGoal.title": {
-    "translation": "Today's Goals"
+  "dailyGoal.title" : {
+    "translation" : "Aujourd'hui, les objectifs"
   },
-  "dailyGoal.FriendBonus": {
-    "translation": "Friend Bonus"
+  "dailyGoal.FriendBonus" : {
+    "translation" : "ami Bonus"
   },
-  "label.connect": {
-    "translation": "Connect"
+  "label.connect" : {
+    "translation" : "Relier"
   },
-  "label.start": {
-    "translation": "Start"
+  "label.start" : {
+    "translation" : "Début"
   },
-  "cozmoTab.title": {
-    "translation": "Upgrades"
+  "cozmoTab.title" : {
+    "translation" : "Mises à jour"
   },
-  "cozmoTab.subTitle": {
-    "translation": ": Expand Cozmo's abilities"
+  "cozmoTab.subTitle" : {
+    "translation" : ": Développer les capacités de Cozmo"
   },
-  "coreUpgradeDetailsDialog.cubesNeeded": {
-    "translation": "{0} {1} Required"
+  "coreUpgradeDetailsDialog.cubesNeeded" : {
+    "translation" : "{0}{1} Champs obligatoires"
   },
-  "loot.Start": {
-    "translation": "Tap Repeatedly!"
+  "loot.Start" : {
+    "translation" : "Appuyez à plusieurs reprises!"
   },
-  "loot.Mid": {
-    "translation": "Keep Going!"
+  "loot.Mid" : {
+    "translation" : "Continue!"
   },
-  "loot.Almost": {
-    "translation": "Almost There!"
+  "loot.Almost" : {
+    "translation" : "Presque là!"
   },
-  "loot.Announce": {
-    "translation": "Emotion Chip Charged!"
+  "loot.Announce" : {
+    "translation" : "Emotion Chip Charged!"
   },
-  "label.emptyWithArg": {
-    "translation": "{0}"
+  "label.emptyWithArg" : {
+    "translation" : "{0}"
   },
-  "title.soundCheck": {
-    "translation": "Sound Check"
+  "title.soundCheck" : {
+    "translation" : "Sound check"
   },
-  "button.GetACozmo": {
-    "translation": "Get A Cozmo"
+  "button.GetACozmo" : {
+    "translation" : "Get A Cozmo"
   },
-  "button.start": {
-    "translation": "Start"
+  "button.start" : {
+    "translation" : "Début"
   },
-  "button.begin": {
-    "translation": "Let's Begin"
+  "button.begin" : {
+    "translation" : "Commençons"
   },
-  "soundcheck.description": {
-    "translation": "Please make sure your device's sound is turned on"
+  "soundcheck.description" : {
+    "translation" : "faire S'il vous plaît que le son de votre appareil est allumé"
   },
-  "refreshCubesPrompt.description": {
-    "translation": "Put one of each Cube next to Cozmo and tap 'Refresh'. Cozmo will Connect to the 3 that he thinks are closest."
+  "refreshCubesPrompt.description" : {
+    "translation" : "Mettez un de chaque côté de Cube Cozmo et appuyez sur «Actualiser». Cozmo se connecter à la 3 qu'il pense sont les plus proches."
   },
-  "label.available": {
-    "translation": "Available!"
+  "label.available" : {
+    "translation" : "Disponible!"
   },
-  "button.replay": {
-    "translation": "Replay"
+  "button.replay" : {
+    "translation" : "Rejouer"
   },
-  "label.to": {
-    "translation": "To:"
+  "label.to" : {
+    "translation" : "À:"
   },
-  "button.skip": {
-    "translation": "Skip"
+  "button.skip" : {
+    "translation" : "Sauter"
   },
-  "soundcheck.description.confirm": {
-    "translation": "Did you hear the sound?"
+  "soundcheck.description.confirm" : {
+    "translation" : "Avez-vous entendu le son?"
   },
-  "error.badLight.Top": {
-    "translation": "Cozmo is having trouble seeing"
+  "error.badLight.Top" : {
+    "translation" : "Cozmo est d'avoir du mal à voir"
   },
-  "error.badLight.Bottom": {
-    "translation": "Avoid bright lights and dimly lit spaces"
+  "error.badLight.Bottom" : {
+    "translation" : "Évitez les lumières vives et des espaces mal éclairés"
   },
-  "label.cozmo.serial": {
-    "translation": "Cozmo ID: {0}"
+  "label.cozmo.serial" : {
+    "translation" : "Cozmo ID: {0}"
   },
-  "label.deviceid": {
-    "translation": "Device ID: {0}"
+  "label.deviceid" : {
+    "translation" : "Reference de l'appareil: {0}"
   },
-  "label.privacyPolicy": {
-    "translation": "Privacy Policy"
+  "label.privacyPolicy" : {
+    "translation" : "Politique de confidentialité"
   },
-  "button.openEnvelope": {
-    "translation": "TAP TO OPEN"
+  "button.openEnvelope" : {
+    "translation" : "TAP POUR OUVRIR"
   },
-  "label.pressAndHoldInstruction": {
-    "translation": "Press and hold {0} to confirm"
+  "label.pressAndHoldInstruction" : {
+    "translation" : "Appuyez et maintenez {0} confirmer"
   },
-  "label.activePlayer": {
-    "translation": "Active Player:"
+  "label.activePlayer" : {
+    "translation" : "Joueur actif:"
   },
-  "label.streaksCount": {
-    "translation": "Longest Daily Streak:"
+  "label.streaksCount" : {
+    "translation" : "La plus longue série Daily:"
   },
-  "label.goalsCompleted": {
-    "translation": "Goals Completed:"
+  "label.goalsCompleted" : {
+    "translation" : "Objectifs Achevé:"
   },
-  "label.daysWithCozmo": {
-    "translation": "Days Played With Cozmo:"
+  "label.daysWithCozmo" : {
+    "translation" : "Jours Joué Avec Cozmo:"
   },
-  "label.termsOfUse": {
-    "translation": "Terms of Use"
+  "label.termsOfUse" : {
+    "translation" : "Conditions d'utilisation"
   },
-  "label.totalSparks": {
-    "translation": "Total Sparks: {0}"
+  "label.totalSparks" : {
+    "translation" : "Total des Sparks: {0}"
   },
-  "label.termsInstructions": {
-    "translation": "By tapping \"Start\", you agree to the terms below:"
+  "label.termsInstructions" : {
+    "translation" : "En appuyant sur \"Démarrer\", vous acceptez les termes ci-dessous:"
   },
-  "label.simpleCount": {
-    "translation": "{0} {1}"
+  "label.simpleCount" : {
+    "translation" : "{0} {1}"
   }
 }

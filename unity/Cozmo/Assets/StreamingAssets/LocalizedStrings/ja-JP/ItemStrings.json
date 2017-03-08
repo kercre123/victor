@@ -1,45 +1,33 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "item.experience.singular": {
-    "translation": "Energy"
+  "item.experience.singular" : {
+    "translation" : "エネルギー"
   },
-  "item.experience.plural": {
-    "translation": "Energy"
+  "item.experience.plural" : {
+    "translation" : "エネルギー"
   },
-  "item.treat.singular": {
-    "translation": "Spark"
+  "item.treat.singular" : {
+    "translation" : "スパーク"
   },
-  "item.treat.plural": {
-    "translation": "Sparks"
+  "item.treat.plural" : {
+    "translation" : "スパークス"
   },
-  "item.genericHex.singular": {
-    "translation": "Bit"
+  "item.genericHex.singular" : {
+    "translation" : "ビット"
   },
-  "item.genericHex.plural": {
-    "translation": "Bits"
+  "item.genericHex.plural" : {
+    "translation" : "ビット"
   },
-  "item.cube.singular": {
-    "translation": "Cube"
+  "item.cube.singular" : {
+    "translation" : "キューブ"
   },
-  "item.cube.plural": {
-    "translation": "Cubes"
+  "item.cube.plural" : {
+    "translation" : "キューブ"
   }
 }

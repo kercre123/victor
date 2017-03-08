@@ -1,129 +1,117 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "wifiStrings.Instructions.SlideA.titleCopy": {
-    "translation": "To connect to Cozmo's WiFi, you'll need to go to your device's Settings"
+  "wifiStrings.Instructions.SlideA.titleCopy" : {
+    "translation" : "Pour se connecter au WiFi de Cozmo, vous aurez besoin d'aller aux paramètres de votre appareil"
   },
-  "wifiStrings.Instructions.SlideA.altCopy": {
-    "translation": "READ ALL INSTRUCTIONS FIRST"
+  "wifiStrings.Instructions.SlideA.altCopy" : {
+    "translation" : "LIRE TOUTES LES INSTRUCTIONS PREMIÈRE"
   },
-  "wifiStrings.Instructions.SlideB": {
-    "translation": "Let's make sure Cozmo is powered on"
+  "wifiStrings.Instructions.SlideB" : {
+    "translation" : "Faisons en sorte que Cozmo est sous tension"
   },
-  "wifiStrings.Instructions.SlideB.altCopy": {
-    "translation": "Remove then replace him on the charger"
+  "wifiStrings.Instructions.SlideB.altCopy" : {
+    "translation" : "Retirez ensuite le remplacer sur le chargeur"
   },
-  "wifiStrings.Instructions.Slide0": {
-    "translation": "Find and tap your device's Settings icon"
+  "wifiStrings.Instructions.Slide0" : {
+    "translation" : "Tapez sur l'icône Paramètres de votre appareil"
   },
-  "wifiStrings.Instructions.Slide0altCopy": {
-    "translation": "Press the Home button to exit the Cozmo app"
+  "wifiStrings.Instructions.Slide0altCopy" : {
+    "translation" : "Appuyez sur le bouton Home pour quitter l'application Cozmo"
   },
-  "wifiStrings.Instructions.Slide0Android": {
-    "translation": "Pull down your device's Settings panel"
+  "wifiStrings.Instructions.Slide0Android" : {
+    "translation" : "Tirer vers le bas du panneau Paramètres de votre appareil"
   },
-  "wifiStrings.Instructions.Slide1": {
-    "translation": "Select the WiFi section from your Settings menu"
+  "wifiStrings.Instructions.Slide1" : {
+    "translation" : "Sélectionnez la section WiFi à partir du menu Paramètres"
   },
-  "wifiStrings.Instructions.Slide2": {
-    "translation": "Choose Cozmo's network from the list"
+  "wifiStrings.Instructions.Slide2" : {
+    "translation" : "Choisissez le réseau de Cozmo de la liste"
   },
-  "wifiStrings.Instructions.Slide3": {
-    "translation": "Enter the password shown on your Cozmo"
+  "wifiStrings.Instructions.Slide3" : {
+    "translation" : "Entrez le mot de passe indiqué sur votre Cozmo"
   },
-  "wifiStrings.Instructions.Slide3.altCopy": {
-    "translation": "Don't see a password?  Tap Here:"
+  "wifiStrings.Instructions.Slide3.altCopy" : {
+    "translation" : "Vous ne trouvez pas un mot de passe? Appuyez ici:"
   },
-  "wifiStrings.Instructions.Slide3altCopy2": {
-    "translation": "Use ALL CAPS with no spaces"
+  "wifiStrings.Instructions.Slide3altCopy2" : {
+    "translation" : "Utilisez MAJUSCULES sans espaces"
   },
-  "wifiStrings.Instructions.Slide3.5": {
-    "translation": "Cozmo does not provide an Internet connection"
+  "wifiStrings.Instructions.Slide3.5" : {
+    "translation" : "Cozmo ne fournit pas une connexion Internet"
   },
-  "wifiStrings.Instructions.Slide3.5altCopy": {
-    "translation": "Tap OK to stay connected to Cozmo's WiFi"
+  "wifiStrings.Instructions.Slide3.5altCopy" : {
+    "translation" : "Appuyez sur OK pour rester connecté au WiFi de Cozmo"
   },
-  "wifiStrings.Instructions.Slide4": {
-    "translation": "Exit Settings and return to the Cozmo App"
+  "wifiStrings.Instructions.Slide4" : {
+    "translation" : "Paramètres de sortie et de retour à l'App Cozmo"
   },
-  "wifiStrings.Instructions.Slide4altCopy": {
-    "translation": "The App will know when Cozmo is connected"
+  "wifiStrings.Instructions.Slide4altCopy" : {
+    "translation" : "L'App saura quand Cozmo est connecté"
   },
-  "wifiStrings.nextButton": {
-    "translation": "Next"
+  "wifiStrings.nextButton" : {
+    "translation" : "Prochain"
   },
-  "wifiStrings.backButton": {
-    "translation": "Back"
+  "wifiStrings.backButton" : {
+    "translation" : "Arrière"
   },
-  "wifi.gethelp.title": {
-    "translation": "Having trouble connecting to Cozmo's WiFi?"
+  "wifi.gethelp.title" : {
+    "translation" : "Ayant des problèmes de connexion au WiFi de Cozmo?"
   },
-  "wifi.gethelp.description": {
-    "translation": "Try the following:\n\n1. Remove then replace Cozmo on his charger\n2. Turn your device's WiFi OFF then back ON"
+  "wifi.gethelp.description" : {
+    "translation" : "Essayez ce qui suit: 1. Retirez puis remplacez Cozmo sur son chargeur 2. Tournez WiFi de votre appareil OFF puis de nouveau"
   },
-  "wifi.gethelp.description2": {
-    "translation": "If you need to see Cozmo's network info, raise and lower his lift"
+  "wifi.gethelp.description2" : {
+    "translation" : "Si vous avez besoin de voir l'information du réseau de Cozmo, soulever et abaisser son ascenseur"
   },
-  "wifi.gethelp.footer": {
-    "translation": "Still stuck? Visit <b>support.anki.com</b> on another device\n or call us at <b>(877) 721-ANKI</b>"
+  "wifi.gethelp.footer" : {
+    "translation" : "Toujours coincé? Visite <b> support.anki.com </b> sur un autre appareil ou appelez-nous au <b> (877) 721-ANKI </b>"
   },
-  "wifi.getHelp.linkText": {
-    "translation": "Get Help"
+  "wifi.getHelp.linkText" : {
+    "translation" : "Obtenir de l'aide"
   },
-  "wifi.enterPassword": {
-    "translation": "Enter password for {0}"
+  "wifi.enterPassword" : {
+    "translation" : "Entrez le mot de passe {0}"
   },
-  "wifi.passwordFormat": {
-    "translation": "Password must have 12 alphanumeric characters, no spaces"
+  "wifi.passwordFormat" : {
+    "translation" : "Mot de passe doit avoir 12 caractères alphanumériques, sans espaces"
   },
-  "wifi.selectNetwork": {
-    "translation": "Select a Cozmo to connect to:"
+  "wifi.selectNetwork" : {
+    "translation" : "Sélectionnez un Cozmo pour se connecter à:"
   },
-  "wifi.lookingForNetworks": {
-    "translation": "Searching for Cozmo networks..."
+  "wifi.lookingForNetworks" : {
+    "translation" : "Recherche de réseaux Cozmo ..."
   },
-  "wifi.currentSsid": {
-    "translation": "Current SSID: {0}"
+  "wifi.currentSsid" : {
+    "translation" : "SSID actuel: {0}"
   },
-  "wifi.currentStatus": {
-    "translation": "Status: {0}"
+  "wifi.currentStatus" : {
+    "translation" : "Statut: {0}"
   },
-  "wifi.wrongPassword": {
-    "translation": "The previous password was wrong."
+  "wifi.wrongPassword" : {
+    "translation" : "Le mot de passe précédent était erroné."
   },
-  "wifi.enableWifi": {
-    "translation": "Wifi is turned off. Please press the button below to turn it on."
+  "wifi.enableWifi" : {
+    "translation" : "Wifi est désactivé. S'il vous plaît appuyez sur le bouton ci-dessous pour l'allumer."
   },
-  "wifi.locationPermission": {
-    "translation": "Let the Cozmo App make connecting easier! Tap \"Allow\" when asked for Location Permissions, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
+  "wifi.locationPermission" : {
+    "translation" : "Que l'App Cozmo rendre la connexion plus facile! Appuyez sur \"Autoriser\" lorsque demandé Lieu autorisations, de sorte que l'App Cozmo peut trouver à proximité Cozmos. Note: Nous ne pourrons jamais stocker votre emplacement!"
   },
-  "wifi.pleaseLocationPermission": {
-    "translation": "Are you sure? Without Location Permissions, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap \"Allow\" when asked to allow the Cozmo App to connect for you, or tap \"Cancel\" to connect yourself."
+  "wifi.pleaseLocationPermission" : {
+    "translation" : "Êtes-vous sûr? Sans Situation Autorisations, vous devez vous connecter à Cozmo manuellement dans les paramètres Wifi de votre téléphone. Appuyez sur \"Autoriser\" lorsqu'on lui a demandé de permettre à l'App Cozmo de se connecter pour vous, ou appuyez sur \"Annuler\" pour vous connecter."
   },
-  "wifi.enableLocation": {
-    "translation": "Tap \"Yes\" when asked to turn on Location, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
+  "wifi.enableLocation" : {
+    "translation" : "Appuyez sur \"Oui\" lorsqu'on lui a demandé de tourner sur l'emplacement, de sorte que l'App Cozmo peut trouver Cozmos à proximité. Note: Nous ne pourrons jamais stocker votre emplacement!"
   },
-  "wifi.pleaseEnableLocation": {
-    "translation": "Are you sure? Without Location, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap \"Yes\" when asked to allow the Cozmo App to connect for you, or tap \"Cancel\" to connect yourself."
+  "wifi.pleaseEnableLocation" : {
+    "translation" : "Êtes-vous sûr? Sans emplacement, vous devez vous connecter à Cozmo manuellement dans les paramètres Wifi de votre téléphone. Appuyez sur \"Oui\" lorsqu'on lui a demandé de permettre à l'App Cozmo de se connecter pour vous, ou appuyez sur \"Annuler\" pour vous connecter."
   },
-  "wifi.passwordRememberStatement": {
-    "translation": "Password is visible on Cozmo's face, enter it carefully! Your device should remember this password, so you will only need to enter it once."
+  "wifi.passwordRememberStatement" : {
+    "translation" : "Mot de passe est visible sur le visage de Cozmo, entrez soigneusement! Votre appareil devrait se rappeler ce mot de passe, de sorte que vous aurez seulement besoin d'entrer une fois."
   }
 }

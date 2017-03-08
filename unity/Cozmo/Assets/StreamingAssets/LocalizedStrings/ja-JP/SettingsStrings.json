@@ -1,186 +1,174 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "settings.cubeStatusPanel.button.cubeRefresh": {
-    "translation": "Refresh Cubes"
+  "settings.cubeStatusPanel.button.cubeRefresh" : {
+    "translation" : "キューブをリフレッシュ"
   },
-  "settings.cubeStatusPanel.button.title": {
-    "translation": "Cube Status"
+  "settings.cubeStatusPanel.button.title" : {
+    "translation" : "キューブステータス"
   },
-  "settings.cubeStatusPanel.locateText": {
-    "translation": "(Tap to locate Cubes)"
+  "settings.cubeStatusPanel.locateText" : {
+    "translation" : "（キューブを見つけるためにタップ）"
   },
-  "settings.sdkPanel.activateSDKalert.text": {
-    "translation": "Activate SDK Mode?"
+  "settings.sdkPanel.activateSDKalert.text" : {
+    "translation" : "SDKモードをアクティブに？"
   },
-  "settings.sdkPanel.disableButton.text": {
-    "translation": "Disable SDK"
+  "settings.sdkPanel.disableButton.text" : {
+    "translation" : "無効にするSDK"
   },
-  "settings.sdkPanel.enableButton.text": {
-    "translation": "Enable SDK"
+  "settings.sdkPanel.enableButton.text" : {
+    "translation" : "SDKを有効にします"
   },
-  "settings.sdkPanel.label.title": {
-    "translation": "Cozmo SDK"
+  "settings.sdkPanel.label.title" : {
+    "translation" : "コズモSDK"
   },
-  "settings.sdkPanel.connectionCommandCount.text": {
-    "translation": "Commands: {0}"
+  "settings.sdkPanel.connectionCommandCount.text" : {
+    "translation" : "コマンド： {0}"
   },
-  "settings.sdkPanel.connectionDuration.text": {
-    "translation": "Connected for: {0}"
+  "settings.sdkPanel.connectionDuration.text" : {
+    "translation" : "以下のために接続されました： {0}"
   },
-  "settings.sdkPanel.lastCommandTimeIdle.text": {
-    "translation": "Last Command: {0:n1} seconds ago (Idle?)"
+  "settings.sdkPanel.lastCommandTimeIdle.text" : {
+    "translation" : "最終コマンド： {0:n1}秒前（アイドル？）"
   },
-  "settings.sdkPanel.lastCommandTimePaused.text": {
-    "translation": "Last Command: {0:n1} seconds ago (Paused?)"
+  "settings.sdkPanel.lastCommandTimePaused.text" : {
+    "translation" : "最終コマンド： {0:n1}前秒（一時停止？）"
   },
-  "settings.sdkPanel.lastCommandTime.text": {
-    "translation": "Last Command: {0:n1} seconds ago"
+  "settings.sdkPanel.lastCommandTime.text" : {
+    "translation" : "最終コマンド： {0:n1}秒前"
   },
-  "settings.sdkPanel.lastMessageTime.text": {
-    "translation": "Time Since Last Message : {0:n1} seconds"
+  "settings.sdkPanel.lastMessageTime.text" : {
+    "translation" : "最終メッセージからの時間： {0:n1}秒"
   },
-  "settings.sdkPanel.noMessages.text": {
-    "translation": "No Messages Received"
+  "settings.sdkPanel.noMessages.text" : {
+    "translation" : "いいえメッセージが受信されません"
   },
-  "settings.sdkPanel.modeDuration.text": {
-    "translation": "In SDK mode for: {0}"
+  "settings.sdkPanel.modeDuration.text" : {
+    "translation" : "以下のためのSDKモードの場合： {0}"
   },
-  "settings.sdkPanel.programsRun.text": {
-    "translation": "Programs Run: {0}"
+  "settings.sdkPanel.programsRun.text" : {
+    "translation" : "プログラムを実行します： {0}"
   },
-  "settings.sdkPanel.sdkConnected.text": {
-    "translation": "SDK Program Running"
+  "settings.sdkPanel.sdkConnected.text" : {
+    "translation" : "SDKプログラムの実行中"
   },
-  "settings.sdkPanel.sdkUrl.label": {
-    "translation": "To learn about the Cozmo SDK visit:\n\ngo.anki.com/cozmo-app-sdk"
+  "settings.sdkPanel.sdkUrl.label" : {
+    "translation" : "コズモSDKの訪問について学ぶために：go.anki.com/cozmo-app-sdk"
   },
-  "settings.sdkPanel.sdkNotConnected.text": {
-    "translation": "No SDK Program Currently Running"
+  "settings.sdkPanel.sdkNotConnected.text" : {
+    "translation" : "いいえSDKプログラムが動作していません"
   },
-  "settings.sdkPanel.wrongVersion.text": {
-    "translation": "Incompatible SDK Version"
+  "settings.sdkPanel.wrongVersion.text" : {
+    "translation" : "互換性のないSDKバージョン"
   },
-  "settings.sdkPanel.hideScreenButton.text": {
-    "translation": "Hide Screen"
+  "settings.sdkPanel.hideScreenButton.text" : {
+    "translation" : "画面を非表示にします"
   },
-  "settings.sleepCozmoPanel.button.sleepCozmo": {
-    "translation": "Sleep Cozmo"
+  "settings.sleepCozmoPanel.button.sleepCozmo" : {
+    "translation" : "スリープコズモ"
   },
-  "settings.sleepCozmoPanel.confirmationModal.title": {
-    "translation": "Sleep Cozmo?"
+  "settings.sleepCozmoPanel.confirmationModal.title" : {
+    "translation" : "コズモスリープ？"
   },
-  "settings.sleepCozmoPanel.confirmModal.description": {
-    "translation": "Leave Cozmo on his charger to boost his battery or tap Sleep to disconnect"
+  "settings.sleepCozmoPanel.confirmModal.description" : {
+    "translation" : "切断する彼のバッテリーやタップスリープを高めるために、彼の充電器にコズモを残します"
   },
-  "settings.sleepCozmoPanel.confirmModal.button.confirm": {
-    "translation": "Sleep"
+  "settings.sleepCozmoPanel.confirmModal.button.confirm" : {
+    "translation" : "睡眠"
   },
-  "settings.supportView.button.restoreCozmo": {
-    "translation": "Restore Cozmo"
+  "settings.supportView.button.restoreCozmo" : {
+    "translation" : "コズモを復元"
   },
-  "settings.supportView.label.directions": {
-    "translation": "Customer Support is available online at"
+  "settings.supportView.label.directions" : {
+    "translation" : "カスタマサポートは、オンラインで入手可能です"
   },
-  "settings.supportView.label.restoreCozmoClarification": {
-    "translation": "(Re-applies unlocks from this profile to your Cozmo)"
+  "settings.supportView.label.restoreCozmoClarification" : {
+    "translation" : "（あなたのコズモにこのプロファイルからアンロックを再適用されます）"
   },
-  "settings.supportView.label.title": {
-    "translation": "Contact Support"
+  "settings.supportView.label.title" : {
+    "translation" : "サポート問い合わせ先"
   },
-  "settings.supportView.label.url": {
-    "translation": "support.anki.com"
+  "settings.supportView.label.url" : {
+    "translation" : "support.anki.com"
   },
-  "settings.supportView.restoreCozmoModal.restoreCozmoConfirmButton": {
-    "translation": "Restore"
+  "settings.supportView.restoreCozmoModal.restoreCozmoConfirmButton" : {
+    "translation" : "リストア"
   },
-  "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel": {
-    "translation": "<color=#b52c13>Failed to Restore Your Cozmo</color>"
+  "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel" : {
+    "translation" : "<color=#b52c13>あなたのコズモの復元に失敗しました。 </color>"
   },
-  "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel": {
-    "translation": "Restoring your Cozmo..."
+  "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel" : {
+    "translation" : "あなたのコズモを復元しています..."
   },
-  "settings.supportView.restoreCozmoModal.restoreCozmoTitle": {
-    "translation": "Restore Cozmo?"
+  "settings.supportView.restoreCozmoModal.restoreCozmoTitle" : {
+    "translation" : "コズモを復元しますか？"
   },
-  "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel": {
-    "translation": "WARNING: This option will restore Cozmo from a backup and replace the game progress on the robot. Use this option if you replaced your Cozmo with a new one."
+  "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel" : {
+    "translation" : "警告：このオプションは、バックアップからコズモを復元し、ロボットにゲームの進行に置き換えられます。あなたは新しいものを使用してコズモを交換した場合は、このオプションを使用します。"
   },
-  "settings.versionPanel.title": {
-    "translation": "About"
+  "settings.versionPanel.title" : {
+    "translation" : "約"
   },
-  "settings.versionPanel.acknowledgementsModal.title": {
-    "translation": "Acknowledgments"
+  "settings.versionPanel.acknowledgementsModal.title" : {
+    "translation" : "謝辞"
   },
-  "settings.versionPanel.button.acknowledgementsLink": {
-    "translation": "Acknowledgments"
+  "settings.versionPanel.button.acknowledgementsLink" : {
+    "translation" : "謝辞"
   },
-  "settings.versionPanel.button.eraseCozmo": {
-    "translation": "Erase Cozmo"
+  "settings.versionPanel.button.eraseCozmo" : {
+    "translation" : "コズモを消去"
   },
-  "settings.versionPanel.button.support": {
-    "translation": "Support"
+  "settings.versionPanel.button.support" : {
+    "translation" : "サポート"
   },
-  "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton": {
-    "translation": "Erase"
+  "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton" : {
+    "translation" : "消します"
   },
-  "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel": {
-    "translation": "<color=#b52c13>Failed to Erase Your Cozmo</color>"
+  "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel" : {
+    "translation" : "<color=#b52c13>あなたのコズモ消去に失敗しました。 </color>"
   },
-  "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel": {
-    "translation": "Erasing your Cozmo..."
+  "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel" : {
+    "translation" : "あなたのコズモを消去..."
   },
-  "settings.versionPanel.eraseCozmoModal.eraseCozmoTitle": {
-    "translation": "Erase Cozmo?"
+  "settings.versionPanel.eraseCozmoModal.eraseCozmoTitle" : {
+    "translation" : "コズモを消去？"
   },
-  "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel": {
-    "translation": "WARNING: This will clear Cozmo's data, and all unlocks. Use this only if you wish to start over with Cozmo! Your Bits and Sparks will be saved."
+  "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel" : {
+    "translation" : "警告：これはコズモのデータ、およびすべてのロック解除をクリアします。あなたはコズモでやり直すしたい場合にのみ、これを使用してください！あなたのビットとスパークスが保存されます。"
   },
-  "settings.versionPanel.label.appRun": {
-    "translation": "App Run ID: {0}"
+  "settings.versionPanel.label.appRun" : {
+    "translation" : "アプリの実行ID： {0}"
   },
-  "settings.versionPanel.label.appVersion": {
-    "translation": "App Version: {0}"
+  "settings.versionPanel.label.appVersion" : {
+    "translation" : "アプリのバージョン： {0}"
   },
-  "settings.versionPanel.label.cozmoVersion": {
-    "translation": "Cozmo Version: {0}"
+  "settings.versionPanel.label.cozmoVersion" : {
+    "translation" : "コズモバージョン： {0}"
   },
-  "settings.versionPanel.label.deviceId": {
-    "translation": "Device ID: {0}"
+  "settings.versionPanel.label.deviceId" : {
+    "translation" : "デバイスID： {0}"
   },
-  "settings.versionPanel.label.serialNumber": {
-    "translation": "Cozmo Serial: {0}"
+  "settings.versionPanel.label.serialNumber" : {
+    "translation" : "コズモシリアル： {0}"
   },
-  "settings.volumePanel.title": {
-    "translation": "Volume & General"
+  "settings.volumePanel.title" : {
+    "translation" : "ボリューム＆一般"
   },
-  "settings.volumePanel.robotToggle.low": {
-    "translation": "Low"
+  "settings.volumePanel.robotToggle.low" : {
+    "translation" : "ロー"
   },
-  "settings.volumePanel.robotToggle.high": {
-    "translation": "High"
+  "settings.volumePanel.robotToggle.high" : {
+    "translation" : "高い"
   },
-  "settings.volumePanel.robotToggle.medium": {
-    "translation": "Medium"
+  "settings.volumePanel.robotToggle.medium" : {
+    "translation" : "中"
   },
-  "settings.acknowledgementsPanel.title": {
-    "translation": "Acknowledgements"
+  "settings.acknowledgementsPanel.title" : {
+    "translation" : "謝辞"
   }
 }

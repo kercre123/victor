@@ -1,33 +1,21 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "progStat.Bond": {
-    "translation": "Bond"
+  "progStat.Bond" : {
+    "translation" : "Liaison"
   },
-  "progStat.Excitement": {
-    "translation": "Excitement"
+  "progStat.Excitement" : {
+    "translation" : "Excitation"
   },
-  "progStat.Novelty": {
-    "translation": "Novelty"
+  "progStat.Novelty" : {
+    "translation" : "Nouveauté"
   },
-  "progStat.Default": {
-    "translation": "DEFAULT"
+  "progStat.Default" : {
+    "translation" : "DÉFAUT"
   }
 }
