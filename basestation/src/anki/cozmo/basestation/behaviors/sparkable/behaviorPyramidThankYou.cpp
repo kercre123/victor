@@ -73,7 +73,10 @@ Result BehaviorPyramidThankYou::InitInternal(Robot& robot)
 {
 
   CompoundActionSequential* turnVerifyThank = new CompoundActionSequential(robot);
-  if(robot.GetFaceWorld().HasKnownFaces()){
+  Pose3d facePose;
+  robot.GetFaceWorld().GetLastObservedFace(facePose);
+  const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+  if(lastFaceInCurrentOrigin){
    // Turn to the user and say thank you
     TurnTowardsFaceAction* turnTowardsAction = new TurnTowardsLastFacePoseAction(robot);
     turnTowardsAction->SetRequireFaceConfirmation(true);
