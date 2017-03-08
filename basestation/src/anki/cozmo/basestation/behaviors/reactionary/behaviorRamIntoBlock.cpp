@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -65,7 +66,11 @@ bool BehaviorRamIntoBlock::IsRunnableInternal(const BehaviorPreReqAcknowledgeObj
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRamIntoBlock::InitInternal(Robot& robot)
 {
-  TransitionToTurningToBlock(robot);
+  if(robot.IsCarryingObject()){
+    TransitionToPuttingDownBlock(robot);
+  }else{
+    TransitionToTurningToBlock(robot);
+  }
   return Result::RESULT_OK;
 }
 
@@ -81,7 +86,35 @@ Result BehaviorRamIntoBlock::ResumeInternal(Robot& robot)
 void BehaviorRamIntoBlock::StopInternal(Robot& robot)
 {  
 }
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(Robot& robot)
+{
+  CompoundActionSequential* placeAction = new CompoundActionSequential(robot);
+  if(robot.GetCarryingObject() != _targetID){
+    ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(robot.GetCarryingObject());
+    if(obj != nullptr){
+      Vec3f outVector;
+      if(ComputeVectorBetween(robot.GetPose(), obj->GetPose(), outVector)){
+        Radians angle = FLT_NEAR(outVector.x(), 0.0f) ?
+                  Radians(0)                          :
+                  Radians(atanf(outVector.y()/outVector.x()));
+        const int offsetDirection = angle.ToFloat() > 0 ? 1 : -1;
+        angle += DEG_TO_RAD(90 * offsetDirection);
+        const bool isAbsolute = true;
+        
+        // Overshoot the angle to ram by a quarter turn and then place the block down
+        placeAction->AddAction(new TurnInPlaceAction(robot, angle, isAbsolute));
+      }
+    }
+  }
+  
+  placeAction->AddAction(new PlaceObjectOnGroundAction(robot));
+  StartActing(placeAction, &BehaviorRamIntoBlock::TransitionToTurningToBlock);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::TransitionToTurningToBlock(Robot& robot)
 {

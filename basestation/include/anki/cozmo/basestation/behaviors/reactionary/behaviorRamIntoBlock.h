@@ -45,6 +45,7 @@ protected:
 private:
   mutable s32 _targetID;
   
+  void TransitionToPuttingDownBlock(Robot& robot);
   void TransitionToTurningToBlock(Robot& robot);
   void TransitionToRammingIntoBlock(Robot& robot);
 

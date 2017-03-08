@@ -140,6 +140,7 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
                          "No valid predock poses for objectID: %d with offsets x:%f y:%f",
                          _targetID.GetValue(),
                          _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm);
+        robot.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
         _status = BehaviorStatus::Failure;
       }
     }else{
