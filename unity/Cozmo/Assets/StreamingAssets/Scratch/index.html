@@ -39,6 +39,14 @@
             </block>
             <block type="cozmo_turn_left"></block>
             <block type="cozmo_turn_right"></block>
+            <block type="cozmo_drive_speed">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_drive_speed">
+                        <field name="CHOICE">fast</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_dock_with_cube"></block>
             <block type="cozmo_liftheight">
                 <value name="CHOICE">
                     <shadow type="dropdown_cozmo_liftheight">
@@ -53,7 +61,6 @@
                     </shadow>
                 </value>
             </block>
-            <block type="cozmo_dock_with_cube"></block>
             <block type="cozmo_animation">
                 <value name="CHOICE">
                     <shadow type="dropdown_cozmo_setanimation">
@@ -75,13 +82,6 @@
                     </shadow>
                 </value>
             </block>
-            <block type="cozmo_drive_speed">
-                <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_drive_speed">
-                        <field name="CHOICE">fast</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="cozmo_wait_for_face"></block>
             <block type="cozmo_wait_for_cube"></block>
             <block type="cozmo_wait_for_cube_tap"></block>
@@ -93,20 +93,6 @@
                 </value>
             </block>
             <block type="control_forever"></block>
-            <block type="event_whenbroadcastreceived">
-                <value name="CHOICE">
-                    <shadow type="dropdown_whenbroadcast">
-                        <field name="CHOICE">blue</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="event_broadcast">
-                <value name="CHOICE">
-                    <shadow type="dropdown_broadcast">
-                        <field name="CHOICE">blue</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="control_stop"></block>
         </xml>
         
