@@ -30,6 +30,11 @@ extern "C" {
   
   // Firmware for local (nRF51) radio
   extern const uint8_t g_Radio[], g_RadioEnd[];
+  
+  
+  //print known info on all included binaries
+  //@param csv - true prints in CSV-friendly format. False format for console view.
+  void binPrintInfo(bool csv);
 }
 
 #endif

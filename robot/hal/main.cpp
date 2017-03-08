@@ -116,7 +116,7 @@ int main (void)
   // Force recovery mode if watchdog count gets too high
   #ifndef FCC_TEST  // THIS IS NOT THE FINAL
   if (RCM_SRS0 & RCM_SRS0_WDOG_MASK) {
-    if (WDOG_RSTCNT > MAXIMUM_RESET_COUNT) {
+    if (WDOG_RSTCNT >= MAXIMUM_RESET_COUNT) {
       Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
     }
   }
@@ -150,6 +150,7 @@ int main (void)
   HALInit();
   I2C::Enable();
 
+  MicroWait(1000000);
   FCC::start();
   for(;;) {
     UART::Transmit();

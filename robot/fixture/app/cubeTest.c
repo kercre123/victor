@@ -1,3 +1,4 @@
+#include <string.h>
 #include "app/tests.h"
 #include "hal/portable.h"
 #include "hal/testport.h"
@@ -7,8 +8,13 @@
 #include "hal/uart.h"
 #include "hal/cube.h"
 #include "hal/monitor.h"
+#include "app/app.h"
 #include "app/fixture.h"
 #include "binaries.h"
+
+#define CUBE_TEST_SKIP_BURN   0   /*don't try to pgm the cube*/
+#define CUBE_TEST_DEBUG       0   /*turns on debug logging*/
+#define CUBE_TEST_CSV_OUT     0   /*formats output as CSV. Slow printing for sluggish console loggers.*/
 
 // Return true if device is detected on contacts
 bool CubeDetect(void)
@@ -41,8 +47,13 @@ bool CubeDetect(void)
 
 // Connect to and burn the program into the cube or charger
 void CubeBurn(void)
-{  
+{
+#if CUBE_TEST_SKIP_BURN > 0
+  #warning "DEBUG: SKIP CUBE BURN"
+  ConsolePrintf("DEBUG: SKIP CUBE BURN\r\n");
+#else
   ProgramCubeWithSerial();    // Normal bootloader (or cert firmware in FCC build)
+#endif
 }
 
 static int g_deltaMA = 0;
@@ -78,10 +89,7 @@ void CubePOST(void)
   PIN_IN(GPIOB, PINB_VDD);
   EnableBAT();
   EnableVEXT();
-
-  // Let power stabilize, then free from reset
-  MicroWait(25000);
-  PIN_IN(GPIOC, PINC_RESET);
+  MicroWait(25000); // Let power stabilize
 
   // Set up fast measurement thresholds (for charger or cube)
   int deltaMA = (g_fixtureType == FIXTURE_CHARGER_TEST) ? DELTA_CHARGER : DELTA_CUBE;
@@ -92,24 +100,43 @@ void CubePOST(void)
   // It takes us 110uS to read one sample, and LEDs are on for 770uS, off for 770uS
   // So, a 7 sample sliding window is sufficient to detect the rising edge of a blink
   // Cubes blink 16 LEDs + 1 LED per type (1, 2, or 3) - chargers blink 11 LEDs
-  int on = 0, blinks = 0, sample = 0;
+#if CUBE_TEST_DEBUG > 0
+  #define HISTORY_LEN 30000
+  static s8 sample_history[HISTORY_LEN];
+  //memset( &sample_history, 0, sizeof(sample_history) );
+#endif
+  int on = 0, blinks = 0, sample = 0, peak = 0, current = 0, avgpeak = 0;
   const int MASK = 15, WINDOW = 7;
   int buf[MASK+1];
-  int peak = 0, current = 0, avgpeak = 0;
   u32 start = getMicroCounter();
+  
+  //release reset; run cpu
+#if CUBE_TEST_DEBUG > 0
+  ConsolePrintf("cube power up\r\n");
+#endif
+  PIN_IN(GPIOC, PINC_RESET);
+  
   while (getMicroCounter() - start < CUBE_TEST_TIME)
   {
-    int diff = 0;
     if (g_fixtureType == FIXTURE_CHARGER_TEST)
       current = ChargerGetCurrent() * 5;   // Because charger runs at 5x the voltage
     else
       current = BatGetCurrent();
     buf[sample&MASK] = current;
-    if (current > peak)
+    if (current > peak)  //save peak for this blink cycle
       peak = current;
+    
+    int diff = 0;
     if (sample > MASK)   // Look back WINDOW samples, average 3 adjacent samples
       diff = ((buf[(sample-1)&MASK] + buf[(sample)&MASK] + buf[(sample+1)&MASK])
              -(buf[(sample-WINDOW-1)&MASK] + buf[(sample-WINDOW)&MASK] + buf[(sample-WINDOW+1)&MASK])) / 3;
+    
+#if CUBE_TEST_DEBUG > 0
+    #define ABS(x)  ( (x)>=0 ? (x) : -(x) )
+    if( sample < HISTORY_LEN )
+      sample_history[sample] = current > 99 ? 111 : current < -99 ? -111 : current;
+#endif
+    
     if (diff > deltaMA && !on)
     {
       blinks++;
@@ -127,6 +154,11 @@ void CubePOST(void)
   int microamps = 0;
   for (int i = 0; i < 1000; i++)
     microamps += BatGetCurrent();
+  
+#if CUBE_TEST_DEBUG > 0
+  ConsolePrintf("window sampling complete\r\n");
+#endif
+  
   // Calculate how many LEDs we saw light
   int leds = (blinks + 32) >> 6;  // Each LED blinks 64 times
   int expected = (g_fixtureType - FIXTURE_CHARGER_TEST);
@@ -136,9 +168,50 @@ void CubePOST(void)
     expected += 16;   // Other cubes light 16 LEDs + their ID code
   
   // Shut down and print results
-  avgpeak /= blinks;
+  avgpeak = blinks > 0 ? avgpeak/blinks : 0;
+#if CUBE_TEST_DEBUG > 0
+  ConsolePrintf("disabling power\r\n");
+#endif
   DisableVEXT();
   DisableBAT();
+  
+#if CUBE_TEST_DEBUG > 0
+  {
+    int num_samples = sample > HISTORY_LEN ? HISTORY_LEN : sample;
+    ConsolePrintf("logged %d of %d samples\r\n", num_samples, sample);
+    
+    if( CUBE_TEST_CSV_OUT > 0 )
+    {
+      //output samples and derived metrics in CSV rows for easy import to excel/graphing
+      ConsolePrintf("sample,i[mA],i-lowpass,i-lookback-lp,i-diff,on\r\n");
+      int i_on = 0; //track filtered LED on/off state
+      for( int x=0; x < num_samples; x++ )
+      {
+        int i_lowpass_x3 = 0, i_lookback_lowpass_x3 = 0, i_diff = 0;
+        if( x > 0 && x < num_samples-1 )
+          i_lowpass_x3 = sample_history[x-1] + sample_history[x] + sample_history[x+1];
+        if( x > WINDOW )
+          i_lookback_lowpass_x3 = sample_history[x-WINDOW-1] + sample_history[x-WINDOW] + sample_history[x-WINDOW+1];
+        if( x > MASK )
+          i_diff = (i_lowpass_x3 - i_lookback_lowpass_x3) / 3;
+        if (i_diff > deltaMA && !i_on)
+          i_on = 1;
+        if (i_diff < -deltaMA && i_on)
+          i_on = 0;
+        ConsolePrintf("%d,%i,%i,%i,%i,%i\r\n", x, sample_history[x], i_lowpass_x3/3, i_lookback_lowpass_x3/3, i_diff, i_on*100 );
+        MicroWait(1000); //console logging to file is slower than a turtle in peanut butter
+      }
+    }
+    else
+    {
+      //for simple pattern inspection in console, just dump the whole thing
+      for( int x=0; x < num_samples; x++ )
+        ConsolePrintf("%i,", sample_history[x]);
+      ConsolePrintf("\r\n");
+    }
+  }
+#endif
+  
   ConsolePrintf("cube-test,%d,%d,%d,%d,%d,%d,%d\r\n", leds, expected, blinks, microamps, avgpeak, sample, deltaMA);
   
   // Check all the results and throw exceptions if faults are found

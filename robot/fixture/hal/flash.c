@@ -5,11 +5,11 @@
 #include "hal/console.h"
 #include "hal/display.h"
 #include "../../crypto/crypto.h"
+#include "../app/app.h"
 #include "../app/fixture.h"
 #include <string.h>
 
-extern FixtureType g_fixtureType;
-extern u8 g_fixtureReleaseVersion;
+FlashParams g_flashParams;
 
 static u8 m_bitMap[TARGET_MAX_BLOCK];
 static u8 m_decryptedBuffer[SAFE_BLOCK_SIZE];

@@ -19,7 +19,7 @@
 #define GRESET(gp, pin)    gp->BSRRH = (pin)
 #define GREAD(gp)          gp->IDR
 
-void SlowPrintf(const char* format, ...);
+int SlowPrintf(const char* format, ...);
 
 //#define SWD_DEBUG
 
@@ -380,6 +380,7 @@ static int swd_write32(int addr, int data)
 }
 
 // Send 8 0 bits to flush SWD state
+/*
 static void swd_flush(void)
 {
 	unsigned long data = 0;
@@ -410,6 +411,7 @@ static int swd_lock_jtag(void)
   // TBD
   return 0;
 }
+*/
 
 // Write a CPU register in the ARM core - mostly to set up PC and SP before execution
 static void swd_write_cpu_reg(int reg, int value)

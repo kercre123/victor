@@ -10,10 +10,10 @@
 
 #define FIXTURE_HEAD1_TEST    2     // ID 2  
 
-#define FIXTURE_MOTOR1A_TEST  10    // ID 4 + 2         MOTORxL = lift
-#define FIXTURE_MOTOR2A_TEST  11    // ID 4 + 2 + 1
-#define FIXTURE_MOTOR1B_TEST  3     // ID 2 + 1         MOTORxH = head
-#define FIXTURE_MOTOR2B_TEST  12    // ID 4 + 3
+#define FIXTURE_MOTOR1L_TEST  10    // ID 4 + 2         MOTORxL = lift
+#define FIXTURE_MOTOR2L_TEST  11    // ID 4 + 2 + 1
+#define FIXTURE_MOTOR1H_TEST  3     // ID 2 + 1         MOTORxH = head
+#define FIXTURE_MOTOR2H_TEST  12    // ID 4 + 3
 
 // Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
 #define FIXTURE_CHARGER_TEST  4     // ID 3
@@ -48,20 +48,16 @@
 
 #define FIXTURE_SOUND_TEST     29
 
+#define FIXTURE_COZ187_TEST    30   // murder cozmo, kill code to fac-revert via charge-contact cmd
+
 #define FIXTURE_DEBUG          32   // Should be last ID
 
 typedef unsigned char FixtureType;
 #define FIXTURE_TYPES { "NO ID",   "BODY1",  "HEAD1",  "MOTOR1H","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
                         "ROBOT1",  "BODY2",  "MOTOR1L","MOTOR2L","MOTOR2H", "BODY3",  "INFO",  "PLAYPEN", \
                         "FINISHC", "FINISH1","FINISH2","FINISH3","FINISHX", "CUBEX",  "ROBOT2","ROBOT3", \
-                        "PACKOUT","LIFETEST","RECHARGE","JAM",   "HEAD2",   "SOUND",  "","", \
+                        "PACKOUT","LIFETEST","RECHARGE","JAM",   "HEAD2",   "SOUND",  "COZ187","", \
                         "DEBUG" }
-
-extern FixtureType g_fixtureType;
-
-extern char g_lotCode[15];
-extern u32 g_time;
-extern u32 g_dateCode;
 
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 u32 GetSerial();
@@ -93,6 +89,8 @@ u32 GetSerial();
 #define ERROR_SERIAL_INVALID        13    // When the serial number of this fixture exceeds 255, it can't make cubes!
 
 #define ERROR_RADIO_TIMEOUT         14    // On-board radio firmware failed to boot
+
+#define ERROR_INCOMPATIBLE_FIX_REV  15    // Test is incompatible with the current fixture hardware revision
 
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
@@ -138,6 +136,7 @@ u32 GetSerial();
 
 // Head errors
 #define ERROR_HEAD_BOOTLOADER       500   // Can't load bootloader into K02
+#define ERROR_HEAD_ROM_SIZE         501   // binary image too large for target region
 
 #define ERROR_HEAD_RADIO_SYNC       510   // Can't sync with radio
 #define ERROR_HEAD_RADIO_ERASE      511   // Problem erasing flash
@@ -166,6 +165,9 @@ u32 GetSerial();
 #define ERROR_ENCODER_FAULT         651   // Encoder wire/solder broken
 #define ERROR_MOTOR_BACKWARD        652   // Motor or encoder is wired backward
 #define ERROR_MOTOR_SLOW            653   // Motor cannot turn easily (too tight or debris inside)
+#define ERROR_BACKPACK_BTN_THRESH   654   // Button voltage detected outside digital thresholds
+#define ERROR_BACKPACK_BTN_PRESS_TIMEOUT    655 // Timeout waiting for backpack button to be pressed
+#define ERROR_BACKPACK_BTN_RELEASE_TIMEOUT  656 // Timeout waiting for backpack button to be released
 
 #define ERROR_MOTOR_FAST            664   // Encoder does not meet Anki spec (can't count every tick at speed)
 #define ERROR_ENCODER_UNDERVOLT     665   // Encoder does not meet Anki spec (can't meet minimum voltage)

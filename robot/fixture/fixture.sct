@@ -10,10 +10,15 @@ LR_IROM1 0x08060000 0x000A0000  {    ; load region size_region
    *(InRoot$$Sections)
    .ANY (+RO)
   }
- 
+  
   RW_IRAM1 0x20000000 0x00020000  {  ; RW data
    .ANY (+RW +ZI)
   }
+  
+  ;No-Init RAM must also be no-init by bootloader!
+  ;RW_IRAM2 0x2001FFF0 UNINIT 0x00000010  {
+  ; *(NoInit)  ;.ANY (+RW +ZI)
+  ;}
   
   ; Put all the resources at the end of flash
   ; If you get a weird linker error on this section, add "--datacompressor off" to the Linker options
@@ -22,4 +27,3 @@ LR_IROM1 0x08060000 0x000A0000  {    ; load region size_region
     binaries.o (+RO)
   }
 }
-

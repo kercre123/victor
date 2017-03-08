@@ -3,7 +3,7 @@
 
 // Uncomment this line to build a mini-version without binaries (to speed debugging)
 //#define INCBIN ;
-    
+
   ; Note:  Cube and charger share the same binary
   ALIGN
   EXPORT g_Cube
@@ -39,14 +39,6 @@ g_BodyBLE
 g_BodyBLEEnd
 
   ALIGN
-  EXPORT g_stubBody
-  EXPORT g_stubBodyEnd
-g_stubBody
-  INCBIN releases\\nrf51_stub.bin
-g_stubBodyEnd
-
-
-  ALIGN
   EXPORT g_K02
   EXPORT g_K02End
 g_K02
@@ -63,22 +55,6 @@ g_K02End
 g_K02Boot
   INCBIN releases\\robot_boot.bin
 g_K02BootEnd
-
-  ALIGN
-  EXPORT g_stubK02
-  EXPORT g_stubK02End
-g_stubK02
-  INCBIN releases\\k02_stub.bin
-g_stubK02End
-
-
-
-  ALIGN
-  EXPORT g_EspBlank
-  EXPORT g_EspBlankEnd
-g_EspBlank
-  INCBIN releases\\esp.blank.bin
-g_EspBlankEnd
 
   ALIGN
   EXPORT g_EspUser
@@ -113,7 +89,7 @@ g_EspInitEnd
 g_EspSafe
   INCBIN releases\\esp.safe.bin
 g_EspSafeEnd
-
+#endif
 
   ALIGN
   EXPORT g_Radio
@@ -121,7 +97,6 @@ g_EspSafeEnd
 g_Radio
   INCBIN releases\\radio.bin
 g_RadioEnd
-#endif
 
   ALIGN
   EXPORT g_canary

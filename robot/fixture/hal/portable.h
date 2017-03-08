@@ -47,6 +47,10 @@
 # define FALSE 0
 #endif
 
+#ifndef ABS
+#define ABS(x) ((x) < 0 ? -(x) : (x))
+#endif
+
 typedef int error_t;
 typedef void (*TestFunction)(void);
 

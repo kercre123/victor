@@ -128,6 +128,7 @@
             <RestoreFunctions>1</RestoreFunctions>
             <RestoreToolbox>1</RestoreToolbox>
             <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
+            <RestoreSysVw>1</RestoreSysVw>
           </Simulator>
           <Target>
             <UseTarget>1</UseTarget>
@@ -139,6 +140,8 @@
             <RestoreFunctions>0</RestoreFunctions>
             <RestoreToolbox>1</RestoreToolbox>
             <RestoreTracepoints>0</RestoreTracepoints>
+            <RestoreSysVw>1</RestoreSysVw>
+            <UsePdscDebugDescription>0</UsePdscDebugDescription>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
           <TargetSelection>1</TargetSelection>
@@ -304,7 +307,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8060000</StartAddress>
-                <Size>0xa0000</Size>
+                <Size>0x10000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -353,6 +356,8 @@
             <wLevel>2</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
+            <uC99>0</uC99>
+            <useXO>0</useXO>
             <VariousControls>
               <MiscControls>--exceptions --exceptions_unwind</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,FIXTURE</Define>
@@ -369,6 +374,7 @@
             <SwStkChk>0</SwStkChk>
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
+            <useXO>0</useXO>
             <VariousControls>
               <MiscControls>--cpreproc</MiscControls>
               <Define></Define>
@@ -385,6 +391,7 @@
             <useFile>0</useFile>
             <TextAddressRange>0x8000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
+            <pXoBase></pXoBase>
             <ScatterFile>.\fixture.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
@@ -492,11 +499,64 @@
               <FileName>app.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\app\app.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>2</IncludeInBuild>
+                  <AlwaysBuild>1</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <useXO>2</useXO>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
             <File>
               <FileName>binaries.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\app\binaries.s</FilePath>
+            </File>
+            <File>
+              <FileName>binaries2.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\app\binaries2.s</FilePath>
+            </File>
+            <File>
+              <FileName>binariesc.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\binariesc.c</FilePath>
             </File>
             <File>
               <FileName>bodyTest.c</FileName>
@@ -527,6 +587,26 @@
               <FileName>motorTest.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\app\motorTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>nvReset.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\nvReset.c</FilePath>
+            </File>
+            <File>
+              <FileName>crc16.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\app\crc16.c</FilePath>
+            </File>
+            <File>
+              <FileName>debugTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\debugTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>buttonTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\buttonTest.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -623,6 +703,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\random.c</FilePath>
             </File>
+            <File>
+              <FileName>psk.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\psk.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -682,7 +767,7 @@
           <CreateHexFile>0</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\build\</ListingPath>
+          <ListingPath>.\build\fcc\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -759,6 +844,7 @@
             <RestoreFunctions>1</RestoreFunctions>
             <RestoreToolbox>1</RestoreToolbox>
             <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
+            <RestoreSysVw>1</RestoreSysVw>
           </Simulator>
           <Target>
             <UseTarget>1</UseTarget>
@@ -770,6 +856,8 @@
             <RestoreFunctions>0</RestoreFunctions>
             <RestoreToolbox>1</RestoreToolbox>
             <RestoreTracepoints>0</RestoreTracepoints>
+            <RestoreSysVw>1</RestoreSysVw>
+            <UsePdscDebugDescription>1</UsePdscDebugDescription>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
           <TargetSelection>1</TargetSelection>
@@ -935,7 +1023,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8060000</StartAddress>
-                <Size>0xa0000</Size>
+                <Size>0x10000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -984,6 +1072,8 @@
             <wLevel>2</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
+            <uC99>0</uC99>
+            <useXO>0</useXO>
             <VariousControls>
               <MiscControls>--exceptions --exceptions_unwind</MiscControls>
               <Define>FCC,REV1,USE_STDPERIPH_DRIVER,FIXTURE</Define>
@@ -1000,6 +1090,7 @@
             <SwStkChk>0</SwStkChk>
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
+            <useXO>0</useXO>
             <VariousControls>
               <MiscControls>--cpreproc --cpreproc_opts=-DFCC=1</MiscControls>
               <Define></Define>
@@ -1016,6 +1107,7 @@
             <useFile>0</useFile>
             <TextAddressRange>0x8000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
+            <pXoBase></pXoBase>
             <ScatterFile>.\fixture.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
@@ -1130,6 +1222,16 @@
               <FilePath>.\app\binaries.s</FilePath>
             </File>
             <File>
+              <FileName>binaries2.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\app\binaries2.s</FilePath>
+            </File>
+            <File>
+              <FileName>binariesc.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\binariesc.c</FilePath>
+            </File>
+            <File>
               <FileName>bodyTest.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\app\bodyTest.c</FilePath>
@@ -1158,6 +1260,26 @@
               <FileName>motorTest.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\app\motorTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>nvReset.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\nvReset.c</FilePath>
+            </File>
+            <File>
+              <FileName>crc16.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\app\crc16.c</FilePath>
+            </File>
+            <File>
+              <FileName>debugTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\debugTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>buttonTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\buttonTest.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1253,6 +1375,11 @@
               <FileName>random.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\random.c</FilePath>
+            </File>
+            <File>
+              <FileName>psk.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\psk.c</FilePath>
             </File>
           </Files>
         </Group>

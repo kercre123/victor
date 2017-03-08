@@ -31,6 +31,22 @@
 #define PINB_SWC  11
 #define GPIOB_SWC (1 << PINB_SWC)
 
+#define PINB_MOTDRV_IN1   12
+#define PINB_MOTDRV_EN1   13
+#define PINB_MOTDRV_IN2   14
+#define PINB_MOTDRV_EN2   15
+#define GPIOB_MOTDRV_IN1  (1 << PINB_MOTDRV_IN1)
+#define GPIOB_MOTDRV_EN1  (1 << PINB_MOTDRV_EN1)
+#define GPIOB_MOTDRV_IN2  (1 << PINB_MOTDRV_IN2)
+#define GPIOB_MOTDRV_EN2  (1 << PINB_MOTDRV_EN2)
+
+#define PINC_BOARD_ID0    13
+#define PINC_BOARD_ID1    14
+#define PINC_BOARD_ID2    15
+#define GPIOC_BOARD_ID0   (1 << PINC_BOARD_ID0)
+#define GPIOC_BOARD_ID1   (1 << PINC_BOARD_ID1)
+#define GPIOC_BOARD_ID2   (1 << PINC_BOARD_ID2)
+
 #define PINA_NRF_SWD  11
 #define GPIOA_NRF_SWD (1 << PINA_NRF_SWD)
 #define PINA_NRF_SWC  12
@@ -86,7 +102,18 @@ void STM_EVAL_LEDOn(Led_TypeDef Led);
 void STM_EVAL_LEDOff(Led_TypeDef Led);
 void STM_EVAL_LEDToggle(Led_TypeDef Led);
 
-int InitBoard(void);
+//Fixture Hardware revisions
+typedef enum {
+  BOARD_REV_1_0_REV1  = 0,  //Fixture release 1.0 rev1
+  BOARD_REV_1_0_REV2  = 1,  //Fixture release 1.0 rev2
+  BOARD_REV_1_0_REV3  = 2,  //Fixture release 1.0 rev3
+  BOARD_REV_1_5_0     = 3,  //Fixture release 1.5.0
+} board_rev_t;
+
+void InitBoard(void);
+board_rev_t GetBoardRev(void);  //read the board revision
+char* GetBoardRevStr(void);     //get board revision, descriptive string (const)
+u8   GetBoardID(void);          //read the ID set resistors to determine test mode
 void EnableBAT(void);
 void DisableBAT(void);
 void EnableVEXT(void);
