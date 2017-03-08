@@ -76,7 +76,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   // if we are updating an object that we are carrying, we always want to update, so that we can correct the
   // fact that it's not in the lift, it's where the observation happens
   const bool isCarriedObject = (nullptr != confirmedMatch) && _robot.IsCarryingObject( confirmedMatch->GetID() );
-  const bool isNonLocalizableObject = !object->CanBeUsedForLocalization();
+  const bool isLocalizableObject = object->CanBeUsedForLocalization();
   const bool isConfirmedMatch = (object == confirmedMatch);
   
   // now calculate what posestate we should set and if that poseState overrides the current one (we still need
@@ -108,7 +108,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   const bool setAsKnown = isRobotOnTreads && !isFarAway && !robotWasMoving && !objectIsMoving;
 
   const bool updatePose = isCarriedObject ||
-                          isNonLocalizableObject ||
+                          !isLocalizableObject ||
                           !isConfirmedMatch ||
                           setAsKnown ||
                           !object->IsPoseStateKnown();

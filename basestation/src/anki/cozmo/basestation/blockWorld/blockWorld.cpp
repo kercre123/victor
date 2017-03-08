@@ -1836,6 +1836,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         BlockWorldFilter filter;
         // Ignore the object we are looking on top off so that we don't consider it as on top of itself
         filter.AddIgnoreID(changedObjectPtr->GetID());
+        
+        // some objects should not be updated! (specially those that are not managed through observations)
+        // TODO rsam/andrew: I don't like not having to specify true/false for families. Whether a new family
+        // gets included or ignored happens silently for filters if we don't static_assert requiring all
+        filter.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::MarkerlessObject);
+        filter.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::CustomObject);
 
         // find object
         ObservableObject* objectOnTopOfOldPose = FindLocatedObjectOnTopOf(*myOldCopy, STACKED_HEIGHT_TOL_MM, filter);
@@ -2462,8 +2468,32 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   
     // Validate that ActiveID is not currently a connected object. We assume that if the robot is reporting
     // an activeID, it should not be still used here (should have reported a disconnection)
-    const ActiveObject* const conObjWithActiveID = GetConnectedActiveObjectByActiveID( activeID );
-    ANKI_VERIFY( nullptr == conObjWithActiveID, "BlockWorld.AddConnectedActiveObject.ActiveIDAlreadyUsed", "%d", activeID );
+    const ActiveObject* conObjWithActiveID = GetConnectedActiveObjectByActiveID( activeID );
+    if ( nullptr != conObjWithActiveID)
+    {
+      // Al/rsam: it is possible to receive multiple connection messages for the same cube. Verify here that factoryID
+      // and activeType match, and if they do, simply ignore the message, since we already have a valid instance
+      const bool isSameObject = (factoryID == conObjWithActiveID->GetFactoryID()) &&
+                                (activeObjectType == conObjWithActiveID->GetActiveObjectTypeFromType(conObjWithActiveID->GetType()));
+      if ( isSameObject ) {
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundMatchingObjectAtSameSlot",
+                      "objectID %d, activeID %d, factoryID 0x%x, type %s",
+                      conObjWithActiveID->GetID().GetValue(),
+                      conObjWithActiveID->GetActiveID(),
+                      conObjWithActiveID->GetFactoryID(),
+                      EnumToString(conObjWithActiveID->GetType()));
+        return conObjWithActiveID->GetID();
+      }
+      
+      // if it's not the same, then what the hell, we are currently using that activeID for other object!
+      PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.ConflictingActiveID",
+                        "ActiveID:%d found when we tried to add that activeID as connected object. Disconnecting previous.",
+                        activeID);
+    
+      // clear the pointer and destroy it
+      conObjWithActiveID = nullptr;
+      RemoveConnectedActiveObject(activeID);
+    }
 
     // Validate that factoryId is not currently a connected object. We assume that if the robot is reporting
     // a factoryID, the same object should not be in any current activeIDs.
