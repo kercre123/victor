@@ -242,7 +242,7 @@ static void _btn_execute(void)
   _led_manage(); //juice the LEDs
   
   //read the button and update (LPF) counter
-  const int idle_threshold_mv = 2600;
+  const int idle_threshold_mv = 2240; //0.8*Vdd, Vdd=2.8V
   int btn_mv = idle_threshold_mv;
   u8 pressed = 0;
   if( _isRobot() ) {
@@ -260,7 +260,7 @@ static void _btn_execute(void)
   if( !pressed && btn_mv < idle_threshold_mv ) {
     m.btn_threshold_violation++;
     #if BTN_DEBUG > 0
-    ConsolePrintf("violation %d %d.%03dV...", m.btn_threshold_violation, btn_mv/1000, btn_mv%1000);
+    ConsolePrintf("threshold violation %dmV\r\n", btn_mv);
     #endif
     if( m.btn_threshold_violation >= 3 )
       _throw_gracefully( ERROR_BACKPACK_BTN_THRESH );
@@ -283,8 +283,8 @@ void ButtonTest(void)
   btn_start = getMicroCounter();
   while( m.btn_press_lpf_cnt < cnt_compare ) {
     _btn_execute();
-    if( getMicroCounter() - btn_start > 15*1000*1000 )
-      _throw_gracefully( ERROR_BACKPACK_BTN_TIMEOUT );
+    if( getMicroCounter() - btn_start > 5*1000*1000 )
+      _throw_gracefully( ERROR_BACKPACK_BTN_PRESS_TIMEOUT );
   }
   
   ConsolePrintf("btn pressed\r\n");
@@ -295,8 +295,8 @@ void ButtonTest(void)
   btn_start = getMicroCounter();
   while( m.btn_release_lpf_cnt < cnt_compare ) {
     _btn_execute();
-    if( getMicroCounter() - btn_start > 10*1000*1000 )
-      _throw_gracefully( ERROR_BACKPACK_BTN_TIMEOUT );
+    if( getMicroCounter() - btn_start > 5*1000*1000 )
+      _throw_gracefully( ERROR_BACKPACK_BTN_RELEASE_TIMEOUT );
   }
   
   ConsolePrintf("btn released\r\n");

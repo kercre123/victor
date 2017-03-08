@@ -166,7 +166,8 @@ u32 GetSerial();
 #define ERROR_MOTOR_BACKWARD        652   // Motor or encoder is wired backward
 #define ERROR_MOTOR_SLOW            653   // Motor cannot turn easily (too tight or debris inside)
 #define ERROR_BACKPACK_BTN_THRESH   654   // Button voltage detected outside digital thresholds
-#define ERROR_BACKPACK_BTN_TIMEOUT  655   // Timeout waiting for backpack button to be pressed
+#define ERROR_BACKPACK_BTN_PRESS_TIMEOUT    655 // Timeout waiting for backpack button to be pressed
+#define ERROR_BACKPACK_BTN_RELEASE_TIMEOUT  656 // Timeout waiting for backpack button to be released
 
 #define ERROR_MOTOR_FAST            664   // Encoder does not meet Anki spec (can't count every tick at speed)
 #define ERROR_ENCODER_UNDERVOLT     665   // Encoder does not meet Anki spec (can't meet minimum voltage)

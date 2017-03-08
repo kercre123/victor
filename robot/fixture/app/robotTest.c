@@ -363,8 +363,7 @@ TestFunction* GetRobotTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
-    #warning "skip Button Test (ROBOT)"
-    //ButtonTest,
+    ButtonTest,
     SlowMotors,
     FastMotors,
     RobotFixtureDropSensor,
