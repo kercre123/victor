@@ -202,11 +202,13 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       strategy = genericStrategy;
       break;
     }
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
     case ReactionTrigger::VoiceCommand:
     {
       strategy = new ReactionTriggerStrategyVoiceCommand(robot, config);
       break;
     }
+#endif
     case ReactionTrigger::Count:
     case ReactionTrigger::NoneTrigger:
     {
