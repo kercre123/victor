@@ -755,7 +755,9 @@ message MemoryMapMessageBegin
 {
   uint_32  originId,
   int_32   rootDepth,
-  float_32 rootSize_mm
+  float_32 rootSize_mm,
+  float_32 rootCenterX,
+  float_32 rootCenterY
 }
 
 enum uint_8 ENodeContentTypeEnum
