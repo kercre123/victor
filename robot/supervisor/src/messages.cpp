@@ -997,10 +997,11 @@ namespace Anki {
       }
 
       // These are stubbed out just to get things compiling
-      void Process_robotIpInfo(const Anki::Cozmo::RobotInterface::AppConnectRobotIP& msg) {}
+       // These are stubbed out just to get things compiling
       void Process_appConCfgString(const Anki::Cozmo::RobotInterface::AppConnectConfigString& msg) {}
       void Process_appConCfgFlags(const Anki::Cozmo::RobotInterface::AppConnectConfigFlags& msg) {}
       void Process_appConCfgIPInfo(const Anki::Cozmo::RobotInterface::AppConnectConfigIPInfo& msg) {}
+      void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
       void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
 
       void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer&) {
