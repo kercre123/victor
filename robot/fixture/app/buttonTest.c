@@ -260,7 +260,7 @@ static void _btn_execute(void)
   if( !pressed && btn_mv < idle_threshold_mv ) {
     m.btn_threshold_violation++;
     #if BTN_DEBUG > 0
-    ConsolePrintf("violation %d %d.%03dV...", m.btn_threshold_violation, btn_mv/1000, btn_mv%1000);
+    ConsolePrintf("threshold violation %dmV\r\n", btn_mv);
     #endif
     if( m.btn_threshold_violation >= 3 )
       _throw_gracefully( ERROR_BACKPACK_BTN_THRESH );
