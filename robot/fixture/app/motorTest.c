@@ -88,14 +88,14 @@ static void m_TestLEDs(void)
 static void TestLEDs(void)
 {
   //x attempts before fail
-  int x=5;
+  int x=3;
   while(1) {
     try { m_TestLEDs(); break; }
     catch(int e) {
       if(--x <= 0)
         throw e;
       ConsolePrintf("error %d\r\n", e);
-      MicroWait(100*1000);
+      MicroWait(150*1000); //extra insertion delay before next attempt
     }
   }
 }
