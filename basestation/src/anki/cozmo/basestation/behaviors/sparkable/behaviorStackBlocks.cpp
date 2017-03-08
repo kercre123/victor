@@ -315,8 +315,10 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   if( ! AreBlocksStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
     UpdateTargetBlocks(robot);
-    BehaviorPreReqNone preReqData;
-    if( IsRunnableScored(preReqData) ) {
+    const bool allowWhileRunning = true;
+    BehaviorPreReqRobot preReqData(robot);
+    if( IsRunnable(preReqData, allowWhileRunning) ) {
+      DEV_ASSERT( AreBlocksStillValid(robot), "BehaviorStackBlocks.TransitionToPickingUp.InvalidReset");
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Picking.RestartWithNewBlocks",
                        "had to change blocks, re-starting behavior");
@@ -329,7 +331,8 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   }
 
   // if we are already holding the block, skip
-  if( robot.IsCarryingObject() && robot.GetCarryingObject() == _targetBlockTop ) {
+  const bool holdingTopBlock = robot.IsCarryingObject() && robot.GetCarryingObject() == _targetBlockTop;
+  if( holdingTopBlock ) {
     PRINT_NAMED_DEBUG("BehaviorStackBlocks.SkipPickup",
                       "Already holding top block, so no need to pick it up");
     TransitionToStackingBlock(robot);
@@ -444,21 +447,24 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
   if( ! AreBlocksStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
     UpdateTargetBlocks(robot);
-    BehaviorPreReqNone preReqData;
-    if( IsRunnableScored(preReqData) ) {
+    const bool allowWhileRunning = true;
+    BehaviorPreReqRobot preReqData(robot);
+    if( IsRunnable(preReqData, allowWhileRunning) ) {
+      DEV_ASSERT( AreBlocksStillValid(robot), "BehaviorStackBlocks.TransitionToStacking.InvalidReset");
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Stacking.RestartWithNewBlocks.",
                        "had to change blocks, re-starting behavior");
-      TransitionToPickingUpBlock(robot);
+      // fall through to the main function body here
     }
     else {
       TransitionToWaitForBlocksToBeValid(robot);
+      return;
     }
-    return;
   }
   
   // if we aren't carrying the top block, fail back to pick up
-  if( ! robot.IsCarryingObject() ) {
+  const bool holdingTopBlock = robot.IsCarryingObject() && robot.GetCarryingObject() == _targetBlockTop;
+  if( ! holdingTopBlock ) {
     PRINT_NAMED_DEBUG("BehaviorStackBlocks.FailBackToPickup",
                       "wanted to stack, but we aren't carrying a block");
     TransitionToPickingUpBlock(robot);

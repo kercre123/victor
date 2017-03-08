@@ -30,7 +30,7 @@ public:
   ReactionTriggerStrategyPositionUpdate(Robot& robot, const Json::Value& config, const std::string& strategyName);
 
   virtual bool ShouldResumeLastBehavior() const override final { return true;}
-  virtual bool CanTriggerWhileTriggeredBehaviorRunning() const override { return true; }
+  virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
 
   // Allow a behavior chooser to reset reaction data for objects
   void ResetReactionData();
@@ -44,7 +44,7 @@ protected:
     float       samePoseDistThreshold_sparked_mm   = 30.f;
   } _params;
   
-  void LoadConfig(const Json::Value& config);
+  // void LoadConfig(const Json::Value& config);
   
   struct ReactionData
   {

@@ -73,9 +73,13 @@ bool AIGoalStrategyPyramid::WantsToStartInternal(const Robot& robot, float lastT
   const int numBases = static_cast<int>(robot.GetBlockWorld().GetBlockConfigurationManager().
                                  GetPyramidBaseCache().GetWeakBases().size());
   
+  const int numPyramids = static_cast<int>(robot.GetBlockWorld().GetBlockConfigurationManager().
+                                        GetPyramidCache().GetWeakPyramids().size());
+  
   const bool willRun =
-        numBases > 0 ||
-        (_wantsToRunRandomized && knownOrDirtyBlocks.size() >= kMinimumBlocksForPyramid);
+        (numPyramids == 0) &&
+        ((numBases > 0) ||
+        (_wantsToRunRandomized && knownOrDirtyBlocks.size() >= kMinimumBlocksForPyramid));
   
   if(willRun){
     _pyramidBuilt = false;

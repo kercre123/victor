@@ -147,7 +147,7 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
     case TestState::MoveBack:
     {
       const float kCubeHalfHeight_mm = 44 * 0.5f; // I don't see a way in webots to get size of node, and other CST have this hardcoded
-      const float cubeZ = GetLightCubePoseActual(0).GetTranslation().z() - kCubeHalfHeight_mm;
+      const float cubeZ = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1).GetTranslation().z() - kCubeHalfHeight_mm;
       const float robotZ = GetRobotPose().GetTranslation().z();
     
       IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&

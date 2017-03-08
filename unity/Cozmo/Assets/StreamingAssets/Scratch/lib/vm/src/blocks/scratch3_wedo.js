@@ -29,9 +29,12 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_liftheight: this.setLiftHeight,
         cozmo_wait_for_face: this.waitForFace,
         cozmo_wait_for_cube: this.waitForCube,
+        cozmo_wait_for_cube_tap: this.waitForCubeTap,
         cozmo_headangle: this.setHeadAngle,
+        cozmo_dock_with_cube: this.dockWithCube,
         cozmo_turn_left: this.turnLeft,
         cozmo_turn_right: this.turnRight,
+        cozmo_drive_speed: this.driveSpeed,
         cozmo_says: this.speak
     };
 };
@@ -56,11 +59,11 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
 Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
     // TODO Wait for RobotCompletedAction instead of using timer.
     if (!util.stackFrame.timer) {
-       // The distMultiplier will be between 1 and 9 (as set by the parameter
-       // number under the block) and will be used as a multiplier against the
-       // base dist_mm of 30.0f.
-       var distMultiplier = Cast.toNumber(args.DISTANCE);
-       window.Unity.call('{"command": "cozmoDriveForward","argFloat": ' + distMultiplier + '}');
+        // The distMultiplier will be between 1 and 9 (as set by the parameter
+        // number under the block) and will be used as a multiplier against the
+        // base dist_mm of 30.0f.
+        var distMultiplier = Cast.toNumber(args.DISTANCE);
+        window.Unity.call('{"command": "cozmoDriveForward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
 
         // Yield
         util.stackFrame.timer = new Timer();
@@ -77,11 +80,11 @@ Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
 Scratch3CozmoBlocks.prototype.driveBackward = function(args, util) {
     // TODO Wait for RobotCompletedAction instead of using timer.
     if (!util.stackFrame.timer) {
-       // The distMultiplier will be between 1 and 9 (as set by the parameter
-       // number under the block) and will be used as a multiplier against the
-       // base dist_mm of 30.0f.
-       var distMultiplier = Cast.toNumber(args.DISTANCE);
-       window.Unity.call('{"command": "cozmoDriveBackward","argFloat": ' + distMultiplier + '}');
+        // The distMultiplier will be between 1 and 9 (as set by the parameter
+        // number under the block) and will be used as a multiplier against the
+        // base dist_mm of 30.0f.
+        var distMultiplier = Cast.toNumber(args.DISTANCE);
+        window.Unity.call('{"command": "cozmoDriveBackward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
 
         // Yield
         util.stackFrame.timer = new Timer();
@@ -251,6 +254,24 @@ Scratch3CozmoBlocks.prototype.waitForCube = function (args, util) {
     }
 };
 
+/**
+ * See waitForFace docs above.
+ *
+ * @param argValues Parameters passed with the block.
+ * @param util The util instance to use for yielding and finishing.
+ * @private
+ */
+Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
+    this.runtime.stackIsWaitingForCubeTap = true;
+    if (!this.runtime.cozmoCubeWasTapped) {
+        util.yield();
+    }
+    else {
+        this.runtime.cozmoCubeWasTapped = false;
+        this.runtime.stackIsWaitingForCubeTap = false;
+    }
+};
+
 Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
     // TODO Wait for RobotCompletedAction instead of using timer.
     if (!util.stackFrame.timer) {
@@ -263,6 +284,23 @@ Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
         util.yield();
     } else {
         if (util.stackFrame.timer.timeElapsed() < 1000) {
+            util.yield();
+        }
+    }
+};
+
+Scratch3CozmoBlocks.prototype.dockWithCube = function(args, util) {
+    // TODO Wait for RobotCompletedAction instead of using timer.
+    if (!util.stackFrame.timer) {
+        window.Unity.call('{"command": "cozmoDockWithCube"}');
+
+        // Yield
+        util.stackFrame.timer = new Timer();
+        util.stackFrame.timer.start();
+        util.yield();
+    } else {
+        // TODO Add distance as multiplier to the time below
+        if (util.stackFrame.timer.timeElapsed() < 3000) {
             util.yield();
         }
     }
@@ -298,6 +336,10 @@ Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
             util.yield();
         }
     }
+};
+
+Scratch3CozmoBlocks.prototype.driveSpeed = function(args, util) {
+    this.runtime.cozmoDriveSpeed = Cast.toString(args.CHOICE);
 };
 
 Scratch3CozmoBlocks.prototype.speak = function(args, util) {

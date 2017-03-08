@@ -589,53 +589,21 @@
       "AnimName": "ag_memorymatch_point_fast_center"
     },
     {
-      "CladEvent": "MemoryMatchPointLeftSmallFast",
-      "AnimName": "ag_memorymatch_pointleft_degree_15"
-    },
-    {
-      "CladEvent": "MemoryMatchPointLeft1",
-      "AnimName": "ag_memorymatch_pointleft_degree_30"
-    },
-    {
-      "CladEvent": "MemoryMatchPointLeft2",
-      "AnimName": "ag_memorymatch_pointleft_degree_45"
-    },
-    {
-      "CladEvent": "MemoryMatchPointLeft3",
-      "AnimName": "ag_memorymatch_pointleft_degree_60"
-    },            
-    {
-      "CladEvent": "MemoryMatchPointLeft4",
-      "AnimName": "ag_memorymatch_pointleft_degree_75"
-    },
-    {
       "CladEvent": "MemoryMatchPointLeftBigFast",
-      "AnimName": "ag_memorymatch_pointleft_degree_90"
-    },    
-    {
-      "CladEvent": "MemoryMatchPointRightSmallFast",
-      "AnimName": "ag_memorymatch_pointright_degree_15"
+      "AnimName": "ag_memorymatch_point_fast_bigleft"
     },
     {
-      "CladEvent": "MemoryMatchPointRight1",
-      "AnimName": "ag_memorymatch_pointright_degree_30"
-    },
-    {
-      "CladEvent": "MemoryMatchPointRight2",
-      "AnimName": "ag_memorymatch_pointright_degree_45"
-    },
-    {
-      "CladEvent": "MemoryMatchPointRight3",
-      "AnimName": "ag_memorymatch_pointright_degree_60"
-    },            
-    {
-      "CladEvent": "MemoryMatchPointRight4",
-      "AnimName": "ag_memorymatch_pointright_degree_75"
+      "CladEvent": "MemoryMatchPointLeftSmallFast",
+      "AnimName": "ag_memorymatch_point_fast_smallleft"
     },
     {
       "CladEvent": "MemoryMatchPointRightBigFast",
-      "AnimName": "ag_memorymatch_pointright_degree_90"
-    }, 
+      "AnimName": "ag_memorymatch_point_fast_bigright"
+    },
+    {
+      "CladEvent": "MemoryMatchPointRightSmallFast",
+      "AnimName": "ag_memorymatch_point_fast_smallright"
+    },
     {
       "CladEvent": "MemoryMatchCozmoGetOut",
       "AnimName": "ag_memorymatch_getout"
@@ -1194,7 +1162,7 @@
     },
     {
       "CladEvent": "SoundOnlyRamIntoBlock",
-      "AnimName": "LiftEffortRoll"
+      "AnimName": "ag_reacttoblock_audioblockcrash"
     },
     {
       "CladEvent": "SoundOnlyTurnSmall",

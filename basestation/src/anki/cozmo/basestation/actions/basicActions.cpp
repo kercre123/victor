@@ -307,11 +307,24 @@ namespace Anki {
               (u8)AnimTrackFlag::BODY_TRACK)
     , _compoundAction(robot)
     , _desiredObjectID(desiredObjectID)
+    , _objectObservedDuringSearch(false)
     , _backupDistance_mm(backupDistance_mm)
     , _backupSpeed_mms(backupSpeed_mms)
     , _headAngle_rad(headAngle_rad)
     {
-
+      auto observedObjectCallback =
+        [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event){
+          if(event.GetData().Get_RobotObservedObject().objectID == _desiredObjectID){
+            _objectObservedDuringSearch = true;
+          }
+        };
+      
+      if(robot.HasExternalInterface()){
+        using namespace ExternalInterface;
+        _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
+                    ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
+                    observedObjectCallback));
+      }
     }
   
     SearchForNearbyObjectAction::~SearchForNearbyObjectAction()
@@ -394,22 +407,13 @@ namespace Anki {
         _shouldPopIdle = true;
         _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
       }
-
-      if(_desiredObjectID.IsSet())
-      {
-        const ObservableObject* desiredObject = _robot.GetBlockWorld().GetLocatedObjectByID(_desiredObjectID);
-        if(nullptr != desiredObject)
-        {
-          _desiredObjectLastObsTime = desiredObject->GetLastObservedTime();
-        }
-      }
       
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
       // first update doesn't _fail_
       ActionResult compoundResult = _compoundAction.Update();
-      if(ActionResult::SUCCESS == compoundResult ||
-         ActionResult::RUNNING == compoundResult)
+      if((ActionResult::SUCCESS == compoundResult) ||
+         (ActionResult::RUNNING == compoundResult))
       {
         return ActionResult::SUCCESS;
       } else {
@@ -420,18 +424,16 @@ namespace Anki {
     ActionResult SearchForNearbyObjectAction::CheckIfDone()
     {
       ActionResult internalResult = _compoundAction.Update();
-      const ObservableObject* desiredObject = _desiredObjectID.IsSet() ? _robot.GetBlockWorld().GetLocatedObjectByID(_desiredObjectID) : nullptr;
-      
       // check if the object has been located and actually observed
-      if(desiredObject != nullptr &&
-         desiredObject->IsPoseStateKnown() &&
-         desiredObject->GetLastObservedTime() > _desiredObjectLastObsTime)
+      if(_objectObservedDuringSearch)
       {
+        _objectObservedDuringSearch = false;
         return ActionResult::SUCCESS;
       }
       
       // unsuccessful in finding the object
-      else if(internalResult == ActionResult::SUCCESS && _desiredObjectID.IsSet()){
+      else if((internalResult == ActionResult::SUCCESS) &&
+              _desiredObjectID.IsSet()){
         return ActionResult::VISUAL_OBSERVATION_FAILED;
       }
       

@@ -172,7 +172,7 @@ public:
   void RequestCurrentBehaviorEndOnNextActionComplete();
   
   // Have behavior manager maintain light state on blocks
-  void SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction);
+  void SetBehaviorStateLights(BehaviorClass classSettingLights, const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Freeplay - specific
@@ -365,6 +365,7 @@ private:
   std::list<IBehavior*> _tapInteractionBehaviors;
   
   std::vector<BehaviorStateLightInfo> _behaviorStateLights;
+  BehaviorClass _behaviorThatSetLights;
   bool _behaviorStateLightsPersistOnReaction;
   
 }; // class BehaviorManager

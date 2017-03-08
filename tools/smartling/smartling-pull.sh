@@ -42,7 +42,7 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 : ${ANKI_BUILD_BASE_LANG:="en-US"}
-: ${ANKI_BUILD_TRANSLATED_LANGS:="en-GB de-DE"}
+: ${ANKI_BUILD_TRANSLATED_LANGS:="de-DE fr-FR ja-JP"}
 
 while getopts ":nvCo:t:" opt; do
     case $opt in
@@ -99,7 +99,7 @@ function smartling_download()
 }
 
 # Use base file names to determine which translated files to download
-BASE_FILES=(`ls ${LOCALIZATION_DIR}/base/*-strings.json`)
+BASE_FILES=(`ls ${LOCALIZATION_DIR}/${ANKI_BUILD_BASE_LANG}/*.json`)
 for base_file in "${BASE_FILES[@]}"; do
     logv "Download translations for string file: $base_file"
     bn=`basename $base_file _base.json`
@@ -109,7 +109,7 @@ done
 # Fix newlines & other escape codes
 for lang in ${ANKI_BUILD_TRANSLATED_LANGS}; do
     lang_dir="${LOCALIZATION_DIR}/${lang}"
-    strings_files=(`ls ${lang_dir}/*-strings.json`)
+    strings_files=(`ls ${lang_dir}/*.json`)
     for string_file in "${strings_files[@]}"; do
         echo "Post process ${string_file}..."
         # fix newlines

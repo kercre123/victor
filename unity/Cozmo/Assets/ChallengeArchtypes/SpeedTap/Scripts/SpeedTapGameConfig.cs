@@ -33,6 +33,9 @@ public class SpeedTapGameConfig : MinigameConfigBase {
   public Color CozmoTint;
   public Color Player1Tint;
   public Color Player2Tint;
+  // Cozmo's tint is only used for cubes. Doesn't need on scoreboards.
+  public Color Player1TintDim;
+  public Color Player2TintDim;
 
   public float MPTimeBetweenRoundsSec = 5.0f;
   public float MPTimeSetupHoldSec = 5.0f;

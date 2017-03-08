@@ -81,11 +81,17 @@ def start_sim(coz_conn):
 
 
 def run(coz_conn):
-  
+    global _options
+
     start_sim(coz_conn)
     coz = coz_conn.wait_for_robot()
     cozmo.logger.info("Done")
-
+    if _options and _options.is_freeplay:
+      # Put Cozmo in freeplay
+      coz.start_freeplay_behaviors()
+      # Keep Cozmo doing what he was doing after the script exits
+      msg = cozmo._clad._clad_to_engine_iface.SetStopRobotOnSdkDisconnect(doStop=False)
+      coz_conn.send_msg(msg)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -95,6 +101,12 @@ if __name__ == '__main__':
                         action='store_const',
                         const=True,
                         help='Run with a real robot instead of a sim')
+    parser.add_argument('-f', '--freeplay',
+                        dest='is_freeplay',
+                        default=False,
+                        action='store_const',
+                        const=True,
+                        help='Start in freeplay mode')
     _options = parser.parse_args()
     cozmo.setup_basic_logging()
   

@@ -1,5 +1,5 @@
 /*
- * File: audioEngineClientCunnection.h
+ * File: audioEngineClientConnection.h
  *
  * Author: Jordan Rivas
  * Created: 11/09/2015
@@ -10,8 +10,8 @@
  * Copyright: Anki, Inc. 2015
  */
 
-#ifndef __Basestation_Audio_AudioEngineClientCunnection_H__
-#define __Basestation_Audio_AudioEngineClientCunnection_H__
+#ifndef __Basestation_Audio_AudioEngineClientConnection_H__
+#define __Basestation_Audio_AudioEngineClientConnection_H__
 
 #include "anki/cozmo/basestation/audio/audioClientConnection.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -52,4 +52,4 @@ private:
 } // Anki
 
 
-#endif /* __Basestation_Audio_AudioEngineClientCunnection_H__ */
+#endif /* __Basestation_Audio_AudioEngineClientConnection_H__ */

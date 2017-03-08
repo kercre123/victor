@@ -97,7 +97,7 @@ private:
   // Parameters:
   const float _kRobotNearBlockThreshold_mm = 65.f;
   const float _kRobotNearBlockThresholdHigh_mm = 95.f;
-  int _cubeIdToMove = -1;
+  ObjectType _cubeToMove = ObjectType::Invalid;
   
   // Status flags:
   int _startedBehavior = 0;
@@ -254,10 +254,15 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT( GetCarryingObjectID() >= 0, 20) {
         // move the cube we aren't holding
-        _cubeIdToMove = GetCarryingObjectID() == 0 ? 1 : 0;
+        ObjectType carryingCube;
+        CST_ASSERT(GetObjectType(GetCarryingObjectID(), carryingCube) == Result::RESULT_OK,
+                   "Could not get object type for cube being carried");
+        _cubeToMove = (carryingCube == ObjectType::Block_LIGHTCUBE1) ?
+                      ObjectType::Block_LIGHTCUBE2 :
+                      ObjectType::Block_LIGHTCUBE1;
 
         // raise it off the ground so we trigger a moved event, and send it somewhere we know the robot won't see it
-        SetLightCubePose(_cubeIdToMove, hideCubePose);
+        SetLightCubePose(_cubeToMove, hideCubePose);
         SET_STATE(BehaviorShouldFail);
         // at this point, robot should be trying to do stacking action. It picked up the first cube, then will
         // go try to stack it, but should fail because the bottom cube isn't there
@@ -281,11 +286,9 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       else {
         static constexpr double timeToHold_s = 0.5f;
         if(currTime_s - _behaviorCheckTime >= timeToHold_s ) {
-
-          CST_ASSERT(_cubeIdToMove >= 0, "Internal test error (this shouldn't happen)");
           
           // now send the cube to a place where the robot will be able to see / interact with it
-          SetLightCubePose(_cubeIdToMove, kidnapCubePose);
+          SetLightCubePose(_cubeToMove, kidnapCubePose);
 
           // first move the head down
           SendMoveHeadToAngle(0, 100, 100);
@@ -338,8 +341,8 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     {
       // Verify robot has stacked the blocks
       // NOTE: actual poses are in meters
-      Pose3d pose0 = GetLightCubePoseActual(0);
-      Pose3d pose1 = GetLightCubePoseActual(1);
+      Pose3d pose1 = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
+      Pose3d pose2 = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE2);
 
       const float stackingTolerance_mm = 40.0f;
       
@@ -347,10 +350,10 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                             GetCarryingObjectID() == -1,
                                             // (x,y) positions are nearly on top of each other
-                                            NEAR(pose0.GetTranslation().x(), pose1.GetTranslation().x(), stackingTolerance_mm),
-                                            NEAR(pose0.GetTranslation().y(), pose1.GetTranslation().y(), stackingTolerance_mm),
+                                            NEAR(pose1.GetTranslation().x(), pose2.GetTranslation().x(), stackingTolerance_mm),
+                                            NEAR(pose1.GetTranslation().y(), pose2.GetTranslation().y(), stackingTolerance_mm),
                                             // difference between z's is about a block height
-                                            NEAR( ABS(pose1.GetTranslation().z() - pose0.GetTranslation().z()), 44.0f, 10.0f)) {
+                                            NEAR( ABS(pose2.GetTranslation().z() - pose1.GetTranslation().z()), 44.0f, 10.0f)) {
         // Cancel the stack behavior:
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("NoneBehavior")));
         // Now attempt to pick up the top block:
@@ -365,7 +368,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     case TestState::AttemptPickupHigh:
     {
       const Pose3d robotPose = GetRobotPoseActual();
-      const Pose3d cubePose = GetLightCubePoseActual(0);
+      const Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
       const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThresholdHigh_mm;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
         // Push the block out of view so that the pickup will fail.
@@ -400,7 +403,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     case TestState::AttemptPickupLowOutOfView:
     {
       Pose3d robotPose = GetRobotPoseActual();
-      Pose3d cubePose = GetLightCubePoseActual(1);
+      Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE2);
       const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
         // Push the block out of view:
@@ -419,7 +422,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         Pose3d cubePose = GetRobotPoseActual();
         Vec3f T = cubePose.GetTranslation();
         cubePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 25));
-        SetLightCubePose(1, cubePose);
+        SetLightCubePose(ObjectType::Block_LIGHTCUBE2, cubePose);
         // move head up to see the cube:
         _moveHeadToAngleResult = ActionResult::RUNNING;
         SendMoveHeadToAngle(0, 100, 100);
@@ -446,7 +449,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     case TestState::AttemptPickupLowInView:
     {
       Pose3d robotPose = GetRobotPoseActual();
-      Pose3d cubePose = GetLightCubePoseActual(1);
+      Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE2);
       const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
         // Push the block out of view:
@@ -476,7 +479,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         Pose3d cubePose = GetRobotPoseActual();
         Vec3f T = cubePose.GetTranslation();
         cubePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 22));
-        SetLightCubePose(1, cubePose);
+        SetLightCubePose(ObjectType::Block_LIGHTCUBE2, cubePose);
         SET_STATE(PickupLowInViewShouldFail)
       }
       

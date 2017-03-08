@@ -69,11 +69,14 @@ void SdkStatus::StopRobotDoingAnything()
   // Ensure auto-exposure is (re) enabled
   _externalInterface->Broadcast( GToE(ExternalInterface::SetCameraSettings(true, 0, 0.0f)) );
   
-  // Stop everything else
-  _externalInterface->Broadcast( GToE(ExternalInterface::StopRobotForSdk()) );
-  
   // Disable color images from camera
   _externalInterface->Broadcast( GToE(ExternalInterface::EnableColorImages(false)) );
+  
+  // Delete all custom objects from the world
+  _externalInterface->Broadcast( GToE(ExternalInterface::DeleteAllCustomObjects(1)) );
+  
+  // Stop everything else
+  _externalInterface->Broadcast( GToE(ExternalInterface::StopRobotForSdk()) );
 }
 
 

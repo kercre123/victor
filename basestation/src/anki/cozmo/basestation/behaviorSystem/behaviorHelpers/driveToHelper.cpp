@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -41,13 +42,29 @@ DriveToHelper::DriveToHelper(Robot& robot,
 , _targetID(targetID)
 , _params(params)
 , _searchLevel(0)
-, _lastSearchRun_ts(0)
 , _tmpRetryCounter(0)
+, _objectObservedDuringSearch(false)
 {
   const bool invalidPlaceRelParams =
                 (_params.actionType != PreActionPose::PLACE_RELATIVE) &&
                  !(FLT_NEAR(_params.placeRelOffsetY_mm, 0.f) &&
                    FLT_NEAR(_params.placeRelOffsetX_mm, 0.f));
+  
+  
+  auto observedObjectCallback =
+  [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event){
+    if(event.GetData().Get_RobotObservedObject().objectID == _targetID){
+      _objectObservedDuringSearch = true;
+    }
+  };
+  
+  if(robot.HasExternalInterface()){
+    using namespace ExternalInterface;
+    _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
+                                                                    ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
+                                                                    observedObjectCallback));
+  }
+  
   
   DEV_ASSERT(!invalidPlaceRelParams,"DriveToHelper.InvalidPlaceRelParams");
 }
@@ -71,7 +88,7 @@ BehaviorStatus DriveToHelper::Init(Robot& robot)
 {
   _tmpRetryCounter = 0;
   _searchLevel = 0;
-  _lastSearchRun_ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _objectObservedDuringSearch = false;
   DriveToPreActionPose(robot);
   return _status;
 }
@@ -88,6 +105,7 @@ BehaviorStatus DriveToHelper::UpdateWhileActiveInternal(Robot& robot)
 void DriveToHelper::DriveToPreActionPose(Robot& robot)
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
+    _status = BehaviorStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -111,15 +129,18 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
           // Already in pose, no drive to necessary
           _status = BehaviorStatus::Complete;
         }else{
-          // Drive to the nearest pose
-          StartActing(new DriveToPoseAction(robot, possiblePoses),
-                      &DriveToHelper::RespondToDriveResult);
+          // Drive to the nearest allowed pose, and then perform a visual verify
+          CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+          compoundAction->AddAction(new DriveToPoseAction(robot, possiblePoses), true);
+          compoundAction->AddAction(new VisuallyVerifyObjectAction(robot, _targetID));
+          StartActing(compoundAction, &DriveToHelper::RespondToDriveResult);
         }
       }else{
         PRINT_NAMED_INFO("DriveToHelper.DriveToPreActionPose.NoPreDockPoses",
                          "No valid predock poses for objectID: %d with offsets x:%f y:%f",
                          _targetID.GetValue(),
                          _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm);
+        robot.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
         _status = BehaviorStatus::Failure;
       }
     }else{
@@ -142,7 +163,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     {
-      _lastSearchRun_ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      _objectObservedDuringSearch = false;
       SearchForBlock(result, robot);
       break;
     }
@@ -185,9 +206,8 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
   
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(staticBlock != nullptr){
-    // Check if block observed since last search
-    const TimeStamp_t lastObserved = staticBlock->GetLastObservedTime();
-    if(lastObserved > _lastSearchRun_ts){
+    // Check if block observed during the last search
+    if(_objectObservedDuringSearch){
       _status = BehaviorStatus::Complete;
       return;
     }
@@ -232,7 +252,6 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
   }
   
   _searchLevel++;
-  _lastSearchRun_ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 }
   
   

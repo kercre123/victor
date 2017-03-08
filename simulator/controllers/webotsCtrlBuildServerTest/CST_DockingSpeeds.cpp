@@ -273,7 +273,7 @@ namespace Anki {
         }
         case TestState::VerifyPlaced:
         {
-          Pose3d pose0 = GetLightCubePoseActual(0);
+          Pose3d pose0 = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
                                            _placeActionCompleted &&
@@ -330,7 +330,7 @@ namespace Anki {
     
     void CST_DockingSpeeds::ResetTest()
     {
-      SetLightCubePose(0, _startingCubePose);
+      SetLightCubePose(ObjectType::Block_LIGHTCUBE1, _startingCubePose);
       SetActualRobotPose(_startingRobotPose);
     }
     

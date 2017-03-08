@@ -76,6 +76,7 @@ BehaviorStatus PickupBlockHelper::UpdateWhileActiveInternal(Robot& robot)
 void PickupBlockHelper::StartPickupAction(Robot& robot)
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
+    _status = BehaviorStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -104,7 +105,20 @@ void PickupBlockHelper::StartPickupAction(Robot& robot)
       _params.animBeforeDock = AnimationTrigger::Count;
     }
     action->AddAction(new PickupObjectAction(robot, _targetID));
-    StartActingWithResponseAnim(action, &PickupBlockHelper::RespondToPickupResult);
+    StartActingWithResponseAnim(action, &PickupBlockHelper::RespondToPickupResult,  [] (ActionResult result){
+      switch(result){
+        case ActionResult::SUCCESS:
+        {
+          return UserFacingActionResult::Count;
+          break;
+        }
+        default:
+        {
+          return UserFacingActionResult::DriveToBlockIssue;
+          break;
+        }
+      }
+    });
   }
 }
   

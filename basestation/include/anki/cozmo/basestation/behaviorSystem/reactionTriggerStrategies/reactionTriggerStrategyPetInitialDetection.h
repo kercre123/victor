@@ -27,7 +27,7 @@ public:
 
   virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return true;}
-  virtual bool CanTriggerWhileTriggeredBehaviorRunning() const override { return true; }
+  virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
   
   virtual void EnabledStateChanged(bool enabled) override
                  {UpdateReactedTo(_robot);}

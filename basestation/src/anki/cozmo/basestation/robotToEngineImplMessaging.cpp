@@ -673,47 +673,13 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     // the lift. I'm leaving this a separate check from the decision about broadcasting
     // the movement, in case we want to easily remove the checks above but keep this one.
     const bool isCarryingObject = robot->IsCarryingObject(object->GetID());
-    if(GetIsMoving<PayloadType>() && object->IsPoseStateKnown() && !isCarryingObject)
+    if(object->IsPoseStateKnown() && !isCarryingObject)
     {
       // Once an object moves, we can no longer use it for localization because
       // we don't know where it is anymore. Next time we see it, relocalize it
       // relative to robot's pose estimate. Then we can use it for localization
       // again.
       robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
-      
-      // Do additional checks for objects in the current frame
-      const bool isInCurrentFrame = (&object->GetPose().FindOrigin() == robot->GetWorldOrigin());
-      if(isInCurrentFrame)
-      {
-        PRINT_NAMED_INFO(MAKE_EVENT_NAME("DelocalizingObject"),
-                         "ObjectID: %d (Active ID %d), type: %s",
-                         object->GetID().GetValue(), object->GetActiveID(),
-                         EnumToString(object->GetType()));
-
-        // TODO: should this go inside MarkObjectDirty?
-        // If this is the object we were localized to, unset our localizedToID.
-        // Note we are still "localized" by odometry, however.
-        if(robot->GetLocalizedTo() == object->GetID())
-        {
-          DEV_ASSERT(robot->IsLocalized(), MAKE_EVENT_NAME("BadIsLocalizedCheck"));
-          PRINT_NAMED_INFO(MAKE_EVENT_NAME("UnsetLocalizedToID"),
-                           "Unsetting %s %d, which moved/stopped, as robot %d's localization object.",
-                           ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
-          robot->SetLocalizedTo(nullptr);
-        }
-        else if(!(robot->IsLocalized()) && robot->GetOffTreadsState() == OffTreadsState::OnTreads)
-        {
-          // If we are not localized and there is nothing else left in the world that
-          // we could localize to, then go ahead and mark us as localized (via
-          // odometry alone)
-          if(false == robot->GetBlockWorld().AnyRemainingLocalizableObjects()) {
-            PRINT_NAMED_INFO(MAKE_EVENT_NAME("NoMoreRemainingLocalizableObjects"),
-                             "Marking previously-unlocalized robot %d as localized to odometry because "
-                             "there are no more objects to localize to in the world.", robot->GetID());
-            robot->SetLocalizedTo(nullptr);
-          }
-        }
-      }
     }
     
     const bool wasMoving = object->IsMoving();

@@ -386,16 +386,16 @@ protected:
   void SetActualRobotPose(const Pose3d& newPose);
 
   void SetActualObjectPose(const std::string& name, const Pose3d& newPose);
-  const Pose3d GetLightCubePoseActual(int lightCubeId);
+  const Pose3d GetLightCubePoseActual(ObjectType lightCubeType);
 
 
   ///
   // @brief      Physically move the cube in simulation.
-  // @param[in]  lightCubeId  The light cube identifier
-  // @param[in]  pose         Pose with translation in millimeters.
+  // @param[in]  lightCubeType  The ObjectType for the light cube
+  // @param[in]  pose           Pose with translation in millimeters.
   //
-  void SetLightCubePose(int lightCubeId, const Pose3d& pose);
-  bool HasActualLightCubePose(int lightCubeId) const;
+  void SetLightCubePose(ObjectType lightCubeType, const Pose3d& pose);
+  bool HasActualLightCubePose(ObjectType lightCubeType) const;
   
   ///
   // @brief      Iterates through _lightCubes and removes the one of the given ObjectType
@@ -501,10 +501,10 @@ private:
   ///
   // @brief      Iterates through _lightCubes and returns the first light cube with the given ID
   //             (should be unique).
-  // @param[in]  id    The identifier
+  // @param[in]  type    The ObjectType for the cube in question.
   // @return     The webots node for the light cube.
   //
-  webots::Node* GetLightCubeById(int lightCubeId) const;
+  webots::Node* GetLightCubeByType(ObjectType type) const;
   
   const f32 TIME_UNTIL_READY_SEC = 1.5;
   

@@ -126,7 +126,7 @@ namespace Cozmo {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
       }
-      if (IsConfirmSleepDialogOpen) {
+      if (IsConfirmSleepDialogOpen && message.newTrigger != Anki.Cozmo.ReactionTrigger.PlacedOnCharger) {
         StopIdleTimeout();
         _IsOnChargerToSleep = false;
         CloseGoToSleepDialog();

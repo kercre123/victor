@@ -1600,6 +1600,13 @@ namespace Anki {
       SetShouldCheckForObjectOnTopOf(false);
       
       // SetPlacementOffset set in InitInternal
+      if(!(FLT_NEAR(placementOffsetX_mm, 0.f) &&
+           FLT_NEAR(placementOffsetY_mm, 0.f))){
+        SetDoNearPredockPoseCheck(false);
+        PRINT_CH_INFO("Actions",
+                      "PlaceRelObjectAction.Constructor.WillNotCheckPreDockPoses",
+                      "Pre-dock pose is at an offset, so preDock pose check won't run");
+      }
     }
 
     ActionResult  PlaceRelObjectAction::InitInternal()

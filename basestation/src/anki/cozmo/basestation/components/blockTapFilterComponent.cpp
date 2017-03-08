@@ -104,6 +104,37 @@ void BlockTapFilterComponent::Update()
       _tapInfo.clear();
     }
   }
+  
+  for(auto& doubleTapInfo : _doubleTapObjects)
+  {
+    const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    const bool ignoreMovementTimePassed = doubleTapInfo.second.ignoreNextMoveTime <= curTime;
+    
+    // If we were ignoring move messages but the timeout has expired mark the object as dirty
+    if(doubleTapInfo.second.isIgnoringMoveMessages &&
+       ignoreMovementTimePassed)
+    {
+      doubleTapInfo.second.isIgnoringMoveMessages = false;
+      
+      BlockWorldFilter filter;
+      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+      filter.SetFilterFcn([&doubleTapInfo](const ObservableObject* object) {
+        return object->IsActive() && (object->GetID() == doubleTapInfo.first);
+      });
+      
+      std::vector<ObservableObject *> matchingObjects;
+      _robot.GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
+      
+      PRINT_CH_DEBUG("BlockTapFilterComponent", "BlockTapFilterComponent.Update.ExpiredTap",
+                     "Marking object %d as dirty due to tap timeout",
+                     matchingObjects.front()->GetID().GetValue());
+      
+      for(auto& object : matchingObjects)
+      {
+        _robot.GetObjectPoseConfirmer().MarkObjectDirty(object);
+      }
+    }
+  }
 }
   
 void BlockTapFilterComponent::HandleEnableTapFilter(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message)
@@ -290,12 +321,14 @@ void BlockTapFilterComponent::CheckForDoubleTap(const ObjectID& objectID)
     }
     
     doubleTapInfo->second.doubleTapTime = 0;
+    doubleTapInfo->second.isIgnoringMoveMessages = false;
   }
   // Start waiting for a double tap
   else
   {
     doubleTapInfo->second.doubleTapTime = currTime + kDoubleTapTime_ms;
     doubleTapInfo->second.ignoreNextMoveTime = currTime + kIgnoreMoveTimeAfterDoubleTap_ms;
+    doubleTapInfo->second.isIgnoringMoveMessages = true;
   }
 }
   

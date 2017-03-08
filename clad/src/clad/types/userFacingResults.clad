@@ -7,8 +7,8 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 UserFacingActionResult {
-  DidntInteractWithBlock,
-  DidntAlignWithBlock,
+  DriveToBlockIssue,
+  InteractWithBlockDockingIssue,
   Success,
   
   Count

@@ -183,6 +183,11 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
   const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
   if( isNewPoseValid )
   {
+    if(newPoseState != PoseState::Known)
+    {
+      DelocalizeRobotFromObject(object->GetID());
+    }
+  
     object->SetPose(newPose, distance, newPoseState);
     
     // we can pass the same instance since BlockWorld keeps it
@@ -230,6 +235,11 @@ void ObjectPoseConfirmer::SetPoseStateHelper(ObservableObject* object, PoseState
 
   if ( ObservableObject::IsValidPoseState(newState) )
   {
+    if(newState != PoseState::Known)
+    {
+      DelocalizeRobotFromObject(object->GetID());
+    }
+  
     // do the change, store old for notification
     const PoseState oldState = object->GetPoseState();
     object->SetPoseState(newState);
@@ -866,6 +876,14 @@ TimeStamp_t ObjectPoseConfirmer::GetLastPoseUpdatedTime(const ObjectID& id) cons
   }
   
   return 0;
+}
+
+void ObjectPoseConfirmer::DelocalizeRobotFromObject(const ObjectID& objectID) const
+{
+  if(_robot.GetLocalizedTo() == objectID)
+  {
+    _robot.SetLocalizedTo(nullptr);
+  }
 }
   
 } // namespace Cozmo

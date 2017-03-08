@@ -788,6 +788,11 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.SetEnableFreeplayLightStates(true);
     }
 
+    // Destroy any active player goals
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      _PlayerInfo[i].SetGoal(null);
+    }
+
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
 
@@ -1064,6 +1069,9 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     // Close minigame UI
+    if (_ChallengeEndViewInstance != null) {
+      _ChallengeEndViewInstance.HideScrollRectGradients();
+    }
     CloseMinigame();
 
     if (DidHumanWin()) {
@@ -1079,22 +1087,26 @@ public abstract class GameBase : MonoBehaviour {
       }
     }
 
+    // Analytics wants the human with the highest score in MP.
     int humanRoundsWon = 0;
-    PlayerInfo humanPlayer = GetFirstPlayerByType(PlayerType.Human);
-    if (humanPlayer != null) {
-      humanRoundsWon = humanPlayer.playerRoundsWon;
+    for (int i = 0; i < _PlayerInfo.Count; ++i) {
+      if (_PlayerInfo[i].playerType == PlayerType.Human &&
+          _PlayerInfo[i].playerRoundsWon > humanRoundsWon) {
+        humanRoundsWon = _PlayerInfo[i].playerRoundsWon;
+      }
     }
+
     int robotRoundsWon = 0;
     PlayerInfo robotPlayer = GetFirstPlayerByType(PlayerType.Cozmo);
     if (robotPlayer != null) {
-      humanRoundsWon = robotPlayer.playerRoundsWon;
+      robotRoundsWon = robotPlayer.playerRoundsWon;
     }
     DAS.Event("game.end.score", humanRoundsWon.ToString(), DASUtil.FormatExtraData(robotRoundsWon.ToString()));
 
     if (GetPlayerCount() > 2) {
       PlayerInfo info = GetPlayerMostRoundsWon();
       int playerIndex = _PlayerInfo.IndexOf(info);
-      DAS.Event("game.end.MP.winnertype", info.playerType.ToString(), DASUtil.FormatExtraData(playerIndex.ToString()));
+      DAS.Event("game.end.MP.winnertype", playerIndex.ToString());
       DAS.Event("game.end.MP.roundsTotal", TotalRounds.ToString());
     }
 
@@ -1314,11 +1326,11 @@ public abstract class GameBase : MonoBehaviour {
     }
     DAS.Event("robot.interrupt", currentStateString, DASUtil.FormatExtraData(behaviorTransition.newTrigger.ToString()));
 
-    if ((behaviorTransition.newTrigger != ReactionTrigger.NoneTrigger) && 
+    if ((behaviorTransition.newTrigger != ReactionTrigger.NoneTrigger) &&
         (behaviorTransition.oldTrigger == ReactionTrigger.NoneTrigger)) {
       PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.newTrigger);
     }
-    else if(behaviorTransition.newTrigger == ReactionTrigger.NoneTrigger) {
+    else if (behaviorTransition.newTrigger == ReactionTrigger.NoneTrigger) {
       ResumeStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.oldTrigger);
     }
   }

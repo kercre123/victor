@@ -9,6 +9,7 @@ import platform
 import sys
 import subprocess
 import shutil
+import time
 import hashlib
 
 GAME_ROOT = os.path.normpath(
@@ -702,11 +703,7 @@ class GamePlatformConfiguration(object):
 
         if self.platform == 'ios':
             if self.options.command == 'run':
-                # ankibuild.ios_deploy.noninteractive(self.artifact_path)
-                ankibuild.ios_deploy.debug(self.artifact_path)
-
-                # elif self.platform == 'mac':
-                # run webots?
+                ankibuild.ios_deploy.just_launch(self.artifact_path)
 
         elif self.platform == 'android':
             device = get_android_device()
@@ -720,6 +717,8 @@ class GamePlatformConfiguration(object):
             else:
                 print('{0}: No attached devices found via adb'.format(self.options.command))
 
+        # elif self.platform == 'mac':
+            # run webots?
         else:
             print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
 
@@ -728,7 +727,12 @@ class GamePlatformConfiguration(object):
             print_status('Uninstalling for platform {0}...'.format(self.platform))
 
         if self.platform == 'ios':
-            ankibuild.ios_deploy.uninstall(self.artifact_path)
+            ankibuild.ios_deploy.uninstall('com.anki.cozmo')    # Pass bundle ID, not path
+        elif self.platform == 'android':
+            if self.options.features is not None and 'standalone' in self.options.features[0]:
+                subprocess.call("adb shell pm uninstall -k com.anki.cozmoengine", shell=True)
+            else:
+                subprocess.call("adb shell pm uninstall -k com.anki.cozmo", shell=True)
         else:
             print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
 
@@ -764,6 +768,8 @@ def recursive_delete(options):
 
 
 def main():
+    start_time = time.time()
+
     options = parse_game_arguments()
 
     clad_csharp = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated')
@@ -775,6 +781,10 @@ def main():
     if options.command == 'delete':
         recursive_delete(options)
 
+    total_seconds = time.time() - start_time
+    minutes = int(total_seconds / 60)
+    seconds = int(total_seconds - (minutes * 60))
+    print_status('Total script duration {0}:{1}'.format(minutes, seconds))
 
 if __name__ == '__main__':
     main()

@@ -192,6 +192,8 @@ bool IHelper::StartActingWithResponseAnim(
                                          std::placeholders::_2);
   _actionResultMapFunc = mapFunc;
   
+  DEV_ASSERT(_callbackAfterResponseAnim != nullptr,
+             "IHelper.StartActingWithResponseAnim.NullCllback");
   return StartActing(action, &IHelper::RespondToResultWithAnim);
 }
   

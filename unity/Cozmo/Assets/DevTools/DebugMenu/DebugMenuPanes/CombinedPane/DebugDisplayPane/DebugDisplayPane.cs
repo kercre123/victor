@@ -12,7 +12,9 @@ public class ScratchRequest {
 }
 
 public class DebugDisplayPane : MonoBehaviour {
-  private const float kDriveSpeed_mmps = 30.0f;
+  private const float kSlowDriveSpeed_mmps = 30.0f;
+  private const float kMediumDriveSpeed_mmps = 45.0f;
+  private const float kFastDriveSpeed_mmps = 60.0f;
   private const float kDriveDist_mm = 30.0f;
   private const float kDegreesToRadians = Mathf.PI / 180.0f;
   private const float kTurnAngle = 90.0f * kDegreesToRadians;
@@ -55,8 +57,10 @@ public class DebugDisplayPane : MonoBehaviour {
   [SerializeField]
   private Button _LoadWebViewButton;
   private GameObject _WebViewObject;
-  private float _TimeLastObservedFace;
+  private float _TimeLastReportedObservedFaceToScratch;
+  private float _TimeLastReportedObservedCubeToScratch;
   private float _TimeLastObservedCube;
+  private int _LastObservedObjectID;
 
   private void Start() {
 
@@ -77,8 +81,10 @@ public class DebugDisplayPane : MonoBehaviour {
     _LoadWebViewButton.onClick.AddListener(HandleLoadWebView);
 
     // TODO Check that this initialization doesn't cause unwanted behavior if have to turn on/off vision system for Scratch.
-    _TimeLastObservedFace = float.MinValue;
+    _TimeLastReportedObservedFaceToScratch = float.MinValue;
+    _TimeLastReportedObservedCubeToScratch = float.MinValue;
     _TimeLastObservedCube = float.MinValue;
+    _LastObservedObjectID = -1;
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
     RobotEngineManager.Instance.SendRequestDeviceData();
@@ -90,6 +96,7 @@ public class DebugDisplayPane : MonoBehaviour {
     if (_WebViewObject != null) {
       RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(HandleRobotObservedFace);
       RobotEngineManager.Instance.RemoveCallback<RobotObservedObject>(HandleRobotObservedObject);
+      LightCube.TappedAction -= HandleTap;
 
       GameObject.Destroy(_WebViewObject);
       _WebViewObject = null;
@@ -203,6 +210,7 @@ public class DebugDisplayPane : MonoBehaviour {
 
       RobotEngineManager.Instance.AddCallback<RobotObservedFace>(HandleRobotObservedFace);
       RobotEngineManager.Instance.AddCallback<RobotObservedObject>(HandleRobotObservedObject);
+      LightCube.TappedAction += HandleTap;
 
       Debug.Log("Index file = " + indexFile);
       webViewObjectComponent.LoadURL(indexFile);
@@ -219,22 +227,40 @@ public class DebugDisplayPane : MonoBehaviour {
     //Debug.Log("HandleRobotObservedFace");
 
     // If Cozmo sees a face (and hasn't seen a face for 2.0 seconds), resume the face block.
-    if (Time.time - _TimeLastObservedFace > 2.0f) {
+    if (Time.time - _TimeLastReportedObservedFaceToScratch > 2.0f) {
       WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
       webViewObjectComponent.EvaluateJS(@"window.vm.runtime.onCozmoSawFace();");
-      _TimeLastObservedFace = Time.time;
+      _TimeLastReportedObservedFaceToScratch = Time.time;
     }
   }
 
   private void HandleRobotObservedObject(RobotObservedObject message) {
-    //Debug.Log("HandleRobotObservedObject");
+    //Debug.Log("HandleRobotObservedObject objectID = " + message.objectID);
+    _LastObservedObjectID = message.objectID;
+    _TimeLastObservedCube = Time.time;
 
     // If Cozmo sees a cube (and hasn't seen a cube for 2.0 seconds), resume the cube block.
-    if (Time.time - _TimeLastObservedCube > 2.0f) {
+    if (Time.time - _TimeLastReportedObservedCubeToScratch > 2.0f) {
       WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
       webViewObjectComponent.EvaluateJS(@"window.vm.runtime.onCozmoSawCube();");
-      _TimeLastObservedCube = Time.time;
+      _TimeLastReportedObservedCubeToScratch = Time.time;
     }
+  }
+
+  private void HandleTap(int id, int tappedTimes, float timeStamp) {
+    //Debug.Log("HandleTap");
+    WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+    webViewObjectComponent.EvaluateJS(@"window.vm.runtime.onCozmoCubeWasTapped();");
+  }
+
+  private void HandleAlignWithObjectResponse(bool success) {
+    if (!success) {
+      PlayAngryAnimation();
+    }
+  }
+
+  private void PlayAngryAnimation() {
+    RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor);
   }
 
   private void WebViewCallback(string text) {
@@ -245,12 +271,12 @@ public class DebugDisplayPane : MonoBehaviour {
     if (scratchRequest.command == "cozmoDriveForward") {
       // Here, argFloat represents the number selected from the dropdown under the "drive forward" block
       float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
-      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kDriveSpeed_mmps, dist_mm, false);
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(getDriveSpeed(scratchRequest), dist_mm, false);
     }
     else if (scratchRequest.command == "cozmoDriveBackward") {
       // Here, argFloat represents the number selected from the dropdown under the "drive backward" block
       float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
-      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(-kDriveSpeed_mmps, -dist_mm, false);
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(-getDriveSpeed(scratchRequest), -dist_mm, false);
     }
     else if (scratchRequest.command == "cozmoPlayAnimation") {
       Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
@@ -279,6 +305,19 @@ public class DebugDisplayPane : MonoBehaviour {
 
       RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(headAngle);
     }
+    else if (scratchRequest.command == "cozmoDockWithCube") {
+      // Dock with a cube we observed within the last 0.2 seconds, if any.
+      LightCube cube = null;
+      RobotEngineManager.Instance.CurrentRobot.LightCubes.TryGetValue(_LastObservedObjectID, out cube);
+
+      if ((Time.time - _TimeLastObservedCube) < 0.2f && cube != null) {
+        RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: HandleAlignWithObjectResponse, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE);
+      }
+      else {
+        // Play angry animation since Cozmo wasn't able to complete the task
+        PlayAngryAnimation();
+      }
+    }
     else if (scratchRequest.command == "cozmoForklift") {
       float liftHeight = 0.5f; // medium setting
       if (scratchRequest.argString == "low") {
@@ -298,6 +337,19 @@ public class DebugDisplayPane : MonoBehaviour {
     }
 
     return;
+  }
+
+  // Check if cozmoDriveFaster JavaScript bool arg is set by checking ScratchRequest.argBool and set speed appropriately.
+  private float getDriveSpeed(ScratchRequest scratchRequest) {
+    float driveSpeed_mmps = kSlowDriveSpeed_mmps;
+    if (scratchRequest.argString == "medium") {
+      driveSpeed_mmps = kMediumDriveSpeed_mmps;
+    }
+    else if (scratchRequest.argString == "fast") {
+      driveSpeed_mmps = kFastDriveSpeed_mmps;
+    }
+
+    return driveSpeed_mmps;
   }
 
   private Anki.Cozmo.AnimationTrigger GetAnimationTriggerForScratchName(string scratchAnimationName) {

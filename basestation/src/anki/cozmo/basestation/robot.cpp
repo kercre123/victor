@@ -2259,6 +2259,11 @@ Result Robot::PlaceObjectOnGround(const bool useManualSpeed)
                                                             DEFAULT_PATH_MOTION_PROFILE.decel_mmps2,
                                                             useManualSpeed);
 }
+
+bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
+{
+  return _tapFilterComponent->ShouldIgnoreMovementDueToDoubleTap(objectID);
+}
     
 void Robot::ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
                       TimeStamp_t duration_ms, const std::string& name)
@@ -2359,7 +2364,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
                       existingObject->GetID().GetValue());
   }
       
-  if(!existingObject->CanBeUsedForLocalization()) {
+  if(!existingObject->CanBeUsedForLocalization() || WasObjectTappedRecently(existingObject->GetID())) {
     PRINT_NAMED_ERROR("Robot.LocalizeToObject.UnlocalizedObject",
                       "Refusing to localize to object %d, which claims not to be localizable.",
                       existingObject->GetID().GetValue());

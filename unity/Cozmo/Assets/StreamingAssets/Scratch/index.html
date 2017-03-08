@@ -23,13 +23,6 @@
         <!-- Toolbox -->
         <xml id="toolbox">
             <block type="event_whenflagclicked"></block>
-            <block type="cozmo_setbackpackcolor">
-                <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_setcolor">
-                        <field name="CHOICE">mystery</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="cozmo_drive_forward">
                 <value name="DISTANCE">
                     <shadow type="math_positive_number">
@@ -46,17 +39,25 @@
             </block>
             <block type="cozmo_turn_left"></block>
             <block type="cozmo_turn_right"></block>
-            <block type="cozmo_animation">
-                <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_setanimation">
-                        <field name="CHOICE">happy</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="cozmo_liftheight">
                 <value name="CHOICE">
                     <shadow type="dropdown_cozmo_liftheight">
                         <field name="CHOICE">low</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_headangle">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_headangle">
+                        <field name="CHOICE">high</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_dock_with_cube"></block>
+            <block type="cozmo_animation">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_setanimation">
+                        <field name="CHOICE">happy</field>
                     </shadow>
                 </value>
             </block>
@@ -67,8 +68,23 @@
                     </shadow>
                 </value>
             </block>
+            <block type="cozmo_setbackpackcolor">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_setcolor">
+                        <field name="CHOICE">mystery</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_drive_speed">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_drive_speed">
+                        <field name="CHOICE">fast</field>
+                    </shadow>
+                </value>
+            </block>
             <block type="cozmo_wait_for_face"></block>
             <block type="cozmo_wait_for_cube"></block>
+            <block type="cozmo_wait_for_cube_tap"></block>
             <block type="control_repeat">
                 <value name="TIMES">
                     <shadow type="math_whole_number">
@@ -77,13 +93,6 @@
                 </value>
             </block>
             <block type="control_forever"></block>
-            <block type="cozmo_headangle">
-                <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_headangle">
-                        <field name="CHOICE">high</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="event_whenbroadcastreceived">
                 <value name="CHOICE">
                     <shadow type="dropdown_whenbroadcast">

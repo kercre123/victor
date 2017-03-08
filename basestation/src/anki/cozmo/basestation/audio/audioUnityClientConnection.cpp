@@ -40,7 +40,7 @@ AudioUnityClientConnection::AudioUnityClientConnection( IExternalInterface& exte
 void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   PRINT_CH_DEBUG(AudioClientConnection::kAudioLogChannel,
-                 "AudioUnityClientCunnection.HandleGameEvents", "Handle game event of type %s !",
+                 "AudioUnityClientConnection.HandleGameEvents", "Handle game event of type %s !",
                  ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) );
   
   switch ( event.GetData().GetTag() ) {
@@ -71,7 +71,7 @@ void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterf
       
     default:
     {
-      PRINT_NAMED_ERROR( "AudioUnityClientCunnection.HandleGameEvents",
+      PRINT_NAMED_ERROR( "AudioUnityClientConnection.HandleGameEvents",
                          "Subscribed to unhandled event of type %s !",
                          ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) );
     }

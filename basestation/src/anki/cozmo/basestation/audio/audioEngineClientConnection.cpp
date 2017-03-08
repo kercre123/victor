@@ -1,5 +1,5 @@
 /*
- * File: audioEngineClientCunnection.cpp
+ * File: audioEngineClientConnection.cpp
  *
  * Author: Jordan Rivas
  * Created: 11/09/2015

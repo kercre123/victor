@@ -85,7 +85,9 @@ namespace SpeedTap {
         if (playerInfo.playerType == PlayerType.Cozmo) {
           _SpeedTapGame.ShowWaitForCozmoSlide();
         }
-        else if (playerInfo.CubeID == -1) {
+        // Don't ever show the mid screen game in MP in hopes the more explicit
+        // round start screen will de-confuse players about who they are the second round.
+        else if (playerInfo.CubeID == -1 || _SpeedTapGame.GetPlayerCount() > 2) {
           _SpeedTapGame.ShowPlayerTapConfirmSlide(_PlayerIndexSelecting);
         }
         else {

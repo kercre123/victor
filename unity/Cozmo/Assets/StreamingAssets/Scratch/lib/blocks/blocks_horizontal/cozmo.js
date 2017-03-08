@@ -285,7 +285,7 @@ Blockly.Blocks['cozmo_liftheight'] = {
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-forklift-medium.svg",
           "width": 40,
           "height": 40,
-          "alt": "Motor Speed"
+          "alt": "Move lift"
         },
         {
           "type": "input_value",
@@ -341,11 +341,40 @@ Blockly.Blocks['cozmo_headangle'] = {
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-head-angle-high.svg",
           "width": 40,
           "height": 40,
-          "alt": "Motor Speed"
+          "alt": "Move head"
         },
         {
           "type": "input_value",
           "name": "CHOICE"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.motion,
+      "colour": Blockly.Colours.motion.primary,
+      "colourSecondary": Blockly.Colours.motion.secondary,
+      "colourTertiary": Blockly.Colours.motion.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_dock_with_cube'] = {
+  /**
+   * Block to tell Cozmo to dock with a cube that he can see, if any.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_dock_with_cube",
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-dock-with-cube.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Dock with cube"
         }
       ],
       "inputsInline": true,
@@ -386,9 +415,65 @@ init: function() {
       "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.looks,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['dropdown_cozmo_drive_speed'] = {
+  /**
+   * Block to set speed for Cozmo drive forward and backward.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldIconMenu([
+            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-drive-slow.svg',
+              value: 'slow', width: 48, height: 48, alt: 'Slow'},
+            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-drive-medium.svg',
+              value: 'medium', width: 48, height: 48, alt: 'Medium'},
+            {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/cozmo-drive-fast.svg',
+              value: 'fast', width: 48, height: 48, alt: 'Fast'}
+        ]), 'CHOICE');
+    this.setOutput(true);
+    this.setColour(Blockly.Colours.control.primary,
+      Blockly.Colours.control.secondary,
+      Blockly.Colours.control.tertiary
+    );
+  }
+};
+
+Blockly.Blocks['cozmo_drive_speed'] = {
+  /**
+   * Block to make Cozmo drive forward or backward faster.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo__drive_speed",
+      "message0": "%1 %2",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-drive-slow.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Set drive speed"
+        },
+        {
+          "type": "input_value",
+          "name": "CHOICE"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.control,
+      "colour": Blockly.Colours.control.primary,
+      "colourSecondary": Blockly.Colours.control.secondary,
+      "colourTertiary": Blockly.Colours.control.tertiary
     });
   }
 };
@@ -400,7 +485,7 @@ Blockly.Blocks['cozmo_turn_left'] = {
   */
   init: function() {
     this.jsonInit({
-      "id": "cozmo_turn",
+      "id": "cozmo_turn_left",
       "message0": "%1",
       "args0": [
         {
@@ -429,7 +514,7 @@ Blockly.Blocks['cozmo_turn_right'] = {
   */
   init: function() {
     this.jsonInit({
-      "id": "cozmo_turn",
+      "id": "cozmo_turn_right",
       "message0": "%1",
       "args0": [
         {
@@ -494,6 +579,34 @@ Blockly.Blocks['cozmo_wait_for_cube'] = {
           "width": 40,
           "height": 40,
           "alt": "Wait until Cozmo sees a cube"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.control,
+      "colour": Blockly.Colours.control.primary,
+      "colourSecondary": Blockly.Colours.control.secondary,
+      "colourTertiary": Blockly.Colours.control.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
+  /**
+   * Block to wait until a cube that Cozmo can see is tapped.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-cube-tap.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Wait for cube tap"
         }
       ],
       "inputsInline": true,

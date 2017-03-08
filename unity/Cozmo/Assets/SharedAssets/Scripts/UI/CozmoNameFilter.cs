@@ -11,9 +11,8 @@ public class CozmoNameFilter : MonoBehaviour {
   }
 
   private char ValidateNameField(string input, int charIndex, char charToValidate) {
-    if (charToValidate >= 'a' && charToValidate <= 'z' || charToValidate >= 'A' && charToValidate <= 'Z') {
-      return charToValidate;
-    }
-    return '\0';
+    // Allows for japanese, russian, greek etc. But not emojis, punctuation and numbers
+    // Flite will just not pronounce characters it can't recognize.
+    return char.IsLetter(charToValidate) ? charToValidate : '\0';
   }
 }

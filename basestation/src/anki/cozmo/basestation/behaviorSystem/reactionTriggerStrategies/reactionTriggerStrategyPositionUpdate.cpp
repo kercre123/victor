@@ -25,11 +25,12 @@ CONSOLE_VAR(bool, kDebugAcknowledgements, "AcknowledgementBehaviors", false);
 CONSOLE_VAR(f32, kHeadAngleDistFactor, "AcknowledgementBehaviors", 1.0);
 CONSOLE_VAR(f32, kBodyAngleDistFactor, "AcknowledgementBehaviors", 3.0);
 
-static const char * const kCoolDownDurationKey    = "CoolDownDuration_ms";
-static const char * const kSamePoseDistKey        = "SamePoseDistThresh_mm";
-static const char * const kSamePoseDistSparkedKey = "SamePoseDistThresh_sparked_mm";
-static const char * const kSamePoseAngleKey       = "SamePoseAngleThresh_deg";
-  
+// static const char * const kCoolDownDurationKey    = "CoolDownDuration_ms";
+// static const char * const kSamePoseDistKey        = "SamePoseDistThresh_mm";
+// static const char * const kSamePoseDistSparkedKey = "SamePoseDistThresh_sparked_mm";
+// static const char * const kSamePoseAngleKey       = "SamePoseAngleThresh_deg";
+// no longer used (see COZMO-9862)
+
 }
 
 void ReactionTriggerStrategyPositionUpdate::ReactionData::FakeReaction()
@@ -49,31 +50,32 @@ ReactionTriggerStrategyPositionUpdate::ReactionTriggerStrategyPositionUpdate(Rob
 }
 
 
-void ReactionTriggerStrategyPositionUpdate::LoadConfig(const Json::Value& config)
-{
-  using namespace JsonTools;
+// void ReactionTriggerStrategyPositionUpdate::LoadConfig(const Json::Value& config)
+// {
+//   using namespace JsonTools;
   
-  if(GetValueOptional(config, kCoolDownDurationKey , _params.coolDownDuration_ms)) {
-    PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetCoolDownDuration",
-                      "%ums", _params.coolDownDuration_ms);
-  }
+//   if(GetValueOptional(config, kCoolDownDurationKey , _params.coolDownDuration_ms)) {
+//     PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetCoolDownDuration",
+//                       "%ums", _params.coolDownDuration_ms);
+//   }
   
-  if(GetValueOptional(config, kSamePoseDistKey , _params.samePoseDistThreshold_mm)) {
-    PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThresh",
-                      "%.1f", _params.samePoseDistThreshold_mm);
-  }
+//   if(GetValueOptional(config, kSamePoseDistKey , _params.samePoseDistThreshold_mm)) {
+//     PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThresh",
+//                       "%.1f", _params.samePoseDistThreshold_mm);
+//   }
   
-  if(GetValueOptional(config, kSamePoseDistSparkedKey, _params.samePoseDistThreshold_sparked_mm)) {
-    PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThreshSparked",
-                      "%.1f", _params.samePoseDistThreshold_sparked_mm);
-  }
+//   if(GetValueOptional(config, kSamePoseDistSparkedKey, _params.samePoseDistThreshold_sparked_mm)) {
+//     PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThreshSparked",
+//                       "%.1f", _params.samePoseDistThreshold_sparked_mm);
+//   }
   
   
-  if(GetAngleOptional(config, kSamePoseAngleKey, _params.samePoseAngleThreshold_rad, true)) {
-    PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseAngleThresh",
-                      "%.1fdeg", _params.samePoseAngleThreshold_rad.getDegrees());
-  }
-}
+//   if(GetAngleOptional(config, kSamePoseAngleKey, _params.samePoseAngleThreshold_rad, true)) {
+//     PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseAngleThresh",
+//                       "%.1fdeg", _params.samePoseAngleThreshold_rad.getDegrees());
+//   }
+// }
+// No longer used (see COZMO-9862)
 
 
 void ReactionTriggerStrategyPositionUpdate::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)

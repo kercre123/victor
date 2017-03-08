@@ -330,6 +330,9 @@ namespace Cozmo {
         closeAnimation = JoinFadeTween(closeAnimation, _MiddleBackgroundTween, _MiddleBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
         closeAnimation = JoinFadeTween(closeAnimation, _OverlayBackgroundTween, _OverlayBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
 
+        if (_CurrentSlide != null) {
+          closeAnimation.Join(_CurrentSlide.DOFade(0f, fadeOutSeconds).SetEase(fadeOutEasing));
+        }
       }
 
       private Sequence JoinFadeTween(Sequence sequenceToUse, Tween tween, Image targetImage, float targetAlpha,
@@ -754,6 +757,9 @@ namespace Cozmo {
         }
         CreateWidgetIfNull<ContinueGameButtonWidget>(ref _ContinueButtonInstance, _ContinueButtonRewardPrefab);
         _ContinueButtonState = ContinueButtonState.Reward;
+        // Much like we have to hide the InfoText mid screen when showing new slides, Hide the shelf.
+        // The shelf text now can conflict with this screen.
+        HideShelf();
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
         _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfTextColor, dasButtonName, dasViewControllerName);
         _ContinueButtonInstance.SetAmountText(rewardAmount);
