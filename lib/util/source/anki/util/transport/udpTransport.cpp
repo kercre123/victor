@@ -383,7 +383,6 @@ UDPTransport::UDPTransport(sa_family_t family)
   , _ownsSocketImpl(false)
   , _reset(false)
 {
-  assert(g_ipRetriever != nullptr);
   assert((_family == AF_INET) || (_family == AF_INET6));
   SetSocketImpl(&g_PosixSocketImpl);
 }
