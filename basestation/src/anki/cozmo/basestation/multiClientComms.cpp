@@ -12,7 +12,7 @@
  **/
 
 #include "util/logging/logging.h"
-#include "anki/common/basestation/utils/helpers/printByteArray.h"
+#include "util/helpers/printByteArray.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"

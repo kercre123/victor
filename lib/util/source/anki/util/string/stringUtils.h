@@ -29,6 +29,8 @@ std::string StringToUpper(const std::string& source);
 std::string StringFromContentsOfFile(const std::string &filename);
 
 std::string StringMapToJson(const std::map<std::string,std::string> &stringMap);
+
+std::string StringMapToPrettyJson(const std::map<std::string,std::string> &stringMap);
   
 // Return the json string as a map of <string, string>. This will fail if the json has non string values or is nested
 std::map<std::string,std::string> JsonToStringMap(const std::string &jsonString);
@@ -44,6 +46,8 @@ std::string ConvertFromByteVectorToString(const std::vector<uint8_t> &bytes);
   
 // Returns a vector representation of the string
 void ConvertFromStringToVector(std::vector<uint8_t> &bytes, const std::string &stringValue);
+
+bool StringStartsWith(const std::string& fullString, const std::string& prefix);
 
 bool StringEndsWith(const std::string& fullString, const std::string& ending);
 
@@ -63,6 +67,10 @@ std::string GetUUIDString();
 
 // Url encode string
 std::string UrlEncodeString(const std::string& str);
+
+// Simple way to handle comma-delimited strings
+std::string StringJoin(const std::vector<std::string>& strings, char delim=',');
+std::vector<std::string> StringSplit(const std::string& string, char delim=',');
   
 } // namespace Util
 } // namespace Anki

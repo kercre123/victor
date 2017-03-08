@@ -24,6 +24,10 @@ def gypHelp():
   print "echo PATH=$HOME/your_workspace/gyp:$PATH >> ~/.bash_profile"
   print ". ~/.bash_profile"
 
+def _getGypArgs(format, outputFolder, gypFile):
+  return ['--check', '--depth', '.', '-f', format, '--toplevel-dir', '../..', \
+    '--generator-output', outputFolder, '--include', '../../project/gyp/build-variables.gypi', gypFile]
+
 def main(scriptArgs):
   version = '1.0'
   parser = argparse.ArgumentParser(description='runs gyp to generate projects', version=version)
@@ -311,11 +315,11 @@ def main(scriptArgs):
                                     dasProjectPath,
                                     clad_dir_rel,
                                   )
-      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
+      gypArgs = _getGypArgs('xcode', '../../generated/mac', gypFile)
       gyp.main(gypArgs)
       # mac
       if options.mex:
-        gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', 'cozmoEngineMex.gyp']
+        gypArgs = _getGypArgs('xcode', '../../generated/mac', 'cozmoEngineMex.gyp')
         gyp.main(gypArgs)
       
 
@@ -365,7 +369,7 @@ def main(scriptArgs):
                                   dasProjectPath,
                                   clad_dir_rel,
                                 )
-    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
+    gypArgs = _getGypArgs('xcode', '../../generated/ios', gypFile)
     gyp.main(gypArgs)
 
 
@@ -413,7 +417,7 @@ def main(scriptArgs):
                                     dasProjectPath,
                                     clad_dir_rel,
                                   )
-      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
+      gypArgs = _getGypArgs('xcode', '../../generated/mex', gypFile)
       gyp.main(gypArgs)
       
       
@@ -507,7 +511,7 @@ def main(scriptArgs):
     os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
     os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
     os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
-    gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
+    gypArgs = _getGypArgs('ninja-android', 'generated/android', gypFile)
     gyp.main(gypArgs)
 
 
@@ -558,7 +562,7 @@ def main(scriptArgs):
       os.environ['CC_target'] = '/usr/bin/clang'
       os.environ['CXX_target'] = '/usr/bin/clang++'
       os.environ['LD_target'] = '/usr/bin/clang++'
-      gypArgs = ['--check', '--depth', '.', '-f', 'ninja', '--toplevel-dir', '../..', '--generator-output', '../../generated/linux', gypFile] 
+      gypArgs = _getGypArgs('ninja', '../../generated/linux', gypFile)
       gyp.main(gypArgs)
       print "***********************HERE-configure.py2"
 

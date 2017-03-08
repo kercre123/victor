@@ -113,6 +113,10 @@ void TaskExecutor::Wake(std::function<void()> task, const char* name)
 
 void TaskExecutor::WakeSync(std::function<void()> task, const char* name)
 {
+  if (std::this_thread::get_id() == _taskExecuteThread.get_id()) {
+    task();
+    return;
+  }
   std::lock_guard<std::mutex> lock(_addSyncTaskMutex);
 
   TaskHolder taskHolder;

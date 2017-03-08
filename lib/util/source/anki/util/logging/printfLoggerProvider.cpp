@@ -15,6 +15,19 @@
 namespace Anki {
 namespace Util {
 
+
+PrintfLoggerProvider::PrintfLoggerProvider()
+: _minToStderrLevel(1000)
+{
+  SetMinLogLevel(LOG_LEVEL_INFO);
+}
+
+PrintfLoggerProvider::PrintfLoggerProvider(ILoggerProvider::LogLevel minToStderrLogLevel)
+: _minToStderrLevel(minToStderrLogLevel)
+{
+  SetMinLogLevel(LOG_LEVEL_INFO);
+}
+
 void PrintfLoggerProvider::Log(ILoggerProvider::LogLevel logLevel, const std::string& message)
 {
   FILE* outStream = _minToStderrLevel > logLevel ? stdout : stderr;

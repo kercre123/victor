@@ -12,7 +12,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/utils/helpers/printByteArray.h"
+#include "util/helpers/printByteArray.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"

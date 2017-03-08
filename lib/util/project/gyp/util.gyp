@@ -10,9 +10,11 @@
     'networkApp_source_file_name': 'networkApp.lst',
 
     'build_flavor%': 'dev',
-    'clad_dir%': '../../BLAHBLAH/message-buffers',
+    'clad_dir%': '../../tools/message-buffers',
+    'has_shipping%': 1,
     
     'compiler_flags': [
+      '-DJSONCPP_USING_SECURE_MEMORY=0',
       '-fdiagnostics-show-category=name',
       '-Wall',
       '-Woverloaded-virtual',
@@ -74,6 +76,7 @@
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
+          '-DNO_LOCALE_SUPPORT=1',
           '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
           '-fpic',
           '-ffunction-sections',
@@ -147,7 +150,9 @@
       'CLANG_CXX_LIBRARY':'libc++',
       'DEBUG_INFORMATION_FORMAT': 'dwarf',
       'GCC_DEBUGGING_SYMBOLS': 'full',
-      'GENERATE_MASTER_OBJECT_FILE': 'YES',      
+      'GENERATE_MASTER_OBJECT_FILE': 'YES',
+      'ENABLE_BITCODE': 'NO',
+      'SKIP_INSTALL': 'YES',
     },
     'target_conditions': [
     ['OS!="cmake"', {
@@ -198,24 +203,29 @@
             ]
           ],
         },
-        'Shipping': {
-            'cflags': ['-Os'],
-            'cflags_cc': ['-Os'],
-            'xcode_settings': {
-              'OTHER_CFLAGS': ['-Os'],
-              'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-             },
-            'defines': [
-              'NDEBUG=1',
-              'SHIPPING=1',
-            ],
-        },
       }},
       {
         'configurations': {
           '.': {}
         }
       }
+    ],
+    ['<(has_shipping)==1', {
+      'configurations': {
+        'Shipping': {
+              'cflags': ['-Os'],
+              'cflags_cc': ['-Os'],
+              'xcode_settings': {
+                'OTHER_CFLAGS': ['-Os'],
+                'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+               },
+              'defines': [
+                'NDEBUG=1',
+                'SHIPPING=1',
+              ],
+          },
+      }
+    }
     ]],
   },
 
@@ -277,6 +287,12 @@
             'sources': [
               "<!@(cat <(util_source_file_name))",
               '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
+            ],
+            'conditions': [
+              ['OS!="mac"',     {'sources/': [['exclude', '_osx\\.']]}],
+              ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
+              ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
+              ['OS!="linux"',   {'sources/': [['exclude', '_linux\\.']]}],
             ],
             'include_dirs': [
               '../../source/anki',
@@ -406,6 +422,9 @@
               'jsoncpp',
               'kazmath',
             ],
+            'xcode_settings': {
+              'LD_DYLIB_INSTALL_NAME': '@rpath/$(EXECUTABLE_PATH)'
+            },
             'type': '<(util_library_type)',
           },
 
@@ -417,6 +436,7 @@
               'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
             },
             'xcode_settings': {
+              'LD_RUNPATH_SEARCH_PATHS': '@loader_path',
             },
             'include_dirs': [
               '../../source/anki',

@@ -21,6 +21,8 @@ class FileUtils{
 public:
   static bool DirectoryExists(const std::string& path);
 
+  static bool DirectoryDoesNotExist(const std::string& path) { return !DirectoryExists(path); }
+
   // stripFilename - if set to true, will remove text after last '/'
   // dashP (-p)    - Create intermediate directories as required.  If this option is not specified,
   // the full path prefix of each operand must already exist.  On the other hand, with this
@@ -42,6 +44,8 @@ public:
 
   static ssize_t GetFileSize(const std::string& fileName);
 
+  static bool FileDoesNotExist(const std::string& fileName) { return !FileExists(fileName); }
+
   static std::string ReadFile(const std::string& fileName);
 
   static std::vector<uint8_t> ReadFileAsBinary(const std::string& fileName);
@@ -50,6 +54,10 @@ public:
   
   static bool WriteFile(const std::string& fileName, const std::vector<uint8_t>& body, bool append = false);
   
+  static bool WriteFileAtomic(const std::string& fileName, const std::string& body);
+
+  static bool WriteFileAtomic(const std::string& fileName, const std::vector<uint8_t>& body);
+
   // Copies srcFileName to dest.
   // If dest is a file, the srcFileName is copied to a file called dest.
   // If dest is a folder, the copy retains the name of the original file and is put in dest.
@@ -57,7 +65,7 @@ public:
   // of srcFileName to dest. This is required of the playpen test app for copying the engine log but only
   // the part we care about for the last robot.
   static bool CopyFile(const std::string& dest, const std::string& srcFileName, const int maxBytesToCopyFromEnd = 0);
-  
+
   static void DeleteFile(const std::string& fileName);
   
   static void ListAllDirectories( const std::string& path, std::vector<std::string>& directories );
@@ -77,6 +85,9 @@ public:
   // If mustHaveExtension == false, returns whatever follows the last delimiter in fullPath.
   // If mustHaveExtension and removeExtension == true, returns the filename with the extension removed
   static std::string GetFileName(const std::string& fullPath, bool mustHaveExtension = false, bool removeExtension = false);
+
+  static std::string AddTrailingFileSeparator(const std::string& path);
+  
 };
 
 } // namespace Util

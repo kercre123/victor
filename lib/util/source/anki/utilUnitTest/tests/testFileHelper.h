@@ -10,10 +10,22 @@
 #define driveEngine_testFileHelper_h
 
 #include "util/helpers/includeGTest.h"
+#include "util/fileUtils/fileUtils.h"
 #include <fstream>
 #include <string>
 #include <sys/stat.h>
 
+#define ASSERT_FILE_EXISTS(fileName) \
+  ASSERT_PRED1(Anki::Util::FileUtils::FileExists, fileName)
+
+#define ASSERT_FILE_DOES_NOT_EXIST(fileName) \
+  ASSERT_PRED1(Anki::Util::FileUtils::FileDoesNotExist, fileName)
+
+#define ASSERT_DIR_EXISTS(dirName) \
+  ASSERT_PRED1(Anki::Util::FileUtils::DirectoryExists, dirName)
+
+#define ASSERT_DIR_DOES_NOT_EXIST(dirName) \
+  ASSERT_PRED1(Anki::Util::FileUtils::DirectoryDoesNotExist, dirName)
 
 class FileHelper : public ::testing::Test
 {

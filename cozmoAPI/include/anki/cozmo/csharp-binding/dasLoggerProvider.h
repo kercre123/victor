@@ -59,6 +59,9 @@ public:
   inline void SetGlobal(const char* key, const char* value) override {
     _DAS_SetGlobal(key, value);
   }
+  inline void GetGlobals(std::map<std::string, std::string>& dasGlobals) override {
+    _DAS_GetGlobalsForThisRun(dasGlobals);
+  }
 
   
   inline void EnableNetwork(int reason) override {

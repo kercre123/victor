@@ -29,11 +29,16 @@ namespace Dispatch {
 class RollingFileLogger : noncopyable {
 public:
   using ClockType = std::chrono::steady_clock;
+  struct create_queue_t {};
+  static constexpr create_queue_t create_queue{};
   
   static constexpr std::size_t  kDefaultMaxFileSize = 1024 * 1024 * 20;
   static const char * const     kDefaultFileExtension;
   
+  // use an existing queue for the file logger
   RollingFileLogger(Dispatch::Queue* queue, const std::string& baseDirectory, const std::string& extension = kDefaultFileExtension, std::size_t maxFileSize = kDefaultMaxFileSize);
+  // create a new queue that will be owned by this file logger
+  RollingFileLogger(create_queue_t, const std::string& baseDirectory, const std::string& extension = kDefaultFileExtension, std::size_t maxFileSize = kDefaultMaxFileSize);
   virtual ~RollingFileLogger();
   
   void Write(std::string message);
@@ -47,6 +52,7 @@ private:
   void ExecuteBlock(const std::function<void()>& block);
   
   Dispatch::Queue*  _dispatchQueue;
+  bool              _ownedQueue;
   std::string       _baseDirectory;
   std::string       _extension;
   std::string       _currentFileName;

@@ -79,12 +79,12 @@ TracePrinter::TracePrinter(Robot* robot)
     }
     
     const Json::Value jsonNameTable   = jsonDict["nameTable"];
-    for (Json::ValueIterator itr = jsonNameTable.begin(); itr != jsonNameTable.end(); itr++) {
+    for (Json::ValueConstIterator itr = jsonNameTable.begin(); itr != jsonNameTable.end(); itr++) {
       _nameTable.insert(std::pair<const int, const std::string>(atoi(itr.key().asString().c_str()), itr->asString()));
     }
     
     const Json::Value jsonFormatTable = jsonDict["formatTable"];
-    for (Json::ValueIterator itr = jsonFormatTable.begin(); itr != jsonFormatTable.end(); itr++) {
+    for (Json::ValueConstIterator itr = jsonFormatTable.begin(); itr != jsonFormatTable.end(); itr++) {
       const int key = atoi(itr.key().asString().c_str());
       const std::string fmt = (*itr)[0].asString();
       const int nargs = (*itr)[1].asInt();

@@ -59,6 +59,7 @@ std::string HexDump(const void *value, const size_t len, char delimiter)
 
 ITickTimeProvider* gTickTimeProvider = nullptr;
 ILoggerProvider*gLoggerProvider = nullptr;
+ChannelFilter gChannelFilter;
 IEventProvider* gEventProvider = nullptr;
 bool _errG = false;
 const size_t kMaxStringBufferSize = 1024;
@@ -70,84 +71,82 @@ namespace {
 using KVV = std::vector<std::pair<const char*, const char*>>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void LogError(const char* eventName, const KVV& keyValues, const char* string)
+
+void AddTickCount(std::ostringstream& oss)
+{
+  if ( gTickTimeProvider ) {
+    oss << "(tc";
+    oss << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
+    oss << ") ";
+  }
+  oss << ": ";
+}
+
+std::string PrependTickCount(const char* logString)
+{
+  std::ostringstream oss;
+  AddTickCount(oss);
+  oss << logString;
+
+  return std::string(oss.str());
+}
+
+void LogError(const char* eventName, const KVV& keyValues, const char* logString)
 {
   if (nullptr == gLoggerProvider) {
     return;
   }
 
-  // set tick count if available
-  std::stringstream finalLogStr;
-  if ( gTickTimeProvider ) {
-    finalLogStr << "(tc";
-    finalLogStr << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
-    finalLogStr << ") : ";
-  }
- 
-  // append string to tick count
-  finalLogStr << string;
-  gLoggerProvider->PrintLogE(eventName, keyValues, finalLogStr.str().c_str());
-
+  gLoggerProvider->PrintLogE(eventName, keyValues, PrependTickCount(logString).c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void LogWarning(const char* eventName, const KVV& keyValues, const char* string)
+void LogWarning(const char* eventName, const KVV& keyValues, const char* logString)
 {
-  if (nullptr == gLoggerProvider) {
+  if (gLoggerProvider == nullptr) {
     return;
   }
 
-  // set tick count if available
-  std::stringstream finalLogStr;
-  if ( gTickTimeProvider ) {
-    finalLogStr << "(tc";
-    finalLogStr << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
-    finalLogStr << ") : ";
-  }
- 
-  // append string to tick count
-  finalLogStr << string;
-  gLoggerProvider->PrintLogW(eventName, keyValues, finalLogStr.str().c_str());
+  gLoggerProvider->PrintLogW(eventName, keyValues, PrependTickCount(logString).c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void LogChanneledInfo(const char* channel, const char* eventName, const KVV& keyValues, const char* string)
+void LogChanneledInfo(const char* channel, const char* eventName, const KVV& keyValues, const char* logString)
 {
   if (nullptr == gLoggerProvider) {
     return;
   }
 
-  // set tick count if available
-  std::stringstream finalLogStr;
-  if ( gTickTimeProvider ) {
-    finalLogStr << "(tc";
-    finalLogStr << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
-    finalLogStr << ") : ";
+  // set tick count and channel name if available
+  std::ostringstream finalLogStr;
+  AddTickCount(finalLogStr);
+
+  std::string channelNameString(channel);
+  if(gChannelFilter.IsInitialized()) {
+    if(!gChannelFilter.IsChannelRegistered(channelNameString)) {
+      PRINT_NAMED_ERROR("UnregisteredChannel", "Channel @%s not registered!", channel);
+    } else {
+      if (!gChannelFilter.IsChannelEnabled(channelNameString)) {
+        return;
+      }
+    }
+    finalLogStr << "[@";
+    finalLogStr << channel;
+    finalLogStr << "] ";
   }
- 
-  // append string to tick count
-  finalLogStr << string;
+  finalLogStr << logString;
+
   gLoggerProvider->PrintChanneledLogI(channel, eventName, keyValues, finalLogStr.str().c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void LogChannelDebug(const char* channel, const char* eventName, const KVV& keyValues, const char* string)
+void LogChannelDebug(const char* channel, const char* eventName, const KVV& keyValues, const char* logString)
 {
   if (nullptr == gLoggerProvider) {
     return;
   }
 
-  // set tick count if available
-  std::stringstream finalLogStr;
-  if ( gTickTimeProvider ) {
-    finalLogStr << "(tc";
-    finalLogStr << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
-    finalLogStr << ") : ";
-  }
- 
-  // append string to tick count
-  finalLogStr << string;
-  gLoggerProvider->PrintChanneledLogD(channel, eventName, keyValues, finalLogStr.str().c_str());
+  gLoggerProvider->PrintChanneledLogD(channel, eventName, keyValues, PrependTickCount(logString).c_str());
 }
 
 }

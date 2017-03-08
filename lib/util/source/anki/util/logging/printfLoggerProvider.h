@@ -19,8 +19,8 @@ namespace Util {
 class PrintfLoggerProvider : public IFormattedLoggerProvider {
 
 public:
-  PrintfLoggerProvider() : _minToStderrLevel(1000) {}
-  PrintfLoggerProvider(ILoggerProvider::LogLevel minToStderrLogLevel) : _minToStderrLevel(minToStderrLogLevel) {}
+  PrintfLoggerProvider();
+  PrintfLoggerProvider(ILoggerProvider::LogLevel minToStderrLogLevel);
   
   void Log(ILoggerProvider::LogLevel logLevel, const std::string& message) override;
   

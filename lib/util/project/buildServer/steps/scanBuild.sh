@@ -10,6 +10,13 @@ if [ -z $GIT ];then
   echo git not found
   exit 1
 fi
+
+BREW=`which brew`
+if [ -z $BREW ];then
+  echo brew not found
+  exit 1
+fi
+
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 # prepare
@@ -21,7 +28,13 @@ mkdir -p $SCAN_BUILD_OUTPUT
 
 SCAN_BUILD=`which scan-build`
 if [ -z $SCAN_BUILD ];then
-  SCAN_BUILD=/usr/local/Cellar/llvm/3.6.1/share/clang/tools/scan-build/scan-build
+  $BREW install llvm
+  export PATH=/usr/local/opt/llvm/bin:$PATH
+  SCAN_BUILD=`which scan-build`
+  if [ -z $SCAN_BUILD ];then
+    echo no scan-build found.
+    exit 1
+  fi
 fi
 # static analyze build
 $SCAN_BUILD -o $SCAN_BUILD_OUTPUT --use-analyzer Xcode \
