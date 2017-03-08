@@ -125,9 +125,12 @@ void BlockTapFilterComponent::Update()
       std::vector<ObservableObject *> matchingObjects;
       _robot.GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
       
-      PRINT_CH_DEBUG("BlockTapFilterComponent", "BlockTapFilterComponent.Update.ExpiredTap",
-                     "Marking object %d as dirty due to tap timeout",
-                     matchingObjects.front()->GetID().GetValue());
+      const ActiveObject* tappedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID( doubleTapInfo.first );
+      if ( nullptr != tappedObject ) {
+        PRINT_CH_DEBUG("BlockTapFilterComponent", "BlockTapFilterComponent.Update.ExpiredTap",
+                       "Marking object %d as dirty due to tap timeout",
+                        tappedObject->GetID().GetValue());
+      }
       
       for(auto& object : matchingObjects)
       {
