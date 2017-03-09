@@ -535,32 +535,34 @@ class GamePlatformConfiguration(object):
         else:
             buildaction = 'build'
 
-        if self.options.nobuild and buildaction != 'clean':
-            print_status('Skipping \'build\' step due to nobuild option')
-            return
+        if buildaction == 'build':
+            if self.options.nobuild:
+                print_status('Skipping \'build\' step due to nobuild option')
+                return
 
-        if self.options.verbose:
-            print_status('Building project for platform {0}...'.format(self.platform))
+            if self.options.verbose:
+                print_status('Building project for platform {0}...'.format(self.platform))
 
         if self.platform == 'android':
-            # Calls the configure_engine.py script to do the android build
+            # Calls the configure_engine.py script to do the android build (or clean)
             self.call_engine(buildaction)
-            # move files.
-            # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
-            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
+            if buildaction == 'build':
+                # move files.
+                # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
+                ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
                                                 "libcozmoEngine.so"),
-                                   os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
-            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
+                                       os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
+                ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
                                                 "libDAS.so"),
-                                   os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
-            # build android-specific java files
-            self.build_java(buildaction)
-            # move third ndk libs.
-            self.move_ndk()
-            # strip libraries and copy into unity
-            self.strip_libs()
-            # Call unity for game
-            self.call_unity()
+                                       os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
+                # build android-specific java files
+                self.build_java()
+                # move third ndk libs.
+                self.move_ndk()
+                # strip libraries and copy into unity
+                self.strip_libs()
+                # Call unity for game
+                self.call_unity()
 
 
         elif not os.path.exists(self.workspace_path):
@@ -590,10 +592,11 @@ class GamePlatformConfiguration(object):
                         configuration=self.options.configuration,
                         simulator=self.options.simulator)
         
-        if self.options.features is not None and 'standalone' in self.options.features[0]:
-            print("Building standalone-apk")
-            ankibuild.util.File.execute(['./standalone-apk/stage-assets.sh'])
-            ankibuild.util.File.execute(['buck', 'build', ':cozmoengine_standalone_app'])
+        if buildaction == 'build':
+            if self.options.features is not None and 'standalone' in self.options.features[0]:
+                print("Building standalone-apk")
+                ankibuild.util.File.execute(['./standalone-apk/stage-assets.sh'])
+                ankibuild.util.File.execute(['buck', 'build', ':cozmoengine_standalone_app'])
 
     def call_engine(self, command):
         args = [os.path.join(ENGINE_ROOT, 'configure_engine.py'), command]
@@ -623,7 +626,7 @@ class GamePlatformConfiguration(object):
                 else:
                     sys.exit("Cannot locate {0}".format(original))
 
-    def build_java(self, command):
+    def build_java(self):
         # copy unity jars
         unity_jar_dir = os.path.join(GAME_ROOT, 'project', 'android', 'cozmojava', 'lib')
         copy_unity_classes(unity_jar_dir, self.options.configuration)
@@ -784,7 +787,7 @@ def main():
     total_seconds = time.time() - start_time
     minutes = int(total_seconds / 60)
     seconds = int(total_seconds - (minutes * 60))
-    print_status('Total script duration {0}:{1}'.format(minutes, seconds))
+    print_status('Total script duration {0}:{1:02}'.format(minutes, seconds))
 
 if __name__ == '__main__':
     main()
