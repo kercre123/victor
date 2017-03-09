@@ -14,6 +14,7 @@
 #define __UtilTransport_IIpRetriever_H__
 
 #include <cstdint>
+#include <netinet/in.h>
 
 namespace Anki {
 namespace Util {
@@ -23,6 +24,7 @@ class IIpRetriever
 public:
   virtual ~IIpRetriever() = default;
   virtual uint32_t GetIpAddress() = 0;
+  virtual struct in6_addr GetIPv6LinkLocalAddress() = 0;
 };
 
 } // end namespace Util

@@ -2,7 +2,6 @@
   'includes': [
     '../../coretech/project/gyp/opencv.gypi',
     '../../coretech/project/gyp/face-library.gypi',
-    'build-variables.gypi',
   ],
 
   'variables': {

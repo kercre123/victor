@@ -1,84 +1,72 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "faceEnrollment.instructions": {
-    "translation": "Cozmo needs to check you out! Look at Cozmo straight on, and hold still.\n\nWhen he's done, you'll hear a chime."
+  "faceEnrollment.instructions" : {
+    "translation" : "Cozmo braucht Sie, um zu überprüfen! Schauen Sie geradeaus über Cozmo, und halten immer noch. Als er fertig ist, werden Sie ein Glockenspiel zu hören."
   },
-  "faceEnrollment.enterName.placeholderText": {
-    "translation": "Enter your first name"
+  "faceEnrollment.enterName.placeholderText" : {
+    "translation" : "Geben Sie Ihren Vornamen ein"
   },
-  "faceEnrollment.faceEnrollmentList.description": {
-    "translation": "Teach Cozmo to recognize you, or someone else!"
+  "faceEnrollment.faceEnrollmentList.description" : {
+    "translation" : "Teach Cozmo erkennen Sie, oder jemand anderes!"
   },
-  "faceEnrollment.faceEnrollmentList.deleteConfirmTitle": {
-    "translation": "Delete {0}?"
+  "faceEnrollment.faceEnrollmentList.deleteConfirmTitle" : {
+    "translation" : "Löschen {0} ?"
   },
-  "faceEnrollment.faceEnrollmentList.deleteConfirmButton": {
-    "translation": "Delete"
+  "faceEnrollment.faceEnrollmentList.deleteConfirmButton" : {
+    "translation" : "Löschen"
   },
-  "faceEnrollment.instructions.top": {
-    "translation": "Look at Cozmo straight on, and hold still"
+  "faceEnrollment.instructions.top" : {
+    "translation" : "Schauen Sie geradeaus über Cozmo, und halten noch"
   },
-  "faceEnrollment.instructions.bottom": {
-    "translation": "When Cozmo is done, he'll say your name"
+  "faceEnrollment.instructions.bottom" : {
+    "translation" : "Wenn Cozmo getan wird, werden sagen, dass er Ihren Namen"
   },
-  "faceEnrollment.errors.neverSawValidFace.title": {
-    "translation": "Cozmo already knows you!"
+  "faceEnrollment.errors.neverSawValidFace.title" : {
+    "translation" : "Cozmo bereits weiß, dass Sie!"
   },
-  "faceEnrollment.errors.neverSawValidFace.description": {
-    "translation": "Cozmo recognizes you as {0}"
+  "faceEnrollment.errors.neverSawValidFace.description" : {
+    "translation" : "Cozmo erkennt man als {0}"
   },
-  "faceEnrollment.errors.timeOut.title": {
-    "translation": "Cozmo is having trouble seeing you"
+  "faceEnrollment.errors.timeOut.title" : {
+    "translation" : "Cozmo hat Mühe, Sie zu sehen,"
   },
-  "faceEnrollment.errors.timeOut.description": {
-    "translation": "Make sure you're in a well-lit room and are aligned with Cozmo's face. Cozmo should be on a flat, stable surface."
+  "faceEnrollment.errors.timeOut.description" : {
+    "translation" : "Stellen Sie sicher, dass Sie in einem gut beleuchteten Raum befinden und ausgerichtet sind, mit Cozmo Gesicht. Cozmo sollte auf einer ebenen, stabilen Fläche sein."
   },
-  "faceEnrollment.condition.allChangesSaved": {
-    "translation": "All changes have been saved."
+  "faceEnrollment.condition.allChangesSaved" : {
+    "translation" : "Alle Änderungen wurden gespeichert."
   },
-  "faceEnrollment.firstTimeCompleteAlert.title": {
-    "translation": "Cozmo knows your name!"
+  "faceEnrollment.firstTimeCompleteAlert.title" : {
+    "translation" : "Cozmo Ihren Namen kennt!"
   },
-  "faceEnrollment.firstTimeCompleteAlert.description": {
-    "translation": "Cozmo has learned to recognize your face and may say your name when he sees you. Use Meet Cozmo again to introduce him to more friends."
+  "faceEnrollment.firstTimeCompleteAlert.description" : {
+    "translation" : "Cozmo hat gelernt, Ihr Gesicht zu erkennen und kann Ihren Namen sagen, wenn er dich sieht. Verwenden Sie wieder treffen Cozmo ihn Freunde zu mehr vorstellen."
   },
-  "faceEnrollment.button.addNewPerson": {
-    "translation": "Add New Person"
+  "faceEnrollment.button.addNewPerson" : {
+    "translation" : "New Person"
   },
-  "faceEnrollment.button.scanAgain": {
-    "translation": "Scan {0} Again"
+  "faceEnrollment.button.scanAgain" : {
+    "translation" : "Scan {0} Nochmals"
   },
-  "faceEnrollment.label.dayCount.singular": {
-    "translation": "Day Ago"
+  "faceEnrollment.label.dayCount.singular" : {
+    "translation" : "Vor einem Tag"
   },
-  "faceEnrollment.label.dayCount.plural": {
-    "translation": "Days Ago"
+  "faceEnrollment.label.dayCount.plural" : {
+    "translation" : "Vor Tagen"
   },
-  "faceEnrollment.label.HelpCozmoRecognize": {
-    "translation": "Help Cozmo recognize you more easily"
+  "faceEnrollment.label.HelpCozmoRecognize" : {
+    "translation" : "Hilfe Cozmo erkennen Sie leichter"
   },
-  "faceEnrollment.label.lastScanned": {
-    "translation": "Last Scanned:"
+  "faceEnrollment.label.lastScanned" : {
+    "translation" : "Letzte Gescannte:"
   },
-  "faceEnrollment.label.today": {
-    "translation": "Today"
+  "faceEnrollment.label.today" : {
+    "translation" : "Heute"
   }
 }

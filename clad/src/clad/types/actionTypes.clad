@@ -118,6 +118,11 @@ structure ReadToolCodeCompleted {
   ToolCodeInfo info // info.code will be UnknownTool if failure
 }
 
+// Used by TurnInPlaceAction
+structure TurnInPlaceCompleted {
+  uint_32 relocalizedCnt,  // number of times relocalization occurred during the turn
+}
+
 // Used by actions that don't have extra info on completion
 structure DefaultCompleted {
 
@@ -130,6 +135,7 @@ union ActionCompletedUnion {
   DeviceAudioCompleted        deviceAudioCompleted,
   TrackFaceCompleted          trackFaceCompleted,
   ReadToolCodeCompleted       readToolCodeCompleted,
+  TurnInPlaceCompleted        turnInPlaceCompleted,
   DefaultCompleted            defaultCompleted,
 }
 

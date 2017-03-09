@@ -134,7 +134,9 @@ void BlockTapFilterComponent::Update()
       
       for(auto& object : matchingObjects)
       {
+        if ( object->IsPoseStateKnown() ) {
         _robot.GetObjectPoseConfirmer().MarkObjectDirty(object);
+        }
       }
     }
   }

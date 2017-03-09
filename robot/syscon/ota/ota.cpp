@@ -410,9 +410,7 @@ int main(void) {
   // Make sure the watchdog knows not to fail
   kickDog();
 
-  // This makes sure that if the OTA fails, the robot will revert to factory
-  EraseSector(0x18000);
-
+  // Start with the OTA recovery junk
   for (;;) {
     EnterRecovery();
   }

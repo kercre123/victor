@@ -25,7 +25,7 @@ const char* kChannelEnabledKey = "enabled";
 
 ChannelFilter::~ChannelFilter()
 {
-  for(auto c : _channelEnableList) {
+  for(auto& c : _channelEnableList) {
     delete c.second;
   }
 }

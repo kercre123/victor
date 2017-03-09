@@ -149,10 +149,15 @@ message HeadAngleUpdate
 // This is a turn in place to an absolute angle
 message SetBodyAngle
 {
-  float_32 angle_rad,
-  float_32 max_speed_rad_per_sec,
-  float_32 accel_rad_per_sec2,
-  float_32 angle_tolerance
+  float_32 angle_rad,              // Absolute angle the robot should achieve at the end of the turn.
+  float_32 max_speed_rad_per_sec,  // Maximum speed of the turn (sign determines the direction of the turn)
+  float_32 accel_rad_per_sec2,     // Accel/decel to use during the turn
+  float_32 angle_tolerance,
+  uint_16 num_half_revolutions,    // Used for turns greater than 180 degrees (e.g. "turn 720 degrees")
+  bool use_shortest_direction      // If true, robot should take the shortest path to angle_rad and disregard
+                                   // the sign of max_speed and num_half_revolutions. If false, consider sign
+                                   // of max_speed and num_half_revolutions to determine which direction to
+                                   // turn and how far to turn (e.g. for turns longer than 360 deg)
 }
 
 message TurnInPlaceAtSpeed
@@ -417,8 +422,7 @@ union EngineToRobot
 {
   // 0x00 Is invalid message
 
-  // 0x01 to 0x27: Messages to the body / test fixture
-  // 0x28 to 0x2f: Allocated to BLE response messages
+  // 0x01 to 0x2f: Messages to the body / test fixture
   AdjustTimestamp               adjustTimestamp             = 0x01,
   BackpackSetLayer              setBackpackLayer            = 0x02,
   BackpackLightsMiddle          setBackpackLightsMiddle     = 0x03,
@@ -439,14 +443,8 @@ union EngineToRobot
   SendDTMCommand                sendDTMCommand              = 0x12,
 
   GetManufacturingInfo          getMfgInfo                  = 0x25,
-  DiffieHellmanResults          diffieHellmanResults        = 0x26,
-  EnterPairing                  enterPairing                = 0x27,
-
-  HelloPhone                    helloPhoneMessage           = 0x28,
-  EncodedAESKey                 encodedAESKey               = 0x29,
-
-  AppConnectRobotIP             robotIpInfo                 = 0x2e,
-  AppConnectConfigResult        wifiCfgResult               = 0x2f,
+  BLE::SendData                 bleSendData                 = 0x26,
+  BLE::Disconnect               bleDisconnect               = 0x27,
 
   // 0x30 to 0x7f: To RTIP
   OTA::EnterRecoveryMode        enterRecoveryMode           = 0x30,
@@ -505,16 +503,15 @@ union EngineToRobot
   GenerateTestTone              generateTestTone            = 0x65,
   EnableColorImages             enableColorImages           = 0x66,
 
-  
   // 0x80 to 0xAF: To WiFi
   RequestCrashReports           requestCrashReports         = 0x80,
   NVStorage::NVCommand          commandNV                   = 0x81,
-  CalculateDiffieHellman        calculateDiffieHellman      = 0x82,
+  //          FREE SLOT!!!                                  = 0x82,
   //          FREE SLOT!!!                                  = 0x83,
   //          FREE SLOT!!!                                  = 0x84,
   //          FREE SLOT!!!                                  = 0x85,
-  //          FREE SLOT!!!                                  = 0x86,
-  //          FREE SLOT!!!                                  = 0x87,
+  BLE::ConnectionState          bleConnectionState          = 0x86,
+  BLE::DataReceived             bleDataReceived             = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   //          FREE SLOT!!!                                  = 0x8A,
   //          FREE SLOT!!!                                  = 0x8B,

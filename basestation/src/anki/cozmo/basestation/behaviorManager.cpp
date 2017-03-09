@@ -829,20 +829,25 @@ void BehaviorManager::StopAndNullifyCurrentBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::CheckReactionTriggerStrategies()
 {
-  //Check to see if any reactionary behaviors want to perform a computational switch
+  // Check to see if any reaction triggers want to activate a behavior
   bool hasAlreadySwitchedThisTick = false;
   for(const auto& mapEntry: _reactionTriggerMap){
     IReactionTriggerStrategy& strategy = *mapEntry.first;
     IBehavior* rBehavior = mapEntry.second;
     
+    bool shouldCheckStrategy = true;
     
-    const bool shouldCheckStrategy = !rBehavior->IsRunning() || strategy.CanInterruptSelf();
-    const bool canInterruptBehavior =  (GetRunningAndResumeInfo().GetCurrentReactionTrigger()
-                                           == ReactionTrigger::NoneTrigger) ||
-                                       strategy.CanInterruptOtherTriggeredBehavior();
+    // If there is a current triggered behavior running, make sure
+    //  we are allowed to interrupt it.
+    const ReactionTrigger currentReactionTrigger = GetCurrentReactionTrigger();
+    if (currentReactionTrigger != ReactionTrigger::NoneTrigger)
+    {
+      shouldCheckStrategy = (currentReactionTrigger == strategy.GetReactionTrigger()) ?
+                            strategy.CanInterruptSelf() :
+                            strategy.CanInterruptOtherTriggeredBehavior();
+    }
 
     if(shouldCheckStrategy &&
-       canInterruptBehavior &&
        strategy.IsReactionEnabled() &&
        strategy.ShouldTriggerBehavior(_robot, rBehavior)){
         

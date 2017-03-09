@@ -232,11 +232,31 @@ bool FileUtils::WriteFile(const std::string &fileName, const std::vector<uint8_t
   fileOut.open(fileName,mode);
   if( fileOut.is_open() ) {
     copy(body.begin(), body.end(), std::ostreambuf_iterator<char>(fileOut));
+    fileOut.flush();
     fileOut.close();
     success = true;
   }
   return success;
 }
+
+bool FileUtils::WriteFileAtomic(const std::string& fileName, const std::string& body)
+{
+  std::vector<uint8_t> bytes;
+  copy(body.begin(), body.end(), back_inserter(bytes));
+  return WriteFileAtomic(fileName, bytes);
+}
+
+bool FileUtils::WriteFileAtomic(const std::string& fileName, const std::vector<uint8_t>& body)
+{
+  std::string tmpFileName = fileName + ".tmp";
+  DeleteFile(tmpFileName);
+  bool success = WriteFile(tmpFileName, body) && (0 == rename(tmpFileName.c_str(), fileName.c_str()));
+  if (!success) {
+    DeleteFile(tmpFileName);
+  }
+  return success;
+}
+
   
 bool FileUtils::CopyFile(const std::string& dest, const std::string& srcFileName, const int maxBytesToCopyFromEnd)
 {
@@ -290,7 +310,7 @@ bool FileUtils::CopyFile(const std::string& dest, const std::string& srcFileName
   
 void FileUtils::DeleteFile(const std::string &fileName)
 {
-  remove(fileName.c_str());
+  (void) remove(fileName.c_str());
 }
  
 void FileUtils::ListAllDirectories( const std::string& path, std::vector<std::string>& directories )
@@ -383,10 +403,10 @@ std::string FileUtils::FullFilePath(std::vector<std::string>&& names)
       ++nameIter;
     }
   }
-  
+
   return fullpath;
 }
-                        
+
 std::string FileUtils::GetFileName(const std::string& fullPath, bool mustHaveExtension, bool removeExtension)
 {
   size_t i = fullPath.rfind(kFileSeparator, fullPath.length());
@@ -403,7 +423,16 @@ std::string FileUtils::GetFileName(const std::string& fullPath, bool mustHaveExt
   
   return("");
 }
-                        
+
+std::string FileUtils::AddTrailingFileSeparator(const std::string& path)
+{
+  std::string newPath;
+  newPath = path;
+  if (newPath.back() != kFileSeparator) {
+    newPath += kFileSeparator;
+  }
+  return newPath;
+}
   
 }
 }

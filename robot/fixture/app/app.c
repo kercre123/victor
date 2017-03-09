@@ -8,23 +8,32 @@
 #include "hal/uart.h"
 #include "hal/console.h"
 #include "hal/cube.h"
-#include "app/fixture.h"
 #include "hal/espressif.h"
 #include "hal/random.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "app/app.h"
+#include "app/fixture.h"
 #include "app/tests.h"
+#include "nvReset.h"
 
-u8 g_fixtureReleaseVersion = 69;
-const char* BUILD_INFO = "MP";
+u8 g_fixtureReleaseVersion = 91;
+#define BUILD_INFO "EP2 v1.5"
+
+//Set this flag to modify display info - indicates a debug/test build
+#define NOT_FOR_FACTORY 0
+
+//other global dat
+app_reset_dat_t g_app_reset;
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
 FixtureType g_fixtureType = FIXTURE_NONE;
-FlashParams g_flashParams;
+board_rev_t g_fixtureRev = (board_rev_t)0;
 
 char g_lotCode[15] = {0};
 u32 g_time = 0;
@@ -43,16 +52,6 @@ void WritePreTestData(void)
 // This logs an error code in the Device flash - showing a test completed (maybe successfully)
 void WriteFactoryBlockErrorCode(error_t errorCode)
 {
-}
-
-// Not even sure why..
-TestFunction* GetDebugTestFunctions()
-{
-  static TestFunction m_debugFunctions[] = 
-  {
-    NULL
-  };
-  return m_debugFunctions;
 }
 
 // This generates a unique ID per cycle of the test fixture
@@ -109,29 +108,41 @@ extern int g_canary;
 // Show the name of the fixture and version information
 void SetFixtureText(void)
 {
-  DisplayClear();
+#ifdef FCC
+  const bool fcc = true;
+#else
+  const bool fcc = false;
+#endif
   
+  DisplayClear();
   DisplayBigCenteredText(FIXTYPES[g_fixtureType]);
   
-  // Show the version number in the corner
+  //reset display sizing/defaults
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
-#ifdef FCC
-  DisplayInvert(1);
-  DisplayMoveCursor(55, 108);
-  DisplayPutChar('c');
-  DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
-  DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
-  DisplayMoveCursor(55, 2);
-  DisplayPutString("CERT/TEST ONLY");
-#else
-  DisplayMoveCursor(55, 110);
-  DisplayPutChar('v');
-  DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
-  DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
-  DisplayMoveCursor(55, 0);
-  DisplayPutString(BUILD_INFO);
+  DisplayInvert(fcc); //invert the display colors for fcc build (easy to idenfity)
+  
+  //Dev builds show compile date-time across the top
+#if NOT_FOR_FACTORY
+  DisplayMoveCursor(1,2);
+  DisplayPutString("DEV-NOT FOR FACTORY!!");
+  DisplayMoveCursor(10,2);
+  DisplayPutString(__DATE__);
+  DisplayPutString(" ");
+  DisplayPutString(__TIME__);
 #endif
+  
+  //add verision #s and other useful info
+#ifdef FCC
+  DisplayMoveCursor(45, 2);
+  DisplayPutString("CERT/TEST ONLY");
+#endif
+  DisplayMoveCursor(55, 2);
+  DisplayPutString(BUILD_INFO);
+  DisplayMoveCursor(55, fcc ? 108 : 110 );
+  DisplayPutChar(fcc ? 'c' : 'v');
+  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + ((g_fixtureReleaseVersion / 10) % 10));
+  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + (g_fixtureReleaseVersion % 10));
   DisplayFlip();
 }
 
@@ -188,16 +199,17 @@ bool DetectDevice(void)
     case FIXTURE_ROBOT1_TEST:
     case FIXTURE_ROBOT2_TEST:
     case FIXTURE_ROBOT3_TEST:
+    case FIXTURE_COZ187_TEST:
     case FIXTURE_PACKOUT_TEST:
     case FIXTURE_LIFETEST_TEST:
     case FIXTURE_RECHARGE_TEST:
     case FIXTURE_PLAYPEN_TEST:
     case FIXTURE_SOUND_TEST:
       return RobotDetect();
-    case FIXTURE_MOTOR1A_TEST:
-    case FIXTURE_MOTOR1B_TEST:
-    case FIXTURE_MOTOR2A_TEST:      
-    case FIXTURE_MOTOR2B_TEST:      
+    case FIXTURE_MOTOR1L_TEST:
+    case FIXTURE_MOTOR1H_TEST:
+    case FIXTURE_MOTOR2L_TEST:
+    case FIXTURE_MOTOR2H_TEST:
       return MotorDetect();
     case FIXTURE_FINISHC_TEST:
     case FIXTURE_FINISH1_TEST:
@@ -205,6 +217,8 @@ bool DetectDevice(void)
     case FIXTURE_FINISH3_TEST:
     case FIXTURE_FINISH_TEST:
       return FinishDetect();
+    case FIXTURE_DEBUG:
+      return DebugTestDetectDevice();
   }
 
   // If we don't know what kind of device to look for, it's not there!
@@ -217,17 +231,21 @@ void WaitForDeviceOff(bool error)
   // In debug mode, keep device powered up so we can continue talking to it
   if (g_fixtureType == FIXTURE_DEBUG)
   {
-    while (g_isDevicePresent)
+    //while (g_isDevicePresent)
     {
       // Note: We used to send DMC_ACK commands continuously here to prevent auto-power-off
       ConsoleUpdate();
       DisplayUpdate();
     }
     // ENBAT off
+    DisableVEXT();
     DisableBAT();
 
   // In normal mode, just debounce the connection
   } else {
+    if( g_fixtureType == FIXTURE_HEAD1_TEST || g_fixtureType == FIXTURE_HEAD2_TEST ) //head tests leave this on!
+      DisableVEXT();
+    
     // ENBAT off
     DisableBAT();
     
@@ -376,6 +394,9 @@ static void MainExecution()
     case FIXTURE_ROBOT3_TEST:
       m_functions = GetRobotTestFunctions();
       break;
+    case FIXTURE_COZ187_TEST:
+      m_functions = GetFacRevertTestFunctions();
+      break;
     case FIXTURE_PACKOUT_TEST:
       m_functions = GetPackoutTestFunctions();
       break; 
@@ -391,15 +412,17 @@ static void MainExecution()
     case FIXTURE_SOUND_TEST:
       m_functions = GetSoundTestFunctions();
       break;      
-    case FIXTURE_MOTOR1A_TEST:
-    case FIXTURE_MOTOR1B_TEST:
-      m_functions = GetMotor1TestFunctions();
+    case FIXTURE_MOTOR1L_TEST:
+      m_functions = GetMotor1LTestFunctions();
       break;
-    case FIXTURE_MOTOR2A_TEST:      
-      m_functions = GetMotor2ATestFunctions();
+    case FIXTURE_MOTOR1H_TEST:
+      m_functions = GetMotor1HTestFunctions();
       break;
-    case FIXTURE_MOTOR2B_TEST:      
-      m_functions = GetMotor2BTestFunctions();
+    case FIXTURE_MOTOR2L_TEST:      
+      m_functions = GetMotor2LTestFunctions();
+      break;
+    case FIXTURE_MOTOR2H_TEST:      
+      m_functions = GetMotor2HTestFunctions();
       break;
     case FIXTURE_FINISHC_TEST:
     case FIXTURE_FINISH1_TEST:
@@ -455,29 +478,42 @@ void StoreParams(void)
 int main(void)
 {
   __IO uint32_t i = 0;
- 
+  
+  //Check for nvReset data
+  memset( &g_app_reset, 0, sizeof(g_app_reset) );
+  g_app_reset.valid = sizeof(g_app_reset) == nvResetGet( (u8*)&g_app_reset, sizeof(g_app_reset) );
+  
   InitTimers();
   InitUART();
-  FetchParams();
+  FetchParams(); //g_flashParams = flash backup (saved via 'setmode' console cmd)
   InitConsole();
   InitRandom();
  
   SlowPutString("STARTUP!\r\n");
-
-  // If we don't have a full upload, this is version 0 type NO ID
-  g_fixtureType = (FixtureType)InitBoard();
+  InitBoard();
+  g_fixtureRev = GetBoardRev();
+  
+  //Check the fixture's mode (need a freakin' flow chart for this)
+  //1) if we don't have a full upload, always set to version 0, mode NONE
+  //2)   if fixture is 1.0, read ID set by external resistors
+  //3)   if no valid mode detected so far, and one is saved in flash, use that.
+  g_fixtureType = FIXTURE_NONE;
   if (g_canary != 0xcab00d1e)
-    g_fixtureType = g_fixtureReleaseVersion = 0; 
-
-  // Else, figure out which fixture type we are
-  else if (g_fixtureType == FIXTURE_NONE 
-            && g_flashParams.fixtureTypeOverride > FIXTURE_NONE 
-            && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
-    g_fixtureType = g_flashParams.fixtureTypeOverride;
+    g_fixtureReleaseVersion = 0;
+  else
+  {
+    if( g_fixtureRev < BOARD_REV_1_5_0 )
+      g_fixtureType = GetBoardID();
+    
+    if (g_fixtureType == FIXTURE_NONE 
+          && g_flashParams.fixtureTypeOverride > FIXTURE_NONE 
+          && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
+      g_fixtureType = g_flashParams.fixtureTypeOverride;
+  }
   
   SlowPutString("Initializing Display...\r\n");
   
-  InitCube();  
+  InitCube();
   InitDisplay();
 
   SetFixtureText();
@@ -493,7 +529,12 @@ int main(void)
   InitEspressif();
 
   STM_EVAL_LEDOn(LEDRED);
-
+  
+  ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, g_fixtureReleaseVersion );
+  ConsolePrintf("ConsoleMode=%u\r\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
+  ConsolePrintf("Fixure Rev: %s\r\n", GetBoardRevStr() );
+  ConsolePrintf("Mode: %s\r\n", FIXTYPES[g_fixtureType]);
+  
   while (1)
   {  
     MainExecution();

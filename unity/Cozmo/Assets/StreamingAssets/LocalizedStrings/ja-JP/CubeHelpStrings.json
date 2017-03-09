@@ -1,48 +1,36 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "cubeHelpStrings.Instructions.Slide0": {
-    "translation": "Cozmo can't hear all of the Power Cubes. Place them near him."
+  "cubeHelpStrings.Instructions.Slide0" : {
+    "translation" : "コズモはパワーキューブのすべてを聞くことはできません。彼の近くに配置します。"
   },
-  "cubeHelpStrings.Instructions.Slide0altCopy": {
-    "translation": "Tap Next if you're still having trouble"
+  "cubeHelpStrings.Instructions.Slide0altCopy" : {
+    "translation" : "それでも問題が解決しない場合は[次へ]をタップし"
   },
-  "cubeHelpStrings.Instructions.SlideACopy": {
-    "translation": "First, go to Settings\nThen, tap Refresh Cubes"
+  "cubeHelpStrings.Instructions.SlideACopy" : {
+    "translation" : "まず、最新の情報に更新キューブをタップし、次に[設定]"
   },
-  "cubeHelpStrings.Instructions.Slide1": {
-    "translation": "Next, let's try changing your Cube's battery"
+  "cubeHelpStrings.Instructions.Slide1" : {
+    "translation" : "次は、あなたのキューブのバッテリーを変更してみましょう"
   },
-  "cubeHelpStrings.Instructions.Slide1altCopy": {
-    "translation": "Place it upside down and unscrew the cover"
+  "cubeHelpStrings.Instructions.Slide1altCopy" : {
+    "translation" : "それを逆さまに置き、カバーを外し"
   },
-  "cubeHelpStrings.Instructions.Slide2": {
-    "translation": "Replace the battery with a fresh N cell"
+  "cubeHelpStrings.Instructions.Slide2" : {
+    "translation" : "新鮮なN個のセルとバッテリーを交換"
   },
-  "cubeHelpStrings.Instructions.Slide2altCopy": {
-    "translation": "Insert the new battery positive (+) end up"
+  "cubeHelpStrings.Instructions.Slide2altCopy" : {
+    "translation" : "新しい電池の正（+）終わるを挿入"
   },
-  "cubeHelpStrings.Instructions.Slide3": {
-    "translation": "Replace the cover and fasten it gently"
+  "cubeHelpStrings.Instructions.Slide3" : {
+    "translation" : "カバーを取り付け、軽く締め"
   },
-  "cubeHelpStrings.Instructions.Slide3altCopy": {
-    "translation": "Make sure the cover matches the Cube. It should now light up!"
+  "cubeHelpStrings.Instructions.Slide3altCopy" : {
+    "translation" : "カバーはキューブと一致していることを確認します。今では点灯します！"
   }
 }

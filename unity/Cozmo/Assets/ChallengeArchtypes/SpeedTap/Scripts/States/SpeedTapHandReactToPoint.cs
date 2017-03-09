@@ -113,6 +113,9 @@ namespace SpeedTap {
       return cube;
     }
     private void UpdateBlockLights(bool wasMistakeMade) {
+      if (_SpeedTapGame == null || _CurrentRobot == null) {
+        return;
+      }
       List<LightCube> losingBlocks = new List<LightCube>();
 
       int playerCount = _SpeedTapGame.GetPlayerCount();

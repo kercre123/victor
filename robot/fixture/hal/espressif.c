@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 #include "hal/board.h"
 #include "hal/portable.h"
@@ -80,21 +81,55 @@ struct ESPHeader {
 struct FlashLoadLocation {
   const unsigned char* name;
   uint32_t addr;
+  uint32_t max_length; //size of the region @ addr (for image size checks)
   int length;
-  const uint8_t* data;
+  const uint8_t* data; //NULL: no rom available. Perform static fill
+  uint8_t static_fill; //static fill value
 };
-  
+
 static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 #ifdef FCC
-  { "FCC",  0x000000, g_EspUserEnd - g_EspUser, g_EspUser },
+  { "FCC",      0x000000, 0x200000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
 #else
-  { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot, g_EspBoot },
-  { "USER", 0x080000, g_EspUserEnd - g_EspUser, g_EspUser },
-  { "SAFE", 0x0c8000, g_EspSafeEnd - g_EspSafe, g_EspSafe },
-  { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit, g_EspInit },
-  { "BLANK",0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
+  { "BOOT",     0x000000, 0x001000, g_EspBootEnd - g_EspBoot,   g_EspBoot,  0 },    //Espressif Flash Map::Bootloader
+  { "USER",     0x080000, 0x048000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },    //Espressif Flash Map::Factory WiFi Firmware
+  { "SAFE",     0x0c8000, 0x016000, g_EspSafeEnd - g_EspSafe,   g_EspSafe,  0 },    //Espressif Flash Map::Factory RTIP+Body Firmware
+  { "ESP.INIT", 0x1fc000, 0x002000, g_EspInitEnd - g_EspInit,   g_EspInit,  0 },    //Espressif Flash Map::ESP Init Data
 #endif
-  { 0, 0, NULL }
+  { NULL, 0, 0, NULL, 0},
+};
+
+#ifndef MIN
+#define MIN(a,b)  ((a) < (b) ? (a) : (b))
+#endif
+
+#define ERASE_FULL(x)       x
+#define ERASE_SIZE(x)       0x1000 /*invalidate regions by erasing first sector (speedy)*/
+#define ERASE_SIZE2(x)      (MIN(0x2000,x)) /*erase 2 sectors - for NV regions that may index past 1st sector*/
+
+//define regions to erase
+static const FlashLoadLocation ESPRESSIF_ERASE[] = {
+  //{ "ERASE.ALL",0x000000, 0x200000, 0x200000,                   NULL,       0xFF },
+  { "ERASE.0",  0x000000, 0x080000, 0x080000,                   NULL,       0xFF },
+  { "ERASE.1",  0x080000, 0x080000, 0x080000,                   NULL,       0xFF },
+  { "ERASE.2",  0x100000, 0x080000, 0x080000,                   NULL,       0xFF },
+  { "ERASE.3",  0x180000, 0x080000, 0x080000,                   NULL,       0xFF },
+  //{ "BOOT",     0x000000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Bootloader
+  //{ "FAC.DAT",  0x001000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Factory Data
+  //{ "CRASHDMP", 0x002000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Crash Dumps
+  //{ "APP.A",    0x003000, 0x07D000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code A
+  //{ "USER",     0x080000, 0x048000, ERASE_SIZE(0x048000),       NULL,       0xFF }, //Espressif Flash Map::Factory WiFi Firmware
+  //{ "SAFE",     0x0c8000, 0x016000, ERASE_SIZE(0x016000),       NULL,       0xFF }, //Espressif Flash Map::Factory RTIP+Body Firmware
+  //{ "NV.STOR",  0x0de000, 0x01E000, ERASE_FULL(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::Factory NV Storage
+  //{ "FIX.STOR", 0x0fc000, 0x004000, ERASE_SIZE(0x004000),       NULL,       0xFF }, //Espressif Flash Map::Factory Fixture Storage
+  //{ "DHCP",     0x100000, 0x003000, ERASE_FULL(0x003000),       NULL,       0xFF }, //Espressif Flash Map::DHCP Storage
+  //{ "APP.B",    0x103000, 0x07D000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code B
+  //{ "ASS.STOR", 0x180000, 0x040000, ERASE_SIZE(0x040000),       NULL,       0xFF }, //Espressif Flash Map::Asset (DHCP) Storage
+  //{ "NV.SEG.1", 0x1c0000, 0x01E000, ERASE_FULL(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::NV Storage Segment 1
+  //{ "NV.SEG.2", 0x1de000, 0x01E000, ERASE_FULL(0x01E000),       NULL,       0xFF }, //Espressif Flash Map::NV Storage Segment 2
+  //{ "ESP.INIT", 0x1fc000, 0x002000, ERASE_FULL(0x002000),       NULL,       0xFF }, //Espressif Flash Map::ESP Init Data
+  //{ "WIFI.CFG", 0x1fe000, 0x002000, ERASE_FULL(0x002000),       NULL,       0xFF }, //Espressif Flash Map::ESP wifi configuration data
+  { NULL, 0, 0, NULL, 0},
 };
 
 void InitEspressif(void)
@@ -313,24 +348,29 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
   SlowPrintf("%s=%02X {", debug, cmd);
   ESPCommand(cmd, data, length, checksum);
   
+  const u32 cmd_timeout = 15000000; //max 15s (for large erase ops)
+  u32 start_time_us = getMicroCounter();
+  
   // I don't know how long to wait - during initial erase, I've seen as many as 19 retries
-  for (int retry = 0 ; retry < 50; retry++)
+  for (u32 time_us=0, retry=0; time_us < cmd_timeout;  )
   {    
     int replySize = ESPRead(reply, max, timeout);
-
+    time_us = getMicroCounter() - start_time_us;
+    
     // esptool says retry a command until it at least acks the command
     // NOTE:  This check is hardcoded to deal with flashing commands and will fail on readback commands
     if (replySize < 10 || reply[1] != cmd || reply[8] != 0) {
-      SlowPrintf("retry..");
+      retry++;
       continue;
     }
+    SlowPrintf("retries: %u}", retry);
     
-    SlowPrintf("..} <- %d { ", replySize);
+    SlowPrintf(" <- %d { ", replySize);
 #ifdef ESP_DEBUG
     for (int i = 0; i < replySize; i++)
       SlowPrintf("%02X ", reply[i]);
 #endif
-    SlowPrintf("}\n");
+    SlowPrintf("} %u.%03ums\n", time_us/1000, time_us%1000 );
 
     return replySize;
   }
@@ -338,7 +378,7 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
   throw ERROR_HEAD_RADIO_TIMEOUT;
 }
 
-bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
+bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data, bool dat_static_fill) {
   union {
     uint8_t reply_buffer[0x100];
   };
@@ -378,19 +418,27 @@ bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
   // Write BEGIN command (erase, wait for flash to blank)
   int replySize = Command("Flash Begin", ESP_FLASH_BEGIN, (uint8_t*) &begin, sizeof(begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
   
-  while (length > 0) {
-    int copyLength = (length > ESP_FLASH_BLOCK) ? ESP_FLASH_BLOCK : length;
-    if (copyLength < ESP_FLASH_BLOCK) {
-      memset(block.data, 0xFF, ESP_FLASH_BLOCK);
-    }
-    memcpy(block.data, data, copyLength);
+  if( !(dat_static_fill && *data == 0xFF) ) //skip write phase if we are "writing" all FFs (erase only)
+  {
+    while (length > 0) {
+      int copyLength = (length > ESP_FLASH_BLOCK) ? ESP_FLASH_BLOCK : length;
+      if (copyLength < ESP_FLASH_BLOCK) {
+        memset(block.data, 0xFF, ESP_FLASH_BLOCK);
+      }
+      
+      if( !dat_static_fill )
+        memcpy(block.data, data, copyLength);   //standard: copy image data for block write
+      else
+        memset(block.data, *data, copyLength);  //fill block (up to specified length) with static value
 
-    int check = checksum(block.data, ESP_FLASH_BLOCK);
-    replySize = Command("Flash Block", ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT, check);
-    
-    data += ESP_FLASH_BLOCK;
-    length -= ESP_FLASH_BLOCK;
-    block.seq++;
+      int check = checksum(block.data, ESP_FLASH_BLOCK);
+      SlowPrintf("Flash Block %06X ", block.seq * ESP_FLASH_BLOCK);
+      replySize = Command(/*"Flash Block"*/ "", ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT, check);
+      
+      data += dat_static_fill ? 0 : ESP_FLASH_BLOCK; //don't move ptr for static fill
+      length -= ESP_FLASH_BLOCK;
+      block.seq++;
+    }
   }
 
   // FINISH with this hack from esptool.py - to prevent chip locking
@@ -400,42 +448,105 @@ bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
   return true;
 }
 
+
+extern int generateCozmoPassword(char* pwOut, int len);
+
+
 void ProgramEspressif(int serial)
 {
-  SlowPrintf("ESP Syncronizing...");
+  SlowPrintf("ESP Syncronizing...\n");
 
   if (!ESPSync()) { 
     SlowPrintf("Sync Failed.\n");
     throw ERROR_HEAD_RADIO_SYNC;
   }
   
+  u32 start_time_us = getMicroCounter();
   bool setserial = false;
-  for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++) {
-    SlowPrintf("Load ROM %s\n", rom->name);
-
-    if (!ESPFlashLoad(rom->addr, rom->length, rom->data)) {
-      throw ERROR_HEAD_RADIO_ERASE;
+  for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++)
+  {
+    bool static_fill = rom->data == NULL; //no ROM image. fill region with provided static value.
+    SlowPrintf("Load ROM %s", rom->name);
+    SlowPrintf( (static_fill ? ": static fill 0x%02x" : ""), rom->static_fill);
+    SlowPrintf("\n");
+    
+    SlowPrintf("@ 0x%06X, size 0x%06X of 0x%06X\n", rom->addr, rom->length, rom->max_length);
+    if( rom->length > rom->max_length ) {
+      SlowPrintf("ROM LENGTH EXCEEDS REGION BY 0x%06X bytes\n", rom->length - rom->max_length);
+      throw ERROR_HEAD_ROM_SIZE;
     }
-      
+    
+    if( !ESPFlashLoad(rom->addr, rom->length, static_fill ? &rom->static_fill : rom->data, static_fill) )
+        throw ERROR_HEAD_RADIO_ERASE;
+    
   #ifndef FCC
-    // Set serial number, model number, random data in Espressif
-    if (!setserial) {
-      const int DATALEN = 2+16;
-      u32 data[DATALEN];
-      data[0] = serial; // Serial
-      data[1] = 0;      // Model
+    // Set serial number, model number, random data & wifi password in Espressif
+    if (!setserial)
+    {
+      const int SERIALLEN = 2;
+      const int RANDLEN = 16;
+      const int PWDLEN = 20;
+      struct {
+        u32   serial[SERIALLEN];
+        u32   rand[RANDLEN];
+        char  pwd[PWDLEN];
+      } data;
+      
+      //enforce packed struct for proper flash placements
+      assert( sizeof(data) == (SERIALLEN+RANDLEN)*sizeof(u32) + PWDLEN );
+      
+      //Set serial/model
+      data.serial[0] = serial;  // Serial
+      data.serial[1] = 5;       // Model ;try to keep this in sync with HW version in sys_boot - 0 = pre-Pilot, 1 = Pilot, 3 = "First 1000" Prod, 4 = Full Prod, 5 = 1.5 EP2
       
       // Add 64 bytes of random gibberish, at Daniel's request
-      for (int i = 2; i < DATALEN; i++)
-        data[i] = GetRandom();
+      for( int i=0; i < RANDLEN; i++ )
+        data.rand[i] = GetRandom();
+      
+      //Generate WiFi pass
+      generateCozmoPassword( data.pwd, PWDLEN);
       
       SlowPrintf("Load SERIAL data: ");
-      for (int i = 0; i < DATALEN; i++)
-        SlowPrintf("%08x,", data[i]);
+      for (int i = 0; i < (sizeof(data)/sizeof(u32)); i++)
+        SlowPrintf("%08x,", ((u32*)&data)[i] );
       SlowPrintf("\n");
-      ESPFlashLoad(0x1000, sizeof(data), (uint8_t*)&data);
+      SlowPrintf("Pwd: %s\n", data.pwd );
+      
+      ESPFlashLoad(0x1000, sizeof(data), (uint8_t*)&data, false);
       setserial = true;
     }
   #endif
   }
+  
+  u32 total_time_us = getMicroCounter() - start_time_us;
+  SlowPrintf("ProgramEspressif() total time: %u.%03ums\n", total_time_us/1000, total_time_us%1000);
 }
+
+void EraseEspressif(void)
+{
+  SlowPrintf("ESP Syncronizing...\n");
+
+  if (!ESPSync()) { 
+    SlowPrintf("Sync Failed.\n");
+    throw ERROR_HEAD_RADIO_SYNC;
+  }
+  
+  u32 start_time_us = getMicroCounter();
+  for(const FlashLoadLocation* rom = &ESPRESSIF_ERASE[0]; rom->length; rom++)
+  {
+    assert( rom->data == NULL && rom->static_fill == 0xFF ); //no ROM image, 0xFF fill data
+    SlowPrintf("Erase Region %s @ 0x%06X. length 0x%06X of 0x%06X\n", rom->name, rom->addr, rom->length, rom->max_length);
+    
+    if( rom->length > rom->max_length ) {
+      SlowPrintf("ERASE LENGTH EXCEEDS REGION BY 0x%06X bytes!\n", rom->length - rom->max_length);
+      throw ERROR_HEAD_ROM_SIZE;
+    }
+    
+    if( !ESPFlashLoad(rom->addr, rom->length, &rom->static_fill, true) )
+        throw ERROR_HEAD_RADIO_ERASE;
+  }
+  
+  u32 total_time_us = getMicroCounter() - start_time_us;
+  SlowPrintf("EraseEspressif() total time: %u.%03ums\n", total_time_us/1000, total_time_us%1000);
+}
+

@@ -1,237 +1,225 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "unlockable.Unlock": {
-    "translation": "Unlock"
+  "unlockable.Unlock" : {
+    "translation" : "aufschließen"
   },
-  "unlockable.Locked": {
-    "translation": "Locked"
+  "unlockable.Locked" : {
+    "translation" : "Eingesperrt"
   },
-  "unlockable.App": {
-    "translation": "App"
+  "unlockable.App" : {
+    "translation" : "App"
   },
-  "unlockable.Upgrade": {
-    "translation": "Upgrade"
+  "unlockable.Upgrade" : {
+    "translation" : "Aktualisierung"
   },
-  "unlockable.Available": {
-    "translation": "Available:"
+  "unlockable.Available" : {
+    "translation" : "Verfügbar:"
   },
-  "unlockable.PreReqNeeded.Description": {
-    "translation": "You need to unlock the {0} {1} first!"
+  "unlockable.PreReqNeeded.Description" : {
+    "translation" : "Sie müssen die zu entsperren {0}{1} zuerst!"
   },
-  "unlockable.BitsRequired.Title": {
-    "translation": "Not Enough Bits"
+  "unlockable.BitsRequired.Title" : {
+    "translation" : "Nicht genügend Bits"
   },
-  "unlockable.CurrencyRequired": {
-    "translation": "Not Enough {0}"
+  "unlockable.CurrencyRequired" : {
+    "translation" : "Nicht genug {0}"
   },
-  "unlockable.BitsRequired.Description": {
-    "translation": "Use {0} {1} to Unlock"
+  "unlockable.BitsRequired.Description" : {
+    "translation" : "Benutzen {0}{1} Aufschließen"
   },
-  "unlockable.BitsRequired.EarnMore": {
-    "translation": "Earn more by completing Daily Goals"
+  "unlockable.BitsRequired.EarnMore" : {
+    "translation" : "Verdienen Sie mehr von Daily Tore Abschluss"
   },
-  "unlockable.Mystery.Title": {
-    "translation": "????"
+  "unlockable.Mystery.Title" : {
+    "translation" : "????"
   },
-  "unlockable.Mystery.Description": {
-    "translation": "More great Upgrades coming soon!"
+  "unlockable.Mystery.Description" : {
+    "translation" : "Weitere große Upgrades folgen in Kürze!"
   },
-  "unlockable.FistBump.Title": {
-    "translation": "Fist Bump"
+  "unlockable.FistBump.Title" : {
+    "translation" : "Fauststoß"
   },
-  "unlockable.FistBump.Description": {
-    "translation": "Want to show Cozmo that you're proud of him? Give him a little fist bump! With this upgrade, Cozmo will hold his lift in the air and wait for you to bump it."
+  "unlockable.FistBump.Description" : {
+    "translation" : "Möchten Sie Cozmo zu zeigen, dass Sie stolz auf ihn sind? Geben Sie ihm ein wenig Faust stoßen! Mit diesem Upgrade wird Cozmo seinen Auftrieb in der Luft halten und warten, bis Sie es zu stoßen."
   },
-  "unlockable.FistBump.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to fist bump"
+  "unlockable.FistBump.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo fragen Beule auf Faust"
   },
-  "unlockable.FistBump.SparkedStateDescription": {
-    "translation": "When he's ready, fist bump Cozmo"
+  "unlockable.FistBump.SparkedStateDescription" : {
+    "translation" : "Als er fertig ist, Faust Cozmo Beule"
   },
-  "unlockable.Workout.Title": {
-    "translation": "Workout with Cubes"
+  "unlockable.Workout.Title" : {
+    "translation" : "Workout mit Cubes"
   },
-  "unlockable.Workout.Description": {
-    "translation": "Even robots need exercise! With this upgrade, Cozmo learns to workout with a Cube to stay in top shape."
+  "unlockable.Workout.Description" : {
+    "translation" : "Auch Roboter üben müssen! Mit diesem Upgrade lernt Cozmo mit einem Cube zum Training in Top-Form zu bleiben."
   },
-  "unlockable.Workout.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to workout"
+  "unlockable.Workout.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo zum Training zu fragen,"
   },
-  "unlockable.Workout.SparkedStateDescription": {
-    "translation": "Watch Cozmo find a Cube and workout"
+  "unlockable.Workout.SparkedStateDescription" : {
+    "translation" : "Schauen Sie Cozmo einen Cube und Training finden"
   },
-  "unlockable.CubePounce.Title": {
-    "translation": "Keepaway"
+  "unlockable.CubePounce.Title" : {
+    "translation" : "Bleib weg"
   },
-  "unlockable.CubePounce.Description": {
-    "translation": "With this Upgrade, Cozmo learns how to play Keepaway, a game of reflexes and reaction time."
+  "unlockable.CubePounce.Description" : {
+    "translation" : "Mit diesem Upgrade lernt Cozmo wie Keepaway, ein Spiel der Reflexe und Reaktionszeit zu spielen."
   },
-  "unlockable.FaceEnrollment.Title": {
-    "translation": "Meet Cozmo"
+  "unlockable.FaceEnrollment.Title" : {
+    "translation" : "Treffen Sie Cozmo"
   },
-  "unlockable.FaceEnrollment.Description": {
-    "translation": "With this Upgrade, Cozmo learns to remember faces and speak names.\n\nFind this in the Meet Cozmo activity."
+  "unlockable.FaceEnrollment.Description" : {
+    "translation" : "Mit diesem Upgrade lernt Cozmo Gesichter zu merken und Namen sprechen. So finden Sie in Meet Cozmo Aktivität."
   },
-  "unlockable.MemoryMatch.Title": {
-    "translation": "Memory Match"
+  "unlockable.MemoryMatch.Title" : {
+    "translation" : "Memory Match"
   },
-  "unlockable.MemoryMatch.Description": {
-    "translation": "With this Upgrade, Cozmo learns how to play the Memory Match game."
+  "unlockable.MemoryMatch.Description" : {
+    "translation" : "Mit diesem Upgrade lernt Cozmo, wie das Memory Match Spiel zu spielen."
   },
-  "unlockable.SpeedTap.Title": {
-    "translation": "Quick Tap"
+  "unlockable.SpeedTap.Title" : {
+    "translation" : "Schnell Tap"
   },
-  "unlockable.SpeedTap.Description": {
-    "translation": "With this Upgrade, Cozmo learns how to play the game Quick Tap. Over time, his skills will improve!"
+  "unlockable.SpeedTap.Description" : {
+    "translation" : "Mit diesem Upgrade lernt Cozmo, wie Sie das Spiel Quick Tap zu spielen. Im Laufe der Zeit verbessern wird seine Fähigkeiten!"
   },
-  "unlockable.cozmoSays.Title": {
-    "translation": "Cozmo Says"
+  "unlockable.cozmoSays.Title" : {
+    "translation" : "Cozmo Says"
   },
-  "unlockable.CubeRollAction.Title": {
-    "translation": "Roll a Cube"
+  "unlockable.CubeRollAction.Title" : {
+    "translation" : "Wirf einen Würfel"
   },
-  "unlockable.CubeRollAction.Description": {
-    "translation": "Cozmo prefers Cubes to be right side up. This Upgrade allows him to roll Cubes, especially when they are on their side."
+  "unlockable.CubeRollAction.Description" : {
+    "translation" : "Cozmo bevorzugt Cubes rechten Seite nach oben zu sein. Dieses Upgrade ermöglicht ihm Würfel zu rollen, vor allem, wenn sie auf ihrer Seite sind."
   },
-  "unlockable.CubeRollAction.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to roll a Cube"
+  "unlockable.CubeRollAction.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo zu bitten, einen Würfel zu rollen"
   },
-  "unlockable.CubeRollAction.SparkedStateDescription": {
-    "translation": "Watch Cozmo roll the first Cube he sees"
+  "unlockable.CubeRollAction.SparkedStateDescription" : {
+    "translation" : "Sehen Sie Cozmo den ersten Würfel rollen er sieht,"
   },
-  "unlockable.DroneMode.Title": {
-    "translation": "Explorer Mode"
+  "unlockable.DroneMode.Title" : {
+    "translation" : "Explorer-Modus"
   },
-  "unlockable.DroneMode.Description": {
-    "translation": "With this Upgrade, Cozmo will allow you to pilot him in Explorer Mode."
+  "unlockable.DroneMode.Description" : {
+    "translation" : "Mit diesem Upgrade wird Cozmo können Sie ihn im Explorer-Modus zu steuern."
   },
-  "unlockable.CubeStackAction.Title": {
-    "translation": "Stack Cubes"
+  "unlockable.CubeStackAction.Title" : {
+    "translation" : "Stapel Würfel"
   },
-  "unlockable.CubeStackAction.Description": {
-    "translation": "With this Upgrade, Cozmo gains the ability to create a stack of two Power Cubes."
+  "unlockable.CubeStackAction.Description" : {
+    "translation" : "Mit diesem Upgrade gewinnt Cozmo die Fähigkeit, einen Stapel von zwei Power-Cubes zu erstellen."
   },
-  "unlockable.CubeStackAction.SparkedStateDescription": {
-    "translation": "Watch Cozmo create a stack of Cubes"
+  "unlockable.CubeStackAction.SparkedStateDescription" : {
+    "translation" : "Uhr Cozmo erstellen einen Stapel von Cubes"
   },
-  "unlockable.CubeStackAction.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to stack two Cubes"
+  "unlockable.CubeStackAction.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo fragen zwei Würfel zu stapeln"
   },
-  "unlockable.PounceOnMotionAction.Title": {
-    "translation": "Pounce On Fingers"
+  "unlockable.PounceOnMotionAction.Title" : {
+    "translation" : "Anspringen Auf Fingern"
   },
-  "unlockable.PounceOnMotionAction.Description": {
-    "translation": "With this Upgrade, when Cozmo sees movement on the ground in front of him, such as a finger, he will playfully pounce on it!"
+  "unlockable.PounceOnMotionAction.Description" : {
+    "translation" : "Mit diesem Upgrade, wenn Cozmo Bewegung auf dem Boden vor sich sieht, wie ein Finger, so wird er spielerisch auf sie stürzen!"
   },
-  "unlockable.PounceOnMotionAction.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to pounce on fingers"
+  "unlockable.PounceOnMotionAction.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo fragen an den Fingern zu stürzen"
   },
-  "unlockable.PounceOnMotionAction.SparkedStateDescription": {
-    "translation": "Cozmo will pounce on any movement he sees"
+  "unlockable.PounceOnMotionAction.SparkedStateDescription" : {
+    "translation" : "Cozmo wird auf jede Bewegung stürzen sieht er"
   },
-  "unlockable.BuildPyramid.Title": {
-    "translation": "Build a Pyramid"
+  "unlockable.BuildPyramid.Title" : {
+    "translation" : "Bauen Sie eine Pyramide"
   },
-  "unlockable.BuildPyramid.Description": {
-    "translation": "With this Upgrade, Cozmo gains the ability to build a pyramid out of three upright Cubes."
+  "unlockable.BuildPyramid.Description" : {
+    "translation" : "Mit diesem Upgrade gewinnt Cozmo die Fähigkeit, eine Pyramide aus drei aufrecht Würfel zu bauen."
   },
-  "unlockable.BuildPyramid.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to build a pyramid"
+  "unlockable.BuildPyramid.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo zu bitten, eine Pyramide zu bauen"
   },
-  "unlockable.BuildPyramid.SparkedStateDescription": {
-    "translation": "Watch Cozmo build a pyramid out of 3 Cubes"
+  "unlockable.BuildPyramid.SparkedStateDescription" : {
+    "translation" : "Uhr Cozmo bauen eine Pyramide aus drei Würfel"
   },
-  "unlockable.PopAWheelieAction.Title": {
-    "translation": "Pop a Wheelie"
+  "unlockable.PopAWheelieAction.Title" : {
+    "translation" : "Pop einen Wheelie"
   },
-  "unlockable.PopAWheelieAction.Description": {
-    "translation": "Cozmo gains a new trick! With this Upgrade he can use a Cube to boost himself up, and pop a wheelie."
+  "unlockable.PopAWheelieAction.Description" : {
+    "translation" : "Cozmo gewinnt einen neuen Trick! Mit diesem Upgrade kann er einen Würfel benutzen, sich zu steigern und einen Wheelie Pop."
   },
-  "unlockable.PopAWheelieAction.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to pop a wheelie"
+  "unlockable.PopAWheelieAction.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo zu bitten, einen Wheelie zu Pop"
   },
-  "unlockable.PopAWheelieAction.SparkedStateDescription": {
-    "translation": "Watch Cozmo pop a wheelie off a Cube"
+  "unlockable.PopAWheelieAction.SparkedStateDescription" : {
+    "translation" : "Sehen Sie Cozmo einen Wheelie aus einem Cube Pop"
   },
-  "unlockable.KnockOverThreeCubeStack.Title": {
-    "translation": "Knock Over Stacks"
+  "unlockable.KnockOverThreeCubeStack.Title" : {
+    "translation" : "Umstoßen Stacks"
   },
-  "unlockable.KnockOverThreeCubeStack.Description": {
-    "translation": "With this Upgrade, any time Cozmo sees a stack of Power Cubes, he may decide to knock them over."
+  "unlockable.KnockOverThreeCubeStack.Description" : {
+    "translation" : "Mit diesem Upgrade sieht jederzeit Cozmo einen Stapel von Power-Cubes, so kann er sich entscheiden, sie umzuwerfen."
   },
-  "unlockable.KnockOverThreeCubeStack.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to knock over a stack"
+  "unlockable.KnockOverThreeCubeStack.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo zu bitten, einen Stapel umstoßen"
   },
-  "unlockable.KnockOverThreeCubeStack.SparkedStateDescription": {
-    "translation": "Build a stack of Cubes for Cozmo to tip over"
+  "unlockable.KnockOverThreeCubeStack.SparkedStateDescription" : {
+    "translation" : "Erstellen Sie einen Stapel von Cubes für Cozmo umkippen"
   },
-  "unlockable.PickupCube.Title": {
-    "translation": "Pick Up Cube"
+  "unlockable.PickupCube.Title" : {
+    "translation" : "Pick Up Cube"
   },
-  "unlockable.PickupCube.Description": {
-    "translation": "With this Upgrade, Cozmo gains the ability to pick up Power Cubes and carry them around."
+  "unlockable.PickupCube.Description" : {
+    "translation" : "Mit diesem Upgrade gewinnt Cozmo die Fähigkeit, Energie-Würfel zu holen und tragen sie herum."
   },
-  "unlockable.PickupCube.SparkButtonDescription": {
-    "translation": "Tap to ask Cozmo to pick up a Cube"
+  "unlockable.PickupCube.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo zu bitten, einen Würfel zu holen"
   },
-  "unlockable.PickupCube.SparkedStateDescription": {
-    "translation": "Watch Cozmo pick up a Cube"
+  "unlockable.PickupCube.SparkedStateDescription" : {
+    "translation" : "Beobachten Sie abholen Cozmo einen Cube"
   },
-  "unlockable.ComingSoon.Title": {
-    "translation": "Coming Soon!"
+  "unlockable.ComingSoon.Title" : {
+    "translation" : "Demnächst!"
   },
-  "unlockable.ComingSoon.Description": {
-    "translation": "Check back for more great Upgrades, Apps, and fun Cozmo features"
+  "unlockable.ComingSoon.Description" : {
+    "translation" : "Überprüfen Sie für weitere große Upgrades zurück, Apps und Spaß Cozmo Funktionen"
   },
-  "sparks.Sparked": {
-    "translation": "Cozmo is sparked:"
+  "sparks.Sparked" : {
+    "translation" : "Cozmo wird ausgelöst:"
   },
-  "sparks.SparkCozmo": {
-    "translation": "Spark Cozmo"
+  "sparks.SparkCozmo" : {
+    "translation" : "funken~~POS=TRUNC Cozmo"
   },
-  "sparks.Spark": {
-    "translation": "Spark"
+  "sparks.Spark" : {
+    "translation" : "Funke"
   },
-  "sparks.Spark.plural": {
-    "translation": "Sparks"
+  "sparks.Spark.plural" : {
+    "translation" : "Sparks"
   },
-  "unlockable.Unavailable.Description": {
-    "translation": "Unlock more upgrades before you can unlock {0}."
+  "unlockable.Unavailable.Description" : {
+    "translation" : "Schalte mehr Upgrades, bevor Sie freischalten können {0} ."
   },
-  "sparks.Spark.ConfirmQuit": {
-    "translation": "Cozmo is Sparked!"
+  "sparks.Spark.ConfirmQuit" : {
+    "translation" : "Cozmo ist Sparked!"
   },
-  "sparks.Spark.ConfirmQuit.Description": {
-    "translation": "If you leave before he is done, Cozmo will no longer be Sparked."
+  "sparks.Spark.ConfirmQuit.Description" : {
+    "translation" : "Wenn Sie verlassen, bevor er fertig ist, wird Cozmo nicht mehr Ausgelöst werden."
   },
-  "sparks.NotEnoughSparks.Title": {
-    "translation": "Not enough Sparks"
+  "sparks.NotEnoughSparks.Title" : {
+    "translation" : "Nicht genug Sparks"
   },
-  "sparks.NotEnoughSparks.Desc": {
-    "translation": "Earn more by completing Daily Goals"
+  "sparks.NotEnoughSparks.Desc" : {
+    "translation" : "Verdienen Sie mehr von Daily Tore Abschluss"
   },
-  "sparks.CubesNeedUpright.Title":{
-    "translation": "Make Sure Cubes are Upright"
+  "sparks.CubesNeedUpright.Title" : {
+    "translation" : "Stellen Sie sicher, Würfel sind Upright"
   },
-  "sparks.CubesNeedUpright.Desc": {
-    "translation": "When the cubes are upright with their lights up, Cozmo can build more quickly."
+  "sparks.CubesNeedUpright.Desc" : {
+    "translation" : "Wenn die Würfel mit ihren leuchtet aufrecht sind, können Cozmo schneller bauen."
   }
 }

@@ -127,7 +127,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       break;    // Reply "OK"
     
     case TEST_RADIOTX:
-      Radio::sendTestPacket();
+      // This no longer exists
       break;    // Reply "OK"
     
     case TEST_KILLHEAD:
@@ -194,6 +194,13 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     {
       u16 data[2] = {vBat, vExt};
       SendDown(sizeof(data), (u8*)data);
+      return;   // Already replied
+    }
+    
+    case TEST_BACKBUTTON:
+    {
+      u8 data = Backpack::button_pressed;
+      SendDown(sizeof(data), (u8*)&data);
       return;   // Already replied
     }
   }

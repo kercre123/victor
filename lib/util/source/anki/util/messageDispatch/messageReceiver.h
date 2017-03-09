@@ -59,7 +59,7 @@ public:
       _dispatcher->Subscribe(this, messageTag, responder);
     }
   }
-  
+
   void Unsubscribe(MessageTag_t messageTag)
   {
     if(nullptr != _dispatcher) {
@@ -79,6 +79,113 @@ public:
     if (nullptr != _dispatcher) {
       _dispatcher->SendMessage(message, args...);
     }
+  }
+
+  //////////////////////////////////////////////////////////
+  // Templated subscription functions for forwarding message
+  // contents directly to methods
+  //
+  // Subscribe by passing: message tag, and a handler that will
+  // receive the unpacked message contents.
+  //
+  // The signature of the handler function must match the contents
+  // of the CLAD message, in the correct order.
+  //
+  // Examples:
+  //
+  //////////////////////////////////
+  // GameService: AddAI message
+  //////////////////////////////////
+  // message AddAI {
+  //   uint_32 commanderId,
+  //   uint_64 vehicleConnectionUUID
+  // }
+  //
+  // void GameService::AddAI(CommanderDefinitionIdType commanderId,
+  //   VehicleConnectionUUID vehicleConnectionUUID); // the commander/vehicle typedefs resolve to uint32/uint64
+  //
+  // SubscribeMember<ToEngineMessage::Tag::addAI>(&GameService::AddAI);
+  //
+  //////////////////////////////////
+  // PlayerService: RequestConnectToPlayer message
+  //////////////////////////////////
+  // message PlayerId {
+  //   uint_8 playerId,
+  // }
+  //
+  // PlayerService::PlayerId requestConnectToPlayer, // in ToEngineMessage
+  //
+  // void PlayerService::RequestConnectToPlayer(GamePlayerId gamePlayerId);
+  //
+  // _externalInterfaceMessageReceiver.SubscribeMember<ToEngineMessage::Tag::requestConnectToPlayer>(
+  //   &PlayerService::RequestConnectToPlayer, this);
+  //
+  // This example has an extra parameter on the end of the SubscribeMember call ("this") to tell
+  // the message receiver what object the message handler function (PlayerService::RequestConnectToPlayer)
+  // should be invoked on, since PlayerService isn't calling this method on itself, but rather on an external
+  // message receiver.
+  //
+  //////////////////////////////////
+  // StoreService: RequestStore message
+  //////////////////////////////////
+  //
+  // Works on void messages/functions too:
+  //
+  // message RequestStore {
+  // }
+  //
+  // void StoreService::RequestStoreCatalog();
+  //
+  // SubscribeMember<ToEngineMessage::Tag::requestStore>(&StoreService::RequestStoreCatalog);
+  //
+  //////////////////////////////////////////////////////////
+protected:
+  // Protected SubscribeMember functions allow for subscribing
+  // member methods of derived classes
+  template <MessageTag_t Tag, typename Subscriber, typename ...MsgArgs>
+  void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...))
+  {
+    SubscribeMember<Tag>(handlerFunc, static_cast<Subscriber*>(this));
+  }
+
+  template <MessageTag_t Tag, typename Subscriber, typename ...MsgArgs>
+  void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...) const)
+  {
+    SubscribeMember<Tag>(handlerFunc, static_cast<Subscriber*>(this));
+  }
+
+public:
+  // Public SubscribeMember functions allow for external objects
+  // with access to a MessageReceiver to subscribe themselves to
+  // a message by passing their instance pointer
+  template <MessageTag_t Tag, typename Subscriber, typename ...MsgArgs>
+  void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...),
+                       Subscriber* subscriber)
+  {
+    auto boundHandler = [subscriber, handlerFunc] (MsgArgs... args) {
+      (subscriber->*handlerFunc)(args...);
+    };
+    SubscribeCallable<Tag>(boundHandler);
+  }
+
+  template <MessageTag_t Tag, typename Subscriber, typename ...MsgArgs>
+  void SubscribeMember(void (Subscriber::*handlerFunc)(MsgArgs...) const,
+                       Subscriber* subscriber)
+  {
+    auto boundHandler = [subscriber, handlerFunc] (MsgArgs... args) {
+      (subscriber->*handlerFunc)(args...);
+    };
+    SubscribeCallable<Tag>(boundHandler);
+  }
+
+  // SubscribeCallable allows for subscription of any callable object that
+  // takes in the parameters contained by the given message type
+  template <MessageTag_t Tag, typename Callable>
+  void SubscribeCallable(Callable&& messageHandler)
+  {
+    Subscribe(Tag, [messageHandler] (const MessageType& message, Args...) {
+      message.template Get_<Tag>().Invoke(messageHandler);
+    });
   }
 
 protected:

@@ -15,14 +15,15 @@ char* const g_hex = "0123456789abcdef";
 #ifdef DEBUG_UART_ENABLED
 
 #ifndef SlowPrintf
-void SlowPrintf(const char* format, ...)
+int SlowPrintf(const char* format, ...)
 {
   char dest[64];
   va_list argptr;
   va_start(argptr, format);
-  vsnprintf(dest, 64, format, argptr);
+  int len = vsnprintf(dest, 64, format, argptr);
   va_end(argptr);  
   SlowPutString(dest);
+  return len;
 }
 #endif
 

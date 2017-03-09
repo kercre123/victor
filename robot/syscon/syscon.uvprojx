@@ -15,7 +15,7 @@
         <TargetCommonOption>
           <Device>nRF51822_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.5.0</PackID>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.11.1</PackID>
           <PackURL>http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>
           <Cpu>IROM(0x00000000,0x40000) IRAM(0x20000000,0x4000) CPUTYPE("Cortex-M0") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -428,11 +428,6 @@
               <FilePath>.\hal\watchdog.cpp</FilePath>
             </File>
             <File>
-              <FileName>tasks.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\tasks.cpp</FilePath>
-            </File>
-            <File>
               <FileName>crashlogger.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\crashlogger.cpp</FilePath>
@@ -516,56 +511,6 @@
               <FileName>clad.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\generated\clad\clad.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>crypto</GroupName>
-          <Files>
-            <File>
-              <FileName>aes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\crypto\aes.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bignum.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\crypto\bignum.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>crc32.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\crypto\crc32.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>diffie.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\crypto\diffie.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>random.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\crypto\random.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\crypto\sha1.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>md5.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\crypto\md5.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>hmac.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\crypto\hmac.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>packet.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\crypto\packet.cpp</FilePath>
             </File>
           </Files>
         </Group>

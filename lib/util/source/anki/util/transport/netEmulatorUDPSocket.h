@@ -103,6 +103,7 @@ public:
   virtual ssize_t SendTo(int socketId, const void* messageData, size_t messageDataSize, int flags, const sockaddr* destSockAddress, socklen_t destSockAddressLength) override;
   virtual ssize_t ReceiveMessage(int socketId, msghdr* messageHeader, int flags) override;
   virtual uint32_t GetLocalIpAddress() override;
+  virtual struct in6_addr GetLocalIpv6LinkLocalAddress() override;
   virtual bool IsEmulator() const override { return true; }
   
   // FakeUDPSocket implementation specific

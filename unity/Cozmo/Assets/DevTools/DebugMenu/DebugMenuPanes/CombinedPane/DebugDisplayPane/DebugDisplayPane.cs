@@ -15,7 +15,7 @@ public class DebugDisplayPane : MonoBehaviour {
   private const float kSlowDriveSpeed_mmps = 30.0f;
   private const float kMediumDriveSpeed_mmps = 45.0f;
   private const float kFastDriveSpeed_mmps = 60.0f;
-  private const float kDriveDist_mm = 30.0f;
+  private const float kDriveDist_mm = 44.0f; // length of one light cube
   private const float kDegreesToRadians = Mathf.PI / 180.0f;
   private const float kTurnAngle = 90.0f * kDegreesToRadians;
 
@@ -259,6 +259,26 @@ public class DebugDisplayPane : MonoBehaviour {
     }
   }
 
+  private void DockWithCube(bool previousActionSucceeded) {
+    bool success = false;
+
+    if (previousActionSucceeded) {
+      // Dock with a cube we observed within the last 0.2 seconds, if any.
+      LightCube cube = null;
+      RobotEngineManager.Instance.CurrentRobot.LightCubes.TryGetValue(_LastObservedObjectID, out cube);
+
+      if ((Time.time - _TimeLastObservedCube) < 0.2f && cube != null) {
+        RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: HandleAlignWithObjectResponse, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE);
+        success = true;
+      }
+    }
+
+    if (!success) {
+      // Play angry animation since Cozmo wasn't able to complete the task
+      PlayAngryAnimation();
+    }
+  }
+
   private void PlayAngryAnimation() {
     RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor);
   }
@@ -295,28 +315,20 @@ public class DebugDisplayPane : MonoBehaviour {
       RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(scratchRequest.argString, Anki.Cozmo.AnimationTrigger.Count);
     }
     else if (scratchRequest.command == "cozmoHeadAngle") {
-      float headAngle = (CozmoUtil.kIdealBlockViewHeadValue + CozmoUtil.kIdealFaceViewHeadValue) * 0.5f; // medium setting
+      float desiredHeadAngle = (CozmoUtil.kIdealBlockViewHeadValue + CozmoUtil.kIdealFaceViewHeadValue) * 0.5f; // medium setting
       if (scratchRequest.argString == "low") {
-        headAngle = CozmoUtil.kIdealBlockViewHeadValue;
+        desiredHeadAngle = CozmoUtil.kIdealBlockViewHeadValue;
       }
       else if (scratchRequest.argString == "high") {
-        headAngle = CozmoUtil.kIdealFaceViewHeadValue;
+        desiredHeadAngle = CozmoUtil.kIdealFaceViewHeadValue;
       }
 
-      RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(headAngle);
+      if (System.Math.Abs(desiredHeadAngle - RobotEngineManager.Instance.CurrentRobot.HeadAngle) > float.Epsilon) {
+        RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(desiredHeadAngle);
+      }
     }
     else if (scratchRequest.command == "cozmoDockWithCube") {
-      // Dock with a cube we observed within the last 0.2 seconds, if any.
-      LightCube cube = null;
-      RobotEngineManager.Instance.CurrentRobot.LightCubes.TryGetValue(_LastObservedObjectID, out cube);
-
-      if ((Time.time - _TimeLastObservedCube) < 0.2f && cube != null) {
-        RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: HandleAlignWithObjectResponse, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE);
-      }
-      else {
-        // Play angry animation since Cozmo wasn't able to complete the task
-        PlayAngryAnimation();
-      }
+      RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue, callback: DockWithCube);
     }
     else if (scratchRequest.command == "cozmoForklift") {
       float liftHeight = 0.5f; // medium setting

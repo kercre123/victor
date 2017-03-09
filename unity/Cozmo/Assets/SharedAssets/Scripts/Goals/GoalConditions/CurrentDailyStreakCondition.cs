@@ -26,9 +26,9 @@ namespace Anki {
       // Returns true if the desired number of sessions has been played
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        isMet = !UseMinSession || DataPersistenceManager.Instance.CurrentStreak >= MinSession;
+        isMet = !UseMinSession || DataPersistenceManager.Instance.Data.DefaultProfile.CurrentStreak >= MinSession;
         if (isMet) {
-          isMet = !UseMaxSession || DataPersistenceManager.Instance.CurrentStreak <= MaxSession;
+          isMet = !UseMaxSession || DataPersistenceManager.Instance.Data.DefaultProfile.CurrentStreak <= MaxSession;
         }
         return isMet;
       }

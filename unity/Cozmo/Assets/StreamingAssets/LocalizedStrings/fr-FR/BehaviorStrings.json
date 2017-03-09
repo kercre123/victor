@@ -1,138 +1,126 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "behavior.BringCubeToBeacon": {
-    "translation": "Cozmo is collecting his Cubes"
+  "behavior.BringCubeToBeacon" : {
+    "translation" : "Cozmo recueille ses Cubes"
   },
-  "behavior.ExploreVisitPossibleMarker": {
-    "translation": "Cozmo is exploring his surroundings"
+  "behavior.ExploreVisitPossibleMarker" : {
+    "translation" : "Cozmo explore son environnement"
   },
-  "behavior.LookInPlaceMemoryMap": {
-    "translation": "Cozmo is exploring his surroundings"
+  "behavior.LookInPlaceMemoryMap" : {
+    "translation" : "Cozmo explore son environnement"
   },
-  "behavior.ExploreLookAroundInPlace": {
-    "translation": "Cozmo is exploring his surroundings"
+  "behavior.ExploreLookAroundInPlace" : {
+    "translation" : "Cozmo explore son environnement"
   },
-  "behavior.ThinkAboutBeacons": {
-    "translation": "Cozmo is exploring his surroundings"
+  "behavior.ThinkAboutBeacons" : {
+    "translation" : "Cozmo explore son environnement"
   },
-  "behavior.VisitInterestingEdge": {
-    "translation": "Cozmo is exploring his surroundings"
+  "behavior.VisitInterestingEdge" : {
+    "translation" : "Cozmo explore son environnement"
   },
-  "behavior.KnockOverCubes": {
-    "translation": "Cozmo is knocking over a stack of Cubes"
+  "behavior.KnockOverCubes" : {
+    "translation" : "Cozmo frappe sur une pile de cubes"
   },
-  "behavior.PopAWheelie": {
-    "translation": "Cozmo is popping a wheelie"
+  "behavior.PopAWheelie" : {
+    "translation" : "Cozmo est popping un wheelie"
   },
-  "behavior.PounceOnMotion": {
-    "translation": "Cozmo wants to pounce on your finger"
+  "behavior.PounceOnMotion" : {
+    "translation" : "Cozmo veut bondir sur votre doigt"
   },
-  "behavior.FistBump": {
-    "translation": "Cozmo wants to fist bump"
+  "behavior.FistBump" : {
+    "translation" : "Cozmo veut poing bosse"
   },
-  "behavior.RollBlock": {
-    "translation": "Cozmo is rolling a Cube"
+  "behavior.RollBlock" : {
+    "translation" : "Cozmo roule un cube"
   },
-  "behavior.StackCube": {
-    "translation": "Cozmo is creating a stack of Cubes"
+  "behavior.StackCube" : {
+    "translation" : "Cozmo crée une pile de cubes"
   },
-  "behavior.LookingForFaces": {
-    "translation": "Cozmo is looking around"
+  "behavior.LookingForFaces" : {
+    "translation" : "Cozmo regarde autour"
   },
-  "behavior.InteractWithFaces": {
-    "translation": "Cozmo is looking around"
+  "behavior.InteractWithFaces" : {
+    "translation" : "Cozmo regarde autour"
   },
-  "behavior.Bored": {
-    "translation": "Cozmo is bored"
+  "behavior.Bored" : {
+    "translation" : "Cozmo est ennuyé"
   },
-  "behavior.ReactToCliff": {
-    "translation": ""
+  "behavior.ReactToCliff" : {
+    "translation" : ""
   },
-  "behavior.ReactToFrustration": {
-    "translation": "Cozmo is upset"
+  "behavior.ReactToFrustration" : {
+    "translation" : "Cozmo est bouleversé"
   },
-  "behavior.ReactToOnCharger": {
-    "translation": "Cozmo is going to sleep"
+  "behavior.ReactToOnCharger" : {
+    "translation" : "Cozmo va dormir"
   },
-  "behavior.ReactToPickup": {
-    "translation": "Cozmo wants to be put down"
+  "behavior.ReactToPickup" : {
+    "translation" : "Cozmo veut être abattu"
   },
-  "behavior.ReactToOnSide": {
-    "translation": "Cozmo wants to be put upright"
+  "behavior.ReactToOnSide" : {
+    "translation" : "Cozmo veut mettre debout"
   },
-  "behavior.ReactToPet": {
-    "translation": "Cozmo sees a pet"
+  "behavior.ReactToPet" : {
+    "translation" : "Cozmo voit un animal de compagnie"
   },
-  "behavior.ReactToPlacedOnSlope": {
-    "translation": ""
+  "behavior.ReactToPlacedOnSlope" : {
+    "translation" : ""
   },
-  "behavior.RequestToPlay": {
-    "translation": "Cozmo is setting up a game"
+  "behavior.RequestToPlay" : {
+    "translation" : "Cozmo met en place un jeu"
   },
-  "behavior.AcknowledgeObject": {
-    "translation": ""
+  "behavior.AcknowledgeObject" : {
+    "translation" : ""
   },
-  "behavior.AcknowledgeFace": {
-    "translation": "Cozmo sees a face"
+  "behavior.AcknowledgeFace" : {
+    "translation" : "Cozmo voit un visage"
   },
-  "behavior.ReactToOnBack": {
-    "translation": ""
+  "behavior.ReactToOnBack" : {
+    "translation" : ""
   },
-  "behavior.ReactToOnFace": {
-    "translation": ""
+  "behavior.ReactToOnFace" : {
+    "translation" : ""
   },
-  "behavior.ReactToOnTreads": {
-    "translation": " "
+  "behavior.ReactToOnTreads" : {
+    "translation" : " "
   },
-  "behavior.ReactToUnexpectedMovement": {
-    "translation": ""
+  "behavior.ReactToUnexpectedMovement" : {
+    "translation" : ""
   },
-  "behavior.DriveOffCharger": {
-    "translation": "Cozmo is waking up"
+  "behavior.DriveOffCharger" : {
+    "translation" : "Cozmo se réveille"
   },
-  "behavior.PickupCube": {
-    "translation": "Cozmo is picking up a cube"
+  "behavior.PickupCube" : {
+    "translation" : "Cozmo est ramasser un cube"
   },
-  "behavior.Workout": {
-    "translation": "Cozmo is doing a workout"
+  "behavior.Workout" : {
+    "translation" : "Cozmo fait une séance d'entraînement"
   },
-  "behavior.CheckForStackAtInterval": {
-    "translation": "Cozmo is looking for a stack"
+  "behavior.CheckForStackAtInterval" : {
+    "translation" : "Cozmo est à la recherche d'une pile"
   },
-  "behavior.LookForFaceAndCube": {
-    "translation": " "
+  "behavior.LookForFaceAndCube" : {
+    "translation" : " "
   },
-  "error.TooManyFaces": {
-    "translation": "Make sure Cozmo only sees"
+  "error.TooManyFaces" : {
+    "translation" : "Assurez-vous que Cozmo ne voit que"
   },
-  "behavior.BuildPyramid": {
-    "translation": "Cozmo is building a pyramid"
+  "behavior.BuildPyramid" : {
+    "translation" : "Cozmo construit une pyramide"
   },
-  "behavior.PrepareCubes": {
-    "translation": "Cozmo is preparing his cubes"
+  "behavior.PrepareCubes" : {
+    "translation" : "Cozmo prépare ses cubes"
   },
-  "behavior.LookInPlaceForCube": {
-    "translation": "Cozmo is looking for a cube"
+  "behavior.LookInPlaceForCube" : {
+    "translation" : "Cozmo est à la recherche d'un cube"
   },
-  "button.clearThisSlot": {
-    "translation": "Clear This Slot"
+  "button.clearThisSlot" : {
+    "translation" : "Effacer Cette machine à sous"
   }
 }

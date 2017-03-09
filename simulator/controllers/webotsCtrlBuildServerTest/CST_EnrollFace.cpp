@@ -171,6 +171,10 @@ s32 CST_EnrollFace::UpdateSimInternal()
         SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("EnrollFace_TimeoutMax_sec", "15")));
         SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("EnrollFace_TimeoutExtraTime_sec", "4")));
         
+        // Disable AcknowledgeFace reaction, to keep the test simpler and avoid it cancelling
+        // the LookDown action in some cases
+        SendMessage(MessageGameToEngine(RequestEnableReactionTrigger("CST_EnrollFace", ReactionTrigger::FacePositionUpdated, false)));
+        
         if(!ENABLE_AUDIO)
         {
           // Disable audio completely because it runs more slowly on the server and causes timeouts

@@ -1,147 +1,135 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "onboarding.CozmoNeedsCharge.Title": {
-    "translation": "Cozmo is Charging"
+  "onboarding.CozmoNeedsCharge.Title" : {
+    "translation" : "コズモが充電されます"
   },
-  "onboarding.CozmoNeedsCharge.SecondsLeft": {
-    "translation": "Seconds left..."
+  "onboarding.CozmoNeedsCharge.SecondsLeft" : {
+    "translation" : "左秒..."
   },
-  "onboarding.CozmoNeedsCharge.KeepOnCharger": {
-    "translation": "Keep him on the charger"
+  "onboarding.CozmoNeedsCharge.KeepOnCharger" : {
+    "translation" : "充電器に彼を保ちます"
   },
-  "onboarding.CozmoNeedsCharge.PutBackOnCharger": {
-    "translation": "Please put Cozmo back on the charger"
+  "onboarding.CozmoNeedsCharge.PutBackOnCharger" : {
+    "translation" : "充電器に戻ってコズモを入れてください"
   },
-  "onboarding.CozmoNeedsCharge.CozmoIsReady": {
-    "translation": "Cozmo is ready!"
+  "onboarding.CozmoNeedsCharge.CozmoIsReady" : {
+    "translation" : "コズモは準備ができています！"
   },
-  "onboarding.CozmoNeedsCharge.message1": {
-    "translation": "You're connected to your Cozmo, and he's almost ready!\nHe just needs a moment to charge."
+  "onboarding.CozmoNeedsCharge.message1" : {
+    "translation" : "あなたはコズモに接続している、と彼はほとんど準備ができています！彼はただ充電する瞬間を必要とします。"
   },
-  "onboarding.CozmoNeedsCharge.message2": {
-    "translation": "Once he's done charging, let Cozmo come to life\nand learn about his new home."
+  "onboarding.CozmoNeedsCharge.message2" : {
+    "translation" : "彼は充電完了だ後は、コズモは生命に来て、彼の新しい家について学びましょう。"
   },
-  "onboarding.CozmoNeedsCharge.message3": {
-    "translation": "Cozmo comes with Upgrades that you can unlock.\nEach one gives him a new ability that he'll do on his own."
+  "onboarding.CozmoNeedsCharge.message3" : {
+    "translation" : "コズモは、あなたがロックを解除することができアップグレードが付属しています。一人一人が彼に彼が自分でやるという新たな機能を提供します。"
   },
-  "onboarding.CozmoNeedsCharge.message4": {
-    "translation": "You can pick up Cozmo if you need to,\nbut he's happiest when he can drive on his own."
+  "onboarding.CozmoNeedsCharge.message4" : {
+    "translation" : "あなたがする必要がある場合には、コズモを拾うことができますが、彼は自分で駆動することができたときに彼が最も幸せです。"
   },
-  "onboarding.CozmoNeedsCharge.message5": {
-    "translation": "When you're not playing games with Cozmo,\nit's great to sit back and watch him explore the world."
+  "onboarding.CozmoNeedsCharge.message5" : {
+    "translation" : "あなたはコズモでゲームをプレイしていないときは、後ろに座ると、彼は世界を探検見るのは素晴らしいことです。"
   },
-  "onboarding.CozmoNeedsCharge.finalMessage": {
-    "translation": "Cozmo is ready to play. To completely charge his battery,\nyou can keep him on the charger for another 7 minutes."
+  "onboarding.CozmoNeedsCharge.finalMessage" : {
+    "translation" : "コズモはプレーする準備ができています。完全に彼のバッテリーを充電するには、別の7分間の充電器に彼を保つことができます。"
   },
-  "onboarding.Slide0": {
-    "translation": "Create a <b>great</b> play space "
+  "onboarding.Slide0" : {
+    "translation" : "作ります<b>すばらしいです</b>遊び場 "
   },
-  "onboarding.Slide2Header": {
-    "translation": "<b>Welcome!</b>"
+  "onboarding.Slide2Header" : {
+    "translation" : "<b>ようこそ！ </b>"
   },
-  "onboarding.Slide2": {
-    "translation": "Cozmo is a very special robot who needs a caring owner\n\n Follow the instructions carefully!"
+  "onboarding.Slide2" : {
+    "translation" : "コズモは、思いやりのある所有者が慎重に指示に従ってください必要がある非常に特別なロボットです！"
   },
-  "onboarding.Phase3.Header1": {
-    "translation": "Place a Power Cube in front of Cozmo"
+  "onboarding.Phase3.Header1" : {
+    "translation" : "コズモの前にパワーキューブを配置"
   },
-  "onboarding.Phase3.Body1": {
-    "translation": "It will turn <color=cyan>blue</color> when he can see it"
+  "onboarding.Phase3.Body1" : {
+    "translation" : "それは変わります<color=cyan>青</color>彼はそれを見ることができるとき"
   },
-  "onboarding.Phase3.Body2": {
-    "translation": "<b>Great!</b>\nJust like you, if the Cube is too close it's hard to see."
+  "onboarding.Phase3.Body2" : {
+    "translation" : "<b>すばらしいです！ </b>キューブが近すぎる場合はちょうどあなたのように、それが参照するのは難しいです。"
   },
-  "onboarding.Phase3.Header3": {
-    "translation": "He'll tell you when he's ready to proceed..."
+  "onboarding.Phase3.Header3" : {
+    "translation" : "彼は続行する準備ができているとき、彼はあなたを教えてあげましょう..."
   },
-  "onboarding.Phase3.Body3": {
-    "translation": "Let Cozmo inspect the Cube on his own"
+  "onboarding.Phase3.Body3" : {
+    "translation" : "コズモは自分でキューブを調べてみましょう"
   },
-  "onboarding.Phase3.Body4": {
-    "translation": "Well done!\nCozmo is ready to play!"
+  "onboarding.Phase3.Body4" : {
+    "translation" : "よくやった！コズモはプレーする準備ができています！"
   },
-  "onboarding.Phase3.ErrorCube": {
-    "translation": "The Cube has moved!"
+  "onboarding.Phase3.ErrorCube" : {
+    "translation" : "キューブは移動しました！"
   },
-  "onboarding.Phase3.ErrorCubeRightSideUp": {
-    "translation": "Lights Side Up!"
+  "onboarding.Phase3.ErrorCubeRightSideUp" : {
+    "translation" : "ライトはアップ側！"
   },
-  "onboarding.Phase3.ErrorCozmo": {
-    "translation": "<b>Tutorial Paused</b>\nCozmo needs to be on a stable, flat, surface and to explore on his own."
+  "onboarding.Phase3.ErrorCozmo" : {
+    "translation" : "<b>チュートリアル一時停止</b>コズモは安定した、平らな表面上にあるように、自分で探索する必要があります。"
   },
-  "onboarding.Phase3.ErrorFinal": {
-    "translation": "<b>Having Trouble?</b>\nMake sure Cozmo is on a flat, clean table. Cozmo may struggle on glass surfaces.\n\nIf you're still having issues, visit <b>support.anki.com</b> on another device."
+  "onboarding.Phase3.ErrorFinal" : {
+    "translation" : "<b>問題がありますか？ </b>コズモはフラット、きれいなテーブルの上にあることを確認します。コズモは、ガラス表面上に苦労することができます。それでも問題が解決しない場合は、訪問<b> support.anki.com </b>別のデバイス上。"
   },
-  "onboarding.Phase4.Body1a": {
-    "translation": "You've charged Cozmo's Emotion Chip! It's what makes him special and alive"
+  "onboarding.Phase4.Body1a" : {
+    "translation" : "あなたはコズモのエモーションチップを請求しました！それは彼が特別で生きて作るものです"
   },
-  "onboarding.Phase4.Body1b": {
-    "translation": "The more you play with Cozmo, the faster it will charge"
+  "onboarding.Phase4.Body1b" : {
+    "translation" : "あなたはコズモと遊ぶより、より速くそれが充電されます"
   },
-  "onboarding.Phase4.Body2a": {
-    "translation": "When the chip is fully charged..."
+  "onboarding.Phase4.Body2a" : {
+    "translation" : "チップが完全に充電されると..."
   },
-  "onboarding.Phase4.Body2b": {
-    "translation": "...open it to get more <color=#fe8f00ff>Bits</color> & <color=#11a2f0ff>Sparks</color>!"
+  "onboarding.Phase4.Body2b" : {
+    "translation" : "...多くを得るためにそれを開きます<color=#fe8f00ff>ビット</color> ＆ <color=#11a2f0ff>スパークス</color> ！"
   },
-  "onboarding.Phase4.Body3bits": {
-    "translation": "Use <color=#fe8f00ff>Bits</color> to unlock new Upgrades"
+  "onboarding.Phase4.Body3bits" : {
+    "translation" : "つかいます<color=#fe8f00ff>ビット</color>新しいアップグレードのロックを解除するには"
   },
-  "onboarding.Phase4.Body3sparks": {
-    "translation": "Use <color=#11a2f0ff>Sparks</color> to ask Cozmo to perform tricks"
+  "onboarding.Phase4.Body3sparks" : {
+    "translation" : "つかいます<color=#11a2f0ff>スパークス</color>トリックを実行するためにコズモを依頼します"
   },
-  "onboarding.Phase4.Body4": {
-    "translation": "Unlock Upgrades to give Cozmo new skills and abilities\n\nLet's unlock Stack Cubes now!"
+  "onboarding.Phase4.Body4" : {
+    "translation" : "それでは、スタックキューブのロックを解除してみましょうコズモに新しいスキルや能力を与えるためにアップグレードのロックを解除！"
   },
-  "onboarding.Phase5.Body2": {
-    "translation": "Each day you'll get a new set of Goals\n\nCompleting these is the quickest way to improve your Cozmo!"
+  "onboarding.Phase5.Body2" : {
+    "translation" : "あなたはこれらの完了目標の新しいセットを取得します毎日あなたのコズモを改善する最も簡単な方法です！"
   },
-  "onboarding.Phase5.Body3": {
-    "translation": "Cozmo Apps are games & activities you can play with Cozmo"
+  "onboarding.Phase5.Body3" : {
+    "translation" : "コズモアプリは、あなたがコズモと遊ぶことができるゲーム＆アクティビティです"
   },
-  "onboarding.Phase5.Body4": {
-    "translation": "Cozmo loves to spend time exploring the world, interacting with Cubes, and just hanging out!\n\nYou can see what\nCozmo is doing, here"
+  "onboarding.Phase5.Body4" : {
+    "translation" : "コズモは、世界を探検キューブとの相互作用、およびちょうどぶらぶら時間を過ごすのが大好き！あなたはここで、コズモが何をしているか見ることができます"
   },
-  "onboarding.Phase5.FinalButton": {
-    "translation": "Let's Play"
+  "onboarding.Phase5.FinalButton" : {
+    "translation" : "遊ぼう"
   },
-  "onboarding.Slide0a": {
-    "translation": "Put Cozmo on a clean, open table in a well lit room"
+  "onboarding.Slide0a" : {
+    "translation" : "よく明るい部屋で清潔、オープンテーブルの上にコズモを入れて"
   },
-  "onboarding.GreatPlaySpace2Header": {
-    "translation": "Keep Cozmo Safe"
+  "onboarding.GreatPlaySpace2Header" : {
+    "translation" : "コズモ安全を保ちます"
   },
-  "onboarding.GreatPlaySpace2Footer": {
-    "translation": "Cozmo will try to avoid falling, but just like a pet, he might need your help."
+  "onboarding.GreatPlaySpace2Footer" : {
+    "translation" : "コズモは転倒しないようにしようとしますが、ちょうどペットのように、彼はあなたの助けが必要になる場合があります。"
   },
-  "onboarding.OldRobotSkip": {
-    "translation": "This Cozmo has already been through the Tutorial. Would you like to Skip it, or Start it again?"
+  "onboarding.OldRobotSkip" : {
+    "translation" : "このコズモはすでにチュートリアルを完了したものです。あなたはそれをスキップする、またはそれを再度起動しますか？"
   },
-  "onboarding.FreeplayStringFakeOnboarding": {
-    "translation": "Cozmo is ready and waiting to play"
+  "onboarding.FreeplayStringFakeOnboarding" : {
+    "translation" : "コズモの準備が整い、遊ぶのを待っています"
   },
-  "onboarding.BirthWait": {
-    "translation": "Watch Cozmo come to life"
+  "onboarding.BirthWait" : {
+    "translation" : "ウォッチコズモは生命に来ます"
   },
-  "onboarding.Phase4.Body5": {
-    "translation": "Now Cozmo can Stack Cubes!\n\nWatch him try out his new skill now..."
+  "onboarding.Phase4.Body5" : {
+    "translation" : "今コズモは、キューブをスタックすることができます！彼は今彼の新しいスキルを試して見てください..."
   }
 }

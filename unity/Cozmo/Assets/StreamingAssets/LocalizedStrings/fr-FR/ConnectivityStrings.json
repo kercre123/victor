@@ -1,105 +1,93 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "connectivity.connectingToCozmoText": {
-    "translation": "Connecting to your Cozmo..."
+  "connectivity.connectingToCozmoText" : {
+    "translation" : "Connexion à votre Cozmo ..."
   },
-  "connectivity.searchForCozmoFailedText": {
-    "translation": "You need to connect to Cozmo"
+  "connectivity.searchForCozmoFailedText" : {
+    "translation" : "Vous devez vous connecter à Cozmo"
   },
-  "connectivity.moreInfo": {
-    "translation": "More Info"
+  "connectivity.moreInfo" : {
+    "translation" : "Plus d'informations"
   },
-  "connectivity.turnCozmoOn": {
-    "translation": "Turn Cozmo On"
+  "connectivity.turnCozmoOn" : {
+    "translation" : "Tournez Cozmo Sur"
   },
-  "connectivity.connectInWifiSettings": {
-    "translation": "Connect in WiFi Settings"
+  "connectivity.connectInWifiSettings" : {
+    "translation" : "Se connecter dans Paramètres WiFi"
   },
-  "connectivity.searchingForCozmo": {
-    "translation": "Searching for Cozmo..."
+  "connectivity.searchingForCozmo" : {
+    "translation" : "Recherche de Cozmo ..."
   },
-  "connectivity.securingConnection": {
-    "translation": "Securing your connection..."
+  "connectivity.securingConnection" : {
+    "translation" : "Sécuriser votre connexion ..."
   },
-  "connection.wakingUpCozmo": {
-    "translation": "Waking up Cozmo..."
+  "connection.wakingUpCozmo" : {
+    "translation" : "Se réveiller Cozmo ..."
   },
-  "connectivity.updatingFirmware": {
-    "translation": "Updating your Cozmo..."
+  "connectivity.updatingFirmware" : {
+    "translation" : "Mise à jour de votre Cozmo ..."
   },
-  "connectivity.updatingFirmwareSubTitle": {
-    "translation": "Please keep Cozmo on his charger"
+  "connectivity.updatingFirmwareSubTitle" : {
+    "translation" : "S'il vous plaît garder Cozmo sur son chargeur"
   },
-  "connectivity.updatingFirmwareFooter": {
-    "translation": "You will need to reconnect to Cozmo's WiFi after the update completes"
+  "connectivity.updatingFirmwareFooter" : {
+    "translation" : "Vous aurez besoin de se reconnecter au WiFi de Cozmo après la mise à jour terminée"
   },
-  "connectivity.pairingPinTitle": {
-    "translation": "Enter the pin shown on your Cozmo"
+  "connectivity.pairingPinTitle" : {
+    "translation" : "Entrez la broche indiquée sur votre Cozmo"
   },
-  "connectivity.invalidPinTitle": {
-    "translation": "Invalid Pin"
+  "connectivity.invalidPinTitle" : {
+    "translation" : "Pin non valide"
   },
-  "connectivity.updateApp": {
-    "translation": "You must update your Cozmo App to continue"
+  "connectivity.updateApp" : {
+    "translation" : "Vous devez mettre à jour votre application Cozmo pour continuer"
   },
-  "connectivity.pullTabsTitle": {
-    "translation": "Pull the tabs on your Power Cubes"
+  "connectivity.pullTabsTitle" : {
+    "translation" : "Tirez les onglets sur votre Power Cubes"
   },
-  "connectivity.enterDOB": {
-    "translation": "Enter your birthday"
+  "connectivity.enterDOB" : {
+    "translation" : "Entrez votre anniversaire"
   },
-  "connectivity.enterName": {
-    "translation": "Enter your first name"
+  "connectivity.enterName" : {
+    "translation" : "Entrez votre prénom"
   },
-  "connectivity.pairingDesc": {
-    "translation": "This step is required when connecting from a new device"
+  "connectivity.pairingDesc" : {
+    "translation" : "Cette étape est nécessaire lors de la connexion d'un nouveau périphérique"
   },
-  "connectivity.cozmoSleepTitle": {
-    "translation": "Going to Sleep"
+  "connectivity.cozmoSleepTitle" : {
+    "translation" : "Aller dormir"
   },
-  "connectivity.cozmoSleepDesc": {
-    "translation": "Cozmo is going to sleep and will disconnect soon"
+  "connectivity.cozmoSleepDesc" : {
+    "translation" : "Cozmo va dormir et se déconnecter rapidement"
   },
-  "connectivity.cozmoLowBatteryTitle": {
-    "translation": "Cozmo is Low on Battery"
+  "connectivity.cozmoLowBatteryTitle" : {
+    "translation" : "Cozmo est faible sur la batterie"
   },
-  "connectivity.cozmoLowBatteryDesc": {
-    "translation": "Please place Cozmo on his charger"
+  "connectivity.cozmoLowBatteryDesc" : {
+    "translation" : "S'il vous plaît placer Cozmo sur son chargeur"
   },
-  "connectivity.keepCozmoOnCharger": {
-    "translation": "Please leave Cozmo on his charger during Setup"
+  "connectivity.keepCozmoOnCharger" : {
+    "translation" : "S'il vous plaît laissez Cozmo sur son chargeur lors de l'installation"
   },
-  "connectivity.placeCozmoOnCharger": {
-    "translation": "Place Cozmo on his charger"
+  "connectivity.placeCozmoOnCharger" : {
+    "translation" : "Placez Cozmo sur son chargeur"
   },
-  "connectivity.replaceCozmoOnCharger": {
-    "translation": "Remove and replace Cozmo on his charger"
+  "connectivity.replaceCozmoOnCharger" : {
+    "translation" : "Retirer et remplacer Cozmo sur son chargeur"
   },
-  "label.getHelp": {
-    "translation": "Get Help"
+  "label.getHelp" : {
+    "translation" : "Obtenir de l'aide"
   },
-  "label.cubesNotWorking": {
-    "translation": "Cubes not working?"
+  "label.cubesNotWorking" : {
+    "translation" : "Cubes ne fonctionne pas?"
   },
-  "connectivity.connectionRejected.title": {
-    "translation": "Another Device is connected to Cozmo\nPlease disconnect that Device and try again"
+  "connectivity.connectionRejected.title" : {
+    "translation" : "Un autre appareil est connecté à Cozmo S'il vous plaît déconnectez que l'appareil et essayez à nouveau"
   }
 }

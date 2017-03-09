@@ -8,22 +8,15 @@
 #include "hal/cube.h"
 #include "hal/monitor.h"
 #include "hal/motorled.h"
+#include "hal/portable.h"
+#include "app/app.h"
 #include "app/fixture.h"
 #include "binaries.h"
 
-const int ENCODER_DETECT_VOLTAGE = 1400;  // Above 1400mV, an encoder is probably pulling us up
+//buttonTest.c
+extern void ButtonTest(void);
 
-void AllOn()
-{
-  // Light up all the LEDs in fixture 2B
-  if (g_fixtureType == FIXTURE_MOTOR2B_TEST)
-  {
-    static int x = 0;
-    LEDOn(x++); 
-    if (x >= 12)
-      x = 0;
-  }
-}
+const int ENCODER_DETECT_VOLTAGE = 1400;  // Above 1400mV, an encoder is probably pulling us up
 
 // Return true if device is detected on contacts
 bool MotorDetect(void)
@@ -33,30 +26,27 @@ bool MotorDetect(void)
   PIN_IN(GPIOA, PINA_ENCLED);
   if (GrabADC(PINA_ENCLED) > ENCODER_DETECT_VOLTAGE)
   {
-    for (int i = 0; i < 11; i++)
-    {
-      AllOn();
+    for (int i = 0; i < LEDCnt(); i++) {
+      if (g_fixtureType == FIXTURE_MOTOR2H_TEST)
+        LEDOn(i);
       MicroWait(150);  // Extra debounce time
     }
+    
+    if (g_fixtureType == FIXTURE_MOTOR2H_TEST)
+      LEDOn(255); //turn off
+
     return true;
   }
   return false;
 }
 
-
-const int LED_COUNT = 12;
 typedef enum { SHORT, RED, GREEN, BLUE, OPEN } VoltRange;
-const VoltRange LED_MAP[LED_COUNT] =
-{ GREEN, BLUE, RED,
-  BLUE, GREEN, RED,
-  BLUE, GREEN, RED,
-  RED,  OPEN,  RED };
+const char * VoltRangeStr[] = { "SHORT", "RED", "GREEN", "BLUE", "OPEN" };
 
 // Check which 'voltage range' (0-4) an LED is in
 // 0:SHORT, 1:RED, 2:GREEN, 3:BLUE, 4:OPEN
-VoltRange GetLEDRange(int x)
+VoltRange ledmv2voltrange(int x)
 {
-  x = LEDTest(x);
   if (x < 1200)
     return SHORT;
   if (x < 1800)
@@ -68,22 +58,52 @@ VoltRange GetLEDRange(int x)
   return OPEN;
 }
 
-// Test LEDs if present - if not wired up, maybe pass anyway?
-void TestLEDs(void)
+//separate for extern usage
+void TestLED(int i)
+{
+  //get voltages
+  int mv_meas = LEDGetHighSideMv(i);
+  int mv_exp  = LEDGetExpectedMv(i);
+  
+  //convert to voltage ranges
+  VoltRange vrmeas = ledmv2voltrange( mv_meas );
+  VoltRange vrexp  = ledmv2voltrange( mv_exp );
+  
+  ConsolePrintf("led,%d,%i,%i,%s,%s\r\n", i, mv_meas, mv_exp, VoltRangeStr[vrmeas], VoltRangeStr[vrexp]);
+  
+  if( vrmeas != vrexp )
+    throw ERROR_BACKPACK_LED;
+}
+
+static void m_TestLEDs(void)
 {
   // Check the LEDs forward and backward for faults
-  for (int i = 0; i < 12; i++)
-    if (GetLEDRange(i) != LED_MAP[i])
-      throw ERROR_BACKPACK_LED;
-  for (int i = 11; i >= 0; i--)
-    if (GetLEDRange(i) != LED_MAP[i])
-      throw ERROR_BACKPACK_LED;
+  for (int i = 0; i < LEDCnt(); i++)
+    TestLED(i);
+  for (int i = LEDCnt()-1; i >= 0; i--)
+    TestLED(i);
+}
+
+// Test LEDs if present - if not wired up, maybe pass anyway?
+static void TestLEDs(void)
+{
+  //x attempts before fail
+  int x=3;
+  while(1) {
+    try { m_TestLEDs(); break; }
+    catch(int e) {
+      if(--x <= 0)
+        throw e;
+      ConsolePrintf("error %d\r\n", e);
+      MicroWait(150*1000); //extra insertion delay before next attempt
+    }
+  }
 }
 
 // Test encoder (not motor)
 const int MIN_ENC_ON = 2310, MAX_ENC_OFF = 800;   // In millivolts (with padding) - must be 0.3x to 0.7x VDD
 const int ENC_SLOW_US = 1000;
-const int ENC_A_US = 200, ENC_B_US = 200;   // Rise/fall time for 2.5KHz (since real thing must get to 2KHz)
+const int ENC_L_US = 200, ENC_H_US = 200;   // Rise/fall time for 2.5KHz (since real thing must get to 2KHz)
 void TestEncoders(void)
 {
   // Read encoder when turned on and off
@@ -103,7 +123,7 @@ void TestEncoders(void)
       throw ERROR_ENCODER_FAULT;
 
   // "Warm up" encoder by toggling the LED, then grab "A" side on last toggle
-  const int ENC_US = (g_fixtureType == FIXTURE_MOTOR1A_TEST) ? ENC_A_US : ENC_B_US;
+  const int ENC_US = (g_fixtureType == FIXTURE_MOTOR1L_TEST) ? ENC_L_US : ENC_H_US;
   for (int i = 0; i < 50; i++)
   {
     ReadEncoder(true, ENC_US, ona, onb);
@@ -123,13 +143,13 @@ void TestEncoders(void)
 // Count encoder ticks, check direction, and collect min/max a/b values
 const int OVERSAMPLE = 18;    // 2^N samples
 const int ENC_LOW = 1000, ENC_HIGH = 2300;   // Low/high threshold
-int MeasureMotor(int speed, bool fast)
+int MeasureMotor(int speed, bool fast, bool reverse = false )
 {
   int mina = 2800, minb = 2800, maxa = 0, maxb = 0;
   bool ahi = 0, bhi = 0;
   int aticks = 0, bticks = 0;
   
-  MotorMV(speed);
+  MotorMV(speed, reverse);
   MicroWait(250000);  // Spin up time
 
   // Collect samples at full speed
@@ -164,51 +184,122 @@ int MeasureMotor(int speed, bool fast)
       minb = b;
     getMicroCounter();  // Required to measure long intervals
   }
-  int hz = (aticks*15625)/((getMicroCounter()-start)>>6);  // Rising edges per second
+  u32 test_time = getMicroCounter()-start;
+  MotorMV(0);
+  
+  //Keep the old-style debug printing so we can do comparisons
+  int hz = (ABS(aticks)*15625)/((int)(test_time>>6));  // Rising edges per second
   int normalized = aticks >> (OVERSAMPLE-13);   // Original calibration was at OVERSAMPLE=13
   ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n", speed, normalized, hz, aticks, mina, maxa, bticks, minb, maxb);
-  MotorMV(0);
+  
+  //Add new verbose printing
+  int a_hz = ABS( (aticks*15625)/((int)(test_time>>6)) );
+  int b_hz = ABS( (bticks*15625)/((int)(test_time>>6)) );
+  int a_norm = aticks>>(OVERSAMPLE-13);
+  int b_norm = bticks>>(OVERSAMPLE-13);
+  ConsolePrintf("motortest,%s,speed=%d,time=%dus\r\n", reverse?"rev":"fwd", speed, test_time);
+  ConsolePrintf("  a:ticks,norm,hz,min,max = %i,%i,%i,%i,%i\r\n", aticks, a_norm, a_hz, mina, maxa );
+  ConsolePrintf("  b:ticks,norm,hz,min,max = %i,%i,%i,%i,%i\r\n", bticks, b_norm, b_hz, minb, maxb );
   
   // Throw some errors - note that 'fast' tests are really checking the encoder (not wiring)
   int diff = aticks-bticks;
   if (diff > 2 || diff < -2)
     throw fast ? ERROR_ENCODER_SPEED_FAULT : ERROR_ENCODER_FAULT;
-  if (aticks < 0)
+  if ( (!reverse && aticks < 0) || (reverse && aticks > 0) )
     throw fast ? ERROR_ENCODER_RISE_TIME : ERROR_MOTOR_BACKWARD;
   
-  return normalized;
+  return a_norm;
 }
 
-// Motor A: Lift motor with encoders
-const int MOTOR_LOW_MV = 1000, MOTOR_FULL_MV = 5000;   // In millivolts
-void TestMotorA(void)
+const int MOTOR_LOW_MV = 1200, MOTOR_FULL_MV = 5000;   // In millivolts
+void TestMotor(void)
 {
-  const int TICKS_SLOW = 10;
-  const int TICKS_FAST = 80;
-  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)
+  const int TICKS_SLOW = 10 / 2;  //adjust for reduced flag cnt on new motors
+  const int TICKS_FAST = 80 / 2;  //"
+  int mm_fwd_low, mm_fwd_full, mm_rev_low, mm_rev_full;
+  
+  mm_fwd_low  = MeasureMotor(MOTOR_LOW_MV, false);
+  mm_fwd_full = MeasureMotor(MOTOR_FULL_MV, true);
+  
+  ConsolePrintf("motor brake...");
+  MotorMV(-1); //motor brake before reverse direction
+  MicroWait(100*1000);
+  MotorMV(0); //high-Z. allow motor to float for bit
+  MicroWait(250*1000);
+  ConsolePrintf("release\r\n");
+  
+  mm_rev_low = MeasureMotor(MOTOR_LOW_MV, false, true);
+  mm_rev_full = MeasureMotor(MOTOR_FULL_MV, true, true);
+  
+  if (mm_fwd_low < TICKS_SLOW)    //Forward slow
     throw ERROR_MOTOR_SLOW;
-  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)
-    throw ERROR_MOTOR_FAST;    
+  if (mm_fwd_full < TICKS_FAST)   //Forward fast
+    throw ERROR_MOTOR_FAST;
+  if (-mm_rev_low < TICKS_SLOW)   //Reverse slow
+    throw ERROR_MOTOR_SLOW;
+  if (-mm_rev_full < TICKS_FAST)  //Reverse fast
+    throw ERROR_MOTOR_FAST;
 }
 
-// Motor B (head motor) makes about same number of ticks
-void TestMotorB(void)
+// MotorL: Lift motor with encoders
+void TestMotorL(void)
 {
-  const int TICKS_SLOW = 10;
-  const int TICKS_FAST = 80;
-  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)
-    throw ERROR_MOTOR_SLOW;
-  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)
-    throw ERROR_MOTOR_FAST;    
+  //x attempts before fail
+  int x=1;
+  while(1) {
+    try { 
+      TestMotor(); 
+      break;
+    } catch(int e) { 
+      if(--x <= 0)
+        throw e;
+      else
+        MicroWait(350*1000);
+    }
+  }
+}
+
+// MotorH (head motor) makes about same number of ticks
+void TestMotorH(void)
+{
+  TestMotorL();
+}
+
+//enforce hardware compatibility for motor tests
+static void CheckFixtureCompatibility(void)
+{
+  ConsolePrintf("fixture rev %s\r\n", GetBoardRevStr());
+  
+  //new tests require v1.5 hardware w/ H-Bridge driver
+  if( g_fixtureRev < BOARD_REV_1_5_0 )
+    throw ERROR_INCOMPATIBLE_FIX_REV;
 }
 
 // List of all functions invoked by the test, in order
-TestFunction* GetMotor1TestFunctions(void)
+TestFunction* GetMotor1LTestFunctions(void)
 {
   static TestFunction functions[] =
   {
     // LEDs are not yet wired in at this station
-    TestEncoders,   // 1A (lift) and 1B (head) use same test
+    TestEncoders,   // 1L (lift) and 1H (head) use same test
+    NULL
+  };
+
+  return functions;
+}
+
+TestFunction* GetMotor1HTestFunctions(void)
+{
+  return GetMotor1LTestFunctions();
+}
+
+// List of all functions invoked by the test, in order
+TestFunction* GetMotor2LTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    CheckFixtureCompatibility,
+    TestMotorL,
     NULL
   };
 
@@ -216,24 +307,14 @@ TestFunction* GetMotor1TestFunctions(void)
 }
 
 // List of all functions invoked by the test, in order
-TestFunction* GetMotor2ATestFunctions(void)
+TestFunction* GetMotor2HTestFunctions(void)
 {
   static TestFunction functions[] =
   {
-    TestMotorA,
-    NULL
-  };
-
-  return functions;
-}
-
-// List of all functions invoked by the test, in order
-TestFunction* GetMotor2BTestFunctions(void)
-{
-  static TestFunction functions[] =
-  {
+    CheckFixtureCompatibility,
     TestLEDs,
-    TestMotorB,
+    ButtonTest,
+    TestMotorH,
     NULL
   };
 

@@ -3,8 +3,11 @@
 #include "MK02F12810.h"
 
 #include "hardware.h"
+#include "watchdog.h"
 #include "power.h"
 #include "anki/cozmo/robot/buildTypes.h"
+
+#include "uart.h"
 
 namespace Anki
 {
@@ -93,13 +96,41 @@ namespace Anki
 
         void enterSleepMode(void)
         {
+          __disable_irq();
+          Watchdog::suspend();
+
+          // Don't go into low power mode for approximately 20ms, giving
+          // the body time to acknowledge that the head went away
+          MicroWait(20000);
+
+          // TODO: DISABLE IMU
+          // TODO: DISABLE OLED
+          // TODO: DISABLE CAMERA
+
+          // NOTE: WE SHOULDN'T BE RIPPING POWER AWAY
+          GPIO_RESET(POWEREN);
+
+          // Turn off all perfs except GPIO
+          SIM_SCGC6 &= ~(SIM_SCGC6_FTM1_MASK | SIM_SCGC6_FTM2_MASK | SIM_SCGC6_DMAMUX_MASK | SIM_SCGC6_DAC0_MASK | SIM_SCGC6_PDB_MASK | SIM_SCGC6_SPI0_MASK);
+          SIM_SCGC7 &= ~SIM_SCGC7_DMA_MASK;
+          SIM_SCGC4 &= ~(SIM_SCGC4_UART1_MASK | SIM_SCGC4_UART0_MASK | SIM_SCGC4_I2C0_MASK);
+
+          // Go into low frequency oscillator mode
+          MCG_C2 &= ~MCG_C2_IRCS_MASK; // Internal reference clock is slow (32khz)
+          MCG_C1 = (MCG_C1 & MCG_C1_CLKS_MASK) | MCG_C1_CLKS(1);
+
+          // Treat the receive pin as a gpio (look for handshake)
+          GPIO_RESET(BODY_UART_TX);
+          GPIO_OUT(BODY_UART_TX);
+          SOURCE_SETUP(BODY_UART_TX, SourceGPIO);
+
+          GPIO_IN(BODY_UART_RX);
+          SOURCE_SETUP(BODY_UART_RX, SourceGPIO);
+
+          // Wait to see the line pulled low
+          while (!GPIO_READ(BODY_UART_RX)) ;
+          
           NVIC_SystemReset();
-        }
-        
-        void disableExternal(void)
-        {
-          // TODO: CHANGE CLOCK TO INTERNAL OSCILLATOR
-          // TODO: TURN OFF POWER TO ESPRESSIF
         }
       }
     }

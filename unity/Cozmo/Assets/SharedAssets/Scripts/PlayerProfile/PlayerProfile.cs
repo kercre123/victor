@@ -34,56 +34,22 @@ namespace DataPersistence {
     public Dictionary<string, int> TotalGamesPlayed;
 
     public int MaximumStreak;
+    public int CurrentStreak;
+    public int TotalSessions;
+    // Just displayed in profile tab, hopefully we can kill this later.
+    public int TotalDailyGoalsCompleted;
+    // Mainly just for logging, but different from sessions in that you need to connect.
+    public int DaysWithCozmo;
 
     public List<Anki.Cozmo.UnlockId> NewUnlocks;
 
     public List<string> PreviousTags;
 
-    /// <summary>
-    /// Gets the total daily goals completed across all past sessions.
-    /// </summary>
-    /// <value>The total daily goals completed.</value>
-    public int TotalDailyGoalsCompleted {
-      get {
-        int total = 0;
-        for (int i = 0; i < Sessions.Count; i++) {
-          for (int j = 0; j < Sessions[i].DailyGoals.Count; j++) {
-            if (Sessions[i].DailyGoals[j].GoalComplete) {
-              total++;
-            }
-          }
-        }
-        return total;
-      }
-    }
-
-    /// <summary>
-    /// Gets the total number of sessions that you completed every daily goal in across all past sessions.
-    /// </summary>
-    /// <value>The total full sets of goals completed.</value>
-    public int TotalFullSetsOfGoalsCompleted {
-      get {
-        int total = 0;
-        for (int i = 0; i < Sessions.Count; i++) {
-          bool allDone = (Sessions[i].DailyGoals.Count > 0);
-          for (int j = 0; j < Sessions[i].DailyGoals.Count; j++) {
-            if (Sessions[i].DailyGoals[j].GoalComplete == false) {
-              allDone = false;
-              break;
-            }
-          }
-          if (allDone) {
-            total++;
-          }
-        }
-        return total;
-      }
-    }
-
     public Dictionary<OnboardingManager.OnboardingPhases, int> OnboardingStages;
 
+    public static int kSaveVersionCurrent = 1;
     // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
-    public int SaveVersion;
+    public int SaveVersion = kSaveVersionCurrent;
 
     public PlayerProfile() {
       FirstTimeUserFlow = true;
@@ -99,8 +65,12 @@ namespace DataPersistence {
       GameInstructionalVideoPlayed = new Dictionary<string, bool>();
       CozmoSkillLevels = new Dictionary<string, DataPersistence.GameSkillData>();
       Inventory = new Cozmo.Inventory();
-      SaveVersion = 0;
+      SaveVersion = kSaveVersionCurrent;
       MaximumStreak = 0;
+      CurrentStreak = 0;
+      TotalSessions = 0;
+      DaysWithCozmo = 0;
+      TotalDailyGoalsCompleted = 0;
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
       PreviousTags = new List<string>();

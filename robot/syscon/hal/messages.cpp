@@ -5,6 +5,7 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
 #include "hardware.h"
+#include "portable.h"
 #include "lights.h"
 #include "cubes.h"
 #include "messages.h"
@@ -46,10 +47,6 @@ struct QueueSlot {
 
 static const int QUEUE_DEPTH = 32;
 static QueueSlot queue[QUEUE_DEPTH];
-
-static void Process_diffieHellmanResults(const DiffieHellmanResults& msg) {
-  Bluetooth::diffieHellmanResults(msg);
-}
 
 static void Process_sendDTMCommand(const RobotInterface::SendDTMCommand& msg) {
   DTM::testCommand(msg.command, msg.freq, msg.length, msg.payload);
@@ -130,9 +127,12 @@ static void Process_setBodyRadioMode(const SetBodyRadioMode& msg) {
   Battery::setOperatingMode(msg.radioMode);
 }
 
-static void Process_enterPairing(const EnterPairing& msg)
-{
-  Bluetooth::enterPairing(msg);
+static void Process_bleSendData(const BLE::SendData& msg) {
+  Bluetooth::sendFrame(&msg.frame);
+}
+
+static void Process_bleDisconnect(const BLE::Disconnect& msg) {
+  Bluetooth::disconnect(msg.reason);
 }
 
 static void Process_setHeadlight(const RobotInterface::SetHeadlight& msg)
@@ -206,7 +206,7 @@ void Spine::processMessages(const uint8_t* buf) {
     if (msg.tag <= RobotInterface::TO_BODY_END) {
       switch(msg.tag)
       {
-        #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x27.def"
+        #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"
         case RobotInterface::GLOBAL_INVALID_TAG:
           // pass
           break ;
@@ -247,12 +247,6 @@ void Spine::dequeue(uint8_t* dest) {
 
 bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
 {
-  // Forward further down the pipe
-  if (msgID >= 0x28 && msgID <= 0x2F)
-  {
-    return Bluetooth::transmit((const uint8_t*)buffer, size, msgID);
-  }
-  
   // Error cases for spine communication
   if (size > SPINE_MAX_CLAD_MSG_SIZE_UP)
   {

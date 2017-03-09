@@ -1,144 +1,132 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "reward.description.Missing": {
-    "translation": "Missing description"
+  "reward.description.Missing" : {
+    "translation" : "Fehlende Beschreibung"
   },
-  "reward.description.Freeplay.Spark": {
-    "translation": "Spark an Upgrade"
+  "reward.description.Freeplay.Spark" : {
+    "translation" : "Funken eines Upgrade"
   },
-  "reward.description.Freeplay.CompleteBehavior.Stack": {
-    "translation": "completing the 'Stack Cubes' behavior successfully"
+  "reward.description.Freeplay.CompleteBehavior.Stack" : {
+    "translation" : "die 'Stack Cubes' Verhalten erfolgreichen Abschluss"
   },
-  "reward.description.Freeplay.CompleteBehavior.Pounce": {
-    "translation": "completing the 'Pounce On Fingers' behavior successfully"
+  "reward.description.Freeplay.CompleteBehavior.Pounce" : {
+    "translation" : "erfolgreichen Abschluss der \"Anspringen On Fingers 'Verhalten"
   },
-  "reward.description.Freeplay.CompleteBehavior.Pyramid": {
-    "translation": "completing the 'Build a Pyramid' behavior successfully"
+  "reward.description.Freeplay.CompleteBehavior.Pyramid" : {
+    "translation" : "die \"bauen eine Pyramide 'Verhalten erfolgreichen Abschluss"
   },
-  "reward.description.Freeplay.CompleteBehavior.PopWheelie": {
-    "translation": "completing the 'Pop a Wheelie' behavior successfully"
+  "reward.description.Freeplay.CompleteBehavior.PopWheelie" : {
+    "translation" : "die \"Pop einen Wheelie 'Verhalten erfolgreichen Abschluss"
   },
-  "reward.description.Freeplay.CompleteBehavior.FistBump": {
-    "translation": "completing the 'Fist Bump' behavior successfully"
+  "reward.description.Freeplay.CompleteBehavior.FistBump" : {
+    "translation" : "erfolgreichen Abschluss der \"Faust-Stoß-Verhalten"
   },
-  "reward.description.MemoryMatch.Played.Solo": {
-    "translation": "Played a game of Memory Match in Solo mode"
+  "reward.description.MemoryMatch.Played.Solo" : {
+    "translation" : "Gespielt eine Partie Memory Match in Solo-Modus"
   },
-  "reward.description.MemoryMatch.Played.Vs": {
-    "translation": "Played a game of Memory Match in Vs. mode"
+  "reward.description.MemoryMatch.Played.Vs" : {
+    "translation" : "Gespielt ein Spiel von Memory Match in Vs. Modus"
   },
-  "reward.description.MemoryMatch.WinGame.Vs": {
-    "translation": "Won a game of Memory Match in Vs. mode"
+  "reward.description.MemoryMatch.WinGame.Vs" : {
+    "translation" : "ein Spiel von Memory Match gewann in Vs. Modus"
   },
-  "reward.description.MemoryMatch.Lives.OneLeft": {
-    "translation": "Won Memory Match Vs. mode on your last life"
+  "reward.description.MemoryMatch.Lives.OneLeft" : {
+    "translation" : "Won Memory Match Vs. Modus auf Ihrem letzten Leben"
   },
-  "reward.description.MemoryMatch.Lives.TwoLeft": {
-    "translation": "Won Memory Match Vs. mode with two lives left"
+  "reward.description.MemoryMatch.Lives.TwoLeft" : {
+    "translation" : "Won Memory Match Vs. Modus mit zwei Leben gelassen"
   },
-  "reward.description.MemoryMatch.Lives.ThreeLeft": {
-    "translation": "Won Memory Match Vs. mode without losing a life"
+  "reward.description.MemoryMatch.Lives.ThreeLeft" : {
+    "translation" : "Won Memory Match Vs. Modus ohne ein Leben zu verlieren"
   },
-  "reward.description.MemoryMatch.PatternLength.Five": {
-    "translation": "Completed a Memory Match pattern > 5 lights long."
+  "reward.description.MemoryMatch.PatternLength.Five" : {
+    "translation" : "Abgeschlossene lange ein Memory Match Muster> 5 leuchtet."
   },
-  "reward.description.MemoryMatch.PatternLength.Ten": {
-    "translation": "Completed a Memory Match pattern > 10 lights long."
+  "reward.description.MemoryMatch.PatternLength.Ten" : {
+    "translation" : "Abgeschlossene lange ein Memory Match Muster> 10 Leuchten."
   },
-  "reward.description.MemoryMatch.PatternLength.Twenty": {
-    "translation": "Completed a Memory Match pattern > 20 lights long."
+  "reward.description.MemoryMatch.PatternLength.Twenty" : {
+    "translation" : "Abgeschlossene lange ein Memory Match Muster> 20 Lichter."
   },
-  "reward.description.MemoryMatch.HighScore.Solo": {
-    "translation": "Set a new pattern record for Memory Match solo"
+  "reward.description.MemoryMatch.HighScore.Solo" : {
+    "translation" : "Legen Sie ein neues Muster Rekord für Memory Match Solo"
   },
-  "reward.description.QuickTap.Played": {
-    "translation": "Played a game of Quick Tap"
+  "reward.description.QuickTap.Played" : {
+    "translation" : "Gespielt ein Spiel von Quick Tap"
   },
-  "reward.description.QuickTap.WinGame.OneColor": {
-    "translation": "Won a game of Quick Tap in 'One Color' mode"
+  "reward.description.QuickTap.WinGame.OneColor" : {
+    "translation" : "Gewann ein Spiel von Quick Tap in 'One Color' Modus"
   },
-  "reward.description.QuickTap.WinGame.TwoColor": {
-    "translation": "Won a game of Quick Tap in 'Two Colors' mode"
+  "reward.description.QuickTap.WinGame.TwoColor" : {
+    "translation" : "Gewann in \"Zwei Farben\" -Modus ein Spiel von Quick Tap"
   },
-  "reward.description.QuickTap.WinGame.ThreeColor": {
-    "translation": "Won a game of Quick Tap in 'Three Colors' mode"
+  "reward.description.QuickTap.WinGame.ThreeColor" : {
+    "translation" : "Gewann in \"Drei Farben\" -Modus ein Spiel von Quick Tap"
   },
-  "reward.description.QuickTap.WinGame.FourColor": {
-    "translation": "Won a game of Quick Tap in 'Four Colors' mode"
+  "reward.description.QuickTap.WinGame.FourColor" : {
+    "translation" : "Gewann in 'Vier Farben-Modus ein Spiel von Quick Tap"
   },
-  "reward.description.QuickTap.Accuracy.50": {
-    "translation": "Finished a game of Quick Tap with tap accuracy >50%"
+  "reward.description.QuickTap.Accuracy.50" : {
+    "translation" : "ein Spiel von Quick Tap mit Leitungs Genauigkeit> 50% Finished"
   },
-  "reward.description.QuickTap.Accuracy.75": {
-    "translation": "Finished a game of Quick Tap with tap accuracy >75%"
+  "reward.description.QuickTap.Accuracy.75" : {
+    "translation" : "ein Spiel von Quick Tap mit Leitungs Genauigkeit> 75% Finished"
   },
-  "reward.description.QuickTap.Accuracy.100": {
-    "translation": "Finished a game of Quick Tap with 100% tap accuracy!"
+  "reward.description.QuickTap.Accuracy.100" : {
+    "translation" : "ein Spiel von Quick Tap mit 100% Leitungs Genauigkeit Fertig!"
   },
-  "reward.description.QuickTap.Shutout.SingleRound": {
-    "translation": "Won a round of Quick Tap 5 to 0"
+  "reward.description.QuickTap.Shutout.SingleRound" : {
+    "translation" : "Gewann eine Runde Schnell Tap 5-0"
   },
-  "reward.description.QuickTap.TieBreaker.OneRound": {
-    "translation": "Won a round of Quick Tap after being tied 4-4"
+  "reward.description.QuickTap.TieBreaker.OneRound" : {
+    "translation" : "eine Runde Schnell Tap Won nach 4-4 gebunden zu sein"
   },
-  "reward.description.QuickTap.PlayMP": {
-    "translation": "Played QuickTap Human vs Human vs Cozmo"
+  "reward.description.QuickTap.PlayMP" : {
+    "translation" : "Gespielt QuickTap Mensch gegen Mensch gegen Cozmo"
   },
-  "reward.description.Keepaway.Played": {
-    "translation": "Played a game of Keepaway"
+  "reward.description.Keepaway.Played" : {
+    "translation" : "Gespielt ein Spiel von Keepaway"
   },
-  "reward.description.Keepaway.Won": {
-    "translation": "Won a game of Keepaway"
+  "reward.description.Keepaway.Won" : {
+    "translation" : "Gewann ein Spiel von Keepaway"
   },
-  "reward.description.Keepaway.Shutout": {
-    "translation": "Won a game of Keepaway 5 to 0"
+  "reward.description.Keepaway.Shutout" : {
+    "translation" : "Gewann ein Spiel von Keepaway 5-0"
   },
-  "reward.description.Keepaway.TieBreaker": {
-    "translation": "Won Keepaway after being tied 4-4"
+  "reward.description.Keepaway.TieBreaker" : {
+    "translation" : "Gewann Keepaway nach 4-4 gebunden zu sein"
   },
-  "reward.description.Explorer.Time.5": {
-    "translation": "Played Explorer Mode for longer than 5 minutes"
+  "reward.description.Explorer.Time.5" : {
+    "translation" : "Gespielt Explorer Modus für länger als 5 Minuten"
   },
-  "reward.description.Explorer.Time.10": {
-    "translation": "Played Explorer Mode for longer than 10 minutes"
+  "reward.description.Explorer.Time.10" : {
+    "translation" : "Gespielt Explorer Modus für länger als 10 Minuten"
   },
-  "reward.description.Explorer.Time.15": {
-    "translation": "Played Explorer Mode for longer than 15 minutes"
+  "reward.description.Explorer.Time.15" : {
+    "translation" : "Gespielt Explorer Modus für länger als 15 Minuten"
   },
-  "reward.description.Explorer.Time.20": {
-    "translation": "Played Explorer Mode for longer than 20 minutes"
+  "reward.description.Explorer.Time.20" : {
+    "translation" : "Gespielt Explorer Modus für länger als 20 Minuten"
   },
-  "reward.collect.CollectEnergyButton": {
-    "translation": "Collect Energy"
+  "reward.collect.CollectEnergyButton" : {
+    "translation" : "Sammeln Sie Energie"
   },
-  "reward.description.NewDifficulty": {
-    "translation": "{0} Mode Unlocked!"
+  "reward.description.NewDifficulty" : {
+    "translation" : "{0} Modus freigeschaltet!"
   },
-  "reward.description.StartNewDay": {
-    "translation": "Check In Streak Reward"
+  "reward.description.StartNewDay" : {
+    "translation" : "Check Streak Belohnung"
   },
-  "reward.description.SkillUp": {
-    "translation": "Cozmo's {0} skill has increased!"
+  "reward.description.SkillUp" : {
+    "translation" : "Cozmo des {0} Geschick hat zugenommen!"
   },
-  "reward.freeplay.BehaviorDisplay": {
-    "translation": "Cozmo got +{0} energy from {1}!"
+  "reward.freeplay.BehaviorDisplay" : {
+    "translation" : "Cozmo bekam + {0} Energie aus {1} !"
   }
 }

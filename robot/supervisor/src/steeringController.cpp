@@ -539,7 +539,7 @@ namespace Anki {
       if (fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         AnkiWarn( 244, "SteeringController.ExecutePointTurn_2.PointTurnTooFast", 533, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(angularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-        angularVel = copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, angularVel);
+        angularVel = copysignf(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, angularVel);
       }
       
       isPointTurnWithTarget_ = false;
@@ -564,16 +564,17 @@ namespace Anki {
       SetSteerMode(SM_PATH_FOLLOW);
     }
 
-    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, f32 angleTolerance, bool useShortestDir)
+    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, f32 angleTolerance, bool useShortestDir, uint16_t numHalfRevolutions)
     {
-      AnkiDebug( 373, "SteeringController.ExecutePointTurn.Params", 609, "%d: target %f, vel %f, accel %f, decel %f, tol %f, shortestDir %d", 7,
+      AnkiDebug( 1196, "SteeringController.ExecutePointTurn.Params", 631, "%d: target %f, vel %f, accel %f, decel %f, tol %f, shortestDir %d, numHalfRevs %d", 8,
                 HAL::GetTimeStamp(),
                 RAD_TO_DEG_F32(targetAngle),
                 RAD_TO_DEG_F32(maxAngularVel),
                 RAD_TO_DEG_F32(angularAccel),
                 RAD_TO_DEG_F32(angularDecel),
                 RAD_TO_DEG_F32(angleTolerance),
-                useShortestDir);
+                useShortestDir,
+                numHalfRevolutions);
       
       // Check for nan params
       if (isnan(targetAngle)   ||
@@ -589,30 +590,24 @@ namespace Anki {
       if (fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         AnkiWarn( 245, "SteeringController.ExecutePointTurn.PointTurnTooFast", 533, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(maxAngularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-        maxAngularVel = copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxAngularVel);
+        maxAngularVel = copysignf(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxAngularVel);
       }
       
       isPointTurnWithTarget_ = true;
       ExecutePointTurn_Internal(maxAngularVel, angularAccel);
 
       targetRad_ = targetAngle;
-      pointTurnAngTol_ = ABS(angleTolerance);
+      pointTurnAngTol_ = fabsf(angleTolerance);
       prevAngle_ = Localization::GetCurrPose_angle();
       f32 currAngle = prevAngle_.ToFloat();
       f32 destAngle = targetRad_.ToFloat();
-      angularDistExpected_ = (targetAngle - Localization::GetCurrPose_angle()).ToFloat();
 
       angularDistTraversed_ = 0;
 
-      if (ABS(angularDistExpected_) < pointTurnAngTol_) {
-        ExitPointTurn();
-        AnkiDebug( 246, "SteeringController.ExecutePointTurn.AlreadyAtDest", 305, "", 0);
-        return;
-      }
-
       if (useShortestDir) {
+        angularDistExpected_ = (targetAngle - Localization::GetCurrPose_angle()).ToFloat();
         // Update destAngle and maxAngularVel_ so that the shortest turn is executed to reach the goal
-        maxAngularVel_ = ABS(maxAngularVel_) * (angularDistExpected_ > 0 ? 1 : -1);
+        maxAngularVel_ = copysignf(maxAngularVel_, angularDistExpected_);
         destAngle = currAngle + angularDistExpected_;
       } else {
         // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
@@ -622,6 +617,24 @@ namespace Anki {
         } else if (currAngle < destAngle && maxAngularVel_ < 0) {
           destAngle -= 2*M_PI_F;
         }
+        
+        // Ensure that the expected angular turn distance is consistent with
+        //  the numHalfRevolutions supplied by the engine:
+        while (fabsf(destAngle - currAngle) < M_PI_F * (numHalfRevolutions - 0.5f) ) {
+          destAngle += copysignf(2*M_PI_F, maxAngularVel);
+        }
+
+        while (fabsf(destAngle - currAngle) > M_PI_F * (numHalfRevolutions + 1.5f) ) {
+          destAngle -= copysignf(2*M_PI_F, maxAngularVel);
+        }
+        
+        angularDistExpected_ = destAngle - currAngle;
+      }
+      
+      if (fabsf(angularDistExpected_) < pointTurnAngTol_) {
+        ExitPointTurn();
+        AnkiDebug( 246, "SteeringController.ExecutePointTurn.AlreadyAtDest", 305, "", 0);
+        return;
       }
 
       // Generate velocity profile
@@ -656,12 +669,18 @@ namespace Anki {
 
         
         // Compute distance to target
-        float angularDistToTarget = ABS(angularDistTraversed_) > pointTurnAngTol_ ?
-                                    (targetRad_ - currAngle).ToFloat() :
-                                    currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
+        float angularDistToTarget = 0.f;
+        
+        if (fabsf(angularDistExpected_ - angularDistTraversed_) > M_PI_F) {
+          // we still have at least 180 deg left in the turn, so don't compare angles yet
+          angularDistToTarget = angularDistExpected_ - angularDistTraversed_;
+        } else {
+          angularDistToTarget = (targetRad_ - currAngle).ToFloat();
+        }
+        
         
         // Check for stop condition
-        f32 absAngularDistToTarget = ABS(angularDistToTarget);
+        f32 absAngularDistToTarget = fabsf(angularDistToTarget);
         if (absAngularDistToTarget < pointTurnAngTol_) {
           if (inPositionStartTime_ == 0) {
             AnkiDebug( 247, "SteeringController.ManagePointTurn.InRange", 534, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG_F32(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG_F32(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
@@ -684,7 +703,7 @@ namespace Anki {
           
           // Check if robot has stopped turning despite integral gain maxing out.
           // Something might be physically obstructing the robot from turning.
-          if (ABS(pointTurnAngleErrorSum_) == pointTurnMaxIntegralError_) {
+          if (fabsf(pointTurnAngleErrorSum_) == pointTurnMaxIntegralError_) {
             if (pointTurnIntegralPowerMaxedStartTime_ == 0 || ABS((pointTurnIntegralPowerMaxedStartAngle_ - currAngle).ToFloat()) < POINT_TURN_STUCK_THRESHOLD_RAD) {
               pointTurnIntegralPowerMaxedStartTime_ = HAL::GetTimeStamp();
               pointTurnIntegralPowerMaxedStartAngle_ = currAngle;

@@ -159,6 +159,16 @@ void IFormattedLoggerProvider::FormatAndLogChanneled(ILoggerProvider::LogLevel l
       stream << " " << logString;
     }
   #endif
+  
+  ASSERT_NAMED(eventName!=nullptr, "IFormattedLoggerProvider.FormatAndLogChanneled logging null eventName");
+  ASSERT_NAMED(eventValue!=nullptr, "IFormattedLoggerProvider.FormatAndLogChanneled logging null eventValue");
+  static const char* emptyStr = "";
+  if( eventName == nullptr ) {
+    eventName = emptyStr;
+  }
+  if( eventValue == nullptr ) {
+    eventValue = emptyStr;
+  }
 
   std::string channelStr(channel);
   if (!channelStr.empty()) {

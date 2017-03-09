@@ -20,6 +20,7 @@ uint32_t getFactoryFirmwareVersion(void);
 
 /// Returns the robot's model number or 0xffff if not set
 uint16_t getModelNumber(void);
+#define COZMO_MODEL_1_5 (5)   //1.5 EP2 and above have this value
 
 /// Retrieves the random seed populated in flash by the factory fixture
 bool getFactoryRandomSeed(uint32_t* dest, const int len);

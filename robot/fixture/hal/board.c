@@ -1,4 +1,5 @@
 // Based on Drive Testfix, updated for Cozmo Testfix
+#include <assert.h>
 #include "hal/board.h"
 #include "hal/portable.h"
 #include "hal/timers.h"
@@ -61,11 +62,10 @@ void STM_EVAL_LEDToggle(Led_TypeDef Led)
   GPIO_PORT[Led]->ODR ^= GPIO_PIN[Led];
 }
 
-#include "hal/console.h"
-
-int InitBoard(void)
+void InitBoard(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
+  GPIO_StructInit( &GPIO_InitStructure ); //set struct defaults
    
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
@@ -74,7 +74,6 @@ int InitBoard(void)
   /* Initialize LEDs */
   STM_EVAL_LEDInit(LEDRED);
   STM_EVAL_LEDInit(LEDGREEN);
-
   STM_EVAL_LEDOff(LEDRED);
   STM_EVAL_LEDOff(LEDGREEN);
   
@@ -87,10 +86,10 @@ int InitBoard(void)
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
   
-  // Initialize PB12-PB15 as the ID inputs with pullups
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+  //pins PB12-PB15 are multi-use (TBD hardware rev). Pull-down is idle state for all revs.
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   MicroWait(100);
 
@@ -113,9 +112,105 @@ int InitBoard(void)
   GPIO_Init(GPIOD, &GPIO_InitStructure);
   
   DisableBAT();
+}
 
-  // Read the ID pins with pull-down resistors on GPIOB[15:12]
-  return (~(GPIO_READ(GPIOB) >> 12) & 15);
+enum pinstate_e { HIGH, LOW, Z };
+static pinstate_e _test_pin_state(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+{
+  pinstate_e state;
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_StructInit( &GPIO_InitStructure ); //set struct defaults
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin;
+  
+  //test value with internal pull-up
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+  GPIO_Init(GPIOx, &GPIO_InitStructure);
+  MicroWait(100);
+  u8 pu_val = GPIO_ReadInputDataBit(GPIOx, GPIO_Pin);
+  
+  //test value with internal pull-down
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+  GPIO_Init(GPIOx, &GPIO_InitStructure);
+  MicroWait(100);
+  u8 pd_val = GPIO_ReadInputDataBit(GPIOx, GPIO_Pin);
+  
+  if( !pu_val && !pd_val )    //pulled low externally
+    state = LOW;
+  else if( pu_val && pd_val ) //pulled high exeternally
+    state = HIGH;
+  else if( pu_val && !pd_val ) //floating
+    state = Z;
+  else //if( !pu_val && pd_val ) //bizarro world?
+    assert( false );
+  
+  //if we're not floating, remove pin pull to save power
+  if( state != Z ) {
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+  }
+  
+  return state;
+}
+
+board_rev_t GetBoardRev(void)
+{
+  pinstate_e board_id0 = _test_pin_state(GPIOC, GPIOC_BOARD_ID0);
+  pinstate_e board_id1 = _test_pin_state(GPIOC, GPIOC_BOARD_ID1);
+  pinstate_e board_id2 = _test_pin_state(GPIOC, GPIOC_BOARD_ID2);
+  
+  //fixture 1.0 rev1,2,3 did not have a board revision check. pins are NC/float.
+  //fixture 1.5+ implemented this check
+  if( board_id0 == Z )
+    return BOARD_REV_1_0_REV3; //or rev1,2. Can't tell.
+  else if( board_id0 == LOW )
+    return BOARD_REV_1_5_0;
+  else //no revision currently pulls this pin high.
+    assert(0);
+  
+  //additional ID pins are NC/float. crash and burn if firmware is older than fixture hardware.
+  assert( board_id1 == Z );
+  assert( board_id2 == Z );
+  
+  return BOARD_REV_1_0_REV1; //silly compiler. we'll never make it here.
+}
+
+static const char board_rev_str_0[] = "1.0.r{1,2,3}";
+static const char board_rev_str_3[] = "1.5.0";
+static const char board_rev_str_x[] = "?";
+char* GetBoardRevStr(void) 
+{
+  char* s;
+  switch( GetBoardRev() ) {
+    case BOARD_REV_1_0_REV1:
+    case BOARD_REV_1_0_REV2:
+    case BOARD_REV_1_0_REV3:  s = (char*)&board_rev_str_0[0]; break;
+    case BOARD_REV_1_5_0:     s = (char*)&board_rev_str_3[0]; break;
+    default:                  s = (char*)&board_rev_str_x[0]; break;
+  }
+  return s;
+}
+
+u8 GetBoardID(void)
+{
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_StructInit( &GPIO_InitStructure ); //set struct defaults
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+  
+  //Enable pull-ups for ID input pins PB12-PB15
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  MicroWait(100);
+  
+  //read id value, ~GPIOB[15:12] - bits 'set' by external pull-down resistors
+  int id = (~(GPIO_READ(GPIOB) >> 12)) & 15;
+  
+  //Float the ID pins; they have alternate functionality on newer hardware
+  //GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  //GPIO_Init(GPIOB, &GPIO_InitStructure);
+  //MicroWait(100);
+  
+  return id;
 }
 
 void EnableVEXT(void)

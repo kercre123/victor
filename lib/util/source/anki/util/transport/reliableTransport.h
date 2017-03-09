@@ -144,6 +144,7 @@ private:
 #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   Stats::RecentStatsAccumulator _timesBetweenUpdates;
   NetTimeStamp                  _lastUpdateTime;
+  NetTimeStamp                  _lastReportOfSlowUpdate;
 #endif // ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   
   bool                    _runSynchronous;

@@ -73,14 +73,14 @@ namespace Anki {
         bool initReceived_ = false;
         u8 ticsSinceInitReceived_ = 0;
         bool syncTimeAckSent_ = false;
-        
+
         // Cache for power state information
         float vExt_;
         bool onCharger_;
         bool isCharging_;
         bool chargerOOS_;
-        BodyRadioMode bodyRadioMode_ = BODY_IDLE_OPERATING_MODE;
-        
+        BodyRadioMode bodyRadioMode_ = BODY_LOW_POWER_OPERATING_MODE;
+
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
         uint32_t cubeID_;
@@ -96,7 +96,7 @@ namespace Anki {
 #ifndef TARGET_K02
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
-        
+
         // In sim we don't expect to get the PowerState message which normally sets this
         bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
 #else
@@ -188,7 +188,7 @@ namespace Anki {
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
         robotState_.cliffDataRaw = HAL::GetRawCliffData();
-        
+
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
 
@@ -257,14 +257,14 @@ namespace Anki {
 
         // Set drive center offset
         Localization::SetDriveCenterOffset(msg.driveCenterOffset);
-        
+
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
-        
+
 #ifndef TARGET_K02
         // Reset number of bytes/audio frames played in animation buffer
         AnimationController::EngineDisconnect();
-        
+
         // In sim, there's no body to put into accessory mode which in turn
         // triggers motor calibration, so we just do motor calibration here.
         LiftController::StartCalibrationRoutine();
@@ -334,7 +334,7 @@ namespace Anki {
             RobotInterface::SyncTimeAck syncTimeAckMsg;
             while (RobotInterface::SendMessage(syncTimeAckMsg) == false);
             syncTimeAckSent_ = true;
-            
+
             // Send up gyro calibration
             // Since the bias is typically calibrate before the robot is even connected,
             // this is the time when the data can actually be sent up to engine.
@@ -344,8 +344,8 @@ namespace Anki {
                       RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[2]));
           }
         }
-        
-        
+
+
         // Process incoming messages
 #ifndef TARGET_K02
         u32 dataLen;
@@ -443,13 +443,13 @@ namespace Anki {
         if (msg.calibrateHead) {
           HeadController::StartCalibrationRoutine();
         }
-        
+
         if (msg.calibrateLift) {
           LiftController::StartCalibrationRoutine();
         }
       }
-      
-      
+
+
       void Process_drive(const RobotInterface::DriveWheels& msg) {
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
@@ -512,7 +512,8 @@ namespace Anki {
                                              msg.accel_rad_per_sec2,
                                              msg.accel_rad_per_sec2,
                                              msg.angle_tolerance,
-                                             true);
+                                             msg.use_shortest_direction,
+                                             msg.num_half_revolutions);
       }
 
       void Process_setCarryState(const CarryStateUpdate& update)
@@ -546,12 +547,12 @@ namespace Anki {
         AnkiInfo( 110, "Messages.Process_imageRequest.Recvd", 358, "mode: %d, resolution: %d", 2, msg.sendMode, msg.resolution);
         HAL::SetImageSendMode(msg.sendMode, msg.resolution);
       }
-      
+
       void Process_enableColorImages(const RobotInterface::EnableColorImages& msg)
       {
         HAL::CameraSetColorEnabled(msg.enable);
       }
-      
+
       void Process_setCameraParams(const SetCameraParams& msg)
       {
         if(msg.requestDefaultParams)
@@ -620,12 +621,12 @@ namespace Anki {
         Anki::Cozmo::HAL::Power::enterSleepMode();
         #endif
       }
-      
+
       void Process_setMotionModelParams(const RobotInterface::SetMotionModelParams& msg)
       {
         Localization::SetMotionModelParams(msg.slipFactor);
       }
-      
+
       void Process_abortDocking(const AbortDocking& msg)
       {
         DockingController::StopDocking();
@@ -651,7 +652,7 @@ namespace Anki {
         AnimationController::EnableTracks(msg.whichTracks);
 #endif
       }
-      
+
       void Process_initAnimController(const AnimKeyFrame::InitController& msg)
       {
 #ifndef TARGET_K02
@@ -669,7 +670,7 @@ namespace Anki {
         }
       }
 #endif
-      
+
       void Process_checkLiftLoad(const RobotInterface::CheckLiftLoad& msg)
       {
         LiftController::CheckForLoad();
@@ -711,21 +712,21 @@ namespace Anki {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
           HAL::MotorSetPower(MOTOR_HEAD, p);
-          
+
           LiftController::Disable();
           p = CLIP(msg.liftPower, -0.5f, 0.5f);
           HAL::MotorSetPower(MOTOR_LIFT, p);
-          
+
         } else {
-          
+
           HAL::MotorSetPower(MOTOR_HEAD, 0);
           HeadController::Enable();
-          
+
           HAL::MotorSetPower(MOTOR_LIFT, 0);
           LiftController::Enable();
         }
       }
-      
+
       void Process_enableStopOnCliff(const RobotInterface::EnableStopOnCliff& msg)
       {
         ProxSensors::EnableStopOnCliff(msg.enable);
@@ -735,12 +736,12 @@ namespace Anki {
       {
         ProxSensors::SetCliffDetectThreshold(msg.detectLevel);
       }
-      
+
       void Process_enableBraceWhenFalling(const RobotInterface::EnableBraceWhenFalling& msg)
       {
         IMUFilter::EnableBraceWhenFalling(msg.enable);
       }
-      
+
       // --------- Block control messages ----------
 
       void Process_flashObjectIDs(const  FlashObjectIDs& msg)
@@ -787,14 +788,6 @@ namespace Anki {
       {
         // Handled on the Espressif
       }
-      void Process_diffieHellmanResults(Anki::Cozmo::DiffieHellmanResults const&)
-      {
-        // Handled on the NRF
-      }
-      void Process_calculateDiffieHellman(Anki::Cozmo::CalculateDiffieHellman const&)
-      {
-        // Handled on the Espressif
-      }
       void Process_readBodyStorage(Anki::Cozmo::ReadBodyStorage const&) {
         // Handled on the NRF
       }
@@ -802,11 +795,11 @@ namespace Anki {
       void Process_writeBodyStorage(Anki::Cozmo::WriteBodyStorage const&) {
         // Handled on the NRF
       }
-      
+
       void Process_bodyStorageContents(Anki::Cozmo::BodyStorageContents const&) {
         // Handled on the Espressif
       }
-      
+
       void Process_animEventToRTIP(const RobotInterface::AnimEventToRTIP& msg)
       {
         RobotInterface::AnimationEvent emsg;
@@ -814,6 +807,23 @@ namespace Anki {
         emsg.event_id = msg.event_id;
         emsg.tag = msg.tag;
         SendMessage(emsg);
+      }
+
+
+      void Process_bleDisconnect(const BLE::Disconnect& msg) {
+        // Handled in the NRF
+      }
+
+      void Process_bleConnectionState(const BLE::ConnectionState& msg) {
+        // Handled in the NRF
+      }
+
+      void Process_bleSendData(const BLE::SendData& msg) {
+        // Handled in the NRF
+      }
+
+      void Process_bleDataReceived(const BLE::DataReceived& msg) {
+        // Handled in the NRF
       }
 
       void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
@@ -862,21 +872,21 @@ namespace Anki {
         newMsg.connected = msg.connected;
         RobotInterface::SendMessage(newMsg);
       }
-      
+
       void Process_enableTestStateMessage(const RobotInterface::EnableTestStateMessage& msg)
       {
         sendTestStateMessages = msg.enable;
       }
-      
+
       void Process_enterRecoveryMode(const RobotInterface::OTA::EnterRecoveryMode& msg)
       {
         // Handled directly in spi to bypass main execution.
       }
-      
+
       void Process_wifiState(const WiFiState& state)
       {
 #ifndef SIMULATOR
-        if (state.rtCount == 0) 
+        if (state.rtCount == 0)
         {
           HAL::SetImageSendMode(Off, QVGA);
           ResetMissedLogCount();
@@ -894,7 +904,7 @@ namespace Anki {
 #ifdef SIMULATOR
       void Process_otaWrite(const Anki::Cozmo::RobotInterface::OTA::Write& msg)
       {
-        
+
       }
       /// Stub message handlers to satisfy simulator build
       void Process_commandNV(NVStorage::NVCommand const& msg)
@@ -912,19 +922,7 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_encodedAESKey(Anki::Cozmo::EncodedAESKey const&)
-      {
-        // Nothing to do here
-      }
-      void Process_enterPairing(Anki::Cozmo::EnterPairing const&)
-      {
-        // Nothing to do here
-      }
       void Process_oledDisplayNumber(Anki::Cozmo::RobotInterface::DisplayNumber const&)
-      {
-        // Nothing to do here
-      }
-      void Process_helloPhoneMessage(Anki::Cozmo::HelloPhone const&)
       {
         // Nothing to do here
       }
@@ -953,12 +951,12 @@ namespace Anki {
         rotationPeriod_ = msg.rotationPeriod_frames;
         cubIDSet_ = true;
       }
-      
+
       void Process_streamObjectAccel(const StreamObjectAccel& msg)
       {
         HAL::StreamObjectAccel(msg.objectID, msg.enable);
       }
-      
+
       void Process_setCubeLights(const CubeLights& msg)
       {
         if(!cubIDSet_)
@@ -998,30 +996,29 @@ namespace Anki {
       {
         RobotInterface::SendMessage(RobotInterface::ManufacturingID());
       }
-      
+
       // These are stubbed out just to get things compiling
-      void Process_robotIpInfo(const Anki::Cozmo::RobotInterface::AppConnectRobotIP& msg) {}
-      void Process_wifiCfgResult(const Anki::Cozmo::RobotInterface::AppConnectConfigResult& msg) {}
+       // These are stubbed out just to get things compiling
       void Process_appConCfgString(const Anki::Cozmo::RobotInterface::AppConnectConfigString& msg) {}
       void Process_appConCfgFlags(const Anki::Cozmo::RobotInterface::AppConnectConfigFlags& msg) {}
       void Process_appConCfgIPInfo(const Anki::Cozmo::RobotInterface::AppConnectConfigIPInfo& msg) {}
       void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
       void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
-      
+
       void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer&) {
         // Handled on the NRF
       }
-      
+
       void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle&) {
         // Handled on the NRF
       }
-      
+
       void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals&) {
         // Handled on the NRF
       }
 
 #endif // simulator
-      
+
       // Stubbed for both simulator and K02
       void Process_requestCrashReports(const Anki::Cozmo::RobotInterface::RequestCrashReports& msg) {}
       void Process_shutdownRobot(const Anki::Cozmo::RobotInterface::ShutdownRobot& msg) {}
@@ -1048,7 +1045,7 @@ namespace Anki {
       }
 
       Result SendRobotStateMsg(const RobotState* msg)
-      {        
+      {
         // Don't send robot state updates unless the init message was received
         if (!initReceived_) {
           return RESULT_FAIL;
@@ -1070,20 +1067,20 @@ namespace Anki {
           // Update send history
           robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
           if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;
-          
+
           #ifdef SIMULATOR
           {
             isForcedDelocalizing_ = false;
           }
           #endif
-          
+
           return RESULT_OK;
         } else {
           return RESULT_FAIL;
         }
       }
 
-      
+
       Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted, bool autoStarted)
       {
         MotorCalibration m;
@@ -1092,7 +1089,7 @@ namespace Anki {
         m.autoStarted = autoStarted;
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
-      
+
       Result SendMotorAutoEnabledMsg(MotorID motor, bool enabled)
       {
         MotorAutoEnabled m;
@@ -1100,12 +1097,12 @@ namespace Anki {
         m.enabled = enabled;
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
-      
+
       void ResetMissedLogCount()
       {
         missedLogs_ = 0;
       }
-      
+
 #ifndef TARGET_K02
       int SendText(const char *format, ...)
       {

@@ -26,6 +26,7 @@
 #include <string>
 #include <strings.h>
 #include <sys/socket.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netdb.h> // NI_DGRAM etc.
 #include <errno.h>
@@ -66,7 +67,7 @@ static const int      kDefaultPort = 47817;
 class PosixUDPSocket : public IUDPSocket
 {
 public:
-  PosixUDPSocket(IIpRetriever* retriever) { }
+  PosixUDPSocket(IIpRetriever* retriever) : _ipRetriever(retriever) { }
   
   virtual int OpenSocket(int protocolFamily, int socketType, int protocol) override
   {
@@ -105,10 +106,26 @@ public:
 
   virtual uint32_t GetLocalIpAddress() override
   {
-    const uint32_t ipAddress = UDPTransport::GetLocalIpAddress();
+    uint32_t ipAddress = _ipRetriever->GetIpAddress();
+    PRINT_CH_INFO("Network", "UDPTransport", "Our IP address: %s", TransportAddress(ipAddress,0).ToString().c_str());
     return ipAddress;
   }
 
+  virtual struct in6_addr GetLocalIpv6LinkLocalAddress() override
+  {
+    struct in6_addr ipv6Address = _ipRetriever->GetIPv6LinkLocalAddress();
+    PRINT_CH_INFO("Network", "UDPTransport", "Our IP address: %s",
+                         TransportAddress(ipv6Address,0).ToString().c_str());
+    return ipv6Address;
+  }
+
+  void SetIpRetriever(IIpRetriever* retriever)
+  {
+    _ipRetriever = retriever;
+  }
+
+private:
+  IIpRetriever* _ipRetriever;
 };
 
 
@@ -260,7 +277,7 @@ const char* GetAnkiPacketHeaderDescriptor()
 class PosixIpRetriever : public IIpRetriever
 {
 public:
-  static const ifaddrs* GetIfAddrs(ifaddrs** const pointerToFree)
+  static const ifaddrs* GetIfAddrs(ifaddrs** const pointerToFree, sa_family_t family = AF_INET)
   {
     const ifaddrs* structToReturn = nullptr;
     bool hasEn0Address = false; // if we find multiple enX addresses, favor en0
@@ -273,12 +290,14 @@ public:
         // is a non-null address on an enX (i.e. Wifi or Ethernet) connection
         if (ifa->ifa_addr && ifa->ifa_name && (ifa->ifa_name[0] == 'e') && (ifa->ifa_name[1] == 'n'))
         {
-          if (ifa->ifa_addr->sa_family == AF_INET)
-          {
+          if (ifa->ifa_addr->sa_family == family) {
+            if (family == AF_INET6) {
+              struct sockaddr_in6* current_addr = (struct sockaddr_in6 *) ifa->ifa_addr;
+              if (!IN6_IS_ADDR_LINKLOCAL(&(current_addr->sin6_addr))) continue;
+            }
+            const bool isEn0Address = (ifa->ifa_name[2] == '0') && (ifa->ifa_name[3] == 0);
             if (!hasEn0Address)
             {
-              const bool isEn0Address = (ifa->ifa_name[2] == '0') && (ifa->ifa_name[3] == 0);
-
               hasEn0Address = isEn0Address;
               structToReturn = ifa;
             }
@@ -291,15 +310,7 @@ public:
 
   static uint32_t GetSockAddress(const sockaddr_in* sockInfo)
   {
-    uint32_t addressToReturn = 0;
-    if (sockInfo != nullptr) {
-      const void* addressStorage = &sockInfo->sin_addr;
-      char addressBuffer[INET_ADDRSTRLEN];
-      inet_ntop(AF_INET, addressStorage, addressBuffer, INET_ADDRSTRLEN);
-
-      addressToReturn = TransportAddress::IPAddressStringToU32(addressBuffer);
-    }
-    return addressToReturn;
+    return sockInfo ? sockInfo->sin_addr.s_addr : 0;
   }
 
   virtual uint32_t GetIpAddress() override
@@ -316,13 +327,31 @@ public:
     if (localIpAddress == 0)
     {
       // Use localhost 127.0.0.1
-      localIpAddress = (127 << 24) | 1;
+      localIpAddress = htonl(INADDR_LOOPBACK);
       PRINT_NAMED_WARNING("GetLocalIpAddressFromIfAddr", "No address found, defaulting to localhost!" );
     }
 
     PRINT_CH_INFO("Network", "UDPTransport.GetIpAddress", "IP address = %s", TransportAddress(localIpAddress, 0).ToString().c_str());
     
     return localIpAddress;
+  }
+
+  virtual struct in6_addr GetIPv6LinkLocalAddress() override
+  {
+    struct in6_addr localIpv6Address = in6addr_loopback;
+    ifaddrs* ifAddrMemory;
+    const ifaddrs* ifa = GetIfAddrs(&ifAddrMemory, AF_INET6);
+    if (ifa) {
+      localIpv6Address = ((const sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+    } else {
+      PRINT_NAMED_WARNING("GetIPv6LinkLocalAddress", "%s",
+                          "No address found, defaulting to loopback");
+    }
+    freeifaddrs(ifAddrMemory);
+
+    PRINT_CH_INFO("Network", "UDPTransport", "IPv6 address = %s",
+                         TransportAddress(localIpv6Address, 0).ToString().c_str());
+    return localIpv6Address;
   }
 };
 
@@ -343,16 +372,18 @@ PosixUDPSocket g_PosixSocketImpl(g_ipRetriever);
 // ============================== UDP Transport ========================================
   
 
-UDPTransport::UDPTransport()
+UDPTransport::UDPTransport(sa_family_t family)
   : IUnreliableTransport()
   , _transportStats("UDP")
   , _udpSocketImpl(nullptr)
   , _lastSendErrorPrinted(kNetTimeStampZero)
+  , _family(family)
   , _socketId(-1)
   , _port(kDefaultPort)
   , _ownsSocketImpl(false)
   , _reset(false)
 {
+  assert((_family == AF_INET) || (_family == AF_INET6));
   SetSocketImpl(&g_PosixSocketImpl);
 }
 
@@ -372,6 +403,28 @@ void UDPTransport::FreeSocketImpl()
   }
   _udpSocketImpl  = nullptr;
   _ownsSocketImpl = false;
+}
+  
+  
+uint32_t GetLocalIpAddress(IUDPSocket* _udpSocketImpl)
+{
+  uint32_t localIpAddress = _udpSocketImpl->GetLocalIpAddress();
+
+  if (!localIpAddress) {
+    PRINT_NAMED_WARNING("GetLocalIpAddress", "localIpAddress is 0");
+  }
+  return localIpAddress;
+}
+
+struct in6_addr GetLocalIpv6LinkLocalAddress(IUDPSocket* _udpSocketImpl)
+{
+  struct in6_addr localIpv6Address = _udpSocketImpl->GetLocalIpv6LinkLocalAddress();
+
+  if (IN6_IS_ADDR_UNSPECIFIED(&localIpv6Address)) {
+    PRINT_NAMED_WARNING("GetLocalIpv6LinkLocalAddress", "localIpv6Address is unspecified");
+  }
+
+  return localIpv6Address;
 }
 
   
@@ -422,6 +475,35 @@ uint32_t UDPTransport::GetBroadcastAddressFromIfAddr()
 }
 #endif // !defined(ANDROID)
 
+unsigned int UDPTransport::GetWifiInterfaceIndex() const
+{
+  unsigned int index = 0;
+
+  // On Android, the Wifi interface should be wlan0, but maybe it is eth0
+  #if defined(ANDROID)
+  index = if_nametoindex("wlan0");
+  if (!index)
+  {
+    index = if_nametoindex("eth0");
+  }
+  #endif
+
+  // On iOS/Mac OSX and maybe the Android emulator, use the en0 interface for Wifi
+  if (!index)
+  {
+    index = if_nametoindex("en0");
+  }
+  return index;
+}
+
+static void safe_freeaddrinfo(addrinfo** pai)
+{
+  if (pai && *pai)
+  {
+    freeaddrinfo(*pai);
+    *pai = nullptr;
+  }
+}
 
 bool UDPTransport::OpenSocket(int port)
 {
@@ -431,18 +513,44 @@ bool UDPTransport::OpenSocket(int port)
   // Make sure we have the right socket impl
   UpdateSocketImplForNetEmulation();
   
-  sockaddr_in socketAddress;
-  memset( &socketAddress, 0, sizeof(socketAddress) );
-  
-  socketAddress.sin_family = AF_INET;                  // IPv4
-  socketAddress.sin_addr.s_addr = htonl( INADDR_ANY ); // accept input from any address
-  socketAddress.sin_port = htons( port );
-  
-  // Open an IP family UDP (datagram) socket
+  unsigned int ifIndex = GetWifiInterfaceIndex();
 
-  _socketId = _udpSocketImpl->OpenSocket( PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   _port = port;
-  
+  addrinfo hints;
+  addrinfo* mcastAddr = nullptr;
+  addrinfo* localAddr = nullptr;
+
+  int protFamily = (_family == AF_INET6) ? PF_INET6 : PF_INET;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = protFamily;
+  int ecode;
+  if (_family == AF_INET6)
+  {
+    hints.ai_flags = AI_NUMERICHOST;
+    ecode = getaddrinfo(kDefaultIPv6MulticastAddress, NULL, &hints, &mcastAddr);
+    if (ecode)
+    {
+      PRINT_NAMED_ERROR("UDPTransport.BadDefaultIpv6Address",
+                        "Error: getaddrinfo for multicast address. ecode = %d '%s'",
+                        ecode, gai_strerror(ecode));
+      return false;
+    }
+  }
+  hints.ai_socktype = SOCK_DGRAM;
+  hints.ai_flags = AI_PASSIVE;
+  ecode = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &localAddr);
+  if (ecode)
+  {
+    safe_freeaddrinfo(&mcastAddr);
+    PRINT_NAMED_ERROR("UDPTransport.BadLocalPort",
+                      "Error: getaddrinfo for local address. port = %d, ecode = %d '%s'",
+                      port, ecode, gai_strerror(ecode));
+    return false;
+  }
+
+  // Open an IP or IPv6 family UDP (datagram) socket
+  _socketId = _udpSocketImpl->OpenSocket(localAddr->ai_family, localAddr->ai_socktype,
+                                         localAddr->ai_protocol);
   if ( _socketId < 0 )
   {
     PRINT_NAMED_ERROR("UDPTransport.OpenSocketFailed", "Error: Unable to open socket - res = %d, errno = %d '%s'", _socketId, errno, strerror(errno));
@@ -453,24 +561,66 @@ bool UDPTransport::OpenSocket(int port)
   {
     PRINT_CH_INFO("Network", "UDPTransport.OpenSocket", "Opened Socket %d", _socketId);
   }
-  
-  int sockOptionEnable = 1;
-  int setSockOptRes = -1;
-  setSockOptRes = _udpSocketImpl->SetSocketOpt(_socketId, SOL_SOCKET, SO_BROADCAST, (void *)&sockOptionEnable, sizeof(sockOptionEnable));
-  if (setSockOptRes < 0)
-  {
-    PRINT_NAMED_ERROR("UDPTransport.OpenSocket.SetBroadcastFailed.", "Unable to setsockopt SO_BROADCAST - res = %d, errno = %d '%s'", setSockOptRes, errno, strerror(errno));
-    CloseSocket();
-    return false;
-  }
 
-  // Bind socket (so we can send and receive on it)
+  if (_family == AF_INET)
+  {
+    int sockOptionEnable = 1;
+    int setSockOptRes = -1;
+    setSockOptRes = _udpSocketImpl->SetSocketOpt(_socketId, SOL_SOCKET, SO_BROADCAST,
+                                                 (void *)&sockOptionEnable,
+                                                 sizeof(sockOptionEnable));
+    if (setSockOptRes < 0)
+    {
+      PRINT_NAMED_ERROR("UDPTransport.SetBroadcastFailed",
+                        "Unable to setsockopt SO_BROADCAST - res = %d, errno = %d '%s'",
+                        setSockOptRes, errno, strerror(errno));
+      CloseSocket();
+      return false;
+    }
+  }
+  else if (_family == AF_INET6)
+  {
+    int hops = 1;
+    if (_udpSocketImpl->SetSocketOpt(_socketId, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+                                     &hops, sizeof(hops)) != 0)
+    {
+      safe_freeaddrinfo(&mcastAddr);
+      PRINT_NAMED_ERROR("UDPTransport.SetIpv6MulticastHopsFailed",
+                        "SetSockOpt - IPV6_MULTICAST_HOPS failed, errno = %d '%s'",
+                        errno, strerror(errno));
+      CloseSocket();
+      return false;
+    }
+
+    int ipv6Only = 1;
+    if (_udpSocketImpl->SetSocketOpt(_socketId, IPPROTO_IPV6, IPV6_V6ONLY,
+                                     &ipv6Only, sizeof(ipv6Only)) != 0)
+    {
+      safe_freeaddrinfo(&mcastAddr);
+      safe_freeaddrinfo(&localAddr);
+      PRINT_NAMED_ERROR("UDPTransport.SetIpv6V6OnlyFailed",
+                        "SetSockOpt - IPV6_V6ONLY failed, errno = %d '%s'",
+                        errno, strerror(errno));
+      CloseSocket();
+      return false;
+    }
+    if (_udpSocketImpl->SetSocketOpt(_socketId, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+                                     &ifIndex, sizeof(ifIndex)) != 0)
+    {
+      safe_freeaddrinfo(&mcastAddr);
+      safe_freeaddrinfo(&localAddr);
+      PRINT_NAMED_ERROR("UDPTransport.SetIpv6MulticastIfFailed",
+                        "SetSockOpt - IPV6_MULTICAST_IF failed, errno = %d '%s'",
+                        errno, strerror(errno));
+      CloseSocket();
+      return false;
+    }
+  }
   
   assert(_socketId >= 0);
-
-  const int bindResult = _udpSocketImpl->BindSocket(_socketId, (struct sockaddr *)&socketAddress, sizeof(socketAddress));
-
-  if ( bindResult < 0 )
+  const int bindResult = _udpSocketImpl->BindSocket(_socketId, localAddr->ai_addr,
+                                                   localAddr->ai_addrlen);
+  if (bindResult < 0)
   {
     if (EADDRINUSE == errno)
     {
@@ -479,17 +629,38 @@ bool UDPTransport::OpenSocket(int port)
     else
     {
       PRINT_NAMED_ERROR("UDPTransport.OpenSocket.BindFailed", "Error: Unable to bind socket (res = %d), errno = %d '%s'", bindResult, errno, strerror(errno));
+      safe_freeaddrinfo(&mcastAddr);
+      safe_freeaddrinfo(&localAddr);
       CloseSocket();
       return false;
     }
   }
-  else
-  {
-    PRINT_CH_INFO("Network", "UDPTransport.OpenSocket.BindSuccess", "Bind result successful - %d", bindResult );
-  }
-  
-  PRINT_CH_INFO("Network", "UDPTransport.OpenSocket.Success", "Socket %d open on port %d. Bind %ssuccessful", _socketId, ntohs(socketAddress.sin_port), (bindResult < 0) ? "Un" : "");
 
+  if (_family == AF_INET6)
+  {
+    struct ipv6_mreq multicastRequest;
+    memcpy(&multicastRequest.ipv6mr_multiaddr,
+           &((struct sockaddr_in6*)(mcastAddr->ai_addr))->sin6_addr,
+           sizeof(multicastRequest.ipv6mr_multiaddr));
+    multicastRequest.ipv6mr_interface = ifIndex;
+
+    if (_udpSocketImpl->SetSocketOpt(_socketId, IPPROTO_IPV6, IPV6_JOIN_GROUP,
+                                     &multicastRequest, sizeof(multicastRequest)) != 0)
+    {
+      safe_freeaddrinfo(&mcastAddr);
+      safe_freeaddrinfo(&localAddr);
+      PRINT_NAMED_ERROR("UDPTransport",
+                        "SetSockOpt - IPV6_JOIN_GROUP failed, errno = %d '%s'",
+                        errno, strerror(errno));
+      CloseSocket();
+      return false;
+    }
+  }
+  safe_freeaddrinfo(&localAddr);
+  safe_freeaddrinfo(&mcastAddr);
+
+  PRINT_CH_INFO("Network", "UDPTransport", "Socket %d open on port %d. Bind %ssuccessful",
+                       _socketId, _port, (bindResult < 0) ? "Un" : "");
   return true;
 }
 
@@ -513,6 +684,7 @@ bool UDPTransport::CloseSocket()
   }
 
   _socketId = -1;
+  _port     = kDefaultPort;
 
   return (closeResult >= 0);
 }
@@ -609,53 +781,62 @@ ssize_t UDPTransport::SendDataToSockAddress(const sockaddr& destSockAddress, uin
   
 void UDPTransport::SendData(const TransportAddress& destAddress, const SrcBufferSet& srcBuffers)
 {
+  ssize_t sendRes = -1;
+  bool isValidIpAddress = true;
+
   if (destAddress.IsIPAddress())
   {
-    char ipAddressString[32];
-    IpAddressToString(ipAddressString, sizeof(ipAddressString), destAddress.GetIPAddress());
+    struct sockaddr_in sin;
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(destAddress.GetIPPort()); // convert to network byte order (nbo)
+    sin.sin_addr.s_addr = destAddress.GetIPAddress(); // ip address is already in nbo
 
-    sockaddr_in destSockAddress;
-    memset( &destSockAddress, 0, sizeof( destSockAddress ) );
-    socklen_t destSockAddressLength = static_cast<socklen_t>(sizeof( destSockAddress ));
+    char ip_buf[INET_ADDRSTRLEN] = { 0 };
+    const char *ip_str __attribute__((unused)) =
+      inet_ntop(AF_INET, &sin.sin_addr.s_addr, ip_buf, sizeof(ip_buf));
+    ANKI_NET_PRINT_VERBOSE("SendData", "Send to '%s:%d': %u bytes",
+                           ip_str, ntohs(sin.sin_port), srcBuffers.CalculateTotalSize());
+    sendRes = SendDataToSockAddress(sin, (uint32_t) sizeof(sin), srcBuffers);
+  }
+  else if (destAddress.IsIPv6Address())
+  {
+    struct sockaddr_in6 sin6;
+    memset(&sin6, 0, sizeof(sin6));
+    sin6.sin6_family = AF_INET6;
+    sin6.sin6_port = htons(destAddress.GetIPPort());
+    sin6.sin6_addr = destAddress.GetIPv6Address();
+    sin6.sin6_scope_id = GetWifiInterfaceIndex();
 
-    destSockAddress.sin_family = AF_INET; // IPv4
-    hostent* host = gethostbyname( ipAddressString );
-
-    if (host != nullptr)
-    {
-      // copy the address data from the host struct over to the server struct
-      bcopy( host->h_addr, &(destSockAddress.sin_addr.s_addr), host->h_length);
-      destSockAddress.sin_port = htons(destAddress.GetIPPort());
-
-      ANKI_NET_PRINT_VERBOSE("SendData", "Send to '%s': %u bytes", destAddress.ToString().c_str(), srcBuffers.CalculateTotalSize());
-      ssize_t sendRes = SendDataToSockAddress(destSockAddress, destSockAddressLength, srcBuffers);
-      
-      if (sendRes < 0)
-      {
-        _transportStats.AddSendError(eME_SendFailed);
-        
-        // when send fails it usually fails for every send (i.e. every few ms), so we throttle the warning
-        // to avoid spamming
-        
-        const NetTimeStamp now = GetCurrentNetTimeStamp();
-        const NetTimeStamp kMinSendWarningSpacingMs = 30000.0;
-        if (kEnableVerboseNetworkLogging || (_lastSendErrorPrinted == kNetTimeStampZero) ||
-            (now > (_lastSendErrorPrinted + kMinSendWarningSpacingMs)))
-        {
-          PRINT_NAMED_WARNING("UDPTransport.SendFailed", "sendto '%s' returned %zd, errno = %d '%s' (%u sends failed), now = %.1f",
-                              destAddress.ToString().c_str(), sendRes, errno, strerror(errno), _transportStats.GetSentStats().GetErrorCount(eME_SendFailed), now);
-          _lastSendErrorPrinted = now;
-        }
-      }
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("UDPTransport.SendData.Failed", "Error: Failed to find host for ipAddress '%s'", ipAddressString);
-    }
+    char ip_buf[INET6_ADDRSTRLEN] = { 0 };
+    const char *ip_str __attribute__((unused)) =
+      inet_ntop(AF_INET6, &sin6.sin6_addr, ip_buf, sizeof(ip_buf));
+    ANKI_NET_PRINT_VERBOSE("SendData", "Send to '%s:%d': %u bytes",
+                           ip_str, ntohs(sin6.sin6_port), srcBuffers.CalculateTotalSize());
+    sendRes = SendDataToSockAddress(sin6, sizeof(sin6), srcBuffers);
   }
   else
   {
+    isValidIpAddress = false;
     PRINT_NAMED_ERROR("UDPTransport.SendData.NonIpAddress", "Error: UDP can only send to IP addresses!");
+  }
+
+  if (isValidIpAddress && (sendRes < 0))
+  {
+    _transportStats.AddSendError(eME_SendFailed);
+        
+    // when send fails it usually fails for every send (i.e. every few ms), so we throttle the warning
+    // to avoid spamming
+        
+    const NetTimeStamp now = GetCurrentNetTimeStamp();
+    const NetTimeStamp kMinSendWarningSpacingMs = 30000.0;
+    if (kEnableVerboseNetworkLogging || (_lastSendErrorPrinted == kNetTimeStampZero) ||
+        (now > (_lastSendErrorPrinted + kMinSendWarningSpacingMs)))
+    {
+          PRINT_NAMED_WARNING("UDPTransport.SendFailed", "sendto '%s' returned %zd, errno = %d '%s' (%u sends failed), now = %.1f",
+                              destAddress.ToString().c_str(), sendRes, errno, strerror(errno), _transportStats.GetSentStats().GetErrorCount(eME_SendFailed), now);
+          _lastSendErrorPrinted = now;
+    }
   }
 }
 
@@ -730,6 +911,7 @@ bool UDPTransport::TryToReadMessage()
   uint8_t buffer[kMaxNetMessageSize];
 
   sockaddr_storage srcSockAddressStorage;
+  memset(&srcSockAddressStorage, 0, sizeof(srcSockAddressStorage));
   
   const int kNumIoVecs = 1;
   iovec iov[kNumIoVecs];
@@ -737,6 +919,7 @@ bool UDPTransport::TryToReadMessage()
   iov[0].iov_len  = sizeof(buffer);
   
   msghdr message;
+  memset(&message, 0, sizeof(message));
   message.msg_name       = &srcSockAddressStorage;
   message.msg_namelen    = sizeof(srcSockAddressStorage);
   message.msg_iov        = iov;
@@ -751,10 +934,9 @@ bool UDPTransport::TryToReadMessage()
   if (bytesReceived > 0)
   {
     assert(bytesReceived <= kMaxNetMessageSize);
-    
-    const sockaddr_in* srcSockAddress = reinterpret_cast<const sockaddr_in*>(&srcSockAddressStorage);
+    assert(srcSockAddressStorage.ss_family == _family);
 
-    TransportAddress sourceTransportAddress(srcSockAddress->sin_addr.s_addr, ntohs(srcSockAddress->sin_port));
+    TransportAddress sourceTransportAddress(srcSockAddressStorage);
     HandleReceivedMessage(buffer, static_cast<uint32_t>(bytesReceived), sourceTransportAddress, wasTruncated);
     
     return true;
@@ -906,7 +1088,7 @@ void UDPTransport::StopClient()
 
 void UDPTransport::FillAdvertisementBytes(AdvertisementBytes& bytes)
 {
-  // IpAddress
+  if (_family == AF_INET)
   {
     const uint32_t ipAddress = _udpSocketImpl->GetLocalIpAddress();
     if (0 == ipAddress)
@@ -918,6 +1100,15 @@ void UDPTransport::FillAdvertisementBytes(AdvertisementBytes& bytes)
     for (auto i = 0; i < sizeof(ipAddress); i++)
     {
       bytes.push_back(ipAddressAsBytes[i]);
+    }
+  }
+  else if (_family == AF_INET6)
+  {
+    const struct in6_addr ipv6Address = GetLocalIpv6LinkLocalAddress(_udpSocketImpl);
+
+    for (auto i = 0; i < sizeof(ipv6Address.s6_addr); i++)
+    {
+      bytes.push_back(ipv6Address.s6_addr[i]);
     }
   }
   // Port
@@ -934,15 +1125,33 @@ void UDPTransport::FillAdvertisementBytes(AdvertisementBytes& bytes)
 
 unsigned int UDPTransport::FillAddressFromAdvertisement(TransportAddress& address, const uint8_t* buffer, unsigned int size)
 {
-  const uint32_t addressSize = sizeof(uint32_t) + sizeof(uint16_t);
-  if (size >= addressSize)
+  if (_family == AF_INET)
   {
-    uint32_t ipAddress = *reinterpret_cast<const uint32_t*>( buffer );
-    uint16_t port      = ntohs(*reinterpret_cast<const uint16_t*>(&buffer[sizeof(ipAddress)]));
-    address.SetIPAddress(ipAddress, port);
-    return addressSize;
+    const uint32_t addressSize = sizeof(uint32_t) + sizeof(uint16_t);
+    if (size >= addressSize)
+    {
+      uint32_t ipAddress = *reinterpret_cast<const uint32_t*>( buffer );
+      uint16_t port      = ntohs(*reinterpret_cast<const uint16_t*>(&buffer[sizeof(ipAddress)]));
+      address.SetIPAddress(ipAddress, port);
+      return addressSize;
+    }
   }
-  
+  else if (_family == AF_INET6)
+  {
+    struct in6_addr ipv6Address;
+    const uint32_t addressSize = sizeof(ipv6Address.s6_addr) + sizeof(uint16_t);
+    if (size >= addressSize)
+    {
+      for (auto i = 0; i < sizeof(ipv6Address.s6_addr); i++)
+      {
+        ipv6Address.s6_addr[i] = buffer[i];
+      }
+      uint16_t port =
+        ntohs(*reinterpret_cast<const uint16_t*>(&buffer[sizeof(ipv6Address.s6_addr)]));
+      address.SetIPv6Address(ipv6Address, port);
+      return addressSize;
+    }
+  }
   assert(0);
   return 0;
 }
@@ -955,6 +1164,7 @@ uint32_t UDPTransport::MaxTotalBytesPerMessage() const
 void UDPTransport::SetIpRetriever(IIpRetriever *ipRetriever)
 {
   g_ipRetriever = ipRetriever;
+  g_PosixSocketImpl.SetIpRetriever(ipRetriever);
 }
 
 #pragma GCC diagnostic pop
