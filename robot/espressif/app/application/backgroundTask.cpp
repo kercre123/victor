@@ -146,7 +146,7 @@ void RadioConnectionStateMachineUpdate()
       }
       case 7:
       {
-        AnkiWarn( 1196, "hardware.model", 631, "Model 1.%d", 1, getModelNumber()&0xFF);
+        AnkiWarn( 1197, "hardware.model", 632, "Model 1.%d", 1, getModelNumber()&0xFF);
         doRTConnectPhase = 0; // Done
         break;
       }

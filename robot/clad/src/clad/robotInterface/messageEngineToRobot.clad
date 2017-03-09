@@ -149,10 +149,15 @@ message HeadAngleUpdate
 // This is a turn in place to an absolute angle
 message SetBodyAngle
 {
-  float_32 angle_rad,
-  float_32 max_speed_rad_per_sec,
-  float_32 accel_rad_per_sec2,
-  float_32 angle_tolerance
+  float_32 angle_rad,              // Absolute angle the robot should achieve at the end of the turn.
+  float_32 max_speed_rad_per_sec,  // Maximum speed of the turn (sign determines the direction of the turn)
+  float_32 accel_rad_per_sec2,     // Accel/decel to use during the turn
+  float_32 angle_tolerance,
+  uint_16 num_half_revolutions,    // Used for turns greater than 180 degrees (e.g. "turn 720 degrees")
+  bool use_shortest_direction      // If true, robot should take the shortest path to angle_rad and disregard
+                                   // the sign of max_speed and num_half_revolutions. If false, consider sign
+                                   // of max_speed and num_half_revolutions to determine which direction to
+                                   // turn and how far to turn (e.g. for turns longer than 360 deg)
 }
 
 message TurnInPlaceAtSpeed

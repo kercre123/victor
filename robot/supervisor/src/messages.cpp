@@ -512,7 +512,8 @@ namespace Anki {
                                              msg.accel_rad_per_sec2,
                                              msg.accel_rad_per_sec2,
                                              msg.angle_tolerance,
-                                             true);
+                                             msg.use_shortest_direction,
+                                             msg.num_half_revolutions);
       }
 
       void Process_setCarryState(const CarryStateUpdate& update)

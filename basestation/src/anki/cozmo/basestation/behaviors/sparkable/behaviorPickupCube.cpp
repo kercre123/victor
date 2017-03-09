@@ -282,13 +282,13 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
     return;
   }
   
-  double turn_rad = robot.GetRNG().RandDblInRange(M_PI_4 ,M_PI_F);
+  float turn_rad = (float) robot.GetRNG().RandDblInRange(M_PI_4, M_PI_F);
   if( robot.GetRNG().RandDbl() < 0.5 )
   {
-    turn_rad *= -1;
+    turn_rad *= -1.f;
   }
   
-  StartActing(new TurnInPlaceAction(robot,Radians(turn_rad),false),
+  StartActing(new TurnInPlaceAction(robot, turn_rad, false),
                   &BehaviorPickUpCube::TransitionToPutDownCube);
 }
   

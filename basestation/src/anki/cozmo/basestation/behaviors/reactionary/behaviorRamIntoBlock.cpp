@@ -105,7 +105,7 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(Robot& robot)
         const bool isAbsolute = true;
         
         // Overshoot the angle to ram by a quarter turn and then place the block down
-        placeAction->AddAction(new TurnInPlaceAction(robot, angle, isAbsolute));
+        placeAction->AddAction(new TurnInPlaceAction(robot, angle.ToFloat(), isAbsolute));
       }
     }
   }
