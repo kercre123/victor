@@ -4306,78 +4306,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     std::vector<ObservableObject*> intersectingAndOldObjects;
     FindLocatedMatchingObjects(filter, intersectingAndOldObjects);
-    
-    // TODO DEBUG DO NOT MERGE INTO MASTER
-    // information to help COZMO-9866, if you see it in master please notify Raul
-    if ( ANKI_DEV_CHEATS && !intersectingAndOldObjects.empty() )
-    {
-      // print all objects now so that I know what's going on
-      PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", "= = = = = Located Objects BEFORE = = = = =");
-      // iterate manually so that I can print the origins
-      for(auto & objectsByOrigin : _locatedObjects)
-      {
-        PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", "+ ORIGIN (0x%p) (%s)",
-          objectsByOrigin.first, (objectsByOrigin.first==_robot->GetWorldOrigin()?"[Current]":"") );
-        for(auto & objectsByFamily : objectsByOrigin.second)
-        {
-          PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", " . + Family: (%s)", EnumToString(objectsByFamily.first) );
-          for(auto & objectsByType : objectsByFamily.second)
-          {
-            PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", " . . + Type: (%s)", EnumToString(objectsByType.first) );
-            for(auto & objectsByID : objectsByType.second)
-            {
-              const ObservableObject* object = objectsByID.second.get();
-              // separate in case the pointer is invalid, at least we print the first line
-              PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", " . . . + Object (0x%p) {shared:%ld}", object, objectsByID.second.use_count());
-              PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", " . . . . | - With ID=%d", object->GetID().GetValue());
-            }
-          }
-        }
-      }
-      PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", "- - - - - - - - - - - - - - - - - - - - -");
-    }
-    
+
     for(ObservableObject* object : intersectingAndOldObjects)
     {
-      // TODO DEBUG DO NOT MERGE INTO MASTER
-      // information to help COZMO-9866, if you see it in master please notify Raul
-      if ( ANKI_DEV_CHEATS )
-      {
-        PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", "* Deleting object (0x%p)", object);
-        PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", " | - With ID=%d", object->GetID().GetValue());
-      }
-    
-      DeleteLocatedObjectByIDInCurOrigin(object->GetID());
-    }
-    
-    // TODO DEBUG DO NOT MERGE INTO MASTER
-    // information to help COZMO-9866, if you see it in master please notify Raul
-    if ( ANKI_DEV_CHEATS && !intersectingAndOldObjects.empty() )
-    {
-      // print all objects now so that I know what's going on
-      PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", "- - - - - Located Objects AFTER  - - - - -");
-      // iterate manually so that I can print the origins
-      for(auto & objectsByOrigin : _locatedObjects)
-      {
-        PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", "+ ORIGIN (0x%p) (%s)",
-          objectsByOrigin.first, (objectsByOrigin.first==_robot->GetWorldOrigin()?"[Current]":"") );
-        for(auto & objectsByFamily : objectsByOrigin.second)
-        {
-          PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", " . + Family: (%s)", EnumToString(objectsByFamily.first) );
-          for(auto & objectsByType : objectsByFamily.second)
-          {
-            PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", " . . + Type: (%s)", EnumToString(objectsByType.first) );
-            for(auto & objectsByID : objectsByType.second)
-            {
-              const ObservableObject* object = objectsByID.second.get();
-              // separate in case the pointer is invalid, at least we print the first line
-              PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", " . . . + Object (0x%p) {shared:%ld}", object, objectsByID.second.use_count());
-              PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", " . . . . | - With ID=%d", object->GetID().GetValue());
-            }
-          }
-        }
-      }
-      PRINT_CH_INFO("Unfiltered", "BlockWorld.COZMO-9866.Helper", "= = = = = = = = = = = = = = = = = = = = =");
+      DeleteLocatedObjectByIDInCurOrigin(object->GetID());      
     }
     
     return RESULT_OK;
@@ -4901,7 +4833,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::DeleteLocatedObjectsByID(const ObjectID& withID)
+  // do not pass reference because we are going to destroy objects with that ID (likely the one we used to obtain it)
+  void BlockWorld::DeleteLocatedObjectsByID(const ObjectID withID)
   {
     BlockWorldFilter filter;
     filter.SetAllowedIDs({withID});
@@ -4947,7 +4880,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::DeleteLocatedObjectByIDInCurOrigin(const ObjectID& withID)
+  // do not pass reference because we are going to destroy objects with that ID (likely the one we used to obtain it)
+  void BlockWorld::DeleteLocatedObjectByIDInCurOrigin(const ObjectID withID)
   {
     // find the object in the current origin
     ObservableObject* object = GetLocatedObjectByID(withID);

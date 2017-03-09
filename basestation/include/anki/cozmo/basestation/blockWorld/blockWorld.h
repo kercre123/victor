@@ -123,8 +123,8 @@ namespace Anki
       void DeleteLocatedObjectsByOrigin(const PoseOrigin* origin); // all instances in the given origin
       void DeleteLocatedObjectsByFamily(ObjectFamily family);      // all instances of the given family in all origins
       void DeleteLocatedObjectsByType(ObjectType type);            // all instances of the given type in all origins
-      void DeleteLocatedObjectsByID(const ObjectID& withID);       // all instances of the given object in all origins
-      void DeleteLocatedObjectByIDInCurOrigin(const ObjectID& withID); // the given instance in the current origin
+      void DeleteLocatedObjectsByID(const ObjectID withID);        // all instances of the given object in all origins
+      void DeleteLocatedObjectByIDInCurOrigin(const ObjectID withID); // the given instance in the current origin
       
       // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
       // without those system lingering
