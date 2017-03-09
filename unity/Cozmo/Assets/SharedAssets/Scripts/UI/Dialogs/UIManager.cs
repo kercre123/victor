@@ -67,7 +67,7 @@ public class UIManager : MonoBehaviour {
   private int _NumModalsDimmingBackground;
   private Sequence _DimBackgroundTweener;
 
-  private bool _IsOpenInProgress = false;
+  private bool _IsForceCloseAndOpenInProgress = false;
   private List<BaseModal> _OpenModals;
   private bool AreAnyModalsOpen { get { return _OpenModals.Count > 0; } }
   private BaseModal CurrentModal {
@@ -350,6 +350,7 @@ public class UIManager : MonoBehaviour {
   }
 
   private bool ModalOpenOrInQueue(string newModalDasEventName) {
+    // Make sure the modal is not already open
     bool modalOpenOrInQueue = false;
     for (int i = 0; i < _OpenModals.Count; i++) {
       if (_OpenModals[i].DASEventDialogName == newModalDasEventName
@@ -358,7 +359,8 @@ public class UIManager : MonoBehaviour {
         break;
       }
     }
-    if (modalOpenOrInQueue) {
+    // If the modal is not open, make sure it is not in the queue
+    if (!modalOpenOrInQueue) {
       for (int i = 0; i < _WaitingForOpenQueue.Count; i++) {
         if (_WaitingForOpenQueue[i].DasEventDialogName == newModalDasEventName) {
           modalOpenOrInQueue = true;
@@ -381,8 +383,8 @@ public class UIManager : MonoBehaviour {
     // TODO Make sure to disallow multiple copies of the same dialog based on das event name
     // Check that it's not already open or in queue
 
-    if (_IsOpenInProgress) {
-      Debug.LogError("Queueing Modal because an open is in progress " + dasEventDialogName);
+    if (_IsForceCloseAndOpenInProgress) {
+      Debug.LogError("Queueing Modal because a force close and open open is in progress " + dasEventDialogName);
       QueueModal(dasEventDialogName, modalPrefab, creationSuccessCallback, creationCancelledCallback,
                              priorityData, overrideBackgroundDim, overrideCloseOnTouchOutside);
     }
@@ -408,12 +410,12 @@ public class UIManager : MonoBehaviour {
                                  priorityData, overrideBackgroundDim, overrideCloseOnTouchOutside);
         }
         else if (priorityData.HighPriorityAction == HighPriorityModalAction.ForceCloseOthersAndOpen) {
-          _IsOpenInProgress = true;
+          _IsForceCloseAndOpenInProgress = true;
           // Close all modals and then open modal now on top of everyone
           CloseAllModalsInternal(forceCloseByModal: true);
           CreateModalInternal(modalPrefab, creationSuccessCallback, creationCancelledCallback,
                                  priorityData, overrideBackgroundDim, overrideCloseOnTouchOutside);
-          _IsOpenInProgress = false;
+          _IsForceCloseAndOpenInProgress = false;
         }
         else {
           // Open modal now on top of everyone
@@ -528,7 +530,7 @@ public class UIManager : MonoBehaviour {
   }
 
   private void OpenNextModalInQueue() {
-    if (!_IsOpenViewQueued && !IsClosingCurrentView && !_IsOpenInProgress &&
+    if (!_IsOpenViewQueued && !IsClosingCurrentView && !_IsForceCloseAndOpenInProgress &&
         !AreAnyModalsOpen && _WaitingForOpenQueue.Count > 0) {
       ModalQueueData nextData = _WaitingForOpenQueue[0];
       _WaitingForOpenQueue.RemoveAt(0);
