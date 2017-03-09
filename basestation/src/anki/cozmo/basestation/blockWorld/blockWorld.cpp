@@ -4865,11 +4865,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // And remove it from the container
       // Note: we're using shared_ptr to store the objects, so erasing from
       //       the container will delete it if nothing else is referring to it
-      const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
+      const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(withID);
       DEV_ASSERT_MSG(numDeleted != 0,
                      "BlockWorld.DeleteLocatedObjectByID.NoObjectsDeleted",
                      "Origin %p Type %s ID %u",
-                     origin, EnumToString(withType), object->GetID().GetValue());
+                     origin, EnumToString(withType), withID.GetValue());
     }
     
     // notify the object was deleted from the current origin
@@ -4895,11 +4895,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const ObjectType   withType = object->GetType();
       
       // And remove it from the container (smart pointer will delete)
-      const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
+      object = nullptr;
+      const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(withID);
       DEV_ASSERT_MSG(numDeleted != 0,
                      "BlockWorld.DeleteLocatedObjectByIDInCurOrigin.NoObjectsDeleted",
                      "Origin %p Type %s ID %u",
-                     origin, EnumToString(withType), object->GetID().GetValue());
+                     origin, EnumToString(withType), withID.GetValue());
 
       // broadcast the fact that we have removed the object from this origin
       _robot->Broadcast(ExternalInterface::MessageEngineToGame(
