@@ -109,17 +109,15 @@ Result BehaviorRespondPossiblyRoll::ResumeInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal(Robot& robot)
 {
-  for(auto entry: _upAxisChangedIDs){
-    if(entry.first == _metadata.GetObjectID()){
-      robot.GetActionList().Cancel(_lastActionTag);
-      _lastActionTag = ActionConstants::INVALID_TAG;
-      if(entry.second == UpAxis::ZPositive){
-        TurnAndRespondPositively(robot);
-      }else{
-        TurnAndRespondNegatively(robot);
-      }
+  const auto& targetAxisChanged = _upAxisChangedIDs.find(_metadata.GetObjectID());
+  
+  if(targetAxisChanged != _upAxisChangedIDs.end()){
+    StopActing(false, false);
+    if(targetAxisChanged->second != UpAxis::ZPositive){
+      TurnAndRespondNegatively(robot);
     }
   }
+  
   _upAxisChangedIDs.clear();
   return IBehavior::UpdateInternal(robot);
 }
