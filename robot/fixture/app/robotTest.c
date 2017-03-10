@@ -451,6 +451,7 @@ TestFunction* GetPackoutTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
+    ButtonTest,
     FastMotors,
     RobotFixtureDropSensor,
     SpeakerTest,            // Must be last
