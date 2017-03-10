@@ -30,11 +30,11 @@ else
 
   imageSize = size(img);
   useIntegralImageFiltering = true;
-  scaleImage_thresholdMultiplier = 1.0;
-  scaleImage_numPyramidLevels = 3;
+  scaleImage_thresholdMultiplier = 0.8;
+  scaleImage_numPyramidLevels = 1; 
   component1d_minComponentWidth = 0;
   component1d_maxSkipDistance = 0;
-  minSideLength = round(0.01*max(imageSize(1),imageSize(2)));
+  minSideLength = round(0.03*max(imageSize(1),imageSize(2)));
   maxSideLength = round(0.97*min(imageSize(1),imageSize(2)));
   component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
   component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
@@ -45,7 +45,7 @@ else
   quads_minQuadArea = 100 / 4;
   quads_quadSymmetryThreshold = 2.0;
   quads_minDistanceFromImageEdge = 2;
-  decode_minContrastRatio = 1.25;
+  decode_minContrastRatio = 1.01;
   quadRefinementIterations = 25;
   numRefinementSamples = 100;
   quadRefinementMaxCornerChange = 5;
