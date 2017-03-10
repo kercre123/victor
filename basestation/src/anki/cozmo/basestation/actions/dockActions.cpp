@@ -507,6 +507,10 @@ namespace Anki {
       };
       _liftLoadSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::liftLoad, liftLoadLambda);
       
+      const Vision::KnownMarker* dockMarkerPtr = nullptr;
+      const Vision::KnownMarker* dockMarkerPtr2 = nullptr;
+      _dockMarkerCode  = Vision::MARKER_INVALID; // clear until we grab them below
+      _dockMarkerCode2 = Vision::MARKER_INVALID;
       
       if (_doNearPredockPoseCheck) {
         PRINT_CH_INFO("Actions", "IDockAction.Init.BeginDockingFromPreActionPose",
@@ -514,8 +518,8 @@ namespace Anki {
                       "proceeding with docking.", preActionPoseOutput.closestPoint.x(), preActionPoseOutput.closestPoint.y());
         
         // Set dock markers
-        _dockMarker = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetMarker();
-        _dockMarker2 = GetDockMarker2(preActionPoseOutput.preActionPoses, preActionPoseOutput.closestIndex);
+        dockMarkerPtr = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetMarker();
+        dockMarkerPtr2 = GetDockMarker2(preActionPoseOutput.preActionPoses, preActionPoseOutput.closestIndex);
         
       } else {
         std::vector<const Vision::KnownMarker*> markers;
@@ -529,7 +533,7 @@ namespace Anki {
         }
         else if(markers.size() == 1)
         {
-          _dockMarker = markers.front();
+          dockMarkerPtr = markers.front();
         }
         else
         {
@@ -548,19 +552,23 @@ namespace Anki {
             if(p.GetTranslation().LengthSq() < distToClosestMarker*distToClosestMarker)
             {
               distToClosestMarker = p.GetTranslation().Length();
-              _dockMarker = marker;
+              dockMarkerPtr = marker;
             }
           }
         }
         PRINT_CH_INFO("Actions", "IDockAction.Init.BeginDockingToMarker",
-                      "Proceeding with docking to marker %s", _dockMarker->GetCodeName());
+                      "Proceeding with docking to marker %s", dockMarkerPtr->GetCodeName());
       }
       
-      if(_dockMarker == nullptr)
+      if(dockMarkerPtr == nullptr)
       {
         PRINT_NAMED_WARNING("IDockAction.Init.NullDockMarker", "Dock marker is null returning failure");
         return ActionResult::BAD_MARKER;
       }
+
+      // cache marker codes (required before SetupTurnAndVerifyAction)
+      _dockMarkerCode  = (nullptr != dockMarkerPtr ) ? dockMarkerPtr->GetCode()  : Vision::MARKER_INVALID;
+      _dockMarkerCode2 = (nullptr != dockMarkerPtr2) ? dockMarkerPtr2->GetCode() : Vision::MARKER_INVALID;
 
       SetupTurnAndVerifyAction(dockObject);
       
@@ -630,12 +638,13 @@ namespace Anki {
             
             PRINT_CH_INFO("Actions", "IDockAction.DockWithObjectHelper.BeginDocking",
                           "Docking with marker %d (%s) using action %s.",
-                          _dockMarker->GetCode(), _dockMarker->GetCodeName(), DockActionToString(_dockAction));
+                          _dockMarkerCode, Vision::Marker::GetNameForCode(_dockMarkerCode), DockActionToString(_dockAction));
             if(_robot.DockWithObject(_dockObjectID,
                                      _dockSpeed_mmps,
                                      _dockAccel_mmps2,
                                      _dockDecel_mmps2,
-                                     _dockMarker, _dockMarker2,
+                                     _dockMarkerCode,
+                                     _dockMarkerCode2,
                                      _dockAction,
                                      _placementOffsetX_mm,
                                      _placementOffsetY_mm,
@@ -750,7 +759,7 @@ namespace Anki {
       // NOTE: This also disables tracking head to object if there was any
       IAction* turnTowardsDockObjectAction = new TurnTowardsObjectAction(_robot,
                                                                          _dockObjectID,
-                                                                         (_visuallyVerifyObjectOnly ? Vision::Marker::ANY_CODE : _dockMarker->GetCode()),
+                                                                         (_visuallyVerifyObjectOnly ? Vision::Marker::ANY_CODE : _dockMarkerCode),
                                                                          0, true, false);
       
       // Disable the turn towards action from issuing a completion signal
@@ -1446,7 +1455,6 @@ namespace Anki {
       } else {
         
         _carryingObjectID  = _robot.GetCarryingObject();
-        _carryObjectMarker = _robot.GetCarryingMarker();
         
         if(_robot.PlaceObjectOnGround() == RESULT_OK)
         {
@@ -1457,9 +1465,10 @@ namespace Anki {
           result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
         }
         
+        const Vision::KnownMarker::Code carryObjectMarkerCode = _robot.GetCarryingMarkerCode();
         _faceAndVerifyAction.reset(new TurnTowardsObjectAction(_robot,
                                                                _carryingObjectID,
-                                                               _carryObjectMarker->GetCode(),
+                                                               carryObjectMarkerCode,
                                                                0, true, false));
         
         _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
@@ -1702,7 +1711,6 @@ namespace Anki {
       // will get unset when the robot unattaches it during placement, and
       // we want to be able to verify that we're seeing what we just placed.
       _carryObjectID     = _robot.GetCarryingObject();
-      _carryObjectMarker = _robot.GetCarryingMarker();
       
       return ActionResult::SUCCESS;
     } // SelectDockAction()

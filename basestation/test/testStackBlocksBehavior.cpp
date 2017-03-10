@@ -187,7 +187,7 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
     ObservableObject* object1 = blockWorld.GetLocatedObjectByID(objID1);
     ASSERT_TRUE(object1 != nullptr);
   }
-  robot.SetCarryingObject(objID1);
+  robot.SetCarryingObject(objID1, Vision::MARKER_INVALID);
     
   {
     ObservableObject* object2 = blockWorld.GetLocatedObjectByID(objID2);
