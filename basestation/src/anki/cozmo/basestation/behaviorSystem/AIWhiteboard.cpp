@@ -76,6 +76,26 @@ const char* ObjectUseActionToString(AIWhiteboard::ObjectUseAction action)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* ObjectUseIntentionToString(AIWhiteboard::ObjectUseIntention intention)
+{
+  using ObjectUseIntention = AIWhiteboard::ObjectUseIntention;
+  switch(intention) {
+    case ObjectUseIntention::PickUpAnyObject: { return "PickUpAnyObject"; }
+    case ObjectUseIntention::PickUpObjectWithAxisCheck: { return "PickUpObjectWithAxisCheck"; }
+    case ObjectUseIntention::RollObjectWithAxisCheck: { return "RollObjectWithAxisCheck"; }
+    case ObjectUseIntention::RollObjectNoAxisCheck: { return "RollObjectNoAxisCheck"; }
+    case ObjectUseIntention::PopAWheelieOnObject: { return "PopAWheelieOnObject"; }
+    case ObjectUseIntention::PyramidBaseObject: { return "PyramidBaseObject"; }
+    case ObjectUseIntention::PyramidStaticObject: { return "PyramidStaticObject"; }
+    case ObjectUseIntention::PyramidTopObject: { return "PyramidTopObject"; }
+  };
+
+  // should never get here, assert if it does (programmer error specifying intention enum class)
+  DEV_ASSERT(false, "AIWhiteboard.ObjectUseIntentionToString.InvalidIntention");
+  return "UNDEFINED_ERROR";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // return how many max entries of the given type we store. DO NOT return 0, at least there has to be 1
 size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectUseAction action)
 {
@@ -1279,39 +1299,47 @@ void AIWhiteboard::UpdateValidObjects()
     const auto& actionIntent = filterPair.first;
     const auto& filterPtr = filterPair.second;
 
-    {
-      // update set of valid objects
-      auto& validObjectIDSet = _validObjectsForAction[actionIntent];
-      validObjectIDSet.clear();
+    // update set of valid objects
+    auto& validObjectIDSet = _validObjectsForAction[actionIntent];
+    validObjectIDSet.clear();
       
-      std::vector<const ObservableObject*> objects;
-      _robot.GetBlockWorld().FindMatchingObjects(*filterPtr, objects);
-      for( const ObservableObject* obj : objects ) {
-        if( obj ) {
-          validObjectIDSet.insert( obj->GetID() );
-        }
+    std::vector<const ObservableObject*> objects;
+    _robot.GetBlockWorld().FindMatchingObjects(*filterPtr, objects);
+    for( const ObservableObject* obj : objects ) {
+      if( obj ) {
+        validObjectIDSet.insert( obj->GetID() );
       }
     }
+
+    const bool bestIsStillValid = validObjectIDSet.find(_bestObjectForAction[actionIntent]) != validObjectIDSet.end();
     
-    
-    bool bestIsStillValid = true;
-    if(actionIntent == ObjectUseIntention::PyramidBaseObject ||
-       actionIntent == ObjectUseIntention::PyramidStaticObject ||
-       actionIntent == ObjectUseIntention::PyramidTopObject){
-      const auto& validObjs = _validObjectsForAction[actionIntent];
-      bestIsStillValid = validObjs.find(_bestObjectForAction[actionIntent]) != validObjs.end();
-    }
-    
-    // Only update _bestObjectForAction as long as we do not have a tap intended object
+    // Only update _bestObjectForAction if we don't have a tap object, or if the tap object became invalid
     if(!_haveTapIntentionObject || !bestIsStillValid)
-    {
+    {      
       // select best object
       const ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(_robot.GetPose(),
                                                                                          * filterPair.second);
       if( closestObject != nullptr ) {
+
+        if( _haveTapIntentionObject && _bestObjectForAction[actionIntent].IsSet() ) {
+          PRINT_CH_INFO("AIWhiteboard", "UpdateValidObjects.ResetBestTapped",
+                        "We have a tap intent, but object id %d is no longer valid for action %s, selecting object %d instead",
+                        _bestObjectForAction[actionIntent].GetValue(),
+                        ObjectUseIntentionToString(actionIntent),
+                        closestObject->GetID().GetValue());
+        }
+        
         _bestObjectForAction[ actionIntent ] = closestObject->GetID();
       }
       else {
+
+        if( _haveTapIntentionObject && _bestObjectForAction[actionIntent].IsSet() ) {
+          PRINT_CH_INFO("AIWhiteboard", "UpdateValidObjects.ClearBestTapped",
+                        "We have a tap intent, but object id %d is no longer valid, clearing best for action %s",
+                        _bestObjectForAction[actionIntent].GetValue(),
+                        ObjectUseIntentionToString(actionIntent));
+        }
+
         _bestObjectForAction[ actionIntent ].UnSet();
       }
     }
@@ -1401,12 +1429,21 @@ void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
     {
       const auto& actionIntent = filterPair.first;
       const auto& filterPtr = filterPair.second;
-      
+
+      const ObjectID oldBest = _bestObjectForAction[actionIntent];      
       _bestObjectForAction[actionIntent].UnSet();
       
       if(filterPtr &&
          filterPtr->ConsiderObject(object))
       {
+
+        if( oldBest != objectID ) {
+          PRINT_CH_INFO("AIWhiteboard", "SetBestObjectForTap",
+                        "Setting tapped object %d as best for intention '%s'",
+                        objectID.GetValue(),
+                        ObjectUseIntentionToString(actionIntent));
+        }
+        
         _bestObjectForAction[actionIntent] = objectID;
         filterCanUseObject = true;
       }
