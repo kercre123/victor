@@ -59,6 +59,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnBack.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnSide.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotShaken.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToSparked.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToStackOfCubes.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
@@ -372,6 +373,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::ReactToRobotOnSide:
     {
       newBehavior = new BehaviorReactToRobotOnSide(robot, config);
+      break;
+    }
+    case BehaviorClass::ReactToRobotShaken:
+    {
+      newBehavior = new BehaviorReactToRobotShaken(robot, config);
       break;
     }
     case BehaviorClass::ReactToOnCharger:

@@ -641,6 +641,12 @@ public:
   // z-axis: points out top of head
   const GyroData& GetHeadGyroData() const {return _robotGyro; }
   
+  // Returns the current accelerometer magnitude (norm of all 3 axes).
+  float GetHeadAccelMagnitude() const {return _robotAccelMagnitude; }
+  
+  // Returns the current accelerometer magnitude, after being low-pass filtered.
+  float GetHeadAccelMagnitudeFiltered() const {return _robotAccelMagnitudeFiltered; }
+  
   // send the request down to the robot
   Result RequestIMU(const u32 length_ms) const;
 
@@ -1043,6 +1049,8 @@ protected:
   // IMU data
   AccelData        _robotAccel;
   GyroData         _robotGyro;
+  float            _robotAccelMagnitude = 0.0f; // current magnitude of accelerometer data (norm of all three axes)
+  float            _robotAccelMagnitudeFiltered = 0.0f; // low-pass filtered accelerometer magnitude
   
   // Gyro drift check
   bool          _gyroDriftReported;
