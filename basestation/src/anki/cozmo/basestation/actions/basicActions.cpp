@@ -30,10 +30,14 @@
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
   
   namespace Cozmo {
+  
+    // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
+    CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
     
     TurnInPlaceAction::TurnInPlaceAction(Robot& robot, const float angle_rad, const bool isAbsolute)
     : IAction(robot,
@@ -1356,7 +1360,7 @@ namespace Anki {
         } else {
           _facePoseCompoundActionDone = true;
           
-          if(_doRefinedTurn)
+          if(_doRefinedTurn && false)
           {
             // If we need to refine the turn just reset this action, set appropriate variables
             Reset(false);
@@ -1373,7 +1377,18 @@ namespace Anki {
           }
           else if(_visuallyVerifyWhenDone)
           {
-            _visuallyVerifyAction.reset(new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode));
+            IActionRunner* action = nullptr;
+            if(kInsertWaitsInTurnTowardsObjectVerify)
+            {
+              action = new CompoundActionSequential(_robot, {new WaitAction(_robot, 2),
+                  new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode),
+                  new WaitAction(_robot, 2)});
+            }
+            else
+            {
+              action = new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode);
+            }
+            _visuallyVerifyAction.reset(action);
             
             // Disable completion signals since this is inside another action
             _visuallyVerifyAction->ShouldEmitCompletionSignal(false);
