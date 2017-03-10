@@ -1236,7 +1236,6 @@ protected:
   // Adds an unconnected charger object
   ObjectID AddUnconnectedCharger();
     
-    
 }; // class Robot
 
 //

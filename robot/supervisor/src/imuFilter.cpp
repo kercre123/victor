@@ -696,6 +696,7 @@ namespace Anki {
       
       void UpdateCameraMotion()
       {
+        #ifndef COZMO_V2
         static u8 cameraMotionDecimationCounter = 0;
         if (cameraMotionDecimationCounter++ > 3 && HAL::IsVideoEnabled())
         {
@@ -707,6 +708,7 @@ namespace Anki {
           RobotInterface::SendMessage(msg);
           cameraMotionDecimationCounter = 0;
         }
+        #endif // ifdef COZMO_V2
       }
 
       Result Update()

@@ -32,9 +32,7 @@ CozmoMat {
 LightCube {
   translation 0.2 0 0.022
 }
-BlockWorldComms {
-}
-CozmoBot {
+%COZMOBOT% {
   name "CozmoBot_1"
 }
 BuildServerTestController {

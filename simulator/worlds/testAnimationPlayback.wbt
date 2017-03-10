@@ -30,10 +30,7 @@ CozmoMat {
   xSize 100
   ySize 100
 }
-BlockWorldComms {
-  filterLogs TRUE
-}
-CozmoBot {
+%COZMOBOT% {
   name "CozmoBot_1"
   animationTestName "%ANIMATION_TEST_NAME%"
 }

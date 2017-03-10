@@ -21,6 +21,7 @@
 #include "clad/robotInterface/appConnectMessage.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/cameraParams.clad"
+#include "clad/types/cameraFOVInfo.clad"
 #include "clad/types/motorTypes.clad"
 
 
@@ -489,7 +490,7 @@ union EngineToRobot
   SetCameraParams               setCameraParams             = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
   RollActionParams              rollActionParams            = 0x59,
-  //          FREE SLOT!!!                                  = 0x5A,
+  CameraFOVInfo                 cameraFOVInfo               = 0x5A,
   //          FREE SLOT!!!                                  = 0x5B,
   //          FREE SLOT!!!                                  = 0x5C,
   //          FREE SLOT!!!                                  = 0x5D,

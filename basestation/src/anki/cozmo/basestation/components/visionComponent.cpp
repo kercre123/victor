@@ -11,43 +11,46 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#ifdef COZMO_V2
+#include "anki/cozmo/basestation/androidHAL/androidHAL.h"
+#endif
+#include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/petWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
-#include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/components/visionComponent.h"
-#include "anki/cozmo/basestation/visionSystem.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "anki/cozmo/basestation/visionSystem.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/common/robot/config.h"
 
-#include "util/logging/logging.h"
-#include "util/helpers/templateHelpers.h"
+#include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
-#include "anki/common/basestation/utils/helpers/boundedWhile.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
-#include "util/console/consoleInterface.h"
-#include "util/cpuProfiler/cpuProfiler.h"
-
-#include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "opencv2/highgui/highgui.hpp"
 
@@ -1582,49 +1585,45 @@ namespace Cozmo {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
     
-    cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+    //cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
     
     std::vector<u8> compressedBuffer;
-    //cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
+    cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
     
-    const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
-    
-    //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
+    const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
+    u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());
     
     m.frameTimeStamp = img.GetTimestamp();
     m.imageId = ++imgID;
     m.chunkId = 0;
-    m.imageChunkCount = ceilf((f32)numTotalBytes / (f32)ImageConstants::IMAGE_CHUNK_SIZE);
+    m.imageChunkCount = ceilf((f32)bytesRemainingToSend / kMaxChunkSize);
     if(img.GetNumChannels() == 1) {
       m.imageEncoding = ImageEncoding::JPEGGray;
     } else {
       m.imageEncoding = ImageEncoding::JPEGColor;
     }
-    m.data.reserve((size_t)ImageConstants::IMAGE_CHUNK_SIZE);
     
-    u32 totalByteCnt = 0;
-    u32 chunkByteCnt = 0;
-    
-    for(s32 i=0; i<numTotalBytes; ++i)
-    {
-      m.data.push_back(compressedBuffer[i]);
+    while (bytesRemainingToSend > 0) {
+      u32 chunkSize = std::min(bytesRemainingToSend, kMaxChunkSize);
       
-      ++chunkByteCnt;
-      ++totalByteCnt;
+      auto startIt = compressedBuffer.begin() + (compressedBuffer.size() - bytesRemainingToSend);
+      auto endIt = startIt + chunkSize;
+      m.data = std::vector<u8>(startIt, endIt);
       
-      if (chunkByteCnt == (s32)ImageConstants::IMAGE_CHUNK_SIZE) {
-        //PRINT("Sending image chunk %d\n", m.chunkId);
-        _robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
-        ++m.chunkId;
-        chunkByteCnt = 0;
-      } else if (totalByteCnt == numTotalBytes) {
-        // This should be the last message!
-        //PRINT("Sending LAST image chunk %d\n", m.chunkId);
-        _robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+      if (_robot.GetContext()->GetExternalInterface() != nullptr && _robot.GetImageSendMode() != ImageSendMode::Off) {
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
       }
-    } // for each byte in the compressed buffer
-    
+      
+      // Forward the image chunks to Viz as well (Note that this does nothing if
+      // sending images is disabled in VizManager)
+      _robot.GetContext()->GetVizManager()->SendImageChunk(_robot.GetID(), m);
+      
+      bytesRemainingToSend -= chunkSize;
+      ++m.chunkId;
+    }
+
     return RESULT_OK;
+    
   } // CompressAndSendImage()
   
   // Explicit instantiation for grayscale and RGB
@@ -2338,6 +2337,52 @@ namespace Cozmo {
     return _visionSystem->GetMaxCameraGain();
   }
   
+  
+# ifdef COZMO_V2
+  void VisionComponent::CaptureAndSendImage()
+  {
+    const ImageResolution res = ImageResolution::QVGA;
+    const int cameraRes = static_cast<const int>(res);
+    const int numRows = Vision::CameraResInfo[cameraRes].height;
+    const int numCols = Vision::CameraResInfo[cameraRes].width;
+    
+    const int bufferSize = numRows * numCols * 3;
+    u8 buffer[bufferSize];
+    
+    // Get image buffer
+    // TODO: ImageImuData can be engine-only, non-clad, struct
+    std::vector<ImageImuData> imuData;
+    u32 imageId = AndroidHAL::getInstance()->CameraGetFrame(buffer, res, imuData);
+    
+    // Add IMU data to history
+    for (auto& data : imuData) {
+      GetImuDataHistory().AddImuData(data.imageId , data.rateX, data.rateY, data.rateZ, data.line2Number);
+    }
+    
+    // Create ImageRGB object from image buffer
+    cv::Mat cvImg;
+    cvImg = cv::Mat(numRows, numCols, CV_8UC3, (void*)buffer);
+    cvtColor(cvImg, cvImg, CV_BGR2RGB);
+    Vision::ImageRGB imgRGB(numRows, numCols, buffer);
+    
+    // Create EncodedImage with proper imageID and timestamp
+    // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
+    TimeStamp_t ts = AndroidHAL::getInstance()->GetTimeStamp() - BS_TIME_STEP;
+    imgRGB.SetTimestamp(ts);
+    EncodedImage encodedImage(imgRGB, imageId);
+    
+    // Set next image for VisionComponent
+    Result lastResult = SetNextImage(encodedImage);
+    
+    // Compress to jpeg and send to game and viz
+    lastResult = CompressAndSendImage(imgRGB, 50);
+    DEV_ASSERT(RESULT_OK == lastResult, "CompressAndSendImage() failed");
+  }
+  
+# endif // #ifdef COZMO_V2
+  
+  
+  
 #pragma mark -
 #pragma mark Message Handlers
   
@@ -2446,6 +2491,21 @@ namespace Cozmo {
                                             payload.distCoeffs);
             
             SetCameraCalibration(calib);
+            
+            #ifdef COZMO_V2
+            {
+              // Compute FOV from focal length
+              f32 headCamFOV_ver = 2.f * atanf(static_cast<f32>(payload.nrows) / (2.f * payload.focalLength_y));
+              f32 headCamFOV_hor = 2.f * atanf(static_cast<f32>(payload.ncols) / (2.f * payload.focalLength_x));
+             
+              CameraFOVInfo msg(headCamFOV_hor, headCamFOV_ver);
+              if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
+                PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
+              }
+            }
+            #endif // ifdef COZMO_V2
+            
+            
           }
         } else {
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
