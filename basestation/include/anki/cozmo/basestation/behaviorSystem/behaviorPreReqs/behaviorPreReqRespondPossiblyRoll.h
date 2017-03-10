@@ -20,19 +20,23 @@ namespace Cozmo {
 
 class BehaviorPreReqRespondPossiblyRoll {
 public:
-  BehaviorPreReqRespondPossiblyRoll(u32 objectID, s32 uprightAnimIndex, s32 onSideAnimIndex)
+  BehaviorPreReqRespondPossiblyRoll(u32 objectID, s32 uprightAnimIndex,
+                                    s32 onSideAnimIndex, bool poseUpAxisAccurate)
   : _objectID(objectID)
   , _uprightAnimIndex(uprightAnimIndex)
-  , _onSideAnimIndex(onSideAnimIndex) {};
+  , _onSideAnimIndex(onSideAnimIndex)
+  , _poseUpAxisAccurate(poseUpAxisAccurate){};
   
-  u32 GetObjectID() const         { return _objectID;}
-  s32 GetUprightAnimIndex() const { return _uprightAnimIndex;}
-  s32 GetOnSideAnimIndex() const  { return _onSideAnimIndex;}
+  u32  GetObjectID()         const { return _objectID;}
+  s32  GetUprightAnimIndex() const { return _uprightAnimIndex;}
+  s32  GetOnSideAnimIndex()  const { return _onSideAnimIndex;}
+  bool GetPoseUpAxisAccurate()      const { return _poseUpAxisAccurate;}
   
 private:
   u32 _objectID;
   s32 _uprightAnimIndex;
   s32 _onSideAnimIndex;
+  bool _poseUpAxisAccurate;
   
 };
 
