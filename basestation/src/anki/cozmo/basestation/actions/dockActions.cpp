@@ -14,9 +14,9 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
@@ -507,6 +508,13 @@ namespace Anki {
       };
       _liftLoadSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::liftLoad, liftLoadLambda);
       
+      if ( _robot.HasExternalInterface() )
+      {
+        using namespace ExternalInterface;
+        auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+        helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotDeletedLocatedObject>();
+      }
+      
       const Vision::KnownMarker* dockMarkerPtr = nullptr;
       const Vision::KnownMarker* dockMarkerPtr2 = nullptr;
       _dockMarkerCode  = Vision::MARKER_INVALID; // clear until we grab them below
@@ -623,6 +631,11 @@ namespace Anki {
     ActionResult IDockAction::CheckIfDone()
     {
       ActionResult actionResult = ActionResult::RUNNING;
+      
+      if(_dockObjectID.IsUnknown())
+      {
+        return ActionResult::BAD_OBJECT;
+      }
       
       // Wait for visual verification to complete successfully before telling
       // robot to dock and continuing to check for completion
@@ -767,6 +780,17 @@ namespace Anki {
       turnTowardsDockObjectAction->ShouldSuppressTrackLocking(true);
       
       _faceAndVerifyAction->AddAction(turnTowardsDockObjectAction);
+    }
+    
+    template<>
+    void IDockAction::HandleMessage(const ExternalInterface::RobotDeletedLocatedObject& msg)
+    {
+      if(msg.objectID == _dockObjectID)
+      {
+        PRINT_CH_INFO("Actions", "IDockAction.RobotDeletedLocatedObject",
+                      "Dock object was deleted from current origin stopping dock action");
+        _dockObjectID.UnSet();
+      }
     }
     
 #pragma mark ---- PopAWheelieAction ----

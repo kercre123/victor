@@ -166,6 +166,9 @@ namespace Anki {
         HAS_NO_LOAD
       };
       
+      template<typename T>
+      void HandleMessage(const T& msg);
+      
     protected:
       
       // IDockAction implements these two required methods from IAction for its
@@ -242,6 +245,8 @@ namespace Anki {
       
       // Handler for when lift load message is received
       Signal::SmartHandle        _liftLoadSignalHandle;
+      
+      std::vector<Signal::SmartHandle> _signalHandles;
       
       // Name of animation to play when moving lift post-dock
       AnimationTrigger           _liftMovingAnimation = AnimationTrigger::Count;

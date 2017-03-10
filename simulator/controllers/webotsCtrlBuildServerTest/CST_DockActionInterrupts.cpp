@@ -175,9 +175,10 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
         CST_EXIT();
       }
     
+      // The dock action should fail with BAD_OBJECT when the dock object is unobserved and deleted
       if(_lastActionResult.first == 10)
       {
-        _result = (_lastActionResult.second == ActionResult::SUCCESS ? RESULT_OK : RESULT_FAIL);
+        _result = (_lastActionResult.second == ActionResult::BAD_OBJECT ? RESULT_OK : RESULT_FAIL);
         CST_EXIT();
       }
       break;
