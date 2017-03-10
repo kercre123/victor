@@ -813,6 +813,40 @@
       }
     },
     {
+      "Id": 44,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchPatternLength",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetScore": 15,
+          "compareType": "GREATER",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 20,
+        "DescriptionKey": "reward.description.MemoryMatch.PatternLength.Fifteen"
+      }
+    },
+    {
       "Id": 37,
       "RewardEvent": {
         "Value": "OnChallengeComplete"
@@ -842,8 +876,76 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 50,
+        "Amount": 30,
         "DescriptionKey": "reward.description.MemoryMatch.PatternLength.Twenty"
+      }
+    },
+    {
+      "Id": 45,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchPatternLength",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetScore": 25,
+          "compareType": "GREATER",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 40,
+        "DescriptionKey": "reward.description.MemoryMatch.PatternLength.TwentyFive"
+      }
+    },
+    {
+      "Id": 46,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchPatternLength",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "MemoryMatchGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetScore": 30,
+          "compareType": "GREATER",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 50,
+        "DescriptionKey": "reward.description.MemoryMatch.PatternLength.Thirty"
       }
     },
     {
