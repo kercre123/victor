@@ -38,6 +38,7 @@ enum int_32 BehaviorObjective {
   ReactedToRobotOnBack,
   ReactedToRobotOnFace,
   ReactedToRobotOnSide,
+  ReactedToRobotShaken,
   ReactedToUnexpectedMovement,
   RequestedGame,
   StackedBlock,

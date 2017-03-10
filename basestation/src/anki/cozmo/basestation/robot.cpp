@@ -1016,6 +1016,15 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _robotAccel = msg.accel;
   _robotGyro = msg.gyro;
   
+  _robotAccelMagnitude = sqrtf(_robotAccel.x * _robotAccel.x
+                             + _robotAccel.y * _robotAccel.y
+                             + _robotAccel.z * _robotAccel.z);
+  
+  const float kAccelFilterConstant = 0.95f; // between 0 and 1
+  _robotAccelMagnitudeFiltered = (kAccelFilterConstant * _robotAccelMagnitudeFiltered)
+                              + ((1.0f - kAccelFilterConstant) * _robotAccelMagnitude);
+  
+  
   // Update cozmo's internal offTreadsState knowledge
   const OffTreadsState prevOffTreadsState = _offTreadsState;
   const bool wasTreadsStateUpdated = CheckAndUpdateTreadsState(msg);

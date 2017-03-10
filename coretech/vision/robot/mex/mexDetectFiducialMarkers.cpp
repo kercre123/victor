@@ -91,9 +91,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
   
   Array<u8> image                             = mxArrayToArray<u8>(prhs[0], memory);
-  params.useIntegralImageFiltering        = static_cast<bool>(Round<s32>(mxGetScalar(prhs[1])));
+  params.useIntegralImageFiltering         = static_cast<bool>(Round<s32>(mxGetScalar(prhs[1])));
+  params.useIlluminationNormalization      = true;
   params.scaleImage_numPyramidLevels       = static_cast<s32>(mxGetScalar(prhs[2]));
   params.scaleImage_thresholdMultiplier    = Round<s32>(pow(2.0,16)*mxGetScalar(prhs[3])); // Convert from double to SQ15.16
+  params.imagePyramid_baseScale            = 4.f; // TODO: Expose in Matlab
   params.component1d_minComponentWidth     = static_cast<s16>(mxGetScalar(prhs[4]));
   params.component1d_maxSkipDistance       = static_cast<s16>(mxGetScalar(prhs[5]));
   params.component_minimumNumPixels        = static_cast<s32>(mxGetScalar(prhs[6]));
@@ -112,6 +114,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   params.refine_quadRefinementMinCornerChange     = static_cast<f32>(mxGetScalar(prhs[19]));
   params.returnInvalidMarkers             = static_cast<bool>(Round<s32>(mxGetScalar(prhs[20])));
   params.doCodeExtraction                 = true;
+  params.fiducialThicknessFraction        = {0.1f, 0.1f};   // TODO: Expose in Matlab
+  params.roundedCornersFraction           = {0.15f, 0.15f}; // TODO: Expose in Matlab
   
   params.cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
   if(nrhs >= 21) {

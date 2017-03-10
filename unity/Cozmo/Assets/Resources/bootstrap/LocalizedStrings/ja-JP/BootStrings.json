@@ -1,45 +1,33 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "boot.errorDiskFull": {
-    "translation": "The Cozmo App could not load because your device's storage is too full. Try removing media or unused apps from your phone, and try again."
+  "boot.errorDiskFull" : {
+    "translation" : "お使いのデバイスのストレージがいっぱいあるので、コズモアプリがロードできませんでした。お使いの携帯電話からメディアまたは未使用のアプリを削除してみて、もう一度やり直してください。 D"
   },
-  "boot.errorReadingFiles": {
-    "translation": "The Cozmo App could not read files. Error: {0}"
+  "boot.errorReadingFiles" : {
+    "translation" : "コズモアプリがファイルを読み取ることができませんでした。エラー： {0}"
   },
-  "boot.needStoragePermission": {
-    "translation": "The Cozmo App needs to access game files on your device in order to run."
+  "boot.needStoragePermission" : {
+    "translation" : "コズモアプリケーションを実行するには、デバイス上のゲームファイルにアクセスする必要があります。"
   },
-  "boot.appSettingsPermission": {
-    "translation": "The Cozmo App needs to access game files on your device in order to run. Use the link below to visit the Cozmo App Settings, and tap <b>Permissions > Storage</b> to enable this."
+  "boot.appSettingsPermission" : {
+    "translation" : "コズモアプリケーションを実行するには、デバイス上のゲームファイルにアクセスする必要があります。コズモアプリの設定を訪問するには下のリンクを使用し、タップ<b>パーミッション&gt;ストレージ</b>これを可能にします。"
   },
-  "boot.continue": {
-    "translation": "Continue"
+  "boot.continue" : {
+    "translation" : "持続する"
   },
-  "boot.settings": {
-    "translation": "Settings"
+  "boot.settings" : {
+    "translation" : "設定"
   },
-  "boot.appVersion": {
-    "translation": "VERSION: {0}"
+  "boot.appVersion" : {
+    "translation" : "バージョン： {0}"
   },
-  "boot.deviceId": {
-    "translation": "DEVICE ID: {0}"
+  "boot.deviceId" : {
+    "translation" : "デバイスID： {0}"
   }
 }

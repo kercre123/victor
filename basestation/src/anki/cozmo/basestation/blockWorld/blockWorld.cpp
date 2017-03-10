@@ -1954,7 +1954,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           //    - that we are currently docking to
           //    - whose pose origin does not match the robot's
           //    - who are a charger (since those stay around)
-          if(object->GetLastObservedTime() >= atTimestamp)
+          const TimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
+          if(lastVisuallyMatchedTime >= atTimestamp)
           {
             observedObjects.push_back(object);
           }

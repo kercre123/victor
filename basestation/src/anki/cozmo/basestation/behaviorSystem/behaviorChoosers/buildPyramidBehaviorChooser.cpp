@@ -805,31 +805,9 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
     _lastUprightBlockCount = static_cast<int>(_pyramidCubePropertiesTrackers.size());
   }
   
-  // Notify game if the BuildPyramidPreReqs have change
-  const bool uprightCountChanged = _lastUprightBlockCount != countOfBlocksUpright;
-  if(uprightCountChanged && _robot.HasExternalInterface()){
-    const bool minimumUprightCountReached =
-      countOfBlocksUpright >= kMinUprightBlocksForPyramid;
-    const bool fellBelowMinimumUprightCount =
-      (_lastUprightBlockCount >= kMinUprightBlocksForPyramid) &&
-      (countOfBlocksUpright < kMinUprightBlocksForPyramid);
-    
-    const bool isSoftSpark = IsPyramidSoftSpark(robot);
-    const bool didUserRequestSparkEnd = robot.GetBehaviorManager().DidGameRequestSparkEnd();
-
-    
-    if(minimumUprightCountReached && !isSoftSpark && !didUserRequestSparkEnd){
-      _robot.GetExternalInterface()->BroadcastToGame<
-        ExternalInterface::BuildPyramidPreReqsChanged>(true);
-    }else if(fellBelowMinimumUprightCount && !isSoftSpark && !didUserRequestSparkEnd){
-      _robot.GetExternalInterface()->BroadcastToGame<
-        ExternalInterface::BuildPyramidPreReqsChanged>(false);
-    }
-  }
-  
   // Check to see if the chooser phase has changed
-  if(countOfBlocksUpright >= kMinUprightBlocksForPyramid ||
-     countOfBlocksUpright == _pyramidCubePropertiesTrackers.size()){
+  if((countOfBlocksUpright >= kMinUprightBlocksForPyramid) ||
+     (countOfBlocksUpright == _pyramidCubePropertiesTrackers.size())){
     if(_chooserPhase != ChooserPhase::BuildingPyramid){
       _chooserPhase = ChooserPhase::BuildingPyramid;
       UpdateActiveBehaviorGroup(_robot, false);
@@ -840,6 +818,45 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
       UpdateActiveBehaviorGroup(_robot, true);
     }
   }
+  
+  
+  /////
+  // Logic for when to notify game if the BuildPyramidPreReqs have changed
+  /////
+  const bool uprightCountChanged = _lastUprightBlockCount != countOfBlocksUpright;
+  if(uprightCountChanged && _robot.HasExternalInterface()){
+    // Collect information about state of world/game
+    const bool isSoftSpark = IsPyramidSoftSpark(robot);
+    const bool didUserRequestSparkEnd =
+                  robot.GetBehaviorManager().DidGameRequestSparkEnd();
+    
+    const bool minimumUprightCountReached =
+      countOfBlocksUpright >= kMinUprightBlocksForPyramid;
+    const bool fellBelowMinimumUprightCount =
+      (_lastUprightBlockCount >= kMinUprightBlocksForPyramid) &&
+      (countOfBlocksUpright < kMinUprightBlocksForPyramid);
+    
+    
+    // Combining all of the above conditions into should send determination
+    const bool shouldSendPreReqsMet = minimumUprightCountReached &&
+                                      !isSoftSpark &&
+                                      !didUserRequestSparkEnd;
+    
+    const bool shouldSendPreReqsNoLongerMet = fellBelowMinimumUprightCount &&
+                                              !isSoftSpark &&
+                                              !didUserRequestSparkEnd &&
+                                              !_pyramidObjectiveAchieved;
+    
+    if(shouldSendPreReqsMet){
+      _robot.GetExternalInterface()->BroadcastToGame<
+        ExternalInterface::BuildPyramidPreReqsChanged>(true);
+    }else if(shouldSendPreReqsNoLongerMet){
+      _robot.GetExternalInterface()->BroadcastToGame<
+        ExternalInterface::BuildPyramidPreReqsChanged>(false);
+    }
+  }
+  
+
   
   _lastUprightBlockCount = countOfBlocksUpright;
 }
