@@ -275,48 +275,57 @@ static void CheckFixtureCompatibility(void)
     throw ERROR_INCOMPATIBLE_FIX_REV;
 }
 
+//Test Matrix:
+//Test  Used By:  Notes
+//1L    Vigor     test encoder part tolerance. wiring harness with only the encoder PCB (no gearbox or backpack)
+//1H    Vigor     ^^ identical to 1H
+//2L    Vigor     run motor fwd/rev slow/fast and check encoder ticks. verifies motor/encoder op
+//2H    Vigor     ^^ same for now. differnt test allows changing test params for different motor characteristics.
+//3L    EL        ==2L; Retest motor assembly at EL production line
+//3H    EL        ==2H+backpack. Retest motor + backpack leds/button which are now wired in.
+
 // List of all functions invoked by the test, in order
-TestFunction* GetMotor1LTestFunctions(void)
-{
-  static TestFunction functions[] =
-  {
-    // LEDs are not yet wired in at this station
-    TestEncoders,   // 1L (lift) and 1H (head) use same test
+TestFunction* GetMotor1LTestFunctions(void) {
+  static TestFunction functions[] = {
+    TestEncoders,
     NULL
   };
-
   return functions;
 }
 
-TestFunction* GetMotor1HTestFunctions(void)
-{
+TestFunction* GetMotor1HTestFunctions(void) {
   return GetMotor1LTestFunctions();
 }
 
-// List of all functions invoked by the test, in order
-TestFunction* GetMotor2LTestFunctions(void)
-{
-  static TestFunction functions[] =
-  {
+TestFunction* GetMotor2LTestFunctions(void) {
+  static TestFunction functions[] = {
     CheckFixtureCompatibility,
     TestMotorL,
     NULL
   };
-
   return functions;
 }
 
-// List of all functions invoked by the test, in order
-TestFunction* GetMotor2HTestFunctions(void)
-{
-  static TestFunction functions[] =
-  {
+TestFunction* GetMotor2HTestFunctions(void) {
+  static TestFunction functions[] = {
+    CheckFixtureCompatibility,
+    TestMotorH,
+    NULL
+  };
+  return functions;
+}
+
+TestFunction* GetMotor3LTestFunctions(void) {
+  return GetMotor2LTestFunctions();
+}
+
+TestFunction* GetMotor3HTestFunctions(void) {
+  static TestFunction functions[] = {
     CheckFixtureCompatibility,
     TestLEDs,
     ButtonTest,
     TestMotorH,
     NULL
   };
-
   return functions;
 }

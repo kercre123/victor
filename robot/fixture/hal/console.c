@@ -263,7 +263,7 @@ static void SetMode(void)
 {
   char* arg = GetArgument(1);
   
-  for (int i = 0; i <= FIXTURE_DEBUG; i++)
+  for (int i = 0; i < NUM_FIXTYPES; i++)
     if (!strcasecmp(arg, FIXTYPES[i]))
     {
       g_flashParams.fixtureTypeOverride = i;
