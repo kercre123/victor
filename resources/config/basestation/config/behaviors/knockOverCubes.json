@@ -9,7 +9,10 @@
     "FP_Socialize",
     "FP_PlayAlone",
     "FP_Hiking",
-    "FP_NothingToDo"
+    "FP_NothingToDo",
+    "FP_Pyramid",
+    "SetupBuildPyramid",
+    "BuildPyramid"
   ],
   "minimumStackHeight": 3,
   "reachForBlockTrigger" : "KnockOverGrabAttempt",

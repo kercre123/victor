@@ -112,6 +112,7 @@ void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, co
         case ReactionTrigger::RobotOnSide:
         case ReactionTrigger::RobotOnBack:
         case ReactionTrigger::RobotOnFace:
+        case ReactionTrigger::RobotShaken:
         case ReactionTrigger::UnexpectedMovement:
         {
           TransitionToErrorState(State::ErrorCozmo,robot);

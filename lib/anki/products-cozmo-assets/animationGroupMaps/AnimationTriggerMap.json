@@ -205,6 +205,30 @@
       "AnimName": "ag_demo_lose_01"
     },
     {
+      "CladEvent": "DizzyReactionHard",
+      "AnimName": "ag_dizzy_reaction_hard"
+    },
+    {
+      "CladEvent": "DizzyReactionMedium",
+      "AnimName": "ag_dizzy_reaction_medium"
+    },
+    {
+      "CladEvent": "DizzyReactionSoft",
+      "AnimName": "ag_dizzy_reaction_soft"
+    },
+    {
+      "CladEvent": "DizzyShakeLoop",
+      "AnimName": "ag_dizzy_shake_loop"
+    },
+    {
+      "CladEvent": "DizzyShakeStop",
+      "AnimName": "ag_dizzy_shake_stop"
+    },
+    {
+      "CladEvent": "DizzyStillPickedUp",
+      "AnimName": "ag_dizzy_pickup"
+    },
+    {
       "CladEvent": "DriveEndAngry",
       "AnimName": "ag_driving_upset_end"
     },

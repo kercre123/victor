@@ -84,7 +84,7 @@ namespace Anki.UI {
       }
 
       if (_FormattingArgs != null) {
-        displayText = Localization.GetWithArgs(displayText, _FormattingArgs);
+        displayText = string.Format(displayText, _FormattingArgs);
       }
 
       if (_AllUppercase) {

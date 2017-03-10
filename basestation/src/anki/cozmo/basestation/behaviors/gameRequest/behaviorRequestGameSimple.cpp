@@ -480,7 +480,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
   }
 
   // TODO:(bn) use same motion profile here
-  action->AddAction(new DriveStraightAction(robot, -_afterPlaceBackupDist_mm, -_afterPlaceBackupSpeed_mmps));
+  action->AddAction(new DriveStraightAction(robot, -_afterPlaceBackupDist_mm, _afterPlaceBackupSpeed_mmps));
 
   StartActing(action,
               [this, &robot](ActionResult result) {
