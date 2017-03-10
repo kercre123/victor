@@ -80,7 +80,8 @@ bool BehaviorRespondPossiblyRoll::IsRunnableInternal(const BehaviorPreReqRespond
   
   _metadata = RespondPossiblyRollMetadata(preReqData.GetObjectID(),
                                           preReqData.GetUprightAnimIndex(),
-                                          preReqData.GetOnSideAnimIndex());
+                                          preReqData.GetOnSideAnimIndex(),
+                                          preReqData.GetPoseUpAxisAccurate());
   return true;
 }
 
@@ -128,8 +129,10 @@ void BehaviorRespondPossiblyRoll::DetermineNextResponse(Robot& robot)
 {
   ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
   if(nullptr != object){
-    if (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
+    if (!_metadata.GetPoseUpAxisAccurate() ||
+        (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS))
     {
+      _metadata.SetPoseUpAxisWillBeChecked();
       TurnAndRespondNegatively(robot);
     }else{
       TurnAndRespondPositively(robot);
@@ -147,8 +150,6 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(Robot& robot)
                                          _metadata.GetUprightAnimIndex() : kUprightAnims.size() - 1;
   turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kUprightAnims[animIndex]));
   StartActing(turnAndReact, [this](ActionResult result){
-    // TO DO - until we have a helper to search on a turn, just set as acknowledged
-    // if can't see
     if((result == ActionResult::SUCCESS) ||
        (result == ActionResult::VISUAL_OBSERVATION_FAILED)){
       _metadata.SetPlayedUprightAnim();

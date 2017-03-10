@@ -125,6 +125,7 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
 , _onSideAnimIndex(0)
 , _forceLightMusicUpdate(false)
 , _lightsShouldMessageCubeOnSide(false)
+, _timeRespondedRollStartedPreviously_s(-1.0f)
 {
   UpdateActiveBehaviorGroup(_robot, true);
   
@@ -243,8 +244,9 @@ void BuildPyramidBehaviorChooser::OnSelected()
   _currentPyramidConstructionStage = PyramidConstructionStage::None;
   _highestAudioStageReached = PyramidConstructionStage::None;
   _chooserPhase = ChooserPhase::None;
-  _nextTimeCheckBlockOrientations_s = -1;
-  _nextTimeForceUpdateLightMusic_s = -1;
+  _nextTimeCheckBlockOrientations_s = -1.0f;
+  _nextTimeForceUpdateLightMusic_s = -1.0f;
+  _timeRespondedRollStartedPreviously_s = _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
   UpdateActiveBehaviorGroup(_robot, true);
 
   _pyramidObjectiveAchieved = false;
@@ -503,7 +505,7 @@ void BuildPyramidBehaviorChooser::UpdatePyramidAssignments(const BehaviorBuildPy
 IBehavior* BuildPyramidBehaviorChooser::ChooseNextBehavior(Robot& robot,
                                                            const IBehavior* currentRunningBehavior)
 {
-  UpdateTrackerPropertiesBasedOnCurrentRunningBehavior(currentRunningBehavior);
+  UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(currentRunningBehavior);
 
   // Thank the user if possible
   IBehavior* bestBehavior = CheckForShouldThankUser(robot, currentRunningBehavior);
@@ -667,11 +669,16 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
       if(entry.second.GetCurrentUpAxis() != UpAxis::ZPositive){
         BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
                                                      _uprightAnimIndex,
-                                                     _onSideAnimIndex);
+                                                     _onSideAnimIndex,
+                                                     false);
         if(_behaviorRespondPossiblyRoll->IsRunnable(preReqData)){
+          PRINT_CH_INFO("BuildPyramid",
+                        "BuildPyramidBehaviorChooser.CheckForRespondPossiblyRoll.RespondToBlockOnSide",
+                        "Responding to object %d which is on its side and rolling",
+                        entry.second.GetObjectID().GetValue());
           bestBehavior = _behaviorRespondPossiblyRoll;
+          break;
         }
-        break;
       }
       
       if(bestBehavior == nullptr && !entry.second.GetHasAcknowledgedPositively()){
@@ -682,9 +689,14 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
         
         BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
                                                      _uprightAnimIndex,
-                                                     onSideIdx);
+                                                     onSideIdx,
+                                                     true);
         if(_behaviorRespondPossiblyRoll->IsRunnable(preReqData)){
           bestBehavior = _behaviorRespondPossiblyRoll;
+          PRINT_CH_INFO("BuildPyramid",
+                        "BuildPyramidBehaviorChooser.CheckForRespondPossiblyRoll.MayRespondToUpright",
+                        "May respond to object %d positively if the block on its side is unknown",
+                        entry.second.GetObjectID().GetValue());
         }
       }
     }
@@ -692,19 +704,34 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
   
   // We don't want to acknowledge positively if all cubes are upright and we can start
   // building
-  return  numberOfCubesOnSide != 0 ? bestBehavior : nullptr;
+  return (numberOfCubesOnSide != 0)  ? bestBehavior : nullptr;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BuildPyramidBehaviorChooser::UpdateTrackerPropertiesBasedOnCurrentRunningBehavior(const IBehavior* currentRunningBehavior)
+void BuildPyramidBehaviorChooser::UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(const IBehavior* currentRunningBehavior)
 {
+  // The respond possibly roll behavior may have updated properties while running
+  const bool respondCurrentlyRunning = currentRunningBehavior != nullptr &&
+                 (currentRunningBehavior->GetClass() == BehaviorClass::RespondPossiblyRoll);
+  
+  // The chooser may not have gotten updated properties from the respond possibly
+  // roll behavior before it stopped itself - if it has run since last updated
+  // pull the properties just to check
+  const bool runSinceLastTimeCheck = _timeRespondedRollStartedPreviously_s !=
+                                       _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
+  
+  // If respond possibly roll isn't running, update the tracked last time it ran
+  if(!respondCurrentlyRunning && runSinceLastTimeCheck){
+    _timeRespondedRollStartedPreviously_s = _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
+  }
+  
   // Update respondPossiblyRoll tracker info
-  if(currentRunningBehavior != nullptr &&
-     currentRunningBehavior->GetClass() == BehaviorClass::RespondPossiblyRoll){
+  if(respondCurrentlyRunning || runSinceLastTimeCheck){
     
     const auto& metadata =  _behaviorRespondPossiblyRoll->GetResponseMetadata();
     
+    // Update animation trigger to play on the next time the behavior runs
     if(metadata.GetPlayedUprightAnim()){
       _uprightAnimIndex = metadata.GetUprightAnimIndex() + 1;
     }

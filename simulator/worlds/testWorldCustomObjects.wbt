@@ -63,9 +63,7 @@ DEF LightCube LightCube {
   translation -0.0285 0.235 0.022
   rotation 0 0 1 -1.0482006
 }
-BlockWorldComms {
-}
-CozmoBot {
+%COZMOBOT% {
   name "CozmoBot_1"
 }
 BuildServerTestController {

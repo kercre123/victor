@@ -31,9 +31,7 @@ CozmoMat {
 Face {
   translation -0.004046 -0.474987 0.39
 }
-BlockWorldComms {
-}
-CozmoBot {
+%COZMOBOT% {
   name "CozmoBot_1"
 }
 BuildServerTestController {

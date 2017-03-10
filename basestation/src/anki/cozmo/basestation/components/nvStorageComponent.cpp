@@ -55,12 +55,25 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 
+#ifdef COZMO_V2
+#ifdef SIMULATOR
+#include "anki/cozmo/basestation/androidHAL/androidHAL.h"
+#include "clad/types/imageTypes.h"
+#endif // ifdef SIMULATOR
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "util/fileUtils/fileUtils.h"
+#endif // ifdef COZMO_V2
+
 CONSOLE_VAR(bool, kNoWriteToRobot, "NVStorageComponent", false);
 
 // For some inexplicable reason this needs to be here in the cpp instead of in the header
 // because we are including consoleInterface.h
 // Maximum size of a single blob
 static constexpr u32 _kMaxNvStorageBlobSize = 1024;
+
+#ifdef COZMO_V2
+static const char*   _kNVDataFileExtension = ".nvdata";
+#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -113,9 +126,24 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
   
 NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* context)
   : _robot(inRobot)
+#ifdef COZMO_V2
+  , _kStoragePath((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "nvStorage/") : ""))
+#else 
   , _backupManager(inRobot)
+#endif
+
 {
-  SetState(NVSCState::IDLE);
+  #ifdef COZMO_V2
+  {
+    #ifdef SIMULATOR
+    LoadSimData();
+    #endif
+
+    LoadDataFromFiles();
+  }
+  #else
+    SetState(NVSCState::IDLE);
+  #endif // ifndef COZMO_V2
   
   if (context) {
     // Setup game message handlers
@@ -131,20 +159,24 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
       helper.SubscribeGameToEngine<MessageGameToEngineTag::NVStorageWipeAll>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::NVStorageClearPartialPendingWriteEntry>();
     }
-    
-    // Setup robot message handlers
-    RobotInterface::MessageHandler *messageHandler = context->GetRobotManager()->GetMsgHandler();
-    RobotID_t robotId = _robot.GetID();
-    
-    using localHandlerType = void(NVStorageComponent::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
-    // Create a helper lambda for subscribing to a tag with a local handler
-    auto doRobotSubscribe = [this, robotId, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
+
+    #ifndef COZMO_V2
     {
-      _signalHandles.push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
-    };
-    
-    // bind to specific handlers in the NVStorage class
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::nvOpResult,        &NVStorageComponent::HandleNVOpResult);
+      // Setup robot message handlers
+      RobotInterface::MessageHandler *messageHandler = context->GetRobotManager()->GetMsgHandler();
+      RobotID_t robotId = _robot.GetID();
+      
+      using localHandlerType = void(NVStorageComponent::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
+      // Create a helper lambda for subscribing to a tag with a local handler
+      auto doRobotSubscribe = [this, robotId, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
+      {
+        _signalHandles.push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
+      };
+      
+      // bind to specific handlers in the NVStorage class
+      doRobotSubscribe(RobotInterface::RobotToEngineTag::nvOpResult,        &NVStorageComponent::HandleNVOpResult);
+    }
+    #endif
     
     InitSizeTable();
     
@@ -203,7 +235,7 @@ u32 NVStorageComponent::GetMaxSizeForEntryTag(NVEntryTag tag)
 {
   auto it = _maxSizeTable.find(tag);
   if (it == _maxSizeTable.end() || it->first == NVEntryTag::NVEntry_NEXT_SLOT) {
-    PRINT_NAMED_ERROR("NVStorageComponent.GetMaxSizeForEntryTag.InvalidTag", "0x%x", tag);
+    PRINT_NAMED_WARNING("NVStorageComponent.GetMaxSizeForEntryTag.InvalidTag", "0x%x", tag);
     return 0;
   }
   
@@ -332,11 +364,15 @@ bool NVStorageComponent::Write(NVEntryTag tag,
   
   // Sanity check on size
   u32 allowedSize = GetMaxSizeForEntryTag(tag);
+
+# ifndef COZMO_V2
   // If we aren't writing to the factory block then subtract the size of the header
   if(!_writingFactory)
   {
     allowedSize -= _kEntryHeaderSize;
   }
+# endif
+  
   if ((size > allowedSize) || size <= 0) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.InvalidSize",
                         "Tag: %s, %zu bytes (limit %d bytes)",
@@ -370,21 +406,44 @@ bool NVStorageComponent::Write(NVEntryTag tag,
     return true;
   }
 
-  if(!_writingFactory)
-  {
-    PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.PrecedingWriteWithErase",
-                   "Tag: %s", EnumToString(tag));
-    
-    _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
-  }
   
-  // Queue write request
-  _requestQueue.emplace(tag, callback, new std::vector<u8>(data,data+size), broadcastResultToGame);
+  #ifdef COZMO_V2
+  {
+    PRINT_CH_INFO("NVStorage", "NVStorageComponent.Write.WritingData", "%s", EnumToString(tag));
+    u32 entryTag = static_cast<u32>(tag);
+    
+    _tagDataMap[entryTag] = std::vector<u8>(data,data+size);
+    
+    if (callback) {
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.ExecutingCallback", "%s", EnumToString(tag));
+      callback(NVResult::NV_OKAY);
+    }
+    
+    if (broadcastResultToGame) {
+      BroadcastNVStorageOpResult(tag, NVResult::NV_OKAY, NVOperation::NVOP_WRITE);
+    }
+    
+    WriteEntryToFile(entryTag);
+  }
+  #else
+  {
+    if(!_writingFactory)
+    {
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.PrecedingWriteWithErase",
+                     "Tag: %s", EnumToString(tag));
+      
+      _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
+    }
+    
+    // Queue write request
+    _requestQueue.emplace(tag, callback, new std::vector<u8>(data,data+size), broadcastResultToGame);
 
-  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.DataQueued",
-                 "%s - numBytes: %zu",
-                 EnumToString(tag),
-                 size);
+    PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.DataQueued",
+                   "%s - numBytes: %zu",
+                   EnumToString(tag),
+                   size);
+  }
+  #endif
   
   return true;
 }
@@ -427,25 +486,48 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
     return false;
   }
   
-  // If we aren't writing to the robot then call the callback immediately
-  if(kNoWriteToRobot)
+  
+  #ifdef COZMO_V2
   {
-    if(broadcastResultToGame)
-    {
-      BroadcastNVStorageOpResult(tag, NVResult::NV_OKAY, NVOperation::NVOP_ERASE);
-    }
-    if(callback)
-    {
+    PRINT_CH_INFO("NVStorage", "NVStorageComponent.Erase.ErasingData", "%s", EnumToString(tag));
+    u32 entryTag = static_cast<u32>(tag);
+    
+    _tagDataMap.erase(entryTag);
+    
+    if (callback) {
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Erase.ExecutingCallback", "%s", EnumToString(tag));
       callback(NVResult::NV_OKAY);
     }
-    return true;
+    
+    if (broadcastResultToGame) {
+      BroadcastNVStorageOpResult(tag, NVResult::NV_OKAY, NVOperation::NVOP_ERASE);
+    }
+    
+    WriteEntryToFile(entryTag);
   }
+  #else
+  {
+    // If we aren't writing to the robot then call the callback immediately
+    if(kNoWriteToRobot)
+    {
+      if(broadcastResultToGame)
+      {
+        BroadcastNVStorageOpResult(tag, NVResult::NV_OKAY, NVOperation::NVOP_ERASE);
+      }
+      if(callback)
+      {
+        callback(NVResult::NV_OKAY);
+      }
+      return true;
+    }
+    
+    _requestQueue.emplace(tag, callback, broadcastResultToGame, eraseSize);
+    
+    PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Erase.Queued",
+                   "%s", EnumToString(tag));
+  }
+  #endif  // ifdef COZMO_V2
   
-  _requestQueue.emplace(tag, callback, broadcastResultToGame, eraseSize);
-  
-  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Erase.Queued",
-                 "%s", EnumToString(tag));
-
   return true;
 }
   
@@ -453,23 +535,42 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
 bool NVStorageComponent::WipeAll(NVStorageWriteEraseCallback callback,
                                  bool broadcastResultToGame)
 {
-  // If we aren't writing to the robot then call the callback immediately
-  if(kNoWriteToRobot)
+  #ifdef COZMO_V2
   {
-    if(broadcastResultToGame)
-    {
-      BroadcastNVStorageOpResult(NVEntryTag::NVEntry_NEXT_SLOT, NVResult::NV_OKAY, NVOperation::NVOP_WIPEALL);
-    }
-    if(callback)
-    {
+    _tagDataMap.clear();
+    
+    if (callback) {
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WipeAll.ExecutingCallback", "");
       callback(NVResult::NV_OKAY);
     }
-    return true;
+    
+    if (broadcastResultToGame) {
+      BroadcastNVStorageOpResult(NVEntryTag::NVEntry_NEXT_SLOT, NVResult::NV_OKAY, NVOperation::NVOP_WIPEALL);
+    }
+    
+    Util::FileUtils::RemoveDirectory(_kStoragePath);
   }
+  #else
+  {
+    // If we aren't writing to the robot then call the callback immediately
+    if(kNoWriteToRobot)
+    {
+      if(broadcastResultToGame)
+      {
+        BroadcastNVStorageOpResult(NVEntryTag::NVEntry_NEXT_SLOT, NVResult::NV_OKAY, NVOperation::NVOP_WIPEALL);
+      }
+      if(callback)
+      {
+        callback(NVResult::NV_OKAY);
+      }
+      return true;
+    }
 
-  _requestQueue.emplace(callback, broadcastResultToGame);
-  
-  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WipeAll.Queued", "");
+    _requestQueue.emplace(callback, broadcastResultToGame);
+    
+    PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WipeAll.Queued", "");
+  }
+#endif // ifdef COZMO_V2
   
   return true;
 }
@@ -513,22 +614,141 @@ bool NVStorageComponent::Read(NVEntryTag tag,
     return false;
   }
   
-  PRINT_CH_INFO("NVStorage", "NVStorageComponent.Read.QueueingReadRequest", "%s", EnumToString(tag));
-  _requestQueue.emplace(tag, callback, data, broadcastResultToGame);
+  #ifdef COZMO_V2
+  {
+    PRINT_CH_INFO("NVStorage", "NVStorageComponent.Read.ReadingData", "%s", EnumToString(tag));
+    u32 entryTag = static_cast<u32>(tag);
+    NVResult result = NVResult::NV_OKAY;
+    
+    const auto dataIter = _tagDataMap.find(entryTag);
+    const bool dataExists = dataIter != _tagDataMap.end();
+    
+    u8* dataPtr = nullptr;
+    size_t dataSize = 0;
+    if (dataExists) {
+      dataPtr = dataIter->second.data();
+      dataSize = dataIter->second.size();
+      
+      // Copy data to destination
+      if (data != nullptr) {
+        *data = dataIter->second;
+      }
+    } else {
+      result = NVResult::NV_NOT_FOUND;
+    }
+    
+    if (callback) {
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Read.ExecutingCallback", "%s", EnumToString(tag));
+      callback(dataPtr, dataSize, result);
+    }
+    
+    if (broadcastResultToGame) {
+      BroadcastNVStorageReadResults(tag, dataPtr, dataSize);
+    }
+  }
+  #else
+  {
+    PRINT_CH_INFO("NVStorage", "NVStorageComponent.Read.QueueingReadRequest", "%s", EnumToString(tag));
+    _requestQueue.emplace(tag, callback, data, broadcastResultToGame);
+  }
+  #endif  // ifdef COZMO_V2
   
   return true;
 }
 
-void NVStorageComponent::SetState(NVSCState s)
+
+
+#pragma mark --- Start of COZMO 2.0 only methods ---
+#ifdef COZMO_V2
+  
+void NVStorageComponent::WriteEntryToFile(u32 tag)
 {
-  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.SetState", "PrevState: %d, NewState: %d", _state, s);
-  if (s == NVSCState::IDLE) {
-    _writeDataObject.sending  = false;
-    _writeDataAckInfo.pending = false;
-    _recvDataInfo.pending     = false;
+  // Not writing data to disk on Mac OS so as make sure Webots robots load "clean"
+  // which is usually the assumption when using Webots robots.
+  // If you bypass this it's your own responsibility to delete webotsCtrlGameEngine2/files/output/nvStorage
+  // to get a clean system again.
+  #if !defined(ANKI_PLATFORM_OSX)
+  
+  // Create filename from tag
+  std::stringstream ss;
+  ss << std::hex << tag << _kNVDataFileExtension;
+
+  // If tag doesn't exist in map, then delete the associated file if it exists
+  auto iter = _tagDataMap.find(tag);
+  if (iter == _tagDataMap.end()) {
+    PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WriteEntryToFile.Erasing", "Tag 0x%x", tag);
+    Util::FileUtils::DeleteFile(_kStoragePath + ss.str());
+    return;
   }
-  _state = s;
+  
+  // Write data to file
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WriteEntryToFile.Writing", "Tag 0x%x, side %zu", tag, iter->second.size());
+  Util::FileUtils::CreateDirectory(_kStoragePath);
+  if (!Util::FileUtils::WriteFile(_kStoragePath + ss.str(), iter->second)) {
+    PRINT_NAMED_ERROR("NVStorageComponent.WriteEntryToFile.Failed", "%s", ss.str().c_str());
+  }
+
+  #endif // if !defined(ANKI_PLATFORM_OSX)
 }
+  
+void NVStorageComponent::LoadDataFromFiles()
+{
+  auto fileList = Util::FileUtils::FilesInDirectory(_kStoragePath, false, _kNVDataFileExtension);
+  
+  for (auto& fileName : fileList) {
+    
+    // Remove extension
+    const std::string tagStr = fileName.substr(0, fileName.find_last_of("."));
+    
+    // Check for valid fileName (Must be numeric and a valid tag)
+    char *end;
+    u32 tagNum = static_cast<u32>(strtol(tagStr.c_str(), &end, 16));
+    if (tagNum <= 0) {
+      PRINT_NAMED_ERROR("NVStorageComponent.LoadDataFromFiles.InvalidFileName", "%s", fileName.c_str());
+      continue;
+    }
+    
+    if (!IsValidEntryTag(static_cast<NVEntryTag>(tagNum))) {
+      PRINT_NAMED_ERROR("NVStorageComponent.LoadDataFromFiles.InvalidTagValues", "0x%x", tagNum);
+      continue;
+    }
+    
+    // Read data from file
+    std::vector<u8> file = Util::FileUtils::ReadFileAsBinary(_kStoragePath + fileName);
+    if(file.empty())
+    {
+      PRINT_NAMED_ERROR("NVStorageComponent.LoadDataFromFiles.ReadFileFailed",
+                        "Unable to read nvStorage entry file %s", fileName.c_str());
+      continue;
+    }
+    
+    PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.LoadDataFromFiles.LoadingData", "Tag 0x%x, data size = %zu bytes", tagNum, file.size());
+    _tagDataMap[tagNum].assign(file.data(), file.data() + file.size());
+  }  
+}
+  
+void NVStorageComponent::Update()
+{
+}
+  
+bool NVStorageComponent::HasPendingRequests()
+{
+  return false;
+}
+  
+#ifdef SIMULATOR
+void NVStorageComponent::LoadSimData()
+{
+  // Store simulated camera calibration data
+  const CameraCalibration* camCalib = AndroidHAL::getInstance()->GetHeadCamInfo();
+  
+  _tagDataMap[static_cast<u32>(NVEntryTag::NVEntry_CameraCalib)].assign(reinterpret_cast<const u8*>(camCalib), reinterpret_cast<const u8*>(camCalib) + sizeof(*camCalib));
+}
+#endif  // ifdef SIMULATOR
+  
+#pragma mark --- End of COZMO 2.0 only methods ---
+#else  // #ifdef COZMO_V2
+#pragma mark --- Start of COZMO 1.x only methods ---
   
 void NVStorageComponent::ProcessRequest()
 {
@@ -673,12 +893,7 @@ void NVStorageComponent::ProcessRequest()
   _numSendAttempts = 0;
   
 }
-  
-bool NVStorageComponent::HasPendingRequests()
-{
-  return !_requestQueue.empty() || _recvDataInfo.pending || _writeDataAckInfo.pending;
-}
-  
+
 void NVStorageComponent::Update()
 {
   ANKI_CPU_PROFILE("NVStorageComponent::Update");
@@ -799,6 +1014,22 @@ void NVStorageComponent::Update()
   }
   
   
+}
+  
+void NVStorageComponent::SetState(NVSCState s)
+{
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.SetState", "PrevState: %d, NewState: %d", _state, s);
+  if (s == NVSCState::IDLE) {
+    _writeDataObject.sending  = false;
+    _writeDataAckInfo.pending = false;
+    _recvDataInfo.pending     = false;
+  }
+  _state = s;
+}
+
+bool NVStorageComponent::HasPendingRequests()
+{
+  return !_requestQueue.empty() || _recvDataInfo.pending || _writeDataAckInfo.pending;
 }
   
 bool NVStorageComponent::ResendLastCommand()
@@ -1118,11 +1349,13 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
       break;
   }
 }
+#endif // #ifdef COZMO_V2
+#pragma mark --- End of COZMO 1.x only methods ---
   
-void NVStorageComponent::BroadcastNVStorageOpResult(NVEntryTag tag, NVResult res, NVOperation op, u8 index, const u8* data, u32 data_length)
+void NVStorageComponent::BroadcastNVStorageOpResult(NVEntryTag tag, NVResult res, NVOperation op, u8 index, const u8* data, size_t data_length)
 {
   DEV_ASSERT_MSG(data_length <= _kMaxNvStorageBlobSize,
-                 "NVStorageComponent.BroadcastNVStorageOpResult.DataLengthTooLarge", "%u", data_length);
+                 "NVStorageComponent.BroadcastNVStorageOpResult.DataLengthTooLarge", "%zu", data_length);
   
   ExternalInterface::NVStorageOpResult msg;
   msg.tag = tag;
@@ -1135,6 +1368,34 @@ void NVStorageComponent::BroadcastNVStorageOpResult(NVEntryTag tag, NVResult res
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
 }
 
+void NVStorageComponent::BroadcastNVStorageReadResults(NVEntryTag tag, u8* dataPtr, size_t dataSize)
+{
+  if (dataPtr == nullptr || dataSize == 0) {
+    BroadcastNVStorageOpResult(tag, NVResult::NV_NOT_FOUND, NVOperation::NVOP_READ);
+    return;
+  }
+  
+  // Send data up to game if result was NV_OKAY
+  size_t bytesRemaining = dataSize;
+  u8 index = 0;
+  BOUNDED_WHILE(1000, bytesRemaining > 0) {
+    
+    size_t data_length = MIN(bytesRemaining, _kMaxNvStorageBlobSize);
+    
+    BroadcastNVStorageOpResult(tag,
+                               bytesRemaining > data_length ? NVResult::NV_MORE : NVResult::NV_OKAY,
+                               NVOperation::NVOP_READ,
+                               index,
+                               dataPtr, data_length);
+    
+    bytesRemaining -= data_length;
+    dataPtr += data_length;
+    index++;
+  }
+}
+  
+  
+  
 bool NVStorageComponent::QueueWriteBlob(const NVEntryTag tag,
                                         const u8* data, u16 dataLength,
                                         u8 blobIndex, u8 numTotalBlobs)

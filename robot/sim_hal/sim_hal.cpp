@@ -63,8 +63,6 @@ namespace Anki {
 
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
 
-      const u32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
-
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
 
       bool isInitialized = false;
@@ -97,9 +95,13 @@ namespace Anki {
 
 
       // Cameras / Vision Processing
-      bool enableVideo_;
+#ifndef COZMO_V2
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
+      const u32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
+      u32 imageFrameID_ = 1;      
+#endif
+      bool enableVideo_;
       u32 cameraStartTime_ms_;
 
       // For pose information
@@ -174,7 +176,6 @@ namespace Anki {
       u32 AUDIO_FRAME_TIME_MS = 33;     // Duration of single audio frame
       bool audioReadyForFrame_ = true;  // Whether or not ready to receive another audio frame
       
-      u32 imageFrameID_ = 1;
 
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -300,18 +301,18 @@ namespace Anki {
       headPosSensor_ = webotRobot_.getPositionSensor("HeadMotorPosSensor");
       liftPosSensor_ = webotRobot_.getPositionSensor("LiftMotorPosSensor");
 
-
       con_ = webotRobot_.getConnector("gripperConnector");
-      //con_->enablePresence(TIME_STEP);
 
+#ifndef COZMO_V2
       headCam_ = webotRobot_.getCamera("HeadCamera");
-
+      
       if(VISION_TIME_STEP % static_cast<u32>(webotRobot_.getBasicTimeStep()) != 0) {
         PRINT("VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).\n",
               VISION_TIME_STEP, webotRobot_.getBasicTimeStep());
         return RESULT_FAIL;
       }
       headCam_->enable(VISION_TIME_STEP);
+#endif
 
       // HACK: Figure out when first camera image will actually be taken (next
       // timestep from now), so we can reference to it when computing frame
@@ -320,9 +321,13 @@ namespace Anki {
       cameraStartTime_ms_ = HAL::GetTimeStamp(); // + TIME_STEP;
       PRINT_NAMED_INFO("SIM", "Setting camera start time as %d", cameraStartTime_ms_);
 
-      enableVideo_ = robotNode->getField("enableVideo")->getSFBool();
-      if (!enableVideo_) {
-        printf("WARN: ******** Video disabled *********\n");
+      webots::Field* enableVideoField = robotNode->getField("enableVideo");
+      if (enableVideoField) {
+        enableVideo_ = enableVideoField->getSFBool();
+        
+        if (!enableVideo_) {
+          printf("WARN: ******** Video disabled *********\n");
+        }
       }
 
       // Set ID
@@ -485,8 +490,10 @@ namespace Anki {
     void HAL::Destroy()
     {
       // Turn off components: (strictly necessary?)
+#ifndef COZMO_V2
       headCam_->disable();
-
+#endif
+      
       gps_->disable();
       compass_->disable();
 
@@ -781,7 +788,8 @@ namespace Anki {
 
     } // step()
 
-
+    
+#ifndef COZMO_V2
     // Helper function to create a CameraInfo struct from Webots camera properties:
     void FillCameraInfo(const webots::Camera *camera,
                         HAL::CameraInfo &info)
@@ -828,38 +836,6 @@ namespace Anki {
       }
     }
 
-    /*
-    HAL::CameraMode HAL::GetHeadCamMode(void)
-    {
-      return headCamMode_;
-    }
-
-    // TODO: there is a copy of this in hal.cpp -- consolidate into one location.
-    // TODO: perhaps we'd rather have this be a switch statement
-    //       (However, if the header is stored as a member of the CameraModeInfo
-    //        struct, we can't use it as a case in the switch statement b/c
-    //        the compiler doesn't think it's a constant expression.  We can
-    //        get around this using "constexpr" when declaring CameraModeInfo,
-    //        but that's a C++11 thing and not likely supported on the Movidius
-    //        compiler)
-    void HAL::SetHeadCamMode(const u8 frameResHeader)
-    {
-      bool found = false;
-      for(CameraMode mode = CAMERA_MODE_VGA;
-          not found && mode != CAMERA_MODE_COUNT; ++mode)
-      {
-        if(frameResHeader == CameraModeInfo[mode].header) {
-          headCamMode_ = mode;
-          found = true;
-        }
-      }
-
-      if(not found) {
-        PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
-      }
-    } //SetHeadCamMode()
-    */
-    
     void HAL::CameraGetDefaultParameters(DefaultCameraParams& params)
     {
       params.minExposure_ms = 0;
@@ -959,7 +935,7 @@ namespace Anki {
       
       // line2Number number increases while a frame is being captured so subsequent calls to this function where
       // imageFrameID_ hasn't changed should increase line2Number_
-      // This function is not called more than 4 times per frame so line2Number_ will never exceed (60 + 1) * 4 = 244
+      // This function is not called more than 4 times per frame so line2Number_ will never exceed (60 * 4) + 1 = 241
       // where the max value it could be is 250 (500 scanlines per frame / 2)
       uint8_t line2NumberIncrement = HAL::GetTimeStamp() % 60 + 1;
       if(prevImageID_ == imageFrameID_)
@@ -976,6 +952,7 @@ namespace Anki {
       
       prevImageID_ = imageFrameID_;
     }
+#endif // #ifndef COZMO_V2
     
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)

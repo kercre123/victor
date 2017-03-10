@@ -38,10 +38,11 @@ namespace Cozmo {
     
   }
   
-  EncodedImage::EncodedImage(const Vision::Image& imgGray)
+  EncodedImage::EncodedImage(const Vision::Image& imgGray, const u32 imageID)
   : _timestamp(imgGray.GetTimestamp())
   , _imgWidth(imgGray.GetNumCols())
   , _imgHeight(imgGray.GetNumRows())
+  , _imgID(imageID)
   , _encoding(ImageEncoding::RawGray)
   , _isImgValid(!imgGray.IsEmpty())
   {
@@ -50,10 +51,11 @@ namespace Cozmo {
               std::back_inserter(_buffer));
   }
   
-  EncodedImage::EncodedImage(const Vision::ImageRGB& imgRGB)
+  EncodedImage::EncodedImage(const Vision::ImageRGB& imgRGB, const u32 imageID)
   : _timestamp(imgRGB.GetTimestamp())
   , _imgWidth(imgRGB.GetNumCols())
   , _imgHeight(imgRGB.GetNumRows())
+  , _imgID(imageID)
   , _encoding(ImageEncoding::RawRGB)
   , _isImgValid(!imgRGB.IsEmpty())
   {

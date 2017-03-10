@@ -10,24 +10,26 @@
 #include "anki/cozmo/transport/IUnreliableTransport.h"
 #include "anki/cozmo/transport/IReceiver.h"
 #include "anki/cozmo/transport/reliableTransport.h"
-#include "anki/vision/CameraSettings.h"
+#ifndef COZMO_V2
 #include "nvStorage.h"
-#endif
+#endif // #ifndef COZMO_V2
+#endif // #ifdef SIMULATOR
 #include <string.h>
 
-#include "liftController.h"
+#include "blockLightController.h"
+#include "dockingController.h"
 #include "headController.h"
 #include "imuFilter.h"
-#include "blockLightController.h"
-#include "speedController.h"
-#include "steeringController.h"
-#include "wheelController.h"
+#include "liftController.h"
 #include "localization.h"
 #include "pathFollower.h"
-#include "dockingController.h"
 #include "pickAndPlaceController.h"
-#include "testModeController.h"
 #include "proxSensors.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "testModeController.h"
+#include "wheelController.h"
+
 #ifdef TARGET_K02
 #include "hal/dac.h"
 #include "hal/uart.h"
@@ -550,11 +552,18 @@ namespace Anki {
 
       void Process_enableColorImages(const RobotInterface::EnableColorImages& msg)
       {
+        #ifdef COZMO_V2
+        AnkiWarn( 1197, "Messages.Process_enableColorImages.Unsupported", 305, "", 0);
+        #else
         HAL::CameraSetColorEnabled(msg.enable);
+        #endif  // ifdef COZMO_V2
       }
 
       void Process_setCameraParams(const SetCameraParams& msg)
       {
+        #ifdef COZMO_V2
+        AnkiWarn( 1198, "Messages.Process_setCameraParams.Unsupported", 305, "", 0);
+        #else
         if(msg.requestDefaultParams)
         {
           DefaultCameraParams params;
@@ -565,6 +574,16 @@ namespace Anki {
         {
           HAL::CameraSetParameters(msg.exposure_ms, msg.gain);
         }
+        #endif // ifdef COZMO_V2
+      }
+      
+      void Process_cameraFOVInfo(const CameraFOVInfo& msg)
+      {
+        #ifdef COZMO_V2
+        DockingController::SetCameraFieldOfView(msg.horizontalFOV, msg.verticalFOV);
+        #else
+        AnkiWarn( 1200, "Messages.Process_cameraFOVInfo.Unsupported", 305, "", 0);
+        #endif
       }
 
       void Process_rollActionParams(const RobotInterface::RollActionParams& msg) {
@@ -909,10 +928,14 @@ namespace Anki {
       /// Stub message handlers to satisfy simulator build
       void Process_commandNV(NVStorage::NVCommand const& msg)
       {
+        #ifdef COZMO_V2
+        AnkiWarn( 1196, "Messages.Process_commandNV.Unsupported", 631, "Cozmo 2.0 NVStorage is in engine only", 0);
+        #else
         auto callback = [](NVStorage::NVOpResult& res) {
           RobotInterface::SendMessage(res);
         };
         NVStorage::Command(msg, callback);
+        #endif   // ifdef COZMO_V2
       }
       void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {

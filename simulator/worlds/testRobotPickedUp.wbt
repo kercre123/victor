@@ -28,9 +28,7 @@ DirectionalLight {
 CozmoMat {
   showMarkers FALSE
 }
-BlockWorldComms {
-}
-DEF cozmo CozmoBot {
+%COZMOBOT% {
   name "CozmoBot_1"
 }
 BuildServerTestController {

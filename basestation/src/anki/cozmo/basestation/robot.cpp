@@ -317,10 +317,13 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   {
     _visionComponent->Init(_context->GetDataLoader()->GetRobotVisionConfig());
   }
-      
+  
+  
+# ifndef COZMO_V2   // TODO: RobotDataBackupManager needs to reside on the Unity-side for Cozmo 2.0
   // Read all neccessary data off the robot and back it up
   // Potentially duplicates some reads like FaceAlbumData
   _nvStorageComponent->GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
+# endif
 
   // initialize AI
   _aiComponent->Init();
@@ -1393,7 +1396,7 @@ void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
   */
 }
     
-    
+
 Result Robot::Update()
 {
   ANKI_CPU_PROFILE("Robot::Update");
@@ -1434,6 +1437,10 @@ Result Robot::Update()
       
   if(_visionComponent->GetCamera().IsCalibrated())
   {
+#   ifdef COZMO_V2
+    _visionComponent->CaptureAndSendImage();
+#   endif
+    
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
     Result visionResult = _visionComponent->UpdateAllResults();
     if(RESULT_OK != visionResult) {

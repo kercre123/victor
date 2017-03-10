@@ -46,9 +46,7 @@ SolidBox {
   translation 10 10 10
   size 0.044 0.044 0.044
 }
-BlockWorldComms {
-}
-CozmoBot {
+%COZMOBOT% {
   name "CozmoBot_1"
 }
 BuildServerTestController {

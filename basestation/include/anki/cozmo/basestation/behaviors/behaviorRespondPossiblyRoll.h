@@ -29,13 +29,15 @@ public:
   RespondPossiblyRollMetadata(){};
   RespondPossiblyRollMetadata(const ObjectID& objID,
                               s32 uprightAnimIndex,
-                              s32  onSideAnimIndex)
+                              s32  onSideAnimIndex,
+                              bool poseUpAxisAccurate)
   : _objID(objID)
   , _uprightAnimIndex(uprightAnimIndex)
   , _playedUpright(false)
   , _onSideAnimIndex(onSideAnimIndex)
   , _playedOnSide(false)
   , _reachedPreDockRoll(false)
+  , _poseUpAxisAccurate(poseUpAxisAccurate)
   {
   }
   
@@ -45,12 +47,14 @@ public:
   s32 GetOnSideAnimIndex()      const { return _onSideAnimIndex;}
   bool GetPlayedOnSideAnim()    const { return _playedOnSide;}
   bool GetReachedPreDocRoll()   const { return _reachedPreDockRoll;}
+  bool GetPoseUpAxisAccurate()         const { return _poseUpAxisAccurate;}
   
 protected:
   friend class BehaviorRespondPossiblyRoll;
   void SetPlayedUprightAnim() { _playedUpright = true;}
   void SetPlayedOnSideAnim() { _playedOnSide = true;}
   void SetReachedPreDockRoll() { _reachedPreDockRoll = true;}
+  void SetPoseUpAxisWillBeChecked() { _poseUpAxisAccurate = true;}
 
 private:
   ObjectID _objID;
@@ -59,6 +63,10 @@ private:
   s32 _onSideAnimIndex = 0;
   bool _playedOnSide = false;
   bool _reachedPreDockRoll = false;
+  // If we get to a point where the pose reflects up axis changed messages
+  // this bool should be removed - currently helps keep sync between pyramid
+  // behavior chooser and this behavior
+  bool _poseUpAxisAccurate = true;
 };
   
 

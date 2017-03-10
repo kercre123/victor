@@ -42,14 +42,10 @@ namespace Anki {
 
         markerAppearance = VisionMarkerAppearance::BLACK_ON_WHITE;
         
-#ifdef SIMULATOR
-        scaleImage_thresholdMultiplier = 32768; // 0.5*(2^16)=32768
-  #error "SIMULATOR flag not supported in basestation"
-#else
         scaleImage_thresholdMultiplier = static_cast<s32>(65536.f * 0.9f);
         // scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
         //scaleImage_thresholdMultiplier = 49152; // 0.75*(2^16)=49152
-#endif
+
         scaleImage_numPyramidLevels = 3;
         
         component1d_minComponentWidth = 0;

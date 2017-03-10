@@ -61,7 +61,7 @@ namespace Anki {
       //  _lastActionType to the supplied actionType:
       void StartingAction(const RobotActionType& actionType);
       
-      const Point3f _poseToVerify = {190, 0, 22};
+      const Point3f _poseToVerify = {200, 0, 22};
       
       // to keep track of relative turns of more than one revolution:
       Radians _prevAngle;

@@ -25,10 +25,12 @@
 #endif
 
 #ifdef SIMULATOR
+#ifndef COZMO_V2
 #include "anki/vision/CameraSettings.h"
 #include "nvStorage.h"
 #include <math.h>
-#endif
+#endif // COZMO_V2
+#endif // SIMULATOR
 
 ///////// TESTING //////////
 
@@ -195,7 +197,9 @@ namespace Anki {
         // Simulated NVStorage
         //////////////////////////////////////////////////////////////
 #if SIMULATOR
+#ifndef COZMO_V2
         NVStorage::Update();
+#endif
 #endif
 
         //////////////////////////////////////////////////////////////
@@ -233,7 +237,9 @@ namespace Anki {
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
+          #ifndef COZMO_V2
           HAL::CameraSetColorEnabled(false);
+          #endif
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 
@@ -395,6 +401,7 @@ namespace Anki {
         Result retVal = RESULT_OK;
 
 #       ifdef SIMULATOR
+#       ifndef COZMO_V2
 
         if (!HAL::IsVideoEnabled()) {
           return retVal;
@@ -443,6 +450,7 @@ namespace Anki {
 
         } // if (HAL::imageSendMode_ != ISM_OFF)
 
+#       endif // ifndef COZMO_V2
 #       endif // ifdef SIMULATOR
 
         return retVal;

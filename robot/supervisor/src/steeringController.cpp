@@ -566,7 +566,7 @@ namespace Anki {
 
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, f32 angleTolerance, bool useShortestDir, uint16_t numHalfRevolutions)
     {
-      AnkiDebug( 1196, "SteeringController.ExecutePointTurn.Params", 631, "%d: target %f, vel %f, accel %f, decel %f, tol %f, shortestDir %d, numHalfRevs %d", 8,
+      AnkiDebug( 1204, "SteeringController.ExecutePointTurn.Params", 633, "%d: target %f, vel %f, accel %f, decel %f, tol %f, shortestDir %d, numHalfRevs %d", 8,
                 HAL::GetTimeStamp(),
                 RAD_TO_DEG_F32(targetAngle),
                 RAD_TO_DEG_F32(maxAngularVel),
