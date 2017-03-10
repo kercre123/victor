@@ -387,6 +387,17 @@ protected:
                              SimpleCallbackWithRobot successCallback = nullptr,
                              SimpleCallbackWithRobot failureCallback = nullptr);
 
+  template<typename T>
+  bool SmartDelegateToHelper(Robot& robot,
+                             HelperHandle handleToRun,
+                             void(T::*successCallback)(Robot& robot));
+
+  template<typename T>
+  bool SmartDelegateToHelper(Robot& robot,
+                             HelperHandle handleToRun,
+                             void(T::*successCallback)(Robot& robot),
+                             void(T::*failureCallback)(Robot& robot));
+
   // Stop a helper delegated with SmartDelegateToHelper
   bool StopHelperWithoutCallback();
   
@@ -613,7 +624,29 @@ bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(ActionResu
 {
   return StartActing(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1, std::placeholders::_2));
 }
-  
+
+
+
+template<typename T>
+bool IBehavior::SmartDelegateToHelper(Robot& robot,
+                                      HelperHandle handleToRun,
+                                      void(T::*successCallback)(Robot& robot))
+{
+  return SmartDelegateToHelper(robot, handleToRun,
+                               std::bind(successCallback, static_cast<T*>(this), std::placeholders::_1));
+}
+
+template<typename T>
+bool IBehavior::SmartDelegateToHelper(Robot& robot,
+                                      HelperHandle handleToRun,
+                                      void(T::*successCallback)(Robot& robot),
+                                      void(T::*failureCallback)(Robot& robot))
+{
+  return SmartDelegateToHelper(robot, handleToRun,
+                               std::bind(successCallback, static_cast<T*>(this), std::placeholders::_1),
+                               std::bind(failureCallback, static_cast<T*>(this), std::placeholders::_1));
+}
+
   
 inline bool IBehavior::IsActing() const {
   return _lastActionTag != ActionConstants::INVALID_TAG;
