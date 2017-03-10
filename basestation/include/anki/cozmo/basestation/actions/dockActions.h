@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/dockingSignals.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
@@ -207,8 +208,8 @@ namespace Anki {
       
       ObjectID                   _dockObjectID;
       DockAction                 _dockAction;
-      const Vision::KnownMarker* _dockMarker                     = nullptr;
-      const Vision::KnownMarker* _dockMarker2                    = nullptr;
+      Vision::KnownMarker::Code  _dockMarkerCode                 = Vision::MARKER_INVALID;
+      Vision::KnownMarker::Code  _dockMarkerCode2                = Vision::MARKER_INVALID;
       Radians                    _preActionPoseAngleTolerance    = DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE;
       f32                        _waitToVerifyTimeSecs           = -1.0f;
       bool                       _wasPickingOrPlacing            = false;
@@ -382,7 +383,6 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
       ObjectID                       _carryingObjectID;
-      const Vision::KnownMarker*     _carryObjectMarker = nullptr;
       std::unique_ptr<IActionRunner> _faceAndVerifyAction = nullptr;
       bool                           _startedPlacing = false;
       
@@ -458,8 +458,7 @@ namespace Anki {
       
       // If placing an object, we need a place to store what robot was
       // carrying, for verification.
-      ObjectID                   _carryObjectID;
-      const Vision::KnownMarker* _carryObjectMarker;
+      ObjectID                   _carryObjectID;      
       
       std::unique_ptr<IActionRunner> _placementVerifyAction = nullptr;
       bool                           _verifyComplete; // used in PLACE modes

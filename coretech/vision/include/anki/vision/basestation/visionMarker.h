@@ -39,6 +39,7 @@ namespace Anki {
       inline const Code& GetCode() const;
       
       const char* GetCodeName() const;
+      static const char* GetNameForCode(Code code);
       
     protected:
       

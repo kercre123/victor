@@ -2954,8 +2954,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const f32 speed_mmps,
                              const f32 accel_mmps2,
                              const f32 decel_mmps2,
-                             const Vision::KnownMarker* marker,
-                             const Vision::KnownMarker* marker2,
+                             const Vision::KnownMarker::Code markerCode,
+                             const Vision::KnownMarker::Code markerCode2,
                              const DockAction dockAction,
                              const f32 placementOffsetX_mm,
                              const f32 placementOffsetY_mm,
@@ -2969,8 +2969,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                         speed_mmps,
                         accel_mmps2,
                         decel_mmps2,
-                        marker,
-                        marker2,
+                        markerCode,
+                        markerCode2,
                         dockAction,
                         0, 0, std::numeric_limits<u8>::max(),
                         placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
@@ -2984,8 +2984,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const f32 speed_mmps,
                              const f32 accel_mmps2,
                              const f32 decel_mmps2,
-                             const Vision::KnownMarker* marker,
-                             const Vision::KnownMarker* marker2,
+                             const Vision::KnownMarker::Code markerCode,
+                             const Vision::KnownMarker::Code markerCode2,
                              const DockAction dockAction,
                              const u16 image_pixel_x,
                              const u16 image_pixel_y,
@@ -3005,16 +3005,34 @@ Result Robot::DockWithObject(const ObjectID objectID,
     return RESULT_FAIL;
   }
       
-  DEV_ASSERT(marker != nullptr, "Robot.DockWithObject.InvalidMarker");
-      
   // Need to store these so that when we receive notice from the physical
   // robot that it has picked up an object we can transition the docking
   // object to being carried, using PickUpDockObject()
-  _dockObjectID = objectID;
-  _dockMarker   = marker;
-      
+  _dockObjectID   = objectID;
+  _dockMarkerCode = markerCode;
+
+  // get the marker from the code
+  const auto& markersWithCode = object->GetMarkersWithCode(markerCode);
+  if ( markersWithCode.empty() ) {
+    PRINT_NAMED_ERROR("Robot.DockWithObject.NoMarkerWithCode",
+                      "No marker found with that code.");
+    return RESULT_FAIL;
+  }
+  
+  // notify if we have more than one, since we are going to assume that any is fine to use its pose
+  // we currently don't have this, so treat as warning. But if we ever allow, make sure that they are
+  // simetrical with respect to the object
+  const bool hasMultipleMarkers = (markersWithCode.size() > 1);
+  if(hasMultipleMarkers) {
+    PRINT_NAMED_WARNING("Robot.DockWithObject.MultipleMarkersForCode",
+                        "Multiple markers found for code '%d'. Using first for lift attachment", markerCode);
+  }
+  
+  const Vision::KnownMarker* dockMarker = markersWithCode[0];
+  DEV_ASSERT(dockMarker != nullptr, "Robot.DockWithObject.InvalidMarker");
+  
   // Dock marker has to be a child of the dock block
-  if(marker->GetPose().GetParent() != &object->GetPose()) {
+  if(dockMarker->GetPose().GetParent() != &object->GetPose()) {
     PRINT_NAMED_ERROR("Robot.DockWithObject.MarkerNotOnObject",
                       "Specified dock marker must be a child of the specified dock object.");
     return RESULT_FAIL;
@@ -3050,7 +3068,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
                                dockAction == DockAction::DA_CROSS_BRIDGE);
         
     // Tell the VisionSystem to start tracking this marker:
-    _visionComponent->SetMarkerToTrack(marker->GetCode(), marker->GetSize(),
+    _visionComponent->SetMarkerToTrack(dockMarker->GetCode(), dockMarker->GetSize(),
                                           image_pixel_x, image_pixel_y, checkAngleX,
                                           placementOffsetX_mm, placementOffsetY_mm,
                                           placementOffsetAngle_rad);
@@ -3077,7 +3095,7 @@ bool Robot::IsCarryingObject(const ObjectID& objectID) const
   return _carryingObjectID == objectID || _carryingObjectOnTopID == objectID;
 }
 
-void Robot::SetCarryingObject(ObjectID carryObjectID)
+void Robot::SetCarryingObject(ObjectID carryObjectID, Vision::Marker::Code atMarkerCode)
 {
   ObservableObject* object = _blockWorld->GetLocatedObjectByID(carryObjectID);
   if(object == nullptr) {
@@ -3088,6 +3106,7 @@ void Robot::SetCarryingObject(ObjectID carryObjectID)
   else
   {
     _carryingObjectID = carryObjectID;
+    _carryingMarkerCode = atMarkerCode;
     
     // Don't remain localized to an object if we are now carrying it
     if(_carryingObjectID == GetLocalizedTo())
@@ -3149,6 +3168,7 @@ void Robot::UnSetCarryingObjects(bool topOnly)
 
     // Even if the above failed, still mark the robot's carry ID as unset
     _carryingObjectID.UnSet();
+    _carryingMarkerCode = Vision::MARKER_INVALID;
   }
   _carryingObjectOnTopID.UnSet();
 }
@@ -3164,20 +3184,14 @@ void Robot::UnSetCarryObject(ObjectID objID)
 }
     
     
-Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
+Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker::Code atMarkerCode)
 {
   if(!objectID.IsSet()) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectIDNotSet",
                       "No docking object ID set, but told to pick one up.");
     return RESULT_FAIL;
   }
-      
-  if(objectMarker == nullptr) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoDockMarkerSet",
-                      "No docking marker set, but told to pick up object.");
-    return RESULT_FAIL;
-  }
-      
+  
   if(IsCarryingObject()) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.AlreadyCarryingObject",
                       "Already carrying an object, but told to pick one up.");
@@ -3190,7 +3204,26 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
                       "Dock object with ID=%d no longer exists for picking up.", objectID.GetValue());
     return RESULT_FAIL;
   }
-      
+  
+  // get the marker from the code
+  const auto& markersWithCode = object->GetMarkersWithCode(atMarkerCode);
+  if ( markersWithCode.empty() ) {
+    PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoMarkerWithCode",
+                      "No marker found with that code.");
+    return RESULT_FAIL;
+  }
+  
+  // notify if we have more than one, since we are going to assume that any is fine to use its pose
+  // we currently don't have this, so treat as warning. But if we ever allow, make sure that they are
+  // simetrical with respect to the object
+  const bool hasMultipleMarkers = (markersWithCode.size() > 1);
+  if(hasMultipleMarkers) {
+    PRINT_NAMED_WARNING("Robot.PickUpDockObject.MultipleMarkersForCode",
+                        "Multiple markers found for code '%d'. Using first for lift attachment", atMarkerCode);
+  }
+  
+  const Vision::KnownMarker* attachmentMarker = markersWithCode[0];
+  
   // Base the object's pose relative to the lift on how far away the dock
   // marker is from the center of the block
   // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
@@ -3201,7 +3234,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
     return RESULT_FAIL;
   }
       
-  objectPoseWrtLiftPose.SetTranslation({objectMarker->GetPose().GetTranslation().Length() +
+  objectPoseWrtLiftPose.SetTranslation({attachmentMarker->GetPose().GetTranslation().Length() +
         LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f});
 
   // If we know there's an object on top of the object we are picking up,
@@ -3242,8 +3275,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
     _carryingObjectOnTopID.UnSet();
   }
       
-  SetCarryingObject(objectID); // also marks the object as carried
-  _carryingMarker   = objectMarker;
+  SetCarryingObject(objectID, atMarkerCode); // also marks the object as carried
   
   // Don't actually change the object's pose until we've checked for objects on top
   Result poseResult = GetObjectPoseConfirmer().AddLiftRelativeObservation(object, objectPoseWrtLiftPose);
@@ -3306,8 +3338,7 @@ Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
   // Store the object IDs we were carrying before we unset them so we can clear them later if needed
   auto carriedObjectIDs = GetCarryingObjects();
   
-  UnSetCarryingObjects(); 
-  _carryingMarker = nullptr;
+  UnSetCarryingObjects();  
       
   if(deleteLocatedObjects)
   {

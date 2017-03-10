@@ -1588,7 +1588,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
     if(msg.objectID < 0) {
       robot->SetCarriedObjectAsUnattached();
     } else {
-      robot->SetCarryingObject(msg.objectID);
+      robot->SetCarryingObject(msg.objectID, Vision::MARKER_INVALID);
     }
   }
 }

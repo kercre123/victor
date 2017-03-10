@@ -485,7 +485,7 @@ public:
   const ObjectID&            GetCarryingObject()      const {return _carryingObjectID;}
   const ObjectID&            GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
   const std::set<ObjectID>   GetCarryingObjects()     const;
-  const Vision::KnownMarker* GetCarryingMarker()      const {return _carryingMarker; }
+  const Vision::Marker::Code GetCarryingMarkerCode()  const {return _carryingMarkerCode;}
 
   bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
   bool IsCarryingObject(const ObjectID& objectID) const;
@@ -495,7 +495,7 @@ public:
   EncodedImage& GetEncodedImage() { return _encodedImage; }
   
   // TODO Define better API for (un)setting carried objects: they are confused easily with SetCarriedObjectAsUnattached
-  void SetCarryingObject(ObjectID carryObjectID);
+  void SetCarryingObject(ObjectID carryObjectID, Vision::Marker::Code atMarkerCode);
   void UnSetCarryingObjects(bool topOnly = false);
   
   // If objID == carryingObjectOnTopID, only that object's carry state is unset.
@@ -513,8 +513,8 @@ public:
                         const f32 speed_mmps,
                         const f32 accel_mmps2,
                         const f32 decel_mmps2,
-                        const Vision::KnownMarker* marker,
-                        const Vision::KnownMarker* marker2,
+                        const Vision::KnownMarker::Code marker,
+                        const Vision::KnownMarker::Code marker2,
                         const DockAction dockAction,
                         const u16 image_pixel_x,
                         const u16 image_pixel_y,
@@ -532,8 +532,8 @@ public:
                         const f32 speed_mmps,
                         const f32 accel_mmps2,
                         const f32 decel_mmps2,
-                        const Vision::KnownMarker* marker,
-                        const Vision::KnownMarker* marker2,
+                        const Vision::KnownMarker::Code marker,
+                        const Vision::KnownMarker::Code marker2,
                         const DockAction dockAction,
                         const f32 placementOffsetX_mm = 0,
                         const f32 placementOffsetY_mm = 0,
@@ -550,10 +550,10 @@ public:
   Result SetDockObjectAsAttachedToLift();
     
   // Same as above, but with specified object
-  Result SetObjectAsAttachedToLift(const ObjectID& dockObjectID,
-                                   const Vision::KnownMarker* dockMarker);
+  Result SetObjectAsAttachedToLift(const ObjectID& objectID,
+                                   const Vision::KnownMarker::Code atMarkerCode);
   
-  void UnsetDockObjectID() { _dockObjectID.UnSet(); }
+  void UnsetDockObjectID() { _dockObjectID.UnSet(); _dockMarkerCode = Vision::MARKER_INVALID; }
   void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf;  }
   bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
     
@@ -1082,17 +1082,14 @@ protected:
   static void MoveRobotPoseForward(const Pose3d &startPose, const f32 distance, Pose3d &movedPose);
   
   // Docking / Carrying
-  // Note that we don't store a pointer to the object because it
-  // could deleted, but it is ok to hang onto a pointer to the
-  // marker on that block, so long as we always verify the object
-  // exists and is still valid (since, therefore, the marker must
-  // be as well)
-  ObjectID                    _dockObjectID;
-  const Vision::KnownMarker*  _dockMarker               = nullptr;
-  ObjectID                    _carryingObjectID;
-  ObjectID                    _carryingObjectOnTopID;
-  const Vision::KnownMarker*  _carryingMarker           = nullptr;
-  bool                        _lastPickOrPlaceSucceeded = false;
+  // We can't store pointers to makers eithers because the object may be unobserved and reoverserved, which
+  // could cause a located instance to be destroyed and recreated
+  ObjectID                  _dockObjectID;
+  Vision::KnownMarker::Code _dockMarkerCode = Vision::MARKER_INVALID;
+  ObjectID                  _carryingObjectID;
+  Vision::KnownMarker::Code _carryingMarkerCode = Vision::MARKER_INVALID;
+  ObjectID                  _carryingObjectOnTopID;
+  bool                      _lastPickOrPlaceSucceeded = false;
     
   EncodedImage _encodedImage; // TODO:(bn) store pointer?
   double       _timeSinceLastImage_s = 0.0;
@@ -1264,7 +1261,7 @@ inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirectio
 }
   
 inline Result Robot::SetDockObjectAsAttachedToLift(){
-  return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
+  return SetObjectAsAttachedToLift(_dockObjectID, _dockMarkerCode);
 }
 
 inline u8 Robot::GetCurrentAnimationTag() const {
