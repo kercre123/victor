@@ -1360,7 +1360,7 @@ namespace Anki {
         } else {
           _facePoseCompoundActionDone = true;
           
-          if(_doRefinedTurn && false)
+          if(_doRefinedTurn)
           {
             // If we need to refine the turn just reset this action, set appropriate variables
             Reset(false);
