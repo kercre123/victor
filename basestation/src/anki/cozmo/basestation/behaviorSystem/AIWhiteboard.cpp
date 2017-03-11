@@ -193,6 +193,10 @@ bool AIWhiteboard::CanRollRotationImportantHelper(const ObservableObject* object
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) const
 {
+  if(object->IsPoseStateUnknown()){
+    return false;
+  }
+  
   const auto& pyramidBases = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   const auto& pyramids = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   
@@ -214,23 +218,22 @@ bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) cons
   }
   
   
-  // If there is a stack of 2, the middle block should be selected as the base of the pyramid
+  // If there is a stack of 2, the top block should be selected as the base of the pyramid
   const auto& stacks = _robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
   for(const auto& stack: stacks){
     if(stack->GetStackHeight() == kMaxStackHeightReach &&
-       stack->GetMiddleBlockID() == object->GetID()){
+       stack->GetTopBlockID() == object->GetID()){
       return _robot.CanPickUpObject(*object);
     }
   }
   
-  if(!stacks.empty()){
-    return false;
-  }
-  
-  
   // If the robot is carrying a block, make that the static block
   if(_robot.IsCarryingObject()){
     return _robot.GetCarryingObject() == object->GetID();
+  }
+  
+  if(!stacks.empty()){
+    return false;
   }
   
   // So long as we can pick the object up, it's a valid base block
@@ -244,6 +247,10 @@ bool AIWhiteboard::CanUseAsPyramidStaticBlock(const ObservableObject* object) co
   // Base block must be set before static block can be set
   auto bestBaseBlock = GetBestObjectForAction(ObjectUseIntention::PyramidBaseObject);
   if(!bestBaseBlock.IsSet() || (bestBaseBlock == object->GetID())){
+    return false;
+  }
+  
+  if(object->IsPoseStateUnknown()){
     return false;
   }
   
@@ -269,18 +276,7 @@ bool AIWhiteboard::CanUseAsPyramidStaticBlock(const ObservableObject* object) co
     return false;
   }
   
-  
-  
-  
   if(!object->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerence)){
-    return false;
-  }
-  
-  const ObservableObject* onTop = _robot.GetBlockWorld().FindObjectOnTopOf(
-                                           *object,
-                                           BlockWorld::kOnCubeStackHeightTolerence);
-  
-  if(onTop != nullptr){
     return false;
   }
 
@@ -299,6 +295,10 @@ bool AIWhiteboard::CanUseAsPyramidTopBlock(const ObservableObject* object) const
      !bestStaticBlock.IsSet() ||
      (bestBaseBlock == object->GetID()) ||
      (bestStaticBlock == object->GetID())){
+    return false;
+  }
+  
+  if(object->IsPoseStateUnknown()){
     return false;
   }
   

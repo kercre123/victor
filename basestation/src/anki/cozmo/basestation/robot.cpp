@@ -26,6 +26,7 @@
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/charger.h"
@@ -3282,6 +3283,10 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
       
   SetCarryingObject(objectID); // also marks the object as carried
   _carryingMarker   = objectMarker;
+  
+  // Robot may have just destroyed a configuration
+  // update the configuration manager
+  GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
   
   // Don't actually change the object's pose until we've checked for objects on top
   Result poseResult = GetObjectPoseConfirmer().AddLiftRelativeObservation(object, objectPoseWrtLiftPose);

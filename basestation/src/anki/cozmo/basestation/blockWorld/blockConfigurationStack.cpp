@@ -165,6 +165,11 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindObjectOnTopOf(*currentBlock,
                                                                            BlockWorld::kOnCubeStackHeightTolerence,
                                                                            blocksOnlyFilter))){
+      // Blocks being carried by the robot are not part of a stack
+      if(robot.GetCarryingObject().IsSet() &&
+         (robot.GetCarryingObject() == nextBlock->GetID())){
+        break;
+      }
       blocksOnTopOfObject.push_back(nextBlock);
       currentBlock = nextBlock;
     }
@@ -182,9 +187,12 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
   
   // build the vector of all stacks including the block
   const StackOfCubes* largestStackContainingBlock = nullptr;
-  
+
   // check to see if the block is part of a stack
-  if(blocksOnGround.empty() || (blocksOnTopOfObject.empty() && blocksBelowObject.empty())){
+  const bool robotIsCarryingObject = robot.GetCarryingObject().IsSet() &&
+                                      (robot.GetCarryingObject() == object->GetID());
+  if(robotIsCarryingObject || blocksOnGround.empty() ||
+     (blocksOnTopOfObject.empty() && blocksBelowObject.empty())){
     return largestStackContainingBlock;
   }
   
