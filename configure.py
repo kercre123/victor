@@ -217,13 +217,6 @@ def parse_game_arguments():
                         help="Generates feature flags for project")
 
     parser.add_argument(
-        '--script-engine',
-        action="store",
-        choices=('mono2x', 'il2cpp', 'auto'),
-        default="auto",
-        help='Set the Unity scripting back end')
- 
-    parser.add_argument(
         '--provision-profile',
         metavar='string',
         default=None,
@@ -553,13 +546,6 @@ class GamePlatformConfiguration(object):
             buildaction = 'clean'
         else:
             buildaction = 'build'
-            script_engine = self.options.script_engine
-            if script_engine == 'auto' or not self.options.script_engine:
-                # if script-engine not defined, set a sensible default
-                if self.platform == 'android':
-                    script_engine = 'mono2x'
-                else:
-                    script_engine = 'il2cpp'
 
         if buildaction == 'build':
             if self.options.nobuild:
@@ -588,7 +574,7 @@ class GamePlatformConfiguration(object):
                 # strip libraries and copy into unity
                 self.strip_libs()
                 # Call unity for game
-                self.call_unity(script_engine)
+                self.call_unity()
 
 
         elif not os.path.exists(self.workspace_path):
@@ -596,8 +582,7 @@ class GamePlatformConfiguration(object):
                 'Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
             sys.exit(0)
         else:
-            if self.options.verbose:
-                print_status('Calling ankibuild.xcode.build with scriptengine={0}'.format(script_engine))
+
             # Other cs flags and codesigning identity have default values that will work no matter what.
             try:
                 ankibuild.xcode.build(
@@ -607,7 +592,6 @@ class GamePlatformConfiguration(object):
                     platform=self.platform,
                     configuration=self.options.configuration,
                     simulator=self.options.simulator,
-                    scriptengine=script_engine,
                     other_code_sign_flags=self.other_cs_flags,
                     provision_profile=self.provision_profile_uuid,
                     code_sign_identity=self.codesign_identity)
@@ -618,9 +602,8 @@ class GamePlatformConfiguration(object):
                     scheme=self.scheme,
                     platform=self.platform,
                     configuration=self.options.configuration,
-                    simulator=self.options.simulator,
-                    scriptengine=script_engine)
-        
+                    simulator=self.options.simulator)
+
         if buildaction == 'build':
             if self.options.features is not None and 'standalone' in self.options.features[0]:
                 print("Building standalone-apk")
@@ -682,7 +665,7 @@ class GamePlatformConfiguration(object):
         # copy libs to unity plugin folder
         copytree(self.android_lib_dir, self.android_unity_plugin_dir)
 
-    def call_unity(self, script_engine):
+    def call_unity(self):
         if self.platform != 'android':
             print ('Error: invalid call to unity. only allowed for android builds.')
             return False
@@ -694,7 +677,6 @@ class GamePlatformConfiguration(object):
         args += ['--build-path', os.path.join(self.options.build_dir, self.platform)]
         args += ['--build-type', 'PlayerAndAssets']
         args += ['--asset-path', 'Assets/StreamingAssets/cozmo_resources']
-        args += ['--script-engine', script_engine]
         if self.options.google_play:
             args += ['--config', "googleplay"]
         else:

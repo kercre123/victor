@@ -110,7 +110,6 @@ def build(
     configuration = None,
     platform = None,
     simulator = False,
-    scriptengine = 'il2cpp',
     other_code_sign_flags = None,
     code_sign_identity = None,
     provision_profile = None,
@@ -153,9 +152,7 @@ def build(
             arguments += ['-sdk', 'iphonesimulator']
     
     arguments += ['-parallelizeTargets']
-
-    arguments += ['SCRIPT_ENGINE=' + scriptengine]
-
+    
     arguments += [buildaction]
     
     if use_xcpretty:
