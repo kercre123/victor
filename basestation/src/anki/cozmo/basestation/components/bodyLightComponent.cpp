@@ -119,8 +119,7 @@ void BodyLightComponent::Update()
 
 void BodyLightComponent::SetBackpackLights(const BackpackLights& lights)
 {
-  StopLoopingBackpackLights(_sharedLightConfig);
-  _sharedLightConfig = StartLoopingBackpackLightsInternal(lights, Util::EnumToUnderlying(BackpackLightSourcePrivate::Shared));
+  StartLoopingBackpackLightsInternal(lights, Util::EnumToUnderlying(BackpackLightSourcePrivate::Shared), _sharedLightConfig);
 }
 
 void BodyLightComponent::SetHeadlight(bool on)
@@ -230,13 +229,15 @@ const BackpackLights& BodyLightComponent::GetOffBackpackLights()
   return kBackpackLightsOff;
 }
   
-BackpackLightDataLocator BodyLightComponent::StartLoopingBackpackLights(BackpackLights lights, BackpackLightSource source)
+void BodyLightComponent::StartLoopingBackpackLights(BackpackLights lights, BackpackLightSource source, BackpackLightDataLocator& lightLocator_out)
 {
-  return StartLoopingBackpackLightsInternal(lights, Util::EnumToUnderlying(source));
+  StartLoopingBackpackLightsInternal(lights, Util::EnumToUnderlying(source), lightLocator_out);
 }
   
-BackpackLightDataLocator BodyLightComponent::StartLoopingBackpackLightsInternal(BackpackLights lights, BackpackLightSourceType source)
+void BodyLightComponent::StartLoopingBackpackLightsInternal(BackpackLights lights, BackpackLightSourceType source, BackpackLightDataLocator& lightLocator_out)
 {
+  StopLoopingBackpackLights(lightLocator_out);
+  
   _backpackLightMap[source].emplace_front(new BackpackLightData{std::move(lights)});
   
   BackpackLightDataLocator result{};
@@ -244,7 +245,7 @@ BackpackLightDataLocator BodyLightComponent::StartLoopingBackpackLightsInternal(
   result._listIter = --(result._mapIter->second.end());
   result._dataPtr = std::weak_ptr<BackpackLightData>(*result._listIter);
   
-  return result;
+  lightLocator_out = std::move(result);
 }
   
 bool BodyLightComponent::StopLoopingBackpackLights(const BackpackLightDataLocator& lightDataLocator)

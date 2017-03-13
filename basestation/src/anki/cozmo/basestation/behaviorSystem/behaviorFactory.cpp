@@ -63,6 +63,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToSparked.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToStackOfCubes.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToVoiceCommand.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorCheckForStackAtInterval.h"
@@ -440,6 +441,13 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
       newBehavior = new BehaviorReactToDoubleTap(robot, config);
       break;
     }
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+    case BehaviorClass::ReactToVoiceCommand:
+    {
+      newBehavior = new BehaviorReactToVoiceCommand(robot, config);
+      break;
+    }
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
     case BehaviorClass::Count:
     {
       PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.BadType", "Unexpected type '%s'", EnumToString(behaviorType));

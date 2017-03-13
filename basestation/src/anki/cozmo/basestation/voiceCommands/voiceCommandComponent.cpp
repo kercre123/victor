@@ -69,12 +69,12 @@ VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
 VoiceCommandComponent::~VoiceCommandComponent() = default;
   
 template<typename T>
-void VoiceCommandComponent::BroadcastVoiceEvent(T event)
+void VoiceCommandComponent::BroadcastVoiceEvent(T&& event)
 {
-  auto* robot = _context.GetRobotManager()->GetFirstRobot();
-  if (robot && robot->HasExternalInterface())
+  auto* externalInterface = _context.GetExternalInterface();
+  if (externalInterface)
   {
-    robot->GetExternalInterface()->BroadcastToGame<VoiceCommandEvent>(VoiceCommandEventUnion(std::move(event)));
+    externalInterface->BroadcastToGame<VoiceCommandEvent>(VoiceCommandEventUnion(std::forward<T>(event)));
   }
 }
   
@@ -89,20 +89,34 @@ void VoiceCommandComponent::Update()
     // TODO: Here we will do some screening of the next result, including checking whether it's the primary trigger.
     // For now we're only listening for the primary trigger so we know that's what we heard.
     heardPrimaryTrigger = true;
-    BroadcastVoiceEvent(CommandHeardEvent(VoiceCommandType::HEY_COZMO));
   }
   
   if (ANKI_CONSOLE_SYSTEM_ENABLED)
   {
+    static bool forceTriggerAlreadySet = false;
     if (kShouldForceTrigger &&
         (static_cast<uint32_t>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) % kForceTriggerFreq_s) == 0)
     {
-      LOG_INFO("VoiceCommandComponent.ForceTrigger","");
-      heardPrimaryTrigger = true;
+      if (!forceTriggerAlreadySet)
+      {
+        LOG_INFO("VoiceCommandComponent.ForceTrigger","");
+        heardPrimaryTrigger = true;
+        forceTriggerAlreadySet = true;
+      }
+    }
+    else
+    {
+      forceTriggerAlreadySet = false;
     }
   }
   
   UpdateCommandLight(heardPrimaryTrigger);
+  
+  
+  if (heardPrimaryTrigger)
+  {
+    BroadcastVoiceEvent(CommandHeardEvent(VoiceCommandType::HEY_COZMO));
+  }
 }
   
 void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
@@ -119,7 +133,7 @@ void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
     }
   }
   
-  if (heardTriggerPhrase && robot)
+  if (heardTriggerPhrase && robot && _commandLightTimeRemaining_s < 0.f)
   {
     static const BackpackLights kHeardCommandLights = {
       .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLUE, NamedColors::BLACK}},
@@ -140,7 +154,7 @@ void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
                                                                                     kHeardCommandLights.transitionOffPeriod_ms[kIndexOfVoiceLight]));
     
     _commandLightTimeRemaining_s = kTimeForCommandLight_s;
-    _bodyLightDataLocator = robot->GetBodyLightComponent().StartLoopingBackpackLights(kHeardCommandLights, BackpackLightSource::Voice);
+    robot->GetBodyLightComponent().StartLoopingBackpackLights(kHeardCommandLights, BackpackLightSource::Voice, _bodyLightDataLocator);
   }
 }
 

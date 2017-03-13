@@ -174,7 +174,7 @@ void SparksBehaviorChooser::OnSelected()
                                                                AnimationTrigger::SparkDrivingLoop,
                                                                AnimationTrigger::SparkDrivingStop});
     _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-    _bodyLightDataLocator = _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights, BackpackLightSource::Behavior);
+    _robot.GetBodyLightComponent().StartLoopingBackpackLights(kLoopingSparkLights, BackpackLightSource::Behavior, _bodyLightDataLocator);
 
     _idleAnimationsSet = true;
   }

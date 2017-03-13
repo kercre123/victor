@@ -50,7 +50,7 @@ bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehavior(const Robot& rob
     
     std::set<Vision::FaceID_t> targets;
     targets.insert(_desiredFace);
-    BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(targets);
+    BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(targets, robot);
     
     LOG_INFO("ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehavior.DesiredFace", "DesiredFaceID: %d", _desiredFace);
     return behavior->IsRunnable(acknowledgeFacePreReqs);
@@ -61,48 +61,66 @@ bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehavior(const Robot& rob
 
 void ReactionTriggerStrategyVoiceCommand::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
-  switch (event.GetData().GetTag())
+  if (event.GetData().GetTag() != EngineToGameTag::VoiceCommandEvent)
   {
-    case EngineToGameTag::VoiceCommandEvent:
+    PRINT_NAMED_ERROR("ReactionTriggerStrategyVoiceCommand.AlwaysHandleInternal.UnhandledEventType",
+                      "Type: %s", MessageEngineToGameTagToString(event.GetData().GetTag()));
+    return;
+  }
+  
+  const auto& vcEvent = event.GetData().Get_VoiceCommandEvent().voiceCommandEvent;
+  if (vcEvent.GetTag() != VoiceCommandEventUnionTag::commandHeardEvent)
+  {
+    PRINT_NAMED_ERROR("ReactionTriggerStrategyVoiceCommand.AlwaysHandleInternal.UnhandledVoiceCommandEventType",
+                      "Type: %s", VoiceCommandEventUnionTagToString(vcEvent.GetTag()));
+    return;
+  }
+  
+  if (vcEvent.Get_commandHeardEvent().voiceCommandType != VoiceCommandType::HEY_COZMO)
+  {
+    PRINT_NAMED_ERROR("ReactionTriggerStrategyVoiceCommand.AlwaysHandleInternal.UnhandledVoiceCommandEnumType",
+                      "Type: %s", VoiceCommandTypeToString(vcEvent.Get_commandHeardEvent().voiceCommandType));
+    return;
+  }
+  
+  // All recently seen face IDs
+  const auto& knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDs();
+  Vision::FaceID_t desiredFace = Vision::UnknownFaceID;
+  auto oldestTimeLookedAt_s = std::numeric_limits<float>::max();
+  
+  for (const auto& faceID : knownFaceIDs)
+  {
+    // If we don't know where this face is right now, continue on
+    const auto* face = robot.GetFaceWorld().GetFace(faceID);
+    Pose3d pose;
+    if(nullptr == face || !face->GetHeadPose().GetWithRespectTo(robot.GetPose(), pose))
     {
-      // All recently seen face IDs
-      const auto& knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDs();
-      Vision::FaceID_t desiredFace = Vision::UnknownFaceID;
-      auto oldestTimeLookedAt_s = std::numeric_limits<float>::max();
-      
-      for (const auto& faceID : knownFaceIDs)
-      {
-        auto dataIter = _lookedAtTimesMap.find(faceID);
-        if (dataIter == _lookedAtTimesMap.end())
-        {
-          desiredFace = faceID;
-          break;
-        }
-        
-        const auto& curLookedTime = dataIter->second;
-        if (curLookedTime < oldestTimeLookedAt_s)
-        {
-          desiredFace = faceID;
-          oldestTimeLookedAt_s = curLookedTime;
-        }
-      }
-      
-      if (Vision::UnknownFaceID != desiredFace)
-      {
-        _desiredFace = desiredFace;
-        _lookedAtTimesMap[desiredFace] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        _shouldTrigger = true;
-      }
-      
+      continue;
+    }
+    
+    auto dataIter = _lookedAtTimesMap.find(faceID);
+    if (dataIter == _lookedAtTimesMap.end())
+    {
+      // If we don't have a time associated with looking at this face, break out now and use it cause it's new.
+      desiredFace = faceID;
       break;
     }
-    default:
+    
+    const auto& curLookedTime = dataIter->second;
+    if (curLookedTime < oldestTimeLookedAt_s)
     {
-      PRINT_NAMED_ERROR("ReactionTriggerStrategyVoiceCommand.AlwaysHandleInternal.UnhandledEventType",
-                        "Type: %s", MessageEngineToGameTagToString(event.GetData().GetTag()));
-      break;
+      desiredFace = faceID;
+      oldestTimeLookedAt_s = curLookedTime;
     }
   }
+  
+  if (Vision::UnknownFaceID != desiredFace)
+  {
+    _lookedAtTimesMap[desiredFace] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+  
+  _desiredFace = desiredFace;
+  _shouldTrigger = true;
 }
   
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
