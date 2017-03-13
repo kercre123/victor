@@ -2,13 +2,65 @@
 using UnityEngine.UI;
 using Newtonsoft.Json;
 using Anki.Cozmo.ExternalInterface;
+using System.Collections.Generic;
 
 public class ScratchRequest {
+  public int requestId { get; set; }
   public string command { get; set; }
   public string argString { get; set; }
   public int argInt { get; set; }
   public uint argUInt { get; set; }
   public float argFloat { get; set; }
+}
+
+public class InProgressScratchBlock {
+  private int _RequestId;
+  private WebViewObject _WebViewObjectComponent;
+
+  public void Init(int requestId = -1, WebViewObject webViewObjectComponent = null) {
+    _RequestId = requestId;
+    _WebViewObjectComponent = webViewObjectComponent;
+  }
+
+  public void AdvanceToNextBlock(bool success) {
+    // Calls the JavaScript function resolving the Promise on the block
+    _WebViewObjectComponent.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
+  }
+}
+
+public static class InProgressScratchBlockPool {
+  private static List<InProgressScratchBlock> _available = new List<InProgressScratchBlock>();
+  private static List<InProgressScratchBlock> _inUse = new List<InProgressScratchBlock>();
+
+  public static InProgressScratchBlock GetInProgressScratchBlock() {
+    // TODO Verify the lock is required and if we can assert on threadId here
+    // to make sure we're not opening ourselves to threading issues.
+    lock (_available) {
+      if (_available.Count != 0) {
+        InProgressScratchBlock po = _available[0];
+        _inUse.Add(po);
+        _available.RemoveAt(0);
+
+        return po;
+      }
+      else {
+        InProgressScratchBlock po = new InProgressScratchBlock();
+        po.Init();
+        _inUse.Add(po);
+
+        return po;
+      }
+    }
+  }
+
+  public static void ReleaseInProgressScratchBlock(InProgressScratchBlock po) {
+    po.Init();
+
+    lock (_available) {
+      _available.Add(po);
+      _inUse.Remove(po);
+    }
+  }
 }
 
 public class DebugDisplayPane : MonoBehaviour {
@@ -254,6 +306,7 @@ public class DebugDisplayPane : MonoBehaviour {
   }
 
   private void HandleAlignWithObjectResponse(bool success) {
+    // TODO Try to use Promise with DockWithCube
     if (!success) {
       PlayAngryAnimation();
     }
@@ -288,31 +341,34 @@ public class DebugDisplayPane : MonoBehaviour {
     Debug.Log("JSON from JavaScript: " + jsonStringFromJS);
     ScratchRequest scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
 
+    InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
+    inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObject.GetComponent<WebViewObject>());
+
     if (scratchRequest.command == "cozmoDriveForward") {
       // Here, argFloat represents the number selected from the dropdown under the "drive forward" block
       float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
-      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(getDriveSpeed(scratchRequest), dist_mm, false);
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(getDriveSpeed(scratchRequest), dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
     }
     else if (scratchRequest.command == "cozmoDriveBackward") {
       // Here, argFloat represents the number selected from the dropdown under the "drive backward" block
       float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
-      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(-getDriveSpeed(scratchRequest), -dist_mm, false);
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(-getDriveSpeed(scratchRequest), -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
     }
     else if (scratchRequest.command == "cozmoPlayAnimation") {
       Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger);
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.AdvanceToNextBlock);
     }
     else if (scratchRequest.command == "cozmoTurnLeft") {
       // Turn 90 degrees to the left
-      RobotEngineManager.Instance.CurrentRobot.TurnInPlace(kTurnAngle, 0.0f, 0.0f);
+      RobotEngineManager.Instance.CurrentRobot.TurnInPlace(kTurnAngle, 0.0f, 0.0f, inProgressScratchBlock.AdvanceToNextBlock);
     }
     else if (scratchRequest.command == "cozmoTurnRight") {
       // Turn 90 degrees to the right
-      RobotEngineManager.Instance.CurrentRobot.TurnInPlace(-kTurnAngle, 0.0f, 0.0f);
+      RobotEngineManager.Instance.CurrentRobot.TurnInPlace(-kTurnAngle, 0.0f, 0.0f, inProgressScratchBlock.AdvanceToNextBlock);
     }
     else if (scratchRequest.command == "cozmoSays") {
       // TODO Add profanity filter
-      RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(scratchRequest.argString, Anki.Cozmo.AnimationTrigger.Count);
+      RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(scratchRequest.argString, Anki.Cozmo.AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock);
     }
     else if (scratchRequest.command == "cozmoHeadAngle") {
       float desiredHeadAngle = (CozmoUtil.kIdealBlockViewHeadValue + CozmoUtil.kIdealFaceViewHeadValue) * 0.5f; // medium setting
@@ -324,7 +380,7 @@ public class DebugDisplayPane : MonoBehaviour {
       }
 
       if (System.Math.Abs(desiredHeadAngle - RobotEngineManager.Instance.CurrentRobot.HeadAngle) > float.Epsilon) {
-        RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(desiredHeadAngle);
+        RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(desiredHeadAngle, inProgressScratchBlock.AdvanceToNextBlock);
       }
     }
     else if (scratchRequest.command == "cozmoDockWithCube") {
@@ -339,10 +395,11 @@ public class DebugDisplayPane : MonoBehaviour {
         liftHeight = 1.0f;
       }
 
-      RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(liftHeight);
+      RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(liftHeight, inProgressScratchBlock.AdvanceToNextBlock);
     }
     else if (scratchRequest.command == "cozmoSetBackpackColor") {
       RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
+      inProgressScratchBlock.AdvanceToNextBlock(true);
     }
     else {
       Debug.LogError("Scratch: no match for command");

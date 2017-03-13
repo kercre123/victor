@@ -16849,11 +16849,7 @@ module.exports =
 	     */
 	    this.runtime = runtime;
 
-	    /**
-	     * Current motor speed as a percentage (100 = full speed).
-	     * @type {Number}
-	     */
-	    this._motorSpeed = 100;
+	    this._currentRequestId = 0;
 	};
 
 	/**
@@ -16879,11 +16875,31 @@ module.exports =
 	    };
 	};
 
+	// Values returned will be from 0 to 126.
+	//
+	// In the VM, the methods called by the Cozmo blocks (e.g., Scratch3CozmoBlocks.prototype.driveForward)
+	// each generate a ScratchRequest.requestId (by calling _getRequestId()). In addition, these methods
+	// each return a Promise, with the corresponding resolve function stored in the window.resolveCommands array.
+	Scratch3CozmoBlocks.prototype._getRequestId = function () {
+	    this._currentRequestId += 1;
+	    this._currentRequestId %= 127;
+	    return this._currentRequestId;
+	};
+
+	Scratch3CozmoBlocks.prototype._promiseForCommand = function (requestId) {
+	    return new Promise(function (resolve) {
+	        window.resolveCommands[requestId] = resolve;
+	    });
+	};
+
 	Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
-	    // TODO Wait for RobotCompletedAction instead of using timer.
+	    // Cozmo performs this request instantly, so we have a timeout instead in js
+	    // so the user can see each backpack light setting.
+	    //
+	    // Pass -1 for requestId to indicate we don't need a Promise resolved.
 	    if (!util.stackFrame.timer) {
 	        var colorHexValue = this._getColor(Cast.toString(args.CHOICE));
-	        window.Unity.call('{"command": "cozmoSetBackpackColor","argUInt": "' + colorHexValue + '"}');
+	        window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoSetBackpackColor","argUInt": "' + colorHexValue + '"}');
 	        
 	        // Yield
 	        util.stackFrame.timer = new Timer();
@@ -16901,23 +16917,13 @@ module.exports =
 	        return;
 	    }
 
-	    // TODO Wait for RobotCompletedAction instead of using timer.
-	    if (!util.stackFrame.timer) {
-	        // The distMultiplier (as set by the parameter number under the block)
-	        // will be used as a multiplier against the base dist_mm.
-	        var distMultiplier = Cast.toNumber(args.DISTANCE);
-	        window.Unity.call('{"command": "cozmoDriveForward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
+	    // The distMultiplier (as set by the parameter number under the block)
+	    // will be used as a multiplier against the base dist_mm.
+	    var distMultiplier = Cast.toNumber(args.DISTANCE);
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDriveForward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
 
-	        // Yield
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	    } else {
-	        // TODO Add distance as multiplier to the time below
-	        if (util.stackFrame.timer.timeElapsed() < 1000) {
-	            util.yield();
-	        }
-	    }
+	    return this._promiseForCommand(requestId);
 	};
 
 	Scratch3CozmoBlocks.prototype.driveBackward = function(args, util) {
@@ -16925,58 +16931,29 @@ module.exports =
 	        return;
 	    }
 
-	    // TODO Wait for RobotCompletedAction instead of using timer.
-	    if (!util.stackFrame.timer) {
-	        // The distMultiplier (as set by the parameter number under the block)
-	        // will be used as a multiplier against the base dist_mm.
-	        var distMultiplier = Cast.toNumber(args.DISTANCE);
-	        window.Unity.call('{"command": "cozmoDriveBackward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
+	    // The distMultiplier (as set by the parameter number under the block)
+	    // will be used as a multiplier against the base dist_mm.
+	    var distMultiplier = Cast.toNumber(args.DISTANCE);
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDriveBackward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
 
-	        // Yield
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	    } else {
-	        // TODO Add distance as multiplier to the time below
-	        if (util.stackFrame.timer.timeElapsed() < 1000) {
-	            util.yield();
-	        }
-	    }
+	    return this._promiseForCommand(requestId);
 	};
 
 	Scratch3CozmoBlocks.prototype.playAnimation = function(args, util) {
-	    // TODO Wait for RobotCompletedAction instead of using timer.
-	    if (!util.stackFrame.timer) {
-	        var animationName = this._getAnimation(Cast.toString(args.CHOICE));
-	        window.Unity.call('{"command": "cozmoPlayAnimation","argString": "' + animationName + '"}');
+	    var animationName = this._getAnimation(Cast.toString(args.CHOICE));
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "' + animationName + '"}');
 
-	        // Yield
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	    } else {
-	        // TODO Is this long enough for all animations?
-	        if (util.stackFrame.timer.timeElapsed() < 3000) {
-	            util.yield();
-	        }
-	    }
+	    return this._promiseForCommand(requestId);
 	};
 
 	Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
-	    // TODO Wait for RobotCompletedAction instead of using timer.
-	    if (!util.stackFrame.timer) {
-	        var liftHeight = Cast.toString(args.CHOICE);
-	        window.Unity.call('{"command": "cozmoForklift","argString": "' + liftHeight + '"}');
+	    var liftHeight = Cast.toString(args.CHOICE);
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoForklift","argString": "' + liftHeight + '"}');
 
-	        // Yield
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	    } else {
-	        if (util.stackFrame.timer.timeElapsed() < 1000) {
-	            util.yield();
-	        }
-	    }
+	    return this._promiseForCommand(requestId);
 	};    
 
 	/**
@@ -17072,7 +17049,9 @@ module.exports =
 	 * @private
 	 */
 	Scratch3CozmoBlocks.prototype.waitForFace = function (args, util) {
-	    window.Unity.call('{"command": "cozmoHeadAngle","argString": "high"}');
+	    // TODO Use Promise here instead of having waitForFace called repeatedly?
+	    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
+	    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "high"}');
 
 	    this.runtime.stackIsWaitingForFace = true;
 	    if (!this.runtime.cozmoSawFace) {
@@ -17092,7 +17071,9 @@ module.exports =
 	 * @private
 	 */
 	Scratch3CozmoBlocks.prototype.waitForCube = function (args, util) {
-	    window.Unity.call('{"command": "cozmoHeadAngle","argString": "low"}');
+	    // TODO Use Promise here instead of having waitForCube called repeatedly?
+	    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
+	    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "low"}');
 
 	    this.runtime.stackIsWaitingForCube = true;
 	    if (!this.runtime.cozmoSawCube) {
@@ -17112,6 +17093,7 @@ module.exports =
 	 * @private
 	 */
 	Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
+	    // TODO Use Promise here instead of having waitForCubeTap called repeatedly?
 	    this.runtime.stackIsWaitingForCubeTap = true;
 	    if (!this.runtime.cozmoCubeWasTapped) {
 	        util.yield();
@@ -17123,26 +17105,17 @@ module.exports =
 	};
 
 	Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
-	    // TODO Wait for RobotCompletedAction instead of using timer.
-	    if (!util.stackFrame.timer) {
-	        var headAngle = Cast.toString(args.CHOICE);
-	        window.Unity.call('{"command": "cozmoHeadAngle","argString": "' + headAngle + '"}');
+	    var headAngle = Cast.toString(args.CHOICE);
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoHeadAngle","argString": "' + headAngle + '"}');
 
-	        // Yield
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	    } else {
-	        if (util.stackFrame.timer.timeElapsed() < 1000) {
-	            util.yield();
-	        }
-	    }
+	    return this._promiseForCommand(requestId);
 	};
 
 	Scratch3CozmoBlocks.prototype.dockWithCube = function(args, util) {
-	    // TODO Wait for RobotCompletedAction instead of using timer.
+	    // TODO Try to use Promise for dockWithCube. For now pass -1 for requestId to indicate we don't need a Promise resolved.
 	    if (!util.stackFrame.timer) {
-	        window.Unity.call('{"command": "cozmoDockWithCube"}');
+	        window.Unity.call('{"requestId": "' + -1 + '","command": "cozmoDockWithCube"}');
 
 	        // Yield
 	        util.stackFrame.timer = new Timer();
@@ -17157,35 +17130,17 @@ module.exports =
 	};
 	                                       
 	Scratch3CozmoBlocks.prototype.turnLeft = function(args, util) {
-	    // TODO Wait for RobotCompletedAction instead of using timer.
-	    if (!util.stackFrame.timer) {
-	        window.Unity.call('{"command": "cozmoTurnLeft"}');
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnLeft"}');
 
-	        // Yield
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	    } else {
-	        if (util.stackFrame.timer.timeElapsed() < 1000) {
-	            util.yield();
-	        }
-	    }
+	    return this._promiseForCommand(requestId);
 	};
 
 	Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
-	    // TODO Wait for RobotCompletedAction instead of using timer.
-	    if (!util.stackFrame.timer) {
-	        window.Unity.call('{"command": "cozmoTurnRight"}');
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnRight"}');
 
-	        // Yield
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	    } else {
-	        if (util.stackFrame.timer.timeElapsed() < 1000) {
-	            util.yield();
-	        }
-	    }
+	    return this._promiseForCommand(requestId);
 	};
 
 	Scratch3CozmoBlocks.prototype.driveSpeed = function(args, util) {
@@ -17193,21 +17148,11 @@ module.exports =
 	};
 
 	Scratch3CozmoBlocks.prototype.speak = function(args, util) {
-	    // TODO Wait for RobotCompletedAction instead of using timer.
-	    if (!util.stackFrame.timer) {
-	        var textToSay = Cast.toString(args.STRING);
-	        window.Unity.call('{"command": "cozmoSays","argString": "' + textToSay + '"}');
+	    var textToSay = Cast.toString(args.STRING);
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoSays","argString": "' + textToSay + '"}');
 
-	        // Yield
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	    } else {
-	        // TODO Add length of string as multiplier to the time below?
-	        if (util.stackFrame.timer.timeElapsed() < 2000) {
-	            util.yield();
-	        }
-	    }
+	    return this._promiseForCommand(requestId);
 	};
 
 	module.exports = Scratch3CozmoBlocks;
