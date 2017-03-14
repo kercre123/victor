@@ -1,48 +1,36 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "cubeHelpStrings.Instructions.Slide0": {
-    "translation": "Cozmo can't hear all of the Power Cubes. Place them near him."
+  "cubeHelpStrings.Instructions.Slide0" : {
+    "translation" : "Cozmo ne peut pas entendre tous les Power Cubes. Placez-les près de lui."
   },
-  "cubeHelpStrings.Instructions.Slide0altCopy": {
-    "translation": "Tap Next if you're still having trouble"
+  "cubeHelpStrings.Instructions.Slide0altCopy" : {
+    "translation" : "Appuyez sur Suivant si vous rencontrez toujours des difficultés"
   },
-  "cubeHelpStrings.Instructions.SlideACopy": {
-    "translation": "First, go to Settings\nThen, tap Refresh Cubes"
+  "cubeHelpStrings.Instructions.SlideACopy" : {
+    "translation" : "Tout d'abord, allez dans Paramètres Ensuite, appuyez sur Cubes Rafraîchir"
   },
-  "cubeHelpStrings.Instructions.Slide1": {
-    "translation": "Next, let's try changing your Cube's battery"
+  "cubeHelpStrings.Instructions.Slide1" : {
+    "translation" : "Ensuite, nous allons essayer de changer la batterie de votre Cube"
   },
-  "cubeHelpStrings.Instructions.Slide1altCopy": {
-    "translation": "Place it upside down and unscrew the cover"
+  "cubeHelpStrings.Instructions.Slide1altCopy" : {
+    "translation" : "Placez-le à l'envers et dévisser le couvercle"
   },
-  "cubeHelpStrings.Instructions.Slide2": {
-    "translation": "Replace the battery with a fresh N cell"
+  "cubeHelpStrings.Instructions.Slide2" : {
+    "translation" : "Remplacez la pile par une cellule fraîche N"
   },
-  "cubeHelpStrings.Instructions.Slide2altCopy": {
-    "translation": "Insert the new battery positive (+) end up"
+  "cubeHelpStrings.Instructions.Slide2altCopy" : {
+    "translation" : "Insérez la nouvelle batterie positive (+) finissent"
   },
-  "cubeHelpStrings.Instructions.Slide3": {
-    "translation": "Replace the cover and fasten it gently"
+  "cubeHelpStrings.Instructions.Slide3" : {
+    "translation" : "Replacer le couvercle et le fixer doucement"
   },
-  "cubeHelpStrings.Instructions.Slide3altCopy": {
-    "translation": "Make sure the cover matches the Cube. It should now light up!"
+  "cubeHelpStrings.Instructions.Slide3altCopy" : {
+    "translation" : "Assurez-vous que le couvercle correspond au Cube. Il devrait maintenant allumer!"
   }
 }

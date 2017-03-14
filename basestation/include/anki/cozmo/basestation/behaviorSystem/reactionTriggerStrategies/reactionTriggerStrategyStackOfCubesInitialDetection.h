@@ -26,7 +26,7 @@ public:
   // Currently disabled until we want to respond to stacks of cubes for some reason
   virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override { return false; }
   virtual bool ShouldResumeLastBehavior() const override { return true; }  
-  virtual bool CanTriggerWhileTriggeredBehaviorRunning() const override { return true; }
+  virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
 };
 
 

@@ -143,7 +143,7 @@ MonoBehaviour:
   ButtonGraphics:
   - targetImage: {fileID: 11429166}
     ignoreSprite: 0
-    pressedSprite: {fileID: 21300000, guid: 0d05400c965d2429dbf74afacb813d9d, type: 3}
+    pressedSprite: {fileID: 21300000, guid: f8a9f7cc63704407ea5fc341092689cd, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: f06f3ac2bd68e45ea98cef17b2a841e8, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0.516}
@@ -157,7 +157,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11492938
 MonoBehaviour:
@@ -172,7 +171,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -194,6 +193,7 @@ MonoBehaviour:
   m_Text: BUTTON TEXT
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11493876
 MonoBehaviour:
   m_ObjectHideFlags: 1

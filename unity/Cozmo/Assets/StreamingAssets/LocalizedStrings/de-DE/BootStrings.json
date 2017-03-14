@@ -1,45 +1,33 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "boot.errorDiskFull": {
-    "translation": "Die Cozmo-App konnte nicht geladen werden, da der Speicher Ihres Geräts zu voll ist. Versuchen Sie, Medien oder nicht verwendete Apps von Ihrem Telefon zu entfernen, und versuchen Sie es erneut."
+  "boot.errorDiskFull" : {
+    "translation" : "Die Cozmo App konnte nicht geladen werden, da der Speicher Ihres Geräts zu voll ist. Versuchen Medien oder ungenutzte Anwendungen von Ihrem Telefon zu entfernen, und versuchen Sie es erneut. D"
   },
-  "boot.errorReadingFiles": {
-    "translation": "Die Cozmo App konnte keine Dateien lesen. Fehler: {0}"
+  "boot.errorReadingFiles" : {
+    "translation" : "Die Cozmo App konnte nicht lesen Dateien. Fehler: {0}"
   },
-  "boot.needStoragePermission": {
-    "translation": "Die Cozmo App muss auf Spieldateien auf Ihrem Gerät zugreifen, um ausgeführt zu werden."
+  "boot.needStoragePermission" : {
+    "translation" : "Die Cozmo App muss Spieldateien auf Ihrem Gerät zugreifen, um zu laufen."
   },
-  "boot.appSettingsPermission": {
-    "translation": "Die Cozmo App muss auf Spieldateien auf Ihrem Gerät zugreifen, um ausgeführt zu werden. Verwenden Sie den unten stehenden Link, um die Cozmo App-Einstellungen aufzurufen, und tippen Sie auf <b> Berechtigungen> Speicher </b>, um dies zu aktivieren."
+  "boot.appSettingsPermission" : {
+    "translation" : "Die Cozmo App muss Spieldateien auf Ihrem Gerät zugreifen, um zu laufen. Verwenden Sie den Link unten die Cozmo App-Einstellungen zu besuchen, und tippen Sie <b> Berechtigungen&gt; Speicher </b> Rückzug zu ermöglichen."
   },
-  "boot.continue": {
-    "translation": "Fortsetzen"
+  "boot.continue" : {
+    "translation" : "Fortsetzen"
   },
-  "boot.settings": {
-    "translation": "Einstellungen"
+  "boot.settings" : {
+    "translation" : "Einstellungen"
   },
-  "boot.appVersion": {
-    "translation": "VERSION: {0}"
+  "boot.appVersion" : {
+    "translation" : "VERSION: {0}"
   },
-  "boot.deviceId": {
-    "translation": "GERÄTE ID: {0}"
+  "boot.deviceId" : {
+    "translation" : "GERÄTE ID: {0}"
   }
 }

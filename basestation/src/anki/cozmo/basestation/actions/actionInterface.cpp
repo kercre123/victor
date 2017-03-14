@@ -196,7 +196,7 @@ namespace Anki {
           PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destroy.UnlockTracks",
                         "unlocked: (0x%x) %s by %s [%d]",
                         _tracks,
-                        AnimTrackFlagToString((AnimTrackFlag)_tracks),
+                        AnimTrackHelpers::AnimTrackFlagsToString(_tracks).c_str(),
                         _name.c_str(),
                         _idTag);
         }
@@ -251,7 +251,7 @@ namespace Anki {
             PRINT_CH_INFO(kLogChannelName, "IActionRunner.Interrupt.UnlockTracks",
                           "unlocked: (0x%x) %s by %s [%d]",
                           tracks,
-                          AnimTrackFlagToString((AnimTrackFlag)tracks),
+                          AnimTrackHelpers::AnimTrackFlagsToString(tracks).c_str(),
                           _name.c_str(),
                           _idTag);
           }
@@ -305,7 +305,7 @@ namespace Anki {
                                   GetName().c_str(),
                                   GetTag(),
                                   tracksToLock,
-                                  AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
+                                  AnimTrackHelpers::AnimTrackFlagsToString(tracksToLock).c_str(),
                                   _robot.GetMoveComponent().WhoIsLocking(tracksToLock).c_str());
               
               _state = ActionResult::TRACKS_LOCKED;
@@ -318,7 +318,7 @@ namespace Anki {
               PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.LockTracks",
                             "locked: (0x%x) %s by %s [%d]",
                             tracksToLock,
-                            AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
+                            AnimTrackHelpers::AnimTrackFlagsToString(tracksToLock).c_str(),
                             GetName().c_str(),
                             GetTag());
             }
@@ -426,7 +426,7 @@ namespace Anki {
           PRINT_CH_INFO(kLogChannelName, "IActionRunner.UnlockTracks",
                         "unlocked: (0x%x) %s by %s [%d]",
                         tracks,
-                        AnimTrackFlagToString((AnimTrackFlag)tracks),
+                        AnimTrackHelpers::AnimTrackFlagsToString(tracks).c_str(),
                         _name.c_str(),
                         _idTag);
         }

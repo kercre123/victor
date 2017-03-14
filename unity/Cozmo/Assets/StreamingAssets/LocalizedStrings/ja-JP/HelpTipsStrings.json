@@ -1,115 +1,99 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-
-  "helpTipsStrings.viewTitle": {
-    "translation": "Help & Tips"
+  "helpTipsStrings.viewTitle" : {
+    "translation" : "ヘルプ＆ヒント"
   },
-  "helpTipsStrings.Slide0.title": {
-    "translation": "Create a Great Play Space"
+  "helpTipsStrings.Slide0.title" : {
+    "translation" : "グレートプレイスペースを作成します。"
   },
-  "helpTipsStrings.Slide0.body": {
-    "translation": "Cozmo likes a clean, open table in a well lit room. He sees best indoors and out of direct sunlight."
+  "helpTipsStrings.Slide0.body" : {
+    "translation" : "コズモはよく明るい部屋で清潔、開いているテーブルが好きです。彼は最高の屋内や直射日光の当たらない場所に見ています。"
   },
-  "helpTipsStrings.Slide1.title": {
-    "translation": "Cozmo's Cubes"
+  "helpTipsStrings.Slide1.title" : {
+    "translation" : "コズモのキューブ"
   },
-  "helpTipsStrings.Slide1.body": {
-    "translation": "Cozmo likes to be around his Cubes. They work best when he can see the symbol clearly, and they're right side up. Check out Settings for Cube maintenance."
+  "helpTipsStrings.Slide1.body" : {
+    "translation" : "コズモは彼のキューブの周りにあることをするのが好きです。彼らは、彼は明らかにシンボルを見ることができるときに最適に動作し、そして、彼らは右サイドアップしています。キューブのメンテナンスのための設定をチェックしてください。"
   },
-
-  "helpTipsStrings.Slide2.title": {
-    "translation": "When you're not playing a game,\nthe Cube lights can tell you that..."
+  "helpTipsStrings.Slide2.title" : {
+    "translation" : "あなたがゲームをプレイしていない場合には、キューブライトはあなたにそれを伝えることができます..."
   },
-  "helpTipsStrings.Slide2.subtitle1": {
-    "translation": "Cozmo has seen\nthis Cube"
+  "helpTipsStrings.Slide2.subtitle1" : {
+    "translation" : "コズモは、このキューブを見ています"
   },
-  "helpTipsStrings.Slide2.subtitle2": {
-    "translation": "Cozmo wants to use\nthis Cube"
+  "helpTipsStrings.Slide2.subtitle2" : {
+    "translation" : "コズモは、このキューブを使用したいです"
   },
-  "helpTipsStrings.Slide2.subtitle3": {
-    "translation": "This Cube is low\non batteries"
+  "helpTipsStrings.Slide2.subtitle3" : {
+    "translation" : "このキューブは、電池が少なくなって"
   },
-  
-  "helpTipsStrings.Slide3.title": {
-    "translation": "Cozmo Gets Better Over Time"
+  "helpTipsStrings.Slide3.title" : {
+    "translation" : "コズモはベターオーバータイムを取得します。"
   },
-  "helpTipsStrings.Slide3.body": {
-    "translation": "You can <color=orange>Upgrade</color> Cozmo to learn more abilities, and watch Cozmo grow. You can also unlock new Cozmo <color=#00aee0ff>Apps</color>, and get more games & activities."
+  "helpTipsStrings.Slide3.body" : {
+    "translation" : "あなたはできる<color=orange>アップグレード</color>コズモは、より多くの能力を学び、コズモが成長を見守るします。また、新しいコズモのロックを解除することができます<color=#00aee0ff>アプリ</color> 、そしてより多くのゲーム＆アクティビティを取得します。"
   },
-  "helpTipsStrings.Slide3.bodyUpgrade": {
-    "translation": "Upgrade"
+  "helpTipsStrings.Slide3.bodyUpgrade" : {
+    "translation" : "アップグレード"
   },
-  "helpTipsStrings.Slide3.bodyApp": {
-    "translation": "App"
+  "helpTipsStrings.Slide3.bodyApp" : {
+    "translation" : "アプリ"
   },
-  "helpTipsStrings.Slide4.title": {
-    "translation": "Energy, Bits, and Sparks"
+  "helpTipsStrings.Slide4.title" : {
+    "translation" : "エネルギー、ビット、およびスパークス"
   },
-  "helpTipsStrings.Slide4.body": {
-    "translation": "Earn <color=#00bd3dff>Energy</color> by completing your Daily Goals. Energy rewards you with <color=#fe8f00ff>Bits</color> and <color=#11a2f0ff>Sparks</color>: use these to unlock Cozmo's Upgrades & Apps!"
+  "helpTipsStrings.Slide4.body" : {
+    "translation" : "獲得します<color=#00bd3dff>エネルギー</color>あなたの毎日の目標を完了することもできます。エネルギーはであなたに報酬を与えます<color=#fe8f00ff>ビット</color>そして<color=#11a2f0ff>スパークス</color> ：コズモのアップグレード＆アプリのロックを解除するためにこれらを使用します！"
   },
-  "helpTipsStrings.Slide4.bodyEnergy": {
-    "translation": "Energy"
+  "helpTipsStrings.Slide4.bodyEnergy" : {
+    "translation" : "エネルギー"
   },
-  "helpTipsStrings.Slide4.bodyBits": {
-    "translation": "Bits"
+  "helpTipsStrings.Slide4.bodyBits" : {
+    "translation" : "ビット"
   },
-  "helpTipsStrings.Slide4.bodySparks": {
-    "translation": "Sparks"
+  "helpTipsStrings.Slide4.bodySparks" : {
+    "translation" : "スパークス"
   },
-
-  "helpTipsStrings.Slide5.title": {
-    "translation": "Check-in with Cozmo"
+  "helpTipsStrings.Slide5.title" : {
+    "translation" : "チェックインコズモで"
   },
-  "helpTipsStrings.Slide5.body": {
-    "translation": "Launch the Cozmo App to check-in every day and receive new rewards. Connect to Cozmo to wake him up and give him the attention he needs."
+  "helpTipsStrings.Slide5.body" : {
+    "translation" : "毎日のチェックインと新しい報酬を受け取るためにコズモアプリを起動します。彼を覚ますと、彼に彼が必要な注意を与えるためにコズモに接続します。"
   },
-  "helpTipsStrings.Slide6.title": {
-    "translation": "Keep Cozmo Safe"
+  "helpTipsStrings.Slide6.title" : {
+    "translation" : "コズモ安全を保ちます"
   },
-  "helpTipsStrings.Slide6.body": {
-    "translation": "Cozmo needs you to keep him safe. He's just like a hamster or other small pet. Keep an eye on him in case he gets into trouble; he may need your help to get un-stuck."
+  "helpTipsStrings.Slide6.body" : {
+    "translation" : "コズモは安全な彼を保つためにあなたを必要とします。彼はただ、ハムスターまたは他の小さなペットのようなものです。彼はトラブルになるケースで彼に目が離せない。彼は、非立ち往生ためにあなたの助けが必要な場合があります。"
   },
-  "helpTipsStrings.Slide7.title": {
-    "translation": "Cozmo's backpack lights can tell you that..."
+  "helpTipsStrings.Slide7.title" : {
+    "translation" : "コズモのバックパックライトはあなたにそれを伝えることができます..."
   },
-  "helpTipsStrings.Slide7.subtitle1": {
-    "translation": "Cozmo is\ncharged"
+  "helpTipsStrings.Slide7.subtitle1" : {
+    "translation" : "コズモが充電されます"
   },
-  "helpTipsStrings.Slide7.subtitle2": {
-    "translation": "Cozmo is\ncharging"
+  "helpTipsStrings.Slide7.subtitle2" : {
+    "translation" : "コズモが充電されます"
   },
-  "helpTipsStrings.Slide7.subtitle3": {
-    "translation": "Cozmo has a\nlow battery"
+  "helpTipsStrings.Slide7.subtitle3" : {
+    "translation" : "コズモはローバッテリを持っています"
   },
-  "helpTipsStrings.Slide8.title": {
-    "translation": "Cozmo is Secure"
+  "helpTipsStrings.Slide8.title" : {
+    "translation" : "コズモはセキュアです。"
   },
-  "helpTipsStrings.Slide8.body": {
-    "translation": "Cozmo and his camera are safe and secure. No images or video are ever stored, online or offline. Cozmo will only talk to devices you authorize."
+  "helpTipsStrings.Slide8.body" : {
+    "translation" : "コズモと彼のカメラは、安心・安全です。いいえ画像や動画は、これまでにオンラインまたはオフライン、保存されません。コズモは、あなたが承認デバイスに話をします。"
   },
-  "helpTipsStrings.Slide9.title": {
-    "translation": "Charge Up"
+  "helpTipsStrings.Slide9.title" : {
+    "translation" : "充電します"
   },
-  "helpTipsStrings.Slide9.body": {
-    "translation": "Cozmo needs his charger, so keep it with you. When you're done playing, place him on his charger to put him to sleep."
+  "helpTipsStrings.Slide9.body" : {
+    "translation" : "コズモは彼の充電器を必要とするので、あなたにそれを維持します。あなたがプレイし終わったら、スリープ状態に彼を置くために彼の充電器に彼を置きます。"
   }
 }

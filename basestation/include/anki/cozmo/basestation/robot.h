@@ -567,6 +567,8 @@ public:
   // ground right where it is. Returns RESULT_FAIL if robot is not carrying
   // anything.
   Result PlaceObjectOnGround(const bool useManualSpeed = false);
+  
+  bool WasObjectTappedRecently(const ObjectID& objectID) const;
 
   // =========== Object Stacking ===========
   

@@ -415,6 +415,17 @@ Blockly.BlockSvg.prototype.render = function(opt_bubble) {
     }
   }
   Blockly.Field.stopCache();
+
+  // Anki code change:
+  // Bandaid fix for numeric parameters not displaying correctly
+  // https://github.com/LLK/scratch-blocks/issues/826
+  for (var i = 0, input; input = this.inputList[i]; i++) {
+    for (var j = 0, field; field = input.fieldRow[j]; j++) {
+      if (field instanceof Blockly.FieldTextInput) {
+        field.render_();
+      }
+    }
+  }
 };
 
 /**

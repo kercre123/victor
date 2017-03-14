@@ -4,7 +4,7 @@
  * Author: Kevin M. Karol
  * Created: 12/08/16
  *
- * Description: Reaction Trigger strategy for responding to
+ * Description: Reaction Trigger strategy for responding to pets
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -55,7 +55,7 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehavior(const Rob
   // Keep track of petIDs observed during cooldown.  This prevents Cozmo from
   // suddenly reacting to a "known" pet when cooldown expires.
   if (RecentlyReacted()) {
-    LOG_INFO("ReactStratPetInitialDetect.ShouldSwitch.RecentlyReacted", "Recently reacted to a pet");
+    LOG_DEBUG("ReactStratPetInitialDetect.ShouldSwitch.RecentlyReacted", "Recently reacted to a pet");
     UpdateReactedTo(robot);
     return false;
   }

@@ -330,6 +330,9 @@ namespace Cozmo {
         closeAnimation = JoinFadeTween(closeAnimation, _MiddleBackgroundTween, _MiddleBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
         closeAnimation = JoinFadeTween(closeAnimation, _OverlayBackgroundTween, _OverlayBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
 
+        if (_CurrentSlide != null) {
+          closeAnimation.Join(_CurrentSlide.DOFade(0f, fadeOutSeconds).SetEase(fadeOutEasing));
+        }
       }
 
       private Sequence JoinFadeTween(Sequence sequenceToUse, Tween tween, Image targetImage, float targetAlpha,

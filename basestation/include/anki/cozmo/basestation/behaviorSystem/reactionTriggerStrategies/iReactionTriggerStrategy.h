@@ -57,9 +57,9 @@ public:
   // this trigger is complete. Otherwise, a new behavior will be selected by the chooser.
   virtual bool ShouldResumeLastBehavior() const = 0;
 
-  // if this returns false, this trigger cannot run while a
-  // triggered behavior is running
-  virtual bool CanTriggerWhileTriggeredBehaviorRunning() const { return true; }
+  // If this returns true, then this reaction trigger can interrupt any behavior
+  //  that was caused by any _other_ reaction trigger
+  virtual bool CanInterruptOtherTriggeredBehavior() const { return true; }
   
   // allows reaction triggers to check should computationally switch
   // even if they are currently running

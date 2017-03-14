@@ -68,7 +68,7 @@ namespace Anki {
     PlayAnimationAction::~PlayAnimationAction()
     {
       // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
-      // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
+      // by animationStreamer (the source of the event that marks _wasAborted), then explicitly tell animationStreamer
       // to clean up
       if (_robot.GetAnimationStreamer().GetStreamingAnimation() == _animPointer) {
         PRINT_NAMED_INFO("PlayAnimationAction.Destructor.StillStreaming",

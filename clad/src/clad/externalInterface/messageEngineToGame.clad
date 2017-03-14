@@ -42,7 +42,6 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
-#include "clad/types/voiceCommandTypes.clad"
 #include "clad/types/ledTypes.clad"
 
 namespace Anki {
@@ -755,7 +754,9 @@ message MemoryMapMessageBegin
 {
   uint_32  originId,
   int_32   rootDepth,
-  float_32 rootSize_mm
+  float_32 rootSize_mm,
+  float_32 rootCenterX,
+  float_32 rootCenterY
 }
 
 enum uint_8 ENodeContentTypeEnum

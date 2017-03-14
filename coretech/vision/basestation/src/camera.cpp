@@ -51,6 +51,7 @@ namespace Anki {
     
     Camera::Camera(const Camera& other)
     : _camID(other._camID)
+    , _calibration(nullptr)
     , _isCalibrationShared(other._isCalibrationShared)
     , _pose(other._pose)
     , _occluderList(other._occluderList)
@@ -59,7 +60,7 @@ namespace Anki {
         // If we're sharing calibrations, just share the same one as
         // the Camera we are copying
         _calibration = other._calibration;
-      } else {
+      } else if(other._calibration != nullptr) {
         // Otherwise create another copy of calibration
         _calibration = new CameraCalibration(*other._calibration);
       }

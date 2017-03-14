@@ -267,6 +267,20 @@ namespace Cozmo {
     }
   }
   
+  // Private helper to construct string of unsent message tags
+  static std::string ToString(const std::list<RobotInterface::EngineToRobot*> sendBuffer)
+  {
+    std::string s;
+    for (const auto * item : sendBuffer)
+    {
+      if (item != sendBuffer.front()) {
+        s.append(",");
+      }
+      s.append(EngineToRobotTagToString(item->GetTag()));
+    }
+    return s;
+  }
+  
   void AnimationStreamer::Abort()
   {
     if (_tag != NotAnimatingTag) {
@@ -274,18 +288,28 @@ namespace Cozmo {
       _context->GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
     }
     
-    if(nullptr != _streamingAnimation || nullptr != _idleAnimation)
+    if (nullptr != _streamingAnimation || nullptr != _idleAnimation)
     {
-      const char *type = (_streamingAnimation != nullptr ? "Streaming" : "Idle");
-      const std::string& name = (_streamingAnimation != nullptr ? _streamingAnimation->GetName() : _idleAnimation->GetName());
-      PRINT_NAMED_INFO("AnimationStreamer.Abort",
-                       "Tag: %d, %s:%s, startOfAnimationSent: %d, endOfAnimationSent: %d",
-                       _tag, type, name.c_str(), _startOfAnimationSent, _endOfAnimationSent);
+      // Log streamer state for diagnostics
+      const auto * anim = (_streamingAnimation != nullptr ? _streamingAnimation : _idleAnimation);
+      const char * type = (_streamingAnimation != nullptr ? "Streaming" : "Idle");
       
+      PRINT_NAMED_INFO("AnimationStreamer.Abort",
+                       "Tag=%d %s:%s hasFramesLeft=%d audioComplete=%d startSent=%d endSent=%d sendBuffer=%s",
+                       _tag,
+                       type,
+                       anim->GetName().c_str(),
+                       anim->HasFramesLeft(),
+                       _audioClient.AnimationIsComplete(),
+                       _startOfAnimationSent,
+                       _endOfAnimationSent,
+                       ToString(_sendBuffer).c_str());
+      
+      // Reset streamer state
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
 
-      if ( _audioClient.HasAnimation() ) {
+      if (_audioClient.HasAnimation()) {
         _audioClient.GetCurrentAnimation()->AbortAnimation();
       }
       _audioClient.ClearCurrentAnimation();
@@ -654,6 +678,9 @@ namespace Cozmo {
   void AnimationStreamer::ClearSendBuffer()
   {
     for (auto& engineToRobotMsg : _sendBuffer ) {
+      PRINT_NAMED_DEBUG("AnimationStreamer.ClearSendBuffer",
+                        "Clearing unsent %s",
+                        EngineToRobotTagToString(engineToRobotMsg->GetTag()));
       Util::SafeDelete(engineToRobotMsg);
     }
     _sendBuffer.clear();

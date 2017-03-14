@@ -36,6 +36,7 @@ namespace Cozmo {
   
 class CozmoContext;
 
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 class VoiceCommandComponent : private Util::noncopyable
 {
 public:
@@ -59,6 +60,8 @@ private:
   void UpdateCommandLight(bool heardTriggerPhrase);
   
 }; // class VoiceCommandComponent
+
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 } // namespace Cozmo
 } // namespace Anki

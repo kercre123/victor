@@ -30,7 +30,7 @@ public:
   // Functionality being overridden from base class
   virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return _shouldResumeLast;}
-  virtual bool CanTriggerWhileTriggeredBehaviorRunning() const override { return _canTriggerWhileTriggered; }
+  virtual bool CanInterruptOtherTriggeredBehavior() const override { return _canInterruptOtherTriggeredBehavior; }
   
   // Callback for the custom logic to determine whether to trigger the behavior
   using ShouldTriggerCallbackType = std::function<bool(const Robot& robot, const IBehavior* behavior)>;
@@ -50,7 +50,7 @@ private:
   bool                          _shouldTrigger = false;
   std::string                   _strategyName = "Trigger Strategy Generic";
   bool                          _shouldResumeLast = true;
-  bool                          _canTriggerWhileTriggered; // Initialized in constructor by call to base class getter
+  bool                          _canInterruptOtherTriggeredBehavior; // Initialized in constructor by call to base class getter
   bool                          _needsRobotPreReq = false;
   std::set<EngineToGameTag>     _relevantEvents; // The list of events this trigger is subscribed to, kept for sanity checking later
   ShouldTriggerCallbackType     _shouldTriggerCallback;

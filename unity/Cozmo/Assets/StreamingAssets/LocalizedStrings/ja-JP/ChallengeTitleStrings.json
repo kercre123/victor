@@ -1,78 +1,66 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "challengeDetails.needsMoreCubesModal.title": {
-    "translation": "Not Enough Cubes"
+  "challengeDetails.needsMoreCubesModal.title" : {
+    "translation" : "ノット・イナフキューブ"
   },
-  "challengeDetails.needsMoreCubesModal.description": {
-    "translation": "Cozmo needs {0} more {1} to start {2}."
+  "challengeDetails.needsMoreCubesModal.description" : {
+    "translation" : "コズモのニーズ{0}もっと{1}開始するには{2} 。"
   },
-  "challengeDetails.cozmoNotOnTreads.title": {
-    "translation": "Cozmo is not ready"
+  "challengeDetails.cozmoNotOnTreads.title" : {
+    "translation" : "コズモの準備ができていません"
   },
-  "challengeDetails.cozmoNotOnTreads.description": {
-    "translation": "Please help Cozmo get upright and ready to play."
+  "challengeDetails.cozmoNotOnTreads.description" : {
+    "translation" : "コズモが直立して再生する準備を手伝ってください。"
   },
-  "challengeDetails.cozmoIsStillWakingUpModal.title": {
-    "translation": "Cozmo is Waking Up"
+  "challengeDetails.cozmoIsStillWakingUpModal.title" : {
+    "translation" : "コズモが目覚めるれます"
   },
-  "challengeDetails.cozmoIsStillWakingUpModal.description": {
-    "translation": "Please wait for Cozmo to wake up and drive off of his charger."
+  "challengeDetails.cozmoIsStillWakingUpModal.description" : {
+    "translation" : "コズモが目を覚ますと、彼の充電器のオフに駆動するまでお待ちください。"
   },
-  "challengeDetails.needsMoreCubesModal.button": {
-    "translation": "Show Me How"
+  "challengeDetails.needsMoreCubesModal.button" : {
+    "translation" : "どうするか教えて"
   },
-  "cubeSlap.title": {
-    "translation": "Keepaway"
+  "cubeSlap.title" : {
+    "translation" : "遠ざける"
   },
-  "cubeSlap.description": {
-    "translation": "Tempt Cozmo to pounce on a Cube, then pull it away before he can!"
+  "cubeSlap.description" : {
+    "translation" : "彼ができる前にそれを引き離した後、キューブに襲い掛かるためにコズモを誘惑！"
   },
-  "droneMode.title": {
-    "translation": "Explorer Mode"
+  "droneMode.title" : {
+    "translation" : "エクスプローラモード"
   },
-  "droneMode.description": {
-    "translation": "Cozmo allows you to take control and explore the world through his eyes."
+  "droneMode.description" : {
+    "translation" : "コズモは、あなたがコントロールを取ると、彼の目を通して世界を探索することができます。"
   },
-  "faceEnrollment.title": {
-    "translation": "Meet Cozmo"
+  "faceEnrollment.title" : {
+    "translation" : "ミートコズモ"
   },
-  "faceEnrollment.description": {
-    "translation": "Introduce Cozmo to new people so he can learn to say their name."
+  "faceEnrollment.description" : {
+    "translation" : "彼は自分の名前を言うことを学ぶことができるように、新しい人々にコズモを紹介します。"
   },
-  "memoryMatchGame.title": {
-    "translation": "Memory Match"
+  "memoryMatchGame.title" : {
+    "translation" : "メモリマッチ"
   },
-  "memoryMatchGame.description": {
-    "translation": "A pattern game that tests your memory. Watch the cubes and listen carefully!"
+  "memoryMatchGame.description" : {
+    "translation" : "あなたの記憶をテストパターンゲーム。キューブを見て、慎重に耳を傾けます！"
   },
-  "speedTap.title": {
-    "translation": "Quick Tap"
+  "speedTap.title" : {
+    "translation" : "クイックタップ"
   },
-  "speedTap.description": {
-    "translation": "A color matching game of fast reflexes and sharp wits."
+  "speedTap.description" : {
+    "translation" : "高速反射神経と鋭いウィットのカラーマッチングゲーム。"
   },
-  "cozmoSays.title": {
-    "translation": "Cozmo Says"
+  "cozmoSays.title" : {
+    "translation" : "コズモは言います"
   },
-  "cozmoSays.description": {
-    "translation": "In exchange for a Spark, Cozmo will try to say a word or phrase!"
+  "cozmoSays.description" : {
+    "translation" : "スパークと引き換えに、コズモは、単語やフレーズを言うしようとします！"
   }
 }

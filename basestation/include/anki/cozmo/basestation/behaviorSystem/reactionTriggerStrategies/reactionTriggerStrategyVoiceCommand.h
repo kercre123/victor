@@ -23,13 +23,15 @@
 namespace Anki {
 namespace Cozmo {
 
+  
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 class ReactionTriggerStrategyVoiceCommand : public IReactionTriggerStrategy {
 public:
   ReactionTriggerStrategyVoiceCommand(Robot& robot, const Json::Value& config);
 
   virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return true; }
-  virtual bool CanTriggerWhileTriggeredBehaviorRunning() const override { return true; }
+  virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
   
 protected:
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
@@ -40,6 +42,7 @@ private:
   Vision::FaceID_t                      _desiredFace = Vision::UnknownFaceID;
   std::map<Vision::FaceID_t, float>     _lookedAtTimesMap;
 };
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 
 } // namespace Cozmo

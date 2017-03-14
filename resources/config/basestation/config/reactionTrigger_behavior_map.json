@@ -70,7 +70,7 @@
       "behaviorName": "reactToDoubleTap",
       "genericStrategyParams": {
         "shouldResumeLast": true,
-        "canTriggerWhileTriggered": false,
+        "canInterruptOtherTriggeredBehavior": false,
         "needsRobotPreReq": true,
         "debugStrategyName": "Trigger Strategy Double Tap"
       }
@@ -173,10 +173,6 @@
         "shouldResumeLast": true,
         "debugStrategyName": "Trigger Strategy Unexpected Movement"
       }
-    },
-    {
-      "reactionTrigger": "VoiceCommand",
-      "behaviorName": "AcknowledgeFace"
     }
   ]
 }

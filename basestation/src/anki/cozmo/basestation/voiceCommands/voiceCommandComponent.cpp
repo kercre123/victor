@@ -24,6 +24,8 @@
 #include "util/console/consoleInterface.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
+
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 #include "clad/types/voiceCommandTypes.h"
 
 #define LOG_CHANNEL "VoiceCommands"
@@ -144,3 +146,6 @@ void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
 
 } // namespace Cozmo
 } // namespace Anki
+
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+

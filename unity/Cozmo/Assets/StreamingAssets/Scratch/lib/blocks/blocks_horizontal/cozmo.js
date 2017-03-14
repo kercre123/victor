@@ -263,9 +263,9 @@ Blockly.Blocks['dropdown_cozmo_liftheight'] = {
               value: 'high', width: 48, height: 48, alt: 'High'}
         ]), 'CHOICE');
     this.setOutput(true);
-    this.setColour(Blockly.Colours.motion.primary,
-      Blockly.Colours.motion.secondary,
-      Blockly.Colours.motion.tertiary
+    this.setColour(Blockly.Colours.looks.primary,
+      Blockly.Colours.looks.secondary,
+      Blockly.Colours.looks.tertiary
     );
   }
 };
@@ -295,10 +295,10 @@ Blockly.Blocks['cozmo_liftheight'] = {
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary
     });
   }
 };
@@ -319,9 +319,9 @@ Blockly.Blocks['dropdown_cozmo_headangle'] = {
               value: 'high', width: 48, height: 48, alt: 'High'}
         ]), 'CHOICE');
     this.setOutput(true);
-    this.setColour(Blockly.Colours.motion.primary,
-      Blockly.Colours.motion.secondary,
-      Blockly.Colours.motion.tertiary
+    this.setColour(Blockly.Colours.looks.primary,
+      Blockly.Colours.looks.secondary,
+      Blockly.Colours.looks.tertiary
     );
   }
 };
@@ -346,6 +346,35 @@ Blockly.Blocks['cozmo_headangle'] = {
         {
           "type": "input_value",
           "name": "CHOICE"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_dock_with_cube'] = {
+  /**
+   * Block to tell Cozmo to dock with a cube that he can see, if any.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_dock_with_cube",
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-dock-with-cube.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Dock with cube"
         }
       ],
       "inputsInline": true,
@@ -409,9 +438,9 @@ Blockly.Blocks['dropdown_cozmo_drive_speed'] = {
               value: 'fast', width: 48, height: 48, alt: 'Fast'}
         ]), 'CHOICE');
     this.setOutput(true);
-    this.setColour(Blockly.Colours.control.primary,
-      Blockly.Colours.control.secondary,
-      Blockly.Colours.control.tertiary
+    this.setColour(Blockly.Colours.motion.primary,
+      Blockly.Colours.motion.secondary,
+      Blockly.Colours.motion.tertiary
     );
   }
 };
@@ -441,10 +470,10 @@ Blockly.Blocks['cozmo_drive_speed'] = {
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "category": Blockly.Categories.motion,
+      "colour": Blockly.Colours.motion.primary,
+      "colourSecondary": Blockly.Colours.motion.secondary,
+      "colourTertiary": Blockly.Colours.motion.tertiary
     });
   }
 };
@@ -550,6 +579,34 @@ Blockly.Blocks['cozmo_wait_for_cube'] = {
           "width": 40,
           "height": 40,
           "alt": "Wait until Cozmo sees a cube"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.control,
+      "colour": Blockly.Colours.control.primary,
+      "colourSecondary": Blockly.Colours.control.secondary,
+      "colourTertiary": Blockly.Colours.control.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
+  /**
+   * Block to wait until a cube that Cozmo can see is tapped.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-cube-tap.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Wait for cube tap"
         }
       ],
       "inputsInline": true,

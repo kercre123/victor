@@ -376,10 +376,12 @@ bool PotentialObjectsForLocalizingTo::CouldUseObjectForLocalization(const Observ
   const bool objectCanBeUsedForLocalization = matchingObject->CanBeUsedForLocalization();
   const bool isDockingObject = matchingObject->GetID() == _robot.GetDockObject();
   const bool isTrackToObject = matchingObject->GetID() == _robot.GetMoveComponent().GetTrackToObject();
+  const bool objectWasTappedRecently = _robot.WasObjectTappedRecently(matchingObject->GetID());
   
   const bool useThisObjectToLocalize = (objectCanBeUsedForLocalization &&
                                         !isDockingObject &&
-                                        !isTrackToObject);
+                                        !isTrackToObject &&
+                                        !objectWasTappedRecently);
   
   VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.CouldUseObjectForLocalization",
                       "%s %d: objCanBeUsedForLoc=%d(%s) isDockObj=%d isTrackToObj=%d",
