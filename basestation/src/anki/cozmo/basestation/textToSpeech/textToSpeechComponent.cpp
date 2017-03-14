@@ -25,7 +25,7 @@ extern "C" {
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "audioEngine/AudioEngineController.h"
+#include "audioEngine/audioEngineController.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "audioEngine/plugins/ankiPluginInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"

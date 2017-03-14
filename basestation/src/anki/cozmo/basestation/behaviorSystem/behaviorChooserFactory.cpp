@@ -13,7 +13,7 @@
 
 // behavior choosers
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalEvaluator.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/BuildPyramidBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/buildPyramidBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/selectionBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/socializeBehaviorChooser.h"

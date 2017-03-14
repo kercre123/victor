@@ -1,5 +1,5 @@
 /**
- * File: AIInformationAnalysisProcessTypes
+ * File: aiInformationAnalysisProcessTypes
  *
  * Author: Raul
  * Created: 09/13/16
@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "AIInformationAnalysisProcessTypes.h"
+#include "aiInformationAnalysisProcessTypes.h"
 
 #include "util/logging/logging.h"
 

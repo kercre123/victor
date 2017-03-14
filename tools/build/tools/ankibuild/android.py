@@ -45,7 +45,10 @@ def get_ndk_version_from_buckconfig(path):
     if not path or not os.path.isfile(path):
         return None
     config = parse_buckconfig_as_ini(path)
-    return config.get('ndk', 'ndk_version')
+    try:
+        return config.get('ndk', 'ndk_version')
+    except ConfigParser.NoSectionError:
+        return None
 
 def read_properties_from_file(path):
     properties = {}
@@ -109,6 +112,8 @@ def find_ndk_root_for_ndk_version(version_arg):
         'r13b': '13.1.3345770',
         '13.1.3345770': '13.1.3345770',
         'r10e': 'r10e',
+        'r14': '14.0.3770861',
+        '14.0.3770861': '14.0.3770861'
     }
     version = ndk_version_arg_to_version[version_arg]
     ndk_root_env_vars = [
@@ -171,15 +176,19 @@ def install_ndk(revision):
     ndk_revision_to_version = {
         '13.1.3345770': 'r13b',
         'r10e': 'r10e',
-        'r13b': 'r13b'
+        'r13b': 'r13b',
+        '14.0.3770861': 'r14',
+        'r14' : 'r14'
     }
 
     ndk_info_darwin = {
+        'r14': {'size': 824579088, 'sha1': 'd121c9e4f359ff65fb4d003bdd7dbe5dd9cf7295'},
         'r13b': {'size': 665967997, 'sha1': '71fe653a7bf5db08c3af154735b6ccbc12f0add5'},
         'r10e': {'size': 1083342126, 'sha1': '6be8598e4ed3d9dd42998c8cb666f0ee502b1294'},
     }
 
     ndk_info_linux = {
+        'r14': {'size': 840507097, 'sha1': 'eac8b293054671555cb636e350f1a9bc475c8f0c'},
         'r13b': {'size':687311866, 'sha1': '0600157c4ddf50ec15b8a037cfc474143f718fd0'},
         'r10e': {'size':1110915721, 'sha1': 'f692681b007071103277f6edc6f91cb5c5494a32'},
     }
@@ -259,7 +268,9 @@ def install_ndk(revision):
 def get_required_ndk_version():
     buck_config_path = os.path.join(get_toplevel_directory(), '.buckconfig')
     required_ndk_ver = get_ndk_version_from_buckconfig(buck_config_path)
-    return required_ndk_ver
+    buck_config_override_path = os.path.join(get_toplevel_directory(), '.buckconfig.override')
+    override_required_ndk_ver = get_ndk_version_from_buckconfig(buck_config_override_path)
+    return override_required_ndk_ver or required_ndk_ver
 
 def find_ndk_root_dir(required_ndk_ver):
     ndk_root_dir = find_ndk_root_for_ndk_version(required_ndk_ver)

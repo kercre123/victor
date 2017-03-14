@@ -1,5 +1,5 @@
 /**
- * File: AIInformationAnalysisProcessTypes
+ * File: aiInformationAnalysisProcessTypes
  *
  * Author: Raul
  * Created: 09/13/16
