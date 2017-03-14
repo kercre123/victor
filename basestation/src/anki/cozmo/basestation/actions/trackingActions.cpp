@@ -332,10 +332,12 @@ ActionResult ITrackAction::CheckIfDone()
       const f32 accel = 10.f; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
       
       RobotInterface::SetBodyAngle setBodyAngle;
-      setBodyAngle.angle_rad             = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
-      setBodyAngle.max_speed_rad_per_sec = speed;
-      setBodyAngle.accel_rad_per_sec2    = accel;
-      setBodyAngle.angle_tolerance       = _panTolerance.ToFloat();
+      setBodyAngle.angle_rad              = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
+      setBodyAngle.max_speed_rad_per_sec  = speed;
+      setBodyAngle.accel_rad_per_sec2     = accel;
+      setBodyAngle.angle_tolerance        = _panTolerance.ToFloat();
+      setBodyAngle.num_half_revolutions   = 0;
+      setBodyAngle.use_shortest_direction = true;
       if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
         return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
