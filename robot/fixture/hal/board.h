@@ -42,10 +42,11 @@
 
 #define PINC_BOARD_ID0    13
 #define PINC_BOARD_ID1    14
-#define PINC_BOARD_ID2    15
 #define GPIOC_BOARD_ID0   (1 << PINC_BOARD_ID0)
 #define GPIOC_BOARD_ID1   (1 << PINC_BOARD_ID1)
-#define GPIOC_BOARD_ID2   (1 << PINC_BOARD_ID2)
+
+#define PINC_BUZZER       15
+#define GPIOC_BUZZER      (1 << PINC_BUZZER)
 
 #define PINA_NRF_SWD  11
 #define GPIOA_NRF_SWD (1 << PINA_NRF_SWD)
@@ -118,5 +119,6 @@ void EnableBAT(void);
 void DisableBAT(void);
 void EnableVEXT(void);
 void DisableVEXT(void);
+void Buzzer(u8 f_kHz, u16 duration_ms); //piezo buzzer beep. f={1..20}kHz
 
 #endif 

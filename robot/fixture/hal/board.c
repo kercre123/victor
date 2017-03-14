@@ -20,7 +20,6 @@ void STM_EVAL_LEDInit(Led_TypeDef Led)
   /* Enable the GPIO_LED Clock */
   RCC_AHB1PeriphClockCmd(GPIO_CLK[Led], ENABLE);
 
-
   /* Configure the GPIO_LED pin */
   GPIO_InitStructure.GPIO_Pin = GPIO_PIN[Led];
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
@@ -111,6 +110,10 @@ void InitBoard(void)
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
   
+  //Piezo Buzzer output
+  PIN_RESET(GPIOC, PINC_BUZZER);
+  PIN_OUT(GPIOC, PINC_BUZZER);
+  
   DisableBAT();
 }
 
@@ -156,7 +159,6 @@ board_rev_t GetBoardRev(void)
 {
   pinstate_e board_id0 = _test_pin_state(GPIOC, GPIOC_BOARD_ID0);
   pinstate_e board_id1 = _test_pin_state(GPIOC, GPIOC_BOARD_ID1);
-  pinstate_e board_id2 = _test_pin_state(GPIOC, GPIOC_BOARD_ID2);
   
   //fixture 1.0 rev1,2,3 did not have a board revision check. pins are NC/float.
   //fixture 1.5+ implemented this check
@@ -169,7 +171,6 @@ board_rev_t GetBoardRev(void)
   
   //additional ID pins are NC/float. crash and burn if firmware is older than fixture hardware.
   assert( board_id1 == Z );
-  assert( board_id2 == Z );
   
   return BOARD_REV_1_0_REV1; //silly compiler. we'll never make it here.
 }
@@ -251,6 +252,24 @@ void DisableBAT(void)
   isEnabled = 0;
 }
 
+void Buzzer(u8 f_kHz, u16 duration_ms)
+{
+  u32 half_period_us = f_kHz > 0 && f_kHz <= 20 ? (1000/2)/f_kHz : 125 /*4kHz*/; //half-period in us for delay loop
+  
+  PIN_RESET(GPIOC, PINC_BUZZER);
+  PIN_OUT(GPIOC, PINC_BUZZER);
+  
+  u32 sqw_start = getMicroCounter();
+  while( getMicroCounter() - sqw_start < duration_ms*1000 )
+  {
+    PIN_SET(GPIOC, PINC_BUZZER);
+    MicroWait( half_period_us );
+    PIN_RESET(GPIOC, PINC_BUZZER);
+    MicroWait( half_period_us );
+  }
+  
+  PIN_RESET(GPIOC, PINC_BUZZER); //idle low
+}
 
 #if 0
 extern u8 g_fixbootbin[], g_fixbootend[];
