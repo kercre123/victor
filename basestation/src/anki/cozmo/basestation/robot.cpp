@@ -855,6 +855,8 @@ void Robot::Delocalize(bool isCarryingObject)
   // notify behavior whiteboard
   _aiComponent->OnRobotDelocalized();
   
+  _behaviorMgr->OnRobotDelocalized();
+  
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDelocalized(GetID())));
