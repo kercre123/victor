@@ -321,7 +321,7 @@ def main(scriptArgs):
     return True
 
   #run clad's make
-  unityGeneratedPath=os.path.join(projectRoot, 'unity/Cozmo/Assets/Scripts/Generated')
+  unityGeneratedPath=os.path.join(projectRoot, 'unity/Cozmo/Assets/Scripts/Generated/')
   shutil.rmtree(unityGeneratedPath, True)
   if (subprocess.call(['make', '--silent', 'OUTPUT_DIR_CSHARP=' + unityGeneratedPath, 'csharp'],
     cwd=os.path.join(options.cozmoEnginePath, 'clad')) != 0):
