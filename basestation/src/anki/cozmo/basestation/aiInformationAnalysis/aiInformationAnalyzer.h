@@ -15,7 +15,7 @@
 
 #include "aiInformationAnalysisProcessTypes.h"
 // processes
-#include "informationAnalysisProcesses/AIInfoAnalysisProcCalculateInterestingRegions.h"
+#include "informationAnalysisProcesses/aiInfoAnalysisProcCalculateInterestingRegions.h"
 
 #include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
 

@@ -16,7 +16,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/helpers/printByteArray.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/RobotToEngineImplMessaging.h"
+#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
