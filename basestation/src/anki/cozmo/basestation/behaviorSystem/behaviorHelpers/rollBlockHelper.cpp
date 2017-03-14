@@ -25,6 +25,10 @@
 namespace Anki {
 namespace Cozmo {
   
+namespace{
+static const int kMaxNumRetrys = 3;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RollBlockHelper::RollBlockHelper(Robot& robot,
                                  IBehavior& behavior,
@@ -36,6 +40,7 @@ RollBlockHelper::RollBlockHelper(Robot& robot,
 , _targetID(targetID)
 , _params(parameters)
 , _shouldUpright(rollToUpright)
+, _tmpRetryCounter(0)
 {
 
 }
@@ -59,40 +64,38 @@ BehaviorStatus RollBlockHelper::Init(Robot& robot)
 {
   // do first update immediately
   _shouldRoll = true;
-  return UpdateWhileActiveInternal(robot);
+  _tmpRetryCounter = 0;
+  DetermineAppropriateAction(robot);
+  return _status;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot)
 {
+  return _status;
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RollBlockHelper::DetermineAppropriateAction(Robot& robot)
+{
   // If the robot is carrying a block, put it down
   if(robot.IsCarryingObject()){
-    DelegateProperties delegateProperties;
-    delegateProperties.SetDelegateToSet(CreatePlaceBlockHelper(robot));
-    delegateProperties.SetOnSuccessFunction(
-      [this](Robot& robot) {
-        _shouldRoll = true;
-        return BehaviorStatus::Running;
-      });
-    delegateProperties.SetOnFailureFunction([](Robot& robot)
-                      { return BehaviorStatus::Failure;});
-    DelegateAfterUpdate(delegateProperties);
-    return BehaviorStatus::Running;
-  }
-
-  if( _shouldRoll ) {
+    DelegateToPutDown(robot);
+  }else{
     // If the block can't be accessed, pick it up and move it so it can be rolled
     const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_targetID);
     if(obj != nullptr &&
        !obj->IsPoseStateUnknown()){
-      const bool canRoll = robot.GetAIComponent().GetWhiteboard().IsObjectValidForAction(
-        AIWhiteboard::ObjectUseIntention::RollObjectNoAxisCheck,
-        obj->GetID());
+      auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+      const bool canRoll = whiteboard.IsObjectValidForAction(
+                               AIWhiteboard::ObjectUseIntention::RollObjectNoAxisCheck,
+                               obj->GetID());
       if(canRoll){
         PRINT_CH_INFO("Behaviors", "RollBlockHelper.Update.Rolling", "Doing roll action");
         const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
-                          robot, _targetID, PreActionPose::ActionType::ROLLING);
+                                   robot, _targetID, PreActionPose::ActionType::ROLLING);
         
         if(isAtPreAction != ActionResult::SUCCESS){
           DriveToParameters params;
@@ -110,7 +113,7 @@ BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot)
         DelegateProperties delegateProperties;
         delegateProperties.SetDelegateToSet(pickupHelper);
         delegateProperties.SetOnFailureFunction( [](Robot& robot)
-                                                 {return BehaviorStatus::Failure;});
+                                                {return BehaviorStatus::Failure;});
         DelegateAfterUpdate(delegateProperties);
       }
       
@@ -120,14 +123,34 @@ BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot)
       _status = BehaviorStatus::Failure;
     }
   }
-  
-  return _status;
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RollBlockHelper::DelegateToPutDown(Robot& robot)
+{
+  DelegateProperties delegateProperties;
+  delegateProperties.SetDelegateToSet(CreatePlaceBlockHelper(robot));
+  delegateProperties.SetOnSuccessFunction(
+                                          [this](Robot& robot) {
+                                            _shouldRoll = true;
+                                            return BehaviorStatus::Running;
+                                          });
+  delegateProperties.SetOnFailureFunction([](Robot& robot)
+                                          { return BehaviorStatus::Failure;});
+  DelegateAfterUpdate(delegateProperties);
+}
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RollBlockHelper::StartRollingAction(Robot& robot)
 {
+  if(_tmpRetryCounter >= kMaxNumRetrys){
+    _status = BehaviorStatus::Failure;
+    return;
+  }
+  _tmpRetryCounter++;
+  
   _shouldRoll = false;
   DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetID);
   if( _shouldUpright ) {
@@ -136,6 +159,11 @@ void RollBlockHelper::StartRollingAction(Robot& robot)
   if(_params.preDockCallback != nullptr){
     rollAction->SetPreDockCallback(_params.preDockCallback);
   }
+  
+  rollAction->SetSayNameAnimationTrigger(_params.sayNameAnimationTrigger);
+  rollAction->SetNoNameAnimationTrigger(_params.noNameAnimationTrigger);
+  rollAction->SetMaxTurnTowardsFaceAngle(_params.maxTurnToFaceAngle);
+  
 
   StartActingWithResponseAnim(rollAction, &RollBlockHelper::RespondToRollingResult, [] (ActionResult result){
     switch(result){
@@ -173,7 +201,7 @@ void RollBlockHelper::RespondToRollingResult(ActionResult result, Robot& robot)
       break;
     default:
     {
-      _status = BehaviorStatus::Failure;
+      StartRollingAction(robot);
       break;
     }
   }

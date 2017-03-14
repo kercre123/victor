@@ -43,28 +43,16 @@ protected:
   virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {(_isBlockRotationImportant ? AIWhiteboard::ObjectUseIntention::RollObjectWithAxisCheck : AIWhiteboard::ObjectUseIntention::RollObjectNoAxisCheck)}; }
   
 private:
-
-  AnimationTrigger _putDownAnimTrigger = AnimationTrigger::Count;
-
   // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
   // UpdateWhileNotRunning
   mutable ObjectID _targetBlock;
   
-  s32 _numRollActionRetries = 0;
-
   bool _isBlockRotationImportant;
 
   const Robot& _robot;
-  
-  enum class DebugState {
-    SettingDownBlock,
-    PerformingAction
-  };
 
-  void TransitionToSettingDownBlock(Robot& robot);
   void TransitionToPerformingAction(Robot& robot, bool isRetry = false);
 
-  void SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
   
   void ResetBehavior(Robot& robot);
 
