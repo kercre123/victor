@@ -556,10 +556,10 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "category": Blockly.Categories.event,
+      "colour": Blockly.Colours.event.primary,
+      "colourSecondary": Blockly.Colours.event.secondary,
+      "colourTertiary": Blockly.Colours.event.tertiary
     });
   }
 };
@@ -584,10 +584,10 @@ Blockly.Blocks['cozmo_wait_until_see_cube'] = {
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "category": Blockly.Categories.event,
+      "colour": Blockly.Colours.event.primary,
+      "colourSecondary": Blockly.Colours.event.secondary,
+      "colourTertiary": Blockly.Colours.event.tertiary
     });
   }
 };
@@ -612,10 +612,10 @@ Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "category": Blockly.Categories.event,
+      "colour": Blockly.Colours.event.primary,
+      "colourSecondary": Blockly.Colours.event.secondary,
+      "colourTertiary": Blockly.Colours.event.tertiary
     });
   }
 };

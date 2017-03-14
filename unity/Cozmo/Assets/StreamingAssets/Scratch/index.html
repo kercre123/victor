@@ -47,6 +47,13 @@
                 </value>
             </block>
             <block type="cozmo_dock_with_cube"></block>
+            <block type="cozmo_animation">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_setanimation">
+                        <field name="CHOICE">happy</field>
+                    </shadow>
+                </value>
+            </block>
             <block type="cozmo_liftheight">
                 <value name="CHOICE">
                     <shadow type="dropdown_cozmo_liftheight">
@@ -61,10 +68,10 @@
                     </shadow>
                 </value>
             </block>
-            <block type="cozmo_animation">
+            <block type="cozmo_setbackpackcolor">
                 <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_setanimation">
-                        <field name="CHOICE">happy</field>
+                    <shadow type="dropdown_cozmo_setcolor">
+                        <field name="CHOICE">mystery</field>
                     </shadow>
                 </value>
             </block>
@@ -72,13 +79,6 @@
                 <value name="STRING">
                     <shadow type="text">
                         <field name="TEXT">Hi</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="cozmo_setbackpackcolor">
-                <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_setcolor">
-                        <field name="CHOICE">mystery</field>
                     </shadow>
                 </value>
             </block>

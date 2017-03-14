@@ -116,6 +116,95 @@ Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
     return this._promiseForCommand(requestId);
 };    
 
+Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
+    var headAngle = Cast.toString(args.CHOICE);
+    var requestId = this._getRequestId();
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoHeadAngle","argString": "' + headAngle + '"}');
+
+    return this._promiseForCommand(requestId);
+};
+
+Scratch3CozmoBlocks.prototype.dockWithCube = function(args, util) {
+    var requestId = this._getRequestId();
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDockWithCube"}');
+
+    return this._promiseForCommand(requestId);
+};
+                                       
+Scratch3CozmoBlocks.prototype.turnLeft = function(args, util) {
+    var requestId = this._getRequestId();
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnLeft"}');
+
+    return this._promiseForCommand(requestId);
+};
+
+Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
+    var requestId = this._getRequestId();
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnRight"}');
+
+    return this._promiseForCommand(requestId);
+};
+
+Scratch3CozmoBlocks.prototype.speak = function(args, util) {
+    var textToSay = Cast.toString(args.STRING);
+    var requestId = this._getRequestId();
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoSays","argString": "' + textToSay + '"}');
+
+    return this._promiseForCommand(requestId);
+};
+
+/**
+ * Wait until see face.
+ *
+ * @param argValues Parameters passed with the block.
+ * @param util The util instance to use for yielding and finishing.
+ * @private
+ */
+Scratch3CozmoBlocks.prototype.waitUntilSeeFace = function (args, util) {
+    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
+    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "high"}');
+
+    var requestId = this._getRequestId();
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitUntilSeeFace"}');
+
+    return this._promiseForCommand(requestId);
+};
+
+/**
+ * Wait until see cube.
+ *
+ * @param argValues Parameters passed with the block.
+ * @param util The util instance to use for yielding and finishing.
+ * @private
+ */
+Scratch3CozmoBlocks.prototype.waitUntilSeeCube = function (args, util) {
+    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
+    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "low"}');
+
+    var requestId = this._getRequestId();
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitUntilSeeCube"}');
+
+    return this._promiseForCommand(requestId);
+};
+
+/**
+ * Wait until cube is tapped.
+ *
+ * @param argValues Parameters passed with the block.
+ * @param util The util instance to use for yielding and finishing.
+ * @private
+ */
+Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
+    var requestId = this._getRequestId();
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitForCubeTap"}');
+
+    return this._promiseForCommand(requestId);
+};
+
+Scratch3CozmoBlocks.prototype.driveSpeed = function(args, util) {
+    this.runtime.cozmoDriveSpeed = Cast.toString(args.CHOICE);
+};
+
 /**
  * Convert a color name to a Cozmo color index.
  * Supports 'mystery' for a random hue.
@@ -182,95 +271,6 @@ Scratch3CozmoBlocks.prototype._getAnimation = function(animationName) {
     }
 
     return animationName;
-};
-
-/**
- * Wait until see face.
- *
- * @param argValues Parameters passed with the block.
- * @param util The util instance to use for yielding and finishing.
- * @private
- */
-Scratch3CozmoBlocks.prototype.waitUntilSeeFace = function (args, util) {
-    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
-    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "high"}');
-
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitUntilSeeFace"}');
-
-    return this._promiseForCommand(requestId);
-};
-
-/**
- * Wait until see cube.
- *
- * @param argValues Parameters passed with the block.
- * @param util The util instance to use for yielding and finishing.
- * @private
- */
-Scratch3CozmoBlocks.prototype.waitUntilSeeCube = function (args, util) {
-    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
-    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "low"}');
-
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitUntilSeeCube"}');
-
-    return this._promiseForCommand(requestId);
-};
-
-/**
- * Wait until cube is tapped.
- *
- * @param argValues Parameters passed with the block.
- * @param util The util instance to use for yielding and finishing.
- * @private
- */
-Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitForCubeTap"}');
-
-    return this._promiseForCommand(requestId);
-};
-
-Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
-    var headAngle = Cast.toString(args.CHOICE);
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoHeadAngle","argString": "' + headAngle + '"}');
-
-    return this._promiseForCommand(requestId);
-};
-
-Scratch3CozmoBlocks.prototype.dockWithCube = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDockWithCube"}');
-
-    return this._promiseForCommand(requestId);
-};
-                                       
-Scratch3CozmoBlocks.prototype.turnLeft = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnLeft"}');
-
-    return this._promiseForCommand(requestId);
-};
-
-Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnRight"}');
-
-    return this._promiseForCommand(requestId);
-};
-
-Scratch3CozmoBlocks.prototype.driveSpeed = function(args, util) {
-    this.runtime.cozmoDriveSpeed = Cast.toString(args.CHOICE);
-};
-
-Scratch3CozmoBlocks.prototype.speak = function(args, util) {
-    var textToSay = Cast.toString(args.STRING);
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoSays","argString": "' + textToSay + '"}');
-
-    return this._promiseForCommand(requestId);
 };
 
 module.exports = Scratch3CozmoBlocks;
