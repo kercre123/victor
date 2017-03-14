@@ -2074,43 +2074,7 @@ module.exports =
 	 * @private
 	 */
 	Runtime.prototype.resetCozmoVariables = function () {
-	    this.stackIsWaitingForFace = false;
-	    this.stackIsWaitingForCube = false;
-	    this.stackIsWaitingForCubeTap = false;
-	    this.cozmoSawFace = false;
-	    this.cozmoSawCube = false;
-	    this.cozmoCubeWasTapped = false;
 	    this.cozmoDriveSpeed = "slow";
-	};
-
-	/**
-	 * onCozmoSawFace method is called from native side when Cozmo sees a face.
-	 */
-	Runtime.prototype.onCozmoSawFace = function() {
-	    if (!this.stackIsWaitingForFace) return;
-
-	    this.stackIsWaitingForFace = false;
-	    this.cozmoSawFace = true;
-	};
-
-	/**
-	 * onCozmoSawCube method is called from native side when Cozmo sees a cube.
-	 */
-	Runtime.prototype.onCozmoSawCube = function() {
-	    if (!this.stackIsWaitingForCube) return;
-
-	    this.stackIsWaitingForCube = false;
-	    this.cozmoSawCube = true;
-	};
-
-	/**
-	 * onCozmoCubeWasTapped method is called from native side when Cozmo observes a cube tap.
-	 */
-	Runtime.prototype.onCozmoCubeWasTapped = function() {
-	    if (!this.stackIsWaitingForCubeTap) return;
-
-	    this.stackIsWaitingForCubeTap = false;
-	    this.cozmoCubeWasTapped = true;
 	};
 
 	/**
@@ -16863,8 +16827,8 @@ module.exports =
 	        cozmo_drive_backward: this.driveBackward,
 	        cozmo_animation: this.playAnimation,
 	        cozmo_liftheight: this.setLiftHeight,
-	        cozmo_wait_for_face: this.waitForFace,
-	        cozmo_wait_for_cube: this.waitForCube,
+	        cozmo_wait_for_face: this.waitUntilSeeFace,
+	        cozmo_wait_until_see_cube: this.waitUntilSeeCube,
 	        cozmo_wait_for_cube_tap: this.waitForCubeTap,
 	        cozmo_headangle: this.setHeadAngle,
 	        cozmo_dock_with_cube: this.dockWithCube,
@@ -17025,83 +16989,51 @@ module.exports =
 	};
 
 	/**
-	 * The waitForFace and waitForCube methods work the same way as the
-	 * control cube waitUntil. Using waitForFace as an example:
-	 *
-	 * First, waitForFace is called.
-	 *
-	 * waitForFace calls util.yield(), which sets thread.status to STATUS_YIELD.
-	 *
-	 * stepThread() is called. In stepThread(), the code sees that the thread status
-	 * is STATUS_YIELD and sets it to STATUS_RUNNING. stepThread returns.
-	 *
-	 * The vm calls waitForFace again. If the condition we are checking for
-	 * still exists (in this case the condition is “has a face been seen),
-	 * then again the thread is set to STATUS_YIELD. Otherwise, if a face
-	 * has been seen, then the function finishes, leaving the thread status
-	 * as STATUS_RUNNING.
-	 *
-	 * The next time stepThread is called, it calls goToNextBlock, so that the
-	 * block following the waitForFace block is executed.
+	 * Wait until see face.
 	 *
 	 * @param argValues Parameters passed with the block.
 	 * @param util The util instance to use for yielding and finishing.
 	 * @private
 	 */
-	Scratch3CozmoBlocks.prototype.waitForFace = function (args, util) {
-	    // TODO Use Promise here instead of having waitForFace called repeatedly?
+	Scratch3CozmoBlocks.prototype.waitUntilSeeFace = function (args, util) {
 	    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
 	    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "high"}');
 
-	    this.runtime.stackIsWaitingForFace = true;
-	    if (!this.runtime.cozmoSawFace) {
-	        util.yield();
-	    }
-	    else {
-	        this.runtime.cozmoSawFace = false;
-	        this.runtime.stackIsWaitingForFace = false;
-	    }
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitUntilSeeFace"}');
+
+	    return this._promiseForCommand(requestId);
 	};
 
 	/**
-	 * See waitForFace docs above.
+	 * Wait until see cube.
 	 *
 	 * @param argValues Parameters passed with the block.
 	 * @param util The util instance to use for yielding and finishing.
 	 * @private
 	 */
-	Scratch3CozmoBlocks.prototype.waitForCube = function (args, util) {
-	    // TODO Use Promise here instead of having waitForCube called repeatedly?
+	Scratch3CozmoBlocks.prototype.waitUntilSeeCube = function (args, util) {
 	    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
 	    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "low"}');
 
-	    this.runtime.stackIsWaitingForCube = true;
-	    if (!this.runtime.cozmoSawCube) {
-	        util.yield();
-	    }
-	    else {
-	        this.runtime.cozmoSawCube = false;
-	        this.runtime.stackIsWaitingForCube = false;
-	    }
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitUntilSeeCube"}');
+
+	    return this._promiseForCommand(requestId);
 	};
 
 	/**
-	 * See waitForFace docs above.
+	 * Wait until cube is tapped.
 	 *
 	 * @param argValues Parameters passed with the block.
 	 * @param util The util instance to use for yielding and finishing.
 	 * @private
 	 */
 	Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
-	    // TODO Use Promise here instead of having waitForCubeTap called repeatedly?
-	    this.runtime.stackIsWaitingForCubeTap = true;
-	    if (!this.runtime.cozmoCubeWasTapped) {
-	        util.yield();
-	    }
-	    else {
-	        this.runtime.cozmoCubeWasTapped = false;
-	        this.runtime.stackIsWaitingForCubeTap = false;
-	    }
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitForCubeTap"}');
+
+	    return this._promiseForCommand(requestId);
 	};
 
 	Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
@@ -17113,20 +17045,10 @@ module.exports =
 	};
 
 	Scratch3CozmoBlocks.prototype.dockWithCube = function(args, util) {
-	    // TODO Try to use Promise for dockWithCube. For now pass -1 for requestId to indicate we don't need a Promise resolved.
-	    if (!util.stackFrame.timer) {
-	        window.Unity.call('{"requestId": "' + -1 + '","command": "cozmoDockWithCube"}');
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDockWithCube"}');
 
-	        // Yield
-	        util.stackFrame.timer = new Timer();
-	        util.stackFrame.timer.start();
-	        util.yield();
-	    } else {
-	        // TODO Add distance as multiplier to the time below
-	        if (util.stackFrame.timer.timeElapsed() < 3000) {
-	            util.yield();
-	        }
-	    }
+	    return this._promiseForCommand(requestId);
 	};
 	                                       
 	Scratch3CozmoBlocks.prototype.turnLeft = function(args, util) {

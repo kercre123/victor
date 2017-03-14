@@ -564,7 +564,7 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
   }
 };
 
-Blockly.Blocks['cozmo_wait_for_cube'] = {
+Blockly.Blocks['cozmo_wait_until_see_cube'] = {
   /**
    * Block to wait until a Cozmo sees a cube.
    * @this Blockly.Block
