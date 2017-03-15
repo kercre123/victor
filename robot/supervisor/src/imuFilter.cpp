@@ -523,9 +523,9 @@ namespace Anki {
           if (!WheelController::AreWheelsMoving() && !WheelController::AreWheelsPowered()) {
             s16 cliffDelta = 0;
             if (cliffValWhileNotMoving_ == 0) {
-              cliffValWhileNotMoving_ = HAL::GetRawCliffData();
+              cliffValWhileNotMoving_ = ProxSensors::GetMinRawCliffValue();
             } else {
-              cliffDelta = ABS(cliffValWhileNotMoving_ - HAL::GetRawCliffData());
+              cliffDelta = ABS(cliffValWhileNotMoving_ - ProxSensors::GetMinRawCliffValue());
             }
             
             cliffBasedPickupDetect = cliffDelta > CLIFF_DELTA_FOR_PICKUP;

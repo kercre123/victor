@@ -267,8 +267,10 @@ namespace Cozmo {
         }
 
         private void SetHeadSliderToCurrentPosition() {
-          float headAngleRadians = _CurrentRobot.HeadAngle;
-          _DroneModeControlsSlide.SetHeadSliderValue(headAngleRadians * Mathf.Rad2Deg);
+          if (_CurrentRobot != null && _DroneModeControlsSlide != null) {
+            float headAngleRadians = _CurrentRobot.HeadAngle;
+            _DroneModeControlsSlide.SetHeadSliderValue(headAngleRadians * Mathf.Rad2Deg);
+          }
         }
 
         private void EnableInput() {

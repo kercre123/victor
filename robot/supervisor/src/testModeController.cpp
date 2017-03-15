@@ -1150,7 +1150,6 @@ namespace Anki {
           HAL::MotorSetPower(MOTOR_RIGHT_WHEEL, 1.0);
           //HAL::MotorSetPower(MOTOR_LIFT, pwr);
           //HAL::MotorSetPower(MOTOR_HEAD, pwr);
-          //HAL::MotorSetPower(MOTOR_GRIP, pwr);
           pwr *= -1;
           ticCnt_ = 0;
         }

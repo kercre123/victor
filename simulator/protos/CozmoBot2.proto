@@ -110,19 +110,24 @@ Supervisor {
           name "compass"
         }
 
-        Transform {
-          translation 0 0 -0.013
-          rotation 0 1 0 1.5708
-          children [
-            DistanceSensor {
-              name "cliffSensor"
-              type "infra-red"
-              aperture 0.5
-              lookupTable [0   900 0,
-                           0.2   0 0]
-            }
-          ]
+        # TODO: These cliff sensor positions need to be verified
+        CozmoCliffSensor {
+          name "cliffSensorFL"
+          translation 0 0.015 -0.013
         }
+        CozmoCliffSensor {
+          name "cliffSensorFR"
+          translation 0 -0.015 -0.013
+        }
+        CozmoCliffSensor {
+          name "cliffSensorBL"
+          translation -0.045 0.015 -0.013
+        }
+        CozmoCliffSensor {
+          name "cliffSensorBR"
+          translation -0.045 -0.015 -0.013
+        }        
+        
 
         # if you modify the length, you need to update FORWARD_COLLISION_SENSOR_LENGTH_MM
         DistanceSensor {

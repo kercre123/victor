@@ -134,7 +134,7 @@ keil:
 
 espBuild: esp AnkiLog
 	make -C espressif lib/libmain_w.a
-	make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld
+	make -C espressif/app ROBOT_INC_DIR=$$PWD/include ROBOT_HAL_INC_DIR=$$PWD/hal/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld
 	$(PY) ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin $(WIFI_BINARY)
 	cp espressif/app/esp.map $(BUILD_DIR)/esp.map
 	cp ./espressif/bin/upgrade/user1.2048.new.3.S $(BUILD_DIR)/esp.S
@@ -150,7 +150,7 @@ esp_factory: python dev esp
 		make -C espressif clean
 		cd espressif_bootloader; ./build.sh; cd ..
 		make esp -C clad -j4
-		make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_factory.ld FACTORY_FIRMWARE=1
+		make -C espressif/app ROBOT_INC_DIR=$$PWD/include ROBOT_HAL_INC_DIR=$$PWD/hal/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_factory.ld FACTORY_FIRMWARE=1
 		test `wc -c ./espressif/bin/upgrade/user1.2048.new.3.bin | awk '{print $$1}'` -le 294912 # Make sure the firmware fits in segment
 		cp ./espressif/bin/upgrade/user1.2048.new.3.bin $(BUILD_DIR)/esp.factory.bin
 		python3 ./tools/sign.py --prepend_size_word --rtip $(BUILD_DIR)/robot.axf --body  $(BUILD_DIR)/syscon.axf $(BUILD_DIR)/factory.safe

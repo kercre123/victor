@@ -809,7 +809,8 @@
             'include_dirs': [
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
-              '../../robot/hal/include',
+              '../../robot2/hal/include',
+              '../../robot2/hal/sim/include', 
               '../../robot/include',
               '../../robot/generated',
               '../../include',
