@@ -95,11 +95,11 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     string uhdAssetPath = null;
     if (IsSDAsset()) {
       ppu *= _kSDScaleFactor;
-      uhdAssetPath = assetPath.Replace(_kHDBundleTag, _kUHDBundleTag);
+      uhdAssetPath = assetPath.Replace(_kSDBundleTag, _kUHDBundleTag);
     }
     else if (IsHDAsset()) {
       ppu *= _kHDScaleFactor;
-      uhdAssetPath = assetPath.Replace(_kSDBundleTag, _kUHDBundleTag);
+      uhdAssetPath = assetPath.Replace(_kHDBundleTag, _kUHDBundleTag);
     }
 
     if (!string.IsNullOrEmpty(uhdAssetPath)) {
@@ -109,6 +109,9 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
           // if we didn't downsample due to minimum sprite requirements then we shouldn't downsample the ppu either.
           ppu = _kSpritePixelsPerUnit;
         }
+      }
+      else {
+        Debug.LogError("Tried to compute pixels per unit for asset " + assetPath + " but UHD version does not exist! udhpath: " + uhdAssetPath);
       }
     }
     return ppu;
@@ -234,6 +237,11 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     byte[] newTextureData = newTexture.EncodeToPNG();
     string newAssetPath = assetPath.Replace(_kUHDBundleTag, newBundleTag);
     bool forceReimport = File.Exists(newAssetPath);
+
+    // if the directory does not exist create it
+    System.IO.FileInfo file = new System.IO.FileInfo(newAssetPath);
+    file.Directory.Create();
+
     File.WriteAllBytes(newAssetPath, newTextureData);
     if (forceReimport) {
       AssetDatabase.ImportAsset(newAssetPath);
