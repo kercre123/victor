@@ -34,7 +34,7 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      if (_SpeedTapGame != null) {
+      if (_SpeedTapGame != null && _CurrentRobot != null) {
         _SpeedTapGame.SharedMinigameView.HideMiddleBackground();
 
         // Clear lights on all cubes
