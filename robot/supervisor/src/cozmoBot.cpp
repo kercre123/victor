@@ -18,7 +18,7 @@
 #include "pathFollower.h"
 #include "testModeController.h"
 #include "anki/cozmo/robot/logging.h"
-#ifndef TARGET_K02
+#ifdef SIMULATOR
 #include "animationController.h"
 #include "anki/common/shared/utilities_shared.h"
 #include "blockLightController.h"
@@ -101,22 +101,13 @@ namespace Anki {
       {
         Result lastResult = RESULT_OK;
 
-        // Coretech setup
-#ifndef TARGET_K02
-#ifndef SIMULATOR
-#if(DIVERT_PRINT_TO_RADIO)
-        SetCoreTechPrintFunctionPtr(Messages::SendText);
-#else
-        SetCoreTechPrintFunctionPtr(0);
-#endif
-#elif(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
-        SetCoreTechPrintFunctionPtr(Messages::SendText);
-#endif
-#endif
         // HAL and supervisor init
-#ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
+#ifdef  SIMULATOR    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
         lastResult = HAL::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 219, "CozmoBot.InitFail.HAL", 305, "", 0);
+        
+        lastResult = AnimationController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 227, "CozmoBot.InitFail.AnimationController", 305, "", 0);
 #endif
         lastResult = Messages::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 220, "CozmoBot.InitFail.Messages", 305, "", 0);
@@ -139,24 +130,12 @@ namespace Anki {
 
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 226, "CozmoBot.InitFail.LiftController", 305, "", 0);
-#ifndef TARGET_K02
-        lastResult = AnimationController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 227, "CozmoBot.InitFail.AnimationController", 305, "", 0);
-#endif
 
         robotStateMessageCounter_ = 0;
 
         return RESULT_OK;
 
       } // Robot::Init()
-
-
-#ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
-      void Destroy()
-      {
-        HAL::Destroy();
-      }
-#endif
 
 
       Result step_MainExecution()
@@ -271,7 +250,7 @@ namespace Anki {
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, ANIM);
-#ifndef TARGET_K02
+#ifdef SIMULATOR
         if(AnimationController::Update() != RESULT_OK) {
           AnkiWarn( 230, "CozmoBot.Main.AnimationControllerUpdateFailed", 305, "", 0);
           AnimationController::Clear();
@@ -280,7 +259,7 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
-#ifndef TARGET_K02
+#ifdef SIMULATOR
         BlockLightController::Update();
 #endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
@@ -288,7 +267,7 @@ namespace Anki {
         PickAndPlaceController::Update();
         DockingController::Update();
 
-#ifndef TARGET_K02
+#ifdef SIMULATOR
         //////////////////////////////////////////////////////////////
         // Audio Subsystem
         //////////////////////////////////////////////////////////////
@@ -309,9 +288,9 @@ namespace Anki {
               // is ready to go
               waitForFirstMotorCalibAfterConnect_ = false;
               
-#ifndef TARGET_K02
+#ifdef SIMULATOR
               RobotInterface::RobotAvailable msg;
-              msg.robotID = HAL::GetIDCard()->esn;
+              msg.robotID = 0;
               AnkiInfo( 179, "CozmoBot.BroadcastingAvailability", 479, "RobotID: %d", 1, msg.robotID);
               RobotInterface::SendMessage(msg);
 #endif
@@ -344,14 +323,12 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
 
         Messages::UpdateRobotStateMsg();
-#if(!STREAM_DEBUG_IMAGES)
         ++robotStateMessageCounter_;
         if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
           if (!waitForFirstMotorCalibAfterConnect_) Messages::SendRobotStateMsg();
           Messages::SendTestStateMsg();
           robotStateMessageCounter_ = 0;
         }
-#endif
 
         // Print time profile stats
         END_TIME_PROFILE(CozmoBot);

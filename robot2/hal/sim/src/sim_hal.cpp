@@ -3,10 +3,12 @@
  *
  * Author: Andrew Stein (andrew)
  * Created: 10/10/2013
+ * Author: Daniel Casner <daniel@anki.com>
+ * Revised for Cozmo 2: 02/27/2017
  *
  * Description:
  *
- *   Simulated HAL implementation for Cozmo 1.x
+ *   Simulated HAL implementation for Cozmo 2.0
  *
  *   This is an "abstract class" defining an interface to lower level
  *   hardware functionality like getting an image from a camera,
@@ -21,9 +23,10 @@
  *   is used for a given project/executable is decided by which .cpp
  *   file gets compiled in.
  *
- * Copyright: Anki, Inc. 2013
+ * Copyright: Anki, Inc. 2017
  *
  **/
+
 
 // System Includes
 #include <cassert>
@@ -54,7 +57,6 @@
 #include <webots/Motor.hpp>
 #include <webots/GPS.hpp>
 #include <webots/Compass.hpp>
-#include <webots/Camera.hpp>
 #include <webots/Display.hpp>
 #include <webots/Gyro.hpp>
 #include <webots/DistanceSensor.hpp>
@@ -63,18 +65,11 @@
 #include <webots/Connector.hpp>
 #include <webots/LED.hpp>
 
-#define BLUR_CAPTURED_IMAGES 1
-
 #define DEBUG_GRIPPER 0
 
 // Enable this to light up the backpack whenever a sound is being played
 // When this is on, HAL::SetLED() doesn't work.
 #define LIGHT_BACKPACK_DURING_SOUND 0
-
-
-#if BLUR_CAPTURED_IMAGES
-#include "opencv2/imgproc/imgproc.hpp"
-#endif
 
 #ifndef SIMULATOR
 #error SIMULATOR should be defined by any target using sim_hal.cpp
@@ -116,19 +111,7 @@ namespace Anki {
 
       // Gripper
       webots::Connector* con_;
-      //bool gripperEngaged_ = false;
       bool isGripperEnabled_ = false;
-      //s32 unlockhysteresis_ = UNLOCK_HYSTERESIS;
-
-
-      // Cameras / Vision Processing
-      webots::Camera* headCam_;
-      HAL::CameraInfo headCamInfo_;
-      const u32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
-      u32 imageFrameID_ = 1;      
-
-      bool enableVideo_;
-      u32 cameraStartTime_ms_;
 
       // For pose information
       webots::GPS* gps_;
@@ -140,7 +123,7 @@ namespace Anki {
 
       // Prox sensors
       webots::DistanceSensor *proxCenter_;
-      webots::DistanceSensor *cliffSensor_;
+      webots::DistanceSensor *cliffSensors_[HAL::CLIFF_COUNT];
 
       // Charge contact
       webots::Connector* chargeContact_;
@@ -174,8 +157,6 @@ namespace Anki {
       f32 motorSpeeds_[MOTOR_COUNT];
       f32 motorSpeedCoeffs_[MOTOR_COUNT];
 
-      HAL::IDCard idCard_;
-
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
 
@@ -189,9 +170,6 @@ namespace Anki {
       const u32 DISPLAY_WIDTH = 128;
       const u32 DISPLAY_HEIGHT = 64;
       uint64_t faceFrame_[DISPLAY_WIDTH];
-
-      s32 facePosX_ = 0;
-      s32 facePosY_ = 0;
 
       // Audio
       // (Can't actually play sound in simulator, but proper handling of audio frames is still
@@ -327,30 +305,6 @@ namespace Anki {
 
       con_ = webotRobot_.getConnector("gripperConnector");
 
-      headCam_ = webotRobot_.getCamera("HeadCamera");
-      
-      if(VISION_TIME_STEP % static_cast<u32>(webotRobot_.getBasicTimeStep()) != 0) {
-        PRINT("VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).\n",
-              VISION_TIME_STEP, webotRobot_.getBasicTimeStep());
-        return RESULT_FAIL;
-      }
-      headCam_->enable(VISION_TIME_STEP);
-
-      // HACK: Figure out when first camera image will actually be taken (next
-      // timestep from now), so we can reference to it when computing frame
-      // capture time from now on.
-      // TODO: Not sure from Cyberbotics support message whether this should include "+ TIME_STEP" or not...
-      cameraStartTime_ms_ = HAL::GetTimeStamp(); // + TIME_STEP;
-      PRINT_NAMED_INFO("SIM", "Setting camera start time as %d", cameraStartTime_ms_);
-
-      webots::Field* enableVideoField = robotNode->getField("enableVideo");
-      if (enableVideoField) {
-        enableVideo_ = enableVideoField->getSFBool();
-        
-        if (!enableVideo_) {
-          printf("WARN: ******** Video disabled *********\n");
-        }
-      }
 
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -367,14 +321,6 @@ namespace Anki {
         PRINT_NAMED_ERROR("SIM.RobotName", "Cozmo robot name %s is invalid.  Must end with '_<ID number>'.", name.c_str());
         return RESULT_FAIL;
       }
-
-      // ID card info
-      idCard_.esn = robotID_;
-      idCard_.modelNumber = 0;
-      idCard_.lotCode = 0;
-      idCard_.birthday = 0;
-      idCard_.hwVersion = 0;
-
 
       //Set the motors to velocity mode
       headMotor_->setPosition(WEBOTS_INFINITY);
@@ -430,12 +376,19 @@ namespace Anki {
       accel_ = webotRobot_.getAccelerometer("accel");
       accel_->enable(TIME_STEP);
 
-      // Proximity sensors
+      // Proximity sensor
       proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
-      cliffSensor_ = webotRobot_.getDistanceSensor("cliffSensor");
-      
       proxCenter_->enable(TIME_STEP);
-      cliffSensor_->enable(TIME_STEP);
+      
+      // Cliff sensors
+      cliffSensors_[HAL::CLIFF_FL] = webotRobot_.getDistanceSensor("cliffSensorFL");
+      cliffSensors_[HAL::CLIFF_FR] = webotRobot_.getDistanceSensor("cliffSensorFR");
+      cliffSensors_[HAL::CLIFF_BL] = webotRobot_.getDistanceSensor("cliffSensorBL");
+      cliffSensors_[HAL::CLIFF_BR] = webotRobot_.getDistanceSensor("cliffSensorBR");
+      cliffSensors_[HAL::CLIFF_FL]->enable(TIME_STEP);
+      cliffSensors_[HAL::CLIFF_FR]->enable(TIME_STEP);
+      cliffSensors_[HAL::CLIFF_BL]->enable(TIME_STEP);
+      cliffSensors_[HAL::CLIFF_BR]->enable(TIME_STEP);
 
       // Charge contact
       chargeContact_ = webotRobot_.getConnector("ChargeContact");
@@ -478,18 +431,6 @@ namespace Anki {
       }
 
       // Lights
-      /* Old eye LED segments
-      leds_[LED_LEFT_EYE_TOP] = webotRobot_.getLED("LeftEyeLED_top");
-      leds_[LED_LEFT_EYE_LEFT] = webotRobot_.getLED("LeftEyeLED_left");
-      leds_[LED_LEFT_EYE_RIGHT] = webotRobot_.getLED("LeftEyeLED_right");
-      leds_[LED_LEFT_EYE_BOTTOM] = webotRobot_.getLED("LeftEyeLED_bottom");
-
-      leds_[LED_RIGHT_EYE_TOP] = webotRobot_.getLED("RightEyeLED_top");
-      leds_[LED_RIGHT_EYE_LEFT] = webotRobot_.getLED("RightEyeLED_left");
-      leds_[LED_RIGHT_EYE_RIGHT] = webotRobot_.getLED("RightEyeLED_right");
-      leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
-      */
-
       leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
       leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
@@ -509,9 +450,6 @@ namespace Anki {
 
     void HAL::Destroy()
     {
-      // Turn off components: (strictly necessary?)
-      headCam_->disable();
-      
       gps_->disable();
       compass_->disable();
 
@@ -604,7 +542,7 @@ namespace Anki {
           headMotor_->setVelocity(HeadPowerToAngSpeed(power));
           break;
         default:
-          PRINT("ERROR (HAL::MotorSetPower) - Undefined motor type %d\n", motor);
+          PRINT_NAMED_ERROR("simHAL.MotorSetPower.UndefinedType", "%d", motor);
           return;
       }
     }
@@ -613,7 +551,7 @@ namespace Anki {
     void HAL::MotorResetPosition(MotorID motor)
     {
       if (motor >= MOTOR_COUNT) {
-        PRINT("ERROR (HAL::MotorResetPosition) - Undefined motor type %d\n", motor);
+        PRINT_NAMED_ERROR("simHAL.MotorResetPosition.UndefinedType", "%d", motor);
         return;
       }
 
@@ -636,7 +574,7 @@ namespace Anki {
           return motorSpeeds_[motor];
 
         default:
-          PRINT("ERROR (HAL::MotorGetSpeed) - Undefined motor type %d\n", motor);
+          PRINT_NAMED_ERROR("simHAL.MotorGetSpeed.UndefinedType", "%d", motor);
           break;
       }
       return 0;
@@ -657,7 +595,7 @@ namespace Anki {
           return motorPositions_[motor];
 
         default:
-          PRINT("ERROR (HAL::MotorGetPosition) - Undefined motor type %d\n", motor);
+          PRINT_NAMED_ERROR("simHAL.MotorGetPosition.UndefinedType", "%d", motor);
           return 0;
       }
 
@@ -671,23 +609,8 @@ namespace Anki {
       con_->enablePresence(TIME_STEP);
       isGripperEnabled_ = true;
 #     if DEBUG_GRIPPER
-      PRINT("GRIPPER LOCKED!\n");
+      PRINT_NAMED_DEBUG("simHAL.EngageGripper.Locked", "");
 #     endif
-
-      /*
-      //Should we lock to a block which is close to the connector?
-      if (!gripperEngaged_ && con_->getPresence() == 1)
-      {
-        if (unlockhysteresis_ == 0)
-        {
-          con_->lock();
-          gripperEngaged_ = true;
-          printf("GRIPPER LOCKED!\n");
-        }else{
-          unlockhysteresis_--;
-        }
-      }
-       */
     }
 
     void HAL::DisengageGripper()
@@ -696,18 +619,9 @@ namespace Anki {
       con_->disablePresence();
       isGripperEnabled_ = false;
 #     if DEBUG_GRIPPER
-      PRINT("GRIPPER UNLOCKED!\n");
+      PRINT_NAMED_DEBUG("simHAL.DisengageGripper.Unocked", "");
 #     endif
 
-      /*
-      if (gripperEngaged_)
-      {
-        gripperEngaged_ = false;
-        unlockhysteresis_ = UNLOCK_HYSTERESIS;
-        con_->unlock();
-        printf("GRIPPER UNLOCKED!\n");
-      }
-       */
     }
 
     bool IsSameTypeActiveObjectAssigned(u32 device_type)
@@ -793,10 +707,10 @@ namespace Anki {
 
         // Check charging status (Debug)
         if (BatteryIsOnCharger() && !wasOnCharger_) {
-          PRINT("ON CHARGER\n");
+          PRINT_NAMED_DEBUG("simHAL.Step.OnCharger", "");
           wasOnCharger_ = true;
         } else if (!BatteryIsOnCharger() && wasOnCharger_) {
-          PRINT("OFF CHARGER\n");
+          PRINT_NAMED_DEBUG("simHAL.Step.OffCharger", "");
           wasOnCharger_ = false;
         }
 
@@ -807,168 +721,6 @@ namespace Anki {
     } // step()
 
     
-    // Helper function to create a CameraInfo struct from Webots camera properties:
-    void FillCameraInfo(const webots::Camera *camera,
-                        HAL::CameraInfo &info)
-    {
-
-      const u16 nrows  = static_cast<u16>(camera->getHeight());
-      const u16 ncols  = static_cast<u16>(camera->getWidth());
-      const f32 width  = static_cast<f32>(ncols);
-      const f32 height = static_cast<f32>(nrows);
-      //f32 aspect = width/height;
-
-      const f32 fov_hor = camera->getFov();
-
-      // Compute focal length from simulated camera's reported FOV:
-      const f32 f = width / (2.f * std::tan(0.5f*fov_hor));
-
-      // There should only be ONE focal length, because simulated pixels are
-      // square, so no need to compute/define a separate fy
-      //f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
-
-      info.focalLength_x = f;
-      info.focalLength_y = f;
-      info.center_x      = 0.5f*(width-1);
-      info.center_y      = 0.5f*(height-1);
-      info.skew          = 0.f;
-      info.nrows         = nrows;
-      info.ncols         = ncols;
-
-      for(u8 i=0; i<NUM_RADIAL_DISTORTION_COEFFS; ++i) {
-        info.distortionCoeffs[i] = 0.f;
-      }
-
-    } // FillCameraInfo
-
-    const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
-    {
-      if(isInitialized) {
-        FillCameraInfo(headCam_, headCamInfo_);
-        return &headCamInfo_;
-      }
-      else {
-        PRINT("HeadCam calibration requested before HAL initialized.\n");
-        return NULL;
-      }
-    }
-
-    void HAL::CameraGetDefaultParameters(DefaultCameraParams& params)
-    {
-      params.minExposure_ms = 0;
-      params.maxExposure_ms = 67;
-      params.gain = 2.f;
-      params.maxGain = 4.f;
-      
-      u8 count = 0;
-      for(u8 i = 0; i < GAMMA_CURVE_SIZE; ++i)
-      {
-        params.gammaCurve[i] = count;
-        count += 255/GAMMA_CURVE_SIZE;
-      }
-      
-      return;
-    }
-
-    void HAL::CameraSetParameters(u16 exposure_ms, f32 gain)
-    {
-      // Can't control simulated camera's exposure.
-
-      // TODO: Simulate this somehow?
-
-      return;
-
-    } // HAL::CameraSetParameters()
-    
-    void HAL::CameraSetColorEnabled(bool enable)
-    {
-      // Does nothing
-    }
-    
-    
-    bool HAL::CameraGetColorEnabled()
-    {
-      // Sim camera is always in color
-      return true;
-    }
-
-
-    u32 HAL::GetCameraStartTime()
-    {
-      return cameraStartTime_ms_;
-    }
-
-    u32 HAL::GetVisionTimeStep()
-    {
-      return VISION_TIME_STEP;
-    }
-    
-    bool HAL::IsVideoEnabled()
-    {
-      return enableVideo_;
-    }
-
-    // Starts camera frame synchronization
-    void HAL::CameraGetFrame(u8* frame, ImageResolution res, bool enableLight)
-    {
-      // TODO: enableLight?
-      AnkiConditionalErrorAndReturn(frame != NULL, 190, "SimHAL.CameraGetFrame.NullFramePointer", 494, "NULL frame pointer provided to CameraGetFrame(), check "
-                                    "to make sure the image allocation succeeded.", 0);
-
-#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-      static u32 lastFrameTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
-      u32 currentTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
-      AnkiConditionalWarn(currentTime_ms - lastFrameTime_ms > headCam_->getSamplingPeriod(), 191, "SimHAL.CameraGetFrame", 495, "Image requested too soon -- new frame may not be ready yet.", 0);
-#endif
-
-      const u8* image = headCam_->getImage();
-
-      AnkiConditionalErrorAndReturn(image != NULL, 192, "SimHAL.CameraGetFrame.NullImagePointer", 496, "NULL image pointer returned from simulated camera's getFrame() method.", 0);
-
-      s32 pixel = 0;
-      s32 imgWidth = headCam_->getWidth();
-      for (s32 y=0; y < headCamInfo_.nrows; y++) {
-        for (s32 x=0; x < headCamInfo_.ncols; x++) {
-          frame[pixel++] = webots::Camera::imageGetRed(image, imgWidth, x, y);
-          frame[pixel++] = webots::Camera::imageGetGreen(image, imgWidth, x, y);
-          frame[pixel++] = webots::Camera::imageGetBlue(image,  imgWidth, x, y);
-        }
-      }
-
-#     if BLUR_CAPTURED_IMAGES
-      // Add some blur to simulated images
-      cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
-      cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
-#     endif
-
-      imageFrameID_++;
-
-    } // CameraGetFrame()
-    
-    void HAL::IMUGetCameraTime(uint32_t* const frameNumber, uint8_t* const line2Number)
-    {
-      static uint32_t prevImageID_ = 0;
-      static uint8_t line2Number_ = 0;
-      
-      // line2Number number increases while a frame is being captured so subsequent calls to this function where
-      // imageFrameID_ hasn't changed should increase line2Number_
-      // This function is not called more than 4 times per frame so line2Number_ will never exceed (60 * 4) + 1 = 241
-      // where the max value it could be is 250 (500 scanlines per frame / 2)
-      uint8_t line2NumberIncrement = HAL::GetTimeStamp() % 60 + 1;
-      if(prevImageID_ == imageFrameID_)
-      {
-        line2Number_ += line2NumberIncrement;
-      }
-      else
-      {
-        line2Number_ = line2NumberIncrement;
-      }
-    
-      *frameNumber = imageFrameID_;
-      *line2Number = line2Number_;
-      
-      prevImageID_ = imageFrameID_;
-    }
     
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)
@@ -1002,14 +754,9 @@ namespace Anki {
                            (((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT) << ( 8 + 3)) |
                            (((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT) << ( 0 + 3)));
       } else {
-        PRINT("Unhandled LED %d\n", led_id);
+        PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
       }
       #endif
-    }
-
-    void HAL::SetHeadlights(bool state)
-    {
-      // TODO: ...
     }
 
     void HAL::AudioFill(void) {}
@@ -1056,75 +803,35 @@ namespace Anki {
       else FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
 
       // Draw face
-      FaceMove(facePosX_, facePosY_);
-    }
-
-    // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
-    void HAL::FaceMove(s32 x, s32 y)
-    {
-      // Compute starting pixel of dest image (i.e. face_ display)
-      u8 destX = 0, destY = 0;
-
-      if (x > 0) {
-        destX += x;
-      }
-
-      if (y > 0) {
-        destY += y;
-      }
-
-      // Compute dimensions of overlapping region
-      u8 w = DISPLAY_WIDTH - ABS(x);
-      u8 h = DISPLAY_HEIGHT - ABS(y);
-
-      FaceClear();
-
-      for (u8 i = 0; i < w; ++i) {
-        for (u8 j = 0; j < h; ++j) {
+      for (u8 i = 0; i < DISPLAY_WIDTH; ++i) {
+        for (u8 j = 0; j < DISPLAY_HEIGHT; ++j) {
           if ((faceFrame_[i] >> j) & 1) {
-            face_->drawPixel(destX + i, destY + j);
+            face_->drawPixel(i, j);
           }
         }
       }
-
-      facePosX_ = x;
-      facePosY_ = y;
-
     }
 
-    HAL::IDCard* HAL::GetIDCard()
-    {
-      return &idCard_;
-    }
-    
     u32 HAL::GetID()
     {
-      return 0;
+      return robotID_;
     }
-
+    
     u16 HAL::GetRawProxData()
     {
       const u16 val = static_cast<u16>( proxCenter_->getValue() );
       return val;
     }
 
-    u16 HAL::GetRawCliffData()
+    u16 HAL::GetRawCliffData(const CliffID cliff_id)
     {
-      return static_cast<u16>(cliffSensor_->getValue());
+      if (cliff_id == HAL::CLIFF_COUNT) {
+        PRINT_NAMED_ERROR("simHAL.GetRawCliffData.InvalidCliffID", "");
+        return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxRange());
+      }
+      return static_cast<u16>(cliffSensors_[cliff_id]->getValue());
     }
     
-    namespace HAL {
-      int UARTGetFreeSpace()
-      {
-        return 100000000;
-      }
-
-      int UARTGetWriteBufferSize()
-      {
-        return 100000000;
-      }
-    }
-
     f32 HAL::BatteryGetVoltage()
     {
       return 5;
@@ -1150,10 +857,6 @@ namespace Anki {
     extern "C" {
     void EnableIRQ() {}
     void DisableIRQ() {}
-    }
-
-    void HAL::FlashBlockIDs() {
-      // TODO: Fix this if and when we know how it'll work in HW
     }
 
     Result HAL::SetBlockLight(const u32 activeID, const u16* colors)
@@ -1426,7 +1129,7 @@ namespace Anki {
       // Stub
     }
 
-    u16 HAL::GetWatchdogResetCounter()
+    u8 HAL::GetWatchdogResetCounter()
     {
       return 0; // Simulator never watchdogs
     }

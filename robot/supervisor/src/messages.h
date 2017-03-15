@@ -76,7 +76,7 @@ namespace Anki {
       
       void ResetMissedLogCount();
       
-#ifndef TARGET_K02
+#ifdef SIMULATOR
       // For sending text message to basestation
       int SendText(const char *format, ...);
 

@@ -191,15 +191,6 @@ namespace Anki {
         missedLogs_ = 0;
       }
 
-      int SendText(const char *format, ...)
-      {
-        va_list argptr;
-        va_start(argptr, format);
-        SendText(RobotInterface::ANKI_LOG_LEVEL_PRINT, format, argptr);
-        va_end(argptr);
-        return 0;
-      }
-
       int SendText(const RobotInterface::LogLevel level, const char *format, va_list vaList)
       {
         RobotInterface::PrintText m;
@@ -220,6 +211,16 @@ namespace Anki {
 
         return 0;
       }
+
+      int SendText(const char *format, ...)
+      {
+        va_list argptr;
+        va_start(argptr, format);
+        SendText(RobotInterface::ANKI_LOG_LEVEL_PRINT, format, argptr);
+        va_end(argptr);
+        return 0;
+      }
+
       
     } // namespace Messages
     

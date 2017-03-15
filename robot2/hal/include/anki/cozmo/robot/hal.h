@@ -6,11 +6,6 @@
  * Author: Daniel Casner <daniel@anki.com>
  * Revised for Cozmo 2: 02/27/2017
  *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- *
  * Description:
  *
  *   This is an "abstract class" defining an interface to lower level
@@ -33,6 +28,11 @@
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #include "anki/types.h"
+#include "clad/types/motorTypes.h"
+
+#ifdef SIMULATOR
+#include "sim_hal.h"
+#endif
 
 namespace Anki
 {
@@ -51,9 +51,9 @@ namespace Anki
       /// Scale value for maximum motor power in HAL
       static const f32 MOTOR_MAX_POWER = 1.0f;
       /// Number of bytes of audio data fetche each time step
-      static const size_t AUDIO_DATA_PER_TICK = 2560;
+      //static const size_t AUDIO_DATA_PER_TICK = 2560;
       /// Maximum number of object advertisements reported in a time step
-      static const size_t MAX_ADVERTISEMENTS_PER_TICK = 16;
+      //static const size_t MAX_ADVERTISEMENTS_PER_TICK = 16;
 
 /************************************************************************
  * \section Time
@@ -70,7 +70,7 @@ namespace Anki
        * TICKS_PER_SECOND. The engine sets timestamp on connect to the robot process but otherwise it increases
        * monotonically.
        */
-      TimeStamp_t GetTimeStamp(void);
+      extern "C" TimeStamp_t GetTimeStamp(void);
       
       /** Sets the robot timestamp to value
        * Set timing offset on engine connect.
@@ -113,16 +113,6 @@ namespace Anki
 /************************************************************************
  * \section Motors
  */
-
-      /// IDs for motors
-      typedef enum
-      {
-        MOTOR_LEFT_WHEEL = 0,
-        MOTOR_RIGHT_WHEEL,
-        MOTOR_LIFT,
-        MOTOR_HEAD,
-        MOTOR_COUNT
-      } MotorID;
 
       /** Set motor drive voltage and direction
        * Positive numbers move the motor forward or up, negative is back or down
@@ -217,14 +207,14 @@ namespace Anki
  */
 
       /// LED identifiers
-      typedef enum 
+      typedef enum
       {
         LED_BACKPACK_FRONT = 0, ///< Front / top most backpack LED
         LED_BACKPACK_MIDDLE,    ///< Middle backpack LED
         LED_BACKPACK_BACK,      ///< Back / bottom most backpack LED. Includes IR channel
         LED_HEADLIGHT,          ///< Forward facing IR illuminator
         LED_COUNT
-      };
+      } LEDId;
 
       /** Set LED to specific color, includes backpack, headlight and backpack IR
        * @param[in] led_id The LED to Set
@@ -239,10 +229,10 @@ namespace Anki
       /// Data about an unconnected object advertisement
       struct ObjectAdvertisement
       {
-        u32 factory_id,    ///< Factory ID of object, used for slot assignment
-        u32 lastHeardTick, ///< Last tick heard from
-        s32 rssi           ///< RSSI of last advertisement packet
-      }
+        u32 factory_id;    ///< Factory ID of object, used for slot assignment
+        u32 lastHeardTick; ///< Last tick heard from
+        s32 rssi;          ///< RSSI of last advertisement packet
+      };
 
       /** Retrieves the list of most recently heard from unassigned object advertisements.
        * @param[out] objects An array to fill with advertisement data. Must have room for MAX_ADVERTISEMENTS_PER_TICK
@@ -258,7 +248,7 @@ namespace Anki
        * @param[in] activeID Accessory slot to update
        * @param[in] colors an array of 4 16 bit packed color values
        */
-      Result SetBlockLight(const u32 activeID, const u16[4] colors);
+      Result SetBlockLight(const u32 activeID, const u16 colors[4]);
       
       /// Enable or disable streaming accelerometer data from object at activeID
       Result StreamObjectAccel(const u32 activeID, const bool enable);
@@ -293,6 +283,39 @@ namespace Anki
       
       
 /************************************************************************
+ * \section "Radio" comms to/from engine
+ */
+      bool RadioIsConnected();
+      
+      void RadioUpdateState(u8 wifi, u8 blue);
+      
+      int RadioQueueAvailable();
+      
+      void DisconnectRadio();
+      
+      /** Gets the next packet from the radio
+       * @param buffer [out] A buffer into which to copy the packet. Must have MTU bytes available
+       * return The number of bytes of the packet or 0 if no packet was available.
+       */
+      u32 RadioGetNextPacket(u8* buffer);
+      
+      /** Send a packet on the radio.
+       * @param buffer [in] A pointer to the data to be sent
+       * @param length [in] The number of bytes to be sent
+       * @param socket [in] Socket number, default 0 (base station)
+       * @return true if the packet was queued for transmission, false if it couldn't be queued.
+       */
+      bool RadioSendPacket(const void *buffer, const u32 length, const u8 socket=0);
+      
+      /** Wrapper method for sending messages NOT PACKETS
+       * @param msgID The ID (tag) of the message to be sent
+       * @param buffer A pointer to the message to be sent
+       * @return True if sucessfully queued, false otherwise
+       */
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
+
+      
+/************************************************************************
  * \section Hardware / Firmware Version information
  */
       
@@ -302,9 +325,6 @@ namespace Anki
 /************************************************************************
  * \section Error reporting
  */
-      
-      /// Sends formatted text out for debugging
-      Result SendText(const LogLevel level, const char *format, ...);
       
       /// Force a hard fault in the processor, used for hardware assert
       void FORCE_HARDFAULT();

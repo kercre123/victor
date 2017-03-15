@@ -5,11 +5,6 @@
  * Author: Andrew Stein (andrew)
  * Created: 10/10/2013
  *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- *
  * Description:
  *
  *   This is an "abstract class" defining an interface to lower level
@@ -438,7 +433,7 @@ namespace Anki
       
       // Returns distance in mm
       // If 0, nothing is detected
-      u8 GetForwardProxSensorCurrentValue();
+      u16 GetRawProxData();
       
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
@@ -534,7 +529,7 @@ namespace Anki
       void FlashBlockIDs();
 
 #if defined(SIMULATOR)
-      bool AssignSlot(u32 slot_id, u32 factory_id);
+      Result AssignSlot(u32 slot_id, u32 factory_id);
 #endif
       
       // Set the color and flashing of each LED on a block separately

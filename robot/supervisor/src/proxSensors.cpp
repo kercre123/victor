@@ -32,11 +32,16 @@ namespace Anki {
         TimeStamp_t _pendingCliffEvent = 0;
         TimeStamp_t _pendingUncliffEvent = 0;
         
-#ifdef SIMULATOR
+        #ifdef SIMULATOR
         // Forward prox sensor
         u8 _lastForwardObstacleDetectedDist = FORWARD_COLLISION_SENSOR_LENGTH_MM + 1;
         const u32 PROX_EVENT_CYCLE_PERIOD = 6;
-#endif
+        #endif
+        
+        #ifdef COZMO_V2
+        u16 _cliffVals[HAL::CLIFF_COUNT];
+        HAL::CliffID _minCliffSensor;
+        #endif
         
         bool _stopOnCliff = true;
         
@@ -65,13 +70,43 @@ namespace Anki {
         }
       }
 
+      u16 GetMinRawCliffValue()
+      {
+        #ifdef COZMO_V2
+        return _cliffVals[_minCliffSensor];
+        #else
+        return HAL::GetRawCliffData();
+        #endif // COZMO_V2
+      }
+
+      
+      
       // Stops robot if cliff detected as wheels are driving forward.
       // Delays cliff event to allow pickup event to cancel it in case the
       // reason for the cliff was actually a pickup.
       void UpdateCliff()
       {
+        #ifdef COZMO_V2
+        {
+          // Update all cliff values and store sensor with min value
+          _cliffVals[HAL::CLIFF_FL] = HAL::GetRawCliffData(HAL::CLIFF_FL);
+          _cliffVals[HAL::CLIFF_FR] = HAL::GetRawCliffData(HAL::CLIFF_FR);
+          _cliffVals[HAL::CLIFF_BL] = HAL::GetRawCliffData(HAL::CLIFF_BL);
+          _cliffVals[HAL::CLIFF_BR] = HAL::GetRawCliffData(HAL::CLIFF_BR);
+
+          u16 minVal = _cliffVals[0];
+          _minCliffSensor = (HAL::CliffID)0;
+          for (int i=1; i<HAL::CLIFF_COUNT; ++i) {
+            if (_cliffVals[i] < minVal) {
+              minVal = _cliffVals[i];
+              _minCliffSensor = (HAL::CliffID)i;
+            }
+          }
+        }
+        #endif  // COZMO_V2
+        
         // Update cliff status with hysteresis
-        u16 rawCliff = HAL::GetRawCliffData();
+        u16 rawCliff = GetMinRawCliffValue();
         if (!_cliffDetected && rawCliff < _cliffDetectThresh) {
           _cliffDetected = true;
         } else if (_cliffDetected && rawCliff > CLIFF_SENSOR_UNDROP_LEVEL) {
@@ -80,8 +115,14 @@ namespace Anki {
         
         
         const f32 avgWheelSpeed = WheelController::GetAverageFilteredWheelSpeed();
-        const bool isDrivingForward = avgWheelSpeed > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
-
+        #ifdef COZMO_V2
+        f32 leftSpeed, rightSpeed;
+        WheelController::GetFilteredWheelSpeeds(leftSpeed, rightSpeed);
+        const bool isDriving = (ABS(leftSpeed) + ABS(rightSpeed)) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
+        #else
+        const bool isDriving = avgWheelSpeed > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
+        #endif
+        
         // Check for whether or not wheels are already stopping.
         // When reversing and stopping fast enough it's possible for the wheels to report forward speeds.
         // Not sure if because the speed change is too fast for encoders to register properly or if the wheels
@@ -95,7 +136,7 @@ namespace Anki {
         if (_enableCliffDetect &&
             IsCliffDetected() &&
             !IMUFilter::IsPickedUp() &&
-            isDrivingForward && !alreadyStopping &&
+            isDriving && !alreadyStopping &&
             !_wasCliffDetected) {
           
           // TODO (maybe): Check for cases where cliff detect should not stop motors
@@ -109,10 +150,11 @@ namespace Anki {
             // Stop all motors and animations
             PickAndPlaceController::Reset();
             SteeringController::ExecuteDirectDrive(0,0);
-#ifndef TARGET_K02
+            
+            #ifdef SIMULATOR
             // TODO: On K02, need way to tell Espressif to cancel animations
             AnimationController::Clear();
-#endif
+            #endif
 
             // Send stopped message
             RobotInterface::RobotStopped msg;
@@ -163,14 +205,14 @@ namespace Anki {
 
         // FAKING obstacle detection via prox sensor.
         // TODO: This will eventually be done entirely on the engine using images.
-#ifdef SIMULATOR
+        #ifdef SIMULATOR
         {
           
           if ( HAL::RadioIsConnected() )
           {
             static u32 proxCycleCnt = 0;
             if (++proxCycleCnt == PROX_EVENT_CYCLE_PERIOD) {
-              u8 proxVal = HAL::GetForwardProxSensorCurrentValue();
+              u16 proxVal = HAL::GetRawProxData();
               const bool eventChanged = (proxVal != _lastForwardObstacleDetectedDist);
               if ( eventChanged )
               {
@@ -189,7 +231,7 @@ namespace Anki {
           }
           
         }
-#endif        
+        #endif
 
         UpdateCliff();
         
