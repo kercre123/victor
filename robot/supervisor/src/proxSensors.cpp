@@ -113,13 +113,12 @@ namespace Anki {
           _cliffDetected = false;
         }
         
-        
-        const f32 avgWheelSpeed = WheelController::GetAverageFilteredWheelSpeed();
         #ifdef COZMO_V2
         f32 leftSpeed, rightSpeed;
         WheelController::GetFilteredWheelSpeeds(leftSpeed, rightSpeed);
         const bool isDriving = (ABS(leftSpeed) + ABS(rightSpeed)) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
         #else
+        const f32 avgWheelSpeed = WheelController::GetAverageFilteredWheelSpeed();
         const bool isDriving = avgWheelSpeed > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
         #endif
         
@@ -143,7 +142,6 @@ namespace Anki {
           // 1) Turning in place
           // 2) Driving over something (i.e. pitch is higher than some degrees).
           AnkiEvent( 339, "ProxSensors.UpdateCliff.StoppingDueToCliff", 347, "%d", 1, _stopOnCliff);
-          AnkiDebug( 407, "ProxSensors.UpdateCliff.WheelSpeed", 623, "%f", 1, avgWheelSpeed);
           
           if(_stopOnCliff)
           {
