@@ -49,7 +49,7 @@ namespace Cozmo.Upgrades {
       _TileButton.onPress.AddListener(HandlePointerDown);
       _TileButton.onRelease.AddListener(HandlePointerUp);
 
-      _LockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked || unlockState == CozmoUnlocksPanel.CozmoUnlockState.NeverAvailable);
+      _LockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked || unlockState == CozmoUnlocksPanel.CozmoUnlockState.ComingSoon);
       _AvailableBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable);
       _UnlockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlocked);
       _ComingSoonContainer.gameObject.SetActive(false);
@@ -70,7 +70,7 @@ namespace Cozmo.Upgrades {
         _AffordableIndicator.gameObject.SetActive(false);
         _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, 1.0f);
         break;
-      case CozmoUnlocksPanel.CozmoUnlockState.NeverAvailable:
+      case CozmoUnlocksPanel.CozmoUnlockState.ComingSoon:
         _AffordableIndicator.gameObject.SetActive(false);
         _UnlockedIconSprite.gameObject.SetActive(false);
         _ComingSoonContainer.gameObject.SetActive(true);

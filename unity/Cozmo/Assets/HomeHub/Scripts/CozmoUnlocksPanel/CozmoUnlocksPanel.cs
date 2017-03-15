@@ -9,7 +9,7 @@ namespace Cozmo.Upgrades {
       Unlocked,
       Unlockable,
       Locked,
-      NeverAvailable
+      ComingSoon
     }
 
     public enum CozmoUnlockPosition {
@@ -93,12 +93,16 @@ namespace Cozmo.Upgrades {
       bool isUnlockedDisabled = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades) &&
                                 UnlockablesManager.Instance.GetAvailableAndLocked().Count > 0;
       for (int i = 0; i < allUnlockData.Count; ++i) {
+        if (!allUnlockData[i].FeatureIsEnabled) {
+          continue;
+        }
+
         tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
         unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
         CozmoUnlockState unlockState = CozmoUnlockState.Locked;
-        if (allUnlockData[i].NeverAvailable) {
-          unlockState = CozmoUnlockState.NeverAvailable;
-          unlockableTile.OnTapped += HandleTappedUnavailable;
+        if (allUnlockData[i].ComingSoon) {
+          unlockState = CozmoUnlockState.ComingSoon;
+          unlockableTile.OnTapped += HandleTappedComingSoon;
         }
         else if (UnlockablesManager.Instance.IsUnlocked(allUnlockData[i].Id.Value)) {
           unlockState = CozmoUnlockState.Unlocked;
@@ -138,7 +142,7 @@ namespace Cozmo.Upgrades {
       _UnlockableTiles.Clear();
 
       for (int i = 0; i < _LockedTiles.Count; ++i) {
-        _LockedTiles[i].OnTapped -= HandleTappedUnavailable;
+        _LockedTiles[i].OnTapped -= HandleTappedComingSoon;
         _LockedTiles[i].OnTapped -= HandleTappedLocked;
       }
       _LockedTiles.Clear();
@@ -180,7 +184,7 @@ namespace Cozmo.Upgrades {
       UIManager.OpenModal(_CoreUpgradeDetailsModalPrefab, _CoreUpgradeDetailsModalPriorityData, detailsModalCreatedCallback);
     }
 
-    private void HandleTappedUnavailable(UnlockableInfo unlockInfo) {
+    private void HandleTappedComingSoon(UnlockableInfo unlockInfo) {
       DAS.Debug(this, "Tapped unavailable: " + unlockInfo.Id);
       // Open "Coming Soon" alert view
       var closeAlertButtonData = new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose);
