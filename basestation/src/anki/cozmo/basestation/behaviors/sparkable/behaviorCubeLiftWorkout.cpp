@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorCubeLiftworkout.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorCubeLiftWorkout.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"

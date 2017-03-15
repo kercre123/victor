@@ -13,7 +13,7 @@ import time
 import hashlib
 
 GAME_ROOT = os.path.normpath(
-        os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
+    os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
 
 ENGINE_ROOT = GAME_ROOT
 CERT_ROOT = os.path.join(GAME_ROOT, 'project', 'ios', 'ProvisioningProfiles')
@@ -79,6 +79,7 @@ def find_unity_app_path():
 
     return unity_app_path
 
+
 def copy_unity_classes(destination_dir, configuration):
     jar_target = os.path.join(destination_dir, 'unity-classes.jar')
     jar_config = "Development" if configuration.lower() == "debug" else "Release"
@@ -101,7 +102,8 @@ def get_android_device():
     # return id of first device in list
     return device_list[0].split(' ')[0]
 
-#stolen from http://stackoverflow.com/questions/1868714/how-do-i-copy-an-entire-directory-of-files-into-an-existing-directory-using-pyth
+
+# stolen from http://stackoverflow.com/questions/1868714/how-do-i-copy-an-entire-directory-of-files-into-an-existing-directory-using-pyth
 def copytree(src, dst, symlinks=False, ignore=None):
     if not os.path.exists(dst):
         os.makedirs(dst)
@@ -114,7 +116,8 @@ def copytree(src, dst, symlinks=False, ignore=None):
             if not os.path.exists(d) or os.stat(s).st_mtime - os.stat(d).st_mtime > 1:
                 shutil.copy2(s, d)
 
-#stolen from above
+
+# stolen from above
 def getfilesrecursive(src):
     files = []
     if not os.path.exists(src):
@@ -126,6 +129,7 @@ def getfilesrecursive(src):
         else:
             files.append(s)
     return files
+
 
 ####################
 # ARGUMENT PARSING #
@@ -148,15 +152,15 @@ def add_unity_arguments(parser):
     group = parser.add_mutually_exclusive_group(required=False)
     if default_unity_dir:
         group.add_argument(
-                '-u',
-                '--unity-dir',
-                metavar='path',
-                default=default_unity_dir,
-                help='Choose unity default directory.  Bypasses version check.')
-    group.add_argument(
-            '--unity-binary-path',
+            '-u',
+            '--unity-dir',
             metavar='path',
-            help='the full path to the Unity executable. Bypasses version check.')
+            default=default_unity_dir,
+            help='Choose unity default directory.  Bypasses version check.')
+    group.add_argument(
+        '--unity-binary-path',
+        metavar='path',
+        help='the full path to the Unity executable. Bypasses version check.')
 
     def postprocess_unity(args):
         if hasattr(args, 'unity_dir'):
@@ -209,73 +213,80 @@ def parse_game_arguments():
     # signing_group = parser.add_mutually_exclusive_group(required=False)
 
     parser.add_argument('--features', action='append', dest='features',
-                      choices=['factoryTest', 'factoryTestDev', 'sdkOnly', 'standalone'], nargs='+',
-                      help="Generates feature flags for project")
+                        choices=['factoryTest', 'factoryTestDev', 'sdkOnly', 'standalone'], nargs='+',
+                        help="Generates feature flags for project")
 
     parser.add_argument(
-            '--provision-profile',
-            metavar='string',
-            default=None,
-            required=False,
-            help='Provide the mobile provisioning profile name for signing')
+        '--script-engine',
+        action="store",
+        choices=('mono2x', 'il2cpp', 'auto'),
+        default="auto",
+        help='Set the Unity scripting back end')
+ 
+    parser.add_argument(
+        '--provision-profile',
+        metavar='string',
+        default=None,
+        required=False,
+        help='Provide the mobile provisioning profile name for signing')
 
     parser.add_argument(
-            '--codesign-force-dev',
-            required=False,
-            action='store_true',
-            help='Force the mobileprovision to be signed with iPhone Developer')
+        '--codesign-force-dev',
+        required=False,
+        action='store_true',
+        help='Force the mobileprovision to be signed with iPhone Developer')
 
     parser.add_argument(
-            '--set-build-number',
-            metavar='string',
-            default='1',
-            required=False,
-            help='Set the Android build number')
+        '--set-build-number',
+        metavar='string',
+        default='1',
+        required=False,
+        help='Set the Android build number')
 
     parser.add_argument(
-            '--google-play',
-            action='store_true',
-            dest='google_play',
-            help='Generate binaries for google-play store. (build obb files)')
+        '--google-play',
+        action='store_true',
+        dest='google_play',
+        help='Generate binaries for google-play store. (build obb files)')
 
     parser.add_argument(
-            '--use-keychain',
-            metavar='string',
-            default=None,
-            required=False,
-            help='Provide the keychain to look for the signing cert.')
+        '--use-keychain',
+        metavar='string',
+        default=None,
+        required=False,
+        help='Provide the keychain to look for the signing cert.')
 
     parser.add_argument(
-            '--do-not-check-dependencies',
-            required=False,
-            action='store_true',
-            help='Use this flag to NOT pull down the latest dependencies (i.e. audio and animation)')
+        '--do-not-check-dependencies',
+        required=False,
+        action='store_true',
+        help='Use this flag to NOT pull down the latest dependencies (i.e. audio and animation)')
 
     parser.add_argument(
-            '--use-external',
-            required=False,
-            default=EXTERNALS_ROOT,
-            metavar='path',
-            help='Use this flag to specify a non default external dependency location.')
+        '--use-external',
+        required=False,
+        default=EXTERNALS_ROOT,
+        metavar='path',
+        help='Use this flag to specify a non default external dependency location.')
 
     parser.add_argument(
-            '--use-cte',
-            required=False,
-            default=None,
-            metavar='path',
-            help='Use this flag to specify a non default location for Coretech External (absolute path).')
+        '--use-cte',
+        required=False,
+        default=None,
+        metavar='path',
+        help='Use this flag to specify a non default location for Coretech External (absolute path).')
 
     parser.add_argument(
-            '-l', '--logcat',
-            required=False,
-            action='store_true',
-            help='Launch logcat for Android devices')
+        '-l', '--logcat',
+        required=False,
+        action='store_true',
+        help='Launch logcat for Android devices')
 
     parser.add_argument(
-           '-n', '--nobuild',
-           required=False,
-           action='store_true',
-           help='Skip build step, i.e. to install/run without building when no code has changed')
+        '-n', '--nobuild',
+        required=False,
+        action='store_true',
+        help='Skip build step, i.e. to install/run without building when no code has changed')
 
     return parser.parse_args()
 
@@ -324,7 +335,6 @@ class GamePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.android_lib_dir)
         self.android_prestrip_lib_dir = os.path.join(self.platform_build_dir, 'libs-prestrip')
 
-
         self.symlink_keys = ['opencv', 'HockeyApp']
         # The keys defined in symlink must exist in the following dictionaries
         self.unity_symlink = {}
@@ -345,7 +355,8 @@ class GamePlatformConfiguration(object):
             if os.environ.get("ANDROID_NDK_ROOT"):
                 self.android_ndk_root = os.environ.get("ANDROID_NDK_ROOT")
             else:
-                sys.exit("Cannot find ANDROID_NDK_ROOT env var, script should have installed it. Perhaps internet is not available?")
+                sys.exit(
+                    "Cannot find ANDROID_NDK_ROOT env var, script should have installed it. Perhaps internet is not available?")
 
             self.android_opencv_target = os.path.join(CTE_ROOT, 'build', 'opencv-android',
                                                       'OpenCV-android-sdk', 'sdk', 'native', 'libs')
@@ -360,13 +371,14 @@ class GamePlatformConfiguration(object):
                 if self.options.provision_profile is not None:
                     tmp_pp = os.path.join(CERT_ROOT, self.options.provision_profile + '.mobileprovision')
                     self.provision_profile_uuid = subprocess.check_output(
-                            '{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True).strip()
-                    self.cert_type = subprocess.check_output('{0}/mpParse -f {1}'.format(CERT_ROOT, tmp_pp), shell=True).strip()
+                        '{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True).strip()
+                    self.cert_type = subprocess.check_output('{0}/mpParse -f {1}'.format(CERT_ROOT, tmp_pp),
+                                                             shell=True).strip()
                     if self.options.codesign_force_dev:
                         self.codesign_identity = "iPhone Developer"
                     else:
                         self.codesign_identity = subprocess.check_output(
-                                '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True).strip()
+                            '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True).strip()
                 else:
                     self.provision_profile_uuid = None
                     self.codesign_identity = "iPhone Developer"
@@ -382,7 +394,7 @@ class GamePlatformConfiguration(object):
                 self.cert_type = "debug"
 
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
-            #there should be a 1-to-1 with self.symlink_list for _symlink
+            # there should be a 1-to-1 with self.symlink_list for _symlink
             for sl in self.symlink_keys:
                 self.unity_symlink[sl] = os.path.join(self.unity_xcode_project_dir, sl)
             self.unity_target['opencv'] = os.path.join(CTE_ROOT, 'build', 'opencv-ios')
@@ -426,9 +438,9 @@ class GamePlatformConfiguration(object):
             workspace.add_project(relative_gyp_project)
         # END ENGINE GENERATE
 
-        #FEATURES BUILD FLAGS
+        # FEATURES BUILD FLAGS
 
-        #writes to smcs file based on feature flags
+        # writes to smcs file based on feature flags
         unityAssetsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets');
         smcsFile = open(os.path.join(unityAssetsPath, 'smcs.rsp'), 'w')
         smcsSettings = "-warnaserror\n";
@@ -439,24 +451,25 @@ class GamePlatformConfiguration(object):
             smcsSettings = smcsSettings + "-define:FACTORY_TEST" + "\n-define:FACTORY_TEST_DEV"
         elif self.options.features != None and 'sdkOnly' in self.options.features[0]:
             smcsSettings = smcsSettings + "-define:SDK_ONLY"
- 
 
         smcsFile.write(smcsSettings + '\n');
 
         smcsFile.close()
 
         class_code = 'public class BuildFlags { \n'
-        git_variable = '  public const string kGitHash = \"' + subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip() + '\";\n'
+        git_variable = '  public const string kGitHash = \"' + subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD']).strip() + '\";\n'
         buildFlagsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated')
         ankibuild.util.File.mkdir_p(buildFlagsPath)
 
         file = open(os.path.join(buildFlagsPath, 'BuildFlags.cs'), 'w')
 
         # writes a hash for the contents of the smcs file to force unity editor to recompile if the editor is already open.
-        file.write(class_code + git_variable + '  public const string kSmcsFileHash = \"' + hashlib.sha256(smcsSettings).hexdigest() + '\";'+'\n'+'}')
+        file.write(class_code + git_variable + '  public const string kSmcsFileHash = \"' + hashlib.sha256(
+            smcsSettings).hexdigest() + '\";' + '\n' + '}')
 
         file.close()
-        #NEED OF DEMO BUILD
+        # NEED OF DEMO BUILD
 
         if self.platform == 'mac':
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)
@@ -489,15 +502,20 @@ class GamePlatformConfiguration(object):
             if self.other_cs_flags is not None:
                 xcconfig += ['OTHER_CODE_SIGN_FLAGS="{0}"'.format(self.other_cs_flags)]
             if self.cert_type == 'universal':
-                xcconfig += ['DEVELOPMENT_TEAM=V9998YVMU5'] # Enterprise
+                xcconfig += ['DEVELOPMENT_TEAM=V9998YVMU5']  # Enterprise
             else:
-                xcconfig += ['DEVELOPMENT_TEAM=BEJF9NAYCL'] # DEV, STORE, etc
+                xcconfig += ['DEVELOPMENT_TEAM=BEJF9NAYCL']  # DEV, STORE, etc
             if self.provision_profile_uuid is not None:
                 xcconfig += ['PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid)]
-	    if self.options.provision_profile is not None:
-		xcconfig += ['PROVISIONING_PROFILE_SPECIFIER= {0}'.format(self.options.provision_profile.replace ("_", " "))]
+            if self.options.configuration is "Shipping":
+                xcconfig += ['IPHONEOS_DEPLOYMENT_TARGET=9.0']
             else:
-		xcconfig += ['PROVISIONING_PROFILE_SPECIFIER=Cozmo']
+                xcconfig += ['IPHONEOS_DEPLOYMENT_TARGET=8.0']
+            if self.options.provision_profile is not None:
+                xcconfig += [
+                    'PROVISIONING_PROFILE_SPECIFIER= {0}'.format(self.options.provision_profile.replace("_", " "))]
+            else:
+                xcconfig += ['PROVISIONING_PROFILE_SPECIFIER=Cozmo']
             xcconfig += ['CODE_SIGN_IDENTITY="{0}"'.format(self.codesign_identity)]
             xcconfig += ['']
 
@@ -521,7 +539,8 @@ class GamePlatformConfiguration(object):
             ankibuild.util.File.mkdir_p(self.derived_data_dir)
             workspace.generate(self.workspace_path, self.derived_data_dir)
 
-        DASSource = os.path.join(GAME_ROOT, 'unity', 'Common', 'DASConfig', self.options.configuration, 'DASConfig.json')
+        DASSource = os.path.join(GAME_ROOT, 'unity', 'Common', 'DASConfig', self.options.configuration,
+                                 'DASConfig.json')
         DASTarget = os.path.join(self.unity_project_root, 'Assets', 'StreamingAssets', 'DASConfig.json')
         ankibuild.util.File.rm(DASTarget)
         ankibuild.util.File.cp(DASSource, DASTarget)
@@ -534,6 +553,13 @@ class GamePlatformConfiguration(object):
             buildaction = 'clean'
         else:
             buildaction = 'build'
+            script_engine = self.options.script_engine
+            if script_engine == 'auto' or not self.options.script_engine:
+                # if script-engine not defined, set a sensible default
+                if self.platform == 'android':
+                    script_engine = 'mono2x'
+                else:
+                    script_engine = 'il2cpp'
 
         if buildaction == 'build':
             if self.options.nobuild:
@@ -550,10 +576,10 @@ class GamePlatformConfiguration(object):
                 # move files.
                 # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
                 ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
-                                                "libcozmoEngine.so"),
+                                                    "libcozmoEngine.so"),
                                        os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
                 ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
-                                                "libDAS.so"),
+                                                    "libDAS.so"),
                                        os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
                 # build android-specific java files
                 self.build_java()
@@ -562,35 +588,38 @@ class GamePlatformConfiguration(object):
                 # strip libraries and copy into unity
                 self.strip_libs()
                 # Call unity for game
-                self.call_unity()
+                self.call_unity(script_engine)
 
 
         elif not os.path.exists(self.workspace_path):
             print_status(
-                    'Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
+                'Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
             sys.exit(0)
         else:
-
+            if self.options.verbose:
+                print_status('Calling ankibuild.xcode.build with scriptengine={0}'.format(script_engine))
             # Other cs flags and codesigning identity have default values that will work no matter what.
             try:
                 ankibuild.xcode.build(
-                        buildaction=buildaction,
-                        workspace=self.workspace_path,
-                        scheme=self.scheme,
-                        platform=self.platform,
-                        configuration=self.options.configuration,
-                        simulator=self.options.simulator,
-                        other_code_sign_flags=self.other_cs_flags,
-                        provision_profile=self.provision_profile_uuid,
-                        code_sign_identity=self.codesign_identity)
+                    buildaction=buildaction,
+                    workspace=self.workspace_path,
+                    scheme=self.scheme,
+                    platform=self.platform,
+                    configuration=self.options.configuration,
+                    simulator=self.options.simulator,
+                    scriptengine=script_engine,
+                    other_code_sign_flags=self.other_cs_flags,
+                    provision_profile=self.provision_profile_uuid,
+                    code_sign_identity=self.codesign_identity)
             except AttributeError:
                 ankibuild.xcode.build(
-                        buildaction=buildaction,
-                        workspace=self.workspace_path,
-                        scheme=self.scheme,
-                        platform=self.platform,
-                        configuration=self.options.configuration,
-                        simulator=self.options.simulator)
+                    buildaction=buildaction,
+                    workspace=self.workspace_path,
+                    scheme=self.scheme,
+                    platform=self.platform,
+                    configuration=self.options.configuration,
+                    simulator=self.options.simulator,
+                    scriptengine=script_engine)
         
         if buildaction == 'build':
             if self.options.features is not None and 'standalone' in self.options.features[0]:
@@ -606,12 +635,12 @@ class GamePlatformConfiguration(object):
             args += ['--verbose']
         if self.options.do_not_check_dependencies:
             args += ['--do-not-check-dependencies']
-        print_status( "\nBeginning to {0} engine".format(command))
+        print_status("\nBeginning to {0} engine".format(command))
         ankibuild.util.File.execute(args)
         print_status("Finished {0} step of engine\n".format(command))
 
     def move_ndk(self):
-        #this must be more dynamic. But I'm not sure how to do this at the moment.
+        # this must be more dynamic. But I'm not sure how to do this at the moment.
         ndk = ['stl', 'cxx', 'gnu']
         ndk_values = {'stl': "libstlport_shared.so", 'stl_path': "sources/cxx-stl/stlport/libs",
                       'cxx': "libc++_shared.so", 'cxx_path': "sources/cxx-stl/llvm-libc++/libs",
@@ -653,7 +682,7 @@ class GamePlatformConfiguration(object):
         # copy libs to unity plugin folder
         copytree(self.android_lib_dir, self.android_unity_plugin_dir)
 
-    def call_unity(self):
+    def call_unity(self, script_engine):
         if self.platform != 'android':
             print ('Error: invalid call to unity. only allowed for android builds.')
             return False
@@ -665,6 +694,7 @@ class GamePlatformConfiguration(object):
         args += ['--build-path', os.path.join(self.options.build_dir, self.platform)]
         args += ['--build-type', 'PlayerAndAssets']
         args += ['--asset-path', 'Assets/StreamingAssets/cozmo_resources']
+        args += ['--script-engine', script_engine]
         if self.options.google_play:
             args += ['--config', "googleplay"]
         else:
@@ -699,7 +729,6 @@ class GamePlatformConfiguration(object):
         else:
             print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
 
-
     def run(self):
         if self.options.verbose:
             print_status('Executing on platform {0}...'.format(self.platform))
@@ -720,8 +749,8 @@ class GamePlatformConfiguration(object):
             else:
                 print('{0}: No attached devices found via adb'.format(self.options.command))
 
-        # elif self.platform == 'mac':
-            # run webots?
+                # elif self.platform == 'mac':
+                # run webots?
         else:
             print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
 
@@ -730,7 +759,7 @@ class GamePlatformConfiguration(object):
             print_status('Uninstalling for platform {0}...'.format(self.platform))
 
         if self.platform == 'ios':
-            ankibuild.ios_deploy.uninstall('com.anki.cozmo')    # Pass bundle ID, not path
+            ankibuild.ios_deploy.uninstall('com.anki.cozmo')  # Pass bundle ID, not path
         elif self.platform == 'android':
             if self.options.features is not None and 'standalone' in self.options.features[0]:
                 subprocess.call("adb shell pm uninstall -k com.anki.cozmoengine", shell=True)
@@ -788,6 +817,7 @@ def main():
     minutes = int(total_seconds / 60)
     seconds = int(total_seconds - (minutes * 60))
     print_status('Total script duration {0}:{1:02}'.format(minutes, seconds))
+
 
 if __name__ == '__main__':
     main()

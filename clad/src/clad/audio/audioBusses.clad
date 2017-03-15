@@ -1,8 +1,7 @@
 // Available audio busses in project
 
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioMetaData {
 namespace Bus {
 
 enum uint_32 BusType
@@ -22,6 +21,5 @@ enum uint_32 BusType
 }
 
 } // Bus
-} // Audio
-} // Cozmo
+} // AudioMetaData
 } // Anki

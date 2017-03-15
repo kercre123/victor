@@ -87,7 +87,7 @@ public class TestTapPane : MonoBehaviour {
         DAS.Info("TestTapPane.OnBlockTapped.NewID", "New ID " + id);
       }
       DAS.Info("TestTapPane.OnBlockTapped.Info", id + " @ " + timeStamp + " unityT: " + Time.time);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Placeholder);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Placeholder);
       CurrentRobot.LightCubes[id].SetLEDs(_TestColors[_CubeTappedAmount[id] % _TestColors.Length]);
     }
   }

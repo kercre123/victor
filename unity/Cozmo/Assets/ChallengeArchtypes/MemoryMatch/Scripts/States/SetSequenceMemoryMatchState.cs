@@ -38,7 +38,7 @@ namespace MemoryMatch {
 
       _InCountdown = true;
       // Start Sequence after audio completes
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Mm_Pattern_Start);
+      GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Mm_Pattern_Start);
       if (SequenceGrown) {
         _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kMemoryMatchGameLabelNextRound), null, 0.0f, false);
       }
@@ -124,7 +124,7 @@ namespace MemoryMatch {
       LightCube target = GetCurrentTarget();
       if (target != null) {
         int cubeId = target.ID;
-        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(cubeId));
+        GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(cubeId));
         _GameInstance.BlinkLight(cubeId, MemoryMatchGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(cubeId));
       }
     }

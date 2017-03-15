@@ -1,16 +1,16 @@
 /*
- * File: audioEngineClientConnection.cpp
+ * File: audioEngineInput.cpp
  *
  * Author: Jordan Rivas
  * Created: 11/09/2015
  *
- * Description: This is a subclass of AudioClientConnection which provides communication between itself and an
+ * Description: This is a subclass of AudioMuxInput which provides communication between itself and an
  *              AudioEngineClient by means of AudioEngineMessageHandler.
  *
  * Copyright: Anki, Inc. 2015
  */
 
-#include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
+#include "anki/cozmo/basestation/audio/audioEngineInput.h"
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "clad/audio/messageAudioClient.h"
 #include <util/helpers/templateHelpers.h>
@@ -20,14 +20,16 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
+using namespace AudioEngine::Multiplexer;
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClientConnection::AudioEngineClientConnection( AudioEngineMessageHandler* messageHandler ) :
+AudioEngineInput::AudioEngineInput( AudioEngineMessageHandler* messageHandler ) :
   _messageHandler( messageHandler )
 {
   DEV_ASSERT(nullptr != messageHandler, "Message Handler is NULL!");
   
   // Subscribe to Connection Side Messages
-  auto callback = std::bind(&AudioEngineClientConnection::HandleEvents, this, std::placeholders::_1);
+  auto callback = std::bind(&AudioEngineInput::HandleEvents, this, std::placeholders::_1);
   AddSignalHandle( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioEvent, callback ) );
   AddSignalHandle( _messageHandler->Subscribe( MessageAudioClientTag::StopAllAudioEvents, callback ) );
   AddSignalHandle( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioGameState, callback ) );
@@ -37,14 +39,14 @@ AudioEngineClientConnection::AudioEngineClientConnection( AudioEngineMessageHand
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClientConnection::~AudioEngineClientConnection()
+AudioEngineInput::~AudioEngineInput()
 {
   ClearSignalHandles();
   Util::SafeDelete( _messageHandler );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClientConnection::PostCallback( const AudioCallback& callbackMessage ) const
+void AudioEngineInput::PostCallback( const AudioEngine::Multiplexer::AudioCallback& callbackMessage ) const
 {
   const MessageAudioClient msg(( AudioCallback( callbackMessage ) ));
   _messageHandler->Broadcast( std::move( msg ) );
@@ -53,13 +55,12 @@ void AudioEngineClientConnection::PostCallback( const AudioCallback& callbackMes
 
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClientConnection::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
+void AudioEngineInput::HandleEvents(const AnkiEvent<AudioEngine::Multiplexer::MessageAudioClient>& event)
 {
-  PRINT_CH_DEBUG(AudioClientConnection::kAudioLogChannel,
-                 "AudioEngineClientConnection.HandleGameEvents",
+  PRINT_CH_DEBUG(AudioMuxInput::kAudioLogChannel,
+                 "AudioEngineInput.HandleGameEvents",
                  "Handle game event of type %s !",
                  MessageAudioClientTagToString(event.GetData().GetTag()));
-  
   switch ( event.GetData().GetTag() ) {
       
     case MessageAudioClientTag::PostAudioEvent:
@@ -88,7 +89,7 @@ void AudioEngineClientConnection::HandleEvents(const AnkiEvent<MessageAudioClien
       
     default:
     {
-      PRINT_NAMED_ERROR( "AudioEngineClientConnection.HandleGameEvents",
+      PRINT_NAMED_ERROR( "AudioEngineInput.HandleGameEvents",
                          "Subscribed to unhandled event of type %s !",
                          MessageAudioClientTagToString(event.GetData().GetTag()) );
     }

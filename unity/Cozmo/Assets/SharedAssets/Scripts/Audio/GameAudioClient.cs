@@ -11,30 +11,29 @@ namespace Anki {
 
       namespace VolumeParameters {
         public enum VolumeType : uint {
-          UI = GameParameter.ParameterType.Ui_Volume,
-          SFX = GameParameter.ParameterType.Sfx_Volume,
-          VO = GameParameter.ParameterType.Vo_Volume,
-          Music = GameParameter.ParameterType.Music_Volume,
-          Robot = GameParameter.ParameterType.Robot_Volume
+          UI = AudioMetaData.GameParameter.ParameterType.Ui_Volume,
+          SFX = AudioMetaData.GameParameter.ParameterType.Sfx_Volume,
+          VO = AudioMetaData.GameParameter.ParameterType.Vo_Volume,
+          Music = AudioMetaData.GameParameter.ParameterType.Music_Volume,
+          Robot = AudioMetaData.GameParameter.ParameterType.Robot_Volume
         }
       }
 
       [System.Serializable]
       public struct AudioEventParameter {
 
-        public static AudioEventParameter InvalidEvent = new AudioEventParameter(GameEvent.GenericEvent.Invalid, 
-                                                                                 GameEvent.EventGroupType.GenericEvent);
+        public static AudioEventParameter InvalidEvent = new AudioEventParameter(AudioMetaData.GameEvent.GenericEvent.Invalid, 
+                                                                                 AudioMetaData.GameEvent.EventGroupType.GenericEvent);
 
-        public static AudioEventParameter DefaultClick = new AudioEventParameter(
-                                                           GameEvent.GenericEvent.Play__Ui__Click_General,
-                                                           GameEvent.EventGroupType.Ui);
+        public static AudioEventParameter DefaultClick = new AudioEventParameter(AudioMetaData.GameEvent.GenericEvent.Play__Ui__Click_General,
+                                                                                 AudioMetaData.GameEvent.EventGroupType.Ui);
 
-        public static AudioEventParameter UIEvent(GameEvent.Ui ui) {
-          return new AudioEventParameter((GameEvent.GenericEvent)ui, GameEvent.EventGroupType.Ui);
+        public static AudioEventParameter UIEvent(AudioMetaData.GameEvent.Ui ui) {
+          return new AudioEventParameter((AudioMetaData.GameEvent.GenericEvent)ui, AudioMetaData.GameEvent.EventGroupType.Ui);
         }
 
-        public static AudioEventParameter SFXEvent(GameEvent.Sfx sfx) {
-          return new AudioEventParameter((GameEvent.GenericEvent)sfx, GameEvent.EventGroupType.Sfx);
+        public static AudioEventParameter SFXEvent(AudioMetaData.GameEvent.Sfx sfx) {
+          return new AudioEventParameter((AudioMetaData.GameEvent.GenericEvent)sfx, AudioMetaData.GameEvent.EventGroupType.Sfx);
         }
 
         // Unity doesn't like uints for some reason
@@ -44,64 +43,64 @@ namespace Anki {
         [SerializeField]
         private string _EventType;
 
-        private AudioEventParameter(GameEvent.GenericEvent evt, GameEvent.EventGroupType evtType) {
+        private AudioEventParameter(AudioMetaData.GameEvent.GenericEvent evt, AudioMetaData.GameEvent.EventGroupType evtType) {
           _Event = evt.ToString();
           _EventType = evtType.ToString();
         }
 
-        public GameEvent.GenericEvent Event {
+        public AudioMetaData.GameEvent.GenericEvent Event {
           get {
             // if we used the default, return invalid
             if (string.IsNullOrEmpty(_Event)) {
-              return GameEvent.GenericEvent.Invalid;
+              return AudioMetaData.GameEvent.GenericEvent.Invalid;
             }
 
-            return (GameEvent.GenericEvent)Enum.Parse(typeof(GameEvent.GenericEvent), _Event);
+            return (AudioMetaData.GameEvent.GenericEvent)Enum.Parse(typeof(AudioMetaData.GameEvent.GenericEvent), _Event);
           }
           set {
             _Event = value.ToString();
           }
         }
 
-        public GameEvent.EventGroupType EventType {
+        public AudioMetaData.GameEvent.EventGroupType EventType {
           get {
             // if we used the default, return generic
             if (string.IsNullOrEmpty(_EventType)) {
-              return GameEvent.EventGroupType.GenericEvent;
+              return AudioMetaData.GameEvent.EventGroupType.GenericEvent;
             }
 
-            return (GameEvent.EventGroupType)Enum.Parse(typeof(GameEvent.EventGroupType), _EventType);
+            return (AudioMetaData.GameEvent.EventGroupType)Enum.Parse(typeof(AudioMetaData.GameEvent.EventGroupType), _EventType);
           }
           set {
             _EventType = value.ToString();
           }
         }
 
-        public GameObjectType GetGameObjectType() {
+        public AudioMetaData.GameObjectType GetGameObjectType() {
           var eventType = EventType;
 
           switch (eventType) {
-          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Sfx:
-            return GameObjectType.SFX;
+          case AudioMetaData.GameEvent.EventGroupType.Sfx:
+            return AudioMetaData.GameObjectType.SFX;
 
-          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Ui:
-            return GameObjectType.UI;
+          case AudioMetaData.GameEvent.EventGroupType.Ui:
+            return AudioMetaData.GameObjectType.UI;
 
           // Only SFX and UI are valid for the time being
-          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Coz_App:
-          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Dev_Device:
-          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Dev_Robot:
-          case Anki.Cozmo.Audio.GameEvent.EventGroupType.GenericEvent:
-          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Music:
-          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Robot_Sfx:
-          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Robot_Vo:
+          case AudioMetaData.GameEvent.EventGroupType.Coz_App:
+          case AudioMetaData.GameEvent.EventGroupType.Dev_Device:
+          case AudioMetaData.GameEvent.EventGroupType.Dev_Robot:
+          case AudioMetaData.GameEvent.EventGroupType.GenericEvent:
+          case AudioMetaData.GameEvent.EventGroupType.Music:
+          case AudioMetaData.GameEvent.EventGroupType.Robot_Sfx:
+          case AudioMetaData.GameEvent.EventGroupType.Robot_Vo:
           default:
-            return GameObjectType.Invalid;
+            return AudioMetaData.GameObjectType.Invalid;
           }
         }
 
         public bool IsInvalid() {
-          return GameObjectType.Invalid == GetGameObjectType();
+          return AudioMetaData.GameObjectType.Invalid == GetGameObjectType();
         }
       }
 
@@ -112,31 +111,31 @@ namespace Anki {
         //    client.OnAudioCallback += YourHandler
 
         static public ushort PostAudioEvent(AudioEventParameter parameter,
-                                            Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
+                                            AudioEngine.Multiplexer.AudioCallbackFlag callbackFlag = AudioEngine.Multiplexer.AudioCallbackFlag.EventNone,
                                             CallbackHandler handler = null) {
           UnityAudioClient client = UnityAudioClient.Instance;
           return client.PostEvent(parameter.Event, parameter.GetGameObjectType(), callbackFlag, handler);
         }
 
-        static public ushort PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui audioEvent,
-                                         Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
+        static public ushort PostUIEvent(AudioMetaData.GameEvent.Ui audioEvent,
+                                         AudioEngine.Multiplexer.AudioCallbackFlag callbackFlag = AudioEngine.Multiplexer.AudioCallbackFlag.EventNone,
                                          CallbackHandler handler = null) {
           UnityAudioClient client = UnityAudioClient.Instance;
-          return client.PostEvent((GameEvent.GenericEvent)audioEvent, Anki.Cozmo.Audio.GameObjectType.UI, callbackFlag, handler);
+          return client.PostEvent((AudioMetaData.GameEvent.GenericEvent)audioEvent, AudioMetaData.GameObjectType.UI, callbackFlag, handler);
         }
 
-        static public ushort PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx audioEvent,
-                                          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
+        static public ushort PostSFXEvent(AudioMetaData.GameEvent.Sfx audioEvent,
+                                          AudioEngine.Multiplexer.AudioCallbackFlag callbackFlag = AudioEngine.Multiplexer.AudioCallbackFlag.EventNone,
                                           CallbackHandler handler = null) {
           UnityAudioClient client = UnityAudioClient.Instance;
-          return client.PostEvent((GameEvent.GenericEvent)audioEvent, Anki.Cozmo.Audio.GameObjectType.SFX, callbackFlag, handler);
+          return client.PostEvent((AudioMetaData.GameEvent.GenericEvent)audioEvent, AudioMetaData.GameObjectType.SFX, callbackFlag, handler);
         }
 
-        static public ushort PostAnnouncerVOEvent(Anki.Cozmo.Audio.GameEvent.GenericEvent audioEvent,
-                                                  Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
+        static public ushort PostAnnouncerVOEvent(AudioMetaData.GameEvent.GenericEvent audioEvent,
+                                                  AudioEngine.Multiplexer.AudioCallbackFlag callbackFlag = AudioEngine.Multiplexer.AudioCallbackFlag.EventNone,
                                                   CallbackHandler handler = null) {
           UnityAudioClient client = UnityAudioClient.Instance;
-          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Aria, callbackFlag, handler);
+          return client.PostEvent(audioEvent, AudioMetaData.GameObjectType.Aria, callbackFlag, handler);
         }
 
         // Remove callback handle from Audio Client
@@ -145,7 +144,7 @@ namespace Anki {
           client.UnregisterCallbackHandler(playId);
         }
 
-        static public void SetVolumeValue(VolumeParameters.VolumeType parameter, float volume, int timeInMS = 0, CurveType curve = CurveType.Linear, bool storeValue = true) {
+        static public void SetVolumeValue(VolumeParameters.VolumeType parameter, float volume, int timeInMS = 0, AudioEngine.Multiplexer.CurveType curve = AudioEngine.Multiplexer.CurveType.Linear, bool storeValue = true) {
           // Must sent to the robot's volume through the robot object
           if (parameter == Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot) {
             IRobot robot = RobotEngineManager.Instance.CurrentRobot;
@@ -159,7 +158,7 @@ namespace Anki {
           else {
             // User GameObjectType.Invalid to set global RTPC values
             UnityAudioClient client = UnityAudioClient.Instance;
-            client.PostParameter((GameParameter.ParameterType)parameter, volume, GameObjectType.Invalid, timeInMS, curve);
+            client.PostParameter((AudioMetaData.GameParameter.ParameterType)parameter, volume, AudioMetaData.GameObjectType.Invalid, timeInMS, curve);
           }
 
           if (storeValue) {
@@ -194,7 +193,7 @@ namespace Anki {
             if (!hasVolumePref) {
               aValue = GetDefaultVolume(aParameter);
             }
-            SetVolumeValue(aParameter, aValue, 0, CurveType.Linear, false);
+            SetVolumeValue(aParameter, aValue, 0, AudioEngine.Multiplexer.CurveType.Linear, false);
           }
         }
 
@@ -241,47 +240,47 @@ namespace Anki {
         }
 
         // Set Music States
-        static public void SetMusicState(Anki.Cozmo.Audio.GameState.Music state,
+        static public void SetMusicState(AudioMetaData.GameState.Music state,
                                          bool interrupt = false,
                                          uint minDurationInMilliSeconds = 0) {
           UnityAudioClient client = UnityAudioClient.Instance;
-          client.PostMusicState((GameState.GenericState)state, interrupt, minDurationInMilliSeconds);
+          client.PostMusicState((AudioMetaData.GameState.GenericState)state, interrupt, minDurationInMilliSeconds);
         }
 
        
         // Game Helpers
         static public void SetMusicRoundState(int round) {
-          SwitchState.Gameplay_Round roundState = SwitchState.Gameplay_Round.Invalid;
+          AudioMetaData.SwitchState.Gameplay_Round roundState = AudioMetaData.SwitchState.Gameplay_Round.Invalid;
           switch (round) {
           case 1:
-            roundState = SwitchState.Gameplay_Round.Round_01;
+            roundState = AudioMetaData.SwitchState.Gameplay_Round.Round_01;
             break;
           case 2:
-            roundState = SwitchState.Gameplay_Round.Round_02;
+            roundState = AudioMetaData.SwitchState.Gameplay_Round.Round_02;
             break;
           case 3:
-            roundState = SwitchState.Gameplay_Round.Round_03;
+            roundState = AudioMetaData.SwitchState.Gameplay_Round.Round_03;
             break;
           case 4:
-            roundState = SwitchState.Gameplay_Round.Round_04;
+            roundState = AudioMetaData.SwitchState.Gameplay_Round.Round_04;
             break;
           case 5:
-            roundState = SwitchState.Gameplay_Round.Round_05;
+            roundState = AudioMetaData.SwitchState.Gameplay_Round.Round_05;
             break;
           default:
             // Set default state
-            roundState = SwitchState.Gameplay_Round.Round_01;
+            roundState = AudioMetaData.SwitchState.Gameplay_Round.Round_01;
             DAS.Error("GameAudioClient.SetMusicRoundState", string.Format("Unhandled round value: {0}", round));
             break;
           }
 
           UnityAudioClient client = UnityAudioClient.Instance;
-          client.PostSwitchState (SwitchState.SwitchGroupType.Gameplay_Round, (SwitchState.GenericSwitch)roundState, GameObjectType.Default);
+          client.PostSwitchState(AudioMetaData.SwitchState.SwitchGroupType.Gameplay_Round, (AudioMetaData.SwitchState.GenericSwitch)roundState, AudioMetaData.GameObjectType.Default);
         }
 
-        static public void SetSparkedMusicState(Anki.Cozmo.Audio.SwitchState.Sparked sparked) {
+        static public void SetSparkedMusicState(AudioMetaData.SwitchState.Sparked sparked) {
           UnityAudioClient client = UnityAudioClient.Instance;
-          client.PostSwitchState (SwitchState.SwitchGroupType.Sparked, (SwitchState.GenericSwitch)sparked, GameObjectType.Default);
+          client.PostSwitchState(AudioMetaData.SwitchState.SwitchGroupType.Sparked, (AudioMetaData.SwitchState.GenericSwitch)sparked, AudioMetaData.GameObjectType.Default);
         }
      
       }

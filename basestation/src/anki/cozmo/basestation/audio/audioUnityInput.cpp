@@ -1,16 +1,16 @@
 /*
- * File: audioUnityClientConnection.cpp
+ * File: audioUnityInput.cpp
  *
  * Author: Jordan Rivas
  * Created: 11/09/2015
  *
  * Description: This Connection is specific to communicating with the Unity Message Interface. It is a subclass of
- *              AudioClientConnection.
+ *              AudioMuxInput.
  *
  * Copyright: Anki, Inc. 2015
  */
 
-#include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
+#include "anki/cozmo/basestation/audio/audioUnityInput.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -23,11 +23,11 @@ namespace Cozmo {
 namespace Audio {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioUnityClientConnection::AudioUnityClientConnection( IExternalInterface& externalInterface ) :
+AudioUnityInput::AudioUnityInput( IExternalInterface& externalInterface ) :
   _externalInterface( externalInterface )
 {
   // Subscribe to Audio Messages
-  auto callback = std::bind(&AudioUnityClientConnection::HandleGameEvents, this, std::placeholders::_1);
+  auto callback = std::bind(&AudioUnityInput::HandleGameEvents, this, std::placeholders::_1);
   _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioEvent, callback ) );
   _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::StopAllAudioEvents, callback ) );
   _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioGameState, callback ) );
@@ -37,10 +37,10 @@ AudioUnityClientConnection::AudioUnityClientConnection( IExternalInterface& exte
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void AudioUnityInput::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
-  PRINT_CH_DEBUG(AudioClientConnection::kAudioLogChannel,
-                 "AudioUnityClientConnection.HandleGameEvents", "Handle game event of type %s !",
+  PRINT_CH_DEBUG(AudioMuxInput::kAudioLogChannel,
+                 "AudioUnityInput.HandleGameEvents", "Handle game event of type %s !",
                  ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) );
   
   switch ( event.GetData().GetTag() ) {
@@ -71,7 +71,7 @@ void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterf
       
     default:
     {
-      PRINT_NAMED_ERROR( "AudioUnityClientConnection.HandleGameEvents",
+      PRINT_NAMED_ERROR( "AudioUnityInput.HandleGameEvents",
                          "Subscribed to unhandled event of type %s !",
                          ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) );
     }
@@ -79,9 +79,9 @@ void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterf
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityClientConnection::PostCallback( const AudioCallback& callbackMessage ) const
+void AudioUnityInput::PostCallback( const AudioEngine::Multiplexer::AudioCallback& callbackMessage ) const
 {
-  const ExternalInterface::MessageEngineToGame msg( (AudioCallback( callbackMessage)) );
+  const ExternalInterface::MessageEngineToGame msg( (AudioEngine::Multiplexer::AudioCallback( callbackMessage)) );
   _externalInterface.Broadcast( std::move( msg ) );
 }
 

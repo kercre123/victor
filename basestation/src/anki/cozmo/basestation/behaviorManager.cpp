@@ -1380,6 +1380,21 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
   }
 }
 
+void BehaviorManager::OnRobotDelocalized()
+{
+  // If the robot delocalizes and we have a tapped object immediately stop the double tapped lights
+  // Normally the lights would be stopped when the tapInteraction goal exits but that is too late
+  // Eg. Pick Cozmo up after double tapping a cube, the lights will stay on until he is put down and the
+  // tapInteraction goal is kicked out. Instead of having the lights stop when he is put down, they should
+  // stop when he is picked up (delocalizes)
+  // Can't do this on Stop() because tapInteraction behaviors are stopped and started as different objects get tapped
+  if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent())
+  {
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
+  }
+}
+
   
 } // namespace Cozmo
 } // namespace Anki

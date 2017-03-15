@@ -247,6 +247,7 @@ def main(scriptArgs):
     UtilLog.error('audio path not found [%s]' % options.audioPath)
     return False
   audioProjectPath = options.audioPath
+  audioGeneratedCladPath=os.path.join(projectRoot, 'generated', 'clad', 'engine')
   audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioEngine.gyp')
 
   if not options.bleCozmoPath:
@@ -320,7 +321,7 @@ def main(scriptArgs):
     return True
 
   #run clad's make
-  unityGeneratedPath=os.path.join(projectRoot, 'unity/Cozmo/Assets/Scripts/Generated')
+  unityGeneratedPath=os.path.join(projectRoot, 'unity/Cozmo/Assets/Scripts/Generated/')
   shutil.rmtree(unityGeneratedPath, True)
   if (subprocess.call(['make', '--silent', 'OUTPUT_DIR_CSHARP=' + unityGeneratedPath, 'csharp'],
     cwd=os.path.join(options.cozmoEnginePath, 'clad')) != 0):
@@ -367,6 +368,7 @@ def main(scriptArgs):
   cgAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, configurePath)
   ceAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, cozmoEngineConfigurePath)
   ctiAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, coretechInternalConfigurePath)
+  audioAnkiUtilProjectPath = ctiAnkiUtilProjectPath
   cgCoretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
   ceCoretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, cozmoEngineConfigurePath)
   cgCozmoEngineProjectPath = os.path.relpath(os.path.join(options.cozmoEnginePath, 'project/gyp/cozmoEngine.gyp'), configurePath)
@@ -375,6 +377,7 @@ def main(scriptArgs):
   audioProjectPath = os.path.abspath(os.path.join(cozmoEngineConfigurePath, audioProjectPath))
   cgAudioProjectGypPath = os.path.relpath(os.path.join(cozmoEngineConfigurePath, audioProjectGypPath))
   ceAudioProjectGypPath = cgAudioProjectGypPath
+  #DNW: Add another GYP path here.
   cgDasProjectPath = os.path.relpath(dasProjectPath, configurePath)
   ceDasProjectPath = os.path.relpath(dasProjectPath, cozmoEngineConfigurePath)
   cgBLECozmoProjectPath = os.path.relpath(bleCozmoProjectPath, configurePath)
@@ -438,6 +441,8 @@ def main(scriptArgs):
                                   cg-ble_cozmo_path={22}
                                   ce-ble_cozmo_path={23}
                                   clad_dir={24}
+				  util_gyp_path={25}
+                                  generated_clad_path={26}
                                   """.format(
                                     options.arch,
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -464,6 +469,8 @@ def main(scriptArgs):
                                     cgBLECozmoProjectPath,
                                     ceBLECozmoProjectPath,
                                     clad_dir_rel,
+                                    audioAnkiUtilProjectPath,
+                                    audioGeneratedCladPath,
                                   )
       gypArgs = _getGypArgs('xcode', '../../generated/mac', gypFile)
       gyp.main(gypArgs)
@@ -513,6 +520,8 @@ def main(scriptArgs):
                                 cg-ble_cozmo_path={19}
                                 ce-ble_cozmo_path={20}
                                 clad_dir={21}
+                                util_gyp_path={22}
+                                generated_clad_path={23}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -536,6 +545,8 @@ def main(scriptArgs):
                                   cgBLECozmoProjectPath,
                                   ceBLECozmoProjectPath,
                                   clad_dir_rel,
+                                  audioAnkiUtilProjectPath,
+                                  audioGeneratedCladPath,
                                 )
     gypArgs = _getGypArgs('xcode', '../../generated/ios', gypFile)
     gyp.main(gypArgs)
@@ -567,7 +578,6 @@ def main(scriptArgs):
     ### android deps installed
 
     ndk_root = os.environ['ANDROID_NDK_ROOT']
-
     os.environ['ANDROID_BUILD_TOP'] = configurePath
     ##################### GYP_DEFINES ####
     os.environ['GYP_DEFINES'] = """
@@ -613,6 +623,8 @@ def main(scriptArgs):
                                 cg-ble_cozmo_path={20}
                                 ce-ble_cozmo_path={21}
                                 clad_dir={22}
+                                util_gyp_path={23}
+                                generated_clad_path={24}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -637,6 +649,8 @@ def main(scriptArgs):
                                   cgBLECozmoProjectPath,
                                   ceBLECozmoProjectPath,
                                   clad_dir_rel,
+				  audioAnkiUtilProjectPath,
+                                  audioGeneratedCladPath,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')

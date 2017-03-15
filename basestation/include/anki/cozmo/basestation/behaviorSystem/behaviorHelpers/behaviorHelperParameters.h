@@ -44,6 +44,9 @@ struct PlaceRelObjectParameters{
 
 struct RollBlockParameters{
   DriveToAlignWithObjectAction::PreDockCallback preDockCallback = nullptr;
+  AnimationTrigger sayNameAnimationTrigger = AnimationTrigger::Count;
+  AnimationTrigger noNameAnimationTrigger = AnimationTrigger::Count;
+  Radians maxTurnToFaceAngle = 0;
 };
 
 

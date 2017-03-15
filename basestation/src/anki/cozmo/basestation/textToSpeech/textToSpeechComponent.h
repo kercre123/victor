@@ -16,7 +16,7 @@
 #ifndef __Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__
 #define __Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__
 
-#include "anki/cozmo/basestation/audio/standardWaveDataContainer.h"
+#include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "anki/common/types.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
@@ -30,6 +30,10 @@
 struct cst_voice_struct;
 
 namespace Anki {
+  
+namespace AudioEngine {
+class AudioEngineController;
+}
 
 // Forward declaration
 namespace Util {
@@ -41,9 +45,6 @@ namespace Dispatch {
 namespace Cozmo {
   
 class CozmoContext;
-namespace Audio {
-  class AudioController;
-}
   
 class TextToSpeechComponent
 {
@@ -89,7 +90,7 @@ public:
   void ClearAllLoadedAudioData();
   
   // Get appropriate Audio Event for SayTextStyle
-  Audio::GameEvent::GenericEvent GetAudioEvent(SayTextVoiceStyle style) const;
+  AudioMetaData::GameEvent::GenericEvent GetAudioEvent(SayTextVoiceStyle style) const;
 
 
 private:
@@ -98,14 +99,14 @@ private:
 // Private Vars
   
   struct TtsBundle {
-    AudioCreationState state                    = AudioCreationState::None;
-    Audio::StandardWaveDataContainer* waveData  = nullptr;
+    AudioCreationState state                          = AudioCreationState::None;
+    AudioEngine::StandardWaveDataContainer* waveData  = nullptr;
     ~TtsBundle() { Util::SafeDelete(waveData); }
   };
   
-  Util::Dispatch::Queue*          _dispatchQueue = nullptr;
-  Audio::AudioController*         _audioController = nullptr;
-  cst_voice_struct*               _voice = nullptr;
+  AudioEngine::AudioEngineController* _audioController  = nullptr;
+  Util::Dispatch::Queue* _dispatchQueue                 = nullptr;
+  cst_voice_struct* _voice                              = nullptr;
   
   std::unordered_map<OperationId, TtsBundle> _ttsWaveDataMap;
   
@@ -118,7 +119,7 @@ private:
   
   // Use Text to Speech lib to create audio data & reformat into StandardWaveData format
   // Return nullptr if Text to Speech lib fails to create audio data
-  Audio::StandardWaveDataContainer* CreateAudioData(const std::string& text, const float durationScalar);
+  AudioEngine::StandardWaveDataContainer* CreateAudioData(const std::string& text, const float durationScalar);
   
   // Helpers
   // Find TtsBundle for operation

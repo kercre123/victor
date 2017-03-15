@@ -33,6 +33,9 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   private const float _kHDScaleFactor = 0.5f;
   private const float _kSDScaleFactor = 0.35f;
 
+  private const float _kMinWidth = 200f;
+  private const float _kMinHeight = 200f;
+
   static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths) {
     // TODO handle materials
   }
@@ -89,11 +92,24 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
 
   private float GetPixelsPerUnit() {
     float ppu = _kSpritePixelsPerUnit;
+    string uhdAssetPath = null;
     if (IsSDAsset()) {
       ppu *= _kSDScaleFactor;
+      uhdAssetPath = assetPath.Replace(_kHDBundleTag, _kUHDBundleTag);
     }
     else if (IsHDAsset()) {
       ppu *= _kHDScaleFactor;
+      uhdAssetPath = assetPath.Replace(_kSDBundleTag, _kUHDBundleTag);
+    }
+
+    if (!string.IsNullOrEmpty(uhdAssetPath)) {
+      Sprite uhdSprite = AssetDatabase.LoadAssetAtPath(uhdAssetPath, typeof(Sprite)) as Sprite;
+      if (uhdSprite != null) {
+        if ((uhdSprite.texture.height < _kMinHeight && uhdSprite.texture.width < _kMinWidth)) {
+          // if we didn't downsample due to minimum sprite requirements then we shouldn't downsample the ppu either.
+          ppu = _kSpritePixelsPerUnit;
+        }
+      }
     }
     return ppu;
   }
@@ -114,7 +130,12 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     if (!string.IsNullOrEmpty(uhdAssetPath)) {
       Sprite uhdSprite = AssetDatabase.LoadAssetAtPath(uhdAssetPath, typeof(Sprite)) as Sprite;
       if (uhdSprite != null) {
-        border = uhdSprite.border * borderScale;
+        if ((uhdSprite.texture.height < _kMinHeight && uhdSprite.texture.width < _kMinWidth)) {
+          border = uhdSprite.border;
+        }
+        else {
+          border = uhdSprite.border * borderScale;
+        }
       }
       else {
         Debug.LogError("Tried to set spriteBorder but failed: Could not find UHD asset for sprite at path " + assetPath + " at UHD path " + uhdAssetPath);
@@ -199,9 +220,16 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     }
     int newHeight = Mathf.FloorToInt(baseTexture.height * scale);
     if (newHeight <= 0) {
-      Debug.LogError("Scaled image to " + scale + " for UHD asset at " + assetPath + " but base UHD image is too small! Clamping new texture height to 1.");
+      Debug.LogError("Scaled image to " + scale + " for UHD a" +
+                     "sset at " + assetPath + " but base UHD image is too small! Clamping new texture height to 1.");
       newHeight = 1;
     }
+
+    if (baseTexture.height < _kMinHeight && baseTexture.width < _kMinWidth) {
+      newHeight = baseTexture.height;
+      newWidth = baseTexture.width;
+    }
+
     TextureScale.Bilinear(newTexture, newWidth, newHeight);
     byte[] newTextureData = newTexture.EncodeToPNG();
     string newAssetPath = assetPath.Replace(_kUHDBundleTag, newBundleTag);

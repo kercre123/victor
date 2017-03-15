@@ -142,7 +142,7 @@ namespace SpeedTap {
       else {
         _SpeedTapGame.SetLEDs(player.CubeID, CubePalette.Instance.ReadyColor.lightColor);
       }
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Cube_Cozmo_Tap);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Cube_Cozmo_Tap);
     }
 
     private void HandleCubeSelectedAttempted(PlayerInfo playerBase, int cubeID) {

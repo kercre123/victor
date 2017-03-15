@@ -71,7 +71,8 @@ protected:
   // utility functions
   void SetState_internal(State state, const std::string& stateName);
   void ResetMemberVars();
-  void UpdatePyramidTargets(const Robot& robot) const;
+  // Returns true if any pyramid targets have changed
+  bool UpdatePyramidTargets(const Robot& robot) const;
   
   // Ensures that blocks IDs which become invalid are cleared out of
   // the assigned ObjectIDs below - not actually const

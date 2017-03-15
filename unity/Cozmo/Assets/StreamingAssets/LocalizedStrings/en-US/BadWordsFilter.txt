@@ -12,7 +12,7 @@ bollo[ckx]k?#bollok
 buggery?#
 chin(c|k)#chinc#http://www.urbandictionary.com/define.php?term=chink
 \b(?!\bscunthorpe\b)\w*[kc][u]+n[t7]\w*\b#cunt
-\b\w*(c|k)[0o]+[c]*k\w*\b#cock
+\b\w*(c|k)[0o][c]*k\w*\b#cock
 \bdago\b#
 dam[mn]#
 deggo#

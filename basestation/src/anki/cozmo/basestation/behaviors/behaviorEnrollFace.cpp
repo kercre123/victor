@@ -692,7 +692,7 @@ void BehaviorEnrollFace::TransitionToSayingName(Robot& robot)
       if(_useMusic)
       {
         // NOTE: it will be up to the caller to stop this music
-        robot.GetRobotAudioClient()->PostMusicState((Audio::GameState::GenericState)Audio::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
+        robot.GetRobotAudioClient()->PostMusicState((AudioMetaData::GameState::GenericState)AudioMetaData::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
       }
       
       {

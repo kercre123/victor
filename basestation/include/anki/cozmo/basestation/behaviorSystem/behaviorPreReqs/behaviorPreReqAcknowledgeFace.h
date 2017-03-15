@@ -21,18 +21,23 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+class Robot;
 
 class BehaviorPreReqAcknowledgeFace{
 public:
-  BehaviorPreReqAcknowledgeFace(const std::set<Vision::FaceID_t>& desiredTargets)
+  BehaviorPreReqAcknowledgeFace(const std::set<Vision::FaceID_t>& desiredTargets, const Robot& robot)
+  : _robot(robot)
   {
     _desiredTargets = desiredTargets;
   }
   
   std::set<Vision::FaceID_t> GetDesiredTargets()const{return _desiredTargets;}
+  const Robot& GetRobot() const { return _robot; }
   
 private:
   std::set< Vision::FaceID_t > _desiredTargets;
+  const Robot& _robot;
   
 };
 

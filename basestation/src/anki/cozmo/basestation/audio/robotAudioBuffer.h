@@ -20,7 +20,7 @@
 #define __Basestation_Audio_RobotAudioBuffer_H__
 
 #include "anki/cozmo/basestation/audio/robotAudioFrameStream.h"
-#include "anki/cozmo/basestation/audio/audioDataTypes.h"
+#include "audioEngine/audioTools/audioDataTypes.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include <stdint.h>
@@ -48,7 +48,7 @@ public:
   void PrepareAudioBuffer();
   
   // Write samples to buffer
-  void UpdateBuffer( const AudioSample* samples, const size_t sampleCount );
+  void UpdateBuffer( const AudioEngine::AudioSample* samples, const size_t sampleCount );
   
   // This is called when the plug-in is terminated.
   void CloseAudioBuffer();

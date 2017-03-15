@@ -14,7 +14,11 @@
 #define CONSOLE_MACRO_H
 
 #ifndef REMOTE_CONSOLE_ENABLED
-#define REMOTE_CONSOLE_ENABLED (!defined(SHIPPING) && 1)
+  #if defined(SHIPPING)
+    #define REMOTE_CONSOLE_ENABLED 0
+  #else
+    #define REMOTE_CONSOLE_ENABLED 1
+  #endif
 #endif
 
 #if REMOTE_CONSOLE_ENABLED

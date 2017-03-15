@@ -185,7 +185,7 @@ namespace Cozmo.HomeHub {
       if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart &&
           !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home) &&
           robot != null) {
-        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
         robot.SetEnableFreeplayLightStates(true);
         robot.SetEnableFreeplayBehaviorChooser(true);
       }

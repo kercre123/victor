@@ -43,11 +43,16 @@ private:
   ObjectID _targetID;
   RollBlockParameters _params;
 
+  
+  void DetermineAppropriateAction(Robot& robot);
+  void DelegateToPutDown(Robot& robot);
   void StartRollingAction(Robot& robot);
   void RespondToRollingResult(ActionResult result, Robot& robot);
 
   bool _shouldRoll = true;
   const bool _shouldUpright;
+  u32 _tmpRetryCounter;
+
 
 };
 

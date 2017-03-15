@@ -111,6 +111,15 @@ namespace Cozmo.Minigame.DroneMode {
       if (closestFocus != CurrentlyFocusedObject) {
         CurrentlyFocusedObject = closestFocus;
         ShowTextForReticle(closestFocus, closestReticle);
+
+        foreach (var kvp in _ObjToReticle) {
+          if (kvp.Key == closestFocus) {
+            kvp.Value.SetColor(_CurrentColorSet.FocusedReticleFillColor, _CurrentColorSet.FocusedReticleStrokeColor);
+          }
+          else {
+            kvp.Value.SetColor(_CurrentColorSet.UnfocusedReticleFillColor, _CurrentColorSet.UnfocusedReticleStrokeColor);
+          }
+        }
       }
     }
 
@@ -334,7 +343,12 @@ namespace Cozmo.Minigame.DroneMode {
           reticleFocus.OnVizRectChanged += HandleVizRectChanged;
 
           PositionReticle(newReticle, reticleFocus.VizRect);
-          newReticle.SetColor(_CurrentColorSet.FocusFrameColor, _CurrentColorSet.ButtonColor);
+          if (reticleFocus == CurrentlyFocusedObject) {
+            newReticle.SetColor(_CurrentColorSet.FocusedReticleFillColor, _CurrentColorSet.FocusedReticleStrokeColor);
+          }
+          else {
+            newReticle.SetColor(_CurrentColorSet.UnfocusedReticleFillColor, _CurrentColorSet.UnfocusedReticleStrokeColor);
+          }
         }
       }
     }

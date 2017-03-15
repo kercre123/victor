@@ -334,17 +334,25 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
+bool BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
 {
   using Intention = AIWhiteboard::ObjectUseIntention;
-  _baseBlockID = robot.GetAIComponent().GetWhiteboard().
-                       GetBestObjectForAction(Intention::PyramidBaseObject);
-  _staticBlockID = robot.GetAIComponent().GetWhiteboard().
-                       GetBestObjectForAction(Intention::PyramidStaticObject);
-  _topBlockID = robot.GetAIComponent().GetWhiteboard().
-                       GetBestObjectForAction(Intention::PyramidTopObject);
+  auto bestBase   = robot.GetAIComponent().GetWhiteboard().
+                      GetBestObjectForAction(Intention::PyramidBaseObject);
+  auto bestStatic = robot.GetAIComponent().GetWhiteboard().
+                      GetBestObjectForAction(Intention::PyramidStaticObject);
+  auto bestTop    =  robot.GetAIComponent().GetWhiteboard().
+                      GetBestObjectForAction(Intention::PyramidTopObject);
+  const bool blockAssignmentChanged = (bestBase != _baseBlockID) ||
+                                      (bestStatic != _staticBlockID) ||
+                                      (bestTop != _topBlockID);
+  
+  _baseBlockID = std::move(bestBase);
+  _staticBlockID = std::move(bestStatic);
+  _topBlockID = std::move(bestTop);
   
   DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramidBase.IsRunnable.AllBlocksNotUnique");
+  return blockAssignmentChanged;
 }
 
 

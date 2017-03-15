@@ -105,7 +105,7 @@ structure AnimationCompleted {
 
 // Used by DeviceAudioAction
 structure DeviceAudioCompleted {
-  Audio::GameEvent::GenericEvent audioEvent,
+  AudioMetaData::GameEvent::GenericEvent audioEvent,
 }
 
 // Used by TrackFaceAction and TrackPetFaceAction

@@ -1,19 +1,19 @@
 /*
- * File: audioUnityClientConnection.h
+ * File: audioUnityInput.h
  *
  * Author: Jordan Rivas
  * Created: 11/09/2015
  *
  * Description: This Connection is specific to communicating with the Unity Message Interface. It is a subclass of
- *              AudioClientConnection.
+ *              AudioMuxInput.
  *
  * Copyright: Anki, Inc. 2015
  */
 
-#ifndef __Basestation_Audio_AudioUnityClientConnection_H__
-#define __Basestation_Audio_AudioUnityClientConnection_H__
+#ifndef __Basestation_Audio_AudioUnityInput_H__
+#define __Basestation_Audio_AudioUnityInput_H__
 
-#include "anki/cozmo/basestation/audio/audioClientConnection.h"
+#include "audioEngine/multiplexer/audioMuxInput.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 
@@ -31,13 +31,13 @@ class MessageGameToEngine;
   
 namespace Audio {
 
-class AudioUnityClientConnection : public AudioClientConnection {
+class AudioUnityInput : public AudioEngine::Multiplexer::AudioMuxInput {
 
 public:
 
-  AudioUnityClientConnection( IExternalInterface& externalInterface );
+  AudioUnityInput( IExternalInterface& externalInterface );
 
-  void PostCallback( const AudioCallback& callbackMessage ) const override;
+  void PostCallback( const AudioEngine::Multiplexer::AudioCallback& callbackMessage ) const override;
   
 
 private:
@@ -54,4 +54,4 @@ private:
 } // Cozmo
 } // Anki
 
-#endif /* __Basestation_Audio_AudioUnityClientConnection_H__ */
+#endif /* __Basestation_Audio_AudioUnityInput_H__ */

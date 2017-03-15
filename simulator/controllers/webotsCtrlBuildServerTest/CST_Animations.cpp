@@ -75,7 +75,8 @@ s32 CST_Animations::UpdateSimInternal()
         // Setup Sound Banks for Tests
         // Handle Text to Speech audio events
         // Note: MessageGameToEngine uses the UnityAudioClient Connection to set audio state
-        using namespace Audio;
+        using namespace AudioMetaData;
+        using namespace AudioEngine::Multiplexer;
         MessageGameToEngine audioStateMsg;
         audioStateMsg.Set_PostAudioGameState(PostAudioGameState(static_cast<GameState::StateGroupType>(GameState::StateGroupType::External_Name),
                                                                 static_cast<GameState::GenericState>(GameState::External_Name::Unit_Test_Mock)));

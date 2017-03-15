@@ -49,7 +49,7 @@ void RobotAudioBuffer::PrepareAudioBuffer()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sampleCount )
+void RobotAudioBuffer::UpdateBuffer( const AudioEngine::AudioSample* samples, const size_t sampleCount )
 {
   std::lock_guard<std::mutex> lock( _lock );
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
@@ -74,7 +74,7 @@ void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sa
   }
   
   // Copy audio samples into frame & push it into the queue
-  AudioFrameData *audioFrame = new AudioFrameData( sampleCount );
+  AudioEngine::AudioFrameData *audioFrame = new AudioEngine::AudioFrameData( sampleCount );
   audioFrame->CopySamples( samples, sampleCount );
   _streamQueue.back().PushRobotAudioFrame( audioFrame );
 }

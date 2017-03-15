@@ -593,6 +593,22 @@ namespace Cozmo.Minigame.DroneMode {
     public Color FocusFrameColor { get { return _FocusFrameColor; } }
 
     [SerializeField]
+    private Color _UnfocusedReticleFillColor;
+    public Color UnfocusedReticleFillColor { get { return _UnfocusedReticleFillColor; } }
+
+    [SerializeField]
+    private Color _UnfocusedReticleStrokeColor;
+    public Color UnfocusedReticleStrokeColor { get { return _UnfocusedReticleStrokeColor; } }
+
+    [SerializeField]
+    private Color _FocusedReticleFillColor;
+    public Color FocusedReticleFillColor { get { return _FocusedReticleFillColor; } }
+
+    [SerializeField]
+    private Color _FocusedReticleStrokeColor;
+    public Color FocusedReticleStrokeColor { get { return _FocusedReticleStrokeColor; } }
+
+    [SerializeField]
     private Color _TopCameraColor;
     public Color TopCameraColor { get { return _TopCameraColor; } }
 

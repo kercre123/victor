@@ -51,7 +51,7 @@ public abstract class GameBase : MonoBehaviour {
     get { return _SharedMinigameViewInstance; }
   }
 
-  public Anki.Cozmo.Audio.GameState.Music GetDefaultMusicState() {
+  public Anki.AudioMetaData.GameState.Music GetDefaultMusicState() {
     return _ChallengeData.DefaultMusic;
   }
 
@@ -801,7 +801,7 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance.DialogCloseAnimationFinished += QuitMinigameAnimationFinished;
       _SharedMinigameViewInstance.CloseDialog();
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
 
       // cancels any queued up actions or co-routines
       if (CurrentRobot != null) {
@@ -1110,8 +1110,8 @@ public abstract class GameBase : MonoBehaviour {
       DAS.Event("game.end.MP.roundsTotal", TotalRounds.ToString());
     }
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_End);
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Game_End);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
 
     DAS.Info(this, "HandleChallengeResultViewClosed");
   }
@@ -1369,7 +1369,7 @@ public abstract class GameBase : MonoBehaviour {
           CreateInterruptionQuitGameView(dasAlertName, titleKey, descriptionKey);
         };
         _InterruptedAlertView = alertModal;
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Game_End);
       };
 
       UIManager.OpenAlert(interruptedAlertData, interruptedAlertPriorityData, interruptedAlertCreated,

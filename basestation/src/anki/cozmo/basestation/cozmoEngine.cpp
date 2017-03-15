@@ -13,18 +13,14 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "clad/externalInterface/messageGameToEngine.h"
-#include "util/logging/logging.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "util/helpers/templateHelpers.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
-#include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
-#include "anki/cozmo/basestation/ble/BLESystem.h"
-#include "anki/cozmo/basestation/audio/audioServer.h"
-#include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
+#include "anki/cozmo/basestation/audio/audioEngineInput.h"
+#include "anki/cozmo/basestation/audio/audioUnityInput.h"
+#include "anki/cozmo/basestation/audio/cozmoAudioController.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/ble/BLESystem.h"
 #include "anki/cozmo/basestation/debug/cladLoggerProvider.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -39,9 +35,13 @@
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
+#include "audioEngine/multiplexer/audioMultiplexer.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 #include "util/time/universalTime.h"
@@ -408,9 +408,9 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   }
   
   // Tick Audio Controller after all messages have been processed
-  const auto audioServer = _context->GetAudioServer();
-  if (audioServer != nullptr) {
-    audioServer->UpdateAudioController();
+  const auto audioMux = _context->GetAudioMultiplexer();
+  if (audioMux != nullptr) {
+    audioMux->UpdateAudioController();
   }
   
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS
@@ -548,13 +548,14 @@ void CozmoEngine::SetEngineState(EngineState newState)
 Result CozmoEngine::InitInternal()
 {
   // Setup Audio Controller
-  using namespace Audio;
-  
-  // Setup Unity Audio Client Connections
-  AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_context->GetExternalInterface() );
-  auto audioServer = _context->GetAudioServer();
-  if (audioServer) {
-    audioServer->RegisterClientConnection( unityConnection );
+  {
+    using namespace Audio;
+    // Setup Unity Audio Input
+    AudioUnityInput *unityInput = new AudioUnityInput( *_context->GetExternalInterface() );
+    auto audioMux = _context->GetAudioMultiplexer();
+    if (audioMux) {
+      audioMux->RegisterInput( unityInput );
+    }
   }
   
   // Archive factory test logs
@@ -586,18 +587,18 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
   } else {
     PRINT_NAMED_INFO("CozmoEngine.AddRobot", "Sending init to the robot %d.", robotID);
     
-    // Setup Audio Server with Robot Audio Connection & Client
+    // Setup Audio Multiplexer with Robot Audio Input
     using namespace Audio;
     AudioEngineMessageHandler* engineMessageHandler = new AudioEngineMessageHandler();
-    AudioEngineClientConnection* engineConnection = new AudioEngineClientConnection( engineMessageHandler );
-    // Transfer ownership of connection to Audio Server
-    auto audioServer = _context->GetAudioServer();
-    if (audioServer) {
-      audioServer->RegisterClientConnection( engineConnection );
+    AudioEngineInput* engineInput = new AudioEngineInput( engineMessageHandler );
+    // Transfer ownership of Input to Audio Multiplexer
+    auto audioMux = _context->GetAudioMultiplexer();
+    if (audioMux) {
+      audioMux->RegisterInput( engineInput );
     }
     
-    // Set Robot Audio Client Message Handler to link to Connection and Robot Audio Buffer ( Audio played on Robot )
-    robot->GetRobotAudioClient()->SetMessageHandler( engineConnection->GetMessageHandler() );
+    // Set Robot Audio Client Message Handler to link to Input and Robot Audio Buffer ( Audio played on Robot )
+    robot->GetRobotAudioClient()->SetMessageHandler( engineInput->GetMessageHandler() );
   }
   
   return lastResult;
@@ -695,8 +696,10 @@ void CozmoEngine::HandleMessage(const ExternalInterface::SetGameBeingPaused& msg
   _isGamePaused = msg.isPaused;
   
   // Update Audio
-  if (nullptr != _context->GetAudioServer()) {
-    _context->GetAudioServer()->GetAudioController()->AppIsInFocus(!_isGamePaused);
+  const auto audioMux = _context->GetAudioMultiplexer();
+  if (nullptr != audioMux) {
+    auto audioCtrl = static_cast<Audio::CozmoAudioController*>( audioMux->GetAudioController() );
+    audioCtrl->AppIsInFocus(!_isGamePaused);
   }
 }
 

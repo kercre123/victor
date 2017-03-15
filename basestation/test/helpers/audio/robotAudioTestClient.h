@@ -28,7 +28,7 @@ public:
   RobotAudioTestClient( );
 
   // The the audio buffer for the corresponding Game Object
-  RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject ) override;
+  RobotAudioBuffer* GetRobotAudiobuffer( AudioMetaData::GameObjectType gameObject ) override;
 
 private:
   RobotAudioTestBuffer _robotAudioTestBuffer;

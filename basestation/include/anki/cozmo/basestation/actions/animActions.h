@@ -117,15 +117,15 @@ namespace Anki {
       // Play Audio Event
       // TODO: Add bool to set if caller want's to block "wait" until audio is completed
       DeviceAudioAction(Robot& robot,
-                        const Audio::GameEvent::GenericEvent event,
-                        const Audio::GameObjectType gameObj,
+                        const AudioMetaData::GameEvent::GenericEvent event,
+                        const AudioMetaData::GameObjectType gameObj,
                         const bool waitUntilDone = false);
       
       // Stop All Events on Game Object, pass in Invalid to stop all audio
-      DeviceAudioAction(Robot& robot, const Audio::GameObjectType gameObj = Audio::GameObjectType::Invalid);
+      DeviceAudioAction(Robot& robot, const AudioMetaData::GameObjectType gameObj = AudioMetaData::GameObjectType::Invalid);
       
       // Change Music state
-      DeviceAudioAction(Robot& robot, const Audio::GameState::Music state);
+      DeviceAudioAction(Robot& robot, const AudioMetaData::GameState::Music state);
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
@@ -140,13 +140,13 @@ namespace Anki {
         SetState,
       };
       
-      AudioActionType                   _actionType;
-      bool                              _isCompleted    = false;
-      bool                              _waitUntilDone  = false;
-      Audio::GameEvent::GenericEvent    _event          = Audio::GameEvent::GenericEvent::Invalid;
-      Audio::GameObjectType             _gameObj        = Audio::GameObjectType::Invalid;
-      Audio::GameState::StateGroupType  _stateGroup     = Audio::GameState::StateGroupType::Invalid;
-      Audio::GameState::GenericState    _state          = Audio::GameState::GenericState::Invalid;
+      AudioActionType _actionType;
+      bool            _isCompleted    = false;
+      bool            _waitUntilDone  = false;
+      AudioMetaData::GameEvent::GenericEvent    _event       = AudioMetaData::GameEvent::GenericEvent::Invalid;
+      AudioMetaData::GameObjectType             _gameObj     = AudioMetaData::GameObjectType::Invalid;
+      AudioMetaData::GameState::StateGroupType  _stateGroup  = AudioMetaData::GameState::StateGroupType::Invalid;
+      AudioMetaData::GameState::GenericState    _state       = AudioMetaData::GameState::GenericState::Invalid;
       
     }; // class PlayAudioAction
 

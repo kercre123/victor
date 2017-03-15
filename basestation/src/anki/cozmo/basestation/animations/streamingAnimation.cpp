@@ -13,12 +13,11 @@
 #include "anki/cozmo/basestation/animations/streamingAnimation.h"
 #include "anki/cozmo/basestation/animations/track.h"
 
-#include "anki/cozmo/basestation/audio/audioDataTypes.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 
-#include "AudioEngine/audioCallback.h"
-
+#include "audioEngine/audioCallback.h"
+#include "audioEngine/audioTools/audioDataTypes.h"
 
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/helpers/templateHelpers.h"
@@ -107,7 +106,7 @@ void AddKeyframeNonNullToList(const IKeyFrame* keyframe, KeyframeList& out_keyfr
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StreamingAnimation::TickPlayhead(KeyframeList& out_keyframeList, const Audio::AudioFrameData*& out_audioFrame)
+void StreamingAnimation::TickPlayhead(KeyframeList& out_keyframeList, const AudioEngine::AudioFrameData*& out_audioFrame)
 {
   // Don't advance past next frame
   DEV_ASSERT(CanPlayNextFrame(), "StreamingAnimation.TickPlayhead.NextFrameIsNotReady");
@@ -202,8 +201,8 @@ void StreamingAnimation::GenerateAudioEventList(Util::RandomGenerator& randomGen
   while (audioTrack.HasFramesLeft()) {
     const RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
     const RobotAudioKeyFrame::AudioRef& audioRef = aFrame.GetAudioRef();
-    const Audio::GameEvent::GenericEvent event = audioRef.audioEvent;
-    if (Audio::GameEvent::GenericEvent::Invalid != event) {
+    const AudioMetaData::GameEvent::GenericEvent event = audioRef.audioEvent;
+    if (AudioMetaData::GameEvent::GenericEvent::Invalid != event) {
       
       // Apply random weight
       bool playEvent = Util::IsFltNear(audioRef.probability, 1.0f);
@@ -315,7 +314,7 @@ void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
       if (playId != AudioEngine::kInvalidAudioPlayingId) {
         // Set event's volume RTPC
         _audioClient->SetCozmoEventParameter(playId,
-                                             Audio::GameParameter::ParameterType::Event_Volume,
+                                             AudioMetaData::GameParameter::ParameterType::Event_Volume,
                                              animationEvent->volume);
       }
       // Processes event NOW, minimize buffering latency
@@ -341,7 +340,7 @@ void StreamingAnimation::GenerateDeviceAudioEvents(Audio::RobotAudioClient* audi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StreamingAnimation::PushFrameIntoBuffer(const Audio::AudioFrameData* frame)
+void StreamingAnimation::PushFrameIntoBuffer(const AudioEngine::AudioFrameData* frame)
 {
   _audioFrames.push_back(frame);
   ++_audioBufferedFrameCount;

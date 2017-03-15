@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Anki.AudioEngine.Multiplexer;
 
 namespace Anki {
   namespace Cozmo {
@@ -11,7 +12,7 @@ namespace Anki {
         public readonly AudioCallbackFlag CallbackType;
         public readonly System.Object Info;
 
-        public CallbackInfo(Anki.Cozmo.Audio.AudioCallback callback) {
+        public CallbackInfo(AudioCallback callback) {
           this.PlayId = callback.callbackId;
           this.CallbackType = AudioCallbackFlag.EventNone;
           this.Info = null;
@@ -44,20 +45,20 @@ namespace Anki {
           }
         }
 
-        public Anki.Cozmo.Audio.AudioCallbackDuration DurationInfo {
-          get { return Info as Anki.Cozmo.Audio.AudioCallbackDuration; }
+        public AudioCallbackDuration DurationInfo {
+          get { return Info as AudioCallbackDuration; }
         }
 
-        public Anki.Cozmo.Audio.AudioCallbackMarker MarkerInfo {
-          get { return Info as Anki.Cozmo.Audio.AudioCallbackMarker; }
+        public AudioCallbackMarker MarkerInfo {
+          get { return Info as AudioCallbackMarker; }
         }
 
-        public Anki.Cozmo.Audio.AudioCallbackComplete CompleteInfo {
-          get { return Info as Anki.Cozmo.Audio.AudioCallbackComplete; }
+        public AudioCallbackComplete CompleteInfo {
+          get { return Info as AudioCallbackComplete; }
         }
 
-        public Anki.Cozmo.Audio.AudioCallbackError ErrorInfo {
-          get { return Info as Anki.Cozmo.Audio.AudioCallbackError; }
+        public AudioCallbackError ErrorInfo {
+          get { return Info as AudioCallbackError; }
         }
       }
 

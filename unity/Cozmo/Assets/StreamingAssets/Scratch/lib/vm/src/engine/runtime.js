@@ -518,43 +518,7 @@ Runtime.prototype.greenFlag = function () {
  * @private
  */
 Runtime.prototype.resetCozmoVariables = function () {
-    this.stackIsWaitingForFace = false;
-    this.stackIsWaitingForCube = false;
-    this.stackIsWaitingForCubeTap = false;
-    this.cozmoSawFace = false;
-    this.cozmoSawCube = false;
-    this.cozmoCubeWasTapped = false;
     this.cozmoDriveSpeed = "slow";
-};
-
-/**
- * onCozmoSawFace method is called from native side when Cozmo sees a face.
- */
-Runtime.prototype.onCozmoSawFace = function() {
-    if (!this.stackIsWaitingForFace) return;
-
-    this.stackIsWaitingForFace = false;
-    this.cozmoSawFace = true;
-};
-
-/**
- * onCozmoSawCube method is called from native side when Cozmo sees a cube.
- */
-Runtime.prototype.onCozmoSawCube = function() {
-    if (!this.stackIsWaitingForCube) return;
-
-    this.stackIsWaitingForCube = false;
-    this.cozmoSawCube = true;
-};
-
-/**
- * onCozmoCubeWasTapped method is called from native side when Cozmo observes a cube tap.
- */
-Runtime.prototype.onCozmoCubeWasTapped = function() {
-    if (!this.stackIsWaitingForCubeTap) return;
-
-    this.stackIsWaitingForCubeTap = false;
-    this.cozmoCubeWasTapped = true;
 };
 
 /**

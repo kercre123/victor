@@ -48,7 +48,7 @@ public class SoundCheckModal : Cozmo.UI.BaseModal {
   }
 
   private void HandlePlayButton() {
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Onboarding_Test_Tone);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Onboarding_Test_Tone);
 
     // TODO: use actual audio finish trigger?
     Invoke("HandlePlaySoundComplete", _SoundCheckAudioDuration);

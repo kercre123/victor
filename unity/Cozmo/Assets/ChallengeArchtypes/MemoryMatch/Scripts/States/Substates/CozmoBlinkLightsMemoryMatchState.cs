@@ -35,7 +35,7 @@ namespace MemoryMatch {
           Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(game.GetAudioForBlock(cubeId));
         }
         else {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Lose);
         }
         game.BlinkLight(cubeId, MemoryMatchGame.kLightBlinkLengthSeconds, Color.black, game.GetColorForBlock(cubeId));
       }

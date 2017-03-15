@@ -96,7 +96,7 @@ namespace MemoryMatch {
     private void PlayerWinHand() {
       _GameInstance.SetCubeLightsGuessRight();
       _GameInstance.ShowCenterResult(true, true);
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
+      GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Round_End);
       AnimationTrigger trigger = AnimationTrigger.MemoryMatchPlayerWinHand;
       if (_GameInstance.IsSoloMode()) {
         trigger = AnimationTrigger.MemoryMatchPlayerWinHandSolo;
@@ -143,7 +143,7 @@ namespace MemoryMatch {
         }
       }
       else {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
+        GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Lose);
         // wants lose when blink done. No input
         _SubState = SubState.WaitForBlinkDone;
       }
