@@ -249,9 +249,9 @@ void RobotDataLoader::LoadAnimationsInternal()
   
   if (IsCustomAnimLoadEnabled())
   {
-    std::string test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
-    if (Util::FileUtils::FileExists(test_anim)) {
-      myWorker.PushJob(test_anim);
+    _test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
+    if (Util::FileUtils::FileExists(_test_anim)) {
+      myWorker.PushJob(_test_anim);
       size += 1;
     }
   }
