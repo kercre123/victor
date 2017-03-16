@@ -166,7 +166,7 @@ static void BackpackButton(void)
       //  break;
     }
   }
-  ConsolePrintf("\r\n");
+  //ConsolePrintf("\r\n");
 }
 
 void DebugEnd(void)
@@ -184,12 +184,24 @@ bool DebugTestDetectDevice(void)
   return getMicroCounter() - start_time > (1000*1000*10);
 }
 
+static void DebugTestBuzzer(void)
+{
+  ConsolePrintf("Debug Test Buzzer: ");
+  for(int x=1; x<=20; x++) {
+    ConsolePrintf("%dkHz,",x);
+    Buzzer(x,100);
+    MicroWait(100*1000);
+  }
+  ConsolePrintf("\r\n");
+}
+
 TestFunction* GetDebugTestFunctions()
 {
   static TestFunction m_debugFunctions[] = 
   {
     DebugStart,
     BackpackLeds,
+    //DebugTestBuzzer,
     BackpackButton,
     DebugEnd,
     NULL
