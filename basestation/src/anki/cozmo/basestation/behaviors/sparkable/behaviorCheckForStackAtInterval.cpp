@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorCheckForStackAtInterval.h"
 
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
@@ -126,7 +127,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(Robot& robo
       ghostPose.GetTranslation().y(),
       ghostPose.GetTranslation().z() + obj->GetDimInParentFrame<'Z'>(ghostPose)});
     
-    robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
+    robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
     
     // use 0 for max turn angle so we only look with the head
     TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
@@ -186,7 +187,7 @@ const ObservableObject* BehaviorCheckForStackAtInterval::GetKnownObject(const Ro
   const ObjectID& objID = GetKnownObjectID(index);
   if ( objID.IsSet() ) {
     // find object currently in world
-    const ObservableObject* ret = robot.GetBlockWorld().GetObjectByID( objID );
+    const ObservableObject* ret = robot.GetBlockWorld().GetLocatedObjectByID( objID );
     return ret;
   } else {
     return nullptr;
@@ -199,20 +200,9 @@ void BehaviorCheckForStackAtInterval::UpdateTargetBlocks(const Robot& robot) con
   
   BlockWorldFilter knownBlockFilter;
   knownBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  knownBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
-                                 {
-                                  // originally we had !known, but if cubes are not at localizable distance, Cozmo
-                                  // never checks back on them, or if you build a tower and doing so they become
-                                  // dirty. Trying Unknown instead
-                                   if(blockPtr->IsPoseStateUnknown()){
-                                     return false;
-                                   }
-                                   
-                                   return true;
-                                 });
  
   std::vector<const ObservableObject*> objectList;
-  robot.GetBlockWorld().FindMatchingObjects(knownBlockFilter, objectList);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(knownBlockFilter, objectList);
   for( const auto& objPtr : objectList ) {
     _knownBlockIDs.emplace_back( objPtr->GetID() );
   }

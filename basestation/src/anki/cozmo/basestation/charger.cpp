@@ -60,8 +60,8 @@ namespace Anki {
 
       // PreActionPose, initialized to be with respect to charger
       Pose3d preActionPose(0, Z_AXIS_3D(),
-                           Point3f{-PreAscentDistance, 0.f, 0.f},
-                           &GetPose());
+                           {0.f, 0.f, -(PreAscentDistance + SlopeLength + PlatformWidth)},
+                           &_marker->GetPose());
       
       if(preActionPose.GetWithRespectTo(_marker->GetPose(), preActionPose) == false) {
         PRINT_NAMED_ERROR("Charger.PreActionPoseError", "Could not get preActionPose w.r.t. front Charger marker");
@@ -87,7 +87,7 @@ namespace Anki {
     }
 
     
-    Pose3d Charger::GetDockedPose() const
+    Pose3d Charger::GetRobotDockedPose() const
     {
       Pose3d pose(M_PI, Z_AXIS_3D(),
                   Point3f{RobotToChargerDistWhenDocked, 0, 0},
@@ -98,16 +98,13 @@ namespace Anki {
       return pose;
     }
     
-    void Charger::SetPoseRelativeToRobot(Robot& robot) // const Pose3d& robotPose, BlockWorld& blockWorld)
+    Pose3d Charger::GetDockPoseRelativeToRobot(const Robot& robot)
     {
-      Pose3d relPose(-M_PI_F, Z_AXIS_3D(),
-                     Point3f{RobotToChargerDistWhenDocked, 0, 0},
-                     &robot.GetPose(),
-                     "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
-      
-      robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(this, relPose, PoseState::Known);
+      return Pose3d(M_PI_F, Z_AXIS_3D(),
+                    Point3f{RobotToChargerDistWhenDocked, 0, 0},
+                    &robot.GetPose(),
+                    "ChargerDockPose");
     }
-    
     
 #if 0
 #pragma mark --- Virtual Method Implementations ---

@@ -279,16 +279,10 @@ ActionResult FlipBlockAction::Init()
   // Incase we are being retried
   _compoundAction.ClearActions();
   
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("FlipBlockAction.Init.NullObject", "ObjectID=%d", _objectID.GetValue());
-    return ActionResult::BAD_OBJECT;
-  }
-  
-  if(object->IsPoseStateUnknown())
-  {
-    PRINT_NAMED_WARNING("FlipBlockAction.Init.UnknownPose", "Object %d pose state is unknown", _objectID.GetValue());
     return ActionResult::BAD_OBJECT;
   }
   
@@ -337,11 +331,11 @@ ActionResult FlipBlockAction::CheckIfDone()
   if(result != ActionResult::RUNNING)
   {
     // By clearing the bottom block the entire stack will get cleared
-    _robot.GetBlockWorld().ClearObject(_objectID);
+    _robot.GetBlockWorld().ClearLocatedObjectByIDInCurOrigin(_objectID);
     return result;
   }
   
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("FlipBlockAction.CheckIfDone.NullObject", "ObjectID=%d", _objectID.GetValue());

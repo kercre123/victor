@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
@@ -55,9 +56,57 @@ void CreateStackBehavior(Robot& robot, IBehavior*& stackBehavior)
   ASSERT_TRUE(stackBehavior != nullptr);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+
+// TODO refactor this because it's also in blockworld unit tests. This should be a helper
+ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ActiveObjectType activeObjectType)
+{
+  // matching activeID happens through objectID automatically on addition
+  const ActiveID activeID = -1;
+  const FactoryID factoryID = 0;
+
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  Anki::Cozmo::ObservableObject* objectPtr = blockWorld.CreateActiveObject(activeObjectType, activeID, factoryID);
+  ANKI_VERIFY(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull", "");
+  
+  // check it currently doesn't exist in BlockWorld
+  {
+    BlockWorldFilter filter;
+    filter.SetAllowedTypes( {objectPtr->GetType()} );
+    filter.SetAllowedFamilies( {objectPtr->GetFamily()} );
+    ObservableObject* sameBlock = blockWorld.FindLocatedMatchingObject(filter);
+    ANKI_VERIFY(nullptr == sameBlock, "CreateObjectLocatedAtOrigin.TypeAlreadyInUse", "");
+  }
+  
+  // set initial pose & ID (that's responsibility of the system creating the object)
+  ANKI_VERIFY(!objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDSet", "");
+  ANKI_VERIFY(!objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.HasValidPose", "");
+  objectPtr->SetID();
+  Anki::Pose3d originPose;
+  originPose.SetParent( robot.GetWorldOrigin() );
+  objectPtr->InitPose( originPose, Anki::PoseState::Known); // posestate could be something else
+  
+  // now they can be added to the world
+  blockWorld.AddLocatedObject(std::shared_ptr<ObservableObject>(objectPtr));
+
+  // need to pretend we observed this object
+  robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr); // this has to be called after AddLocated just because
+  
+  // verify they are there now
+  ANKI_VERIFY(objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDNotset", "");
+  ANKI_VERIFY(objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.InvalidPose", "");
+  ObservableObject* objectInWorld = blockWorld.GetLocatedObjectByID( objectPtr->GetID() );
+  ANKI_VERIFY(objectInWorld == objectPtr, "CreateObjectLocatedAtOrigin.NotSameObject", "");
+  ANKI_VERIFY(nullptr != objectInWorld, "CreateObjectLocatedAtOrigin.NullWorldPointer", "");
+  return objectInWorld;
+}
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SetupStackTest(Robot& robot, IBehavior*& stackBehavior, ObjectID& objID1, ObjectID& objID2)
 {
-  auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();
   
   aiComponent.Init();
@@ -72,18 +121,21 @@ void SetupStackTest(Robot& robot, IBehavior*& stackBehavior, ObjectID& objID1, O
   aiComponent.Update();
   ASSERT_FALSE(stackBehavior->IsRunnable(prereq)) << "behavior should not be runnable without cubes after update";
 
-  // Add two objects
-  objID1 = blockWorld.AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE1);
-  objID2 = blockWorld.AddActiveObject(2, 2, ActiveObjectType::OBJECT_CUBE2);
-
-  ObservableObject* object1 = blockWorld.GetObjectByID(objID1);
-  ASSERT_TRUE(nullptr != object1);
-  
-  ObservableObject* object2 = blockWorld.GetObjectByID(objID2);
-  ASSERT_TRUE(nullptr != object2);
+  auto& blockWorld = robot.GetBlockWorld();
+  blockWorld.AddConnectedActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  blockWorld.AddConnectedActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
 
   aiComponent.Update();
   ASSERT_FALSE(stackBehavior->IsRunnable(prereq)) << "behavior should not be runnable with unknown cubes";
+
+  // Add two objects
+  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE1);
+  ASSERT_TRUE(nullptr != object1);
+  objID1 = object1->GetID();
+  
+  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE2);
+  ASSERT_TRUE(nullptr != object2);
+  objID2 = object2->GetID();
 
   // put two cubes in front of the robot
   {
@@ -132,25 +184,24 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   SetupStackTest(robot, stackBehavior, objID1, objID2);
 
   {
-    ObservableObject* object1 = blockWorld.GetObjectByID(objID1);
+    ObservableObject* object1 = blockWorld.GetLocatedObjectByID(objID1);
     ASSERT_TRUE(object1 != nullptr);
   }
-  robot.SetCarryingObject(objID1);
+  robot.SetCarryingObject(objID1, Vision::MARKER_INVALID);
     
   {
-    ObservableObject* object2 = blockWorld.GetObjectByID(objID2);
+    ObservableObject* object2 = blockWorld.GetLocatedObjectByID(objID2);
     ASSERT_TRUE(object2 != nullptr);
   }
-  bool deleted = blockWorld.DeleteObject(objID2);
-  EXPECT_TRUE(deleted);
+  blockWorld.DeleteLocatedObjectsByID(objID2);
 
   {
-    ObservableObject* object1 = blockWorld.GetObjectByID(objID1);
+    ObservableObject* object1 = blockWorld.GetLocatedObjectByID(objID1);
     ASSERT_TRUE(object1 != nullptr);
   }
 
   {
-    ObservableObject* object2 = blockWorld.GetObjectByID(objID2);
+    ObservableObject* object2 = blockWorld.GetLocatedObjectByID(objID2);
     ASSERT_TRUE(object2 == nullptr) << "object should have been deleted";
   }
 

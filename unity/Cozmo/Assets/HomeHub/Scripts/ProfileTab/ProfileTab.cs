@@ -27,38 +27,12 @@ public class ProfileTab : MonoBehaviour {
   private void Awake() {
     _PlayerName.text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
 
-    int daysWithCozmo = GetDaysWithCozmo();
-    _TimeWithCozmoCountValueLabel.text = daysWithCozmo.ToString();
+    _TimeWithCozmoCountValueLabel.text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DaysWithCozmo.ToString();
 
-    _DailyGoalsCompletedCount.text = TotalDailyGoalsCompleted().ToString();
-    _StreaksCountValueLabel.text = GetLongestStreak().ToString();
+    _DailyGoalsCompletedCount.text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalDailyGoalsCompleted.ToString();
+    _StreaksCountValueLabel.text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.MaximumStreak.ToString();
 
     _EditNameButton.Initialize(HandleEditNameButton, "edit_name_button", "profile_tab");
-  }
-
-  private int GetLongestStreak() {
-    int longestStreak = 1;
-    int streakCounter = 1;
-    for (int i = 1; i < DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count; ++i) {
-      int prevIndex = i - 1;
-      int currIndex = i;
-      DataPersistence.Date prevDate = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions[prevIndex].Date;
-      DataPersistence.Date currDate = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions[currIndex].Date;
-
-      if (prevDate.OffsetDays(1) == currDate) {
-        // we have a streak!
-        streakCounter++;
-        if (streakCounter > longestStreak) {
-          longestStreak = streakCounter;
-        }
-      }
-      else {
-        // we lost a streak...
-        streakCounter = 1;
-      }
-
-    }
-    return longestStreak;
   }
 
   private void HandleEditNameButton() {
@@ -88,27 +62,4 @@ public class ProfileTab : MonoBehaviour {
       UIManager.CloseModal(_ProfileEditNameModalInstance);
     }
   }
-
-  private int GetDaysWithCozmo() {
-    int daysWithCozmo = 0;
-    foreach (DataPersistence.TimelineEntryData sessionEntry in DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions) {
-      if (sessionEntry.HasConnectedToCozmo) {
-        daysWithCozmo++;
-      }
-    }
-    return daysWithCozmo;
-  }
-
-  private int TotalDailyGoalsCompleted() {
-    int dailyGoalsCompleted = 0;
-    foreach (DataPersistence.TimelineEntryData sessionEntry in DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions) {
-      foreach (DailyGoal goal in sessionEntry.DailyGoals) {
-        if (goal.GoalComplete) {
-          dailyGoalsCompleted++;
-        }
-      }
-    }
-    return dailyGoalsCompleted;
-  }
-
 }

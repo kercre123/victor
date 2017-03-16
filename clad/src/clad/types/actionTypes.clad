@@ -105,7 +105,7 @@ structure AnimationCompleted {
 
 // Used by DeviceAudioAction
 structure DeviceAudioCompleted {
-  Audio::GameEvent::GenericEvent audioEvent,
+  AudioMetaData::GameEvent::GenericEvent audioEvent,
 }
 
 // Used by TrackFaceAction and TrackPetFaceAction
@@ -116,6 +116,11 @@ structure TrackFaceCompleted {
 // Used by ReadToolCodeAction
 structure ReadToolCodeCompleted {
   ToolCodeInfo info // info.code will be UnknownTool if failure
+}
+
+// Used by TurnInPlaceAction
+structure TurnInPlaceCompleted {
+  uint_32 relocalizedCnt,  // number of times relocalization occurred during the turn
 }
 
 // Used by actions that don't have extra info on completion
@@ -130,6 +135,7 @@ union ActionCompletedUnion {
   DeviceAudioCompleted        deviceAudioCompleted,
   TrackFaceCompleted          trackFaceCompleted,
   ReadToolCodeCompleted       readToolCodeCompleted,
+  TurnInPlaceCompleted        turnInPlaceCompleted,
   DefaultCompleted            defaultCompleted,
 }
 

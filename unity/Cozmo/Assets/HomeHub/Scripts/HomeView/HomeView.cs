@@ -803,7 +803,7 @@ namespace Cozmo.HomeHub {
         _CurrentChallengeId = data.ChallengeID;
 
         // Hook up callbacks
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Request_Game);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Request_Game);
         _RequestDialog = alertModal;
 
         RobotEngineManager.Instance.RequestGameManager.StartGameRequested();

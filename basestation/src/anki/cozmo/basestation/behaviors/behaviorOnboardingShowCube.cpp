@@ -112,6 +112,7 @@ void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, co
         case ReactionTrigger::RobotOnSide:
         case ReactionTrigger::RobotOnBack:
         case ReactionTrigger::RobotOnFace:
+        case ReactionTrigger::RobotShaken:
         case ReactionTrigger::UnexpectedMovement:
         {
           TransitionToErrorState(State::ErrorCozmo,robot);
@@ -221,7 +222,7 @@ void BehaviorOnboardingShowCube::TransitionToNextState(Robot& robot)
                     bool lightsError = false;
                     if( _targetBlock.IsSet() )
                     {
-                      ObservableObject* block = robot.GetBlockWorld().GetObjectByID(_targetBlock);
+                      ObservableObject* block = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
                       // Block is still visible if we saw it last processed frame.
                       if( block != nullptr && startWaitTime < block->GetLastObservedTime() )
                       {
@@ -376,7 +377,7 @@ bool IsBlockFacingUp(const ObservableObject* block)
 
 void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const ExternalInterface::RobotObservedObject& msg)
 {
-  const ObservableObject* block = robot.GetBlockWorld().GetObjectByID(msg.objectID);
+  const ObservableObject* block = robot.GetBlockWorld().GetLocatedObjectByID(msg.objectID);
 
   if(nullptr == block)
   {

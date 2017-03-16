@@ -26,6 +26,7 @@
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/charger.h"
@@ -72,6 +73,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
@@ -123,7 +125,7 @@ static const TimeStamp_t kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToCo
 
 // Laying flat angles
 static const float kPitchAngleOntreads_rads = DEG_TO_RAD(0);
-static const float kPitchAngleOntreadsTolerence_rads = DEG_TO_RAD(45);
+static const float kPitchAngleOntreadsTolerance_rads = DEG_TO_RAD(45);
 
 //Constants for on back
 static const float kPitchAngleOnBack_rads = DEG_TO_RAD(74.5f);
@@ -316,10 +318,13 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   {
     _visionComponent->Init(_context->GetDataLoader()->GetRobotVisionConfig());
   }
-      
+  
+  
+# ifndef COZMO_V2   // TODO: RobotDataBackupManager needs to reside on the Unity-side for Cozmo 2.0
   // Read all neccessary data off the robot and back it up
   // Potentially duplicates some reads like FaceAlbumData
   _nvStorageComponent->GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
+# endif
 
   // initialize AI
   _aiComponent->Init();
@@ -362,40 +367,60 @@ Robot::~Robot()
     
 void Robot::SetOnCharger(bool onCharger)
 {
-  ObservableObject* object = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-  Charger* charger = dynamic_cast<Charger*>(object);
-  if (onCharger && !_isOnCharger)
+  // If we are being set on a charger, we can update the instance of the charger in the current world to
+  // match the robot. If we don't have an instance, we can add an instance now
+  if ( onCharger )
   {
-    // If we don't actually have a charger, add an unconnected one now
-    if (nullptr == charger)
+    const Pose3d& poseWrtRobot = Charger::GetDockPoseRelativeToRobot(*this);
+    
+    // find instance in current origin
+    BlockWorldFilter filter;
+    filter.AddAllowedFamily(ObjectFamily::Charger);
+    filter.AddAllowedType(ObjectType::Charger_Basic);
+    ObservableObject* chargerInstance = GetBlockWorld().FindLocatedMatchingObject(filter);
+    if ( nullptr == chargerInstance )
     {
-      ObjectID newObjID = AddUnconnectedCharger();
-      charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObjID));
-      if(nullptr == charger)
-      {
-        PRINT_NAMED_ERROR("Robot.SetOnCharger.FailedToAddUnconnectedCharger", "NewID=%d",
-                          newObjID.GetValue());
+      // there's currently no located instance, we need to create one.
+      ActiveID unconnectedActiveID = ObservableObject::InvalidActiveID;
+      FactoryID unconnectedFactoryID = ObservableObject::InvalidFactoryID;
+      chargerInstance = GetBlockWorld().CreateActiveObject(ActiveObjectType::OBJECT_CHARGER,
+                                                           unconnectedActiveID, unconnectedFactoryID);
+      
+
+      // check if there is a connected instance, because we can inherit its ID (objectID)
+      // note that setting ActiveID and FactoryID is responsibility of whenever we Add the object to the BlockWorld
+      ActiveObject* connectedInstance = GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+      if ( nullptr != connectedInstance ) {
+        chargerInstance->CopyID(connectedInstance);
+      } else {
+        chargerInstance->SetID();
       }
     }
-    
+
+    // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
+    // that timestamp refers to visual observations only (TODO: maybe that should be more explicit or any
+    // observation should set that timestamp)
+    GetObjectPoseConfirmer().AddRobotRelativeObservation(chargerInstance, poseWrtRobot, PoseState::Known);
+  }
+  
+  // log events when onCharger status changes
+  if (onCharger && !_isOnCharger)
+  {
     // if we are on the charger, we must also be on the charger platform.
     SetOnChargerPlatform(true);
-          
+	  
+    // offCharger -> onCharger
     LOG_EVENT("robot.on_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
-        
   }
   else if (!onCharger && _isOnCharger)
   {
+    // onCharger -> offCharger
     LOG_EVENT("robot.off_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
   }
-      
-  if( onCharger && nullptr != charger )
-  {
-    charger->SetPoseRelativeToRobot(*this);
-  }
-      
+
+  // update flag now (note this gets updated after notifying; this might be an issue for listerners)
   _isOnCharger = onCharger;
 }
 
@@ -415,43 +440,6 @@ void Robot::SetOnChargerPlatform(bool onPlatform)
   }
 }
     
-ObjectID Robot::AddUnconnectedCharger()
-{
-  // ChargerId is unknown because it exists in a previous frame but not this one
-
-  BlockWorldFilter filter;
-  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn(nullptr);
-  filter.AddAllowedType(ObjectType::Charger_Basic);
-  
-  std::vector<ObservableObject *> matchingObjects;
-  GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
-  
-  ObservableObject* obj = nullptr;
-  for (auto object : matchingObjects)
-  {
-    if (obj != nullptr)
-    {
-      DEV_ASSERT(object->GetID() == obj->GetID(), "Matching charger ids not equal");
-    }
-    obj = object;
-  }
-  
-  ObjectID objID;
-  s32 activeId = -1;
-  if (obj != nullptr)
-  {
-    activeId = obj->GetActiveID();
-  }
-  
-  // Copying existing object's activeId and objectId if an existing object was found
-  objID = GetBlockWorld().AddActiveObject(activeId, 0, ActiveObjectType::OBJECT_CHARGER, obj);
-  
-  SetCharger(objID);
-  
-  return _chargerID;
-}
-
 void Robot::IncrementSuspiciousCliffCount()
 {
   if (_cliffDetectThreshold > kCliffSensorMinDetectionThresh) {
@@ -560,7 +548,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   //////////
   
   //// COZMO_UP_RIGHT
-  const bool currOntreads = std::abs(GetPitchAngle().ToDouble() - kPitchAngleOntreads_rads) <= kPitchAngleOntreadsTolerence_rads;
+  const bool currOntreads = std::abs(GetPitchAngle().ToDouble() - kPitchAngleOntreads_rads) <= kPitchAngleOntreadsTolerance_rads;
   
   //// COZMO_ON_BACK
   const float backAngle = IsPhysical() ? kPitchAngleOnBack_rads : kPitchAngleOnBack_sim_rads;
@@ -851,6 +839,8 @@ void Robot::Delocalize(bool isCarryingObject)
   // notify behavior whiteboard
   _aiComponent->OnRobotDelocalized();
   
+  _behaviorMgr->OnRobotDelocalized();
+  
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDelocalized(GetID())));
@@ -1032,6 +1022,15 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _robotAccel = msg.accel;
   _robotGyro = msg.gyro;
   
+  _robotAccelMagnitude = sqrtf(_robotAccel.x * _robotAccel.x
+                             + _robotAccel.y * _robotAccel.y
+                             + _robotAccel.z * _robotAccel.z);
+  
+  const float kAccelFilterConstant = 0.95f; // between 0 and 1
+  _robotAccelMagnitudeFiltered = (kAccelFilterConstant * _robotAccelMagnitudeFiltered)
+                              + ((1.0f - kAccelFilterConstant) * _robotAccelMagnitude);
+  
+  
   // Update cozmo's internal offTreadsState knowledge
   const OffTreadsState prevOffTreadsState = _offTreadsState;
   const bool wasTreadsStateUpdated = CheckAndUpdateTreadsState(msg);
@@ -1087,58 +1086,59 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     Pose3d newPose;
         
     if(IsOnRamp()) {
-          
-      // Sanity check:
-      DEV_ASSERT(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
-          
-      // Don't update pose history while on a ramp.
-      // Instead, just compute how far the robot thinks it has gone (in the plane)
-      // and compare that to where it was when it started traversing the ramp.
-      // Adjust according to the angle of the ramp we know it's on.
-          
-      const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
-          
-      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld->GetObjectByID(_rampID, ObjectFamily::Ramp));
-      if(ramp == nullptr) {
-        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
-                          "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.",
-                          _ID, _rampID.GetValue());
-        return RESULT_FAIL;
-      }
-          
-      // Progress must be along ramp's direction (init assuming ascent)
-      Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>();
-          
-      // Initialize tilt angle assuming we are ascending
-      Radians tiltAngle = ramp->GetAngle();
-          
-      switch(_rampDirection)
-      {
-        case Ramp::DESCENDING:
-          tiltAngle    *= -1.f;
-          headingAngle += M_PI_F;
-          break;
-        case Ramp::ASCENDING:
-          break;
-              
-        default:
-          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
-                            "Robot is on a ramp, expecting the ramp direction to be either "
-                            "ASCEND or DESCENDING, not %d", _rampDirection);
-          return RESULT_FAIL;
-      }
-
-      const f32 heightAdjust = distanceTraveled*sin(tiltAngle.ToFloat());
-      const Point3f newTranslation(_rampStartPosition.x() + distanceTraveled*cos(headingAngle.ToFloat()),
-                                   _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
-                                   _rampStartHeight + heightAdjust);
-          
-      const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
-      const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
-          
-      newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
-      //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
-          
+// Unsupported, remove in new PR
+//
+//      // Sanity check:
+//      DEV_ASSERT(_rampID.IsSet(), "Robot.UpdateFullRobotState.InvalidRampID");
+//          
+//      // Don't update pose history while on a ramp.
+//      // Instead, just compute how far the robot thinks it has gone (in the plane)
+//      // and compare that to where it was when it started traversing the ramp.
+//      // Adjust according to the angle of the ramp we know it's on.
+//          
+//      const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
+//          
+//      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld->GetLocatedObjectByID(_rampID, ObjectFamily::Ramp));
+//      if(ramp == nullptr) {
+//        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
+//                          "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.",
+//                          _ID, _rampID.GetValue());
+//        return RESULT_FAIL;
+//      }
+//          
+//      // Progress must be along ramp's direction (init assuming ascent)
+//      Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>();
+//          
+//      // Initialize tilt angle assuming we are ascending
+//      Radians tiltAngle = ramp->GetAngle();
+//          
+//      switch(_rampDirection)
+//      {
+//        case Ramp::DESCENDING:
+//          tiltAngle    *= -1.f;
+//          headingAngle += M_PI_F;
+//          break;
+//        case Ramp::ASCENDING:
+//          break;
+//              
+//        default:
+//          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
+//                            "Robot is on a ramp, expecting the ramp direction to be either "
+//                            "ASCEND or DESCENDING, not %d", _rampDirection);
+//          return RESULT_FAIL;
+//      }
+//
+//      const f32 heightAdjust = distanceTraveled*sin(tiltAngle.ToFloat());
+//      const Point3f newTranslation(_rampStartPosition.x() + distanceTraveled*cos(headingAngle.ToFloat()),
+//                                   _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
+//                                   _rampStartHeight + heightAdjust);
+//          
+//      const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
+//      const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
+//          
+//      newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
+//      //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
+      
     } else {
       // This is "normal" mode, where we udpate pose history based on the
       // reported odometry from the physical robot
@@ -1399,7 +1399,7 @@ void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
   */
 }
     
-    
+
 Result Robot::Update()
 {
   ANKI_CPU_PROFILE("Robot::Update");
@@ -1440,6 +1440,10 @@ Result Robot::Update()
       
   if(_visionComponent->GetCamera().IsCalibrated())
   {
+#   ifdef COZMO_V2
+    _visionComponent->CaptureAndSendImage();
+#   endif
+    
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
     Result visionResult = _visionComponent->UpdateAllResults();
     if(RESULT_OK != visionResult) {
@@ -1465,8 +1469,8 @@ Result Robot::Update()
   // the charger.
 
   if( _isOnChargerPlatform && _offTreadsState == OffTreadsState::OnTreads ) {  
-    ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-    if( nullptr != charger && !charger->IsPoseStateUnknown() )
+    ObservableObject* charger = GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
+    if( nullptr != charger )
     {
       const bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
       if( !isOnChargerPlatform )
@@ -1870,9 +1874,9 @@ Result Robot::Update()
     BlockWorldFilter filter;
     filter.SetAllowedFamilies({ObjectFamily::LightCube});
     std::vector<ObservableObject*> matchingObjects;
-    GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+    GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects); // note this doesn't retrieve unknowns anymore
     for( const auto obj : matchingObjects ) {
-        const ObservableObject* topObj = GetBlockWorld().FindObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
+        const ObservableObject* topObj = GetBlockWorld().FindLocatedObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
         Pose3d relPose;
         bool gotRelPose = obj->GetPose().GetWithRespectTo(GetPose(), relPose);
 
@@ -1890,7 +1894,7 @@ Result Robot::Update()
                           "block:%d poseState:%8s moving?%d RestingFlat?%d carried?%d poseWRT?%d objOnTop:%d"
                           " z=%6.2f UpAxis:%s CanStack?%d CanPickUp?%d FromGround?%d",
                           obj->GetID().GetValue(),
-                          obj->PoseStateToString( obj->GetPoseState() ),
+                          PoseStateToString( obj->GetPoseState() ),
                           obj->IsMoving(),
                           obj->IsRestingFlat(),
                           (IsCarryingObject() && GetCarryingObject() == obj->GetID()),
@@ -2860,7 +2864,7 @@ Result Robot::SetOnRamp(bool t)
       
   // We are either transition onto or off of a ramp
       
-  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetObjectByID(_rampID, ObjectFamily::Ramp));
+  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetLocatedObjectByID(_rampID, ObjectFamily::Ramp));
   if(ramp == nullptr) {
     PRINT_NAMED_WARNING("Robot.SetOnRamp.NoRampWithID",
                         "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world",
@@ -2934,7 +2938,7 @@ Result Robot::SetPoseOnCharger()
 {
   ANKI_CPU_PROFILE("Robot::SetPoseOnCharger");
   
-  Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger));
+  Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetLocatedObjectByID(_chargerID));
   if(charger == nullptr) {
     PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.NoChargerWithID",
                         "Robot %d has docked to charger, but Charger object with ID=%d not found in the world.",
@@ -2944,7 +2948,7 @@ Result Robot::SetPoseOnCharger()
       
   // Just do an absolute pose update, setting the robot's position to
   // where we "know" he should be when he finishes ascending the charger.
-  Result lastResult = SetNewPose(charger->GetDockedPose().GetWithRespectToOrigin());
+  Result lastResult = SetNewPose(charger->GetRobotDockedPose().GetWithRespectToOrigin());
   if(lastResult != RESULT_OK) {
     PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.SetNewPose",
                         "Robot %d failed to set new pose", _ID);
@@ -2969,8 +2973,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const f32 speed_mmps,
                              const f32 accel_mmps2,
                              const f32 decel_mmps2,
-                             const Vision::KnownMarker* marker,
-                             const Vision::KnownMarker* marker2,
+                             const Vision::KnownMarker::Code markerCode,
+                             const Vision::KnownMarker::Code markerCode2,
                              const DockAction dockAction,
                              const f32 placementOffsetX_mm,
                              const f32 placementOffsetY_mm,
@@ -2984,8 +2988,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                         speed_mmps,
                         accel_mmps2,
                         decel_mmps2,
-                        marker,
-                        marker2,
+                        markerCode,
+                        markerCode2,
                         dockAction,
                         0, 0, std::numeric_limits<u8>::max(),
                         placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
@@ -2999,8 +3003,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const f32 speed_mmps,
                              const f32 accel_mmps2,
                              const f32 decel_mmps2,
-                             const Vision::KnownMarker* marker,
-                             const Vision::KnownMarker* marker2,
+                             const Vision::KnownMarker::Code markerCode,
+                             const Vision::KnownMarker::Code markerCode2,
                              const DockAction dockAction,
                              const u16 image_pixel_x,
                              const u16 image_pixel_y,
@@ -3013,30 +3017,48 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const DockingMethod dockingMethod,
                              const bool doLiftLoadCheck)
 {
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(objectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetLocatedObjectByID(objectID));
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.DockWithObject.ObjectDoesNotExist",
                       "Object with ID=%d no longer exists for docking.", objectID.GetValue());
     return RESULT_FAIL;
   }
       
-  DEV_ASSERT(marker != nullptr, "Robot.DockWithObject.InvalidMarker");
-      
   // Need to store these so that when we receive notice from the physical
   // robot that it has picked up an object we can transition the docking
   // object to being carried, using PickUpDockObject()
-  _dockObjectID = objectID;
-  _dockMarker   = marker;
-      
+  _dockObjectID   = objectID;
+  _dockMarkerCode = markerCode;
+
+  // get the marker from the code
+  const auto& markersWithCode = object->GetMarkersWithCode(markerCode);
+  if ( markersWithCode.empty() ) {
+    PRINT_NAMED_ERROR("Robot.DockWithObject.NoMarkerWithCode",
+                      "No marker found with that code.");
+    return RESULT_FAIL;
+  }
+  
+  // notify if we have more than one, since we are going to assume that any is fine to use its pose
+  // we currently don't have this, so treat as warning. But if we ever allow, make sure that they are
+  // simetrical with respect to the object
+  const bool hasMultipleMarkers = (markersWithCode.size() > 1);
+  if(hasMultipleMarkers) {
+    PRINT_NAMED_WARNING("Robot.DockWithObject.MultipleMarkersForCode",
+                        "Multiple markers found for code '%d'. Using first for lift attachment", markerCode);
+  }
+  
+  const Vision::KnownMarker* dockMarker = markersWithCode[0];
+  DEV_ASSERT(dockMarker != nullptr, "Robot.DockWithObject.InvalidMarker");
+  
   // Dock marker has to be a child of the dock block
-  if(marker->GetPose().GetParent() != &object->GetPose()) {
+  if(dockMarker->GetPose().GetParent() != &object->GetPose()) {
     PRINT_NAMED_ERROR("Robot.DockWithObject.MarkerNotOnObject",
                       "Specified dock marker must be a child of the specified dock object.");
     return RESULT_FAIL;
   }
 
   // Mark as dirty so that the robot no longer localizes to this object
-  GetObjectPoseConfirmer().SetPoseState(object, PoseState::Dirty);
+  GetObjectPoseConfirmer().MarkObjectDirty(object);
       
   _usingManualPathSpeed = useManualSpeed;
   _lastPickOrPlaceSucceeded = false;
@@ -3065,7 +3087,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
                                dockAction == DockAction::DA_CROSS_BRIDGE);
         
     // Tell the VisionSystem to start tracking this marker:
-    _visionComponent->SetMarkerToTrack(marker->GetCode(), marker->GetSize(),
+    _visionComponent->SetMarkerToTrack(dockMarker->GetCode(), dockMarker->GetSize(),
                                           image_pixel_x, image_pixel_y, checkAngleX,
                                           placementOffsetX_mm, placementOffsetY_mm,
                                           placementOffsetAngle_rad);
@@ -3092,9 +3114,9 @@ bool Robot::IsCarryingObject(const ObjectID& objectID) const
   return _carryingObjectID == objectID || _carryingObjectOnTopID == objectID;
 }
 
-void Robot::SetCarryingObject(ObjectID carryObjectID)
+void Robot::SetCarryingObject(ObjectID carryObjectID, Vision::Marker::Code atMarkerCode)
 {
-  ObservableObject* object = _blockWorld->GetObjectByID(carryObjectID);
+  ObservableObject* object = _blockWorld->GetLocatedObjectByID(carryObjectID);
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.SetCarryingObject.NullCarryObject",
                       "Object %d no longer exists in the world. Can't set it as robot's carried object.",
@@ -3103,6 +3125,7 @@ void Robot::SetCarryingObject(ObjectID carryObjectID)
   else
   {
     _carryingObjectID = carryObjectID;
+    _carryingMarkerCode = atMarkerCode;
     
     // Don't remain localized to an object if we are now carrying it
     if(_carryingObjectID == GetLocalizedTo())
@@ -3132,7 +3155,7 @@ void Robot::UnSetCarryingObjects(bool topOnly)
       continue;
     }
         
-    ObservableObject* carriedObject = _blockWorld->GetObjectByID(objID);
+    ObservableObject* carriedObject = _blockWorld->GetLocatedObjectByID(objID);
     if(carriedObject == nullptr) {
       PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects.NullObject",
                         "Object %d robot %d thought it was carrying no longer exists in the world.",
@@ -3154,23 +3177,17 @@ void Robot::UnSetCarryingObjects(bool topOnly)
     }
   }
 
+  // this method should not affect the objects pose or pose state; just clear the IDs
+
   if (!topOnly) {
     // Tell the robot it's not carrying anything
     if (_carryingObjectID.IsSet()) {
-      
-      // Since the PoseState of an object on the lift is Known, make it Unknown.
-      // here when it's detached from the lift so that Cozmo doesn't try to localize to it.
-      ObservableObject* carriedObject = _blockWorld->GetObjectByID(_carryingObjectID);
-      if (nullptr != carriedObject) {
-        PRINT_NAMED_INFO("Robot.UnSetCarryingObjects.SettingUnknownPoseState", "");
-        GetObjectPoseConfirmer().MarkObjectUnknown(carriedObject);
-      }
-      
       SendSetCarryState(CarryState::CARRY_NONE);
     }
 
     // Even if the above failed, still mark the robot's carry ID as unset
     _carryingObjectID.UnSet();
+    _carryingMarkerCode = Vision::MARKER_INVALID;
   }
   _carryingObjectOnTopID.UnSet();
 }
@@ -3186,33 +3203,46 @@ void Robot::UnSetCarryObject(ObjectID objID)
 }
     
     
-Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
+Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker::Code atMarkerCode)
 {
   if(!objectID.IsSet()) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectIDNotSet",
                       "No docking object ID set, but told to pick one up.");
     return RESULT_FAIL;
   }
-      
-  if(objectMarker == nullptr) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoDockMarkerSet",
-                      "No docking marker set, but told to pick up object.");
-    return RESULT_FAIL;
-  }
-      
+  
   if(IsCarryingObject()) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.AlreadyCarryingObject",
                       "Already carrying an object, but told to pick one up.");
     return RESULT_FAIL;
   }
       
-  ObservableObject* object = _blockWorld->GetObjectByID(objectID);
+  ObservableObject* object = _blockWorld->GetLocatedObjectByID(objectID);
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
                       "Dock object with ID=%d no longer exists for picking up.", objectID.GetValue());
     return RESULT_FAIL;
   }
-      
+  
+  // get the marker from the code
+  const auto& markersWithCode = object->GetMarkersWithCode(atMarkerCode);
+  if ( markersWithCode.empty() ) {
+    PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoMarkerWithCode",
+                      "No marker found with that code.");
+    return RESULT_FAIL;
+  }
+  
+  // notify if we have more than one, since we are going to assume that any is fine to use its pose
+  // we currently don't have this, so treat as warning. But if we ever allow, make sure that they are
+  // simetrical with respect to the object
+  const bool hasMultipleMarkers = (markersWithCode.size() > 1);
+  if(hasMultipleMarkers) {
+    PRINT_NAMED_WARNING("Robot.PickUpDockObject.MultipleMarkersForCode",
+                        "Multiple markers found for code '%d'. Using first for lift attachment", atMarkerCode);
+  }
+  
+  const Vision::KnownMarker* attachmentMarker = markersWithCode[0];
+  
   // Base the object's pose relative to the lift on how far away the dock
   // marker is from the center of the block
   // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
@@ -3223,14 +3253,14 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
     return RESULT_FAIL;
   }
       
-  objectPoseWrtLiftPose.SetTranslation({objectMarker->GetPose().GetTranslation().Length() +
+  objectPoseWrtLiftPose.SetTranslation({attachmentMarker->GetPose().GetTranslation().Length() +
         LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f});
 
   // If we know there's an object on top of the object we are picking up,
   // mark it as being carried too
   // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
 
-  ObservableObject* objectOnTop = _blockWorld->FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+  ObservableObject* objectOnTop = _blockWorld->FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
   if(objectOnTop != nullptr)
   {
     Pose3d onTopPoseWrtCarriedPose;
@@ -3264,8 +3294,11 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
     _carryingObjectOnTopID.UnSet();
   }
       
-  SetCarryingObject(objectID); // also marks the object as carried
-  _carryingMarker   = objectMarker;
+  SetCarryingObject(objectID, atMarkerCode); // also marks the object as carried
+  
+  // Robot may have just destroyed a configuration
+  // update the configuration manager
+  GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
   
   // Don't actually change the object's pose until we've checked for objects on top
   Result poseResult = GetObjectPoseConfirmer().AddLiftRelativeObservation(object, objectPoseWrtLiftPose);
@@ -3280,7 +3313,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
 } // AttachObjectToLift()
     
     
-Result Robot::SetCarriedObjectAsUnattached(bool clearObjects)
+Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
 {
   if(IsCarryingObject() == false) {
     PRINT_NAMED_WARNING("Robot.SetCarriedObjectAsUnattached.CarryingObjectNotSpecified",
@@ -3289,7 +3322,7 @@ Result Robot::SetCarriedObjectAsUnattached(bool clearObjects)
     return RESULT_FAIL;
   }
       
-  ObservableObject* object = _blockWorld->GetObjectByID(_carryingObjectID);
+  ObservableObject* object = _blockWorld->GetLocatedObjectByID(_carryingObjectID);
       
   if(object == nullptr)
   {
@@ -3306,7 +3339,7 @@ Result Robot::SetCarriedObjectAsUnattached(bool clearObjects)
     return RESULT_FAIL;
   }
   
-  // Initially just mark the pose as Dirty. Iff clearObject=true, then the ClearObject
+  // Initially just mark the pose as Dirty. Iff deleteLocatedObjects=true, then the ClearObject
   // call at the end will mark as Unknown. This is necessary because there are some
   // unfortunate ordering dependencies with how we set the pose, set the pose state, and
   // unset the carrying objects below. It's safer to do all of that, and _then_
@@ -3328,44 +3361,13 @@ Result Robot::SetCarriedObjectAsUnattached(bool clearObjects)
   // Store the object IDs we were carrying before we unset them so we can clear them later if needed
   auto carriedObjectIDs = GetCarryingObjects();
   
-  UnSetCarryingObjects(); 
-  _carryingMarker = nullptr;
+  UnSetCarryingObjects();  
       
-  if(_carryingObjectOnTopID.IsSet()) {
-    ObservableObject* objectOnTop = _blockWorld->GetObjectByID(_carryingObjectOnTopID);
-    if(objectOnTop == nullptr)
-    {
-      // This really should not happen.  How can a object being carried get deleted?
-      PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached",
-                        "Object on top of carrying object with ID=%d no longer exists.",
-                        _carryingObjectOnTopID.GetValue());
-      return RESULT_FAIL;
-    }
-        
-    Pose3d placedPoseOnTop;
-    if(objectOnTop->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPoseOnTop) == false) {
-      PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
-                        "Could not get carrying object's pose relative to robot's origin.");
-      return RESULT_FAIL;
-    }
-    
-    Result poseResult = GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, placedPoseOnTop, object);
-    if(RESULT_OK != poseResult)
-    {
-      // TODO: warn / error
-      return poseResult;
-    }
-
-    _carryingObjectOnTopID.UnSet();
-    PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached", "Updated object %d on top of carried object.",
-                     objectOnTop->GetID().GetValue());
-  }
-  
-  if(clearObjects)
+  if(deleteLocatedObjects)
   {
     for(auto const& objectID : carriedObjectIDs)
     {
-      GetBlockWorld().ClearObject(objectID); // Marks as unknown
+      GetBlockWorld().DeleteLocatedObjectByIDInCurOrigin(objectID);
     }
   }
     
@@ -3385,8 +3387,7 @@ bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& 
   }
 
   // check that the object is ready to place on top of
-  if( object.IsPoseStateUnknown() ||
-      !object.IsRestingFlat() ||
+  if( !object.IsRestingFlat() ||
       (IsCarryingObject() && GetCarryingObject() == object.GetID()) ) {
     return false;
   }
@@ -3397,7 +3398,7 @@ bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& 
   }
 
   // check if it has something on top
-  const ObservableObject* objectOnTop = GetBlockWorld().FindObjectOnTopOf(object, STACKED_HEIGHT_TOL_MM);
+  const ObservableObject* objectOnTop = GetBlockWorld().FindLocatedObjectOnTopOf(object, STACKED_HEIGHT_TOL_MM);
   if ( nullptr != objectOnTop ) {
     return false;
   }

@@ -22,7 +22,7 @@
 #include "anki/cozmo/basestation/animation/animation.h"
 #include "clad/audio/audioCallbackMessage.h"
 #include "clad/audio/messageAudioClient.h"
-#include "AudioEngine/audioCallback.h"
+#include "audioEngine/audioCallback.h"
 #include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -40,7 +40,7 @@ namespace Audio {
 CONSOLE_VAR(bool, kEnableAudioEventProbability, "RobotAudioAnimation", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioAnimation::RobotAudioAnimation( GameObjectType gameObject, Util::RandomGenerator* randomGenerator )
+RobotAudioAnimation::RobotAudioAnimation( AudioMetaData::GameObjectType gameObject, Util::RandomGenerator* randomGenerator )
 : _gameObj( gameObject )
 , _randomGenerator( randomGenerator )
 {
@@ -171,8 +171,8 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   while ( audioTrack.HasFramesLeft() ) {
     const RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
     const RobotAudioKeyFrame::AudioRef& audioRef = aFrame.GetAudioRef();
-    const GameEvent::GenericEvent event = audioRef.audioEvent;
-    if ( GameEvent::GenericEvent::Invalid != event ) {
+    const auto event = audioRef.audioEvent;
+    if ( AudioMetaData::GameEvent::GenericEvent::Invalid != event ) {
       
       // Apply random weight if event probability is allowed
       if ( allowEventProbability && !Util::IsFltNear( audioRef.probability, 1.0f ) ) {
@@ -205,7 +205,7 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   _audioClient = audioClient;
   
   // HACK: Don't need Audio buffer for playing on device
-  if (_gameObj != GameObjectType::Cozmo_OnDevice) {
+  if (_gameObj != AudioMetaData::GameObjectType::Cozmo_OnDevice) {
     // When playing animation on robot get audio buffer
     if ( _audioClient != nullptr ) {
       _audioBuffer = _audioClient->GetRobotAudiobuffer( _gameObj );

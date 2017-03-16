@@ -102,7 +102,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
   const ObjectID lastTopID = _targetBlockTop;
   _targetBlockTop.UnSet();
   if( robot.IsCarryingObject() ) {
-    const ObservableObject* carriedObject = robot.GetBlockWorld().GetObjectByID( robot.GetCarryingObject() );
+    const ObservableObject* carriedObject = robot.GetBlockWorld().GetLocatedObjectByID( robot.GetCarryingObject() );
 
     if( nullptr != carriedObject ) {
       const bool forFreeplay = true;
@@ -127,7 +127,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
   }
 
   if( lastTopID.IsSet() && ! _targetBlockTop.IsSet() ) {
-    const ObservableObject* lastTop = robot.GetBlockWorld().GetObjectByID(lastTopID);
+    const ObservableObject* lastTop = robot.GetBlockWorld().GetLocatedObjectByID(lastTopID);
     if( nullptr == lastTop ) {
       PRINT_NAMED_DEBUG("BehaviorStackBlocks.UpdateTargets.LostTopBlock.null",
                         "last top (%d) must have been deleted",
@@ -138,14 +138,14 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
     }
   }
 
-  const ObservableObject* bottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
+  const ObservableObject* bottomObject = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(),
                                                                              *_blockworldFilterForBottom);
   if( nullptr != bottomObject ) {
     _targetBlockBottom = bottomObject->GetID();
   }
   else {
     if( _targetBlockBottom.IsSet() ) {
-      const ObservableObject* oldBottom = robot.GetBlockWorld().GetObjectByID(_targetBlockBottom);
+      const ObservableObject* oldBottom = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
       if( nullptr == oldBottom ) {
         PRINT_NAMED_DEBUG("BehaviorStackBlocks.UpdateTargets.LostBottomBlock.null",
                           "last bottom (%d) must have been deleted",
@@ -166,8 +166,7 @@ bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
   const bool upAxisOk = ! isRollingUnlocked ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
   
-  return (obj->GetFamily() == ObjectFamily::LightCube &&
-          !obj->IsPoseStateUnknown() &&
+  return (obj->GetFamily() == ObjectFamily::LightCube &&          
           (upAxisOk || _stackInAnyOrientation));
 }
 
@@ -227,7 +226,7 @@ bool BehaviorStackBlocks::AreBlocksStillValid(const Robot& robot)
   }
       
   if( !robot.IsCarryingObject() ) {
-    const ObservableObject* topObject = robot.GetBlockWorld().GetObjectByID(_targetBlockTop);
+    const ObservableObject* topObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
     if( topObject == nullptr ) {
       PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BlockDeleted",
                        "target block %d has no pointer in blockworld",
@@ -252,7 +251,7 @@ bool BehaviorStackBlocks::AreBlocksStillValid(const Robot& robot)
     }
   }
   
-  const ObservableObject* bottomObject = robot.GetBlockWorld().GetObjectByID(_targetBlockBottom);
+  const ObservableObject* bottomObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
   if( bottomObject == nullptr ) {
     PRINT_NAMED_INFO("BehaviorStackBlocks.BlockDeleted",
                      "target block %d has no pointer in blockworld",
@@ -288,9 +287,9 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
   // Check to see if better bottom block identified for stacking on
   // New bottom must be closer to cozmo and currently visible while the old target base is not
   if(robot.IsCarryingObject()){
-    const ObservableObject* newBottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
+    const ObservableObject* newBottomObject = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(),
                                                                                      *_blockworldFilterForBottom);
-    const ObservableObject* currentTarget = robot.GetBlockWorld().GetObjectByID(_targetBlockBottom);
+    const ObservableObject* currentTarget = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
     
     if( nullptr != newBottomObject && newBottomObject->GetID() != _targetBlockBottom) {
       const bool currentTargetSeenThisFrame = currentTarget != nullptr &&
@@ -423,7 +422,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
                 else
                 {
                   // mark the block as inaccessible if we've retried the appropriate number of times
-                  const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockTop);
+                  const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
                   if(failedObject){
                     robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
                                                                               AIWhiteboard::ObjectUseAction::PickUpObject);
@@ -487,7 +486,7 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                   }
                   else if( resCat == ActionResultCategory::ABORT ) {
                     // mark the block as failed to stack on
-                    const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockBottom);
+                    const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
                     if(failedObject){
                       robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
                                                                                 AIWhiteboard::ObjectUseAction::StackOnObject);
@@ -546,11 +545,12 @@ void BehaviorStackBlocks::ResetBehavior(const Robot& robot)
 
 void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObject* obj) const
 {
+  // this should be helper so that it can be reused
   const char* poseStateStr = "";
   switch(obj->GetPoseState()) {
     case PoseState::Known: poseStateStr = "known"; break;
-    case PoseState::Unknown: poseStateStr = "unknown"; break;
     case PoseState::Dirty: poseStateStr = "dirty"; break;
+    case PoseState::Invalid: poseStateStr = "invalid"; break;
   }
   
   PRINT_NAMED_DEBUG(event,

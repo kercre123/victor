@@ -64,8 +64,11 @@ private:
   const DynamicSingleton& operator=(const DynamicSingleton&) = delete;
 };
 
+template <class ClassType>
+ClassType* DynamicSingleton<ClassType>::_instance = nullptr;
+
 #define ANKIUTIL_FRIEND_SINGLETON(CT) friend class Anki::Util::DynamicSingleton<CT>
-#define ANKIUTIL_DEFINE_SINGLETON_INSTANCE(CT) template<> CT* Anki::Util::DynamicSingleton<CT>::_instance = nullptr
+
 
 } // namespace
 } // namespace

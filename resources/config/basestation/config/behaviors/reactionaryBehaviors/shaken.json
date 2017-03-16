@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "ReactToRobotShaken",
+  "name": "reactToRobotShaken",
+  "displayNameKey":"behavior.ReactToShaken",
+  "disableByDefault": false
+}

@@ -93,7 +93,7 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(Robot& robot)
 {
   CompoundActionSequential* placeAction = new CompoundActionSequential(robot);
   if(robot.GetCarryingObject() != _targetID){
-    ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(robot.GetCarryingObject());
+    ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(robot.GetCarryingObject());
     if(obj != nullptr){
       Vec3f outVector;
       if(ComputeVectorBetween(robot.GetPose(), obj->GetPose(), outVector)){
@@ -105,7 +105,7 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(Robot& robot)
         const bool isAbsolute = true;
         
         // Overshoot the angle to ram by a quarter turn and then place the block down
-        placeAction->AddAction(new TurnInPlaceAction(robot, angle, isAbsolute));
+        placeAction->AddAction(new TurnInPlaceAction(robot, angle.ToFloat(), isAbsolute));
       }
     }
   }
@@ -119,7 +119,7 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(Robot& robot)
 void BehaviorRamIntoBlock::TransitionToTurningToBlock(Robot& robot)
 {
   CompoundActionParallel* action = new CompoundActionParallel(robot, {
-    new TurnTowardsObjectAction(robot, _targetID, M_PI_2),
+    new TurnTowardsObjectAction(robot, _targetID, M_PI),
     new MoveLiftToHeightAction(robot,  MoveLiftToHeightAction::Preset::CARRY)
   });
   StartActing(action, &BehaviorRamIntoBlock::TransitionToRammingIntoBlock);
@@ -130,7 +130,7 @@ void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(Robot& robot)
 {
   SmartDisableReactionTrigger(kReactionsToDisable);
   
-  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_targetID);
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){
     const f32 distToObj = ComputeDistanceBetween(robot.GetPose(), obj->GetPose());
     

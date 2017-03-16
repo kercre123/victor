@@ -184,9 +184,7 @@ void BehaviorLookAround::TransitionToRoaming(Robot& robot)
     Quad2f robotQuad = robot.GetBoundingQuadXY(destPose);
     
     std::vector<ObservableObject*> existingObjects;
-    robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
-                                                   existingObjects,
-                                                   10);
+    robot.GetBlockWorld().FindLocatedIntersectingObjects(robotQuad, existingObjects, 10);
     
     if (existingObjects.empty()) {
       break;
@@ -458,7 +456,7 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
       TransitionToExaminingFoundObject(robot);
     }
 
-    ObservableObject* object = robot.GetBlockWorld().GetObjectByID(msg.objectID);
+    ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(msg.objectID);
     if (nullptr != object)
     {
       UpdateSafeRegionForCube(object->GetPose().GetTranslation());

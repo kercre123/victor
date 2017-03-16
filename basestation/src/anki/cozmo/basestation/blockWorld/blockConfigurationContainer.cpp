@@ -36,7 +36,7 @@ void BlockConfigurationContainer::Update(const Robot& robot)
   BlockWorldFilter blockFilter;
   blockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
   std::vector<const ObservableObject*> allBlocks;
-  robot.GetBlockWorld().FindMatchingObjects(blockFilter, allBlocks);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(blockFilter, allBlocks);
   
   // save the cache as weak pointers and then clear it - any weak pointers
   // not added back in within the loop will automatically be deleted

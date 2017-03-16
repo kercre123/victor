@@ -315,6 +315,7 @@ namespace Anki {
         bool connectWithProfiler = false;
         string assetFolder = null;
         string buildType = null;
+        string scriptEngine = null;
         int i = 0;
 
         while (i < argv.Length) {
@@ -357,6 +358,10 @@ namespace Anki {
             }
           case "--build-type": {
               buildType = argv[i++];
+              break;
+            }
+          case "--script-engine": {
+              scriptEngine = argv[i++];
               break;
             }
           default:
@@ -411,7 +416,8 @@ namespace Anki {
         bool isDebugBuild = config.ToLower() == "debug";
         BuildOptions buildOptions = GetBuildOptions(buildTarget, isDebugBuild, enableDebugging, connectWithProfiler);
 
-        ConfigurePlayerSettings(buildTarget, buildTargetGroup, config);
+        ScriptingImplementation saveScriptingImplementation = (ScriptingImplementation)PlayerSettings.GetPropertyInt("ScriptingBackend", buildTargetGroup);
+        ConfigurePlayerSettings(buildTargetGroup, config, scriptEngine);
 
         // Stop playing
         EditorApplication.isPlaying = false;
@@ -432,6 +438,7 @@ namespace Anki {
           PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
           PlayerSettings.iOS.scriptCallOptimization = saveIOSScriptLevel;
           PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, savePoundDefines);
+          PlayerSettings.SetPropertyInt("ScriptingBackend", (int)saveScriptingImplementation, buildTargetGroup);
           return result;
         }
 
@@ -460,6 +467,7 @@ namespace Anki {
         PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
         PlayerSettings.iOS.scriptCallOptimization = saveIOSScriptLevel;
         PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, savePoundDefines);
+        PlayerSettings.SetPropertyInt("ScriptingBackend", (int)saveScriptingImplementation, buildTargetGroup);
 
         return result;
       }
@@ -522,7 +530,7 @@ namespace Anki {
       // In an ideal world, we would never have to change the player settings.
       // However, on iOS this is necessary to get appropriate debug symbols & C# exception behavior
       // for optimal debugging.
-      private static void ConfigurePlayerSettings(BuildTarget target, BuildTargetGroup buildTargetGroup, string config) {
+      private static void ConfigurePlayerSettings(BuildTargetGroup buildTargetGroup, string config, string scriptEngine) {
 
         // unity keeps this list from last execution. so we will not build on it. we will instead start fresh each time
         //string poundDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
@@ -558,6 +566,11 @@ namespace Anki {
         }
 
         PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, poundDefines);
+
+        if (scriptEngine != null) {
+          ScriptingImplementation si = (scriptEngine == "mono2x" ? ScriptingImplementation.Mono2x : ScriptingImplementation.IL2CPP);
+          PlayerSettings.SetPropertyInt("ScriptingBackend", (int)si, buildTargetGroup);
+        }
       }
 
       // Copies the asset bundles to the target folder

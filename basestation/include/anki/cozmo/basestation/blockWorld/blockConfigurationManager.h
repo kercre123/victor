@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/blockWorld/pyramidConfigurationContainer.h"
 
 #include "util/signals/simpleSignal_fwd.h"
+#include "clad/types/poseStructs.h"
 #include <set>
 #include <map>
 
@@ -52,7 +53,7 @@ public:
 
   // Notify the BlockConfigurationManager that an object's pose has changed and that it should
   // check the object on its next update to see if configurations have been created/destroyed as a result
-  void SetObjectPoseChanged(const ObjectID& objectID){ _objectsPoseChangedThisTick.insert(objectID);}
+  void SetObjectPoseChanged(const ObjectID& objectID, const PoseState newPoseState);
   
   // Update should be called after all block world changes have been made
   // if it has been notified that object poses have changed, it checks whether these

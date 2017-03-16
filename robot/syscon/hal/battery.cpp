@@ -2,6 +2,7 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "timer.h"
+#include "random.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
 #include "messages.h"
@@ -11,13 +12,13 @@
 
 #include "hardware.h"
 
+#include "lights.h"
 #include "backpack.h"
 #include "bluetooth.h"
 #include "cubes.h"
 #include "backpack.h"
 #include "motors.h"
 #include "head.h"
-#include "tasks.h"
 #include "ota.h"
 #include "dtm.h"
 
@@ -123,7 +124,6 @@ static inline void sendPowerStateUpdate()
   msg.operatingMode = active_operating_mode;
   msg.VBatFixed = vBat;
   msg.VExtFixed = vExt;
-  msg.BodyTemp = 0;
   msg.batteryLevel = Battery::getLevel();
   msg.onCharger  = ContactTime > MinContactTime;
   msg.isCharging = isCharging;
@@ -173,6 +173,8 @@ void Battery::init()
   int temp = getADCsample(ANALOG_CLIFF_SENSE, VEXT_SCALE);
 
   startADCsample(ANALOG_CLIFF_SENSE);
+
+  Battery::powerOn();
 }
 
 void Battery::hookButton(bool button_pressed) {
@@ -183,6 +185,8 @@ void Battery::hookButton(bool button_pressed) {
     if (++button_count >= 200) {
       Battery::powerOff();
       NVIC_SystemReset();
+    } else if (current_operating_mode == BODY_LOW_POWER_OPERATING_MODE) {
+      setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
     }
   } else {
     button_count = 0;
@@ -210,6 +214,14 @@ void Battery::updateOperatingMode() {
 
   // Tear down existing mode
   switch (active_operating_mode) {
+    case BODY_LOW_POWER_OPERATING_MODE:
+      nrf_gpio_pin_clear(PIN_VDDs_EN);
+      Bluetooth::shutdown();
+
+      //Head::leaveLowPowerMode();
+      current_operating_mode = BODY_OTA_MODE;
+      break ;
+
     case BODY_BLUETOOTH_OPERATING_MODE:
       Backpack::detachTimer();
       Bluetooth::shutdown();
@@ -231,10 +243,6 @@ void Battery::updateOperatingMode() {
       DTM::stop();
       break ;
 
-    case BODY_IDLE_OPERATING_MODE:
-      nrf_gpio_pin_clear(PIN_VDDs_EN);
-      break ;
-    
     default:
       Bluetooth::shutdown();
       break ;
@@ -276,27 +284,12 @@ void Battery::updateOperatingMode() {
       Battery::powerOff();
       break ;
     
-    default:
-    case BODY_IDLE_OPERATING_MODE:
-      // Turn off encoders
-      nrf_gpio_pin_set(PIN_VDDs_EN);
-      Motors::disable(true);
-      Head::enterLowPowerMode();
-      #ifdef FACTORY
-      g_turnPowerOff = true;
-      #else
-      Battery::powerOff();
-      #endif
-
-      break ;
-
     #ifdef FACTORY
     case BODY_DTM_OPERATING_MODE:
       Backpack::clearLights(BPL_USER);
       Backpack::setLayer(BPL_USER);
 
       Motors::disable(true);
-      Battery::powerOn();
       Backpack::useTimer();
       DTM::start();
 
@@ -337,25 +330,42 @@ void Battery::updateOperatingMode() {
       EnterOTA();
 
       break ;
-    
+
+    case BODY_LOW_POWER_OPERATING_MODE:
+      #ifdef FACTORY
+      g_turnPowerOff = true;
+      #endif
+
+      // Turn off encoders
+      nrf_gpio_pin_set(PIN_VDDs_EN);
+      Lights::setHeadlight(false);
+      Head::enterLowPowerMode();
+      Motors::disable(true);
+
+      NVIC_DisableIRQ(UART0_IRQn);
+      NVIC_DisableIRQ(GPIOTE_IRQn);
+      NVIC_DisableIRQ(RTC1_IRQn);
+
+      Bluetooth::advertise();
+
+      NVIC_EnableIRQ(UART0_IRQn);
+      NVIC_EnableIRQ(GPIOTE_IRQn);
+      NVIC_EnableIRQ(RTC1_IRQn);
+      break ;
+
     case BODY_BLUETOOTH_OPERATING_MODE:
       Backpack::setLayer(BPL_IMPULSE);
       Motors::disable(true);
 
-      Battery::powerOn();
+      NVIC_DisableIRQ(UART0_IRQn);
+      NVIC_DisableIRQ(GPIOTE_IRQn);
+      NVIC_DisableIRQ(RTC1_IRQn);
 
-      // This is temporary until I figure out why this thing is being lame
-      {  
-        NVIC_DisableIRQ(UART0_IRQn);
-        NVIC_DisableIRQ(GPIOTE_IRQn);
-        NVIC_DisableIRQ(RTC1_IRQn);
+      Bluetooth::advertise();
 
-        Bluetooth::advertise();
-
-        NVIC_EnableIRQ(UART0_IRQn);
-        NVIC_EnableIRQ(GPIOTE_IRQn);
-        NVIC_EnableIRQ(RTC1_IRQn);
-      }
+      NVIC_EnableIRQ(UART0_IRQn);
+      NVIC_EnableIRQ(GPIOTE_IRQn);
+      NVIC_EnableIRQ(RTC1_IRQn);
 
       Backpack::useTimer();
 
@@ -381,12 +391,16 @@ void Battery::updateOperatingMode() {
       Backpack::clearLights(BPL_USER);
       Backpack::setLayer(BPL_USER);
 
-      Battery::powerOn();
       Radio::advertise();
 
       Backpack::useTimer();
       break ;
-   }
+
+    default:
+      Battery::powerOff();
+      NVIC_SystemReset();
+      break ;
+  }
 
   active_operating_mode = current_operating_mode;
 }
@@ -446,7 +460,12 @@ static void updateChargeState(Fixed vext) {
   if (!onContacts) {
     ContactTime = 0;
   } else {
-    ContactTime++;
+    if (++ContactTime == MinContactTime) {
+      // Wake if we hopped on the charger
+      if (current_operating_mode == BODY_LOW_POWER_OPERATING_MODE) {
+        setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
+      }
+    }
   }
 
   switch (charge_state) {
@@ -521,14 +540,26 @@ void Battery::manage()
 {
   using namespace Battery;
   static const int LOW_BAT_TIME = CYCLES_MS(60*1000); // 1 minute
+  static const int LOW_POWER_TIME = 5760000; // 8 hours of low power
+  static int low_power_ticks;
 
   // Startup heads up check
   #ifdef FACTORY
-  if (current_operating_mode == BODY_STARTUP && GetCounter() > CYCLES_MS(500)) {
+  if (active_operating_mode == BODY_STARTUP && GetCounter() > CYCLES_MS(500)) {
     Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
   }
   #endif
-  
+
+  // Do a full power down if the robot is in low power mode for too long
+  if (active_operating_mode == BODY_LOW_POWER_OPERATING_MODE) {
+    if (++low_power_ticks >= LOW_POWER_TIME) {
+      powerOff();
+      NVIC_SystemReset();
+    }
+  } else {
+    low_power_ticks = 0;
+  }
+
   if (!NRF_ADC->EVENTS_END) {
     return ;
   }
@@ -584,7 +615,12 @@ void Battery::manage()
         vExt = calcResult(VEXT_SCALE);
         updateChargeState(vExt);
         
-        startADCsample(ANALOG_CLIFF_SENSE);
+        if (active_operating_mode == BODY_LOW_POWER_OPERATING_MODE) {
+          nrf_gpio_pin_clear(PIN_IR_DROP);
+          startADCsample(ANALOG_V_EXT_SENSE);
+        } else {
+          startADCsample(ANALOG_CLIFF_SENSE);
+        }
         break ;
       }
     case ANALOG_CLIFF_SENSE:

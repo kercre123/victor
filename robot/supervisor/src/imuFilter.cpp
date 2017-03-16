@@ -523,9 +523,9 @@ namespace Anki {
           if (!WheelController::AreWheelsMoving() && !WheelController::AreWheelsPowered()) {
             s16 cliffDelta = 0;
             if (cliffValWhileNotMoving_ == 0) {
-              cliffValWhileNotMoving_ = HAL::GetRawCliffData();
+              cliffValWhileNotMoving_ = ProxSensors::GetMinRawCliffValue();
             } else {
-              cliffDelta = ABS(cliffValWhileNotMoving_ - HAL::GetRawCliffData());
+              cliffDelta = ABS(cliffValWhileNotMoving_ - ProxSensors::GetMinRawCliffValue());
             }
             
             cliffBasedPickupDetect = cliffDelta > CLIFF_DELTA_FOR_PICKUP;
@@ -696,6 +696,7 @@ namespace Anki {
       
       void UpdateCameraMotion()
       {
+        #ifndef COZMO_V2
         static u8 cameraMotionDecimationCounter = 0;
         if (cameraMotionDecimationCounter++ > 3 && HAL::IsVideoEnabled())
         {
@@ -707,6 +708,7 @@ namespace Anki {
           RobotInterface::SendMessage(msg);
           cameraMotionDecimationCounter = 0;
         }
+        #endif // ifdef COZMO_V2
       }
 
       Result Update()

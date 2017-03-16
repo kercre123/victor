@@ -184,7 +184,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                                      EnumToString(msg.result));
                     
                     // mark the block as inaccessible
-                    const ObservableObject* failedObject = failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlock);
+                    const ObservableObject* failedObject = failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
                     if(failedObject){
                       robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
                     }

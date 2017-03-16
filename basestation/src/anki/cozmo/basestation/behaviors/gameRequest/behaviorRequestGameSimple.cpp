@@ -344,7 +344,7 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                 }
                 else {
                   // mark the block as unable to pickup
-                  const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(targetBlockID);
+                  const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(targetBlockID);
                   if(failedObject){
                     robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
                   }
@@ -480,7 +480,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
   }
 
   // TODO:(bn) use same motion profile here
-  action->AddAction(new DriveStraightAction(robot, -_afterPlaceBackupDist_mm, -_afterPlaceBackupSpeed_mmps));
+  action->AddAction(new DriveStraightAction(robot, -_afterPlaceBackupDist_mm, _afterPlaceBackupSpeed_mmps));
 
   StartActing(action,
               [this, &robot](ActionResult result) {
@@ -652,7 +652,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
     BlockWorldFilter filter;
     filter.OnlyConsiderLatestUpdate(false);
     filter.SetFilterFcn( [&](const ObservableObject* obj) {
-        if( obj->GetPoseState() != PoseState::Known ) {
+        if( obj->GetPoseState() != PoseState::Known ) { // TODO Brad review this. This is ignoring !Known which is not =Unknown
           // ignore unknown obstacles
           return false;
         }
@@ -676,7 +676,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
       });
 
     std::vector<ObservableObject*> blocks;
-    robot.GetBlockWorld().FindMatchingObjects(filter, blocks);
+    robot.GetBlockWorld().FindLocatedMatchingObjects(filter, blocks);
 
     if(blocks.empty()) {
       targetPoseRet = targetPose;

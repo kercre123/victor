@@ -69,7 +69,7 @@ uint8_t encodeMuLaw(float in_val)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot( Animation* anAnimation,
                                                         RobotAudioClient* audioClient,
-                                                        GameObjectType gameObject,
+                                                        AudioMetaData::GameObjectType gameObject,
                                                         Util::RandomGenerator* randomGenerator )
 : Anki::Cozmo::Audio::RobotAudioAnimation( gameObject, randomGenerator )
 {
@@ -317,7 +317,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
   // Get data from stream
   if ( HasCurrentBufferStream() ) {
     
-    const AudioFrameData* audioFrame = _currentBufferStream->PopRobotAudioFrame();
+    const AudioEngine::AudioFrameData* audioFrame = _currentBufferStream->PopRobotAudioFrame();
     if (nullptr != audioFrame)
     {
       // TEMP: Convert audio frame into correct robot output, this will be done in the Mixing Console at some point
@@ -377,7 +377,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot()
-: Anki::Cozmo::Audio::RobotAudioAnimation( GameObjectType::Invalid, nullptr )
+: Anki::Cozmo::Audio::RobotAudioAnimation( AudioMetaData::GameObjectType::Invalid, nullptr )
 { }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -454,7 +454,7 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
         // Set event's volume RTPC
         if (RobotAudioClient::kInvalidCozmoPlayId != playId) {
           _audioClient->SetCozmoEventParameter( playId,
-                                                GameParameter::ParameterType::Event_Volume,
+                                                AudioMetaData::GameParameter::ParameterType::Event_Volume,
                                                 animationEvent->volume );
         }
         

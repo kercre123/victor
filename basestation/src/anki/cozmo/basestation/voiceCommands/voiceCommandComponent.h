@@ -54,7 +54,7 @@ private:
   float                                                 _commandLightTimeRemaining_s = -1.f;
   
   template<typename T>
-  void BroadcastVoiceEvent(T event);
+  void BroadcastVoiceEvent(T&& event);
   
   // Updates the status of the backpack light on Cozmo that indicates hearing a command
   void UpdateCommandLight(bool heardTriggerPhrase);

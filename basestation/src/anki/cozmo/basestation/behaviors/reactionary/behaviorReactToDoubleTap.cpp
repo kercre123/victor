@@ -49,7 +49,6 @@ bool BehaviorReactToDoubleTap::IsRunnableInternal(const BehaviorPreReqRobot& pre
 
 Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
 {
-  _objectInCurrentFrame = true;
   _turningTowardsGhostObject = false;
   _leaveTapInteractionOnStop = false;
   
@@ -61,32 +60,19 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
     filter.SetAllowedIDs({objectID});
     filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
-    ObservableObject* object = robot.GetBlockWorld().FindMatchingObject(filter);
+    ObservableObject* object = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
     
     IAction* action = nullptr;
     
     // Tapped object does not exist in the current frame
     if(object == nullptr)
     {
-      filter.SetOriginMode(BlockWorldFilter::OriginMode::NotInRobotFrame);
-      object = robot.GetBlockWorld().FindMatchingObject(filter);
-      if(object == nullptr)
-      {
-        // This should never happen, the object needs to exist in a frame in order to get taps from
-        // it
-        PRINT_NAMED_ERROR("BehaviorReactToDoubleTap.NullObject",
-                          "ObjectID %d not found in any frame",
-                          objectID.GetValue());
-        return RESULT_FAIL;
-      }
-      PRINT_CH_INFO("Behaviors", "ReactToDoubleTap.ObjectInOtherFrame",
-                    "Turning towards pose in old frame");
+      // al/andrew/raul: We think that we no longer need to rely on LastKnown pose, which is currently hard to
+      // support (due to rejiggers), so simply search for the cube when we have no idea where it is
+      TransitionToSearchForCube(robot);
       
-      action = new TurnTowardsPoseAction(robot, object->GetPose(), DEG_TO_RAD(180.f));
-      _objectInCurrentFrame = false;
-      
-      // Treat this as the same as turning towards a ghost object
-      _turningTowardsGhostObject = true;
+      // note that by leaving action = nullptr we do not try to run other than the transition one
+      action = nullptr;
     }
     // If the tapped object's pose is in the ground (probably at 0,0) then we should artificially move it
     // up as if it was level with the robot so our head angle when we turn towards it will be in a position to
@@ -119,25 +105,30 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
       action = new TurnTowardsObjectAction(robot, objectID, Radians(DEG_TO_RAD(180.f)), true, false);
     }
     
-    StartActing(action,
+    // if an action was set, start it now
+    if ( nullptr != action )
+    {
+      StartActing(action,
                 [this, &robot](const ExternalInterface::RobotCompletedAction& msg) {
-                  // Who knows what pose the object has that is in another frame so don't try to
-                  // drive to it but still do a little search
-                  if(!_objectInCurrentFrame)
-                  {
-                    TransitionToSearchForCube(robot);
-                    return;
-                  }
-                
+
                   // If we can't see the object after turning towards it then try to drive to it
                   if(msg.result == ActionResult::VISUAL_OBSERVATION_FAILED)
                   {
-                    TransitionToDriveToCube(robot);
+                    // Note the object may have recently become Unknown/deleted (for example because we turned
+                    // and then realized it's not there)
+                    // If the object is still located, drive to it, if it's not, search for it
+                    const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
+                    const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
+                    if ( nullptr != object ) {
+                      TransitionToDriveToCube(robot);
+                    } else {
+                      TransitionToSearchForCube(robot);
+                    }
                   }
                   else if(msg.result == ActionResult::SUCCESS)
                   {
                     const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
-                    const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
+                    const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
                     
                     // If we turned towards the object and are seeing it but it's pose is still dirty then
                     // we should drive closer
@@ -163,6 +154,7 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
                     TransitionToSearchForCube(robot);
                   }
                 });
+    } // nullptr != action
     
     robot.GetBehaviorManager().RequestEnableReactionTrigger("ReactToDoubleTap", ReactionTrigger::ObjectPositionUpdated, false);
     
@@ -201,7 +193,7 @@ bool BehaviorReactToDoubleTap::IsTappedObjectValid(const Robot& robot) const
   if(robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
     const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
-    const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
+    const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
     
     // The double tapped cube is valid for this reaction as long as it is not known and is not being
     // carried
@@ -224,10 +216,10 @@ void BehaviorReactToDoubleTap::TransitionToDriveToCube(Robot& robot)
 {
   const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
   
-  DriveToObjectAction* action = new DriveToObjectAction(robot, objectID, PreActionPose::ActionType::DOCKING);
+  // al/andrew/rsam: SetObjectCanBeUnknown would need to know about LastPose. This is not currently supported,
+  // and we think it's ok to not support at the moment. If it's still calling it here,
   
-  // It is ok to drive to an object with an unknown pose
-  action->SetObjectCanBeUnknown(true);
+  DriveToObjectAction* action = new DriveToObjectAction(robot, objectID, PreActionPose::ActionType::DOCKING);
   
   // Don't care if we don't get exactly where we need to
   action->DoPositionCheckOnPathCompletion(false);

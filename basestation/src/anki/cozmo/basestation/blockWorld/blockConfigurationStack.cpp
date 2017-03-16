@@ -36,7 +36,7 @@ namespace {
   
 using StackIterator = std::vector<StackWeakPtr>::iterator;
 using StackIteratorConst = std::vector<StackWeakPtr>::const_iterator;
-const float kOnGroundTolerenceStackBlockOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
+const float kOnGroundToleranceStackBlockOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
 
 }
   
@@ -133,11 +133,7 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
     bottomBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
                                    {
-                                     if(blockPtr->IsPoseStateUnknown()){
-                                       return false;
-                                     }
-                                     
-                                     if(!blockPtr->IsRestingAtHeight(0, kOnGroundTolerenceStackBlockOnly)){
+                                     if(!blockPtr->IsRestingAtHeight(0, kOnGroundToleranceStackBlockOnly)){
                                        return false;
                                      }
                                      
@@ -148,7 +144,7 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
                                      return true;
                                    });
     
-    robot.GetBlockWorld().FindMatchingObjects(bottomBlockFilter, blocksOnGround);
+    robot.GetBlockWorld().FindLocatedMatchingObjects(bottomBlockFilter, blocksOnGround);
   }
 
   
@@ -162,9 +158,14 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     // blocks above
     auto currentBlock = object;
     auto nextBlock = currentBlock;
-    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindObjectOnTopOf(*currentBlock,
-                                                                           BlockWorld::kOnCubeStackHeightTolerence,
-                                                                           blocksOnlyFilter))){
+    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindLocatedObjectOnTopOf(*currentBlock,
+                                                                                 BlockWorld::kOnCubeStackHeightTolerance,
+                                                                                 blocksOnlyFilter))){
+      // Blocks being carried by the robot are not part of a stack
+      if(robot.GetCarryingObject().IsSet() &&
+         (robot.GetCarryingObject() == nextBlock->GetID())){
+        break;
+      }
       blocksOnTopOfObject.push_back(nextBlock);
       currentBlock = nextBlock;
     }
@@ -172,9 +173,9 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     // blocks below
     currentBlock = object;
     nextBlock = currentBlock;
-    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindObjectUnderneath(*currentBlock,
-                                                                              BlockWorld::kOnCubeStackHeightTolerence,
-                                                                              blocksOnlyFilter))){
+    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindLocatedObjectUnderneath(*currentBlock,
+                                                                                    BlockWorld::kOnCubeStackHeightTolerance,
+                                                                                    blocksOnlyFilter))){
       blocksBelowObject.push_back(nextBlock);
       currentBlock = nextBlock;
     }
@@ -182,9 +183,12 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
   
   // build the vector of all stacks including the block
   const StackOfCubes* largestStackContainingBlock = nullptr;
-  
+
   // check to see if the block is part of a stack
-  if(blocksOnGround.empty() || (blocksOnTopOfObject.empty() && blocksBelowObject.empty())){
+  const bool robotIsCarryingObject = robot.GetCarryingObject().IsSet() &&
+                                      (robot.GetCarryingObject() == object->GetID());
+  if(robotIsCarryingObject || blocksOnGround.empty() ||
+     (blocksOnTopOfObject.empty() && blocksBelowObject.empty())){
     return largestStackContainingBlock;
   }
   

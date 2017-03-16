@@ -117,12 +117,12 @@ Pose3d RelativePathArc::ExtendPath(const Pose3d& pose, Planning::Path& path) con
 ////Turn Implementation
 //////////
   
-RelativePathTurn::RelativePathTurn(f32 rotRadians, f32 targetRotSpeed, f32 rotAccel, f32 rotDecel, f32 angleTolerence, bool clockwise)
+RelativePathTurn::RelativePathTurn(f32 rotRadians, f32 targetRotSpeed, f32 rotAccel, f32 rotDecel, f32 angleTolerance, bool clockwise)
   :_rotRadians(rotRadians)
   ,_targetRotSpeed(targetRotSpeed)
   ,_rotAccel(rotAccel)
   ,_rotDecel(rotDecel)
-  ,_angleTolerence(angleTolerence)
+  ,_angleTolerance(angleTolerance)
   ,_clockwise(clockwise)
 {}
 
@@ -149,7 +149,7 @@ Pose3d RelativePathTurn::ExtendPath(const Pose3d& pose, Planning::Path& path) co
     useShortestDistance = false;
   }
   
-  path.AppendPointTurn(x_start, y_start, zAxisRotation.ToFloat(), _targetRotSpeed, _rotAccel, _rotDecel, _angleTolerence, useShortestDistance);
+  path.AppendPointTurn(x_start, y_start, zAxisRotation.ToFloat(), _targetRotSpeed, _rotAccel, _rotDecel, _angleTolerance, useShortestDistance);
   
   //Create Ending Pose
   Pose3d newRobotRotated = Pose3d(rotRadians, Z_AXIS_3D(), {0.f, 0.f, 0.f}, &pose);

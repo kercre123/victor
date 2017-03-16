@@ -86,7 +86,7 @@ namespace Cozmo {
 
     // Handlers for signals coming from the engine
     Result HandleObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
-    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg);
+    Result HandleDeletedLocatedObject(const ExternalInterface::RobotDeletedLocatedObject& msg);
     Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
     Result HandleCameraCalibration(Robot& robot, const CameraCalibration &msg);
     Result HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);

@@ -30,17 +30,21 @@
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
   
   namespace Cozmo {
+  
+    // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
+    CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
     
-    TurnInPlaceAction::TurnInPlaceAction(Robot& robot, const Radians& angle, const bool isAbsolute)
+    TurnInPlaceAction::TurnInPlaceAction(Robot& robot, const float angle_rad, const bool isAbsolute)
     : IAction(robot,
               "TurnInPlace",
               RobotActionType::TURN_IN_PLACE,
               (u8)AnimTrackFlag::BODY_TRACK)
-    , _requestedTargetAngle(angle)
+    , _requestedAngle_rad(angle_rad)
     , _isAbsoluteAngle(isAbsolute)
     {
       
@@ -103,10 +107,17 @@ namespace Anki {
     Result TurnInPlaceAction::SendSetBodyAngle() const
     {
       RobotInterface::SetBodyAngle setBodyAngle;
-      setBodyAngle.angle_rad             = _currentTargetAngle.ToFloat();
-      setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
-      setBodyAngle.accel_rad_per_sec2    = _accel_radPerSec2;
-      setBodyAngle.angle_tolerance       = _angleTolerance.ToFloat();
+      setBodyAngle.angle_rad              = _currentTargetAngle.ToFloat();
+      setBodyAngle.max_speed_rad_per_sec  = _maxSpeed_radPerSec;
+      setBodyAngle.accel_rad_per_sec2     = _accel_radPerSec2;
+      setBodyAngle.angle_tolerance        = _angleTolerance.ToFloat();
+      // For absolute turns, the robot should take the shortest path to
+      //  the desired angle:
+      setBodyAngle.use_shortest_direction = _isAbsoluteAngle;
+      // For relative turns, the total angle to turn can be greater than 180 degrees.
+      //  So we need to tell the robot how 'far' it should turn. For absolute angles,
+      //  the robot should always just take the shortest path to the desired angle.
+      setBodyAngle.num_half_revolutions   = _isAbsoluteAngle ? 0 : (uint16_t) std::floor( std::abs(_angularDistExpected_rad / M_PI_F) );
       
       Result result = _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle));
       return result;
@@ -114,37 +125,59 @@ namespace Anki {
     
     ActionResult TurnInPlaceAction::Init()
     {
-      // Compute a goal pose rotated by specified angle around robot's
-      // _current_ pose, taking into account the current driveCenter offset
-      Radians currentHeading = 0;
-      if (!_isAbsoluteAngle) {
-        currentHeading = _robot.GetPose().GetRotationAngle<'Z'>();
-      }
-      
-      // the new angle is, current + requested - [what we have done so far for retries, 0 for first time]
-      const float doneSoFar = (_currentAngle-_initialAngle).ToFloat();
-      Radians newAngle;
-      newAngle = currentHeading + _requestedTargetAngle - doneSoFar;
-      if(_variability != 0) {
-        newAngle += GetRNG().RandDblInRange(-_variability.ToDouble(),
-                                            _variability.ToDouble());
-      }
-      
-      Pose3d dcPose = _robot.GetDriveCenterPose();
-      dcPose.SetRotation(newAngle, Z_AXIS_3D());
-      _robot.ComputeOriginPose(dcPose, _targetPose);
-      
-      _targetPose.SetParent(_robot.GetWorldOrigin());
-      _initialPose = _robot.GetPose();
+      // Grab the robot's current heading and PoseFrameId (which
+      //  is used later to detect if relocalization occurred mid-turn)
+      _prevPoseFrameId = _robot.GetPoseFrameID();
+      _relocalizedCnt = 0;
       
       DEV_ASSERT(_robot.GetPose().GetParent() == _robot.GetWorldOrigin(), "TurnInPlaceAction.Init.RobotOriginMismatch");
       
-      _initialAngle = _initialPose.GetRotation().GetAngleAroundZaxis();
-      _currentAngle = _initialAngle;
-      _currentTargetAngle = _targetPose.GetRotation().GetAngleAroundZaxis();
+      _currentAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
       
-      Radians currentAngle;
-      _inPosition = IsBodyInPosition(currentAngle);
+      // Compute variability to add to target angle (if any):
+      float variabilityToAdd_rad = 0.f;
+      if (_variability != 0.f) {
+          variabilityToAdd_rad = (float) GetRNG().RandDblInRange(-_variability.ToDouble(),
+                                                                  _variability.ToDouble());
+      }
+      
+      // Compute the target absolute angle for this turn (depending on if this
+      //   is a relative or absolute turn request):
+      if (_isAbsoluteAngle) {
+        _currentTargetAngle = _requestedAngle_rad + variabilityToAdd_rad;
+        
+        _angularDistExpected_rad = (_currentTargetAngle - _currentAngle).ToFloat();
+      } else {
+        // This is a relative turn.
+        // First, check the turn angle to make sure it's not too large:
+        if (std::abs(_requestedAngle_rad) > 2.f*M_PI_F*_kMaxRelativeTurnRevs) {
+          PRINT_NAMED_WARNING("TurnInPlaceAction.Init.AngleTooLarge",
+                        "Requested relative turn angle (%.1f deg) is too large!",
+                        RAD_TO_DEG(_requestedAngle_rad));
+          return ActionResult::ABORT;
+        }
+        
+        // In case this is a retry, subtract how much of the turn has been
+        //  completed so far (0 for first time):
+        _requestedAngle_rad -= _angularDistTraversed_rad;
+        
+        // Add the requested relative angle to the current heading to get the absolute target angle.
+        _currentTargetAngle = _currentAngle + _requestedAngle_rad + variabilityToAdd_rad;
+      
+        // The angular distance is simply the requested relative angle and any variability
+        //  (note: abs() of this can be greater than 2*PI rads).
+        _angularDistExpected_rad = _requestedAngle_rad + variabilityToAdd_rad;
+        
+        // Also, for relative turns, the sign of the requested angle should dictate the direction of
+        //   the turn. (the robot uses the sign of _maxSpeed_radPerSec to decide which direction to turn)
+        _maxSpeed_radPerSec = std::copysign(_maxSpeed_radPerSec, _requestedAngle_rad);
+      }
+
+      // reset angular distance traversed and previousAngle (used in CheckIfDone):
+      _angularDistTraversed_rad = 0;
+      _previousAngle = _currentAngle;
+      
+      _inPosition = IsBodyInPosition(_currentAngle);
       _turnStarted = false;
       
       if(!_inPosition) {
@@ -159,24 +192,17 @@ namespace Anki {
           // doing our own
           _robot.GetAnimationStreamer().RemoveKeepAliveEyeDart(IKeyFrame::SAMPLE_LENGTH_MS);
           
-          // Store half the total difference so we know when to remove eye shift
-          _halfAngle = 0.5f*(_currentTargetAngle - _initialAngle).getAbsoluteVal();
+          // Store the angular distance at which to remove eye shift (halfway through the turn)
+          _absAngularDistToRemoveEyeDart_rad = 0.5f * std::abs(_angularDistExpected_rad);
           
           // Move the eyes (only if not in position)
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
-          Radians angleDiff = _currentTargetAngle - currentAngle;
+          float angleDiff_rad = _angularDistExpected_rad;
           
           // Clip angleDiff to 89 degrees to prevent unintended behavior due to tangent
-          if(angleDiff.getDegrees() > 89)
-          {
-            angleDiff = DEG_TO_RAD(89);
-          }
-          else if(angleDiff.getDegrees() < -89)
-          {
-            angleDiff = DEG_TO_RAD(-89);
-          }
-          
-          f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+          angleDiff_rad = Anki::Util::Clamp(angleDiff_rad, DEG_TO_RAD(-89.f), DEG_TO_RAD(89.f));
+
+          const f32 x_mm = std::tan(angleDiff_rad) * HEAD_CAM_POSITION[0];
           const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
           _robot.ShiftEyes(_eyeShiftTag, xPixShift, 0, 4*IKeyFrame::SAMPLE_LENGTH_MS, "TurnInPlaceEyeDart");
         }
@@ -188,7 +214,23 @@ namespace Anki {
     bool TurnInPlaceAction::IsBodyInPosition(Radians& currentAngle) const
     {
       currentAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
-      const bool inPosition = currentAngle.IsNear(_currentTargetAngle, _angleTolerance.ToFloat() + Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+      bool inPosition = false;
+      
+      const float absAngularDistToTarget_rad = std::abs(_angularDistExpected_rad - _angularDistTraversed_rad);
+
+      // Only check if body is in position if we're within Pi radians of completing
+      //  the turn (to allow for multiple-rotation turns, e.g. 360 degrees).
+      if (absAngularDistToTarget_rad < M_PI_F) {
+        inPosition = currentAngle.IsNear(_currentTargetAngle, _angleTolerance.ToFloat() + Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+        
+        // If we've relocalized during the turn, also consider the turn complete
+        //  if we've turned through the entire expected angular distance (since the
+        //  pose jump may cause the target vs. actual angle comparison to fail)
+        if (_relocalizedCnt != 0 &&
+            absAngularDistToTarget_rad < std::abs(_angleTolerance.ToFloat())) {
+          inPosition = true;
+        }
+      }
       return inPosition && !_robot.GetMoveComponent().AreWheelsMoving();
     }
     
@@ -196,58 +238,40 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      // Make sure world origin didn't change mid-turn. If it did: update the initial/target/half
-      // poses and angles to be in the current coordinate frame
-      if(_targetPose.GetParent() != _robot.GetWorldOrigin())
+      // Check to see if the pose frame ID has changed
+      //  (due to robot re-localizing)
+      if(_prevPoseFrameId != _robot.GetPoseFrameID())
       {
-        if(!_targetPose.GetWithRespectTo(*_robot.GetWorldOrigin(), _targetPose))
-        {
-          PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.WorldOriginUpdateFail",
-                        "Could not get target pose w.r.t. current world origin");
-          return ActionResult::BAD_POSE;
-        }
-        
-        _currentTargetAngle = _targetPose.GetRotation().GetAngleAroundZaxis();
-        
-        // Also need to update the angle being used by the steering controller
-        // on the robot:
-        if(RESULT_OK != SendSetBodyAngle()) {
-          return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
-        }
-        
-        if(_moveEyes)
-        {
-          if(!_initialPose.GetWithRespectTo(*_robot.GetWorldOrigin(), _initialPose)) {
-            // If we got target pose w.r.t. world origin, we should be able to get initial pose too!
-            PRINT_NAMED_WARNING("TurnInPlaceAction.CheckIfDone.WorldOriginUpdateFail",
-                                "Could not get initial pose w.r.t. current world origin");
-          }
-          else
-          {
-            _initialAngle = _initialPose.GetRotation().GetAngleAroundZaxis();
-            
-            // Store half the total difference so we know when to remove eye shift
-            _halfAngle = 0.5f*(_currentTargetAngle - _initialAngle).getAbsoluteVal();
-          }
-        }
-        
-        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.WorldOriginChanged",
-                      "New target angle = %.1fdeg", _currentTargetAngle.getDegrees());
+        ++_relocalizedCnt;
+        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.PfidChanged",
+                            "[%d] pose frame ID changed (old=%d, new=%d). "
+                            "No longer comparing angles to check if done - using angular distance traversed instead. "
+                            "(relocalizedCnt=%d) (inPositionNow=%d)",
+                            GetTag(), _prevPoseFrameId, _robot.GetPoseFrameID(),
+                            _relocalizedCnt, IsBodyInPosition(_currentAngle));
+        _prevPoseFrameId = _robot.GetPoseFrameID();
+        // Need to update previous angle since pose has changed (to
+        //  keep _angularDistTraversed semi-accurate)
+        _previousAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
       }
       
       if(!_inPosition) {
         _inPosition = IsBodyInPosition(_currentAngle);
-        
       }
       
+      // Keep track of how far we've traversed:
+      _angularDistTraversed_rad += (_currentAngle - _previousAngle).ToFloat();
+      _previousAngle = _currentAngle;
+
       // When we've turned at least halfway, remove eye dart
       if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
-        if(_inPosition || _currentAngle.IsNear(_currentTargetAngle, _halfAngle))
+        if(_inPosition || (std::abs(_angularDistTraversed_rad) > _absAngularDistToRemoveEyeDart_rad))
         {
           PRINT_CH_DEBUG("Actions", "TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
-                         "Currently at %.1fdeg, on the way to %.1fdeg, within "
-                         "half angle of %.1fdeg", _currentAngle.getDegrees(),
-                         _currentTargetAngle.getDegrees(), _halfAngle.getDegrees());
+                         "Currently at %.1fdeg, on the way to %.1fdeg (traversed %.1fdeg)",
+                         _currentAngle.getDegrees(),
+                         _currentTargetAngle.getDegrees(),
+                         RAD_TO_DEG(_angularDistTraversed_rad));
           _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
           _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
@@ -262,36 +286,50 @@ namespace Anki {
       // TODO: Is this really necessary in practice?
       if(_inPosition) {
         result = ActionResult::SUCCESS;
-        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.ReachedAngle",
-                      "[%d] Reached angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d). WheelsMoving=%s",
+        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.InPosition",
+                      "[%d] In Position: %.1fdeg vs. %.1fdeg(+/-%.1f), angDistTravd=%+.1fdeg, angDistExpc=%+.1fdeg (tol: %f) (pfid: %d)",
                       GetTag(),
                       _currentAngle.getDegrees(),
                       _currentTargetAngle.getDegrees(),
                       _variability.getDegrees(),
+                      RAD_TO_DEG(_angularDistTraversed_rad),
+                      RAD_TO_DEG(_angularDistExpected_rad),
                       _angleTolerance.getDegrees(),
-                      _robot.GetPoseFrameID(),
-                      (_robot.GetMoveComponent().AreWheelsMoving() ? "Yes" : "No"));
+                      _robot.GetPoseFrameID());
       } else {
-        // Don't spam "in position" messages
+        // Don't spam "AngleNotReached" messages
         PRINT_PERIODIC_CH_DEBUG(10, "Actions", "TurnInPlaceAction.CheckIfDone.AngleNotReached",
-                                "[%d] Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
+                                "[%d] Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f), angDistTravd=%+.1fdeg, angDistExpc=%+.1fdeg (tol: %f) (pfid: %d)",
                                 GetTag(),
                                 _currentAngle.getDegrees(),
                                 _currentTargetAngle.getDegrees(),
                                 _variability.getDegrees(),
+                                RAD_TO_DEG(_angularDistTraversed_rad),
+                                RAD_TO_DEG(_angularDistExpected_rad),
                                 _angleTolerance.getDegrees(),
                                 _robot.GetPoseFrameID());
         
-
         if( _turnStarted && !_robot.GetMoveComponent().AreWheelsMoving()) {
           PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
-                              "[%d] giving up since we stopped moving",
-                              GetTag());
+                              "[%d] giving up since we stopped moving. currentAngle=%.1fdeg, target=%.1fdeg, angDistExp=%.1fdeg, angDistTrav=%.1fdeg (pfid: %d)",
+                              GetTag(),
+                              _currentAngle.getDegrees(),
+                              _currentTargetAngle.getDegrees(),
+                              RAD_TO_DEG(_angularDistExpected_rad),
+                              RAD_TO_DEG(_angularDistTraversed_rad),
+                              _robot.GetPoseFrameID());
           result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
         }
       }
       
       return result;
+    }
+    
+    void TurnInPlaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    {
+      TurnInPlaceCompleted info;
+      info.relocalizedCnt = _relocalizedCnt;
+      completionUnion.Set_turnInPlaceCompleted(std::move( info ));
     }
 
 #pragma mark ---- SearchForNearbyObjectAction ----
@@ -1092,7 +1130,7 @@ namespace Anki {
       _compoundAction.ClearActions();
       _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
       
-      TurnInPlaceAction* action = new TurnInPlaceAction(_robot, _bodyPanAngle, _isPanAbsolute);
+      TurnInPlaceAction* action = new TurnInPlaceAction(_robot, _bodyPanAngle.ToFloat(), _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
@@ -1225,7 +1263,7 @@ namespace Anki {
       }
       else
       {
-        _objectPtr = _robot.GetBlockWorld().GetObjectByID(_objectID);
+        _objectPtr = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
         if(nullptr == _objectPtr) {
           PRINT_NAMED_WARNING("TurnTowardsObjectAction.Init.ObjectNotFound",
                               "Object with ID=%d no longer exists in the world.",
@@ -1339,7 +1377,18 @@ namespace Anki {
           }
           else if(_visuallyVerifyWhenDone)
           {
-            _visuallyVerifyAction.reset(new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode));
+            IActionRunner* action = nullptr;
+            if(kInsertWaitsInTurnTowardsObjectVerify)
+            {
+              action = new CompoundActionSequential(_robot, {new WaitAction(_robot, 2),
+                  new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode),
+                  new WaitAction(_robot, 2)});
+            }
+            else
+            {
+              action = new VisuallyVerifyObjectAction(_robot, _objectPtr->GetID(), _whichCode);
+            }
+            _visuallyVerifyAction.reset(action);
             
             // Disable completion signals since this is inside another action
             _visuallyVerifyAction->ShouldEmitCompletionSignal(false);
@@ -1409,7 +1458,7 @@ namespace Anki {
       // Select the chosen action based on the object's type, if we haven't
       // already
       if(_chosenAction == nullptr) {
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.ObjectNotFound",
                             "Could not get actionable object with ID = %d from world.", _objectID.GetValue());

@@ -50,8 +50,8 @@ static void VERBOSE_DEBUG_PRINT(const char* eventName, const char* description, 
   va_end(args);
 # endif
 }
-  
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PotentialObjectsForLocalizingTo::PotentialObjectsForLocalizingTo(Robot& robot)
 : _robot(robot)
 , _currentWorldOrigin(_robot.GetWorldOrigin())
@@ -66,45 +66,62 @@ PotentialObjectsForLocalizingTo::PotentialObjectsForLocalizingTo(Robot& robot)
                       _robot.HasMovedSinceBeingLocalized());
 }
   
-  
-void PotentialObjectsForLocalizingTo::UpdateMatchedObjectPose(ObservedAndMatchedPair& pair, bool wasRobotMoving)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// TODO rsam/andrew: PotentialObjectsForLocalizingTo should not know about PoseConfirmer/ObservationFilter, but
+// directly affect objects in BlockWorld because it should receive/process confirmations, not observations
+void PotentialObjectsForLocalizingTo::UseDiscardedObservation(ObservedAndMatchedPair& pair, bool wasRobotMoving)
 {
-  VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.UpdateMatchedObjectPose",
-                      "Updating %s %d pose from (%.1f,%.1f,%.1f) to (%.1f,%.1f,%.1f). WasRobotMoving:%d",
-                      EnumToString(pair.matchedObject->GetType()),
-                      pair.matchedObject->GetID().GetValue(),
-                      pair.matchedObject->GetPose().GetTranslation().x(),
-                      pair.matchedObject->GetPose().GetTranslation().y(),
-                      pair.matchedObject->GetPose().GetTranslation().z(),
-                      pair.observedObject->GetPose().GetTranslation().x(),
-                      pair.observedObject->GetPose().GetTranslation().y(),
-                      pair.observedObject->GetPose().GetTranslation().z(),
-                      wasRobotMoving);
-  
-  Result result = _robot.GetObjectPoseConfirmer().AddVisualObservation(pair.matchedObject,
-                                                                       pair.observedObject->GetPose(),
-                                                                       wasRobotMoving,
-                                                                       pair.distance);
-  
-  if(RESULT_OK != result)
+  if ( pair.observationAlreadyUsed )
   {
-    PRINT_NAMED_WARNING("PotentialObjectsForLocalizingTo.UpdateMatchedObjectPose.AddVisualObservationFailed", "");
-    return;
-  }
+    VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.UseDiscardedObservation.AlreadyUsed",
+                        "Not using observation from %s %d MATCH(%.1f,%.1f,%.1f) OBS(%.1f,%.1f,%.1f), already used. WasRobotMoving:%d",
+                        EnumToString(pair.matchedObject->GetType()),
+                        pair.matchedObject->GetID().GetValue(),
+                        pair.matchedObject->GetPose().GetTranslation().x(),
+                        pair.matchedObject->GetPose().GetTranslation().y(),
+                        pair.matchedObject->GetPose().GetTranslation().z(),
+                        pair.observedObject->GetPose().GetTranslation().x(),
+                        pair.observedObject->GetPose().GetTranslation().y(),
+                        pair.observedObject->GetPose().GetTranslation().z(),
+                        wasRobotMoving);
   
+  }
+  else
+  {
+    VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.UseDiscardedObservation",
+                        "Updating %s %d pose from (%.1f,%.1f,%.1f) to (%.1f,%.1f,%.1f). WasRobotMoving:%d",
+                        EnumToString(pair.matchedObject->GetType()),
+                        pair.matchedObject->GetID().GetValue(),
+                        pair.matchedObject->GetPose().GetTranslation().x(),
+                        pair.matchedObject->GetPose().GetTranslation().y(),
+                        pair.matchedObject->GetPose().GetTranslation().z(),
+                        pair.observedObject->GetPose().GetTranslation().x(),
+                        pair.observedObject->GetPose().GetTranslation().y(),
+                        pair.observedObject->GetPose().GetTranslation().z(),
+                        wasRobotMoving);
+    
+    // affect pose of the object with the observation
+    _robot.GetObjectPoseConfirmer().AddVisualObservation(pair.observedObject,
+                                                         pair.matchedObject,
+                                                         wasRobotMoving,
+                                                         pair.distance);
+  }
 }
   
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObject>& observedObject,
                                              ObservableObject* matchedObject,
-                                             f32 observedDistance_mm)
+                                             f32 observedDistance_mm,
+                                             bool observationAlreadyUsed)
 {
+
   ObservedAndMatchedPair newPair{
-    .observedObject = observedObject,
-    .matchedObject  = matchedObject,
-    .distance       = observedDistance_mm,
+    .observedObject         = observedObject,
+    .matchedObject          = matchedObject,
+    .distance               = observedDistance_mm,
+    .observationAlreadyUsed = observationAlreadyUsed
   };
-  
+
   const PoseOrigin* matchedOrigin = &newPair.matchedObject->GetPose().FindOrigin();
   
   // Don't bother if the matched object doesn't pass these up-front checks:
@@ -126,7 +143,8 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
       const bool wasRobotMoving = _robot.GetVisionComponent().WasMovingTooFast(observedObject->GetLastObservedTime(),
                                                                                DEG_TO_RAD(kMaxBodyRotationSpeed_degPerSec),
                                                                                DEG_TO_RAD(kMaxHeadRotationSpeed_degPerSec));
-      UpdateMatchedObjectPose(newPair, wasRobotMoving);
+      
+      UseDiscardedObservation(newPair, wasRobotMoving);
     }
     return false;
   }
@@ -170,7 +188,7 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
       if (rpsObserved->GetPose().IsSameAs(rpsMatched->GetPose(), kSamePoseThresh_mm, kSameAngleThresh_rad)) {
         if (!observedObject->GetPose().IsSameAs(matchedObject->GetPose(), kSamePoseThresh_mm, kSameAngleThresh_rad)) {
           VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.ObjectPoseNotSameEnough", "");
-          UpdateMatchedObjectPose(newPair, wasRobotMoving);
+          UseDiscardedObservation(newPair, wasRobotMoving);
           return false;
         }
       }
@@ -207,7 +225,7 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                           newPair.distance);
       
       if(iter->first == _currentWorldOrigin) {
-        UpdateMatchedObjectPose(iter->second, wasRobotMoving);
+        UseDiscardedObservation(iter->second, wasRobotMoving);
       }
       std::swap(iter->second, newPair);
     }
@@ -223,7 +241,7 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                           newPair.distance);
       
       if(matchedOrigin == _currentWorldOrigin) {
-        UpdateMatchedObjectPose(newPair, wasRobotMoving);
+        UseDiscardedObservation(newPair, wasRobotMoving);
       }
     }
     
@@ -299,7 +317,7 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
         const ObjectID& matchedID = matchPair.second.matchedID;
         DEV_ASSERT(matchedID.IsSet(), "PotentialObjectsForLocalizingTo.LocalizeToRobot.NullMatchWithUnsetID");
         
-        matchedObj = _robot.GetBlockWorld().GetObjectByID(matchedID);
+        matchedObj = _robot.GetBlockWorld().GetLocatedObjectByID(matchedID);
         if(nullptr == matchedObj)
         {
           PRINT_NAMED_WARNING("PotentialObjectsForLocalizingTo.LocalizeToRobot.MissingMatchedObjectInCurrentFrame",

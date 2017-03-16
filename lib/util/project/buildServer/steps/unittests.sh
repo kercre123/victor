@@ -10,10 +10,10 @@ if [ -z $GIT ];then
   echo git not found
   exit 1
 fi
-TOPLEVEL=`$GIT rev-parse --show-toplevel`
+TOPLEVEL="${DIR}/../../.."
 
 # prepare
-PROJECT=$TOPLEVEL/lib/util/project/gyp-mac
+PROJECT=$TOPLEVEL/project/gyp-mac
 BUILD_TYPE="Debug"
 DERIVED_DATA=$PROJECT/DerivedData
 
@@ -57,16 +57,18 @@ fi
 
 # execute
 set -o pipefail
-$TOPLEVEL/tools/build/tools/ankibuild/multiTest.py \
+ANKIWORKROOT="$DERIVED_DATA/$BUILD_TYPE/testdata" \
+ANKICONFIGROOT="$DERIVED_DATA/$BUILD_TYPE/" \
+DYLD_FRAMEWORK_PATH="$DERIVED_DATA/$BUILD_TYPE/" \
+DYLD_LIBRARY_PATH="$DERIVED_DATA/$BUILD_TYPE/" \
+GTEST_OUTPUT=xml:$DERIVED_DATA/$BUILD_TYPE/utilGoogleTest.xml \
+$TOPLEVEL/tools/build/multiTest/MultiTest.py \
 --stdout_fail \
 --path $DERIVED_DATA/$BUILD_TYPE \
---gtest_path "$DERIVED_DATA/$BUILD_TYPE/" \
---work_path "$DERIVED_DATA/$BUILD_TYPE/testdata" \
---config_path "$DERIVED_DATA/$BUILD_TYPE/" \
---gtest_output "xml:$DERIVED_DATA/$BUILD_TYPE/basestationGoogleTest.xml" \
 --executable UtilUnitTest \
 --stdout_file \
 --xml_dir "$DERIVED_DATA/$BUILD_TYPE" \
+--xml_basename "utilGoogleTest_" \
 $ARGS
 
 EXIT_STATUS=$?
@@ -79,7 +81,7 @@ fi
 #tarball files together
 echo "Entering directory \`${DERIVED_DATA}/${BUILD_TYPE}}'"
 cd $DERIVED_DATA/$BUILD_TYPE
-tar czf utilUnitGoogleTest.tar.gz googleTest_*
+tar czf utilUnitGoogleTest.tar.gz utilGoogleTest*
 mv utilUnitGoogleTest.tar.gz $PROJECT/utilUnitGoogleTest.tar.gz
 # exit
 exit $EXIT_STATUS

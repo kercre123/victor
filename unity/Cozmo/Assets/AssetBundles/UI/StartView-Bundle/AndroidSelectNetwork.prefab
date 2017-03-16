@@ -176,9 +176,6 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
-    JsonValue: false
-  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLegacy:m_Text
     JsonValue: '"#button.continue"'
   ModifiedLocalReferences:
@@ -442,10 +439,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22479092}
   m_RootOrder: 4
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -1226.9999, y: 584.4344}
-  m_SizeDelta: {x: -2558.9998, y: -1275.8688}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 139.00012, y: -140}
+  m_SizeDelta: {x: 173.00024, y: 173}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22479092
 RectTransform:

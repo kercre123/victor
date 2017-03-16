@@ -98,6 +98,20 @@ std::string StringMapToJson(const std::map<std::string,std::string> &stringMap)
 
   return outputJson;
 }
+
+std::string StringMapToPrettyJson(const std::map<std::string,std::string> &stringMap)
+{
+  Json::Value root;
+
+  for (auto const& kv : stringMap) {
+    root[kv.first] = kv.second;
+  }
+
+  Json::StyledWriter writer;
+  std::string outputJson = writer.write(root);
+
+  return outputJson;
+}
   
 std::map<std::string,std::string> JsonToStringMap(const std::string &jsonString)
 {
@@ -147,6 +161,15 @@ std::string ConvertFromByteVectorToString(const std::vector<uint8_t> &bytes)
 void ConvertFromStringToVector(std::vector<uint8_t> &bytes, const std::string &stringValue)
 {
   copy(stringValue.begin(), stringValue.end(), back_inserter(bytes));
+}
+
+bool StringStartsWith(const std::string& fullString, const std::string& prefix)
+{
+  if (fullString.length() >= prefix.length()) {
+    return (0 == fullString.compare(0, prefix.length(), prefix));
+  } else {
+    return false;
+  }
 }
 
 bool StringEndsWith(const std::string& fullString, const std::string& ending)
@@ -325,6 +348,33 @@ std::string UrlEncodeString(const std::string &str)
   }
   
   return escaped.str();
+}
+
+std::string StringJoin(const std::vector<std::string>& strings, char delim)
+{
+  std::string result;
+
+  for(const auto& str : strings) {
+    if(!result.empty()) {
+      result.append(std::string(1, delim));
+    }
+    result.append(str);
+  }
+
+  return result;
+}
+
+std::vector<std::string> StringSplit(const std::string& string, char delim)
+{
+  std::vector<std::string> result;
+
+  std::istringstream is(string);
+  std::string s;
+  while(std::getline(is, s, delim)) {
+    result.emplace_back(std::move(s));
+  }
+  
+  return result;
 }
 
 } // namespace Util

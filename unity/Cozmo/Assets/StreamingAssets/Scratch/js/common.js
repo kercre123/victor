@@ -64,6 +64,12 @@
             }
         });
         window.workspace = workspace;
+
+        // Create an array which stores resolve functions indexed by requestId.
+        // These will be used as a means of communication between the JavaScript
+        // and C# code to know when the robot is done with his work and the vm
+        // should proceed to the next block.
+        window.resolveCommands = [];
  
         // Disable long-press
         // TODO Need to turn this off for tool tips?

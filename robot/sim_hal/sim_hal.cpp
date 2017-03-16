@@ -1,3 +1,30 @@
+/**
+ * File: sim_hal.cpp
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 10/10/2013
+ *
+ * Description:
+ *
+ *   Simulated HAL implementation for Cozmo 1.x
+ *
+ *   This is an "abstract class" defining an interface to lower level
+ *   hardware functionality like getting an image from a camera,
+ *   setting motor speeds, etc.  This is all the Robot should
+ *   need to know in order to talk to its underlying hardware.
+ *
+ *   To avoid C++ class overhead running on a robot's embedded hardware,
+ *   this is implemented as a namespace instead of a fullblown class.
+ *
+ *   This just defines the interface; the implementation (e.g., Real vs.
+ *   Simulated) is given by a corresponding .cpp file.  Which type of
+ *   is used for a given project/executable is decided by which .cpp
+ *   file gets compiled in.
+ *
+ * Copyright: Anki, Inc. 2013
+ *
+ **/
+
 // System Includes
 #include <cassert>
 #include <cmath>
@@ -63,8 +90,6 @@ namespace Anki {
 
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
 
-      const u32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
-
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
 
       bool isInitialized = false;
@@ -97,16 +122,17 @@ namespace Anki {
 
 
       // Cameras / Vision Processing
-      bool enableVideo_;
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
+      const u32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
+      u32 imageFrameID_ = 1;      
+
+      bool enableVideo_;
       u32 cameraStartTime_ms_;
 
       // For pose information
       webots::GPS* gps_;
       webots::Compass* compass_;
-      //webots::Node* estPose_;
-      //char locStr[MAX_TEXT_DISPLAY_LENGTH];
 
       // IMU
       webots::Gyro* gyro_;
@@ -174,7 +200,6 @@ namespace Anki {
       u32 AUDIO_FRAME_TIME_MS = 33;     // Duration of single audio frame
       bool audioReadyForFrame_ = true;  // Whether or not ready to receive another audio frame
       
-      u32 imageFrameID_ = 1;
 
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -300,12 +325,10 @@ namespace Anki {
       headPosSensor_ = webotRobot_.getPositionSensor("HeadMotorPosSensor");
       liftPosSensor_ = webotRobot_.getPositionSensor("LiftMotorPosSensor");
 
-
       con_ = webotRobot_.getConnector("gripperConnector");
-      //con_->enablePresence(TIME_STEP);
 
       headCam_ = webotRobot_.getCamera("HeadCamera");
-
+      
       if(VISION_TIME_STEP % static_cast<u32>(webotRobot_.getBasicTimeStep()) != 0) {
         PRINT("VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).\n",
               VISION_TIME_STEP, webotRobot_.getBasicTimeStep());
@@ -320,9 +343,13 @@ namespace Anki {
       cameraStartTime_ms_ = HAL::GetTimeStamp(); // + TIME_STEP;
       PRINT_NAMED_INFO("SIM", "Setting camera start time as %d", cameraStartTime_ms_);
 
-      enableVideo_ = robotNode->getField("enableVideo")->getSFBool();
-      if (!enableVideo_) {
-        printf("WARN: ******** Video disabled *********\n");
+      webots::Field* enableVideoField = robotNode->getField("enableVideo");
+      if (enableVideoField) {
+        enableVideo_ = enableVideoField->getSFBool();
+        
+        if (!enableVideo_) {
+          printf("WARN: ******** Video disabled *********\n");
+        }
       }
 
       // Set ID
@@ -360,7 +387,6 @@ namespace Anki {
       motors_[MOTOR_RIGHT_WHEEL] = rightWheelMotor_;
       motors_[MOTOR_HEAD] = headMotor_;
       motors_[MOTOR_LIFT] = liftMotor_;
-      //motors_[MOTOR_GRIP] = NULL;
 
       // Load position sensor array
       motorPosSensors_[MOTOR_LEFT_WHEEL] = leftWheelPosSensor_;
@@ -395,7 +421,6 @@ namespace Anki {
       compass_ = webotRobot_.getCompass("compass");
       gps_->enable(TIME_STEP);
       compass_->enable(TIME_STEP);
-      //estPose_ = webotRobot_.getFromDef("CozmoBotPose");
 
       // Gyro
       gyro_ = webotRobot_.getGyro("gyro");
@@ -486,7 +511,7 @@ namespace Anki {
     {
       // Turn off components: (strictly necessary?)
       headCam_->disable();
-
+      
       gps_->disable();
       compass_->disable();
 
@@ -781,7 +806,7 @@ namespace Anki {
 
     } // step()
 
-
+    
     // Helper function to create a CameraInfo struct from Webots camera properties:
     void FillCameraInfo(const webots::Camera *camera,
                         HAL::CameraInfo &info)
@@ -828,38 +853,6 @@ namespace Anki {
       }
     }
 
-    /*
-    HAL::CameraMode HAL::GetHeadCamMode(void)
-    {
-      return headCamMode_;
-    }
-
-    // TODO: there is a copy of this in hal.cpp -- consolidate into one location.
-    // TODO: perhaps we'd rather have this be a switch statement
-    //       (However, if the header is stored as a member of the CameraModeInfo
-    //        struct, we can't use it as a case in the switch statement b/c
-    //        the compiler doesn't think it's a constant expression.  We can
-    //        get around this using "constexpr" when declaring CameraModeInfo,
-    //        but that's a C++11 thing and not likely supported on the Movidius
-    //        compiler)
-    void HAL::SetHeadCamMode(const u8 frameResHeader)
-    {
-      bool found = false;
-      for(CameraMode mode = CAMERA_MODE_VGA;
-          not found && mode != CAMERA_MODE_COUNT; ++mode)
-      {
-        if(frameResHeader == CameraModeInfo[mode].header) {
-          headCamMode_ = mode;
-          found = true;
-        }
-      }
-
-      if(not found) {
-        PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
-      }
-    } //SetHeadCamMode()
-    */
-    
     void HAL::CameraGetDefaultParameters(DefaultCameraParams& params)
     {
       params.minExposure_ms = 0;
@@ -959,7 +952,7 @@ namespace Anki {
       
       // line2Number number increases while a frame is being captured so subsequent calls to this function where
       // imageFrameID_ hasn't changed should increase line2Number_
-      // This function is not called more than 4 times per frame so line2Number_ will never exceed (60 + 1) * 4 = 244
+      // This function is not called more than 4 times per frame so line2Number_ will never exceed (60 * 4) + 1 = 241
       // where the max value it could be is 250 (500 scanlines per frame / 2)
       uint8_t line2NumberIncrement = HAL::GetTimeStamp() % 60 + 1;
       if(prevImageID_ == imageFrameID_)
@@ -1109,9 +1102,9 @@ namespace Anki {
       return 0;
     }
 
-    u8 HAL::GetForwardProxSensorCurrentValue()
+    u16 HAL::GetRawProxData()
     {
-      const u8 val = static_cast<u8>( proxCenter_->getValue() );
+      const u16 val = static_cast<u16>( proxCenter_->getValue() );
       return val;
     }
 
@@ -1230,10 +1223,10 @@ namespace Anki {
     }
     
     // Connect to active object
-    bool HAL::AssignSlot(u32 slot_id, u32 factory_id)
+    Result HAL::AssignSlot(u32 slot_id, u32 factory_id)
     {
       if (slot_id >= MAX_NUM_ACTIVE_OBJECTS) {
-        return false;
+        return RESULT_FAIL;
       }
       
       ActiveObjectSlotInfo* acc = &activeObjectSlots_[slot_id];
@@ -1265,7 +1258,7 @@ namespace Anki {
         
       }
       
-      return true;
+      return RESULT_OK;
     }
     
     int8_t CalculateObjectRSSI(double signalStrength)

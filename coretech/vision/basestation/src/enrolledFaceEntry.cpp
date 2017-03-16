@@ -79,6 +79,8 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
   }
   _lastDataUpdateTime = Time(std::chrono::seconds(numTicks));
   
+  ClipFutureTimesToNow("ConstructFromIDandJson");
+
   if(!json.isMember(JsonKey::name)) {
     MissingFieldWarning(JsonKey::name);
   } else {
@@ -152,6 +154,13 @@ EnrolledFaceEntry::EnrolledFaceEntry(const EnrolledFaceStorage& message)
         _albumEntrySeenTimes[albumEntry] = seenTime;
       }
     }
+    
+    ClipFutureTimesToNow("ConstructFromEnrolledFaceStorage");
+    
+    PRINT_NAMED_INFO("EnrolledFaceEntry.ConstructFromEnrolledFaceStorage.Times",
+                     "EnrollmentTime:%s LastUpdateTime:%s",
+                     GetTimeString(_enrollmentTime).c_str(),
+                     GetTimeString(_lastDataUpdateTime).c_str());
   }
 }
   
@@ -382,18 +391,24 @@ Result EnrolledFaceEntry::MergeWith(const EnrolledFaceEntry& other,
     _prevID = other._faceID;
   }
   
-  // Keep most recent lastDataUpdateTime
-  if(other._lastDataUpdateTime > _lastDataUpdateTime) {
-    _lastDataUpdateTime = other._lastDataUpdateTime;
-  }
-  
   // Use keepID's name unless it doesn't have one
   if(_name.empty()) {
     _name = other._name;
   }
   
+  // Keep most recent lastDataUpdateTime
+  _lastDataUpdateTime = std::max(_lastDataUpdateTime, other._lastDataUpdateTime);
+  
   // Keep oldest enrollment time
   _enrollmentTime = std::min(_enrollmentTime, other._enrollmentTime);
+  
+  if(ANKI_DEVELOPER_CODE)
+  {
+    // Sanity check: neither "this" nor "other" should have times in the future, so
+    // merged times also shouldn't
+    const bool clippingOccurred = ClipFutureTimesToNow("MergeWith");
+    DEV_ASSERT(!clippingOccurred, "EnrolledFaceEntry.MergeWith.FutureTimesClipped");
+  }
   
   // Keep highest score
   _score = std::max(_score, other._score);
@@ -550,6 +565,44 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(const EnrolledFaceEntry& other
   }
   
   return RESULT_OK;
+}
+  
+std::string EnrolledFaceEntry::GetTimeString(Time time)
+{
+  std::string str;
+  char buffer[256];
+  auto t = std::chrono::system_clock::to_time_t(time);
+  strftime(buffer, 255, "%F %T", localtime(&t));
+  str = buffer;
+  return str;
+}
+ 
+bool EnrolledFaceEntry::ClipFutureTimesToNow(const std::string& logString)
+{
+  bool didClip = false;
+  
+  // If incoming times are somehow in the future, clip them to now
+  const Time currentTime = std::chrono::system_clock::now();
+  if(_enrollmentTime > currentTime)
+  {
+    PRINT_NAMED_WARNING(("EnrolledFaceEntry." + logString + ".FutureEnrollmentTime").c_str(),
+                        "Clipping future enrollment time (%s) to now (%s)",
+                        GetTimeString(_enrollmentTime).c_str(), GetTimeString(currentTime).c_str());
+    
+    _enrollmentTime = currentTime;
+    didClip = true;
+  }
+  if(_lastDataUpdateTime > currentTime)
+  {
+    PRINT_NAMED_WARNING(("EnrolledFaceEntry." + logString + ".FutureLastUpdatedTime").c_str(),
+                        "Clipping future last updated time (%s) to now (%s)",
+                        GetTimeString(_lastDataUpdateTime).c_str(), GetTimeString(currentTime).c_str());
+    
+    _lastDataUpdateTime = currentTime;
+    didClip = true;
+  }
+  
+  return didClip;
 }
   
 } // namespace Vision

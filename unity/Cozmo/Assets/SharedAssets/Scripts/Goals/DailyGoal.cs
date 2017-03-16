@@ -168,10 +168,8 @@ namespace Cozmo {
       public void CheckIfComplete() {
         if (IsGoalComplete() && !GoalComplete) {
           // Grant Reward
-          int numDays = 0;
-          if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions != null) {
-            numDays = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count;
-          }
+          int numDays = DataPersistenceManager.Instance.Data.DefaultProfile.TotalSessions;
+          DataPersistenceManager.Instance.Data.DefaultProfile.TotalDailyGoalsCompleted++;
           DAS.Event("meta.daily_goal_completed", numDays.ToString(), DASUtil.FormatExtraData(Title.Key));
           DAS.Event("meta.daily_goal_reward", PointsRewarded.ToString());
           _GoalComplete = true;

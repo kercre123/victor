@@ -64,7 +64,7 @@ public class ContextManager : MonoBehaviour {
       _ForegroundTweener.Kill(true);
     }
     if (playChime) {
-      Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
+      Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Attention_Device);
     }
     _OverlayForeground.color = _DefaultSettings.ContextFlashColor;
     _ForegroundTweener.Append(_OverlayForeground.DOFade(1.0f, _DefaultSettings.ContextFlashDuration));
@@ -102,7 +102,7 @@ public class ContextManager : MonoBehaviour {
     }
     if (anticipation) {
       // If we are doing the drumroll sound
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Banner_Wipe);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Banner_Wipe);
     }
 
     if (OnAppHoldStart != null) {

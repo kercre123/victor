@@ -265,7 +265,7 @@ namespace Cozmo.Upgrades {
     private void CreateConfirmQuitAlert() {
       // Hook up callbacks
       var staySparkedButtonData = new AlertModalButtonData("stay_sparked_button", LocalizationKeys.kButtonStaySparked, HandleStaySparked,
-                                                           Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
+                                                           Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Click_Back));
       var leaveSparkButtonData = new AlertModalButtonData("quit_spark_confirm_button", LocalizationKeys.kButtonLeave, HandleLeaveSpark);
 
       var confirmQuitSparkData = new AlertModalData("confirm_quit_spark_alert",
@@ -376,7 +376,7 @@ namespace Cozmo.Upgrades {
       _UpgradeTween = DOTween.Sequence();
       _UpgradeTween.Join(_UnlockableIcon.DOColor(Color.white, _UpgradeTween_sec));
       _UpgradeTween.AppendCallback(ResolveOnNewUnlock);
-      Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Upgrade);
+      Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Upgrade);
     }
 
     private void ResolveOnNewUnlock() {
@@ -481,16 +481,16 @@ namespace Cozmo.Upgrades {
       DAS.Event("meta.upgrade_replay", _UnlockInfo.Id.Value.ToString(), DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
 
       // Post sparked audio SFX
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Spark_Launch);
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
         // Give Sparked Behavior music ownership
-        Anki.Cozmo.Audio.SwitchState.Sparked sparkedMusicState = _UnlockInfo.SparkedMusicState.Sparked;
-        if (sparkedMusicState == Anki.Cozmo.Audio.SwitchState.Sparked.Invalid) {
+        Anki.AudioMetaData.SwitchState.Sparked sparkedMusicState = _UnlockInfo.SparkedMusicState.Sparked;
+        if (sparkedMusicState == Anki.AudioMetaData.SwitchState.Sparked.Invalid) {
           sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
         }
-        RobotEngineManager.Instance.CurrentRobot.ActivateSparkedMusic(_UnlockInfo.Id.Value, Anki.Cozmo.Audio.GameState.Music.Spark, sparkedMusicState);
+        RobotEngineManager.Instance.CurrentRobot.ActivateSparkedMusic(_UnlockInfo.Id.Value, Anki.AudioMetaData.GameState.Music.Spark, sparkedMusicState);
       }
       UpdateState();
       DataPersistenceManager.Instance.Save();
@@ -510,7 +510,7 @@ namespace Cozmo.Upgrades {
           RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
         }
         // Take Music ownership back from Sparked Behavior and set next state
-        RobotEngineManager.Instance.CurrentRobot.DeactivateSparkedMusic(_UnlockInfo.Id.Value, Anki.Cozmo.Audio.GameState.Music.Freeplay);
+        RobotEngineManager.Instance.CurrentRobot.DeactivateSparkedMusic(_UnlockInfo.Id.Value, Anki.AudioMetaData.GameState.Music.Freeplay);
         UpdateState();
       }
 

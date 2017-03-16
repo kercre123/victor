@@ -141,7 +141,7 @@ bool VisuallyVerifyObjectAction::HaveSeenObject()
     {
       // We've seen the object, check if we've seen the correct marker if one was
       // specified and we haven't seen it yet
-      ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
+      ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.HaveSeenObject.ObjectNotFound",
                             "[%d] Object with ID=%d no longer exists in the world.",
@@ -335,7 +335,7 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
     // If there is an object at the given pose within the threshold then fail
     // Only do this check once we have turned towards the pose and have started waiting for images in case
     // there isn't actually an object at the pose but blockworld thinks there is
-    if(_robot.GetBlockWorld().FindObjectClosestTo(_pose, _thresholds_mm, _filter) != nullptr)
+    if(_robot.GetBlockWorld().FindLocatedObjectClosestTo(_pose, _thresholds_mm, _filter) != nullptr)
     {
       PRINT_CH_DEBUG("Actions", "VisuallyVerifyNoObjectAtPose.FoundObject",
                      "Seeing object near pose (%f %f %f)",

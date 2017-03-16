@@ -219,6 +219,8 @@ public:
   const ObjectID& GetLastTappedObject() const { return _lastDoubleTappedObject; }
   const ObjectID& GetCurrTappedObject() const { return _currDoubleTappedObject; }
   
+  void OnRobotDelocalized();
+  
   
 private:
   using TriggerBehaviorMapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;

@@ -31,14 +31,6 @@ namespace WiFiConfiguration {
 
   uint8_t sessionToken[16];
 
-  static bool sendResult(int32_t result, uint8_t command)
-  {
-    RobotInterface::AppConnectConfigResult msg;
-    msg.result  = result;
-    msg.command = command;
-    return RobotInterface::SendMessage(msg);
-  }
-
 
   Result Init()
   {
@@ -59,28 +51,6 @@ namespace WiFiConfiguration {
     db_printf("WiFiConfiguration::Off(%d)\r\n", sleep);
     if (sleep) os_printf("WARN: WiFi sleep not yet implemented");
     return wifi_set_opmode_current(NULL_MODE);
-  }
-  
-  void SendRobotIpInfo(const u8 ifId)
-  {
-    RobotInterface::AppConnectRobotIP msg;
-    struct ip_info ipInfo;
-    os_memset(&msg, 0, sizeof(RobotInterface::AppConnectRobotIP));
-    msg.ifId = ifId;
-    msg.success = wifi_get_ip_info(ifId, &ipInfo);
-    if (msg.success)
-    {
-      msg.robotIp      = ipInfo.ip.addr;
-      msg.robotGateway = ipInfo.gw.addr;
-      msg.robotNetmask = ipInfo.netmask.addr;
-      if (ifId == STATION_IF) msg.fromDHCP = wifi_station_dhcpc_status();
-      msg.success = wifi_get_macaddr(ifId, msg.macaddr);
-    }
-    db_printf("WiFiConfig robot ip info: %x %x %x %x:%x:%x:%x:%x:%x, %d, %d, %d\r\n",
-      msg.robotIp, msg.robotNetmask, msg.robotGateway,
-      msg.macaddr[0], msg.macaddr[1], msg.macaddr[2], msg.macaddr[3], msg.macaddr[4], msg.macaddr[5],
-      msg.ifId, msg.fromDHCP, msg.success);
-    RobotInterface::SendMessage(msg);
   }
   
   void ProcessConfigString(const RobotInterface::AppConnectConfigString& msg)
@@ -140,7 +110,6 @@ namespace WiFiConfiguration {
         if (wifi_station_set_hostname(hostname) == false);
         {
           os_printf("WiFiConfig: Couldn't set wifi station hostname to \"%s\"\r\n", hostname);
-          sendResult(BAD_HOSTNAME_ERR, EngineToRobot::Tag_appConCfgString);
           return;
         }
         break;
@@ -152,16 +121,13 @@ namespace WiFiConfiguration {
       }
       default:
       {
-        sendResult(UNSUPPORTED_STRING_OFFSET - msg.id, EngineToRobot::Tag_appConCfgString);
         return;
       }
     }
-    sendResult(0, EngineToRobot::Tag_appConCfgString);
   }
   
 #define conditionalFlagsError(cond, error, msg, ...) if ((cond) == false) {\
   os_printf("WiFiConfig: " msg "\r\n", ##__VA_ARGS__); \
-  sendResult(error, EngineToRobot::Tag_appConCfgFlags); \
   return; \
 }
   
@@ -238,26 +204,6 @@ namespace WiFiConfiguration {
       }
     }
     
-    sendResult(0, EngineToRobot::Tag_appConCfgFlags);
-  }
-  
-  void ProcessConfigIPInfo(const RobotInterface::AppConnectConfigIPInfo& msg)
-  {
-    struct ip_info ipInfo;
-    ipInfo.ip.addr      = msg.robotIp;
-    ipInfo.gw.addr      = msg.robotGateway;
-    ipInfo.netmask.addr = msg.robotNetmask;
-    
-    db_printf("WiFiConfg PCIPI: %x, %x, %x, %d\r\n", msg.robotIp, msg.robotGateway, msg.robotNetmask, msg.ifId);
-    
-    if(wifi_set_ip_info(msg.ifId, &ipInfo))
-    {
-      sendResult(0, RobotInterface::EngineToRobot::Tag_appConCfgIPInfo);
-    }
-    else
-    {
-      sendResult(SET_IP_ERROR_OFFSET - msg.ifId, RobotInterface::EngineToRobot::Tag_appConCfgIPInfo);
-    }
   }
   
 } // namespace WiFiConfiguration

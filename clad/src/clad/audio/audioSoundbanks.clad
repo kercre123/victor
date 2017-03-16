@@ -1,8 +1,7 @@
 // Available Soundbanks in project
 
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioMetaData {
 namespace SoundBank {
 
 enum uint_32 BankType
@@ -17,6 +16,5 @@ enum uint_32 BankType
 }
 
 } // SoundBank
-} // Audio
-} // Cozmo
+} // AudioMetaData
 } // Anki

@@ -15,16 +15,12 @@ static inline void AlphaBlend(
   const uint16_t startColor, const uint16_t endColor,
   const uint16_t phase, const int frames)
 {
-  const uint32_t alpha = (0x10000 * phase) / frames;
+  const uint32_t alpha = (0x10000 / frames) * phase;
   const uint32_t invAlpha = 0x10000 - alpha;
-
-  const LightSet start = { UNPACK_COLORS(startColor) };
-  const LightSet end = { UNPACK_COLORS(endColor) };
   
-  color.red = (start.red * invAlpha + end.red * alpha) >> 16;
-  color.green = (start.green * invAlpha + end.green * alpha) >> 16;
-  color.blue = (start.blue * invAlpha + end.blue * alpha) >> 16;
-  color.ir = (alpha < 0x8000) ? start.ir : end.ir;
+  color.red = (FIELD_RED(startColor) * invAlpha + FIELD_RED(endColor) * alpha) >> 16;
+  color.green = (FIELD_GREEN(startColor) * invAlpha + FIELD_GREEN(endColor) * alpha) >> 16;
+  color.blue = (FIELD_BLUE(startColor) * invAlpha + FIELD_BLUE(endColor) * alpha) >> 16;
 }
 
 static inline bool transition(int& phase, LightMode& mode, const uint16_t frames, const LightMode next) {
@@ -33,12 +29,13 @@ static inline bool transition(int& phase, LightMode& mode, const uint16_t frames
     mode = next;
     return true;
   }
+
   return false;
 }
 
-static void CalculateLEDColor(LightValues& light, const uint32_t delta)
+static void CalculateLEDColor(LightValues& light)
 { 
-  light.phase += delta;
+  light.phase ++;
 
   // Advance light
   for (;;) {
@@ -88,32 +85,22 @@ void Lights::init() {
   memset(&lightController, 0, sizeof(lightController));
 }
 
-int Lights::manage() {
-  static unsigned int last_counter = 0;
+void Lights::manage() {
+  static const unsigned int delta = CYCLES_MS(5) * FRAME_RATE;
   static unsigned int accumulator = 0;
-
   unsigned int counter = GetCounter();
-  unsigned int delta = counter - last_counter;
-  last_counter = counter;
 
-  accumulator += delta * FRAME_RATE;
+  accumulator += delta;
 
-  int frame_delta = 0;
-  while (accumulator >= TICKS_PER_SECOND) {
-    frame_delta++;
+  if (accumulator >= TICKS_PER_SECOND) { 
     accumulator -= TICKS_PER_SECOND;
+    
+    for(int i = 0; i < TOTAL_LIGHTS; ++i) {
+      CalculateLEDColor(lightController.lights[i]);
+    }
+    
+    Radio::rotate();
   }
-
-  if (frame_delta <= 0) {
-    return 0;
-  }
-
-  for(int i = 0; i < TOTAL_LIGHTS; ++i)
-  {
-    CalculateLEDColor(lightController.lights[i], frame_delta);
-  }
-  
-  return frame_delta;
 }
 
 void Lights::update(LightValues& light, const LightState* params) {

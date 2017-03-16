@@ -19,7 +19,7 @@ namespace Onboarding {
     public override void Start() {
       base.Start();
       _CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Onboarding);
       _CurrentRobot.SendAnimationTrigger(_Animation.Value, HandleEndAnimationComplete);
       // Match the logo jumping of the previous screen
       bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.StackTwoCubes);
@@ -30,7 +30,7 @@ namespace Onboarding {
 
     public override void OnDestroy() {
       base.OnDestroy();
-      Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
+      Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Attention_Device);
     }
 
     public override void SkipPressed() {

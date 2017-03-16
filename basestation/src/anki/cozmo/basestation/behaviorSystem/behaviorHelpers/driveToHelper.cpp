@@ -117,7 +117,7 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
   }else{
     // Calculate the pre-dock pose directly for PLACE_RELATIVE and drive to that pose
     ActionableObject* obj = dynamic_cast<ActionableObject*>(
-                           robot.GetBlockWorld().GetObjectByID(_targetID));
+                           robot.GetBlockWorld().GetLocatedObjectByID(_targetID));
     if(obj != nullptr){
       std::vector<Pose3d> possiblePoses;
       bool alreadyInPosition;
@@ -204,9 +204,8 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
 void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
 {
   
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_targetID);
-  if(staticBlock != nullptr &&
-     !staticBlock->IsPoseStateUnknown()){
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(staticBlock != nullptr){
     // Check if block observed during the last search
     if(_objectObservedDuringSearch){
       _status = BehaviorStatus::Complete;
@@ -243,7 +242,7 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
         if(staticBlock->IsPoseStateKnown()){
           PRINT_NAMED_ERROR("DriveToHelper.SearchForBlock.GoingNuclear",
                               "Failed to find known block - wiping");
-          robot.GetBlockWorld().ClearAllExistingObjects();
+          robot.GetBlockWorld().DeleteLocatedObjectsByOrigin(robot.GetWorldOrigin());
         }
         _status = BehaviorStatus::Failure;
       }

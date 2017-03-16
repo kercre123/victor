@@ -43,7 +43,7 @@ public class SpeedTapGameConfig : MinigameConfigBase {
   [SerializeField]
   protected MusicStateWrapper _BetweenRoundMusic;
 
-  public Anki.Cozmo.Audio.GameState.Music BetweenRoundMusic {
+  public Anki.AudioMetaData.GameState.Music BetweenRoundMusic {
     get { return _BetweenRoundMusic.Music; }
   }
 

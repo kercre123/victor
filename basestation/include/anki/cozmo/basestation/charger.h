@@ -56,11 +56,9 @@ namespace Anki {
       const Vision::KnownMarker* GetMarker() const { return _marker; }
       
       // Return pose of the robot when it's in the charger
-      Pose3d GetDockedPose()  const;
-      
-      // set pose to robot's pose and notify blockworld once done
-      void SetPoseRelativeToRobot(Robot& robot);
-      
+      Pose3d GetRobotDockedPose()  const;
+      // Return pose of charger wrt robot when the robot is on the charger
+      static Pose3d GetDockPoseRelativeToRobot(const Robot& robot);
       
       //
       // Inherited Virtual Methods

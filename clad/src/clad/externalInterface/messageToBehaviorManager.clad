@@ -41,16 +41,16 @@ structure SparkUnlocked
 // Tells the behavior manager to start playing sparked music and allow state updates
 structure ActivateSparkedMusic
 {
-  UnlockId                      behaviorSpark,
-  Audio::GameState::Music       musicSate,
-  Audio::SwitchState::Sparked   sparkedMusicState,
+  UnlockId                            behaviorSpark,
+  AudioMetaData::GameState::Music     musicSate,
+  AudioMetaData::SwitchState::Sparked sparkedMusicState,
 }
 
 // Tells the behavior manager to no longer update sparked music states
 structure DeactivateSparkedMusic
 {
-  UnlockId                  behaviorSpark,
-  Audio::GameState::Music   musicSate,
+  UnlockId                        behaviorSpark,
+  AudioMetaData::GameState::Music  musicSate,
 }
 
 union BehaviorManagerMessageUnion {

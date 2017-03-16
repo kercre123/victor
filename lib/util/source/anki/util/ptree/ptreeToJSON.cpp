@@ -49,7 +49,7 @@ struct UnsignedIntTranslator
     static const std::regex int_pattern = std::regex { R"(^[0-9]+$)" };
     
     if (!str.empty() && std::regex_match(str, int_pattern)) {
-      return boost::optional<Json::UInt64>(numeric_cast<Json::UInt64>(std::stoul(str)));
+      return boost::optional<Json::UInt64>(numeric_cast<Json::UInt64>(std::stoull(str)));
     }
     return boost::optional<Json::UInt64>(boost::none);
   }
@@ -68,7 +68,7 @@ struct IntTranslator
     static const std::regex int_pattern = std::regex { R"(^-[0-9]+$)" };
     if (!str.empty()) {
       if (std::regex_match(str, int_pattern)) {
-        return boost::optional<Json::Int64>(std::stol(str));
+        return boost::optional<Json::Int64>(std::stoll(str));
       }
     }
     return boost::optional<Json::Int64>(boost::none);

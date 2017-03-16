@@ -232,6 +232,7 @@ Result BehaviorEnrollFace::InitInternal(Robot& robot)
     ReactionTrigger::ObjectPositionUpdated,
     ReactionTrigger::CliffDetected,
     ReactionTrigger::CubeMoved,
+    ReactionTrigger::FistBump,
     ReactionTrigger::Frustration,
     ReactionTrigger::RobotOnBack,
     ReactionTrigger::RobotOnFace,
@@ -455,11 +456,6 @@ void BehaviorEnrollFace::StopInternal(Robot& robot)
                     "Erasing new face %d as a precaution because we are about to report failure result: %s",
                     _faceID, EnumToString(info.result));
       robot.GetVisionComponent().EraseFace(_faceID);
-    }
-    
-    if(info.faceID != Vision::UnknownFaceID) {
-      // We have to have at least seen a face (even if the wrong one) to achieve "interacting" objective
-      BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
     }
     
     if(info.result == FaceEnrollmentResult::Success)
@@ -696,7 +692,7 @@ void BehaviorEnrollFace::TransitionToSayingName(Robot& robot)
       if(_useMusic)
       {
         // NOTE: it will be up to the caller to stop this music
-        robot.GetRobotAudioClient()->PostMusicState((Audio::GameState::GenericState)Audio::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
+        robot.GetRobotAudioClient()->PostMusicState((AudioMetaData::GameState::GenericState)AudioMetaData::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
       }
       
       {

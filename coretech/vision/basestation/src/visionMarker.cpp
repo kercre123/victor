@@ -30,16 +30,20 @@ namespace Anki {
       
     }
     
-    const char * Marker::GetCodeName() const
-    {
-      if (_code >= 0 && _code <= NUM_MARKER_TYPES) {
-        return MarkerTypeStrings[_code];
-      } else if (_code == ANY_CODE) {
+    const char* Marker::GetNameForCode(Marker::Code code) {
+      if (code >= 0 && code <= NUM_MARKER_TYPES) {
+        return MarkerTypeStrings[code];
+      } else if (code == Marker::ANY_CODE) {
         return "MARKER_ANY";
       } else {
-        PRINT_NAMED_ERROR("Marker.GetCodeName", "Could not look up name for code=%d", _code);
+        PRINT_NAMED_ERROR("Marker.GetNameForCode", "Could not look up name for code=%d", code);
         return "UNKNOWN";
       }
+    }
+    
+    const char * Marker::GetCodeName() const
+    {
+      return GetNameForCode(_code);
     }
     
     ObservedMarker::ObservedMarker()

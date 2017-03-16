@@ -116,23 +116,6 @@ message AppConnectGetRobotIP
   uint_8 ifId
 }
 
-message AppConnectRobotIP
-{
-  uint_32 robotIp,
-  uint_32 robotNetmask,
-  uint_32 robotGateway,
-  uint_8  macaddr[6],
-  uint_8  ifId,
-  bool    fromDHCP,
-  bool    success
-}
-
-message AppConnectConfigResult
-{
-  int_32 result, // 0 is success, anything else is an error
-  uint_8 command // What command this result is for
-}
-
 message WiFiOff
 {
   bool sleep

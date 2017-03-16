@@ -121,9 +121,25 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
 {
     self = [super init];
 
+    // With WKWebView, the Scratch horizontal content on iOS 9 (only tested iOS 9.3) has the
+    // following problems:
+    // * The keyboard hides immediately after it is shown when editing a Scratch text area.
+    // * Sound doesn't play for connecting and trashing the blocks.
+    // 
+    // The above iOS 9 issues go away when using UIWebView.
+    //
+    // We continue to use WKWebView on iOS 10.
+    BOOL iOSVersion10OrGreater = NO;
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 10.0) {
+        iOSVersion10OrGreater = YES;
+    }
+
     UIView *view = UnityGetGLViewController().view;
-    if (enableWKWebView && [WKWebView class]) {
-        webView = [[WKWebView alloc] initWithFrame:view.frame];
+    if (enableWKWebView && [WKWebView class] && iOSVersion10OrGreater) {
+        WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+        configuration.requiresUserActionForMediaPlayback = NO;
+
+        webView = [[WKWebView alloc] initWithFrame:view.frame configuration:configuration];
         webView.UIDelegate = self;
         webView.navigationDelegate = self;
     } else {

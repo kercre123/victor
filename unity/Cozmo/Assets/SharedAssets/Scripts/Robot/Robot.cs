@@ -383,10 +383,11 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectTapped>(HandleActiveObjectTapped);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedLocatedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.AddCallback<ObjectMoved>(HandleActiveObjectMoved);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ObjectStates>(HandleObjectStatesUpdate);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.LocatedObjectStates>(HandleLocatedObjectStatesUpdate);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ConnectedObjectStates>(HandleConnectedObjectStatesUpdate);
     RobotEngineManager.Instance.AddCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
     RobotEngineManager.Instance.AddCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
@@ -416,10 +417,11 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectTapped>(HandleActiveObjectTapped);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedLocatedObject>(HandleDeleteObservedObject);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.RemoveCallback<ObjectMoved>(HandleActiveObjectMoved);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ObjectStates>(HandleObjectStatesUpdate);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.LocatedObjectStates>(HandleLocatedObjectStatesUpdate);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ConnectedObjectStates>(HandleConnectedObjectStatesUpdate);
     RobotEngineManager.Instance.RemoveCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
     RobotEngineManager.Instance.RemoveCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
@@ -816,9 +818,14 @@ public class Robot : IRobot {
     }
   }
 
-  public void HandleDeleteObservedObject(Anki.Cozmo.ExternalInterface.RobotDeletedObject message) {
+  public void HandleDeleteObservedObject(Anki.Cozmo.ExternalInterface.RobotDeletedLocatedObject message) {
     if (ID == message.robotID) {
       KnownObjects.Remove((int)message.objectID);
+
+      ActiveObject objectPoseUnknown = GetActiveObjectById((int)message.objectID);
+      if (objectPoseUnknown != null) {
+      	objectPoseUnknown.MarkPoseUnknown();
+      }
     }
   }
 
@@ -954,11 +961,15 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleObjectStatesUpdate(Anki.Cozmo.ExternalInterface.ObjectStates message) {
-    ObjectState[] objectStates = message.objects;
-    if (objectStates != null) {
-      for (int i = 0; i < objectStates.Length; ++i) {
-        ObjectState obj = objectStates[i];
+  private void HandleLocatedObjectStatesUpdate(G2U.LocatedObjectStates message) {
+    // first flag all objects as Unknown because LocatedObjectStates only broadcasts objects that currently
+    // exist in the current coordinate frame. Flag all Unknown, and then Update the poses of those received
+    MarkAllActiveObjectsPoseAsUnknown();
+
+    LocatedObjectState[] locObjectStates = message.objects;
+    if (locObjectStates != null) {
+      for (int i = 0; i < locObjectStates.Length; ++i) {
+        LocatedObjectState obj = locObjectStates[i];
 
         ObservableObject knownObj = null;
         if (KnownObjects.TryGetValue((int)obj.objectID, out knownObj)) {
@@ -971,6 +982,10 @@ public class Robot : IRobot {
         }
       }
     }
+  }
+
+  private void HandleConnectedObjectStatesUpdate(G2U.ConnectedObjectStates message) {
+    // Do we care about this in Unity?
   }
 
   private void HandleSeeObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
@@ -1073,6 +1088,16 @@ public class Robot : IRobot {
       if (objectPoseUnknown != null) {
         objectPoseUnknown.HandleObjectTapped(message);
       }
+    }
+  }
+
+  // Flags the pose of all active objects as Unknown
+  public void MarkAllActiveObjectsPoseAsUnknown() {
+    if (Charger != null) {
+      Charger.MarkPoseUnknown();
+    }
+    foreach (var kvp in LightCubes) {
+      kvp.Value.MarkPoseUnknown();
     }
   }
 
@@ -1757,21 +1782,22 @@ public class Robot : IRobot {
     SetHeadAngle();
   }
 
-  public void ClearAllBlocks() {
-    DAS.Debug(this, "Clear All Blocks");
-    RobotEngineManager.Instance.Message.ClearAllBlocks = Singleton<ClearAllBlocks>.Instance.Initialize(ID);
-    RobotEngineManager.Instance.SendMessage();
-    Reset(null);
-
-    SetLiftHeight(0f);
-    SetHeadAngle();
-  }
-
-  public void ClearAllObjects() {
-    RobotEngineManager.Instance.Message.ClearAllObjects = Singleton<ClearAllObjects>.Instance.Initialize(ID);
-    RobotEngineManager.Instance.SendMessage();
-    Reset(null);
-  }
+// rsam: meaning has changed. Probably no need to support now
+//  public void ClearAllBlocks() {
+//    DAS.Debug(this, "Clear All Blocks");
+//    RobotEngineManager.Instance.Message.ClearAllBlocks = Singleton<ClearAllBlocks>.Instance.Initialize(ID);
+//    RobotEngineManager.Instance.SendMessage();
+//    Reset(null);
+//
+//    SetLiftHeight(0f);
+//    SetHeadAngle();
+//  }
+//
+//  public void ClearAllObjects() {
+//    RobotEngineManager.Instance.Message.ClearAllObjects = Singleton<ClearAllObjects>.Instance.Initialize(ID);
+//    RobotEngineManager.Instance.SendMessage();
+//    Reset(null);
+//  }
 
   public void VisionWhileMoving(bool enable) {
     RobotEngineManager.Instance.Message.VisionWhileMoving = Singleton<VisionWhileMoving>.Instance.Initialize(System.Convert.ToByte(enable));
@@ -1805,8 +1831,8 @@ public class Robot : IRobot {
   }
 
   public void ActivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId,
-                                   Anki.Cozmo.Audio.GameState.Music musicState,
-                                   Anki.Cozmo.Audio.SwitchState.Sparked sparkedState) {
+                                   Anki.AudioMetaData.GameState.Music musicState,
+                                   Anki.AudioMetaData.SwitchState.Sparked sparkedState) {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage = Singleton<BehaviorManagerMessage>.Instance.Initialize(
       ID,
       Singleton<ActivateSparkedMusic>.Instance.Initialize(behaviorUnlockId, musicState, sparkedState)
@@ -1814,7 +1840,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void DeactivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.Cozmo.Audio.GameState.Music musicState) {
+  public void DeactivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.AudioMetaData.GameState.Music musicState) {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage = Singleton<BehaviorManagerMessage>.Instance.Initialize(
       ID,
       Singleton<DeactivateSparkedMusic>.Instance.Initialize(behaviorUnlockId, musicState)

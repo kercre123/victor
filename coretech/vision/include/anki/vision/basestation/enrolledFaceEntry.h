@@ -133,6 +133,8 @@ public:
   Result MergeWith(const EnrolledFaceEntry& other, s32 maxAlbumEntriesToKeep,
                    std::vector<s32>& entriesRemoved);
   
+  static std::string GetTimeString(Time time);
+  
   // ---------------------------------------------------------------------------
   // Serialization
   //
@@ -150,6 +152,9 @@ protected:
   
   Result MergeAlbumEntriesHelper(const EnrolledFaceEntry& other, s32 maxAlbumEntriesToKeep,
                                  std::vector<AlbumEntryID_t>& entriesRemoved);
+  
+  // Helper to make sure times aren't in the future when loaded/initialized
+  bool ClipFutureTimesToNow(const std::string& logString);
   
   FaceID_t            _faceID = UnknownFaceID; // The ID used for recognition
   FaceID_t            _prevID = UnknownFaceID; // The previous ID if the ID just changed (e.g. due to merge)

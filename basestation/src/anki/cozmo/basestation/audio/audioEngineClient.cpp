@@ -22,6 +22,18 @@
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+  
+using namespace AudioEngine::Multiplexer;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AudioEngineClient::AudioEngineClient()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AudioEngineClient::~AudioEngineClient()
+{
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHandler )
@@ -36,8 +48,8 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( const GameEvent::GenericEvent event,
-                                                                  const GameObjectType gameObject,
+  AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( const AudioMetaData::GameEvent::GenericEvent event,
+                                                                  const AudioMetaData::GameObjectType gameObject,
                                                                   const CallbackFunc& callback )
 {
   if ( nullptr != _messageHandler ) {
@@ -59,7 +71,7 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::StopAllEvents( const GameObjectType gameObject )
+void AudioEngineClient::StopAllEvents( const AudioMetaData::GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
     MessageAudioClient msg( (StopAllAudioEvents( gameObject )) );
@@ -71,8 +83,8 @@ void AudioEngineClient::StopAllEvents( const GameObjectType gameObject )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostGameState( const GameState::StateGroupType gameStateGroup,
-                                       const GameState::GenericState gameState )
+  void AudioEngineClient::PostGameState( const AudioMetaData::GameState::StateGroupType gameStateGroup,
+                                         const AudioMetaData::GameState::GenericState gameState )
 {
   if ( nullptr != _messageHandler ) {
     MessageAudioClient msg( (PostAudioGameState( gameStateGroup, gameState )) );
@@ -84,9 +96,9 @@ void AudioEngineClient::PostGameState( const GameState::StateGroupType gameState
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostSwitchState( const SwitchState::SwitchGroupType switchGroup,
-                                         const SwitchState::GenericSwitch switchState,
-                                         const GameObjectType gameObject )
+void AudioEngineClient::PostSwitchState( const AudioMetaData::SwitchState::SwitchGroupType switchGroup,
+                                         const AudioMetaData::SwitchState::GenericSwitch switchState,
+                                         const AudioMetaData::GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
     MessageAudioClient msg( PostAudioSwitchState( switchGroup, switchState, gameObject ) );
@@ -98,11 +110,11 @@ void AudioEngineClient::PostSwitchState( const SwitchState::SwitchGroupType swit
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostParameter( const GameParameter::ParameterType parameter,
+void AudioEngineClient::PostParameter( const AudioMetaData::GameParameter::ParameterType parameter,
                                        const float parameterValue,
-                                       const GameObjectType gameObject,
+                                       const AudioMetaData::GameObjectType gameObject,
                                        const int32_t timeInMilliSeconds,
-                                       const CurveType curve ) const
+                                       const AudioEngine::Multiplexer::CurveType curve ) const
 {
   if ( nullptr != _messageHandler ) {
     MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObject, timeInMilliSeconds, curve ) );
@@ -114,7 +126,7 @@ void AudioEngineClient::PostParameter( const GameParameter::ParameterType parame
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostMusicState( const GameState::GenericState musicState,
+void AudioEngineClient::PostMusicState( const AudioMetaData::GameState::GenericState musicState,
                                         const bool interrupt,
                                         const uint32_t minDuration_ms )
 {
@@ -126,45 +138,7 @@ void AudioEngineClient::PostMusicState( const GameState::GenericState musicState
     PRINT_NAMED_WARNING("AudioEngineClient.PostMusicState", "Message Handler is Null Can NOT post Music State");
   }
 }
-  
-  
-// Private
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleCallbackEvent( const AudioCallback& callbackMsg )
-{
-//  const CallbackIdType callbackId = static_cast<CallbackIdType>( callbackMsg.callbackId );
-  const auto& callbackIt = _callbackMap.find( static_cast<CallbackIdType>( callbackMsg.callbackId ) );
-  if ( callbackIt != _callbackMap.end() ) {
-    // Perfomr Callback Func
-    callbackIt->second( callbackMsg );
-    
-    // FIXME: Waiting to hear back from WWise if complete callback is allways called, if so remove callback check
-    // Delete if it is completed or there there is an error
-    AudioCallbackInfoTag callbackTag = callbackMsg.callbackInfo.GetTag();
-    if ( AudioCallbackInfoTag::callbackComplete == callbackTag ||
-         AudioCallbackInfoTag::callbackError == callbackTag )
-    {
-      _callbackMap.erase( callbackIt );
-    }
-  }
-  else {
-    // Received unexpected callback!
-    PRINT_NAMED_ERROR( "AudioEngineClient.HandleCallbackEvent", "Received Unexpected callbackId: %d Type %s",
-                       callbackMsg.callbackId, AudioCallbackInfoTagToString( callbackMsg.callbackInfo.GetTag() ) );
-  }
-}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType AudioEngineClient::GetNewCallbackId()
-{
-  // We intentionally let the callback id roll over
-  CallbackIdType callbackId = ++_previousCallbackId;
-  if ( kInvalidCallbackId == callbackId ) {
-    ++callbackId;
-  }
-  
-  return callbackId;
-}
 
 } // Audio
 } // Cozmo

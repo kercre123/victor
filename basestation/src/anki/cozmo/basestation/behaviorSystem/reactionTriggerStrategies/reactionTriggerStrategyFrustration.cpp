@@ -58,7 +58,7 @@ bool ReactionTriggerStrategyFrustration::ShouldTriggerBehavior(const Robot& robo
   
   if(notReactingToFrustration &&
      confidentVal < _maxConfidentScore &&
-     (FLT_LT(_lastReactedTime_s, 0.f) ||  _lastReactedTime_s + _cooldownTime_s > currTime_s)){
+     ( (_lastReactedTime_s <= 0.f) || ((currTime_s - _lastReactedTime_s) > _cooldownTime_s)) ){
     return behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
   }
   

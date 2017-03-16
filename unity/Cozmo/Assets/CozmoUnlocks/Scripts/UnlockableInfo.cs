@@ -24,18 +24,12 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   private bool _ComingSoon;
   public bool ComingSoon { get { return _ComingSoon; } }
 
-  [SerializeField, Tooltip("Will never leave the 'locked' state and is never shown in the UI")]
-  private bool _HideInUI;
-
-  public bool NeverAvailable {
+  public bool FeatureIsEnabled {
     get {
-      // If a featuregate can block it ever showing up if it has the same name as the unlockable
       if (FeatureGate.Instance.FeatureMap.ContainsKey(Id.Value.ToString().ToLower())) {
-        if (!FeatureGate.Instance.IsFeatureEnabled(Id.Value.ToString().ToLower())) {
-          return true;
-        }
+        return FeatureGate.Instance.IsFeatureEnabled(Id.Value.ToString().ToLower());
       }
-      return _ComingSoon || _HideInUI;
+      return true;
     }
   }
 
@@ -57,7 +51,7 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   public string RequestTrickCostItemId;
   public AnimationCurve RequestTrickCostAmountCurve;
   public int RequestTrickCostAmountNeededMin = 1;
-  [Range(1,20)]
+  [Range(1, 20)]
   public int RequestTrickCostAmountNeededMaxTimes = 1;
   public int RequestTrickCostAmountNeededMax = 1;
   public int RequestTrickCostAmountNeeded {

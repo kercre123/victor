@@ -21,11 +21,14 @@
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/encodedImage.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"
 #include "anki/cozmo/basestation/visionModeSchedule.h"
 #include "anki/cozmo/basestation/visionPoseData.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/cameraParams.h"
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/visionModes.h"
@@ -277,6 +280,12 @@ struct DockingErrorSignal;
     s32 GetMaxCameraExposureTime_ms() const;
     f32 GetMinCameraGain() const;
     f32 GetMaxCameraGain() const;
+    
+#   ifdef COZMO_V2
+    // COZMO 2.0 ONLY
+    // Captures image to be queued for processing and sent to game and viz
+    void CaptureAndSendImage();
+#   endif
     
   protected:
     

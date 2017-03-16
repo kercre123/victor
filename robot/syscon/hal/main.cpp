@@ -22,8 +22,6 @@ extern "C" {
 #include "backpack.h"
 #include "lights.h"
 #include "cubes.h"
-#include "random.h"
-#include "tasks.h"
 #include "bluetooth.h"
 #include "messages.h"
 #include "watchdog.h"
@@ -34,13 +32,20 @@ extern "C" {
 extern GlobalDataToHead g_dataToHead;
 
 // This is our near-realtime loop
-void main_execution(void) { 
+void main_execution(void) {
   Motors::manage();
   Head::manage();
   Battery::manage();
   Bluetooth::manage();
-  Backpack::trigger();
- 
+
+  // Update our lights
+  Lights::manage();
+  Backpack::manage();
+
+  #ifdef FACTORY
+  TestFixtures::manage();
+  #endif
+
   Watchdog::kick(WDOG_MAIN_LOOP);
 
   g_dataToHead.timestamp += TIME_STEP;
@@ -49,7 +54,7 @@ void main_execution(void) {
 int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
-  
+
   Storage::init();
 
   // Initialize our scheduler
@@ -58,7 +63,6 @@ int main(void)
 
   // Initialize the SoftDevice handler module.
   Bluetooth::init();
-  Tasks::init();
   Lights::init();
 
   // Setup all tasks
@@ -83,14 +87,8 @@ int main(void)
   // NOTE: HERE DOWN SOFTDEVICE ACCESS IS NOT GUARANTEED
   // Run forever, because we are awesome.
   for (;;) {
+    __asm { WFI }
+    Watchdog::kick(WDOG_ROOT_LOOP);
     Battery::updateOperatingMode();
-
-    // This means that if the crypto engine is running, the lights will stop pulsing.
-    Tasks::manage();
-    Radio::rotate(Lights::manage());
-
-    #ifdef FACTORY
-    TestFixtures::manage();
-    #endif
   }
 }

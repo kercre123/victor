@@ -17,7 +17,7 @@
 #include <stdexcept>
 #include "util/logging/logging.h"
 
-#define BOUNDED_WHILE(n, exp) unsigned int MAKE_NAME=0; while(MAKE_NAME++ < (n) ? (exp) : Anki::Util::util_PrintErrorAndCrash(__FILE__, __LINE__))
+#define BOUNDED_WHILE(n, exp) unsigned int MAKE_NAME=0; while(MAKE_NAME++ < (n) ? (exp) : Anki::Util::util_PrintErrorAndCrashInDev(__FILE__, __LINE__))
 
 #define SOFT_BOUNDED_WHILE(str, n, exp) unsigned int MAKE_NAME=0; while(MAKE_NAME++ < (n) ? (exp) : Anki::Util::util_PrintWarning(str))
 
@@ -37,9 +37,11 @@ inline bool util_PrintWarning(const char* errorString) {
   return false;
 }
 
-inline bool util_PrintErrorAndCrash(const char* file, int line) {
+inline bool util_PrintErrorAndCrashInDev(const char* file, int line) {
   PRINT_NAMED_ERROR("LoopBoundOverflow", "%s:%d", file, line);
-  throw std::runtime_error("LoopBoundOverflow");
+  if( ANKI_DEVELOPER_CODE ) { // dont crash prod
+    throw std::runtime_error("LoopBoundOverflow");
+  }
   return false;
 }
 

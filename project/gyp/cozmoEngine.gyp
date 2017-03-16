@@ -2,13 +2,14 @@
   'includes': [
     '../../coretech/project/gyp/face-library.gypi',
     '../../coretech/project/gyp/opencv.gypi',
-    'build-variables.gypi',
     'voice-recognition.gypi',
   ],
-  
+
   'variables': {
 
     'engine_source': 'cozmoEngine.lst',
+    'engine2_source': 'cozmoEngine2.lst',
+    'engine2_sim_source': 'cozmoEngine2_sim.lst',
     'clad_vision_source': '../../generated/clad/vision.lst',
     'clad_common_source': '../../generated/clad/common.lst',
     'clad_engine_source': '../../generated/clad/engine.lst',
@@ -20,15 +21,17 @@
     'ctrlShared_source': 'ctrlShared.lst',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
+    'ctrlRobot2_source': 'ctrlRobot2.lst',
     'ctrlViz_source': 'ctrlViz.lst',
     'ctrlGameEngine_source': 'ctrlGameEngine.lst',
+    'ctrlGameEngine2_source': 'ctrlGameEngine2.lst',
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
-    'ctrlBuildServerTest_source': 'ctrlBuildServerTest.lst',    
+    'ctrlBuildServerTest_source': 'ctrlBuildServerTest.lst',
     'ctrlDevLog_source': 'ctrlDevLog.lst',
     'clad_source': 'clad.lst',
     'pluginPhysics_source': 'pluginPhysics.lst',
     'robot_generated_clad_source': 'robotGeneratedClad.lst',
-    
+
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
       'ANKICORETECH_USE_MATLAB=0',
@@ -137,13 +140,14 @@
       '<(webots_path)/include/ode',
       '<(webots_path)/include',
     ],
-  
+
     'das_include': [
       '../../lib/das-client/include',
       '../../lib/das-client/ios',
     ],
 
     'compiler_flags': [
+      '-DJSONCPP_USING_SECURE_MEMORY=0',
       '-Wno-deprecated-declarations', # Suppressed until system() usage is removed
       '-fdiagnostics-show-category=name',
       '-Wall',
@@ -156,7 +160,7 @@
       '-fvisibility=default',
       '-Wshorten-64-to-32',
       '-Winit-self',
-      '-Wconditional-uninitialized', 
+      '-Wconditional-uninitialized',
       # '-Wno-deprecated-register', # Disabled until this warning actually needs to be suppressed
       '-Wformat',
       '-Werror=format-security',
@@ -458,7 +462,7 @@
           ],
       },
     },
-    'conditions': [    
+    'conditions': [
       [
         "OS=='ios'",
         {
@@ -486,7 +490,7 @@
     ],
   },
 
-  'conditions': [    
+  'conditions': [
     [
       "OS=='android'",
       {
@@ -551,7 +555,7 @@
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-util_gyp_path):util',
             ],
-            'sources': [ 
+            'sources': [
               '<!@(cat <(pluginPhysics_source))',
             ],
             'defines': [
@@ -568,10 +572,10 @@
               'libode.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
-              '$(SDKROOT)/System/Library/Frameworks/GLUT.framework',              
+              '$(SDKROOT)/System/Library/Frameworks/GLUT.framework',
             ],
           }, # end cozmo_physics
- 
+
           {
             'target_name': 'webotsCtrlLightCube',
             'type': 'executable',
@@ -666,6 +670,7 @@
             'include_dirs': [
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
+              '../../robot/hal/include',
               '../../robot/include',
               '../../robot/generated',
               '../../include',
@@ -751,14 +756,14 @@
             'xcode_settings': {
               'OTHER_LDFLAGS': ['-force_load <(coretech_external_path)/routing_http_server/generated/Mac/DerivedData/Release/librouting_http_server.a'],
             },
-                  
-              
+
+
             'actions': [
               {
                 'action_name': 'create_symlink_webotsCtrlEnginefaceLibraryLibs',
                 'inputs': [ ],
                 'outputs': [ ],
-                
+
                 'conditions': [
                   ['face_library=="faciometric"', {
                     'action': [
@@ -797,6 +802,261 @@
               ],
             ],
           }, # end controller Game Engine
+
+          {
+            'target_name': 'webotsCtrlRobot2',
+            'type': 'executable',
+            'include_dirs': [
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
+              '../../robot2/hal/include',
+              '../../robot2/hal/sim/include', 
+              '../../robot/include',
+              '../../robot/generated',
+              '../../include',
+              '../../simulator/include',
+            ],
+            'dependencies': [
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-cti_gyp_path):ctiMessagingRobot',
+              '<(ce-cti_gyp_path):ctiPlanningRobot',
+              '<(ce-util_gyp_path):util',
+              'robotClad',
+            ],
+            'sources': [
+              '<!@(cat <(ctrlRobot2_source))',
+              '<!@(cat <(ctrlShared_source))'
+              ],
+            'defines': [
+              'COZMO_ROBOT',
+              'COZMO_V2',
+              'SIMULATOR',
+              '_DEBUG'
+            ],
+            'libraries': [
+              'libCppController.dylib',
+              '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+            ],
+            'actions': [
+              {
+                    'action_name': 'Robot pre-build steps',
+                    'inputs': [],
+                    'outputs': [],
+                    'action': [
+                        'make', '-C', '../../robot/', 'sim', 'BUILD_TYPE=SIMULATOR'
+                    ],
+                }
+            ]
+          }, # end controller Robot 2
+
+
+
+          {
+            'target_name': 'cozmoEngine2_sim',
+            'type': 'static_library',
+            'sources': [
+              '<!@(cat <(engine2_sim_source))',
+              '<!@(cat <(clad_engine_source))',
+              '<!@(cat <(clad_common_source))',
+              '<!@(cat <(clad_vision_source))',
+              '<!@(cat <(clad_robot_source))',
+              '<!@(cat <(clad_viz_source))',
+              '<!@(cat <(clad_source))',
+              '<!@(cat <(api_source))',
+            ],
+            'sources/': [
+              ['exclude', 'bleRobotManager.mm'],
+              ['exclude', 'bleComms.mm'],
+              ['exclude', '../../cozmoAPI/src/anki/cozmo/csharp-binding/ios'],
+            ],
+            'include_dirs': [
+              '../../basestation/src',
+              '../../basestation/include',
+              '../../basestation/include/anki/cozmo/basestation',
+              '../../basestation/include/anki/cozmo/basestation/actions',
+              '../../androidHAL/include',
+              '../../include',
+              '../../robot/include',
+              '../../generated/clad/engine',
+              '../../coretech/generated/clad/vision',
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!        
+              '<@(flatbuffers_include)',
+              '<@(flite_includes)',
+              '<@(routing_http_server_include)',
+              '../../cozmoAPI/include',
+              '../../generated/clad/game',
+              '<@(libarchive_include)',
+              '<@(das_include)',
+              '<@(voice_recog_library_includes)',
+            ],
+            'direct_dependent_settings': {
+              'include_dirs': [
+                '../../basestation/include',
+                '../../androidHAL/include',
+                '../../include',
+                '../../robot/include',
+                '../../generated/clad/engine',
+                '../../basestation/src',
+                '../../cozmoAPI/include',
+                '../../generated/clad/game',
+              ],
+              'defines': [
+                'COZMO_BASESTATION',
+                'COZMO_V2',
+                'SIMULATOR'
+              ],
+            },
+            'defines': [
+              'COZMO_BASESTATION',
+              'COZMO_V2',
+              'SIMULATOR'
+            ],
+            'dependencies': [
+              '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):audioUtil',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-cti_gyp_path):ctiPlanning',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(cg-audio_path):AudioEngine',
+              '<(ce-ble_cozmo_path):BLECozmo',
+              '<(ce-das_path):DAS',
+            ],
+            'libraries': [
+              '<(webots_path)/lib/libCppController.dylib',            
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+              '<@(flatbuffers_libs)',
+              '<@(flite_libs)',
+              '<@(routing_http_server_libs)',
+              '<@(libarchive_libs)',
+              '<@(voice_recog_library_libs)',
+            ],
+
+            'conditions': [
+              ['face_library=="faciometric"', {
+                # Copy FacioMetric's models into the resources so they are available at runtime.
+                # This is a little icky since it reaches into cozmo engine...
+                'actions': [
+                  {
+                    'action_name': 'copy_faciometric_models',
+                    'action': [
+                      'cp',
+                      '-R',
+                      '<(face_library_path)/Demo/models',
+                      '../../resources/config/basestation/vision/faciometric',
+                    ],
+                  },
+                ],
+              }],
+            ] #'conditions'
+
+          }, # end cozmoEngine2_sim target
+
+
+
+          {
+            'target_name': 'webotsCtrlGameEngine2',
+            'type': 'executable',
+            'include_dirs': [
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
+              '<@(flatbuffers_include)',
+              '<@(flite_includes)',
+              '<@(routing_http_server_include)',
+              '<@(voice_recog_library_includes)',
+            ],
+            'dependencies': [
+              'cozmoEngine2_sim',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):jsoncpp',
+            ],
+            'sources': [
+              '<!@(cat <(ctrlGameEngine2_source))',
+              '<!@(cat <(ctrlShared_source))'
+              ],
+            'defines': [
+              'COZMO_V2',
+              'SIMULATOR'
+            ],
+            'libraries': [
+              'libCppController.dylib',
+              '$(SDKROOT)/System/Library/Frameworks/Security.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+              '$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreBluetooth.framework',
+              '<@(flatbuffers_libs)',
+              '<@(flite_libs)',
+              '<@(opencv_libs)',
+              '<@(face_library_libs)',
+              '<@(routing_http_server_libs)',
+              '<@(voice_recog_library_libs)',
+            ],
+
+            #Force linked due to objective-C categories.
+            'xcode_settings': {
+              'OTHER_LDFLAGS': ['-force_load <(coretech_external_path)/routing_http_server/generated/Mac/DerivedData/Release/librouting_http_server.a'],
+            },
+
+
+            'actions': [
+              {
+                'action_name': 'create_symlink_webotsCtrlEnginefaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      '../../tools/build/tools/ankibuild/symlink.py',
+                      '--link_target', '<(face_library_lib_path)',
+                      '--link_name', '../../simulator/controllers/webotsCtrlGameEngine2/'
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      '../../tools/build/tools/ankibuild/symlink.py',
+                      '--link_target', '<(face_library_lib_path)/libfsdk.dylib',
+                      '--link_name', '../../simulator/controllers/webotsCtrlGameEngine2/'
+                    ],
+                  }],
+                  ['face_library=="opencv" or face_library=="okao"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVGameAction',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ], # actions
+
+            'conditions': [
+              [
+                'OS=="ios" or OS=="mac"',
+                {
+                  'libraries': [
+                    '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+                  ],
+                },
+              ],
+            ],
+          }, # end controller Game Engine 2
 
           {
             'target_name': 'webotsCtrlKeyboard',
@@ -913,19 +1173,21 @@
             'type': 'none',
             'dependencies': [
               'webotsCtrlKeyboard',
-              'webotsCtrlBuildServerTest',              
+              'webotsCtrlBuildServerTest',
               'webotsCtrlGameEngine',
+              'webotsCtrlGameEngine2',
               'webotsCtrlRobot',
+              'webotsCtrlRobot2',
               'webotsCtrlViz',
               'webotsCtrlLightCube',
               'webotsCtrlDevLog',
               'cozmo_physics',
             ],
-            
+
             # Create symlinks to controller binaries
             # For some reason this is necessary in order to be able to attach to their processes from Xcode.
             'actions': [
-            
+
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsCtrlKeyboard
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -952,7 +1214,7 @@
                   '--create_folder', '../../simulator/controllers/webotsCtrlKeyboard/resources'
                 ],
               },
-              
+
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsCtrlBuildServerTest
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -967,7 +1229,7 @@
                   '--link_name', '../../simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest'
                 ],
               },
-              
+
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsCtrlGameEngine
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1003,6 +1265,41 @@
                 ],
               },
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsCtrlGameEngine2
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              {
+                'action_name': 'create_symlink_webotsCtrlGameEngine2',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/webotsCtrlGameEngine2',
+                  '--link_name', '../../simulator/controllers/webotsCtrlGameEngine2/webotsCtrlGameEngine2'
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_configs2',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '../../simulator/controllers/webotsCtrlGameEngine2/resources/config',
+                  '--create_folder', '../../simulator/controllers/webotsCtrlGameEngine2/resources'
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_test2',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/test',
+                  '--link_name', '../../simulator/controllers/webotsCtrlGameEngine2/resources/test'
+                ],
+              },
+
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsCtrlRobot
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # controller binary
@@ -1028,7 +1325,35 @@
                   '--create_folder', '../../simulator/controllers/webotsCtrlRobot/resources'
                 ],
               },
-              
+
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            # webotsCtrlRobot2
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            # controller binary
+            {
+              'action_name': 'create_symlink_webotsCtrlRobot2',
+              'inputs':[],
+              'outputs':[],
+              'action': [
+                '../../tools/build/tools/ankibuild/symlink.py',
+                '--link_target', '<(PRODUCT_DIR)/webotsCtrlRobot2',
+                '--link_name', '../../simulator/controllers/webotsCtrlRobot2/webotsCtrlRobot2'
+              ],
+            },
+            # create symlink to config, so that webotsCtrlRobot2 can also load json configuration files
+            # shared with other controllers
+            {
+              'action_name': 'create_symlink_resources_configs_webotsCtrlRobot2',
+              'inputs':[], 'outputs':[],
+              'action': [
+                '../../tools/build/tools/ankibuild/symlink.py',
+                '--link_target', '<(cozmo_engine_path)/resources/config',
+                '--link_name', '../../simulator/controllers/webotsCtrlRobot2/resources/config',
+                '--create_folder', '../../simulator/controllers/webotsCtrlRobot2/resources'
+              ],
+            },
+
+
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsCtrlViz
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1054,7 +1379,7 @@
                   '--create_folder', '../../simulator/controllers/webotsCtrlViz/resources'
                 ],
               },
-              
+
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsCtrlLightCube
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1080,7 +1405,7 @@
                   '--create_folder', '../../simulator/controllers/webotsCtrlLightCube/resources'
                 ],
               },
-              
+
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsPluginPhysics
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1109,7 +1434,7 @@
                 ],
               }
             ], # actions
-            
+
           }, # end webotsControllers
 
 
@@ -1164,7 +1489,7 @@
               '<@(face_library_libs)',
             ],
 
-            'conditions': [    
+            'conditions': [
               [
                 'OS=="ios" or OS=="mac"',
                 {
@@ -1234,7 +1559,7 @@
 
             ], #end actions
           }, # end unittest target
-          
+
           {
             'target_name': 'recognizeFacesTool',
             'type': 'executable',
@@ -1266,7 +1591,7 @@
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
-            
+
             'conditions': [
               [
                 'OS=="ios" or OS=="mac"',
@@ -1297,7 +1622,7 @@
               },
             ], #end actions
           }, # end recognizeFacesTool target
-          
+
         ], # end targets
       },
     ], # end if mac
@@ -1321,7 +1646,7 @@
 
     {
       'target_name': 'cozmoEngine',
-      'sources': [ 
+      'sources': [
         '<!@(cat <(engine_source))',
         '<!@(cat <(clad_engine_source))',
         '<!@(cat <(clad_common_source))',
@@ -1384,7 +1709,7 @@
         '<(ce-ble_cozmo_path):BLECozmo',
         '<(ce-das_path):DAS',
       ],
-      'conditions': [    
+      'conditions': [
         [
           'OS=="ios" or OS=="mac"',
           {
@@ -1497,7 +1822,7 @@
             ],
           }
         ],
-        
+
        ['face_library=="faciometric"', {
           # Copy FacioMetric's models into the resources so they are available at runtime.
           # This is a little icky since it reaches into cozmo engine...
@@ -1514,7 +1839,7 @@
           ],
         }],
         ['OS=="ios"',{
-          'sources/': [ 
+          'sources/': [
             ['exclude', '(android|linux)']
           ],
           'libraries': [
@@ -1522,18 +1847,18 @@
           ]
         }],
         ['OS=="mac"',{
-          'sources/': [ 
+          'sources/': [
             ['exclude', '(android|linux)'],
             ['exclude', '../../cozmoAPI/src/anki/cozmo/csharp-binding/ios']
           ]
         }],
         ['OS=="android"',{
-          'sources/': [ 
+          'sources/': [
             ['exclude', '(ios|linux|mac)']
           ]
         }],
         ['OS=="linux"',{
-          'sources/': [ 
+          'sources/': [
             ['exclude', '(android|ios|mac)']
           ]
         }],
@@ -1541,10 +1866,237 @@
 
     }, # end engine target
 
-    
+    {
+      'target_name': 'cozmoEngine2',
+      'sources': [
+        '<!@(cat <(engine2_source))',
+        '<!@(cat <(clad_engine_source))',
+        '<!@(cat <(clad_common_source))',
+        '<!@(cat <(clad_vision_source))',
+        '<!@(cat <(clad_robot_source))',
+        '<!@(cat <(clad_viz_source))',
+        '<!@(cat <(clad_source))',
+        '<!@(cat <(api_source))',
+      ],
+      'sources/': [
+        ['exclude', 'bleRobotManager.mm'],
+        ['exclude', 'bleComms.mm'],
+      ],
+      'include_dirs': [
+        '../../basestation/src',
+        '../../basestation/include',
+        '../../basestation/include/anki/cozmo/basestation',
+        '../../basestation/include/anki/cozmo/basestation/actions',
+        '../../androidHAL/src',
+        '../../androidHAL/include',
+        '../../include',
+        '../../robot/include',
+        '../../generated/clad/engine',
+        '../../coretech/generated/clad/vision',
+        '<@(opencv_includes)',
+        '<@(flatbuffers_include)',
+        '<@(flite_includes)',
+        '<@(routing_http_server_include)',
+        '../../cozmoAPI/include',
+        '../../generated/clad/game',
+        '<@(libarchive_include)',
+        '<@(das_include)',
+        '<@(voice_recog_library_includes)',
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../basestation/include',
+          '../../androidHAL/include',
+          '../../include',
+          '../../robot/include',
+          '../../generated/clad/engine',
+          '../../basestation/src',
+          '../../androidHAL/src',
+          '../../cozmoAPI/include',
+          '../../generated/clad/game',
+        ],
+        'defines': [
+          'COZMO_BASESTATION',
+          'COZMO_V2',
+        ],
+      },
+      'defines': [
+        'COZMO_BASESTATION',
+        'COZMO_V2',
+      ],
+      'dependencies': [
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):audioUtil',
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiMessaging',
+        '<(ce-cti_gyp_path):ctiPlanning',
+        '<(ce-cti_gyp_path):ctiVision',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
+        '<(cg-audio_path):AudioEngine',
+        '<(ce-ble_cozmo_path):BLECozmo',
+        '<(ce-das_path):DAS',
+      ],
+      'conditions': [
+        [
+          'OS=="ios" or OS=="mac"',
+          {
+            'type': 'static_library',
+            'libraries': [
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+              '<@(flatbuffers_libs)',
+              '<@(flite_libs)',
+              '<@(routing_http_server_libs)',
+              '<@(libarchive_libs)',
+              '<@(voice_recog_library_libs)',
+            ],
+          },
+      	  'OS=="android"',
+          {
+            'type': 'shared_library',
+            'library_dirs':
+            [
+              #these are empty?!?!
+              #'<(opencv_lib_search_path_debug)',
+              #'<(face_library_lib_path)',
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a',
+            ],
+
+            'libraries': [ # why is this in #if android? shouldn't mac and ios have same libs to link against?
+              '-Wl,--whole-archive',
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkao.a',      # Common
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoCo.a',    #
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoPc.a',    # Property Estimation (for Smile/Gaze/Blink?)
+              '-Wl,--no-whole-archive',
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoDt.a',    # Face Detection
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoPt.a',    # Face Parts Detection
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoEx.a',    # Facial Expression estimation
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoFr.a',    # Face Recognition
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOmcvPd.a',    # Pet Detection
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoSm.a',    # Smile Estimation
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoGb.a',    # Gaze & Blink Estimation
+              '<(coretech_external_path)/libarchive/project/android/DerivedData/libarchive.a',
+              '<(crash_path)/Breakpad/libs/armeabi-v7a/libbreakpad_client.a',   # Google Breakpad
+              # does not work with ninja?!?!
+              # '<@(face_library_libs)',
+              # '<@(opencv_libs)',
+              '<@(flatbuffers_libs_android)',
+              '<@(flite_libs_android)',
+              '<@(voice_recog_library_libs)',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/libIlmImf.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjasper.a',
+              #'<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjpeg.a',
+              '<(coretech_external_path)/libjpeg-turbo/android_armv7_libs/libturbojpeg.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibpng.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibtiff.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibwebp.a',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_calib3d.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_core.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_features2d.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_flann.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_highgui.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_imgcodecs.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_imgproc.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_java3.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_ml.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_objdetect.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_photo.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_shape.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_stitching.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_superres.so',
+              #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_ts.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_video.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videoio.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videostab.so',
+
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libCommunicationCentral.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkStreamMgr.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkMusicEngine.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSoundEngine.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkMemoryMgr.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkDelayFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkRoomVerbFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSilenceSource.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkCompressorFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkPeakLimiterFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkParametricEQFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkHarmonizerFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkMeterFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkFlangerFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkGainFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkToneSource.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkVorbisDecoder.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkTimeStretchFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSineSource.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkExpanderFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkGuitarDistortionFX.a',
+              '-llog',
+              '-lOpenSLES',
+              '-landroid',
+
+            ],
+            'include_dirs': [
+              '<(crash_path)/Breakpad/include/breakpad',
+              '<@(flatbuffers_include)',
+              '../../include/anki/cozmo',
+            ],
+            'defines': [
+              'USE_GOOGLE_BREAKPAD=1',
+            ],
+          }
+        ],
+
+       ['face_library=="faciometric"', {
+          # Copy FacioMetric's models into the resources so they are available at runtime.
+          # This is a little icky since it reaches into cozmo engine...
+          'actions': [
+            {
+              'action_name': 'copy_faciometric_models',
+              'action': [
+                'cp',
+                '-R',
+                '<(face_library_path)/Demo/models',
+                '../../resources/config/basestation/vision/faciometric',
+              ],
+            },
+          ],
+        }],
+        ['OS=="ios"',{
+          'sources/': [
+            ['exclude', '(android|linux)']
+          ],
+          'libraries': [
+              '../../lib/HockeySDK-iOS/HockeySDK.framework',
+          ]
+        }],
+        ['OS=="mac"',{
+          'sources/': [
+            ['exclude', '(android|linux)'],
+            ['exclude', '../../cozmoAPI/src/anki/cozmo/csharp-binding/ios']
+          ]
+        }],
+        ['OS=="android"',{
+          'sources/': [
+            ['exclude', '(ios|linux|mac)']
+          ]
+        }],
+        ['OS=="linux"',{
+          'sources/': [
+            ['exclude', '(android|ios|mac)']
+          ]
+        }],
+      ] #'conditions'
+
+    }, # end engine2 target
+
+
     {
       'target_name': 'robotClad',
-      'sources': [ 
+      'sources': [
         '<!@(cat <(robot_generated_clad_source))',
       ],
       'include_dirs': [

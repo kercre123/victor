@@ -38,7 +38,7 @@ RobotAudioFrameStream::~RobotAudioFrameStream()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioFrameStream::PushRobotAudioFrame( AudioFrameData* audioFrame )
+void RobotAudioFrameStream::PushRobotAudioFrame( AudioEngine::AudioFrameData* audioFrame )
 {
   std::lock_guard<std::mutex> lock( _lock );
   DEV_ASSERT(!_isComplete, "Do NOT add key frames after the stream is set to isComplete");
@@ -46,11 +46,11 @@ void RobotAudioFrameStream::PushRobotAudioFrame( AudioFrameData* audioFrame )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const AudioFrameData* RobotAudioFrameStream::PopRobotAudioFrame()
+const AudioEngine::AudioFrameData* RobotAudioFrameStream::PopRobotAudioFrame()
 {
   std::lock_guard<std::mutex> lock( _lock );
   DEV_ASSERT(!_audioFrameQueue.empty(), "Do Not call this methods if Key Frame Queue is empty");
-  AudioFrameData* audioFrame = nullptr;
+  AudioEngine::AudioFrameData* audioFrame = nullptr;
   if (!_audioFrameQueue.empty())
   {
     audioFrame = _audioFrameQueue.front();

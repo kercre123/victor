@@ -2,8 +2,8 @@
 #include "clad/audio/audioEventTypes.clad"
 
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioEngine {
+namespace Multiplexer {
 
 
 structure AudioCallbackDuration
@@ -23,7 +23,7 @@ structure AudioCallbackMarker
 
 structure AudioCallbackComplete
 {
-  GameEvent::GenericEvent eventType,
+  Anki::AudioMetaData::GameEvent::GenericEvent eventType,
 }
 
 enum uint_8 CallbackErrorType
@@ -52,6 +52,6 @@ message AudioCallback
   AudioCallbackInfo callbackInfo,
 }
 
-}
-}
-}
+} // Multiplexer
+} // AudioEngine
+} // Anki

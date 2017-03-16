@@ -63,8 +63,17 @@
   "reward.description.MemoryMatch.PatternLength.Ten": {
     "translation": "Completed a Memory Match pattern > 10 lights long."
   },
+  "reward.description.MemoryMatch.PatternLength.Fifteen": {
+    "translation": "Completed a Memory Match pattern > 15 lights long."
+  },
   "reward.description.MemoryMatch.PatternLength.Twenty": {
     "translation": "Completed a Memory Match pattern > 20 lights long."
+  },
+  "reward.description.MemoryMatch.PatternLength.TwentyFive": {
+    "translation": "Completed a Memory Match pattern > 25 lights long."
+  },
+  "reward.description.MemoryMatch.PatternLength.Thirty": {
+    "translation": "Completed a Memory Match pattern > 30 lights long."
   },
   "reward.description.MemoryMatch.HighScore.Solo": {
     "translation": "Set a new pattern record for Memory Match solo"

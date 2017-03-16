@@ -54,9 +54,7 @@ SolidBox {
   size 0.05 0.05 0.001
   contactMaterial "soft_collision"
 }
-BlockWorldComms {
-}
-CozmoBot {
+%COZMOBOT% {
   name "CozmoBot_1"
 }
 BuildServerTestController {

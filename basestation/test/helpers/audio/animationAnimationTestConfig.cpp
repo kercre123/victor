@@ -175,6 +175,7 @@ void AnimationAnimationTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAud
       }
       
       // Add Frame
+      using namespace AudioEngine;
       const AudioSample* samples = new const AudioSample[ (size_t)Anki::Cozmo::AnimConstants::AUDIO_SAMPLE_SIZE ]();
       outBuffer.UpdateBuffer( samples, (size_t)Anki::Cozmo::AnimConstants::AUDIO_SAMPLE_SIZE );
       Util::SafeDeleteArray( samples );

@@ -290,12 +290,15 @@ int main(int argc, const char * argv[])
   int tickCount = (gConfigSettings._freqSends > k_MaxTicksTilFirstSend) ? (gConfigSettings._freqSends - k_MaxTicksTilFirstSend) : 0;
   int numSent   = 0;
   
-  const uint32_t sendIpAddress = TransportAddress::IPAddressStringToU32( gConfigSettings._ipAddress.c_str() );
-  printf("[NetworkTestApp] sendIpAddress = 0x%08x from '%s'\n", sendIpAddress, gConfigSettings._ipAddress.c_str());
+  uint32_t sendIpAddress;
 
   {
     TransportAddress destAddress;
-    destAddress.SetIPAddress(sendIpAddress, activePort);
+    destAddress.SetIPAddressFromString(gConfigSettings._ipAddress.c_str(), activePort);
+
+    sendIpAddress = destAddress.GetIPAddress();
+    printf("[NetworkTestApp] sendIpAddress = 0x%08x from '%s'\n", sendIpAddress, gConfigSettings._ipAddress.c_str());
+
     reliableTransport.Connect(destAddress);
   }
   

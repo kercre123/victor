@@ -86,7 +86,7 @@ public class DailyGoalPanel : MonoBehaviour {
     if (currentSession.GoalsFinished == false &&
         DailyGoalManager.Instance.AreAllDailyGoalsComplete()) {
       currentSession.GoalsFinished = true;
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Daily_Goal);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Daily_Goal);
     }
     // TODO: UpdateDailySession should reflect rewards earned during that session rather than passing the rewardIcons through a spaghetti chain
     // RewardedAction and UnlockManagers should save that data to the session.
@@ -115,7 +115,7 @@ public class DailyGoalPanel : MonoBehaviour {
       }
     }
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Daily_Goal);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Daily_Goal);
   }
 
 

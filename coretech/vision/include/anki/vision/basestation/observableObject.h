@@ -267,15 +267,18 @@ namespace Anki {
       // X and Y axes.
       bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(10)) const;
 
-      PoseState GetPoseState() const { return _poseState; }
+      PoseState GetPoseState() const { return _poseState; } // TODO Remove in favor of concepts
       void SetPoseState(PoseState newState) { _poseState = newState; }
-      bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }
-      bool IsPoseStateUnknown() const { return _poseState == PoseState::Unknown; }
+      bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }      
+      
+      // in general clients should not need to check for this, but it's public for unit tests and asserts
+      inline bool HasValidPose() const;
+      inline static bool IsValidPoseState(PoseState poseState);
 
       static const char* PoseStateToString(const PoseState& state);
       
-      //Check if the bottom of an object is resting at a certain height within a tolerence
-      bool IsRestingAtHeight(float height, float tolerence) const;
+      //Check if the bottom of an object is resting at a certain height within a tolerance
+      bool IsRestingAtHeight(float height, float tolerance) const;
       
       // Helper to check whether a pose is too high above an object:
       // True if pose.z is more than heightTol above (object.z + (heightMultiplier*object.height)),
@@ -295,7 +298,7 @@ namespace Anki {
       ObjectID     _ID;
       TimeStamp_t  _lastObservedTime = 0;
       ColorRGBA    _color;
-      PoseState    _poseState = PoseState::Unknown;
+      PoseState    _poseState = PoseState::Invalid;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -334,10 +337,6 @@ namespace Anki {
     
     inline const ColorRGBA& ObservableObject::GetColor() const {
       return _color;
-    }
-    
-    inline const Pose3d& ObservableObject::GetPose() const {
-      return _pose;
     }
     
     inline void ObservableObject::SetID() { //const ObjectID newID) {
@@ -417,6 +416,14 @@ namespace Anki {
       GetObservedMarkers(observedMarkers, GetLastObservedTime());
     }
     
+    inline bool ObservableObject::HasValidPose() const {
+      return _poseState != PoseState::Invalid;
+    }
+    
+    inline bool ObservableObject::IsValidPoseState(PoseState poseState) {
+      return poseState != PoseState::Invalid;
+    }
+	
     inline Point3f ObservableObject::GetSizeInParentFrame(const Pose3d& atPose) const
     {
       const RotationMatrix3d& Rmat = atPose.GetRotation().GetRotationMatrix();

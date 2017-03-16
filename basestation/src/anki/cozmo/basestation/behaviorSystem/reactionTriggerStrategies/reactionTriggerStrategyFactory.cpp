@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPetInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotPlacedOnSlope.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPyramidInitialDetection.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotShaken.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategySparked.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyStackOfCubesInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
@@ -181,6 +182,11 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       strategy = genericStrategy;
       break;
     }
+    case ReactionTrigger::RobotShaken:
+    {
+      strategy = new ReactionTriggerStrategyRobotShaken(robot, config);
+      break;
+    }
     case ReactionTrigger::Sparked:
     {
       strategy = new ReactionTriggerStrategySparked(robot, config);
@@ -208,7 +214,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       strategy = new ReactionTriggerStrategyVoiceCommand(robot, config);
       break;
     }
-#endif
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
     case ReactionTrigger::Count:
     case ReactionTrigger::NoneTrigger:
     {

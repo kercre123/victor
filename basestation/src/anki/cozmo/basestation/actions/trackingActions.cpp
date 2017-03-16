@@ -332,10 +332,12 @@ ActionResult ITrackAction::CheckIfDone()
       const f32 accel = 10.f; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
       
       RobotInterface::SetBodyAngle setBodyAngle;
-      setBodyAngle.angle_rad             = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
-      setBodyAngle.max_speed_rad_per_sec = speed;
-      setBodyAngle.accel_rad_per_sec2    = accel;
-      setBodyAngle.angle_tolerance       = _panTolerance.ToFloat();
+      setBodyAngle.angle_rad              = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
+      setBodyAngle.max_speed_rad_per_sec  = speed;
+      setBodyAngle.accel_rad_per_sec2     = accel;
+      setBodyAngle.angle_tolerance        = _panTolerance.ToFloat();
+      setBodyAngle.num_half_revolutions   = 0;
+      setBodyAngle.use_shortest_direction = true;
       if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
         return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
@@ -438,7 +440,7 @@ ActionResult TrackObjectAction::InitInternal()
     return ActionResult::BAD_OBJECT;
   }
   
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
   if(nullptr == object) {
     PRINT_NAMED_ERROR("TrackObjectAction.Init.InvalidObject",
                       "Object %d does not exist in BlockWorld", _objectID.GetValue());
@@ -465,7 +467,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     BlockWorldFilter filter;
     filter.OnlyConsiderLatestUpdate(true);
     
-    matchingObject = _robot.GetBlockWorld().FindClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
+    matchingObject = _robot.GetBlockWorld().FindLocatedClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
     
     if(nullptr == matchingObject) {
       // Did not see an object of the right type during latest blockworld update
@@ -480,7 +482,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
       _robot.GetMoveComponent().SetTrackToObject(matchingObject->GetID());
     }
   } else {
-    matchingObject = _robot.GetBlockWorld().GetObjectByID(_objectID);
+    matchingObject = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
     if(nullptr == matchingObject) {
       PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.ObjectNoLongerExists",
                           "Object %d no longer exists in BlockWorld",
@@ -490,8 +492,6 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   }
   
   assert(nullptr != matchingObject);
-  
-  DEV_ASSERT(PoseState::Unknown != matchingObject->GetPoseState(), "Object's pose state should not be Unknown");
   
   _lastTrackToPose = matchingObject->GetPose();
   

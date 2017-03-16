@@ -16,6 +16,7 @@
 
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
@@ -66,6 +67,7 @@ BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::V
 
   // give the ghost object and ID so we can visualize it
   _ghostStackedObject->SetVizManager(robot.GetContext()->GetVizManager());
+  _ghostStackedObject->InitPose(Pose3d(), PoseState::Dirty); // we rely on restoring poses, so just set a valid one
 }
   
   
@@ -141,7 +143,7 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
   _currTarget = *_targets.begin();
   DEV_ASSERT(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
 
-  const ObservableObject* targetObj = robot.GetBlockWorld().GetObjectByID(_currTarget);
+  const ObservableObject* targetObj = robot.GetBlockWorld().GetLocatedObjectByID(_currTarget);
 
   if( nullptr == targetObj ) {
     // could happen if the cube "disappears" somehow between this behavior getting triggered and the time this
@@ -206,19 +208,10 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
 {
-  ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_currTarget);
+  ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_currTarget);
   if( nullptr == obj ) {
     PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.StackedCube.NullTargetObject",
                         "Target object %d returned null from blockworld",
-                        _currTarget.GetValue());
-    FinishIteration(robot);
-    return;
-  }
-  else if(obj->IsPoseStateUnknown())
-  {
-    // Can't do the ghost object stuff below if object is unknown pose state
-    PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.StackedCube.TargetObjectInUnknownPose",
-                        "Target object %d has unknown pose state",
                         _currTarget.GetValue());
     FinishIteration(robot);
     return;
@@ -289,7 +282,8 @@ void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const O
     ghostPose.GetTranslation().y(),
     ghostPose.GetTranslation().z() + zOffset});
   
-  robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
+  // Using the PoseConfimer for ghost objects is weird, we need to fake PoseConfirmations here
+  robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
 }
   
   
@@ -330,7 +324,7 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const Obs
                                                                                               false);
   
   //restore ghost pose
-  robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), currentGhostPose, obj);
+  robot.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), currentGhostPose, PoseState::Dirty);
   
   // If we couldn't see the ghost cube b/c it was outside FOV, we should retry
   shouldRetry = (reason == Vision::KnownMarker::NotVisibleReason::OUTSIDE_FOV);

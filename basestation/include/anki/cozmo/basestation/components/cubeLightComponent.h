@@ -136,10 +136,10 @@ public:
   // Plays the tap interaction animations on an object depending on its posestate
   void SetTapInteractionObject(const ObjectID& objectID);
   
-  // Called whenever an object's posestate changes in order to update the lights
-  void OnObjectPoseStateWillChange(const ObjectID& objectID,
-                                   const PoseState oldPoseState,
-                                   const PoseState newPoseState);
+  // Called whenever an active object's posestate changes in order to update the lights
+  void OnActiveObjectPoseStateChanged(const ObjectID& objectID,
+                                      const PoseState oldPoseState,
+                                      const PoseState newPoseState);
   
   Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights);
   Result SetObjectLights(const ObjectID& objectID,

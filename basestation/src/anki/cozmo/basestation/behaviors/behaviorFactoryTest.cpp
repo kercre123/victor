@@ -20,14 +20,14 @@
  *
  * Copyright: Anki, Inc. 2016
  **/
+#include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -41,6 +41,8 @@
 #include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "anki/common/basestation/utils/timer.h"
 
 #include "clad/types/fwTestMessages.h"
 
@@ -189,7 +191,7 @@ namespace Cozmo {
     // Subscribe to EngineToGame messages
     SubscribeToTags({{
       EngineToGameTag::RobotObservedObject,
-      EngineToGameTag::RobotDeletedObject,
+      EngineToGameTag::RobotDeletedLocatedObject,
       EngineToGameTag::ObjectMoved,
       EngineToGameTag::CameraCalibration,
       EngineToGameTag::RobotStopped,
@@ -1319,7 +1321,7 @@ namespace Cozmo {
         // Get closest predock pose. Default to _prePickupPose.
         _closestPredockPose = _prePickupPose;
         Pose3d blockPose = _expectedLightCubePose;
-        ObservableObject* obsObj = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
+        ObservableObject* obsObj = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectID);
         if (nullptr != obsObj) {
           blockPose = obsObj->GetPose();
           ActionableObject* actObj = dynamic_cast<ActionableObject*>(obsObj);
@@ -1413,7 +1415,7 @@ namespace Cozmo {
         }
 
         // Write cube's pose to nv storage
-        ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
+        ObservableObject* oObject = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectID);
         if(nullptr == oObject)
         {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.FailedToFindObject",
@@ -1684,8 +1686,8 @@ namespace Cozmo {
                                                   event.GetData().Get_RobotObservedObject());
         break;
         
-      case EngineToGameTag::RobotDeletedObject:
-        _lastHandlerResult = HandleDeletedObject(event.GetData().Get_RobotDeletedObject());
+      case EngineToGameTag::RobotDeletedLocatedObject:
+        _lastHandlerResult = HandleDeletedLocatedObject(event.GetData().Get_RobotDeletedLocatedObject());
         break;
         
       case EngineToGameTag::ObjectMoved:
@@ -1802,7 +1804,7 @@ namespace Cozmo {
   {
 
     ObjectID objectID = msg.objectID;
-    const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+    const ObservableObject* oObject = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
     
     if(nullptr == oObject)
     {
@@ -1848,7 +1850,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
-  Result BehaviorFactoryTest::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg)
+  Result BehaviorFactoryTest::HandleDeletedLocatedObject(const ExternalInterface::RobotDeletedLocatedObject &msg)
   {
     // remove the object if we knew about it
     ObjectID objectID;

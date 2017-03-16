@@ -61,8 +61,8 @@ bool AIGoalStrategyPyramid::WantsToStartInternal(const Robot& robot, float lastT
   knownOrDirtyBlocksFilter.SetAllowedFamilies(
           {{ObjectFamily::LightCube, ObjectFamily::Block}});
   
-  robot.GetBlockWorld().FindMatchingObjects(knownOrDirtyBlocksFilter,
-                                            knownOrDirtyBlocks);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(knownOrDirtyBlocksFilter,
+                                                   knownOrDirtyBlocks);
   
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currentTime_s > _nextTimeUpdateRunability_s){

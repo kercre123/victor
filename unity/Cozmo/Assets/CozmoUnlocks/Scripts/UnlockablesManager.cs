@@ -152,9 +152,8 @@ public class UnlockablesManager : MonoBehaviour {
   public List<UnlockableInfo> GetUnlocked() {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
-      if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value]) {
-        if (!neverAvailable) {
+      if (_UnlockableInfoList.UnlockableInfoData[i].FeatureIsEnabled) {
+        if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value]) {
           unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
         }
       }
@@ -167,38 +166,13 @@ public class UnlockablesManager : MonoBehaviour {
     List<UnlockableInfo> available = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
-      bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
-      bool isAvailable = !neverAvailable && IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
+      bool featureIsEnabled = _UnlockableInfoList.UnlockableInfoData[i].FeatureIsEnabled;
+      bool isAvailable = featureIsEnabled && IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
       if (locked && isAvailable) {
         available.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }
     return available;
-  }
-
-  // explicit unlocks only.
-  public List<UnlockableInfo> GetUnavailable() {
-    List<UnlockableInfo> unavailable = new List<UnlockableInfo>();
-    for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
-      bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
-      bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
-      if (!neverAvailable && locked && !isAvailable) {
-        unavailable.Add(_UnlockableInfoList.UnlockableInfoData[i]);
-      }
-    }
-    return unavailable;
-  }
-
-  public List<UnlockableInfo> GetComingSoon() {
-    List<UnlockableInfo> comingSoonList = new List<UnlockableInfo>();
-    for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      bool comingSoon = _UnlockableInfoList.UnlockableInfoData[i].ComingSoon;
-      if (comingSoon) {
-        comingSoonList.Add(_UnlockableInfoList.UnlockableInfoData[i]);
-      }
-    }
-    return comingSoonList;
   }
 
   public UnlockableInfo GetUnlockableInfo(Anki.Cozmo.UnlockId id, bool errorOnNotFound = true) {
@@ -242,7 +216,7 @@ public class UnlockablesManager : MonoBehaviour {
       return false;
     }
 
-    if (unlockableInfo.NeverAvailable) {
+    if (unlockableInfo.ComingSoon || !unlockableInfo.FeatureIsEnabled) {
       return false;
     }
 

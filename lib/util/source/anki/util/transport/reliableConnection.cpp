@@ -26,8 +26,9 @@ namespace Util {
 
 CONSOLE_VAR_RANGED(uint32_t, kMaxPingTimesToTrackOverride, "Network", 0, 0, 1000);
   
+// DEBUG CONSOLE FUNCTIONS
 #if REMOTE_CONSOLE_ENABLED
-  
+
 static void SetConnectionTimeoutInMS( ConsoleFunctionContextRef context )
 {
   const double newVal = ConsoleArg_Get_Double( context, "timeoutInMS");
@@ -37,7 +38,7 @@ static void SetConnectionTimeoutInMS( ConsoleFunctionContextRef context )
 CONSOLE_FUNC( SetConnectionTimeoutInMS, "Network", double timeoutInMS );
   
 #endif // REMOTE_CONSOLE_ENABLED
-  
+
 NetTimeStamp ReliableConnection::sTimeBetweenPingsInMS = 250.0;
 NetTimeStamp ReliableConnection::sTimeBetweenResendsInMS = 50.0;
 NetTimeStamp ReliableConnection::sMaxTimeSinceLastSend = sTimeBetweenResendsInMS - 1.0;

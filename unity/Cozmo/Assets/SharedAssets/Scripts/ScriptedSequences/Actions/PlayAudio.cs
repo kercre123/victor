@@ -5,9 +5,9 @@ using System.ComponentModel;
 namespace ScriptedSequences.Actions {
   public class PlayAudio : ScriptedSequenceAction {
 
-    public Anki.Cozmo.Audio.GameEvent.GenericEvent EventType;
+    public Anki.AudioMetaData.GameEvent.GenericEvent EventType;
 
-    public GameObjectType GameObjectType;
+    public Anki.AudioMetaData.GameObjectType GameObjectType;
 
     [DefaultValue(true)]
     public bool WaitToEnd = true;
@@ -22,13 +22,13 @@ namespace ScriptedSequences.Actions {
       if (WaitToEnd) {
         // Play with Callback
         // TODO: Need to set the Game Object Type appropriately
-        UnityAudioClient.Instance.PostEvent(EventType, GameObjectType, AudioCallbackFlag.EventComplete, (c) => {
-          if (c.CallbackType == AudioCallbackFlag.EventComplete || c.CallbackType == AudioCallbackFlag.EventError) {
+        UnityAudioClient.Instance.PostEvent(EventType, GameObjectType, Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete, (c) => {
+          if (c.CallbackType == Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete || c.CallbackType == Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventError) {
             token.Succeed();
           }
           else {
-            var err = (c.Info as AudioCallbackError);
-            var errorType = err != null ? err.callbackError : CallbackErrorType.Invalid;
+            var err = (c.Info as Anki.AudioEngine.Multiplexer.AudioCallbackError);
+            var errorType = err != null ? err.callbackError : Anki.AudioEngine.Multiplexer.CallbackErrorType.Invalid;
             token.Fail(new Exception("Received Error Playing event " + EventType + ": " + errorType));
           }
         });

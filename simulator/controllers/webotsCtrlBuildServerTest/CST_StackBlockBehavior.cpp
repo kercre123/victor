@@ -527,7 +527,10 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       
     case TestState::PlaceObjectShouldFail:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_placeObjectResult == ActionResult::NOT_CARRYING_OBJECT_ABORT, 10) {
+      // rsam: the robot is faster flagging the object as unknown before verify action can finish. Flagging
+      // as unknown deletes the object from BlockWorld, which makes the action fail with BAD_OBJECT rather
+      // than NOT_CARRYING_OBJECT_ABORT
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_placeObjectResult == ActionResult::BAD_OBJECT, 10) {
         SET_STATE(TestDone)
       }
       

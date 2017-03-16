@@ -226,10 +226,10 @@
     "translation": "Cozmo has moved and can't continue the game."
   },
   "minigame.lostTrackOfBlock.title": {
-    "translation": "Cube Missing"
+    "translation": "Cube Disconnected"
   },
   "minigame.lostTrackOfBlock.description": {
-    "translation": "Cozmo lost track of his Cube and can't continue the game."
+    "translation": "One of the Cubes has disconnected. Visit Settings to learn more about troubleshooting Cubes."
   },
   "minigame.timeout.title": {
     "translation": "The Game Has Ended"

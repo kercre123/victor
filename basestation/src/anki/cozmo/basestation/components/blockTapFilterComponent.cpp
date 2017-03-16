@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -122,22 +123,20 @@ void BlockTapFilterComponent::Update()
       });
       
       std::vector<ObservableObject *> matchingObjects;
-      _robot.GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+      _robot.GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
       
-      if(matchingObjects.empty())
-      {
-        PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectTapped.UnknownActiveID",
-                            "Could not find match for active object ID %d", doubleTapInfo.first.GetValue());
-        return;
+      const ActiveObject* tappedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID( doubleTapInfo.first );
+      if ( nullptr != tappedObject ) {
+        PRINT_CH_DEBUG("BlockTapFilterComponent", "BlockTapFilterComponent.Update.ExpiredTap",
+                       "Marking object %d as dirty due to tap timeout",
+                        tappedObject->GetID().GetValue());
       }
-      
-      PRINT_CH_DEBUG("BlockTapFilterComponent", "BlockTapFilterComponent.Update.ExpiredTap",
-                     "Marking object %d as dirty due to tap timeout",
-                     matchingObjects.front()->GetID().GetValue());
       
       for(auto& object : matchingObjects)
       {
-        _robot.GetObjectPoseConfirmer().SetPoseState(object, PoseState::Dirty);
+        if ( object->IsPoseStateKnown() ) {
+        _robot.GetObjectPoseConfirmer().MarkObjectDirty(object);
+        }
       }
     }
   }
@@ -177,39 +176,28 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
                   "Tap ignored %d <= %d",intensity,kTapIntensityMin);
     return;
   }
-  
-  // The message from the robot has the active object ID in it, so we need
-  // to find the objects in blockworld (which have their own bookkeeping ID) that
-  // have the matching active ID. We also need to consider all pose states and origin frames.
-  BlockWorldFilter filter;
-  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn([&payload](const ObservableObject* object) {
-    return object->IsActive() && object->GetActiveID() == payload.objectID;
-  });
-  
-  std::vector<ObservableObject *> matchingObjects;
-  _robot.GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
 
-  if(matchingObjects.empty())
+  // find connected object by activeID
+  ActiveID tappedActiveID = payload.objectID;
+  const ActiveObject* tappedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID( tappedActiveID );
+
+  if(nullptr == tappedObject)
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectTapped.UnknownActiveID",
                         "Could not find match for active object ID %d", payload.objectID);
     return;
   }
   
-  // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
-  ObservableObject* object = matchingObjects.front();
-  
   const Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
                 "Received message that %s %d (Active ID %d) was tapped %d times "
                 "(robotTime %d, tapTime %d, intensity: %d, engineTime: %d).",
-                EnumToString(object->GetType()),
-                object->GetID().GetValue(), payload.objectID, payload.numTaps,
+                EnumToString(tappedObject->GetType()),
+                tappedObject->GetID().GetValue(), payload.objectID, payload.numTaps,
                 payload.timestamp, payload.tapTime, intensity, engineTime);
   
   // Update the ID to be the blockworld ID before broadcasting
-  payload.objectID = object->GetID();
+  payload.objectID = tappedObject->GetID();
   payload.robotID = _robot.GetID();
   // In the simulator, taps are soft and also webots doesn't simulate the phantom taps.
   if (!_enabled || !_robot.IsPhysical())
@@ -238,7 +226,7 @@ void BlockTapFilterComponent::HandleActiveObjectMoved(const AnkiEvent<RobotInter
   const auto& payload = message.GetData().Get_activeObjectMoved();
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
-  ObservableObject* object = _robot.GetBlockWorld().GetObjectByActiveID(payload.objectID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
   if( object == nullptr )
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectMoved.ObjectIDNull",
@@ -270,7 +258,7 @@ void BlockTapFilterComponent::HandleActiveObjectStopped(const AnkiEvent<RobotInt
   const auto& payload = message.GetData().Get_activeObjectStopped();
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByActiveID(payload.objectID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
   if( object == nullptr )
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectStopped.ObjectIDNull",

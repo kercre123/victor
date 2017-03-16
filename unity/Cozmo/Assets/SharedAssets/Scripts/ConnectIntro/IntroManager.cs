@@ -130,7 +130,7 @@ public class IntroManager : MonoBehaviour {
       _CheckInViewInstance.HandleRobotDisconnect();
       return;
     }
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Connectivity);
     UIManager.EnableTouchEvents();
 
     if (!_StartFlowInProgress) {

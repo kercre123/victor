@@ -25,17 +25,20 @@ extern "C" {
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/audio/audioController.h"
-#include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
-#include "anki/cozmo/basestation/audio/audioServer.h"
+#include "audioEngine/audioEngineController.h"
+#include "audioEngine/multiplexer/audioMultiplexer.h"
+#include "audioEngine/plugins/ankiPluginInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
 
+
 #define DEBUG_TEXTTOSPEECH_COMPONENT 0
 
+// TEMP Until we move this class into Audio Lib
+static const char* kLogChannelName = Anki::AudioEngine::AudioEngineController::kLogChannelName;
 
 namespace Anki {
 namespace Cozmo {
@@ -48,8 +51,8 @@ TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
   
   _voice = register_cmu_us_rms(nullptr);
   
-  if(nullptr != context && nullptr != context->GetAudioServer()) {
-    _audioController = context->GetAudioServer()->GetAudioController();
+  if(nullptr != context && nullptr != context->GetAudioMultiplexer()) {
+    _audioController = context->GetAudioMultiplexer()->GetAudioController();
   }
 } // TextToSpeechComponent()
 
@@ -69,7 +72,7 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
 {
   // Prepare to generate TtS on other thread
   OperationId opId = GetNextOperationId();
-  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+  PRINT_CH_INFO(kLogChannelName,
                 "TextToSpeechComponent.CreateSpeech",
                 "Text '%s' Style: %s Duration: %f OperationId: %u",
                 Util::HidePersonallyIdentifiableInfo(text.c_str()), // could be a name!
@@ -85,14 +88,14 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
   // Dispatch work onto another thread
   Util::Dispatch::Async(_dispatchQueue, [this, text, durationScalar, opId]
   {
-    Audio::StandardWaveDataContainer* audioData = CreateAudioData(text, durationScalar);
+    AudioEngine::StandardWaveDataContainer* audioData = CreateAudioData(text, durationScalar);
     {
       std::lock_guard<std::mutex> lock(_lock);
       const auto bundle = GetTtsBundle(opId);
       
       // Check if the ttsBundle is still valid
       if (nullptr == bundle) {
-        PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+        PRINT_CH_INFO(kLogChannelName,
                       "TextToSpeechComponent.CreateSpeech.AsyncDispatch",
                       "OperationId: %u for Tts Bundle NOT found", opId);
         Util::SafeDelete(audioData);
@@ -136,7 +139,7 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
     return false;
   }
   
-  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+  PRINT_CH_INFO(kLogChannelName,
                 "TextToSpeechComponent.PrepareAudioEngine",
                 "OperationId: %u",
                 operationId);
@@ -149,9 +152,10 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
     return false;
   }
   
-  using namespace Audio;
+  using namespace AudioEngine::PlugIns;
   DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.PrepareAudioEngine.NullAudioController");
-  AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
+  
+  AnkiPluginInterface* pluginInterface = _audioController->GetPluginInterface();
   DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.PrepareAudioEngine.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
@@ -173,12 +177,12 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::CleanupAudioEngine(const OperationId operationId)
 {
-  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+  PRINT_CH_INFO(kLogChannelName,
                 "TextToSpeechComponent.CleanupAudioEngine", "");
   
-  using namespace Audio;
+  using namespace AudioEngine::PlugIns;
   DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.CleanupAudioEngine.NullAudioController");
-  AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
+  AnkiPluginInterface* pluginInterface = _audioController->GetPluginInterface();
   DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.CleanupAudioEngine.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
@@ -195,7 +199,7 @@ void TextToSpeechComponent::CleanupAudioEngine(const OperationId operationId)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::ClearOperationData(const OperationId operationId)
 {
-  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+  PRINT_CH_INFO(kLogChannelName,
                 "TextToSpeechComponent.ClearOperationData",
                 "OperationId: %u",
                 operationId);
@@ -210,7 +214,7 @@ void TextToSpeechComponent::ClearOperationData(const OperationId operationId)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::ClearAllLoadedAudioData()
 {
-  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+  PRINT_CH_INFO(kLogChannelName,
                 "TextToSpeechComponent.ClearAllLoadedAudioData", "");
   
   std::lock_guard<std::mutex> lock(_lock);
@@ -218,34 +222,34 @@ void TextToSpeechComponent::ClearAllLoadedAudioData()
 } // ClearAllLoadedAudioData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Audio::GameEvent::GenericEvent TextToSpeechComponent::GetAudioEvent(SayTextVoiceStyle style) const
+AudioMetaData::GameEvent::GenericEvent TextToSpeechComponent::GetAudioEvent(SayTextVoiceStyle style) const
 {
   switch (style) {
     case SayTextVoiceStyle::Unprocessed:
-      return Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Unprocessed;
+      return AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vo__External_Unprocessed;
       break;
       
     case SayTextVoiceStyle::CozmoProcessing_Sentence:
     case SayTextVoiceStyle::CozmoProcessing_Name:
-      return Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
+      return AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
       break;
       
     case SayTextVoiceStyle::Count:
       PRINT_NAMED_ERROR("TextToSpeechComponent.GetAudioEvent", "Invalid SayTextStyle Count");
       break;
   }
-  return Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Unprocessed;
+  return AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vo__External_Unprocessed;
 } // GetAudioEvent()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const std::string& text,
-                                                                         const float durationScalar)
+AudioEngine::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const std::string& text,
+                                                                               const float durationScalar)
 {
   using namespace Util::Time;
   double time_ms = 0.0;
   if (DEBUG_TEXTTOSPEECH_COMPONENT) {
     time_ms = UniversalTime::GetCurrentTimeInMilliseconds();
-    PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+    PRINT_CH_INFO(kLogChannelName,
                   "TextToSpeechComponent.CreateAudioData",
                   "Start - text to wave: %s - duration scalar: %f", text.c_str(), durationScalar);
   }
@@ -257,7 +261,7 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   cst_wave* waveData = flite_text_to_wave(text.c_str(), _voice);
   
   if (DEBUG_TEXTTOSPEECH_COMPONENT) {
-    PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+    PRINT_CH_INFO(kLogChannelName,
                   "TextToSpeechComponent.CreateAudioData",
                   "finish text to wave - time_ms: %f", UniversalTime::GetCurrentTimeInMilliseconds() - time_ms);
   }
@@ -268,9 +272,11 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   }
   
   // Create Standard Wave
-  Audio::StandardWaveDataContainer* data = new Audio::StandardWaveDataContainer(waveData->sample_rate,
-                                                                                waveData->num_channels,
-                                                                                (size_t)waveData->num_samples);
+  using namespace AudioEngine;
+  StandardWaveDataContainer* data = new StandardWaveDataContainer( waveData->sample_rate,
+                                                                  waveData->num_channels,
+                                                                  (size_t)waveData->num_samples );
+  
 
   // Convert waveData format into StandardWaveDataContainer's format
   const float kOneOverSHRT_MAX = 1.0f / float(SHRT_MAX);
@@ -279,7 +285,7 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   }
   
   if (DEBUG_TEXTTOSPEECH_COMPONENT) {
-    PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+    PRINT_CH_INFO(kLogChannelName,
                   "TextToSpeechComponent.CreateAudioData",
                   "Finish convert samples - time_ms: %f", UniversalTime::GetCurrentTimeInMilliseconds() - time_ms);
   }

@@ -58,6 +58,7 @@ namespace Cozmo.Minigame.DroneMode {
       _IsPlayingAnimations = playAnimations;
       if (_IsPlayingAnimations) {
         _NextSlideButton.Interactable = false;
+        _PreviousSlideButton.Interactable = false;
         _HowToPlaySlideAnimators[0].ListenForAnimationEnd(HandleSlideAnimationEnd);
       }
       else {
@@ -71,14 +72,11 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void HandleSlideAnimationEnd(AnimatorStateInfo animationInfo) {
       _NextSlideButton.Interactable = true;
+      _PreviousSlideButton.Interactable = !IsFirstSlide();
     }
 
     private void HandlePreviousSlideButtonPressed() {
       SetCurrentSlide(_CurrentSlideIndex - 1);
-
-      if (_IsPlayingAnimations) {
-        _NextSlideButton.Interactable = true;
-      }
     }
 
     private void HandleNextSlideButtonPressed() {
@@ -93,9 +91,11 @@ namespace Cozmo.Minigame.DroneMode {
           if (_CurrentSlideIndex == _MostProgressedSlide) {
             _HowToPlaySlideAnimators[_CurrentSlideIndex].ListenForAnimationEnd(HandleSlideAnimationEnd);
             _NextSlideButton.Interactable = false;
+            _PreviousSlideButton.Interactable = false;
           }
           else {
             _NextSlideButton.Interactable = true;
+            _PreviousSlideButton.Interactable = true;
           }
         }
       }

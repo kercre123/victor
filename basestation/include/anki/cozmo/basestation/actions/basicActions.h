@@ -32,13 +32,23 @@
 namespace Anki {
 namespace Cozmo {
 
-    // Turn in place by a given angle, wherever the robot is when the action
-    // is executed.
+    // Turn in place by a given angle, wherever the robot is when the action is executed.
+    //
+    // If isAbsolute==true, then angle_rad specifies the absolute body angle to turn to,
+    // and the robot will take the shortest path to the desired angle.
+    //
+    // If isAbsolute==false, then the robot will turn by the amount specified by angle_rad
+    // (which can be any arbitrarily large angular displacement, possibly greater than 180
+    // degrees or possibly multiple turns)
     class TurnInPlaceAction : public IAction
     {
     public:
-      TurnInPlaceAction(Robot& robot, const Radians& angle, const bool isAbsolute);
+      explicit TurnInPlaceAction(Robot& robot,
+                                 const float angle_rad, // float instead of Radians to allow angles > 180 deg.
+                                 const bool isAbsolute);
       virtual ~TurnInPlaceAction();
+      
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxSpeed(f32 maxSpeed_radPerSec);
@@ -58,20 +68,28 @@ namespace Cozmo {
       bool IsBodyInPosition(Radians& currentAngle) const;
       Result SendSetBodyAngle() const;
       
-      const f32 _kDefaultSpeed     = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
-      const f32 _kDefaultAccel     = 10.f;
+      const f32 _kDefaultSpeed        = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
+      const f32 _kDefaultAccel        = 10.f;
+      const f32 _kMaxRelativeTurnRevs = 25.f; // Maximum number of revolutions allowed for a relative turn.
       
       bool    _inPosition = false;
       bool    _turnStarted = false;
-      const Radians _requestedTargetAngle;
+      float _requestedAngle_rad = 0.f;
       Radians _currentAngle;
-      Radians _currentTargetAngle, _initialAngle, _halfAngle;
-      Pose3d  _targetPose, _initialPose;
+      Radians _previousAngle;
+      Radians _currentTargetAngle;
+      float _angularDistExpected_rad           = 0.f;
+      float _angularDistTraversed_rad          = 0.f;
+      float _absAngularDistToRemoveEyeDart_rad = 0.f;
       Radians _angleTolerance = POINT_TURN_ANGLE_TOL;
-      Radians _variability = 0;
-      bool    _isAbsoluteAngle;
+      Radians _variability;
+      const bool _isAbsoluteAngle;
       f32     _maxSpeed_radPerSec = _kDefaultSpeed;
       f32     _accel_radPerSec2 = _kDefaultAccel;
+      
+      // To keep track of PoseFrameId changes mid-turn:
+      PoseFrameID_t _prevPoseFrameId = 0;
+      u32 _relocalizedCnt = 0;
       
       bool    _moveEyes = true;
       AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;

@@ -114,7 +114,7 @@ int main (void)
   using namespace Anki::Cozmo::HAL;
 
   // Force recovery mode if watchdog count gets too high
-  #ifndef FCC_TEST  // THIS IS NOT THE FINAL
+  #ifndef FCC_TEST
   if (RCM_SRS0 & RCM_SRS0_WDOG_MASK) {
     if (WDOG_RSTCNT >= MAXIMUM_RESET_COUNT) {
       Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
@@ -128,7 +128,8 @@ int main (void)
 
   // Workaround a hardware bug (missing pull-down) until UARTInit gets called much later
   SOURCE_SETUP(BODY_UART_TX, SourceGPIO | SourcePullDown);
-  
+
+  UART::DebugInit();
   Watchdog::init();
   Power::enableExternal();
   Watchdog::kickAll();
@@ -138,7 +139,6 @@ int main (void)
   UpdateBootloader();
   #endif
 
-  UART::DebugInit();
   DAC::Init();
 
   // Sequential I2C bus initalization (Non-interrupt based)

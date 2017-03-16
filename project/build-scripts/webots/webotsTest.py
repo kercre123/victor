@@ -31,6 +31,7 @@ stdout_handler.setFormatter(formatter)
 UtilLog.addHandler(stdout_handler)
 
 WORLD_FILE_TEST_NAME_PLACEHOLDER = r'%COZMO_SIM_TEST%'
+COZMOBOT_PLACEHOLDER = r'%COZMOBOT%'
 GENERATED_WORLD_FILE_NAME = '__generated__.wbt'
 
 # Name of user created certificate for signing webots executables to be
@@ -461,7 +462,7 @@ def get_tests(config_file_path):
   return tests
 
 
-def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_level, num_retries = 0,
+def run_tests(tests, log_folder, show_graphics, cozmo_version, timeout, forward_webots_log_level, num_retries = 0,
               fail_on_error=False):
   """Run webots tests and store the logs.
 
@@ -472,6 +473,10 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
 
     log_folder (string) --
       Path of directory to keep the webots logs
+
+    cozmo_version (int) --
+      1: Cozmo 1.x
+      2: Cozmo 2.0
 
     show_graphics (boolean) --
       Shows the webots gui and runs simulation at regular speed if true; hides gui and runs in fast
@@ -518,6 +523,22 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
       source_file_path = get_subpath("simulator/worlds", world_file)
       generate_file_with_replace(GENERATED_FILE_PATH, source_file_path,
                                  WORLD_FILE_TEST_NAME_PLACEHOLDER, test_controller)
+
+      if cozmo_version == 1:
+        generate_file_with_replace(GENERATED_FILE_PATH, GENERATED_FILE_PATH,
+                                   COZMOBOT_PLACEHOLDER, "BlockWorldComms{\n}\nDEF cozmoBot CozmoBot")
+      elif cozmo_version == 2:
+        generate_file_with_replace(GENERATED_FILE_PATH, GENERATED_FILE_PATH,
+                                   COZMOBOT_PLACEHOLDER, "DEF cozmoBot CozmoBot2")
+      else:
+        UtilLog.error("Unsupported Cozmo version #{version}".format(version=cozmo_version))
+        for test_controller, worlds in tests.items():
+          for world_file in worlds:
+            test_statuses[test_controller][world_file] = ResultCode.failed
+            total_error_count += 1
+        return (test_statuses, total_error_count, total_warning_count)
+
+                                 
 
       num_retries_counting_up = -1 # only needed for teamcity variable logging
 
@@ -763,6 +784,13 @@ def main(args):
                       type=int,
                       help="""Time limit for each webots test before marking it as failure and killing the webots instance.""")
 
+  parser.add_argument('--cozmoVersion',
+                      dest='cozmo_version',
+                      action='store',
+                      default=1,
+                      type=int,
+                      help="""The Cozmo version number to use. 1 or 2.""")
+
   parser.add_argument('--numRetries',
                       dest='num_retries',
                       action='store',
@@ -819,6 +847,7 @@ def main(args):
 
     test_results, total_error_count, total_warning_count = run_tests(tests, build_folder,
                                                                      options.show_graphics,
+                                                                     options.cozmo_version,
                                                                      options.timeout,
                                                                      options.log_level,
                                                                      options.num_retries,

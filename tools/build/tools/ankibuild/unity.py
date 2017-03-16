@@ -377,6 +377,7 @@ class UnityBuild(object):
         # not being found.
         # If this occurs, run the build one more time as a workaround
         if ret != 0 and self.check_log_file_for_autobuild_not_found(self.build_config.log_file):
+            print('WARNING:  TRIGGERING A BUILD AGAIN IN run_unity_command_line')
             ret = subprocess.call(procArgs, cwd=projectPath)
 
         return (ret, self.build_config.log_file)

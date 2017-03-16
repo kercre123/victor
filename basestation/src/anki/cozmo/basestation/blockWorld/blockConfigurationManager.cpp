@@ -62,6 +62,16 @@ bool BlockConfigurationManager::CheckForPyramidBaseBelowObject(const ObservableO
   return false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BlockConfigurationManager::SetObjectPoseChanged(const ObjectID& objectID, const PoseState newPoseState)
+{
+  _objectsPoseChangedThisTick.insert(objectID);
+  
+  // if the object becomes unknown, forget its last known pose
+  if ( !ObservableObject::IsValidPoseState(newPoseState) ) {
+    _objectIDToLastPoseConfigurationUpdateMap.erase(objectID);
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlockConfigurationManager::Update()
@@ -99,28 +109,24 @@ bool BlockConfigurationManager::DidAnyObjectsMovePastThreshold()
   
   // check to see if any block has moved past our update configuration threshold
   for(const auto& objectID: _objectsPoseChangedThisTick){
-    const ObservableObject* blockMoved = _robot.GetBlockWorld().GetObjectByID(objectID);
+    const ObservableObject* blockMoved = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
     if(blockMoved == nullptr){
+      // The block's pose was known at some point and has changed to unknown -
+      // It may have been part of a configuration - if it was we need to rebuild the configurations
+      if(IsObjectPartOfAnyConfiguration(objectID)){
+        anyObjectMovedPastThreshold = true;
+      }
       continue;
     }
     
     auto lastPoseMapIter = _objectIDToLastPoseConfigurationUpdateMap.find(objectID);
     if(lastPoseMapIter != _objectIDToLastPoseConfigurationUpdateMap.end()){
-      if(blockMoved->IsPoseStateUnknown()){
-        // The block's pose was known at some point and has changed to unknown -
-        // It may have been part of a configuration - if it was we need to rebuild the configurations
-        if(IsObjectPartOfAnyConfiguration(blockMoved->GetID())){
-          anyObjectMovedPastThreshold = true;
-          break;
-        }
-      }else{
-        // the blocks pose is known, so check if it moved past our threshold
-        const auto newBlockPose = blockMoved->GetPose();
-        const bool isBlockWithinTolerence = lastPoseMapIter->second.IsSameAs(newBlockPose, kMinBlockMoveUpdateThreshold_mm, kMinBlockRotationUpdateThreshold_rad);
-        if(!isBlockWithinTolerence){
-          anyObjectMovedPastThreshold = true;
-          break;
-        }
+      // the blocks pose is known, so check if it moved past our threshold
+      const auto& newBlockPose = blockMoved->GetPose();
+      const bool isBlockWithinTolerance = lastPoseMapIter->second.IsSameAs(newBlockPose, kMinBlockMoveUpdateThreshold_mm, kMinBlockRotationUpdateThreshold_rad);
+      if(!isBlockWithinTolerance){
+        anyObjectMovedPastThreshold = true;
+        break;
       }
     }else{
       // the object is not in our pose map, so check to see if it is part of any configurations
@@ -211,22 +217,16 @@ void BlockConfigurationManager::UpdateLastConfigCheckBlockPoses()
   BlockWorldFilter blockFilter;
   blockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
   std::vector<const ObservableObject*> allBlocks;
-  _robot.GetBlockWorld().FindMatchingObjects(blockFilter, allBlocks);
+  _robot.GetBlockWorld().FindLocatedMatchingObjects(blockFilter, allBlocks);
   
   for(const auto& block: allBlocks){
-    if(block != nullptr) {
-      const ObjectID& objectID = block->GetID();
-      auto lastPoseMapIter = _objectIDToLastPoseConfigurationUpdateMap.find(objectID);
-      
-      if(lastPoseMapIter != _objectIDToLastPoseConfigurationUpdateMap.end()){
-        if(block->IsPoseStateUnknown()){
-          _objectIDToLastPoseConfigurationUpdateMap.erase(objectID);
-        }else{
-          lastPoseMapIter->second = block->GetPose().GetWithRespectToOrigin();
-        }
-      }else if(!block->IsPoseStateUnknown()){
-        _objectIDToLastPoseConfigurationUpdateMap.insert(std::make_pair(objectID, block->GetPose().GetWithRespectToOrigin()));
-      }
+    DEV_ASSERT(block != nullptr, "BlockConfigurationManager.UpdateLastConfigCheckBlockPoses.NullBlock");
+    const ObjectID& objectID = block->GetID();
+    auto lastPoseMapIter = _objectIDToLastPoseConfigurationUpdateMap.find(objectID);
+    if(lastPoseMapIter != _objectIDToLastPoseConfigurationUpdateMap.end()){
+      lastPoseMapIter->second = block->GetPose().GetWithRespectToOrigin();
+    }else{
+      _objectIDToLastPoseConfigurationUpdateMap.insert(std::make_pair(objectID, block->GetPose().GetWithRespectToOrigin()));
     }
   }
 }

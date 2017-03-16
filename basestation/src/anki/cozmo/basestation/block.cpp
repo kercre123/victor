@@ -92,29 +92,29 @@ namespace Cozmo {
     switch(whichFace)
     {
       case FRONT_FACE:
-        facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-halfDepth, 0.f, 0.f},  &GetPose());
+        facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-halfDepth, 0.f, 0.f},  nullptr);
         break;
         
       case LEFT_FACE:
-        facePose = Pose3d(M_PI,    Z_AXIS_3D(), {0.f, halfWidth, 0.f},   &GetPose());
+        facePose = Pose3d(M_PI,    Z_AXIS_3D(), {0.f, halfWidth, 0.f},   nullptr);
         break;
         
       case BACK_FACE:
-        facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {halfDepth, 0.f, 0.f},   &GetPose());
+        facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {halfDepth, 0.f, 0.f},   nullptr);
         break;
         
       case RIGHT_FACE:
-        facePose = Pose3d(0,       Z_AXIS_3D(), {0.f, -halfWidth, 0.f},  &GetPose());
+        facePose = Pose3d(0,       Z_AXIS_3D(), {0.f, -halfWidth, 0.f},  nullptr);
         break;
         
       case TOP_FACE:
         // Rotate -90deg around X, then -90 around Z
-        facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, halfHeight},  &GetPose());
+        facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, halfHeight},  nullptr);
         break;
         
       case BOTTOM_FACE:
         // Rotate +90deg around X, then -90 around Z
-        facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -halfHeight}, &GetPose());
+        facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -halfHeight}, nullptr);
         break;
         
       default:

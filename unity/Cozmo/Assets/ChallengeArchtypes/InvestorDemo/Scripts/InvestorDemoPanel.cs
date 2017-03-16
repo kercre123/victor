@@ -25,10 +25,11 @@ namespace InvestorDemo {
 
     private void HandleMagicButton() {
       DAS.Debug(this, "Magic Button!");
-      Anki.Cozmo.ExternalInterface.ClearAllObjects clearAllObjectsMessage = new Anki.Cozmo.ExternalInterface.ClearAllObjects();
-      clearAllObjectsMessage.robotID = (byte)RobotEngineManager.Instance.CurrentRobotID;
-      RobotEngineManager.Instance.Message.ClearAllObjects = clearAllObjectsMessage;
-      RobotEngineManager.Instance.SendMessage();
+// rsam: ClearAll meaning has changed, but we are not supporting InvestorDemo anymore
+//      Anki.Cozmo.ExternalInterface.ClearAllObjects clearAllObjectsMessage = new Anki.Cozmo.ExternalInterface.ClearAllObjects();
+//      clearAllObjectsMessage.robotID = (byte)RobotEngineManager.Instance.CurrentRobotID;
+//      RobotEngineManager.Instance.Message.ClearAllObjects = clearAllObjectsMessage;
+//      RobotEngineManager.Instance.SendMessage();
     }
 
     public void SetActionText(string text) {

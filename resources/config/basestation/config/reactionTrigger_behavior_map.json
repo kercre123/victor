@@ -159,6 +159,10 @@
       }
     },
     {
+      "reactionTrigger": "RobotShaken",
+      "behaviorName": "reactToRobotShaken"
+    },
+    {
       "reactionTrigger": "Sparked",
       "behaviorName": "reactToSparked"
     },

@@ -39,7 +39,7 @@ AnimationAudioInputSource::BufferState AnimationAudioInputSource::Update()
 }
 
   
-void AnimationAudioInputSource::SetNextFrame(const Audio::AudioFrameData* audioFrame)
+void AnimationAudioInputSource::SetNextFrame(const AudioEngine::AudioFrameData* audioFrame)
 {
   // We expect that the animation is buffer is ready so the frame is either empty or ready
   _nextFrameData = audioFrame;

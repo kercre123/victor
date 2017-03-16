@@ -72,6 +72,9 @@
   "behavior.ReactToPlacedOnSlope" : {
     "translation" : ""
   },
+  "behavior.ReactToShaken": {
+    "translation": "コズモはめまいです"
+  },
   "behavior.RequestToPlay" : {
     "translation" : "コズモは、ゲームを設定されています"
   },

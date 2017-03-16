@@ -37,13 +37,11 @@ DEF cube1 LightCube {
   rotation -1.92748e-06 -1.45314e-05 -1 0.261799
   ID 1
 }
-BlockWorldComms {
-}
-CozmoBot {
+%COZMOBOT% {
   name "CozmoBot_1"
 }
 BuildServerTestController {
-  controllerArgs "%COZMO_SIM_TEST%"
+ controllerArgs "%COZMO_SIM_TEST%"
 # controllerArgs "CST_StackBlockBehavior"
 }
 CozmoVizDisplay {
