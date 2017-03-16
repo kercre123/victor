@@ -5,6 +5,7 @@
 #include "hardware.h"
 #include "watchdog.h"
 #include "power.h"
+#include "uart.h"
 #include "anki/cozmo/robot/buildTypes.h"
 
 #include "uart.h"
@@ -36,7 +37,7 @@ namespace Anki
           SOURCE_SETUP(CAM_RESET_N, SourceGPIO);
           GPIO_OUT(OLED_RESET_N);
           SOURCE_SETUP(OLED_RESET_N, SourceGPIO);
-          MicroWait(3000);
+          MicroWait(100000);
 
           // Pull-up MISO during ESP8266 boot
           GPIO_IN(MISO);

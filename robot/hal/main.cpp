@@ -128,7 +128,8 @@ int main (void)
 
   // Workaround a hardware bug (missing pull-down) until UARTInit gets called much later
   SOURCE_SETUP(BODY_UART_TX, SourceGPIO | SourcePullDown);
-  
+
+  UART::DebugInit();
   Watchdog::init();
   Power::enableExternal();
   Watchdog::kickAll();
@@ -138,7 +139,6 @@ int main (void)
   UpdateBootloader();
   #endif
 
-  UART::DebugInit();
   DAC::Init();
 
   // Sequential I2C bus initalization (Non-interrupt based)

@@ -2,9 +2,9 @@
 #define __WATCHDOG_H
 
 enum watchdog_channels {
-  WDOG_ROOT_LOOP,
   WDOG_MAIN_LOOP,
   WDOG_UART,
+  WDOG_ROOT_LOOP,
   WDOG_TOTAL_CHANNELS
 };
 
