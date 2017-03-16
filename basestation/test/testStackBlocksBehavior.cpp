@@ -193,7 +193,10 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
     ObservableObject* object2 = blockWorld.GetLocatedObjectByID(objID2);
     ASSERT_TRUE(object2 != nullptr);
   }
-  blockWorld.DeleteLocatedObjectsByID(objID2);
+  BlockWorldFilter filter;
+  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+  filter.AddAllowedID(objID2);
+  blockWorld.DeleteLocatedObjects(filter);
 
   {
     ObservableObject* object1 = blockWorld.GetLocatedObjectByID(objID1);

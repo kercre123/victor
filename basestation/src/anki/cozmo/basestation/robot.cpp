@@ -3359,16 +3359,15 @@ Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
                    object->GetPose().GetTranslation().z());
 
   // Store the object IDs we were carrying before we unset them so we can clear them later if needed
-  auto carriedObjectIDs = GetCarryingObjects();
+  auto const& carriedObjectIDs = GetCarryingObjects();
   
   UnSetCarryingObjects();  
       
   if(deleteLocatedObjects)
   {
-    for(auto const& objectID : carriedObjectIDs)
-    {
-      GetBlockWorld().DeleteLocatedObjectByIDInCurOrigin(objectID);
-    }
+    BlockWorldFilter filter;
+    filter.AddAllowedIDs(carriedObjectIDs);
+    GetBlockWorld().DeleteLocatedObjects(filter);
   }
     
   return RESULT_OK;

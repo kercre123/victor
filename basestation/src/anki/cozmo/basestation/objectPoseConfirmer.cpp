@@ -206,7 +206,10 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
     _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), object->GetID().GetValue())));
     
     // delete the object from BlockWorld
-    _robot.GetBlockWorld().DeleteLocatedObjectByIDInCurOrigin(object->GetID());
+    BlockWorldFilter filter;
+    filter.AddAllowedID(object->GetID());
+    _robot.GetBlockWorld().DeleteLocatedObjects(filter);
+    
     object = nullptr; // do not use anymore, since it's deleted
   }
 

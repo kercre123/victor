@@ -242,7 +242,9 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
         if(staticBlock->IsPoseStateKnown()){
           PRINT_NAMED_ERROR("DriveToHelper.SearchForBlock.GoingNuclear",
                               "Failed to find known block - wiping");
-          robot.GetBlockWorld().DeleteLocatedObjectsByOrigin(robot.GetWorldOrigin());
+          BlockWorldFilter filter;
+          filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame); // not necessary, just to be explicit
+          robot.GetBlockWorld().DeleteLocatedObjects(filter);
         }
         _status = BehaviorStatus::Failure;
       }

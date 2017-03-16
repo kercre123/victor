@@ -355,7 +355,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         PRINT_NAMED_WARNING("BlockWorld.DefineObject.RemovingObjectsWithPreviousDefinition",
                             "Type %s was already defined, removing object(s) with old definition",
                             EnumToString(objType));
-        DeleteLocatedObjectsByType(objType);
+        
+        BlockWorldFilter filter;
+        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+        filter.AddAllowedType(objType);
+        DeleteLocatedObjects(filter);
       }
     }
     else
@@ -373,7 +377,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   void BlockWorld::HandleMessage(const ExternalInterface::DeleteAllCustomObjects& msg)
   {
     _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
-    DeleteLocatedObjectsByFamily(ObjectFamily::CustomObject);
+    BlockWorldFilter filter;
+    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+    filter.AddAllowedFamily(ObjectFamily::CustomObject);
+    DeleteLocatedObjects(filter);
     _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedAllCustomObjects>(_robot->GetID());
   };
   
@@ -2624,7 +2631,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.MismatchedFactoryID",
                           "objectID %d, activeID %d, type %s, factoryID 0x%x (expected 0x%x)",
                           matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), factoryID, matchingObject->GetFactoryID());
-        DeleteLocatedObjectByIDInCurOrigin(matchingObject->GetID());
+        
+        BlockWorldFilter filter;
+        filter.AddAllowedID(matchingObject->GetID());
+        DeleteLocatedObjects(filter);
         
         // do not inherit the objectID we just removed
         DEV_ASSERT( !newActiveObjectPtr->GetID().IsSet(), "BlockWorld.AddConnectedActiveObject.UnexpectedObjectID" );
@@ -4250,13 +4260,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                           return false;
                         });
     
-    std::vector<ObservableObject*> intersectingAndOldObjects;
-    FindLocatedMatchingObjects(filter, intersectingAndOldObjects);
-
-    for(ObservableObject* object : intersectingAndOldObjects)
-    {
-      DeleteLocatedObjectByIDInCurOrigin(object->GetID());      
-    }
+    DeleteLocatedObjects(filter);
     
     return RESULT_OK;
   }
@@ -4669,191 +4673,106 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::DeleteAllLocatedObjects()
+  void BlockWorld::DeleteLocatedObjects(const BlockWorldFilter& filter)
   {
-    // clear all objects in the current origin (other origins should not be necessary)
-    ModifyLocatedObjects([this](ObservableObject* object) { ClearLocatedObjectHelper(object); });
-    
-    // clear the entire map of located instances (smart pointers will free)
-    _locatedObjects.clear();    
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::DeleteLocatedObjectsByOrigin(const Pose3d* origin)
-  {
-    auto originIter = _locatedObjects.find(origin);
-    if(originIter != _locatedObjects.end())
-    {
-      // cache objectIDs since we are going to destroy the objects
-      std::set<ObjectID> idsToBroadcast;
-      const bool isCurrentOrigin = (originIter->first == _robot->GetWorldOrigin());
-      
-      // clearing the object and adding to notification should only be needed for current origin
-      if ( isCurrentOrigin ) {
-        // iterate all families and types
-        for(auto & objectsByFamily : originIter->second)
-        {
-          for(auto & objectsByType : objectsByFamily.second)
-          {
-            // for every object
-            auto objectIter = objectsByType.second.begin();
-            while(objectIter != objectsByType.second.end())
-            {
-              // clear the object and add to notification
-              idsToBroadcast.insert(objectIter->second->GetID());
-              ClearLocatedObjectHelper(objectIter->second.get());
-              ++objectIter;
-            }
-          }
-        }
-      }
-    
-      // always delete the origin itself, which frees all the objects in it
-      _locatedObjects.erase(originIter);
-      
-      // notify of the deleted objects
-      for(const auto& id : idsToBroadcast) {
-        _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                            ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), id)));
-      }
-    }
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::DeleteLocatedObjectsByFamily(const ObjectFamily family)
-  {
+    // cache objectIDs since we are going to destroy the objects
     std::set<ObjectID> idsToBroadcast;
-    for(auto & objectsByOrigin : _locatedObjects) {
-      auto familyIter = objectsByOrigin.second.find(family);
-      if(familyIter != objectsByOrigin.second.end())
+    
+    auto originIter = _locatedObjects.begin();
+    while(originIter != _locatedObjects.end())
+    {
+      const Pose3d* crntOrigin = originIter->first;
+      auto& familyContainer = originIter->second;
+      
+      if(filter.ConsiderOrigin(crntOrigin, _robot->GetWorldOrigin()))
       {
-        // clear objects in current origin (others should not be needed)
-        const bool isCurrentOrigin = (objectsByOrigin.first == _robot->GetWorldOrigin());
-        if ( isCurrentOrigin ) {
-          for(auto & objectsByType : familyIter->second) {
-            for(auto & objectsByID : objectsByType.second) {
-              idsToBroadcast.insert(objectsByID.first);
-              ClearLocatedObjectHelper(objectsByID.second.get());
-            }
-          }
-        }
-        
-        // remove the family
-        objectsByOrigin.second.erase(familyIter);
-      }
-    }
-    
-    for(const auto& id : idsToBroadcast) {
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                          ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), id)));
-    }
-  }
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::DeleteLocatedObjectsByType(ObjectType type)
-  {
-    std::set<ObjectID> idsToBroadcast;
-    for(auto & objectsByOrigin : _locatedObjects) {
-      const bool isCurrentOrigin = (objectsByOrigin.first == _robot->GetWorldOrigin());
-      for(auto & objectsByFamily : objectsByOrigin.second) {
-        auto typeIter = objectsByFamily.second.find(type);
-        if(typeIter != objectsByFamily.second.end()) {
-          // broadcast only in current origin (per message design), and clear should only affect current origin objects
-          if ( isCurrentOrigin ) {
-            for(auto & objectsByID : typeIter->second) {
-              idsToBroadcast.insert(objectsByID.first);
-              ClearLocatedObjectHelper(objectsByID.second.get());
-            }
-          }
+        auto familyIter = familyContainer.begin();
+        while(familyIter != familyContainer.end())
+        {
+          const ObjectFamily crntFamily = familyIter->first;
+          auto& typeContainer = familyIter->second;
           
-          objectsByFamily.second.erase(typeIter);
-        }
+          if(filter.ConsiderFamily(crntFamily))
+          {
+            auto typeIter = typeContainer.begin();
+            while(typeIter != typeContainer.end())
+            {
+              const ObjectType crntType = typeIter->first;
+              auto& idContainer = typeIter->second;
+              
+              if(filter.ConsiderType(crntType))
+              {
+                auto idIter = idContainer.begin();
+                while(idIter != idContainer.end())
+                {
+                  const ObjectID crntID = idIter->first;
+                  
+                  ObservableObject* object = idIter->second.get();
+                  if(nullptr == object)
+                  {
+                    // This shouldn't happen, but warn if we encounter it (for debugging) and remove it from the container
+                    PRINT_NAMED_WARNING("BlockWorld.DeleteLocatedObjects.NullObject",
+                                        "Deleting null object in origin %s with Family:%s Type:%s ID:%d",
+                                        crntOrigin->GetName().c_str(),
+                                        EnumToString(crntFamily),
+                                        EnumToString(crntType),
+                                        crntID.GetValue());
+                    
+                    idIter = idContainer.erase(idIter);
+                  }
+                  else if(filter.ConsiderObject(object))
+                  {
+                    // clear objects in current origin (others should not be needed)
+                    const bool isCurrentOrigin = (crntOrigin == _robot->GetWorldOrigin());
+                    if ( isCurrentOrigin )
+                    {
+                      idsToBroadcast.insert(object->GetID());
+                      ClearLocatedObjectHelper(object);
+                    }
+                    
+                    idIter = idContainer.erase(idIter);
+                  }
+                  else
+                  {
+                    ++idIter;
+                  }
+                } // while(id)
+              } // if(ConsiderType)
+              
+              if(idContainer.empty()) {
+                // All IDs removed from this type, erase it
+                typeIter = typeContainer.erase(typeIter);
+              } else {
+                ++typeIter;
+              }
+            } // while(type)
+          } // if(ConsiderFamily)
+          
+          if(typeContainer.empty()) {
+            // All types removed from this family, erase it
+            familyIter = familyContainer.erase(familyIter);
+          } else {
+            ++familyIter;
+          }
+        } // while(family)
+      } // if(ConsiderOrigin)
+      
+      if(familyContainer.empty()) {
+        // All families removed from this origin, erase it
+        originIter = _locatedObjects.erase(originIter);
+      } else {
+        ++originIter;
       }
-    }
+    } // while(origin)
     
-    // notify of deleted objects (per message design)
-    for(const auto& id : idsToBroadcast) {
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                          ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), id)));
-    }
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // do not pass reference because we are going to destroy objects with that ID (likely the one we used to obtain it)
-  void BlockWorld::DeleteLocatedObjectsByID(const ObjectID withID)
-  {
-    BlockWorldFilter filter;
-    filter.SetAllowedIDs({withID});
-    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    
-    std::vector<ObservableObject*> objects;
-    FindLocatedMatchingObjects(filter, objects);
-
-    bool existedInCurrentOrigin = false; // will update if found
-    for(auto* object : objects)
+    // notify of the deleted objects
+    for(const auto& id : idsToBroadcast)
     {
-      DEV_ASSERT(nullptr != object, "BlockWorld.DeleteLocatedObjectByID.NullObject");
-      
-      // Grab vars for this instance
-      const Pose3d* origin = &object->GetPose().FindOrigin();
-      ObjectFamily inFamily = object->GetFamily();
-      ObjectType   withType = object->GetType();
-
-      // Clear in current origin
-      const bool isCurrentOrigin = (origin == _robot->GetWorldOrigin());
-      if ( isCurrentOrigin ) {
-        ClearLocatedObjectHelper(object);
-      }
-      
-      // Update existedInCurrentOrigin
-      existedInCurrentOrigin = existedInCurrentOrigin || isCurrentOrigin;
-      
-      // And remove it from the container
-      // Note: we're using shared_ptr to store the objects, so erasing from
-      //       the container will delete it if nothing else is referring to it
-      const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(withID);
-      DEV_ASSERT_MSG(numDeleted != 0,
-                     "BlockWorld.DeleteLocatedObjectByID.NoObjectsDeleted",
-                     "Origin %p Type %s ID %u",
-                     origin, EnumToString(withType), withID.GetValue());
-    }
-    
-    // notify the object was deleted from the current origin
-    if ( existedInCurrentOrigin ) {
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                          ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), withID)));
+      using namespace ExternalInterface;
+      _robot->Broadcast(MessageEngineToGame(RobotDeletedLocatedObject(_robot->GetID(), id)));
     }
   }
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // do not pass reference because we are going to destroy objects with that ID (likely the one we used to obtain it)
-  void BlockWorld::DeleteLocatedObjectByIDInCurOrigin(const ObjectID withID)
-  {
-    // find the object in the current origin
-    ObservableObject* object = GetLocatedObjectByID(withID);
-    if ( nullptr != object )
-    {
-      // clear and delete
-      ClearLocatedObjectHelper(object);
-      
-      const PoseOrigin* origin    = &object->GetPose().FindOrigin();
-      const ObjectFamily inFamily = object->GetFamily();
-      const ObjectType   withType = object->GetType();
-      
-      // And remove it from the container (smart pointer will delete)
-      object = nullptr;
-      const size_t numDeleted = _locatedObjects.at(origin).at(inFamily).at(withType).erase(withID);
-      DEV_ASSERT_MSG(numDeleted != 0,
-                     "BlockWorld.DeleteLocatedObjectByIDInCurOrigin.NoObjectsDeleted",
-                     "Origin %p Type %s ID %u",
-                     origin, EnumToString(withType), withID.GetValue());
-
-      // broadcast the fact that we have removed the object from this origin
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                          ExternalInterface::RobotDeletedLocatedObject(_robot->GetID(), withID)));
-    }
-  }
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::ObjectsMapByID_t::iterator BlockWorld::DeleteLocatedObjectAt(const ObjectsMapByID_t::iterator objIter,
                                                                            const ObjectType&   withType,

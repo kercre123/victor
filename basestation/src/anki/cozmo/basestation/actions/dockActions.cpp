@@ -1411,7 +1411,9 @@ namespace Anki {
               
               _robot.GetObjectPoseConfirmer().CopyWithNewPose(carryObject, objectInOriginalPose->GetPose(), objectInOriginalPose);
               
-              blockWorld.DeleteLocatedObjectByIDInCurOrigin(objectInOriginalPose->GetID());
+              BlockWorldFilter filter;
+              filter.AddAllowedID(objectInOriginalPose->GetID());
+              blockWorld.DeleteLocatedObjects(filter);
             }
             _robot.UnSetCarryingObjects();
             

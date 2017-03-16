@@ -312,7 +312,9 @@ TEST(BlockWorld, AddAndRemoveObject)
     ObservableObject* objectAfterClear = blockWorld.GetLocatedObjectByID(secondObjID);
     ASSERT_NE(objectAfterClear, nullptr);
     
-    blockWorld.DeleteLocatedObjectByIDInCurOrigin(secondObjID);
+    BlockWorldFilter filter;
+    filter.AddAllowedID(secondObjID);
+    blockWorld.DeleteLocatedObjects(filter);
     
     ObservableObject* objectAfterDelete = blockWorld.GetLocatedObjectByID(secondObjID);
     ASSERT_EQ(objectAfterDelete, nullptr);
@@ -1572,7 +1574,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     TimeStamp_t currentTimeStamp = (i_pose+1)*100;
 
     // Start the robot/world fresh for each pose
-    robot.GetBlockWorld().DeleteAllLocatedObjects();
+    BlockWorldFilter filter;
+    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+    robot.GetBlockWorld().DeleteLocatedObjects(filter);
     ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
     ASSERT_EQ(robot.AddRawOdomPoseToHistory(currentTimeStamp, robot.GetPoseFrameID(), Pose3d(0, Z_AXIS_3D(), {0, 0, 0}), 0, 0, CLIFF_SENSOR_UNDROP_LEVEL, false), RESULT_OK);
     

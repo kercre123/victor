@@ -115,22 +115,15 @@ namespace Anki
       // Object Access
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-      // TODO: Could this be converted to a filter?
       // Delete located instances will delete object instances of both active and passive objects. However
       // from connected objects, only the located instances are affected. The unlocated instances, that are stored
       // regardless of pose, are not affected by this. Passive objects don't have connected instances.
-      void DeleteAllLocatedObjects();                              // all instances in all origins
-      void DeleteLocatedObjectsByOrigin(const PoseOrigin* origin); // all instances in the given origin
-      void DeleteLocatedObjectsByFamily(ObjectFamily family);      // all instances of the given family in all origins
-      void DeleteLocatedObjectsByType(ObjectType type);            // all instances of the given type in all origins
-      void DeleteLocatedObjectsByID(const ObjectID withID);        // all instances of the given object in all origins
-      void DeleteLocatedObjectByIDInCurOrigin(const ObjectID withID); // the given instance in the current origin
+      void DeleteLocatedObjects(const BlockWorldFilter& filter);   // objects that pass the filter will be deleted
       
       // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
       // without those system lingering
       void ClearLocatedObjectByIDInCurOrigin(const ObjectID& withID);
       void ClearLocatedObject(ObservableObject* object);
-      
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Get objects by ID or activeID
