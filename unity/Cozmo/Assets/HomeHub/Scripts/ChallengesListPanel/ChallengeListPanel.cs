@@ -44,6 +44,12 @@ namespace Cozmo.HomeHub {
 
       for (int i = 0; i < sortedDict.Count; i++) {
         KeyValuePair<string, ChallengeStatePacket> kvp = sortedDict[i];
+        // Ignore feature gates that have been turned off...
+        if (FeatureGate.Instance.FeatureMap.ContainsKey(kvp.Key.ToLower())) {
+          if (!FeatureGate.Instance.IsFeatureEnabled(kvp.Key.ToLower())) {
+            continue;
+          }
+        }
         _ChallengeButtons.Add(kvp.Value.Data.ChallengeID,
           CreateChallengeButton(kvp.Value.Data, _UnlockedChallengeButtonPrefab.gameObject,
             HandleUnlockedChallengeClicked, "home_hub_challenge_list_panel"));

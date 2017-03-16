@@ -268,6 +268,7 @@ public class UIManager : MonoBehaviour {
   public void ShowTouchCatcher(System.Action onTouch = null) {
     if (_TouchCatcherInstance == null) {
       _TouchCatcherInstance = Instantiate(_TouchCatcherPrefab).GetComponent<TouchCatcher>();
+      _TouchCatcherInstance.Initialize("touch_catcher", "uimanager");
       _TouchCatcherInstance.transform.SetParent(_Instance._HorizontalCanvas.transform, false);
     }
     _TouchCatcherInstance.Enable();

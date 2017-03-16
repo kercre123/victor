@@ -54,6 +54,7 @@ enum int_32 UnlockId
 
   CozmoSaysGame           = 34,
   FistBump                = 35,
+  CodeLabGame             = 36,
 
   // ADD NEW UNLOCKS HERE
 
