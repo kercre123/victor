@@ -61,7 +61,6 @@ namespace Anki {
     , _imgCorners(corners)
     , _seenByCam(seenBy)
     , _userHandle(userHandle)
-    , _used(false)
     {
 
     }

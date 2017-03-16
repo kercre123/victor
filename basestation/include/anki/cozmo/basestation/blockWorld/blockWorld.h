@@ -58,8 +58,8 @@ namespace Anki
       ~BlockWorld();
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
-      // and updating robots' poses and blocks' poses from them.
-      Result Update(std::list<Vision::ObservedMarker>& observedMarkers);
+      // and updating robot's and objects' poses from them.
+      Result Update(const std::list<Vision::ObservedMarker>& observedMarkers);
       
       // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
       Result AddProxObstacle(const Pose3d& p);
@@ -453,10 +453,6 @@ namespace Anki
       //
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
-      Result UpdateObjectPoses(std::list<Vision::ObservedMarker>& obsMarkers,
-                               const ObjectFamily& inFamily,
-                               const TimeStamp_t atTimestamp);
-      
       Result UpdateMarkerlessObjects(TimeStamp_t atTimestamp);
       
       /*
@@ -499,16 +495,12 @@ namespace Anki
       //  will either directly add them to BlockWorld's existing objects or delete them
       //  if/when they are no longer needed.
       Result AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
-                                 const ObjectFamily& inFamily,
                                  const TimeStamp_t atTimestamp);
       
       // Updates poses of stacks of objects by finding the difference between old object
       // poses and applying that to the new observed poses
       void UpdatePoseOfStackedObjects();
       
-      // Remove all posekey-marker pairs from the map if marker is marked used
-      void RemoveUsedMarkers(std::list<Vision::ObservedMarker>& poseKeyObsMarkerMap);
-
       // adds a markerless object at the given pose
       Result AddMarkerlessObject(const Pose3d& pose, ObjectType type);
       
@@ -530,6 +522,8 @@ namespace Anki
       void BroadcastConnectedObjects();
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
+      
+      Result SanityCheckBookkeeping() const;
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Nav memory map
@@ -575,8 +569,7 @@ namespace Anki
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)
-      // TODO: combine into single object library instead of per family (COZMO-9319)
-      std::map<ObjectFamily, ObservableObjectLibrary> _objectLibrary;
+      ObservableObjectLibrary _objectLibrary;
       
       // Objects that we know about because they have connected, but for which we may or may not know their location.
       // The instances of objects in this container are expected to NEVER have a valid Pose/PoseState. If they are

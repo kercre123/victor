@@ -28,8 +28,6 @@ namespace Anki {
      *
      **************************************************************************/
     
-    // Suppresses marker-based localization (FOR PHYSICAL ROBOT ONLY)
-    const bool SKIP_PHYS_ROBOT_LOCALIZATION = true;
     
     
     /***************************************************************************

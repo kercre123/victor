@@ -334,7 +334,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   
   Result BlockWorld::DefineObject(std::unique_ptr<const ObservableObject>&& object)
   {
-    const ObjectFamily objFamily = object->GetFamily(); // Remove with COZMO-9319
     const ObjectType objType = object->GetType(); // Store due to std::move
     
     // Find objects that already exist with this type
@@ -344,7 +343,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     ObservableObject* objWithType = FindLocatedMatchingObject(filter);
     const bool redefiningExistingType = (objWithType != nullptr);
     
-    const Result addResult = _objectLibrary[objFamily].AddObject(std::move(object));
+    const Result addResult = _objectLibrary.AddObject(std::move(object));
     
     if(RESULT_OK == addResult)
     {
@@ -1505,7 +1504,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
-                                         const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
   {
     const Pose3d* currFrame = &_robot->GetPose().FindOrigin();
@@ -2175,18 +2173,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     return numVisibleObjects;
   } // CheckForUnobservedObjects()
-  
-  void BlockWorld::RemoveUsedMarkers(std::list<Vision::ObservedMarker>& observedMarkers)
-  {
-    for(auto markerIter = observedMarkers.begin(); markerIter != observedMarkers.end();)
-    {
-      if (markerIter->IsUsed()) {
-        markerIter = observedMarkers.erase(markerIter);
-      } else {
-        ++markerIter;
-      }
-    }
-  }
 
   Result BlockWorld::AddMarkerlessObject(const Pose3d& p, ObjectType type)
   {
@@ -2307,49 +2293,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   const TimeStamp_t& BlockWorld::GetTimeOfLastChange() const {
     return _robotMsgTimeStampAtChange;
   }
-
-  Result BlockWorld::UpdateObjectPoses(std::list<Vision::ObservedMarker>& obsMarkers,
-                                       const ObjectFamily& inFamily,
-                                       const TimeStamp_t atTimestamp)
-  {
-    // Sanity checks for robot's origin
-    DEV_ASSERT(_robot->GetPose().GetParent() == _robot->GetWorldOrigin(),
-                 "BlockWorld.UpdateObjectPoses.RobotParentShouldBeOrigin");
-    DEV_ASSERT(&_robot->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
-                 "BlockWorld.UpdateObjectPoses.BadRobotOrigin");
-    
-    const ObservableObjectLibrary& objectLibrary = _objectLibrary[inFamily];
-    
-    // Keep the objects sorted by increasing distance from the robot.
-    // This will allow us to only use the closest object that can provide
-    // localization information (if any) to update the robot's pose.
-    // Note that we use a multimap to handle the corner case that there are two
-    // objects that have the exact same distance. (We don't want to only report
-    // seeing one of them and it doesn't matter which we use to localize.)
-    std::multimap<f32, ObservableObject*> objectsSeen;
-    
-    // Don't bother with this update at all if we didn't see at least one
-    // marker (which is our indication we got an update from the robot's
-    // vision system
-    if(!obsMarkers.empty())
-    {
-      // Extract only observed markers from obsMarkersAtTimestamp
-      objectLibrary.CreateObjectsFromMarkers(obsMarkers, objectsSeen);
-      
-      // Remove used markers from list
-      RemoveUsedMarkers(obsMarkers);
-    
-      // Use them to add or update existing blocks in our world
-      Result lastResult = AddAndUpdateObjects(objectsSeen, inFamily, atTimestamp);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateObjectPoses.AddAndUpdateFailed", "");
-        return lastResult;
-      }
-    }
-    
-    return RESULT_OK;
-    
-  } // UpdateObjectPoses()
 
   /*
   Result BlockWorld::UpdateProxObstaclePoses()
@@ -3951,8 +3894,56 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
   } // RemoveMarkersWithinMarkers()
 
-
-  Result BlockWorld::Update(std::list<Vision::ObservedMarker>& currentObsMarkers)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Result BlockWorld::SanityCheckBookkeeping() const
+  {
+    // Sanity check our containers to make sure each located object's properties
+    // match the keys of the containers within which it is stored
+    for(auto const& objectsByOrigin : _locatedObjects)
+    {
+      for(auto const& objectsByFamily : objectsByOrigin.second)
+      {
+        for(auto const& objectsByType : objectsByFamily.second)
+        {
+          for(auto const& objectsByID : objectsByType.second)
+          {
+            auto const& object = objectsByID.second;
+            
+            ANKI_VERIFY(objectsByID.first == object->GetID(),
+                        "BlockWorld.SanityCheckBookkeeping.MismatchedID",
+                        "%s Object has ID:%d but is keyed by ID:%d",
+                        EnumToString(object->GetType()),
+                        object->GetID().GetValue(), objectsByID.first.GetValue());
+            
+            ANKI_VERIFY(objectsByType.first == object->GetType(),
+                        "BlockWorld.SanityCheckBookkeeping.MismatchedType",
+                        "Object %d has Type:%s but is keyed by Type:%s",
+                        object->GetID().GetValue(),
+                        EnumToString(object->GetType()), EnumToString(objectsByType.first));
+            
+            ANKI_VERIFY(objectsByFamily.first == object->GetFamily(),
+                        "BlockWorld.SanityCheckBookkeeping.MismatchedFamily",
+                        "%s Object %d has Family:%s but is keyed by Family:%s",
+                        EnumToString(object->GetType()), object->GetID().GetValue(),
+                        EnumToString(object->GetFamily()), EnumToString(objectsByFamily.first));
+            
+            const Pose3d* origin = &object->GetPose().FindOrigin();
+            ANKI_VERIFY(objectsByOrigin.first == origin,
+                        "BlockWorld.SanityCheckBookkeeping.MismatchedOrigin",
+                        "%s Object %d is in Origin:%s but is keyed by Origin:%s",
+                        EnumToString(object->GetType()), object->GetID().GetValue(),
+                        origin->GetName().c_str(), objectsByOrigin.first->GetName().c_str());
+            
+          }
+        }
+      }
+    }
+    
+    return RESULT_OK;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Result BlockWorld::Update(const std::list<Vision::ObservedMarker>& currentObsMarkers)
   {
     ANKI_CPU_PROFILE("BlockWorld::Update");
 
@@ -3994,71 +3985,40 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
       // Optional: don't allow markers seen enclosed in other markers
       //RemoveMarkersWithinMarkers(currentObsMarkers);
-
-// rsam: this code was for Mat localization. Now that localization happens by cubes, this code makes no sense
-//      // Only update robot's poses using VisionMarkers while not on a ramp
-//      if(!_robot->IsOnRamp()) {
-//        if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
-//          // Note that this removes markers from the list that it uses
-//          UpdateRobotPose(currentObsMarkers, atTimestamp);
-//        }
-//      }
       
       // Reset the flag telling us objects changed here, before we update any objects:
       _didObjectsChange = false;
 
-      Result updateResult;
+      // Add, update, and/or localize the robot to any objects indicated by the
+      // observed markers
+      {
+        // Sanity checks for robot's origin
+        DEV_ASSERT(_robot->GetPose().GetParent() == _robot->GetWorldOrigin(),
+                   "BlockWorld.Update.RobotParentShouldBeOrigin");
+        DEV_ASSERT(&_robot->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
+                   "BlockWorld.Update.BadRobotOrigin");
+        
+        // Keep the objects sorted by increasing distance from the robot.
+        // This will allow us to only use the closest object that can provide
+        // localization information (if any) to update the robot's pose.
+        // Note that we use a multimap to handle the corner case that there are two
+        // objects that have the exact same distance. (We don't want to only report
+        // seeing one of them and it doesn't matter which we use to localize.)
+        std::multimap<f32, ObservableObject*> objectsSeen;
+        
+        Result lastResult = _objectLibrary.CreateObjectsFromMarkers(currentObsMarkers, objectsSeen);
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_ERROR("BlockWorld.Update.CreateObjectsFromMarkersFailed", "");
+          return lastResult;
+        }
+        
+        lastResult = AddAndUpdateObjects(objectsSeen, atTimestamp);
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_ERROR("BlockWorld.Update.AddAndUpdateFailed", "");
+          return lastResult;
+        }
+      }
 
-      
-      // TODO: Combine these into a single UpdateObjectPoses call for all families (COZMO-9319)
-      
-      //
-      // Find any observed active blocks from the remaining markers.
-      // Do these first because they can update our localization, meaning that
-      // other objects found below will be more accurately localized.
-      //
-      // Note that this removes markers from the list that it uses
-      updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::LightCube, atTimestamp);
-      if(updateResult != RESULT_OK) {
-        return updateResult;
-      }
-      
-      //
-      // Find any observed blocks from the remaining markers
-      //
-      // Note that this removes markers from the list that it uses
-      updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::Block, atTimestamp);
-      if(updateResult != RESULT_OK) {
-        return updateResult;
-      }
-      
-      //
-      // Find any observed ramps from the remaining markers
-      //
-      // Note that this removes markers from the list that it uses
-      updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::Ramp, atTimestamp);
-      if(updateResult != RESULT_OK) {
-        return updateResult;
-      }
-      
-      //
-      // Find any observed chargers from the remaining markers
-      //
-      // Note that this removes markers from the list that it uses
-      updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::Charger, atTimestamp);
-      if(updateResult != RESULT_OK) {
-        return updateResult;
-      }
-      
-      //
-      // Find any observed customObjects from the remaining markers
-      //
-      // Note that this removes markers from the list that it uses
-      updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::CustomObject, atTimestamp);
-      if(updateResult != RESULT_OK) {
-        return updateResult;
-      }
-  
       // Delete any objects that should have been observed but weren't,
       // visualize objects that were observed:
       CheckForUnobservedObjects(atTimestamp);
@@ -4135,27 +4095,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       ModifyLocatedObjects(markAsDirty, unobservedCollidingObjectFilter);
     }
     
-    
-    // TODO: Deal with unknown markers?
-    
-    // Keep track of how many markers went unused by either robot or block
-    // pose updating processes above
-    const size_t numUnusedMarkers = currentObsMarkers.size();
-    
-    for(auto & unusedMarker : currentObsMarkers) {
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.UnusedMarker",
-                    "An observed %s marker went unused.",
-                    unusedMarker.GetCodeName());
-    }
-
-    if(numUnusedMarkers > 0) {
-      if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
-        PRINT_NAMED_WARNING("BlockWorld.Update.UnusedMarkers",
-                            "%zu observed markers did not match any known objects and went unused.",
-                            numUnusedMarkers);
-      }
-    }
-    
     //Update  block configurations now that all block poses have been updated
     _blockConfigurationManager->Update();
     
@@ -4168,11 +4107,17 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       return lastResult;
     }
     */
+    
+    if(ANKI_DEVELOPER_CODE)
+    {
+      DEV_ASSERT(RESULT_OK == SanityCheckBookkeeping(), "BlockWorld.Update.SanityCheckBookkeepingFailed");
+    }
 
     return lastResult;
     
   } // Update()
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BlockWorld::CheckForCollisionWithRobot(const ObservableObject* object) const
   {
     // If this object is _allowed_ to intersect with the robot, no reason to

@@ -170,7 +170,6 @@ TEST(BlockWorld, AddAndRemoveObject)
   std::list<Vision::ObservedMarker> markers{marker};
   lastResult = robot.GetBlockWorld().Update(markers);
   ASSERT_EQ(lastResult, RESULT_OK);
-  ASSERT_EQ(0, markers.size()); // all markers will get used up
   
   {
     // There should be nothing in BlockWorld yet because we have only seen it once (it's unconfirmed)
