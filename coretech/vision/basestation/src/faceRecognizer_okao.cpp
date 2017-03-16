@@ -94,16 +94,6 @@ namespace Vision {
     const char* TimeBetweenDasEvents = "TimeBetweenProfilerDasLogs_sec";
   }
   
-  static std::string GetTimeString(EnrolledFaceEntry::Time time)
-  {
-    std::string str;
-    char buffer[256];
-    auto t = std::chrono::system_clock::to_time_t(time);
-    strftime(buffer, 255, "%F %T", localtime(&t));
-    str = buffer;
-    return str;
-  }
-  
   inline static s64 GetSecondsSince(std::chrono::time_point<std::chrono::system_clock> now, EnrolledFaceEntry::Time t)
   {
     using namespace std::chrono;
@@ -446,8 +436,9 @@ namespace Vision {
             PRINT_CH_INFO("FaceRecognizer", "UpdateRecognitionData.MergeBasedOnEnrollmentTime",
                           "Merging ID=%d into ID=%d (%d enrolled at %s, %d enrolled at %s)",
                           mergeFrom,  mergeTo, faceID,
-                          GetTimeString(faceIDenrollData->second.GetEnrollmentTime()).c_str(),
-                          recognizedID, GetTimeString(recIDenrollData->second.GetEnrollmentTime()).c_str());
+                          EnrolledFaceEntry::GetTimeString(faceIDenrollData->second.GetEnrollmentTime()).c_str(),
+                          recognizedID,
+                          EnrolledFaceEntry::GetTimeString(recIDenrollData->second.GetEnrollmentTime()).c_str());
           }
         }
         
@@ -760,7 +751,7 @@ namespace Vision {
       {
         PRINT_CH_INFO("FaceRecognizer", "GetNextAlbumEntryToUse.ReplacingOldestSessionOnlyUser",
                       "Session-only face %d not updated since %s and will be replaced.",
-                      oldestSessionOnlyID, GetTimeString(oldestUpdateTime).c_str());
+                      oldestSessionOnlyID, EnrolledFaceEntry::GetTimeString(oldestUpdateTime).c_str());
         
         auto & albumEntries = _enrollmentData.at(oldestSessionOnlyID).GetAlbumEntries();
         
@@ -1120,7 +1111,7 @@ namespace Vision {
           }
         }
         
-        if(entryToReplace >= 0)
+        if(EnrolledFaceEntry::UnknownAlbumEntryID != entryToReplace)
         {
           okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, albumEntry, entryToReplace);
           if(OKAO_NORMAL != okaoResult) {
@@ -1144,18 +1135,9 @@ namespace Vision {
       }
       
       // Even if we didn't actually update: the following will update the last time we at
-      // least considered doing so
-      if(_enrollmentID == enrollData.GetFaceID())
-      {
-        // If we're specifically enrolling this faceID (not doing opportunistic enrollment),
-        // make this albumEntry _not_ session only and update its lastSeen time.
-        enrollData.AddOrUpdateAlbumEntry(albumEntry, updateTime, false);
-      }
-      else
-      {
-        // This is just opportunistic updating, just update the last seen time.
-        enrollData.AddOrUpdateAlbumEntry(albumEntry, updateTime, true);
-      }
+      // least considered doing so.
+      const bool isSessionOnly = (_enrollmentID != enrollData.GetFaceID());
+      enrollData.AddOrUpdateAlbumEntry(albumEntry, updateTime, isSessionOnly);
       
       if(DEBUG_ENROLLMENT_IMAGES && entryToReplace != EnrolledFaceEntry::UnknownAlbumEntryID) {
         // Update the enrollment image _after_ we update the lastUpdateTime so it shows
@@ -1279,7 +1261,7 @@ namespace Vision {
             dispROI.DrawText({2,dispROI.GetNumRows()-2},
                              std::string("Score: ") + std::to_string(enrollData.second.GetScore()),
                              NamedColors::RED, 0.15f, true);
-            dispROI.DrawText({0,10}, GetTimeString(enrollData.second.GetLastUpdateTime()),
+            dispROI.DrawText({0,10}, EnrolledFaceEntry::GetTimeString(enrollData.second.GetLastUpdateTime()),
                              NamedColors::RED, 0.15f, true);
           }
           
@@ -2263,10 +2245,6 @@ namespace Vision {
           {
             const auto & faceID = entry.second.GetFaceID();
             const auto & faceName = entry.second.GetName();
-            PRINT_CH_DEBUG("FaceRecognizer", "SetSerializedData.AddedEnrollmentDataEntry",
-                           "User '%s' with ID=%d",
-                           Util::HidePersonallyIdentifiableInfo(faceName.c_str()),
-                           faceID);
             
             // Log the ID and num of album entries (as DDATA) of each entry we load
             const size_t numAlbumEntries = entry.second.GetAlbumEntries().size();
@@ -2274,11 +2252,18 @@ namespace Vision {
                           {{DDATA, std::to_string(numAlbumEntries).c_str()}},
                           "%d", faceID);
             
-            loadedFaces.emplace_back(LoadedKnownFace(GetSecondsSince(nowTime, entry.second.GetEnrollmentTime()),
-                                                     GetSecondsSince(nowTime, entry.second.GetLastUpdateTime()),
-                                                     GetSecondsSince(nowTime, entry.second.FindLastSeenTime()),
+            const s64 secSinceEnrolled = GetSecondsSince(nowTime, entry.second.GetEnrollmentTime());
+            const s64 secSinceUpdated  = GetSecondsSince(nowTime, entry.second.GetLastUpdateTime());
+            const s64 secSinceSeen     = GetSecondsSince(nowTime, entry.second.FindLastSeenTime());
+            
+            loadedFaces.emplace_back(LoadedKnownFace(secSinceEnrolled, secSinceUpdated, secSinceSeen,
                                                      faceID,
                                                      faceName));
+            
+            PRINT_CH_INFO("FaceRecognizer", "SetSerializedData.AddedEnrollmentDataEntry",
+                          "User '%s' with ID=%d. Seconds since: Enrolled=%lld Updated=%lld Seen=%lld",
+                          Util::HidePersonallyIdentifiableInfo(faceName.c_str()),
+                          faceID, secSinceEnrolled, secSinceUpdated, secSinceSeen);
           }
         }
       }
