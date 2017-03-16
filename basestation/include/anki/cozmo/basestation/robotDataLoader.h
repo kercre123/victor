@@ -135,6 +135,8 @@ private:
   TimestampMap _cubeLightAnimFileTimestamps;
   TimestampMap _backpackLightAnimFileTimestamps;
 
+  std::string _test_anim;
+
   // robot configs
   Json::Value _robotMoodConfig;
   Json::Value _robotBehaviorConfig;

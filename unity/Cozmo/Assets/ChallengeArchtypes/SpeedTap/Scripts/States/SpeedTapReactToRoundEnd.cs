@@ -84,12 +84,14 @@ namespace SpeedTap {
       // Do nothing
     }
     private void EnableExtraReactions(bool enabled) {
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, enabled);
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, enabled);
-      _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.CliffDetected, enabled);
-      // breaking out the big hammer. This state make cozmo lift himself up and then he drives back within the animation
-      // so it's important we don't get a firmware stop.
-      _CurrentRobot.SetEnableCliffSensor(enabled);
+      if (_CurrentRobot != null) {
+        _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.RobotPickedUp, enabled);
+        _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.ReturnedToTreads, enabled);
+        _CurrentRobot.RequestEnableReactionTrigger("speed_tap_anim", ReactionTrigger.CliffDetected, enabled);
+        // breaking out the big hammer. This state make cozmo lift himself up and then he drives back within the animation
+        // so it's important we don't get a firmware stop.
+        _CurrentRobot.SetEnableCliffSensor(enabled);
+      }
     }
 
     private void PlayReactToRoundAnimationAndSendEvent() {

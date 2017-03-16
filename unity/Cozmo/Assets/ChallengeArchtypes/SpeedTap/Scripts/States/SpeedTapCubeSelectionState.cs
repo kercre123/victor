@@ -165,6 +165,11 @@ namespace SpeedTap {
       }
 
       if (valid) {
+        // This is the list of "in use" cubes so they can all disconnect.
+        // Primarily populated by what cozmo sees before difficulty selection
+        if (!_SpeedTapGame.CubeIdsForGame.Contains(cubeID)) {
+          _SpeedTapGame.CubeIdsForGame.Add(cubeID);
+        }
         if (player.playerType != PlayerType.Cozmo) {
           LightCubeForPlayer(player);
           SelectCubeForNextPlayer();

@@ -10,6 +10,10 @@
   {
     "feature": "SpeedTapMultiPlayer",
     "enabled": true
+  },
+  {
+    "feature": "CodeLabGame",
+    "enabled": false
   }
 ]
 

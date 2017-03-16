@@ -5,6 +5,7 @@ enum uint_8 FeatureType {
   ObjectTapInteractions,
   AndroidConnectionFlow,
   SpeedTapMultiPlayer,
+  CodeLabGame,
 }
 
 structure FeatureToggle {
