@@ -26,7 +26,7 @@ namespace Cozmo {
   
 namespace {
 const float kMinTimeMoving_ms = 1000;
-const float kRadiusRobotTolerence = 50;
+const float kRadiusRobotTolerance = 50;
 static const char* kTriggerStrategyName = "Trigger Strategy Cube Moved";
 }
   
@@ -275,7 +275,7 @@ bool ReactionObjectData::ObjectOutsideIgnoreArea(const Robot& robot)
     return false;
   }
   
-  return distance > kRadiusRobotTolerence;
+  return distance > kRadiusRobotTolerance;
 }
 
 // update values for reactionObject

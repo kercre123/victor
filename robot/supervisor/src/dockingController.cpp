@@ -821,7 +821,7 @@ namespace Anki {
                     }
                   }
                   // If we can't use the last docking error signal then check if the robot's pose is within some
-                  // tolerences of the dockPose
+                  // tolerances of the dockPose
                   else if((HAL::GetTimeStamp() - dockingErrSignalMsg_.timestamp) > TIME_SINCE_LAST_ERRSIG &&
                           (rel_vert_dist_block > VERT_DOCK_TOL_MM ||
                            ABS(rel_horz_dist_block) > HORZ_DOCK_TOL_MM ||

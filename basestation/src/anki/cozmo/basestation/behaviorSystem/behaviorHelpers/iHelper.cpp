@@ -26,7 +26,7 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-const float kLastObservedTimestampTolerence_ms = 1000.0f;
+const float kLastObservedTimestampTolerance_ms = 1000.0f;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -266,7 +266,7 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
   
   // Check that the object has been visually verified within the last second
   const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  if(object->GetLastObservedTime() + kLastObservedTimestampTolerence_ms < currentTimestamp){
+  if(object->GetLastObservedTime() + kLastObservedTimestampTolerance_ms < currentTimestamp){
     PRINT_CH_INFO("BehaviorHelpers",
                   "IHelper.IsAtPreActionPoseWithVisualVerification.VisualVerifyFailed",
                   "Helper %s failed to visually verify object %d",

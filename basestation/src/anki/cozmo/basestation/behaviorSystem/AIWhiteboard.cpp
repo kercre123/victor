@@ -285,7 +285,7 @@ bool AIWhiteboard::CanUseAsPyramidStaticBlock(const ObservableObject* object) co
     return false;
   }
   
-  if(!object->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerence)){
+  if(!object->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerance)){
     return false;
   }
 

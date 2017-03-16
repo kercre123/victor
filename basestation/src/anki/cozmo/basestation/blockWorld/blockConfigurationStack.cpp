@@ -36,7 +36,7 @@ namespace {
   
 using StackIterator = std::vector<StackWeakPtr>::iterator;
 using StackIteratorConst = std::vector<StackWeakPtr>::const_iterator;
-const float kOnGroundTolerenceStackBlockOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
+const float kOnGroundToleranceStackBlockOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
 
 }
   
@@ -133,7 +133,7 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
     bottomBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
                                    {
-                                     if(!blockPtr->IsRestingAtHeight(0, kOnGroundTolerenceStackBlockOnly)){
+                                     if(!blockPtr->IsRestingAtHeight(0, kOnGroundToleranceStackBlockOnly)){
                                        return false;
                                      }
                                      
@@ -159,7 +159,7 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     auto currentBlock = object;
     auto nextBlock = currentBlock;
     BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindLocatedObjectOnTopOf(*currentBlock,
-                                                                                 BlockWorld::kOnCubeStackHeightTolerence,
+                                                                                 BlockWorld::kOnCubeStackHeightTolerance,
                                                                                  blocksOnlyFilter))){
       // Blocks being carried by the robot are not part of a stack
       if(robot.GetCarryingObject().IsSet() &&
@@ -174,7 +174,7 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     currentBlock = object;
     nextBlock = currentBlock;
     BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindLocatedObjectUnderneath(*currentBlock,
-                                                                                    BlockWorld::kOnCubeStackHeightTolerence,
+                                                                                    BlockWorld::kOnCubeStackHeightTolerance,
                                                                                     blocksOnlyFilter))){
       blocksBelowObject.push_back(nextBlock);
       currentBlock = nextBlock;

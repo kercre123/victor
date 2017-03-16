@@ -123,8 +123,8 @@ bool BlockConfigurationManager::DidAnyObjectsMovePastThreshold()
     if(lastPoseMapIter != _objectIDToLastPoseConfigurationUpdateMap.end()){
       // the blocks pose is known, so check if it moved past our threshold
       const auto& newBlockPose = blockMoved->GetPose();
-      const bool isBlockWithinTolerence = lastPoseMapIter->second.IsSameAs(newBlockPose, kMinBlockMoveUpdateThreshold_mm, kMinBlockRotationUpdateThreshold_rad);
-      if(!isBlockWithinTolerence){
+      const bool isBlockWithinTolerance = lastPoseMapIter->second.IsSameAs(newBlockPose, kMinBlockMoveUpdateThreshold_mm, kMinBlockRotationUpdateThreshold_rad);
+      if(!isBlockWithinTolerance){
         anyObjectMovedPastThreshold = true;
         break;
       }

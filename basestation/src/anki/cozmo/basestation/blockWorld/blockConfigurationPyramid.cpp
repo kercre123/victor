@@ -41,7 +41,7 @@ namespace BlockConfigurations{
   
 namespace {
 using PyramidIterator = std::vector<PyramidWeakPtr>::iterator;
-const float kOnGroundTolerencePyramidOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
+const float kOnGroundTolerancePyramidOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
 const float kTopBlockOverhangMin_mm = 5;
 // Distance of 60mm used - 30 mm from corner to center plus max distance seperation of 30mm
 const float kDistMaxCornerToCenter_mm = 60;
@@ -217,10 +217,10 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
     return false;
   }
   
-  const float xTopBlockOverhangTolerence_mm = (0.5f * rotatedBtmSize.x()) - kTopBlockOverhangMin_mm;
-  const float yTopBlockOverhangTolerence_mm = (0.5f * rotatedBtmSize.y()) - kTopBlockOverhangMin_mm;
+  const float xTopBlockOverhangTolerance_mm = (0.5f * rotatedBtmSize.x()) - kTopBlockOverhangMin_mm;
+  const float yTopBlockOverhangTolerance_mm = (0.5f * rotatedBtmSize.y()) - kTopBlockOverhangMin_mm;
   const float arbitrarilyHighZ = 100.f; // this has already been checked
-  const Point3f distanceTolerence = Point3f(xTopBlockOverhangTolerence_mm, yTopBlockOverhangTolerence_mm, arbitrarilyHighZ);
+  const Point3f distanceTolerance = Point3f(xTopBlockOverhangTolerance_mm, yTopBlockOverhangTolerance_mm, arbitrarilyHighZ);
   
   const Vec3f& targetTrans = targetObject->GetPose().GetTranslation();
   Pose3d targetObjectUnrotatedCenter(0, Z_AXIS_3D(),
@@ -230,8 +230,8 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
                                      &staticBlock->GetPose().FindOrigin());
   
   const bool topBlockCentered =
-               targetObjectUnrotatedCenter.IsSameAs(staticBlockIdealCenter, distanceTolerence, M_PI) &&
-               targetObjectUnrotatedCenter.IsSameAs(baseBlockIdealCenter, distanceTolerence, M_PI);
+               targetObjectUnrotatedCenter.IsSameAs(staticBlockIdealCenter, distanceTolerance, M_PI) &&
+               targetObjectUnrotatedCenter.IsSameAs(baseBlockIdealCenter, distanceTolerance, M_PI);
   
   
   return topBlockCentered;
@@ -307,7 +307,7 @@ std::vector<const PyramidBase*> Pyramid::BuildAllPyramidBasesForBlock(const Robo
     bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
     bottomBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
                                    {
-                                     if(!blockPtr->IsRestingAtHeight(0, kOnGroundTolerencePyramidOnly)){
+                                     if(!blockPtr->IsRestingAtHeight(0, kOnGroundTolerancePyramidOnly)){
                                        return false;
                                      }
                                      
@@ -356,7 +356,7 @@ std::vector<const Pyramid*> Pyramid::BuildAllPyramidsForBlock(const Robot& robot
 
   // if the block is on the ground, check if it is part of a pyramid base
   // and then check all possible top blocks to see if they are on top of it
-  if(object->IsRestingAtHeight(0, kOnGroundTolerencePyramidOnly)){
+  if(object->IsRestingAtHeight(0, kOnGroundTolerancePyramidOnly)){
     std::vector<const ObservableObject*> potentialTopBlocks;
     // Get all potential top blocks
     {
@@ -368,7 +368,7 @@ std::vector<const Pyramid*> Pyramid::BuildAllPyramidsForBlock(const Robot& robot
                                        return false;
                                      }
                                      
-                                     if(blockPtr->IsRestingAtHeight(0, kOnGroundTolerencePyramidOnly)){
+                                     if(blockPtr->IsRestingAtHeight(0, kOnGroundTolerancePyramidOnly)){
                                        return false;
                                      }
                                      
