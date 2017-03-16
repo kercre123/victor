@@ -51,7 +51,7 @@ namespace Anki
     {
     public:
       using ObservableObjectLibrary = Vision::ObservableObjectLibrary<ObservableObject>;
-      constexpr static const float kOnCubeStackHeightTolerence = 2 * STACKED_HEIGHT_TOL_MM;
+      constexpr static const float kOnCubeStackHeightTolerance = 2 * STACKED_HEIGHT_TOL_MM;
       
       BlockWorld(Robot* robot);
             

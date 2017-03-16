@@ -277,8 +277,8 @@ namespace Anki {
 
       static const char* PoseStateToString(const PoseState& state);
       
-      //Check if the bottom of an object is resting at a certain height within a tolerence
-      bool IsRestingAtHeight(float height, float tolerence) const;
+      //Check if the bottom of an object is resting at a certain height within a tolerance
+      bool IsRestingAtHeight(float height, float tolerance) const;
       
       // Helper to check whether a pose is too high above an object:
       // True if pose.z is more than heightTol above (object.z + (heightMultiplier*object.height)),

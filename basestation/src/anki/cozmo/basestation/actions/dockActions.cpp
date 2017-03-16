@@ -1859,7 +1859,7 @@ namespace Anki {
       const float robotObjRelRotation_rad = dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       // consts for comparing relative robot/block alignment
-      const float kRotationTolerence_rad = DEG_TO_RAD(15.f);
+      const float kRotationTolerance_rad = DEG_TO_RAD(15.f);
       const float kInAlignment_rad = DEG_TO_RAD(0.f);
       const float kClockwise_rad = DEG_TO_RAD(-90.f);
       const float kCounterClockwise_rad = -kClockwise_rad;
@@ -1870,23 +1870,23 @@ namespace Anki {
       f32 xAbsolutePlacementOffset_mm;
       f32 yAbsolutePlacementOffset_mm;
 
-      if(Util::IsNear(robotObjRelRotation_rad, kInAlignment_rad, kRotationTolerence_rad)){
+      if(Util::IsNear(robotObjRelRotation_rad, kInAlignment_rad, kRotationTolerance_rad)){
         xAbsolutePlacementOffset_mm = -_relOffsetX_mm;
         yAbsolutePlacementOffset_mm = _relOffsetY_mm;
-      }else if(Util::IsNear(robotObjRelRotation_rad, kCounterClockwise_rad, kRotationTolerence_rad)){
+      }else if(Util::IsNear(robotObjRelRotation_rad, kCounterClockwise_rad, kRotationTolerance_rad)){
         xAbsolutePlacementOffset_mm = _relOffsetY_mm;
         yAbsolutePlacementOffset_mm = _relOffsetX_mm;
-      }else if(Util::IsNear(robotObjRelRotation_rad, kClockwise_rad, kRotationTolerence_rad)){
+      }else if(Util::IsNear(robotObjRelRotation_rad, kClockwise_rad, kRotationTolerance_rad)){
         xAbsolutePlacementOffset_mm = -_relOffsetY_mm;
         yAbsolutePlacementOffset_mm = -_relOffsetX_mm;
-      }else if( Util::IsNear(robotObjRelRotation_rad, kOppposite_rad, kRotationTolerence_rad)
-               ||  Util::IsNear(robotObjRelRotation_rad, kOppposite_rad_neg, kRotationTolerence_rad)){
+      }else if( Util::IsNear(robotObjRelRotation_rad, kOppposite_rad, kRotationTolerance_rad)
+               ||  Util::IsNear(robotObjRelRotation_rad, kOppposite_rad_neg, kRotationTolerance_rad)){
         xAbsolutePlacementOffset_mm = _relOffsetX_mm;
         yAbsolutePlacementOffset_mm = -_relOffsetY_mm;
       }else{
         PRINT_NAMED_WARNING("PlaceRelObjectAction.CalculatePlacementOffset.InvalidOrientation",
                             "Robot and block are not within alignment threshold - rotation:%f threshold:%f",
-                            RAD_TO_DEG(robotObjRelRotation_rad), kRotationTolerence_rad);
+                            RAD_TO_DEG(robotObjRelRotation_rad), kRotationTolerance_rad);
         return ActionResult::DID_NOT_REACH_PREACTION_POSE;
       }
       

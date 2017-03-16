@@ -423,13 +423,13 @@ namespace Vision {
   }
 
 
-  bool ObservableObject::IsRestingAtHeight(float height, float tolerence) const
+  bool ObservableObject::IsRestingAtHeight(float height, float tolerance) const
   {
     DEV_ASSERT(HasValidPose(), "ObservableObject.IsRestingAtHeight.ObjectPoseIsNotValid");
     
     const Pose3d& pose = GetPose().GetWithRespectToOrigin();
     const f32 blockHeight = GetDimInParentFrame<'Z'>(pose);
-    return std::abs(height - (pose.GetTranslation().z() - blockHeight/2)) < tolerence;
+    return std::abs(height - (pose.GetTranslation().z() - blockHeight/2)) < tolerance;
   }
 
   void ObservableObject::SetObservationTimes(const ObservableObject* otherObject)

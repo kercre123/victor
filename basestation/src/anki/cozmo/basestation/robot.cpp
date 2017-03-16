@@ -125,7 +125,7 @@ static const TimeStamp_t kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToCo
 
 // Laying flat angles
 static const float kPitchAngleOntreads_rads = DEG_TO_RAD(0);
-static const float kPitchAngleOntreadsTolerence_rads = DEG_TO_RAD(45);
+static const float kPitchAngleOntreadsTolerance_rads = DEG_TO_RAD(45);
 
 //Constants for on back
 static const float kPitchAngleOnBack_rads = DEG_TO_RAD(74.5f);
@@ -548,7 +548,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   //////////
   
   //// COZMO_UP_RIGHT
-  const bool currOntreads = std::abs(GetPitchAngle().ToDouble() - kPitchAngleOntreads_rads) <= kPitchAngleOntreadsTolerence_rads;
+  const bool currOntreads = std::abs(GetPitchAngle().ToDouble() - kPitchAngleOntreads_rads) <= kPitchAngleOntreadsTolerance_rads;
   
   //// COZMO_ON_BACK
   const float backAngle = IsPhysical() ? kPitchAngleOnBack_rads : kPitchAngleOnBack_sim_rads;

@@ -33,7 +33,7 @@ static const char* const kMinimumStackHeight = "minimumStackHeight";
 
 const float kLookingDown_rad = DEG_TO_RAD(-25);
 const float kLookingUp_rad = DEG_TO_RAD(45);
-const float kZTolerenceStackMoved = 10.0f;
+const float kZToleranceStackMoved = 10.0f;
 }
 
 namespace Anki {
@@ -72,9 +72,9 @@ bool BehaviorCantHandleTallStack::IsRunnableInternal(const BehaviorPreReqRobot& 
         if(bottomBlock == nullptr){
           return false;
         }
-        auto tolerence = Point3f(_minBlockMovedThreshold_mm, _minBlockMovedThreshold_mm, kZTolerenceStackMoved);
+        auto tolerance = Point3f(_minBlockMovedThreshold_mm, _minBlockMovedThreshold_mm, kZToleranceStackMoved);
         const bool hasStackMovedEnough = !_isLastReactionPoseValid ||
-                                          !_lastReactionBasePose.IsSameAs(bottomBlock->GetPose(), tolerence, M_PI);
+                                          !_lastReactionBasePose.IsSameAs(bottomBlock->GetPose(), tolerance, M_PI);
         return hasStackMovedEnough;
       }
     }
