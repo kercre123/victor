@@ -56,7 +56,7 @@
 #include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotStateHistory.h"
 #include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
@@ -221,7 +221,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _driftCheckMinGyroZ_rad_per_sec(0)
   , _driftCheckMaxGyroZ_rad_per_sec(0)
   , _driftCheckNumReadings(0)
-  , _poseHistory(nullptr)
+  , _stateHistory(new RobotStateHistory())
   , _moodManager(new MoodManager(this))
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
   , _speedChooser(new SpeedChooser(*this))
@@ -231,7 +231,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
   , _robotIdleTimeoutComponent(new RobotIdleTimeoutComponent(*this))
 {
-  _poseHistory = new RobotPoseHistory();
   PRINT_NAMED_INFO("Robot.Robot", "Created");
       
   _pose.SetName("Robot_" + std::to_string(_ID));
@@ -246,7 +245,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // It will also flag that a localization update is needed when it increments the frameID so set the flag
   // to false
   _frameId = 0;
-  _poseHistory->Clear();
+  _stateHistory->Clear();
   _needToSendLocalizationUpdate = false;
   
   // Delocalize will mark isLocalized as false, but we are going to consider
@@ -345,10 +344,12 @@ Robot::~Robot()
   _actionList.reset();
       
   // destroy vision component first because its thread might be using things from Robot. This fixes a crash
-  // caused by the vision thread using _poseHistory when it was destroyed here
+  // caused by the vision thread using _stateHistory when it was destroyed here
   _visionComponent.reset();
   
-  Util::SafeDelete(_poseHistory);
+  // Destroy the state history
+  _stateHistory.reset();
+  
   Util::SafeDelete(_pdo);
   Util::SafeDelete(_longPathPlanner);
   Util::SafeDelete(_shortPathPlanner);
@@ -501,7 +502,7 @@ void Robot::UpdateCliffDetectThreshold() {
   if (_cliffStartTimestamp > 0) {
     if( !GetMoveComponent().AreWheelsMoving() ) {
       
-      auto poseMap = GetPoseHistory()->GetRawPoses();
+      auto poseMap = GetStateHistory()->GetRawPoses();
       u16 minVal = std::numeric_limits<u16>::max();
       for (auto startIt = poseMap.lower_bound(_cliffStartTimestamp); startIt != poseMap.end(); ++startIt) {
         u16 currVal = startIt->second.GetCliffData();
@@ -1172,15 +1173,15 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
         // message's (x,y) odometry info into history. Since it comes from
         // pose history, it will already be w.r.t. world origin, since that's
         // how we store everything in pose history.
-        RobotPoseStamp p;
-        lastResult = _poseHistory->GetLastPoseWithFrameID(msg.pose_frame_id, p);
+        HistRobotState histState;
+        lastResult = _stateHistory->GetLastStateWithFrameID(msg.pose_frame_id, histState);
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
                             "Failed to get last pose from history with frame ID=%d",
                             msg.pose_frame_id);
           return lastResult;
         }
-        pose_z = p.GetPose().GetWithRespectToOrigin().GetTranslation().z();
+        pose_z = histState.GetPose().GetWithRespectToOrigin().GetTranslation().z();
       }
       
       newPose.SetTranslation({newPose.GetTranslation().x(), newPose.GetTranslation().y(), pose_z});
@@ -1188,17 +1189,11 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     } // if/else on ramp
     
     // Add to history
-    lastResult = AddRawOdomPoseToHistory(msg.timestamp,
-                                         msg.pose_frame_id,
-                                         newPose,
-                                         msg.headAngle,
-                                         msg.liftAngle,
-                                         msg.cliffDataRaw,
-                                         isCarryingObject);
+    lastResult = AddRobotStateToHistory(newPose, msg);
     
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.AddPoseError",
-                          "AddRawOdomPoseToHistory failed for timestamp=%d", msg.timestamp);
+                          "AddRawOdomStateToHistory failed for timestamp=%d", msg.timestamp);
       return lastResult;
     }
 
@@ -1323,45 +1318,45 @@ void Robot::SetPhysicalRobot(bool isPhysical)
 
 Result Robot::GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const
 {
-  RobotPoseStamp p;
+  HistRobotState histState;
   TimeStamp_t t;
-  Result result = _poseHistory->GetRawPoseAt(t_request, t, p);
+  Result result = _stateHistory->GetRawStateAt(t_request, t, histState);
   if(RESULT_OK != result)
   {
     return result;
   }
   
-  camera = GetHistoricalCamera(p, t);
+  camera = GetHistoricalCamera(histState, t);
   return RESULT_OK;
 }
     
-Pose3d Robot::GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const
+Pose3d Robot::GetHistoricalCameraPose(const HistRobotState& histState, TimeStamp_t t) const
 {
   // Compute pose from robot body to camera
   // Start with canonical (untilted) headPose
   Pose3d camPose(_headCamPose);
       
   // Rotate that by the given angle
-  RotationVector3d Rvec(-histPoseStamp.GetHeadAngle(), Y_AXIS_3D());
+  RotationVector3d Rvec(-histState.GetHeadAngle_rad(), Y_AXIS_3D());
   camPose.RotateBy(Rvec);
       
   // Precompose with robot body to neck pose
   camPose.PreComposeWith(_neckPose);
       
   // Set parent pose to be the historical robot pose
-  camPose.SetParent(&(histPoseStamp.GetPose()));
+  camPose.SetParent(&(histState.GetPose()));
       
   camPose.SetName("PoseHistoryCamera_" + std::to_string(t));
       
   return camPose;
 }
     
-Vision::Camera Robot::GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const
+Vision::Camera Robot::GetHistoricalCamera(const HistRobotState& histState, TimeStamp_t t) const
 {
   Vision::Camera camera(_visionComponent->GetCamera());
       
   // Update the head camera's pose
-  camera.SetPose(GetHistoricalCameraPose(p, t));
+  camera.SetPose(GetHistoricalCameraPose(histState, t));
       
   return camera;
 }
@@ -1945,7 +1940,7 @@ Result Robot::SetNewPose(const Pose3d& newPose)
   //  can get.
   const TimeStamp_t timeStamp = GetLastMsgTimestamp();
   
-  return AddVisionOnlyPoseToHistory(timeStamp, _pose, GetHeadAngle(), GetLiftAngle());
+  return AddVisionOnlyStateToHistory(timeStamp, _pose, GetHeadAngle(), GetLiftAngle());
 }
     
 void Robot::SetPose(const Pose3d &newPose)
@@ -2354,7 +2349,7 @@ void Robot::LoadBehaviors()
 Result Robot::SyncTime()
 {
   _timeSynced = false;
-  _poseHistory->Clear();
+  _stateHistory->Clear();
       
   Result res = SendSyncTime();
   if (res == RESULT_OK) {
@@ -2395,8 +2390,9 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
      PRINT_NAMED_INFO("Robot.LocalizeToMat.ExistingMatChain",
      "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
   */
-      
-  RobotPoseStamp* posePtr = nullptr;
+  
+  HistStateKey histStateKey;
+  HistRobotState* histStatePtr = nullptr;
   Pose3d robotPoseWrtObject;
   float  headAngle;
   float  liftAngle;
@@ -2411,8 +2407,8 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     liftAngle = GetLiftAngle();
     headAngle = GetHeadAngle();
   } else {
-    // Get computed RobotPoseStamp at the time the object was observed.
-    if ((lastResult = GetComputedPoseAt(seenObject->GetLastObservedTime(), &posePtr)) != RESULT_OK) {
+    // Get computed HistRobotState at the time the object was observed.
+    if ((lastResult = _stateHistory->GetComputedStateAt(seenObject->GetLastObservedTime(), &histStatePtr, &histStateKey)) != RESULT_OK) {
       PRINT_NAMED_ERROR("Robot.LocalizeToObject.CouldNotFindHistoricalPose",
                         "Time %d", seenObject->GetLastObservedTime());
       return lastResult;
@@ -2421,18 +2417,18 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     // The computed historical pose is always stored w.r.t. the robot's world
     // origin and parent chains are lost. Re-connect here so that GetWithRespectTo
     // will work correctly
-    Pose3d robotPoseAtObsTime = posePtr->GetPose();
+    Pose3d robotPoseAtObsTime = histStatePtr->GetPose();
     robotPoseAtObsTime.SetParent(_worldOrigin);
         
     // Get the pose of the robot with respect to the observed object
     if(robotPoseAtObsTime.GetWithRespectTo(seenObject->GetPose(), robotPoseWrtObject) == false) {
       PRINT_NAMED_ERROR("Robot.LocalizeToObject.ObjectPoseOriginMisMatch",
-                        "Could not get RobotPoseStamp w.r.t. seen object pose.");
+                        "Could not get HistRobotState w.r.t. seen object pose.");
       return RESULT_FAIL;
     }
         
-    liftAngle = posePtr->GetLiftAngle();
-    headAngle = posePtr->GetHeadAngle();
+    liftAngle = histStatePtr->GetLiftAngle_rad();
+    headAngle = histStatePtr->GetHeadAngle_rad();
   }
       
   // Make the computed robot pose use the existing object as its parent
@@ -2493,7 +2489,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   if(nullptr != seenObject)
   {
     //
-    if((lastResult = AddVisionOnlyPoseToHistory(seenObject->GetLastObservedTime(),
+    if((lastResult = AddVisionOnlyStateToHistory(seenObject->GetLastObservedTime(),
                                                 robotPoseWrtOrigin,
                                                 headAngle, liftAngle)) != RESULT_OK)
     {
@@ -2542,11 +2538,11 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
       
       
-  if(nullptr != posePtr)
+  if(nullptr != histStatePtr)
   {
     // Update the computed historical pose as well so that subsequent block
     // pose updates use obsMarkers whose camera's parent pose is correct.
-    posePtr->SetAll(GetPoseFrameID(), robotPoseWrtOrigin, liftAngle, liftAngle, posePtr->GetCliffData(), posePtr->IsCarryingObject());
+    histStatePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, headAngle, liftAngle);
   }
 
       
@@ -2560,7 +2556,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   }
       
   // Mark the robot as now being localized to this object
-  // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
+  // NOTE: this should be _after_ calling AddVisionOnlyStateToHistory, since
   //    that function checks whether the robot is already localized
   lastResult = SetLocalizedTo(existingObject);
   if(RESULT_OK != lastResult) {
@@ -2618,9 +2614,10 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
      "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
   */
       
-  // Get computed RobotPoseStamp at the time the mat was observed.
-  RobotPoseStamp* posePtr = nullptr;
-  if ((lastResult = GetComputedPoseAt(matSeen->GetLastObservedTime(), &posePtr)) != RESULT_OK) {
+  // Get computed HistRobotState at the time the mat was observed.
+  HistStateKey histStateKey;
+  HistRobotState* histStatePtr = nullptr;
+  if ((lastResult = _stateHistory->GetComputedStateAt(matSeen->GetLastObservedTime(), &histStatePtr, &histStateKey)) != RESULT_OK) {
     PRINT_NAMED_ERROR("Robot.LocalizeToMat.CouldNotFindHistoricalPose", "Time %d", matSeen->GetLastObservedTime());
     return lastResult;
   }
@@ -2628,14 +2625,14 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   // The computed historical pose is always stored w.r.t. the robot's world
   // origin and parent chains are lost. Re-connect here so that GetWithRespectTo
   // will work correctly
-  Pose3d robotPoseAtObsTime = posePtr->GetPose();
+  Pose3d robotPoseAtObsTime = histStatePtr->GetPose();
   robotPoseAtObsTime.SetParent(_worldOrigin);
       
   /*
   // Get computed Robot pose at the time the mat was observed (note that this
   // also makes the pose have the robot's current world origin as its parent
   Pose3d robotPoseAtObsTime;
-  if(robot->GetComputedPoseAt(matSeen->GetLastObservedTime(), robotPoseAtObsTime) != RESULT_OK) {
+  if(robot->GetComputedStateAt(matSeen->GetLastObservedTime(), robotPoseAtObsTime) != RESULT_OK) {
   PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.CouldNotComputeHistoricalPose",
                     "Time %d\n",
                     matSeen->GetLastObservedTime());
@@ -2647,7 +2644,7 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   Pose3d robotPoseWrtMat;
   if(robotPoseAtObsTime.GetWithRespectTo(matSeen->GetPose(), robotPoseWrtMat) == false) {
     PRINT_NAMED_ERROR("Robot.LocalizeToMat.MatPoseOriginMisMatch",
-                      "Could not get RobotPoseStamp w.r.t. matPose.");
+                      "Could not get HistRobotState w.r.t. matPose.");
     return RESULT_FAIL;
   }
       
@@ -2753,16 +2750,16 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
       
   // Add the new vision-based pose to the robot's history. Note that we use
   // the pose w.r.t. the origin for storing poses in history.
-  // RobotPoseStamp p(robot->GetPoseFrameID(),
+  // HistRobotState p(robot->GetPoseFrameID(),
   //                  robotPoseWrtMat.GetWithRespectToOrigin(),
   //                  posePtr->GetHeadAngle(),
   //                  posePtr->GetLiftAngle());
   Pose3d robotPoseWrtOrigin = robotPoseWrtMat.GetWithRespectToOrigin();
       
-  if((lastResult = AddVisionOnlyPoseToHistory(existingMatPiece->GetLastObservedTime(),
+  if((lastResult = AddVisionOnlyStateToHistory(existingMatPiece->GetLastObservedTime(),
                                               robotPoseWrtOrigin,
-                                              posePtr->GetHeadAngle(),
-                                              posePtr->GetLiftAngle())) != RESULT_OK)
+                                              histStatePtr->GetHeadAngle_rad(),
+                                              histStatePtr->GetLiftAngle_rad())) != RESULT_OK)
   {
     PRINT_NAMED_ERROR("Robot.LocalizeToMat.FailedAddingVisionOnlyPoseToHistory", "");
     return lastResult;
@@ -2773,7 +2770,7 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   // pose updates use obsMarkers whose camera's parent pose is correct.
   // Note again that we store the pose w.r.t. the origin in history.
   // TODO: Should SetPose() do the flattening w.r.t. origin?
-  posePtr->SetAll(GetPoseFrameID(), robotPoseWrtOrigin, posePtr->GetHeadAngle(), posePtr->GetLiftAngle(), posePtr->GetCliffData(), posePtr->IsCarryingObject());
+  histStatePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, histStatePtr->GetHeadAngle_rad(), histStatePtr->GetLiftAngle_rad());
       
   // Compute the new "current" pose from history which uses the
   // past vision-based "ground truth" pose we just computed.
@@ -2783,7 +2780,7 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   }
       
   // Mark the robot as now being localized to this mat
-  // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
+  // NOTE: this should be _after_ calling AddVisionOnlyStateToHistory, since
   //    that function checks whether the robot is already localized
   lastResult = SetLocalizedTo(existingMatPiece);
   if(RESULT_OK != lastResult) {
@@ -2915,7 +2912,7 @@ Result Robot::SetOnRamp(bool t)
         
     _rampDirection = Ramp::UNKNOWN;
         
-    const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
+    const TimeStamp_t timeStamp = _stateHistory->GetNewestTimeStamp();
         
     PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOffRamp",
                      "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
@@ -2953,7 +2950,7 @@ Result Robot::SetPoseOnCharger()
     return lastResult;
   }
 
-  const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
+  const TimeStamp_t timeStamp = _stateHistory->GetNewestTimeStamp();
     
   PRINT_NAMED_INFO("Robot.SetPoseOnCharger.SetPose",
                    "Robot %d now on charger %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
@@ -3543,13 +3540,13 @@ Result Robot::SendAbsLocalizationUpdate() const
 {
   // Look in history for the last vis pose and send it.
   TimeStamp_t t;
-  RobotPoseStamp p;
-  if (_poseHistory->GetLatestVisionOnlyPose(t, p) == RESULT_FAIL) {
+  HistRobotState histState;
+  if (_stateHistory->GetLatestVisionOnlyState(t, histState) == RESULT_FAIL) {
     PRINT_NAMED_WARNING("Robot.SendAbsLocUpdate.NoVizPoseFound", "");
     return RESULT_FAIL;
   }
 
-  return SendAbsLocalizationUpdate(p.GetPose().GetWithRespectToOrigin(), t, p.GetFrameId());
+  return SendAbsLocalizationUpdate(histState.GetPose().GetWithRespectToOrigin(), t, histState.GetFrameId());
 }
     
 Result Robot::SendHeadAngleUpdate() const
@@ -3713,17 +3710,11 @@ Result Robot::RequestIMU(const u32 length_ms) const
     
     
 // ============ Pose history ===============
-    
-Result Robot::AddRawOdomPoseToHistory(const TimeStamp_t t,
-                                      const PoseFrameID_t frameID,
-                                      const Pose3d& pose,
-                                      const f32 head_angle,
-                                      const f32 lift_angle,
-                                      const u16 cliff_data,
-                                      const bool isCarryingObject)
+
+Result Robot::AddRobotStateToHistory(const Pose3d& pose, const RobotState& state)
 {
-  RobotPoseStamp poseStamp(frameID, pose, head_angle, lift_angle, cliff_data, isCarryingObject);
-  return _poseHistory->AddRawOdomPose(t, poseStamp);
+  const HistRobotState histState(pose, state);
+  return _stateHistory->AddRawOdomState(state.timestamp, histState);
 }
     
     
@@ -3777,7 +3768,7 @@ Result Robot::UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin)
 } // UpdateWorldOrigin()
     
     
-Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
+Result Robot::AddVisionOnlyStateToHistory(const TimeStamp_t t,
                                          const Pose3d& pose,
                                          const f32 head_angle,
                                          const f32 lift_angle)
@@ -3788,68 +3779,36 @@ Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
   // Set needToSendLocalizationUpdate to true so we send an update on the next tick
   _needToSendLocalizationUpdate = true;
   
-  // vision poses do not care about whether you are carrying an object. This field has no meaning here, so we
-  // set to false always
-  // COZMO-3309 Need to change poseHistory to robot status history
-  const bool isCarryingObject = false;
-  
-  RobotPoseStamp poseStamp(_frameId, pose, head_angle, lift_angle, std::numeric_limits<u16>::max(), isCarryingObject);
-  return _poseHistory->AddVisionOnlyPose(t, poseStamp);
+  HistRobotState histState;
+  histState.SetPose(_frameId, pose, head_angle, lift_angle);
+  return _stateHistory->AddVisionOnlyState(t, histState);
 }
 
-Result Robot::ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
-                                              TimeStamp_t& t, RobotPoseStamp** p,
-                                              HistPoseKey* key,
-                                              bool withInterpolation)
+Result Robot::GetComputedStateAt(const TimeStamp_t t_request, Pose3d& pose) const
 {
-  return _poseHistory->ComputeAndInsertPoseAt(t_request, t, p, key, withInterpolation);
-}
-
-Result Robot::GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
-{
-  return _poseHistory->GetVisionOnlyPoseAt(t_request, p);
-}
-
-Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const
-{
-  const RobotPoseStamp* poseStamp;
-  Result lastResult = GetComputedPoseAt(t_request, &poseStamp);
+  HistStateKey histStateKey;
+  const HistRobotState* histStatePtr = nullptr;
+  Result lastResult = _stateHistory->GetComputedStateAt(t_request, &histStatePtr, &histStateKey);
   if(lastResult == RESULT_OK) {
     // Grab the pose stored in the pose stamp we just found, and hook up
     // its parent to the robot's current world origin (since pose history
     // doesn't keep track of pose parent chains)
-    pose = poseStamp->GetPose();
+    pose = histStatePtr->GetPose();
     pose.SetParent(_worldOrigin);
   }
   return lastResult;
 }
-    
-Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, const RobotPoseStamp** p, HistPoseKey* key) const
-{
-  return _poseHistory->GetComputedPoseAt(t_request, p, key);
-}
-
-Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
-{
-  return _poseHistory->GetComputedPoseAt(t_request, p, key);
-}
-
-bool Robot::IsValidPoseKey(const HistPoseKey key) const
-{
-  return _poseHistory->IsValidPoseKey(key);
-}
-    
 bool Robot::UpdateCurrPoseFromHistory()
 {
   bool poseUpdated = false;
       
   TimeStamp_t t;
-  RobotPoseStamp p;
-  if (_poseHistory->ComputePoseAt(_poseHistory->GetNewestTimeStamp(), t, p) == RESULT_OK)
+  HistRobotState histState;
+  if (_stateHistory->ComputeStateAt(_stateHistory->GetNewestTimeStamp(), t, histState) == RESULT_OK)
   {
 
     Pose3d newPose;
-    if((p.GetPose().GetWithRespectTo(*_worldOrigin, newPose))==false)
+    if((histState.GetPose().GetWithRespectTo(*_worldOrigin, newPose))==false)
     {
       // This is not necessarily an error anymore: it's possible we've received an
       // odometry update from the robot w.r.t. an old origin (before being delocalized),
@@ -3857,7 +3816,7 @@ bool Robot::UpdateCurrPoseFromHistory()
       // in its new frame.
       PRINT_NAMED_INFO("Robot.UpdateCurrPoseFromHistory.GetWrtParentFailed",
                         "Could not update robot %d's current pose using historical pose w.r.t. %s because we are now in frame %s.",
-                        _ID, p.GetPose().FindOrigin().GetName().c_str(),
+                        _ID, histState.GetPose().FindOrigin().GetName().c_str(),
                        _worldOrigin->GetName().c_str());
     }
     else
@@ -4269,7 +4228,7 @@ void Robot::BroadcastEngineErrorCode(EngineErrorCode error)
                     error);
 }
     
-ExternalInterface::RobotState Robot::GetRobotState()
+ExternalInterface::RobotState Robot::GetRobotState() const
 {
   ExternalInterface::RobotState msg;
       
@@ -4318,7 +4277,35 @@ ExternalInterface::RobotState Robot::GetRobotState()
       
   return msg;
 }
-    
+  
+RobotState Robot::GetDefaultRobotState()
+{
+  const auto kDefaultStatus = (Util::EnumToUnderlying(RobotStatusFlag::HEAD_IN_POS) |
+                               Util::EnumToUnderlying(RobotStatusFlag::LIFT_IN_POS));
+  
+  const RobotPose kDefaultPose(0.f, 0.f, 0.f, 0.f, 0.f);
+  
+  const RobotState state(1, //uint32_t timestamp, (Robot does not report at t=0
+                         0, //uint32_t pose_frame_id,
+                         1, //uint32_t pose_origin_id,
+                         kDefaultPose, //const Anki::Cozmo::RobotPose &pose,
+                         0.f, //float lwheel_speed_mmps,
+                         0.f, //float rwheel_speed_mmps,
+                         0.f, //float headAngle
+                         0.f, //float liftAngle,
+                         LIFT_HEIGHT_LOWDOCK, //float liftHeight,
+                         AccelData(), //const Anki::Cozmo::AccelData &accel,
+                         GyroData(), //const Anki::Cozmo::GyroData &gyro,
+                         5.f, //float batteryVoltage,
+                         kDefaultStatus, //uint32_t status,
+                         0, //uint16_t lastPathID,
+                         0, //uint16_t cliffDataRaw,
+                         -1, //int8_t currPathSegment,
+                         0); //uint8_t numFreeSegmentSlots
+  
+  return state;
+}
+
 RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
 {
   if (!_context->GetRobotManager())
@@ -4467,9 +4454,9 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
   const Vision::CameraCalibration* calib = GetVisionComponent().GetCamera().GetCalibration();
   const Point2f pt = imgPoint - calib->GetCenter();
   
-  RobotPoseStamp poseStamp;
+  HistRobotState histState;
   TimeStamp_t t;
-  Result result = GetPoseHistory()->ComputePoseAt(timestamp, t, poseStamp);
+  Result result = GetStateHistory()->ComputeStateAt(timestamp, t, histState);
   if(RESULT_OK != result)
   {
     PRINT_NAMED_WARNING("Robot.ComputeTurnTowardsImagePointAngles.ComputeHistPoseFailed", "t=%u", timestamp);
@@ -4478,8 +4465,8 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
     return result;
   }
   
-  absTiltAngle = std::atan2f(-pt.y(), calib->GetFocalLength_y()) + poseStamp.GetHeadAngle();
-  absPanAngle  = std::atan2f(-pt.x(), calib->GetFocalLength_x()) + poseStamp.GetPose().GetRotation().GetAngleAroundZaxis();
+  absTiltAngle = std::atan2f(-pt.y(), calib->GetFocalLength_y()) + histState.GetHeadAngle_rad();
+  absPanAngle  = std::atan2f(-pt.x(), calib->GetFocalLength_x()) + histState.GetPose().GetRotation().GetAngleAroundZaxis();
   
   return RESULT_OK;
 }

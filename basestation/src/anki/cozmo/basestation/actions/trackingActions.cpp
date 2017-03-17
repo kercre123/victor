@@ -797,9 +797,9 @@ bool TrackMotionAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     _robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
     
     // Find pose of robot at time motion was observed
-    RobotPoseStamp* poseStamp = nullptr;
+    HistRobotState* histStatePtr = nullptr;
     TimeStamp_t junkTime;
-    if(RESULT_OK != _robot.GetPoseHistory()->ComputeAndInsertPoseAt(_motionObservation.timestamp, junkTime, &poseStamp)) {
+    if(RESULT_OK != _robot.GetStateHistory()->ComputeAndInsertStateAt(_motionObservation.timestamp, junkTime, &histStatePtr)) {
       PRINT_NAMED_ERROR("TrackMotionAction.GetAngles.PoseHistoryError",
                         "Could not get historical pose for motion observed at t=%d (lastRobotMsgTime = %d)",
                         _motionObservation.timestamp,
@@ -807,11 +807,11 @@ bool TrackMotionAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
       return false;
     }
     
-    assert(nullptr != poseStamp);
+    assert(nullptr != histStatePtr);
     
     // Make absolute
-    absTiltAngle += poseStamp->GetHeadAngle();
-    absPanAngle  += poseStamp->GetPose().GetRotation().GetAngleAroundZaxis();
+    absTiltAngle += histStatePtr->GetHeadAngle_rad();
+    absPanAngle  += histStatePtr->GetPose().GetRotation().GetAngleAroundZaxis();
     
 #   if DEBUG_TRACKING_ACTIONS
     PRINT_NAMED_INFO("TrackMotionAction.GetAngles.Motion",

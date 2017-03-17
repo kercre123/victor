@@ -22,7 +22,7 @@
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotStateHistory.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"
 #include "anki/cozmo/basestation/visionModeSchedule.h"
 #include "anki/cozmo/basestation/visionPoseData.h"
@@ -173,20 +173,20 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasHeadMovingTooFast(TimeStamp_t t,
-                              const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                              const int numImuDataToLookBack = 0);
-    bool WasBodyMovingTooFast(TimeStamp_t t,
-                              const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                              const int numImuDataToLookBack = 0);
+    bool WasHeadRotatingTooFast(TimeStamp_t t,
+                                const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                                const int numImuDataToLookBack = 0);
+    bool WasBodyRotatingTooFast(TimeStamp_t t,
+                                const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                                const int numImuDataToLookBack = 0);
     
     // Returns true if head or body were moving too fast at the timestamp
     // If numImuDataToLookBack is greater than zero we will look that far back in imu data history instead
     // of just looking at the previous and next imu data
-    bool WasMovingTooFast(TimeStamp_t t,
-                          const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                          const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                          const int numImuDataToLookBack = 0);
+    bool WasRotatingTooFast(TimeStamp_t t,
+                            const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                            const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                            const int numImuDataToLookBack = 0);
 
     // Add an occluder to the camera for the cross-bar of the lift in its position
     // at the requested time

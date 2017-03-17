@@ -30,7 +30,7 @@ namespace Cozmo {
 
 // Forward Declarations:
 class Robot;
-class RobotPoseStamp;
+class HistRobotState;
 class DriveStraightAction;
 
 template <typename Type>

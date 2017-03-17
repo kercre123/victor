@@ -31,6 +31,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/bridge.h"
 #include "anki/cozmo/basestation/charger.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/customObject.h"
@@ -1913,11 +1914,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     u32 numVisibleObjects = 0;
     
-    // Don't bother if the robot is picked up or if it was moving too fast to
+    // Don't bother if the robot is picked up or if it was rotating too fast to
     // have been able to see the markers on the objects anyway.
     // NOTE: Just using default speed thresholds, which should be conservative.
     if(_robot->GetOffTreadsState() != OffTreadsState::OnTreads ||
-       _robot->GetVisionComponent().WasMovingTooFast(atTimestamp))
+       _robot->GetMoveComponent().WasMoving(atTimestamp) ||
+       _robot->GetVisionComponent().WasRotatingTooFast(atTimestamp))
     {
       return numVisibleObjects;
     }
@@ -3286,9 +3288,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
     // grab the robot pose at the timestamp of this frame
     TimeStamp_t t;
-    RobotPoseStamp* p = nullptr;
-    HistPoseKey poseKey;
-    const Result poseRet = _robot->GetPoseHistory()->ComputeAndInsertPoseAt(frameInfo.timestamp, t, &p, &poseKey, true);
+    HistRobotState* histState = nullptr;
+    HistStateKey histStateKey;
+    const Result poseRet = _robot->GetStateHistory()->ComputeAndInsertStateAt(frameInfo.timestamp, t, &histState, &histStateKey, true);
     if(RESULT_FAIL_ORIGIN_MISMATCH == poseRet)
     {
       // "Failing" because of an origin mismatch is OK, so don't freak out, but don't
@@ -3296,21 +3298,21 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       return RESULT_OK;
     }
     
-    const bool poseIsGood = ( RESULT_OK == poseRet ) && (p != nullptr);
+    const bool poseIsGood = ( RESULT_OK == poseRet ) && (histState != nullptr);
     if ( !poseIsGood ) {
       // this can happen if robot status messages are lost
       PRINT_CH_INFO("BlockWorld", "BlockWorld.AddVisionOverheadEdges.HistoricalPoseNotFound",
                     "Pose not found for timestamp %u (hist: %u to %u). Edges ignored for this timestamp.",
                     frameInfo.timestamp,
-                    _robot->GetPoseHistory()->GetOldestTimeStamp(),
-                    _robot->GetPoseHistory()->GetNewestTimeStamp());
+                    _robot->GetStateHistory()->GetOldestTimeStamp(),
+                    _robot->GetStateHistory()->GetNewestTimeStamp());
       return RESULT_OK;
     }
     
     // If we can't transfor the observedPose to the current origin, it's ok, that means that the timestamp
     // for the edges we just received is from before delocalizing, so we should discard it.
     Pose3d observedPose;
-    if ( !p->GetPose().GetWithRespectTo( *_robot->GetWorldOrigin(), observedPose) ) {
+    if ( !histState->GetPose().GetWithRespectTo( *_robot->GetWorldOrigin(), observedPose) ) {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.AddVisionOverheadEdges.NotInThisWorld",
                     "Received timestamp %d, but could not translate that timestamp into current origin.", frameInfo.timestamp);
       return RESULT_OK;

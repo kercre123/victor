@@ -34,11 +34,6 @@
 namespace Anki {
 namespace Cozmo {
   
-namespace {
-  CONSOLE_VAR_RANGED(f32, kMaxBodyRotationSpeed_degPerSec, "LocalizationToObjects", 0.1f,  0.f, 20.f);
-  CONSOLE_VAR_RANGED(f32, kMaxHeadRotationSpeed_degPerSec, "LocalizationToObjects", 0.1f,  0.f, 20.f);
-}
-  
 // Using a function vs. a macro here to make sure we continue to compile all the code
 // where this gets used below, even when the DEBUG flag is disabled.
 static void VERBOSE_DEBUG_PRINT(const char* eventName, const char* description, ...)
@@ -121,7 +116,8 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
     .distance               = observedDistance_mm,
     .observationAlreadyUsed = observationAlreadyUsed
   };
-
+  
+  const TimeStamp_t obsTime = observedObject->GetLastObservedTime();
   const PoseOrigin* matchedOrigin = &newPair.matchedObject->GetPose().FindOrigin();
   
   // Don't bother if the matched object doesn't pass these up-front checks:
@@ -139,34 +135,27 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                         seeingFromTooFar);
     
     // Since we're not storing this pair, update pose if in the current frame
-    if(matchedOrigin == _currentWorldOrigin) {
-      const bool wasRobotMoving = _robot.GetVisionComponent().WasMovingTooFast(observedObject->GetLastObservedTime(),
-                                                                               DEG_TO_RAD(kMaxBodyRotationSpeed_degPerSec),
-                                                                               DEG_TO_RAD(kMaxHeadRotationSpeed_degPerSec));
-      
-      UseDiscardedObservation(newPair, wasRobotMoving);
+    if(matchedOrigin == _currentWorldOrigin)
+    {
+      const bool wasCameraMoving = _robot.GetMoveComponent().WasCameraMoving(obsTime);
+      UseDiscardedObservation(newPair, wasCameraMoving);
     }
     return false;
   }
   
-
-//  const bool wasRobotMoving = _robot.GetVisionComponent().WasMovingTooFast(observedObject->GetLastObservedTime(),
-//                                                                           DEG_TO_RAD(kMaxBodyRotationSpeed_degPerSec),
-//                                                                           DEG_TO_RAD(kMaxHeadRotationSpeed_degPerSec));
-
-  // Seems to be better than the commented line above which should be more accurate,
-  // but this incorporates some delay which might compensate for whatever timestamp inaccuracies there may be...
-  // or something...
-  const bool wasRobotMoving = _robot.GetMoveComponent().IsMoving();
+  // Might be sufficient to check for movement at historical time, but to be conservative (and account for
+  // timestamping inaccuracies?) we will also check _current_ moving status.
+  const bool wasCameraMoving = (_robot.GetMoveComponent().IsCameraMoving() ||
+                                _robot.GetMoveComponent().WasCameraMoving(obsTime));
   
   
   // We'd like to use this pair for localization, but the robot is moving,
   // so we just drop it on the floor instead (without even updating the object)  :-(
   // The reasoning here is that we don't want to mess up potentially-localizable objects'
   // poses because we are moving
-  if (wasRobotMoving)
+  if (wasCameraMoving)
   {
-    VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.IsMoving", "");
+    VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.WasMoving", "t=%u", obsTime);
     return false;
   }
   
@@ -175,20 +164,20 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
   // matched object pose.
   if(matchedOrigin == _currentWorldOrigin) {
     const TimeStamp_t lastObservedTime = _robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(matchedObject->GetID());
-    const TimeStamp_t currObservedTime = observedObject->GetLastObservedTime();
-    const RobotPoseStamp *rpsMatched;
-    const RobotPoseStamp *rpsObserved;
-    if (_robot.GetPoseHistory()->GetComputedPoseAt(lastObservedTime, &rpsMatched) == RESULT_OK &&
-        _robot.GetPoseHistory()->GetComputedPoseAt(currObservedTime, &rpsObserved) == RESULT_OK) {
+    const TimeStamp_t currObservedTime = obsTime;
+    const HistRobotState *hrsMatched;
+    const HistRobotState *hrsObserved;
+    if (_robot.GetStateHistory()->GetComputedStateAt(lastObservedTime, &hrsMatched) == RESULT_OK &&
+        _robot.GetStateHistory()->GetComputedStateAt(currObservedTime, &hrsObserved) == RESULT_OK) {
       
       // Extra tight isSameAs thresholds
       const f32 kSamePoseThresh_mm = 1.f;
       const f32 kSameAngleThresh_rad = DEG_TO_RAD(1.f);
       
-      if (rpsObserved->GetPose().IsSameAs(rpsMatched->GetPose(), kSamePoseThresh_mm, kSameAngleThresh_rad)) {
+      if (hrsObserved->GetPose().IsSameAs(hrsMatched->GetPose(), kSamePoseThresh_mm, kSameAngleThresh_rad)) {
         if (!observedObject->GetPose().IsSameAs(matchedObject->GetPose(), kSamePoseThresh_mm, kSameAngleThresh_rad)) {
           VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.ObjectPoseNotSameEnough", "");
-          UseDiscardedObservation(newPair, wasRobotMoving);
+          UseDiscardedObservation(newPair, wasCameraMoving);
           return false;
         }
       }
@@ -225,7 +214,7 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                           newPair.distance);
       
       if(iter->first == _currentWorldOrigin) {
-        UseDiscardedObservation(iter->second, wasRobotMoving);
+        UseDiscardedObservation(iter->second, wasCameraMoving);
       }
       std::swap(iter->second, newPair);
     }
@@ -241,7 +230,7 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                           newPair.distance);
       
       if(matchedOrigin == _currentWorldOrigin) {
-        UseDiscardedObservation(newPair, wasRobotMoving);
+        UseDiscardedObservation(newPair, wasCameraMoving);
       }
     }
     

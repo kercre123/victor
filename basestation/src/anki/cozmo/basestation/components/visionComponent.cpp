@@ -24,7 +24,7 @@
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/petWorld.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotStateHistory.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -57,13 +57,13 @@
 namespace Anki {
 namespace Cozmo {
 
-  CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "WasMovingTooFast.Block.Head_deg/s",   10.f);
-  CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "WasMovingTooFast.Block.Body_deg/s",   30.f);
-  CONSOLE_VAR(f32, kHeadTurnSpeedThreshFace_degs,  "WasMovingTooFast.Face.Head_deg/s",    10.f);
-  CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasMovingTooFast.Face.Body_deg/s",    30.f);
-  CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasMovingTooFast.Face.NumToLookBack", 5);
-  CONSOLE_VAR(f32, kHeadTurnSpeedThreshPet_degs,   "WasMovingTooFast.Pet.Head_deg/s",     10.f);
-  CONSOLE_VAR(f32, kBodyTurnSpeedThreshPet_degs,   "WasMovingTooFast.Pet.Body_deg/s",     30.f);
+  CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Head_deg/s",   10.f);
+  CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Body_deg/s",   30.f);
+  CONSOLE_VAR(f32, kHeadTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Head_deg/s",    10.f);
+  CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
+  CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
+  CONSOLE_VAR(f32, kHeadTurnSpeedThreshPet_degs,   "WasRotatingTooFast.Pet.Head_deg/s",     10.f);
+  CONSOLE_VAR(f32, kBodyTurnSpeedThreshPet_degs,   "WasRotatingTooFast.Pet.Body_deg/s",     30.f);
   
   
   // Whether or not to do rolling shutter correction for physical robots
@@ -394,17 +394,17 @@ namespace Cozmo {
     }
   }
   
-  static Result GetImagePoseStamp(const Robot&      robot,
+  static Result GetImageHistState(const Robot&      robot,
                                   const TimeStamp_t imageTimeStamp,
-                                  RobotPoseStamp&   imagePoseStamp,
-                                  TimeStamp_t&      imagePoseStampTimeStamp)
+                                  HistRobotState&   imageHistState,
+                                  TimeStamp_t&      imageHistTimeStamp)
   {
     // Handle the (rare, Webots-test-only?) possibility that the image timstamp is _newer_
     // than the latest thing in history. In that case, we'll just use the last pose information
     // we have, since we can't really interpolate.
-    const TimeStamp_t requestedTimeStamp = std::min(imageTimeStamp, robot.GetPoseHistory()->GetNewestTimeStamp());
+    const TimeStamp_t requestedTimeStamp = std::min(imageTimeStamp, robot.GetStateHistory()->GetNewestTimeStamp());
     
-    Result lastResult = robot.GetPoseHistory()->ComputePoseAt(requestedTimeStamp, imagePoseStampTimeStamp, imagePoseStamp, true);
+    Result lastResult = robot.GetStateHistory()->ComputeStateAt(requestedTimeStamp, imageHistTimeStamp, imageHistState, true);
     
     return lastResult;
   }
@@ -456,10 +456,10 @@ namespace Cozmo {
                                                         encodedImage.GetHeight());
     
       // Fill in the pose data for the given image, by querying robot history
-      RobotPoseStamp imagePoseStamp;
-      TimeStamp_t imagePoseStampTimeStamp;
+      HistRobotState imageHistState;
+      TimeStamp_t imageHistTimeStamp;
       
-      Result lastResult = GetImagePoseStamp(_robot, encodedImage.GetTimeStamp(), imagePoseStamp, imagePoseStampTimeStamp);
+      Result lastResult = GetImageHistState(_robot, encodedImage.GetTimeStamp(), imageHistState, imageHistTimeStamp);
 
       if(lastResult == RESULT_FAIL_ORIGIN_MISMATCH)
       {
@@ -471,53 +471,27 @@ namespace Cozmo {
       }
       else if(lastResult != RESULT_OK)
       {
-        PRINT_NAMED_WARNING("VisionComponent.SetNextImage.PoseHistoryFail",
-                            "Unable to get computed pose at image timestamp of %d. (rawPoses: have %zu from %d:%d) (visionPoses: have %zu from %d:%d)",
+        PRINT_NAMED_WARNING("VisionComponent.SetNextImage.StateHistoryFail",
+                            "Unable to get computed pose at image timestamp of %d. (rawStates: have %zu from %d:%d) (visionStates: have %zu from %d:%d)",
                             encodedImage.GetTimeStamp(),
-                            _robot.GetPoseHistory()->GetNumRawPoses(),
-                            _robot.GetPoseHistory()->GetOldestTimeStamp(),
-                            _robot.GetPoseHistory()->GetNewestTimeStamp(),
-                            _robot.GetPoseHistory()->GetNumVisionPoses(),
-                            _robot.GetPoseHistory()->GetOldestVisionOnlyTimeStamp(),
-                            _robot.GetPoseHistory()->GetNewestVisionOnlyTimeStamp());
+                            _robot.GetStateHistory()->GetNumRawStates(),
+                            _robot.GetStateHistory()->GetOldestTimeStamp(),
+                            _robot.GetStateHistory()->GetNewestTimeStamp(),
+                            _robot.GetStateHistory()->GetNumVisionStates(),
+                            _robot.GetStateHistory()->GetOldestVisionOnlyTimeStamp(),
+                            _robot.GetStateHistory()->GetNewestVisionOnlyTimeStamp());
         return lastResult;
       }
       
       // Get most recent pose data in history
-      Anki::Cozmo::RobotPoseStamp lastPoseStamp;
-      _robot.GetPoseHistory()->GetLastPoseWithFrameID(_robot.GetPoseFrameID(), lastPoseStamp);
-      
-      // Compare most recent pose and pose at time of image to see if robot has moved in the short time
-      // time since the image was taken. If it has, this suppresses motion detection inside VisionSystem.
-      // This is necessary because the image might contain motion, but according to the pose there was none.
-      // Whether this is due to inaccurate timestamping of images or low-resolution pose reporting from
-      // the robot, this additional info allows us to know if motion in the image was likely due to actual
-      // robot motion.
-      // NOTE: if the two pose stamps are not in the same coordinate frame, just assume there
-      //       was motion to be conservative
-      const bool inSameFrame = &lastPoseStamp.GetPose().FindOrigin() == &imagePoseStamp.GetPose().FindOrigin();
-      const bool headSame = inSameFrame && NEAR(lastPoseStamp.GetHeadAngle(),
-                                                imagePoseStamp.GetHeadAngle(), DEG_TO_RAD(0.1f));
-      const bool liftSame = inSameFrame && NEAR(lastPoseStamp.GetLiftAngle(),
-                                                imagePoseStamp.GetLiftAngle(), DEG_TO_RAD(0.1f));
-      
-      const bool poseSame = (inSameFrame &&
-                             NEAR(lastPoseStamp.GetPose().GetTranslation().x(),
-                                  imagePoseStamp.GetPose().GetTranslation().x(), .5f) &&
-                             NEAR(lastPoseStamp.GetPose().GetTranslation().y(),
-                                  imagePoseStamp.GetPose().GetTranslation().y(), .5f) &&
-                             NEAR(lastPoseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                                  imagePoseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                                  DEG_TO_RAD(0.1f)));
-      
+      Anki::Cozmo::HistRobotState lastHistState;
+      _robot.GetStateHistory()->GetLastStateWithFrameID(_robot.GetPoseFrameID(), lastHistState);
+           
       Lock();
-      _nextPoseData.poseStamp = imagePoseStamp;
-      _nextPoseData.timeStamp = imagePoseStampTimeStamp;
-      _nextPoseData.isBodyMoving = !poseSame;
-      _nextPoseData.isHeadMoving = !headSame;
-      _nextPoseData.isLiftMoving = !liftSame;
-      _nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(_nextPoseData.poseStamp, _nextPoseData.timeStamp);
-      _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.poseStamp.GetHeadAngle(),
+      _nextPoseData.histState = imageHistState;
+      _nextPoseData.timeStamp = imageHistTimeStamp;
+      _nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(_nextPoseData.histState, _nextPoseData.timeStamp);
+      _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.histState.GetHeadAngle_rad(),
                                                                      _nextPoseData.groundPlaneHomography);
       _nextPoseData.imuDataHistory = _imuHistory;
       Unlock();
@@ -532,7 +506,7 @@ namespace Cozmo {
       {
         // If we were moving too fast at the timestamp the image was taken then don't use it for
         // calibration or dot test purposes
-        if(!WasMovingTooFast(encodedImage.GetTimeStamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
+        if(!WasRotatingTooFast(encodedImage.GetTimeStamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
         {
           Vision::Image imageGray;
           Result result = encodedImage.DecodeImageGray(imageGray);
@@ -938,10 +912,10 @@ namespace Cozmo {
       // Get historical robot pose at this processing result's timestamp to get
       // head angle and to attach as parent of the camera pose.
       TimeStamp_t t;
-      RobotPoseStamp* p = nullptr;
-      HistPoseKey poseKey;
+      HistRobotState* histStatePtr = nullptr;
+      HistStateKey histStateKey;
       
-      lastResult = _robot.GetPoseHistory()->ComputeAndInsertPoseAt(procResult.timestamp, t, &p, &poseKey, true);
+      lastResult = _robot.GetStateHistory()->ComputeAndInsertStateAt(procResult.timestamp, t, &histStatePtr, &histStateKey, true);
       
       if(RESULT_FAIL_ORIGIN_MISMATCH == lastResult)
       {
@@ -955,15 +929,15 @@ namespace Cozmo {
         PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.HistoricalPoseNotFound",
                       "Time: %u, hist: %u to %u",
                       procResult.timestamp,
-                      _robot.GetPoseHistory()->GetOldestTimeStamp(),
-                      _robot.GetPoseHistory()->GetNewestTimeStamp());
+                      _robot.GetStateHistory()->GetOldestTimeStamp(),
+                      _robot.GetStateHistory()->GetNewestTimeStamp());
         return RESULT_OK;
       }
       
-      if(&p->GetPose().FindOrigin() != _robot.GetWorldOrigin()) {
+      if(&histStatePtr->GetPose().FindOrigin() != _robot.GetWorldOrigin()) {
         PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.OldOrigin",
                       "Ignoring observed marker from origin %s (robot origin is %s)",
-                      p->GetPose().FindOrigin().GetName().c_str(),
+                      histStatePtr->GetPose().FindOrigin().GetName().c_str(),
                       _robot.GetWorldOrigin()->GetName().c_str());
         return RESULT_OK;
       }
@@ -974,12 +948,12 @@ namespace Cozmo {
       
       // If we were moving too fast at timestamp t and we aren't doing rolling shutter correction
       // then don't queue this marker otherwise don't queue if only the head was moving too fast
-      if(WasMovingTooFast(t, DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs), DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)))
+      if(WasRotatingTooFast(t, DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs), DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)))
       {
         return RESULT_OK;
       }
       
-      Vision::Camera histCamera = _robot.GetHistoricalCamera(*p, procResult.timestamp);
+      Vision::Camera histCamera = _robot.GetHistoricalCamera(*histStatePtr, procResult.timestamp);
       
       // Note: we deliberately make a copy of the vision markers in observedMarkers
       // as we loop over them here, because procResult is const but we want to modify
@@ -997,9 +971,10 @@ namespace Cozmo {
         // Remove observed markers whose historical poses have become invalid.
         // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
         // Increasing history time window would fix this, but it's not really a solution.
-        if ((visionMarker.GetSeenBy().GetID() == GetCamera().GetID()) && !_robot.IsValidPoseKey(poseKey))
+        if ((visionMarker.GetSeenBy().GetID() == GetCamera().GetID()) &&
+            !_robot.GetStateHistory()->IsValidKey(histStateKey))
         {
-          PRINT_NAMED_WARNING("VisionComponent.Update.InvalidHistPoseKey", "key=%d", poseKey);
+          PRINT_NAMED_WARNING("VisionComponent.Update.InvalidHistStateKey", "key=%d", histStateKey);
           continue;
         }
         
@@ -1080,7 +1055,7 @@ namespace Cozmo {
       // If the detected face is being tracked than we should look farther back in imu data history
       // else we will just look at the previous and next imu data
       if((kBodyTurnSpeedThreshFace_degs > 0.f || kHeadTurnSpeedThreshFace_degs > 0.f) &&
-         WasMovingTooFast(faceDetection.GetTimeStamp(),
+         WasRotatingTooFast(faceDetection.GetTimeStamp(),
                           DEG_TO_RAD(kBodyTurnSpeedThreshFace_degs),
                           DEG_TO_RAD(kHeadTurnSpeedThreshFace_degs),
                           (faceDetection.IsBeingTracked() ? kNumImuDataToLookBack : 0)))
@@ -1107,7 +1082,7 @@ namespace Cozmo {
     for(auto & pet : procResult.pets)
     {
       if((FLT_GT(kBodyTurnSpeedThreshPet_degs, 0.f) || FLT_GT(kHeadTurnSpeedThreshPet_degs, 0.f)) &&
-         WasMovingTooFast(pet.GetTimeStamp(),
+         WasRotatingTooFast(pet.GetTimeStamp(),
                           DEG_TO_RAD(kBodyTurnSpeedThreshPet_degs),
                           DEG_TO_RAD(kHeadTurnSpeedThreshPet_degs),
                           (pet.IsBeingTracked() ? kNumImuDataToLookBack : 0)))
@@ -1144,9 +1119,9 @@ namespace Cozmo {
     {
       // Hook the pose coming out of the vision system up to the historical
       // camera at that timestamp
-      RobotPoseStamp p;
+      HistRobotState histState;
       TimeStamp_t p_timeStamp;
-      Result poseStampResult = GetImagePoseStamp(_robot, procResult.timestamp, p, p_timeStamp);
+      Result poseStampResult = GetImageHistState(_robot, procResult.timestamp, histState, p_timeStamp);
       if(RESULT_OK != poseStampResult)
       {
         PRINT_NAMED_WARNING("VisionComponent.UpdateDockingErrorSignal.HistoricalCameraFail",
@@ -1155,7 +1130,7 @@ namespace Cozmo {
         return poseStampResult;
       }
 
-      Vision::Camera histCamera = _robot.GetHistoricalCamera(p, p_timeStamp);
+      Vision::Camera histCamera = _robot.GetHistoricalCamera(histState, p_timeStamp);
       markerPoseWrtCamera.SetParent(&histCamera.GetPose());
       /*
        // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
@@ -1235,7 +1210,7 @@ namespace Cozmo {
         0.f,-1.f, roi.GetWidthFar()*0.5f,
         0.f, 0.f, 1.f};
 
-      Pose3d worldPoseWrtRobot = poseData.poseStamp.GetPose().GetInverse();
+      Pose3d worldPoseWrtRobot = poseData.histState.GetPose().GetInverse();
       for(s32 i=0; i<roi.GetWidthFar(); ++i) {
         const u8* mask_i = roi.GetOverheadMask().GetRow(i);
         const f32 y = static_cast<f32>(i) - 0.5f*roi.GetWidthFar();
@@ -1256,7 +1231,7 @@ namespace Cozmo {
               const Vision::PixelRGB value = image(y_img, x_img);
               
               // Get corresponding map point in world coords
-              Point3f mapPoint = poseData.poseStamp.GetPose() * Point3f(x,y,0.f);
+              Point3f mapPoint = poseData.histState.GetPose() * Point3f(x,y,0.f);
               const s32 x_map = std::round( mapPoint.x() + static_cast<f32>(overheadMap.GetNumCols())*0.5f);
               const s32 y_map = std::round(-mapPoint.y() + static_cast<f32>(overheadMap.GetNumRows())*0.5f);
               if(x_map >= 0 && y_map >= 0 &&
@@ -1284,7 +1259,7 @@ namespace Cozmo {
         // a red border
         overheadMap.CopyTo(dispImg);
         Quad3f lastUpdate;
-        poseData.poseStamp.GetPose().ApplyTo(roi.GetGroundQuad(), lastUpdate);
+        poseData.histState.GetPose().ApplyTo(roi.GetGroundQuad(), lastUpdate);
         for(auto & point : lastUpdate) {
           point.x() += static_cast<f32>(overheadMap.GetNumCols()*0.5f);
           point.y() *= -1.f;
@@ -1405,9 +1380,9 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
-  bool VisionComponent::WasHeadMovingTooFast(TimeStamp_t t,
-                                         const f32 headTurnSpeedLimit_radPerSec,
-                                         const int numImuDataToLookBack)
+  bool VisionComponent::WasHeadRotatingTooFast(TimeStamp_t t,
+                                               const f32 headTurnSpeedLimit_radPerSec,
+                                               const int numImuDataToLookBack)
   {
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
@@ -1424,7 +1399,7 @@ namespace Cozmo {
       if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
       {
         PRINT_CH_INFO("VisionComponent",
-                      "VisionComponent.VisionComponent.WasHeadMovingTooFast.NoIMUData",
+                      "VisionComponent.VisionComponent.WasHeadRotatingTooFast.NoIMUData",
                       "Could not get next/previous imu data for timestamp %u", t);
         return true;
       }
@@ -1438,9 +1413,9 @@ namespace Cozmo {
     return false;
   }
   
-  bool VisionComponent::WasBodyMovingTooFast(TimeStamp_t t,
-                                             const f32 bodyTurnSpeedLimit_radPerSec,
-                                             const int numImuDataToLookBack)
+  bool VisionComponent::WasBodyRotatingTooFast(TimeStamp_t t,
+                                               const f32 bodyTurnSpeedLimit_radPerSec,
+                                               const int numImuDataToLookBack)
   {
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
@@ -1456,7 +1431,7 @@ namespace Cozmo {
       ImuDataHistory::ImuData prev, next;
       if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
       {
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.VisionComponent.WasBodyMovingTooFast",
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.VisionComponent.WasBodyRotatingTooFast",
                       "Could not get next/previous imu data for timestamp %u", t);
         return true;
       }
@@ -1470,39 +1445,39 @@ namespace Cozmo {
     return false;
   }
   
-  bool VisionComponent::WasMovingTooFast(TimeStamp_t t,
-                                         const f32 bodyTurnSpeedLimit_radPerSec,
-                                         const f32 headTurnSpeedLimit_radPerSec,
-                                         const int numImuDataToLookBack)
+  bool VisionComponent::WasRotatingTooFast(TimeStamp_t t,
+                                           const f32 bodyTurnSpeedLimit_radPerSec,
+                                           const f32 headTurnSpeedLimit_radPerSec,
+                                           const int numImuDataToLookBack)
   {
-    return (WasHeadMovingTooFast(t, headTurnSpeedLimit_radPerSec, numImuDataToLookBack) ||
-            WasBodyMovingTooFast(t, bodyTurnSpeedLimit_radPerSec, numImuDataToLookBack));
+    return (WasHeadRotatingTooFast(t, headTurnSpeedLimit_radPerSec, numImuDataToLookBack) ||
+            WasBodyRotatingTooFast(t, bodyTurnSpeedLimit_radPerSec, numImuDataToLookBack));
   }
 
   void VisionComponent::AddLiftOccluder(TimeStamp_t t_request)
   {
     // TODO: More precise check for position of lift in FOV given head angle
-    RobotPoseStamp poseStamp;
+    HistRobotState histState;
     TimeStamp_t t;
-    Result result = _robot.GetPoseHistory()->GetRawPoseAt(t_request, t, poseStamp, false);
+    Result result = _robot.GetStateHistory()->GetRawStateAt(t_request, t, histState, false);
     
     if(RESULT_FAIL_ORIGIN_MISMATCH == result)
     {
       // Not a warning, this can legitimately happen
       PRINT_CH_INFO("VisionComponent",
-                    "VisionComponent.VisionComponent.AddLiftOccluder.PoseHistoryOriginMismatch",
+                    "VisionComponent.VisionComponent.AddLiftOccluder.StateHistoryOriginMismatch",
                     "Cound not get pose at t=%u due to origin change. Skipping.", t_request);
       return;
     }
     else if(RESULT_OK != result)
     {
-      PRINT_NAMED_WARNING("VisionComponent.WasLiftInFOV.PoseHistoryFailure",
+      PRINT_NAMED_WARNING("VisionComponent.WasLiftInFOV.StateHistoryFailure",
                           "Could not get raw pose at t=%u", t_request);
       return;
     }
     
-    const Pose3d& liftPoseWrtCamera = _robot.GetLiftPoseWrtCamera(poseStamp.GetLiftAngle(),
-                                                                  poseStamp.GetHeadAngle());
+    const Pose3d& liftPoseWrtCamera = _robot.GetLiftPoseWrtCamera(histState.GetLiftAngle_rad(),
+                                                                  histState.GetHeadAngle_rad());
     
     const f32 padding = _robot.IsPhysical() ? LIFT_HARDWARE_FALL_SLACK_MM : 0.f;
     std::vector<Point3f> liftCrossBar{
