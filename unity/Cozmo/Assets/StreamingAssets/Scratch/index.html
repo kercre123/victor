@@ -25,14 +25,14 @@
             <block type="event_whenflagclicked"></block>
             <block type="cozmo_drive_forward">
                 <value name="DISTANCE">
-                    <shadow type="math_whole_number">
+                    <shadow type="math_whole_number_with_validator">
                         <field name="NUM">1</field>
                     </shadow>
                 </value>
             </block>
             <block type="cozmo_drive_backward">
                 <value name="DISTANCE">
-                    <shadow type="math_whole_number">
+                    <shadow type="math_whole_number_with_validator">
                         <field name="NUM">1</field>
                     </shadow>
                 </value>
@@ -77,7 +77,7 @@
             </block>
             <block type="cozmo_says">
                 <value name="STRING">
-                    <shadow type="text">
+                    <shadow type="text_with_validator">
                         <field name="TEXT">Hi</field>
                     </shadow>
                 </value>
@@ -87,7 +87,7 @@
             <block type="cozmo_wait_for_cube_tap"></block>
             <block type="control_repeat">
                 <value name="TIMES">
-                    <shadow type="math_whole_number">
+                    <shadow type="math_whole_number_with_validator">
                         <field name="NUM">4</field>
                     </shadow>
                 </value>

@@ -53,7 +53,7 @@ namespace CodeLab {
             success = true;
             cube = kvp.Value;
             RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE);
-            break;
+            return;
           }
         }
       }
