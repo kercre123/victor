@@ -71,6 +71,7 @@ namespace Anki {
         u16 biasFiltCnt_                = 0;
         const f32 BIAS_FILT_RESTART_THRESH = DEG_TO_RAD_F32(0.5f); // Max difference allowed between bias filter output and gyro input before filter is restarted
         const u16 BIAS_FILT_COMPLETE_COUNT = 200;    // Number of consecutive gyro readings required while robot not moving before bias filter switches to slower rate
+        bool gyro_sign[3] = {false}; // true is negative, false is positive
 
         f32 accel_filt[3]               = {0};    // Filtered accelerometer measurements
         f32 accel_robot_frame[3]        = {0};    // Unfiltered accelerometer measurements in robot frame
@@ -558,9 +559,26 @@ namespace Anki {
                                            (ABS(gyro_robot_frame_filt[1]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[1]) ||
                                            (ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[2]);
 
-            if (cliffBasedPickupDetect || gyroBasedMotionDetected) {
+            if (cliffBasedPickupDetect || gyroBasedMotionDetected)
+            {
               ++potentialPickupCnt_;
             }
+            else if(potentialPickupCnt_ > 0)
+            {
+              // Decrease potentialPickupCnt while no motion is detected
+              --potentialPickupCnt_;
+            }
+            
+            // If the sign of the gyro data changes then reset potentialPickupCnt
+            // This is to prevent oscillations from triggering pickup
+            for(u8 i = 0; i < 3; ++i)
+            {
+              if(gyro_sign[i] != signbit(gyro_robot_frame_filt[i]))
+              {
+                potentialPickupCnt_ = 0;
+              }
+            }
+            
             
             // Sufficient acceleration is evidence of pickup.
             // Only evaluating the horiztonal axes. Z-acceleration is sensitive to surface vibrations,
@@ -720,6 +738,7 @@ namespace Anki {
         while (HAL::IMUReadData(imu_data_)) {
 
         ////// Gyro Update //////
+        
 
         // Bias corrected gyro readings
         gyro_[0] = imu_data_.rate_x - gyro_bias_filt[0];
@@ -811,6 +830,11 @@ namespace Anki {
         gyro_robot_frame[1] = gyro_[1];
         gyro_robot_frame[2] = gyro_[2] / cosf(headAngle);
         // TODO: We actually only care about gyro_robot_frame_filt[2]. Any point in computing the others?
+
+        for(u8 i = 0; i < 3; ++i)
+        {
+          gyro_sign[i] = signbit(gyro_robot_frame_filt[i]);
+        }
 
         // Fiter gyro readings in robot frame
         LowPassFilter(gyro_robot_frame_filt, gyro_robot_frame, RATE_FILT_COEFF);
