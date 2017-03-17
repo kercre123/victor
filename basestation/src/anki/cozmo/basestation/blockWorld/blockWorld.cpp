@@ -128,6 +128,9 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
 
 // Whether or not to put custom objects in the memory map (COZMO-9360)
 CONSOLE_VAR(bool, kAddCustomObjectsToMemMap, "BlockWorld.MemoryMap", false);
+
+// Frequency/cooldown to warn about active objects that are seen while not connected
+CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld.MemoryMap", 10.0f);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper namespace
@@ -1627,15 +1630,24 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         
         if(objSeen->IsActive())
         {
-          const ActiveObject* conObjMatch = GetConnectedActiveObjectByID( objSeen->GetID() );
-          if(nullptr == conObjMatch)
+          static std::unordered_map<int, float> warningCooldown; // won't warn again until cooldown is done
+          const f32 currentTimeSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const f32 cooldownTime   = warningCooldown[objSeen->GetID().GetValue()]; // will create and init to 0 first time
+          if ( currentTimeSec >= cooldownTime )
           {
-            // We expect to have already heard from all (powered) active objects,
-            // so if we see one we haven't heard from (and therefore added) yet, then
-            // perhaps it isn't on?
-            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
-                                "Observed active object of type %s but it's not connected. Is the battery plugged in?",
-                                EnumToString(objSeen->GetType()));
+            const ActiveObject* conObjMatch = GetConnectedActiveObjectByID( objSeen->GetID() );
+            if(nullptr == conObjMatch)
+            {
+              // We expect to have already heard from all (powered) active objects,
+              // so if we see one we haven't heard from (and therefore added) yet, then
+              // perhaps it isn't on?
+              PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
+                                  "Observed active object of type %s but it's not connected. Is the battery plugged in?",
+                                  EnumToString(objSeen->GetType()));
+              
+              // we just warned, set cooldown
+              warningCooldown[objSeen->GetID().GetValue()] = currentTimeSec + kUnconnectedObservationCooldownDuration_sec;
+            }
           }
         }
 
