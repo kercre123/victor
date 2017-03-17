@@ -784,49 +784,29 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
 
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectUpAxisChanged payload = message.GetData().Get_activeObjectUpAxisChanged();
-
-  // The message from the robot has the active object ID in it, so we need
-  // to find the object in blockworld (which has its own bookkeeping ID) that
-  // has the matching active ID. We also need to consider all pose states and origin frames.
-  BlockWorldFilter filter;
-  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn([&payload](const ObservableObject* object) {
-    return object->IsActive() && object->GetActiveID() == payload.objectID;
-  });
-
-  std::vector<ObservableObject *> matchingObjects;
-  robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
-
-  if(matchingObjects.empty())
-  {
-    if(ANKI_DEVELOPER_CODE)
-    {
-      // maybe we do not have located instances, there should be a connected one though
-      ActiveID activeID = payload.objectID;
-      const bool isConnected = ( nullptr != robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID) );
-      if ( !isConnected ) {
-        PRINT_NAMED_WARNING("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
-                            "Could not find match for active object ID %d", payload.objectID);
-      }
-    }
   
+  
+  // grab objectID from the connected instance
+  ActiveID activeID = payload.objectID;
+  const ObservableObject* conObj = robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+  if ( nullptr == conObj )
+  {
+    PRINT_NAMED_ERROR("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
+                      "Could not find match for active object ID %d", payload.objectID);
     return;
   }
 
-  // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
-  ObservableObject* object = matchingObjects.front();
-  
   PRINT_NAMED_INFO("Robot.HandleActiveObjectUpAxisChanged.UpAxisChanged",
-                   "Type: %s, ObjectID: %d, UpAxis: %s",
-                   EnumToString(object->GetType()),
-                   object->GetID().GetValue(),
-                   EnumToString(payload.upAxis));
+                  "Type: %s, ObjectID: %d, UpAxis: %s",
+                  EnumToString(conObj->GetType()),
+                  conObj->GetID().GetValue(),
+                  EnumToString(payload.upAxis));
   
   // Viz update
   robot->GetContext()->GetVizManager()->SendObjectUpAxisState(payload.objectID, payload.upAxis);
   
   // Update the ID to be the blockworld ID before broadcasting
-  payload.objectID = object->GetID();
+  payload.objectID = conObj->GetID();
   payload.robotID = robot->GetID();
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectUpAxisChanged(payload)));
 }
