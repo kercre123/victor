@@ -123,6 +123,9 @@
   "behavior.LookForFaceAndCube": {
     "translation": " "
   },
+  "behavior.behavior.RamIntoBlock": {
+    "translation": " "
+  },
   "error.TooManyFaces": {
     "translation": "Make sure Cozmo only sees"
   },
