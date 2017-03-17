@@ -32,17 +32,21 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
+#include "clad/types/activeObjectTypes.h"
 #include "clad/types/robotStatusAndActions.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/debug/messageDebugging.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
 #include "util/signals/signalHolder.h"
+
 #include <functional>
 
 // Whether or not to handle prox obstacle events
@@ -455,6 +459,29 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
   LOG_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
 }
 
+// Mapping of ActiveObjectType to ObjectType
+static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type)
+{
+  ObjectType objType = ObjectType::Unknown;
+  switch(type) {
+    case ActiveObjectType::OBJECT_CHARGER:
+      objType = ObjectType::Charger_Basic;
+      break;
+    case ActiveObjectType::OBJECT_CUBE1:
+      objType = ObjectType::Block_LIGHTCUBE1;
+      break;
+    case ActiveObjectType::OBJECT_CUBE2:
+      objType = ObjectType::Block_LIGHTCUBE2;
+      break;
+    case ActiveObjectType::OBJECT_CUBE3:
+      objType = ObjectType::Block_LIGHTCUBE3;
+      break;
+    default:
+      break;
+  }
+  return objType;
+}
+
 void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleActiveObjectDiscovered");
@@ -462,7 +489,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<Ro
   const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
   
   // Check object type
-  ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
+  const ObjectType objType = GetTypeFromActiveObjectType(payload.device_type);
   switch(objType) {
     case ObjectType::Charger_Basic:
     {
@@ -512,7 +539,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
     return;
   }
   
-  ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
+  const ObjectType objType = GetTypeFromActiveObjectType(payload.device_type);
   if (payload.connected)
   {
     // log event to das
@@ -520,7 +547,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
                         payload.factoryID, EnumToString(payload.device_type));
 
     // Add active object to blockworld
-    objID = robot->GetBlockWorld().AddConnectedActiveObject(payload.objectID, payload.factoryID, payload.device_type);
+    objID = robot->GetBlockWorld().AddConnectedActiveObject(payload.objectID, payload.factoryID, objType);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
                        "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx)",

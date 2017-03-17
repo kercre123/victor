@@ -8,7 +8,8 @@
 
 #include "activeBlock.h"
 #include "BlockMessages.h"
-#include "clad/types/activeObjectTypes.h"
+#include "clad/types/activeObjectConstants.h"
+#include "clad/types/ledTypes.h"
 #include "clad/robotInterface/lightCubeMessage.h"
 #include "anki/cozmo/robot/ledController.h"
 #include "util/logging/logging.h"

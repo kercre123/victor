@@ -3,7 +3,7 @@
  */
 
 #include "clad/types/activeObjectTypes.clad"
-
+#include "clad/types/activeObjectAccel.clad"
 
 namespace Anki {
 namespace Cozmo {

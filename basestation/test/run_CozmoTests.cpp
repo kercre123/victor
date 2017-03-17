@@ -6,6 +6,7 @@
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -445,10 +446,10 @@ TEST(BlockWorld, UpdateObjectOrigins)
     Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
   };
   
-  const ObjectID farID = robot.GetBlockWorld().AddConnectedActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  const ObjectID farID = robot.GetBlockWorld().AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(farID.IsSet());
   
-  const ObjectID closeID = robot.GetBlockWorld().AddConnectedActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  const ObjectID closeID = robot.GetBlockWorld().AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(closeID.IsSet());
   
   // Camera calibration
@@ -558,11 +559,27 @@ namespace {
 // helper for device connection messages, for example when cubes connect/disconnect. Note implementation directly
 // calls the robot handler, rather than simulating actually sending a message
 using namespace Anki::Cozmo;
-void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uint32_t factoryID, Anki::Cozmo::ActiveObjectType device_type, bool connected)
+void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uint32_t factoryID, Anki::Cozmo::ObjectType objectType, bool connected)
 {
+  Anki::Cozmo::ActiveObjectType deviceType = Anki::Cozmo::ActiveObjectType::OBJECT_UNKNOWN;
+  switch(objectType)
+  {
+    case ObjectType::Block_LIGHTCUBE1:
+      deviceType = ActiveObjectType::OBJECT_CUBE1;
+      break;
+    case ObjectType::Block_LIGHTCUBE2:
+      deviceType = ActiveObjectType::OBJECT_CUBE2;
+      break;
+    case ObjectType::Block_LIGHTCUBE3:
+      deviceType = ActiveObjectType::OBJECT_CUBE3;
+    default:
+      DEV_ASSERT(false, "FaceRecvConnectionMessage.UnsupportedObjectType");
+      break;
+  }
+  
   using namespace RobotInterface;
   RobotToEngine msg = RobotToEngine::CreateactiveObjectConnectionState(
-                        ObjectConnectionState(activeID, factoryID, device_type, connected) );
+                        ObjectConnectionState(activeID, factoryID, deviceType, connected) );
   AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
   robot.GetRobotToEngineImplMessaging().HandleActiveObjectConnectionState(event, &robot);
 }
@@ -694,13 +711,13 @@ TEST(BlockWorld, PoseUpdates)
   // - - - Connect to some cubes
 
   // Do not connect object1
-  //  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, 100, ActiveObjectType::OBJECT_CUBE1);
+  //  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, 100, ObjectType::Block_LIGHTCUBE1);
   //  ASSERT_TRUE(connObj1.IsSet());
   
-  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, 101, ActiveObjectType::OBJECT_CUBE2);
+  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, 101, ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(connObj2.IsSet());
   
-  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedActiveObject(2, 102, ActiveObjectType::OBJECT_CUBE3);
+  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedActiveObject(2, 102, ObjectType::Block_LIGHTCUBE3);
   ASSERT_TRUE(connObj3.IsSet());
 
   // - - - See all objects from close so that their poses are Known
@@ -796,7 +813,7 @@ TEST(BlockWorld, PoseUpdates)
   // DISCONNECT object3
   {
     const ActiveObject* con3 = robot.GetBlockWorld().GetConnectedActiveObjectByID( connObj3 );
-    FakeRecvConnectionMessage(robot, fakeTime, con3->GetActiveID(), con3->GetFactoryID(), Anki::Cozmo::ActiveObjectType::OBJECT_CUBE2, false);
+    FakeRecvConnectionMessage(robot, fakeTime, con3->GetActiveID(), con3->GetFactoryID(), Anki::Cozmo::ObjectType::Block_LIGHTCUBE2, false);
     ++fakeTime;
   }
   
@@ -897,13 +914,13 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   
   // - - - Connect to some cubes
   
-  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, 100, ActiveObjectType::OBJECT_CUBE1);
+  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, 100, ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(connObj1.IsSet());
   
-  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, 101, ActiveObjectType::OBJECT_CUBE2);
+  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, 101, ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(connObj2.IsSet());
   
-  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedActiveObject(2, 102, ActiveObjectType::OBJECT_CUBE3);
+  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedActiveObject(2, 102, ObjectType::Block_LIGHTCUBE3);
   ASSERT_TRUE(connObj3.IsSet());
 
   // - - - See all objects from close so that their poses are Known
@@ -1026,7 +1043,6 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // For faking observations of a cube
-  const ActiveObjectType closeActiveObjectType = ActiveObjectType::OBJECT_CUBE2;
   const ActiveID closeActiveID = 1;
   const FactoryID closeFactoryID = 1;
   const ObjectType closeType = ObjectType::Block_LIGHTCUBE2;
@@ -1040,7 +1056,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   TimeStamp_t fakeTime = 10;
 
   // connect to cube
-  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeActiveObjectType, true);
+  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeType, true);
   ++fakeTime;
   
   // Should have a "close" object connected
@@ -1093,7 +1109,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
   
   // disconnect from the cube
-  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeActiveObjectType, false);
+  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeType, false);
   ++fakeTime;
   
   // delocalize while the cube is disconnected
@@ -1103,7 +1119,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   ++fakeTime;
   
   // reconnect to the cube
-  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeActiveObjectType, true);
+  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeType, true);
   ++fakeTime;
   
   // see the cube again
@@ -1139,14 +1155,14 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
 namespace {
 
 // Helpers can't have TEST assertions
-ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ActiveObjectType activeObjectType)
+ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectType)
 {
   // matching activeID happens through objectID automatically on addition
   const ActiveID activeID = -1;
   const FactoryID factoryID = 0;
 
   BlockWorld& blockWorld = robot.GetBlockWorld();
-  Anki::Cozmo::ObservableObject* objectPtr = blockWorld.CreateActiveObject(activeObjectType, activeID, factoryID);
+  Anki::Cozmo::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
   DEV_ASSERT(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull");
   
   // check it currently doesn't exist in BlockWorld
@@ -1212,9 +1228,9 @@ TEST(BlockWorld, CubeStacks)
   }
   
   // Create three objects
-  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE1);
-  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE2);
-  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE3);
+  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
+  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
   
   {
     // verify they are there now
@@ -1405,8 +1421,8 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0);
   
   // Only connected objects can localize, so add connected
-  const ObjectID objID1 = blockWorld.AddConnectedActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
-  const ObjectID objID2 = blockWorld.AddConnectedActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  const ObjectID objID1 = blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
+  const ObjectID objID2 = blockWorld.AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
   
   // make object2 localizable in the current world by adding visual observations
   {
@@ -1462,7 +1478,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ASSERT_EQ(nullptr, obj2);
   
   // Add a new object to this currently empty frame
-  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE3);
+  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
   ASSERT_NE(nullptr, object3);
   const ObjectID objID3 = object3->GetID();
   ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 2);
@@ -1942,10 +1958,10 @@ TEST(Localization, LocalizationDistance)
     Point2f( 167,117),  Point2f( 170,185),  Point2f(236,116),  Point2f(237,184)
   };
   
-  const ObjectID firstID = robot.GetBlockWorld().AddConnectedActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  const ObjectID firstID = robot.GetBlockWorld().AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(firstID.IsSet());
   
-  const ObjectID secondID = robot.GetBlockWorld().AddConnectedActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  const ObjectID secondID = robot.GetBlockWorld().AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(secondID.IsSet());
   
   // Camera calibration
@@ -2274,9 +2290,9 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0);
   
   // Add object
-  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE1);
-  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE2);
-  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE3);
+  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
+  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
   
   ASSERT_NE(nullptr, object1);
   const ObjectID objID1 = object1->GetID();

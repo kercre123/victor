@@ -71,11 +71,9 @@ namespace Anki {
       
     } // Charger() Constructor
     
-    Charger::Charger(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
-    : Charger(GetTypeFromActiveObjectType(activeObjectType))
-    {
-      DEV_ASSERT(GetTypeFromActiveObjectType(activeObjectType) == ObjectType::Charger_Basic, "Charger.InvalidFactoryID");
-      
+    Charger::Charger(ActiveID activeID, FactoryID factoryID, ObjectType objectType)
+    : Charger(objectType)
+    {     
       _activeID = activeID;
       _factoryID = factoryID;
     }

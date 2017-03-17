@@ -1,0 +1,17 @@
+/** Clad definitions for the state of active object's identification
+ * This is largely an old placeholder concept for if/when we need to 
+ * "identify" (read: disambiguate) multiple instances of the same active object 
+ * type present at the same time. This is something we don't currently support.
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 ActiveIdentityState {
+  Unidentified,
+  WaitingForIdentity,
+  Identified
+}
+
+} // namespace Cozmo
+} // namespace Anki

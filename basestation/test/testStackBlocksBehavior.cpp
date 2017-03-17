@@ -14,6 +14,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
@@ -60,14 +61,14 @@ void CreateStackBehavior(Robot& robot, IBehavior*& stackBehavior)
 namespace {
 
 // TODO refactor this because it's also in blockworld unit tests. This should be a helper
-ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ActiveObjectType activeObjectType)
+ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectType)
 {
   // matching activeID happens through objectID automatically on addition
   const ActiveID activeID = -1;
   const FactoryID factoryID = 0;
 
   BlockWorld& blockWorld = robot.GetBlockWorld();
-  Anki::Cozmo::ObservableObject* objectPtr = blockWorld.CreateActiveObject(activeObjectType, activeID, factoryID);
+  Anki::Cozmo::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
   ANKI_VERIFY(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull", "");
   
   // check it currently doesn't exist in BlockWorld
@@ -122,18 +123,18 @@ void SetupStackTest(Robot& robot, IBehavior*& stackBehavior, ObjectID& objID1, O
   ASSERT_FALSE(stackBehavior->IsRunnable(prereq)) << "behavior should not be runnable without cubes after update";
 
   auto& blockWorld = robot.GetBlockWorld();
-  blockWorld.AddConnectedActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
-  blockWorld.AddConnectedActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
+  blockWorld.AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
 
   aiComponent.Update();
   ASSERT_FALSE(stackBehavior->IsRunnable(prereq)) << "behavior should not be runnable with unknown cubes";
 
   // Add two objects
-  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE1);
+  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(nullptr != object1);
   objID1 = object1->GetID();
   
-  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ActiveObjectType::OBJECT_CUBE2);
+  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(nullptr != object2);
   objID2 = object2->GetID();
 

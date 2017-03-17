@@ -18,6 +18,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/animations/engineAnimationController.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
@@ -65,7 +66,6 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/activeObjectTypes.h"
 #include "clad/types/gameStatusFlag.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "util/console/consoleInterface.h"
@@ -383,9 +383,7 @@ void Robot::SetOnCharger(bool onCharger)
       // there's currently no located instance, we need to create one.
       ActiveID unconnectedActiveID = ObservableObject::InvalidActiveID;
       FactoryID unconnectedFactoryID = ObservableObject::InvalidFactoryID;
-      chargerInstance = GetBlockWorld().CreateActiveObject(ActiveObjectType::OBJECT_CHARGER,
-                                                           unconnectedActiveID, unconnectedFactoryID);
-      
+      chargerInstance = CreateActiveObjectByType(ObjectType::Charger_Basic, unconnectedActiveID, unconnectedFactoryID);
 
       // check if there is a connected instance, because we can inherit its ID (objectID)
       // note that setting ActiveID and FactoryID is responsibility of whenever we Add the object to the BlockWorld

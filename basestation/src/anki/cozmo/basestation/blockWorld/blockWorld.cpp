@@ -24,6 +24,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/block.h"
@@ -2401,10 +2402,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ObjectID BlockWorld::AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
+  ObjectID BlockWorld::AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ObjectType objType)
   {
-    const ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(activeObjectType);
-    
     // only connected objects should be added through this method, so a required activeID is a must
     DEV_ASSERT(activeID != ObservableObject::InvalidActiveID, "BlockWorld.AddConnectedActiveObject.CantAddInvalidActiveID");
   
@@ -2425,7 +2424,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // Al/rsam: it is possible to receive multiple connection messages for the same cube. Verify here that factoryID
       // and activeType match, and if they do, simply ignore the message, since we already have a valid instance
       const bool isSameObject = (factoryID == conObjWithActiveID->GetFactoryID()) &&
-                                (activeObjectType == conObjWithActiveID->GetActiveObjectTypeFromType(conObjWithActiveID->GetType()));
+                                (objType == conObjWithActiveID->GetType());
       if ( isSameObject ) {
         PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundMatchingObjectAtSameSlot",
                       "objectID %d, activeID %d, factoryID 0x%x, type %s",
@@ -2459,7 +2458,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // we know the objectID, so we create it first, and then we look for unconnected matches (we have seen the
     // object but we had not connected to it.) If we find one, we will inherit the objectID from that match; if
     // we don't find a match, we will assign it a new objectID. Then we can add to the container of _connectedObjects.
-    ActiveObject* newActiveObjectPtr = CreateActiveObject(activeObjectType, activeID, factoryID);
+    ActiveObject* newActiveObjectPtr = CreateActiveObjectByType(objType, activeID, factoryID);
     if ( nullptr == newActiveObjectPtr ) {
       // failed to create the object (that function should print the error, exit here with unSet ID)
       return ObjectID();
@@ -2721,34 +2720,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // return the objectID
     return removedObjectID;
   }
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ActiveObject* BlockWorld::CreateActiveObject(ActiveObjectType activeObjectType, ActiveID activeID, FactoryID factoryID)
-  {
-    ActiveObject* retPtr = nullptr;
-    const ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(activeObjectType);
-    switch(objType) {
-      case ObjectType::Block_LIGHTCUBE1:
-      case ObjectType::Block_LIGHTCUBE2:
-      case ObjectType::Block_LIGHTCUBE3:
-      {
-        retPtr = new ActiveCube(activeID, factoryID, activeObjectType);
-        break;
-      }
-      case ObjectType::Charger_Basic:
-      {
-        retPtr = new Charger(activeID, factoryID, activeObjectType);
-        break;
-      }
-      default:
-      {
-        PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.UnsupportedActiveObjectType",
-                           "%s (ActiveObjectType: 0x%hx)", EnumToString(objType), activeObjectType);
-      }
-    }
-    return retPtr;
-  }
-  
+    
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::AddLocatedObject(const std::shared_ptr<ObservableObject>& object)
   {

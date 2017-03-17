@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
@@ -2037,8 +2038,7 @@ namespace Cozmo {
   void BehaviorFactoryTest::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
   {
     const ObjectDiscovered payload = msg.GetData().Get_activeObjectDiscovered();
-    ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
-    if(objType != ObjectType::Unknown)
+    if(IsValid(payload.device_type))
     {
       _activeObjectDiscovered = true;
     }

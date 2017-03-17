@@ -85,15 +85,9 @@ namespace Anki
       // However, if an object of the same type is found as an unconnected object, the objectID is inherited, and
       // the unconnected instances (in origins) become linked to this connected object instance.
       // It returns the new or inherited objectID on success, or invalid objectID if it fails.
-      ObjectID AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
+      ObjectID AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ObjectType objectType);
       // Removes connected object from the connected objects container. Returns matching objectID if found
       ObjectID RemoveConnectedActiveObject(ActiveID activeID);
-
-      // Creates an object from the given active object type. Current API design prevents BlockWorld from setting
-      // the pose, that's why we have AddLocatedObject(shared_ptr), that checks the pose and ID have already been
-      // set. We should revisit this API where we need to expose this CreateActiveObject
-      // Note memory management is responsibility of the calling code
-      ActiveObject* CreateActiveObject(ActiveObjectType activeObjectType, ActiveID activeID, FactoryID factoryID);
 
       // Adds the given object to the BlockWorld according to its current objectID and pose. The objectID is expected
       // to be set, and not be currently in use in the BlockWorld. Otherwise it's a sign that something went

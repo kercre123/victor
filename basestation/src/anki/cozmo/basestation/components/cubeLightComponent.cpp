@@ -20,6 +20,7 @@
 
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -849,10 +850,7 @@ const char* CubeLightComponent::LayerToString(const AnimLayerEnum& layer) const
 template<>
 void CubeLightComponent::HandleMessage(const ObjectConnectionState& msg)
 {
-  if(msg.connected &&
-     (msg.device_type == ActiveObjectType::OBJECT_CUBE1 ||
-      msg.device_type == ActiveObjectType::OBJECT_CUBE2 ||
-      msg.device_type == ActiveObjectType::OBJECT_CUBE3))
+  if(msg.connected && IsLightCube(msg.device_type))
   {
     // Add the objectID to the _objectInfo map and play the wake up animation
     ObjectInfo info = {};
@@ -999,17 +997,6 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::EnableCubeSleep&
   // and force a default layer anim to be played. In the case where _enableCubeSleep is
   // true the sleep anim will be picked otherwise an appropriate anim will be picked
   EnableGameLayerOnly(kAllObjects, false);
-}
-
-ActiveObject* CubeLightComponent::GetActiveObjectInAnyFrame(const ObjectID& objectID)
-{
-  BlockWorldFilter filter;
-  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
-  filter.AddAllowedID(objectID);
-  ActiveObject* activeObject = dynamic_cast<ActiveObject*>(_robot.GetBlockWorld().FindLocatedMatchingObject(filter));
-  
-  return activeObject;
 }
 
 Result CubeLightComponent::SetObjectLights(const ObjectID& objectID, const ObjectLights& values)

@@ -57,9 +57,7 @@ static const char * const kNumImagesToWaitForKey  = "NumImagesToWaitFor";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _ghostStackedObject(new ActiveCube(ObservableObject::InvalidActiveID,
-                                     ObservableObject::InvalidFactoryID,
-                                     ActiveObjectType::OBJECT_UNKNOWN)) // Ghost cubes do not have valid active object type
+, _ghostStackedObject(new Block_Cube1x1(ObjectType::Block_LIGHTCUBE_GHOST))
 , _shouldCheckBelowTarget(true)
 {
   SetDefaultName("AcknowledgeObject");

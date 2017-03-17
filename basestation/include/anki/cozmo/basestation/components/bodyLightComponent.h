@@ -16,7 +16,7 @@
 
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
-#include "clad/types/activeObjectTypes.h"
+#include "clad/types/ledTypes.h"
 #include "json/json.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"

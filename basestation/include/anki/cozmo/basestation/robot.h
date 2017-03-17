@@ -32,7 +32,6 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/activeObjectTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/dockingSignals.h"
 #include "clad/types/imageTypes.h"
