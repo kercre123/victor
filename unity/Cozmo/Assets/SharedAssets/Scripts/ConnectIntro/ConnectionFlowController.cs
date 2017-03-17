@@ -619,6 +619,9 @@ public class ConnectionFlowController : MonoBehaviour {
       if (_ConnectionRejectedScreenInstance != null) {
         GameObject.Destroy(_ConnectionRejectedScreenInstance.gameObject);
       }
+      #if !UNITY_EDITOR && UNITY_ANDROID
+      AndroidConnectionFlow.CallJava("disconnect");
+      #endif
       ReturnToTitle();
     };
     _ConnectionRejectedScreenInstance.OnRetryButton += () => {
