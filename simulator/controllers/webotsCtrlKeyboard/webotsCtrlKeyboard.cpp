@@ -338,7 +338,6 @@ namespace Anki {
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
         printf("         Clear all known objects:  Alt+c\n");
-        printf("         Select behavior by type:  Shift+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");

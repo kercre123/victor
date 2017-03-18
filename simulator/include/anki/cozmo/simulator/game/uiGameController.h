@@ -109,6 +109,7 @@ protected:
   virtual void HandleActiveObjectMoved(ObjectMoved const& msg){};
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
+  virtual void HandleActiveObjectUpAxisChanged(ObjectUpAxisChanged const& msg){};
   virtual void HandleLocatedObjectStates(ExternalInterface::LocatedObjectStates const& msg){};
   virtual void HandleConnectedObjectStates(ExternalInterface::ConnectedObjectStates const& msg){};
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
@@ -479,6 +480,7 @@ private:
   void HandleActiveObjectMovedBase(ObjectMoved const& msg);
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
+  void HandleActiveObjectUpAxisChangedBase(ObjectUpAxisChanged const& msg);
   void HandleLocatedObjectStatesBase(ExternalInterface::LocatedObjectStates const& msg);
   void HandleConnectedObjectStatesBase(ExternalInterface::ConnectedObjectStates const& msg);
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);

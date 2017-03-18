@@ -1104,6 +1104,15 @@ namespace Anki {
               RobotInterface::SendMessage(m);
               break;
             }
+            case BlockMessages::LightCubeMessage::Tag_upAxisChanged:
+            {
+              ObjectUpAxisChanged m;
+              memcpy(m.GetBuffer(), lcm.upAxisChanged.GetBuffer(), lcm.upAxisChanged.Size());
+              m.objectID = i;
+              m.timestamp = HAL::GetTimeStamp();
+              RobotInterface::SendMessage(m);
+              break;
+            }
             default:
             {
               printf("Received unexpected message from simulated object: %d\r\n", static_cast<int>(lcm.tag));

@@ -13,6 +13,7 @@ enum class TestState {
   MoveCube,
   CheckForMovedMessage,
   CheckForStoppedMessage1,
+  CheckForUpAxisChangedMessage,
   Exit
 };
 
@@ -27,6 +28,7 @@ private:
   void HandleActiveObjectTapped(const ObjectTapped& msg) override;
   void HandleActiveObjectStoppedMoving(const ObjectStoppedMoving& msg) override;
   void HandleActiveObjectMoved(const ObjectMoved& msg) override;
+  void HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& msg) override;
   void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
 
   TestState _testState = TestState::Init;
@@ -34,6 +36,7 @@ private:
   bool _wasTapped = false;
   bool _wasStopped = false;
   bool _wasMoved = false;
+  UpAxis _lastReportedUpAxis = UpAxis::Unknown;
   
   u32 _numObjectsConnected = 0;
 };
@@ -112,11 +115,25 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
     case TestState::CheckForStoppedMessage1:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasStopped, 5) {
-        _testState = TestState::Exit;
+        // Rotate the block onto another side
+        //  (without causing the 'moved' message)
+        _lastReportedUpAxis = UpAxis::Unknown;
+        Pose3d p = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
+        p.SetRotation(Radians(DEG_TO_RAD(90.f)), Y_AXIS_3D());
+        SetLightCubePose(ObjectType::Block_LIGHTCUBE1, p);
+        _testState = TestState::CheckForUpAxisChangedMessage;
       }
       break;
     }
 
+    case TestState::CheckForUpAxisChangedMessage:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_lastReportedUpAxis == UpAxis::XNegative, 5) {
+        _testState = TestState::Exit;
+      }
+      break;
+    }
+      
     case TestState::Exit:
     {
       CST_EXIT();
@@ -140,6 +157,11 @@ void CST_MotionMessagesFromBlocks::HandleActiveObjectStoppedMoving(const ObjectS
 void CST_MotionMessagesFromBlocks::HandleActiveObjectMoved(const ObjectMoved& msg)
 {
   _wasMoved = true;
+}
+  
+void CST_MotionMessagesFromBlocks::HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& msg)
+{
+  _lastReportedUpAxis = msg.upAxis;
 }
   
 void CST_MotionMessagesFromBlocks::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)

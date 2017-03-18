@@ -44,6 +44,11 @@ namespace {
   // (This is just to throttle movement messages a bit)
   const s32 MOVEMENT_UPDATE_PERIOD = 10;
   
+  // Number of cycles (of length TIMESTEP) for which UpAxis must be stable before sending
+  //  out an "UpAxisChanged" message. (On actual cube firmware, this is about 525 ms. See
+  //  'robot/syscon/cubes/cubes.cpp' for details)
+  const s32 UP_AXIS_STABLE_PERIOD = 52;
+  
   // once we start moving, we have to stop for this long to send StoppedMoving message
   const double STOPPED_MOVING_TIME_SEC = 0.5f;
   
@@ -84,7 +89,10 @@ namespace {
   LightState ledParams_[NUM_CUBE_LEDS];
   TimeStamp_t ledPhases_[NUM_CUBE_LEDS];
   
-  UpAxis currentUpAxis_;
+  // To keep track of previous (and next) UpAxis
+  //  sent to the robot (via UpAxisChanged msg)
+  UpAxis prevUpAxis_ = Unknown;
+  UpAxis nextUpAxis_ = Unknown;
   
   bool wasMoving_;
   double wasLastMovingTime_sec_;
@@ -430,7 +438,7 @@ void SetLED(WhichCubeLEDs whichLEDs, u32 color)
   u8 shiftedLEDs = static_cast<u8>(whichLEDs);
   for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
     if(shiftedLEDs & FIRST_BIT) {
-      SetLED_helper(ledIndexLUT[currentUpAxis_][i], color);
+      SetLED_helper(ledIndexLUT[prevUpAxis_][i], color);
     }
     shiftedLEDs = shiftedLEDs >> 1;
   }
@@ -438,7 +446,7 @@ void SetLED(WhichCubeLEDs whichLEDs, u32 color)
 
 inline void SetLED(u32 ledIndex, u32 color)
 {
-  SetLED_helper(ledIndexLUT[currentUpAxis_][ledIndex], color);
+  SetLED_helper(ledIndexLUT[prevUpAxis_][ledIndex], color);
 }
 
 
@@ -609,12 +617,8 @@ Result Update() {
           // acceleration vector is different from gravity
           const bool isMoving = !NEAR(accelMagSq, 9.81*9.81, 1.0);
           
-          if(!isMoving) {
-            currentUpAxis_ = GetCurrentUpAxis();
-          }
-          
           if(isMoving) {
-            PRINT_NAMED_INFO("ActiveBlock", "Block %d appears to be moving (UpAxis=%d).", blockID_, currentUpAxis_);
+            PRINT_NAMED_INFO("ActiveBlock", "Block %d appears to be moving (UpAxis=%d).", blockID_, prevUpAxis_);
             
             // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
             BlockMessages::LightCubeMessage msg;
@@ -623,7 +627,7 @@ Result Update() {
             msg.moved.accel.x = accelVals[0];
             msg.moved.accel.y = accelVals[1];
             msg.moved.accel.z = accelVals[2];
-            msg.moved.axisOfAccel = currentUpAxis_;
+            msg.moved.axisOfAccel = prevUpAxis_;
             emitter_->send(msg.GetBuffer(), msg.Size());
             
             wasLastMovingTime_sec_ = currTime_sec;
@@ -631,8 +635,21 @@ Result Update() {
             
           } else if(wasMoving_ && currTime_sec - wasLastMovingTime_sec_ > STOPPED_MOVING_TIME_SEC ) {
             
-            PRINT_NAMED_INFO("ActiveBlock", "Block %d stopped moving (UpAxis=%d).", blockID_, currentUpAxis_);
+            PRINT_NAMED_INFO("ActiveBlock", "Block %d stopped moving (UpAxis=%d).", blockID_, prevUpAxis_);
             
+            // Send "UpAxisChanged" message now if necessary, so that it's
+            //  sent before the stopped message (to mirror what the actual
+            //  cube firmware does - see 'robot/syscon/cubes/cubes.cpp')
+            if (prevUpAxis_ != nextUpAxis_) {
+              prevUpAxis_ = nextUpAxis_;
+              BlockMessages::LightCubeMessage msg;
+              msg.tag = BlockMessages::LightCubeMessage::Tag_upAxisChanged;
+              msg.upAxisChanged.objectID = blockID_;
+              msg.upAxisChanged.upAxis = nextUpAxis_;
+              emitter_->send(msg.GetBuffer(), msg.Size());
+            }
+            
+            // Send the "Stopped" message.
             // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
             BlockMessages::LightCubeMessage msg;
             msg.tag = BlockMessages::LightCubeMessage::Tag_stopped;
@@ -642,6 +659,30 @@ Result Update() {
             wasMoving_ = false;
           }
         } // if(SEND_MOVING_MESSAGES_EVERY_N_TIMESTEPS)
+        
+        // Grab the current UpAxis (from accelerometer)
+        UpAxis currentUpAxis = GetCurrentUpAxis();
+        
+        // Check for a stable UpAxis:
+        static s32 nextUpAxisCtr = 0;
+        if (currentUpAxis == nextUpAxis_) {
+          if (nextUpAxis_ != prevUpAxis_) {
+            if (++nextUpAxisCtr > UP_AXIS_STABLE_PERIOD) {
+              prevUpAxis_ = nextUpAxis_;
+              // Send "UpAxisChanged" message:
+              BlockMessages::LightCubeMessage msg;
+              msg.tag = BlockMessages::LightCubeMessage::Tag_upAxisChanged;
+              msg.upAxisChanged.objectID = blockID_;
+              msg.upAxisChanged.upAxis = nextUpAxis_;
+              emitter_->send(msg.GetBuffer(), msg.Size());
+            }
+          } else {
+            nextUpAxisCtr = 0;
+          }
+        } else {
+          nextUpAxisCtr = 0;
+          nextUpAxis_ = currentUpAxis;
+        }
         
         break;
       }

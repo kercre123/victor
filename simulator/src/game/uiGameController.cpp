@@ -273,6 +273,14 @@ namespace Anki {
       
       HandleActiveObjectTapped(msg);
     }
+    
+    void UiGameController::HandleActiveObjectUpAxisChangedBase(ObjectUpAxisChanged const& msg)
+    {
+      PRINT_NAMED_INFO("HandleActiveObjectUpAxisChanged", "Received message that object %d's UpAxis has changed (new UpAxis = %s).",
+                       msg.objectID, UpAxisToString(msg.upAxis));
+      
+      HandleActiveObjectUpAxisChanged(msg);
+    }
 
     void UiGameController::HandleConnectedObjectStatesBase(ExternalInterface::ConnectedObjectStates const& msg)
     {
@@ -537,6 +545,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ObjectTapped:
             HandleActiveObjectTappedBase(message.Get_ObjectTapped());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectUpAxisChanged:
+            HandleActiveObjectUpAxisChangedBase(message.Get_ObjectUpAxisChanged());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ConnectedObjectStates:
             HandleConnectedObjectStatesBase(message.Get_ConnectedObjectStates());
