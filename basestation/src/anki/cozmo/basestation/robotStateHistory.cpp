@@ -666,32 +666,36 @@ namespace Anki {
         
         // Get pointer to the oldest timestamp that may remain in the map
         TimeStamp_t oldestAllowedTime = mostRecentTime - _windowSize_ms;
-        const_StateMapIter_t it = _states.upper_bound(oldestAllowedTime);
-        const_StateMapIter_t git = _visStates.upper_bound(oldestAllowedTime);
-        const_StateMapIter_t cit = _computedStates.upper_bound(oldestAllowedTime);
+        const auto it = _states.lower_bound(oldestAllowedTime);
+        const auto git = _visStates.lower_bound(oldestAllowedTime);
+        const auto cit = _computedStates.lower_bound(oldestAllowedTime);
+        const auto keyByTs_it = _keyByTsMap.lower_bound(oldestAllowedTime);
         
         // Delete everything before the oldest allowed timestamp
-        if (oldestAllowedTime > _states.begin()->first) {
+        if (!_states.empty() && it != _states.begin()) {
           _states.erase(_states.begin(), it);
         }
-        if (oldestAllowedTime > _visStates.begin()->first) {
+        if (!_visStates.empty() &&  git != _visStates.begin()) {
           _visStates.erase(_visStates.begin(), git);
         }
-        if (oldestAllowedTime > _computedStates.begin()->first) {
-
-          // For all computedPoses up until cit, remove their associated keys.
-          for(StateMapIter_t delIt = _computedStates.begin(); delIt != cit; ++delIt) {
-            KeyByTimestampMapIter_t kbtIt = _keyByTsMap.find(delIt->first);
-            if (kbtIt == _keyByTsMap.end()) {
-              PRINT_NAMED_WARNING("RobotStateHistory.CullToWindowSize.KeyNotFound", "");
-              break;
-            }
-            _tsByKeyMap.erase(kbtIt->second);
-            _keyByTsMap.erase(kbtIt);
-          }
-
+        if (!_computedStates.empty() && cit != _computedStates.begin()) {
           _computedStates.erase(_computedStates.begin(), cit);
         }
+
+        if (!_keyByTsMap.empty() && keyByTs_it != _keyByTsMap.begin()) {
+          if (keyByTs_it != _keyByTsMap.end()) {
+            const auto tsByKey_it = _tsByKeyMap.find(keyByTs_it->second);
+            if (tsByKey_it != _tsByKeyMap.end()) {
+              _tsByKeyMap.erase(_tsByKeyMap.begin(), tsByKey_it);
+            } else {
+              PRINT_NAMED_ERROR("RobotStateHistory.CullToWindowSize.MapsOutOfSync",
+                                "keyByTsMap size: %zu, tsByKeyMap size: %zu",
+                                _keyByTsMap.size(), _tsByKeyMap.size());
+            }
+          }
+          _keyByTsMap.erase(_keyByTsMap.begin(), keyByTs_it);
+        }
+
       }
     }
     

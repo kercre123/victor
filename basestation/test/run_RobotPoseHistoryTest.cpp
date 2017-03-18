@@ -6,6 +6,10 @@
 #include "anki/common/basestation/math/point_impl.h"
 
 #include "anki/cozmo/basestation/robot.h"
+
+#define private public
+#define protected public
+
 #include "anki/cozmo/basestation/robotStateHistory.h"
 
 #define DIST_EQ_THRESH 0.00001
@@ -234,3 +238,48 @@ TEST(RobotStateHistory, GroundTruthPose)
   ASSERT_TRUE(histState.GetPose() == p1);
 }
 
+TEST(RobotStateHistory, CullToWindowSizeTest)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  RobotStateHistory hist;
+  
+  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
+  const Pose3d p(0, Z_AXIS_3D(), Vec3f(0,0,0), &origin );
+  RobotState state(Robot::GetDefaultRobotState());
+  HistRobotState histState(p, state);
+
+  // Verify that culling on empty history doesn't cause a crash
+  hist.CullToWindowSize();  // Keeps the latest 300ms and removes the rest
+
+  // Fill history with 6 seconds
+  for (TimeStamp_t t = 0; t < 6000; t += 100) {
+    hist.AddRawOdomState(t, histState);
+    
+    // Don't add any visStates so as to test possible bad erase conditions in CullToWindowSize()
+    
+    if (t % 1000 == 0) {
+      TimeStamp_t actualTime;
+      HistRobotState *statePtr;
+      hist.ComputeAndInsertStateAt(t, actualTime, &statePtr);
+    }
+  }
+
+  printf("CullToWindowSizeTest: raw %zu, vis %zu, comp %zu, keyByTs %zu, tsByKey %zu\n",
+         hist._states.size(),
+         hist._visStates.size(),
+         hist._computedStates.size(),
+         hist._keyByTsMap.size(),
+         hist._tsByKeyMap.size());
+
+  
+  // Verify that history stays at size no larger than 3s
+  ASSERT_TRUE(hist._states.size() == 31);
+  
+  ASSERT_TRUE(hist._visStates.size() == 0);
+  ASSERT_TRUE(hist._computedStates.size() == 3);
+  ASSERT_TRUE(hist._keyByTsMap.size() == 3);
+  ASSERT_TRUE(hist._tsByKeyMap.size() == 3);
+  
+}
