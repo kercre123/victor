@@ -1,0 +1,16 @@
+{
+  "behaviorClass": "PeekABoo",
+  "name": "sparksPeekABoo",
+  "displayNameKey":"behavior.PeekAboo",
+  "requiredUnlockId": "PeekABoo",
+  "behaviorGroups": [
+    "SparksPeekABoo"
+  ],
+  "flatScore" : 5.0,
+  "minTimesPeekBeforeQuit" : 3,
+  "maxTimesPeekBeforeQuit" : 6,
+  "maxTimeWithoutSeeingFace_Sec": 15,
+  "waitIncrementTime_Sec" : 0.05,
+  "waitTimeFirstSec" : 0.35,
+  "maxTimeOldestFaceToConsider_Sec" : 30
+}

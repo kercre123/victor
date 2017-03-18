@@ -21,6 +21,7 @@ enum int_32 BehaviorObjective {
   FoundFace,
   InteractedWithFace,
   KnockedOverBlocks,
+  PeekedABoo,
   PerformedWorkout,
   PerformedStrongWorkout,
   PickedupBlock,

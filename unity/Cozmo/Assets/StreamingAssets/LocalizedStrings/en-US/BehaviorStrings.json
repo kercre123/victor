@@ -135,6 +135,9 @@
   "behavior.PrepareCubes": {
     "translation": "Cozmo is preparing his cubes"
   },
+  "behavior.PeekAboo": {
+      "translation": "Cozmo wants to PeekABoo you"
+  },
   "behavior.LookInPlaceForCube": {
     "translation": "Cozmo is looking for a cube"
   },

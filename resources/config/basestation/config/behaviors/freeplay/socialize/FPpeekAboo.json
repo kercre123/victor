@@ -1,0 +1,37 @@
+{
+  "behaviorClass": "PeekABoo",
+  "name": "FPPeekABoo",
+  "displayNameKey":"behavior.PeekAboo",
+  "requiredUnlockId": "PeekABoo",
+  "behaviorGroups": [
+    "FP_Socialize"
+  ],
+  "flatScore": 0.8,
+
+  "repetitionPenalty": {
+    "nodes": [
+      {
+        "x": 0.0,
+        "y": 0.0
+      },
+      {
+        "x": 300.0,
+        "y": 0.0
+      },
+      {
+        "x": 400.0,
+        "y": 0.3
+      },
+      {
+        "x": 430.0,
+        "y": 1.0
+      }
+    ]
+  },
+  "minTimesPeekBeforeQuit" : 3,
+  "maxTimesPeekBeforeQuit" : 6,
+  "maxTimeWithoutSeeingFace_Sec": 15,
+  "waitIncrementTime_Sec" : 0.05,
+  "waitTimeFirstSec" : 0.35,
+  "maxTimeOldestFaceToConsider_Sec" : 30
+}

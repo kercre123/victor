@@ -70,6 +70,7 @@
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorCubeLiftWorkout.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorKnockOverCubes.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPeekABoo.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickupCube.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPopAWheelie.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPounceOnMotion.h"
@@ -249,6 +250,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::PopAWheelie:
     {
       newBehavior = new BehaviorPopAWheelie(robot, config);
+      break;
+    }
+    case BehaviorClass::PeekABoo:
+    {
+      newBehavior = new BehaviorPeekABoo(robot, config);
       break;
     }
     case BehaviorClass::DrivePath:

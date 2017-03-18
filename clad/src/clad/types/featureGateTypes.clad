@@ -6,6 +6,7 @@ enum uint_8 FeatureType {
   AndroidConnectionFlow,
   SpeedTapMultiPlayer,
   CodeLabGame,
+  PeekABoo,
 }
 
 structure FeatureToggle {

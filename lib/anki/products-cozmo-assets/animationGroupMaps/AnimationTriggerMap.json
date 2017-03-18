@@ -821,6 +821,42 @@
       "AnimName": "ag_launch_reacttonextscreen"
     },
     {
+      "CladEvent": "PeekABooGetIn",
+      "AnimName": "ag_sparking_getin"
+    },
+    {
+      "CladEvent": "PeekABooIdle",
+      "AnimName": "ag_peekaboo_idles"
+    },
+    {
+      "CladEvent": "PeekABooLowIntensity",
+      "AnimName": "ag_peekaboo_requestonce"
+    },
+    {
+      "CladEvent": "PeekABooMedIntensity",
+      "AnimName": "ag_peekaboo_requesttwice"
+    },
+    {
+      "CladEvent": "PeekABooHightIntensity",
+      "AnimName": "ag_peekaboo_requestthrice"
+    },
+    {
+      "CladEvent": "PeekABooShort",
+      "AnimName": "ag_peekaboo_requestshort"
+    },
+    {
+      "CladEvent": "PeekABooSurprised",
+      "AnimName": "ag_peekaboo_success"
+    },
+    {
+      "CladEvent": "PeekABooGetOutSad",
+      "AnimName": "ag_memorymatch_failgame_cozmo"
+    },
+    {
+      "CladEvent": "PeekABooGetOutHappy",
+      "AnimName": "ag_sparking_getout"
+    },
+    {
       "CladEvent": "PetDetectionCat",
       "AnimName": "ag_petdetection_cat"
     },
