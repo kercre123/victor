@@ -42,7 +42,7 @@ namespace Anki {
       const Pose3d&       GetPose()                 const {return _pose;               }
       const f32           GetHeadAngle_rad()        const {return _state.headAngle;    }
       const f32           GetLiftAngle_rad()        const {return _state.liftAngle;    }
-      const f32           GetLiftHeight_mm()        const {return _state.liftHeight;   }
+      const f32           GetLiftHeight_mm()        const;
       const u16           GetCliffData()            const {return _state.cliffDataRaw; }
       const PoseFrameID_t GetFrameId()              const {return _state.pose_frame_id;}
       

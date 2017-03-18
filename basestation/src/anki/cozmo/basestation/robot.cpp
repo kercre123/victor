@@ -4293,7 +4293,6 @@ RobotState Robot::GetDefaultRobotState()
                          0.f, //float rwheel_speed_mmps,
                          0.f, //float headAngle
                          0.f, //float liftAngle,
-                         LIFT_HEIGHT_LOWDOCK, //float liftHeight,
                          AccelData(), //const Anki::Cozmo::AccelData &accel,
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          5.f, //float batteryVoltage,

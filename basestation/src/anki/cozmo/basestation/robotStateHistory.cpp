@@ -49,6 +49,11 @@ namespace Anki {
       _state.liftAngle = liftAngle_rad;
     }
     
+    const f32 HistRobotState::GetLiftHeight_mm() const
+    {
+      return Robot::ConvertLiftAngleToLiftHeightMM(_state.liftAngle);
+    }
+    
     void HistRobotState::Print() const
     {
       printf("Frame %d, headAng %f, cliff %d, carrying %s, moving %s, whichMoving [%s%s%s]",
@@ -85,9 +90,6 @@ namespace Anki {
       
       // Interp lift angle
       interpState.liftAngle = histState1.GetLiftAngle_rad() + fraction * (histState2.GetLiftAngle_rad() - histState1.GetLiftAngle_rad());
-      
-      // Interp lift height
-      interpState.liftHeight = histState1.GetLiftHeight_mm() + fraction * (histState2.GetLiftHeight_mm() - histState1.GetLiftHeight_mm());
       
       // Interp cliff data
       interpState.cliffDataRaw = std::round(f32(histState1.GetCliffData()) + fraction * f32(histState2.GetCliffData() - histState1.GetCliffData()));
