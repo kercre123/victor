@@ -211,15 +211,14 @@ int MeasureMotor(int speed, bool fast, bool reverse = false )
   return a_norm;
 }
 
-const int MOTOR_LOW_MV = 1200, MOTOR_FULL_MV = 5000;   // In millivolts
-void TestMotor(void)
+void m_TestMotor(int low_mv, int full_mv)
 {
   const int TICKS_SLOW = 10 / 2;  //adjust for reduced flag cnt on new motors
   const int TICKS_FAST = 80 / 2;  //"
   int mm_fwd_low, mm_fwd_full, mm_rev_low, mm_rev_full;
   
-  mm_fwd_low  = MeasureMotor(MOTOR_LOW_MV, false);
-  mm_fwd_full = MeasureMotor(MOTOR_FULL_MV, true);
+  mm_fwd_low  = MeasureMotor(low_mv, false);
+  mm_fwd_full = MeasureMotor(full_mv, true);
   
   ConsolePrintf("motor brake...");
   MotorMV(-1); //motor brake before reverse direction
@@ -228,8 +227,8 @@ void TestMotor(void)
   MicroWait(250*1000);
   ConsolePrintf("release\r\n");
   
-  mm_rev_low = MeasureMotor(MOTOR_LOW_MV, false, true);
-  mm_rev_full = MeasureMotor(MOTOR_FULL_MV, true, true);
+  mm_rev_low = MeasureMotor(low_mv, false, true);
+  mm_rev_full = MeasureMotor(full_mv, true, true);
   
   if (mm_fwd_low < TICKS_SLOW)    //Forward slow
     throw ERROR_MOTOR_SLOW;
@@ -242,27 +241,27 @@ void TestMotor(void)
 }
 
 // MotorL: Lift motor with encoders
-void TestMotorL(void)
-{
-  //x attempts before fail
-  int x=1;
-  while(1) {
-    try { 
-      TestMotor(); 
-      break;
-    } catch(int e) { 
-      if(--x <= 0)
-        throw e;
-      else
-        MicroWait(350*1000);
-    }
-  }
-}
-
 // MotorH (head motor) makes about same number of ticks
-void TestMotorH(void)
+void TestMotor(void)
 {
-  TestMotorL();
+  //relax motor low test for #3 (give it a bit more power)
+  const int MOTOR2_LOW_MV = 1200, MOTOR2_FULL_MV = 5000;  // In millivolts
+  const int MOTOR3_LOW_MV = 1500, MOTOR3_FULL_MV = 5000;  // In millivolts
+  
+  switch( g_fixtureType )
+  {
+    case FIXTURE_MOTOR2L_TEST:
+    case FIXTURE_MOTOR2H_TEST:
+      m_TestMotor( MOTOR2_LOW_MV, MOTOR2_FULL_MV );
+      break;
+    case FIXTURE_MOTOR3L_TEST:
+    case FIXTURE_MOTOR3H_TEST:
+      m_TestMotor( MOTOR3_LOW_MV, MOTOR3_FULL_MV );
+      break;
+    default:
+      throw ERROR_UNKNOWN_MODE;
+      //break;
+  }
 }
 
 //enforce hardware compatibility for motor tests
@@ -300,7 +299,7 @@ TestFunction* GetMotor1HTestFunctions(void) {
 TestFunction* GetMotor2LTestFunctions(void) {
   static TestFunction functions[] = {
     CheckFixtureCompatibility,
-    TestMotorL,
+    TestMotor,
     NULL
   };
   return functions;
@@ -309,7 +308,7 @@ TestFunction* GetMotor2LTestFunctions(void) {
 TestFunction* GetMotor2HTestFunctions(void) {
   static TestFunction functions[] = {
     CheckFixtureCompatibility,
-    TestMotorH,
+    TestMotor,
     NULL
   };
   return functions;
@@ -324,7 +323,7 @@ TestFunction* GetMotor3HTestFunctions(void) {
     CheckFixtureCompatibility,
     TestLEDs,
     ButtonTest,
-    TestMotorH,
+    TestMotor,
     NULL
   };
   return functions;
