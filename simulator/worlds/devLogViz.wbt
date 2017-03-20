@@ -23,6 +23,7 @@ DEF CozmoViz_1 CozmoBot {
   vizMode TRUE
 }
 CozmoVizDisplay {
+  blankImageFrequency_ms 65
 }
 WebotsDevLogController {
 }

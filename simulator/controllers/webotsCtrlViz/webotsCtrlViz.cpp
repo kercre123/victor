@@ -44,12 +44,17 @@ int main(int argc, char **argv)
   UdpServer server;
   server.StartListening((uint16_t)VizConstants::VIZ_SERVER_PORT);
   
+  // Get image-blanking frequency (until we have a better solution with COZMO-10240)
+  webots::Node* _root = vizSupervisor.getSelf();
+  webots::Field* blankFreqField = _root->getField("blankImageFrequency_ms");
+  ANKI_VERIFY(blankFreqField != nullptr, "WebotsCtrlViz.MissingBlankImageFrequencyField", "");
+  const s32 blankImageFrequency_ms = blankFreqField->getSFInt32();
   
   // Setup client to forward relevant commands to cozmo_physics plugin
   UdpClient physicsClient;
   physicsClient.Connect("127.0.0.1", (uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
-
-  vizController.Init();
+  
+  vizController.Init(blankImageFrequency_ms);
   
   //
   // Main Execution loop

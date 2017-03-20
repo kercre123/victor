@@ -52,9 +52,10 @@ VizControllerImpl::VizControllerImpl(webots::Supervisor& vs)
 }
   
 
-void VizControllerImpl::Init()
+void VizControllerImpl::Init(u32 blankImageFrequency_ms)
 {
-
+  _blankImageFreqency_ms = blankImageFrequency_ms;
+  
   // bind to specific handlers in the robot class
   Subscribe(VizInterface::MessageVizTag::SetRobot,
     std::bind(&VizControllerImpl::ProcessVizSetRobotMessage, this, std::placeholders::_1));
@@ -640,6 +641,16 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_BODY_ACC_MODE ? "" : "(BODY)");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
+  
+  // Blank the image if enabled and it's time (until we have better solution with COZMO-10240)
+  if(_blankImageFreqency_ms != 0 &&
+     (payload.state.timestamp - _lastStateTimeStamp) > _blankImageFreqency_ms)
+  {
+    _camDisp->setColor(0);
+    _camDisp->fillRectangle(0, 0, _camDisp->getWidth(), _camDisp->getHeight());
+    
+    _lastStateTimeStamp = payload.state.timestamp;
+  }
   
   // Save state to file
   if(_saveState)

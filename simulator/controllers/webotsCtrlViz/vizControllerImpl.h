@@ -64,7 +64,8 @@ class VizControllerImpl
 public:
   VizControllerImpl(webots::Supervisor& vs);
 
-  void Init();
+  void Init(u32 blankImageFrequency_ms);
+  
   void ProcessMessage(VizInterface::MessageViz&& message);
 
 private:
@@ -171,6 +172,8 @@ private:
   // Image message processing
   EncodedImage  _encodedImage;
   TimeStamp_t   _curImageTimestamp;
+  TimeStamp_t   _lastStateTimeStamp;
+  TimeStamp_t   _blankImageFreqency_ms = 0; // how often to blank the camera display, 0 to disable
   ImageSendMode _saveImageMode = ImageSendMode::Off;
   std::string   _savedImagesFolder = "";
   u32           _saveCtr = 0;
