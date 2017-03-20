@@ -60,7 +60,7 @@ private:
 class RelativePathTurn : public IRelativePathSegment
 {
 public:
-  RelativePathTurn(f32 rotRadians, f32 targetRotSpeed, f32 rotAccel, f32 rotDecel, f32 angleTolerence, bool clockwise);
+  RelativePathTurn(f32 rotRadians, f32 targetRotSpeed, f32 rotAccel, f32 rotDecel, f32 angleTolerance, bool clockwise);
   virtual Pose3d ExtendPath(const Pose3d& pose, Planning::Path& path) const override;
   
 private:
@@ -68,7 +68,7 @@ private:
   f32 _targetRotSpeed;
   f32 _rotAccel;
   f32 _rotDecel;
-  f32 _angleTolerence;
+  f32 _angleTolerance;
   bool _clockwise;
 };
   

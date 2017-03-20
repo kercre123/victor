@@ -408,7 +408,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::SaveRobotState:                   return true;
         case GameToEngineTag::ExecuteTestPlan:                  return true;
         case GameToEngineTag::PlannerRunMode:                   return true;
-        case GameToEngineTag::SetObjectAdditionAndDeletion:     return true;
         case GameToEngineTag::StartTestMode:                    return true;
         case GameToEngineTag::TransitionToNextOnboardingState:  return true;
         case GameToEngineTag::ProgressionMessage:               return true; // (SetFriendshipPoints + Level)

@@ -13,7 +13,9 @@
 #ifndef __Cozmo_Basestation_NVStorageComponent_H__
 #define __Cozmo_Basestation_NVStorageComponent_H__
 
+#ifndef COZMO_V2
 #include "anki/cozmo/basestation/robotDataBackupManager.h"
+#endif
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
 #include "util/helpers/templateHelpers.h"
@@ -53,6 +55,9 @@ public:
   
   // Get the maximum number of bytes that can be saved for the given tag
   u32 GetMaxSizeForEntryTag(NVStorage::NVEntryTag tag);
+  
+  // TODO: For COZMO_V2 consider making Write(), Read(), and Erase() just return NVResult
+  //       and and not take a callback since they should return immediately.
   
   // Save data to robot under the given tag.
   // Returns true if request was successfully sent.
@@ -122,9 +127,35 @@ public:
   // For dev only!
   void Test();
   
+# ifndef COZMO_V2
   RobotDataBackupManager& GetRobotDataBackupManager() { return _backupManager; }
+# endif
  
 private:
+  
+  Robot&       _robot;
+  
+# pragma mark --- Start of Cozmo 2.0 only members ---  
+# ifdef COZMO_V2
+  
+  // Map of all stored data
+  using TagDataMap = std::unordered_map<u32, std::vector<u8> >;
+  TagDataMap _tagDataMap;
+  
+  // Data file read/write methods
+  void LoadDataFromFiles();
+  void WriteEntryToFile(u32 tag);
+  
+  // Path of NVStorage data folder
+  const std::string _kStoragePath;
+
+# ifdef SIMULATOR
+  void LoadSimData();
+# endif
+  
+# pragma mark --- End of Cozmo 2.0 only members ---
+# else
+# pragma mark --- Start of Cozmo 1.x only members ---
   
   static constexpr u32 _kHeaderMagic = 0x435a4d4f; // "CZMO" in hex
   struct NVStorageHeader {
@@ -217,18 +248,59 @@ private:
     bool dataSizeKnown;
   };
   
-  // Stores blobs of a multi-blob messgage.
-  // When the first blob of a new tag is received, remainingIndices is populated with
-  // all the indices it expects to receive. Indices are removed as blobs are received.
-  // When all blobs are received remainingIndices should be empty.
-  struct PendingWriteData {
-    NVStorage::NVEntryTag tag;
-    std::vector<u8> data;
-    std::unordered_set<u8> remainingIndices;
-    bool pending = false;
+  enum class NVSCState {
+    IDLE,
+    SENDING_WRITE_DATA,
+    RECEIVING_DATA,
   };
   
+  NVSCState _state;
+  void SetState(NVSCState s);
+
   
+  // Data currently being sent to robot for writing
+  WriteDataObject _writeDataObject;
+  
+  // ACK handling struct for write and erase requests
+  WriteDataAckInfo _writeDataAckInfo;
+  
+  // Received data handling struct
+  RecvDataObject _recvDataInfo;
+  
+  // Manages the robot data backups
+  // The backup manager lives here as it needs to update the backup everytime we write new things to the robot
+  RobotDataBackupManager _backupManager;
+  
+  
+  // ======= Robot event handlers ======
+  void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+
+  
+  // ====== Message retry ========
+  NVStorage::NVCommand _lastCommandSent;
+  
+  void SendErase(u32 tag);
+  
+  // Number of attempted sends of the last write or read message
+  u8 _numSendAttempts;
+  
+  // Max num of attempts allowed for sending a write or read message
+  const u8 _kMaxNumSendAttempts = 8;
+  
+  // Returns false if number of allowable retries exceeded
+  bool ResendLastCommand();
+  
+  // Size of header that should be at the start of all entries, except factory entries
+  static constexpr u32 _kEntryHeaderSize      = sizeof(NVStorageHeader);
+  static_assert(_kEntryHeaderSize % 4 == 0, "NVStorageHeader must have a 4-byte aligned size");  // Using sizeof should ensure this is true, but checking just in case.
+  
+  // Ack timeout
+  // If an operation is not acked within this timeout then give up waiting for it.
+  // (Average write/read rate is ~10KB/s)
+  static constexpr u32 _kAckTimeout_ms        = 5000;
+  
+
   // Struct for holding any type of request to the robot's non-volatile storage
   struct NVStorageRequest {
     
@@ -275,16 +347,24 @@ private:
     u32 eraseSize;
   };
   
-  Robot&       _robot;
+  // Queue of write/erase/read requests to be sent to robot
+  std::queue<NVStorageRequest> _requestQueue;
   
-  enum class NVSCState {
-    IDLE,
-    SENDING_WRITE_DATA,
-    RECEIVING_DATA,
+  void ProcessRequest();
+  
+# endif // #ifdef COZMO_V2
+# pragma mark --- End of Cozmo 1.x only members ---
+  
+  // Stores blobs of a multi-blob messgage.
+  // When the first blob of a new tag is received, remainingIndices is populated with
+  // all the indices it expects to receive. Indices are removed as blobs are received.
+  // When all blobs are received remainingIndices should be empty.
+  struct PendingWriteData {
+    NVStorage::NVEntryTag tag;
+    std::vector<u8> data;
+    std::unordered_set<u8> remainingIndices;
+    bool pending = false;
   };
-  
-  NVSCState _state;
-  void SetState(NVSCState s);
   
   // Map of the max number of bytes that may be written at each entry tag
   static std::map<NVStorage::NVEntryTag, u32> _maxSizeTable;
@@ -293,35 +373,22 @@ private:
   // Initialize _maxSizeTable
   void InitSizeTable();
   
-  // ====== Message retry ========
-  NVStorage::NVCommand _lastCommandSent;
-  
-  void SendErase(u32 tag);
-  
-  // Number of attempted sends of the last write or read message
-  u8 _numSendAttempts;
-  
-  // Max num of attempts allowed for sending a write or read message
-  const u8 _kMaxNumSendAttempts = 8;
-
-  // Returns false if number of allowable retries exceeded
-  bool ResendLastCommand();
-
-  
-  // ======= Robot event handlers ======
-  void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  
-  
-  void ProcessRequest();
-  
   // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
   bool QueueWriteBlob(const NVStorage::NVEntryTag tag, const u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
   
   // Clear any data that was received from game (via NVStorageWriteEntry) for writing
   void ClearPendingWriteEntry();
   
-  void BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op, u8 index = 0, const u8* data = nullptr, u32 data_length = 0);
+  void BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag,
+                                  NVStorage::NVResult res,
+                                  NVStorage::NVOperation op,
+                                  u8 index = 0,
+                                  const u8* data = nullptr,
+                                  size_t data_length = 0);
+  
+  void BroadcastNVStorageReadResults(NVStorage::NVEntryTag tag,
+                                     u8* dataPtr = nullptr,
+                                     size_t dataSize = 0);
   
   std::vector<Signal::SmartHandle> _signalHandles;
 
@@ -348,34 +415,10 @@ private:
              bool broadcastResultToGame,
              u32 eraseSize);
 
-  // Queue of write/erase/read requests to be sent to robot
-  std::queue<NVStorageRequest> _requestQueue;
-  
-  // Data currently being sent to robot for writing
-  WriteDataObject _writeDataObject;
-  
-  // ACK handling struct for write and erase requests
-  WriteDataAckInfo _writeDataAckInfo;
-  
-  // Received data handling struct
-  RecvDataObject _recvDataInfo;
-
   // Storage for in-progress-of-receiving multi-blob data
   // via MessageGameToEngine::NVStorageWriteEntry
   PendingWriteData _pendingWriteData;
-
-  // Size of header that should be at the start of all entries, except factory entries
-  static constexpr u32 _kEntryHeaderSize      = sizeof(NVStorageHeader);
-  static_assert(_kEntryHeaderSize % 4 == 0, "NVStorageHeader must have a 4-byte aligned size");  // Using sizeof should ensure this is true, but checking just in case.
-    
-  // Ack timeout
-  // If an operation is not acked within this timeout then give up waiting for it.
-  // (Average write/read rate is ~10KB/s)
-  static constexpr u32 _kAckTimeout_ms        = 5000;   // TODO: What's an appropriate timeout?
   
-  // Manages the robot data backups
-  // The backup manager lives here as it needs to update the backup everytime we write new things to the robot
-  RobotDataBackupManager _backupManager;
   
   // Whether or not we should be writing headers
   bool _writingFactory = false;

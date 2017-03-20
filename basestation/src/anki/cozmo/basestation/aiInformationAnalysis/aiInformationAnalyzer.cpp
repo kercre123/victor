@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "AIInformationAnalyzer.h"
+#include "aiInformationAnalyzer.h"
 
 // processes
 #include "informationAnalysisProcesses/aiInfoAnalysisProcCalculateInterestingRegions.h"

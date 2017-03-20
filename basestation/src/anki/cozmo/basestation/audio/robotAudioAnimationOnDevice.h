@@ -42,7 +42,7 @@ public:
   // Default Constructor
   RobotAudioAnimationOnDevice( Animation* anAnimation,
                                RobotAudioClient* audioClient,
-                               GameObjectType gameObject,
+                               AudioMetaData::GameObjectType gameObject,
                                Util::RandomGenerator* randomGenerator );
 
   // Call at the beginning of the update loop to update the animation's state for the upcoming loop cycle

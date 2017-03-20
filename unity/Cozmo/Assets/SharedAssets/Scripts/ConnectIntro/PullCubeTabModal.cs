@@ -132,7 +132,7 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
                                                             kConnectedOnPeriod_ms, kConnectedOffPeriod_ms,
                                                             kConnectedOnTransition_ms, kConnectedOffTransition_ms,
                                                             kConnectedOffset);
-          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect);
+          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect);
         }
         _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
       }

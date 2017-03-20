@@ -18,3 +18,4 @@ Steps:
     `./tools/sdk_devonly/start_sim.py -r`  
 The -r means 'use a real robot, instead of webots simulator'.  (webots simulator integration may not work yet).
 5.  Now you can run the example python scripts in [cozmo-python-sdk/examples/tutorials](https://github.com/anki/cozmo-python-sdk/tree/nextclad/examples)
+6.  You can also use -f or --freeplay-mode as an argument to start_sim.py, to start in freeplay mode.

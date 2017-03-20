@@ -80,7 +80,8 @@ bool BehaviorRespondPossiblyRoll::IsRunnableInternal(const BehaviorPreReqRespond
   
   _metadata = RespondPossiblyRollMetadata(preReqData.GetObjectID(),
                                           preReqData.GetUprightAnimIndex(),
-                                          preReqData.GetOnSideAnimIndex());
+                                          preReqData.GetOnSideAnimIndex(),
+                                          preReqData.GetPoseUpAxisAccurate());
   return true;
 }
 
@@ -109,17 +110,15 @@ Result BehaviorRespondPossiblyRoll::ResumeInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal(Robot& robot)
 {
-  for(auto entry: _upAxisChangedIDs){
-    if(entry.first == _metadata.GetObjectID()){
-      robot.GetActionList().Cancel(_lastActionTag);
-      _lastActionTag = ActionConstants::INVALID_TAG;
-      if(entry.second == UpAxis::ZPositive){
-        TurnAndRespondPositively(robot);
-      }else{
-        TurnAndRespondNegatively(robot);
-      }
+  const auto& targetAxisChanged = _upAxisChangedIDs.find(_metadata.GetObjectID());
+  
+  if(targetAxisChanged != _upAxisChangedIDs.end()){
+    StopActing(false, false);
+    if(targetAxisChanged->second != UpAxis::ZPositive){
+      TurnAndRespondNegatively(robot);
     }
   }
+  
   _upAxisChangedIDs.clear();
   return IBehavior::UpdateInternal(robot);
 }
@@ -128,11 +127,12 @@ IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::DetermineNextResponse(Robot& robot)
 {
-  ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_metadata.GetObjectID());
-  if(nullptr != object &&
-     !object->IsPoseStateUnknown()){
-    if (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
+  ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
+  if(nullptr != object){
+    if (!_metadata.GetPoseUpAxisAccurate() ||
+        (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS))
     {
+      _metadata.SetPoseUpAxisWillBeChecked();
       TurnAndRespondNegatively(robot);
     }else{
       TurnAndRespondPositively(robot);
@@ -150,8 +150,6 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(Robot& robot)
                                          _metadata.GetUprightAnimIndex() : kUprightAnims.size() - 1;
   turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kUprightAnims[animIndex]));
   StartActing(turnAndReact, [this](ActionResult result){
-    // TO DO - until we have a helper to search on a turn, just set as acknowledged
-    // if can't see
     if((result == ActionResult::SUCCESS) ||
        (result == ActionResult::VISUAL_OBSERVATION_FAILED)){
       _metadata.SetPlayedUprightAnim();
@@ -181,10 +179,10 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::DelegateToRollHelper(Robot& robot)
 {
-  ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_metadata.GetObjectID());
-  if (nullptr != object &&
-      !object->IsPoseStateUnknown() &&
-      object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
+  ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
+  if ((nullptr != object) &&
+      (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
+      )
   {
     auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
     const bool upright = true;

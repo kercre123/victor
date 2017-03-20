@@ -35,8 +35,8 @@ namespace Cozmo {
     EncodedImage();
     // Create an "encoded" image from an existing image. Copies data from the image
     // into the EncodedImage's buffer. ImageEncoding will be RawGray or RawRGB.
-    explicit EncodedImage(const Vision::Image& imgGray);
-    explicit EncodedImage(const Vision::ImageRGB& imgRGB);
+    explicit EncodedImage(const Vision::Image& imgGray, const u32 imageID = std::numeric_limits<u32>::max());
+    explicit EncodedImage(const Vision::ImageRGB& imgRGB, const u32 imageID = std::numeric_limits<u32>::max());
     
     // Returns true if the image is ready after adding this chunk
     bool AddChunk(const ImageChunk& chunk);

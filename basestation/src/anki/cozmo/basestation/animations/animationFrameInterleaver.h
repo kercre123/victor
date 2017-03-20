@@ -19,7 +19,6 @@
 
 #include <cstdint>
 #include <functional>
-//#include <list>
 #include <vector>
 #include <queue>
 

@@ -25,14 +25,14 @@
             <block type="event_whenflagclicked"></block>
             <block type="cozmo_drive_forward">
                 <value name="DISTANCE">
-                    <shadow type="math_positive_number">
+                    <shadow type="math_whole_number_with_validator">
                         <field name="NUM">1</field>
                     </shadow>
                 </value>
             </block>
             <block type="cozmo_drive_backward">
                 <value name="DISTANCE">
-                    <shadow type="math_positive_number">
+                    <shadow type="math_whole_number_with_validator">
                         <field name="NUM">1</field>
                     </shadow>
                 </value>
@@ -47,6 +47,13 @@
                 </value>
             </block>
             <block type="cozmo_dock_with_cube"></block>
+            <block type="cozmo_animation">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_setanimation">
+                        <field name="CHOICE">happy</field>
+                    </shadow>
+                </value>
+            </block>
             <block type="cozmo_liftheight">
                 <value name="CHOICE">
                     <shadow type="dropdown_cozmo_liftheight">
@@ -61,20 +68,6 @@
                     </shadow>
                 </value>
             </block>
-            <block type="cozmo_animation">
-                <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_setanimation">
-                        <field name="CHOICE">happy</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="cozmo_says">
-                <value name="STRING">
-                    <shadow type="text">
-                        <field name="TEXT">Hi</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="cozmo_setbackpackcolor">
                 <value name="CHOICE">
                     <shadow type="dropdown_cozmo_setcolor">
@@ -82,12 +75,19 @@
                     </shadow>
                 </value>
             </block>
+            <block type="cozmo_says">
+                <value name="STRING">
+                    <shadow type="text_with_validator">
+                        <field name="TEXT">Hi</field>
+                    </shadow>
+                </value>
+            </block>
             <block type="cozmo_wait_for_face"></block>
-            <block type="cozmo_wait_for_cube"></block>
+            <block type="cozmo_wait_until_see_cube"></block>
             <block type="cozmo_wait_for_cube_tap"></block>
             <block type="control_repeat">
                 <value name="TIMES">
-                    <shadow type="math_whole_number">
+                    <shadow type="math_whole_number_with_validator">
                         <field name="NUM">4</field>
                     </shadow>
                 </value>

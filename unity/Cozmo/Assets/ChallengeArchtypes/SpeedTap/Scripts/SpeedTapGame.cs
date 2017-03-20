@@ -434,7 +434,7 @@ namespace SpeedTap {
 
     public void StartRoundMusic() {
       SpeedTapRoundData currRoundData = GetCurrentRoundData();
-      if (currRoundData.MidRoundMusic != Anki.Cozmo.Audio.GameState.Music.Invalid) {
+      if (currRoundData.MidRoundMusic != Anki.AudioMetaData.GameState.Music.Invalid) {
         GameAudioClient.SetMusicState(currRoundData.MidRoundMusic);
       }
       else {
@@ -442,7 +442,7 @@ namespace SpeedTap {
       }
     }
     public void StartEndMusic() {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Quick_Tap_Win);
+      GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Minigame__Quick_Tap_Win);
     }
 
     public void ClearWinningLightPatterns() {

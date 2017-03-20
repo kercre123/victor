@@ -2,18 +2,17 @@
   'includes': [
     '../../coretech/project/gyp/opencv.gypi',
     '../../coretech/project/gyp/face-library.gypi',
-    'build-variables.gypi',
   ],
 
   'variables': {
 
     'ctrlGameEngine_source': 'ctrlGameEngine.lst',
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
-    'ctrlBuildServerTest_source': 'ctrlBuildServerTest.lst',    
+    'ctrlBuildServerTest_source': 'ctrlBuildServerTest.lst',
     'csharp_source': 'csharp.lst',
     'assets_source': 'assets.lst',
     'buildMex': '<(build-mex)',
-    
+
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
       'ANKICORETECH_USE_MATLAB=0',
@@ -56,7 +55,7 @@
     'webots_includes': [
       '<(webots_path)/include/controller/cpp',
     ],
-    
+
     'compiler_flags': [
       '-Wdeprecated-declarations',
       '-fdiagnostics-show-category=name',
@@ -99,9 +98,9 @@
 
     # Copy overridden vars into this scope
     'arch_group%': '<(arch_group)',
-    
+
     'conditions': [
-    
+
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
       }],
@@ -347,7 +346,7 @@
           ],
       },
     },
-    'conditions': [    
+    'conditions': [
       [
         "OS=='ios'",
         {
@@ -375,7 +374,7 @@
     ],
   },
 
-  'conditions': [    
+  'conditions': [
     [
       "OS=='android'",
       {
@@ -481,6 +480,8 @@
             'type': 'none',
             'dependencies': [],
             'actions': [
+
+            # Add assets for webotsCtrlGameEngine
             {
                 'action_name': 'create_symlink_resources_animations',
                 'inputs': [],
@@ -553,6 +554,82 @@
                   '../../tools/build/tools/ankibuild/symlink.py',
                   '--link_target', '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
                   '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/sound'
+                ],
+            },
+
+            # Add assets for webotsCtrlGameEngine2
+            {
+                'action_name': 'create_symlink_resources_animations2',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(externals_path)/cozmo-assets/animations',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/animations',
+                  '--create_folder', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets'
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_animationGroups2',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(externals_path)/cozmo-assets/animationGroups',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/animationGroups'
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_faceAnimations2',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<(externals_path)/cozmo-assets/faceAnimations',
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/faceAnimations',
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_daily_goals2',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_asset_path)/DailyGoals',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/DailyGoals'
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_anim_group_maps2',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_asset_path)/animationGroupMaps',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/animationGroupMaps'
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_cube_anim_group_maps2',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_asset_path)/cubeAnimationGroupMaps',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/cubeAnimationGroupMaps'
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_sound2',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/sound'
                 ],
             },
             ]

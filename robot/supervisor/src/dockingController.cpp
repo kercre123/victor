@@ -91,7 +91,7 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
 
-#ifdef  TARGET_K02
+#ifndef SIMULATOR
         // Don't warn about set but unread variables because we have too many different code paths and shared pieces below
         #pragma diag_suppress 550
         // Compensating for motor backlash by lifting a little higher when
@@ -183,8 +183,8 @@ namespace Anki {
         bool markerOutOfFOV_ = false;
         const f32 MARKER_WIDTH = 25.f;
 
-        f32 headCamFOV_ver_;
-        f32 headCamFOV_hor_;
+        f32 headCamFOV_ver_ = 0.f;
+        f32 headCamFOV_hor_ = 0.f;
 
         DockingErrorSignal dockingErrSignalMsg_;
         bool dockingErrSignalMsgReady_ = false;
@@ -318,10 +318,12 @@ namespace Anki {
       }
 
       f32 GetVerticalFOV() {
+        AnkiConditionalError(headCamFOV_ver_ != 0.f, 1201, "DockingController.GetVerticalFOV.ZeroFOV", 305, "", 0);
         return headCamFOV_ver_;
       }
 
       f32 GetHorizontalFOV() {
+        AnkiConditionalError(headCamFOV_hor_ != 0.f, 1202, "DockingController.GetHorizontalFOV.ZeroFOV", 305, "", 0);
         return headCamFOV_hor_;
       }
       
@@ -520,20 +522,30 @@ namespace Anki {
 
       Result Init()
       {
-        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        #ifndef COZMO_V2
+        {
+          const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
 
-        AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT, 362, "DockingController.Init.NullHeadCamInfo", 305, "", 0);
+          AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT, 362, "DockingController.Init.NullHeadCamInfo", 305, "", 0);
 
-        // Compute FOV from focal length (currently used for tracker prediciton)
-        headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo->nrows) /
-                                      (2.f * headCamInfo->focalLength_y));
-        headCamFOV_hor_ = 2.f * atanf(static_cast<f32>(headCamInfo->ncols) /
-                                      (2.f * headCamInfo->focalLength_x));
-
+          // Compute FOV from focal length (currently used for tracker prediciton)
+          headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo->nrows) /
+                                        (2.f * headCamInfo->focalLength_y));
+          headCamFOV_hor_ = 2.f * atanf(static_cast<f32>(headCamInfo->ncols) /
+                                        (2.f * headCamInfo->focalLength_x));
+        }
+        #endif // COZMO_V2
+        
         return RESULT_OK;
       }
 
-
+      void SetCameraFieldOfView(f32 horizontalFOV, f32 verticalFOV)
+      {
+        AnkiDebug( 1199, "DockingController.SetCameraFieldOfView.Values", 634, "H: %f, V: %f", 2, horizontalFOV, verticalFOV);
+        headCamFOV_hor_ = horizontalFOV;
+        headCamFOV_ver_ = verticalFOV;
+      }
+      
       Result Update()
       {
       
@@ -809,7 +821,7 @@ namespace Anki {
                     }
                   }
                   // If we can't use the last docking error signal then check if the robot's pose is within some
-                  // tolerences of the dockPose
+                  // tolerances of the dockPose
                   else if((HAL::GetTimeStamp() - dockingErrSignalMsg_.timestamp) > TIME_SINCE_LAST_ERRSIG &&
                           (rel_vert_dist_block > VERT_DOCK_TOL_MM ||
                            ABS(rel_horz_dist_block) > HORZ_DOCK_TOL_MM ||

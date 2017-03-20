@@ -58,14 +58,14 @@ protected:
   // If SwitchState::Sparked::Invalid is passed in audio engine switch state will not be updated
   // Return false if behavior UnlockId is Invalid
   bool ActivateSparkedMusic(const UnlockId behaviorUnlockId,
-                            const GameState::Music musicState,
-                            const SwitchState::Sparked sparkedState,
+                            const AudioMetaData::GameState::Music musicState,
+                            const AudioMetaData::SwitchState::Sparked sparkedState,
                             const int round = kBehaviorRound);
   
   // This deactivates the BehaviorAudioClient and set new music state
   // If GameState::Music::Invalid is passed in audio engine music state will not be updated
   // Return false behavior UnlockId does not match the UnlockId that was used to activate the sparked music or Invalid
-  bool DeactivateSparkedMusic(const UnlockId behaviorUnlockId, const GameState::Music musicState);
+  bool DeactivateSparkedMusic(const UnlockId behaviorUnlockId, const AudioMetaData::GameState::Music musicState);
   
   
 private:
@@ -75,7 +75,7 @@ private:
   bool      _isActive = false;
   int       _round    = kBehaviorRound;
   
-  std::vector<SwitchState::Gameplay_Round> _sparkedEnums;
+  std::vector<AudioMetaData::SwitchState::Gameplay_Round> _sparkedEnums;
   
   void SetDefaultBehaviorRound() { _round = kBehaviorRound; }
   

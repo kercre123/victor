@@ -47,7 +47,7 @@ ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionU
 bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
 {
   if(!_desiredTargets.empty()){
-    BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(_desiredTargets);
+    BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(_desiredTargets, robot);
     const bool robotOffCharger = !robot.IsOnChargerPlatform();
     return robotOffCharger && kEnableFaceAcknowledgeReact &&
             behavior->IsRunnable(acknowledgeFacePreReqs);

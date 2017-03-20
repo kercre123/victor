@@ -100,7 +100,7 @@ protected:
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg){};
   virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg){};
   virtual void HandleRobotObservedPet(ExternalInterface::RobotObservedPet const& msg) {};
-  virtual void HandleRobotDeletedObject(ExternalInterface::RobotDeletedObject const& msg){};
+  virtual void HandleRobotDeletedLocatedObject(ExternalInterface::RobotDeletedLocatedObject const& msg){};
   virtual void HandleUiDeviceConnection(const ExternalInterface::UiDeviceAvailable& msgIn){};
   virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg){};
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
@@ -109,7 +109,9 @@ protected:
   virtual void HandleActiveObjectMoved(ObjectMoved const& msg){};
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
-  virtual void HandleObjectStates(ExternalInterface::ObjectStates const& msg){};
+  virtual void HandleActiveObjectUpAxisChanged(ObjectUpAxisChanged const& msg){};
+  virtual void HandleLocatedObjectStates(ExternalInterface::LocatedObjectStates const& msg){};
+  virtual void HandleConnectedObjectStates(ExternalInterface::ConnectedObjectStates const& msg){};
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
   virtual void HandleAnimationAborted(ExternalInterface::AnimationAborted const& msg){};
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
@@ -469,7 +471,7 @@ private:
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);
   void HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg);
   void HandleRobotObservedPetBase(ExternalInterface::RobotObservedPet const& msg);
-  void HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg);
+  void HandleRobotDeletedLocatedObjectBase(ExternalInterface::RobotDeletedLocatedObject const& msg);
   void HandleUiDeviceConnectionBase(ExternalInterface::UiDeviceAvailable const& msgIn);
   void HandleRobotConnectedBase(ExternalInterface::RobotConnectionResponse const &msg);
   void HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg);
@@ -478,7 +480,9 @@ private:
   void HandleActiveObjectMovedBase(ObjectMoved const& msg);
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
-  void HandleObjectStatesBase(ExternalInterface::ObjectStates const& msg);
+  void HandleActiveObjectUpAxisChangedBase(ObjectUpAxisChanged const& msg);
+  void HandleLocatedObjectStatesBase(ExternalInterface::LocatedObjectStates const& msg);
+  void HandleConnectedObjectStatesBase(ExternalInterface::ConnectedObjectStates const& msg);
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
   void HandleAnimationAbortedBase(ExternalInterface::AnimationAborted const& msg);
   void HandleDebugStringBase(ExternalInterface::DebugString const& msg);

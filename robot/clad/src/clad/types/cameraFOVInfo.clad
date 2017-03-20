@@ -1,0 +1,13 @@
+
+
+namespace Anki {
+namespace Cozmo {
+
+message CameraFOVInfo
+{
+  float_32 horizontalFOV,
+  float_32 verticalFOV
+}
+
+}
+}

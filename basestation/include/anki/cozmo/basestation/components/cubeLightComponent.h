@@ -24,7 +24,7 @@
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/types.h"
-#include "clad/types/activeObjectTypes.h"
+#include "clad/types/activeObjectConstants.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/poseStructs.h"
@@ -136,10 +136,10 @@ public:
   // Plays the tap interaction animations on an object depending on its posestate
   void SetTapInteractionObject(const ObjectID& objectID);
   
-  // Called whenever an object's posestate changes in order to update the lights
-  void OnObjectPoseStateWillChange(const ObjectID& objectID,
-                                   const PoseState oldPoseState,
-                                   const PoseState newPoseState);
+  // Called whenever an active object's posestate changes in order to update the lights
+  void OnActiveObjectPoseStateChanged(const ObjectID& objectID,
+                                      const PoseState oldPoseState,
+                                      const PoseState newPoseState);
   
   Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights);
   Result SetObjectLights(const ObjectID& objectID,
@@ -272,8 +272,6 @@ private:
   void EnableGameLayerOnly(const ObjectID& objectID, bool enable);
   
   const char* LayerToString(const AnimLayerEnum& layer) const;
-  
-  ActiveObject* GetActiveObjectInAnyFrame(const ObjectID& objectID);
   
   Result SetLights(const ActiveObject* object, const u32 rotationPeriod_ms);
   

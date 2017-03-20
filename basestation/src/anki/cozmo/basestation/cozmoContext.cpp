@@ -1,8 +1,8 @@
+
 #include "anki/cozmo/basestation/cozmoContext.h"
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/cozmo/basestation/audio/audioController.h"
-#include "anki/cozmo/basestation/audio/audioServer.h"
+#include "anki/cozmo/basestation/audio/cozmoAudioController.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -11,10 +11,12 @@
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "util/cpuProfiler/cpuThreadId.h"
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/random/randomGenerator.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -46,7 +48,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   // Only set up the audio server if we have a real dataPlatform
   if (nullptr != dataPlatform)
   {
-    _audioServer.reset(new Audio::AudioServer(new Audio::AudioController(this)));
+    _audioServer.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::CozmoAudioController(this)));
   }
   #if USE_DAS
   _dasTransferTask->Init(_transferQueueMgr.get());

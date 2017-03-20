@@ -237,7 +237,7 @@ public class ChallengeDetailsModal : BaseModal {
     _UnlockTween = DOTween.Sequence();
     _UnlockTween.Join(_ChallengeIcon.IconImage.DOColor(Color.white, _UnlockTween_sec));
     _UnlockTween.AppendCallback(HandleUpgradeAnimationPlayed);
-    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Upgrade);
+    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Upgrade);
   }
 
   //Reinitialize with new state if unlocked

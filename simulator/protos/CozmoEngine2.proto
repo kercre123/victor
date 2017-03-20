@@ -1,0 +1,64 @@
+PROTO CozmoEngine2 [
+  field SFString name "CozmoEngine"
+  field SFVec3f translation 0 0 0
+  field SFRotation rotation 0 0 1 0
+  
+  field SFInt32 numUIDevicesToWaitFor 1
+
+  field SFBool filterLogs FALSE
+]
+{
+Supervisor {
+  name IS name
+  translation IS translation
+  rotation IS rotation
+  controller "webotsCtrlGameEngine2"
+
+  %{ if fields.filterLogs.value then }%
+  controllerArgs "--applyLogFilter"
+  %{ else }%
+  controllerArgs ""
+  %{ end }%
+
+
+  children [
+    # Allows the engine to connect to CozmoBot2
+    Connector {
+      name "engineConnector"
+      model "engineConnector"
+      rotation 0 1 0 3.14159265
+      type "symmetric"
+      isLocked TRUE
+      autoLock TRUE
+      distanceTolerance 0.1
+      axisTolerance 3.14
+      rotationTolerance 3.14
+      numberOfRotations 1
+    }
+  
+    CozmoCamera {
+      translation 0.01752 0 -0.008 # Matches engine definitions
+      rotation    0.563430001007340  -0.563430001007340  -0.604229482837223 2.054545429548061 # 4-degree look-down      
+    }
+    
+    # This IMU is positioned in the same place as the one in CozmoBot2.proto
+    # as way to simulate access to the same IMU from both the engine and robot processes
+    CozmoIMU {
+      translation 0.0058 -0.0135 0
+    }
+  ]
+  
+  boundingObject Box {
+    size 0.000001 0.000001 0.000001
+  }
+  physics Physics {
+    mass 0.00001
+    density -1
+  }
+
+
+  # Referencing a field that is used in code but not in the proto model
+  # to suppress a Webots error message.
+  %{if fields.numUIDevicesToWaitFor.value then end }%
+} # Supervisor definition
+} # PROTO definition

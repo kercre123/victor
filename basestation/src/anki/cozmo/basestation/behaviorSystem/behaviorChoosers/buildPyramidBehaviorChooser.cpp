@@ -11,6 +11,7 @@
  **/
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/buildPyramidBehaviorChooser.h"
 
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
@@ -124,6 +125,7 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
 , _onSideAnimIndex(0)
 , _forceLightMusicUpdate(false)
 , _lightsShouldMessageCubeOnSide(false)
+, _timeRespondedRollStartedPreviously_s(-1.0f)
 {
   UpdateActiveBehaviorGroup(_robot, true);
   
@@ -242,8 +244,9 @@ void BuildPyramidBehaviorChooser::OnSelected()
   _currentPyramidConstructionStage = PyramidConstructionStage::None;
   _highestAudioStageReached = PyramidConstructionStage::None;
   _chooserPhase = ChooserPhase::None;
-  _nextTimeCheckBlockOrientations_s = -1;
-  _nextTimeForceUpdateLightMusic_s = -1;
+  _nextTimeCheckBlockOrientations_s = -1.0f;
+  _nextTimeForceUpdateLightMusic_s = -1.0f;
+  _timeRespondedRollStartedPreviously_s = _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
   UpdateActiveBehaviorGroup(_robot, true);
 
   _pyramidObjectiveAchieved = false;
@@ -386,8 +389,8 @@ void BuildPyramidBehaviorChooser::CheckBlockWorldCubeOrientations(Robot& robot)
     return false;
   });
   
-  robot.GetBlockWorld().FindMatchingObjects(knownDisconnectedBlockFilter,
-                                            knownDisconnectedBlocks);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(knownDisconnectedBlockFilter,
+                                                   knownDisconnectedBlocks);
   
   // we only want to update orientations from block world if the pose state is known
   // because the pose is only updated through observation, so if we've received
@@ -425,8 +428,13 @@ void BuildPyramidBehaviorChooser::UpdateStateTrackerForUnrecognizedID(const Obje
   BlockWorldFilter blockInAnyFrameFilter;
   blockInAnyFrameFilter.SetAllowedIDs({objID});
   blockInAnyFrameFilter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  blockInAnyFrameFilter.SetFilterFcn(nullptr);
-  const ObservableObject* block = _robot.GetBlockWorld().FindMatchingObject(blockInAnyFrameFilter);
+  const ObservableObject* block = _robot.GetBlockWorld().FindLocatedMatchingObject(blockInAnyFrameFilter);
+  
+  if ( block == nullptr ) {
+    // if there are no located instances, try with the connected ones
+    block = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objID);
+  }
+  
   
   DEV_ASSERT(block != nullptr,
              "BuildPyramidBehaviorChooser.UpdateStateTracker.NoBlocksWithID");
@@ -497,7 +505,7 @@ void BuildPyramidBehaviorChooser::UpdatePyramidAssignments(const BehaviorBuildPy
 IBehavior* BuildPyramidBehaviorChooser::ChooseNextBehavior(Robot& robot,
                                                            const IBehavior* currentRunningBehavior)
 {
-  UpdateTrackerPropertiesBasedOnCurrentRunningBehavior(currentRunningBehavior);
+  UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(currentRunningBehavior);
 
   // Thank the user if possible
   IBehavior* bestBehavior = CheckForShouldThankUser(robot, currentRunningBehavior);
@@ -656,16 +664,21 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
       numberOfCubesOnSide++;
     }
     
-    ObservableObject* object = robot.GetBlockWorld().GetObjectByID(entry.second.GetObjectID());
-    if(object != nullptr && !object->IsPoseStateUnknown()){
+    ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(entry.second.GetObjectID());
+    if(object != nullptr){
       if(entry.second.GetCurrentUpAxis() != UpAxis::ZPositive){
         BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
                                                      _uprightAnimIndex,
-                                                     _onSideAnimIndex);
+                                                     _onSideAnimIndex,
+                                                     false);
         if(_behaviorRespondPossiblyRoll->IsRunnable(preReqData)){
+          PRINT_CH_INFO("BuildPyramid",
+                        "BuildPyramidBehaviorChooser.CheckForRespondPossiblyRoll.RespondToBlockOnSide",
+                        "Responding to object %d which is on its side and rolling",
+                        entry.second.GetObjectID().GetValue());
           bestBehavior = _behaviorRespondPossiblyRoll;
+          break;
         }
-        break;
       }
       
       if(bestBehavior == nullptr && !entry.second.GetHasAcknowledgedPositively()){
@@ -676,9 +689,14 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
         
         BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
                                                      _uprightAnimIndex,
-                                                     onSideIdx);
+                                                     onSideIdx,
+                                                     true);
         if(_behaviorRespondPossiblyRoll->IsRunnable(preReqData)){
           bestBehavior = _behaviorRespondPossiblyRoll;
+          PRINT_CH_INFO("BuildPyramid",
+                        "BuildPyramidBehaviorChooser.CheckForRespondPossiblyRoll.MayRespondToUpright",
+                        "May respond to object %d positively if the block on its side is unknown",
+                        entry.second.GetObjectID().GetValue());
         }
       }
     }
@@ -686,19 +704,34 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
   
   // We don't want to acknowledge positively if all cubes are upright and we can start
   // building
-  return  numberOfCubesOnSide != 0 ? bestBehavior : nullptr;
+  return (numberOfCubesOnSide != 0)  ? bestBehavior : nullptr;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BuildPyramidBehaviorChooser::UpdateTrackerPropertiesBasedOnCurrentRunningBehavior(const IBehavior* currentRunningBehavior)
+void BuildPyramidBehaviorChooser::UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(const IBehavior* currentRunningBehavior)
 {
+  // The respond possibly roll behavior may have updated properties while running
+  const bool respondCurrentlyRunning = currentRunningBehavior != nullptr &&
+                 (currentRunningBehavior->GetClass() == BehaviorClass::RespondPossiblyRoll);
+  
+  // The chooser may not have gotten updated properties from the respond possibly
+  // roll behavior before it stopped itself - if it has run since last updated
+  // pull the properties just to check
+  const bool runSinceLastTimeCheck = _timeRespondedRollStartedPreviously_s !=
+                                       _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
+  
+  // If respond possibly roll isn't running, update the tracked last time it ran
+  if(!respondCurrentlyRunning && runSinceLastTimeCheck){
+    _timeRespondedRollStartedPreviously_s = _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
+  }
+  
   // Update respondPossiblyRoll tracker info
-  if(currentRunningBehavior != nullptr &&
-     currentRunningBehavior->GetClass() == BehaviorClass::RespondPossiblyRoll){
+  if(respondCurrentlyRunning || runSinceLastTimeCheck){
     
     const auto& metadata =  _behaviorRespondPossiblyRoll->GetResponseMetadata();
     
+    // Update animation trigger to play on the next time the behavior runs
     if(metadata.GetPlayedUprightAnim()){
       _uprightAnimIndex = metadata.GetUprightAnimIndex() + 1;
     }
@@ -710,7 +743,7 @@ void BuildPyramidBehaviorChooser::UpdateTrackerPropertiesBasedOnCurrentRunningBe
     // Set acknowledged positevely if response was a positive response
     const ObjectID& target = metadata.GetObjectID();
     PyramidCubePropertiesTracker* tracker = nullptr;
-    ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(target);
+    ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(target);
     if(GetCubePropertiesTrackerByID(target, tracker) &&
        object != nullptr &&
        tracker->GetCurrentUpAxis() == UpAxis::ZPositive){
@@ -799,31 +832,9 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
     _lastUprightBlockCount = static_cast<int>(_pyramidCubePropertiesTrackers.size());
   }
   
-  // Notify game if the BuildPyramidPreReqs have change
-  const bool uprightCountChanged = _lastUprightBlockCount != countOfBlocksUpright;
-  if(uprightCountChanged && _robot.HasExternalInterface()){
-    const bool minimumUprightCountReached =
-      countOfBlocksUpright >= kMinUprightBlocksForPyramid;
-    const bool fellBelowMinimumUprightCount =
-      (_lastUprightBlockCount >= kMinUprightBlocksForPyramid) &&
-      (countOfBlocksUpright < kMinUprightBlocksForPyramid);
-    
-    const bool isSoftSpark = IsPyramidSoftSpark(robot);
-    const bool didUserRequestSparkEnd = robot.GetBehaviorManager().DidGameRequestSparkEnd();
-
-    
-    if(minimumUprightCountReached && !isSoftSpark && !didUserRequestSparkEnd){
-      _robot.GetExternalInterface()->BroadcastToGame<
-        ExternalInterface::BuildPyramidPreReqsChanged>(true);
-    }else if(fellBelowMinimumUprightCount && !isSoftSpark && !didUserRequestSparkEnd){
-      _robot.GetExternalInterface()->BroadcastToGame<
-        ExternalInterface::BuildPyramidPreReqsChanged>(false);
-    }
-  }
-  
   // Check to see if the chooser phase has changed
-  if(countOfBlocksUpright >= kMinUprightBlocksForPyramid ||
-     countOfBlocksUpright == _pyramidCubePropertiesTrackers.size()){
+  if((countOfBlocksUpright >= kMinUprightBlocksForPyramid) ||
+     (countOfBlocksUpright == _pyramidCubePropertiesTrackers.size())){
     if(_chooserPhase != ChooserPhase::BuildingPyramid){
       _chooserPhase = ChooserPhase::BuildingPyramid;
       UpdateActiveBehaviorGroup(_robot, false);
@@ -834,6 +845,45 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
       UpdateActiveBehaviorGroup(_robot, true);
     }
   }
+  
+  
+  /////
+  // Logic for when to notify game if the BuildPyramidPreReqs have changed
+  /////
+  const bool uprightCountChanged = _lastUprightBlockCount != countOfBlocksUpright;
+  if(uprightCountChanged && _robot.HasExternalInterface()){
+    // Collect information about state of world/game
+    const bool isSoftSpark = IsPyramidSoftSpark(robot);
+    const bool didUserRequestSparkEnd =
+                  robot.GetBehaviorManager().DidGameRequestSparkEnd();
+    
+    const bool minimumUprightCountReached =
+      countOfBlocksUpright >= kMinUprightBlocksForPyramid;
+    const bool fellBelowMinimumUprightCount =
+      (_lastUprightBlockCount >= kMinUprightBlocksForPyramid) &&
+      (countOfBlocksUpright < kMinUprightBlocksForPyramid);
+    
+    
+    // Combining all of the above conditions into should send determination
+    const bool shouldSendPreReqsMet = minimumUprightCountReached &&
+                                      !isSoftSpark &&
+                                      !didUserRequestSparkEnd;
+    
+    const bool shouldSendPreReqsNoLongerMet = fellBelowMinimumUprightCount &&
+                                              !isSoftSpark &&
+                                              !didUserRequestSparkEnd &&
+                                              !_pyramidObjectiveAchieved;
+    
+    if(shouldSendPreReqsMet){
+      _robot.GetExternalInterface()->BroadcastToGame<
+        ExternalInterface::BuildPyramidPreReqsChanged>(true);
+    }else if(shouldSendPreReqsNoLongerMet){
+      _robot.GetExternalInterface()->BroadcastToGame<
+        ExternalInterface::BuildPyramidPreReqsChanged>(false);
+    }
+  }
+  
+
   
   _lastUprightBlockCount = countOfBlocksUpright;
 }
@@ -1089,7 +1139,7 @@ bool BuildPyramidBehaviorChooser::IsAnOnSideCubeLight(CubeAnimationTrigger anim)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CubeAnimationTrigger BuildPyramidBehaviorChooser::GetAppropriateOnSideAnimation(Robot& robot, const ObjectID& staticID)
 {
-  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(staticID);
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(staticID);
   if(obj != nullptr){
     if(obj->IsPoseStateKnown()){
       return CubeAnimationTrigger::PyramidOnSideLocated;
@@ -1184,8 +1234,8 @@ ObjectLights BuildPyramidBehaviorChooser::GetBaseFormedBaseLightsModifier(Robot&
   ObjectLights baseBlockLights;
   baseBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
   
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(staticID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(baseID);
   if(staticBlock == nullptr || baseBlock == nullptr){
     return baseBlockLights;
   }
@@ -1211,8 +1261,8 @@ ObjectLights BuildPyramidBehaviorChooser::GetBaseFormedStaticLightsModifier(Robo
   ObjectLights staticBlockLights;
   staticBlockLights.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
   
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(staticID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(baseID);
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(staticID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(baseID);
   if(staticBlock == nullptr || baseBlock == nullptr){
     return staticBlockLights;
   }

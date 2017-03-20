@@ -127,7 +127,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       break;    // Reply "OK"
     
     case TEST_RADIOTX:
-      Radio::sendTestPacket();
+      // This no longer exists
       break;    // Reply "OK"
     
     case TEST_KILLHEAD:

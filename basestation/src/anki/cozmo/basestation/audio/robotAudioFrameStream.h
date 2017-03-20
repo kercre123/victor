@@ -15,7 +15,7 @@
 #ifndef __Basestation_Audio_RobotAudioFrameStream_H__
 #define __Basestation_Audio_RobotAudioFrameStream_H__
 
-#include "anki/cozmo/basestation/audio/audioDataTypes.h"
+#include "audioEngine/audioTools/audioDataTypes.h"
 #include "util/helpers/noncopyable.h"
 #include <stdio.h>
 #include <queue>
@@ -26,7 +26,7 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
   
-class RobotAudioFrameStream : Util::noncopyable  {
+class RobotAudioFrameStream : private Util::noncopyable  {
   
 public:
   
@@ -52,17 +52,17 @@ public:
   size_t AudioFrameCount() const { return _audioFrameQueue.size(); }
   
   //  Push Robot Audio Message into buffer stream, this will take ownership of message's memory
-  void PushRobotAudioFrame( AudioFrameData* audioFrame );
+  void PushRobotAudioFrame( AudioEngine::AudioFrameData* audioFrame );
   
   //  Pop Robot Audio Message out of buffer stream, this will release relinquished of message's memory to caller.
-  const AudioFrameData* PopRobotAudioFrame();
+  const AudioEngine::AudioFrameData* PopRobotAudioFrame();
 
 
 private:
 
   double _createdTime_ms = 0.0;
   bool _isComplete = false;
-  using AudioFrameQueueType = std::queue< AudioFrameData* >;
+  using AudioFrameQueueType = std::queue< AudioEngine::AudioFrameData* >;
   AudioFrameQueueType _audioFrameQueue;
   std::mutex _lock;
 

@@ -8,6 +8,11 @@ set -e
 # Exit if a needed environment variable is not set
 set -u
 
+SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
+source "${SCRIPT_PATH}/build_env.sh"
+
+profile_begin "" "[$@]"
+
 GIT=`which git`
 if [ -z $GIT ];then
   echo git not found
@@ -133,3 +138,4 @@ $ASSET_ROOT/build/$TARGET/dist/gameData/stringMap.json \
 $BS_ROOT/resources/config/stringMap.json \
 $DIST_ROOT/config/stringMap.json
 
+profile_end ""

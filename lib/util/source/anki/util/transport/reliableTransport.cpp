@@ -125,6 +125,7 @@ ReliableTransport::ReliableTransport(IUnreliableTransport* unreliableTransport, 
 #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   , _timesBetweenUpdates(1000)
   , _lastUpdateTime(kNetTimeStampZero)
+  , _lastReportOfSlowUpdate(kNetTimeStampZero)
 #endif // ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   , _runSynchronous(true)
 {
@@ -340,7 +341,7 @@ void ReliableTransport::Disconnect(const TransportAddress& destAddress)
 
 void ReliableTransport::StartClient()
 {
-  _unreliable->StartClient();
+  QueueAction([this] { _unreliable->StartClient(); });
 }
 
 
@@ -360,7 +361,7 @@ void ReliableTransport::StopClient()
   
 void ReliableTransport::StartHost()
 {
-  _unreliable->StartHost();
+  QueueAction( [this] { _unreliable->StartHost(); });
 }
 
 
@@ -702,10 +703,15 @@ void ReliableTransport::Update()
       _timesBetweenUpdates.AddStat(timeSinceLastUpdate);
       
       // We expect ~2ms, but it's only a big issue if it seriously impacts our ability to read and ack packets in a timely manner
-      if (timeSinceLastUpdate > 15.0)
+      if (timeSinceLastUpdate > 15.0 && !_reliableConnectionMap.empty())
       {
-        //PRINT_NAMED_WARNING("ReliableTransport.Update.Slow", "Unusually long between updates: %.2f ms (expect ~2ms)", timeSinceLastUpdate);
-        Anki::Util::sEventF("reliable_transport.update.sleep.slow", {{DDATA,"2"}}, "%.2f", timeSinceLastUpdate);
+        const double timeSinceLastReport = updateStartTimeMs - _lastReportOfSlowUpdate;
+        const double kMinTimeBetweenSlowSleepReports_ms = 60000.0;
+        if (timeSinceLastReport > kMinTimeBetweenSlowSleepReports_ms) {
+          Anki::Util::sChanneledInfoF("Network", "reliable_transport.update.sleep.slow",
+                                      {{DDATA,"2"}}, "%.2f", timeSinceLastUpdate);
+          _lastReportOfSlowUpdate = updateStartTimeMs;
+        }
       }
     }
     _lastUpdateTime = updateStartTimeMs;

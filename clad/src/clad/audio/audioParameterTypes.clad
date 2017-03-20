@@ -1,8 +1,7 @@
 // Available Game parameters in project
 
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioMetaData {
 namespace GameParameter {
 
 enum uint_32 ParameterType
@@ -38,6 +37,5 @@ enum uint_32 ParameterType
 }
 
 } // GameParameter
-} // Audio
-} // Cozmo
+} // AudioMetaData
 } // Anki

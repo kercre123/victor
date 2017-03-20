@@ -662,8 +662,8 @@ namespace Cozmo {
   {
     AnkiAssert(_havePrevPoseData);
     
-    const Pose3d& crntPose = _poseData.poseStamp.GetPose();
-    const Pose3d& prevPose = _prevPoseData.poseStamp.GetPose();
+    const Pose3d& crntPose = _poseData.histState.GetPose();
+    const Pose3d& prevPose = _prevPoseData.histState.GetPose();
     const Radians crntAngle = crntPose.GetRotation().GetAngleAroundZaxis();
     const Radians prevAngle = prevPose.GetRotation().GetAngleAroundZaxis();
     const Vec3f& crntT = crntPose.GetTranslation();
@@ -724,13 +724,13 @@ namespace Cozmo {
   
   Radians VisionSystem::GetCurrentHeadAngle()
   {
-    return _poseData.poseStamp.GetHeadAngle();
+    return _poseData.histState.GetHeadAngle_rad();
   }
   
   
   Radians VisionSystem::GetPreviousHeadAngle()
   {
-    return _prevPoseData.poseStamp.GetHeadAngle();
+    return _prevPoseData.histState.GetHeadAngle_rad();
   }
   
   bool VisionSystem::CheckMailbox(VisionProcessingResult& result)
@@ -1978,15 +1978,15 @@ namespace Cozmo {
   
   bool VisionSystem::HasBodyPoseChanged(const Radians& bodyAngleThresh, const f32 bodyPoseThresh_mm) const
   {
-    const bool isXPositionSame = NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
-                                      _prevPoseData.poseStamp.GetPose().GetTranslation().x(),
+    const bool isXPositionSame = NEAR(_poseData.histState.GetPose().GetTranslation().x(),
+                                      _prevPoseData.histState.GetPose().GetTranslation().x(),
                                       bodyPoseThresh_mm);
     
-    const bool isYPositionSame = NEAR(_poseData.poseStamp.GetPose().GetTranslation().y(),
-                                      _prevPoseData.poseStamp.GetPose().GetTranslation().y(),
+    const bool isYPositionSame = NEAR(_poseData.histState.GetPose().GetTranslation().y(),
+                                      _prevPoseData.histState.GetPose().GetTranslation().y(),
                                       bodyPoseThresh_mm);
-    const bool isAngleSame =  NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                                   _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+    const bool isAngleSame =  NEAR(_poseData.histState.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                   _prevPoseData.histState.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
                                    bodyAngleThresh.ToFloat());
     
     const bool isPoseSame = isXPositionSame && isYPositionSame && isAngleSame;
@@ -1996,8 +1996,8 @@ namespace Cozmo {
                           
   bool VisionSystem::HasHeadAngleChanged(const Radians& headAngleThresh) const
   {
-    const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
-                                _prevPoseData.poseStamp.GetHeadAngle(),
+    const bool headSame =  NEAR(_poseData.histState.GetHeadAngle_rad(),
+                                _prevPoseData.histState.GetHeadAngle_rad(),
                                 headAngleThresh.ToFloat());
     
     return !headSame;
@@ -2021,7 +2021,7 @@ namespace Cozmo {
     }
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
-    if(headSame && poseSame && !_poseData.isBodyMoving && !_poseData.isHeadMoving && !_prevImage.IsEmpty() &&
+    if(headSame && poseSame && !_prevImage.IsEmpty() && !_poseData.histState.WasCameraMoving() &&
 #      if USE_THREE_FRAME_MOTION_DETECTION
        !_prevPrevImage.IsEmpty() &&
 #      endif
@@ -2177,7 +2177,7 @@ namespace Cozmo {
           } else if(temp.z() <= 0.f) {
             PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadProjectedZ",
                                 "z<=0 (%f) when projecting motion centroid to ground. Bad homography at head angle %.3fdeg?",
-                                temp.z(), RAD_TO_DEG(_poseData.poseStamp.GetHeadAngle()));
+                                temp.z(), RAD_TO_DEG(_poseData.histState.GetHeadAngle_rad()));
             // Don't report this centroid
             groundRegionArea = 0.f;
             groundPlaneCentroid = 0.f;
@@ -2491,7 +2491,7 @@ namespace Cozmo {
     // if we are carrying an object, it's also not probably a good idea, since we would most likely detect
     // its edges (unless it's carrying high and we are looking down, but that requires modeling what
     // objects can be carried here).
-    if ( _poseData.isLiftMoving || _poseData.poseStamp.IsCarryingObject() ) {
+    if ( _poseData.histState.WasLiftMoving() || _poseData.histState.WasCarryingObject() ) {
       return RESULT_OK;
     }
     
@@ -2533,9 +2533,9 @@ namespace Cozmo {
       Anki::Vec3f offsetBotBackPoint { LIFT_BACK_WRT_WRIST_JOINT, 0.f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - kHardwareFallSlackMargin_mm};
 
       // calculate the lift pose with respect to the poseStamp's origin
-      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
+      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.histState.GetPose(), "RobotLiftBase");
       Pose3d liftPose(0, Y_AXIS_3D(), {0.f, 0.f, 0.f}, &liftBasePose, "RobotLift");
-      Robot::ComputeLiftPose(_poseData.poseStamp.GetLiftAngle(), liftPose);
+      Robot::ComputeLiftPose(_poseData.histState.GetLiftAngle_rad(), liftPose);
       
       // calculate lift wrt camera
       Pose3d liftPoseWrtCamera;
@@ -2777,7 +2777,7 @@ namespace Cozmo {
         }
         for( const auto& point : chain.points ) {
           // project the point to 3D
-          Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f), &_poseData.poseStamp.GetPose(), "ChainPoint");
+          Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f), &_poseData.histState.GetPose(), "ChainPoint");
           Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToOrigin();
           // disabled 3D render
           // _vizManager->DrawSegment("kRenderEdgesInCameraView", pointWrtOrigin.GetTranslation(), pointWrtOrigin.GetTranslation() + Vec3f{0,0,30}, NamedColors::WHITE, false);
@@ -3563,13 +3563,13 @@ namespace Cozmo {
     }
     
     // All the conditions that must be met to bother trying to read the tool code:
-    const bool headMoving = !NEAR(_poseData.poseStamp.GetHeadAngle(), _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1f));
+    const bool headMoving = (_poseData.histState.WasHeadMoving() || _prevPoseData.histState.WasHeadMoving());
     
-    const bool liftMoving = !NEAR(_poseData.poseStamp.GetLiftAngle(), _prevPoseData.poseStamp.GetLiftAngle(), DEG_TO_RAD(0.1f));
+    const bool liftMoving = (_poseData.histState.WasLiftMoving() || _prevPoseData.histState.WasLiftMoving());
 
-    const bool headDown = _poseData.poseStamp.GetHeadAngle() <= MIN_HEAD_ANGLE + HEAD_ANGLE_TOL;
+    const bool headDown = _poseData.histState.GetHeadAngle_rad() <= MIN_HEAD_ANGLE + HEAD_ANGLE_TOL;
     
-    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM;
+    const bool liftDown = _poseData.histState.GetLiftHeight_mm() <= LIFT_HEIGHT_LOWDOCK + READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM;
     
     // Sanity checks: we should not even be calling ReadToolCode if everybody
     // hasn't done their job and got us into position
@@ -3593,11 +3593,11 @@ namespace Cozmo {
       {1.5f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT}, // Right in image
     };
     
-    const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
+    const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.histState.GetPose(), "RobotLiftBase");
     
     Pose3d liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &liftBasePose, "RobotLift");
     
-    Robot::ComputeLiftPose(_poseData.poseStamp.GetLiftAngle(), liftPose);
+    Robot::ComputeLiftPose(_poseData.histState.GetLiftAngle_rad(), liftPose);
     
     Pose3d liftPoseWrtCam;
     if(false == liftPose.GetWithRespectTo(_poseData.cameraPose, liftPoseWrtCam)) {

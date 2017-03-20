@@ -39,9 +39,7 @@ DEF Face_2 Face {
   translation -0.0469527 0.41004 0.39
   image "face05.png"
 }
-BlockWorldComms {
-}
-CozmoBot {
+%COZMOBOT% {
   rotation 0 0 1 4.71239
   name "CozmoBot_1"
 }

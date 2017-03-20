@@ -14,7 +14,8 @@ public static class Localization {
     string value;
     if (!_st.TryGetString(key, out value)) {
 #if !UNITY_EDITOR
-      DAS.Warn("LocalizedString.Get.MissingKey", "");  //disabling populating of key name for COPPA reasons (JDN)
+      //disabling populating of key name for COPPA reasons (JDN)
+      DAS.Warn("LocalizedString.Get.MissingKey", PrivacyGuard.HidePersonallyIdentifiableInfo(key));
 #else
       if (Application.isPlaying) {
         DAS.Warn("LocalizedString.Get.MissingKey", key);
@@ -67,6 +68,10 @@ public static class Localization {
 
   public static string LoadLocaleAndCultureInfo(string languageOverride = null) {
     string deviceLocale;
+#if SHIPPING
+        deviceLocale = "en-US";
+#else
+    // Only show localization logic in non-shipping builds
     if (string.IsNullOrEmpty(languageOverride)) {
       SystemLanguage language = Application.systemLanguage;
       switch (language) {
@@ -90,6 +95,7 @@ public static class Localization {
     else {
       deviceLocale = languageOverride;
     }
+#endif
 
     _CurrentLocale = deviceLocale;
     _CurrentCulture = new System.Globalization.CultureInfo(_CurrentLocale);

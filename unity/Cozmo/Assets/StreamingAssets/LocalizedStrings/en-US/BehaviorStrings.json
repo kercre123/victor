@@ -84,6 +84,9 @@
   "behavior.ReactToPlacedOnSlope": {
     "translation": ""
   },
+  "behavior.ReactToShaken": {
+    "translation": "Cozmo is dizzy"
+  },
   "behavior.RequestToPlay": {
     "translation": "Cozmo is setting up a game"
   },
@@ -120,6 +123,9 @@
   "behavior.LookForFaceAndCube": {
     "translation": " "
   },
+  "behavior.behavior.RamIntoBlock": {
+    "translation": " "
+  },
   "error.TooManyFaces": {
     "translation": "Make sure Cozmo only sees"
   },
@@ -128,6 +134,9 @@
   },
   "behavior.PrepareCubes": {
     "translation": "Cozmo is preparing his cubes"
+  },
+  "behavior.PeekAboo": {
+      "translation": "Cozmo wants to PeekABoo you"
   },
   "behavior.LookInPlaceForCube": {
     "translation": "Cozmo is looking for a cube"

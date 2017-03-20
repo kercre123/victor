@@ -17,7 +17,7 @@
 #include "anki/common/basestation/math/matrix.h"
 
 #include "anki/cozmo/basestation/groundPlaneROI.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotStateHistory.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"
 
 namespace Anki {
@@ -26,14 +26,11 @@ namespace Cozmo {
 struct VisionPoseData
 {
   TimeStamp_t           timeStamp;
-  RobotPoseStamp        poseStamp;  // contains historical head/lift/pose info
+  HistRobotState        histState;  // contains historical head/lift/pose info
   Pose3d                cameraPose; // w.r.t. pose in poseStamp
   bool                  groundPlaneVisible;
   Matrix_3x3f           groundPlaneHomography;
   GroundPlaneROI        groundPlaneROI;
-  bool                  isBodyMoving = false;
-  bool                  isHeadMoving = false;
-  bool                  isLiftMoving = false;
   ImuDataHistory        imuDataHistory;
   
   VisionPoseData() = default;
@@ -72,19 +69,16 @@ void swap(T1&& first, T2&& second)
   using std::swap;
   
   swap(first.timeStamp, second.timeStamp);
-  swap(first.poseStamp, second.poseStamp);
+  swap(first.histState, second.histState);
   swap(first.cameraPose, second.cameraPose);
   swap(first.groundPlaneVisible, second.groundPlaneVisible);
   swap(first.groundPlaneHomography, second.groundPlaneHomography);
   swap(first.groundPlaneROI, second.groundPlaneROI);
-  swap(first.isBodyMoving, second.isBodyMoving);
-  swap(first.isHeadMoving, second.isHeadMoving);
-  swap(first.isLiftMoving, second.isLiftMoving);
   swap(first.imuDataHistory, second.imuDataHistory);
   
   // Because the cameraPose is wrt the pose contained in poseStamp, set it explicitly
-  first.cameraPose.SetParent(&(first.poseStamp.GetPose()));
-  second.cameraPose.SetParent(&(second.poseStamp.GetPose()));
+  first.cameraPose.SetParent(&(first.histState.GetPose()));
+  second.cameraPose.SetParent(&(second.histState.GetPose()));
 }
 
 

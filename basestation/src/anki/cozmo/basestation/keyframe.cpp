@@ -475,7 +475,7 @@ return RESULT_FAIL; \
       if(_audioReferences.empty()) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
                           "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        static const AudioRef InvalidRef( Audio::GameEvent::GenericEvent::Invalid );
+        static const AudioRef InvalidRef( AudioMetaData::GameEvent::GenericEvent::Invalid );
         return InvalidRef;
       }
       
@@ -515,7 +515,7 @@ return RESULT_FAIL; \
 
         // The casting to 64-bit was borrowed from RobotAudioKeyFrame::SetMembersFromJson(), where the corresponding
         // comment is "We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit"
-        const auto eventId = static_cast<Audio::GameEvent::GenericEvent>( (uint64_t) audioEventVal );
+        const auto eventId = static_cast<AudioMetaData::GameEvent::GenericEvent>( (uint64_t) audioEventVal );
 
         Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
         if(addResult != RESULT_OK) {
@@ -549,7 +549,7 @@ return RESULT_FAIL; \
       if(jsonAudioNames.isArray()) {
         for(s32 i=0; i<jsonAudioNames.size(); ++i) {
           // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-          const auto eventId = static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames[i].asUInt64() );
+          const auto eventId = static_cast<AudioMetaData::GameEvent::GenericEvent>( jsonAudioNames[i].asUInt64() );
           Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
           if(addResult != RESULT_OK) {
             return addResult;
@@ -557,7 +557,7 @@ return RESULT_FAIL; \
         }
       } else {
         // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-        const auto eventId = static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames.asUInt64() );
+        const auto eventId = static_cast<AudioMetaData::GameEvent::GenericEvent>( jsonAudioNames.asUInt64() );
         Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
         if(addResult != RESULT_OK) {
           return addResult;

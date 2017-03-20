@@ -12,7 +12,7 @@
 *
 */
 
-#include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.H"
+#include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
 #include "util/logging/logging.h"
 
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF

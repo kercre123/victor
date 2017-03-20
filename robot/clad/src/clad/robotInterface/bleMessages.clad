@@ -5,29 +5,44 @@
 
 namespace Anki {
 namespace Cozmo {
-	// These are the diffie-hellman key exchange values
-	message EnterPairing {
-		uint_8	secret[16]
-	}
+	namespace BLE {
+		enum uint_32 BluetoothConstants {
+			COZMO_FRAME_DATA_LENGTH = 16
+		}
 
-	message EncodedAESKey {
-		uint_8 secret[16],
-		uint_8 encoded_key[16]
-	}
+		enum uint_32 BluetoothConnectionState {
+			BLE_CONNECTED,
+			BLE_DISCONNECTED_NORMALLY,
+			BLE_CANNOT_CONFIGURE_CONN_PARAMS
+		}
 
-	// This is the Diffie Hellman offloading calculation function
-	message CalculateDiffieHellman {
-		uint_8 local[16],
-		uint_8 remote[16]
-	}
+		// Bitmask for BLE Payload framing
+		enum uint_8 PayloadFlags {
+			START_OF_MESSAGE = 1,
+			END_OF_MESSAGE = 2,
+			MESSAGE_ENCRYPTED = 4
+		}
 
-	message DiffieHellmanResults {
-		uint_8 result[16]
-	}
+		structure Frame {
+			uint_8 flags,
+			uint_8 data[16]
+		}
 
-	// This sends a 32-byte nonce for generating HMACing with the robot
-	message HelloPhone {
-		uint_8	nonce[32],
+		message Disconnect {
+			uint_32 reason
+		}
+
+		message ConnectionState {
+			uint_32 state
+		}
+
+		message DataReceived {
+			Frame frame
+		}
+
+		message SendData {
+			Frame frame
+		}
 	}
 }
 }

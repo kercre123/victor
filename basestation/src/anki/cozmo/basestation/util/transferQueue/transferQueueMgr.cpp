@@ -54,7 +54,12 @@ namespace Anki {
 
     void TransferQueueMgr::StartDataTransfer()
     {
-      DEV_ASSERT(_numRequests == 0, "TransferQueueMgr.StartDataTransfer.InvalidRequestCount");
+      const bool noActiveRequests = _numRequests == 0;
+      DEV_ASSERT(noActiveRequests, "TransferQueueMgr.StartDataTransfer.InvalidRequestCount");
+      if (!noActiveRequests) {
+        // perhaps previous request didn't finish yet, don't start more
+        return;
+      }
       std::unique_lock<std::mutex> lock{_mutex};
       _numRequests = 0;
 

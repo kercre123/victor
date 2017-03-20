@@ -10,13 +10,18 @@ matlab.mat
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 *.wbproj
 #
-simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY
-#
 simulator/controllers/webotsCtrlViz/webotsCtrlViz
 simulator/controllers/webotsCtrlViz/resources
+simulator/controllers/webotsCtrlViz/saved_images
+simulator/controllers/webotsCtrlViz/saved_state
 #
 simulator/controllers/webotsCtrlRobot/webotsCtrlRobot
 simulator/controllers/webotsCtrlRobot/resources
+simulator/controllers/webotsCtrlRobot/nvStorage
+#
+simulator/controllers/webotsCtrlRobot2/webotsCtrlRobot2
+simulator/controllers/webotsCtrlRobot2/resources
+simulator/controllers/webotsCtrlRobot2/nvStorage
 #
 simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube
 simulator/controllers/webotsCtrlLightCube/resources
@@ -26,12 +31,19 @@ simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest
 simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
 simulator/controllers/webotsCtrlGameEngine/resources
 simulator/controllers/webotsCtrlGameEngine/temp
+simulator/controllers/webotsCtrlGameEngine/files
+#
+simulator/controllers/webotsCtrlGameEngine2/webotsCtrlGameEngine2
+simulator/controllers/webotsCtrlGameEngine2/resources
+simulator/controllers/webotsCtrlGameEngine2/temp
+simulator/controllers/webotsCtrlGameEngine2/files
 #
 simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
 simulator/controllers/webotsCtrlKeyboard/factory_test_logs
 simulator/controllers/webotsCtrlKeyboard/resources
 #
 simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog
+#
 simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/worlds/__generated__.wbt
@@ -41,7 +53,7 @@ project/build-scripts/webots/__GENERATED_ANIMATIONS_TEST__.cfg
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Symlinks for face libraries:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-simulator/controllers/webotsCtrlGameEngine/lib 
+simulator/controllers/webotsCtrlGameEngine/lib
 simulator/controllers/webotsCtrlGameEngine/libfsdk.dylib
 simulator/controllers/webotsCtrlKeyboard/lib
 simulator/controllers/webotsCtrlViz/lib
@@ -163,7 +175,6 @@ anki.c
 basestation/cozmo_sounds
 a7_out.txt
 /a7_out.txt.old
-**.uvguix.*
 probeTree_*.mat
 build_ios
 ios/CozmoVision/build
@@ -204,11 +215,12 @@ animationTool.zip
 UnityDASDll/UnityDASDll/obj/*
 UnityDASDll/UnityDASDll/bin/*
 
-# pycharm 
+# pycharm
 .idea
 
 # Anki specific
 EXTERNALS
+TAGS
 
 #symlinks
 resources/config/basestation/firmware
@@ -228,172 +240,20 @@ resources/config/basestation/old_firmware
 .idea
 *.swo
 
-matlab.mat
-TAGS
-EXTERNALS
-.idea
 
-
-# Webots
-*.wbproj
-simulator/controllers/webotsCtrlViz/webotsCtrlViz
-simulator/controllers/webotsCtrlViz/saved_images
-simulator/controllers/webotsCtrlViz/saved_state
-simulator/controllers/webotsCtrlRobot/webotsCtrlRobot
-simulator/controllers/webotsCtrlRobot/nvStorage
-simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube
-simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
-simulator/controllers/webotsCtrlGameEngine/resources
-simulator/controllers/webotsCtrlGameEngine/temp
-simulator/controllers/webotsCtrlGameEngine/files
-simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest
-simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
-simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
-simulator/worlds/__generated__.wbt
-
-# Mac OS
-*.DS_Store
-# Xcode
-*.mexmaci64
-*.o
-*.obj
-*.so
-*.la
-*.a
-*.ko
-*.pbxuser
-*.mode1v3
-*.mode2v3
-*.perspectivev3
-*.moved-aside
-
-# Xcode ignores
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-*.xcuserstate
-*.xccheckout
-xcuserdata
-*.moved-aside
-RTE
 # MSVC
-*.res
-*.user
-*.suo
-*.sdf
-*.opensdf
-*.ncb
-*.exe
-*.dll
-*.lib
-*.aps
-*.layout
-*.log
-*.tlog
-*.pdb
-*.lastbuildstate
-*.idb
-*.ilk
-*.pyc
-*.mexw32
-*.mexw64
-*.mexmac
-*.mexmaci64
-*.ipch
-*.asv
 tools/**/bin
 tools/**/obj
-matlab/profiling/*
-build/msvc*
-build/xcode*
-project/xcode4/Cozmo/Cozmo.xcodeproj/xcuserdata
-project/xcode4/Cozmo/Cozmo.xcodeproj/project.xcworkspace/xcuserdata
-/build
-simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
-simulator/controllers/webotsCtrlViz/webotsCtrlViz
-simulator/controllers/webotsCtrlViz/lib
-screenshot.png
-rx-packet-log.txt
-blockworld_controller
-*.mvlib
-*.shv*lib
-movidiusTests/shaveTests2/output
-*.asmgen
-robot/evmMake/output
-movidiusTests/dmaTests/output
-ims.mat
-robot/ld/objects.ldscript
-movidiusTests/shaveTests3/output
-interp2InnerLoop.asmgen-1155e305
-robot/.settings
-.com.apple.timemachine.supported
-coretech/common/include/anki/common/robot/array2d.h.BACKUP.85552.h
-coretech/common/include/anki/common/robot/array2d.h.BASE.85552.h
-coretech/common/include/anki/common/robot/array2d.h.LOCAL.85552.h
-coretech/common/include/anki/common/robot/array2d.h.REMOTE.85552.h
-coretech/common/include/anki/common/robot/array2d.h.orig
-movidiusTests/shaveTests4/output/
-CMakeFiles
-visionUnitTestController
-robot/robot.uvgui.anki
-robot/robot_robot.dep
-robot/robot_vision-tests.dep
-robot/startup_stm32f429_439xx.lst
-coretech/vision/robot/test/embeddedVisionTests - Copy.cpp
-robot/robot_embedded-tests.dep
-robot/VERSION
-*.MikeAnderson
-*.dep
-*.ini
-robot/syscon/JLinkLog.txt
-robot/chipSimulator/robot_chipSimulator.uvguix.anki
-cozmo_viz_controller
-matlab/basicsResults.mat
-matlab/basicsResults_input.mat
-matlab/perTestStatsResults.mat
-systemTests/tests/intermediate/
-matlab/basicsResults_input*.mat
-webots_keyboard_controller
-systemTests/tests/*.mat
-matlab/recompileBasicsAllInput.mat
-matlab/runParallelProcesses_input*.mat
-matlab/nohup.out
-systemTests/nohup.out
-systemTests/recompileBasicsAllInput.mat
-systemTests/runParallelProcesses_input*.mat
-matlab/runParallelProcesses_mutex*.mat
-matlab/perPoseAllInput.mat
-out.txt
-trainingState.mat
-tmp.mat
-tmp_allImages.mat
-training.mat
-._*
-build_makefile
-anki.cpp
-anki.c
-basestation/cozmo_sounds
-a7_out.txt
-/a7_out.txt.old
-**.uvguix.*
-probeTree_*.mat
-build_ios
-ios/build
-ios/CozmoVision/CozmoVision.xcodeproj/xcuserdata
-coretech/vision/matlab/@VisionMarkerTrained/trainingState_*.*
+
+# Keil
 *.saved_uv4
-tools/modulate_led/Project/LCD/MDK-ARM/Demo/
 *.uvgui.*
+**.uvguix.*
 *.uvoptx.*
 *.uvprojx.*
+*.uvproj
+robot/VERSION
 uImage
-robot/som/ov2686/ov2686_code_timestamp.h
-robot/som/*.jpg
 
 # Ban .safe files, unless they're in the proper place (releases)
 *.safe
@@ -473,9 +333,6 @@ JLinkLog.txt
 robot/cube/lst/block.m51
 resources/config/basestation/AnkiLogStringTables.json
 coretech/generated
-
-# VSCode
-.vscode
 
 # Buck
 **.buckd

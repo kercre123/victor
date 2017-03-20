@@ -17,13 +17,14 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
-void AudioEngineMessageHandler::Broadcast( const MessageAudioClient& message)
+void AudioEngineMessageHandler::Broadcast( const AudioEngine::Multiplexer::MessageAudioClient& message)
 {
-  _eventMgr.Broadcast( AnkiEvent<MessageAudioClient>( static_cast<uint32_t>(message.GetTag()), message ));
+  _eventMgr.Broadcast( AnkiEvent<AudioEngine::Multiplexer::MessageAudioClient>( static_cast<uint32_t>(message.GetTag()), message ));
 }
 
 
-Signal::SmartHandle AudioEngineMessageHandler::Subscribe(const MessageAudioClientTag& tagType, std::function<void(const AnkiEvent<MessageAudioClient>&)> messageHandler)
+Signal::SmartHandle AudioEngineMessageHandler::Subscribe ( const AudioEngine::Multiplexer::MessageAudioClientTag& tagType,
+                                                           SubscribeFunc messageHandler )
 {
   return _eventMgr.Subscribe( static_cast<uint32_t>(tagType), messageHandler );
 }

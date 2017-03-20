@@ -9,7 +9,7 @@ public class SpeedTapRoundData {
   [SerializeField]
   protected MusicStateWrapper _MidRoundMusic;
 
-  public Anki.Cozmo.Audio.GameState.Music MidRoundMusic {
+  public Anki.AudioMetaData.GameState.Music MidRoundMusic {
     get { return _MidRoundMusic.Music; }
   }
 

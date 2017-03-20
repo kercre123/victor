@@ -5,6 +5,8 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/types.h"
+#include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -71,32 +73,24 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
-  // There should be nothing in BlockWorld yet
-  BlockWorldFilter filter;
-  std::vector<ObservableObject*> objects;
-  blockWorld.FindMatchingObjects(filter, objects);
-  ASSERT_TRUE(objects.empty());
+  {
+    // There should be nothing in BlockWorld yet
+    BlockWorldFilter filter;
+    std::vector<ObservableObject*> objects;
+    blockWorld.FindLocatedMatchingObjects(filter, objects);
+    ASSERT_TRUE(objects.empty());
+  }
+  
+  {
+    // no connected objects either
+    BlockWorldFilter filter;
+    std::vector<ActiveObject*> activeObjects;
+    blockWorld.FindConnectedActiveMatchingObjects(filter, activeObjects);
+    ASSERT_TRUE(activeObjects.empty());
+  }
 
   // Fake a state message update for robot
-  // The robot should not report at t=0, since we are after timeSync and 0 is used by the
-  // robot constructor to set everything to 0
-  RobotState stateMsg(1, // timestamp,
-                      0, // pose_frame_id,
-                      1, // pose_origin_id,
-                      RobotPose(0.f,0.f,0.f,0.f,0.f),
-                      0.f, // lwheel_speed_mmps,
-                      0.f, // rwheel_speed_mmps,
-                      0.f, // headAngle,
-                      0.f, // liftAngle,
-                      0.f, // liftHeight,
-                      AccelData(),
-                      GyroData(),
-                      0.f, // batteryVoltage,
-                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
-                      0, // lastPathID,
-                      0, // cliffDataRaw,
-                      0, // currPathSegment,
-                      0); // numFreeSegmentSlots)
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
   
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
@@ -145,8 +139,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   corners[Quad::BottomLeft] = {xcen - markerHalfSize, ycen + markerHalfSize};
   corners[Quad::TopRight]   = {xcen + markerHalfSize, ycen - markerHalfSize};
   corners[Quad::BottomRight]= {xcen + markerHalfSize, ycen + markerHalfSize};
-  TimeStamp_t fakeTime = 1;
-  Vision::ObservedMarker marker(fakeTime, testCode, corners, robot.GetVisionComponent().GetCamera());
+  Vision::ObservedMarker marker(stateMsg.timestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
   
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
@@ -159,95 +152,126 @@ TEST(BlockWorld, AddAndRemoveObject)
   std::list<Vision::ObservedMarker> markers{marker};
   lastResult = robot.GetBlockWorld().Update(markers);
   ASSERT_EQ(lastResult, RESULT_OK);
-  ASSERT_EQ(0, markers.size()); // all markers will get used up
   
-  // There should now be an object of the right type, with the right ID in BlockWorld
-  objects.clear();
-  filter.SetFilterFcn(nullptr);
-  filter.SetAllowedTypes({testType});
-  blockWorld.FindMatchingObjects(filter, objects);
-  ASSERT_EQ(1, objects.size());
-  auto objByIdIter = objects.begin();
-  ASSERT_NE(objByIdIter, objects.end());
-  ASSERT_NE(*objByIdIter, nullptr);
+  {
+    // There should be nothing in BlockWorld yet because we have only seen it once (it's unconfirmed)
+    BlockWorldFilter filter;
+    std::vector<ObservableObject*> objects;
+    blockWorld.FindLocatedMatchingObjects(filter, objects);
+    ASSERT_TRUE(objects.empty());
+  }
+
+  {
+    // still no connected objects
+    BlockWorldFilter filter;
+    std::vector<ActiveObject*> activeObjects;
+    blockWorld.FindConnectedActiveMatchingObjects(filter, activeObjects);
+    ASSERT_TRUE(activeObjects.empty());
+  }
   
-  ObjectID objID = (*objByIdIter)->GetID();
-  ObservableObject* object = blockWorld.GetObjectByID(objID);
-  ASSERT_NE(object, nullptr);
-  ASSERT_EQ(object->GetID(), objID);
-  ASSERT_EQ(object->GetType(), testType);
-  
-  // Returned object should be dynamically-castable to its base class:
-  Block* block = dynamic_cast<Block*>(object);
-  ASSERT_NE(block, nullptr);
-  
-  // Object should start in Unknown pose state, until confirmed
-  ASSERT_EQ(PoseState::Unknown, object->GetPoseState());
-  
-  // After seeing three times, should be Known
+  // After seeing three times, ...
   const s32 kNumObservations = 3;
-  for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
+  for(s32 i=0; i<kNumObservations; ++i)
   {
     // Tick the robot, which will tick the BlockWorld, which will use the queued marker
-    Vision::ObservedMarker marker(fakeTime, testCode, corners, robot.GetVisionComponent().GetCamera());
+    stateMsg.timestamp+=10;
+    lastResult = robot.UpdateFullRobotState(stateMsg);
+    ASSERT_EQ(RESULT_OK, lastResult);
+    Vision::ObservedMarker marker(stateMsg.timestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
     std::list<Vision::ObservedMarker> markers{marker};
     lastResult = robot.GetBlockWorld().Update(markers);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
-  ASSERT_EQ(PoseState::Known, object->GetPoseState());
+  ObjectID firstObjID;
   
-  // Projected corners of the marker should match the corners of the fake marker
-  // we queued above
-  std::vector<const Vision::KnownMarker*> observedMarkers;
-  object->GetObservedMarkers(observedMarkers, 1);
-  ASSERT_EQ(1, observedMarkers.size()); // Should only have seen one
+  // There should now be an object of the right type, with the right ID in BlockWorld
+  {
+    BlockWorldFilter filter;
+    std::vector<ObservableObject*> objects;
+    filter.SetAllowedTypes({testType});
+    blockWorld.FindLocatedMatchingObjects(filter, objects);
+    ASSERT_EQ(1, objects.size());
+    auto objByIdIter = objects.begin();
+    ASSERT_NE(objByIdIter, objects.end());
+    ASSERT_NE(*objByIdIter, nullptr);
+    
+    ObservableObject* object = *objByIdIter;
+    ASSERT_EQ(object->GetType(), testType);
+    firstObjID = object->GetID();
+    
+    ASSERT_EQ(PoseState::Known, object->GetPoseState());
   
-  Pose3d markerPoseWrtCamera;
-  const bool poseResult = observedMarkers[0]->GetPose().GetWithRespectTo(robot.GetVisionComponent().GetCamera().GetPose(), markerPoseWrtCamera);
-  ASSERT_TRUE(poseResult);
+    // Projected corners of the marker should match the corners of the fake marker
+    // we queued above
+    std::vector<const Vision::KnownMarker*> observedMarkers;
+    object->GetObservedMarkers(observedMarkers, 1);
+    ASSERT_EQ(1, observedMarkers.size()); // Should only have seen one
   
-  auto obsCorners3d = observedMarkers[0]->Get3dCorners(markerPoseWrtCamera);
-  Quad2f obsCorners;
-  robot.GetVisionComponent().GetCamera().Project3dPoints(obsCorners3d, obsCorners);
-  const bool cornersMatch = IsNearlyEqual(obsCorners, corners, .25f);
-  ASSERT_TRUE(cornersMatch);
+    Pose3d markerPoseWrtCamera;
+    const bool poseResult = observedMarkers[0]->GetPose().GetWithRespectTo(robot.GetVisionComponent().GetCamera().GetPose(), markerPoseWrtCamera);
+    ASSERT_TRUE(poseResult);
+  
+    auto obsCorners3d = observedMarkers[0]->Get3dCorners(markerPoseWrtCamera);
+    Quad2f obsCorners;
+    robot.GetVisionComponent().GetCamera().Project3dPoints(obsCorners3d, obsCorners);
+    const bool cornersMatch = IsNearlyEqual(obsCorners, corners, .25f);
+    ASSERT_TRUE(cornersMatch);
+  }
 
   // After NOT seeing the object three times, it should still be known
   // because we don't yet have evidence that actually isn't there
   std::list<Vision::ObservedMarker> emptyMarkersList;
-  for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
+  for(s32 i=0; i<kNumObservations; ++i)
   {
-    robot.GetVisionComponent().FakeImageProcessed(fakeTime);
+    stateMsg.timestamp+=10;
+    lastResult = robot.UpdateFullRobotState(stateMsg);
+    ASSERT_EQ(RESULT_OK, lastResult);
+    robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp);
     lastResult = robot.GetBlockWorld().Update(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
-  ASSERT_EQ(PoseState::Known, object->GetPoseState());
+  {
+    // should be known now
+    ObservableObject* object = blockWorld.GetLocatedObjectByID(firstObjID);
+    ASSERT_NE(object, nullptr);
+    ASSERT_EQ(PoseState::Known, object->GetPoseState());
   
-  // Now fake an object moved message
-  object->SetIsMoving(true, 0);
-  robot.GetObjectPoseConfirmer().SetPoseState(object, PoseState::Dirty);
+    // Now fake an object moved message
+    object->SetIsMoving(true, 0);
+    robot.GetObjectPoseConfirmer().MarkObjectDirty(object);
+  }
   
   // Now after not seeing the object three times, it should be Unknown
   // because it was dirty
-  for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
+  for(s32 i=0; i<kNumObservations; ++i)
   {
-    robot.GetVisionComponent().FakeImageProcessed(fakeTime);
+    stateMsg.timestamp+=10;
+    lastResult = robot.UpdateFullRobotState(stateMsg);
+    ASSERT_EQ(RESULT_OK, lastResult);
+    robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp);
     lastResult = robot.GetBlockWorld().Update(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
-  ASSERT_EQ(PoseState::Unknown, object->GetPoseState());
+  {
+    // should be unknown now. In the new code Unknown objects are removed from their origin
+    ObservableObject* object = blockWorld.GetLocatedObjectByID(firstObjID);
+    ASSERT_EQ(object, nullptr);
+  }
   
   // See the object again, but from "far" away, which after a few ticks should make it
   // Dirty again.
   corners.Scale(0.15f);
   
-  for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
+  for(s32 i=0; i<kNumObservations; ++i)
   {
     // Tick the robot, which will tick the BlockWorld, which will use the queued marker
-    Vision::ObservedMarker markerFar(fakeTime, testCode, corners, robot.GetVisionComponent().GetCamera());
+    stateMsg.timestamp+=10;
+    lastResult = robot.UpdateFullRobotState(stateMsg);
+    ASSERT_EQ(RESULT_OK, lastResult);
+    Vision::ObservedMarker markerFar(stateMsg.timestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
     std::list<Vision::ObservedMarker> markersFar{markerFar};
     lastResult = robot.GetBlockWorld().Update(markersFar);
     ASSERT_EQ(lastResult, RESULT_OK);
@@ -255,27 +279,40 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   // Find the object again (because it may have been deleted while unknown since
   // it had no active ID set)
+  ObjectID secondObjID;
   {
     BlockWorldFilter filter;
     filter.SetAllowedTypes({testType});
     std::vector<ObservableObject*> objects;
-    blockWorld.FindMatchingObjects(filter, objects);
+    blockWorld.FindLocatedMatchingObjects(filter, objects);
     ASSERT_EQ(objects.size(), 1);
     auto objByIdIter = objects.begin();
     ASSERT_NE(objByIdIter, objects.end());
     ASSERT_NE(*objByIdIter, nullptr);
-    object = *objByIdIter;
-    objID = object->GetID();
+    ObservableObject* object = *objByIdIter;
+    secondObjID = object->GetID();
+  
+    ASSERT_NE(nullptr, object);
+    ASSERT_EQ(PoseState::Dirty, object->GetPoseState());
   }
   
-  ASSERT_NE(nullptr, object);
-  ASSERT_EQ(PoseState::Dirty, object->GetPoseState());
-  
-  // Now try deleting the object, and make sure we can't still get it using the old ID
-  blockWorld.ClearObject(objID);
-  object = blockWorld.GetObjectByID(objID);
-  ASSERT_NE(object, nullptr);
-  ASSERT_EQ(object->GetPoseState(), PoseState::Unknown);
+  {
+    // Now try clearing the object, and make sure we can't still get it using the second ID
+    ObservableObject* objectBeforeClear = blockWorld.GetLocatedObjectByID(secondObjID);
+    ASSERT_NE(objectBeforeClear, nullptr);
+    
+    blockWorld.ClearLocatedObject(objectBeforeClear);
+    
+    ObservableObject* objectAfterClear = blockWorld.GetLocatedObjectByID(secondObjID);
+    ASSERT_NE(objectAfterClear, nullptr);
+    
+    BlockWorldFilter filter;
+    filter.AddAllowedID(secondObjID);
+    blockWorld.DeleteLocatedObjects(filter);
+    
+    ObservableObject* objectAfterDelete = blockWorld.GetLocatedObjectByID(secondObjID);
+    ASSERT_EQ(objectAfterDelete, nullptr);
+  }
   
 } // BlockWorld.AddAndRemoveObject
 
@@ -354,27 +391,18 @@ TEST(BlockWorld, UpdateObjectOrigins)
   // There should be nothing in BlockWorld yet
   BlockWorldFilter filter;
   std::vector<ObservableObject*> objects;
-  blockWorld.FindMatchingObjects(filter, objects);
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
   ASSERT_TRUE(objects.empty());
   
+  {
+    // no connected objects either
+    std::vector<ActiveObject*> activeObjects;
+    blockWorld.FindConnectedActiveMatchingObjects(BlockWorldFilter(), activeObjects);
+    ASSERT_TRUE(activeObjects.empty());
+  }
+  
   // Fake a state message update for robot
-  RobotState stateMsg(1, // timestamp,
-                      0, // pose_frame_id,
-                      1, // pose_origin_id,
-                      RobotPose(0.f,0.f,0.f,0.f,0.f),
-                      0.f, // lwheel_speed_mmps,
-                      0.f, // rwheel_speed_mmps,
-                      0.f, // headAngle,
-                      0.f, // liftAngle,
-                      0.f, // liftHeight,
-                      AccelData(),
-                      GyroData(),
-                      0.f, // batteryVoltage,
-                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
-                      0, // lastPathID,
-                      0, // cliffDataRaw,
-                      0, // currPathSegment,
-                      0); // numFreeSegmentSlots)
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
   
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
@@ -395,10 +423,10 @@ TEST(BlockWorld, UpdateObjectOrigins)
     Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
   };
   
-  const ObjectID farID = robot.GetBlockWorld().AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  const ObjectID farID = robot.GetBlockWorld().AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(farID.IsSet());
   
-  const ObjectID closeID = robot.GetBlockWorld().AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  const ObjectID closeID = robot.GetBlockWorld().AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(closeID.IsSet());
   
   // Camera calibration
@@ -433,11 +461,16 @@ TEST(BlockWorld, UpdateObjectOrigins)
   
   // Should have a "far" object present in block world now
   filter.SetAllowedTypes({farType});
-  const ObservableObject* matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  const ObservableObject* matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
   ASSERT_NE(nullptr, matchingObject);
   
   const ObjectID obsFarID = matchingObject->GetID();
   ASSERT_EQ(farID, obsFarID);
+
+  // active match
+  ActiveObject* connectedFar = robot.GetBlockWorld().GetConnectedActiveObjectByID(farID);
+  ASSERT_NE(nullptr, connectedFar);
+  ASSERT_EQ(connectedFar->GetActiveID(), matchingObject->GetActiveID());
   
   // Should be localized to "far" object
   ASSERT_EQ(farID, robot.GetLocalizedTo());
@@ -453,11 +486,16 @@ TEST(BlockWorld, UpdateObjectOrigins)
   
   // Should have a "close" object present
   filter.SetAllowedTypes({closeType});
-  matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
   ASSERT_NE(nullptr, matchingObject);
   
   const ObjectID obsCloseID = matchingObject->GetID();
   ASSERT_EQ(closeID, obsCloseID);
+  
+  // active match
+  ActiveObject* connectedClose = robot.GetBlockWorld().GetConnectedActiveObjectByID(closeID);
+  ASSERT_NE(nullptr, connectedClose);
+  ASSERT_EQ(connectedClose->GetActiveID(), matchingObject->GetActiveID());
   
   // Should be localized to "close" object
   ASSERT_EQ(closeID, robot.GetLocalizedTo());
@@ -470,11 +508,11 @@ TEST(BlockWorld, UpdateObjectOrigins)
   // Should have both objects
   filter.SetAllowedTypes({farType, closeType});
   std::vector<ObservableObject*> matchingObjects;
-  robot.GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
   ASSERT_EQ(2, matchingObjects.size());
   
   // Far object should now be Known pose state
-  matchingObject = robot.GetBlockWorld().GetObjectByID(farID);
+  matchingObject = robot.GetBlockWorld().GetLocatedObjectByID(farID);
   ASSERT_NE(nullptr, matchingObject);
   ASSERT_TRUE(matchingObject->IsPoseStateKnown());
   
@@ -498,15 +536,444 @@ namespace {
 // helper for device connection messages, for example when cubes connect/disconnect. Note implementation directly
 // calls the robot handler, rather than simulating actually sending a message
 using namespace Anki::Cozmo;
-void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uint32_t factoryID, Anki::Cozmo::ActiveObjectType device_type, bool connected)
+void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uint32_t factoryID, Anki::Cozmo::ObjectType objectType, bool connected)
 {
+  Anki::Cozmo::ActiveObjectType deviceType = Anki::Cozmo::ActiveObjectType::OBJECT_UNKNOWN;
+  switch(objectType)
+  {
+    case ObjectType::Block_LIGHTCUBE1:
+      deviceType = ActiveObjectType::OBJECT_CUBE1;
+      break;
+    case ObjectType::Block_LIGHTCUBE2:
+      deviceType = ActiveObjectType::OBJECT_CUBE2;
+      break;
+    case ObjectType::Block_LIGHTCUBE3:
+      deviceType = ActiveObjectType::OBJECT_CUBE3;
+    default:
+      DEV_ASSERT(false, "FaceRecvConnectionMessage.UnsupportedObjectType");
+      break;
+  }
+  
   using namespace RobotInterface;
   RobotToEngine msg = RobotToEngine::CreateactiveObjectConnectionState(
-                        ObjectConnectionState(activeID, factoryID, device_type, connected) );
+                        ObjectConnectionState(activeID, factoryID, deviceType, connected) );
   AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
   robot.GetRobotToEngineImplMessaging().HandleActiveObjectConnectionState(event, &robot);
 }
 
+// helper for move messages
+void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp, uint32_t activeID)
+{
+  using namespace RobotInterface;
+  RobotToEngine msg = RobotToEngine::CreateactiveObjectMoved(
+      ObjectMoved(timestamp, activeID, 1, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive ) );
+  AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
+  robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(event, &robot);
+}
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(BlockWorld, PoseUpdates)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  
+  {
+    // no connected objects either
+    std::vector<ActiveObject*> activeObjects;
+    blockWorld.FindConnectedActiveMatchingObjects(BlockWorldFilter(), activeObjects);
+    ASSERT_TRUE(activeObjects.empty());
+  }
+  
+  // Fake a state message update for robot
+  RobotState stateMsg(1, // timestamp,
+                      0, // pose_frame_id,
+                      1, // pose_origin_id,
+                      RobotPose(0.f,0.f,0.f,0.f,0.f),
+                      0.f, // lwheel_speed_mmps,
+                      0.f, // rwheel_speed_mmps,
+                      0.f, // headAngle,
+                      0.f, // liftAngle,
+                      AccelData(),
+                      GyroData(),
+                      0.f, // batteryVoltage,
+                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
+                      0, // lastPathID,
+                      0, // cliffDataRaw,
+                      0, // currPathSegment,
+                      0); // numFreeSegmentSlots)
+  
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // Camera calibration
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  
+  // Enable "vision while moving" so that we don't have to deal with trying to compute
+  // angular velocities, since we don't have real state history to do so.
+  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  
+  /*
+    + See unique    object1 (non-localizable) from close, seeing same object in *different pose from far
+      | - It should override the pose
+    + See connected object2 (localizable), seeing same object in *different pose from far
+      | - It should NOT override the pose
+    + See connected object3 (localizable), seeing same object in *different pose from far
+      | - It should NOT override the pose
+    + Move object2 & see object 2
+      | - It should override the pose
+    + Move object3
+      | - It should NOT override the pose
+    + Disconnect active object3 & see object3
+      | - It should override the pose
+  */
+  
+  // For faking observations of blocks
+  const ObjectType obj1Type = ObjectType::Block_LIGHTCUBE1;
+  const ObjectType obj2Type = ObjectType::Block_LIGHTCUBE2;
+  const ObjectType obj3Type = ObjectType::Block_LIGHTCUBE3;
+  const Block_Cube1x1 obj1Cube(obj1Type);
+  const Block_Cube1x1 obj2Cube(obj2Type);
+  const Block_Cube1x1 obj3Cube(obj3Type);
+  const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  const Vision::Marker::Code obj3Code = obj3Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  
+//  const Quad2f farCornersLocalizable {
+//    Point2f(213,111),  Point2f(214,158),  Point2f(260,111),  Point2f(258,158)
+//  };
+
+  // These parameters create corners beyond localizable distance
+  const f32 halfHeight = 0.05f*static_cast<f32>(camCalib.GetNrows());
+  const f32 halfWidth = 0.05f*static_cast<f32>(camCalib.GetNcols());
+  const f32 xcen = camCalib.GetCenter_x();
+  const f32 ycen = camCalib.GetCenter_y();
+  Quad2f farCorners;
+  const f32 markerHalfSize = std::min(halfHeight, halfWidth);
+  farCorners[Quad::TopLeft]    = {xcen - markerHalfSize, ycen - markerHalfSize};
+  farCorners[Quad::BottomLeft] = {xcen - markerHalfSize, ycen + markerHalfSize};
+  farCorners[Quad::TopRight]   = {xcen + markerHalfSize, ycen - markerHalfSize};
+  farCorners[Quad::BottomRight]= {xcen + markerHalfSize, ycen + markerHalfSize};
+  
+  const Quad2f closeCorners{
+    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
+  };
+  
+  // - - - Connect to some cubes
+
+  // Do not connect object1
+  //  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, 100, ObjectType::Block_LIGHTCUBE1);
+  //  ASSERT_TRUE(connObj1.IsSet());
+  
+  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, 101, ObjectType::Block_LIGHTCUBE2);
+  ASSERT_TRUE(connObj2.IsSet());
+  
+  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedActiveObject(2, 102, ObjectType::Block_LIGHTCUBE3);
+  ASSERT_TRUE(connObj3.IsSet());
+
+  // - - - See all objects from close so that their poses are Known
+  
+  VisionProcessingResult procResult;
+  TimeStamp_t fakeTime = 10;
+  
+  // After seeing at least 2 times, should be Known
+  const s32 kNumObservations = 5;
+  
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  fakeTime += 10;
+  
+  // see object 1 from far, it should update its pose, since it's not localizable
+  {
+    filter.SetAllowedTypes({obj1Type});
+    const ObservableObject* matchingObject1 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+    ASSERT_NE(nullptr, matchingObject1);
+    
+    const Pose3d prevObj1Pose = matchingObject1->GetPose();
+    
+    lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
+    const Pose3d& newObj1Pose = matchingObject1->GetPose();
+    const bool isSameNewToPrev = newObj1Pose.IsSameAs(prevObj1Pose, matchingObject1->GetSameDistanceTolerance(), matchingObject1->GetSameAngleTolerance());
+    ASSERT_FALSE(isSameNewToPrev); // DIFFERENT
+  }
+
+  // see object 2 from far, it should NOT update its pose, since it's localizable
+  {
+    filter.SetAllowedTypes({obj2Type});
+    const ObservableObject* matchingObject2 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+    ASSERT_NE(nullptr, matchingObject2);
+    const ObjectID& conMatch2 = matchingObject2->GetID();
+    ASSERT_EQ(conMatch2, connObj2);
+
+    // should become localize to 2
+    const bool localizedTo2 = (robot.GetLocalizedTo() == conMatch2);
+    ASSERT_TRUE(localizedTo2);
+  
+    const Pose3d prevObj2Pose = matchingObject2->GetPose();
+
+    lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
+    const Pose3d& newObj2Pose = matchingObject2->GetPose();
+    const bool isSameNewToPrev = newObj2Pose.IsSameAs(prevObj2Pose, matchingObject2->GetSameDistanceTolerance(), matchingObject2->GetSameAngleTolerance());
+    ASSERT_TRUE(isSameNewToPrev); // SAME
+  }
+  
+  // see object 3 from far, it should NOT update its pose, since it's localizable
+  {
+    filter.SetAllowedTypes({obj3Type});
+    const ObservableObject* matchingObject3 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+    ASSERT_NE(nullptr, matchingObject3);
+    const ObjectID& conMatch3 = matchingObject3->GetID();
+    ASSERT_EQ(conMatch3, connObj3);
+  
+    const Pose3d prevObj3Pose = matchingObject3->GetPose();
+
+    lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
+    const Pose3d& newObj3Pose = matchingObject3->GetPose();
+    const bool isSameNewToPrev = newObj3Pose.IsSameAs(prevObj3Pose, matchingObject3->GetSameDistanceTolerance(), matchingObject3->GetSameAngleTolerance());
+    ASSERT_TRUE(isSameNewToPrev); // SAME
+  }
+
+  // MOVE object2
+  {
+    const ActiveObject* con2 = robot.GetBlockWorld().GetConnectedActiveObjectByID( connObj2 );
+    FakeRecvMovedMessage(robot, fakeTime, fakeTime, con2->GetActiveID());
+    ++fakeTime;
+  }
+  
+  // move object 2, and do the same observations. If moved, then the pose should be updated, since it's not localizable
+  {
+    filter.SetAllowedTypes({obj2Type});
+    const ObservableObject* matchingObject2 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+    ASSERT_NE(nullptr, matchingObject2);
+    const ObjectID& conMatch2 = matchingObject2->GetID();
+    ASSERT_EQ(conMatch2, connObj2);
+    
+    const Pose3d prevObj2Pose = matchingObject2->GetPose();
+
+    lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
+    const Pose3d& newObj2Pose = matchingObject2->GetPose();
+    const bool isSameNewToPrev = newObj2Pose.IsSameAs(prevObj2Pose, matchingObject2->GetSameDistanceTolerance(), matchingObject2->GetSameAngleTolerance());
+    ASSERT_FALSE(isSameNewToPrev); // DIFFERENT
+  }
+
+  // DISCONNECT object3
+  {
+    const ActiveObject* con3 = robot.GetBlockWorld().GetConnectedActiveObjectByID( connObj3 );
+    FakeRecvConnectionMessage(robot, fakeTime, con3->GetActiveID(), con3->GetFactoryID(), Anki::Cozmo::ObjectType::Block_LIGHTCUBE2, false);
+    ++fakeTime;
+  }
+  
+  // disconnect object 3, and do the same observatins. If disconnected, the pose should be updated, since it's not localizable
+  {
+    filter.SetAllowedTypes({obj3Type});
+    const ObservableObject* matchingObject3 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+    ASSERT_NE(nullptr, matchingObject3);
+    const ObjectID& conMatch3 = matchingObject3->GetID();
+    ASSERT_EQ(conMatch3, connObj3);
+  
+    const Pose3d prevObj3Pose = matchingObject3->GetPose();
+
+    lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
+    const Pose3d& newObj3Pose = matchingObject3->GetPose();
+    const bool isSameNewToPrev = newObj3Pose.IsSameAs(prevObj3Pose, matchingObject3->GetSameDistanceTolerance(), matchingObject3->GetSameAngleTolerance());
+    ASSERT_FALSE(isSameNewToPrev); // DIFFERENT
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(BlockWorld, RejiggerAndObserveAtSameTick)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  
+  {
+    // no connected objects either
+    std::vector<ActiveObject*> activeObjects;
+    blockWorld.FindConnectedActiveMatchingObjects(BlockWorldFilter(), activeObjects);
+    ASSERT_TRUE(activeObjects.empty());
+  }
+  
+  // Fake a state message update for robot
+  RobotState stateMsg(1, // timestamp,
+                      0, // pose_frame_id,
+                      1, // pose_origin_id,
+                      RobotPose(0.f,0.f,0.f,0.f,0.f),
+                      0.f, // lwheel_speed_mmps,
+                      0.f, // rwheel_speed_mmps,
+                      0.f, // headAngle,
+                      0.f, // liftAngle,
+                      AccelData(),
+                      GyroData(),
+                      0.f, // batteryVoltage,
+                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
+                      0, // lastPathID,
+                      0, // cliffDataRaw,
+                      0, // currPathSegment,
+                      0); // numFreeSegmentSlots)
+  
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // Camera calibration
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  
+  // Enable "vision while moving" so that we don't have to deal with trying to compute
+  // angular velocities, since we don't have real state history to do so.
+  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  
+  // For faking observations of blocks
+  const Block_Cube1x1 obj1Cube(ObjectType::Block_LIGHTCUBE1);
+  const Block_Cube1x1 obj2Cube(ObjectType::Block_LIGHTCUBE2);
+  const Block_Cube1x1 obj3Cube(ObjectType::Block_LIGHTCUBE3);
+  const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  const Vision::Marker::Code obj3Code = obj3Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  
+  const Quad2f closeCorners{
+    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
+  };
+  
+  // - - - Connect to some cubes
+  
+  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, 100, ObjectType::Block_LIGHTCUBE1);
+  ASSERT_TRUE(connObj1.IsSet());
+  
+  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, 101, ObjectType::Block_LIGHTCUBE2);
+  ASSERT_TRUE(connObj2.IsSet());
+  
+  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedActiveObject(2, 102, ObjectType::Block_LIGHTCUBE3);
+  ASSERT_TRUE(connObj3.IsSet());
+
+  // - - - See all objects from close so that their poses are Known
+  
+  VisionProcessingResult procResult;
+  TimeStamp_t fakeTime = 10;
+  
+  // After seeing at least 2 times, should be Known
+  const s32 kNumObservations = 5;
+  
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+// Do not add object 3 so that we need to confirm it later
+//  lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+//  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  fakeTime += 10;
+
+  // - - - Delocalize
+
+  const bool isCarryingObject = false;
+  robot.Delocalize(isCarryingObject);
+  ++fakeTime;
+  
+  // See all objects from close so they all have unconfirmed observations
+  lastResult = ObserveMarkerHelper(1,
+    {{obj1Code, closeCorners}, {obj2Code, closeCorners}, {obj3Code, closeCorners}},
+    fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // now see each cube separately
+  
+  // 1 will rejigger
+  lastResult = ObserveMarkerHelper(1,{{obj1Code, closeCorners}},
+    fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // we should have objects 1 and 2, but not 3, since 3 was not in the world before delocalizing
+  const ObservableObject* obj1Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj1);
+  ASSERT_NE(obj1Ptr, nullptr);
+  const ObservableObject* obj2Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj2);
+  ASSERT_NE(obj2Ptr, nullptr);
+  const ObservableObject* obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
+  ASSERT_EQ(obj3Ptr, nullptr);
+  
+  // Add 1 confirmation for 2 and 3
+  lastResult = ObserveMarkerHelper(1,{{obj2Code, closeCorners}},
+    fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  lastResult = ObserveMarkerHelper(1,{{obj3Code, closeCorners}},
+    fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+
+  // still should have 1 and 2, but not 3
+  obj1Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj1);
+  ASSERT_NE(obj1Ptr, nullptr);
+  obj2Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj2);
+  ASSERT_NE(obj2Ptr, nullptr);
+  obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
+  ASSERT_EQ(obj3Ptr, nullptr);
+
+  // Add 1 confirmation for 2 and 3
+  lastResult = ObserveMarkerHelper(1,{{obj2Code, closeCorners}},
+    fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  lastResult = ObserveMarkerHelper(1,{{obj3Code, closeCorners}},
+    fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // now 3 should be added (assumes we need 2 visual observations to confirm)
+  obj1Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj1);
+  ASSERT_NE(obj1Ptr, nullptr);
+  obj2Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj2);
+  ASSERT_NE(obj2Ptr, nullptr);
+  obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
+  ASSERT_NE(obj3Ptr, nullptr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -525,33 +992,16 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   // There should be nothing in BlockWorld yet
   BlockWorldFilter filter;
   std::vector<ObservableObject*> objects;
-  blockWorld.FindMatchingObjects(filter, objects);
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
   ASSERT_TRUE(objects.empty());
   
   // Fake a state message update for robot
-  RobotState stateMsg(1, // timestamp,
-                      0, // pose_frame_id,
-                      1, // pose_origin_id,
-                      RobotPose(0.f,0.f,0.f,0.f,0.f),
-                      0.f, // lwheel_speed_mmps,
-                      0.f, // rwheel_speed_mmps,
-                      0.f, // headAngle,
-                      0.f, // liftAngle,
-                      0.f, // liftHeight,
-                      AccelData(),
-                      GyroData(),
-                      0.f, // batteryVoltage,
-                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
-                      0, // lastPathID,
-                      0, // cliffDataRaw,
-                      0, // currPathSegment,
-                      0); // numFreeSegmentSlots)
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
   
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // For faking observations of a cube
-  const ActiveObjectType closeActiveObjectType = ActiveObjectType::OBJECT_CUBE2;
   const ActiveID closeActiveID = 1;
   const FactoryID closeFactoryID = 1;
   const ObjectType closeType = ObjectType::Block_LIGHTCUBE2;
@@ -565,16 +1015,16 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   TimeStamp_t fakeTime = 10;
 
   // connect to cube
-  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeActiveObjectType, true);
+  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeType, true);
   ++fakeTime;
   
-  // Should have a "close" object present
+  // Should have a "close" object connected
   filter.SetAllowedTypes({closeType});
   filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
-  const ObservableObject* matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  const ObservableObject* matchingObject = robot.GetBlockWorld().FindConnectedActiveMatchingObject(filter);
   ASSERT_NE(nullptr, matchingObject);
   ASSERT_TRUE(matchingObject->GetID().IsSet());
-  ASSERT_TRUE(matchingObject->IsPoseStateUnknown());
+  ASSERT_FALSE(matchingObject->HasValidPose());
   ASSERT_EQ(closeActiveID, matchingObject->GetActiveID());
   
   // capture the ID so we can compare later
@@ -610,7 +1060,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   
   // Should be localized to "close" object
   filter.SetAllowedTypes({closeType});
-  matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
   ASSERT_NE(nullptr, matchingObject);
   ASSERT_EQ(blockObjectID, matchingObject->GetID());
   ASSERT_EQ(closeActiveID, matchingObject->GetActiveID());
@@ -618,7 +1068,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
   
   // disconnect from the cube
-  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeActiveObjectType, false);
+  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeType, false);
   ++fakeTime;
   
   // delocalize while the cube is disconnected
@@ -628,7 +1078,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   ++fakeTime;
   
   // reconnect to the cube
-  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeActiveObjectType, true);
+  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeType, true);
   ++fakeTime;
   
   // see the cube again
@@ -639,11 +1089,11 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   // Should have the object back
   filter.SetAllowedTypes({closeType});
   std::vector<ObservableObject*> matchingObjects;
-  robot.GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
   ASSERT_EQ(1, matchingObjects.size());
-  
+
   // Close object should now be Known pose state
-  matchingObject = robot.GetBlockWorld().GetObjectByID(blockObjectID);
+  matchingObject = robot.GetBlockWorld().GetLocatedObjectByID(blockObjectID);
   ASSERT_NE(nullptr, matchingObject);
   ASSERT_TRUE(matchingObject->IsPoseStateKnown());
   
@@ -660,7 +1110,56 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+
+// Helpers can't have TEST assertions
+ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectType)
+{
+  // matching activeID happens through objectID automatically on addition
+  const ActiveID activeID = -1;
+  const FactoryID factoryID = 0;
+
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  Anki::Cozmo::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
+  DEV_ASSERT(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull");
+  
+  // check it currently doesn't exist in BlockWorld
+  {
+    BlockWorldFilter filter;
+    filter.SetFilterFcn(nullptr); // TODO Should not be needed by default
+    filter.SetAllowedTypes( {objectPtr->GetType()} );
+    filter.SetAllowedFamilies( {objectPtr->GetFamily()} );
+    ObservableObject* sameBlock = blockWorld.FindLocatedMatchingObject(filter);
+    DEV_ASSERT(nullptr == sameBlock, "CreateObjectLocatedAtOrigin.TypeAlreadyInUse");
+  }
+  
+  // set initial pose & ID (that's responsibility of the system creating the object)
+  DEV_ASSERT(!objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDSet");
+  DEV_ASSERT(!objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.HasValidPose");
+  objectPtr->SetID();
+  Anki::Pose3d originPose;
+  originPose.SetParent( robot.GetWorldOrigin() );
+  objectPtr->InitPose( originPose, Anki::PoseState::Known); // posestate could be something else
+  
+  // now they can be added to the world
+  blockWorld.AddLocatedObject(std::shared_ptr<ObservableObject>(objectPtr));
+
+  // need to pretend we observed this object
+  robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr); // this has to be called after AddLocated just because
+  
+  // verify they are there now
+  DEV_ASSERT(objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDNotset");
+  DEV_ASSERT(objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.InvalidPose");
+  ObservableObject* objectInWorld = blockWorld.GetLocatedObjectByID( objectPtr->GetID() );
+  DEV_ASSERT(objectInWorld == objectPtr, "CreateObjectLocatedAtOrigin.NotSameObject");
+  DEV_ASSERT(nullptr != objectInWorld, "CreateObjectLocatedAtOrigin.NullWorldPointer");
+  return objectInWorld;
+}
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(BlockWorld, CubeStacks)
 {
   using namespace Anki;
@@ -676,22 +1175,29 @@ TEST(BlockWorld, CubeStacks)
   // There should be nothing in BlockWorld yet
   BlockWorldFilter filter;
   std::vector<ObservableObject*> objects;
-  blockWorld.FindMatchingObjects(filter, objects);
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
   ASSERT_TRUE(objects.empty());
   
-  // Add three objects
-  ObjectID objID1 = blockWorld.AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE1);
-  ObjectID objID2 = blockWorld.AddActiveObject(2, 2, ActiveObjectType::OBJECT_CUBE2);
-  ObjectID objID3 = blockWorld.AddActiveObject(3, 3, ActiveObjectType::OBJECT_CUBE3);
+  {
+    // no connected objects either
+    BlockWorldFilter filter;
+    std::vector<ActiveObject*> activeObjects;
+    blockWorld.FindConnectedActiveMatchingObjects(filter, activeObjects);
+    ASSERT_TRUE(activeObjects.empty());
+  }
   
-  ObservableObject* object1 = blockWorld.GetObjectByID(objID1);
-  ASSERT_NE(nullptr, object1);
+  // Create three objects
+  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
+  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
   
-  ObservableObject* object2 = blockWorld.GetObjectByID(objID2);
-  ASSERT_NE(nullptr, object2);
-  
-  ObservableObject* object3 = blockWorld.GetObjectByID(objID3);
-  ASSERT_NE(nullptr, object3);
+  {
+    // verify they are there now
+    BlockWorldFilter filter;
+    objects.clear();
+    blockWorld.FindLocatedMatchingObjects(filter, objects);
+    ASSERT_EQ(3, objects.size());
+  }
   
   // Put object 2 on top of object 1 and check that FindOnTopOf and FindUnderneath
   // return the right things. We use ObjectPoseConfirmer because we can't set
@@ -750,11 +1256,11 @@ TEST(BlockWorld, CubeStacks)
     lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, lastResult);
 
-    ObservableObject* foundObject1 = blockWorld.FindObjectOnTopOf(*object1, 2*STACKED_HEIGHT_TOL_MM);
+    ObservableObject* foundObject1 = blockWorld.FindLocatedObjectOnTopOf(*object1, 2*STACKED_HEIGHT_TOL_MM);
     ASSERT_EQ(nullptr, foundObject1);
     ASSERT_NE(object2, foundObject1);
 
-    ObservableObject* foundObject2 = blockWorld.FindObjectOnTopOf(*object2, 2*STACKED_HEIGHT_TOL_MM);
+    ObservableObject* foundObject2 = blockWorld.FindLocatedObjectOnTopOf(*object2, 2*STACKED_HEIGHT_TOL_MM);
 
     ASSERT_EQ(nullptr, foundObject2);
     ASSERT_NE(object1, foundObject2);
@@ -786,11 +1292,11 @@ TEST(BlockWorld, CubeStacks)
               lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, topPose, object1);
               ASSERT_EQ(RESULT_OK, lastResult);
               
-              ObservableObject* foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+              ObservableObject* foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
               ASSERT_NE(nullptr, foundObject);
               ASSERT_EQ(object2, foundObject);
               
-              foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+              foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
               ASSERT_NE(nullptr, foundObject);
               ASSERT_EQ(object1, foundObject);
             }
@@ -802,10 +1308,10 @@ TEST(BlockWorld, CubeStacks)
               lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, nextToPose, object1);
               ASSERT_EQ(RESULT_OK, lastResult);
               
-              ObservableObject* foundObject = blockWorld.FindObjectOnTopOf(*object3, STACKED_HEIGHT_TOL_MM);
+              ObservableObject* foundObject = blockWorld.FindLocatedObjectOnTopOf(*object3, STACKED_HEIGHT_TOL_MM);
               ASSERT_EQ(nullptr, foundObject);
               
-              foundObject = blockWorld.FindObjectUnderneath(*object3, STACKED_HEIGHT_TOL_MM);
+              foundObject = blockWorld.FindLocatedObjectUnderneath(*object3, STACKED_HEIGHT_TOL_MM);
               ASSERT_EQ(nullptr, foundObject);
             }
           }
@@ -824,20 +1330,20 @@ TEST(BlockWorld, CubeStacks)
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, tooHighPose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
-  ObservableObject* foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+  ObservableObject* foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
-  foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
 
   // Two objects in roughly the same place should also fail
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, bottomPose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
-  foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
-  foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
   
@@ -847,10 +1353,10 @@ TEST(BlockWorld, CubeStacks)
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, notAbovePose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
-  foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
-  foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+  foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
   ASSERT_EQ(nullptr, foundObject);
   
 } // BlockWorld.CubeStacks
@@ -869,72 +1375,96 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   // There should be nothing in BlockWorld yet
   BlockWorldFilter filter;
   std::vector<ObservableObject*> objects;
-  blockWorld.FindMatchingObjects(filter, objects);
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
   ASSERT_TRUE(objects.empty());
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 0);
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0);
   
-  // Add object
-  ObjectID objID1 = blockWorld.AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
-  ObjectID objID2 = blockWorld.AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  // Only connected objects can localize, so add connected
+  const ObjectID objID1 = blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
+  const ObjectID objID2 = blockWorld.AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
   
-  ObservableObject* object1 = blockWorld.GetObjectByID(objID1);
-  ASSERT_NE(nullptr, object1);
-  ASSERT_EQ(object1->GetPoseState(), PoseState::Unknown);
-  ASSERT_EQ(object1->IsActive(), true);
-  
-  ObservableObject* object2 = blockWorld.GetObjectByID(objID2);
-  ASSERT_NE(nullptr, object2);
+  // make object2 localizable in the current world by adding visual observations
+  {
+    // Add observation (note observations now require to be shared pointers)
+    ActiveObject* object2 = blockWorld.GetConnectedActiveObjectByID(objID2);
+    ASSERT_NE(nullptr, object2);
+
+    Pose3d fakePose;
+    fakePose.SetParent(robot.GetPose().GetParent());
+    
+    ObservableObject* observation1 = object2->CloneType();
+    observation1->InitPose(fakePose, PoseState::Known);
+    observation1->CopyID(object2);
+    bool isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation1), nullptr, false, 10);
+    
+    // should not be confirmed yet in this origin
+    ASSERT_FALSE(isConfirmed);
+    ObservableObject* confirmedObject = blockWorld.GetLocatedObjectByID(objID2);
+    ASSERT_EQ(nullptr, confirmedObject);
+
+    ObservableObject* observation2 = object2->CloneType();
+    observation2->InitPose(fakePose, PoseState::Known);
+    observation2->CopyID(object2);
+    isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation2), confirmedObject, false, 10);
+
+    // now it should have been confirmed
+    ASSERT_TRUE(isConfirmed);
+    confirmedObject = blockWorld.GetLocatedObjectByID(objID2);
+    ASSERT_NE(nullptr, confirmedObject);
+    
+    confirmedObject->SetIsMoving(false, 0);
+    confirmedObject->SetLastObservedTime(10);
+  }
   
   // Make object2 able to be localized to
-  robot.GetObjectPoseConfirmer().SetPoseState(object2, PoseState::Known);
-  object2->SetIsMoving(false, 0);
-  object2->SetLastObservedTime(10);
-  Pose3d p(0,{0,1,0},{0,0,0});
-  p.SetParent(robot.GetPose().GetParent());
-  robot.GetObjectPoseConfirmer().AddVisualObservation(object2, p, false, 10);
-  robot.GetObjectPoseConfirmer().AddVisualObservation(object2, p, false, 10);
-  ASSERT_EQ(object2->GetPoseState(), PoseState::Known);
-  ASSERT_EQ(object2->IsActive(), true);
-  ASSERT_EQ(object2->CanBeUsedForLocalization(), true);
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 1);
+  ObservableObject* locatedObj2 = blockWorld.GetLocatedObjectByID(objID2);
+  ASSERT_NE(nullptr, locatedObj2);
+  ASSERT_EQ(locatedObj2->GetPoseState(), PoseState::Known);
+  ASSERT_EQ(locatedObj2->IsActive(), true);
+  ASSERT_EQ(locatedObj2->CanBeUsedForLocalization(), true);
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 1);
   
   // Delocalizing will create a new frame but the old frame will still exist since
   // object2 is localizable
   robot.Delocalize(false);
   
   // We won't be able to get objects1 and 2 by id since they aren't in the current frame
-  object1 = blockWorld.GetObjectByID(objID1);
-  ASSERT_EQ(nullptr, object1);
+  ObservableObject* obj1 = blockWorld.GetLocatedObjectByID(objID1);
+  ASSERT_EQ(nullptr, obj1);
   
   // Storing this to a new pointer because I use the old object2 pointer later to set poseState
-  ObservableObject* obj2 = blockWorld.GetObjectByID(objID2);
+  ObservableObject* obj2 = blockWorld.GetLocatedObjectByID(objID2);
   ASSERT_EQ(nullptr, obj2);
   
   // Add a new object to this currently empty frame
-  ObjectID objID3 = blockWorld.AddActiveObject(2, 2, ActiveObjectType::OBJECT_CUBE3);
-  ObservableObject* object3 = blockWorld.GetObjectByID(objID3);
+  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
   ASSERT_NE(nullptr, object3);
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 2);
+  const ObjectID objID3 = object3->GetID();
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 2);
 
-  // Mark object2 in previous frame as unknown so that frame will become a zombie
-  robot.GetObjectPoseConfirmer().SetPoseState(object2, PoseState::Unknown);
+  // Mark object2 in previous frame as Dirty so that frame will become a zombie (not localizable anymore)
+  robot.GetObjectPoseConfirmer().MarkObjectDirty(locatedObj2);
   
   // Delocalizing will create a new frame and delete our 2 zombie frames
   // One of the frames has object1 and 2 the other has object3
-  // Since our new frame has no objects in it we will added all objects from all zombie frames to
-  // the new frame
+  // Since our new frame has no objects, they are all lost. However, the connected instances of 1 and 2 should
+  // still be available
   robot.Delocalize(false);
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 1);
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0); // there are no origins with objects after deloc
   
-  object1 = blockWorld.GetObjectByID(objID1);
-  ASSERT_NE(nullptr, object1);
+  obj1 = blockWorld.GetLocatedObjectByID(objID1);
+  ASSERT_EQ(nullptr, obj1);
   
-  object2 = blockWorld.GetObjectByID(objID2);
-  ASSERT_NE(nullptr, object2);
+  obj2 = blockWorld.GetLocatedObjectByID(objID2);
+  ASSERT_EQ(nullptr, obj2);
   
-  object3 = blockWorld.GetObjectByID(objID3);
-  ASSERT_NE(nullptr, object3);
+  object3 = blockWorld.GetLocatedObjectByID(objID3);
+  ASSERT_EQ(nullptr, object3);
   
+  ActiveObject* active1 = blockWorld.GetConnectedActiveObjectByID(objID1);
+  ASSERT_NE(nullptr, active1);
+  ActiveObject* active2 = blockWorld.GetConnectedActiveObjectByID(objID1);
+  ASSERT_NE(nullptr, active2);
 } // BlockWorld.CopyObjectsFromZombieOrigins
 
 
@@ -948,383 +1478,6 @@ class BlockWorldTest : public ::testing::TestWithParam<const char*>
 #define DISPLAY_ERRORS 0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// This is the parameterized test, instantiated with a list of Json files below
-TEST_P(BlockWorldTest, BlockAndRobotLocalization)
-{
-  using namespace Anki;
-  using namespace Cozmo;
-  
-  /*
-  // TODO: Tighten/loosen thresholds?
-  const float   objectPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
-  
-  const float   objectPoseAngleThresholdNearDistance = 50.f;
-  const float   objectPoseAngleThresholdFarDistance  = 300.f;
-  const float   objectPoseAngleNearThreshold = DEG_TO_RAD(5); // at near distance
-  const float   objectPoseAngleFarThreshold  = DEG_TO_RAD(25); // at far distance
-  */
-  
-//  const float objectPoseDistThreshold_mm    = 12.f;
-//  const Radians objectPoseAngleThreshold    = DEG_TO_RAD(15.f);
-  const float   robotPoseDistThreshold_mm  = 10.f;
-  const Radians robotPoseAngleThreshold    = DEG_TO_RAD(3.f);
-  
-  Json::Reader reader;
-  Json::Value jsonRoot;
-  std::vector<std::string> jsonFileList;
-  
-  const std::string subPath("test/blockWorldTests/");
-  const std::string jsonFilename = subPath + GetParam();
-
-  fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
-
-  const bool jsonParseResult = cozmoContext->GetDataPlatform()->readAsJson(Anki::Util::Data::Scope::Resources, jsonFilename, jsonRoot);
-  ASSERT_TRUE(jsonParseResult);
-
-  // Create the modules we need (and stubs of those we don't)
-  RobotManager        robotMgr(nullptr);
- 
-  robotMgr.AddRobot(0);
-  Robot& robot = *robotMgr.GetRobotByID(0);
-  
-//  Robot robot(0, 0, &blockWorld, 0);    // TODO: Support multiple robots
-
-  ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
-  Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
-  robot.GetVisionComponent().SetCameraCalibration(calib);
-    
-  bool checkRobotPose;
-  ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));
-
-  // Everything before this is per-world, not per-pose
-  
-  ASSERT_TRUE(jsonRoot.isMember("Poses"));
-  
-  const int NumPoses = jsonRoot["Poses"].size();
-  
-#if DISPLAY_ERRORS
-  struct ErrorStruct {
-    Vec3f T_robot, T_blockTrue, T_blockObs;
-    ErrorStruct(const Vec3f& a, const Vec3f& b, const Vec3f& c)
-    : T_robot(a), T_blockTrue(b), T_blockObs(c)
-    {
-      
-    }
-  };
-  std::vector<ErrorStruct> errorVsDist;
-#endif
-  
-  for(int i_pose=0; i_pose<NumPoses; ++i_pose)
-  {
-    TimeStamp_t currentTimeStamp = (i_pose+1)*100;
-
-    // Start the robot/world fresh for each pose
-    robot.GetBlockWorld().ClearAllExistingObjects();
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
-    ASSERT_EQ(robot.AddRawOdomPoseToHistory(currentTimeStamp, robot.GetPoseFrameID(), Pose3d(0, Z_AXIS_3D(), {0, 0, 0}), 0, 0, CLIFF_SENSOR_UNDROP_LEVEL, false), RESULT_OK);
-    
-    currentTimeStamp += 5;
-    
-    const Json::Value& jsonData = jsonRoot["Poses"][i_pose];
-    
-    // Put the robot's head at the right angle *before* queueing up the markers
-    float headAngle;
-    ASSERT_TRUE(JsonTools::GetValueOptional(jsonData["RobotPose"], "HeadAngle", headAngle));
-    robot.SetHeadAngle(headAngle);
-    
-    Pose3d trueRobotPose;
-    ASSERT_TRUE(JsonTools::GetPoseOptional(jsonData, "RobotPose", trueRobotPose));
-    
-    // Create a fake robot state message to do a fake RawOdometryPose update.
-    // I think we need to make sure we have one for each matPose VisionMarker
-    // message.
-    RobotState msg;
-    msg.timestamp = currentTimeStamp;
-    msg.pose_frame_id = robot.GetPoseFrameID();
-    msg.headAngle  = headAngle;
-    msg.liftAngle  = 0;
-    
-    // If we're not going to be checking the robot's pose, we need to set it
-    // to the ground truth now, *before* queueing up the markers
-    if(!checkRobotPose) {
-      msg.pose.x = trueRobotPose.GetTranslation().x();
-      msg.pose.y = trueRobotPose.GetTranslation().y();
-      msg.pose.z = trueRobotPose.GetTranslation().z();
-      msg.pose.angle = trueRobotPose.GetRotationAngle<'Z'>().ToFloat();
-    } else {
-      msg.pose.x = 0;
-      msg.pose.y = 0;
-      msg.pose.z = 0;
-      msg.pose.angle = 0;
-    }
-
-    const bool isCarryingObject = (msg.status&(uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK) != 0;
-    Pose3d pose( msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, msg.pose.y} );
-    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp, msg.pose_frame_id, pose, msg.headAngle, msg.liftAngle, CLIFF_SENSOR_UNDROP_LEVEL, isCarryingObject)
-      , RESULT_OK
-      );
-    
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
-    
-
-    int NumMarkers;
-    ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
-    
-    ASSERT_TRUE(jsonData.isMember("VisionMarkers"));
-    Json::Value jsonMessages = jsonData["VisionMarkers"];
-    ASSERT_EQ(NumMarkers, jsonMessages.size());
-    
-    
-    ASSERT_TRUE(false);
-    // THIS NEEDS TO BE UPDATED NOW THAT VisionMarkerMessage IS BOGUS!
-    /*
-    std::vector<Vision::ObservedMarker> messages;
-    messages.reserve(jsonMessages.size());
-    
-    for(auto & jsonMsg : jsonMessages) {
-
-      // Kludge to convert the string MarkerType stored in the JSON back to an
-      // enum value so we can use the (auto-generated) JSON constructor for
-      // messages.
-      CORETECH_ASSERT(jsonMsg.isMember("markerType"));
-      jsonMsg["markerType"] = Vision::StringToMarkerType.at(jsonMsg["markerType"].asString());
-      
-      MessageVisionMarker msg(jsonMsg);
-      msg.timestamp = currentTimeStamp;
-      
-      Vision::ObservedMarker marker();
-      // If we are not checking robot pose, don't queue mat markers
-      const bool isMatMarker = !robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithCode(msg.markerType).empty();
-      if(!checkRobotPose && isMatMarker) {
-        fprintf(stdout, "Skipping mat marker with code = %d ('%s'), since we are not checking robot pose.\n",
-                msg.markerType, Vision::MarkerTypeStrings[msg.markerType]);
-      } else {
-        ASSERT_EQ(robot.QueueObservedMarker(msg), RESULT_OK);
-      }
-      
-    } // for each VisionMarker in the jsonFile
-    */
-    
-    // Process all the markers we've queued
-    //uint32_t numObjectsObserved = 0;
-    std::list<Vision::ObservedMarker> emptyMarkersList;
-    Result result = robot.GetBlockWorld().Update(emptyMarkersList);
-    ASSERT_EQ(RESULT_OK, result);
-    
-    if(checkRobotPose) {
-      // TODO: loop over all robots
-      
-      // Make sure the estimated robot pose matches the ground truth pose
-      Vec3f Tdiff;
-      const bool robotPoseMatches = trueRobotPose.IsSameAs(robot.GetPose(),
-                                                           robotPoseDistThreshold_mm,
-                                                           robotPoseAngleThreshold, Tdiff);
-      
-      fprintf(stdout, "X/Y error in robot pose = %.2fmm, Z error = %.2fmm\n",
-              sqrtf(Tdiff.x()*Tdiff.x() + Tdiff.y()*Tdiff.y()), Tdiff.z());
-      
-      // If the robot's pose is not correct, we can't continue, because
-      // all the blocks' poses will also be incorrect
-      ASSERT_TRUE(robotPoseMatches);
-      
-    }
-    
-    // Use the rest of the VisionMarkers to update the blockworld's pose
-    // estimates for the blocks
-    //uint32_t numBlocksObserved = blockWorld.UpdateBlockPoses();
-    
-    
-    if(jsonRoot.isMember("Objects"))
-    {
-      const Json::Value& jsonObject = jsonRoot["Objects"];
-      const int numObjectsTrue = jsonObject.size();
-      
-      //EXPECT_GE(numObjectsObserved, numObjectsTrue); // TODO: Should this be EXPECT_EQ?
-      
-      //if(numBlocksObserved != numBlocksTrue)
-      //  break;
-      
-      // Check to see that we found and successfully localized each ground truth
-      // block
-      for(int i_object=0; i_object<numObjectsTrue; ++i_object)
-      {
-        ObjectType objectType = ObjectType::Invalid;
-        std::string objectTypeString;
-        ASSERT_TRUE(JsonTools::GetValueOptional(jsonObject[i_object], "Type", objectTypeString));
-
-        // Use the "Name" as the object family in blockworld
-        std::string objectFamilyString;
-        ASSERT_TRUE(JsonTools::GetValueOptional(jsonObject[i_object], "ObjectName", objectFamilyString));
-        ObjectFamily objectFamily;
-        if(objectFamilyString == "Block") {
-          objectFamily = ObjectFamily::Block;
-        } else if(objectFamilyString == "Ramp") {
-          objectFamily = ObjectFamily::Ramp;
-        }
-        
-        // TODO: Need a (CLAD-generated) way to lookup ObjectType by string
-        //objectType = GetObjectType ObjectType::GetTypeByName(objectTypeString);
-
-        ASSERT_TRUE(objectType != ObjectType::Unknown);
-        ASSERT_TRUE(objectType != ObjectType::Invalid);
-
-        const ObservableObject* libObject = NULL;
-        
-        // TODO: Need a way to get object by type
-        //const ObservableObject* libObject = robot.GetBlockWorld().GetObjectLibrary(objectFamily).GetObjectWithType(objectType);
-
-        /*
-        int blockTypeAsInt;
-        ASSERT_TRUE(JsonTools::GetValueOptional(jsonBlocks[i_block], "Type", blockTypeAsInt));
-        const ObjectType blockType(blockTypeAsInt);
-        */
-        
-        // The ground truth block type should be known to the block world
-        ASSERT_TRUE(libObject != NULL);
-        
-        // Set its pose to what is listed in the json file
-        Pose3d objectPose;
-        ASSERT_TRUE(jsonObject[i_object].isMember("ObjectPose"));
-        ASSERT_TRUE(JsonTools::GetPoseOptional(jsonObject[i_object], "ObjectPose", objectPose));
-        
-        // Make sure this ground truth object was seen and its estimated pose
-        // matches the ground truth pose
-        
-        BlockWorldFilter filter;
-        filter.SetAllowedTypes({libObject->GetType()});
-        std::vector<ObservableObject*> observedObjects;
-        robot.GetBlockWorld().FindMatchingObjects(filter, observedObjects);
-        int matchesFound = 0;
-        
-        /*
-        // The threshold will vary with how far away the block actually is
-        const float trueDistance = (objectPose.GetTranslation() - trueRobotPose.GetTranslation()).Length();
-        const float objectPoseDistThreshold_mm = objectPoseDistThresholdFraction * trueDistance;
-        
-        Radians objectPoseAngleThreshold;
-        if(trueDistance <= objectPoseAngleThresholdNearDistance) {
-          objectPoseAngleThreshold = objectPoseAngleNearThreshold;
-        } else if(trueDistance >= objectPoseAngleThresholdFarDistance) {
-          objectPoseAngleThreshold = objectPoseAngleFarThreshold;
-        } else {
-          const float slope = ((objectPoseAngleFarThreshold - objectPoseAngleNearThreshold) /
-                               (objectPoseAngleThresholdFarDistance - objectPoseAngleThresholdNearDistance));
-          objectPoseAngleThreshold = (slope*(trueDistance - objectPoseAngleThresholdNearDistance) +
-                                      objectPoseAngleNearThreshold);
-        }
-         */
-        
-        for(auto & observedObject : observedObjects)
-        {
-          objectPose.SetParent(&observedObject->GetPose().FindOrigin());
-          
-          std::unique_ptr<ObservableObject> groundTruthObject(libObject->CloneType());
-          
-          groundTruthObject->InitPose(objectPose, PoseState::Unknown); // pose state here shouldn't really matter
-          
-          
-          if(groundTruthObject->IsSameAs(*observedObject))
-          {
-            if(matchesFound > 0) {
-              // We just found multiple matches for this ground truth block
-              fprintf(stdout, "Match #%d found for one ground truth %s object.\n",
-                      //"T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
-                      matchesFound+1, objectFamilyString.c_str());
-                      //P_diff.GetTranslation().Length(),
-                      //objectPoseDistThreshold_mm,
-                      //P_diff.GetRotationAngle().getDegrees(),
-                      //objectPoseAngleThreshold.getDegrees());
-              
-              /*
-              groundTruthObject->IsSameAs(*observedObject.second
-                                          objectPoseDistThreshold_mm,
-                                          objectPoseAngleThreshold, P_diff);
-               */
-            }
-
-            if(matchesFound == 0) {
-              fprintf(stdout, "Match found for observed %s object.\n", objectFamilyString.c_str());
-              /* with "
-                      "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs %.1fdeg)\n",
-                      objectFamilyString.c_str(),
-                      P_diff.GetTranslation().Length(),
-                      objectPoseDistThreshold_mm,
-                      P_diff.GetRotationAngle().getDegrees(),
-                      objectPoseAngleThreshold.getDegrees());
-               */
-#if DISPLAY_ERRORS
-              const Vec3f& T_true = groundTruthObject->GetPose().GetTranslation();
-              
-              Vec3f T_dir(T_true - trueRobotPose.GetTranslation());
-              const float distance = T_dir.makeUnitLength();
-              
-              const Vec3f T_error(T_true - observedObject.second->GetPose().GetTranslation());
-              /*
-               fprintf(stdout, "Block position error = %.1fmm at a distance of %.1fmm\n",
-               (T_true - observedBlock.second->GetPose().GetTranslation()).length(),
-               ().length());
-               */
-              //errorVsDist.push_back(std::make_pair( distance, DotProduct(T_error, T_dir) ));
-              //errorVsDist.push_back(std::make_pair(distance, (T_true - observedBlock.second->GetPose().GetTranslation()).length()));
-              errorVsDist.emplace_back(trueRobotPose.GetTranslation(),
-                                       groundTruthObject->GetPose().GetTranslation(), observedObject.second->GetPose().GetTranslation());
-#endif
-            }
-
-            ++matchesFound;
-          } else {
-            fprintf(stdout, "Observed type-%d %s object %d at (%.2f,%.2f,%.2f) does not match "
-                    "type-%d ground truth at (%.2f,%.2f,%.2f).\n", // T_diff = %2fmm (vs. %.2fmm), "
-                    //"Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
-                    int(observedObject->GetType()),
-                    objectFamilyString.c_str(),
-                    int(observedObject->GetID()),
-                    observedObject->GetPose().GetTranslation().x(),
-                    observedObject->GetPose().GetTranslation().y(),
-                    observedObject->GetPose().GetTranslation().z(),
-                    int(groundTruthObject->GetType()),
-                    groundTruthObject->GetPose().GetTranslation().x(),
-                    groundTruthObject->GetPose().GetTranslation().y(),
-                    groundTruthObject->GetPose().GetTranslation().z());
-                    //P_diff.GetTranslation().Length(),
-                    //objectPoseDistThreshold_mm,
-                    //P_diff.GetRotationAngle().getDegrees(),
-                    //objectPoseAngleThreshold.getDegrees());
-          }
-          
-        } // for each observed object
-        
-        EXPECT_EQ(matchesFound, 1); // Exactly one observed object should match
-        
-      } // for each ground truth object
-      
-    } // IF there are blocks
-    else {
-      //EXPECT_EQ(0, numObjectsObserved) <<
-      //"No objects are defined in the JSON file, but some were observed.";
-    }
-  
-  } // FOR each pose
-  
-#if DISPLAY_ERRORS
-  // Plot the error vs distance in Matlab
-  //Anki::Embedded::Matlab matlab(false);
-  fprintf(stdout, "Paste this into Matlab to get an error vs. distance plot:\n");
-  fprintf(stdout, "errorVsDist = [");
-  for(auto measurement : errorVsDist) {
-    fprintf(stdout, "%f %f %f   %f %f %f   %f %f %f;\n",
-            measurement.T_robot.x(), measurement.T_robot.y(), measurement.T_robot.z(),
-            measurement.T_blockTrue.x(), measurement.T_blockTrue.y(), measurement.T_blockTrue.z(),
-            measurement.T_blockObs.x(), measurement.T_blockObs.y(), measurement.T_blockObs.z());
-            
-  }
-  fprintf(stdout, "];\n");
-#endif
-  
-} // TEST_P(BlockWorldTest, BlockAndRobotLocalization)
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 TEST(Localization, LocalizationDistance)
 {
   using namespace Anki;
@@ -1340,27 +1493,11 @@ TEST(Localization, LocalizationDistance)
   // There should be nothing in BlockWorld yet
   BlockWorldFilter filter;
   std::vector<ObservableObject*> objects;
-  blockWorld.FindMatchingObjects(filter, objects);
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
   ASSERT_TRUE(objects.empty());
   
   // Fake a state message update for robot
-  RobotState stateMsg(1, // timestamp,
-                      0, // pose_frame_id,
-                      1, // pose_origin_id,
-                      RobotPose(0.f,0.f,0.f,0.f,0.f),
-                      0.f, // lwheel_speed_mmps,
-                      0.f, // rwheel_speed_mmps,
-                      0.f, // headAngle,
-                      0.f, // liftAngle,
-                      0.f, // liftHeight,
-                      AccelData(),
-                      GyroData(),
-                      0.f, // batteryVoltage,
-                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
-                      0, // lastPathID,
-                      0, // cliffDataRaw,
-                      0, // currPathSegment,
-                      0); // numFreeSegmentSlots)
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
   
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
@@ -1385,10 +1522,10 @@ TEST(Localization, LocalizationDistance)
     Point2f( 167,117),  Point2f( 170,185),  Point2f(236,116),  Point2f(237,184)
   };
   
-  const ObjectID firstID = robot.GetBlockWorld().AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  const ObjectID firstID = robot.GetBlockWorld().AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(firstID.IsSet());
   
-  const ObjectID secondID = robot.GetBlockWorld().AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  const ObjectID secondID = robot.GetBlockWorld().AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(secondID.IsSet());
   
   // Camera calibration
@@ -1422,7 +1559,7 @@ TEST(Localization, LocalizationDistance)
   
   // Should have the first object present in block world now
   filter.SetAllowedTypes({firstType});
-  const ObservableObject* matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  const ObservableObject* matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
   ASSERT_NE(nullptr, matchingObject);
   
   // Make sure we're seeing the first object from close enough to localize to it
@@ -1467,7 +1604,7 @@ TEST(Localization, LocalizationDistance)
   
   // Should have a the second object present in block world now
   filter.SetAllowedTypes({secondType});
-  matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
   ASSERT_NE(nullptr, matchingObject);
   
   // Make sure we're seeing the second object from close enough to localize to it
@@ -1502,7 +1639,7 @@ TEST(Localization, LocalizationDistance)
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // Make sure the first object's pose is "far"
-  matchingObject = robot.GetBlockWorld().GetObjectByID(firstID);
+  matchingObject = robot.GetBlockWorld().GetLocatedObjectByID(firstID);
   ASSERT_NE(nullptr, matchingObject);
   ASSERT_GE(matchingObject->GetLastObservedTime(), stateMsg.timestamp);
   
@@ -1533,18 +1670,27 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   //////////
   //// Helper Functions
   //////////
-  auto setPoseHelper = [&robot](ObservableObject* object, Pose3d& pose){
-    robot.GetObjectPoseConfirmer().SetPoseState(object, PoseState::Known);
+  auto setPoseHelper = [&robot](ObservableObject* object, Pose3d& pose) {
     object->SetIsMoving(false, 0);
     object->SetLastObservedTime(10);
     pose.SetParent(robot.GetPose().GetParent());
-    robot.GetObjectPoseConfirmer().AddVisualObservation(object, pose, false, 10);
-    robot.GetObjectPoseConfirmer().AddVisualObservation(object, pose, false, 10);
+    
+    // Add observation (note observations now require to be shared pointers)
+    ObservableObject* observation1 = object->CloneType();
+    observation1->InitPose(pose, PoseState::Known);
+    observation1->CopyID(object);
+    robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation1), object, false, 10);
+
+    // Add observation (note observations now require to be shared pointers)
+    ObservableObject* observation2 = object->CloneType();
+    observation2->InitPose(pose, PoseState::Known);
+    observation2->CopyID(object);
+    robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation2), object, false, 10);
+
     ASSERT_EQ(object->GetPoseState(), PoseState::Known);
     ASSERT_EQ(object->IsActive(), true);
     //ASSERT_EQ(object->CanBeUsedForLocalization(), true);
-    ASSERT_EQ(robot.GetBlockWorld().GetNumOrigins(), 1);
-    
+    ASSERT_EQ(robot.GetBlockWorld().GetNumAliveOrigins(), 1);
   };
   
   auto getRandomFlatXRotation = [&randGen](){
@@ -1671,25 +1817,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   
 
   // Fake a state message update for robot
-  // The robot should not report at t=0, since we are after timeSync and 0 is used by the
-  // robot constructor to set everything to 0
-  RobotState stateMsg(1, // timestamp,
-                      0, // pose_frame_id,
-                      1, // pose_origin_id,
-                      RobotPose(0.f,0.f,0.f,0.f,0.f),
-                      0.f, // lwheel_speed_mmps,
-                      0.f, // rwheel_speed_mmps,
-                      0.f, // headAngle,
-                      0.f, // liftAngle,
-                      0.f, // liftHeight,
-                      AccelData(),
-                      GyroData(),
-                      0.f, // batteryVoltage,
-                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
-                      0, // lastPathID,
-                      0, // cliffDataRaw,
-                      0, // currPathSegment,
-                      0); // numFreeSegmentSlots)
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
   
   robot.UpdateFullRobotState(stateMsg);
   // for calling robot update
@@ -1703,25 +1831,23 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   // There should be nothing in BlockWorld yet
   BlockWorldFilter filter;
   std::vector<ObservableObject*> objects;
-  blockWorld.FindMatchingObjects(filter, objects);
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
   ASSERT_TRUE(objects.empty());
-  ASSERT_EQ(blockWorld.GetNumOrigins(), 0);
+  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0);
   
   // Add object
-  ObjectID objID1 = blockWorld.AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
-  ObjectID objID2 = blockWorld.AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
-  ObjectID objID3 = blockWorld.AddActiveObject(2, 2, ActiveObjectType::OBJECT_CUBE3);
-
-  ObservableObject* object1 = blockWorld.GetObjectByID(objID1);
+  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
+  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
+  
   ASSERT_NE(nullptr, object1);
-  ASSERT_EQ(object1->GetPoseState(), PoseState::Unknown);
-  ASSERT_EQ(object1->IsActive(), true);
-  
-  ObservableObject* object2 = blockWorld.GetObjectByID(objID2);
+  const ObjectID objID1 = object1->GetID();
+
   ASSERT_NE(nullptr, object2);
-  
-  ObservableObject* object3 = blockWorld.GetObjectByID(objID3);
+  const ObjectID objID2 = object2->GetID();
+
   ASSERT_NE(nullptr, object3);
+  const ObjectID objID3 = object3->GetID();
   
   /////////
   // Test stacks of cubes
@@ -1900,13 +2026,13 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
   *
   **/
   
-  ObservableObject* staticBlock = blockWorld.GetObjectByID(objID1);
+  ObservableObject* staticBlock = blockWorld.GetLocatedObjectByID(objID1);
   ASSERT_NE(nullptr, staticBlock);
 
-  ObservableObject* baseBlock = blockWorld.GetObjectByID(objID2);
+  ObservableObject* baseBlock = blockWorld.GetLocatedObjectByID(objID2);
   ASSERT_NE(nullptr, baseBlock);
   
-  ObservableObject* topBlock = blockWorld.GetObjectByID(objID3);
+  ObservableObject* topBlock = blockWorld.GetLocatedObjectByID(objID3);
   ASSERT_NE(nullptr, topBlock);
   
   // consts
@@ -2004,19 +2130,6 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
     } // end static orientation
   }// end repetition count
 }
-
-
-// This is the list of JSON files containing vision test worlds:
-// TODO: automatically get all available tests from some directory?
-const char *visionTestJsonFiles[] = {
-  "visionTest_PoseCluster.json",
-  "visionTest_VaryingDistance.json",
-  "visionTest_MatPoseTest.json",
-  "visionTest_TwoBlocksOnePose.json",
-  "visionTest_RepeatedBlock.json",
-//  "visionTest_SingleRamp.json", // TODO: Re-enable
-  "visionTest_OffTheMat.json"
-};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(FactoryTest, IdealCameraPose)
@@ -2197,12 +2310,6 @@ TEST(FactoryTest, FindDotsInImages)
     // TODO: Check the rest of the message contents for sane values
   }
 }
-
-/*
- // This actually creates the set of tests, one for each filename above.
-INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,
-                        ::testing::ValuesIn(visionTestJsonFiles));
-*/
 
 #define CONFIGROOT "ANKICONFIGROOT"
 #define WORKROOT "ANKIWORKROOT"

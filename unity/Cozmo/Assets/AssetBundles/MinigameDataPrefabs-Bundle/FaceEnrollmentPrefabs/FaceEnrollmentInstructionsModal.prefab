@@ -633,6 +633,7 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _PreventForceClose: 0
   DimBackground: 0
   _NameForFaceLabel: {fileID: 11472424}
 --- !u!222 &22200494
@@ -969,8 +970,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -150}
-  m_SizeDelta: {x: 270, y: 203}
+  m_AnchoredPosition: {x: 139, y: -140}
+  m_SizeDelta: {x: 173, y: 173}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:

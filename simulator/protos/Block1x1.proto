@@ -263,6 +263,7 @@ Supervisor {
   boundingObject USE Block1x1Shape
   physics DEF Block1x1Physics Physics {
     mass IS mass
+    density -1
   }
 } # "Robot" (the actual block)
 

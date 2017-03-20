@@ -39,6 +39,7 @@ namespace Anki {
       inline const Code& GetCode() const;
       
       const char* GetCodeName() const;
+      static const char* GetNameForCode(Code code);
       
     protected:
       
@@ -72,16 +73,12 @@ namespace Anki {
       
       inline void SetSeenBy(const Camera& camera);
       
-      inline void MarkUsed(bool used);
-      inline bool IsUsed();
-      
     protected:
       TimeStamp_t    _observationTime;
       Quad2f         _imgCorners;
       Camera         _seenByCam;
       int            _userHandle;
       
-      bool           _used;
     }; // class ObservedMarker
     
     
@@ -198,14 +195,6 @@ namespace Anki {
     
     inline void ObservedMarker::SetSeenBy(const Camera& camera) {
       _seenByCam = camera;
-    }
-    
-    inline void ObservedMarker::MarkUsed(bool used) {
-      _used = used;
-    }
-    
-    inline bool ObservedMarker::IsUsed() {
-      return _used;
     }
     
     inline void KnownMarker::SetLastObservedTime(const TimeStamp_t atTime) {

@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
@@ -107,6 +108,20 @@ public class RobotEngineManager : MonoBehaviour {
     private set;
   }
 
+  private void HandleUiDeviceConnected(Anki.Cozmo.ExternalInterface.UiDeviceConnected message) {
+    if (!message.toGameCLADHash.SequenceEqual(MessageEngineToGameHash._Data)) {
+      DAS.Error("RobotEngineManager.CladMismatchEngineToGame", "Engine's hash (" +
+                 BitConverter.ToString(message.toGameCLADHash) + ") != UI's (" +
+                 BitConverter.ToString(MessageEngineToGameHash._Data) + ")");
+    }
+
+    if (!message.toEngineCLADHash.SequenceEqual(MessageGameToEngineHash._Data)) {
+      DAS.Error("RobotEngineManager.CladMismatchGameToEngine", "Engine's hash (" +
+                 BitConverter.ToString(message.toEngineCLADHash) + ") != UI's (" +
+                 BitConverter.ToString(MessageGameToEngineHash._Data) + ")");
+    }
+  }
+
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {
@@ -134,6 +149,8 @@ public class RobotEngineManager : MonoBehaviour {
 
     FeatureGate.Instance.Initialize();
     Anki.Debug.DebugConsoleData.Instance.RegisterEngineCallbacks();
+
+    AddCallback<Anki.Cozmo.ExternalInterface.UiDeviceConnected>(HandleUiDeviceConnected);
   }
 
   private void OnDisable() {
@@ -152,6 +169,8 @@ public class RobotEngineManager : MonoBehaviour {
 
     // Destroy Singletons depending on RobotEvents
     SkillSystem.Instance.DestroyInstance();
+
+    RemoveCallback<Anki.Cozmo.ExternalInterface.UiDeviceConnected>(HandleUiDeviceConnected);
   }
 
   void Update() {
@@ -523,9 +542,7 @@ public class RobotEngineManager : MonoBehaviour {
 
     Robots[robotID] = new MockRobot(robotID);
     CurrentRobotID = robotID;
-    if (DataPersistence.DataPersistenceManager.Instance.CurrentSession != null) {
-      DataPersistence.DataPersistenceManager.Instance.CurrentSession.HasConnectedToCozmo = true;
-    }
+    DataPersistence.DataPersistenceManager.Instance.SetHasConnectedWithCozmo(true);
 
     // mock connect message fire.
     Anki.Cozmo.ExternalInterface.RobotConnectionResponse connectedMessage = new Anki.Cozmo.ExternalInterface.RobotConnectionResponse();

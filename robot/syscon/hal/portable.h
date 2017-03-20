@@ -16,6 +16,10 @@ typedef double              f64;
 typedef s32                 Fixed;
 #endif
 
+#ifndef MAX
+#define MAX(x,y) ((x < y) ? (y) : (x))
+#endif
+
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
 #endif

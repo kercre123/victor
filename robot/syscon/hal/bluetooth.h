@@ -9,33 +9,8 @@ extern "C"
   #include "ble_settings.h"
 }
 
-#include "tasks.h"
-
 #include "clad/robotInterface/messageEngineToRobot.h"
-
-enum BLEError {
-  BLE_ERROR_NONE,
-  BLE_ERROR_BUFFER_UNDERFLOW,
-  BLE_ERROR_MESSAGE_ENCRYPTION_WRONG,
-  BLE_ERROR_BAD_FRAMING,
-  BLE_ERROR_AUTHENTICATED_FAILED,
-  BLE_ERROR_NOT_AUTHENTICATED,
-  BLE_ERROR_BUFFER_OVERFLOW
-};
-
-static const int COZMO_FRAME_DATA_LENGTH = AES_KEY_LENGTH;
-static const int BLUETOOTH_PIN_DIGITS = 6;
-
-enum CozmoFrameFlags {
-  START_OF_MESSAGE = 0x01,
-  END_OF_MESSAGE = 0x02,
-  MESSAGE_ENCRYPTED = 0x04
-};
-
-struct CozmoFrame {
-  uint8_t message[COZMO_FRAME_DATA_LENGTH];
-  uint8_t flags;
-};
+#include "clad/robotInterface/bleMessages.h"
 
 namespace Bluetooth {
   extern uint16_t                   conn_handle;
@@ -47,14 +22,11 @@ namespace Bluetooth {
   uint32_t init();
   void shutdown(void);
   void advertise(void);
+  void disconnect(uint32_t reason);
   bool enabled(void);
   void manage(void);
   
-  bool transmit(const uint8_t* data, int length, uint8_t id);
-
-  // These are message handlers
-  void enterPairing(const Anki::Cozmo::EnterPairing& msg);
-  void diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults& msg);
+  void sendFrame(const Anki::Cozmo::BLE::Frame*);
 };
 
 #endif

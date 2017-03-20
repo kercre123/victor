@@ -38,6 +38,9 @@ namespace Anki {
       
       void SetCliffDetectThreshold(u16 level);
       
+      // Returns the minimum value of all cliff sensor values
+      u16 GetMinRawCliffValue();
+      
     } // namespace ProxSensors
   } // namespace Cozmo
 } // namespace Anki

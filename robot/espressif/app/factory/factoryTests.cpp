@@ -107,7 +107,10 @@ static const FTMenuItem faceMenuItems[] = {
  
 static const FTMenuItem faceMenuItems[] = {
   {"Exit",            RobotInterface::FTM_entry,           NEVER_TIMEOUT },
-  {"Power off",       RobotInterface::FTM_batteryCharging, NEVER_TIMEOUT },
+  {"Enter low-power", RobotInterface::FTM_Off,             NEVER_TIMEOUT },
+#if FACTORY_FACE_MENUS
+  {"Battery charge",  RobotInterface::FTM_batteryCharging, NEVER_TIMEOUT },
+#endif
   {"Robot info",      RobotInterface::FTM_WiFiInfo,          30000000 },
   {"Sensor info",     RobotInterface::FTM_StateMenu,     MENU_TIMEOUT },
   {"Connections",     RobotInterface::FTM_ConnectionInfo,    30000000 }, 
@@ -825,7 +828,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
     {
       Face::Clear();
       //ClearBackPack Lights?
-      SetBodyRadioMode(BODY_IDLE_OPERATING_MODE);
+      SetBodyRadioMode(BODY_LOW_POWER_OPERATING_MODE);
       break;
     }
     case RobotInterface::FTM_batteryCharging:

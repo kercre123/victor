@@ -16,7 +16,7 @@
 
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
-#include "clad/types/activeObjectTypes.h"
+#include "clad/types/ledTypes.h"
 #include "json/json.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -63,7 +63,7 @@ public:
   // Allows the caller to start a looping light pattern on Cozmo's backpack and get a handle to cancel it later.
   // Note that the source specified will be used in determining which pattern should be used when multiple have
   // been triggered.
-  BackpackLightDataLocator StartLoopingBackpackLights(BackpackLights lights, BackpackLightSource source);
+  void StartLoopingBackpackLights(BackpackLights lights, BackpackLightSource source, BackpackLightDataLocator& lightLocator_out);
   
   // Related to the above start looping call, allows the caller to cancel a currently looping light pattern
   bool StopLoopingBackpackLights(const BackpackLightDataLocator& lightDataLocator);
@@ -100,7 +100,7 @@ private:
   BackpackLightsState             _curBackpackChargeState = BackpackLightsState::OffCharger;
   
   Result SetBackpackLightsInternal(const BackpackLights& lights);
-  BackpackLightDataLocator StartLoopingBackpackLightsInternal(BackpackLights lights, BackpackLightSourceType source);
+  void StartLoopingBackpackLightsInternal(BackpackLights lights, BackpackLightSourceType source, BackpackLightDataLocator& lightLocator_out);
   
   const char* StateToString(const BackpackLightsState& state) const;
   

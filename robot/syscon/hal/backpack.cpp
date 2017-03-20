@@ -40,7 +40,7 @@ struct BackpackLight {
   uint8_t gamma;
 };
 
-static BackpackLight setting[] = { 
+static BackpackLight setting[] = {
   { NULL, 0,             0,                                 0, 0, 0,    0 }, // DUMMY CHANNEL
   { NULL, 0, 1 << PIN_LED1, (1 << PIN_LED1) | (1 << PIN_LED2), 0, 0, 0x10 }, // 0
   { NULL, 0, 1 << PIN_LED1, (1 << PIN_LED1) | (1 << PIN_LED4), 1, 0, 0x10 }, // 1
@@ -80,7 +80,7 @@ void Backpack::init()
 {
   lightsOff();
   setLightsMiddle(BPL_IMPULSE, BackpackLights::disconnected);
-  
+
   // Clear out backpack leds
   #ifndef DISABLE_LIGHTS
   nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
@@ -93,7 +93,7 @@ void Backpack::init()
   nrf_gpio_cfg_output(PIN_LED3);
   nrf_gpio_cfg_output(PIN_LED4);
   #endif
-  
+
   override = false;
 }
 
@@ -127,7 +127,7 @@ static void setImpulsePattern(void) {
         setLightsMiddle(BPL_IMPULSE, BackpackLights::button_pressed[2]);
         break ;
     }
-    
+
     return ;
   }
 
@@ -159,7 +159,7 @@ void Backpack::setLowBattery(bool batteryLow) {
   if (batteryLow == isBatteryLow) {
     return ;
   }
-  
+
   isBatteryLow = batteryLow;
   setImpulsePattern();
 }
@@ -168,7 +168,7 @@ void Backpack::setChargeState(CurrentChargeState state) {
   if (chargeState == state) {
     return ;
   }
-  
+
   chargeState = state;
   setImpulsePattern();
 }
@@ -185,7 +185,7 @@ void Backpack::setLayer(BackpackLayer layer) {
   if (layer == currentLayer || layer >= BACKPACK_LAYERS) {
     return ;
   }
-  
+
   currentLayer = layer;
   updateLights(lightState[currentLayer]);
 }
@@ -222,7 +222,7 @@ void Backpack::setLightsTurnSignals(BackpackLayer layer, const LightState* updat
 
   // Turnsignal lights are indicies 0,1
   memcpy(&lightState[layer][0], &update[0], sizeof(LightState)*2);
-  
+
   if (currentLayer == layer) {
     updateLights(lightState[layer]);
   }
@@ -230,10 +230,10 @@ void Backpack::setLightsTurnSignals(BackpackLayer layer, const LightState* updat
 
 void Backpack::useTimer() {
   NRF_TIMER1->POWER = 1;
-  
+
   NRF_TIMER1->TASKS_STOP = 1;
   NRF_TIMER1->TASKS_CLEAR = 1;
-  
+
   NRF_TIMER1->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
   NRF_TIMER1->MODE = TIMER_MODE_MODE_Timer;
   NRF_TIMER1->PRESCALER = 0;
@@ -307,12 +307,13 @@ static void HandShakeLift(bool pressed) {
   }
 }
 
-void Backpack::trigger() {
+void Backpack::manage() {
   static int countdown = 0;
 
   if (--countdown > 0) {
     return ;
   }
+
   countdown = TIMER_SKIPS;
 
   #ifndef DISABLE_LIGHTS
@@ -348,7 +349,7 @@ void Backpack::trigger() {
   if (!lights_enabled) {
     return ;
   }
-  
+
   // Recalculate the LED drive values
   if (!override) {
     for (int i = 1; i < LIGHT_COUNT; i++) {
@@ -387,7 +388,7 @@ void Backpack::trigger() {
   #endif
 }
 
-extern "C" void TIMER1_IRQHandler(void) { 
+extern "C" void TIMER1_IRQHandler(void) {
   // This just clears out lights
   NRF_TIMER1->EVENTS_COMPARE[0] = 0;
 

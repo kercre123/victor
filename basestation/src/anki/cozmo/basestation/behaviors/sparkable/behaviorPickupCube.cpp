@@ -168,7 +168,7 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
       return !isPartOfIllegalConfiguration;
     });
   
-  const ObservableObject* closestObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), filter);
+  const ObservableObject* closestObject = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(), filter);
   
   if(closestObject != nullptr)
   {
@@ -282,13 +282,13 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
     return;
   }
   
-  double turn_rad = robot.GetRNG().RandDblInRange(M_PI_4 ,M_PI_F);
+  float turn_rad = (float) robot.GetRNG().RandDblInRange(M_PI_4, M_PI_F);
   if( robot.GetRNG().RandDbl() < 0.5 )
   {
-    turn_rad *= -1;
+    turn_rad *= -1.f;
   }
   
-  StartActing(new TurnInPlaceAction(robot,Radians(turn_rad),false),
+  StartActing(new TurnInPlaceAction(robot, turn_rad, false),
                   &BehaviorPickUpCube::TransitionToPutDownCube);
 }
   
@@ -342,7 +342,7 @@ void BehaviorPickUpCube::TransitionToDoingFinalReaction(Robot& robot)
 void BehaviorPickUpCube::FailedToPickupObject(Robot& robot)
 {
   // mark this as failed to pickup so that we don't retry
-  const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+  const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);
   if(failedObject){
     robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
   }

@@ -132,7 +132,7 @@ namespace FaceEnrollment {
         _FaceEnrollmentGame.SharedMinigameView.HideTitleWidget();
         _FaceEnrollmentGame.SharedMinigameView.ShowFullScreenGameStateSlide(_FaceEnrollmentGame.FaceEnrollmentMultipleFacesErrorSlidePrefab, "multiple_faces_error");
         _FaceEnrollmentGame.ShowMultipleFacesErrorShelf(_NameForFace, CreateInstructionsModal);
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Error);
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Error);
       }
       else {
         PopupErrorAlert(faceEnrollmentCompleted);
@@ -168,7 +168,7 @@ namespace FaceEnrollment {
       System.Action<AlertModal> errorAlertCreated = (alertModal) => {
         alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += ReturnToFaceSlide;
         _ErrorAlertModal = alertModal;
-        _ErrorAlertModal.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Error);
+        _ErrorAlertModal.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Error);
       };
 
       // we didn't succeed so let's show an error to the user saying why

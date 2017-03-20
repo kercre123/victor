@@ -191,7 +191,7 @@ static void configure_rf(void* packet, uint32_t address, uint8_t channel, uint32
   NRF_RADIO->PACKETPTR   = (uint32_t)packet;
 }
 
-static void Radio::resume() {
+static void resume() {
   NVIC_ClearPendingIRQ(RADIO_IRQn);
   NVIC_EnableIRQ(RADIO_IRQn);
 
@@ -482,16 +482,9 @@ static void transmitHandshake(void) {
   AccessorySlot* target = &accessories[currentAccessory];
 
   if (++target->last_received >= ACCESSORY_TIMEOUT) {
-    // Spread the remaining accessories forward as a patch fix
-    // Simply reset the timeout of all accessories
-    for (int i = 0; i < MAX_ACCESSORIES; i++) {
-      target->last_received = 0;
-    }
-
     target->active = false;
 
     SendObjectConnectionState(currentAccessory);
-    
     return ;
   }
   
@@ -556,22 +549,7 @@ static void transmitHandshake(void) {
   target->messages_sent++;
 }
 
-void Radio::sendTestPacket(void) {
-  const AdvertisePacket test_packet = {
-    0x0D0B3D09,
-    0xFF03,     // I'm a cube 3
-    0x0000,     // Don't patch me, I have them all!
-    0x06,       // I'm a pilot/production cube
-    0xFF
-  };
-
-  radio_stop();
-  tx_queued = true;
-  configure_rf((void*)&test_packet, ADVERTISE_ADDRESS, ADV_CHANNEL, sizeof(test_packet));
-  Radio::resume();
-}
-
-void Radio::prepare(void) {
+static void prepare(void) {
   // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
     currentAccessory = 0;
@@ -608,6 +586,7 @@ extern "C" void RADIO_IRQHandler()
   case UESB_STATE_PRX:
     // CRC Failed
     if (NRF_RADIO->CRCSTATUS == 0) {
+      configure_rf(&radio_data, ADVERTISE_ADDRESS, ADV_CHANNEL, sizeof(AdvertisePacket));
       break ;
     }
 
@@ -631,14 +610,10 @@ extern "C" void RADIO_IRQHandler()
   }
 
   // Start receiving
-  Radio::resume();
+  resume();
 }
 
-void Radio::rotate(int frames) {
-  if (frames <= 0) {
-    return ;
-  }
-
+void Radio::rotate() {
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
     AccessorySlot* target = &accessories[i];
     
@@ -648,8 +623,7 @@ void Radio::rotate(int frames) {
     }
 
     // Have we underflowed ?
-    target->rotationNext -= frames;
-    while (target->rotationNext <= 0) {
+    if (--target->rotationNext <= 0) {
       // Rotate the light
       target->rotationOffset++;
       target->rotationNext += target->rotationPeriod;
@@ -662,14 +636,14 @@ extern "C" void RTC0_IRQHandler(void) {
     NRF_RTC0->EVENTS_COMPARE[PREPARE_COMPARE] = 0;
     NRF_RTC0->CC[PREPARE_COMPARE] += SCHEDULE_PERIOD;
 
-    Radio::prepare();
+    prepare();
   }
 
   if (NRF_RTC0->EVENTS_COMPARE[RESUME_COMPARE]) {
     NRF_RTC0->EVENTS_COMPARE[RESUME_COMPARE] = 0;
     NRF_RTC0->CC[RESUME_COMPARE] += SCHEDULE_PERIOD;
 
-    Radio::resume();
+    resume();
   }
 }
 

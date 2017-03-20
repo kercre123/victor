@@ -76,6 +76,26 @@
           "type" : "Spark"
         }
       },
+     {
+       "name" : "sparksPeekABoo",
+       "requireSpark":"PeekABoo",
+       "priority": 0, // lower is better
+       "behaviorChooser" :
+       {
+         "type" : "sparks",
+         "minTimeSecs": 0,
+         "maxTimeSecs": 60,
+         "numberOfRepetitions": 1,
+         "behaviorObjective": "PeekedABoo",
+         "softSparkTrigger": "SoftSparkUpgradeLift",
+         // these groups are the behaviors that are allowed in this behavior chooser
+         "behaviorGroups" : [ "SparksPeekABoo" ]
+       },
+       "goalStrategy":
+       {
+       "type" : "Spark"
+       }
+      },
       {
         "name" : "sparksPounceOnMotion",
         "requireSpark":"PounceOnMotionAction",

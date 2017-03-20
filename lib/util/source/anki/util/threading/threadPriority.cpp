@@ -90,8 +90,20 @@ void SetThreadPriority(pthread_t inThread, ThreadPriority threadPriority)
 
   if (res != 0)
   {
+
+#if defined(ANDROID)
+    // Currently, on Android, we expect pthread_setschedparam to fail with EPERM.
+    // A regular (non-root) process cannot change thread priority with pthread_setschedparam
+    if (res != EPERM) {
+#endif // defined(ANDROID)
+
     PRINT_NAMED_ERROR("SetThreadPriority.Failed",
-                      "Error: %s (res=%d) setting thread policy:priority %d:%d", std::strerror(errno), res, policy, priority);
+                      "Error: %s (res=%d) setting thread policy:priority %d:%d",
+                      std::strerror(errno), res, policy, priority);
+
+#if defined(ANDROID)
+    }
+#endif
   }
   else
   {

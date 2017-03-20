@@ -36,7 +36,7 @@ class PotentialObjectsForLocalizingTo
 public:
   
   PotentialObjectsForLocalizingTo(Robot& robot);
-  
+
   // Add the observed/matched pair as a potential localization object if it
   // is closer than the current one stored for its coordinate frame.
   // If in the robot's current coordinate frame, the passed-in matchedObject's
@@ -46,7 +46,8 @@ public:
   // passed-in pair.
   bool Insert(const std::shared_ptr<ObservableObject>& observedObject,
               ObservableObject* matchedObject,
-              f32 observedDistance);
+              f32 observedDistance,
+              bool observationAlreadyUsed);
   
   // Localize the robot we were constructed with, using any observed/matched
   // pairs that have been inserted thus far. Does nothing if there are no pairs.
@@ -64,10 +65,11 @@ private:
     ObservableObject* matchedObject;
     ObjectID matchedID; // normally left unset, but may be used if matchedObject is set to null
     f32 distance;
+    bool observationAlreadyUsed; // see note in BlockWorld about variable with the same name
   };
   
-  // Set the matched object's pose to the observed pose
-  void UpdateMatchedObjectPose(ObservedAndMatchedPair& pair, bool wasRobotMoving);
+  // Set the matched object's pose to the observed pose because the observation is not used for localization
+  void UseDiscardedObservation(ObservedAndMatchedPair& pair, bool wasRobotMoving);
   
   std::map<const PoseOrigin*, ObservedAndMatchedPair> _pairMap;
   

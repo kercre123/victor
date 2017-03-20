@@ -13,6 +13,8 @@
 #ifndef __Util_Logging_IEventProvider_H__
 #define __Util_Logging_IEventProvider_H__
 
+#include <map>
+#include <string>
 
 namespace Anki {
 namespace Util {
@@ -28,6 +30,9 @@ public:
   // sets global properties.
   // all future logs+events will have the updated globals attached to them
   virtual void SetGlobal(const char* key, const char* value) = 0;
+
+  // Get Globals
+  virtual void GetGlobals(std::map<std::string, std::string>& dasGlobals) = 0;
 
   virtual void EnableNetwork(int reason) {}
   virtual void DisableNetwork(int reason) {}

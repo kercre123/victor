@@ -32,16 +32,27 @@ const char * const RollingFileLogger::kDefaultFileExtension = ".log";
 
 RollingFileLogger::RollingFileLogger(Dispatch::Queue* queue, const std::string& baseDirectory, const std::string& extension, std::size_t maxFileSize)
 : _dispatchQueue(queue)
+, _ownedQueue(false)
 , _baseDirectory(baseDirectory)
 , _extension(extension)
 , _maxFileSize(maxFileSize)
 {
   FileUtils::CreateDirectory(baseDirectory);
 }
+
+RollingFileLogger::RollingFileLogger(create_queue_t, const std::string& baseDirectory, const std::string& extension, std::size_t maxFileSize)
+: RollingFileLogger(Dispatch::Create(), baseDirectory, extension, maxFileSize)
+{
+  _ownedQueue = true;
+}
   
 RollingFileLogger::~RollingFileLogger()
 {
   _currentLogFileHandle.close();
+  if (_ownedQueue && _dispatchQueue != nullptr) {
+    Dispatch::Stop(_dispatchQueue);
+    Dispatch::Release(_dispatchQueue);
+  }
 }
 
 void RollingFileLogger::ExecuteBlock(const std::function<void ()>& block)

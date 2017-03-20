@@ -1,11 +1,14 @@
-/** Clad definitions for active objects
+/** Clad definitions for *firmware* active object types
  * ROBOT_CLAD_SHARED
  */
 
-#include "clad/types/ledTypes.clad"
-
 namespace Anki {
 namespace Cozmo {
+
+// NOTE: This enum is meant only for Firmware code to differentiate active 
+//       object types (and to communicate them to engine).
+//       General engine code should not rely on these, other than when 
+//       processing messages coming from the robot.
 
 enum uint_16 ActiveObjectType
 {
@@ -16,89 +19,6 @@ enum uint_16 ActiveObjectType
   OBJECT_CUBE2   	= 0xff02,
   OBJECT_CUBE3   	= 0xff03,
   OBJECT_UNKNOWN 	= 0xffff
-}
-
-
-// Specify LEDs, relative to block's top face (as determined by accelerometer)
-// Looking down at top face (and through to bottom face), LEDs are
-// numbered as follows, with each value corresponding to a bit in a u8:
-// Note that the face labels are done such that they match the way Blocks'
-// faces are defined (imagine the robot is looking along the x axis, facing
-// the "Front" of the block, then it makes sense...)
-// NOTE: In the orientation displayed below, the Top marker is rightside up on screen
-//
-//
-//                 (Left)             Y
-//                 ---1---            ^
-//                |   ^   |           |
-//        (Front) 2  TOP  0 (Back)    |
-//                |       |           +----> X
-//                 ---3---
-//                 (Right)
-//
-//  When the block is on its side, FRONT is synonymous with the upper LED.
-
-enum uint_32 ActiveObjectConstants
-{
-  MAX_NUM_CUBES = 4,
-  MAX_NUM_ACTIVE_OBJECTS = 5,     // 7 is technical limitation, but really there should only be MAX_NUM_CUBES+1 for the charger.
-  NUM_CUBE_LEDS = 4,
-  FLASH_BLOCK_TIME_INTERVAL_MS = 200,
-  ACTIVE_OBJECT_DISCOVERY_PERIOD_MS = 1000,
-  OBJECT_DISCOVERY_CHANNEL = 5,    // sim only
-}
-
-enum uint_8 WhichCubeLEDs
-{
-  NONE = 0x00,
-  ALL  = 0xff,
-  // Individual LEDs masked by bit
-  BACK  = 0x01,
-  LEFT  = 0x02,
-  FRONT = 0x04,
-  RIGHT = 0x08,
-  // Corner groups
-  FRONT_LEFT  = 0x06, // Front | left
-  FRONT_RIGHT = 0x0c, // Front | right
-  BACK_LEFT   = 0x03, // Back  | left
-  BACK_RIGHT  = 0x09, // Back  | right
-
-  // Charger lights
-  CHARGER_BACK   = 0x01,
-  CHARGER_MIDDLE = 0x02,
-  CHARGER_FRONT  = 0x04
-}
-
-enum uint_8 MakeRelativeMode
-{
-  RELATIVE_LED_MODE_OFF = 0,
-  RELATIVE_LED_MODE_BY_CORNER,
-  RELATIVE_LED_MODE_BY_SIDE
-}
-
-// Convenience structure definition
-structure ActiveAccel
-{
-  float_32 x,
-  float_32 y,
-  float_32 z
-}
-
-enum uint_8 UpAxis {
-  XNegative,
-  XPositive,
-  YNegative,
-  YPositive,
-  ZNegative,
-  ZPositive,
-  NumAxes,
-  Unknown
-}
-
-enum uint_8 ActiveIdentityState {
-  Unidentified,
-  WaitingForIdentity,
-  Identified
 }
 
 } // namespace Cozmo

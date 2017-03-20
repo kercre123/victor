@@ -31,7 +31,7 @@
 namespace Anki {
 namespace Cozmo {
   
-constexpr std::array<ObjectType, 4> BlockFilter::kObjectTypes;
+constexpr std::array<ObjectType, 3> BlockFilter::kObjectTypes;
 
 BlockFilter::BlockFilter(Robot* inRobot, IExternalInterface* externalInterface)
   : _robot(inRobot)

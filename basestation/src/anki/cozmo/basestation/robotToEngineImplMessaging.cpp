@@ -14,9 +14,9 @@
 #include <opencv2/imgproc.hpp>
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/helpers/printByteArray.h"
+#include "util/helpers/printByteArray.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/RobotToEngineImplMessaging.h"
+#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -32,17 +32,21 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
+#include "clad/types/activeObjectTypes.h"
 #include "clad/types/robotStatusAndActions.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/debug/messageDebugging.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
 #include "util/signals/signalHolder.h"
+
 #include <functional>
 
 // Whether or not to handle prox obstacle events
@@ -237,7 +241,8 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   
   if( payload.motorID == MotorID::MOTOR_LIFT && payload.calibStarted && robot->IsCarryingObject() ) {
     // if this was a lift calibration, we are no longer holding a cube
-    robot->UnSetCarryObject( robot->GetCarryingObject() );
+    const bool deleteObjects = true; // we have no idea what happened to the cube, so remove completely from the origin
+    robot->SetCarriedObjectAsUnattached(deleteObjects);
   }
   
   if (payload.motorID == MotorID::MOTOR_HEAD) {
@@ -269,7 +274,8 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
   // This probably applies here as it does in HandleMotorCalibration.
   // Seems reasonable to expect whatever object the robot may have been carrying to no longer be there.
   if( payload.motorID == MotorID::MOTOR_LIFT && !payload.enabled && robot->IsCarryingObject() ) {
-    robot->UnSetCarryObject( robot->GetCarryingObject() );
+    const bool deleteObjects = true; // we have no idea what happened to the cube, so remove completely from the origin
+    robot->SetCarriedObjectAsUnattached(deleteObjects);
   }
     
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorAutoEnabled(payload)));
@@ -453,6 +459,29 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
   LOG_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
 }
 
+// Mapping of ActiveObjectType to ObjectType
+static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type)
+{
+  ObjectType objType = ObjectType::Unknown;
+  switch(type) {
+    case ActiveObjectType::OBJECT_CHARGER:
+      objType = ObjectType::Charger_Basic;
+      break;
+    case ActiveObjectType::OBJECT_CUBE1:
+      objType = ObjectType::Block_LIGHTCUBE1;
+      break;
+    case ActiveObjectType::OBJECT_CUBE2:
+      objType = ObjectType::Block_LIGHTCUBE2;
+      break;
+    case ActiveObjectType::OBJECT_CUBE3:
+      objType = ObjectType::Block_LIGHTCUBE3;
+      break;
+    default:
+      break;
+  }
+  return objType;
+}
+
 void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleActiveObjectDiscovered");
@@ -460,7 +489,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<Ro
   const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
   
   // Check object type
-  ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
+  const ObjectType objType = GetTypeFromActiveObjectType(payload.device_type);
   switch(objType) {
     case ObjectType::Charger_Basic:
     {
@@ -510,100 +539,44 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
     return;
   }
   
-  ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
-  if (payload.connected) {
+  const ObjectType objType = GetTypeFromActiveObjectType(payload.device_type);
+  if (payload.connected)
+  {
     // log event to das
-    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "0x%x,%s", payload.factoryID, EnumToString(payload.device_type));
+    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "0x%x,%s",
+                        payload.factoryID, EnumToString(payload.device_type));
 
-    // Add active object to blockworld if not already there
-    objID = robot->GetBlockWorld().AddActiveObject(payload.objectID, payload.factoryID, payload.device_type);
+    // Add active object to blockworld
+    objID = robot->GetBlockWorld().AddConnectedActiveObject(payload.objectID, payload.factoryID, objType);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
                        "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx)",
                        objID.GetValue(), payload.objectID, payload.factoryID, payload.device_type);
       
-      // if a charger, and robot is on the charger, add a pose for the charager
-      if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER )
-      {
-        robot->SetCharger(objID);
-        if( robot->IsOnCharger() )
-        {
-          Charger* charger = dynamic_cast<Charger*>(robot->GetBlockWorld().GetObjectByID(objID, ObjectFamily::Charger));
-          if( nullptr != charger )
-          {
-            charger->SetPoseRelativeToRobot(*robot);
-          }
-        }
-      }
-      
+      // do bookkeeping in robot
       robot->HandleConnectedToObject(payload.objectID, payload.factoryID, objType);
     }
   } else {
     // log event to das
-    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"disconnected"}}, "0x%x,%s", payload.factoryID, EnumToString(payload.device_type));
+    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"disconnected"}}, "0x%x,%s",
+                        payload.factoryID, EnumToString(payload.device_type));
 
-    // Remove active object from blockworld if it exists (in any coordinate frame)
-    BlockWorldFilter filter;
-    filter.SetFilterFcn([&payload](const ObservableObject* object) {
-      return object->IsActive() && object->GetActiveID() == payload.objectID;
-    });
-    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    
-    std::vector<ObservableObject*> matchingObjects;
-    robot->GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
-    
-    if(matchingObjects.empty()) {
-      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.SlotAlreadyDisconnected",
-                       "Received disconnected for activeID %d, factoryID 0x%x, but slot is already disconnected",
-                       payload.objectID, payload.factoryID);
-    } else {
-      for(auto obj : matchingObjects)
-      {
-        bool clearedObject = false;
-        if(objID.IsUnknown()) {
-          objID = obj->GetID();
-        } else {
-          // We expect all objects with the same active ID (across coordinate frames) to have the same
-          // object ID
-          DEV_ASSERT_MSG(objID == obj->GetID(),
-                         "Robot.HandleActiveObjectConnectionState.MismatchedIDs",
-                         "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p)",
-                         objID.GetValue(), payload.objectID, payload.factoryID,
-                         payload.device_type, &obj->GetPose().FindOrigin());
-        }
-        
-        // When disconnecting from an object make sure to set the factoryIDs of all matching objects in all frames
-        // to zero in case we see this disconnected object in the world
-        // Also update activeIDs so we don't try to localize to it.
-        // Also reset moving state if it's moving.
-        obj->SetFactoryID(0);
-        obj->SetActiveID(-1);
-        if (obj->IsMoving()) {
-          obj->SetIsMoving(false, robot->GetLastMsgTimestamp());
-        }
-        
-        if( !obj->IsPoseStateUnknown() ) {
-          robot->GetBlockWorld().ClearObject(objID);
-          clearedObject = true;
-        }
-        
-        PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
-                         "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p) cleared? %d",
-                         objID.GetValue(), payload.objectID, payload.factoryID,
-                         payload.device_type, &obj->GetPose().FindOrigin(), clearedObject);
-      } // for(auto obj : matchingObjects)
+    // Remove active object from blockworld if it exists, and remove all instances in all origins
+    objID = robot->GetBlockWorld().RemoveConnectedActiveObject(payload.objectID);
+    if ( objID.IsSet() )
+    {
+      // do bookkeeping in robot
+      robot->HandleDisconnectedFromObject(payload.objectID, payload.factoryID, objType);
     }
-    
-    robot->HandleDisconnectedFromObject(payload.objectID, payload.factoryID, objType);
   }
+  
+  PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Recvd", "FactoryID 0x%x, connected %d",
+                   payload.factoryID, payload.connected);
   
   // Viz info
   robot->GetContext()->GetVizManager()->SendObjectConnectionState(payload.objectID, objType, payload.connected);
   
-  PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Recvd",
-                   "FactoryID 0x%x, connected %d",
-                   payload.factoryID, payload.connected);
-  
+  // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {
     // Update the objectID to be blockworld ID
     payload.objectID = objID.GetValue();
@@ -644,102 +617,75 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   auto activeID = payload.objectID;
   
   const std::string eventPrefix = GetEventPrefix<PayloadType>();
+
+  // if we find an object with that activeID, its objectID will be here
+  ObjectID matchedObjectID;
   
 # define MAKE_EVENT_NAME(__str__) (eventPrefix + __str__).c_str()
+  
+  // find active object by activeID
+  ObservableObject* connectedObj = robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+  if ( nullptr == connectedObj ) {
+    PRINT_NAMED_WARNING(MAKE_EVENT_NAME("UnknownActiveID"),
+                        "Could not find match for active object ID %d", payload.objectID);
+  }
+  else
+  {
+    // Only do this stuff once, since these checks should be the same across all frames. Use connected instance
+    if( connectedObj->GetID() == robot->GetCharger() )
+    {
+      PRINT_NAMED_INFO(MAKE_EVENT_NAME("Charger"), "Charger sending garbage move messages");
+      return;
+    }
+  
+    DEV_ASSERT(connectedObj->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
+  
+    PRINT_NAMED_INFO(MAKE_EVENT_NAME("ObjectMovedOrStopped"),
+                     "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f, time: %d ms",
+                     connectedObj->GetID().GetValue(), connectedObj->GetActiveID(),
+                     EnumToString(connectedObj->GetType()), GetAxisString(payload),
+                     GetXAccelVal(payload), GetYAccelVal(payload), GetZAccelVal(payload), payload.timestamp );
+    
+    const bool shouldIgnoreMovement = robot->GetBlockTapFilter().ShouldIgnoreMovementDueToDoubleTap(connectedObj->GetID());
+    if(shouldIgnoreMovement && GetIsMoving<PayloadType>())
+    {
+      PRINT_NAMED_INFO(MAKE_EVENT_NAME("IgnoringMessage"),
+                       "Waiting for double tap id:%d ignoring movement message",
+                       connectedObj->GetID().GetValue());
+      return;
+    }
+    
+    // for later notification
+    matchedObjectID = connectedObj->GetID();
+    
+    // update Moving flag of connected object when it changes
+    const bool wasMoving = connectedObj->IsMoving();
+    const bool isMovingNow = GetIsMoving<PayloadType>();
+    if ( wasMoving != isMovingNow ) {
+      connectedObj->SetIsMoving(GetIsMoving<PayloadType>(), payload.timestamp);
+      robot->GetContext()->GetVizManager()->SendObjectMovingState(activeID, connectedObj->IsMoving());
+    }
+  }
+  
+  // -- Update located instances
   
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID. We also need to consider all pose states and origin frames.
   BlockWorldFilter filter;
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn([&payload](const ObservableObject* object) {
-    return object->IsActive() && object->GetActiveID() == payload.objectID;
+  filter.SetFilterFcn([activeID](const ObservableObject* object) {
+    return object->IsActive() && object->GetActiveID() == activeID;
   });
   
   std::vector<ObservableObject *> matchingObjects;
-  robot->GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
-  
-  if(matchingObjects.empty())
-  {
-    PRINT_NAMED_WARNING(MAKE_EVENT_NAME("UnknownActiveID"),
-                        "Could not find match for active object ID %d", payload.objectID);
-    return;
-  }
-  
-  // Only do this stuff once, since these checks should be the same across all frames:
-  const ObservableObject* firstObject = matchingObjects.front();
-  assert(firstObject != nullptr); // FindMatchingObjects should not return nullptrs
-  if( firstObject->GetID() == robot->GetCharger() )
-  {
-    PRINT_NAMED_INFO(MAKE_EVENT_NAME("Charger"), "Charger sending garbage move messages");
-    return;
-  }
-
-  DEV_ASSERT(firstObject->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
-
-  PRINT_NAMED_INFO(MAKE_EVENT_NAME("ObjectMovedOrStopped"),
-                   "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f, time: %d ms",
-                   firstObject->GetID().GetValue(), firstObject->GetActiveID(),
-                   EnumToString(firstObject->GetType()), GetAxisString(payload),
-                   GetXAccelVal(payload), GetYAccelVal(payload), GetZAccelVal(payload), payload.timestamp );
-  
-  const bool shouldIgnoreMovement = robot->GetBlockTapFilter().ShouldIgnoreMovementDueToDoubleTap(firstObject->GetID());
-  if(shouldIgnoreMovement && GetIsMoving<PayloadType>())
-  {
-    PRINT_NAMED_INFO(MAKE_EVENT_NAME("IgnoringMessage"),
-                     "Waiting for double tap id:%d ignoring movement message",
-                     firstObject->GetID().GetValue());
-    return;
-  }
-  
-  // Don't notify game about objects being carried that have moved, since we expect
-  // them to move when the robot does.
-  // TODO: Consider broadcasting carried object movement if the robot is _not_ moving
-  //
-  // Don't notify game about moving objects that are being docked with, because
-  // we expect those to move if/when we bump them. But we still mark them as dirty/inaccurate
-  // below because they have in fact moved and we wouldn't want to localize with them.
-  //
-  // TODO: Consider not filtering these out and letting game ignore them somehow
-  //       - Option 1: give game access to dockingID so it can do this same filtering
-  //       - Option 2: add a "wasDocking" flag to the ObjectMoved/Stopped message
-  //       - Option 3: add a new ObjectMovedWhileDocking message
-  //
-  const bool isDockingObject = (firstObject->GetID() == robot->GetDockObject());
-  const bool isCarryingObject = robot->IsCarryingObject(firstObject->GetID());
-  
-  // Update the ID to be the blockworld ID before broadcasting
-  payload.objectID = firstObject->GetID();
-  payload.robotID = robot->GetID();
-  
-  if(!isDockingObject && !isCarryingObject)
-  {
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
-  }
-
-  // We expect carried objects to move, so don't mark them as dirty/inaccurate.
-  // Their pose state should remain accurate/known because they are attached to
-  // the lift. I'm leaving this a separate check from the decision about broadcasting
-  // the movement, in case we want to easily remove the checks above but keep this one.
-  if(isCarryingObject)
-  {
-    // If carried object is moving, don't ignore stopped messages.
-    if (!GetIsMoving<PayloadType>() && firstObject->IsMoving()) {
-      const_cast<ObservableObject*>(firstObject)->SetIsMoving(false, payload.timestamp);
-      robot->GetContext()->GetVizManager()->SendObjectMovingState(activeID, firstObject->IsMoving());
-    }
-    
-    // TODO: Consider _not_ ignoring carried object movement if the robot is _not_ moving
-    //       (This doesn't "just work" with an IsMoving check because of timing not matching.)
-    // if( robot->GetMoveComponent().IsMoving() )
-    return;
-  }
+  robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
   
   for(ObservableObject* object : matchingObjects)
   {
     assert(object != nullptr); // FindMatchingObjects should not return nullptrs
     
-    if(object->GetID() != matchingObjects.front()->GetID())
+    if(object->GetID() != matchedObjectID)
     {
       PRINT_NAMED_WARNING(MAKE_EVENT_NAME("ActiveObjectInDifferentFramesWithDifferentIDs"),
                           "First object=%d in '%s'. This object=%d in '%s'.",
@@ -753,69 +699,59 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     // Their pose state should remain accurate/known because they are attached to
     // the lift. I'm leaving this a separate check from the decision about broadcasting
     // the movement, in case we want to easily remove the checks above but keep this one.
-    if(isCarryingObject)
-    {
-      // If carried object is moving, don't ignore stopped messages.
-      if (GetIsMoving<PayloadType>() || !object->IsMoving()) {
-        // TODO: Consider _not_ ignoring carried object movement if the robot is _not_ moving
-        //       (This doesn't "just work" with an IsMoving check because of timing not matching.)
-        // if( robot->GetMoveComponent().IsMoving() )
-        continue;
-      }
-    }
-    
-    
-    if(object->IsPoseStateKnown())
+    const bool isCarryingObject = robot->IsCarryingObject(object->GetID());
+    if(object->IsPoseStateKnown() && !isCarryingObject)
     {
       // Once an object moves, we can no longer use it for localization because
       // we don't know where it is anymore. Next time we see it, relocalize it
       // relative to robot's pose estimate. Then we can use it for localization
       // again.
-      robot->GetObjectPoseConfirmer().SetPoseState(object, PoseState::Dirty);
-      
-      // Do additional checks for objects in the current frame
-      const bool isInCurrentFrame = (&object->GetPose().FindOrigin() == robot->GetWorldOrigin());
-      if(isInCurrentFrame)
-      {
-        PRINT_NAMED_INFO(MAKE_EVENT_NAME("DelocalizingObject"),
-                         "ObjectID: %d (Active ID %d), type: %s",
-                         object->GetID().GetValue(), object->GetActiveID(),
-                         EnumToString(object->GetType()));
-
-        
-        // If this is the object we were localized to, unset our localizedToID.
-        // Note we are still "localized" by odometry, however.
-        if(robot->GetLocalizedTo() == object->GetID())
-        {
-          DEV_ASSERT(robot->IsLocalized(), MAKE_EVENT_NAME("BadIsLocalizedCheck"));
-          PRINT_NAMED_INFO(MAKE_EVENT_NAME("UnsetLocalizedToID"),
-                           "Unsetting %s %d, which moved/stopped, as robot %d's localization object.",
-                           ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
-          robot->SetLocalizedTo(nullptr);
-        }
-        else if(!(robot->IsLocalized()) && robot->GetOffTreadsState() == OffTreadsState::OnTreads)
-        {
-          // If we are not localized and there is nothing else left in the world that
-          // we could localize to, then go ahead and mark us as localized (via
-          // odometry alone)
-          if(false == robot->GetBlockWorld().AnyRemainingLocalizableObjects()) {
-            PRINT_NAMED_INFO(MAKE_EVENT_NAME("NoMoreRemainingLocalizableObjects"),
-                             "Marking previously-unlocalized robot %d as localized to odometry because "
-                             "there are no more objects to localize to in the world.", robot->GetID());
-            robot->SetLocalizedTo(nullptr);
-          }
-        }
-      }
+      robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
     }
     
-    // Set moving state of object (in any frame)
-    object->SetIsMoving(GetIsMoving<PayloadType>(), payload.timestamp);
-    
-    // Viz update
-    robot->GetContext()->GetVizManager()->SendObjectMovingState(activeID, object->IsMoving());
+    const bool wasMoving = object->IsMoving();
+    const bool isMovingNow = GetIsMoving<PayloadType>();
+    if ( wasMoving != isMovingNow )
+    {
+      // Set moving state of object (in any frame)
+      object->SetIsMoving(GetIsMoving<PayloadType>(), payload.timestamp);
+    }
     
   } // for(ObservableObject* object : matchingObjects)
-                           
+  
+  if ( matchedObjectID.IsSet() )
+  {
+    // Don't notify game about objects being carried that have moved, since we expect
+    // them to move when the robot does.
+    // TODO: Consider broadcasting carried object movement if the robot is _not_ moving
+    //
+    // Don't notify game about moving objects that are being docked with, because
+    // we expect those to move if/when we bump them. But we still mark them as dirty/inaccurate
+    // below because they have in fact moved and we wouldn't want to localize with them.
+    //
+    // TODO: Consider not filtering these out and letting game ignore them somehow
+    //       - Option 1: give game access to dockingID so it can do this same filtering
+    //       - Option 2: add a "wasDocking" flag to the ObjectMoved/Stopped message
+    //       - Option 3: add a new ObjectMovedWhileDocking message
+    //
+    const bool isDockingObject = (connectedObj->GetID() == robot->GetDockObject());
+    const bool isCarryingObject = robot->IsCarryingObject(connectedObj->GetID());
+    
+    // Update the ID to be the blockworld ID before broadcasting
+    payload.objectID = matchedObjectID;
+    payload.robotID = robot->GetID();
+    
+    if(!isDockingObject && !isCarryingObject)
+    {
+      robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
+    }
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("ObjectMovedOrStoppedHelper.UnknownActiveID",
+                        "Could not find match for active object ID %d", activeID);
+  }
+  
 # undef MAKE_EVENT_NAME
   
 } // ObjectMovedOrStoppedHelper()
@@ -848,43 +784,31 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
 
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectUpAxisChanged payload = message.GetData().Get_activeObjectUpAxisChanged();
-
-  // The message from the robot has the active object ID in it, so we need
-  // to find the object in blockworld (which has its own bookkeeping ID) that
-  // has the matching active ID. We also need to consider all pose states and origin frames.
-  BlockWorldFilter filter;
-  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn([&payload](const ObservableObject* object) {
-    return object->IsActive() && object->GetActiveID() == payload.objectID;
-  });
-
-  std::vector<ObservableObject *> matchingObjects;
-  robot->GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
-
-  if(matchingObjects.empty())
+  
+  
+  // grab objectID from the connected instance
+  ActiveID activeID = payload.objectID;
+  const ObservableObject* conObj = robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+  if ( nullptr == conObj )
   {
-    PRINT_NAMED_WARNING("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
-                        "Could not find match for active object ID %d", payload.objectID);
+    PRINT_NAMED_ERROR("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
+                      "Could not find match for active object ID %d", payload.objectID);
     return;
   }
 
-  // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
-  ObservableObject* object = matchingObjects.front();
-  
   PRINT_NAMED_INFO("Robot.HandleActiveObjectUpAxisChanged.UpAxisChanged",
-                   "Type: %s, ObjectID: %d, UpAxis: %s",
-                   EnumToString(object->GetType()),
-                   object->GetID().GetValue(),
-                   EnumToString(payload.upAxis));
+                  "Type: %s, ObjectID: %d, UpAxis: %s",
+                  EnumToString(conObj->GetType()),
+                  conObj->GetID().GetValue(),
+                  EnumToString(payload.upAxis));
   
   // Viz update
   robot->GetContext()->GetVizManager()->SendObjectUpAxisState(payload.objectID, payload.upAxis);
   
   // Update the ID to be the blockworld ID before broadcasting
-  payload.objectID = object->GetID();
+  payload.objectID = conObj->GetID();
   payload.robotID = robot->GetID();
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectUpAxisChanged(payload)));
-  
 }
 
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -1267,7 +1191,7 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   
   // Forward to game
   const BlockWorld & blockWorld = robot->GetBlockWorld();
-  const ObservableObject * object = blockWorld.GetObjectByActiveID(activeID);
+  const ActiveObject * object = blockWorld.GetConnectedActiveObjectByActiveID(activeID);
   if (object != nullptr) {
     const uint32_t objectID = object->GetID();
     PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Broadcast",

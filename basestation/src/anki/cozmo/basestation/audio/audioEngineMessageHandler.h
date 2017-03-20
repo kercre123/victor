@@ -23,24 +23,27 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
-  
+
 class AudioEngineMessageHandler
 {
 public:
   
-  void Broadcast( const MessageAudioClient& message);
+  void Broadcast( const AudioEngine::Multiplexer::MessageAudioClient& message);
   
   template<typename T, typename ...Args>
   void BroadcastToAudioClient(Args&& ...args)
   {
-    Broadcast(MessageAudioClient(T(std::forward<Args>(args)...)));
+    Broadcast(AudioEngine::Multiplexer::MessageAudioClient(T(std::forward<Args>(args)...)));
   }
   
-  Signal::SmartHandle Subscribe(const MessageAudioClientTag& tagType, std::function<void(const AnkiEvent<MessageAudioClient>&)> messageHandler);
-  
+  using SubscribeFunc = std::function<void(const AnkiEvent<AudioEngine::Multiplexer::MessageAudioClient>&)>;
+  Signal::SmartHandle Subscribe( const AudioEngine::Multiplexer::MessageAudioClientTag& tagType,
+                                 SubscribeFunc messageHandler );
+
+
 private:
   
-  AnkiEventMgr<MessageAudioClient> _eventMgr;
+  AnkiEventMgr<AudioEngine::Multiplexer::MessageAudioClient> _eventMgr;
   
 };
   

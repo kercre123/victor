@@ -20,7 +20,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotStateHistory.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
 

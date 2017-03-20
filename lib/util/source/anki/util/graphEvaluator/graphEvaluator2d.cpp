@@ -178,7 +178,7 @@ bool GraphEvaluator2d::FindFirstX(float y, float& outX) const
     if (((y >= prevNode->_y) && (y <= nextNode->_y)) ||
         ((y <= prevNode->_y) && (y >= nextNode->_y)))
     {
-      // X result exists in this span, but if there's no x seperation then technically that result isn't possible
+      // X result exists in this span, but if there's no x separation then technically that result isn't possible
       // (there's an immediate step up) so we skip that case
     
       const float xRange = (nextNode->_x - prevNode->_x);

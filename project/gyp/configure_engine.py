@@ -24,6 +24,10 @@ def gypHelp():
   print "echo PATH=$HOME/your_workspace/gyp:$PATH >> ~/.bash_profile"
   print ". ~/.bash_profile"
 
+def _getGypArgs(format, outputFolder, gypFile):
+  return ['--check', '--depth', '.', '-f', format, '--toplevel-dir', '../..', \
+    '--generator-output', outputFolder, '--include', '../../project/gyp/build-variables.gypi', gypFile]
+
 def main(scriptArgs):
   version = '1.0'
   parser = argparse.ArgumentParser(description='runs gyp to generate projects', version=version)
@@ -133,6 +137,7 @@ def main(scriptArgs):
     return False
   audioProjectPath = options.audioPath
   audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioEngine.gyp')
+  audioGeneratedCladPath=os.path.join(projectRoot, 'generated', 'clad', 'engine')
 
   if not options.bleCozmoPath:
     options.bleCozmoPath = os.path.join(options.projectRoot, 'lib/BLECozmo')
@@ -210,16 +215,33 @@ def main(scriptArgs):
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'resources'],
    ['project/gyp/cozmoEngine.lst'])
+  generator.processFolder(['basestation/src/anki/cozmo',
+                           'basestation/include/anki/cozmo',
+                           'androidHAL/include/anki/cozmo',
+                           'androidHAL/src/anki/cozmo',                           
+                           'include', 'resources'],
+                          ['project/gyp/cozmoEngine2.lst'])
+  generator.processFolder(['basestation/src/anki/cozmo',
+                           'basestation/include/anki/cozmo',
+                           'androidHAL/include/anki/cozmo',
+                           'androidHAL/sim/src',
+                           'include', 'resources'],
+                          ['project/gyp/cozmoEngine2_sim.lst'])
   generator.processFolder(['cozmoAPI/src/anki/cozmo', 'cozmoAPI/include' ], ['project/gyp/cozmoAPI.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
-   ['project/gyp/ctrlRobot.lst'], ['reliableSequenceId.c', 'reliableMessageTypes.c'])
+                          ['project/gyp/ctrlRobot.lst'],
+                          ['reliableSequenceId.c', 'reliableMessageTypes.c'])
+  generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot2'],
+                          ['project/gyp/ctrlRobot2.lst'],
+                          ['reliableSequenceId.c', 'reliableMessageTypes.c', 'nvStorage.*'])
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
   generator.processFolder(['simulator/controllers/shared'], ['project/gyp/ctrlShared.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'simulator/src/game'], ['project/gyp/ctrlKeyboard.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'simulator/src/game'], ['project/gyp/ctrlBuildServerTest.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlGameEngine2'], ['project/gyp/ctrlGameEngine2.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlDevLog'], ['project/gyp/ctrlDevLog.lst'])
   generator.processFolder(['clad/src', 'clad/vizSrc', 'robot/clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')
@@ -256,6 +278,7 @@ def main(scriptArgs):
   ctiGtestPath = os.path.relpath(gtestPath, coretechInternalConfigurePath)
   ankiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, configurePath)
   ctiAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, coretechInternalConfigurePath)
+  audioAnkiUtilProjectPath = ctiAnkiUtilProjectPath
   coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
   audioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
   #audioProjectPath = os.path.relpath(options.audioPath, configurePath)
@@ -294,6 +317,7 @@ def main(scriptArgs):
                                   ce-ble_cozmo_path={12}
                                   ce-das_path={13}
                                   clad_dir={14}
+                                  util_gyp_path={15}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -310,12 +334,14 @@ def main(scriptArgs):
                                     bleCozmoProjectPath,
                                     dasProjectPath,
                                     clad_dir_rel,
+                                    audioAnkiUtilProjectPath,
+                                    audioGeneratedCladPath,
                                   )
-      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
+      gypArgs = _getGypArgs('xcode', '../../generated/mac', gypFile)
       gyp.main(gypArgs)
       # mac
       if options.mex:
-        gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', 'cozmoEngineMex.gyp']
+        gypArgs = _getGypArgs('xcode', '../../generated/mac', 'cozmoEngineMex.gyp')
         gyp.main(gypArgs)
       
 
@@ -348,6 +374,7 @@ def main(scriptArgs):
                                 ce-ble_cozmo_path={12}
                                 ce-das_path={13}
                                 clad_dir={14}
+                                util_gyp_path={15}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -364,8 +391,10 @@ def main(scriptArgs):
                                   bleCozmoProjectPath,
                                   dasProjectPath,
                                   clad_dir_rel,
+                                  audioAnkiUtilProjectPath,
+                                  audioGeneratedCladPath,
                                 )
-    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
+    gypArgs = _getGypArgs('xcode', '../../generated/ios', gypFile)
     gyp.main(gypArgs)
 
 
@@ -397,6 +426,7 @@ def main(scriptArgs):
                                   ce-ble_cozmo_path={11}
                                   ce-das_path={12}
                                   clad_dir={13}
+                                  generated_clad_path={14}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mex'),
@@ -412,8 +442,9 @@ def main(scriptArgs):
                                     bleCozmoProjectPath,
                                     dasProjectPath,
                                     clad_dir_rel,
+                                    audioGeneratedCladPath,
                                   )
-      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
+      gypArgs = _getGypArgs('xcode', '../../generated/mex', gypFile)
       gyp.main(gypArgs)
       
       
@@ -482,6 +513,8 @@ def main(scriptArgs):
                                 ce-das_path={14}
                                 clad_dir={15}
                                 crash_path={16}
+                                util_gyp_path={17}
+                                generated_clad_path={18}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -500,6 +533,8 @@ def main(scriptArgs):
                                   dasProjectPath,
                                   clad_dir_rel,
                                   crashPath,
+                                  ctiAnkiUtilProjectPath,
+                                  audioGeneratedCladPath,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
@@ -507,7 +542,7 @@ def main(scriptArgs):
     os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
     os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
     os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
-    gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
+    gypArgs = _getGypArgs('ninja-android', 'generated/android', gypFile)
     gyp.main(gypArgs)
 
 
@@ -540,6 +575,7 @@ def main(scriptArgs):
                                   ce-audio_path={10}
                                   ce-ble_cozmo_path={11}
                                   ce-das_path={12}
+                                  generated_clad_path={13}
                                   """.format(
                                     options.arch,
                                     os.path.join(options.projectRoot, 'generated/linux'),
@@ -554,11 +590,12 @@ def main(scriptArgs):
                                     audioProjectGypPath,
                                     bleCozmoProjectPath,
                                     dasProjectPath,
+                                    audioGeneratedCladPath,
                                   )
       os.environ['CC_target'] = '/usr/bin/clang'
       os.environ['CXX_target'] = '/usr/bin/clang++'
       os.environ['LD_target'] = '/usr/bin/clang++'
-      gypArgs = ['--check', '--depth', '.', '-f', 'ninja', '--toplevel-dir', '../..', '--generator-output', '../../generated/linux', gypFile] 
+      gypArgs = _getGypArgs('ninja', '../../generated/linux', gypFile)
       gyp.main(gypArgs)
       print "***********************HERE-configure.py2"
 

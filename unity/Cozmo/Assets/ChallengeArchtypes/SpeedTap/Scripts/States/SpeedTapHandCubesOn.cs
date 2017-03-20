@@ -26,7 +26,7 @@ namespace SpeedTap {
       float CozmoMovementDelay_sec = (_LightsOnDuration_sec * Random.Range(_SpeedTapGame.MinTapDelay_percent, _SpeedTapGame.MaxTapDelay_percent));
 
       // Set lights on cubes
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lightup);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Lightup);
       _SpeedTapGame.Rules.SetLights(shouldMatch: _ShouldMatch, game: _SpeedTapGame);
 
       int playerCount = _SpeedTapGame.GetPlayerCount();

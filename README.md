@@ -16,20 +16,16 @@ First install [brew](http://brew.sh/). Then use brew to install the following de
     brew install cmake
     brew install python3
 
-### Android NDK
+### Android SDK
 
 The android SDK is required to build for Android. (You may find you need it even if you're not building for Android when you run configure.py below.)
 
     brew install android-sdk
 
-You'll also need to extract the [android-ndk from Dropbox](https://www.dropbox.com/s/a46vfzl429fv1wc/android-ndk-r10e.tgz?dl=0) to /usr/local/opt
-
 Add the following to your .bash_profile in your home directory. Create it if it doesn't already exist.
 
-    export ANDROID_ROOT=/usr/local/opt/android-sdk
+	export ANDROID_ROOT=/usr/local/opt/android-sdk
 	export ANDROID_HOME=/usr/local/opt/android-sdk
-	export NDK_ROOT=/usr/local/opt/android-ndk-r10e
-	export ANDROID_NDK_ROOT=/usr/local/opt/android-ndk-r10e
 
 Then run
  

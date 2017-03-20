@@ -128,6 +128,7 @@ private:
   int _onSideAnimIndex;
   bool _forceLightMusicUpdate;
   bool _lightsShouldMessageCubeOnSide;
+  float _timeRespondedRollStartedPreviously_s;
   
   
   void UpdateActiveBehaviorGroup(Robot& robot, bool settingUpPyramid);
@@ -158,7 +159,10 @@ private:
   IBehavior* CheckForShouldThankUser(Robot& robot, const IBehavior* currentRunningBehavior);
   IBehavior* CheckForResponsePossiblyRoll(Robot& robot, const IBehavior* currentRunningBehavior);
   
-  void UpdateTrackerPropertiesBasedOnCurrentRunningBehavior(const IBehavior* currentRunningBehavior);
+  // Some behaviors run directly by the chooser set properties once they've reached a
+  // certain state.  This function ticks those behaviors when appropriate to find out
+  // whether the PropertiesTracker needs to be updated to reflect the behavior's success
+  void UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(const IBehavior* currentRunningBehavior);
   
   
   ////////

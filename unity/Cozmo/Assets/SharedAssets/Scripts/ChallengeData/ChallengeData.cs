@@ -62,7 +62,7 @@ public class ChallengeData : ScriptableObject {
   [SerializeField]
   protected MusicStateWrapper _Music;
 
-  public Anki.Cozmo.Audio.GameState.Music DefaultMusic {
+  public Anki.AudioMetaData.GameState.Music DefaultMusic {
     get { return _Music.Music; }
   }
 
@@ -88,23 +88,23 @@ public class ChallengeData : ScriptableObject {
 [System.Serializable]
 public struct MusicStateWrapper {
 
-  public MusicStateWrapper(Anki.Cozmo.Audio.GameState.Music music) {
+  public MusicStateWrapper(Anki.AudioMetaData.GameState.Music music) {
     _Music = (int)music;
   }
 
   [SerializeField]
   private int _Music;
 
-  public Anki.Cozmo.Audio.GameState.Music Music {
-    get { return (Anki.Cozmo.Audio.GameState.Music)_Music; }
+  public Anki.AudioMetaData.GameState.Music Music {
+    get { return (Anki.AudioMetaData.GameState.Music)_Music; }
     set { _Music = (int)value; }
   }
 
-  public static implicit operator Anki.Cozmo.Audio.GameState.Music(MusicStateWrapper other) {
+  public static implicit operator Anki.AudioMetaData.GameState.Music(MusicStateWrapper other) {
     return other.Music;
   }
 
-  public static implicit operator MusicStateWrapper(Anki.Cozmo.Audio.GameState.Music other) {
+  public static implicit operator MusicStateWrapper(Anki.AudioMetaData.GameState.Music other) {
     return new MusicStateWrapper(other);
   }
 }
@@ -112,27 +112,27 @@ public struct MusicStateWrapper {
 [System.Serializable]
 public struct SparkedMusicStateWrapper {
 
-  public SparkedMusicStateWrapper(Anki.Cozmo.Audio.SwitchState.Sparked sparked) {
+  public SparkedMusicStateWrapper(Anki.AudioMetaData.SwitchState.Sparked sparked) {
     _Sparked = (int)sparked;
   }
 
   [SerializeField]
   private int _Sparked;
 
-  public Anki.Cozmo.Audio.SwitchState.Sparked Sparked {
-    get { return (Anki.Cozmo.Audio.SwitchState.Sparked)_Sparked; }
+  public Anki.AudioMetaData.SwitchState.Sparked Sparked {
+    get { return (Anki.AudioMetaData.SwitchState.Sparked)_Sparked; }
     set { _Sparked = (int)value; }
   }
 
-  public static implicit operator Anki.Cozmo.Audio.SwitchState.Sparked(SparkedMusicStateWrapper other) {
+  public static implicit operator Anki.AudioMetaData.SwitchState.Sparked(SparkedMusicStateWrapper other) {
     return other.Sparked;
   }
 
-  public static implicit operator SparkedMusicStateWrapper(Anki.Cozmo.Audio.SwitchState.Sparked other) {
+  public static implicit operator SparkedMusicStateWrapper(Anki.AudioMetaData.SwitchState.Sparked other) {
     return new SparkedMusicStateWrapper(other);
   }
 
   public static SparkedMusicStateWrapper DefaultState() {
-    return new SparkedMusicStateWrapper(Anki.Cozmo.Audio.SwitchState.Sparked.Sneaky);
+    return new SparkedMusicStateWrapper(Anki.AudioMetaData.SwitchState.Sparked.Sneaky);
   }
 }

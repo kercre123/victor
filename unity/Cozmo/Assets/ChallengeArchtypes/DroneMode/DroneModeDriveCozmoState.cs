@@ -143,19 +143,13 @@ namespace Cozmo {
             "react_to_pet_button",
             DroneModeControlsSlide.ActionContextType.PetSeen);
 
-          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
-          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
-          _DroneModeControlsSlide.OnHeadSliderValueChanged += HandleHeadSliderValueChanged;
-          _DroneModeControlsSlide.OnLiftSliderValueChanged += HandleLiftSliderValueChanged;
-          _DroneModeControlsSlide.OnQuitConfirmed += _DroneModeGame.SharedMinigameView.HandleQuitConfirmed;
-          EnableInput();
-
           UIManager.Instance.BackgroundColorController.SetBackgroundColor(UI.BackgroundColorController.BackgroundColor.TintMe,
             _DroneModeControlsSlide.BackgroundColor);
           _DroneModeGame.SharedMinigameView.HideMiddleBackground();
 
           // DroneModeControlsSlide implements its own quit button so hide the shared one 
           _DroneModeGame.SharedMinigameView.HideQuitButton();
+          _DroneModeControlsSlide.OnQuitConfirmed += _DroneModeGame.SharedMinigameView.HandleQuitConfirmed;
 
           // Show how to play when the player plays drone mode for the first time
           int timesPlayedDroneMode = 0;
@@ -163,13 +157,25 @@ namespace Cozmo {
           if (timesPlayedDroneMode <= 0) {
             _DroneModeControlsSlide.OpenHowToPlayModal(showCloseButton: false, playAnimations: true);
           }
+
+          // Send get in animation; do not accept input while animation is playing
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.DroneModeGetIn, SetUpRobotAnimations);
+          DisableInput();
         }
 
         private void SetUpRobotAnimations(bool getInSuccess) {
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
           _RobotAnimator.OnTurboTransitionAnimationStarted += HandleTurboTransitionAnimationFinished;
           _RobotAnimator.OnTurboTransitionAnimationFinished += HandleTurboTransitionAnimationFinished;
+
+          // HandleDriveSpeedFamilyChanged depends on RobotAnimator being set up
+          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
+
+          // Accept input after Get In animation is done
+          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
+          _DroneModeControlsSlide.OnHeadSliderValueChanged += HandleHeadSliderValueChanged;
+          _DroneModeControlsSlide.OnLiftSliderValueChanged += HandleLiftSliderValueChanged;
+          EnableInput();
 
           _CurrentRobot.EnableDroneMode(true);
           _CurrentRobot.SetEnableFreeplayLightStates(true);
@@ -213,6 +219,7 @@ namespace Cozmo {
               _DroneModeControlsSlide.DebugText.text = _RobotAnimator.ToString();
             }
             else {
+              // Have sliders follow get in animation
               SetSlidersToCurrentPosition();
             }
           }
@@ -260,8 +267,10 @@ namespace Cozmo {
         }
 
         private void SetHeadSliderToCurrentPosition() {
-          float headAngleRadians = _CurrentRobot.HeadAngle;
-          _DroneModeControlsSlide.SetHeadSliderValue(headAngleRadians * Mathf.Rad2Deg);
+          if (_CurrentRobot != null && _DroneModeControlsSlide != null) {
+            float headAngleRadians = _CurrentRobot.HeadAngle;
+            _DroneModeControlsSlide.SetHeadSliderValue(headAngleRadians * Mathf.Rad2Deg);
+          }
         }
 
         private void EnableInput() {

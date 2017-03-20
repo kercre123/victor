@@ -241,7 +241,7 @@ namespace MemoryMatch {
     }
 
     public Anki.Cozmo.Audio.AudioEventParameter GetAudioForBlock(int blockId) {
-      AudioEventParameter audioEvent = AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect);
+      AudioEventParameter audioEvent = AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect);
       MemoryMatchCube MemoryMatchCube;
       if (_BlockIdToSound.TryGetValue(blockId, out MemoryMatchCube)) {
         audioEvent = MemoryMatchCube.soundName;
@@ -261,7 +261,7 @@ namespace MemoryMatch {
       base.ShowWinnerState(currentEndIndex, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count), showWinnerTextInShelf);
 
       // Set Final Music State
-      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Fanfare);
+      GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Minigame__Memory_Match_Fanfare);
     }
 
     public void FinalLifeComplete() {
@@ -347,7 +347,7 @@ namespace MemoryMatch {
       // Max lives - lives left = [0, 2] then shift index + 1 for Rounds [1, 3]
       int round = _Config.MaxLivesHuman - _CurrLivesHuman + 1;
       GameAudioClient.SetMusicRoundState(round);
-      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match);
+      GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Minigame__Memory_Match);
     }
 
     public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {

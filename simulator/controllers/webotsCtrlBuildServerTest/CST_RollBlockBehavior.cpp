@@ -34,7 +34,6 @@ enum class TestState {
   Rolling,
   PushBlockBackward,
   PushBlockToSide,
-  WaitingForRollBlockDone,
   TestDone
 };
 
@@ -233,28 +232,12 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       double currTime = GetSupervisor()->getTime();
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(15,
                                             currTime - _pushedBlockTime > timeToWait_s,
-                                            nearBlock) {
-        // Push the block to the side, out of Cozmo's view. He should end the
-        //  roll behavior with a failed action.
-        SendApplyForce("cube", 5, 20, 10);
-        SET_STATE(WaitingForRollBlockDone);
-      }
-      break;
-    }
-      
-      
-    case TestState::WaitingForRollBlockDone:
-    {
-      // Wait for behavior to end and action to fail with "REACHED_MAX_NUM_RETRIES".
-      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
-                                            _stoppedBehavior,
-                                            _rollActionResult == ActionResult::REACHED_MAX_NUM_RETRIES) {
-        // Roll action failed as expected and behavior stopped.
+                                            nearBlock,
+                                            !_stoppedBehavior) {
         SET_STATE(TestDone)
       }
       break;
     }
-      
       
     case TestState::TestDone:
     {

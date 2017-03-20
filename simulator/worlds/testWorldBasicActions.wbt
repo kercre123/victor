@@ -42,9 +42,11 @@ LightCube {
   rotation 1.59007e-05 -1.83671e-06 1 0.230004
   ID 2
 }
-BlockWorldComms {
+SolidBox {
+  translation 10 10 10
+  size 0.044 0.044 0.044
 }
-CozmoBot {
+%COZMOBOT% {
   name "CozmoBot_1"
 }
 BuildServerTestController {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
+using Anki.AudioMetaData;
 
 public class MockRobot : IRobot {
   #region IRobot implementation
@@ -145,11 +146,11 @@ public class MockRobot : IRobot {
     EnableSparkUnlock(UnlockId.Count);
   }
 
-  public void ActivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.Cozmo.Audio.GameState.Music musicState, Anki.Cozmo.Audio.SwitchState.Sparked sparkedState) {
+  public void ActivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.AudioMetaData.GameState.Music musicState, Anki.AudioMetaData.SwitchState.Sparked sparkedState) {
     // Do nothing
   }
 
-  public void DeactivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.Cozmo.Audio.GameState.Music musicState) {
+  public void DeactivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.AudioMetaData.GameState.Music musicState) {
     // Do nothing
   }
 
@@ -538,13 +539,13 @@ public class MockRobot : IRobot {
     // this one is called by a message, so ignore it
   }
 
-  public void ClearAllBlocks() {
-    // Do nothing
-  }
-
-  public void ClearAllObjects() {
-    // Do nothing
-  }
+//  public void ClearAllBlocks() {
+//    // Do nothing
+//  }
+//
+//  public void ClearAllObjects() {
+//    // Do nothing
+//  }
 
   public void VisionWhileMoving(bool enable) {
     // Do nothing

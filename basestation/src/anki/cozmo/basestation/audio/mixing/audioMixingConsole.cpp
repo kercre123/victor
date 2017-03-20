@@ -111,7 +111,7 @@ bool AudioMixingConsole::MixInputSources()
       // TODO: Get audio frame from source
       
       // Note: Source is the original audio data, do NOT modify!
-      const AudioFrameData* sourceFrame = aSource->PopFrame();
+      const AudioEngine::AudioFrameData* sourceFrame = aSource->PopFrame();
       if (sourceFrame != nullptr) {
         hasFrames = true;
         

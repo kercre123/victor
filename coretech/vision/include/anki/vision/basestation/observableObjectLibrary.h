@@ -43,14 +43,12 @@ namespace Anki {
       // Will return RESULT_FAIL if library already contains an object using a marker present on the given object.
       Result AddObject(std::unique_ptr<const ObsObjectType>&& object);
       
-      // Groups markers referring to the same type, and clusters them into
+      // Groups markers referring to the same object type, and clusters them into
       // observed objects, returned in objectsSeen (which is keyed and sorted by
-      // distance from the camera to the object).   Used markers will be
-      // removed from the input list, so markers referring to objects unknown
-      // to this library will remain.  If seenOnlyBy is not ANY_CAMERA, only markers
+      // distance from the camera to the object). If seenOnlyBy is not ANY_CAMERA, only markers
       // seen by that camera will be considered and objectSeen poses will be returned
       // wrt to that camera. If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
-      Result CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
+      Result CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
                                       std::multimap<f32, ObsObjectType*>& objectsSeen,
                                       const CameraID_t seenOnlyBy = ANY_CAMERA) const;
       

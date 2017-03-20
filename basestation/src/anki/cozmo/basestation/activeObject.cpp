@@ -11,6 +11,8 @@
  **/
 
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/charger.h"
 
 #define SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG 0
 
@@ -21,7 +23,6 @@
 namespace Anki {
   namespace Cozmo {
    
-  
     // The physical blocks are not capable of displaying
     // all light channels at full intensity so this is where
     // we compute the gamma scaler based on the desired light pattern.
@@ -174,62 +175,7 @@ namespace Anki {
       
     }
 */
-
-    
-    ObjectType ActiveObject::GetTypeFromActiveObjectType(ActiveObjectType type) {
-      ObjectType objType = ObjectType::Unknown;
-      switch(type) {
-        case ActiveObjectType::OBJECT_CHARGER:
-          objType = ObjectType::Charger_Basic;
-          break;
-        case ActiveObjectType::OBJECT_CUBE1:
-          objType = ObjectType::Block_LIGHTCUBE1;
-          break;
-        case ActiveObjectType::OBJECT_CUBE2:
-          objType = ObjectType::Block_LIGHTCUBE2;
-          break;
-        case ActiveObjectType::OBJECT_CUBE3:
-          objType = ObjectType::Block_LIGHTCUBE3;
-          break;
-        case ActiveObjectType::OBJECT_UNKNOWN:
-          // Ghost objects don't have valid active object type.
-          // ActiveObjectType is used by firmware code, so better not to even expose the concept/name there.
-          objType = ObjectType::Block_LIGHTCUBE_GHOST;
-          break;
-        case ActiveObjectType::OBJECT_OTA_FAIL:
-          break;
-      }
       
-      return objType;
-    }
-    
-    ActiveObjectType ActiveObject::GetActiveObjectTypeFromType(ObjectType type) {
-      ActiveObjectType objType = ActiveObjectType::OBJECT_UNKNOWN;
-      switch(type) {
-        case ObjectType::Charger_Basic:
-          objType = ActiveObjectType::OBJECT_CHARGER;
-          break;
-        case ObjectType::Block_LIGHTCUBE1:
-          objType = ActiveObjectType::OBJECT_CUBE1;
-          break;
-        case ObjectType::Block_LIGHTCUBE2:
-          objType = ActiveObjectType::OBJECT_CUBE2;
-          break;
-        case ObjectType::Block_LIGHTCUBE3:
-          objType = ActiveObjectType::OBJECT_CUBE3;
-          break;
-        case ObjectType::Block_LIGHTCUBE_GHOST:
-          // Ghost objects don't have valid active object type.
-          // ActiveObjectType is used by firmware code, so better not to even expose the concept/name there.
-          objType = ActiveObjectType::OBJECT_UNKNOWN;
-          break;
-        default:
-          break;
-      }
-      
-      return objType;
-    }
-
   } // namespace Cozmo
 } // namespace Anki
 

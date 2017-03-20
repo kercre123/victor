@@ -80,7 +80,7 @@ public class ConnectionFlowBackgroundModal : Cozmo.UI.BaseModal {
   }
 
   public void SetStateComplete(int completedState) {
-    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect);
+    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect);
     if (completedState < 0 || completedState >= _StateImages.Length) {
       DAS.Error("ConnectionFlowBackground.SetStateComplete", "Setting current state out of range");
     }

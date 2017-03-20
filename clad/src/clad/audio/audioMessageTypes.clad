@@ -1,7 +1,7 @@
 
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioEngine {
+namespace Multiplexer {
 
 
 enum uint_8 AudioCallbackFlag
@@ -28,6 +28,6 @@ enum uint_8 CurveType
   Log3              // Logarithm 3 Curve
 }
 
-}
-}
-}
+} // Multiplexer
+} // AudioEngine
+} // Anki

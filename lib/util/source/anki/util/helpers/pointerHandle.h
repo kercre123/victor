@@ -53,6 +53,14 @@ public:
     explicit operator bool() const {
       return (bool)masterPtr;
     }
+    
+    void reset() {
+      masterPtr.reset();
+    }
+    
+    void reset(T* ptr) {
+      masterPtr.reset(ptr);
+    }
 
     std::weak_ptr<B> getHandle() const { return std::weak_ptr<B>(masterPtr); }
   private:

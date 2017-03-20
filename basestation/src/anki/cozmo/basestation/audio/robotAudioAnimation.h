@@ -24,11 +24,11 @@
 #include <vector>
 
 
+namespace Anki {
+
 namespace AudioEngine {
 struct AudioCallbackInfo;
 }
-
-namespace Anki {
   
 namespace Util {
 class RandomGenerator;
@@ -66,7 +66,7 @@ public:
   };
   
   // Use subclass constructor, this class will return an invalid animation
-  explicit RobotAudioAnimation( GameObjectType gameObject, Util::RandomGenerator* randomGenerator );
+  explicit RobotAudioAnimation( AudioMetaData ::GameObjectType gameObject, Util::RandomGenerator* randomGenerator );
   
   virtual ~RobotAudioAnimation();
   
@@ -110,13 +110,13 @@ protected:
     };
     
     AnimationEventId eventId = kInvalidAnimationEventId;
-    GameEvent::GenericEvent audioEvent = GameEvent::GenericEvent::Invalid;
+    AudioMetaData::GameEvent::GenericEvent audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid;
     uint32_t time_ms = 0;
     float volume = 1.0f;
     AnimationEventState state = AnimationEventState::None;
 
     
-    AnimationEvent( AnimationEventId eventId, GameEvent::GenericEvent audioEvent, uint32_t time_ms, float volume = 0.0f )
+    AnimationEvent( AnimationEventId eventId, AudioMetaData::GameEvent::GenericEvent audioEvent, uint32_t time_ms, float volume = 0.0f )
     : eventId( eventId )
     , audioEvent( audioEvent )
     , time_ms( time_ms )
@@ -179,7 +179,7 @@ protected:
   void HandleCozmoEventCallback( AnimationEvent* animationEvent, const AudioEngine::AudioCallbackInfo& callbackInfo );
 
   // Track what game obj to use for animation
-  GameObjectType _gameObj = GameObjectType::Invalid;
+  AudioMetaData::GameObjectType _gameObj = AudioMetaData::GameObjectType::Invalid;
 
   
 private:

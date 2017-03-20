@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Anki.Cozmo.Audio;
 
 namespace MemoryMatch {
   public class ScanForInitialCubeState : InitialCubesState {
@@ -51,7 +52,7 @@ namespace MemoryMatch {
 
       SetScanPhase(ScanPhase.NoCubesSeen);
       InitShowCubesSlide();
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_Start);
+      GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Game_Start);
     }
 
     // ignore base class events
@@ -118,7 +119,7 @@ namespace MemoryMatch {
         LightCube cube = _CurrentRobot.LightCubes[cubeID];
         if (state == ScannedSetupCubeState.Seen) {
           cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Block_Connect);
+          GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Block_Connect);
         }
         else if (state == ScannedSetupCubeState.TooClose) {
           cube.SetLEDs(Cozmo.UI.CubePalette.Instance.ErrorColor.lightColor);
@@ -249,7 +250,7 @@ namespace MemoryMatch {
 
     private void InitShowCubesSlide() {
       if (_ShowCozmoCubesSlide == null) {
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Open);
+        GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Window_Open);
         _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
       }
       _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kMemoryMatchGameLabelPlaceCenter));
@@ -349,7 +350,7 @@ namespace MemoryMatch {
             }
           }
           // Error sound
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Tap_Red);
+          GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Tap_Red);
           MemoryMatchGame MemoryMatchGameInstance = _Game as MemoryMatchGame;
           _Game.SharedMinigameView.ShowWideGameStateSlide(
                                                      MemoryMatchGameInstance.MemoryMatchSetupErrorPrefab.gameObject, "MemoryMatch_error_slide");

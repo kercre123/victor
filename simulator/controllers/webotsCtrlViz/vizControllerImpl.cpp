@@ -13,6 +13,7 @@
 #include "vizControllerImpl.h"
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/colorRGBA.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"
 #include "clad/types/animationKeyFrames.h"
@@ -549,7 +550,11 @@ void VizControllerImpl::ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterfac
   _camDisp->drawLine((int)payload.bottomRight_x, (int)payload.bottomRight_y, (int)payload.bottomLeft_x, (int)payload.bottomLeft_y);
   _camDisp->drawLine((int)payload.bottomLeft_x, (int)payload.bottomLeft_y, (int)payload.topLeft_x, (int)payload.topLeft_y);
 }
-
+  
+float ConvertLiftAngleToLiftHeightMM(float angle_rad) {
+  return (sinf(angle_rad) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
+}
+  
 void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_RobotStateMessage();
@@ -563,7 +568,7 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
 
   sprintf(txt, "Head: %5.1f deg, Lift: %4.1f mm",
     RAD_TO_DEG(payload.state.headAngle),
-    payload.state.liftHeight);
+    ConvertLiftAngleToLiftHeightMM(payload.state.liftAngle));
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_HEAD_LIFT, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Pitch: %4.1f deg (IMUHead: %4.1f deg)",

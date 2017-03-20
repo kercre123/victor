@@ -38,6 +38,10 @@ namespace Anki {
       FaceObject,
       VisuallyVerifyNoObjectAtPose,
       VisuallyVerifyObjectAtPose,
+      TurnLeftRelative_540,
+      TurnRightRelative_540,
+      TurnAbsolute_180,
+      TurnAbsolute_0,
       TestDone
     };
     
@@ -57,7 +61,11 @@ namespace Anki {
       //  _lastActionType to the supplied actionType:
       void StartingAction(const RobotActionType& actionType);
       
-      const Point3f _poseToVerify = {190, 0, 22};
+      const Point3f _poseToVerify = {200, 0, 22};
+      
+      // to keep track of relative turns of more than one revolution:
+      Radians _prevAngle;
+      float _angularDistTraversed_deg = 0.f;
       
       // Message handlers
       virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
@@ -315,11 +323,11 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            SET_STATE(TestDone);
+            SET_STATE(TurnLeftRelative_540);
           }
           break;
         }
-        case TestState::TestDone:
+        case TestState::TurnLeftRelative_540:
         {
           // Verify robot is seeing an object at pose ~(190,0,22) which means the VisuallyVerifyNoObjectAtPose action
           // failed
@@ -328,6 +336,74 @@ namespace Anki {
                                                 NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10),
                                                 NEAR(GetRobotPose().GetTranslation().x(), 0, 30),
                                                 _lastActionResult == ActionResult::VISUAL_OBSERVATION_FAILED)
+          {
+            _prevAngle = GetRobotPoseActual().GetRotation().GetAngleAroundZaxis();
+            _angularDistTraversed_deg = 0.f;
+            StartingAction(RobotActionType::TURN_IN_PLACE);
+            SendTurnInPlace(DEG_TO_RAD(540.f), DEG_TO_RAD(150), 0);
+            SET_STATE(TurnRightRelative_540);
+          }
+          break;
+        }
+        case TestState::TurnRightRelative_540:
+        {
+          // Verify robot turned through 540 degress to a heading of 180 degrees
+          const Radians currAngle = GetRobotPoseActual().GetRotation().GetAngleAroundZaxis();
+          _angularDistTraversed_deg += (currAngle - _prevAngle).getDegrees();
+          _prevAngle = currAngle;
+          
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(_angularDistTraversed_deg, 540.f, 10.f))
+          {
+            _prevAngle = GetRobotPoseActual().GetRotation().GetAngleAroundZaxis();
+            _angularDistTraversed_deg = 0.f;
+            StartingAction(RobotActionType::TURN_IN_PLACE);
+            SendTurnInPlace(DEG_TO_RAD(-540.f), DEG_TO_RAD(150), 0);
+            SET_STATE(TurnAbsolute_180);
+          }
+          break;
+        }
+        case TestState::TurnAbsolute_180:
+        {
+          // Verify robot turned through -540 degress to a heading of 0 degrees
+          const Radians currAngle = GetRobotPoseActual().GetRotation().GetAngleAroundZaxis();
+          _angularDistTraversed_deg += (currAngle - _prevAngle).getDegrees();
+          _prevAngle = currAngle;
+          
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(_angularDistTraversed_deg, -540.f, 10.f))
+          {
+            StartingAction(RobotActionType::TURN_IN_PLACE);
+            SendTurnInPlace(DEG_TO_RAD(180.f), DEG_TO_RAD(150), 0, true);
+            SET_STATE(TurnAbsolute_0);
+          }
+          break;
+        }
+        case TestState::TurnAbsolute_0:
+        {
+          // Verify robot turned to a heading of 180 degrees
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetRobotPose().GetRotation().GetAngleAroundZaxis().IsNear(DEG_TO_RAD(180.f), DEG_TO_RAD(10.f)))
+          {
+            StartingAction(RobotActionType::TURN_IN_PLACE);
+            SendTurnInPlace(0.f, DEG_TO_RAD(150), 0, true);
+            SET_STATE(TestDone);
+          }
+          break;
+        }
+        case TestState::TestDone:
+        {
+          // Verify robot turned to an absolute heading of 0 degrees
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10))
           {
             StopMovie();
             CST_EXIT();

@@ -60,7 +60,7 @@ namespace Cozmo.HubWorld {
         playerInventory.ItemCountSet += HandleItemValueChanged;
 
         UnlockableInfo unlockabeInfo = UnlockablesManager.Instance.GetUnlockableInfo(_ChallengeData.UnlockId.Value);
-        _ComingSoonContainer.SetActive(unlockabeInfo.NeverAvailable);
+        _ComingSoonContainer.SetActive(unlockabeInfo.ComingSoon);
       }
 
       _ButtonScript.Initialize(HandleButtonClicked, string.Format("see_{0}_details_button", _ChallengeId), dasParentViewName);

@@ -54,7 +54,7 @@ BehaviorStatus PlaceBlockHelper::Init(Robot& robot)
     turn_rad *= -1;
   }
   
-  StartActing(new TurnInPlaceAction(robot, Radians(turn_rad),false),
+  StartActing(new TurnInPlaceAction(robot, (float) turn_rad, false),
               &PlaceBlockHelper::RespondToTurnAction);
   
   return _status;

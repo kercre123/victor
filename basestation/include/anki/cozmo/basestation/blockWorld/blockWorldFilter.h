@@ -57,7 +57,7 @@ namespace Cozmo {
     
     // Add to the existing set of IDs, types, or families
     void AddIgnoreID(const ObjectID& ID);
-    void AddIgnoreIDs(std::set<ObjectID>&& IDs);
+    void AddIgnoreIDs(const std::set<ObjectID>& IDs);
     void AddIgnoreType(ObjectType type);
     void AddIgnoreFamily(ObjectFamily family);
     void AddIgnoreOrigin(const PoseOrigin* origin);
@@ -70,7 +70,7 @@ namespace Cozmo {
     
     // Add to the existing set of IDs, types, or families
     void AddAllowedID(const ObjectID& ID);
-    void AddAllowedIDs(std::set<ObjectID>&& IDs);
+    void AddAllowedIDs(const std::set<ObjectID>& IDs);
     void AddAllowedType(ObjectType type);
     void AddAllowedFamily(ObjectFamily family);
     void AddAllowedOrigin(const PoseOrigin* origin);
@@ -82,7 +82,6 @@ namespace Cozmo {
     void AddFilterFcn(const FilterFcn& filterFcn); // add to list of filters (all must pass)
     
     // Handy, commonly-used filter functions
-    static bool PoseStateNotUnknownFilter(const ObservableObject* object); // Added by default
     static bool PoseStateKnownFilter(const ObservableObject* object);
     static bool ActiveObjectsFilter(const ObservableObject* object);
     static bool UniqueObjectsFilter(const ObservableObject* object);
@@ -107,7 +106,7 @@ namespace Cozmo {
     std::set<ObjectFamily>         _ignoreFamilies, _allowedFamilies;
     std::set<const PoseOrigin*>    _ignoreOrigins,  _allowedOrigins;
     
-    std::list<FilterFcn>    _filterFcns = {&BlockWorldFilter::PoseStateNotUnknownFilter};
+    std::list<FilterFcn>    _filterFcns;
     
     bool _onlyConsiderLatestUpdate = false;
     OriginMode _originMode = OriginMode::InRobotFrame;
@@ -168,7 +167,7 @@ namespace Cozmo {
     _ignoreIDs.insert(ID);
   }
   
-  inline void BlockWorldFilter::AddIgnoreIDs(std::set<ObjectID> &&IDs) {
+  inline void BlockWorldFilter::AddIgnoreIDs(const std::set<ObjectID>& IDs) {
     _ignoreIDs.insert(IDs.begin(), IDs.end());
   }
   
@@ -187,7 +186,7 @@ namespace Cozmo {
     _allowedIDs.insert(ID);
   }
 
-  inline void BlockWorldFilter::AddAllowedIDs(std::set<ObjectID>&& IDs) {
+  inline void BlockWorldFilter::AddAllowedIDs(const std::set<ObjectID>& IDs) {
     _allowedIDs.insert(IDs.begin(), IDs.end());
   }
   
@@ -272,11 +271,6 @@ namespace Cozmo {
       return true;
     }
     return false;
-  }
-  
-  inline bool BlockWorldFilter::PoseStateNotUnknownFilter(const ObservableObject* object) {
-    DEV_ASSERT(nullptr != object, "BlockWorldFilter.PoseStateNotUnknownFilter.NullObject");
-    return !object->IsPoseStateUnknown();
   }
   
   inline bool BlockWorldFilter::PoseStateKnownFilter(const ObservableObject* object)

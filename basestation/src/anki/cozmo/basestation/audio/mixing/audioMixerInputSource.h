@@ -46,7 +46,7 @@ public:
   virtual BufferState Update() = 0;
   
   // Consume frame in Mixer
-  const AudioFrameData* PopFrame();
+  const AudioEngine::AudioFrameData* PopFrame();
   
   void ResetInput();
   
@@ -67,8 +67,8 @@ protected:
   BufferState _state = BufferState::Empty;
   
 //  NextAudioFrameCallbackFunc  _nextFrameCallback = nullptr;
-  const AudioFrameData*       _nextFrameData = nullptr;
-  bool                        _validFrame = false;
+  const AudioEngine::AudioFrameData*  _nextFrameData = nullptr;
+  bool                                _validFrame = false;
   
   float _volume = 1.0f;
   

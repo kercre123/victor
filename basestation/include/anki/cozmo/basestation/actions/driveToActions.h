@@ -175,8 +175,6 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      void SetObjectCanBeUnknown(bool b) { _objectCanBeUnknown = b; }
-      
     protected:
       
       virtual ActionResult Init() override;
@@ -200,10 +198,7 @@ namespace Anki {
       
       PathMotionProfile          _pathMotionProfile;
       bool                       _hasMotionProfile = false;
-      
-      // Whether or not it is ok to drive to an object with an unknown pose
-      bool                       _objectCanBeUnknown = false;
-      
+            
     private:
       GetPossiblePosesFunc _getPossiblePosesFunc;
       bool _lightsSet = false;

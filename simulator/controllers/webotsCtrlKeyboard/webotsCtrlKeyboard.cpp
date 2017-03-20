@@ -12,7 +12,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/utils/helpers/printByteArray.h"
+#include "util/helpers/printByteArray.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -27,7 +27,6 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/activeObjectTypes.h"
 #include "clad/types/behaviorChooserType.h"
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
@@ -339,7 +338,6 @@ namespace Anki {
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
         printf("         Clear all known objects:  Alt+c\n");
-        printf("         Select behavior by type:  Shift+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
@@ -905,26 +903,8 @@ namespace Anki {
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
                 } else if(shiftKeyPressed) {
                   
-                  static const std::array<std::pair<bool,bool>,4> enableModes = {{
-                    {false, false}, {false, true}, {true, false}, {true, true}
-                  }};
-                  static auto enableModeIter = enableModes.begin();
+                  // FREE KEY COMBO!!!
                   
-                  printf("Setting addition/deletion mode to %s/%s.\n",
-                         enableModeIter->first ? "TRUE" : "FALSE",
-                         enableModeIter->second ? "TRUE" : "FALSE");
-                  ExternalInterface::SetObjectAdditionAndDeletion msg;
-                  msg.robotID = 1;
-                  msg.enableAddition = enableModeIter->first;
-                  msg.enableDeletion = enableModeIter->second;
-                  ExternalInterface::MessageGameToEngine msgWrapper;
-                  msgWrapper.Set_SetObjectAdditionAndDeletion(msg);
-                  SendMessage(msgWrapper);
-                  
-                  ++enableModeIter;
-                  if(enableModeIter == enableModes.end()) {
-                    enableModeIter = enableModes.begin();
-                  }
                 } else if(altKeyPressed) {
 
                   // FREE KEY COMBO!!!
@@ -1181,12 +1161,20 @@ namespace Anki {
                 }
                 else if(altKeyPressed)
                 {
-                  SendClearAllObjects();
+                  // rsam: Clear and Delete have change its meaning. Removing until someone complains that it's gone,
+                  // at which point we can evaluate what they need. Sorry if this causes interruptions, unfortunately
+                  // I can't keep supporting all current features in the refactor.
+                  
+                  // SendClearAllObjects();
                 }
                 else
                 {
+                  // rsam: Clear and Delete have change its meaning. Removing until someone complains that it's gone,
+                  // at which point we can evaluate what they need. Sorry if this causes interruptions, unfortunately
+                  // I can't keep supporting all current features in the refactor.
+                
                   // 'c' without SHIFT
-                  SendClearAllBlocks();
+                  // SendClearAllBlocks();
                 }
                 break;
               }

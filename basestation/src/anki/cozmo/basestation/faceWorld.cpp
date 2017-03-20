@@ -74,17 +74,11 @@ namespace Cozmo {
     }
   }
   
-  template<>
-  void FaceWorld::HandleMessage(const ExternalInterface::ClearAllObjects& msg)
-  {
-    ClearAllFaces();
-  }
- 
   void FaceWorld::SetupEventHandlers(IExternalInterface& externalInterface)
   {
-    using namespace ExternalInterface;
-    auto helper = MakeAnkiEventUtil(externalInterface, *this, _eventHandles);
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearAllObjects>();
+//    using namespace ExternalInterface;
+//    auto helper = MakeAnkiEventUtil(externalInterface, *this, _eventHandles);
+//    helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearAllObjects>();
   }
   
   void FaceWorld::RemoveFace(KnownFaceIter& knownFaceIter, bool broadcast)

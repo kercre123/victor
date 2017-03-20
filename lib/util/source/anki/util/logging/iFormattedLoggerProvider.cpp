@@ -127,7 +127,7 @@ void IFormattedLoggerProvider::FormatAndLogChanneled(ILoggerProvider::LogLevel l
   #if (PRINT_TID)
     pthread_once(&thread_id_once, thread_id_init);
     
-    uint32_t thread_id = numeric_cast<uint32_t>((uintptr_t)pthread_getspecific(thread_id_key));
+    uint32_t thread_id = numeric_cast_clamped<uint32_t>((uintptr_t)pthread_getspecific(thread_id_key));
     if(0 == thread_id) {
       thread_id = ++thread_max;
       pthread_setspecific(thread_id_key, (void*)((uintptr_t)thread_id));
@@ -159,6 +159,16 @@ void IFormattedLoggerProvider::FormatAndLogChanneled(ILoggerProvider::LogLevel l
       stream << " " << logString;
     }
   #endif
+  
+  ASSERT_NAMED(eventName!=nullptr, "IFormattedLoggerProvider.FormatAndLogChanneled logging null eventName");
+  ASSERT_NAMED(eventValue!=nullptr, "IFormattedLoggerProvider.FormatAndLogChanneled logging null eventValue");
+  static const char* emptyStr = "";
+  if( eventName == nullptr ) {
+    eventName = emptyStr;
+  }
+  if( eventValue == nullptr ) {
+    eventValue = emptyStr;
+  }
 
   std::string channelStr(channel);
   if (!channelStr.empty()) {

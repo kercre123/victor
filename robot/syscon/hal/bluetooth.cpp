@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "battery.h"
 #include "bluetooth.h"
-#include "tasks.h"
 #include "messages.h"
 #include "storage.h"
 #include "timer.h"
@@ -16,14 +16,10 @@
 // Don't warn about unused functions
 #pragma diag_suppress 177
 
-//#define DISABLE_TASK_CHECK
-#define DISABLE_BLE
+using namespace Anki::Cozmo;
 
-#define member_size(type, member) sizeof(((type *)0)->member)
-  
 // Softdevice settings
 static const nrf_clock_lfclksrc_t m_clock_source = NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM;
-static const uint32_t PIN_CODE_TIMEOUT = CYCLES_MS(10000); // 10 seconds
 static bool  m_sd_enabled;
 
 // Service settings
@@ -33,37 +29,6 @@ ble_gatts_char_handles_t    Bluetooth::transmit_handles;
 
 // Current connection state settings
 uint16_t                    Bluetooth::conn_handle;
-static uint8_t              m_nonce[member_size(Anki::Cozmo::HelloPhone, nonce)];
-static bool                 m_task_enabled;
-static uint32_t             dh_timeout;
-static bool                 dh_started;
-
-static const int MAX_CLAD_MESSAGE_LENGTH = 0x100 - 2;
-static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_KEY_LENGTH;
-
-// This is our inital state for pairing
-static DiffieHellmanTask dh_state;
-
-struct BLE_CladBuffer {
-  union {
-    uint8_t     raw[MAX_CLAD_MESSAGE_LENGTH + 2];
-    struct {
-      uint8_t   length;
-      uint8_t   msgID;
-      uint8_t   data[MAX_CLAD_MESSAGE_LENGTH];
-    };
-  };
-   
-  int  pointer;
-  int  message_size;
-  bool encrypted;
-};
-
-// Buffers for queueing and dequeueing
-static BLE_CladBuffer rx_buffer;
-static BLE_CladBuffer tx_buffer;
-static bool tx_pending;
-static bool tx_buffered;
 
 extern "C" void conn_params_error_handler(uint32_t nrf_error)
 {
@@ -80,291 +45,31 @@ static void softdevice_assertion_handler(uint32_t pc, uint16_t line_num, const u
   NVIC_SystemReset();
 }
 
-static void permissions_error(BLEError error) {
+void Bluetooth::disconnect(uint32_t reason) {
+  Anki::Cozmo::BLE::ConnectionState msg;
+
+  msg.state = reason;  
+  RobotInterface::SendMessage(msg);
+
   // This should be logged
   sd_ble_gap_disconnect(Bluetooth::conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
 }
 
-static void dh_complete(const void* state) {
-  using namespace Anki::Cozmo;
-  
-  const DiffieHellmanTask* dh = (const DiffieHellmanTask*) state;
-  
-  // Transmit our encryped key
-  EncodedAESKey msg;
-  memcpy(msg.secret, dh->local_secret, SECRET_LENGTH);
-  memcpy(msg.encoded_key, dh->encoded_key, AES_KEY_LENGTH);  
-  RobotInterface::SendMessage(msg);
-}
+void Bluetooth::sendFrame(const BLE::Frame* data) {
+  ble_gatts_hvx_params_t params;
+  uint16_t len = sizeof(BLE::Frame);
 
-void Bluetooth::diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults& msg) {
-  if (!m_sd_enabled) {
-    return ;
-  }
+  memset(&params, 0, sizeof(params));
+  params.type   = BLE_GATT_HVX_NOTIFICATION;
+  params.handle = Bluetooth::transmit_handles.value_handle;
+  params.p_data = (uint8_t*) data;
+  params.p_len  = &len;
 
-  memcpy(dh_state.diffie_result, msg.result, SECRET_LENGTH);
-
-  Task t;
-  t.op = TASK_FINISH_DIFFIE_HELLMAN;
-  t.state = &dh_state;
-  t.callback = dh_complete;
-  Tasks::execute(&t);
-}
-
-static void dh_setup(const void* state) {
-  using namespace Anki::Cozmo;
-  
-  const DiffieHellmanTask* dh = (const DiffieHellmanTask*) state;
-
-  // Display the pin number
-  RobotInterface::DisplayNumber dn;
-  dn.value = dh->pin;
-  dn.digits = BLUETOOTH_PIN_DIGITS;
-  dn.x = (8 - BLUETOOTH_PIN_DIGITS) * 8;
-  dn.y = 16;
-  RobotInterface::SendMessage(dn);
-
-  dh_timeout = GetCounter() + PIN_CODE_TIMEOUT;
-  dh_started = true;
-
-  // Ask another processor to nicely calculate our heavy function
-  CalculateDiffieHellman cdh;
-  memcpy(cdh.local, dh->local_encoded, SECRET_LENGTH);
-  memcpy(cdh.remote, dh->remote_encoded, SECRET_LENGTH);
-  RobotInterface::SendMessage(cdh);
-}
-
-void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
-  if (!m_sd_enabled) {
-    return;
-  }
-
-  // Copy in our secret code, and run
-  memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
-  
-  Task t;
-  
-  t.op = TASK_START_DIFFIE_HELLMAN;
-  t.state = &dh_state;
-  t.callback = dh_setup;
-  
-  Tasks::execute(&t);
-}
-
-static bool message_encrypted(uint8_t op) {
-  using namespace Anki::Cozmo::RobotInterface;
-  
-  // These are the only messages that may be sent unencrypted over the wire
-  switch (op) {
-    case EngineToRobot::Tag_enterPairing:
-    case EngineToRobot::Tag_encodedAESKey:
-      return false;
-  }
-
-  return true;
-}
-
-static void frame_data_received(const void* state) {
-  const AESTask *aes = (const AESTask*) state;
-  
-  if (!aes->hmac_test) {
-    permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
-    return ;
-  }
-  
-  // Attempted to underflow the receive buffer
-  if (rx_buffer.length > aes->data_length) {
-    permissions_error(BLE_ERROR_BUFFER_UNDERFLOW);
-    return ;
-  }
-
-  // Forward message up clad
-  if (rx_buffer.msgID >= 0x30) {
-    Anki::Cozmo::HAL::RadioSendMessage(rx_buffer.data, rx_buffer.length, rx_buffer.msgID);
-  } else {
-    Spine::processMessages(rx_buffer.raw);
-  }
-}
-
-static void frame_receive(CozmoFrame& receive)
-{
-  bool final      = (receive.flags & END_OF_MESSAGE) != 0;
-  bool start      = (receive.flags & START_OF_MESSAGE) != 0;
-  bool encrypted  = (receive.flags & MESSAGE_ENCRYPTED) != 0;
-
-  if (start) {
-    memset(&rx_buffer, 0, sizeof(rx_buffer));
-  }
-
-  // Buffer overflow
-  if (rx_buffer.pointer + COZMO_FRAME_DATA_LENGTH >= sizeof(rx_buffer.raw)) {
-    permissions_error(BLE_ERROR_BUFFER_OVERFLOW);
-    return ;
-  }
-
-  memcpy(&rx_buffer.raw[rx_buffer.pointer], receive.message, COZMO_FRAME_DATA_LENGTH);
-  rx_buffer.pointer += COZMO_FRAME_DATA_LENGTH;
-
-  // We have not finished receiving our message
-  if (!final) {
-    return ;
-  }
-  
-  rx_buffer.message_size = rx_buffer.pointer;
-
-  #ifndef DISABLE_TASK_CHECK
-  // Attemped to send a protected message unencrypted
-  if (message_encrypted(rx_buffer.msgID) != encrypted) {
-    permissions_error(BLE_ERROR_MESSAGE_ENCRYPTION_WRONG);
-    return ;
-  }
-  #endif
-
-  // rx_buffer.pointer
-  static AESTask state = {
-    rx_buffer.raw,
-    rx_buffer.message_size,
-    m_nonce,
-    sizeof(m_nonce)
-  };
-  state.data_length = rx_buffer.message_size;
-  
-  if (encrypted) {
-    Task t;
-
-    
-    t.op = TASK_AES_DECODE;
-    t.callback = frame_data_received;
-    t.state = &state;
-
-    Tasks::execute(&t);
-  } else {
-    // Feed unencrypted data through to the engine
-    state.hmac_test = true;
-    frame_data_received(&state);
-  }
-}
-
-static void send_welcome_message(const void*) {
-  using namespace Anki::Cozmo;
-  
-  HelloPhone msg;
-  memcpy(msg.nonce, m_nonce, sizeof(m_nonce));
-
-  RobotInterface::SendMessage(msg);
+  uint32_t err_code = sd_ble_gatts_hvx(Bluetooth::conn_handle, &params);
 }
 
 void Bluetooth::manage() {
   ble_app_timer_manage();
-
-  if (!m_task_enabled) {
-    return ;
-  }
-
-  if (dh_started) {
-    int ticks = dh_timeout - GetCounter();
-    if (ticks < 0) {
-      using namespace Anki::Cozmo;
-      
-      RobotInterface::DisplayNumber dn;
-      dn.digits = 0;
-      RobotInterface::SendMessage(dn);
-
-      dh_started = false;
-    }
-  }
-
-  // Manage outbound transmissions
-  if (tx_pending) {
-    // Calculate the length of the message we are trying to send
-    CozmoFrame f;
-
-    f.flags = 
-      (tx_buffer.encrypted ? MESSAGE_ENCRYPTED : 0) |
-      ((tx_buffer.pointer == 0) ? START_OF_MESSAGE : 0);
-
-    memcpy(f.message, &tx_buffer.raw[tx_buffer.pointer], sizeof(f.message));
-
-    if (tx_buffer.pointer + sizeof(f.message) >= tx_buffer.message_size) {
-      f.flags |= END_OF_MESSAGE;
-    }
-
-    // Transmit our frame
-    ble_gatts_hvx_params_t params;
-    uint16_t len = sizeof(CozmoFrame);
-    
-    memset(&params, 0, sizeof(params));
-    params.type   = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = Bluetooth::transmit_handles.value_handle;
-    params.p_data = (uint8_t*) &f;
-    params.p_len  = &len;
-    
-    uint32_t err_code = sd_ble_gatts_hvx(Bluetooth::conn_handle, &params);
-    
-    if (err_code == NRF_SUCCESS) {
-      tx_buffer.pointer += sizeof(f.message);
-
-      if (tx_buffer.pointer >= tx_buffer.message_size) {
-        tx_pending = false;
-        tx_buffered = false;
-      }
-    }
-    
-    return ;
-  }
-}
-
-static void start_message_transmission(const void* state) {
-  const AESTask* aes = (const AESTask*) state;
-  tx_buffer.message_size = aes->data_length;
-  tx_pending = true;
-}
-
-bool Bluetooth::transmit(const uint8_t* data, int length, uint8_t op) {
-  // We are already sending a message, jerk.
-  if (tx_buffered) {
-    return false;
-  }
-  
-  bool encrypted = message_encrypted(op);
-  
-  tx_buffer.length = length;
-  tx_buffer.msgID = op;
-  tx_buffer.encrypted = encrypted;
-  tx_buffer.pointer = 0;
-  tx_buffer.message_size = length + 2;
-  tx_buffered = true;
-  
-  memcpy(tx_buffer.data, data, length);
-
-  if (length > MAX_CLAD_OUTBOUND_SIZE) {
-    return false;
-  }
-
-  if (encrypted) {
-    Task t;
-
-    tx_buffer.message_size = tx_buffer.length + 2;
-
-    static AESTask state = {
-      tx_buffer.raw,
-      tx_buffer.message_size,
-      m_nonce,
-      sizeof(m_nonce)
-    };
-    
-    state.data_length = tx_buffer.message_size;
-
-    t.op = TASK_AES_ENCODE;
-    t.callback = start_message_transmission;
-    t.state = &state;
-        
-    Tasks::execute(&t);
-  } else {
-    tx_pending = true;
-  }
-  
-  return true;
 }
 
 static void on_ble_event(ble_evt_t * p_ble_evt)
@@ -373,39 +78,37 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
   static ble_gap_sec_keyset_t keys_exchanged;
   
   uint32_t                    err_code;
-  Task t;
 
   switch (p_ble_evt->header.evt_id)
   {
     case BLE_GAP_EVT_CONNECTED:
+      // Make sure we pull out of low power mode
+      Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
+      
       Bluetooth::conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-      tx_pending = false;
-      tx_buffered = false;
 
-      static const RandomTask random = {
-        m_nonce,
-        sizeof(m_nonce)
-      };
-    
-      // Generate our welcome nonce
-      t.op = TASK_GENERATE_RANDOM;
-      t.state = &random;
-      t.callback = send_welcome_message;
-      Tasks::execute(&t);
-
-      m_task_enabled = true;
+      {  
+        BLE::ConnectionState msg;
+        msg.state = BLE::BLE_CONNECTED;
+        RobotInterface::SendMessage(msg);
+      }
 
       using namespace Anki::Cozmo;
       // Disable test mode when we someone connects
       RobotInterface::EnterFactoryTestMode ftm;
       ftm.mode = RobotInterface::FTM_None;
-      RobotInterface::SendMessage(ftm);  
+      RobotInterface::SendMessage(ftm);
   
       break;
 
     case BLE_GAP_EVT_DISCONNECTED:
       Bluetooth::conn_handle = BLE_CONN_HANDLE_INVALID;
-      m_task_enabled = false;
+
+      {  
+        BLE::ConnectionState msg;
+        msg.state = BLE::BLE_DISCONNECTED_NORMALLY;  
+        RobotInterface::SendMessage(msg);
+      }
 
       // Resume advertising
       err_code = sd_ble_gap_adv_start(&adv_params);
@@ -425,8 +128,6 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       break;
 
     case BLE_GAP_EVT_SEC_INFO_REQUEST:
-      //p_enc_info = keys_exchanged.keys_central.p_enc_key
-
       if (p_master_id.ediv == p_ble_evt->evt.gap_evt.params.sec_info_request.master_id.ediv)
       {
         err_code = sd_ble_gap_sec_info_reply(Bluetooth::conn_handle, &keys_exchanged.keys_central.p_enc_key->enc_info, &keys_exchanged.keys_central.p_id_key->id_info, NULL);
@@ -454,8 +155,11 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
 
       // Ignore probing messages, but don't disconnect
       if ((p_evt_write->handle == Bluetooth::receive_handles.value_handle)) {
-        if (p_evt_write->len == sizeof(CozmoFrame)) {
-          frame_receive(*(CozmoFrame*) p_evt_write->data);
+        if (p_evt_write->len == sizeof(BLE::Frame)) {
+          Anki::Cozmo::BLE::DataReceived msg;
+          
+          memcpy(&msg.frame, &p_evt_write->data, sizeof(BLE::Frame));
+          RobotInterface::SendMessage(msg);
         }
       }
       break;
@@ -473,6 +177,7 @@ extern "C" void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
 
   if(p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED)
   {
+    Bluetooth::disconnect(BLE::BLE_CANNOT_CONFIGURE_CONN_PARAMS);
     err_code = sd_ble_gap_disconnect(Bluetooth::conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
     APP_ERROR_CHECK(err_code);
   }
@@ -481,7 +186,7 @@ extern "C" void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
 // Initalization functions
 static uint32_t receive_char_add(uint8_t uuid_type)
 {
-  static CozmoFrame value;
+  static BLE::Frame value;
   ble_gatts_char_md_t char_md;
   ble_gatts_attr_t    attr_char_value;
   ble_uuid_t          ble_uuid;
@@ -513,9 +218,9 @@ static uint32_t receive_char_add(uint8_t uuid_type)
 
   attr_char_value.p_uuid       = &ble_uuid;
   attr_char_value.p_attr_md    = &attr_md;
-  attr_char_value.init_len     = sizeof(CozmoFrame);
+  attr_char_value.init_len     = sizeof(BLE::Frame);
   attr_char_value.init_offs    = 0;
-  attr_char_value.max_len      = sizeof(CozmoFrame);
+  attr_char_value.max_len      = sizeof(BLE::Frame);
   attr_char_value.p_value      = (uint8_t*)&value;
   
   return sd_ble_gatts_characteristic_add(Bluetooth::service_handle, &char_md,
@@ -525,7 +230,7 @@ static uint32_t receive_char_add(uint8_t uuid_type)
 
 static uint32_t transmit_char_add(uint8_t uuid_type)
 {
-  static CozmoFrame value;
+  static BLE::Frame value;
   ble_gatts_char_md_t char_md;
   ble_gatts_attr_md_t cccd_md;
   ble_gatts_attr_t    attr_char_value;
@@ -564,9 +269,9 @@ static uint32_t transmit_char_add(uint8_t uuid_type)
   
   attr_char_value.p_uuid       = &ble_uuid;
   attr_char_value.p_attr_md    = &attr_md;
-  attr_char_value.init_len     = sizeof(CozmoFrame);
+  attr_char_value.init_len     = sizeof(BLE::Frame);
   attr_char_value.init_offs    = 0;
-  attr_char_value.max_len      = sizeof(CozmoFrame);
+  attr_char_value.max_len      = sizeof(BLE::Frame);
   attr_char_value.p_value      = (uint8_t*)&value;
   
   return sd_ble_gatts_characteristic_add(Bluetooth::service_handle, &char_md,
@@ -583,7 +288,6 @@ uint32_t Bluetooth::init() {
   err_code = sd_softdevice_enable(m_clock_source, softdevice_assertion_handler);
   APP_ERROR_CHECK(err_code);
   m_sd_enabled = true;
-  m_task_enabled = false;
 
   // Enable BLE event interrupt (interrupt priority has already been set by the stack).
   return sd_nvic_EnableIRQ(SWI2_IRQn);
@@ -605,7 +309,6 @@ void Bluetooth::advertise(void) {
     m_sd_enabled      = true;
   }
 
-  #ifndef DISABLE_BLE
   // Enable BLE stack 
   ble_enable_params_t ble_enable_params;
   memset(&ble_enable_params, 0, sizeof(ble_enable_params));
@@ -670,14 +373,11 @@ void Bluetooth::advertise(void) {
   // Start advertising
   err_code = sd_ble_gap_adv_start(&adv_params);
   APP_ERROR_CHECK(err_code);
-  #endif
 }
 
 void Bluetooth::shutdown(void) {
   if (!m_sd_enabled) { return ; }
 
-  m_task_enabled = false;
-  
   sd_softdevice_disable();
   m_sd_enabled = false;
 }

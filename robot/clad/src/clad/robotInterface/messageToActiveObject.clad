@@ -2,8 +2,7 @@
  * ROBOT_CLAD_SHARED
  */
 
-#include "clad/types/activeObjectTypes.clad"
-
+#include "clad/types/ledTypes.clad"
 
 namespace Anki {
 namespace Cozmo {

@@ -32,6 +32,8 @@ goog.require('Blockly.Colours');
 
 goog.require('Blockly.constants');
 
+var MAX_NUM_VALUE = 99;
+
 Blockly.Blocks['math_number'] = {
   /**
    * Block for generic numeric value.
@@ -95,6 +97,38 @@ Blockly.Blocks['math_whole_number'] = {
       "output": "Number",
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "colour": Blockly.Colours.textField
+    });
+  }
+};
+
+// Same as math_whole_number block above, with a validator added
+Blockly.Blocks['math_whole_number_with_validator'] = {
+  /**
+   * Block for whole number value, no negatives or decimals.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "NUM",
+          "min": 0,
+          "precision": 1
+        }
+      ],
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
+      "colour": Blockly.Colours.textField
+    });
+
+   this.getField("NUM").setValidator(function(input) {
+      if (input > MAX_NUM_VALUE) {
+        // Validate the entry for all numerical dropdowns (loop, drive forward and drive backward)
+        input = MAX_NUM_VALUE;
+      }
+      return input;
     });
   }
 };

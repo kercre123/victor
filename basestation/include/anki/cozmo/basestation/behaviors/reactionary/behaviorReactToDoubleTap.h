@@ -46,8 +46,6 @@ private:
   
   std::unique_ptr<ObservableObject> _ghostObject;
   
-  bool _objectInCurrentFrame = true;
-  
   // Whether or not we are turning towards a ghost object
   bool _turningTowardsGhostObject = false;
   

@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using sysDebug = System.Diagnostics.Debug;
+using Anki.AudioEngine.Multiplexer;
+
 
 namespace Anki {
   namespace Cozmo {
@@ -38,7 +40,7 @@ namespace Anki {
           _RobotEngineManager = RobotEngineManager.Instance;
           // Setup Engine To Game callbacks
           if (null != _RobotEngineManager) {
-            _RobotEngineManager.AddCallback<Anki.Cozmo.Audio.AudioCallback>(HandleCallback);
+            _RobotEngineManager.AddCallback<AudioCallback>(HandleCallback);
             _IsInitialized = true;
           }
           else {
@@ -47,15 +49,15 @@ namespace Anki {
         }
 
         ~UnityAudioClient() {
-          _RobotEngineManager.RemoveCallback<Anki.Cozmo.Audio.AudioCallback>(HandleCallback);
+          _RobotEngineManager.RemoveCallback<AudioCallback>(HandleCallback);
           _RobotEngineManager = null;
           _IsInitialized = false;
         }
 
         // Basic Audio Client Operations
         // Return PlayId - Note: PlayId is not guaranteed to be unique it will eventually roll over.
-        public ushort PostEvent(GameEvent.GenericEvent audioEvent,
-                                GameObjectType gameObject,
+        public ushort PostEvent(AudioMetaData.GameEvent.GenericEvent audioEvent,
+                                AudioMetaData.GameObjectType gameObject,
                                 AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                 CallbackHandler handler = null) {
           DAS.Ch_Info(kAudioLogChannelName,
@@ -80,17 +82,17 @@ namespace Anki {
         }
 
         // Pass in game object type to stop audio events on that game object, use Invalid to stop all audio
-        public void StopAllAudioEvents(Anki.Cozmo.Audio.GameObjectType gameObject = Anki.Cozmo.Audio.GameObjectType.Invalid) {
+        public void StopAllAudioEvents(AudioMetaData.GameObjectType gameObject = AudioMetaData.GameObjectType.Invalid) {
           DAS.Ch_Info(kAudioLogChannelName,
                       "UnityAudioClient.StopAllAudioEvents",
                       string.Format("GameObj: {0}", gameObject));
-          StopAllAudioEvents msg = new Anki.Cozmo.Audio.StopAllAudioEvents(gameObject);
+          StopAllAudioEvents msg = new StopAllAudioEvents(gameObject);
           _RobotEngineManager.Message.StopAllAudioEvents = msg;
           _RobotEngineManager.SendMessage();
         }
 
-        public void PostGameState(GameState.StateGroupType gameStateGroup,
-                                  GameState.GenericState gameState) {
+        public void PostGameState(AudioMetaData.GameState.StateGroupType gameStateGroup,
+                                  AudioMetaData.GameState.GenericState gameState) {
           DAS.Ch_Info(kAudioLogChannelName,
                       "UnityAudioClient.PostAudioGameState",
                       string.Format("GameStateGroup: {0} GameState: {1}", gameStateGroup, gameState));
@@ -99,7 +101,9 @@ namespace Anki {
           _RobotEngineManager.SendMessage();
         }
 
-        public void PostSwitchState(SwitchState.SwitchGroupType switchStateGroup, SwitchState.GenericSwitch switchState, GameObjectType gameObject) {
+        public void PostSwitchState(AudioMetaData.SwitchState.SwitchGroupType switchStateGroup,
+                                    AudioMetaData.SwitchState.GenericSwitch switchState,
+                                    AudioMetaData.GameObjectType gameObject) {
           DAS.Ch_Info(kAudioLogChannelName,
                       "UnityAudioClient.PostAudioSwitchState",
                       string.Format("SwitchStateGroup: {0} SwitchState: {1} GameObj: {2}", switchStateGroup, switchState, gameObject));
@@ -108,11 +112,11 @@ namespace Anki {
           _RobotEngineManager.SendMessage();
         }
 
-        public void PostParameter(GameParameter.ParameterType parameter,
+        public void PostParameter(AudioMetaData.GameParameter.ParameterType parameter,
                                   float parameterValue,
-                                  GameObjectType gameObject,
+                                  AudioMetaData.GameObjectType gameObject,
                                   int timeInMilliSeconds = 0,
-                                  Anki.Cozmo.Audio.CurveType curve = CurveType.Linear) {
+                                  AudioEngine.Multiplexer.CurveType curve = CurveType.Linear) {
           DAS.Ch_Info(kAudioLogChannelName,
                       "UnityAudioClient.PostAudioParameter",
                       string.Format("Parameter: {0} Id: {1} val: {2}",
@@ -122,7 +126,7 @@ namespace Anki {
           _RobotEngineManager.SendMessage();
         }
 
-        public void PostMusicState(GameState.GenericState musicState,
+        public void PostMusicState(AudioMetaData.GameState.GenericState musicState,
                                    bool interrupt = false,
                                    uint minDurationInMilliSeconds = 0) {
           DAS.Ch_Info(kAudioLogChannelName,
@@ -217,8 +221,8 @@ namespace Anki {
 
         // Testing Helpers
         public static void PostTestTone (float freqencyParameter) {
-          Instance.PostParameter(GameParameter.ParameterType.Dev_Tone_Freq, freqencyParameter, GameObjectType.Default);
-          Instance.PostEvent(GameEvent.GenericEvent.Play__Dev_Device__Tone_Generator, GameObjectType.Default);
+          Instance.PostParameter(AudioMetaData.GameParameter.ParameterType.Dev_Tone_Freq, freqencyParameter, AudioMetaData.GameObjectType.Default);
+          Instance.PostEvent(AudioMetaData.GameEvent.GenericEvent.Play__Dev_Device__Tone_Generator, AudioMetaData.GameObjectType.Default);
         }
 
 
@@ -347,26 +351,26 @@ namespace Anki {
           }
         }
 
-        private List<GameObjectType> _GameObjects;
-        private List<GameEvent.GenericEvent> _Events;
-        private StateMap<GameState.StateGroupType, GameState.GenericState> _GameStateMap = new StateMap<GameState.StateGroupType, GameState.GenericState>("Anki.Cozmo.Audio.GameState");
-        private StateMap<SwitchState.SwitchGroupType, SwitchState.GenericSwitch> _SwitchStateMap = new StateMap<Anki.Cozmo.Audio.SwitchState.SwitchGroupType, Anki.Cozmo.Audio.SwitchState.GenericSwitch>("Anki.Cozmo.Audio.SwitchState");
-        private List<GameParameter.ParameterType> _RTPCParameters;
+        private List<AudioMetaData.GameObjectType> _GameObjects;
+        private List<AudioMetaData.GameEvent.GenericEvent> _Events;
+        private StateMap<AudioMetaData.GameState.StateGroupType, AudioMetaData.GameState.GenericState> _GameStateMap = new StateMap<AudioMetaData.GameState.StateGroupType, AudioMetaData.GameState.GenericState>("AudioMetaData.GameState");
+        private StateMap<AudioMetaData.SwitchState.SwitchGroupType, AudioMetaData.SwitchState.GenericSwitch> _SwitchStateMap = new StateMap<AudioMetaData.SwitchState.SwitchGroupType, AudioMetaData.SwitchState.GenericSwitch>("AudioMetaData.SwitchState");
+        private List<AudioMetaData.GameParameter.ParameterType> _RTPCParameters;
 
 
-        public List<Anki.Cozmo.Audio.GameObjectType> GetGameObjects() {
+        public List<AudioMetaData.GameObjectType> GetGameObjects() {
           if (null == _GameObjects) {
-            _GameObjects = Enum.GetValues(typeof(Anki.Cozmo.Audio.GameObjectType)).Cast<Anki.Cozmo.Audio.GameObjectType>().ToList();
+            _GameObjects = Enum.GetValues(typeof(AudioMetaData.GameObjectType)).Cast<AudioMetaData.GameObjectType>().ToList();
           }
           return _GameObjects;
         }
 
-        public List<Anki.Cozmo.Audio.GameEvent.GenericEvent> GetEvents() {
+        public List<AudioMetaData.GameEvent.GenericEvent> GetEvents() {
           if (null == _Events) {
-            _Events = Enum.GetValues(typeof(Anki.Cozmo.Audio.GameEvent.GenericEvent)).Cast<Anki.Cozmo.Audio.GameEvent.GenericEvent>().ToList();
-            _Events.Sort(delegate (GameEvent.GenericEvent a, GameEvent.GenericEvent b) {
-              if (GameEvent.GenericEvent.Invalid == a) return -1;
-              else if (GameEvent.GenericEvent.Invalid == b) return 1;
+            _Events = Enum.GetValues(typeof(AudioMetaData.GameEvent.GenericEvent)).Cast<AudioMetaData.GameEvent.GenericEvent>().ToList();
+            _Events.Sort(delegate (AudioMetaData.GameEvent.GenericEvent a, AudioMetaData.GameEvent.GenericEvent b) {
+              if (AudioMetaData.GameEvent.GenericEvent.Invalid == a) return -1;
+              else if (AudioMetaData.GameEvent.GenericEvent.Invalid == b) return 1;
               else return a.ToString().CompareTo(b.ToString());
             });
           }
@@ -378,7 +382,7 @@ namespace Anki {
           return _GameStateMap.GetGroupNames();
         }
 
-        public StateMapGroup<GameState.StateGroupType, GameState.GenericState> GetGameStateGroupByIndex(int index) {
+        public StateMapGroup<AudioMetaData.GameState.StateGroupType, AudioMetaData.GameState.GenericState> GetGameStateGroupByIndex(int index) {
           var group = _GameStateMap.GetGroupByIndex(index);
           return group;
         }
@@ -387,17 +391,17 @@ namespace Anki {
           return _SwitchStateMap.GetGroupNames();
         }
 
-        public StateMapGroup<SwitchState.SwitchGroupType, SwitchState.GenericSwitch> GetSwitchGroupByIndex(int index) {
+        public StateMapGroup<AudioMetaData.SwitchState.SwitchGroupType, AudioMetaData.SwitchState.GenericSwitch> GetSwitchGroupByIndex(int index) {
           var group = _SwitchStateMap.GetGroupByIndex(index);
           return group;
         }
 
-        public List<GameParameter.ParameterType> GetParameters() {
+        public List<AudioMetaData.GameParameter.ParameterType> GetParameters() {
           if (null == _RTPCParameters) {
-            _RTPCParameters = Enum.GetValues(typeof(GameParameter.ParameterType)).Cast<GameParameter.ParameterType>().ToList();
-            _RTPCParameters.Sort(delegate (GameParameter.ParameterType a, GameParameter.ParameterType b) {
-              if (GameParameter.ParameterType.Invalid == a) return -1;
-              else if (GameParameter.ParameterType.Invalid == b) return 1;
+            _RTPCParameters = Enum.GetValues(typeof(AudioMetaData.GameParameter.ParameterType)).Cast<AudioMetaData.GameParameter.ParameterType>().ToList();
+            _RTPCParameters.Sort(delegate (AudioMetaData.GameParameter.ParameterType a, AudioMetaData.GameParameter.ParameterType b) {
+              if (AudioMetaData.GameParameter.ParameterType.Invalid == a) return -1;
+              else if (AudioMetaData.GameParameter.ParameterType.Invalid == b) return 1;
               else return a.ToString().CompareTo(b.ToString());
             });
           }

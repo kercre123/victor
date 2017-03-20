@@ -121,8 +121,7 @@ namespace Anki {
       
       SubscribeToTags({{
         EngineToGameTag::RobotCompletedAction,
-        EngineToGameTag::RobotObservedObject,
-        EngineToGameTag::RobotDeletedObject,
+        EngineToGameTag::RobotObservedObject,        
         EngineToGameTag::ObjectMoved,
         EngineToGameTag::RobotStopped,
         EngineToGameTag::RobotOffTreadsStateChanged
@@ -278,7 +277,7 @@ namespace Anki {
         {
           if(_blockObjectIDPickup.IsSet())
           {
-            ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
+            ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectIDPickup);
             if(nullptr == object)
             {
               EndAttempt(robot, ActionResult::ABORT, "PickupObjectIsNull", true);
@@ -344,7 +343,7 @@ namespace Anki {
         {
           if(_blockObjectIDPickup.IsSet())
           {
-            const ObservableObject* blockToPickup = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
+            const ObservableObject* blockToPickup = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectIDPickup);
             if(nullptr == blockToPickup)
             {
               EndAttempt(robot, ActionResult::ABORT, "BlockToPickupNull", true);
@@ -387,13 +386,15 @@ namespace Anki {
             // If we are adding random obstacles
             if(kNumRandomObstacles > 0)
             {
-              // Clear the old obstacles we added
-              robot.GetBlockWorld().ClearObjectsByFamily(ObjectFamily::CustomObject);
+              // Delete the old obstacles we added
+              BlockWorldFilter filter;
+              filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+              filter.AddAllowedFamily(ObjectFamily::CustomObject);
+              robot.GetBlockWorld().DeleteLocatedObjects(filter);
             
               // Add new obstacles at random poses around the preDock pose corresponding with _initialVisionMarker
               for(u32 i = 0; i < kNumRandomObstacles; ++i)
               {
-                
                 f32 x = preActionPose.GetTranslation().x();
                 f32 y = preActionPose.GetTranslation().y();
                 Radians angle = preActionPose.GetRotation().GetAngleAroundZaxis();
@@ -580,7 +581,7 @@ namespace Anki {
           }
           
           // Get the preActionPose relating to the marker we
-          ActionableObject* aObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup));
+          ActionableObject* aObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectIDPickup));
           
           if(aObject == nullptr)
           {
@@ -923,7 +924,7 @@ namespace Anki {
                                                          const ExternalInterface::RobotObservedObject &msg)
     {
       ObjectID objectID = msg.objectID;
-      const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+      const ObservableObject* oObject = robot.GetBlockWorld().GetLocatedObjectByID(objectID);
       
       if(nullptr == oObject)
       {

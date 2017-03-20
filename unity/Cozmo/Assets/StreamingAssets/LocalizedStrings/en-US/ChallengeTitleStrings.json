@@ -74,5 +74,11 @@
   },
   "cozmoSays.description": {
     "translation": "In exchange for a Spark, Cozmo will try to say a word or phrase!"
+  },
+  "codeLab.title": {
+    "translation": "CodeLab"
+  },
+  "codeLab.description": {
+    "translation": "Super Secret description!"
   }
 }

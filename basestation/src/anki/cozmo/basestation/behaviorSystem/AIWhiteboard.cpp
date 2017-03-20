@@ -13,6 +13,7 @@
 
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -72,6 +73,27 @@ const char* ObjectUseActionToString(AIWhiteboard::ObjectUseAction action)
 
   // should never get here, assert if it does (programmer error specifying action enum class)
   DEV_ASSERT(false, "AIWhiteboard.ObjectUseActionToString.InvalidAction");
+  return "UNDEFINED_ERROR";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* ObjectUseIntentionToString(AIWhiteboard::ObjectUseIntention intention)
+{
+  using ObjectUseIntention = AIWhiteboard::ObjectUseIntention;
+  switch(intention) {
+    case ObjectUseIntention::PickUpAnyObject: { return "PickUpAnyObject"; }
+    case ObjectUseIntention::PickUpObjectWithAxisCheck: { return "PickUpObjectWithAxisCheck"; }
+    case ObjectUseIntention::RollObjectWithAxisCheck: { return "RollObjectWithAxisCheck"; }
+    case ObjectUseIntention::RollObjectNoAxisCheck: { return "RollObjectNoAxisCheck"; }
+    case ObjectUseIntention::RollObjectWithDelegate: { return "RollObjectWithDelegate"; }
+    case ObjectUseIntention::PopAWheelieOnObject: { return "PopAWheelieOnObject"; }
+    case ObjectUseIntention::PyramidBaseObject: { return "PyramidBaseObject"; }
+    case ObjectUseIntention::PyramidStaticObject: { return "PyramidStaticObject"; }
+    case ObjectUseIntention::PyramidTopObject: { return "PyramidTopObject"; }
+  };
+
+  // should never get here, assert if it does (programmer error specifying intention enum class)
+  DEV_ASSERT(false, "AIWhiteboard.ObjectUseIntentionToString.InvalidIntention");
   return "UNDEFINED_ERROR";
 }
 
@@ -150,13 +172,14 @@ bool AIWhiteboard::CanPopAWheelieHelper(const ObservableObject* object) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::CanRollHelper(const ObservableObject* object) const
 {
+  
   const bool hasFailedToRoll = DidFailToUse(object->GetID(),
                                             AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
                                             DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
                                             object->GetPose(),
                                             DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
                                             DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
-  
+    
   return (!hasFailedToRoll && _robot.CanPickUpObjectFromGround(*object));
 }
 
@@ -169,6 +192,20 @@ bool AIWhiteboard::CanRollRotationImportantHelper(const ObservableObject* object
           (p.GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::CanRollObjectWithDelegateHelper(const ObservableObject* object) const
+{
+  
+  const bool hasFailedToRoll = DidFailToUse(object->GetID(),
+                                            AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
+                                            DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
+                                            object->GetPose(),
+                                            DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+                                            DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+  
+  return (!hasFailedToRoll && _robot.CanPickUpObject(*object));
+}
+  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) const
@@ -194,23 +231,22 @@ bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) cons
   }
   
   
-  // If there is a stack of 2, the middle block should be selected as the base of the pyramid
+  // If there is a stack of 2, the top block should be selected as the base of the pyramid
   const auto& stacks = _robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
   for(const auto& stack: stacks){
     if(stack->GetStackHeight() == kMaxStackHeightReach &&
-       stack->GetMiddleBlockID() == object->GetID()){
+       stack->GetTopBlockID() == object->GetID()){
       return _robot.CanPickUpObject(*object);
     }
   }
   
-  if(!stacks.empty()){
-    return false;
-  }
-  
-  
   // If the robot is carrying a block, make that the static block
   if(_robot.IsCarryingObject()){
     return _robot.GetCarryingObject() == object->GetID();
+  }
+  
+  if(!stacks.empty()){
+    return false;
   }
   
   // So long as we can pick the object up, it's a valid base block
@@ -249,18 +285,7 @@ bool AIWhiteboard::CanUseAsPyramidStaticBlock(const ObservableObject* object) co
     return false;
   }
   
-  
-  
-  
-  if(!object->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerence)){
-    return false;
-  }
-  
-  const ObservableObject* onTop = _robot.GetBlockWorld().FindObjectOnTopOf(
-                                           *object,
-                                           BlockWorld::kOnCubeStackHeightTolerence);
-  
-  if(onTop != nullptr){
+  if(!object->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerance)){
     return false;
   }
 
@@ -344,6 +369,14 @@ void AIWhiteboard::CreateBlockWorldFilters()
     _filtersPerAction[ObjectUseIntention::RollObjectNoAxisCheck].reset(rollFilter);
   }
   
+  // Roll object with delegate
+  {
+    BlockWorldFilter *rollFilter = new BlockWorldFilter;
+    rollFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollObjectWithDelegateHelper, this, std::placeholders::_1));
+    _filtersPerAction[ObjectUseIntention::RollObjectWithDelegate].reset(rollFilter);
+  }
+  
   // Pop A Wheelie check
   {
     BlockWorldFilter *popFilter = new BlockWorldFilter;
@@ -388,7 +421,6 @@ void AIWhiteboard::Init()
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotMarkedObjectPoseUnknown>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
   }
   else {
@@ -477,7 +509,7 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
     // outisde the beacon, since we would always want to drop it. Any other cube would be unusable until we drop this one
     if ( _robot.IsCarryingObject() )
     {
-      const ObservableObject* const carryingObject = _robot.GetBlockWorld().GetObjectByID( _robot.GetCarryingObject() );
+      const ObservableObject* const carryingObject = _robot.GetBlockWorld().GetLocatedObjectByID( _robot.GetCarryingObject() );
       if ( nullptr != carryingObject ) {
         outObjectList.emplace_back( carryingObject->GetID(), carryingObject->GetFamily() );
       } else {
@@ -493,32 +525,29 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
       // ask for all cubes we know, and if any is not inside a beacon, add to the list
       BlockWorldFilter filter;
       filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-      filter.SetFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
-        if(!blockPtr->IsPoseStateUnknown())
+      filter.AddFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
+        // check if the robot can pick up this object
+        const bool canPickUp = _robot.CanPickUpObject(*blockPtr);
+        if ( canPickUp )
         {
-          // check if the robot can pick up this object
-          const bool canPickUp = _robot.CanPickUpObject(*blockPtr);
-          if ( canPickUp )
-          {
-            bool isBlockInAnyBeacon = false;
-            // check if the object is within any beacon
-            for ( const auto& beacon : _beacons ) {
-              isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-              if ( isBlockInAnyBeacon ) {
-                break;
-              }
+          bool isBlockInAnyBeacon = false;
+          // check if the object is within any beacon
+          for ( const auto& beacon : _beacons ) {
+            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
+            if ( isBlockInAnyBeacon ) {
+              break;
             }
-            
-            // this block should be carried to a beacon
-            if ( !isBlockInAnyBeacon ) {
-              outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
-            }
+          }
+          
+          // this block should be carried to a beacon
+          if ( !isBlockInAnyBeacon ) {
+            outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
           }
         }
         return false; // have to return true/false, even though not used
       });
       
-      _robot.GetBlockWorld().FilterObjects(filter);
+      _robot.GetBlockWorld().FilterLocatedObjects(filter);
     }
   }
 
@@ -551,9 +580,9 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
     // ask for all cubes we know about inside the beacon
     BlockWorldFilter filter;
     filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    filter.SetFilterFcn([this, &robotRef, &outObjectList, beacon](const ObservableObject* blockPtr)
+    filter.AddFilterFcn([this, &robotRef, &outObjectList, beacon](const ObservableObject* blockPtr)
     {
-      if(!blockPtr->IsPoseStateUnknown() && !_robot.IsCarryingObject(blockPtr->GetID()) )
+      if(!_robot.IsCarryingObject(blockPtr->GetID()) )
       {
         const bool isBlockInBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose());
         if ( isBlockInBeacon ) {
@@ -563,7 +592,7 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
       return false; // have to return true/false, even though not used
     });
     
-    _robot.GetBlockWorld().FilterObjects(filter);
+    _robot.GetBlockWorld().FilterLocatedObjects(filter);
   }
   
   return !outObjectList.empty();
@@ -588,14 +617,15 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
     // robot can't be carrying an object, otherwise they are not in beacons
     if ( !_robot.IsCarryingObject() )
     {
-      allInBeacon = true;
+      int locatedCubesInBeacon = 0;
+      int connectedCubes = 0;
       
-      // ask for all cubes we know if they are in beacons
-      BlockWorldFilter filter;
-      filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-      filter.SetFilterFcn([this, &allInBeacon](const ObservableObject* blockPtr)
+      // ask located cubes which ones are in a beacon. Note some cubes might be in the beacon already, but
+      // if Cozmo doesn't know about them he won't count them before detecting them.
       {
-        if(!blockPtr->IsPoseStateUnknown())
+        BlockWorldFilter filter;
+        filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+        filter.AddFilterFcn([this, &locatedCubesInBeacon](const ObservableObject* blockPtr)
         {
           bool isBlockInAnyBeacon = false;
           // check if the object is within any beacon
@@ -606,20 +636,29 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
             }
           }
         
-          // this block should be carried to a beacon
-          if ( !isBlockInAnyBeacon ) {
-            allInBeacon = false;
+          // if the block is in a beacon, count as located
+          if ( isBlockInAnyBeacon ) {
+            ++locatedCubesInBeacon;
           }
-        }
-        else
-        {
-          // object position is unknown, consider not in beacon
-          allInBeacon = false;
-        }
-        return false; // have to return true/false, even though not used
-      });
+          return false; // have to return true/false, even though not used
+        });
+        
+        _robot.GetBlockWorld().FilterLocatedObjects(filter);
+      }
       
-      _robot.GetBlockWorld().FilterObjects(filter);
+      // Find how many connected cubes we have and compare
+      {
+        BlockWorldFilter filter;
+        filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+        
+        std::vector<const ActiveObject*> connectedObjects;
+        _robot.GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedObjects);
+
+        connectedCubes = Util::numeric_cast<int>( connectedObjects.size() );
+      }
+      
+      allInBeacon = (connectedCubes == locatedCubesInBeacon);
+      
     }
   }
 
@@ -1142,32 +1181,6 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-void AIWhiteboard::HandleMessage(const ExternalInterface::RobotMarkedObjectPoseUnknown& msg)
-{
-  const ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(msg.objectID);
-  if( nullptr == obj ) {
-    PRINT_NAMED_WARNING("AIWhiteboard.HandleMessage.RobotMarkedObjectPoseUnknown.NoBlock",
-                        "couldnt get object with id %d",
-                        msg.objectID);
-    return;
-  }
-
-  PRINT_CH_INFO("AIWhiteboard", "MarkedUnknown",
-                    "marked %d unknown, adding to possible objects",
-                    msg.objectID);
-
-  if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-    PRINT_CH_INFO("AIWhiteboard", "PoseMarkedUnknown", "considering old pose from object %d as possible object",
-                      msg.objectID);
-  }
-  
-  // its position has become Unknown. We probably were at the location where we expected this object to be,
-  // and it's no there. So we don't want to keep its markers anymore
-  RemovePossibleObjectsMatching(obj->GetType(), obj->GetPose());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
 void AIWhiteboard::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
 {
   const bool onTreads = msg.treadsState == OffTreadsState::OnTreads;
@@ -1234,7 +1247,7 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
   Vec3f maxLocDist(kBW_PossibleObjectClose_mm);
   Radians maxLocAngle(kBW_PossibleObjectClose_rad);
   ObservableObject* prevObservedObject =
-    _robot.GetBlockWorld().FindClosestMatchingObject( objectType, obsPose, maxLocDist, maxLocAngle);
+    _robot.GetBlockWorld().FindLocatedClosestMatchingObject( objectType, obsPose, maxLocDist, maxLocAngle);
   
   // found object nearby, no need
   if ( nullptr != prevObservedObject )
@@ -1279,39 +1292,47 @@ void AIWhiteboard::UpdateValidObjects()
     const auto& actionIntent = filterPair.first;
     const auto& filterPtr = filterPair.second;
 
-    {
-      // update set of valid objects
-      auto& validObjectIDSet = _validObjectsForAction[actionIntent];
-      validObjectIDSet.clear();
+    // update set of valid objects
+    auto& validObjectIDSet = _validObjectsForAction[actionIntent];
+    validObjectIDSet.clear();
       
-      std::vector<const ObservableObject*> objects;
-      _robot.GetBlockWorld().FindMatchingObjects(*filterPtr, objects);
-      for( const ObservableObject* obj : objects ) {
-        if( obj ) {
-          validObjectIDSet.insert( obj->GetID() );
-        }
+    std::vector<const ObservableObject*> objects;
+    _robot.GetBlockWorld().FindLocatedMatchingObjects(*filterPtr, objects);
+    for( const ObservableObject* obj : objects ) {
+      if( obj ) {
+        validObjectIDSet.insert( obj->GetID() );
       }
     }
+
+    const bool bestIsStillValid = validObjectIDSet.find(_bestObjectForAction[actionIntent]) != validObjectIDSet.end();
     
-    
-    bool bestIsStillValid = true;
-    if(actionIntent == ObjectUseIntention::PyramidBaseObject ||
-       actionIntent == ObjectUseIntention::PyramidStaticObject ||
-       actionIntent == ObjectUseIntention::PyramidTopObject){
-      const auto& validObjs = _validObjectsForAction[actionIntent];
-      bestIsStillValid = validObjs.find(_bestObjectForAction[actionIntent]) != validObjs.end();
-    }
-    
-    // Only update _bestObjectForAction as long as we do not have a tap intended object
+    // Only update _bestObjectForAction if we don't have a tap object, or if the tap object became invalid
     if(!_haveTapIntentionObject || !bestIsStillValid)
-    {
+    {      
       // select best object
-      const ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(_robot.GetPose(),
-                                                                                         * filterPair.second);
+      const ObservableObject* closestObject = _robot.GetBlockWorld().FindLocatedObjectClosestTo(_robot.GetPose(),
+                                                                                                *filterPair.second);
       if( closestObject != nullptr ) {
+
+        if( _haveTapIntentionObject && _bestObjectForAction[actionIntent].IsSet() ) {
+          PRINT_CH_INFO("AIWhiteboard", "UpdateValidObjects.ResetBestTapped",
+                        "We have a tap intent, but object id %d is no longer valid for action %s, selecting object %d instead",
+                        _bestObjectForAction[actionIntent].GetValue(),
+                        ObjectUseIntentionToString(actionIntent),
+                        closestObject->GetID().GetValue());
+        }
+        
         _bestObjectForAction[ actionIntent ] = closestObject->GetID();
       }
       else {
+
+        if( _haveTapIntentionObject && _bestObjectForAction[actionIntent].IsSet() ) {
+          PRINT_CH_INFO("AIWhiteboard", "UpdateValidObjects.ClearBestTapped",
+                        "We have a tap intent, but object id %d is no longer valid, clearing best for action %s",
+                        _bestObjectForAction[actionIntent].GetValue(),
+                        ObjectUseIntentionToString(actionIntent));
+        }
+
         _bestObjectForAction[ actionIntent ].UnSet();
       }
     }
@@ -1387,11 +1408,12 @@ void AIWhiteboard::UpdateBeaconRender()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
 {
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
+  const ObservableObject* connectedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
+  const ObservableObject* locatedObject   = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
   
   // We still want to do something with this double tapped object even if it doesn't exist in the
   // current frame
-  if(object != nullptr)
+  if(connectedObject != nullptr)
   {
     bool filterCanUseObject = false;
     
@@ -1401,12 +1423,22 @@ void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
     {
       const auto& actionIntent = filterPair.first;
       const auto& filterPtr = filterPair.second;
-      
+
+      const ObjectID oldBest = _bestObjectForAction[actionIntent];      
       _bestObjectForAction[actionIntent].UnSet();
       
-      if(filterPtr &&
-         filterPtr->ConsiderObject(object))
+      // consider located instance only, if we don't know where it is we can't use it
+      if(filterPtr && (nullptr != locatedObject) &&
+         filterPtr->ConsiderObject(locatedObject))
       {
+
+        if( oldBest != objectID ) {
+          PRINT_CH_INFO("AIWhiteboard", "SetBestObjectForTap",
+                        "Setting tapped object %d as best for intention '%s'",
+                        objectID.GetValue(),
+                        ObjectUseIntentionToString(actionIntent));
+        }
+        
         _bestObjectForAction[actionIntent] = objectID;
         filterCanUseObject = true;
       }
@@ -1421,6 +1453,11 @@ void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
                           "No actionIntent filter can currently use object %u",
                           objectID.GetValue());
     }
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("AIWhiteboard.SetObjectTapInteraction",
+                        "There's no connected instance but we are setting tap interaction for '%d'.", objectID.GetValue());
   }
 
   _haveTapIntentionObject = true;

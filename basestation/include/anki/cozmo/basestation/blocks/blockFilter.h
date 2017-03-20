@@ -15,7 +15,6 @@
 #define __Cozmo_Basestation_Blocks_BlockFilter_H__
 
 #include "anki/cozmo/basestation/activeCube.h"
-#include "clad/types/activeObjectTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <string>
@@ -69,11 +68,10 @@ private:
   static constexpr uint8_t kMaxRSSI = 150;
   
   // These are the type of objects we care about
-  static constexpr std::array<ObjectType, 4> kObjectTypes = {{
+  static constexpr std::array<ObjectType, 3> kObjectTypes = {{
     ObjectType::Block_LIGHTCUBE1,
     ObjectType::Block_LIGHTCUBE2,
-    ObjectType::Block_LIGHTCUBE3,
-    ObjectType::Charger_Basic
+    ObjectType::Block_LIGHTCUBE3
   }};
   
   void UpdateDiscovering();

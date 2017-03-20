@@ -58,8 +58,8 @@ bool BehaviorPyramidThankYou::IsRunnableInternal(const BehaviorPreReqAcknowledge
   // Check to see if there's a block with a location we can turn to to say thanks
   if(preReqData.GetTargets().size() >= 1){
     _targetID = *preReqData.GetTargets().begin();
-    const ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(_targetID);
-    if(obj != nullptr && !obj->IsPoseStateUnknown()){
+    const ObservableObject* obj = _robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+    if(obj != nullptr){
       return true;
     }
   }
@@ -73,7 +73,10 @@ Result BehaviorPyramidThankYou::InitInternal(Robot& robot)
 {
 
   CompoundActionSequential* turnVerifyThank = new CompoundActionSequential(robot);
-  if(robot.GetFaceWorld().HasKnownFaces()){
+  Pose3d facePose;
+  robot.GetFaceWorld().GetLastObservedFace(facePose);
+  const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+  if(lastFaceInCurrentOrigin){
    // Turn to the user and say thank you
     TurnTowardsFaceAction* turnTowardsAction = new TurnTowardsLastFacePoseAction(robot);
     turnTowardsAction->SetRequireFaceConfirmation(true);

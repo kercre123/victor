@@ -17,7 +17,7 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/BehaviorBuildPyramidBase.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
 
 namespace Anki {
 //forward declaration

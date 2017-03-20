@@ -213,7 +213,7 @@ void QuestEngine::ClearRules()
 const std::vector<Util::QuestEngine::QuestRule*> QuestEngine::GetAvailableRules(std::tm &time)
 {
   std::vector<Util::QuestEngine::QuestRule*> availableRules;
-  for (auto rule : _rules) {
+  for (auto* rule : _rules) {
     if( (rule->IsRepeatable() || !HasTriggered(rule->GetId())) &&
        rule->IsAvailable(*this, time) ) {
       availableRules.push_back(rule);

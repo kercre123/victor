@@ -21,6 +21,7 @@
 #ifndef __Util_Logging_Logging_H_
 #define __Util_Logging_Logging_H_
 
+#include "util/global/globalDefinitions.h"
 #include "util/logging/eventKeys.h"
 #include "util/logging/callstack.h"
 #include "util/global/globalDefinitions.h"
@@ -28,6 +29,9 @@
 #include <string>
 #include <vector>
 
+#ifndef ALLOW_DEBUG_LOGGING
+#define ALLOW_DEBUG_LOGGING ANKI_DEVELOPER_CODE
+#endif
 
 namespace Anki{
 namespace Util {
@@ -68,17 +72,16 @@ void sWarningV(const char* eventName, const std::vector<std::pair<const char*, c
 __attribute__((__used__))
 void sWarning(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
-//__attribute__((__used__))
-//void sInfoF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
+__attribute__((__used__))
+void sInfoF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
 __attribute__((__used__))
 void sChanneledInfoF(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 4, 5)));
-
-//__attribute__((__used__))
-//void sInfoV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args);
+__attribute__((__used__))
+void sInfoV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args);
 __attribute__((__used__))
 void sChanneledInfoV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args);
-//__attribute__((__used__))
-//void sInfo(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
+__attribute__((__used__))
+void sInfo(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 __attribute__((__used__))
 void sChanneledInfo(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
@@ -136,9 +139,13 @@ void sAbort();
   ::Anki::Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
+#if ALLOW_DEBUG_LOGGING
 #define PRINT_NAMED_DEBUG(name, format, ...) do { \
   ::Anki::Util::sChanneledDebugF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__); \
 } while(0)
+#else
+#define PRINT_NAMED_DEBUG(name, format, ...)
+#endif
 
 //
 // ANKI_VERIFY(expr, name, format, args...)
@@ -233,22 +240,27 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
       ::Anki::Util::sChanneledInfo(DEFAULT_CHANNEL_NAME, eventName, {}, ss.str().c_str()); \
     } while(0)
 
+#if ALLOW_DEBUG_LOGGING
 #define PRINT_STREAM_DEBUG(eventName, args) do{         \
       std::stringstream ss; ss<<args;                   \
       ::Anki::Util::sChanneledDebug(DEFAULT_CHANNEL_NAME, eventName, {}, ss.str().c_str()); \
     } while(0)
+#else
+#define PRINT_STREAM_DEBUG(eventName, args)
+#endif
 
 // Auto streams
+#if ALLOW_DEBUG_LOGGING
 #define PRINT_AUTOSTREAM_DEBUG(args) do{ \
     char eventNameBuf[256]; GENERATE_EVENT_NAME(eventNameBuf, sizeof(eventNameBuf)); \
     PRINT_STREAM_DEBUG(eventNameBuf, args); }while(0)
-
+#else
+#define PRINT_AUTOSTREAM_DEBUG(args)
+#endif
 
 #define SHORT_FILE ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
 #define GENERATE_EVENT_NAME(nameBuf, nameBufLen) { snprintf(nameBuf, nameBufLen, "%s.%s.%d", (SHORT_FILE), __FUNCTION__, __LINE__); }
 
-
-#ifdef defunct
 
 // Anki assert definition
 #if (!defined(NDEBUG)) && !(defined(UNIT_TEST))
@@ -266,6 +278,17 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
   }                                                         \
 } while(0)
 
+#define ASSERT_NAMED_AND_RETURN_FALSE_IF_FAIL(exp, name) do { \
+  if(!(exp)) {                                              \
+    PRINT_NAMED_ERROR(name, "Assertion Failed: %s", #exp);  \
+    Anki::Util::sDumpCallstack("AssertCallstack");          \
+    Anki::Util::sLogFlush();                                \
+    DEBUG_ABORT;                                            \
+    return false;                                           \
+  }                                                         \
+}while(0)
+
+
 #define ASSERT_NAMED_EVENT(expr, name, format, ...) do {                      \
   if (!(expr)) {                                                              \
     PRINT_NAMED_ERROR(name, "ASSERT ( %s ): " format, #expr, ##__VA_ARGS__);  \
@@ -275,7 +298,17 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
   }                                                                           \
 } while(0)
 
-#endif
+
+#define ASSERT_NAMED_EVENT_AND_RETURN_FALSE_IF_FAIL(exp, name, format, ...) do { \
+  if(!(exp)) {                                                                \
+    PRINT_NAMED_ERROR(name, "ASSERT ( %s ): " format, #exp, ##__VA_ARGS__);   \
+    Anki::Util::sDumpCallstack("AssertCallstack");                            \
+    Anki::Util::sLogFlush();                                                  \
+    DEBUG_ABORT;                                                              \
+    return false;                                                             \
+  }                                                                           \
+}while(0)
+
 
 //
 // Developer assertions are compiled for debug builds ONLY.

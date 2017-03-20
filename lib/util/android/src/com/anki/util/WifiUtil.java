@@ -131,6 +131,15 @@ public final class WifiUtil {
     return result;
   }
 
+  public static void disconnect() {
+    if (mConnectionAttempt != null) {
+      mConnectionAttempt.unregister();
+      mConnectionAttempt = null;
+    }
+    final boolean result = mWifiManager.disconnect();
+    Log.d(TAG, "disconnect result: " + result);
+  }
+
   public static boolean didPasswordFail() {
     return mConnectionAttempt != null && mConnectionAttempt.didPasswordFail();
   }

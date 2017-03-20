@@ -26,14 +26,14 @@ namespace Anki {
       // Returns true if the desired number of sessions has been played
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        isMet = !UseMinSession || DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count >= MinSession;
+        isMet = !UseMinSession || DataPersistenceManager.Instance.Data.DefaultProfile.TotalSessions >= MinSession;
         if (isMet) {
-          isMet = !UseMaxSession || DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count <= MaxSession;
+          isMet = !UseMaxSession || DataPersistenceManager.Instance.Data.DefaultProfile.TotalSessions <= MaxSession;
         }
         return isMet;
       }
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
         UseMinSession = EditorGUILayout.Toggle("Use Min", UseMinSession);
@@ -48,7 +48,7 @@ namespace Anki {
         }
         EditorGUILayout.EndHorizontal();
       }
-      #endif
+#endif
     }
   }
 }

@@ -115,6 +115,8 @@ namespace Anki {
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg);
       
       DockingResult GetDockingResult();
+      
+      void SetCameraFieldOfView(f32 horizontalFOV, f32 verticalFOV);
 
     } // namespace DockingController
   } // namespace Cozmo

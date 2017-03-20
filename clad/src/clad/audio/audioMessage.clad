@@ -6,45 +6,44 @@
 #include "clad/audio/audioSwitchTypes.clad"
 #include "clad/audio/audioParameterTypes.clad"
 
-
 namespace Anki {
-namespace Cozmo {
-namespace Audio {
+namespace AudioEngine {
+namespace Multiplexer {
 
 // Event messages
 
 message PostAudioEvent
 {
-  GameEvent::GenericEvent   audioEvent,
-  GameObjectType            gameObject,
-  uint_16                   callbackId = 0  // Send all callbacks if this is NOT == 0
+  Anki::AudioMetaData::GameEvent::GenericEvent  audioEvent,
+  Anki::AudioMetaData::GameObjectType           gameObject,
+  uint_16                                       callbackId = 0  // Send all callbacks if this is NOT == 0
 }
 
 message StopAllAudioEvents
 {
-  GameObjectType  gameObject,
+  Anki::AudioMetaData::GameObjectType  gameObject,
 }
 
 message PostAudioGameState
 {
-  GameState::StateGroupType  stateGroup,
-  GameState::GenericState    stateValue,
+  Anki::AudioMetaData::GameState::StateGroupType stateGroup,
+  Anki::AudioMetaData::GameState::GenericState   stateValue,
 }
 
 message PostAudioSwitchState
 {
-  SwitchState::SwitchGroupType  switchStateGroup,
-  SwitchState::GenericSwitch    switchStateValue,
-  GameObjectType                gameObject,
+  Anki::AudioMetaData::SwitchState::SwitchGroupType  switchStateGroup,
+  Anki::AudioMetaData::SwitchState::GenericSwitch    switchStateValue,
+  Anki::AudioMetaData::GameObjectType                gameObject,
 }
 
 message PostAudioParameter
 {
-  GameParameter::ParameterType  parameter,
-  float_32                      parameterValue      = 0.0,
-  GameObjectType                gameObject,
-  int_32                        timeInMilliSeconds  = 0,
-  CurveType                     curve,
+  Anki::AudioMetaData::GameParameter::ParameterType parameter,
+  float_32                                          parameterValue      = 0.0,
+  Anki::AudioMetaData::GameObjectType               gameObject,
+  int_32                                            timeInMilliSeconds  = 0,
+  CurveType                                         curve,
 }
 
 
@@ -52,11 +51,11 @@ message PostAudioParameter
 
 message PostAudioMusicState
 {
-  GameState::GenericState   stateValue,
-  bool                      interrupt                 = 0,
-  uint_32                   minDurationInMilliSeconds = 0,
+  Anki::AudioMetaData::GameState::GenericState  stateValue,
+  bool                                          interrupt                 = 0,
+  uint_32                                       minDurationInMilliSeconds = 0,
 }
 
-}
-}
-}
+} // Multiplexer
+} // AudioEngine
+} // Anki

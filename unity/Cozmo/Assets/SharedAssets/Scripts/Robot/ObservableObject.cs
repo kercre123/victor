@@ -27,10 +27,12 @@ public class ObservableObject : IVisibleInCamera {
   public const int kInvalidObjectID = -1;
   private const uint _kFindCubesTimeoutFrames = 1;
 
+  // TODO: We shouldn't need to duplicate the enum from CLAD to here.
+  // Copy the enum from CLAD to keep properly synchronized
   public enum PoseState {
-    Known,
-    Dirty,
-    Unknown
+    Invalid = Anki.PoseState.Invalid,
+    Known   = Anki.PoseState.Known,
+    Dirty   = Anki.PoseState.Dirty
   }
 
   public enum InFieldOfViewState {
@@ -207,7 +209,7 @@ public class ObservableObject : IVisibleInCamera {
     InfoString = "ObjectID: " + ID + " FactoryID = " + FactoryID.ToString("X") + " Family: " + Family + " Type: " + ObjectType;
     SelectInfoString = "Select ObjectID: " + ID + " FactoryID = " + FactoryID.ToString("X") + " Family: " + Family + " Type: " + ObjectType;
 
-    CurrentPoseState = PoseState.Unknown;
+    CurrentPoseState = PoseState.Invalid;
     _CurrentInFieldOfViewState = InFieldOfViewState.NotVisible;
 
     LastSeenEngineTimestamp = 0;
@@ -248,9 +250,9 @@ public class ObservableObject : IVisibleInCamera {
   }
 
   // Useful for when the world was rejiggered.
-  public void UpdateAvailable(G2U.ObjectState message) {
+  public void UpdateAvailable(G2U.LocatedObjectState message) {
     CurrentPoseState = (ObservableObject.PoseState)message.poseState;
-    if (CurrentPoseState != PoseState.Unknown) {
+    if (CurrentPoseState != PoseState.Invalid) {
       Vector3 newPos = new Vector3(message.pose.x, message.pose.y, message.pose.z);
       //dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
       WorldPosition = newPos;
@@ -296,7 +298,7 @@ public class ObservableObject : IVisibleInCamera {
     IsMoving = true;
     LastMovementMessageEngineTimestamp = message.timestamp;
 
-    if (CurrentPoseState != PoseState.Unknown) {
+    if (CurrentPoseState != PoseState.Invalid) {
       CurrentPoseState = PoseState.Dirty;
     }
   }
@@ -311,7 +313,7 @@ public class ObservableObject : IVisibleInCamera {
   }
 
   public void MarkPoseUnknown() {
-    CurrentPoseState = PoseState.Unknown;
+    CurrentPoseState = PoseState.Invalid;
   }
 
   public virtual void HandleObjectTapped(ObjectTapped message) {

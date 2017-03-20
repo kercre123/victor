@@ -23,7 +23,7 @@ public class MusicStateWrapperDrawer : PropertyDrawer {
   private string[] _SortedOptions;
   private int[] _SortedValues;
   public MusicStateWrapperDrawer() {
-    var type = typeof(Anki.Cozmo.Audio.GameState.Music);
+    var type = typeof(Anki.AudioMetaData.GameState.Music);
     var options = Enum.GetNames(type);
     var values = Enum.GetValues(type).Cast<Enum>().Select(x => (int)(uint)(object)x).ToArray();
 

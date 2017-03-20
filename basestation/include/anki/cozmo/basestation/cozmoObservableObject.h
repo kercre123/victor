@@ -20,7 +20,8 @@
 
 #include "anki/vision/basestation/observableObject.h"
 
-#include "clad/types/activeObjectTypes.h"
+#include "clad/types/activeObjectIdentityStates.h"
+#include "clad/types/activeObjectConstants.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 

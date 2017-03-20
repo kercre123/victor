@@ -446,7 +446,7 @@ class EnginePlatformConfiguration(object):
             cwd_loc = os.path.join(ENGINE_ROOT, 'generated', 'android', 'out', self.options.configuration)
             if self.options.verbose:
                 command += ['-v']
-            if self.options.command == 'clean':
+            if buildaction == 'clean':
                 command += ['-t', 'clean']
             # if this needs more features should add as ankibuild.ninja.build
             results = subprocess.call(command, cwd=cwd_loc)

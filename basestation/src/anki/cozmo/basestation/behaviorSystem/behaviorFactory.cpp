@@ -47,27 +47,30 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorRamIntoBlock.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
-#include "anki/cozmo/basestation/behaviors/reactionary/BehaviorReactToDoubleTap.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToDoubleTap.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToFrustration.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToMotorCalibration.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPet.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPlacedOnSlope.h"
-#include "anki/cozmo/basestation/behaviors/reactionary/BehaviorReactToPyramid.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPyramid.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToReturnedToTreads.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnBack.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnSide.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotShaken.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToSparked.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToStackOfCubes.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToVoiceCommand.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorCheckForStackAtInterval.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorCubeLiftworkout.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorCubeLiftWorkout.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorKnockOverCubes.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPeekABoo.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickupCube.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPopAWheelie.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPounceOnMotion.h"
@@ -249,6 +252,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
       newBehavior = new BehaviorPopAWheelie(robot, config);
       break;
     }
+    case BehaviorClass::PeekABoo:
+    {
+      newBehavior = new BehaviorPeekABoo(robot, config);
+      break;
+    }
     case BehaviorClass::DrivePath:
     {
       newBehavior = new BehaviorDrivePath(robot, config);
@@ -374,6 +382,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
       newBehavior = new BehaviorReactToRobotOnSide(robot, config);
       break;
     }
+    case BehaviorClass::ReactToRobotShaken:
+    {
+      newBehavior = new BehaviorReactToRobotShaken(robot, config);
+      break;
+    }
     case BehaviorClass::ReactToOnCharger:
     {
       newBehavior = new BehaviorReactToOnCharger(robot, config);
@@ -434,6 +447,13 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
       newBehavior = new BehaviorReactToDoubleTap(robot, config);
       break;
     }
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+    case BehaviorClass::ReactToVoiceCommand:
+    {
+      newBehavior = new BehaviorReactToVoiceCommand(robot, config);
+      break;
+    }
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
     case BehaviorClass::Count:
     {
       PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.BadType", "Unexpected type '%s'", EnumToString(behaviorType));

@@ -181,7 +181,7 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
   std::vector<BehaviorStateLightInfo> basePersistantLight;
   SetBehaviorStateLights(basePersistantLight, false);
   
-  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+  const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.TransitionToPlacingBaseBlock.NullObject",
@@ -261,7 +261,7 @@ bool BehaviorBuildPyramidBase::GetTopBlockID(ObjectID& id) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(f32& xOffset, f32& yOffset) const
 {
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.UpdateBlockPlacementOffset.NullObject",
@@ -307,12 +307,13 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(f32& xOffset, f32& yO
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset) const
 {
-  const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-  const ObservableObject* placingObject = _robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+  const ObservableObject* placingObject = _robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
   if(nullptr == object || nullptr == placingObject)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.CHeckBaseBlockPoseIsFree.NullObject",
-                        "Static block with id %d or base block with id %d is NULL", _staticBlockID.GetValue(), _baseBlockID.GetValue());
+                        "Static block with id %d or base block with id %d is NULL",
+                        _staticBlockID.GetValue(), _baseBlockID.GetValue());
     return false;
   }
   
@@ -326,24 +327,32 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
   const Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter(0.f);
   const Pose3d placePose(0, Z_AXIS_3D(), {rotatedSize.x(), rotatedSize.y(), 0}, &zRotatedPose);
   
-  ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(placePose.GetWithRespectToOrigin(),
-                                                                               rotatedSize, filter);
+  ObservableObject* closestObject =
+    _robot.GetBlockWorld().FindLocatedObjectClosestTo(placePose.GetWithRespectToOrigin(), rotatedSize, filter);
   return (closestObject == nullptr);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
+bool BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
 {
   using Intention = AIWhiteboard::ObjectUseIntention;
-  _baseBlockID = robot.GetAIComponent().GetWhiteboard().
-                       GetBestObjectForAction(Intention::PyramidBaseObject);
-  _staticBlockID = robot.GetAIComponent().GetWhiteboard().
-                       GetBestObjectForAction(Intention::PyramidStaticObject);
-  _topBlockID = robot.GetAIComponent().GetWhiteboard().
-                       GetBestObjectForAction(Intention::PyramidTopObject);
+  auto bestBase   = robot.GetAIComponent().GetWhiteboard().
+                      GetBestObjectForAction(Intention::PyramidBaseObject);
+  auto bestStatic = robot.GetAIComponent().GetWhiteboard().
+                      GetBestObjectForAction(Intention::PyramidStaticObject);
+  auto bestTop    =  robot.GetAIComponent().GetWhiteboard().
+                      GetBestObjectForAction(Intention::PyramidTopObject);
+  const bool blockAssignmentChanged = (bestBase != _baseBlockID) ||
+                                      (bestStatic != _staticBlockID) ||
+                                      (bestTop != _topBlockID);
+  
+  _baseBlockID = std::move(bestBase);
+  _staticBlockID = std::move(bestStatic);
+  _topBlockID = std::move(bestTop);
   
   DEV_ASSERT(AreAllBlockIDsUnique(), "BehaviorBuildPyramidBase.IsRunnable.AllBlocksNotUnique");
+  return blockAssignmentChanged;
 }
 
 

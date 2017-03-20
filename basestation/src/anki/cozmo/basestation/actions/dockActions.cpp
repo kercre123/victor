@@ -14,9 +14,9 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
@@ -212,7 +213,7 @@ namespace Anki {
       }
     
       // Get carried object
-      const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(robot.GetCarryingObject());
+      const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(robot.GetCarryingObject());
       if(nullptr == object)
       {
         PRINT_NAMED_WARNING("DriveToActions.ComputePlacementApproachAngle.NullObject",
@@ -432,7 +433,7 @@ namespace Anki {
     {
       _waitToVerifyTimeSecs = -1.f;
 
-      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_dockObjectID));
+      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_dockObjectID));
       
       if(dockObject == nullptr)
       {
@@ -507,6 +508,17 @@ namespace Anki {
       };
       _liftLoadSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::liftLoad, liftLoadLambda);
       
+      if ( _robot.HasExternalInterface() )
+      {
+        using namespace ExternalInterface;
+        auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+        helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotDeletedLocatedObject>();
+      }
+      
+      const Vision::KnownMarker* dockMarkerPtr = nullptr;
+      const Vision::KnownMarker* dockMarkerPtr2 = nullptr;
+      _dockMarkerCode  = Vision::MARKER_INVALID; // clear until we grab them below
+      _dockMarkerCode2 = Vision::MARKER_INVALID;
       
       if (_doNearPredockPoseCheck) {
         PRINT_CH_INFO("Actions", "IDockAction.Init.BeginDockingFromPreActionPose",
@@ -514,8 +526,8 @@ namespace Anki {
                       "proceeding with docking.", preActionPoseOutput.closestPoint.x(), preActionPoseOutput.closestPoint.y());
         
         // Set dock markers
-        _dockMarker = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetMarker();
-        _dockMarker2 = GetDockMarker2(preActionPoseOutput.preActionPoses, preActionPoseOutput.closestIndex);
+        dockMarkerPtr = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetMarker();
+        dockMarkerPtr2 = GetDockMarker2(preActionPoseOutput.preActionPoses, preActionPoseOutput.closestIndex);
         
       } else {
         std::vector<const Vision::KnownMarker*> markers;
@@ -529,7 +541,7 @@ namespace Anki {
         }
         else if(markers.size() == 1)
         {
-          _dockMarker = markers.front();
+          dockMarkerPtr = markers.front();
         }
         else
         {
@@ -548,19 +560,23 @@ namespace Anki {
             if(p.GetTranslation().LengthSq() < distToClosestMarker*distToClosestMarker)
             {
               distToClosestMarker = p.GetTranslation().Length();
-              _dockMarker = marker;
+              dockMarkerPtr = marker;
             }
           }
         }
         PRINT_CH_INFO("Actions", "IDockAction.Init.BeginDockingToMarker",
-                      "Proceeding with docking to marker %s", _dockMarker->GetCodeName());
+                      "Proceeding with docking to marker %s", dockMarkerPtr->GetCodeName());
       }
       
-      if(_dockMarker == nullptr)
+      if(dockMarkerPtr == nullptr)
       {
         PRINT_NAMED_WARNING("IDockAction.Init.NullDockMarker", "Dock marker is null returning failure");
         return ActionResult::BAD_MARKER;
       }
+
+      // cache marker codes (required before SetupTurnAndVerifyAction)
+      _dockMarkerCode  = (nullptr != dockMarkerPtr ) ? dockMarkerPtr->GetCode()  : Vision::MARKER_INVALID;
+      _dockMarkerCode2 = (nullptr != dockMarkerPtr2) ? dockMarkerPtr2->GetCode() : Vision::MARKER_INVALID;
 
       SetupTurnAndVerifyAction(dockObject);
       
@@ -616,6 +632,11 @@ namespace Anki {
     {
       ActionResult actionResult = ActionResult::RUNNING;
       
+      if(_dockObjectID.IsUnknown())
+      {
+        return ActionResult::BAD_OBJECT;
+      }
+      
       // Wait for visual verification to complete successfully before telling
       // robot to dock and continuing to check for completion
       if(_faceAndVerifyAction != nullptr) {
@@ -630,12 +651,13 @@ namespace Anki {
             
             PRINT_CH_INFO("Actions", "IDockAction.DockWithObjectHelper.BeginDocking",
                           "Docking with marker %d (%s) using action %s.",
-                          _dockMarker->GetCode(), _dockMarker->GetCodeName(), DockActionToString(_dockAction));
+                          _dockMarkerCode, Vision::Marker::GetNameForCode(_dockMarkerCode), DockActionToString(_dockAction));
             if(_robot.DockWithObject(_dockObjectID,
                                      _dockSpeed_mmps,
                                      _dockAccel_mmps2,
                                      _dockDecel_mmps2,
-                                     _dockMarker, _dockMarker2,
+                                     _dockMarkerCode,
+                                     _dockMarkerCode2,
                                      _dockAction,
                                      _placementOffsetX_mm,
                                      _placementOffsetY_mm,
@@ -750,7 +772,7 @@ namespace Anki {
       // NOTE: This also disables tracking head to object if there was any
       IAction* turnTowardsDockObjectAction = new TurnTowardsObjectAction(_robot,
                                                                          _dockObjectID,
-                                                                         (_visuallyVerifyObjectOnly ? Vision::Marker::ANY_CODE : _dockMarker->GetCode()),
+                                                                         (_visuallyVerifyObjectOnly ? Vision::Marker::ANY_CODE : _dockMarkerCode),
                                                                          0, true, false);
       
       // Disable the turn towards action from issuing a completion signal
@@ -758,6 +780,17 @@ namespace Anki {
       turnTowardsDockObjectAction->ShouldSuppressTrackLocking(true);
       
       _faceAndVerifyAction->AddAction(turnTowardsDockObjectAction);
+    }
+    
+    template<>
+    void IDockAction::HandleMessage(const ExternalInterface::RobotDeletedLocatedObject& msg)
+    {
+      if(msg.objectID == _dockObjectID)
+      {
+        PRINT_CH_INFO("Actions", "IDockAction.RobotDeletedLocatedObject",
+                      "Dock object was deleted from current origin stopping dock action");
+        _dockObjectID.UnSet();
+      }
     }
     
 #pragma mark ---- PopAWheelieAction ----
@@ -1240,7 +1273,7 @@ namespace Anki {
         // wasn't in the lift during pickup.
         if (checkObjectMotion) {
           BlockWorld& blockWorld = _robot.GetBlockWorld();
-          ActiveObject* obj = blockWorld.GetActiveObjectByID(_dockObjectID);
+          ObservableObject* obj = blockWorld.GetLocatedObjectByID(_dockObjectID);
           if (nullptr == obj) {
             PRINT_NAMED_WARNING("PickupObjectAction.Verify.nullObject", "ObjectID %d", _dockObjectID.GetValue());
             return ActionResult::BAD_OBJECT;
@@ -1309,10 +1342,10 @@ namespace Anki {
           
           BlockWorld& blockWorld = _robot.GetBlockWorld();
           
-          // We should _not_ still see a object with the
+          // We should _not_ still see an object with the
           // same type as the one we were supposed to pick up in that
           // block's original position because we should now be carrying it.
-          ObservableObject* carryObject = blockWorld.GetObjectByID(_robot.GetCarryingObject());
+          ObservableObject* carryObject = blockWorld.GetLocatedObjectByID(_robot.GetCarryingObject());
           if(carryObject == nullptr) {
             PRINT_NAMED_WARNING("PickupObjectAction.Verify.CarryObjectNoLongerExists",
                                 "Object %d we were carrying no longer exists in the world.",
@@ -1324,7 +1357,7 @@ namespace Anki {
           BlockWorldFilter filter;
           filter.SetAllowedTypes({carryObject->GetType()});
           std::vector<ObservableObject*> objectsWithType;
-          blockWorld.FindMatchingObjects(filter, objectsWithType);
+          blockWorld.FindLocatedMatchingObjects(filter, objectsWithType);
           
           // Robot's pose parent could have changed due to delocalization.
           // Assume it's actual pose is relatively accurate w.r.t. that original
@@ -1358,6 +1391,8 @@ namespace Anki {
             }
           }
           
+          // rsam/andrew. We don't think this code should be necessary anymore if the observation code
+          // already checks this
           if(objectInOriginalPose != nullptr)
           {
             // Must not actually be carrying the object I thought I was!
@@ -1376,7 +1411,9 @@ namespace Anki {
               
               _robot.GetObjectPoseConfirmer().CopyWithNewPose(carryObject, objectInOriginalPose->GetPose(), objectInOriginalPose);
               
-              blockWorld.DeleteObject(objectInOriginalPose->GetID());
+              BlockWorldFilter filter;
+              filter.AddAllowedID(objectInOriginalPose->GetID());
+              blockWorld.DeleteLocatedObjects(filter);
             }
             _robot.UnSetCarryingObjects();
             
@@ -1444,7 +1481,6 @@ namespace Anki {
       } else {
         
         _carryingObjectID  = _robot.GetCarryingObject();
-        _carryObjectMarker = _robot.GetCarryingMarker();
         
         if(_robot.PlaceObjectOnGround() == RESULT_OK)
         {
@@ -1455,9 +1491,10 @@ namespace Anki {
           result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
         }
         
+        const Vision::KnownMarker::Code carryObjectMarkerCode = _robot.GetCarryingMarkerCode();
         _faceAndVerifyAction.reset(new TurnTowardsObjectAction(_robot,
                                                                _carryingObjectID,
-                                                               _carryObjectMarker->GetCode(),
+                                                               carryObjectMarkerCode,
                                                                0, true, false));
         
         _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
@@ -1509,9 +1546,12 @@ namespace Anki {
         
         if(actionResult != ActionResult::RUNNING && actionResult != ActionResult::SUCCESS) {
           PRINT_NAMED_WARNING("PlaceObjectOnGroundAction.CheckIfDone.FaceAndVerifyFailed",
-                              "FaceAndVerify action reported failure, just deleting object %d.",
+                              "FaceAndVerify action reported failure, just clearing object %d.",
                               _carryingObjectID.GetValue());
-          _robot.GetBlockWorld().ClearObject(_carryingObjectID);
+          // rsam: it's arguably whether the action should do this. _carryingObjectID may
+          // no longer be equal robot.GetCarryingObject(), and be the reason why the actionResult
+          // is != Success, which would make this operation useless if the object doesn't exist anymore.
+          _robot.GetBlockWorld().ClearLocatedObjectByIDInCurOrigin(_carryingObjectID);
         }
         
       } // if robot is not picking/placing or moving
@@ -1633,7 +1673,7 @@ namespace Anki {
         case DockAction::DA_PLACE_LOW:
         {
           // TODO: Be able to fill in more objects in the stack
-          ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+          ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_dockObjectID);
           if(object == nullptr) {
             PRINT_NAMED_WARNING("PlaceRelObjectAction.EmitCompletionSignal.NullObject",
                                 "Docking object %d not found in world after placing.",
@@ -1648,7 +1688,7 @@ namespace Anki {
               *objectStackIter = object->GetID().GetValue();
               ++objectStackIter;
               ++info.numObjects;
-              object = _robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
+              object = _robot.GetBlockWorld().FindLocatedObjectOnTopOf(*object, 15.f);
             }
             
           }
@@ -1697,7 +1737,6 @@ namespace Anki {
       // will get unset when the robot unattaches it during placement, and
       // we want to be able to verify that we're seeing what we just placed.
       _carryObjectID     = _robot.GetCarryingObject();
-      _carryObjectMarker = _robot.GetCarryingMarker();
       
       return ActionResult::SUCCESS;
     } // SelectDockAction()
@@ -1756,7 +1795,7 @@ namespace Anki {
                                     _dockAction == DockAction::DA_PLACE_LOW ? "low" : "high",
                                     _carryObjectID.GetValue());
                 
-                _robot.GetBlockWorld().ClearObject(_carryObjectID);  
+                _robot.GetBlockWorld().ClearLocatedObjectByIDInCurOrigin(_carryObjectID);  
               }
               else if(_dockAction == DockAction::DA_PLACE_HIGH && !_verifyComplete) {
                 
@@ -1808,7 +1847,7 @@ namespace Anki {
     
     ActionResult PlaceRelObjectAction::TransformPlacementOffsetsRelativeObject()
     {
-      ObservableObject* dockObject = _robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+      ObservableObject* dockObject = _robot.GetBlockWorld().GetLocatedObjectByID(_dockObjectID);
       if(dockObject == nullptr){
         return ActionResult::BAD_OBJECT;
       }
@@ -1822,7 +1861,7 @@ namespace Anki {
       const float robotObjRelRotation_rad = dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       // consts for comparing relative robot/block alignment
-      const float kRotationTolerence_rad = DEG_TO_RAD(15.f);
+      const float kRotationTolerance_rad = DEG_TO_RAD(15.f);
       const float kInAlignment_rad = DEG_TO_RAD(0.f);
       const float kClockwise_rad = DEG_TO_RAD(-90.f);
       const float kCounterClockwise_rad = -kClockwise_rad;
@@ -1833,23 +1872,23 @@ namespace Anki {
       f32 xAbsolutePlacementOffset_mm;
       f32 yAbsolutePlacementOffset_mm;
 
-      if(Util::IsNear(robotObjRelRotation_rad, kInAlignment_rad, kRotationTolerence_rad)){
+      if(Util::IsNear(robotObjRelRotation_rad, kInAlignment_rad, kRotationTolerance_rad)){
         xAbsolutePlacementOffset_mm = -_relOffsetX_mm;
         yAbsolutePlacementOffset_mm = _relOffsetY_mm;
-      }else if(Util::IsNear(robotObjRelRotation_rad, kCounterClockwise_rad, kRotationTolerence_rad)){
+      }else if(Util::IsNear(robotObjRelRotation_rad, kCounterClockwise_rad, kRotationTolerance_rad)){
         xAbsolutePlacementOffset_mm = _relOffsetY_mm;
         yAbsolutePlacementOffset_mm = _relOffsetX_mm;
-      }else if(Util::IsNear(robotObjRelRotation_rad, kClockwise_rad, kRotationTolerence_rad)){
+      }else if(Util::IsNear(robotObjRelRotation_rad, kClockwise_rad, kRotationTolerance_rad)){
         xAbsolutePlacementOffset_mm = -_relOffsetY_mm;
         yAbsolutePlacementOffset_mm = -_relOffsetX_mm;
-      }else if( Util::IsNear(robotObjRelRotation_rad, kOppposite_rad, kRotationTolerence_rad)
-               ||  Util::IsNear(robotObjRelRotation_rad, kOppposite_rad_neg, kRotationTolerence_rad)){
+      }else if( Util::IsNear(robotObjRelRotation_rad, kOppposite_rad, kRotationTolerance_rad)
+               ||  Util::IsNear(robotObjRelRotation_rad, kOppposite_rad_neg, kRotationTolerance_rad)){
         xAbsolutePlacementOffset_mm = _relOffsetX_mm;
         yAbsolutePlacementOffset_mm = -_relOffsetY_mm;
       }else{
         PRINT_NAMED_WARNING("PlaceRelObjectAction.CalculatePlacementOffset.InvalidOrientation",
                             "Robot and block are not within alignment threshold - rotation:%f threshold:%f",
-                            RAD_TO_DEG(robotObjRelRotation_rad), kRotationTolerence_rad);
+                            RAD_TO_DEG(robotObjRelRotation_rad), kRotationTolerance_rad);
         return ActionResult::DID_NOT_REACH_PREACTION_POSE;
       }
       

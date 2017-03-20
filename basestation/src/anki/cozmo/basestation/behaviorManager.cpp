@@ -829,20 +829,25 @@ void BehaviorManager::StopAndNullifyCurrentBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::CheckReactionTriggerStrategies()
 {
-  //Check to see if any reactionary behaviors want to perform a computational switch
+  // Check to see if any reaction triggers want to activate a behavior
   bool hasAlreadySwitchedThisTick = false;
   for(const auto& mapEntry: _reactionTriggerMap){
     IReactionTriggerStrategy& strategy = *mapEntry.first;
     IBehavior* rBehavior = mapEntry.second;
     
+    bool shouldCheckStrategy = true;
     
-    const bool shouldCheckStrategy = !rBehavior->IsRunning() || strategy.CanInterruptSelf();
-    const bool canInterruptBehavior =  (GetRunningAndResumeInfo().GetCurrentReactionTrigger()
-                                           == ReactionTrigger::NoneTrigger) ||
-                                       strategy.CanInterruptOtherTriggeredBehavior();
+    // If there is a current triggered behavior running, make sure
+    //  we are allowed to interrupt it.
+    const ReactionTrigger currentReactionTrigger = GetCurrentReactionTrigger();
+    if (currentReactionTrigger != ReactionTrigger::NoneTrigger)
+    {
+      shouldCheckStrategy = (currentReactionTrigger == strategy.GetReactionTrigger()) ?
+                            strategy.CanInterruptSelf() :
+                            strategy.CanInterruptOtherTriggeredBehavior();
+    }
 
     if(shouldCheckStrategy &&
-       canInterruptBehavior &&
        strategy.IsReactionEnabled() &&
        strategy.ShouldTriggerBehavior(_robot, rBehavior)){
         
@@ -1198,8 +1203,8 @@ void BehaviorManager::UpdateTappedObject()
   {
     // If the tapped objects pose becomes unknown then give up and leave object tap interaction
     // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running)
-    const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_currDoubleTappedObject);
-    if(object != nullptr && object->IsPoseStateUnknown())
+    const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_currDoubleTappedObject);
+    if(object != nullptr)
     {
       LeaveObjectTapInteraction();
     }
@@ -1372,6 +1377,21 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
         return;
       }
     }
+  }
+}
+
+void BehaviorManager::OnRobotDelocalized()
+{
+  // If the robot delocalizes and we have a tapped object immediately stop the double tapped lights
+  // Normally the lights would be stopped when the tapInteraction goal exits but that is too late
+  // Eg. Pick Cozmo up after double tapping a cube, the lights will stay on until he is put down and the
+  // tapInteraction goal is kicked out. Instead of having the lights stop when he is put down, they should
+  // stop when he is picked up (delocalizes)
+  // Can't do this on Stop() because tapInteraction behaviors are stopped and started as different objects get tapped
+  if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent())
+  {
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
+    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
   }
 }
 

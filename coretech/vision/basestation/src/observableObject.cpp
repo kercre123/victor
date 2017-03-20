@@ -143,11 +143,22 @@ namespace Vision {
 
     return latestReason;
   }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  const Pose3d& ObservableObject::GetPose() const
+  {
+    // We can't use the pose if the poseState is invalid, since it's potentially garbage. The calling code
+    // should instead handle the case of receiving an object whose pose is not valid
+    DEV_ASSERT(HasValidPose(), "ObservableObject.GetPose.ObjectPoseIsNotValid");
+    return _pose;
+  }
 
   Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
                                                          const Pose3d&        atPose,
                                                          const Point2f&       size_mm)
   {
+    DEV_ASSERT(atPose.GetParent() == nullptr, "ObservableObject.AddMarker.MarkerPoseShouldBeRelative");
+    
     // Copy the pose and set this object's pose as its parent
     Pose3d poseCopy(atPose);
     poseCopy.SetParent(&_pose);
@@ -412,24 +423,13 @@ namespace Vision {
   }
 
 
-  const char* ObservableObject::PoseStateToString(const PoseState& state)
+  bool ObservableObject::IsRestingAtHeight(float height, float tolerance) const
   {
-    switch(state) {
-      case PoseState::Known: return "Known";
-      case PoseState::Dirty: return "Dirty";
-      case PoseState::Unknown: return "Unknown";
-    }
-  }
-  
-  bool ObservableObject::IsRestingAtHeight(float height, float tolerence) const
-  {
-    if(IsPoseStateUnknown()){
-      return false;
-    }
+    DEV_ASSERT(HasValidPose(), "ObservableObject.IsRestingAtHeight.ObjectPoseIsNotValid");
     
     const Pose3d& pose = GetPose().GetWithRespectToOrigin();
     const f32 blockHeight = GetDimInParentFrame<'Z'>(pose);
-    return std::abs(height - (pose.GetTranslation().z() - blockHeight/2)) < tolerence;
+    return std::abs(height - (pose.GetTranslation().z() - blockHeight/2)) < tolerance;
   }
 
   void ObservableObject::SetObservationTimes(const ObservableObject* otherObject)

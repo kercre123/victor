@@ -164,9 +164,9 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
 }
 
 u32 IBehaviorRequestGame::GetNumBlocks(const Robot& robot) const
-{  
+{
   std::vector<const ObservableObject*> blocks;
-  robot.GetBlockWorld().FindMatchingObjects(*_blockworldFilter, blocks);
+  robot.GetBlockWorld().FindLocatedMatchingObjects(*_blockworldFilter, blocks);
   
   return Util::numeric_cast<u32>( blocks.size() );
 }

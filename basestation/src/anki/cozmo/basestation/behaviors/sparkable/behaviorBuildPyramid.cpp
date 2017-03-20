@@ -131,8 +131,8 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
   SET_STATE(PlacingTopBlock);
   SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
   
-  const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
-  const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+  const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+  const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
   if(staticBlock  == nullptr || baseBlock == nullptr)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramid.TransitionToPlacingTopBlock.NullObject",

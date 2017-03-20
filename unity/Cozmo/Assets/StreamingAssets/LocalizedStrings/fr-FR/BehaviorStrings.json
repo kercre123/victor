@@ -72,6 +72,9 @@
   "behavior.ReactToPlacedOnSlope" : {
     "translation" : ""
   },
+  "behavior.ReactToShaken": {
+    "translation": "Cozmo a le vertige"
+  },
   "behavior.RequestToPlay" : {
     "translation" : "Cozmo met en place un jeu"
   },

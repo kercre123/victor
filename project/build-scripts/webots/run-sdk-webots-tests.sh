@@ -30,10 +30,14 @@ _SCRIPT_PATH=$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)
 _TOPLEVEL_COZMO=${_SCRIPT_PATH}/../../..
 _COZMO_REPO_DIR=cozmo-python-sdk
 _GIT_COZMO_SDK_URI=https://git@github.com/anki/${_COZMO_REPO_DIR}.git
-_GIT_BRANCH_NAME=nextclad
 _GIT_USERNAME="anki-smartling"
 _GIT_EMAIL="anki-smartling@anki.com"
 _SDK_WEBOTS_SCRIPT=${_TOPLEVEL_COZMO}/project/build-scripts/webots/sdkTest.py
+
+_GIT_BRANCH_NAME=nextclad
+if [[ ${SDK_BRANCH:-} ]];then
+  _GIT_BRANCH_NAME=$SDK_BRANCH
+fi
 
 # clone cozmo-python-sdk
 if [ -d $_COZMO_REPO_DIR ]; then
