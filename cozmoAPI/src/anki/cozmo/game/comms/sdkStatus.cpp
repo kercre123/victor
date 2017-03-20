@@ -52,16 +52,25 @@ inline double GetTimeBetween_s(double startTime_s, double endTime_s)
 }
 
 
-void SdkStatus::StopRobotDoingAnything()
+void SdkStatus::ResetRobot(bool isExitingSDKMode)
 {
   using GToE = ExternalInterface::MessageGameToEngine;
   
-  // Disable reactionary behaviors
-  _externalInterface->Broadcast( GToE(ExternalInterface::EnableAllReactionTriggers("sdk", false)) );
-  
-  // Clear Behaviors
-  _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)) );
-  _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior)) );
+  if (isExitingSDKMode) {
+    // Enable reactionary behaviors
+    _externalInterface->Broadcast( GToE(ExternalInterface::EnableAllReactionTriggers("sdk", true)) );
+
+    // Return to freeplay
+    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Freeplay)) );
+  }
+  else {
+    // Disable reactionary behaviors
+    _externalInterface->Broadcast( GToE(ExternalInterface::EnableAllReactionTriggers("sdk", false)) );
+
+    // Clear Behaviors
+    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)) );
+    _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior)) );
+  }
   
   // Turn off all Cube Lights
   _externalInterface->Broadcast( GToE(ExternalInterface::EnableCubeSleep(true, true)) );
@@ -85,7 +94,7 @@ void SdkStatus::EnterMode(bool isExternalSdkMode)
   DEV_ASSERT(!IsInAnySdkMode(), "SdkStatus.EnterMode.AlreadyInMode");
   Util::sEventF("robot.sdk_mode_on", {}, "");
   
-  StopRobotDoingAnything();
+  ResetRobot(false);
   
   if (isExternalSdkMode) {
     _isInExternalSdkMode = true;
@@ -151,7 +160,7 @@ void SdkStatus::OnDisconnect()
     
     if (_stopRobotOnDisconnect)
     {
-      StopRobotDoingAnything();
+      ResetRobot(true);
     }
     
     _isConnected = false;

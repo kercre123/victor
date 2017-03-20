@@ -957,6 +957,7 @@ message EnterSdkMode {
 }
 
 message ExitSdkMode {
+bool isExternalSdkMode = 1
 }
 
 message SetStopRobotOnSdkDisconnect {

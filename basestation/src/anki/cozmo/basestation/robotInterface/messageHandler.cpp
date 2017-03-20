@@ -231,7 +231,9 @@ template<>
 void MessageHandler::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 {
   // Force robot to disconnect when leaving the sdk - ensures they will be in a default initialized state for main app
-  Disconnect();
+  if (msg.isExternalSdkMode) {
+    Disconnect();
+  }
 }
   
 } // end namespace RobotInterface

@@ -294,9 +294,9 @@ public interface IRobot : IDisposable {
 
   void SetRobotCarryingObject(int objectID = -1);
 
-//  void ClearAllBlocks();
-//
-//  void ClearAllObjects();
+  //  void ClearAllBlocks();
+  //
+  //  void ClearAllObjects();
 
   void VisionWhileMoving(bool enable);
 
@@ -378,7 +378,7 @@ public interface IRobot : IDisposable {
 
   void EnterSDKMode(bool isExternalSdkMode);
 
-  void ExitSDKMode();
+  void ExitSDKMode(bool isExternalSdkMode);
 
   void SetNightVision(bool enable);
 

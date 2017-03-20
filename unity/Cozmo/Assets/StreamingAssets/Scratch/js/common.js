@@ -101,8 +101,15 @@
         vm.start();
  
         // DOM event handlers
+        var closeButton = document.querySelector('#closebutton');
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
+        closeButton.addEventListener('click', function () {
+            window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoCloseCodeLab"}');
+        });
+        closeButton.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+        });
         greenFlag.addEventListener('click', function () {
             vm.greenFlag();
         });
@@ -111,16 +118,6 @@
         });
         stop.addEventListener('click', function () {
             vm.stopAll();
-            if (typeof window.extensions !== 'undefined') {
-                /*
-                // Turned off. - msintov, 2/28/17
-                window.extensions.postMessage({
-                    extension: 'wedo',
-                    method: 'motorStop',
-                    args: []
-                });
-                */
-            }
         });
         stop.addEventListener('touchmove', function (e) {
             e.preventDefault();
@@ -146,37 +143,9 @@
         if (typeof webkit.messageHandlers.extensions === 'undefined') return;
         window.extensions = webkit.messageHandlers.extensions;
     }
- 
-    /**
-     * Extension "connect" handler.
-     * @return {void}
-     */
-    function onConnect () {
-        var di = document.querySelector('#navigation .device button');
-        di.classList.add('connected');
-    }
- 
-    /**
-     * Extension "disconnect" handler.
-     * @return {void}
-     */
-    function onDisconnect () {
-        // Original code
-        //var di = document.querySelector('#navigation .device button');
-        //di.classList.remove('connected');
- 
-        // TODO Quick and dirty: hide a UI element so the end user can see it is disconnected (green flag in lower right).
-        // If Cozmo actually disconnects, what should happen? Dialog to user? Save scripts and exit webview?
-        var greenFlagLittle = document.getElementById("greenflag");
-        greenFlagLittle.style.display='none';
- 
-        vm.stopAll();
-    }
- 
+  
     /**
      * Bind event handlers.
      */
     window.onload = onLoad;
-    window.onExtensionConnect = onConnect;
-    window.onExtensionDisconnect = onDisconnect;
 })();

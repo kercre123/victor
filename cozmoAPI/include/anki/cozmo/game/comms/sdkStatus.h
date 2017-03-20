@@ -102,7 +102,7 @@ public:
 
 private:
   
-  void StopRobotDoingAnything();
+  void ResetRobot(bool isExitingSDKMode);
   
   Util::CircularBuffer<ExternalInterface::MessageGameToEngineTag>  _recentCommands;
 
