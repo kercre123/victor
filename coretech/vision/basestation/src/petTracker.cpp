@@ -60,8 +60,7 @@ namespace JsonKey {
   static const char * const DetectionThreshold  = "DetectionThreshold";
   static const char * const InitialSearchCycle  = "InitialSearchCycle";
   static const char * const NewSearchCycle      = "NewSearchCycle";
-  static const char * const TrackRetryCount     = "TrackRetryCount";
-  static const char * const TrackHoldCount      = "TrackHoldCount";
+  static const char * const TrackLostCount      = "TrackLostCount";
   static const char * const TrackSteadiness     = "TrackSteadiness";
 };
   
@@ -114,8 +113,7 @@ Result PetTracker::Init(const Json::Value& config)
     {JsonKey::InitialSearchCycle,   -1},
     {JsonKey::NewSearchCycle,       -1},
     {JsonKey::DetectionThreshold,   -1},
-    {JsonKey::TrackHoldCount,       -1},
-    {JsonKey::TrackRetryCount,      -1},
+    {JsonKey::TrackLostCount,       -1},
     {JsonKey::TrackSteadiness,      -1},
   };
   
@@ -175,8 +173,8 @@ Result PetTracker::Init(const Json::Value& config)
   }
   
   omcvResult = OMCV_PD_MV_SetLostParam(_handles->omcvPetDetector,
-                                       parameters[JsonKey::TrackRetryCount],
-                                       parameters[JsonKey::TrackHoldCount]);
+                                       parameters[JsonKey::TrackLostCount],
+                                       parameters[JsonKey::TrackLostCount]);
   if(OMCV_NORMAL != omcvResult) {
     PRINT_NAMED_ERROR("PetTracker.Init.FaceLibSetLostParamFailed", "OMCV Result=%d", omcvResult);
     return RESULT_FAIL_INVALID_PARAMETER;

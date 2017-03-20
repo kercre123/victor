@@ -11,6 +11,7 @@
  *
  **/
 
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/petWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -18,8 +19,14 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#include "util/console/consoleInterface.h"
+
 namespace  Anki {
 namespace Cozmo {
+  
+CONSOLE_VAR(f32, kHeadTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Head_deg/s", 10.f);
+CONSOLE_VAR(f32, kBodyTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Body_deg/s", 30.f);
+CONSOLE_VAR(u8,  kNumImuDataToLookBackPet,     "WasRotatingTooFast.Pet.NumToLookBack", 5);
   
 PetWorld::PetWorld(Robot& robot)
 : _robot(robot)
@@ -37,21 +44,37 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
     
     for(auto & petDetection : pets)
     {
-      // Insert into the new map
-      auto inserted = newKnownPets.emplace(petDetection.GetID(), petDetection);
+      // Insert into the new map if:
+      // (a) it's a new pet and we weren't rotating fast (try to avoid adding hallucinated pets), OR
+      // (b) it's an existing pet and we want to keep it (even if we were moving too fast)
       
+      // See if it was already in the old map
       auto existingIter = _knownPets.find(petDetection.GetID());
       if(existingIter != _knownPets.end())
       {
-        // If we already knew about this ID, keep and increment its num times seen
-        inserted.first->second.SetNumTimesObserved(existingIter->second.GetNumTimesObserved() + 1);
+        // If we already knew about this ID, increment its num times seen
+        const Vision::TrackedPet& oldKnownPet = existingIter->second;
+        Vision::TrackedPet newKnownPet(petDetection);
+        newKnownPet.SetNumTimesObserved(oldKnownPet.GetNumTimesObserved() + 1);
+        newKnownPets.emplace(petDetection.GetID(), std::move(newKnownPet));
       }
       else
       {
-        // First time seen: initialze num times observed
-        inserted.first->second.SetNumTimesObserved(1);
+        // New pet ID, make sure we weren't rotating too fast while seeing it
+        const bool rotatingTooFastCheckEnabled = (Util::IsFltGT(kBodyTurnSpeedThreshPet_degs, 0.f) ||
+                                                  Util::IsFltGT(kHeadTurnSpeedThreshPet_degs, 0.f));
+        const bool wasRotatingTooFast = (rotatingTooFastCheckEnabled &&
+                                         _robot.GetVisionComponent().WasRotatingTooFast(petDetection.GetTimeStamp(),
+                                                                                        DEG_TO_RAD(kBodyTurnSpeedThreshPet_degs),
+                                                                                        DEG_TO_RAD(kHeadTurnSpeedThreshPet_degs),
+                                                                                        (petDetection.IsBeingTracked() ? kNumImuDataToLookBackPet : 0)));
+        if(!wasRotatingTooFast)
+        {
+          Vision::TrackedPet newKnownPet(petDetection);
+          newKnownPet.SetNumTimesObserved(1);
+          newKnownPets.emplace(petDetection.GetID(), std::move(newKnownPet));
+        }
       }
-      
     }
     
     std::swap(newKnownPets, _knownPets);
@@ -62,9 +85,29 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
   {
     const Vision::TrackedPet& knownPet = knownPetEntry.second;
     
-    // Log to DAS if this is the first detection:
-    if(knownPet.GetNumTimesObserved() == 1)
+    // Log to DAS if this is the first detection for this pet:
+    if(!knownPet.IsBeingTracked()) // The very first time we see a pet, it is not being "tracked" yet
     {
+      ANKI_VERIFY(knownPet.GetNumTimesObserved() == 1, "PetWorld.Update.NewPetDetectionShouldBeObservedOnce",
+                  "%ID:%d NumTimesObserved:%d", knownPet.GetID(), knownPet.GetNumTimesObserved());
+      
+      if(ANKI_DEVELOPER_CODE)
+      {
+        // DEV code to make sure we don't re-log an event for the same ID twice (unless our IDs roll over)
+        static std::set<s32> DEBUG_broadcastIDs;
+        static const Vision::FaceID_t kMaxPetID = 4095; // max output by OMCV detector
+        auto insert = DEBUG_broadcastIDs.insert(knownPet.GetID());
+        
+        DEV_ASSERT_MSG(insert.second == true, "PetWorld.Update.DuplicateEvent",
+                       "Already logged event for Pet ID:%d", knownPet.GetID());
+        
+        if(knownPet.GetID() == kMaxPetID) {
+          // Not likely to see kMaxID pets, but if we reset the ID a bunch in a single session, we could
+          // conceivably overrun this and the IDs would start over with ID=1. We shouldn't fail in this case.
+          DEBUG_broadcastIDs.clear();
+        }
+      }
+      
       Util::sEventF("robot.vision.detected_pet", {{DDATA, EnumToString(knownPet.GetType())}}, "%d", knownPet.GetID());
     }
     

@@ -38,8 +38,8 @@ namespace Cozmo {
     
     FaceWorld(Robot& robot);
     
-    Result Update(std::list<Vision::TrackedFace>& observedFaces);
-    Result AddOrUpdateFace(Vision::TrackedFace& face);
+    Result Update(const std::list<Vision::TrackedFace>& observedFaces);
+    Result AddOrUpdateFace(const Vision::TrackedFace& face);
   
     Result ChangeFaceID(const Vision::UpdatedFaceID& update);
     
@@ -98,7 +98,7 @@ namespace Cozmo {
       s32                      numTimesObservedFacingCamera = 0;
       bool                     hasTurnedTowards = false;
 
-      KnownFace(Vision::TrackedFace& faceIn);
+      KnownFace(const Vision::TrackedFace& faceIn);
       bool IsNamed() const { return !face.GetName().empty(); }
       bool HasStableID() const;
     };

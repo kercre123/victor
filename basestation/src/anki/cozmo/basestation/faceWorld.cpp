@@ -45,13 +45,18 @@ namespace Cozmo {
   // Ignore faces detected below the robot (except when picked up), to help reduce false positives
   CONSOLE_VAR(bool, kIgnoreFacesBelowRobot, "Vision.FaceWorld", true);
   
+  // Ignore new faces detected while rotating too fast
+  CONSOLE_VAR(f32, kHeadTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Head_deg/s",    10.f);
+  CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
+  CONSOLE_VAR(u8,  kNumImuDataToLookBackFace,      "WasRotatingTooFast.Face.NumToLookBack", 5);
+  
   static const char * const kLoggingChannelName = "FaceRecognizer";
   static const char * const kIsNamedStringDAS = "1";
   static const char * const kIsSessionOnlyStringDAS = "0";
   
   static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
   
-  FaceWorld::KnownFace::KnownFace(Vision::TrackedFace& faceIn)
+  FaceWorld::KnownFace::KnownFace(const Vision::TrackedFace& faceIn)
   : face(faceIn)
   , vizHandle(VizManager::INVALID_HANDLE)
   {
@@ -184,7 +189,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  Result FaceWorld::AddOrUpdateFace(Vision::TrackedFace& face)
+  Result FaceWorld::AddOrUpdateFace(const Vision::TrackedFace& face)
   {
     // The incoming TrackedFace should be w.r.t. the arbitrary historical world origin.
     if(face.GetHeadPose().GetParent() == nullptr || !face.GetHeadPose().GetParent()->IsOrigin())
@@ -196,8 +201,8 @@ namespace Cozmo {
 
     // Head pose is stored w.r.t. historical world origin, but needs its parent
     // set up to be the robot's world origin here:
-    Pose3d headPose;
-    const bool success = face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPose);
+    Pose3d headPoseWrtWorldOrigin;
+    const bool success = face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPoseWrtWorldOrigin);
     if(!success)
     {
       PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace.MismatchedOrigins",
@@ -209,19 +214,17 @@ namespace Cozmo {
     }
     
     const bool robotOnTreads = _robot.GetOffTreadsState() == OffTreadsState::OnTreads;
-    const bool headBelowRobot = headPose.GetTranslation().z() < 0.f;
+    const bool headBelowRobot = headPoseWrtWorldOrigin.GetTranslation().z() < 0.f;
     if(kIgnoreFacesBelowRobot && robotOnTreads && headBelowRobot)
     {
       // Don't report faces that are below the origin (which we are assuming is on the ground plane)
       //PRINT_NAMED_DEBUG("VisionSystem.DetectFaces.IgnoreFaceBelowRobot",
       //                  "z=%.2f", headPose.GetTranslation().z());
       PRINT_CH_DEBUG(kLoggingChannelName, "FaceWorld.AddOrUpdateFace.IgnoringFaceBelowRobot",
-                     "z=%f", headPose.GetTranslation().z());
+                     "z=%f", headPoseWrtWorldOrigin.GetTranslation().z());
       return RESULT_OK;
     }
     
-    face.SetHeadPose(headPose);
-
     /*
     PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.AddOrUpdateFace",
                      "Updating with face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
@@ -272,7 +275,8 @@ namespace Cozmo {
         }
         else
         {
-          auto posDiffVec = knownFaceIter->second.face.GetHeadPose().GetTranslation() - face.GetHeadPose().GetTranslation();
+          auto posDiffVec = (knownFaceIter->second.face.GetHeadPose().GetTranslation() -
+                             headPoseWrtWorldOrigin.GetTranslation());
           float posDiffSq = posDiffVec.LengthSq();
           if(posDiffSq <= kHeadCenterPointThreshold_mm * kHeadCenterPointThreshold_mm) {
             if(foundMatch) {
@@ -305,7 +309,7 @@ namespace Cozmo {
       else {
         PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.NewFace",
                       "Added new face with ID=%d at t=%d.", _idCtr, face.GetTimeStamp());
-        face.SetID(_idCtr); // Use our own ID here for the new face
+        
         auto insertResult = _knownFaces.insert({_idCtr, face});
         if(insertResult.second == false) {
           PRINT_NAMED_ERROR("FaceWorld.UpdateFace.ExistingID",
@@ -314,22 +318,47 @@ namespace Cozmo {
           return RESULT_FAIL;
         }
         knownFace = &insertResult.first->second;
+        knownFace->face.SetID(_idCtr); // Use our own ID here for the new face
         
         ++_idCtr;
       }
       
-    } else {
+    }
+    else
+    {
       // Use face recognition to get ID
-      auto insertResult = _knownFaces.insert({face.GetID(), face});
-      knownFace = &insertResult.first->second;
+      auto existingIter = _knownFaces.find(face.GetID());
       
-      if(insertResult.second) {
-        PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.NewFace",
-                      "Added new face with ID=%d at t=%d.",
-                      face.GetID(), face.GetTimeStamp());
+      const bool isNewFace = (existingIter == _knownFaces.end());
+      if(isNewFace)
+      {
+        // Make sure we aren't rotating too fast to add a new face (this helps safeguard against false positives)
+        const bool rotatingTooFastCheckEnabled = (Util::IsFltGT(kBodyTurnSpeedThreshFace_degs, 0.f) ||
+                                                  Util::IsFltGT(kHeadTurnSpeedThreshFace_degs, 0.f));
+        const bool wasRotatingTooFast = (rotatingTooFastCheckEnabled &&
+                                         _robot.GetVisionComponent().WasRotatingTooFast(face.GetTimeStamp(),
+                                                                                        DEG_TO_RAD(kBodyTurnSpeedThreshFace_degs),
+                                                                                        DEG_TO_RAD(kHeadTurnSpeedThreshFace_degs),
+                                                                                        (face.IsBeingTracked() ? kNumImuDataToLookBackFace : 0)));
         
-      } else {
+        if(wasRotatingTooFast)
+        {
+          return RESULT_OK;
+        }
+        else
+        {
+          PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.NewFace",
+                        "Added new face with ID=%d at t=%d.",
+                        face.GetID(), face.GetTimeStamp());
+          
+          auto result = _knownFaces.emplace(face.GetID(), face);
+          knownFace = &result.first->second;
+        }
+      }
+      else
+      {
         // Update the existing face:
+        knownFace = &existingIter->second;
         
         if(face.GetTimeStamp() > knownFace->face.GetTimeStamp())
         {
@@ -346,11 +375,10 @@ namespace Cozmo {
           // If no eyes were detected, the translation we have at this point was
           // computed using "fake" eye locations, so just use the last translation
           // estimate since we matched this to an existing face:
-          Pose3d headPose = face.GetHeadPose();
-          headPose.SetTranslation(insertResult.first->second.face.GetHeadPose().GetTranslation());
-          face.SetHeadPose(headPose);
+          headPoseWrtWorldOrigin.SetTranslation(knownFace->face.GetHeadPose().GetTranslation());
         }
-        insertResult.first->second.face = face;
+        
+        knownFace->face = face;
       }
     } // if(false == Vision::FaceTracker::IsRecognitionSupported()
     
@@ -358,6 +386,7 @@ namespace Cozmo {
     // existing one!
     assert(knownFace != nullptr);
     
+    knownFace->face.SetHeadPose(headPoseWrtWorldOrigin);
     knownFace->numTimesObserved++;
     
     // Keep up with how many times non-tracking-only faces have been seen facing
@@ -457,18 +486,18 @@ namespace Cozmo {
         
       _robot.Broadcast(MessageEngineToGame(RobotObservedFace(knownFace->face.GetID(),
                                                              _robot.GetID(),
-                                                             face.GetTimeStamp(),
-                                                             face.GetHeadPose().ToPoseStruct3d(_robot.GetPoseOriginList()),
-                                                             CladRect(face.GetRect().GetX(),
-                                                                      face.GetRect().GetY(),
-                                                                      face.GetRect().GetWidth(),
-                                                                      face.GetRect().GetHeight()),
+                                                             knownFace->face.GetTimeStamp(),
+                                                             knownFace->face.GetHeadPose().ToPoseStruct3d(_robot.GetPoseOriginList()),
+                                                             CladRect(knownFace->face.GetRect().GetX(),
+                                                                      knownFace->face.GetRect().GetY(),
+                                                                      knownFace->face.GetRect().GetWidth(),
+                                                                      knownFace->face.GetRect().GetHeight()),
                                                              knownFace->face.GetName(),
-                                                             face.GetMaxExpression(),
-                                                             face.GetSmileAmount(),
-                                                             face.GetGaze(),
-                                                             face.GetBlinkAmount(),
-                                                             face.GetExpressionValues(),
+                                                             knownFace->face.GetMaxExpression(),
+                                                             knownFace->face.GetSmileAmount(),
+                                                             knownFace->face.GetGaze(),
+                                                             knownFace->face.GetBlinkAmount(),
+                                                             knownFace->face.GetExpressionValues(),
                                                              leftEye, rightEye, nose, mouth)));
       
       /*
@@ -491,7 +520,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  Result FaceWorld::Update(std::list<Vision::TrackedFace>& observedFaces)
+  Result FaceWorld::Update(const std::list<Vision::TrackedFace>& observedFaces)
   {
     ANKI_CPU_PROFILE("FaceWorld::Update");
     

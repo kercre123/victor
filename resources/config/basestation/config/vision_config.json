@@ -69,8 +69,7 @@
     "DetectionThreshold"  : 850,  // 0 to 1000
     "InitialSearchCycle"  : 4,    // 1 to 45
     "NewSearchCycle"      : 8,    // 5 to 45
-    "TrackRetryCount"     : 2,    // Number of frames to continue searching for a lost pet
-    "TrackHoldCount"      : 0,    // Number of frames to keep outputting a detection after it is lost
+    "TrackLostCount"      : 2,    // Number of frames to continue searching for (and reporting) a lost pet
     "TrackSteadiness"     : 15    // 10 to 30 in Percentage change required to actually update size/position
   }
 }
