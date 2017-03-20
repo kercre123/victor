@@ -41,12 +41,25 @@ button:focus {
     stroke: none !important;
 }
 
+.blocklyFlyoutScrollbar {
+    z-index: 30;
+}
+
 .blocklyScrollbarHorizontal {
-    display: none !important;
+    position: absolute;
+    outline: none;
 }
 
 .blocklyScrollbarVertical {
     display: none !important;
+}
+
+.blocklyScrollbarBackground {
+    opacity: 0.2;
+}
+
+.blocklyScrollbarHandle {
+    fill: #30548a;
 }
 
 /**
