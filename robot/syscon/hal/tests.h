@@ -17,6 +17,8 @@ enum {
   TEST_MOTORSLAM     = 0x89,
   TEST_ADC           = 0x8A,
   TEST_BACKBUTTON    = 0x8B,
+  TEST_BACKPULLUP    = 0x8C,
+  TEST_ENCODERS      = 0x8D,
 };
 
 namespace TestFixtures {
