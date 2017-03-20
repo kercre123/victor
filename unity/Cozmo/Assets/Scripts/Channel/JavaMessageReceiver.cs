@@ -79,7 +79,7 @@ public class JavaMessageReceiver : MonoBehaviour {
     }
   }
 
-  private void Start() {
+  private void Awake() {
     _MessageReceiver = new AndroidJavaClass("com.anki.util.MessageSender").CallStatic<AndroidJavaObject>("getReceiver");
   }
 
