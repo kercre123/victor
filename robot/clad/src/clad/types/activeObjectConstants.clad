@@ -1,0 +1,19 @@
+/** Clad definitions for active object constants
+ * ROBOT_CLAD_SHARED
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_32 ActiveObjectConstants
+{
+  MAX_NUM_CUBES = 4,
+  MAX_NUM_ACTIVE_OBJECTS = 5,     // 7 is technical limitation, but really there should only be MAX_NUM_CUBES+1 for the charger.
+  NUM_CUBE_LEDS = 4,
+  FLASH_BLOCK_TIME_INTERVAL_MS = 200,
+  ACTIVE_OBJECT_DISCOVERY_PERIOD_MS = 1000,
+  OBJECT_DISCOVERY_CHANNEL = 5,    // sim only
+}
+
+} // namespace Cozmo
+} // namespace Anki

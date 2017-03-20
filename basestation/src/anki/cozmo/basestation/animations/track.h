@@ -42,7 +42,7 @@ class Robot;
 
 namespace Animations {
 
-// templated class for storing/accessing various "tracks", which
+// Templated class for storing/accessing various "tracks", which
 // hold different types of KeyFrames.
 template<class FRAME_TYPE>
 class Track
@@ -50,9 +50,47 @@ class Track
 public:
   static const size_t MAX_FRAMES_PER_TRACK = 1000;
 
-  void Init();
+  //
+  // Default copy constructor and copy assignment operator do not do the right thing for std::list iterators.
+  // When a std::list is copied, any associated iterator must be updated to point to the same location in
+  // the new location.  The default member-wise copy produces an invalid iterator.
+  //
   
-  // If set to true, keyframes in this track will be deleted after they are played
+  // Default constructor, move constructor, move assignment
+  Track<FRAME_TYPE>() = default;
+  Track<FRAME_TYPE>(Track<FRAME_TYPE>&&) noexcept = default;
+  Track<FRAME_TYPE>& operator = (Track<FRAME_TYPE>&&) noexcept = default;
+  
+  // Custom copy constructor
+  Track<FRAME_TYPE>(const Track<FRAME_TYPE>& other) :
+    _frames(other._frames),
+    _frameIter(_frames.begin()),
+    _isLive(other._isLive)
+  {
+    // Advance iterator to preserve original position
+    for (auto pos = other._frames.begin(); pos != other._frameIter; ++pos) {
+      ++_frameIter;
+    }
+  }
+  
+  // Custom copy assignment
+  Track<FRAME_TYPE>& operator = (const Track<FRAME_TYPE>& other)
+  {
+    if (this != &other) {
+      _frames = other._frames;
+      _frameIter = _frames.begin();
+      _isLive = other._isLive;
+      // Advance iterator to preserve original position
+      for (auto pos = other._frames.begin(); pos != other._frameIter; ++pos) {
+        ++_frameIter;
+      }
+    }
+    return *this;
+  }
+
+    void Init();
+  
+  // If set to true, keyframes in this track will be deleted after they are played.
   void SetIsLive(bool isLive) { _isLive = isLive; }
   bool IsLive() const { return _isLive; }
 
@@ -81,21 +119,22 @@ public:
   // nullptr otherwise. Also returns nullptr if there are no KeyFrames
   // left in the track.
   RobotInterface::EngineToRobot* GetCurrentStreamingMessage(TimeStamp_t animationTime_ms);
-  // Compair current time with start time
+  
+  // Compare current time with start time.
   RobotInterface::EngineToRobot* GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms);
   
   const FRAME_TYPE* GetCurrentKeyframe(TimeStamp_t animationTime_ms);
   
-  // Get a reference to the current KeyFrame in the track
+  // Get a reference to the current KeyFrame in the track.
   FRAME_TYPE& GetCurrentKeyFrame() { return *_frameIter; }
   
   // Get pointer to next keyframe. Returns nullptr if the track is on the last frame.
   const FRAME_TYPE* GetNextKeyFrame() const;
   
-  // Get a pointer to the first KeyFrame in the track. Returns nullptr if track is empty
+  // Get a pointer to the first KeyFrame in the track. Returns nullptr if track is empty.
   const FRAME_TYPE* GetFirstKeyFrame() const;
   
-  // Get a pointer to the last KeyFrame in the track. Returns nullptr if track is empty
+  // Get a pointer to the last KeyFrame in the track. Returns nullptr if track is empty.
   const FRAME_TYPE* GetLastKeyFrame() const;
   
   // Move to next frame and delete the current one if it's marked "live".
@@ -106,7 +145,7 @@ public:
   void MoveToPrevKeyFrame();
   
   // Move to the last keyframe in the track. Deletes keyframes along the way if
-  // this is a "live" track
+  // this is a "live" track.
   void MoveToLastKeyFrame();
   
   // Move to the very end, deleting keyframes along the way if this is a "live"
@@ -119,7 +158,7 @@ public:
 
   void Clear() { _frames.clear(); _frameIter = _frames.end(); }
   
-  // Clear all frames up to, but not including, the current one
+  // Clear all frames up to, but not including, the current one.
   void ClearUpToCurrent();
   
   // Append Track to current track
@@ -128,17 +167,23 @@ public:
 private:
   
   using FrameList = std::list<FRAME_TYPE>;
-  FrameList _frames;
-  typename FrameList::iterator _frameIter;
+  using FrameListIter = typename std::list<FRAME_TYPE>::iterator;
   
+  // List of frames
+  FrameList _frames;
+  
+  // Pointer to current position
+  FrameListIter _frameIter = _frames.begin();
+  
+  // Is this a live animation?
   bool _isLive = false;
+
   
   Result AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
   Result AddKeyFrameByTimeHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
   
 }; // class Track
-
-
+  
 template<typename FRAME_TYPE>
 void Track<FRAME_TYPE>::Init()
 {

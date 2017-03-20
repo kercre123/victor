@@ -1,4 +1,4 @@
-#VRML_SIM V8.2.1 utf8
+#VRML_SIM V8.5 utf8
 CozmoWorldInfo {
 }
 Viewpoint {
@@ -29,7 +29,7 @@ CozmoMat {
   showMarkers FALSE
 }
 DEF cube0 LightCube {
-  translation 0.227024 -0.0313406 0.022
+  translation 0.21149207 -0.026998811 0.022
   rotation 7.19235e-09 7.39256e-06 1 5.75959
 }
 DEF cube1 LightCube {

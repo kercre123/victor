@@ -24,7 +24,7 @@ namespace Cozmo {
   public:
     
     ActiveCube(Type type);
-    ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
+    ActiveCube(ActiveID activeID, FactoryID factoryID, ObjectType objectType);
     
     virtual ActiveCube* CloneType() const override {
       return new ActiveCube(this->_type);

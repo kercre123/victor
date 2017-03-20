@@ -35,7 +35,7 @@
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/geometry_declarations.h"
 
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotStateHistory.h"
 #include "anki/cozmo/basestation/groundPlaneROI.h"
 #include "anki/cozmo/basestation/overheadEdge.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"

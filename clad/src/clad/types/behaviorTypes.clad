@@ -47,6 +47,7 @@ enum uint_8 BehaviorClass {
   LookInPlaceMemoryMap,
   OnConfigSeen,
   OnboardingShowCube,
+  PeekABoo,
   PickUpCube,
   PlayAnim,
   PlayArbitraryAnim,

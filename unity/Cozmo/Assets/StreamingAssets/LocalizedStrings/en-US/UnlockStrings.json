@@ -66,6 +66,18 @@
   "unlockable.FistBump.SparkedStateDescription": {
     "translation": "When he's ready, fist bump Cozmo"
   },
+  "unlockable.PeekABoo.Title": {
+    "translation": "PeekABoo"
+  },
+  "unlockable.PeekABoo.Description": {
+    "translation": "PeekABoo!!!"
+  },
+  "unlockable.PeekABoo.SparkButtonDescription": {
+    "translation": "PeekABoo!"
+  },
+  "unlockable.PeekABoo.SparkedStateDescription": {
+    "translation": "Peek-A-Boo!!!!!!!"
+  },
   "unlockable.Workout.Title": {
     "translation": "Workout with Cubes"
   },

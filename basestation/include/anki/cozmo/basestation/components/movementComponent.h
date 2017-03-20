@@ -53,6 +53,18 @@ public:
   bool   IsLiftMoving()    const { return _isLiftMoving; }
   bool   AreWheelsMoving() const { return _areWheelsMoving; }
   
+  // Same as above, but looks up moving state in history, by given time
+  // - If we fail finding the state in history, all methods return TRUE (to be conservative)
+  // - These are non-const because they can insert things into pose history due to interpolation
+  bool   WasMoving(TimeStamp_t atTime); // Reminder: head, lift, or wheels!
+  bool   WasHeadMoving(TimeStamp_t atTime);
+  bool   WasLiftMoving(TimeStamp_t atTime);
+  bool   WereWheelsMoving(TimeStamp_t atTime);
+  
+  // Convenience methods for checking head OR wheels, since either moves the camera
+  bool   IsCameraMoving() const { return _isHeadMoving || _areWheelsMoving; }
+  bool   WasCameraMoving(TimeStamp_t atTime); // Slightly more efficient than calling WasHeadMoving _and_ WereWheelsMoving
+  
   // Returns true if any of the tracks are locked
   bool AreAnyTracksLocked(u8 tracks) const;
   // Returns true if all of the specified tracks are locked

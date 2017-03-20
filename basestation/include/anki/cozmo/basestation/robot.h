@@ -32,7 +32,6 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/activeObjectTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/dockingSignals.h"
 #include "clad/types/imageTypes.h"
@@ -102,8 +101,8 @@ class PathDolerOuter;
 class PetWorld;
 class ProgressionUnlockComponent;
 class RobotIdleTimeoutComponent;
-class RobotPoseHistory;
-class RobotPoseStamp;
+class RobotStateHistory;
+class HistRobotState;
 class IExternalInterface;
 struct RobotState;
 class ActiveCube;
@@ -343,9 +342,9 @@ public:
   const bool GetIsCliffReactionDisabled() { return _isCliffReactionDisabled; }
   
   // =========== Camera / Vision ===========
-  Vision::Camera GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
+  Vision::Camera GetHistoricalCamera(const HistRobotState& histState, TimeStamp_t t) const;
   Result         GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const;
-  Pose3d         GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
+  Pose3d         GetHistoricalCameraPose(const HistRobotState& histState, TimeStamp_t t) const;
   
   // Set the calibrated rotation of the camera
   void SetCameraRotation(f32 roll, f32 pitch, f32 yaw);
@@ -726,35 +725,26 @@ public:
 
   // =========== Pose history =============
   
-  RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
-  const RobotPoseHistory* GetPoseHistory() const { return _poseHistory; }
+  RobotStateHistory* GetStateHistory() { return _stateHistory.get(); }
+  const RobotStateHistory* GetStateHistory() const { return _stateHistory.get(); }
   
-  // Adds a raw odom pose to history
+  // Adds robot state information to history at t = state.timestamp
   // Only state updates should be calling this, however, it is exposed for unit tests
-  Result AddRawOdomPoseToHistory(const TimeStamp_t t,
-                                 const PoseFrameID_t frameID,
-                                 const Pose3d& pose,
-                                 const f32 head_angle,
-                                 const f32 lift_angle,
-                                 const u16 cliff_data,
-                                 const bool isCarryingObject);
+  Result AddRobotStateToHistory(const Pose3d& pose, const RobotState& state);
   
   // Increments frameID and adds a vision-only pose to history
   // Sets a flag to send a localization update on the next tick
-  Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
+  Result AddVisionOnlyStateToHistory(const TimeStamp_t t,
                                     const Pose3d& pose, 
                                     const f32 head_angle,
                                     const f32 lift_angle);
 
-    
-  bool IsValidPoseKey(const HistPoseKey key) const;
-    
   // Updates the current pose to the best estimate based on
   // historical poses including vision-based poses. 
   // Returns true if the pose is successfully updated, false otherwise.
   bool UpdateCurrPoseFromHistory();
 
-  Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const;
+  Result GetComputedStateAt(const TimeStamp_t t_request, Pose3d& pose) const;
 
   // =========  Block messages  ============
 
@@ -834,7 +824,11 @@ public:
   Util::Data::DataPlatform* GetContextDataPlatform();
   const CozmoContext* GetContext() const { return _context; }
   
-  ExternalInterface::RobotState GetRobotState();
+  // Populate a RobotState message with robot's current state information (suitable for sending to external listeners)
+  ExternalInterface::RobotState GetRobotState() const;
+  
+  // Populate a RobotState message with default values (suitable for sending to the robot itself, e.g. in unit tests)
+  static RobotState GetDefaultRobotState();
   
   void SetDiscoveredObjects(FactoryID factoryId, ObjectType objectType, int8_t rssi, TimeStamp_t lastDiscoveredTimetamp);
   ObjectType GetDiscoveredObjectType(FactoryID id);
@@ -1073,17 +1067,8 @@ protected:
   // helper for CanStackOnTopOfObject and CanPickUpObjectFromGround
   bool CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const;
   
-  // Pose history
-  Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
-                                         TimeStamp_t& t, RobotPoseStamp** p,
-                                         HistPoseKey* key = nullptr,
-                                         bool withInterpolation = false);
-    
-  Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
-  Result GetComputedPoseAt(const TimeStamp_t t_request, const RobotPoseStamp** p, HistPoseKey* key = nullptr) const;
-  Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
-  
-  RobotPoseHistory* _poseHistory;
+  // State history
+  std::unique_ptr<RobotStateHistory> _stateHistory;
     
   // Takes startPose and moves it forward as if it were a robot pose by distance mm and
   // puts result in movedPose.

@@ -11,7 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
-#include "clad/types/activeObjectTypes.h"
+#include "clad/types/ledTypes.h"
 
 #ifndef __Anki_Cozmo_ActiveObject_H__
 #define __Anki_Cozmo_ActiveObject_H__
@@ -66,10 +66,6 @@ namespace Cozmo {
     virtual void SetIsMoving(bool isMoving, TimeStamp_t t) override { _isMoving = isMoving; _movingTime = t;}
     
     virtual bool CanBeUsedForLocalization() const override;
-    
-    // Mapping of ActiveObjectType to ObjectType
-    static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type);
-    static ActiveObjectType GetActiveObjectTypeFromType(ObjectType type);
     
     struct LEDstate {
       ColorRGBA onColor;

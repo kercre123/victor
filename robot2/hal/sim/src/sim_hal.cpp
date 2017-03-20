@@ -47,7 +47,7 @@
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
 #include "clad/robotInterface/lightCubeMessage.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-
+#include "clad/types/activeObjectConstants.h"
 
 // Webots Includes
 #include <webots/Robot.hpp>
@@ -1099,6 +1099,15 @@ namespace Anki {
             {
               ObjectAccel m;
               memcpy(m.GetBuffer(), lcm.accel.GetBuffer(), lcm.accel.Size());
+              m.objectID = i;
+              m.timestamp = HAL::GetTimeStamp();
+              RobotInterface::SendMessage(m);
+              break;
+            }
+            case BlockMessages::LightCubeMessage::Tag_upAxisChanged:
+            {
+              ObjectUpAxisChanged m;
+              memcpy(m.GetBuffer(), lcm.upAxisChanged.GetBuffer(), lcm.upAxisChanged.Size());
               m.objectID = i;
               m.timestamp = HAL::GetTimeStamp();
               RobotInterface::SendMessage(m);

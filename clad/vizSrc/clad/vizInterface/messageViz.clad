@@ -8,7 +8,7 @@
 #include "clad/types/objectTypes.clad"
 #include "clad/types/vizTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
-#include "clad/types/activeObjectTypes.clad"
+#include "clad/types/activeObjectAccel.clad"
 
 namespace Anki {
 namespace Cozmo {

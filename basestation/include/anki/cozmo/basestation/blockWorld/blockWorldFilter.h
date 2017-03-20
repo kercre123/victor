@@ -57,7 +57,7 @@ namespace Cozmo {
     
     // Add to the existing set of IDs, types, or families
     void AddIgnoreID(const ObjectID& ID);
-    void AddIgnoreIDs(std::set<ObjectID>&& IDs);
+    void AddIgnoreIDs(const std::set<ObjectID>& IDs);
     void AddIgnoreType(ObjectType type);
     void AddIgnoreFamily(ObjectFamily family);
     void AddIgnoreOrigin(const PoseOrigin* origin);
@@ -70,7 +70,7 @@ namespace Cozmo {
     
     // Add to the existing set of IDs, types, or families
     void AddAllowedID(const ObjectID& ID);
-    void AddAllowedIDs(std::set<ObjectID>&& IDs);
+    void AddAllowedIDs(const std::set<ObjectID>& IDs);
     void AddAllowedType(ObjectType type);
     void AddAllowedFamily(ObjectFamily family);
     void AddAllowedOrigin(const PoseOrigin* origin);
@@ -167,7 +167,7 @@ namespace Cozmo {
     _ignoreIDs.insert(ID);
   }
   
-  inline void BlockWorldFilter::AddIgnoreIDs(std::set<ObjectID> &&IDs) {
+  inline void BlockWorldFilter::AddIgnoreIDs(const std::set<ObjectID>& IDs) {
     _ignoreIDs.insert(IDs.begin(), IDs.end());
   }
   
@@ -186,7 +186,7 @@ namespace Cozmo {
     _allowedIDs.insert(ID);
   }
 
-  inline void BlockWorldFilter::AddAllowedIDs(std::set<ObjectID>&& IDs) {
+  inline void BlockWorldFilter::AddAllowedIDs(const std::set<ObjectID>& IDs) {
     _allowedIDs.insert(IDs.begin(), IDs.end());
   }
   

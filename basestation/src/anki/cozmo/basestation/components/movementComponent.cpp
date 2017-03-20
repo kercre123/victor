@@ -25,7 +25,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotStateHistory.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
@@ -231,10 +231,10 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
       const bool leftGoingForward  = FLT_GT(avgLeftWheelSpeed_mmps,  0.f);
       const bool rightGoingForward = FLT_GT(avgRightWheelSpeed_mmps, 0.f);
       
-      RobotPoseStamp poseStamp;
+      HistRobotState histState;
       TimeStamp_t historicalTime;
-      Result poseResult = _robot.GetPoseHistory()->ComputePoseAt(_unexpectedMovement.GetStartTime(), historicalTime,
-                                                                 poseStamp, true);
+      Result poseResult = _robot.GetStateHistory()->ComputeStateAt(_unexpectedMovement.GetStartTime(), historicalTime,
+                                                                 histState, true);
       
       if(RESULT_FAIL_ORIGIN_MISMATCH == poseResult)
       {
@@ -299,7 +299,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
         // but we were likely slipping, so translation is garbage.)
         // Note that this also increments pose frame ID and sends a localization update
         // to the physical robot.
-        Pose3d newPose(poseStamp.GetPose());
+        Pose3d newPose(histState.GetPose());
         newPose.SetRotation(_robot.GetPose().GetRotation());
         Result res = _robot.SetNewPose(newPose);
         if(res != RESULT_OK)
@@ -846,6 +846,64 @@ std::string MovementComponent::WhoIsLocking(u8 tracks) const
   }
   return ss.str();
 }
+
+  static inline bool WasMovingHelper(Robot& robot, TimeStamp_t atTime, const std::string& debugStr,
+                                     std::function<bool(const HistRobotState&)>&& wasMovingFcn)
+  {
+    bool wasMoving = false;
+    
+    TimeStamp_t t_hist = 0;
+    HistRobotState histState;
+    const bool kWithInterpolation = true;
+    const Result result = robot.GetStateHistory()->GetRawStateAt(atTime, t_hist, histState, kWithInterpolation);
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_WARNING(("MovementComponent." + debugStr + ".GetHistoricalPoseFailed").c_str(),
+                          "t=%u", atTime);
+      wasMoving = true;
+    }
+    else
+    {
+      wasMoving = wasMovingFcn(histState);
+    }
+    
+    return wasMoving;
+  }
+  
+  bool MovementComponent::WasMoving(TimeStamp_t atTime)
+  {
+    const bool wasMoving = WasMovingHelper(_robot, atTime, "WasMoving",
+                                           [](const HistRobotState& s) { return s.WasMoving(); });
+    return wasMoving;
+  }
+  
+  bool MovementComponent::WasHeadMoving(TimeStamp_t atTime)
+  {
+    const bool wasHeadMoving = WasMovingHelper(_robot, atTime, "WasHeadMoving",
+                                               [](const HistRobotState& s) { return s.WasHeadMoving(); });
+    return wasHeadMoving;
+  }
+  
+  bool MovementComponent::WasLiftMoving(TimeStamp_t atTime)
+  {
+    const bool wasLiftMoving = WasMovingHelper(_robot, atTime, "WasLiftMoving",
+                                               [](const HistRobotState& s) { return s.WasLiftMoving(); });
+    return wasLiftMoving;
+  }
+  
+  bool MovementComponent::WereWheelsMoving(TimeStamp_t atTime)
+  {
+    const bool wereWheelsMoving = WasMovingHelper(_robot, atTime, "WereWheelsMoving",
+                                                  [](const HistRobotState& s) { return s.WereWheelsMoving(); });
+    return wereWheelsMoving;
+  }
+  
+  bool MovementComponent::WasCameraMoving(TimeStamp_t atTime)
+  {
+    const bool wasCameraMoving = WasMovingHelper(_robot, atTime, "WasCameraMoving",
+                                                 [](const HistRobotState& s) { return s.WasCameraMoving(); });
+    return wasCameraMoving;
+  }
   
 #pragma mark -
 #pragma mark Unexpected Movement 

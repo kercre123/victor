@@ -32,17 +32,21 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
+#include "clad/types/activeObjectTypes.h"
 #include "clad/types/robotStatusAndActions.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/debug/messageDebugging.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
 #include "util/signals/signalHolder.h"
+
 #include <functional>
 
 // Whether or not to handle prox obstacle events
@@ -455,6 +459,29 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
   LOG_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
 }
 
+// Mapping of ActiveObjectType to ObjectType
+static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type)
+{
+  ObjectType objType = ObjectType::Unknown;
+  switch(type) {
+    case ActiveObjectType::OBJECT_CHARGER:
+      objType = ObjectType::Charger_Basic;
+      break;
+    case ActiveObjectType::OBJECT_CUBE1:
+      objType = ObjectType::Block_LIGHTCUBE1;
+      break;
+    case ActiveObjectType::OBJECT_CUBE2:
+      objType = ObjectType::Block_LIGHTCUBE2;
+      break;
+    case ActiveObjectType::OBJECT_CUBE3:
+      objType = ObjectType::Block_LIGHTCUBE3;
+      break;
+    default:
+      break;
+  }
+  return objType;
+}
+
 void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleActiveObjectDiscovered");
@@ -462,7 +489,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<Ro
   const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
   
   // Check object type
-  ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
+  const ObjectType objType = GetTypeFromActiveObjectType(payload.device_type);
   switch(objType) {
     case ObjectType::Charger_Basic:
     {
@@ -512,7 +539,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
     return;
   }
   
-  ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
+  const ObjectType objType = GetTypeFromActiveObjectType(payload.device_type);
   if (payload.connected)
   {
     // log event to das
@@ -520,7 +547,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
                         payload.factoryID, EnumToString(payload.device_type));
 
     // Add active object to blockworld
-    objID = robot->GetBlockWorld().AddConnectedActiveObject(payload.objectID, payload.factoryID, payload.device_type);
+    objID = robot->GetBlockWorld().AddConnectedActiveObject(payload.objectID, payload.factoryID, objType);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
                        "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx)",
@@ -757,49 +784,29 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
 
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectUpAxisChanged payload = message.GetData().Get_activeObjectUpAxisChanged();
-
-  // The message from the robot has the active object ID in it, so we need
-  // to find the object in blockworld (which has its own bookkeeping ID) that
-  // has the matching active ID. We also need to consider all pose states and origin frames.
-  BlockWorldFilter filter;
-  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-  filter.SetFilterFcn([&payload](const ObservableObject* object) {
-    return object->IsActive() && object->GetActiveID() == payload.objectID;
-  });
-
-  std::vector<ObservableObject *> matchingObjects;
-  robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
-
-  if(matchingObjects.empty())
-  {
-    if(ANKI_DEVELOPER_CODE)
-    {
-      // maybe we do not have located instances, there should be a connected one though
-      ActiveID activeID = payload.objectID;
-      const bool isConnected = ( nullptr != robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID) );
-      if ( !isConnected ) {
-        PRINT_NAMED_WARNING("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
-                            "Could not find match for active object ID %d", payload.objectID);
-      }
-    }
   
+  
+  // grab objectID from the connected instance
+  ActiveID activeID = payload.objectID;
+  const ObservableObject* conObj = robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+  if ( nullptr == conObj )
+  {
+    PRINT_NAMED_ERROR("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
+                      "Could not find match for active object ID %d", payload.objectID);
     return;
   }
 
-  // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
-  ObservableObject* object = matchingObjects.front();
-  
   PRINT_NAMED_INFO("Robot.HandleActiveObjectUpAxisChanged.UpAxisChanged",
-                   "Type: %s, ObjectID: %d, UpAxis: %s",
-                   EnumToString(object->GetType()),
-                   object->GetID().GetValue(),
-                   EnumToString(payload.upAxis));
+                  "Type: %s, ObjectID: %d, UpAxis: %s",
+                  EnumToString(conObj->GetType()),
+                  conObj->GetID().GetValue(),
+                  EnumToString(payload.upAxis));
   
   // Viz update
   robot->GetContext()->GetVizManager()->SendObjectUpAxisState(payload.objectID, payload.upAxis);
   
   // Update the ID to be the blockworld ID before broadcasting
-  payload.objectID = object->GetID();
+  payload.objectID = conObj->GetID();
   payload.robotID = robot->GetID();
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectUpAxisChanged(payload)));
 }

@@ -5,21 +5,24 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/robot.h"
+
+#define private public
+#define protected public
+
+#include "anki/cozmo/basestation/robotStateHistory.h"
 
 #define DIST_EQ_THRESH 0.00001
 #define ANGLE_EQ_THRESH 0.00001
 
-TEST(RobotPoseHistory, AddGetPose)
+TEST(RobotStateHistory, AddGetPose)
 {
   using namespace Anki;
   using namespace Cozmo;
   
-  RobotPoseHistory hist;
-  RobotPoseStamp p;
+  RobotStateHistory hist;
+  HistRobotState histState;
   TimeStamp_t t;
-  
-  PoseFrameID_t frameID = 0;
   
   const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
   
@@ -28,123 +31,113 @@ TEST(RobotPoseHistory, AddGetPose)
   const Pose3d p2(0.1f, Z_AXIS_3D(), Vec3f(1,1,2), &origin );
   const Pose3d p3(-0.5, Z_AXIS_3D(), Vec3f(-2,-2,-3), &origin );
   const Pose3d p1p2avg(0.05f, Z_AXIS_3D(), Vec3f(0.5, 0.5, 1) , &origin);
-  const f32 h1 = 0;
-  const f32 h2 = 0.2f;
-  const f32 h3 = -0.3f;
-  const f32 l1 = 0;
-  const f32 l2 = 0.5f;
-  const f32 l3 = 0.7f;
-  const u16 c1 = 800;
+  
+  RobotState state1(Robot::GetDefaultRobotState());
+  RobotState state2(Robot::GetDefaultRobotState());
+  RobotState state3(Robot::GetDefaultRobotState());
+  
+  state1.headAngle = 0;
+  state2.headAngle = 0.2f;
+  state3.headAngle = -0.3f;
+  
+  state1.liftAngle = 0;
+  state2.liftAngle = 0.5f;
+  state2.liftAngle = 0.7f;
+  
+  state1.cliffDataRaw = 800;
+  state2.cliffDataRaw = 800;
+  state3.cliffDataRaw = 800;
+  
   const TimeStamp_t t1 = 0;
   const TimeStamp_t t2 = 10;
   const TimeStamp_t t3 = 1005;
-  const bool carrying1 = false;
-  const bool carrying2 = true;
-  const bool carrying3 = false;
   
+  state1.status &= !Util::EnumToUnderlying(RobotStatusFlag::IS_CARRYING_BLOCK);
+  state2.status &=  Util::EnumToUnderlying(RobotStatusFlag::IS_CARRYING_BLOCK);
+  state3.status &= !Util::EnumToUnderlying(RobotStatusFlag::IS_CARRYING_BLOCK);
+  
+  auto WasStateCarrying = [](const RobotState& state) -> bool {
+    return (state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_CARRYING_BLOCK));
+  };
   
   hist.SetTimeWindow(1000);
   
-  
   // Get pose from empty history
-
-  ASSERT_TRUE( hist.ComputePoseAt(t1, t, p) == RESULT_FAIL );
   
-
+  ASSERT_TRUE( hist.ComputeStateAt(t1, t, histState) == RESULT_FAIL );
+  
+  
   // Add and get one pose
-  hist.AddRawOdomPose(t1,
-                      RobotPoseStamp(frameID,
-                                     p1,
-                                     h1,
-                                     l1,
-                                     c1,
-                                     carrying1));
+  hist.AddRawOdomState(t1, HistRobotState(p1, state1));
   
-  ASSERT_TRUE(hist.GetNumRawPoses() == 1);
-  ASSERT_TRUE(hist.ComputePoseAt(t1, t, p) == RESULT_OK);
+  ASSERT_TRUE(hist.GetNumRawStates() == 1);
+  ASSERT_TRUE(hist.ComputeStateAt(t1, t, histState) == RESULT_OK);
   ASSERT_TRUE(t1 == t);
-  ASSERT_TRUE(p1 == p.GetPose());
-  ASSERT_TRUE(h1 == p.GetHeadAngle());
-  ASSERT_TRUE(l1 == p.GetLiftAngle());
-  ASSERT_TRUE(carrying1 == p.IsCarryingObject());
+  ASSERT_TRUE(p1 == histState.GetPose());
+  ASSERT_TRUE(state1.headAngle == histState.GetHeadAngle_rad());
+  ASSERT_TRUE(state1.liftAngle == histState.GetLiftAngle_rad());
+  ASSERT_TRUE(WasStateCarrying(state1) == histState.WasCarryingObject());
+  
   
   // Add another pose
-  hist.AddRawOdomPose(t2,
-                      RobotPoseStamp(frameID,
-                                     p2,
-                                     h2,
-                                     l2,
-                                     c1,
-                                     carrying2));
+  hist.AddRawOdomState(t2, HistRobotState(p2, state2));
   
   // Request out of range pose
-  ASSERT_TRUE(hist.GetNumRawPoses() == 2);
-  ASSERT_TRUE(hist.ComputePoseAt(t3, t, p) == RESULT_FAIL);
-
+  ASSERT_TRUE(hist.GetNumRawStates() == 2);
+  ASSERT_TRUE(hist.ComputeStateAt(t3, t, histState) == RESULT_FAIL);
+  
   // Request in range pose
-  ASSERT_TRUE(hist.ComputePoseAt(4, t, p) == RESULT_OK);
+  ASSERT_TRUE(hist.ComputeStateAt(4, t, histState) == RESULT_OK);
   ASSERT_TRUE(t1 == t);
-  ASSERT_TRUE(p1 == p.GetPose());
-
-  ASSERT_TRUE(hist.ComputePoseAt(6, t, p) == RESULT_OK);
+  ASSERT_TRUE(p1 == histState.GetPose());
+  
+  ASSERT_TRUE(hist.ComputeStateAt(6, t, histState) == RESULT_OK);
   ASSERT_TRUE(t2 == t);
-  ASSERT_TRUE(p2.IsSameAs(p.GetPose(), 1e-5f, DEG_TO_RAD(0.1f)));
-
+  ASSERT_TRUE(p2.IsSameAs(histState.GetPose(), 1e-5f, DEG_TO_RAD(0.1f)));
+  
   // Request in range pose with interpolation
-  ASSERT_TRUE(hist.ComputePoseAt(5, t, p, true) == RESULT_OK);
-  ASSERT_TRUE(p1p2avg.IsSameAs(p.GetPose(), 0.0001f, 0.0001f));
+  ASSERT_TRUE(hist.ComputeStateAt(5, t, histState, true) == RESULT_OK);
+  ASSERT_TRUE(p1p2avg.IsSameAs(histState.GetPose(), 0.0001f, 0.0001f));
   
   // since interpolation is in the middle it should be the newest
-  ASSERT_TRUE(p.IsCarryingObject() == carrying2);
+  ASSERT_TRUE(histState.WasCarryingObject() == WasStateCarrying(state2));
   
-  
+
   // Add new pose that should bump off oldest pose
-  hist.AddRawOdomPose(t3,
-                      RobotPoseStamp(frameID,
-                                     p3,
-                                     h3,
-                                     l3,
-                                     c1,
-                                     carrying3));
+  hist.AddRawOdomState(t3, HistRobotState(p3, state3));
   
-  ASSERT_TRUE(hist.GetNumRawPoses() == 2);
+  ASSERT_TRUE(hist.GetNumRawStates() == 2);
   
   // Request out of range pose
-  ASSERT_TRUE(hist.ComputePoseAt(9, t, p) == RESULT_FAIL);
+  ASSERT_TRUE(hist.ComputeStateAt(9, t, histState) == RESULT_FAIL);
   
   // This should return p2
-  ASSERT_TRUE(hist.ComputePoseAt(11, t, p) == RESULT_OK);
+  ASSERT_TRUE(hist.ComputeStateAt(11, t, histState) == RESULT_OK);
   ASSERT_TRUE(t2 == t);
-  ASSERT_TRUE(p2.IsSameAs(p.GetPose(), 1e-5f, DEG_TO_RAD(0.1f)));  
+  ASSERT_TRUE(p2.IsSameAs(histState.GetPose(), 1e-5f, DEG_TO_RAD(0.1f)));  
   
   // Add old pose that is out of time window
-  hist.AddRawOdomPose(t1,
-                      RobotPoseStamp(frameID,
-                                     p1,
-                                     h1,
-                                     l1,
-                                     c1,
-                                     carrying1));
+  hist.AddRawOdomState(t1, HistRobotState(p1, state1));
   
-  ASSERT_TRUE(hist.GetNumRawPoses() == 2);
+  ASSERT_TRUE(hist.GetNumRawStates() == 2);
   ASSERT_TRUE(hist.GetOldestTimeStamp() == t2);
   ASSERT_TRUE(hist.GetNewestTimeStamp() == t3);
   
   
   // Clear history
   hist.Clear();
-  ASSERT_TRUE(hist.GetNumRawPoses() == 0);
+  ASSERT_TRUE(hist.GetNumRawStates() == 0);
 }
 
 
-TEST(RobotPoseHistory, GroundTruthPose)
+TEST(RobotStateHistory, GroundTruthPose)
 {
   
   using namespace Anki;
   using namespace Cozmo;
   
-  RobotPoseHistory hist;
-  RobotPoseStamp p;
+  RobotStateHistory hist;
+  HistRobotState histState;
   TimeStamp_t t;
   
   PoseFrameID_t frameID = 0;
@@ -165,35 +158,31 @@ TEST(RobotPoseHistory, GroundTruthPose)
   const f32 l1 = 0;
   const f32 l2 = 0.5f;
   const f32 l3 = 0.7f;
-  const u16 c1 = 800;
   const TimeStamp_t t1 = 0;
   const TimeStamp_t t2 = 10;
   const TimeStamp_t t3 = 20;
-  const bool carrying1 = false;
-  const bool carrying2 = true;
-  const bool carrying3 = false;
   
   hist.SetTimeWindow(1000);
   
   // Add all three poses
-  p.SetAll(frameID, p1, h1, l1, c1, carrying1);
-  hist.AddRawOdomPose(t1, p);
+  histState.SetPose(frameID, p1, h1, l1);
+  hist.AddRawOdomState(t1, histState);
 
-  p.SetAll(frameID, p2, h2, l2, c1, carrying2);
-  hist.AddRawOdomPose(t2, p);
+  histState.SetPose(frameID, p2, h2, l2);
+  hist.AddRawOdomState(t2, histState);
   
-  p.SetAll(frameID, p3, h3, l3, c1, carrying3);
-  hist.AddRawOdomPose(t3, p);
+  histState.SetPose(frameID, p3, h3, l3);
+  hist.AddRawOdomState(t3, histState);
   
-  ASSERT_TRUE(hist.GetNumRawPoses() == 3);
+  ASSERT_TRUE(hist.GetNumRawStates() == 3);
 
   // 1) Add ground truth pose equivalent to p1 at same time t1
-  p.SetAll(frameID, p1, h1, l1, c1, carrying1);
-  ASSERT_TRUE(hist.AddVisionOnlyPose(t1, p) == RESULT_OK);
-  ASSERT_TRUE(hist.GetNumVisionPoses() == 1);
+  histState.SetPose(frameID, p1, h1, l1);
+  ASSERT_TRUE(hist.AddVisionOnlyState(t1, histState) == RESULT_OK);
+  ASSERT_TRUE(hist.GetNumVisionStates() == 1);
  
   // Requested pose at t3 should be the same as p3
-  ASSERT_TRUE(hist.ComputePoseAt(t3, t, p) == RESULT_OK);
+  ASSERT_TRUE(hist.ComputeStateAt(t3, t, histState) == RESULT_OK);
   /*
   printf("Pose p:\n");
   p.GetPose().Print();
@@ -201,16 +190,16 @@ TEST(RobotPoseHistory, GroundTruthPose)
   printf("Pose p3:\n");
   p3.Print();
   */
-  ASSERT_TRUE(p.GetPose().IsSameAs(p3, DIST_EQ_THRESH, ANGLE_EQ_THRESH) );
+  ASSERT_TRUE(histState.GetPose().IsSameAs(p3, DIST_EQ_THRESH, ANGLE_EQ_THRESH) );
 
   
   // 2) Adding ground truth pose equivalent to p1 at time t2
-  p.SetAll(frameID, p1, h1, l1, c1, carrying1);
-  hist.AddVisionOnlyPose(t2, p);
+  histState.SetPose(frameID, p1, h1, l1);
+  hist.AddVisionOnlyState(t2, histState);
   
   // Since the frame ID of the ground truth pose is the same the frame of the
   // raw pose at t3, we expect to get back the raw pose at t3.
-  ASSERT_TRUE(hist.ComputePoseAt(t3, t, p) == RESULT_OK);
+  ASSERT_TRUE(hist.ComputeStateAt(t3, t, histState) == RESULT_OK);
   /*
   printf("Pose p:\n");
   p.GetPose().Print();
@@ -218,34 +207,79 @@ TEST(RobotPoseHistory, GroundTruthPose)
   printf("Pose p1_by_p2Top3:\n");
   p1_by_p2Top3.Print();
   */
-  ASSERT_TRUE(p.GetPose().IsSameAs(p3, DIST_EQ_THRESH, ANGLE_EQ_THRESH));
+  ASSERT_TRUE(histState.GetPose().IsSameAs(p3, DIST_EQ_THRESH, ANGLE_EQ_THRESH));
   
   // 3) Now inserting the same ground truth pose again but with a higher frame id
-  p.SetAll(frameID+1, p1, h1, l1, c1, carrying1);
-  hist.AddVisionOnlyPose(t2, p);
+  histState.SetPose(frameID+1, p1, h1, l1);
+  hist.AddVisionOnlyState(t2, histState);
 
   // Requested pose at t3 should be pose p1 modified by the pose diff between p2 and p3
-  ASSERT_TRUE(hist.ComputePoseAt(t3, t, p) == RESULT_OK);
+  ASSERT_TRUE(hist.ComputeStateAt(t3, t, histState) == RESULT_OK);
   
-  ASSERT_TRUE(p.GetPose().IsSameAs(p1_by_p2Top3, DIST_EQ_THRESH, ANGLE_EQ_THRESH));
+  ASSERT_TRUE(histState.GetPose().IsSameAs(p1_by_p2Top3, DIST_EQ_THRESH, ANGLE_EQ_THRESH));
   
   
   // 4) Check that there are no computed poses in history
-  RobotPoseStamp *rps = nullptr;
-  ASSERT_TRUE(hist.GetComputedPoseAt(t3, &rps) == RESULT_FAIL);
+  HistRobotState *hrs = nullptr;
+  ASSERT_TRUE(hist.GetComputedStateAt(t3, &hrs) == RESULT_FAIL);
   
   // Compute pose at t3 again but this time insert it as well
-  ASSERT_TRUE(hist.ComputeAndInsertPoseAt(t3, t, &rps) == RESULT_OK);
-  ASSERT_TRUE(rps != nullptr);
+  ASSERT_TRUE(hist.ComputeAndInsertStateAt(t3, t, &hrs) == RESULT_OK);
+  ASSERT_TRUE(hrs != nullptr);
   
   // Get the computed pose.
   // Should be the exact same as rps.
-  RobotPoseStamp *rps2 = nullptr;
-  ASSERT_TRUE(hist.GetComputedPoseAt(t3, &rps2) == RESULT_OK);
-  ASSERT_TRUE(rps == rps2);
+  HistRobotState *hrs2 = nullptr;
+  ASSERT_TRUE(hist.GetComputedStateAt(t3, &hrs2) == RESULT_OK);
+  ASSERT_TRUE(hrs == hrs2);
   
   // 5) Get latest vision only pose
-  ASSERT_TRUE(hist.GetLatestVisionOnlyPose(t, p) == RESULT_OK);
-  ASSERT_TRUE(p.GetPose() == p1);
+  ASSERT_TRUE(hist.GetLatestVisionOnlyState(t, histState) == RESULT_OK);
+  ASSERT_TRUE(histState.GetPose() == p1);
 }
 
+TEST(RobotStateHistory, CullToWindowSizeTest)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  RobotStateHistory hist;
+  
+  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
+  const Pose3d p(0, Z_AXIS_3D(), Vec3f(0,0,0), &origin );
+  RobotState state(Robot::GetDefaultRobotState());
+  HistRobotState histState(p, state);
+
+  // Verify that culling on empty history doesn't cause a crash
+  hist.CullToWindowSize();  // Keeps the latest 300ms and removes the rest
+
+  // Fill history with 6 seconds
+  for (TimeStamp_t t = 0; t < 6000; t += 100) {
+    hist.AddRawOdomState(t, histState);
+    
+    // Don't add any visStates so as to test possible bad erase conditions in CullToWindowSize()
+    
+    if (t % 1000 == 0) {
+      TimeStamp_t actualTime;
+      HistRobotState *statePtr;
+      hist.ComputeAndInsertStateAt(t, actualTime, &statePtr);
+    }
+  }
+
+  printf("CullToWindowSizeTest: raw %zu, vis %zu, comp %zu, keyByTs %zu, tsByKey %zu\n",
+         hist._states.size(),
+         hist._visStates.size(),
+         hist._computedStates.size(),
+         hist._keyByTsMap.size(),
+         hist._tsByKeyMap.size());
+
+  
+  // Verify that history stays at size no larger than 3s
+  ASSERT_TRUE(hist._states.size() == 31);
+  
+  ASSERT_TRUE(hist._visStates.size() == 0);
+  ASSERT_TRUE(hist._computedStates.size() == 3);
+  ASSERT_TRUE(hist._keyByTsMap.size() == 3);
+  ASSERT_TRUE(hist._tsByKeyMap.size() == 3);
+  
+}

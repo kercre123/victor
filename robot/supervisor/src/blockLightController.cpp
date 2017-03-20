@@ -14,7 +14,7 @@
 
 #include "blockLightController.h"
 #include "messages.h"
-#include "clad/types/activeObjectTypes.h"
+#include "clad/types/activeObjectConstants.h"
 #include "anki/cozmo/robot/ledController.h"
 #include "anki/cozmo/robot/hal.h"
 #include <string.h>

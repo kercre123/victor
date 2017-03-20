@@ -48,11 +48,9 @@ namespace Anki {
       }
     }
     
-    ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
-    : ActiveCube(GetTypeFromActiveObjectType(activeObjectType))
+    ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID, ObjectType objType)
+    : ActiveCube(objType)
     {
-      
-      ObjectType objType = GetTypeFromActiveObjectType(activeObjectType);
       DEV_ASSERT(objType == ObjectType::Block_LIGHTCUBE1 ||
                  objType == ObjectType::Block_LIGHTCUBE2 ||
                  objType == ObjectType::Block_LIGHTCUBE3 ||

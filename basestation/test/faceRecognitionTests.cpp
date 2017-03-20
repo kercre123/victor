@@ -371,25 +371,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     robot.FakeSyncTimeAck();
 
     // Fake a state message update for robot
-    // The robot should not report at t=0, since we are after timeSync and 0 is used by the
-    // robot constructor to set everything to 0
-    RobotState stateMsg(1, // timestamp,
-                        0, // pose_frame_id,
-                        1, // pose_origin_id,
-                        RobotPose(0.f,0.f,0.f,0.f,0.f),
-                        0.f, // lwheel_speed_mmps,
-                        0.f, // rwheel_speed_mmps,
-                        0.f, // headAngle,
-                        0.f, // liftAngle,
-                        0.f, // liftHeight,
-                        AccelData(),
-                        GyroData(),
-                        0.f, // batteryVoltage,
-                        (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
-                        0, // lastPathID,
-                        0, // cliffDataRaw,
-                        0, // currPathSegment,
-                        0); // numFreeSegmentSlots)
+    RobotState stateMsg( Robot::GetDefaultRobotState() );
     
     robot.GetVisionComponent().SetIsSynchronous(true);
     Result initResult = robot.GetVisionComponent().Init(config);

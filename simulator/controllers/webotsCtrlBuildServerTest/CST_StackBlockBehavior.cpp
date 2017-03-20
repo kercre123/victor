@@ -527,10 +527,16 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       
     case TestState::PlaceObjectShouldFail:
     {
-      // rsam: the robot is faster flagging the object as unknown before verify action can finish. Flagging
-      // as unknown deletes the object from BlockWorld, which makes the action fail with BAD_OBJECT rather
-      // than NOT_CARRYING_OBJECT_ABORT
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_placeObjectResult == ActionResult::BAD_OBJECT, 10) {
+      // rsam: if the robot is faster flagging the object as unknown before verify action can finish it
+      // will delete the object from BlockWorld, which makes the action fail with BAD_OBJECT rather
+      // than NOT_CARRYING_OBJECT_ABORT. If the robot is not fast enough, it would fail in visual observation
+      const bool actionFailed = (_placeObjectResult == ActionResult::BAD_OBJECT) ||
+                                (_placeObjectResult == ActionResult::VISUAL_OBSERVATION_FAILED);
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(actionFailed, 10)
+      {
+        PRINT_NAMED_INFO("CST_StackBlockBehavior.TestInfo",
+                         "Finished PlaceObjectShouldFail with code '%s'",
+                         EnumToString(_placeObjectResult));
         SET_STATE(TestDone)
       }
       

@@ -58,8 +58,8 @@ namespace Anki
       ~BlockWorld();
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
-      // and updating robots' poses and blocks' poses from them.
-      Result Update(std::list<Vision::ObservedMarker>& observedMarkers);
+      // and updating robot's and objects' poses from them.
+      Result Update(const std::list<Vision::ObservedMarker>& observedMarkers);
       
       // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
       Result AddProxObstacle(const Pose3d& p);
@@ -85,15 +85,9 @@ namespace Anki
       // However, if an object of the same type is found as an unconnected object, the objectID is inherited, and
       // the unconnected instances (in origins) become linked to this connected object instance.
       // It returns the new or inherited objectID on success, or invalid objectID if it fails.
-      ObjectID AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
+      ObjectID AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ObjectType objectType);
       // Removes connected object from the connected objects container. Returns matching objectID if found
       ObjectID RemoveConnectedActiveObject(ActiveID activeID);
-
-      // Creates an object from the given active object type. Current API design prevents BlockWorld from setting
-      // the pose, that's why we have AddLocatedObject(shared_ptr), that checks the pose and ID have already been
-      // set. We should revisit this API where we need to expose this CreateActiveObject
-      // Note memory management is responsibility of the calling code
-      ActiveObject* CreateActiveObject(ActiveObjectType activeObjectType, ActiveID activeID, FactoryID factoryID);
 
       // Adds the given object to the BlockWorld according to its current objectID and pose. The objectID is expected
       // to be set, and not be currently in use in the BlockWorld. Otherwise it's a sign that something went
@@ -115,22 +109,15 @@ namespace Anki
       // Object Access
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-      // TODO: Could this be converted to a filter?
       // Delete located instances will delete object instances of both active and passive objects. However
       // from connected objects, only the located instances are affected. The unlocated instances, that are stored
       // regardless of pose, are not affected by this. Passive objects don't have connected instances.
-      void DeleteAllLocatedObjects();                              // all instances in all origins
-      void DeleteLocatedObjectsByOrigin(const PoseOrigin* origin); // all instances in the given origin
-      void DeleteLocatedObjectsByFamily(ObjectFamily family);      // all instances of the given family in all origins
-      void DeleteLocatedObjectsByType(ObjectType type);            // all instances of the given type in all origins
-      void DeleteLocatedObjectsByID(const ObjectID withID);        // all instances of the given object in all origins
-      void DeleteLocatedObjectByIDInCurOrigin(const ObjectID withID); // the given instance in the current origin
+      void DeleteLocatedObjects(const BlockWorldFilter& filter);   // objects that pass the filter will be deleted
       
       // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
       // without those system lingering
       void ClearLocatedObjectByIDInCurOrigin(const ObjectID& withID);
       void ClearLocatedObject(ObservableObject* object);
-      
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Get objects by ID or activeID
@@ -453,10 +440,6 @@ namespace Anki
       //
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
-      Result UpdateObjectPoses(std::list<Vision::ObservedMarker>& obsMarkers,
-                               const ObjectFamily& inFamily,
-                               const TimeStamp_t atTimestamp);
-      
       Result UpdateMarkerlessObjects(TimeStamp_t atTimestamp);
       
       /*
@@ -499,16 +482,12 @@ namespace Anki
       //  will either directly add them to BlockWorld's existing objects or delete them
       //  if/when they are no longer needed.
       Result AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
-                                 const ObjectFamily& inFamily,
                                  const TimeStamp_t atTimestamp);
       
       // Updates poses of stacks of objects by finding the difference between old object
       // poses and applying that to the new observed poses
       void UpdatePoseOfStackedObjects();
       
-      // Remove all posekey-marker pairs from the map if marker is marked used
-      void RemoveUsedMarkers(std::list<Vision::ObservedMarker>& poseKeyObsMarkerMap);
-
       // adds a markerless object at the given pose
       Result AddMarkerlessObject(const Pose3d& pose, ObjectType type);
       
@@ -530,6 +509,8 @@ namespace Anki
       void BroadcastConnectedObjects();
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
+      
+      Result SanityCheckBookkeeping() const;
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Nav memory map
@@ -575,8 +556,7 @@ namespace Anki
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)
-      // TODO: combine into single object library instead of per family (COZMO-9319)
-      std::map<ObjectFamily, ObservableObjectLibrary> _objectLibrary;
+      ObservableObjectLibrary _objectLibrary;
       
       // Objects that we know about because they have connected, but for which we may or may not know their location.
       // The instances of objects in this container are expected to NEVER have a valid Pose/PoseState. If they are

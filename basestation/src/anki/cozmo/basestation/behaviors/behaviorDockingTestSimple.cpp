@@ -387,12 +387,14 @@ namespace Anki {
             if(kNumRandomObstacles > 0)
             {
               // Delete the old obstacles we added
-              robot.GetBlockWorld().DeleteLocatedObjectsByFamily(ObjectFamily::CustomObject);
+              BlockWorldFilter filter;
+              filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+              filter.AddAllowedFamily(ObjectFamily::CustomObject);
+              robot.GetBlockWorld().DeleteLocatedObjects(filter);
             
               // Add new obstacles at random poses around the preDock pose corresponding with _initialVisionMarker
               for(u32 i = 0; i < kNumRandomObstacles; ++i)
               {
-                
                 f32 x = preActionPose.GetTranslation().x();
                 f32 y = preActionPose.GetTranslation().y();
                 Radians angle = preActionPose.GetRotation().GetAngleAroundZaxis();

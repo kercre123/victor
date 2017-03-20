@@ -15,7 +15,6 @@
 #define __Cozmo_Basestation_Blocks_BlockFilter_H__
 
 #include "anki/cozmo/basestation/activeCube.h"
-#include "clad/types/activeObjectTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <string>

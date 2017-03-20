@@ -206,7 +206,10 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
     _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), object->GetID().GetValue())));
     
     // delete the object from BlockWorld
-    _robot.GetBlockWorld().DeleteLocatedObjectByIDInCurOrigin(object->GetID());
+    BlockWorldFilter filter;
+    filter.AddAllowedID(object->GetID());
+    _robot.GetBlockWorld().DeleteLocatedObjects(filter);
+    
     object = nullptr; // do not use anymore, since it's deleted
   }
 
@@ -533,9 +536,12 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
             confirmedMatch = unconfirmedObjectPtr;
             unconfirmedObjectPtr = nullptr;
           }
-          else
+          else if(!robotWasMoving)
           {
-            // update the pose of the confirmed object due to this observation
+            // if the robot was not moving and we see an object we already knew about,
+            // update the pose of the confirmed object due to this observation.
+            // (if the robot was moving, we only confirm _new_ objects, so we don't bump into a cube
+            //  placed in front of the robot for example)
             UpdatePoseInInstance(confirmedMatch, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
           }
           

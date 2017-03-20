@@ -118,16 +118,14 @@ namespace Vision {
   }
   
   template<class ObsObjectType>
-  Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
+  Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
                                                                           std::multimap<f32, ObsObjectType*>& objectsSeen,
                                                                           const CameraID_t seenOnlyBy) const
   {
     std::map<const ObsObjectType*, std::vector<const ObservedMarker*>> markersByLibObject;
     
-    for(auto &marker : markers) {
-      
-      marker.MarkUsed(false);
-      
+    for(auto &marker : markers)
+    {
       // If seenOnlyBy was specified, make sure this marker was seen by that
       // camera
       if(seenOnlyBy == ANY_CAMERA || marker.GetSeenBy().GetID() == seenOnlyBy)
@@ -140,8 +138,13 @@ namespace Vision {
         if(nullptr != objectWithMarker)
         {
           markersByLibObject[objectWithMarker].push_back(&marker);
-          marker.MarkUsed(true);
-        } // IF objectsWithMarker != NULL
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("ObservableObjectLibrary.CreateObjectsFromMarkers.UnusedMarker",
+                              "No objects in library use observed '%s' marker",
+                              marker.GetCodeName());
+        }
       } // IF seenOnlyBy
       
     } // For each marker we saw

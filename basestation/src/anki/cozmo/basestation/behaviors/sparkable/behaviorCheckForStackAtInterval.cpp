@@ -13,7 +13,6 @@
 
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorCheckForStackAtInterval.h"
 
-#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
@@ -37,9 +36,7 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(Robot& robot, c
 , _delayBetweenChecks_s(0)
 , _nextCheckTime_s(0)
 , _knownBlockIndex(-1)
-, _ghostStackedObject(new ActiveCube(ObservableObject::InvalidActiveID,
-                                     ObservableObject::InvalidFactoryID,
-                                     ActiveObjectType::OBJECT_UNKNOWN)) // Ghost cubes do not have valid active object type
+, _ghostStackedObject(new Block_Cube1x1(ObjectType::Block_LIGHTCUBE_GHOST))
 {
   SetDefaultName("CheckForStackAtInterval");
   

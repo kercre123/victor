@@ -77,5 +77,51 @@ structure LightState
 }
 
 
+// Specify LEDs, relative to block's top face (as determined by accelerometer)
+// Looking down at top face (and through to bottom face), LEDs are
+// numbered as follows, with each value corresponding to a bit in a u8:
+// Note that the face labels are done such that they match the way Blocks'
+// faces are defined (imagine the robot is looking along the x axis, facing
+// the "Front" of the block, then it makes sense...)
+// NOTE: In the orientation displayed below, the Top marker is rightside up on screen
+//
+//
+//                 (Left)             Y
+//                 ---1---            ^
+//                |   ^   |           |
+//        (Front) 2  TOP  0 (Back)    |
+//                |       |           +----> X
+//                 ---3---
+//                 (Right)
+//
+//  When the block is on its side, FRONT is synonymous with the upper LED.
+enum uint_8 WhichCubeLEDs
+{
+  NONE = 0x00,
+  ALL  = 0xff,
+  // Individual LEDs masked by bit
+  BACK  = 0x01,
+  LEFT  = 0x02,
+  FRONT = 0x04,
+  RIGHT = 0x08,
+  // Corner groups
+  FRONT_LEFT  = 0x06, // Front | left
+  FRONT_RIGHT = 0x0c, // Front | right
+  BACK_LEFT   = 0x03, // Back  | left
+  BACK_RIGHT  = 0x09, // Back  | right
+
+  // Charger lights
+  CHARGER_BACK   = 0x01,
+  CHARGER_MIDDLE = 0x02,
+  CHARGER_FRONT  = 0x04
+}
+
+enum uint_8 MakeRelativeMode
+{
+  RELATIVE_LED_MODE_OFF = 0,
+  RELATIVE_LED_MODE_BY_CORNER,
+  RELATIVE_LED_MODE_BY_SIDE
+}
+
 } // namespace Cozmo
 } // namespace Anki

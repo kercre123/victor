@@ -27,7 +27,6 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/activeObjectTypes.h"
 #include "clad/types/behaviorChooserType.h"
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
@@ -339,7 +338,6 @@ namespace Anki {
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
         printf("         Clear all known objects:  Alt+c\n");
-        printf("         Select behavior by type:  Shift+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");

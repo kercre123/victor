@@ -179,7 +179,6 @@ namespace Anki {
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
         robotState_.headAngle  = HeadController::GetAngleRad();
         robotState_.liftAngle  = LiftController::GetAngleRad();
-        robotState_.liftHeight = LiftController::GetHeightMM();
 
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
         robotState_.accel.x = imuData.acc_x;
