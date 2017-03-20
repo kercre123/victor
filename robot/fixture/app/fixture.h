@@ -155,6 +155,9 @@ u32 GetSerial();
 // Body errors
 #define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body
 #define ERROR_BODY_OUTOFDATE        601   // Body board is running out of date firmware
+#define ERROR_BODY_TREAD_ENC_LEFT   602   // left tread encoder failed self test
+#define ERROR_BODY_TREAD_ENC_RIGHT  603   // right tread encoder failed self test
+#define ERROR_BODY_BACKPACK_PULL    604   // backpack pull-up incorrect
 
 // Drop sensor errors
 #define ERROR_DROP_LEAKAGE          610   // Drop leakage detected
