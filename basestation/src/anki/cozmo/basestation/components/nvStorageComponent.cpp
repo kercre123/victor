@@ -1035,9 +1035,12 @@ bool NVStorageComponent::HasPendingRequests()
 bool NVStorageComponent::ResendLastCommand()
 {
   if (++_numSendAttempts >= _kMaxNumSendAttempts) {
-    PRINT_NAMED_WARNING("NVStorageComponent.ResendLastCommand.NumRetriesExceeded",
-                        "Tag: 0x%x, Op: %s, Attempts: %d",
-                        _lastCommandSent.address, EnumToString(_lastCommandSent.operation), _kMaxNumSendAttempts );
+    // Something must be wrong with the robot to have kMaxNumSendAttempts attempts fail so print an error
+    PRINT_NAMED_ERROR("NVStorageComponent.ResendLastCommand.NumRetriesExceeded",
+                      "Tag: 0x%x, Op: %s, Attempts: %d",
+                      _lastCommandSent.address,
+                      EnumToString(_lastCommandSent.operation),
+                      _kMaxNumSendAttempts );
     return false;
   }
   
@@ -1095,7 +1098,8 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
         // If the allowed number of retries fails
         if (payload.result == NVResult::NV_NO_MEM ||
             payload.result == NVResult::NV_BUSY   ||
-            payload.result == NVResult::NV_TIMEOUT) {
+            payload.result == NVResult::NV_TIMEOUT||
+            payload.result == NVResult::NV_LOOP) {
           if (ResendLastCommand()) {
             PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVOpResult.ResentFailedWrite",
                              "Tag 0x%x resent due to %s, op: %s", tag, EnumToString(payload.result), EnumToString(payload.operation));
@@ -1179,7 +1183,8 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
         // Under these cases, attempt to resend the failed read message
         if (payload.result == NVResult::NV_NO_MEM ||
             payload.result == NVResult::NV_BUSY   ||
-            payload.result == NVResult::NV_TIMEOUT) {
+            payload.result == NVResult::NV_TIMEOUT||
+            payload.result == NVResult::NV_LOOP) {
           if (ResendLastCommand()) {
             PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVOpResult.ResentFailedRead",
                           "Tag 0x%x resent due to %s", tag, EnumToString(payload.result));
