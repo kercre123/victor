@@ -196,15 +196,38 @@ namespace Anki {
             Log(LogType.Warning, "This case in LoadAssets needs to be implemented");
             return null;
           }
-          return AssetDatabase.LoadMainAssetAtPath(assetPaths[0]) as AssetType;
+          AssetType asset = AssetDatabase.LoadAssetAtPath(assetPaths[0], typeof(AssetType)) as AssetType;
+          if (asset == null) {
+            Log(LogType.Error, "Asset returned from LoadMainAssetsAtPath is null. " + assetPaths[0]);
+          }
+          return asset;
 
         }
         else
 #endif
         {
-
+          return LoadAssetInternal<AssetType>(assetBundleName, assetName);
         }
-        return null;
+      }
+
+      private AssetType LoadAssetInternal<AssetType>(string assetBundleName, string assetName) where AssetType : UnityEngine.Object {
+        LoadedAssetBundle loadedAssetBundle = null;
+        if (!_LoadedAssetBundles.TryGetValue(assetBundleName, out loadedAssetBundle) || (loadedAssetBundle == null)) {
+          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is not loaded");
+          return null;
+        }
+
+        if (loadedAssetBundle.AssetBundle == null) {
+          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is null");
+          return null;
+        }
+
+        AssetType asset = loadedAssetBundle.AssetBundle.LoadAsset(assetName, typeof(AssetType)) as AssetType;
+        if (asset == null) {
+          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The request returned a null asset");
+          return null;
+        }
+        return asset;
       }
 
       // Loads an asset asynchronously from the given asset bundle. The asset bundle must have been loaded previously.

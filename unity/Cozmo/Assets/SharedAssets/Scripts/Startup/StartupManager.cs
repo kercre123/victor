@@ -29,6 +29,8 @@ public class StartupManager : MonoBehaviour {
   private const int _kMaxSDWidth = 1136;
   private const int _kMaxSDHeight = 640;
 
+  private static StartupManager _Instance;
+
   [SerializeField]
   private Cozmo.UI.ProgressBar _LoadingBar;
 
@@ -81,6 +83,21 @@ public class StartupManager : MonoBehaviour {
 
   public void StartLoadAsync() {
     StartCoroutine(LoadCoroutine());
+  }
+
+  public static StartupManager Instance {
+    get {
+      if (_Instance == null) {
+        DAS.Error("StartupManager.NullInstance", "Do not access StartupManager until start: " + System.Environment.StackTrace);
+      }
+      return _Instance;
+    }
+    private set {
+      if (_Instance != null) {
+        DAS.Error("StartupManager.DuplicateInstance", "StartupManager Instance already exists");
+      }
+      _Instance = value;
+    }
   }
 
   private float _EngineLoadingProgress = 0.0f;
@@ -299,6 +316,10 @@ public class StartupManager : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }
 
+  private void Awake() {
+    _Instance = this;
+  }
+
   private IEnumerator LoadDebugAssetBundle(AssetBundleManager assetBundleManager, bool isDebugBuild) {
     // Load debug asset bundle if in debug build
     if (_IsDebugBuild) {
@@ -332,7 +353,7 @@ public class StartupManager : MonoBehaviour {
     }
   }
 
-  private string GetVariantBasedOnScreenResolution() {
+  public string GetVariantBasedOnScreenResolution() {
     // Our checks assume landscape, so "width" is the longer side of the device
     Resolution screenResolution = Screen.currentResolution;
     int screenResolutionWidth = Mathf.Max(screenResolution.width, screenResolution.height);

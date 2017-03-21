@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace Cozmo.Settings {
   public class SettingsSDKPanel : MonoBehaviour {
     [SerializeField]
-    private CozmoButtonLegacy _EnableSDKButton;
+    private CozmoButton _EnableSDKButton;
 
     [SerializeField]
     private SDKModal _SDKModalPrefab;

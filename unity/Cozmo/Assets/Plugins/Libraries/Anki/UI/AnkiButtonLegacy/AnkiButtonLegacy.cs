@@ -324,13 +324,13 @@ namespace Anki {
       protected virtual void ShowPressedState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
-            if (graphic.targetImage != null && graphic.enabledSprite != null) {
+            if (graphic.targetImage != null && graphic.pressedSprite != null) {
               SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
             }
             else {
               DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
                         + " targetImage=" + graphic.targetImage + " sprite="
-                        + graphic.enabledSprite + ". Have you initialized this button?");
+                        + graphic.pressedSprite + ". Have you initialized this button?");
             }
           }
 
@@ -341,13 +341,13 @@ namespace Anki {
       protected virtual void ShowDisabledState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
-            if (graphic.targetImage != null && graphic.enabledSprite != null) {
+            if (graphic.targetImage != null && graphic.disabledSprite != null) {
               SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
             }
             else {
               DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
                         + " targetImage=" + graphic.targetImage + " sprite="
-                        + graphic.enabledSprite + ". Have you initialized this button?");
+                        + graphic.disabledSprite + ". Have you initialized this button?");
             }
           }
 

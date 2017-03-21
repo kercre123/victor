@@ -34,6 +34,10 @@ public static class Localization {
     return string.Format(GetCultureInfo(), "{0:N0}", number);
   }
 
+  public static bool IsLocalizationKey(string textParam) {
+    return ((!string.IsNullOrEmpty(textParam)) && (textParam.Length > 1) && ('#' == textParam[0]));
+  }
+
   public static string GetWithArgs(string localizationKey, params object[] args) {
     string localized = Get(localizationKey);
     localized = string.Format(GetCultureInfo(), localized, args);

@@ -11,10 +11,10 @@ namespace Cozmo.Settings {
     private BaseModal _CubeHelpModalPrefab;
 
     [SerializeField]
-    private CozmoButtonLegacy _RefreshBlockPoolButton;
+    private CozmoButton _RefreshBlockPoolButton;
 
     [SerializeField]
-    private CozmoButtonLegacy _ShowCubeHelpButton;
+    private CozmoButton _ShowCubeHelpButton;
 
     private BaseModal _SettingsCubeHelpDialogInstance;
 
