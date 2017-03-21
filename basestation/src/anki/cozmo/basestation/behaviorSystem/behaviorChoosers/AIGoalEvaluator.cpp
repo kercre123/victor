@@ -84,6 +84,11 @@ void AIGoalSetFPSocialize( ConsoleFunctionContextRef context ) {
 }
 CONSOLE_FUNC( AIGoalSetFPSocialize, "AIGoalEvaluator" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalSetFPBuildPyramid( ConsoleFunctionContextRef context ) {
+  AIGoalEvaluatorSetDebugGoal("FP_Pyramid");
+}
+CONSOLE_FUNC( AIGoalSetFPBuildPyramid, "AIGoalEvaluator" );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIGoalClearSetting( ConsoleFunctionContextRef context ) {
   AIGoalEvaluatorSetDebugGoal("");
 }
